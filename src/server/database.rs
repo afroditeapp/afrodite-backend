@@ -1,15 +1,16 @@
 pub mod git;
+pub mod command;
 
 
-use std::{sync::Arc, time::Duration, path::Path};
+use std::{sync::Arc, path::Path};
 
 use tokio::{sync::{oneshot, mpsc}, task::JoinHandle};
 
-use crate::{config::Config, utils::{QuitSender, QuitReceiver}};
+use crate::{config::Config, utils::{QuitSender, QuitReceiver}, api::core::profile::{LoginBody, LoginResponse}};
 
-use self::git::GitDatabase;
+use self::{git::GitDatabase, command::DatabaseCommand};
 
-use super::app::api::{CreateProfile, CreateProfileResponse};
+use crate::api::core::profile::{RegisterBody, RegisterResponse};
 
 pub type DatabaseTaskResult<T> = Result<T, DatabaseTaskError>;
 
@@ -19,19 +20,15 @@ pub enum DatabaseTaskError {
 }
 
 #[derive(Debug)]
-pub struct DatabaseTask<T> {
-    result_sender: oneshot::Sender<DatabaseTaskResult<T>>,
-    command: DatabaseCommand,
-}
-
-#[derive(Debug)]
-pub enum DatabaseCommand {
-    RegisterProfile(CreateProfile),
+pub struct DatabaseTask<C: DatabaseCommand> {
+    result_sender: oneshot::Sender<DatabaseTaskResult<C::Response>>,
+    command: C,
 }
 
 #[derive(Debug)]
 pub enum DatabaseMessage {
-    QueueTask(DatabaseTask<CreateProfileResponse>),
+    QueueRegister(DatabaseTask<RegisterBody>),
+    QueueLogin(DatabaseTask<LoginBody>),
 }
 
 #[derive(Debug, Clone)]
@@ -40,19 +37,20 @@ pub struct DatabaseTaskSender {
 }
 
 impl DatabaseTaskSender {
-    pub async fn send_command(
+    pub async fn send_command<C: DatabaseCommand>(
         &mut self,
-        command: DatabaseCommand,
-    ) -> oneshot::Receiver<DatabaseTaskResult<CreateProfileResponse>> {
+        command: C,
+    ) -> oneshot::Receiver<DatabaseTaskResult<C::Response>>
+    where DatabaseMessage: From<DatabaseTask<C>> {
         let (result_sender, result_receiver) = oneshot::channel();
 
-        let task = DatabaseTask {
+        let task: DatabaseTask<C> = DatabaseTask {
             result_sender,
             command,
         };
 
         // TODO: make sure that this is not called after DatabaseManager is closed.
-        self.sender.send(DatabaseMessage::QueueTask(task)).await.unwrap();
+        self.sender.send(task.into()).await.unwrap();
 
         result_receiver
     }
@@ -110,8 +108,7 @@ impl DatabaseManager {
 
     async fn handle_message(&mut self, event: DatabaseMessage) {
         match event {
-            DatabaseMessage::QueueTask(profile) => {
-
+            DatabaseMessage::QueueRegister(profile) => {
                 let mut git = GitDatabase::create(&self.config.database_dir, "id123").unwrap();
 
                 let mut test = self.config.database_dir.to_owned();
@@ -122,7 +119,12 @@ impl DatabaseManager {
                 git.commit(Path::new("profile.json"), "Just a test").unwrap();
 
                 let _ = profile.result_sender.send(
-                    Ok(CreateProfileResponse::success("test-from-database".to_string()))
+                    Ok(RegisterResponse::success("test-from-database".to_string()))
+                );
+            }
+            DatabaseMessage::QueueLogin(profile) => {
+                let _ = profile.result_sender.send(
+                    Ok(LoginResponse::database_error())
                 );
             }
         }

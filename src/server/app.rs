@@ -1,19 +1,24 @@
-
-pub mod api;
-
 use std::sync::Arc;
 
 use axum::{Router, routing::{get, post}, Json};
 use tracing::{debug, error, info};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
-use self::api::{CreateProfile, CreateProfileResponse, PATH_REGISTER};
+use crate::api::{core::{profile::{RegisterBody, RegisterResponse}, ApiDocCore}, self, GetDatabaseTaskSender};
 
-use super::database::{DatabaseManager, DatabaseTaskSender, DatabaseCommand};
+use super::database::{DatabaseManager, DatabaseTaskSender};
 
 
 #[derive(Debug, Clone)]
 pub struct AppState {
     database: DatabaseTaskSender,
+}
+
+impl GetDatabaseTaskSender for AppState {
+    fn database(&mut self) -> &mut DatabaseTaskSender {
+        &mut self.database
+    }
 }
 
 
@@ -32,6 +37,17 @@ impl App {
 
     pub fn create_router(&self) -> Router {
         Router::new()
+            .merge(
+                SwaggerUi::new("/swagger-ui/*tail")
+                    .url("/api-doc/openapi.json", ApiDocCore::openapi())
+                )
+            .route(
+                "/openapi.json",
+                get({
+                    let state = self.state.clone();
+                    move || openapi(state)
+                }),
+            )
             .route(
                 "/",
                 get({
@@ -40,10 +56,17 @@ impl App {
                 }),
             )
             .route(
-                PATH_REGISTER,
+                api::core::PATH_REGISTER,
                 post({
                     let state = self.state.clone();
-                    move |body| register(body, state)
+                    move |body| api::core::register(body, state)
+                }),
+            )
+            .route(
+                api::core::PATH_LOGIN,
+                post({
+                    let state = self.state.clone();
+                    move |body| api::core::login(body, state)
                 }),
             )
     }
@@ -54,22 +77,9 @@ async fn root(state: AppState) -> &'static str {
     "Test123"
 }
 
-// TODO: Add timeout for database commands
-
-async fn register(
-    Json(profile_info): Json<CreateProfile>,
-    mut state: AppState,
-) -> Json<CreateProfileResponse> {
-    let cmd = DatabaseCommand::RegisterProfile(profile_info);
-    match state.database.send_command(cmd).await.await.unwrap() {
-        Ok(response) => response.into(),
-        Err(e) => {
-            error!("Database task error: {:?}", e);
-            CreateProfileResponse::error().into()
-        }
-    }
+async fn openapi(state: AppState) -> Json<utoipa::openapi::OpenApi> {
+    ApiDocCore::openapi().into()
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -81,7 +91,11 @@ mod tests {
     use tokio::sync::mpsc;
     use tower::ServiceExt;
 
-    use crate::{server::{database::DatabaseManager, app::{App, api::{CreateProfileResponse, PATH_REGISTER}}, }, config::Config};
+    use crate::{
+        server::{database::DatabaseManager, app::{App}},
+        config::Config,
+        api::core::profile::{RegisterResponse},
+    };
 
     fn router() -> Router {
         let config = Config {
@@ -110,7 +124,7 @@ mod tests {
             .oneshot(
                 Request::builder()
                     .method(Method::POST)
-                    .uri(PATH_REGISTER)
+                    .uri("/register")
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(Body::from(
                         serde_json::to_vec(&json!({
@@ -125,6 +139,6 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-        let _response: CreateProfileResponse = serde_json::from_slice(&body).unwrap();
+        let _response: RegisterResponse = serde_json::from_slice(&body).unwrap();
     }
 }
