@@ -6,7 +6,6 @@ use crate::api::{ApiResult, ApiResultEnum};
 pub type UserId = String;
 pub type UserApiToken = String;
 
-
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct RegisterBody {
     pub name: String,
@@ -22,7 +21,7 @@ impl RegisterResponse {
     pub fn success(user_id: UserId) -> Self {
         Self {
             result: ApiResult::new(ApiResultEnum::Success),
-            user_id: Some(user_id)
+            user_id: Some(user_id),
         }
     }
 
@@ -50,7 +49,7 @@ impl LoginResponse {
     pub fn success(api_key: UserApiToken) -> Self {
         Self {
             result: ApiResult::new(ApiResultEnum::Success),
-            api_key: Some(api_key)
+            api_key: Some(api_key),
         }
     }
 

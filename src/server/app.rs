@@ -1,14 +1,26 @@
 use std::sync::Arc;
 
-use axum::{Router, routing::{get, post}, Json};
+use axum::{
+    routing::{get, post},
+    Json, Router,
+};
 use tracing::{debug, error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::api::{core::{user::{RegisterBody, RegisterResponse}, ApiDocCore}, self, GetSessionManager};
+use crate::api::{
+    self,
+    core::{
+        user::{RegisterBody, RegisterResponse},
+        ApiDocCore,
+    },
+    GetSessionManager,
+};
 
-use super::{database::{util::DatabasePath, DatabaseOperationHandle}, session::SessionManager};
-
+use super::{
+    database::{util::DatabasePath, DatabaseOperationHandle},
+    session::SessionManager,
+};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -21,7 +33,6 @@ impl GetSessionManager for AppState {
     }
 }
 
-
 pub struct App {
     state: AppState,
 }
@@ -29,7 +40,7 @@ pub struct App {
 impl App {
     pub fn new(path: DatabasePath, database_handle: DatabaseOperationHandle) -> Self {
         let state = AppState {
-            session_manager: Arc::new(SessionManager::new(path, database_handle))
+            session_manager: Arc::new(SessionManager::new(path, database_handle)),
         };
 
         Self { state }
@@ -39,8 +50,8 @@ impl App {
         Router::new()
             .merge(
                 SwaggerUi::new("/swagger-ui/*tail")
-                    .url("/api-doc/openapi.json", ApiDocCore::openapi())
-                )
+                    .url("/api-doc/openapi.json", ApiDocCore::openapi()),
+            )
             .route(
                 "/openapi.json",
                 get({
@@ -71,7 +82,6 @@ impl App {
             )
     }
 }
-
 
 async fn root(state: AppState) -> &'static str {
     "Test123"

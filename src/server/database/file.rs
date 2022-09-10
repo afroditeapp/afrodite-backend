@@ -1,6 +1,5 @@
 //! Types for files in different repositories
 
-
 /// Files in profile repository
 #[derive(Debug)]
 pub enum CoreFile {
@@ -23,7 +22,6 @@ impl GitRepositoryPath for CoreFile {
         }
     }
 }
-
 
 pub trait GitRepositoryPath {
     // Get path relative to git repository root. This is relative path.

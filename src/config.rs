@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{value_parser, arg, command};
+use clap::{arg, command, value_parser};
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
@@ -12,9 +12,9 @@ pub fn get_config() -> Config {
     let matches = command!()
         .arg(
             arg!(--database <DIR> "Set database directory")
-            .required(false)
-            .default_value("database")
-            .value_parser(value_parser!(PathBuf))
+                .required(false)
+                .default_value("database")
+                .value_parser(value_parser!(PathBuf)),
         )
         .get_matches();
 

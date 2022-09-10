@@ -1,9 +1,15 @@
-use std::{path::{PathBuf, Path}, fs, io};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 use crate::api::core::user::UserId;
 
-use super::{file::GitRepositoryPath, command::{write::DatabaseWriteCommands, read::DatabaseReadCommands}, DatabaseOperationHandle};
-
+use super::{
+    command::{read::DatabaseReadCommands, write::DatabaseWriteCommands},
+    file::GitRepositoryPath,
+    DatabaseOperationHandle,
+};
 
 /// Path to directory which contains all profile directories.
 ///
@@ -14,8 +20,10 @@ pub struct DatabasePath {
 }
 
 impl DatabasePath {
-    pub fn new<T: ToOwned<Owned=PathBuf>>(database_dir: T) -> Self {
-        Self { database_dir: database_dir.to_owned() }
+    pub fn new<T: ToOwned<Owned = PathBuf>>(database_dir: T) -> Self {
+        Self {
+            database_dir: database_dir.to_owned(),
+        }
     }
 
     /// Make sure that `id` does not contain special characters
@@ -53,27 +61,17 @@ impl ProfileDirPath {
 
     /// Use this only if you know that file does not exist or it is not opened
     /// for reading.
-    pub fn create_file<T: GitRepositoryPath>(
-        &self,
-        file: T,
-    ) -> io::Result<fs::File> {
+    pub fn create_file<T: GitRepositoryPath>(&self, file: T) -> io::Result<fs::File> {
         fs::File::create(self.git_repository_path.join(file.relative_path()))
     }
 
-
     /// Open file for reading.
-    pub fn open_file<T: GitRepositoryPath>(
-        &self,
-        file: T,
-    ) -> io::Result<fs::File> {
+    pub fn open_file<T: GitRepositoryPath>(&self, file: T) -> io::Result<fs::File> {
         fs::File::open(self.git_repository_path.join(file.relative_path()))
     }
 
     /// Replace file using new file.
-    pub fn replace_file<
-        T: GitRepositoryPath,
-        U: FnMut(&mut fs::File) -> Result<(), io::Error>,
-    >(
+    pub fn replace_file<T: GitRepositoryPath, U: FnMut(&mut fs::File) -> Result<(), io::Error>>(
         &self,
         file: T,
         mut write_handle: U,
@@ -97,7 +95,10 @@ pub struct WriteGuard {
 
 impl WriteGuard {
     pub fn new(profile: ProfileDirPath, database_handle: DatabaseOperationHandle) -> Self {
-        Self { profile, database_handle }
+        Self {
+            profile,
+            database_handle,
+        }
     }
 
     pub fn read(&self) -> DatabaseReadCommands<'_> {

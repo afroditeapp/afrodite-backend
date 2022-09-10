@@ -5,10 +5,10 @@ pub mod media;
 
 use ::core::fmt;
 
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::server::{session::SessionManager};
+use crate::server::session::SessionManager;
 
 // Paths
 
@@ -30,14 +30,18 @@ pub struct ApiResult {
 
 impl ApiResult {
     pub fn new(result: ApiResultEnum) -> Self {
-        Self { code: result as u32, message: result }
+        Self {
+            code: result as u32,
+            message: result,
+        }
     }
 
-    pub fn success() -> Self { Self::new(ApiResultEnum::Success) }
+    pub fn success() -> Self {
+        Self::new(ApiResultEnum::Success)
+    }
 }
 
 // App state getters
-
 
 pub trait GetSessionManager {
     fn session_manager(&self) -> &SessionManager;

@@ -2,9 +2,14 @@ use std::collections::HashMap;
 
 use tokio::sync::RwLock;
 
-use crate::api::core::user::{UserId, UserApiToken};
+use crate::api::core::user::{UserApiToken, UserId};
 
-use super::database::{self, util::{DatabasePath, ProfileDirPath, WriteGuard}, command::write::DatabaseWriteCommands, DatabaseOperationHandle};
+use super::database::{
+    self,
+    command::write::DatabaseWriteCommands,
+    util::{DatabasePath, ProfileDirPath, WriteGuard},
+    DatabaseOperationHandle,
+};
 
 use tracing::error;
 
@@ -32,9 +37,12 @@ impl SessionManager {
         let mut database = WriteGuard::new(profile, self.database_handle.clone());
         match database.write().register().await {
             Ok(()) => {
-                self.profiles.write().await.insert(new_user_id.clone(), database);
+                self.profiles
+                    .write()
+                    .await
+                    .insert(new_user_id.clone(), database);
                 Ok(new_user_id)
-            },
+            }
             Err(e) => {
                 error!("Error: {e:?}");
                 Err(())
@@ -50,8 +58,13 @@ impl SessionManager {
         }
 
         let token = uuid::Uuid::new_v4().simple().to_string();
-        let user_state = UserState { profile: self.database.profile_dir(&user_id) };
-        self.api_tokens.write().await.insert(token.clone(), user_state);
+        let user_state = UserState {
+            profile: self.database.profile_dir(&user_id),
+        };
+        self.api_tokens
+            .write()
+            .await
+            .insert(token.clone(), user_state);
 
         // TODO: also save current api token to database
         Ok(token)
@@ -62,6 +75,4 @@ pub struct UserState {
     profile: ProfileDirPath,
 }
 
-impl UserState {
-
-}
+impl UserState {}

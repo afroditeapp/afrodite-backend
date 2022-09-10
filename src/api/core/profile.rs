@@ -1,10 +1,7 @@
-
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::api::{ApiResult, ApiResultEnum};
-
-
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ProfileResponse {

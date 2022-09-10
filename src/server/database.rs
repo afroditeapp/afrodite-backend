@@ -1,20 +1,34 @@
-pub mod git;
 pub mod command;
 pub mod file;
+pub mod git;
 pub mod util;
 
-use std::{sync::Arc, path::{Path, PathBuf}, io, fs};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
-use tokio::{sync::{oneshot, mpsc}, task::{JoinHandle, spawn_blocking}};
+use tokio::{
+    sync::{mpsc, oneshot},
+    task::{spawn_blocking, JoinHandle},
+};
 
-use crate::{config::Config, utils::{QuitSender, QuitReceiver}, api::core::user::{LoginBody, LoginResponse, UserId, UserApiToken}};
+use crate::{
+    api::core::user::{LoginBody, LoginResponse, UserApiToken, UserId},
+    config::Config,
+    utils::{QuitReceiver, QuitSender},
+};
 
-use self::{git::{GitDatabase, GitError}, file::{GitRepositoryPath, CoreFile}, util::{DatabasePath, ProfileDirPath}};
+use self::{
+    file::{CoreFile, GitRepositoryPath},
+    git::{GitDatabase, GitError},
+    util::{DatabasePath, ProfileDirPath},
+};
 
 use crate::api::core::user::{RegisterBody, RegisterResponse};
 
 pub type DatabeseEntryId = String;
-
 
 /// Every running database write operation should keep this handle. When server
 /// quit is started main function waits that all handles are dropped.
@@ -29,7 +43,6 @@ impl DatabaseOperationHandle {
         (Self { _sender }, receiver)
     }
 }
-
 
 #[derive(Debug)]
 pub enum DatabaseError {

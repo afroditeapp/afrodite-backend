@@ -1,26 +1,32 @@
-use std::{path::{Path, PathBuf}, fmt, thread::sleep, time::Duration};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+    thread::sleep,
+    time::Duration,
+};
 
 use tokio::sync::oneshot;
 
-use crate::{api::core::user::{RegisterBody, RegisterResponse, LoginBody, LoginResponse}, server::database::{util::{DatabasePath, ProfileDirPath}, DatabaseError, DatabaseOperationHandle, file::CoreFile}};
+use crate::{
+    api::core::user::{LoginBody, LoginResponse, RegisterBody, RegisterResponse},
+    server::database::{
+        file::CoreFile,
+        util::{DatabasePath, ProfileDirPath},
+        DatabaseError, DatabaseOperationHandle,
+    },
+};
 
-use super::{DatabeseEntryId, super::git::GitDatabase};
-
-
+use super::{super::git::GitDatabase, DatabeseEntryId};
 
 pub struct DatabaseBasicCommands<'a> {
     database: &'a DatabasePath,
 }
 
-impl <'a> DatabaseBasicCommands<'a> {
+impl<'a> DatabaseBasicCommands<'a> {
     pub fn new(database: &'a DatabasePath) -> Self {
         Self { database }
     }
-
-
 }
-
-
 
 /// Make sure that you do not make concurrent writes.
 pub struct DatabaseWriteCommands {
@@ -34,7 +40,7 @@ impl DatabaseWriteCommands {
     }
 
     pub async fn register(self) -> Result<(), DatabaseError> {
-        let task = tokio::task::spawn_blocking(|| self.register_blocking() );
+        let task = tokio::task::spawn_blocking(|| self.register_blocking());
         task.await.unwrap()
     }
 
@@ -49,7 +55,6 @@ impl DatabaseWriteCommands {
         //     .map_err(DatabaseError::Git)
         //     .map(|_| profile)
     }
-
 
     // fn write_api_token_bloking(profile: ProfileDirPath, token: Option<UserApiToken>) -> LoginResponse {
 

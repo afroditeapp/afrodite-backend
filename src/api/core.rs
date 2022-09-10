@@ -1,42 +1,35 @@
-pub mod user;
 pub mod profile;
+pub mod user;
 
 use std::string;
 
 use axum::Json;
-use utoipa::{OpenApi};
+use utoipa::OpenApi;
 
-
-use self::{user::{RegisterBody, RegisterResponse, LoginBody, LoginResponse}, profile::ProfileResponse};
+use self::{
+    profile::ProfileResponse,
+    user::{LoginBody, LoginResponse, RegisterBody, RegisterResponse},
+};
 
 use tracing::{error, info};
 
-use super::{GetSessionManager};
-
+use super::GetSessionManager;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(
-        register,
-        login,
-        profile,
-    ),
-    components(
-        schemas(
-            crate::api::ApiResult,
-            crate::api::ApiResultEnum,
-            user::RegisterBody,
-            user::RegisterResponse,
-            user::LoginBody,
-            user::LoginResponse,
-        )
-    )
+    paths(register, login, profile,),
+    components(schemas(
+        crate::api::ApiResult,
+        crate::api::ApiResultEnum,
+        user::RegisterBody,
+        user::RegisterResponse,
+        user::LoginBody,
+        user::LoginResponse,
+    ))
 )]
 pub struct ApiDocCore;
 
-
 // TODO: Add timeout for database commands
-
 
 pub const PATH_REGISTER: &str = "/register";
 
@@ -59,7 +52,8 @@ pub async fn register<S: GetSessionManager>(
     match state.session_manager().register().await {
         Ok(user_id) => RegisterResponse::success(user_id),
         Err(()) => RegisterResponse::database_error(),
-    }.into()
+    }
+    .into()
 }
 
 pub const PATH_LOGIN: &str = "/login";
@@ -83,7 +77,8 @@ pub async fn login<S: GetSessionManager>(
     match state.session_manager().login(profile_info.user_id).await {
         Ok(api_token) => LoginResponse::success(api_token),
         Err(()) => LoginResponse::database_error(),
-    }.into()
+    }
+    .into()
 }
 
 pub const PATH_PROFILE: &str = "/profile";

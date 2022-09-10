@@ -1,20 +1,26 @@
-
-pub mod user;
-pub mod database;
 pub mod app;
+pub mod database;
 pub mod session;
+pub mod user;
 
-
-use std::sync::Arc;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 
-use tokio::{sync::{mpsc, watch::error}, signal};
+use tokio::{
+    signal,
+    sync::{mpsc, watch::error},
+};
 use tracing::{debug, error, info};
 
-
-use crate::{config::{Config, self}, server::{database::{DatabaseOperationHandle, util::DatabasePath}, app::App}};
+use crate::{
+    config::{self, Config},
+    server::{
+        app::App,
+        database::{util::DatabasePath, DatabaseOperationHandle},
+    },
+};
 
 pub struct PihkaServer {
     config: Arc<Config>,
@@ -32,13 +38,15 @@ impl PihkaServer {
 
         let (database_handle, mut database_quit_receiver) = DatabaseOperationHandle::new();
 
-        let app = App::new(DatabasePath::new(self.config.database_dir.clone()), database_handle.clone());
+        let app = App::new(
+            DatabasePath::new(self.config.database_dir.clone()),
+            database_handle.clone(),
+        );
         let router = app.create_router();
 
         let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
         debug!("listening on {}", addr);
-        let server = axum::Server::bind(&addr)
-            .serve(router.into_make_service());
+        let server = axum::Server::bind(&addr).serve(router.into_make_service());
 
         let shutdown_handle = server.with_graceful_shutdown(async {
             loop {
@@ -72,7 +80,6 @@ impl PihkaServer {
             }
         }
 
-
         info!("Server quit started");
 
         drop(database_handle);
@@ -80,7 +87,7 @@ impl PihkaServer {
         loop {
             match database_quit_receiver.recv().await {
                 None => break,
-                Some(()) => ()
+                Some(()) => (),
             }
         }
 

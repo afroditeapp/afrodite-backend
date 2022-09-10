@@ -1,8 +1,14 @@
-use std::{path::{PathBuf, Path}, io::Write};
+use std::{
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use git2::{Repository, Signature, Tree};
 
-use super::{util::ProfileDirPath, file::{CoreFile, GitRepositoryPath}};
+use super::{
+    file::{CoreFile, GitRepositoryPath},
+    util::ProfileDirPath,
+};
 
 const REPOSITORY_USER_NAME: &str = "Pihka backend";
 const REPOSITORY_USER_EMAIL: &str = "email";
@@ -25,20 +31,25 @@ pub enum GitError {
     Commit(git2::Error),
 }
 
-
 pub struct GitDatabase<'a> {
     repository: Repository,
     profile: &'a ProfileDirPath,
 }
 
-impl <'a> GitDatabase<'a> {
+impl<'a> GitDatabase<'a> {
     pub fn create(profile: &'a ProfileDirPath) -> Result<Self, GitError> {
         let repository = Repository::init(profile.path()).map_err(GitError::Init)?;
 
-        let mut repository = Self {repository, profile};
+        let mut repository = Self {
+            repository,
+            profile,
+        };
 
-        let mut file = profile.create_file(CoreFile::Id).map_err(GitError::CreateIdFile)?;
-        file.write_all(profile.id().as_bytes()).map_err(GitError::CreateIdFile)?;
+        let mut file = profile
+            .create_file(CoreFile::Id)
+            .map_err(GitError::CreateIdFile)?;
+        file.write_all(profile.id().as_bytes())
+            .map_err(GitError::CreateIdFile)?;
         drop(file); // Make sure that file is closed, so it is included in the commit.
 
         repository.initial_commit(CoreFile::Id.relative_path())?;
@@ -49,31 +60,37 @@ impl <'a> GitDatabase<'a> {
     pub fn open(profile: &'a ProfileDirPath) -> Result<Self, GitError> {
         let repository = Repository::open(profile.path()).map_err(GitError::Open)?;
 
-        Ok(Self {repository, profile})
+        Ok(Self {
+            repository,
+            profile,
+        })
     }
 
-    pub fn commit<T: GitRepositoryPath>(
-        &mut self,
-        file: T,
-        message: &str,
-    ) -> Result<(), GitError> {
+    pub fn commit<T: GitRepositoryPath>(&mut self, file: T, message: &str) -> Result<(), GitError> {
         let signature = Self::default_signature()?;
 
         let tree = self.write_to_index(file.relative_path())?;
 
         let current_head = self.repository.head().map_err(GitError::Head)?;
-        let parent = self.repository.find_commit(
-            current_head.target().ok_or(GitError::HeadDoesNotPointToCommit)?
-        ).map_err(GitError::FindCommit)?;
+        let parent = self
+            .repository
+            .find_commit(
+                current_head
+                    .target()
+                    .ok_or(GitError::HeadDoesNotPointToCommit)?,
+            )
+            .map_err(GitError::FindCommit)?;
 
-        self.repository.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            message,
-            &tree,
-            &[&parent]
-        ).map_err(GitError::Commit)?;
+        self.repository
+            .commit(
+                Some("HEAD"),
+                &signature,
+                &signature,
+                message,
+                &tree,
+                &[&parent],
+            )
+            .map_err(GitError::Commit)?;
 
         Ok(())
     }
@@ -84,14 +101,16 @@ impl <'a> GitDatabase<'a> {
 
         let tree = self.write_to_index(file.as_ref())?;
 
-        self.repository.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            INITIAL_COMMIT_MSG,
-            &tree,
-            &[]
-        ).map_err(GitError::Commit)?;
+        self.repository
+            .commit(
+                Some("HEAD"),
+                &signature,
+                &signature,
+                INITIAL_COMMIT_MSG,
+                &tree,
+                &[],
+            )
+            .map_err(GitError::Commit)?;
 
         Ok(())
     }
@@ -103,7 +122,9 @@ impl <'a> GitDatabase<'a> {
             index.add_path(file.as_ref()).map_err(GitError::AddPath)?;
             index.write_tree().map_err(GitError::WriteTree)?
         };
-        self.repository.find_tree(tree_id).map_err(GitError::FindTree)
+        self.repository
+            .find_tree(tree_id)
+            .map_err(GitError::FindTree)
     }
 
     fn default_signature() -> Result<Signature<'static>, GitError> {

@@ -1,16 +1,11 @@
-use crate::{server::database::util::ProfileDirPath, api::core::user::UserId};
-
-
-
-
-
+use crate::{api::core::user::UserId, server::database::util::ProfileDirPath};
 
 /// Reading can be done async as Git library is not used.
 pub struct DatabaseReadCommands<'a> {
     config: &'a ProfileDirPath,
 }
 
-impl <'a> DatabaseReadCommands<'a> {
+impl<'a> DatabaseReadCommands<'a> {
     pub fn new(config: &'a ProfileDirPath) -> Self {
         Self { config }
     }

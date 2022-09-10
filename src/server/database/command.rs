@@ -1,10 +1,13 @@
 pub mod read;
 pub mod write;
 
-use std::{path::{Path, PathBuf}, fmt};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
 use tokio::sync::oneshot;
 
-use crate::api::core::user::{RegisterBody, RegisterResponse, LoginBody, LoginResponse};
+use crate::api::core::user::{LoginBody, LoginResponse, RegisterBody, RegisterResponse};
 
-use super::{DatabeseEntryId, git::GitDatabase};
+use super::{git::GitDatabase, DatabeseEntryId};
