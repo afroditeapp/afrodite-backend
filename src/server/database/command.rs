@@ -1,29 +1,10 @@
-use crate::api::core::profile::{RegisterBody, RegisterResponse, LoginBody, LoginResponse};
+pub mod read;
+pub mod write;
 
-use super::{DatabaseTask, DatabaseMessage};
+use std::{path::{Path, PathBuf}, fmt};
 
-pub trait DatabaseCommand {
-    type Response;
-}
+use tokio::sync::oneshot;
 
-// Command implementations
+use crate::api::core::user::{RegisterBody, RegisterResponse, LoginBody, LoginResponse};
 
-impl DatabaseCommand for RegisterBody {
-    type Response = RegisterResponse;
-}
-
-impl From<DatabaseTask<RegisterBody>> for DatabaseMessage {
-    fn from(task: DatabaseTask<RegisterBody>) -> Self {
-        DatabaseMessage::QueueRegister(task)
-    }
-}
-
-impl DatabaseCommand for LoginBody {
-    type Response = LoginResponse;
-}
-
-impl From<DatabaseTask<LoginBody>> for DatabaseMessage {
-    fn from(task: DatabaseTask<LoginBody>) -> Self {
-        DatabaseMessage::QueueLogin(task)
-    }
-}
+use super::{DatabeseEntryId, git::GitDatabase};

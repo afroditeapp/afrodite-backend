@@ -1,7 +1,8 @@
 
-pub mod profile;
+pub mod user;
 pub mod database;
 pub mod app;
+pub mod session;
 
 
 use std::sync::Arc;
@@ -13,8 +14,7 @@ use tokio::{sync::{mpsc, watch::error}, signal};
 use tracing::{debug, error, info};
 
 
-use crate::{config::{Config, self}, server::{database::DatabaseManager, app::App}};
-
+use crate::{config::{Config, self}, server::{database::{DatabaseOperationHandle, util::DatabasePath}, app::App}};
 
 pub struct PihkaServer {
     config: Arc<Config>,
@@ -30,37 +30,37 @@ impl PihkaServer {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
-        let (sender, receiver) = mpsc::channel(64);
-        let (database_handle, database_quit_sender, database_task_sender) =
-            DatabaseManager::start_task(self.config, sender, receiver);
+        let (database_handle, mut database_quit_receiver) = DatabaseOperationHandle::new();
 
-        let app = App::new(database_task_sender);
+        let app = App::new(DatabasePath::new(self.config.database_dir.clone()), database_handle.clone());
         let router = app.create_router();
 
         let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
         debug!("listening on {}", addr);
-        let mut server = axum::Server::bind(&addr)
+        let server = axum::Server::bind(&addr)
             .serve(router.into_make_service());
 
-        let mut ctrl_c_listener_enabled = true;
+        let shutdown_handle = server.with_graceful_shutdown(async {
+            loop {
+                tokio::select! {
+                    quit_request = signal::ctrl_c() => {
+                        match quit_request {
+                            Ok(()) => (),
+                            Err(e) =>
+                                error!("Failed to listen CTRL+C. Error: {}", e),
+                        }
+                        break
+                    }
+                }
+            }
+        });
 
         loop {
             tokio::select! {
-                quit_request = signal::ctrl_c(), if ctrl_c_listener_enabled => {
-                    match quit_request {
-                        Ok(()) => {
-                            break;
-                        }
-                        Err(e) => {
-                            ctrl_c_listener_enabled = false;
-                            error!("Failed to listen CTRL+C. Error: {}", e);
-                        }
-                    }
-                }
-                result = &mut server => {
+                result = shutdown_handle => {
                     match result {
                         Ok(()) => {
-                            error!("Server future returned Ok()");
+                            info!("Server future returned Ok()");
                         }
                         Err(e) => {
                             error!("Server future returned error: {}", e);
@@ -72,11 +72,17 @@ impl PihkaServer {
             }
         }
 
+
         info!("Server quit started");
 
-        database_quit_sender.send(()).unwrap();
-
-        database_handle.await.unwrap();
+        drop(database_handle);
+        drop(app);
+        loop {
+            match database_quit_receiver.recv().await {
+                None => break,
+                Some(()) => ()
+            }
+        }
 
         info!("Server quit done");
     }

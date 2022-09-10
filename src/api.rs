@@ -8,7 +8,7 @@ use ::core::fmt;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use utoipa::ToSchema;
 
-use crate::server::database::DatabaseTaskSender;
+use crate::server::{session::SessionManager};
 
 // Paths
 
@@ -38,6 +38,7 @@ impl ApiResult {
 
 // App state getters
 
-pub trait GetDatabaseTaskSender {
-    fn database(&mut self) -> &mut DatabaseTaskSender;
+
+pub trait GetSessionManager {
+    fn session_manager(&self) -> &SessionManager;
 }

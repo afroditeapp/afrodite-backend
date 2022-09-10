@@ -1,3 +1,4 @@
+pub mod user;
 pub mod profile;
 
 use std::string;
@@ -6,26 +7,28 @@ use axum::Json;
 use utoipa::{OpenApi};
 
 
-use self::profile::{RegisterBody, RegisterResponse, LoginBody, LoginResponse};
+use self::{user::{RegisterBody, RegisterResponse, LoginBody, LoginResponse}, profile::ProfileResponse};
 
 use tracing::{error, info};
 
-use super::GetDatabaseTaskSender;
+use super::{GetSessionManager};
+
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
         register,
         login,
+        profile,
     ),
     components(
         schemas(
             crate::api::ApiResult,
             crate::api::ApiResultEnum,
-            profile::RegisterBody,
-            profile::RegisterResponse,
-            profile::LoginBody,
-            profile::LoginResponse,
+            user::RegisterBody,
+            user::RegisterResponse,
+            user::LoginBody,
+            user::LoginResponse,
         )
     )
 )]
@@ -49,17 +52,14 @@ pub const PATH_REGISTER: &str = "/register";
         ),
     )
 )]
-pub async fn register<S: GetDatabaseTaskSender>(
+pub async fn register<S: GetSessionManager>(
     Json(profile_info): Json<RegisterBody>,
-    mut state: S,
+    state: S,
 ) -> Json<RegisterResponse> {
-    match state.database().send_command(profile_info).await.await.unwrap() {
-        Ok(response) => response.into(),
-        Err(e) => {
-            error!("Database task error: {:?}", e);
-            RegisterResponse::database_error().into()
-        }
-    }
+    match state.session_manager().register().await {
+        Ok(user_id) => RegisterResponse::success(user_id),
+        Err(()) => RegisterResponse::database_error(),
+    }.into()
 }
 
 pub const PATH_LOGIN: &str = "/login";
@@ -71,20 +71,37 @@ pub const PATH_LOGIN: &str = "/login";
     responses(
         (
             status = 200,
-            description = "Get API key for this profile",
+            description = "Get API token for this profile",
             body = [LoginResponse],
         ),
     )
 )]
-pub async fn login<S: GetDatabaseTaskSender>(
+pub async fn login<S: GetSessionManager>(
     Json(profile_info): Json<LoginBody>,
-    mut state: S,
+    state: S,
 ) -> Json<LoginResponse> {
-    match state.database().send_command(profile_info).await.await.unwrap() {
-        Ok(response) => response.into(),
-        Err(e) => {
-            error!("Database task error: {:?}", e);
-            LoginResponse::database_error().into()
-        }
-    }
+    match state.session_manager().login(profile_info.user_id).await {
+        Ok(api_token) => LoginResponse::success(api_token),
+        Err(()) => LoginResponse::database_error(),
+    }.into()
+}
+
+pub const PATH_PROFILE: &str = "/profile";
+
+#[utoipa::path(
+    post,
+    path = "/profile",
+    responses(
+        (
+            status = 200,
+            description = "Get your profile.",
+            body = [ProfileResponse],
+        ),
+    ),
+)]
+pub async fn profile<S: GetSessionManager>(
+    //Json(profile_info): Json<Pro>,
+    mut state: S,
+) -> Json<ProfileResponse> {
+    ProfileResponse::database_error().into()
 }
