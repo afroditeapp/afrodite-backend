@@ -11,7 +11,6 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::api::{
     self,
     core::{
-        user::{RegisterBody, RegisterResponse},
         ApiDocCore,
     },
     GetSessionManager,
@@ -70,7 +69,7 @@ impl App {
                 api::core::PATH_REGISTER,
                 post({
                     let state = self.state.clone();
-                    move |body| api::core::register(body, state)
+                    move || api::core::register(state)
                 }),
             )
             .route(

@@ -9,7 +9,7 @@ use crate::{
     server::database::{
         util::{DatabasePath, ProfileDirPath},
         DatabaseError, DatabaseOperationHandle, file::{CoreFile, CoreFileNoHistory},
-    }, api::core::{profile::Profile, user::UserApiToken},
+    }, api::core::{profile::Profile, user::ApiKey},
 };
 
 use super::{super::git::GitDatabase};
@@ -75,12 +75,12 @@ impl DatabaseWriteCommands {
         }).await
     }
 
-    pub async fn update_token(self, token: UserApiToken) -> Result<(), DatabaseError> {
+    pub async fn update_token(self, key: ApiKey) -> Result<(), DatabaseError> {
         self.run_command(move |profile_dir| {
             profile_dir.replace_no_history_file(
                 CoreFileNoHistory::ApiToken,
                 move |file|
-                    file.write_all(token.as_bytes())
+                    file.write_all(key.as_str().as_bytes())
                         .map_err(DatabaseError::FileIo),
             )
         }).await

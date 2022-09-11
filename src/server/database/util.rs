@@ -3,7 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::api::core::user::UserId;
 
 use super::{
     command::{read::DatabaseReadCommands, write::DatabaseWriteCommands},
@@ -45,7 +44,7 @@ pub struct ProfileDirPath {
     /// Absolute path to profile directory.
     git_repository_path: PathBuf,
     /// Profile directory file name.
-    id: UserId,
+    id: String,
 }
 
 impl ProfileDirPath {

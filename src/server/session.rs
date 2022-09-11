@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use tokio::sync::RwLock;
 
-use crate::api::core::user::{UserApiToken, UserId};
+use crate::api::core::{user::{ApiKey, UserId}, profile::Profile};
 
 use super::database::{
     util::{DatabasePath, ProfileDirPath, WriteGuard},
@@ -12,7 +12,7 @@ use super::database::{
 use tracing::error;
 
 pub struct SessionManager {
-    api_tokens: RwLock<HashMap<UserApiToken, UserState>>,
+    api_tokens: RwLock<HashMap<ApiKey, UserState>>,
     profiles: RwLock<HashMap<UserId, WriteGuard>>,
     database: DatabasePath,
     database_handle: DatabaseOperationHandle,
@@ -30,8 +30,8 @@ impl SessionManager {
 
     /// New unique UUID is generated every time so no special handling needed.
     pub async fn register(&self) -> Result<UserId, ()> {
-        let new_user_id = uuid::Uuid::new_v4().simple().to_string();
-        let profile = self.database.profile_dir(&new_user_id);
+        let new_user_id = UserId::new(uuid::Uuid::new_v4().simple().to_string());
+        let profile = self.database.profile_dir(new_user_id.as_str());
         let mut database = WriteGuard::new(profile, self.database_handle.clone());
         match database.write().register().await {
             Ok(()) => {
@@ -48,16 +48,16 @@ impl SessionManager {
         }
     }
 
-    pub async fn login(&self, user_id: UserId) -> Result<UserApiToken, ()> {
+    pub async fn login(&self, user_id: UserId) -> Result<ApiKey, ()> {
         // TODO: check that UserId contains only hexadecimals
 
         if self.profiles.read().await.get(&user_id).is_none() {
             return Err(());
         }
 
-        let token = uuid::Uuid::new_v4().simple().to_string();
+        let token = ApiKey::new(uuid::Uuid::new_v4().simple().to_string());
         let user_state = UserState {
-            profile: self.database.profile_dir(&user_id),
+            profile: self.database.profile_dir(user_id.as_str()),
         };
         self.api_tokens
             .write()
@@ -66,6 +66,10 @@ impl SessionManager {
 
         // TODO: also save current api token to database
         Ok(token)
+    }
+
+    pub async fn get_profile(&self, user_id: UserId) -> Result<Profile, ()> {
+        Err(())
     }
 }
 

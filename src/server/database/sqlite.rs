@@ -87,7 +87,7 @@ impl SqliteWriteHandle {
             VALUES (?)
             "#
         )
-        .bind(id)
+        .bind(id.into_string())
         .execute(&self.pool).await.map_err(SqliteDatabaseError::Execute)?;
 
         Ok(())
@@ -102,7 +102,7 @@ impl SqliteWriteHandle {
             "#
         )
         .bind(name)
-        .bind(id)
+        .bind(id.into_string())
         .execute(&self.pool).await.map_err(SqliteDatabaseError::Execute)?;
 
         Ok(())
