@@ -1,7 +1,53 @@
 //! Types for files in different repositories
 
+
+
+pub struct GitPath<'a>(&'a str);
+
+impl GitPath<'_> {
+    pub fn as_str(&self) -> &str {
+        self.0
+    }
+}
+
+pub struct LiveVersionPath<'a>(&'a str);
+
+impl LiveVersionPath<'_> {
+    pub fn as_str(&self) -> &str {
+        self.0
+    }
+}
+
+pub struct TmpPath<'a>(&'a str);
+
+impl TmpPath<'_> {
+    pub fn as_str(&self) -> &str {
+        self.0
+    }
+}
+
+/// Get file name which is used for committing this file to Git.
+pub trait GetGitPath {
+    /// Path relative to git repository root.
+    fn git_path(&self) -> GitPath<'_>;
+}
+
+/// Get file name for file which is ment to be consumed in web requests.
+pub trait GetLiveVersionPath {
+    /// Path relative to git repository root.
+    fn live_path(&self) -> LiveVersionPath<'_>;
+}
+
+/// Get file name which is used for creating tmp files which are only used
+/// when modifying files with no version history.
+pub trait GetTmpPath {
+    /// Path relative to git repository root.
+    fn tmp_path(&self) -> TmpPath<'_>;
+}
+
+
 /// Files in profile repository
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum CoreFile {
     /// Plain text containing profile ID
     Id,
@@ -13,20 +59,49 @@ pub enum CoreFile {
     PrivateUserInfoJson,
 }
 
-impl GitRepositoryPath for CoreFile {
-    fn relative_path(&self) -> &str {
-        match self {
-            Self::Id => "id.txt",
-            Self::ProfileJson => "profile.txt",
-            Self::PrivateUserInfoJson => "user.txt",
-        }
+impl GetGitPath for CoreFile {
+    fn git_path(&self) -> GitPath<'_> {
+        GitPath(match self {
+            Self::Id => "id.txt.git",
+            Self::ProfileJson => "profile.txt.git",
+            Self::PrivateUserInfoJson => "user.txt.git",
+        })
     }
 }
 
-pub trait GitRepositoryPath {
-    // Get path relative to git repository root. This is relative path.
-    fn relative_path(&self) -> &str;
+impl GetLiveVersionPath for CoreFile {
+    fn live_path(&self) -> LiveVersionPath<'_> {
+        LiveVersionPath(match self {
+            Self::Id => "id.txt",
+            Self::ProfileJson => "profile.txt",
+            Self::PrivateUserInfoJson => "user.txt",
+        })
+    }
 }
 
-// TODO: Append only files,
-// TODO: Files w
+/// Files not in version history but in profile history.
+#[derive(Debug, Clone, Copy)]
+pub enum CoreFileNoHistory {
+    /// Plain text containing API token
+    ApiToken,
+}
+
+impl GetTmpPath for CoreFileNoHistory {
+    fn tmp_path(&self) -> TmpPath<'_> {
+        TmpPath(match self {
+            Self::ApiToken => "token.txt.tmp",
+        })
+    }
+}
+
+impl GetLiveVersionPath for CoreFileNoHistory {
+    fn live_path(&self) -> LiveVersionPath<'_> {
+        LiveVersionPath(match self {
+            Self::ApiToken => "token.txt",
+        })
+    }
+}
+
+
+// TODO: Append only files (possibly for IP addresses). Set max limit for ip
+// address changes or something?

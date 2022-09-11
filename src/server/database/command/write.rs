@@ -1,22 +1,18 @@
 use std::{
-    fmt,
-    path::{Path, PathBuf},
     thread::sleep,
-    time::Duration,
+    time::Duration, io::Write,
 };
 
-use tokio::sync::oneshot;
+use tracing::error;
 
 use crate::{
-    api::core::user::{LoginBody, LoginResponse, RegisterBody, RegisterResponse},
     server::database::{
-        file::CoreFile,
         util::{DatabasePath, ProfileDirPath},
-        DatabaseError, DatabaseOperationHandle,
-    },
+        DatabaseError, DatabaseOperationHandle, file::{CoreFile, CoreFileNoHistory},
+    }, api::core::{profile::Profile, user::UserApiToken},
 };
 
-use super::{super::git::GitDatabase, DatabeseEntryId};
+use super::{super::git::GitDatabase};
 
 pub struct DatabaseBasicCommands<'a> {
     database: &'a DatabasePath,
@@ -31,6 +27,7 @@ impl<'a> DatabaseBasicCommands<'a> {
 /// Make sure that you do not make concurrent writes.
 pub struct DatabaseWriteCommands {
     profile: ProfileDirPath,
+    /// This keeps database operation running even if quit singal is received.
     handle: DatabaseOperationHandle,
 }
 
@@ -39,25 +36,53 @@ impl DatabaseWriteCommands {
         Self { profile, handle }
     }
 
+    async fn run_command<
+        T: FnOnce(ProfileDirPath) -> Result<(), DatabaseError> + Send + 'static,
+    >(
+        self,
+        command: T,
+    ) -> Result<(), DatabaseError> {
+        let task = tokio::task::spawn_blocking(|| {
+            let result = command(self.profile);
+            drop(self.handle);
+            result
+        });
+
+        // TODO: This might log user data here?
+        let result = task.await.unwrap();
+        if let Err(e) = &result {
+            error!("Database write command error {e:?}");
+        }
+        result
+    }
+
     pub async fn register(self) -> Result<(), DatabaseError> {
-        let task = tokio::task::spawn_blocking(|| self.register_blocking());
-        task.await.unwrap()
+        self.run_command(move |profile| {
+            GitDatabase::create(&profile).map_err(DatabaseError::Git)?;
+            Ok(())
+        }).await
     }
 
-    fn register_blocking(self) -> Result<(), DatabaseError> {
-        GitDatabase::create(&self.profile).map_err(DatabaseError::Git)?;
-        sleep(Duration::from_secs(5));
-        Ok(())
-        // let file = profile.create_file(CoreFile::ProfileJson);
-        // TODO: Write something to the JSON
-
-        // git.commit(CoreFile::ProfileJson, "Initial profile information")
-        //     .map_err(DatabaseError::Git)
-        //     .map(|_| profile)
+    pub async fn update_profile(self, profile_data: Profile) -> Result<(), DatabaseError> {
+        self.run_command(move |profile_dir| {
+            profile_dir.replace_file(
+                CoreFile::ProfileJson,
+                "Update profile",
+                move |file|
+                    serde_json::to_writer(file, &profile_data)
+                        .map_err(DatabaseError::Serialize),
+            )
+        }).await
     }
 
-    // fn write_api_token_bloking(profile: ProfileDirPath, token: Option<UserApiToken>) -> LoginResponse {
-
-    //     LoginResponse::database_error()
-    // }
+    pub async fn update_token(self, token: UserApiToken) -> Result<(), DatabaseError> {
+        self.run_command(move |profile_dir| {
+            profile_dir.replace_no_history_file(
+                CoreFileNoHistory::ApiToken,
+                move |file|
+                    file.write_all(token.as_bytes())
+                        .map_err(DatabaseError::FileIo),
+            )
+        }).await
+    }
 }

@@ -5,8 +5,6 @@ use tokio::sync::RwLock;
 use crate::api::core::user::{UserApiToken, UserId};
 
 use super::database::{
-    self,
-    command::write::DatabaseWriteCommands,
     util::{DatabasePath, ProfileDirPath, WriteGuard},
     DatabaseOperationHandle,
 };

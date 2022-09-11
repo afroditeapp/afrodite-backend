@@ -3,9 +3,7 @@
 pub mod core;
 pub mod media;
 
-use ::core::fmt;
-
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::server::session::SessionManager;

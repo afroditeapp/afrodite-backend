@@ -6,21 +6,32 @@ use crate::api::{ApiResult, ApiResultEnum};
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct ProfileResponse {
     result: ApiResult,
-    name: Option<String>,
+    profile: Option<Profile>,
 }
 
 impl ProfileResponse {
     pub fn success(name: String) -> Self {
         Self {
             result: ApiResult::new(ApiResultEnum::Success),
-            name: Some(name),
+            profile: Some(Profile {name} ),
         }
     }
 
     pub fn database_error() -> Self {
         Self {
             result: ApiResult::new(ApiResultEnum::DatabaseConnectionFailed),
-            name: None,
+            profile: None,
         }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct Profile {
+    name: String,
+}
+
+impl Profile {
+    pub fn new(name: String) -> Self {
+        Self {name}
     }
 }

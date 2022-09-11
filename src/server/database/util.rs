@@ -7,8 +7,8 @@ use crate::api::core::user::UserId;
 
 use super::{
     command::{read::DatabaseReadCommands, write::DatabaseWriteCommands},
-    file::GitRepositoryPath,
-    DatabaseOperationHandle,
+    file::{GetGitPath, GetLiveVersionPath, GetTmpPath},
+    DatabaseOperationHandle, git::GitDatabase, DatabaseError,
 };
 
 /// Path to directory which contains all profile directories.
@@ -42,49 +42,80 @@ impl DatabasePath {
 // Directory to profile directory which contains git repository.
 #[derive(Debug, Clone)]
 pub struct ProfileDirPath {
+    /// Absolute path to profile directory.
     git_repository_path: PathBuf,
+    /// Profile directory file name.
     id: UserId,
 }
 
 impl ProfileDirPath {
+    /// Absolute path to profile directory
     pub fn path(&self) -> &PathBuf {
         &self.git_repository_path
     }
 
     pub fn exists(&self) -> bool {
-        self.exists()
+        self.git_repository_path.exists()
     }
 
     pub fn id(&self) -> &str {
         &self.id
     }
 
-    /// Use this only if you know that file does not exist or it is not opened
-    /// for reading.
-    pub fn create_file<T: GitRepositoryPath>(&self, file: T) -> io::Result<fs::File> {
-        fs::File::create(self.git_repository_path.join(file.relative_path()))
+    pub async fn read_to_string<T: GetLiveVersionPath>(&self, file: T) -> Result<String, DatabaseError> {
+        let path = self.git_repository_path.join(file.live_path().as_str());
+        tokio::fs::read_to_string(path).await.map_err(DatabaseError::FileIo)
     }
 
     /// Open file for reading.
-    pub fn open_file<T: GitRepositoryPath>(&self, file: T) -> io::Result<fs::File> {
-        fs::File::open(self.git_repository_path.join(file.relative_path()))
+    pub fn open_file<T: GetLiveVersionPath>(&self, file: T) -> Result<fs::File, DatabaseError> {
+        let path = self.git_repository_path.join(file.live_path().as_str());
+        fs::File::open(path).map_err(DatabaseError::FileOpen)
     }
 
     /// Replace file using new file.
-    pub fn replace_file<T: GitRepositoryPath, U: FnMut(&mut fs::File) -> Result<(), io::Error>>(
+    pub fn replace_file<
+        T: GetGitPath + GetLiveVersionPath + Copy,
+        U: FnMut(&mut fs::File) -> Result<(), DatabaseError>,
+    >(
+        &self,
+        file: T,
+        commit_msg: &str,
+        mut write_handle: U,
+    ) -> Result<(), DatabaseError> {
+        let git_file_path = self.git_repository_path.join(file.git_path().as_str());
+        let mut git_file = fs::File::create(&git_file_path).map_err(DatabaseError::FileCreate)?;
+
+        write_handle(&mut git_file)?;
+        drop(git_file);
+
+        let mut git = GitDatabase::open(self).map_err(DatabaseError::Git)?;
+        git.commit(file, commit_msg).map_err(DatabaseError::Git)?;
+
+        let live_file_path = self.git_repository_path.join(file.live_path().as_str());
+        fs::rename(&git_file_path, live_file_path).map_err(DatabaseError::FileRename)
+    }
+
+    pub fn replace_no_history_file<
+        T: GetTmpPath + GetLiveVersionPath + Copy,
+        U: FnMut(&mut fs::File) -> Result<(), DatabaseError>,
+    >(
         &self,
         file: T,
         mut write_handle: U,
-        commit_msg: &str,
-    ) -> io::Result<()> {
-        // Check that previous replace was successfull
+    ) -> Result<(), DatabaseError> {
+        let tmp_file_path = self.git_repository_path.join(file.tmp_path().as_str());
+        let mut tmp_file = fs::File::create(&tmp_file_path).map_err(DatabaseError::FileCreate)?;
 
-        let file = self.git_repository_path.join(file.relative_path());
-        let tmp_file = file.join(".tmp");
-        let mut tmp = fs::File::create(&tmp_file)?;
-        write_handle(&mut tmp)?;
-        fs::rename(&tmp_file, file)
-        // TODO: error handling?
+        write_handle(&mut tmp_file)?;
+        drop(tmp_file);
+
+        let live_file_path = self.git_repository_path.join(file.live_path().as_str());
+        fs::rename(&tmp_file_path, live_file_path).map_err(DatabaseError::FileRename)
+    }
+
+    pub fn read(&self) -> DatabaseReadCommands<'_> {
+        DatabaseReadCommands::new(self)
     }
 }
 
@@ -99,10 +130,6 @@ impl WriteGuard {
             profile,
             database_handle,
         }
-    }
-
-    pub fn read(&self) -> DatabaseReadCommands<'_> {
-        DatabaseReadCommands::new(&self.profile)
     }
 
     pub fn write(&mut self) -> DatabaseWriteCommands {

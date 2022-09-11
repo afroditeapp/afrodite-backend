@@ -1,12 +1,12 @@
 use std::{
-    io::Write,
-    path::{Path, PathBuf},
+    io::{Write, self},
+    path::{Path, PathBuf}, fs,
 };
 
 use git2::{Repository, Signature, Tree};
 
 use super::{
-    file::{CoreFile, GitRepositoryPath},
+    file::{CoreFile, GetGitPath},
     util::ProfileDirPath,
 };
 
@@ -45,14 +45,13 @@ impl<'a> GitDatabase<'a> {
             profile,
         };
 
-        let mut file = profile
-            .create_file(CoreFile::Id)
+        let mut file = repository.create_raw_file(CoreFile::Id)
             .map_err(GitError::CreateIdFile)?;
         file.write_all(profile.id().as_bytes())
             .map_err(GitError::CreateIdFile)?;
         drop(file); // Make sure that file is closed, so it is included in the commit.
 
-        repository.initial_commit(CoreFile::Id.relative_path())?;
+        repository.initial_commit(CoreFile::Id.git_path().as_str())?;
 
         Ok(repository)
     }
@@ -66,10 +65,10 @@ impl<'a> GitDatabase<'a> {
         })
     }
 
-    pub fn commit<T: GitRepositoryPath>(&mut self, file: T, message: &str) -> Result<(), GitError> {
+    pub fn commit<T: GetGitPath>(&mut self, file: T, message: &str) -> Result<(), GitError> {
         let signature = Self::default_signature()?;
 
-        let tree = self.write_to_index(file.relative_path())?;
+        let tree = self.write_to_index(file.git_path().as_str())?;
 
         let current_head = self.repository.head().map_err(GitError::Head)?;
         let parent = self
@@ -130,5 +129,11 @@ impl<'a> GitDatabase<'a> {
     fn default_signature() -> Result<Signature<'static>, GitError> {
         Signature::now(REPOSITORY_USER_NAME, REPOSITORY_USER_EMAIL)
             .map_err(GitError::SignatureCreation)
+    }
+
+    /// Create new file which should be committed to Git.
+    pub fn create_raw_file<T: GetGitPath>(&self, file: T) -> Result<fs::File, io::Error> {
+        let path = self.profile.path().join(file.git_path().as_str());
+        fs::File::create(path)
     }
 }

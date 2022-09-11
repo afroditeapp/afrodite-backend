@@ -4,29 +4,16 @@ pub mod git;
 pub mod util;
 
 use std::{
-    fs, io,
-    path::{Path, PathBuf},
-    sync::Arc,
+    io
 };
 
 use tokio::{
-    sync::{mpsc, oneshot},
-    task::{spawn_blocking, JoinHandle},
-};
-
-use crate::{
-    api::core::user::{LoginBody, LoginResponse, UserApiToken, UserId},
-    config::Config,
-    utils::{QuitReceiver, QuitSender},
+    sync::{mpsc},
 };
 
 use self::{
-    file::{CoreFile, GitRepositoryPath},
-    git::{GitDatabase, GitError},
-    util::{DatabasePath, ProfileDirPath},
+    git::{GitError},
 };
-
-use crate::api::core::user::{RegisterBody, RegisterResponse};
 
 pub type DatabeseEntryId = String;
 
@@ -49,4 +36,7 @@ pub enum DatabaseError {
     Git(GitError),
     FileCreate(io::Error),
     FileOpen(io::Error),
+    FileRename(io::Error),
+    FileIo(io::Error),
+    Serialize(serde_json::Error),
 }
