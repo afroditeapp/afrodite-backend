@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     routing::{get, post},
-    Json, Router,
+    Json, Router, middleware,
 };
 use tracing::{debug, error, info};
 use utoipa::OpenApi;
@@ -46,7 +46,7 @@ impl App {
     }
 
     pub fn create_router(&self) -> Router {
-        Router::new()
+        let public = Router::new()
             .merge(
                 SwaggerUi::new("/swagger-ui/*tail")
                     .url("/api-doc/openapi.json", ApiDocCore::openapi()),
@@ -55,7 +55,7 @@ impl App {
                 "/openapi.json",
                 get({
                     let state = self.state.clone();
-                    move || openapi(state)
+                    move || openapi(state.clone())
                 }),
             )
             .route(
@@ -78,7 +78,25 @@ impl App {
                     let state = self.state.clone();
                     move |body| api::core::login(body, state)
                 }),
-            )
+            );
+
+        let private = Router::new()
+            .route(
+                api::core::PATH_PROFILE,
+                get({
+                    let state = self.state.clone();
+                    move |body| api::core::profile(body, state)
+                }),
+            ).route_layer({
+                middleware::from_fn({
+                    let state = self.state.clone();
+                    move |req, next| api::core::authenticate(state.clone(), req, next)
+                })
+            });
+
+        Router::new()
+            .merge(public)
+            .merge(private)
     }
 }
 

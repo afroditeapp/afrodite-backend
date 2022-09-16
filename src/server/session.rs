@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use tokio::sync::RwLock;
 
-use crate::api::core::{user::{ApiKey, UserId}, profile::Profile};
+use crate::api::{core::{user::{ApiKey, UserId}, profile::Profile}, self};
 
 use super::database::{
     util::{DatabasePath, ProfileDirPath, WriteGuard},
@@ -12,7 +12,7 @@ use super::database::{
 use tracing::error;
 
 pub struct SessionManager {
-    api_tokens: RwLock<HashMap<ApiKey, UserState>>,
+    api_keys: RwLock<HashMap<ApiKey, UserState>>,
     profiles: RwLock<HashMap<UserId, WriteGuard>>,
     database: DatabasePath,
     database_handle: DatabaseOperationHandle,
@@ -20,8 +20,11 @@ pub struct SessionManager {
 
 impl SessionManager {
     pub fn new(database: DatabasePath, database_handle: DatabaseOperationHandle) -> Self {
+        let mut api_keys = HashMap::new();
+        api_keys.insert(ApiKey::new("test".to_string()), UserState { profile: database.profile_dir("test") });
+
         Self {
-            api_tokens: RwLock::new(HashMap::new()),
+            api_keys: RwLock::new(api_keys),
             profiles: RwLock::new(HashMap::new()),
             database,
             database_handle,
@@ -59,7 +62,7 @@ impl SessionManager {
         let user_state = UserState {
             profile: self.database.profile_dir(user_id.as_str()),
         };
-        self.api_tokens
+        self.api_keys
             .write()
             .await
             .insert(token.clone(), user_state);
@@ -69,7 +72,11 @@ impl SessionManager {
     }
 
     pub async fn get_profile(&self, user_id: UserId) -> Result<Profile, ()> {
-        Err(())
+        Ok(Profile::new("Name".to_string()))
+    }
+
+    pub async fn api_key_is_valid(&self, key: ApiKey) -> bool {
+        self.api_keys.read().await.contains_key(&key)
     }
 }
 

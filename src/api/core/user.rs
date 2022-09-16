@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{ToSchema, IntoParams};
 
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams)]
 pub struct UserId {
     user_id: String,
 }
