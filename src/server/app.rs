@@ -1,9 +1,10 @@
-use std::sync::Arc;
+use std::{sync::Arc, collections::HashMap};
 
 use axum::{
     routing::{get, post},
     Json, Router, middleware,
 };
+use tokio::sync::{RwLock, Mutex};
 use tracing::{debug, error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -11,14 +12,14 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::api::{
     self,
     core::{
-        ApiDocCore,
+        ApiDocCore, user::{ApiKey, UserId},
     },
-    GetSessionManager,
+    GetSessionManager, GetRouterDatabaseHandle, GetApiKeys, GetUsers,
 };
 
 use super::{
-    database::{RouterDatabaseHandle},
-    session::SessionManager,
+    database::{RouterDatabaseHandle, write::WriteCommands},
+    session::{SessionManager, UserState},
 };
 
 #[derive(Clone)]
@@ -27,8 +28,26 @@ pub struct AppState {
 }
 
 impl GetSessionManager for AppState {
-    fn session_manager(&self) -> &super::session::SessionManager {
+    fn session_manager(&self) -> &SessionManager {
         &self.session_manager
+    }
+}
+
+impl GetRouterDatabaseHandle for AppState {
+    fn database(&self) -> &RouterDatabaseHandle {
+        &self.session_manager.database
+    }
+}
+
+impl GetApiKeys for AppState {
+    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, UserState>> {
+        &self.session_manager.api_keys
+    }
+}
+
+impl GetUsers for AppState {
+    fn users(&self) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>> {
+        &self.session_manager.users
     }
 }
 

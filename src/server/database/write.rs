@@ -15,6 +15,8 @@ use crate::{
 use super::{git::write::GitDatabaseWriteCommands, sqlite::write::SqliteWriteCommands};
 
 
+/// Write methods should be mutable to make sure that there is no concurrent
+/// Git user directory writing.
 pub struct WriteCommands {
     user_dir: GitUserDirPath,
     database_handle: GitDatabaseOperationHandle,
@@ -45,7 +47,7 @@ impl WriteCommands {
         self.sqlite().update_user_profile(self.user_dir.id(), profile_data).await
     }
 
-    pub async fn update_token(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {
+    pub async fn update_current_api_key(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {
         // Token is only stored as a file.
         self.git().update_token(key).await
     }

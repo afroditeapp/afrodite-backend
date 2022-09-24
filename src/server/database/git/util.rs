@@ -1,5 +1,5 @@
 use std::{
-    fs, io,
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -21,9 +21,9 @@ pub struct DatabasePath {
 }
 
 impl DatabasePath {
-    pub fn new<T: ToOwned<Owned = PathBuf>>(database_dir: T) -> Self {
+    pub fn new<T: AsRef<Path>>(database_dir: T) -> Self {
         Self {
-            database_dir: database_dir.to_owned(),
+            database_dir: database_dir.as_ref().to_path_buf(),
         }
     }
 

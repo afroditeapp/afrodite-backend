@@ -3,7 +3,10 @@ pub mod user;
 
 use axum::{Json, middleware::Next, response::Response, extract::Path};
 use hyper::{StatusCode, Request};
+use tokio::sync::Mutex;
 use utoipa::{OpenApi, Modify, openapi::security::{SecurityScheme, ApiKeyValue}};
+
+use crate::server::session::UserState;
 
 use self::{
     profile::Profile,
@@ -12,7 +15,7 @@ use self::{
 
 use tracing::{error, info};
 
-use super::GetSessionManager;
+use super::{GetSessionManager, GetRouterDatabaseHandle, GetUsers, GetApiKeys};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -54,13 +57,26 @@ pub const PATH_REGISTER: &str = "/register";
         (status = 500),
     )
 )]
-pub async fn register<S: GetSessionManager>(
+pub async fn register<S: GetRouterDatabaseHandle + GetUsers>(
     state: S,
 ) -> Result<Json<UserId>, StatusCode> {
-    state.session_manager()
-        .register().await
-        .map(|user_id| user_id.into())
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    // New unique UUID is generated every time so no special handling needed.
+    let new_user_id = UserId::new(uuid::Uuid::new_v4().simple().to_string());
+
+    let mut write_commands = state.database().user_write_commands(&new_user_id);
+    match write_commands.register().await {
+        Ok(()) => {
+            state.users()
+                .write()
+                .await
+                .insert(new_user_id.clone(), Mutex::new(write_commands));
+            Ok(new_user_id.into())
+        }
+        Err(e) => {
+            error!("Error: {e:?}");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 }
 
 pub const PATH_LOGIN: &str = "/login";
@@ -75,14 +91,37 @@ pub const PATH_LOGIN: &str = "/login";
         (status = 500),
     ),
 )]
-pub async fn login<S: GetSessionManager>(
+pub async fn login<S: GetApiKeys + GetUsers>(
     Json(user_id): Json<UserId>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
-    state.session_manager()
-        .login(user_id).await
-        .map(|token| token.into())
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    // TODO: check that UserId contains only hexadecimals
+
+    let key = ApiKey::new(uuid::Uuid::new_v4().simple().to_string());
+
+    state
+        .users()
+        .read()
+        .await
+        .get(&user_id)
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)? // User does not exists.
+        .lock()
+        .await
+        .update_current_api_key(&key)
+        .await
+        .map_err(|e| {
+            error!("Login error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+        })?;
+
+    let user_state = UserState::new(user_id);
+    state.api_keys()
+        .write()
+        .await
+        .insert(key.clone(), user_state);
+
+
+    Ok(key.into())
 }
 
 pub const PATH_PROFILE: &str = "/profile/:user_id";

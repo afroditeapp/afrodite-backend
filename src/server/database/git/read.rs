@@ -15,7 +15,7 @@ impl<'a> DatabaseReadCommands<'a> {
         Self { profile }
     }
 
-    pub async fn api_key(&self, userId: UserId) -> String {
+    pub async fn api_key(&self, user_id: UserId) -> String {
         "api_key".to_string()
     }
 
