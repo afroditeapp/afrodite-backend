@@ -12,6 +12,7 @@ pub enum SqliteDatabaseError {
     Path,
     Connect(sqlx::Error),
     Execute(sqlx::Error),
+    Migrate(sqlx::migrate::MigrateError),
 }
 
 
@@ -66,7 +67,7 @@ impl SqliteWriteHandle {
         ).await.map_err(SqliteDatabaseError::Connect)?;
 
         if run_initial_setup {
-            db_initial_setup(&pool).await?;
+            sqlx::migrate!().run(&pool).await.map_err(SqliteDatabaseError::Migrate)?;
         }
 
         let write_handle = SqliteWriteHandle {
@@ -81,49 +82,32 @@ impl SqliteWriteHandle {
     }
 
     pub async fn insert_profile(&self, id: UserId) -> Result<(), SqliteDatabaseError> {
-        sqlx::query(
+        let id = id.as_str();
+        sqlx::query!(
             r#"
             INSERT INTO Profile (id)
             VALUES (?)
-            "#
+            "#,
+            id
         )
-        .bind(id.into_string())
         .execute(&self.pool).await.map_err(SqliteDatabaseError::Execute)?;
 
         Ok(())
     }
 
     pub async fn update_name(&self, id: UserId, name: &str) -> Result<(), SqliteDatabaseError> {
-        sqlx::query(
+        let id = id.as_str();
+        sqlx::query!(
             r#"
             UPDATE Profile
             SET name = ?
             WHERE id = ?
-            "#
+            "#,
+            name,
+            id,
         )
-        .bind(name)
-        .bind(id.into_string())
         .execute(&self.pool).await.map_err(SqliteDatabaseError::Execute)?;
 
         Ok(())
     }
-}
-
-
-
-/// Creates database if it does not exists
-pub async fn db_initial_setup(pool: &SqlitePool) -> Result<(), SqliteDatabaseError> {
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS Profile(
-            id          TEXT PRIMARY KEY NOT NULL,
-            name   TEXT
-        )
-        "#
-    ).execute(pool).await.map_err(SqliteDatabaseError::Execute)?;
-
-
-
-    Ok(())
 }
