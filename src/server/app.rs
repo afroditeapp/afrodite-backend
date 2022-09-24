@@ -17,7 +17,7 @@ use crate::api::{
 };
 
 use super::{
-    database::{util::DatabasePath, DatabaseOperationHandle},
+    database::{RouterDatabaseHandle},
     session::SessionManager,
 };
 
@@ -37,9 +37,9 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(path: DatabasePath, database_handle: DatabaseOperationHandle) -> Self {
+    pub fn new(database_handle: RouterDatabaseHandle) -> Self {
         let state = AppState {
-            session_manager: Arc::new(SessionManager::new(path, database_handle)),
+            session_manager: Arc::new(SessionManager::new(database_handle)),
         };
 
         Self { state }

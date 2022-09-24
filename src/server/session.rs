@@ -5,43 +5,46 @@ use tokio::sync::RwLock;
 use crate::api::{core::{user::{ApiKey, UserId}, profile::Profile}, self};
 
 use super::database::{
-    util::{DatabasePath, ProfileDirPath, WriteGuard},
-    DatabaseOperationHandle,
+    write::WriteCommands, DatabaseManager, RouterDatabaseHandle,
 };
 
 use tracing::error;
 
 pub struct SessionManager {
+    /// Users which are logged in.
     api_keys: RwLock<HashMap<ApiKey, UserState>>,
-    profiles: RwLock<HashMap<UserId, WriteGuard>>,
-    database: DatabasePath,
-    database_handle: DatabaseOperationHandle,
+    /// All users registered in the service.
+    profiles: RwLock<HashMap<UserId, WriteCommands>>,
+    database: RouterDatabaseHandle,
 }
 
 impl SessionManager {
-    pub fn new(database: DatabasePath, database_handle: DatabaseOperationHandle) -> Self {
+    pub fn new(database_handle: RouterDatabaseHandle) -> Self {
         let mut api_keys = HashMap::new();
-        api_keys.insert(ApiKey::new("test".to_string()), UserState { profile: database.profile_dir("test") });
+        //api_keys.insert(ApiKey::new("test".to_string()),
+        // UserState { profile: database.profile_dir("test") });
+
+
+        // TODO: load to ram here
 
         Self {
             api_keys: RwLock::new(api_keys),
             profiles: RwLock::new(HashMap::new()),
-            database,
-            database_handle,
+            database: database_handle,
         }
     }
 
     /// New unique UUID is generated every time so no special handling needed.
     pub async fn register(&self) -> Result<UserId, ()> {
         let new_user_id = UserId::new(uuid::Uuid::new_v4().simple().to_string());
-        let profile = self.database.profile_dir(new_user_id.as_str());
-        let mut database = WriteGuard::new(profile, self.database_handle.clone());
-        match database.write().register().await {
+
+        let mut write_commands = self.database.user_write_commands(&new_user_id);
+        match write_commands.register().await {
             Ok(()) => {
                 self.profiles
                     .write()
                     .await
-                    .insert(new_user_id.clone(), database);
+                    .insert(new_user_id.clone(), write_commands);
                 Ok(new_user_id)
             }
             Err(e) => {
@@ -60,7 +63,7 @@ impl SessionManager {
 
         let token = ApiKey::new(uuid::Uuid::new_v4().simple().to_string());
         let user_state = UserState {
-            profile: self.database.profile_dir(user_id.as_str()),
+            user_id,
         };
         self.api_keys
             .write()
@@ -81,7 +84,9 @@ impl SessionManager {
 }
 
 pub struct UserState {
-    profile: ProfileDirPath,
+    user_id: UserId,
 }
 
-impl UserState {}
+impl UserState {
+
+}

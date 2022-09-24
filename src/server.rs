@@ -18,7 +18,7 @@ use crate::{
     config::{self, Config},
     server::{
         app::App,
-        database::{util::DatabasePath, DatabaseOperationHandle, DatabaseManager},
+        database::{DatabaseManager},
     },
 };
 
@@ -36,12 +36,10 @@ impl PihkaServer {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
-        let database_manager = DatabaseManager::new(self.config.database_dir.clone()).await.unwrap();
-        let (database_handle, mut database_quit_receiver) = DatabaseOperationHandle::new();
+        let (database_manager, router_database_handle) = DatabaseManager::new(self.config.database_dir.clone()).await.unwrap();
 
         let app = App::new(
-            database_manager.git_path(),
-            database_handle.clone(),
+            router_database_handle
         );
         let router = app.create_router();
 
@@ -83,14 +81,7 @@ impl PihkaServer {
 
         info!("Server quit started");
 
-        drop(database_handle);
         drop(app);
-        loop {
-            match database_quit_receiver.recv().await {
-                None => break,
-                Some(()) => (),
-            }
-        }
         database_manager.close().await;
 
         info!("Server quit done");

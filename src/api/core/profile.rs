@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct Profile {
     name: String,
 }
@@ -10,5 +10,9 @@ pub struct Profile {
 impl Profile {
     pub fn new(name: String) -> Self {
         Self {name}
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }

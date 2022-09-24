@@ -1,36 +1,27 @@
-pub mod command;
-pub mod file;
+
+pub mod read;
+pub mod write;
 pub mod git;
-pub mod util;
 pub mod sqlite;
 
+
 use std::{
-    io, path::{PathBuf, Path}, fs
+    io, path::{PathBuf, Path}, fs, f64::consts::E
 };
 
 use tokio::{
     sync::{mpsc},
 };
 
+use crate::api::core::user::UserId;
+
 use self::{
-    git::{GitError}, util::DatabasePath, sqlite::{SqliteDatabasePath, SqliteDatabaseError, SqliteWriteHandle, SqliteWriteCloseHandle},
+    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteDatabaseError, SqliteWriteHandle, SqliteWriteCloseHandle}, write::WriteCommands,
 };
 
 pub type DatabeseEntryId = String;
 
-/// Every running database write operation should keep this handle. When server
-/// quit is started main function waits that all handles are dropped.
-#[derive(Debug, Clone)]
-pub struct DatabaseOperationHandle {
-    _sender: mpsc::Sender<()>,
-}
 
-impl DatabaseOperationHandle {
-    pub fn new() -> (Self, mpsc::Receiver<()>) {
-        let (_sender, receiver) = mpsc::channel(1);
-        (Self { _sender }, receiver)
-    }
-}
 
 #[derive(Debug)]
 pub enum DatabaseError {
@@ -42,6 +33,18 @@ pub enum DatabaseError {
     Serialize(serde_json::Error),
     Init(io::Error),
     Sqlite(SqliteDatabaseError),
+}
+
+impl From<GitError> for DatabaseError {
+    fn from(e: GitError) -> Self {
+        DatabaseError::Git(e)
+    }
+}
+
+impl From<SqliteDatabaseError> for DatabaseError {
+    fn from(e: SqliteDatabaseError) -> Self {
+        DatabaseError::Sqlite(e)
+    }
 }
 
 
@@ -76,10 +79,12 @@ impl DatabaseRoot {
         })
     }
 
+    /// Directory containing user git repositories
     pub fn history(&self) -> DatabasePath {
         self.history.clone()
     }
 
+    /// Sqlite database path
     pub fn current(&self) -> SqliteDatabasePath {
         self.current.clone()
     }
@@ -88,35 +93,68 @@ impl DatabaseRoot {
 
 /// Handle Git and SQLite databases
 pub struct DatabaseManager {
-    root: DatabaseRoot,
     sqlite_write_close: SqliteWriteCloseHandle,
-    sqlite_write: SqliteWriteHandle,
+    git_quit_receiver: mpsc::Receiver<()>,
 }
 
 
 impl DatabaseManager {
 
     /// Runs also some blocking file system code.
-    pub async fn new<T: AsRef<Path>>(database_dir: T) -> Result<Self, DatabaseError> {
+    pub async fn new<T: AsRef<Path>>(database_dir: T) -> Result<(Self, RouterDatabaseHandle), DatabaseError> {
 
         let root = DatabaseRoot::new(database_dir)?;
 
         let (sqlite_write, sqlite_write_close) =
             SqliteWriteHandle::new(root.current()).await.map_err(DatabaseError::Sqlite)?;
 
+        let (git_database_handle, git_quit_receiver) = GitDatabaseOperationHandle::new();
 
-        Ok(DatabaseManager {
-            root,
-            sqlite_write,
+
+        let database_manager = DatabaseManager {
             sqlite_write_close,
-        })
+            git_quit_receiver,
+        };
+
+        let router_handle = RouterDatabaseHandle {
+            sqlite_write,
+            root,
+            git_database_handle,
+        };
+
+        Ok((database_manager, router_handle))
     }
 
+    pub async fn close(mut self) {
+        self.sqlite_write_close.close().await;
+        loop {
+            match self.git_quit_receiver.recv().await {
+                None => break,
+                Some(()) => (),
+            }
+        }
+    }
+}
+
+
+pub struct RouterDatabaseHandle {
+    root: DatabaseRoot,
+    sqlite_write: SqliteWriteHandle,
+    git_database_handle: GitDatabaseOperationHandle,
+}
+
+impl RouterDatabaseHandle {
     pub fn git_path(&self) -> DatabasePath {
         self.root.history()
     }
 
-    pub async fn close(self) {
-        self.sqlite_write_close.close().await
+
+    pub fn user_write_commands(&self, user_id: &UserId) -> WriteCommands {
+        let git_dir = self.root.history().user_git_dir(&user_id);
+        WriteCommands::new(
+            git_dir,
+            self.git_database_handle.clone(),
+            self.sqlite_write.clone()
+        )
     }
 }

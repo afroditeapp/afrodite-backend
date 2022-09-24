@@ -1,3 +1,6 @@
+pub mod read;
+pub mod write;
+
 use std::path::{PathBuf, Path};
 
 use sqlx::{SqliteConnection, Sqlite, SqlitePool, sqlite::{SqliteConnectOptions, self, SqlitePoolOptions}};
@@ -46,6 +49,7 @@ impl SqliteWriteCloseHandle {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct SqliteWriteHandle {
     pool: SqlitePool,
 }
@@ -81,33 +85,7 @@ impl SqliteWriteHandle {
         Ok((write_handle, close_handle))
     }
 
-    pub async fn insert_profile(&self, id: UserId) -> Result<(), SqliteDatabaseError> {
-        let id = id.as_str();
-        sqlx::query!(
-            r#"
-            INSERT INTO Profile (id)
-            VALUES (?)
-            "#,
-            id
-        )
-        .execute(&self.pool).await.map_err(SqliteDatabaseError::Execute)?;
-
-        Ok(())
-    }
-
-    pub async fn update_name(&self, id: UserId, name: &str) -> Result<(), SqliteDatabaseError> {
-        let id = id.as_str();
-        sqlx::query!(
-            r#"
-            UPDATE Profile
-            SET name = ?
-            WHERE id = ?
-            "#,
-            name,
-            id,
-        )
-        .execute(&self.pool).await.map_err(SqliteDatabaseError::Execute)?;
-
-        Ok(())
+    pub fn pool(&self) -> &SqlitePool {
+        &self.pool
     }
 }

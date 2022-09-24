@@ -1,43 +1,35 @@
 use std::{
-    thread::sleep,
-    time::Duration, io::Write,
+    io::Write,
 };
 
 use tracing::error;
 
 use crate::{
     server::database::{
-        util::{DatabasePath, ProfileDirPath},
-        DatabaseError, DatabaseOperationHandle, file::{CoreFile, CoreFileNoHistory},
+        git::util::{GitUserDirPath},
+        DatabaseError, GitDatabaseOperationHandle, git::file::{CoreFile, CoreFileNoHistory}, sqlite::SqliteWriteHandle,
     }, api::core::{profile::Profile, user::ApiKey},
 };
 
 use super::{super::git::GitDatabase};
 
-pub struct DatabaseBasicCommands<'a> {
-    database: &'a DatabasePath,
-}
-
-impl<'a> DatabaseBasicCommands<'a> {
-    pub fn new(database: &'a DatabasePath) -> Self {
-        Self { database }
-    }
-}
-
 /// Make sure that you do not make concurrent writes.
-pub struct DatabaseWriteCommands {
-    profile: ProfileDirPath,
+pub struct GitDatabaseWriteCommands {
+    profile: GitUserDirPath,
     /// This keeps database operation running even if quit singal is received.
-    handle: DatabaseOperationHandle,
+    handle: GitDatabaseOperationHandle,
 }
 
-impl DatabaseWriteCommands {
-    pub fn new(profile: ProfileDirPath, handle: DatabaseOperationHandle) -> Self {
+impl GitDatabaseWriteCommands {
+    pub fn new(
+        profile: GitUserDirPath,
+        handle: GitDatabaseOperationHandle,
+    ) -> Self {
         Self { profile, handle }
     }
 
-    async fn run_command<
-        T: FnOnce(ProfileDirPath) -> Result<(), DatabaseError> + Send + 'static,
+    async fn run_git_command<
+        T: FnOnce(GitUserDirPath) -> Result<(), DatabaseError> + Send + 'static,
     >(
         self,
         command: T,
@@ -56,15 +48,17 @@ impl DatabaseWriteCommands {
         result
     }
 
-    pub async fn register(self) -> Result<(), DatabaseError> {
-        self.run_command(move |profile| {
+    /// Create Git repository and store user id there.
+    pub async fn store_user_id(self) -> Result<(), DatabaseError> {
+        self.run_git_command(move |profile| {
             GitDatabase::create(&profile).map_err(DatabaseError::Git)?;
             Ok(())
         }).await
     }
 
-    pub async fn update_profile(self, profile_data: Profile) -> Result<(), DatabaseError> {
-        self.run_command(move |profile_dir| {
+    pub async fn update_user_profile(self, profile_data: &Profile) -> Result<(), DatabaseError> {
+        let profile_data = profile_data.clone();
+        self.run_git_command(move |profile_dir| {
             profile_dir.replace_file(
                 CoreFile::ProfileJson,
                 "Update profile",
@@ -75,8 +69,9 @@ impl DatabaseWriteCommands {
         }).await
     }
 
-    pub async fn update_token(self, key: ApiKey) -> Result<(), DatabaseError> {
-        self.run_command(move |profile_dir| {
+    pub async fn update_token(self, key: &ApiKey) -> Result<(), DatabaseError> {
+        let key = key.clone();
+        self.run_git_command(move |profile_dir| {
             profile_dir.replace_no_history_file(
                 CoreFileNoHistory::ApiToken,
                 move |file|

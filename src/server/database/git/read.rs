@@ -1,12 +1,17 @@
-use crate::{api::core::user::{UserId, ApiKey}, server::database::{util::ProfileDirPath, file::CoreFileNoHistory, DatabaseError}};
+use crate::{
+    api::core::user::{UserId, ApiKey},
+    server::database::{git::util::GitUserDirPath,
+        git::file::CoreFileNoHistory, DatabaseError
+    }
+};
 
 /// Reading can be done async as Git library is not used.
 pub struct DatabaseReadCommands<'a> {
-    profile: &'a ProfileDirPath,
+    profile: &'a GitUserDirPath,
 }
 
 impl<'a> DatabaseReadCommands<'a> {
-    pub fn new(profile: &'a ProfileDirPath) -> Self {
+    pub fn new(profile: &'a GitUserDirPath) -> Self {
         Self { profile }
     }
 

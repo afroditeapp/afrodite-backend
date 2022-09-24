@@ -1,18 +1,38 @@
+pub mod read;
+pub mod write;
+pub mod file;
+pub mod util;
+
 use std::{
     io::{Write, self},
     path::{Path, PathBuf}, fs,
 };
 
 use git2::{Repository, Signature, Tree};
+use tokio::sync::mpsc;
 
-use super::{
+use {
     file::{CoreFile, GetGitPath},
-    util::ProfileDirPath,
+    util::GitUserDirPath,
 };
 
 const REPOSITORY_USER_NAME: &str = "Pihka backend";
 const REPOSITORY_USER_EMAIL: &str = "email";
 const INITIAL_COMMIT_MSG: &str = "Initial commit";
+
+/// Every running database write operation should keep this handle. When server
+/// quit is started main function waits that all handles are dropped.
+#[derive(Debug, Clone)]
+pub struct GitDatabaseOperationHandle {
+    _sender: mpsc::Sender<()>,
+}
+
+impl GitDatabaseOperationHandle {
+    pub fn new() -> (Self, mpsc::Receiver<()>) {
+        let (_sender, receiver) = mpsc::channel(1);
+        (Self { _sender }, receiver)
+    }
+}
 
 #[derive(Debug)]
 pub enum GitError {
@@ -31,13 +51,15 @@ pub enum GitError {
     Commit(git2::Error),
 }
 
+/// Git database for one user
 pub struct GitDatabase<'a> {
     repository: Repository,
-    profile: &'a ProfileDirPath,
+    profile: &'a GitUserDirPath,
 }
 
 impl<'a> GitDatabase<'a> {
-    pub fn create(profile: &'a ProfileDirPath) -> Result<Self, GitError> {
+    /// Create git repository and store user id there
+    pub fn create(profile: &'a GitUserDirPath) -> Result<Self, GitError> {
         let repository = Repository::init(profile.path()).map_err(GitError::Init)?;
 
         let mut repository = Self {
@@ -47,7 +69,7 @@ impl<'a> GitDatabase<'a> {
 
         let mut file = repository.create_raw_file(CoreFile::Id)
             .map_err(GitError::CreateIdFile)?;
-        file.write_all(profile.id().as_bytes())
+        file.write_all(profile.id().as_str().as_bytes())
             .map_err(GitError::CreateIdFile)?;
         drop(file); // Make sure that file is closed, so it is included in the commit.
 
@@ -56,7 +78,7 @@ impl<'a> GitDatabase<'a> {
         Ok(repository)
     }
 
-    pub fn open(profile: &'a ProfileDirPath) -> Result<Self, GitError> {
+    pub fn open(profile: &'a GitUserDirPath) -> Result<Self, GitError> {
         let repository = Repository::open(profile.path()).map_err(GitError::Open)?;
 
         Ok(Self {

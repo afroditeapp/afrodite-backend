@@ -4,15 +4,17 @@ use std::{
 };
 
 
+use crate::api::core::user::UserId;
+
 use super::{
-    command::{read::DatabaseReadCommands, write::DatabaseWriteCommands},
+    {read::DatabaseReadCommands},
     file::{GetGitPath, GetLiveVersionPath, GetTmpPath},
-    DatabaseOperationHandle, git::GitDatabase, DatabaseError,
+    GitDatabase, super::DatabaseError,
 };
 
-/// Path to directory which contains all profile directories.
+/// Path to directory which contains all user data git directories.
 ///
-/// One profile directory contains one git repository.
+/// One user directory contains one git repository.
 #[derive(Debug, Clone)]
 pub struct DatabasePath {
     database_dir: PathBuf,
@@ -26,10 +28,10 @@ impl DatabasePath {
     }
 
     /// Make sure that `id` does not contain special characters
-    pub fn profile_dir(&self, id: &str) -> ProfileDirPath {
-        ProfileDirPath {
-            git_repository_path: self.database_dir.join(id),
-            id: id.to_owned(),
+    pub fn user_git_dir(&self, id: &UserId) -> GitUserDirPath {
+        GitUserDirPath {
+            git_repository_path: self.database_dir.join(id.as_str()),
+            id: id.clone(),
         }
     }
 
@@ -40,14 +42,14 @@ impl DatabasePath {
 
 // Directory to profile directory which contains git repository.
 #[derive(Debug, Clone)]
-pub struct ProfileDirPath {
+pub struct GitUserDirPath {
     /// Absolute path to profile directory.
     git_repository_path: PathBuf,
-    /// Profile directory file name.
-    id: String,
+    /// User id which is also directory name.
+    id: UserId,
 }
 
-impl ProfileDirPath {
+impl GitUserDirPath {
     /// Absolute path to profile directory
     pub fn path(&self) -> &PathBuf {
         &self.git_repository_path
@@ -57,7 +59,7 @@ impl ProfileDirPath {
         self.git_repository_path.exists()
     }
 
-    pub fn id(&self) -> &str {
+    pub fn id(&self) -> &UserId {
         &self.id
     }
 
@@ -115,23 +117,5 @@ impl ProfileDirPath {
 
     pub fn read(&self) -> DatabaseReadCommands<'_> {
         DatabaseReadCommands::new(self)
-    }
-}
-
-pub struct WriteGuard {
-    profile: ProfileDirPath,
-    database_handle: DatabaseOperationHandle,
-}
-
-impl WriteGuard {
-    pub fn new(profile: ProfileDirPath, database_handle: DatabaseOperationHandle) -> Self {
-        Self {
-            profile,
-            database_handle,
-        }
-    }
-
-    pub fn write(&mut self) -> DatabaseWriteCommands {
-        DatabaseWriteCommands::new(self.profile.clone(), self.database_handle.clone())
     }
 }
