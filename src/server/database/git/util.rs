@@ -1,13 +1,13 @@
 use std::{
     fs,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, future::Future,
 };
 
 
 use crate::api::core::user::UserId;
 
 use super::{
-    {read::DatabaseReadCommands},
+    {read::GitDatabaseReadCommands},
     file::{GetGitPath, GetLiveVersionPath, GetTmpPath},
     GitDatabase, super::DatabaseError,
 };
@@ -38,6 +38,22 @@ impl DatabasePath {
     pub fn path(&self) -> &Path {
         &self.database_dir
     }
+
+    // pub async fn iter_users<
+    //     T: FnMut(GitUserDirPath) -> S,
+    //     S: Future<Output = Result<(), DatabaseError>>,
+    // >(&self, mut handle_user_dir: T) -> Result<(), DatabaseError> {
+    //     let mut user_dirs = tokio::fs::read_dir(&self.database_dir).await?;
+
+    //     while let Some(dir_entry) = user_dirs.next_entry().await? {
+    //         let user_id_string = dir_entry.file_name().into_string().map_err(|_| DatabaseError::Utf8)?;
+    //         let user_dir = self.user_git_dir(&UserId::new(user_id_string));
+
+    //         handle_user_dir(user_dir).await?;
+    //     }
+
+    //     Ok(())
+    // }
 }
 
 // Directory to profile directory which contains git repository.
@@ -61,6 +77,14 @@ impl GitUserDirPath {
 
     pub fn id(&self) -> &UserId {
         &self.id
+    }
+
+    pub async fn read_to_string_optional<T: GetLiveVersionPath>(&self, file: T) -> Result<Option<String>, DatabaseError> {
+        let path = self.git_repository_path.join(file.live_path().as_str());
+        if !path.is_file() {
+            return Ok(None);
+        }
+        tokio::fs::read_to_string(path).await.map_err(DatabaseError::FileIo).map(Some)
     }
 
     pub async fn read_to_string<T: GetLiveVersionPath>(&self, file: T) -> Result<String, DatabaseError> {
@@ -115,7 +139,7 @@ impl GitUserDirPath {
         fs::rename(&tmp_file_path, live_file_path).map_err(DatabaseError::FileRename)
     }
 
-    pub fn read(&self) -> DatabaseReadCommands<'_> {
-        DatabaseReadCommands::new(self)
+    pub fn read(&self) -> GitDatabaseReadCommands {
+        GitDatabaseReadCommands::new(self.clone())
     }
 }

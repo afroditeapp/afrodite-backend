@@ -82,14 +82,14 @@ impl GetLiveVersionPath for CoreFile {
 /// Files not in version history but in profile history.
 #[derive(Debug, Clone, Copy)]
 pub enum CoreFileNoHistory {
-    /// Plain text containing API token
+    /// Plain text containing API key
     ApiToken,
 }
 
 impl GetTmpPath for CoreFileNoHistory {
     fn tmp_path(&self) -> TmpPath<'_> {
         TmpPath(match self {
-            Self::ApiToken => "token.txt.tmp",
+            Self::ApiToken => "api_key.txt.tmp",
         })
     }
 }
@@ -97,7 +97,7 @@ impl GetTmpPath for CoreFileNoHistory {
 impl GetLiveVersionPath for CoreFileNoHistory {
     fn live_path(&self) -> LiveVersionPath<'_> {
         LiveVersionPath(match self {
-            Self::ApiToken => "token.txt",
+            Self::ApiToken => "api_key.txt",
         })
     }
 }

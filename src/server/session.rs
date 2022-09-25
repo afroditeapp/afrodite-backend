@@ -19,17 +19,36 @@ pub struct SessionManager {
 }
 
 impl SessionManager {
-    pub fn new(database_handle: RouterDatabaseHandle) -> Self {
+    pub async fn new(database_handle: RouterDatabaseHandle) -> Self {
         let mut api_keys = HashMap::new();
+        let mut users = HashMap::new();
         //api_keys.insert(ApiKey::new("test".to_string()),
         // UserState { profile: database.profile_dir("test") });
 
 
-        // TODO: load to ram here
+
+        database_handle.read().users(|user_id| {
+            let write_commands = database_handle.user_write_commands(&user_id);
+            users.insert(user_id, Mutex::new(write_commands));
+        })
+            .await
+            .expect("User ID reading failed.");
+
+        for id in users.keys() {
+            let key = database_handle
+                .read()
+                .user_api_key(id)
+                .await
+                .expect("API key reading failed.");
+
+            if let Some(key) = key {
+                api_keys.insert(key, UserState { user_id: id.clone() });
+            }
+        }
 
         Self {
             api_keys: RwLock::new(api_keys),
-            users: RwLock::new(HashMap::new()),
+            users: RwLock::new(users),
             database: database_handle,
         }
     }

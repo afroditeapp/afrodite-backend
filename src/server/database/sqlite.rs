@@ -89,3 +89,51 @@ impl SqliteWriteHandle {
         &self.pool
     }
 }
+
+
+pub struct SqliteReadCloseHandle {
+    pool: SqlitePool,
+}
+
+impl SqliteReadCloseHandle {
+    /// Call this before closing the server.
+    pub async fn close(self) {
+        self.pool.close().await
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct SqliteReadHandle {
+    pool: SqlitePool,
+}
+
+impl SqliteReadHandle {
+    pub async fn new(dir: SqliteDatabasePath) -> Result<(Self, SqliteReadCloseHandle), SqliteDatabaseError> {
+
+        let db_path = dir.path().join(DATABASE_FILE_NAME);
+
+        let pool = SqlitePoolOptions::new()
+            .max_connections(16)
+            .connect_with(
+                SqliteConnectOptions::new()
+                    .filename(db_path)
+                    .create_if_missing(false)
+                    .journal_mode(sqlite::SqliteJournalMode::Wal)
+        ).await.map_err(SqliteDatabaseError::Connect)?;
+
+        let handle = SqliteReadHandle {
+            pool: pool.clone()
+        };
+
+        let close_handle = SqliteReadCloseHandle {
+            pool,
+        };
+
+        Ok((handle, close_handle))
+    }
+
+    pub fn pool(&self) -> &SqlitePool {
+        &self.pool
+    }
+}

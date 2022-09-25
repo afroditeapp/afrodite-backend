@@ -40,7 +40,7 @@ impl PihkaServer {
 
         let app = App::new(
             router_database_handle
-        );
+        ).await;
         let router = app.create_router();
 
         let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

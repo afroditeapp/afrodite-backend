@@ -16,7 +16,7 @@ use tokio::{
 use crate::api::core::user::UserId;
 
 use self::{
-    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteDatabaseError, SqliteWriteHandle, SqliteWriteCloseHandle}, write::WriteCommands,
+    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteDatabaseError, SqliteWriteHandle, SqliteWriteCloseHandle, SqliteReadHandle, SqliteReadCloseHandle}, write::WriteCommands, read::ReadCommands,
 };
 
 pub type DatabeseEntryId = String;
@@ -33,6 +33,8 @@ pub enum DatabaseError {
     Serialize(serde_json::Error),
     Init(io::Error),
     Sqlite(SqliteDatabaseError),
+    FileSystem(io::Error),
+    Utf8,
 }
 
 impl From<GitError> for DatabaseError {
@@ -44,6 +46,12 @@ impl From<GitError> for DatabaseError {
 impl From<SqliteDatabaseError> for DatabaseError {
     fn from(e: SqliteDatabaseError) -> Self {
         DatabaseError::Sqlite(e)
+    }
+}
+
+impl From<std::io::Error> for DatabaseError {
+    fn from(e: std::io::Error) -> Self {
+        DatabaseError::FileSystem(e)
     }
 }
 
@@ -94,6 +102,7 @@ impl DatabaseRoot {
 /// Handle Git and SQLite databases
 pub struct DatabaseManager {
     sqlite_write_close: SqliteWriteCloseHandle,
+    sqlite_read_close: SqliteReadCloseHandle,
     git_quit_receiver: mpsc::Receiver<()>,
 }
 
@@ -108,16 +117,24 @@ impl DatabaseManager {
         let (sqlite_write, sqlite_write_close) =
             SqliteWriteHandle::new(root.current()).await.map_err(DatabaseError::Sqlite)?;
 
+        let (sqlite_read, sqlite_read_close) =
+            SqliteReadHandle::new(root.current()).await.map_err(DatabaseError::Sqlite)?;
+
         let (git_database_handle, git_quit_receiver) = GitDatabaseOperationHandle::new();
 
 
+        // TODO: Check that git directories current state matches with the
+        //       sqlite database.
+
         let database_manager = DatabaseManager {
             sqlite_write_close,
+            sqlite_read_close,
             git_quit_receiver,
         };
 
         let router_handle = RouterDatabaseHandle {
             sqlite_write,
+            sqlite_read,
             root,
             git_database_handle,
         };
@@ -126,6 +143,7 @@ impl DatabaseManager {
     }
 
     pub async fn close(mut self) {
+        self.sqlite_read_close.close().await;
         self.sqlite_write_close.close().await;
         loop {
             match self.git_quit_receiver.recv().await {
@@ -140,6 +158,7 @@ impl DatabaseManager {
 pub struct RouterDatabaseHandle {
     root: DatabaseRoot,
     sqlite_write: SqliteWriteHandle,
+    sqlite_read: SqliteReadHandle,
     git_database_handle: GitDatabaseOperationHandle,
 }
 
@@ -156,5 +175,9 @@ impl RouterDatabaseHandle {
             self.git_database_handle.clone(),
             self.sqlite_write.clone()
         )
+    }
+
+    pub fn read(&self) -> ReadCommands {
+        ReadCommands::new(self.root.history(), self.sqlite_read.clone())
     }
 }

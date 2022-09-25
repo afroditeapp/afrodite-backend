@@ -56,9 +56,9 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(database_handle: RouterDatabaseHandle) -> Self {
+    pub async fn new(database_handle: RouterDatabaseHandle) -> Self {
         let state = AppState {
-            session_manager: Arc::new(SessionManager::new(database_handle)),
+            session_manager: Arc::new(SessionManager::new(database_handle).await),
         };
 
         Self { state }
