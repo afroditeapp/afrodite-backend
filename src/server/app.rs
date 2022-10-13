@@ -1,11 +1,12 @@
-use std::{sync::Arc, collections::HashMap};
+use std::{sync::{Arc}, collections::HashMap, future::{Future}, fmt::Write, ops::Deref};
 
 use axum::{
     routing::{get, post},
     Json, Router, middleware,
 };
-use tokio::sync::{RwLock, Mutex};
+use tokio::sync::{RwLock, Mutex, MutexGuard, RwLockReadGuard};
 use tracing::{debug, error, info};
+use tracing_subscriber::registry::Data;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -14,11 +15,11 @@ use crate::api::{
     core::{
         ApiDocCore, user::{ApiKey, UserId},
     },
-    GetSessionManager, GetRouterDatabaseHandle, GetApiKeys, GetUsers,
+    GetSessionManager, GetRouterDatabaseHandle, GetApiKeys, ReadDatabase, GetUsers, WriteDatabase,
 };
 
 use super::{
-    database::{RouterDatabaseHandle, write::WriteCommands},
+    database::{RouterDatabaseHandle, write::WriteCommands, read::ReadCommands},
     session::{SessionManager, UserState},
 };
 
@@ -47,6 +48,20 @@ impl GetApiKeys for AppState {
 
 impl GetUsers for AppState {
     fn users(&self) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>> {
+        &self.session_manager.users
+    }
+}
+
+impl ReadDatabase for AppState {
+    fn read_database(&self) -> ReadCommands {
+        self.session_manager.database.read()
+    }
+}
+
+impl WriteDatabase for AppState {
+    fn write_database_with_db_macro_do_not_call_this_outside_macros(
+        &self
+    ) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>> {
         &self.session_manager.users
     }
 }
@@ -101,10 +116,17 @@ impl App {
 
         let private = Router::new()
             .route(
-                api::core::PATH_PROFILE,
+                api::core::PATH_GET_PROFILE,
                 get({
                     let state = self.state.clone();
-                    move |body| api::core::profile(body, state)
+                    move |body| api::core::get_profile(body, state)
+                }),
+            )
+            .route(
+                api::core::PATH_POST_PROFILE,
+                post({
+                    let state = self.state.clone();
+                    move |header, body| api::core::post_profile(header, body, state)
                 }),
             ).route_layer({
                 middleware::from_fn({

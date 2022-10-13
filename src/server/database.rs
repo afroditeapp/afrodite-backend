@@ -92,9 +92,17 @@ impl DatabaseRoot {
         self.history.clone()
     }
 
+    pub fn history_ref(&self) -> &DatabasePath {
+        &self.history
+    }
+
     /// Sqlite database path
     pub fn current(&self) -> SqliteDatabasePath {
         self.current.clone()
+    }
+
+    pub fn current_ref(&self) -> &SqliteDatabasePath {
+        &self.current
     }
 }
 
@@ -178,6 +186,6 @@ impl RouterDatabaseHandle {
     }
 
     pub fn read(&self) -> ReadCommands {
-        ReadCommands::new(self.root.history(), self.sqlite_read.clone())
+        ReadCommands::new(self.root.history_ref(), &self.sqlite_read)
     }
 }

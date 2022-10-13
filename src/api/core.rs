@@ -1,12 +1,15 @@
 pub mod profile;
 pub mod user;
 
-use axum::{Json, middleware::Next, response::Response, extract::Path};
-use hyper::{StatusCode, Request};
+use std::convert::TryInto;
+
+use axum::{Json, middleware::Next, response::Response, extract::Path, TypedHeader};
+use headers::{Header, HeaderValue};
+use hyper::{StatusCode, Request, header};
 use tokio::sync::Mutex;
 use utoipa::{OpenApi, Modify, openapi::security::{SecurityScheme, ApiKeyValue}};
 
-use crate::server::session::UserState;
+use crate::server::{session::UserState};
 
 use self::{
     profile::Profile,
@@ -15,11 +18,11 @@ use self::{
 
 use tracing::{error, info};
 
-use super::{GetSessionManager, GetRouterDatabaseHandle, GetUsers, GetApiKeys};
+use super::{GetSessionManager, GetRouterDatabaseHandle, GetUsers, GetApiKeys, ReadDatabase, db_write, WriteDatabase};
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(register, login, profile),
+    paths(register, login, get_profile, post_profile),
     components(schemas(
         user::UserId,
         user::ApiKey,
@@ -36,7 +39,7 @@ impl Modify for SecurityApiTokenDefault {
             components.add_security_scheme(
                 "api_key",
                 SecurityScheme::ApiKey(
-                    utoipa::openapi::security::ApiKey::Header(ApiKeyValue::new(API_KEY_HEADER))
+                    utoipa::openapi::security::ApiKey::Header(ApiKeyValue::new(API_KEY_HEADER_STR))
                 ),
             )
         }
@@ -91,7 +94,7 @@ pub const PATH_LOGIN: &str = "/login";
         (status = 500),
     ),
 )]
-pub async fn login<S: GetApiKeys + GetUsers>(
+pub async fn login<S: GetApiKeys + WriteDatabase>(
     Json(user_id): Json<UserId>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
@@ -99,13 +102,7 @@ pub async fn login<S: GetApiKeys + GetUsers>(
 
     let key = ApiKey::new(uuid::Uuid::new_v4().simple().to_string());
 
-    state
-        .users()
-        .read()
-        .await
-        .get(&user_id)
-        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)? // User does not exists.
-        .lock()
+    db_write!(state, &user_id)?
         .await
         .update_current_api_key(&key)
         .await
@@ -124,7 +121,7 @@ pub async fn login<S: GetApiKeys + GetUsers>(
     Ok(key.into())
 }
 
-pub const PATH_PROFILE: &str = "/profile/:user_id";
+pub const PATH_GET_PROFILE: &str = "/profile/:user_id";
 
 #[utoipa::path(
     get,
@@ -136,32 +133,97 @@ pub const PATH_PROFILE: &str = "/profile/:user_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn profile<S: GetSessionManager>(
+pub async fn get_profile<S: ReadDatabase>(
     Path(user_id): Path<UserId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: Validate user id
-    state.session_manager()
-        .get_profile(user_id).await
+    state.read_database()
+        .user_profile(&user_id).await
         .map(|profile| profile.into())
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .map_err(|e| {
+            error!("Get profile error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })
+}
+
+pub const PATH_POST_PROFILE: &str = "/profile";
+
+#[utoipa::path(
+    post,
+    path = "/profile",
+    request_body = Profile,
+    responses(
+        (status = 200, description = "Update profile", body = [Profile]),
+        (status = 500),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Json(profile): Json<Profile>,
+    state: S,
+) -> Result<(), StatusCode> {
+    let keys = state
+        .api_keys()
+        .read()
+        .await;
+    let user_id = keys.get(&api_key.0)
+        .ok_or(StatusCode::BAD_REQUEST)?
+        .id();
+
+    db_write!(state, user_id)?
+        .await
+        .update_user_profile(&profile)
+        .await
+        .map_err(|e| {
+            error!("Post profile error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+        })?;
+
+    Ok(())
 }
 
 
-const API_KEY_HEADER: &str = "X-API-KEY";
+const API_KEY_HEADER_STR: &str = "x-api-key";
+static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
 
-pub async fn authenticate<T, S: GetSessionManager>(
-    session_manager: S,
+pub async fn authenticate<T, S: GetApiKeys>(
+    state: S,
     req: Request<T>,
     next: Next<T>,
 ) -> Result<Response, StatusCode> {
-    let header = req.headers().get(API_KEY_HEADER).ok_or(StatusCode::UNAUTHORIZED)?;
-    let key_str = header.to_str().map_err(|_| StatusCode::UNAUTHORIZED)?;
+    let header = req.headers().get(API_KEY_HEADER_STR).ok_or(StatusCode::BAD_REQUEST)?;
+    let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = ApiKey::new(key_str.to_string());
 
-    if session_manager.session_manager().api_key_is_valid(key).await {
+    if state.api_keys().read().await.contains_key(&key) {
         Ok(next.run(req).await)
     } else {
         Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+
+pub struct ApiKeyHeader(ApiKey);
+
+impl Header for ApiKeyHeader {
+    fn name() -> &'static headers::HeaderName {
+        &API_KEY_HEADER
+    }
+
+    fn decode<'i, I>(values: &mut I) -> Result<Self, headers::Error>
+        where
+            Self: Sized,
+            I: Iterator<Item = &'i headers::HeaderValue> {
+
+        let value = values.next().ok_or_else(headers::Error::invalid)?;
+        let value = value.to_str().map_err(|_| headers::Error::invalid())?;
+        Ok(ApiKeyHeader(ApiKey::new(value.to_string())))
+    }
+
+    fn encode<E: Extend<headers::HeaderValue>>(&self, values: &mut E) {
+        let header = HeaderValue::from_str(self.0.as_str()).unwrap();
+        values.extend(std::iter::once(header))
     }
 }

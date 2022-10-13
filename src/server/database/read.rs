@@ -7,15 +7,15 @@ use crate::{
 
 use super::{git::{util::{GitUserDirPath, DatabasePath}, GitDatabaseOperationHandle, read::GitDatabaseReadCommands, GitDatabase, write::GitDatabaseWriteCommands, file::CoreFileNoHistory}, sqlite::{SqliteReadHandle, SqliteWriteHandle, read::SqliteReadCommands}};
 
-pub struct ReadCommands {
-    git_repositories: DatabasePath,
-    sqlite: SqliteReadHandle,
+pub struct ReadCommands<'a> {
+    git_repositories: &'a DatabasePath,
+    sqlite: &'a SqliteReadHandle,
 }
 
-impl ReadCommands {
+impl <'a> ReadCommands<'a> {
     pub fn new(
-        git_repositories: DatabasePath,
-        sqlite: SqliteReadHandle,
+        git_repositories: &'a DatabasePath,
+        sqlite: &'a SqliteReadHandle,
     ) -> Self {
         Self {
             git_repositories,
@@ -29,6 +29,10 @@ impl ReadCommands {
 
     pub async fn users<T: FnMut(UserId)>(&self, handler: T) -> Result<(), DatabaseError> {
         self.sqlite().users(handler).await
+    }
+
+    pub async fn user_profile(&self, user_id: &UserId) -> Result<Profile, DatabaseError> {
+        self.sqlite().user_profile(user_id).await
     }
 
     fn git(&self, user_id: &UserId) -> GitDatabaseReadCommands {

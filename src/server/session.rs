@@ -52,14 +52,6 @@ impl SessionManager {
             database: database_handle,
         }
     }
-
-    pub async fn get_profile(&self, user_id: UserId) -> Result<Profile, ()> {
-        Ok(Profile::new("Name".to_string()))
-    }
-
-    pub async fn api_key_is_valid(&self, key: ApiKey) -> bool {
-        self.api_keys.read().await.contains_key(&key)
-    }
 }
 
 pub struct UserState {
@@ -71,5 +63,9 @@ impl UserState {
         Self {
             user_id
         }
+    }
+
+    pub fn id(&self) -> &UserId {
+        &self.user_id
     }
 }
