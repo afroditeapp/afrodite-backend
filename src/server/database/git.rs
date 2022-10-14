@@ -67,13 +67,7 @@ impl<'a> GitDatabase<'a> {
             profile,
         };
 
-        let mut file = repository.create_raw_file(CoreFile::Id)
-            .map_err(GitError::CreateIdFile)?;
-        file.write_all(profile.id().as_str().as_bytes())
-            .map_err(GitError::CreateIdFile)?;
-        drop(file); // Make sure that file is closed, so it is included in the commit.
-
-        repository.initial_commit(CoreFile::Id.git_path().as_str())?;
+        repository.initial_commit()?;
 
         Ok(repository)
     }
@@ -90,7 +84,7 @@ impl<'a> GitDatabase<'a> {
     pub fn commit<T: GetGitPath>(&mut self, file: T, message: &str) -> Result<(), GitError> {
         let signature = Self::default_signature()?;
 
-        let tree = self.write_to_index(file.git_path().as_str())?;
+        let tree = self.write_to_index(Some(file.git_path().as_str()))?;
 
         let current_head = self.repository.head().map_err(GitError::Head)?;
         let parent = self
@@ -117,10 +111,10 @@ impl<'a> GitDatabase<'a> {
     }
 
     // File path is relative to git repository root.
-    fn initial_commit<T: AsRef<Path>>(&mut self, file: T) -> Result<(), GitError> {
+    fn initial_commit(&mut self) -> Result<(), GitError> {
         let signature = Self::default_signature()?;
 
-        let tree = self.write_to_index(file.as_ref())?;
+        let tree = self.write_to_index::<&str>(None)?;
 
         self.repository
             .commit(
@@ -137,10 +131,12 @@ impl<'a> GitDatabase<'a> {
     }
 
     // File path is relative to git repository root.
-    fn write_to_index<T: AsRef<Path>>(&self, file: T) -> Result<Tree<'_>, GitError> {
+    fn write_to_index<T: AsRef<Path>>(&self, file: Option<T>) -> Result<Tree<'_>, GitError> {
         let tree_id = {
             let mut index = self.repository.index().map_err(GitError::Index)?;
-            index.add_path(file.as_ref()).map_err(GitError::AddPath)?;
+            if let Some(file) = file {
+                index.add_path(file.as_ref()).map_err(GitError::AddPath)?;
+            }
             index.write_tree().map_err(GitError::WriteTree)?
         };
         self.repository

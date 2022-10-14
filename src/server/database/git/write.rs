@@ -7,11 +7,11 @@ use tracing::error;
 use crate::{
     server::database::{
         git::util::{GitUserDirPath},
-        DatabaseError, GitDatabaseOperationHandle, git::file::{CoreFile, CoreFileNoHistory}, sqlite::SqliteWriteHandle,
-    }, api::core::{profile::Profile, user::ApiKey},
+        DatabaseError, GitDatabaseOperationHandle, git::file::{CoreFile, CoreFileNoHistory},
+    }, api::core::{profile::Profile, user::{ApiKey}},
 };
 
-use super::{super::git::GitDatabase};
+use super::{super::git::GitDatabase, GitError};
 
 /// Make sure that you do not make concurrent writes.
 pub struct GitDatabaseWriteCommands {
@@ -22,9 +22,11 @@ pub struct GitDatabaseWriteCommands {
 
 impl GitDatabaseWriteCommands {
     pub fn new(
-        profile: GitUserDirPath,
+        mut profile: GitUserDirPath,
         handle: GitDatabaseOperationHandle,
+        common_message: Option<&str>,
     ) -> Self {
+        profile.set_git_mode_message(common_message.map(|msg| msg.to_owned()));
         Self { profile, handle }
     }
 
@@ -52,6 +54,12 @@ impl GitDatabaseWriteCommands {
     pub async fn store_user_id(self) -> Result<(), DatabaseError> {
         self.run_git_command(move |profile| {
             GitDatabase::create(&profile).map_err(DatabaseError::Git)?;
+
+            profile.replace_file(CoreFile::Id, "Update user ID file", |file| {
+                file.write_all(profile.id().as_str().as_bytes())
+                    .map_err(|e| DatabaseError::Git(GitError::CreateIdFile(e)))
+            })?;
+
             Ok(())
         }).await
     }
@@ -78,6 +86,15 @@ impl GitDatabaseWriteCommands {
                     file.write_all(key.as_str().as_bytes())
                         .map_err(DatabaseError::FileIo),
             )
+        }).await
+    }
+
+    pub async fn update_user_id(self) -> Result<(), DatabaseError> {
+        self.run_git_command(move |profile| {
+            profile.replace_file(CoreFile::Id, "Update user ID file", |file| {
+                file.write_all(profile.id().as_str().as_bytes())
+                    .map_err(|e| DatabaseError::Git(GitError::CreateIdFile(e)))
+            })
         }).await
     }
 }

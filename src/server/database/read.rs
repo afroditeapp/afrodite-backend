@@ -1,5 +1,7 @@
 use std::{collections::HashMap, marker};
 
+use tokio_stream::StreamExt;
+
 use crate::{
     api::core::{user::{UserId, ApiKey}, profile::Profile},
     server::database::{DatabaseError}
@@ -9,7 +11,7 @@ use super::{git::{util::{GitUserDirPath, DatabasePath}, GitDatabaseOperationHand
 
 pub struct ReadCommands<'a> {
     git_repositories: &'a DatabasePath,
-    sqlite: &'a SqliteReadHandle,
+    sqlite: SqliteReadCommands<'a>,
 }
 
 impl <'a> ReadCommands<'a> {
@@ -19,7 +21,7 @@ impl <'a> ReadCommands<'a> {
     ) -> Self {
         Self {
             git_repositories,
-            sqlite,
+            sqlite: SqliteReadCommands::new(sqlite),
         }
     }
 
@@ -27,19 +29,24 @@ impl <'a> ReadCommands<'a> {
         self.git(user_id).api_key().await
     }
 
-    pub async fn users<T: FnMut(UserId)>(&self, handler: T) -> Result<(), DatabaseError> {
-        self.sqlite().users(handler).await
+    pub async fn users<T: FnMut(UserId)>(&self, mut handler: T) -> Result<(), DatabaseError> {
+        let mut users = self.sqlite().users();
+        while let Some(user_id) = users.try_next().await? {
+            handler(user_id)
+        }
+
+        Ok(())
     }
 
     pub async fn user_profile(&self, user_id: &UserId) -> Result<Profile, DatabaseError> {
         self.sqlite().user_profile(user_id).await
     }
 
-    fn git(&self, user_id: &UserId) -> GitDatabaseReadCommands {
+    pub(super) fn git(&self, user_id: &UserId) -> GitDatabaseReadCommands {
         self.git_repositories.user_git_dir(user_id).read()
     }
 
-    fn sqlite(&self) -> SqliteReadCommands {
-        SqliteReadCommands::new(&self.sqlite)
+    pub(super) fn sqlite(&self) -> &SqliteReadCommands {
+        &self.sqlite
     }
 }

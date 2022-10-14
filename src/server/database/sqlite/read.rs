@@ -1,4 +1,4 @@
-use tokio_stream::StreamExt;
+use tokio_stream::{StreamExt, Stream};
 
 use crate::{server::database::DatabaseError, api::core::{profile::Profile, user::{ApiKey, UserId}}};
 
@@ -31,20 +31,34 @@ impl <'a> SqliteReadCommands<'a> {
         Ok(Profile::new(profile.name))
     }
 
-    pub async fn users<T: FnMut(UserId)>(&self, mut handle_user: T) -> Result<(), DatabaseError> {
-        let mut users = sqlx::query!(
+    pub fn users(&self) -> impl Stream<Item = Result<UserId, SqliteDatabaseError>> + '_ {
+        sqlx::query!(
             r#"
             SELECT id
             FROM User
             "#,
         )
-        .fetch(self.handle.pool());
-
-        while let Some(data) = users.try_next().await.map_err(SqliteDatabaseError::Execute)? {
-            let id = UserId::new(data.id);
-            handle_user(id)
-        }
-
-        Ok(())
+        .fetch(self.handle.pool())
+        .map(|result| result
+            .map_err(SqliteDatabaseError::Execute)
+            .map(|data| UserId::new(data.id))
+        )
     }
+
+    // pub async fn users<T: FnMut(UserId)>(&self, mut handle_user: T) -> impl Stream {
+    //     let mut users = sqlx::query!(
+    //         r#"
+    //         SELECT id
+    //         FROM User
+    //         "#,
+    //     )
+    //     .fetch(self.handle.pool());
+
+    //     while let Some(data) = users.try_next().await.map_err(SqliteDatabaseError::Execute)? {
+    //         let id = UserId::new(data.id);
+    //         handle_user(id)
+    //     }
+
+    //     Ok(())
+    // }
 }

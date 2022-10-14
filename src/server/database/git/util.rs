@@ -32,6 +32,7 @@ impl DatabasePath {
         GitUserDirPath {
             git_repository_path: self.database_dir.join(id.as_str()),
             id: id.clone(),
+            mode_msg: None,
         }
     }
 
@@ -63,6 +64,8 @@ pub struct GitUserDirPath {
     git_repository_path: PathBuf,
     /// User id which is also directory name.
     id: UserId,
+    /// Common title for all current git operations.
+    mode_msg: Option<String>,
 }
 
 impl GitUserDirPath {
@@ -98,7 +101,7 @@ impl GitUserDirPath {
         fs::File::open(path).map_err(DatabaseError::FileOpen)
     }
 
-    /// Replace file using new file.
+    /// Replace file using new file. Creates the file if it does not exists.
     pub fn replace_file<
         T: GetGitPath + GetLiveVersionPath + Copy,
         U: FnMut(&mut fs::File) -> Result<(), DatabaseError>,
@@ -115,7 +118,11 @@ impl GitUserDirPath {
         drop(git_file);
 
         let mut git = GitDatabase::open(self).map_err(DatabaseError::Git)?;
-        git.commit(file, commit_msg).map_err(DatabaseError::Git)?;
+        let msg = match self.mode_msg.as_ref() {
+            Some(mode_msg) => format!("{}\n\n{}", mode_msg, commit_msg),
+            None => commit_msg.to_owned(),
+        };
+        git.commit(file, &msg).map_err(DatabaseError::Git)?;
 
         let live_file_path = self.git_repository_path.join(file.live_path().as_str());
         fs::rename(&git_file_path, live_file_path).map_err(DatabaseError::FileRename)
@@ -141,5 +148,9 @@ impl GitUserDirPath {
 
     pub fn read(&self) -> GitDatabaseReadCommands {
         GitDatabaseReadCommands::new(self.clone())
+    }
+
+    pub fn set_git_mode_message(&mut self, mode_msg: Option<String>) {
+        self.mode_msg = mode_msg;
     }
 }

@@ -53,10 +53,14 @@ impl WriteCommands {
     }
 
     fn git(&self) -> GitDatabaseWriteCommands {
-        GitDatabaseWriteCommands::new(self.user_dir.clone(), self.database_handle.clone())
+        GitDatabaseWriteCommands::new(self.user_dir.clone(), self.database_handle.clone(), None)
     }
 
-    fn sqlite(&self) -> SqliteWriteCommands {
+    pub(super) fn git_with_mode_message(&self, message: Option<&str>) -> GitDatabaseWriteCommands {
+        GitDatabaseWriteCommands::new(self.user_dir.clone(), self.database_handle.clone(), message)
+    }
+
+    pub(super) fn sqlite(&self) -> SqliteWriteCommands {
         SqliteWriteCommands::new(&self.sqlite_database_write)
     }
 }

@@ -6,17 +6,19 @@ pub mod sqlite;
 
 
 use std::{
-    io, path::{PathBuf, Path}, fs, f64::consts::E
+    io, path::{PathBuf, Path}, fs
 };
 
 use tokio::{
     sync::{mpsc},
 };
+use tokio_stream::StreamExt;
+use tracing::log::info;
 
 use crate::api::core::user::UserId;
 
 use self::{
-    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteDatabaseError, SqliteWriteHandle, SqliteWriteCloseHandle, SqliteReadHandle, SqliteReadCloseHandle}, write::WriteCommands, read::ReadCommands,
+    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteDatabaseError, SqliteWriteHandle, SqliteWriteCloseHandle, SqliteReadHandle, SqliteReadCloseHandle, read::SqliteReadCommands}, write::WriteCommands, read::ReadCommands,
 };
 
 pub type DatabeseEntryId = String;
@@ -31,6 +33,7 @@ pub enum DatabaseError {
     FileRename(io::Error),
     FileIo(io::Error),
     Serialize(serde_json::Error),
+    Derialize(serde_json::Error),
     Init(io::Error),
     Sqlite(SqliteDatabaseError),
     FileSystem(io::Error),
@@ -54,7 +57,6 @@ impl From<std::io::Error> for DatabaseError {
         DatabaseError::FileSystem(e)
     }
 }
-
 
 /// Absolsute path to database root directory.
 pub struct DatabaseRoot {
@@ -130,10 +132,6 @@ impl DatabaseManager {
 
         let (git_database_handle, git_quit_receiver) = GitDatabaseOperationHandle::new();
 
-
-        // TODO: Check that git directories current state matches with the
-        //       sqlite database.
-
         let database_manager = DatabaseManager {
             sqlite_write_close,
             sqlite_read_close,
@@ -146,6 +144,8 @@ impl DatabaseManager {
             root,
             git_database_handle,
         };
+
+        router_handle.check_git_integrity().await?;
 
         Ok((database_manager, router_handle))
     }
@@ -175,9 +175,8 @@ impl RouterDatabaseHandle {
         self.root.history()
     }
 
-
     pub fn user_write_commands(&self, user_id: &UserId) -> WriteCommands {
-        let git_dir = self.root.history().user_git_dir(&user_id);
+        let git_dir = self.root.history().user_git_dir(user_id);
         WriteCommands::new(
             git_dir,
             self.git_database_handle.clone(),
@@ -187,5 +186,36 @@ impl RouterDatabaseHandle {
 
     pub fn read(&self) -> ReadCommands {
         ReadCommands::new(self.root.history_ref(), &self.sqlite_read)
+    }
+
+    /// Make sure that current Git HEAD matches SQLite content.
+    /// If not, then do commit with correct files.
+    async fn check_git_integrity(&self) -> Result<(), DatabaseError> {
+        let read = self.read();
+        let mut users = read.sqlite().users();
+        while let Some(user_id) = users.try_next().await? {
+            let git_write = || self.user_write_commands(&user_id).git_with_mode_message("Integrity check".into());
+
+            // Check that user git repository exists
+            let git_dir = self.root.history().user_git_dir(&user_id);
+            if !git_dir.exists() {
+                git_write().store_user_id().await?;
+            }
+
+            // Check profile file
+            let git_profile = self.read().git(&user_id).profile().await?;
+            let sqlite_profile = read.sqlite().user_profile(&user_id).await?;
+            if git_profile.filter(|profile| *profile == sqlite_profile).is_none() {
+                git_write().update_user_profile(&sqlite_profile).await?
+            }
+
+            // Check ID file
+            let git_user_id = self.read().git(&user_id).user_id().await?;
+            if git_user_id.filter(|id| *id == user_id).is_none() {
+                git_write().update_user_id().await?
+            }
+        }
+
+        Ok(())
     }
 }
