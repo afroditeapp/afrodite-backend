@@ -6,16 +6,15 @@ pub mod user;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use axum::{routing::get, Router};
+
 
 use tokio::{
     signal,
-    sync::{mpsc, watch::error},
 };
 use tracing::{debug, error, info};
 
 use crate::{
-    config::{self, Config},
+    config::{Config},
     server::{
         app::App,
         database::{DatabaseManager},

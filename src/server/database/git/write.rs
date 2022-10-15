@@ -1,7 +1,7 @@
 use std::{
     io::Write,
 };
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{Result};
 use tracing::error;
 
 use crate::{

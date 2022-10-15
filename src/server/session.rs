@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use tokio::sync::{RwLock, Mutex};
 
-use crate::api::{core::{user::{ApiKey, UserId}, profile::Profile}, self};
+use crate::api::{core::{user::{ApiKey, UserId}}};
 
 use super::database::{
-    write::WriteCommands, DatabaseManager, RouterDatabaseHandle,
+    write::WriteCommands, RouterDatabaseHandle,
 };
 
-use tracing::error;
+
 
 pub struct SessionManager {
     /// Users which are logged in.

@@ -1,9 +1,9 @@
 use std::{
     fs,
-    path::{Path, PathBuf}, future::Future,
+    path::{Path, PathBuf},
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 
 use crate::api::core::user::UserId;
 

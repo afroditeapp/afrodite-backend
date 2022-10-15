@@ -1,15 +1,14 @@
-use std::{collections::HashMap, marker};
+
 
 use tokio_stream::StreamExt;
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 
 use crate::{
-    api::core::{user::{UserId, ApiKey}, profile::Profile},
-    server::database::{}, utils::{ErrorResultExt, ErrorConversion}
+    api::core::{user::{UserId, ApiKey}, profile::Profile}, utils::{ErrorConversion}
 };
 
-use super::{git::{util::{GitUserDirPath, DatabasePath}, GitDatabaseOperationHandle, read::GitDatabaseReadCommands, GitDatabase, write::GitDatabaseWriteCommands, file::CoreFileNoHistory}, sqlite::{SqliteReadHandle, SqliteWriteHandle, read::SqliteReadCommands}, DatabaseError};
-use crate::utils::IntoReportExt;
+use super::{git::{util::{DatabasePath}, read::GitDatabaseReadCommands}, sqlite::{SqliteReadHandle, read::SqliteReadCommands}, DatabaseError};
+
 
 
 #[derive(Debug, Clone)]

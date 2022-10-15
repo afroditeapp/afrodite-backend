@@ -1,12 +1,12 @@
-use std::{sync::{Arc}, collections::HashMap, future::{Future}, fmt::Write, ops::Deref};
+use std::{sync::{Arc}, collections::HashMap};
 
 use axum::{
     routing::{get, post},
     Json, Router, middleware,
 };
-use tokio::sync::{RwLock, Mutex, MutexGuard, RwLockReadGuard};
-use tracing::{debug, error, info};
-use tracing_subscriber::registry::Data;
+use tokio::sync::{RwLock, Mutex};
+
+
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -141,11 +141,11 @@ impl App {
     }
 }
 
-async fn root(state: AppState) -> &'static str {
+async fn root(_state: AppState) -> &'static str {
     "Test123"
 }
 
-async fn openapi(state: AppState) -> Json<utoipa::openapi::OpenApi> {
+async fn openapi(_state: AppState) -> Json<utoipa::openapi::OpenApi> {
     ApiDocCore::openapi().into()
 }
 

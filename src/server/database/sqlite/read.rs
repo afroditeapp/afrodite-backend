@@ -1,8 +1,8 @@
 use tokio_stream::{StreamExt, Stream};
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 
-use crate::{api::core::{profile::Profile, user::{ApiKey, UserId}}};
-use super::{SqliteWriteHandle, SqliteDatabaseError, SqliteReadHandle};
+use crate::{api::core::{profile::Profile, user::{UserId}}};
+use super::{SqliteDatabaseError, SqliteReadHandle};
 use crate::utils::IntoReportExt;
 
 

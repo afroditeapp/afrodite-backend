@@ -1,16 +1,15 @@
 use std::{
-    thread::sleep,
-    time::Duration, io::Write,
+    io::Write,
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 
-use tracing::error;
+
 
 use crate::{
     server::database::{
-        git::util::{DatabasePath, GitUserDirPath},
-        DatabaseError, GitDatabaseOperationHandle, git::file::{CoreFile, CoreFileNoHistory}, sqlite::SqliteWriteHandle,
+        git::util::{GitUserDirPath},
+        DatabaseError, GitDatabaseOperationHandle, sqlite::SqliteWriteHandle,
     }, api::core::{profile::Profile, user::{ApiKey, UserId}}, utils::{ErrorConversion},
 };
 

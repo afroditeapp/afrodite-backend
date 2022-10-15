@@ -4,8 +4,8 @@ pub mod file;
 pub mod util;
 
 use std::{
-    io::{Write, self},
-    path::{Path, PathBuf}, fs,
+    io::{Write},
+    path::{Path},
 };
 
 use git2::{Repository, Signature, Tree};
@@ -14,7 +14,7 @@ use error_stack::{Result};
 use crate::utils::IntoReportExt;
 
 use {
-    file::{CoreFile, GetGitPath},
+    file::{GetGitPath},
     util::GitUserDirPath,
 };
 

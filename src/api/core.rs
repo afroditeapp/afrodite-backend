@@ -1,7 +1,7 @@
 pub mod profile;
 pub mod user;
 
-use std::convert::TryInto;
+
 
 use axum::{Json, middleware::Next, response::Response, extract::Path, TypedHeader};
 use headers::{Header, HeaderValue};
@@ -16,9 +16,9 @@ use self::{
     user::{UserId, ApiKey},
 };
 
-use tracing::{error, info};
+use tracing::{error};
 
-use super::{GetSessionManager, GetRouterDatabaseHandle, GetUsers, GetApiKeys, ReadDatabase, db_write, WriteDatabase};
+use super::{GetRouterDatabaseHandle, GetUsers, GetApiKeys, ReadDatabase, db_write, WriteDatabase};
 
 #[derive(OpenApi)]
 #[openapi(

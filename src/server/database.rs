@@ -6,20 +6,20 @@ pub mod sqlite;
 
 
 use std::{
-    io, path::{PathBuf, Path}, fs
+    path::{PathBuf, Path}, fs
 };
 
 use tokio::{
     sync::{mpsc},
 };
 use tokio_stream::StreamExt;
-use tracing::log::info;
-use error_stack::{Result, ResultExt, Report, Context};
 
-use crate::{api::core::user::UserId, utils::{ErrorConversion, ErrorContainer, AppendErr, AppendErrorTo, ErrorResultExt}};
+use error_stack::{Result, ResultExt};
+
+use crate::{api::core::user::UserId, utils::{ErrorConversion, ErrorContainer, AppendErr}};
 
 use self::{
-    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteDatabaseError, SqliteWriteHandle, SqliteWriteCloseHandle, SqliteReadHandle, SqliteReadCloseHandle, read::SqliteReadCommands}, write::{WriteCommands, WriteCmd}, read::{ReadCommands, ReadCmd},
+    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteWriteHandle, SqliteWriteCloseHandle, SqliteReadHandle, SqliteReadCloseHandle}, write::{WriteCommands, WriteCmd}, read::{ReadCommands, ReadCmd},
 };
 use crate::utils::IntoReportExt;
 

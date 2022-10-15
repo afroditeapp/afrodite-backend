@@ -3,10 +3,10 @@ pub mod write;
 
 use std::path::{PathBuf, Path};
 
-use sqlx::{SqliteConnection, Sqlite, SqlitePool, sqlite::{SqliteConnectOptions, self, SqlitePoolOptions}};
+use sqlx::{SqlitePool, sqlite::{SqliteConnectOptions, self, SqlitePoolOptions}};
 use error_stack::{Result};
 
-use crate::{api::core::user::UserId, utils::IntoReportExt};
+use crate::{utils::IntoReportExt};
 
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
