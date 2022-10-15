@@ -36,7 +36,7 @@ impl PihkaServer {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
-        let (database_manager, router_database_handle) = DatabaseManager::new(self.config.database_dir.clone()).await.unwrap();
+        let (database_manager, router_database_handle) = DatabaseManager::new(self.config.database_dir.clone()).await.expect("Database init failed");
 
         let app = App::new(
             router_database_handle

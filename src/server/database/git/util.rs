@@ -3,14 +3,18 @@ use std::{
     path::{Path, PathBuf}, future::Future,
 };
 
+use error_stack::{Result, ResultExt};
 
 use crate::api::core::user::UserId;
 
 use super::{
     {read::GitDatabaseReadCommands},
     file::{GetGitPath, GetLiveVersionPath, GetTmpPath},
-    GitDatabase, super::DatabaseError,
+    GitDatabase, super::GitError,
 };
+
+
+use crate::utils::IntoReportExt;
 
 /// Path to directory which contains all user data git directories.
 ///
@@ -42,12 +46,12 @@ impl DatabasePath {
 
     // pub async fn iter_users<
     //     T: FnMut(GitUserDirPath) -> S,
-    //     S: Future<Output = Result<(), DatabaseError>>,
-    // >(&self, mut handle_user_dir: T) -> Result<(), DatabaseError> {
+    //     S: Future<Output = Result<(), GitError>>,
+    // >(&self, mut handle_user_dir: T) -> Result<(), GitError> {
     //     let mut user_dirs = tokio::fs::read_dir(&self.database_dir).await?;
 
     //     while let Some(dir_entry) = user_dirs.next_entry().await? {
-    //         let user_id_string = dir_entry.file_name().into_string().map_err(|_| DatabaseError::Utf8)?;
+    //         let user_id_string = dir_entry.file_name().into_string().map_err(|_| GitError::Utf8)?;
     //         let user_dir = self.user_git_dir(&UserId::new(user_id_string));
 
     //         handle_user_dir(user_dir).await?;
@@ -82,68 +86,92 @@ impl GitUserDirPath {
         &self.id
     }
 
-    pub async fn read_to_string_optional<T: GetLiveVersionPath>(&self, file: T) -> Result<Option<String>, DatabaseError> {
+    pub async fn read_to_string_optional<T: GetLiveVersionPath>(&self, file: T) -> Result<Option<String>, GitError> {
         let path = self.git_repository_path.join(file.live_path().as_str());
         if !path.is_file() {
             return Ok(None);
         }
-        tokio::fs::read_to_string(path).await.map_err(DatabaseError::FileIo).map(Some)
+        tokio::fs::read_to_string(path)
+            .await
+            .into_error_with_info(GitError::IoFileRead, file.live_path())
+            .map(Some)
     }
 
-    pub async fn read_to_string<T: GetLiveVersionPath>(&self, file: T) -> Result<String, DatabaseError> {
+    pub async fn read_to_string<T: GetLiveVersionPath>(&self, file: T) -> Result<String, GitError> {
         let path = self.git_repository_path.join(file.live_path().as_str());
-        tokio::fs::read_to_string(path).await.map_err(DatabaseError::FileIo)
+        tokio::fs::read_to_string(path)
+            .await
+            .into_error_with_info(GitError::IoFileRead, file.live_path())
     }
 
     /// Open file for reading.
-    pub fn open_file<T: GetLiveVersionPath>(&self, file: T) -> Result<fs::File, DatabaseError> {
+    pub fn open_file<T: GetLiveVersionPath>(&self, file: T) -> Result<fs::File, GitError> {
         let path = self.git_repository_path.join(file.live_path().as_str());
-        fs::File::open(path).map_err(DatabaseError::FileOpen)
+        fs::File::open(path)
+            .into_error_with_info(GitError::IoFileOpen, file.live_path())
     }
 
     /// Replace file using new file. Creates the file if it does not exists.
     pub fn replace_file<
         T: GetGitPath + GetLiveVersionPath + Copy,
-        U: FnMut(&mut fs::File) -> Result<(), DatabaseError>,
+        U: FnMut(&mut fs::File) -> Result<(), GitError>,
     >(
         &self,
         file: T,
         commit_msg: &str,
         mut write_handle: U,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), GitError> {
         let git_file_path = self.git_repository_path.join(file.git_path().as_str());
-        let mut git_file = fs::File::create(&git_file_path).map_err(DatabaseError::FileCreate)?;
+        let mut git_file = fs::File::create(&git_file_path)
+            .into_error_with_info_lazy(GitError::IoFileCreate, || git_file_path.clone().to_string_lossy().to_string())?;
 
         write_handle(&mut git_file)?;
         drop(git_file);
 
-        let mut git = GitDatabase::open(self).map_err(DatabaseError::Git)?;
+        let mut git = GitDatabase::open(self)?;
         let msg = match self.mode_msg.as_ref() {
             Some(mode_msg) => format!("{}\n\n{}", mode_msg, commit_msg),
             None => commit_msg.to_owned(),
         };
-        git.commit(file, &msg).map_err(DatabaseError::Git)?;
+        git.commit(file, &msg)?;
 
         let live_file_path = self.git_repository_path.join(file.live_path().as_str());
-        fs::rename(&git_file_path, live_file_path).map_err(DatabaseError::FileRename)
+        fs::rename(&git_file_path, &live_file_path)
+            .into_error_with_info_lazy(
+                GitError::IoFileRename,
+                || format!(
+                    "from: {} to: {}",
+                    git_file_path.to_string_lossy(),
+                    live_file_path.to_string_lossy(),
+                )
+            )
     }
 
     pub fn replace_no_history_file<
         T: GetTmpPath + GetLiveVersionPath + Copy,
-        U: FnMut(&mut fs::File) -> Result<(), DatabaseError>,
+        U: FnMut(&mut fs::File) -> Result<(), GitError>,
     >(
         &self,
         file: T,
         mut write_handle: U,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), GitError> {
         let tmp_file_path = self.git_repository_path.join(file.tmp_path().as_str());
-        let mut tmp_file = fs::File::create(&tmp_file_path).map_err(DatabaseError::FileCreate)?;
+        let mut tmp_file = fs::File::create(&tmp_file_path)
+            .into_error_with_info(GitError::IoFileCreate, file.tmp_path())?;
 
         write_handle(&mut tmp_file)?;
         drop(tmp_file);
 
         let live_file_path = self.git_repository_path.join(file.live_path().as_str());
-        fs::rename(&tmp_file_path, live_file_path).map_err(DatabaseError::FileRename)
+        fs::rename(&tmp_file_path, &live_file_path)
+            .into_error_with_info_lazy(
+                GitError::IoFileRename,
+                || format!(
+                    "from: {} to: {}",
+                    tmp_file_path.to_string_lossy(),
+                    live_file_path.to_string_lossy(),
+                )
+            )
     }
 
     pub fn read(&self) -> GitDatabaseReadCommands {

@@ -4,18 +4,23 @@ pub mod write;
 use std::path::{PathBuf, Path};
 
 use sqlx::{SqliteConnection, Sqlite, SqlitePool, sqlite::{SqliteConnectOptions, self, SqlitePoolOptions}};
+use error_stack::{Result};
 
-use crate::api::core::user::UserId;
+use crate::{api::core::user::UserId, utils::IntoReportExt};
 
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum SqliteDatabaseError {
-    Path,
-    Connect(sqlx::Error),
-    Execute(sqlx::Error),
-    Migrate(sqlx::migrate::MigrateError),
+    #[error("Connecting to SQLite database failed")]
+    Connect,
+    #[error("Executing SQL query failed")]
+    Execute,
+    #[error("Error when streaming data from SQL query")]
+    Fetch,
+    #[error("Running sqlx database migrations failed")]
+    Migrate,
 }
 
 
@@ -68,10 +73,10 @@ impl SqliteWriteHandle {
                     .filename(db_path)
                     .create_if_missing(true)
                     .journal_mode(sqlite::SqliteJournalMode::Wal)
-        ).await.map_err(SqliteDatabaseError::Connect)?;
+        ).await.into_error(SqliteDatabaseError::Connect)?;
 
         if run_initial_setup {
-            sqlx::migrate!().run(&pool).await.map_err(SqliteDatabaseError::Migrate)?;
+            sqlx::migrate!().run(&pool).await.into_error(SqliteDatabaseError::Migrate)?;
         }
 
         let write_handle = SqliteWriteHandle {
@@ -120,7 +125,7 @@ impl SqliteReadHandle {
                     .filename(db_path)
                     .create_if_missing(false)
                     .journal_mode(sqlite::SqliteJournalMode::Wal)
-        ).await.map_err(SqliteDatabaseError::Connect)?;
+        ).await.into_error(SqliteDatabaseError::Connect)?;
 
         let handle = SqliteReadHandle {
             pool: pool.clone()

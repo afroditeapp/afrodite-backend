@@ -1,9 +1,9 @@
 use tokio_stream::{StreamExt, Stream};
+use error_stack::{Result, ResultExt};
 
-use crate::{server::database::DatabaseError, api::core::{profile::Profile, user::{ApiKey, UserId}}};
-
+use crate::{api::core::{profile::Profile, user::{ApiKey, UserId}}};
 use super::{SqliteWriteHandle, SqliteDatabaseError, SqliteReadHandle};
-
+use crate::utils::IntoReportExt;
 
 
 
@@ -16,7 +16,7 @@ impl <'a> SqliteReadCommands<'a> {
         Self { handle }
     }
 
-    pub async fn user_profile(&self, user_id: &UserId) -> Result<Profile, DatabaseError> {
+    pub async fn user_profile(&self, user_id: &UserId) -> Result<Profile, SqliteDatabaseError> {
         let id = user_id.as_str();
         let profile = sqlx::query!(
             r#"
@@ -26,7 +26,8 @@ impl <'a> SqliteReadCommands<'a> {
             "#,
             id
         )
-        .fetch_one(self.handle.pool()).await.map_err(SqliteDatabaseError::Execute)?;
+        .fetch_one(self.handle.pool()).await
+        .into_error(SqliteDatabaseError::Execute)?;
 
         Ok(Profile::new(profile.name))
     }
@@ -40,7 +41,7 @@ impl <'a> SqliteReadCommands<'a> {
         )
         .fetch(self.handle.pool())
         .map(|result| result
-            .map_err(SqliteDatabaseError::Execute)
+            .into_error(SqliteDatabaseError::Fetch)
             .map(|data| UserId::new(data.id))
         )
     }

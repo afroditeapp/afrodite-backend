@@ -10,6 +10,8 @@ use std::{
 
 use git2::{Repository, Signature, Tree};
 use tokio::sync::mpsc;
+use error_stack::{Result};
+use crate::utils::IntoReportExt;
 
 use {
     file::{CoreFile, GetGitPath},
@@ -34,21 +36,48 @@ impl GitDatabaseOperationHandle {
     }
 }
 
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum GitError {
-    Init(git2::Error),
-    SignatureCreation(git2::Error),
-    Open(git2::Error),
+    #[error("Initializing Git repository failed")]
+    Init,
+    #[error("Creating Git commit signature failed")]
+    SignatureCreation,
+    #[error("Opening Git repository failed")]
+    Open,
+    #[error("Git repository head does not point to a commit")]
     HeadDoesNotPointToCommit,
-    CreateIdFile(std::io::Error),
-    Index(git2::Error),
-    AddFile(git2::Error),
-    AddPath(git2::Error),
-    WriteTree(git2::Error),
-    FindTree(git2::Error),
-    Head(git2::Error),
-    FindCommit(git2::Error),
-    Commit(git2::Error),
+    #[error("Get index file failed")]
+    Index,
+    #[error("Adding file to index failed")]
+    AddPath,
+    #[error("Writing tree failed")]
+    WriteTree,
+    #[error("Finding tree failed")]
+    FindTree,
+    #[error("Getting repository HEAD failed")]
+    Head,
+    #[error("Finding commit failed")]
+    FindCommit,
+    #[error("Creating commit failed")]
+    Commit,
+
+    // File IO errors
+    #[error("File create failed")]
+    IoFileCreate,
+    #[error("File open failed")]
+    IoFileOpen,
+    #[error("File rename failed")]
+    IoFileRename,
+    #[error("File reading failed")]
+    IoFileRead,
+    #[error("File writing failed")]
+    IoFileWrite,
+
+    // Serde
+    #[error("Serde serialization failed")]
+    SerdeSerialize,
+    #[error("Serde deserialization failed")]
+    SerdeDerialize,
 }
 
 /// Git database for one user
@@ -60,7 +89,7 @@ pub struct GitDatabase<'a> {
 impl<'a> GitDatabase<'a> {
     /// Create git repository and store user id there
     pub fn create(profile: &'a GitUserDirPath) -> Result<Self, GitError> {
-        let repository = Repository::init(profile.path()).map_err(GitError::Init)?;
+        let repository = Repository::init(profile.path()).into_error(GitError::Init)?;
 
         let mut repository = Self {
             repository,
@@ -73,7 +102,7 @@ impl<'a> GitDatabase<'a> {
     }
 
     pub fn open(profile: &'a GitUserDirPath) -> Result<Self, GitError> {
-        let repository = Repository::open(profile.path()).map_err(GitError::Open)?;
+        let repository = Repository::open(profile.path()).into_error(GitError::Open)?;
 
         Ok(Self {
             repository,
@@ -86,7 +115,7 @@ impl<'a> GitDatabase<'a> {
 
         let tree = self.write_to_index(Some(file.git_path().as_str()))?;
 
-        let current_head = self.repository.head().map_err(GitError::Head)?;
+        let current_head = self.repository.head().into_error(GitError::Head)?;
         let parent = self
             .repository
             .find_commit(
@@ -94,7 +123,7 @@ impl<'a> GitDatabase<'a> {
                     .target()
                     .ok_or(GitError::HeadDoesNotPointToCommit)?,
             )
-            .map_err(GitError::FindCommit)?;
+            .into_error(GitError::FindCommit)?;
 
         self.repository
             .commit(
@@ -105,7 +134,7 @@ impl<'a> GitDatabase<'a> {
                 &tree,
                 &[&parent],
             )
-            .map_err(GitError::Commit)?;
+            .into_error(GitError::Commit)?;
 
         Ok(())
     }
@@ -125,7 +154,7 @@ impl<'a> GitDatabase<'a> {
                 &tree,
                 &[],
             )
-            .map_err(GitError::Commit)?;
+            .into_error(GitError::Commit)?;
 
         Ok(())
     }
@@ -133,25 +162,19 @@ impl<'a> GitDatabase<'a> {
     // File path is relative to git repository root.
     fn write_to_index<T: AsRef<Path>>(&self, file: Option<T>) -> Result<Tree<'_>, GitError> {
         let tree_id = {
-            let mut index = self.repository.index().map_err(GitError::Index)?;
+            let mut index = self.repository.index().into_error(GitError::Index)?;
             if let Some(file) = file {
-                index.add_path(file.as_ref()).map_err(GitError::AddPath)?;
+                index.add_path(file.as_ref())
+                    .into_error(GitError::AddPath)?;
             }
-            index.write_tree().map_err(GitError::WriteTree)?
+            index.write_tree().into_error(GitError::WriteTree)?
         };
         self.repository
-            .find_tree(tree_id)
-            .map_err(GitError::FindTree)
+            .find_tree(tree_id).into_error(GitError::FindTree)
     }
 
     fn default_signature() -> Result<Signature<'static>, GitError> {
         Signature::now(REPOSITORY_USER_NAME, REPOSITORY_USER_EMAIL)
-            .map_err(GitError::SignatureCreation)
-    }
-
-    /// Create new file which should be committed to Git.
-    pub fn create_raw_file<T: GetGitPath>(&self, file: T) -> Result<fs::File, io::Error> {
-        let path = self.profile.path().join(file.git_path().as_str());
-        fs::File::create(path)
+            .into_error(GitError::SignatureCreation)
     }
 }
