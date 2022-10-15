@@ -32,9 +32,9 @@ pub struct SqliteDatabasePath {
 }
 
 impl SqliteDatabasePath {
-    pub fn new<T: ToOwned<Owned = PathBuf>>(database_dir: T) -> Self {
+    pub fn new(database_dir: PathBuf) -> Self {
         Self {
-            database_dir: database_dir.to_owned(),
+            database_dir,
         }
     }
 

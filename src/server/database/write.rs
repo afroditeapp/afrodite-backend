@@ -1,4 +1,3 @@
-use std::io::Write;
 
 use error_stack::Result;
 

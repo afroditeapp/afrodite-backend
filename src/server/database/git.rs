@@ -3,7 +3,7 @@ pub mod read;
 pub mod util;
 pub mod write;
 
-use std::{io::Write, path::Path};
+use std::{path::Path};
 
 use crate::utils::IntoReportExt;
 use error_stack::Result;

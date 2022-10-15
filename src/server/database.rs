@@ -39,12 +39,6 @@ pub enum DatabaseError {
     Sqlite,
 
     // Other errors
-    #[error("Serde serialization failed")]
-    SerdeSerialize,
-    #[error("Serde deserialization failed")]
-    SerdeDerialize,
-    #[error("Invalid UTF-8")]
-    Utf8,
     #[error("Database initialization error")]
     Init,
     #[error("Database SQLite and Git integrity check")]
