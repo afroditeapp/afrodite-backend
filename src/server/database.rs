@@ -213,25 +213,25 @@ impl RouterDatabaseHandle {
         let git_dir = self.root.history().user_git_dir(&user_id);
         if !git_dir.exists() {
             git_write().store_user_id().await
-                .into_db_error_with_info_lazy(|| WriteCmd::Register(user_id.clone()))?;
+                .with_info_lazy(|| WriteCmd::Register(user_id.clone()))?;
         }
 
         // Check profile file
         let git_profile = self.read().git(&user_id).profile().await
-            .into_db_error_with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
+            .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
         let sqlite_profile = read.sqlite().user_profile(&user_id).await
-            .into_db_error_with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
+            .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
         if git_profile.filter(|profile| *profile == sqlite_profile).is_none() {
             git_write().update_user_profile(&sqlite_profile).await
-                .into_db_error_with_info_lazy(|| WriteCmd::UpdateProfile(user_id.clone()))?;
+                .with_info_lazy(|| WriteCmd::UpdateProfile(user_id.clone()))?;
         }
 
         // Check ID file
         let git_user_id = self.read().git(&user_id).user_id().await
-            .into_db_error_with_info_lazy(|| ReadCmdIntegrity::UserId(user_id.clone()))?;
+            .with_info_lazy(|| ReadCmdIntegrity::UserId(user_id.clone()))?;
         if git_user_id.filter(|id| *id == user_id).is_none() {
             git_write().update_user_id().await
-                .into_db_error_with_info_lazy(|| WriteCmdIntegrity::GitUserIdFile(user_id.clone()))?;
+                .with_info_lazy(|| WriteCmdIntegrity::GitUserIdFile(user_id.clone()))?;
         }
 
         Ok(())

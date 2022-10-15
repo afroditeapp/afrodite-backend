@@ -52,21 +52,21 @@ impl WriteCommands {
     }
 
     pub async fn register(&mut self) -> Result<(), DatabaseError> {
-        self.git().store_user_id().await.into_db_error_with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
-        self.sqlite().store_user_id(self.user_dir.id()).await.into_db_error_with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))
+        self.git().store_user_id().await.with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
+        self.sqlite().store_user_id(self.user_dir.id()).await.with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))
 
     }
 
     pub async fn update_user_profile(&mut self, profile_data: &Profile) -> Result<(), DatabaseError> {
         self.git().update_user_profile(profile_data).await
-            .into_db_error_with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))?;
+            .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))?;
         self.sqlite().update_user_profile(self.user_dir.id(), profile_data).await
-            .into_db_error_with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))
+            .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))
     }
 
     pub async fn update_current_api_key(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {
         // Token is only stored as a file.
-        self.git().update_token(key).await.into_db_error_with_info_lazy(|| WriteCmd::UpdateApiKey(self.user_dir.id().clone()))
+        self.git().update_token(key).await.with_info_lazy(|| WriteCmd::UpdateApiKey(self.user_dir.id().clone()))
     }
 
     fn git(&self) -> GitDatabaseWriteCommands {

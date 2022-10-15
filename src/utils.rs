@@ -62,15 +62,18 @@ pub trait ErrorConversion: ResultExt + Sized {
     type Err: Context;
     const ERROR: Self::Err;
 
+    /// Change error context and add additional info about error.
     #[track_caller]
-    fn into_db_error_with_info<
+    fn with_info<
         I: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static,
     >(self, info: I) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info(Self::ERROR, info)
     }
 
+    /// Change error context and add additional info about error. Sets
+    /// additional info about error lazily.
     #[track_caller]
-    fn into_db_error_with_info_lazy<
+    fn with_info_lazy<
         F: FnOnce() -> I,
         I: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static,
     >(self, info: F) -> Result<<Self as ResultExt>::Ok, Self::Err> {
