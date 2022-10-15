@@ -6,19 +6,12 @@ pub mod user;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-
-
-use tokio::{
-    signal,
-};
+use tokio::signal;
 use tracing::{debug, error, info};
 
 use crate::{
-    config::{Config},
-    server::{
-        app::App,
-        database::{DatabaseManager},
-    },
+    config::Config,
+    server::{app::App, database::DatabaseManager},
 };
 
 pub struct PihkaServer {
@@ -35,11 +28,12 @@ impl PihkaServer {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
-        let (database_manager, router_database_handle) = DatabaseManager::new(self.config.database_dir.clone()).await.expect("Database init failed");
+        let (database_manager, router_database_handle) =
+            DatabaseManager::new(self.config.database_dir.clone())
+                .await
+                .expect("Database init failed");
 
-        let app = App::new(
-            router_database_handle
-        ).await;
+        let app = App::new(router_database_handle).await;
         let router = app.create_router();
 
         let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

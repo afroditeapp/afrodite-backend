@@ -5,9 +5,12 @@ pub mod media;
 
 use std::collections::HashMap;
 
-use tokio::sync::{RwLock, Mutex};
+use tokio::sync::{Mutex, RwLock};
 
-use crate::server::{session::{SessionManager, UserState}, database::{RouterDatabaseHandle, write::WriteCommands, read::ReadCommands}};
+use crate::server::{
+    database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
+    session::{SessionManager, UserState},
+};
 
 use self::core::user::{ApiKey, UserId};
 
@@ -38,14 +41,13 @@ pub trait GetUsers {
 /// Use with db_write macro.
 pub trait WriteDatabase {
     fn write_database_with_db_macro_do_not_call_this_outside_macros(
-        &self
+        &self,
     ) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>>;
 }
 
 pub trait ReadDatabase {
     fn read_database(&self) -> ReadCommands;
 }
-
 
 /// Helper macro for getting write access to database.
 ///

@@ -1,7 +1,5 @@
 //! Types for files in different repositories
 
-
-
 #[derive(Debug)]
 pub struct GitPath<'a>(&'a str);
 
@@ -66,7 +64,6 @@ pub trait GetTmpPath {
     fn tmp_path(&self) -> TmpPath<'static>;
 }
 
-
 /// Files in profile repository
 #[derive(Debug, Clone, Copy)]
 pub enum CoreFile {
@@ -122,7 +119,6 @@ impl GetLiveVersionPath for CoreFileNoHistory {
         })
     }
 }
-
 
 // TODO: Append only files (possibly for IP addresses). Set max limit for ip
 // address changes or something?

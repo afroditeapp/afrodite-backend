@@ -1,32 +1,35 @@
-
-pub mod read;
-pub mod write;
 pub mod git;
+pub mod read;
 pub mod sqlite;
-
+pub mod write;
 
 use std::{
-    path::{PathBuf, Path}, fs
+    fs,
+    path::{Path, PathBuf},
 };
 
-use tokio::{
-    sync::{mpsc},
-};
+use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
 use error_stack::{Result, ResultExt};
 
-use crate::{api::core::user::UserId, utils::{ErrorConversion, ErrorContainer, AppendErr}};
+use crate::{
+    api::core::user::UserId,
+    utils::{AppendErr, ErrorContainer, ErrorConversion},
+};
 
 use self::{
-    git::{GitError, util::DatabasePath, GitDatabaseOperationHandle}, sqlite::{SqliteDatabasePath, SqliteWriteHandle, SqliteWriteCloseHandle, SqliteReadHandle, SqliteReadCloseHandle}, write::{WriteCommands, WriteCmd}, read::{ReadCommands, ReadCmd},
+    git::{util::DatabasePath, GitDatabaseOperationHandle, GitError},
+    read::{ReadCmd, ReadCommands},
+    sqlite::{
+        SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle,
+        SqliteWriteHandle,
+    },
+    write::{WriteCmd, WriteCommands},
 };
 use crate::utils::IntoReportExt;
 
-
 pub type DatabeseEntryId = String;
-
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum DatabaseError {
@@ -75,7 +78,9 @@ impl DatabaseRoot {
         let current = SqliteDatabasePath::new(current);
 
         Ok(Self {
-            root, history, current
+            root,
+            history,
+            current,
         })
     }
 
@@ -98,7 +103,6 @@ impl DatabaseRoot {
     }
 }
 
-
 /// Handle Git and SQLite databases
 pub struct DatabaseManager {
     sqlite_write_close: SqliteWriteCloseHandle,
@@ -106,19 +110,20 @@ pub struct DatabaseManager {
     git_quit_receiver: mpsc::Receiver<()>,
 }
 
-
 impl DatabaseManager {
-
     /// Runs also some blocking file system code.
-    pub async fn new<T: AsRef<Path>>(database_dir: T) -> Result<(Self, RouterDatabaseHandle), DatabaseError> {
-
+    pub async fn new<T: AsRef<Path>>(
+        database_dir: T,
+    ) -> Result<(Self, RouterDatabaseHandle), DatabaseError> {
         let root = DatabaseRoot::new(database_dir)?;
 
-        let (sqlite_write, sqlite_write_close) =
-            SqliteWriteHandle::new(root.current()).await.change_context(DatabaseError::Init)?;
+        let (sqlite_write, sqlite_write_close) = SqliteWriteHandle::new(root.current())
+            .await
+            .change_context(DatabaseError::Init)?;
 
-        let (sqlite_read, sqlite_read_close) =
-            SqliteReadHandle::new(root.current()).await.change_context(DatabaseError::Init)?;
+        let (sqlite_read, sqlite_read_close) = SqliteReadHandle::new(root.current())
+            .await
+            .change_context(DatabaseError::Init)?;
 
         let (git_database_handle, git_quit_receiver) = GitDatabaseOperationHandle::new();
 
@@ -152,7 +157,6 @@ impl DatabaseManager {
     }
 }
 
-
 pub struct RouterDatabaseHandle {
     root: DatabaseRoot,
     sqlite_write: SqliteWriteHandle,
@@ -170,7 +174,7 @@ impl RouterDatabaseHandle {
         WriteCommands::new(
             git_dir,
             self.git_database_handle.clone(),
-            self.sqlite_write.clone()
+            self.sqlite_write.clone(),
         )
     }
 
@@ -185,17 +189,22 @@ impl RouterDatabaseHandle {
         let mut users = read.sqlite().users();
         let mut error: ErrorContainer<DatabaseError> = None;
 
-        while let Some(result) = users.next().await.map(|r| r.change_context(DatabaseError::Integrity)) {
+        while let Some(result) = users
+            .next()
+            .await
+            .map(|r| r.change_context(DatabaseError::Integrity))
+        {
             match result {
                 Ok(user_id) => {
-                    let result = self.integrity_check_handle_user_id(user_id, &read)
-                            .await
-                            .map_err(|r| r.change_context(DatabaseError::Integrity));
+                    let result = self
+                        .integrity_check_handle_user_id(user_id, &read)
+                        .await
+                        .map_err(|r| r.change_context(DatabaseError::Integrity));
                     match result {
                         Ok(()) => (),
                         Err(e) => error.append(e),
                     }
-                },
+                }
                 Err(e) => error.append(e),
             }
         }
@@ -205,40 +214,64 @@ impl RouterDatabaseHandle {
         // TODO: Just stop integrity check if one error occurs?
     }
 
-    async fn integrity_check_handle_user_id(&self, user_id: UserId, read: &ReadCommands<'_>) -> Result<(), DatabaseError> {
-        let git_write = || self.user_write_commands(&user_id)
-            .git_with_mode_message("Integrity check".into());
+    async fn integrity_check_handle_user_id(
+        &self,
+        user_id: UserId,
+        read: &ReadCommands<'_>,
+    ) -> Result<(), DatabaseError> {
+        let git_write = || {
+            self.user_write_commands(&user_id)
+                .git_with_mode_message("Integrity check".into())
+        };
 
         // Check that user git repository exists
         let git_dir = self.root.history().user_git_dir(&user_id);
         if !git_dir.exists() {
-            git_write().store_user_id().await
+            git_write()
+                .store_user_id()
+                .await
                 .with_info_lazy(|| WriteCmd::Register(user_id.clone()))?;
         }
 
         // Check profile file
-        let git_profile = self.read().git(&user_id).profile().await
+        let git_profile = self
+            .read()
+            .git(&user_id)
+            .profile()
+            .await
             .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
-        let sqlite_profile = read.sqlite().user_profile(&user_id).await
+        let sqlite_profile = read
+            .sqlite()
+            .user_profile(&user_id)
+            .await
             .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
-        if git_profile.filter(|profile| *profile == sqlite_profile).is_none() {
-            git_write().update_user_profile(&sqlite_profile).await
+        if git_profile
+            .filter(|profile| *profile == sqlite_profile)
+            .is_none()
+        {
+            git_write()
+                .update_user_profile(&sqlite_profile)
+                .await
                 .with_info_lazy(|| WriteCmd::UpdateProfile(user_id.clone()))?;
         }
 
         // Check ID file
-        let git_user_id = self.read().git(&user_id).user_id().await
+        let git_user_id = self
+            .read()
+            .git(&user_id)
+            .user_id()
+            .await
             .with_info_lazy(|| ReadCmdIntegrity::UserId(user_id.clone()))?;
         if git_user_id.filter(|id| *id == user_id).is_none() {
-            git_write().update_user_id().await
+            git_write()
+                .update_user_id()
+                .await
                 .with_info_lazy(|| WriteCmdIntegrity::GitUserIdFile(user_id.clone()))?;
         }
 
         Ok(())
     }
-
 }
-
 
 #[derive(Debug, Clone)]
 enum WriteCmdIntegrity {
@@ -251,10 +284,9 @@ impl std::fmt::Display for WriteCmdIntegrity {
     }
 }
 
-
 #[derive(Debug, Clone)]
 enum ReadCmdIntegrity {
-    UserId(UserId)
+    UserId(UserId),
 }
 
 impl std::fmt::Display for ReadCmdIntegrity {

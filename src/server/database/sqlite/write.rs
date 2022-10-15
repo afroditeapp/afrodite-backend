@@ -1,17 +1,16 @@
-use error_stack::{Result};
+use error_stack::Result;
 
-use crate::{api::core::{profile::Profile, user::{UserId}}};
+use crate::api::core::{profile::Profile, user::UserId};
 
-use super::{SqliteWriteHandle, SqliteDatabaseError};
+use super::{SqliteDatabaseError, SqliteWriteHandle};
 
 use crate::utils::IntoReportExt;
-
 
 pub struct SqliteWriteCommands<'a> {
     handle: &'a SqliteWriteHandle,
 }
 
-impl <'a> SqliteWriteCommands<'a> {
+impl<'a> SqliteWriteCommands<'a> {
     pub fn new(handle: &'a SqliteWriteHandle) -> Self {
         Self { handle }
     }
@@ -25,12 +24,18 @@ impl <'a> SqliteWriteCommands<'a> {
             "#,
             id
         )
-        .execute(self.handle.pool()).await.into_error(SqliteDatabaseError::Execute)?;
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
 
         Ok(())
     }
 
-    pub async fn update_user_profile(self, user_id: &UserId, profile_data: &Profile) -> Result<(), SqliteDatabaseError> {
+    pub async fn update_user_profile(
+        self,
+        user_id: &UserId,
+        profile_data: &Profile,
+    ) -> Result<(), SqliteDatabaseError> {
         let id = user_id.as_str();
         let name = profile_data.name();
         sqlx::query!(
@@ -42,7 +47,9 @@ impl <'a> SqliteWriteCommands<'a> {
             name,
             id,
         )
-        .execute(self.handle.pool()).await.into_error(SqliteDatabaseError::Execute)?;
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
 
         Ok(())
     }

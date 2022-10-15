@@ -1,18 +1,15 @@
-use error_stack::{Result};
-
+use error_stack::Result;
 
 use crate::{
-    api::core::{user::{ApiKey, UserId}, profile::Profile},
-    server::database::{git::util::GitUserDirPath,
-        git::file::CoreFileNoHistory,
-    }
+    api::core::{
+        profile::Profile,
+        user::{ApiKey, UserId},
+    },
+    server::database::{git::file::CoreFileNoHistory, git::util::GitUserDirPath},
 };
 
-
-use crate::utils::IntoReportExt;
 use super::{file::CoreFile, GitError};
-
-
+use crate::utils::IntoReportExt;
 
 /// Reading can be done async as Git library is not used.
 pub struct GitDatabaseReadCommands {
@@ -31,12 +28,18 @@ impl<'a> GitDatabaseReadCommands {
     }
 
     pub async fn api_key(self) -> Result<Option<ApiKey>, GitError> {
-        let text = self.profile.read_to_string_optional(CoreFileNoHistory::ApiToken).await?;
+        let text = self
+            .profile
+            .read_to_string_optional(CoreFileNoHistory::ApiToken)
+            .await?;
         Ok(text.map(ApiKey::new))
     }
 
     pub async fn profile(self) -> Result<Option<Profile>, GitError> {
-        let text = self.profile.read_to_string_optional(CoreFile::ProfileJson).await?;
+        let text = self
+            .profile
+            .read_to_string_optional(CoreFile::ProfileJson)
+            .await?;
         let profile = match text {
             None => return Ok(None),
             Some(text) => serde_json::from_str(&text).into_error(GitError::SerdeDerialize)?,

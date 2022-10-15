@@ -1,13 +1,15 @@
 pub mod read;
 pub mod write;
 
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 
-use sqlx::{SqlitePool, sqlite::{SqliteConnectOptions, self, SqlitePoolOptions}};
-use error_stack::{Result};
+use error_stack::Result;
+use sqlx::{
+    sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
+    SqlitePool,
+};
 
-use crate::{utils::IntoReportExt};
-
+use crate::utils::IntoReportExt;
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 
@@ -22,7 +24,6 @@ pub enum SqliteDatabaseError {
     #[error("Running sqlx database migrations failed")]
     Migrate,
 }
-
 
 /// Path to directory which contains Sqlite files.
 #[derive(Debug, Clone)]
@@ -42,7 +43,6 @@ impl SqliteDatabasePath {
     }
 }
 
-
 pub struct SqliteWriteCloseHandle {
     pool: SqlitePool,
 }
@@ -60,8 +60,9 @@ pub struct SqliteWriteHandle {
 }
 
 impl SqliteWriteHandle {
-    pub async fn new(dir: SqliteDatabasePath) -> Result<(Self, SqliteWriteCloseHandle), SqliteDatabaseError> {
-
+    pub async fn new(
+        dir: SqliteDatabasePath,
+    ) -> Result<(Self, SqliteWriteCloseHandle), SqliteDatabaseError> {
         let db_path = dir.path().join(DATABASE_FILE_NAME);
 
         let run_initial_setup = !db_path.exists();
@@ -72,20 +73,21 @@ impl SqliteWriteHandle {
                 SqliteConnectOptions::new()
                     .filename(db_path)
                     .create_if_missing(true)
-                    .journal_mode(sqlite::SqliteJournalMode::Wal)
-        ).await.into_error(SqliteDatabaseError::Connect)?;
+                    .journal_mode(sqlite::SqliteJournalMode::Wal),
+            )
+            .await
+            .into_error(SqliteDatabaseError::Connect)?;
 
         if run_initial_setup {
-            sqlx::migrate!().run(&pool).await.into_error(SqliteDatabaseError::Migrate)?;
+            sqlx::migrate!()
+                .run(&pool)
+                .await
+                .into_error(SqliteDatabaseError::Migrate)?;
         }
 
-        let write_handle = SqliteWriteHandle {
-            pool: pool.clone()
-        };
+        let write_handle = SqliteWriteHandle { pool: pool.clone() };
 
-        let close_handle = SqliteWriteCloseHandle {
-            pool,
-        };
+        let close_handle = SqliteWriteCloseHandle { pool };
 
         Ok((write_handle, close_handle))
     }
@@ -94,7 +96,6 @@ impl SqliteWriteHandle {
         &self.pool
     }
 }
-
 
 pub struct SqliteReadCloseHandle {
     pool: SqlitePool,
@@ -107,15 +108,15 @@ impl SqliteReadCloseHandle {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub struct SqliteReadHandle {
     pool: SqlitePool,
 }
 
 impl SqliteReadHandle {
-    pub async fn new(dir: SqliteDatabasePath) -> Result<(Self, SqliteReadCloseHandle), SqliteDatabaseError> {
-
+    pub async fn new(
+        dir: SqliteDatabasePath,
+    ) -> Result<(Self, SqliteReadCloseHandle), SqliteDatabaseError> {
         let db_path = dir.path().join(DATABASE_FILE_NAME);
 
         let pool = SqlitePoolOptions::new()
@@ -124,16 +125,14 @@ impl SqliteReadHandle {
                 SqliteConnectOptions::new()
                     .filename(db_path)
                     .create_if_missing(false)
-                    .journal_mode(sqlite::SqliteJournalMode::Wal)
-        ).await.into_error(SqliteDatabaseError::Connect)?;
+                    .journal_mode(sqlite::SqliteJournalMode::Wal),
+            )
+            .await
+            .into_error(SqliteDatabaseError::Connect)?;
 
-        let handle = SqliteReadHandle {
-            pool: pool.clone()
-        };
+        let handle = SqliteReadHandle { pool: pool.clone() };
 
-        let close_handle = SqliteReadCloseHandle {
-            pool,
-        };
+        let close_handle = SqliteReadCloseHandle { pool };
 
         Ok((handle, close_handle))
     }

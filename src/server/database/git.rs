@@ -1,22 +1,16 @@
-pub mod read;
-pub mod write;
 pub mod file;
+pub mod read;
 pub mod util;
+pub mod write;
 
-use std::{
-    io::{Write},
-    path::{Path},
-};
+use std::{io::Write, path::Path};
 
+use crate::utils::IntoReportExt;
+use error_stack::Result;
 use git2::{Repository, Signature, Tree};
 use tokio::sync::mpsc;
-use error_stack::{Result};
-use crate::utils::IntoReportExt;
 
-use {
-    file::{GetGitPath},
-    util::GitUserDirPath,
-};
+use {file::GetGitPath, util::GitUserDirPath};
 
 const REPOSITORY_USER_NAME: &str = "Pihka backend";
 const REPOSITORY_USER_EMAIL: &str = "email";
@@ -164,13 +158,15 @@ impl<'a> GitDatabase<'a> {
         let tree_id = {
             let mut index = self.repository.index().into_error(GitError::Index)?;
             if let Some(file) = file {
-                index.add_path(file.as_ref())
+                index
+                    .add_path(file.as_ref())
                     .into_error(GitError::AddPath)?;
             }
             index.write_tree().into_error(GitError::WriteTree)?
         };
         self.repository
-            .find_tree(tree_id).into_error(GitError::FindTree)
+            .find_tree(tree_id)
+            .into_error(GitError::FindTree)
     }
 
     fn default_signature() -> Result<Signature<'static>, GitError> {

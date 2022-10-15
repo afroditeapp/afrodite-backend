@@ -1,14 +1,10 @@
 use std::collections::HashMap;
 
-use tokio::sync::{RwLock, Mutex};
+use tokio::sync::{Mutex, RwLock};
 
-use crate::api::{core::{user::{ApiKey, UserId}}};
+use crate::api::core::user::{ApiKey, UserId};
 
-use super::database::{
-    write::WriteCommands, RouterDatabaseHandle,
-};
-
-
+use super::database::{write::WriteCommands, RouterDatabaseHandle};
 
 pub struct SessionManager {
     /// Users which are logged in.
@@ -25,12 +21,12 @@ impl SessionManager {
         //api_keys.insert(ApiKey::new("test".to_string()),
         // UserState { profile: database.profile_dir("test") });
 
-
-
-        database_handle.read().users(|user_id| {
-            let write_commands = database_handle.user_write_commands(&user_id);
-            users.insert(user_id, Mutex::new(write_commands));
-        })
+        database_handle
+            .read()
+            .users(|user_id| {
+                let write_commands = database_handle.user_write_commands(&user_id);
+                users.insert(user_id, Mutex::new(write_commands));
+            })
             .await
             .expect("User ID reading failed.");
 
@@ -42,7 +38,12 @@ impl SessionManager {
                 .expect("API key reading failed.");
 
             if let Some(key) = key {
-                api_keys.insert(key, UserState { user_id: id.clone() });
+                api_keys.insert(
+                    key,
+                    UserState {
+                        user_id: id.clone(),
+                    },
+                );
             }
         }
 
@@ -60,9 +61,7 @@ pub struct UserState {
 
 impl UserState {
     pub fn new(user_id: UserId) -> Self {
-        Self {
-            user_id
-        }
+        Self { user_id }
     }
 
     pub fn id(&self) -> &UserId {

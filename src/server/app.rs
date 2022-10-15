@@ -1,11 +1,11 @@
-use std::{sync::{Arc}, collections::HashMap};
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
+    middleware,
     routing::{get, post},
-    Json, Router, middleware,
+    Json, Router,
 };
-use tokio::sync::{RwLock, Mutex};
-
+use tokio::sync::{Mutex, RwLock};
 
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -13,13 +13,14 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::api::{
     self,
     core::{
-        ApiDocCore, user::{ApiKey, UserId},
+        user::{ApiKey, UserId},
+        ApiDocCore,
     },
-    GetSessionManager, GetRouterDatabaseHandle, GetApiKeys, ReadDatabase, GetUsers, WriteDatabase,
+    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
 };
 
 use super::{
-    database::{RouterDatabaseHandle, write::WriteCommands, read::ReadCommands},
+    database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     session::{SessionManager, UserState},
 };
 
@@ -60,7 +61,7 @@ impl ReadDatabase for AppState {
 
 impl WriteDatabase for AppState {
     fn write_database_with_db_macro_do_not_call_this_outside_macros(
-        &self
+        &self,
     ) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>> {
         &self.session_manager.users
     }
@@ -128,16 +129,15 @@ impl App {
                     let state = self.state.clone();
                     move |header, body| api::core::post_profile(header, body, state)
                 }),
-            ).route_layer({
+            )
+            .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();
                     move |req, next| api::core::authenticate(state.clone(), req, next)
                 })
             });
 
-        Router::new()
-            .merge(public)
-            .merge(private)
+        Router::new().merge(public).merge(private)
     }
 }
 

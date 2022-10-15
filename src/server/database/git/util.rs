@@ -3,16 +3,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use error_stack::{Result};
+use error_stack::Result;
 
 use crate::api::core::user::UserId;
 
 use super::{
-    {read::GitDatabaseReadCommands},
+    super::GitError,
     file::{GetGitPath, GetLiveVersionPath, GetTmpPath},
-    GitDatabase, super::GitError,
+    read::GitDatabaseReadCommands,
+    GitDatabase,
 };
-
 
 use crate::utils::IntoReportExt;
 
@@ -86,7 +86,10 @@ impl GitUserDirPath {
         &self.id
     }
 
-    pub async fn read_to_string_optional<T: GetLiveVersionPath>(&self, file: T) -> Result<Option<String>, GitError> {
+    pub async fn read_to_string_optional<T: GetLiveVersionPath>(
+        &self,
+        file: T,
+    ) -> Result<Option<String>, GitError> {
         let path = self.git_repository_path.join(file.live_path().as_str());
         if !path.is_file() {
             return Ok(None);
@@ -107,8 +110,7 @@ impl GitUserDirPath {
     /// Open file for reading.
     pub fn open_file<T: GetLiveVersionPath>(&self, file: T) -> Result<fs::File, GitError> {
         let path = self.git_repository_path.join(file.live_path().as_str());
-        fs::File::open(path)
-            .into_error_with_info(GitError::IoFileOpen, file.live_path())
+        fs::File::open(path).into_error_with_info(GitError::IoFileOpen, file.live_path())
     }
 
     /// Replace file using new file. Creates the file if it does not exists.
@@ -123,7 +125,9 @@ impl GitUserDirPath {
     ) -> Result<(), GitError> {
         let git_file_path = self.git_repository_path.join(file.git_path().as_str());
         let mut git_file = fs::File::create(&git_file_path)
-            .into_error_with_info_lazy(GitError::IoFileCreate, || git_file_path.clone().to_string_lossy().to_string())?;
+            .into_error_with_info_lazy(GitError::IoFileCreate, || {
+                git_file_path.clone().to_string_lossy().to_string()
+            })?;
 
         write_handle(&mut git_file)?;
         drop(git_file);
@@ -136,15 +140,16 @@ impl GitUserDirPath {
         git.commit(file, &msg)?;
 
         let live_file_path = self.git_repository_path.join(file.live_path().as_str());
-        fs::rename(&git_file_path, &live_file_path)
-            .into_error_with_info_lazy(
-                GitError::IoFileRename,
-                || format!(
+        fs::rename(&git_file_path, &live_file_path).into_error_with_info_lazy(
+            GitError::IoFileRename,
+            || {
+                format!(
                     "from: {} to: {}",
                     git_file_path.to_string_lossy(),
                     live_file_path.to_string_lossy(),
                 )
-            )
+            },
+        )
     }
 
     pub fn replace_no_history_file<
@@ -163,15 +168,16 @@ impl GitUserDirPath {
         drop(tmp_file);
 
         let live_file_path = self.git_repository_path.join(file.live_path().as_str());
-        fs::rename(&tmp_file_path, &live_file_path)
-            .into_error_with_info_lazy(
-                GitError::IoFileRename,
-                || format!(
+        fs::rename(&tmp_file_path, &live_file_path).into_error_with_info_lazy(
+            GitError::IoFileRename,
+            || {
+                format!(
                     "from: {} to: {}",
                     tmp_file_path.to_string_lossy(),
                     live_file_path.to_string_lossy(),
                 )
-            )
+            },
+        )
     }
 
     pub fn read(&self) -> GitDatabaseReadCommands {

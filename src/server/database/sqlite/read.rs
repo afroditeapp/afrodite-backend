@@ -1,17 +1,15 @@
-use tokio_stream::{StreamExt, Stream};
-use error_stack::{Result};
+use error_stack::Result;
+use tokio_stream::{Stream, StreamExt};
 
-use crate::{api::core::{profile::Profile, user::{UserId}}};
 use super::{SqliteDatabaseError, SqliteReadHandle};
+use crate::api::core::{profile::Profile, user::UserId};
 use crate::utils::IntoReportExt;
-
-
 
 pub struct SqliteReadCommands<'a> {
     handle: &'a SqliteReadHandle,
 }
 
-impl <'a> SqliteReadCommands<'a> {
+impl<'a> SqliteReadCommands<'a> {
     pub fn new(handle: &'a SqliteReadHandle) -> Self {
         Self { handle }
     }
@@ -26,7 +24,8 @@ impl <'a> SqliteReadCommands<'a> {
             "#,
             id
         )
-        .fetch_one(self.handle.pool()).await
+        .fetch_one(self.handle.pool())
+        .await
         .into_error(SqliteDatabaseError::Execute)?;
 
         Ok(Profile::new(profile.name))
@@ -40,10 +39,11 @@ impl <'a> SqliteReadCommands<'a> {
             "#,
         )
         .fetch(self.handle.pool())
-        .map(|result| result
-            .into_error(SqliteDatabaseError::Fetch)
-            .map(|data| UserId::new(data.id))
-        )
+        .map(|result| {
+            result
+                .into_error(SqliteDatabaseError::Fetch)
+                .map(|data| UserId::new(data.id))
+        })
     }
 
     // pub async fn users<T: FnMut(UserId)>(&self, mut handle_user: T) -> impl Stream {

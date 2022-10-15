@@ -1,15 +1,19 @@
-
-
+use error_stack::Result;
 use tokio_stream::StreamExt;
-use error_stack::{Result};
 
 use crate::{
-    api::core::{user::{UserId, ApiKey}, profile::Profile}, utils::{ErrorConversion}
+    api::core::{
+        profile::Profile,
+        user::{ApiKey, UserId},
+    },
+    utils::ErrorConversion,
 };
 
-use super::{git::{util::{DatabasePath}, read::GitDatabaseReadCommands}, sqlite::{SqliteReadHandle, read::SqliteReadCommands}, DatabaseError};
-
-
+use super::{
+    git::{read::GitDatabaseReadCommands, util::DatabasePath},
+    sqlite::{read::SqliteReadCommands, SqliteReadHandle},
+    DatabaseError,
+};
 
 #[derive(Debug, Clone)]
 pub enum ReadCmd {
@@ -24,17 +28,13 @@ impl std::fmt::Display for ReadCmd {
     }
 }
 
-
 pub struct ReadCommands<'a> {
     git_repositories: &'a DatabasePath,
     sqlite: SqliteReadCommands<'a>,
 }
 
-impl <'a> ReadCommands<'a> {
-    pub fn new(
-        git_repositories: &'a DatabasePath,
-        sqlite: &'a SqliteReadHandle,
-    ) -> Self {
+impl<'a> ReadCommands<'a> {
+    pub fn new(git_repositories: &'a DatabasePath, sqlite: &'a SqliteReadHandle) -> Self {
         Self {
             git_repositories,
             sqlite: SqliteReadCommands::new(sqlite),
@@ -42,14 +42,15 @@ impl <'a> ReadCommands<'a> {
     }
 
     pub async fn user_api_key(&self, user_id: &UserId) -> Result<Option<ApiKey>, DatabaseError> {
-        self.git(user_id).api_key().await
+        self.git(user_id)
+            .api_key()
+            .await
             .with_info_lazy(|| ReadCmd::UserApiKey(user_id.clone()))
     }
 
     pub async fn users<T: FnMut(UserId)>(&self, mut handler: T) -> Result<(), DatabaseError> {
         let mut users = self.sqlite().users();
-        while let Some(user_id) = users.try_next().await
-            .with_info(ReadCmd::Users)? {
+        while let Some(user_id) = users.try_next().await.with_info(ReadCmd::Users)? {
             handler(user_id)
         }
 
@@ -57,7 +58,9 @@ impl <'a> ReadCommands<'a> {
     }
 
     pub async fn user_profile(&self, user_id: &UserId) -> Result<Profile, DatabaseError> {
-        self.sqlite().user_profile(user_id).await
+        self.sqlite()
+            .user_profile(user_id)
+            .await
             .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))
     }
 

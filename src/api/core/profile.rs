@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Profile {
     name: String,
@@ -9,7 +8,7 @@ pub struct Profile {
 
 impl Profile {
     pub fn new(name: String) -> Self {
-        Self {name}
+        Self { name }
     }
 
     pub fn name(&self) -> &str {

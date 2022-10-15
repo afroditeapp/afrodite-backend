@@ -1,16 +1,17 @@
-use std::{
-    io::Write,
-};
+use std::io::Write;
 
-use error_stack::{Result};
-
-
+use error_stack::Result;
 
 use crate::{
+    api::core::{
+        profile::Profile,
+        user::{ApiKey, UserId},
+    },
     server::database::{
-        git::util::{GitUserDirPath},
-        DatabaseError, GitDatabaseOperationHandle, sqlite::SqliteWriteHandle,
-    }, api::core::{profile::Profile, user::{ApiKey, UserId}}, utils::{ErrorConversion},
+        git::util::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
+        GitDatabaseOperationHandle,
+    },
+    utils::ErrorConversion,
 };
 
 use super::{git::write::GitDatabaseWriteCommands, sqlite::write::SqliteWriteCommands};
@@ -27,7 +28,6 @@ impl std::fmt::Display for WriteCmd {
         f.write_fmt(format_args!("Write command: {:?}", self))
     }
 }
-
 
 /// Write methods should be mutable to make sure that there is no concurrent
 /// Git user directory writing.
@@ -51,21 +51,36 @@ impl WriteCommands {
     }
 
     pub async fn register(&mut self) -> Result<(), DatabaseError> {
-        self.git().store_user_id().await.with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
-        self.sqlite().store_user_id(self.user_dir.id()).await.with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))
-
+        self.git()
+            .store_user_id()
+            .await
+            .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
+        self.sqlite()
+            .store_user_id(self.user_dir.id())
+            .await
+            .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))
     }
 
-    pub async fn update_user_profile(&mut self, profile_data: &Profile) -> Result<(), DatabaseError> {
-        self.git().update_user_profile(profile_data).await
+    pub async fn update_user_profile(
+        &mut self,
+        profile_data: &Profile,
+    ) -> Result<(), DatabaseError> {
+        self.git()
+            .update_user_profile(profile_data)
+            .await
             .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))?;
-        self.sqlite().update_user_profile(self.user_dir.id(), profile_data).await
+        self.sqlite()
+            .update_user_profile(self.user_dir.id(), profile_data)
+            .await
             .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))
     }
 
     pub async fn update_current_api_key(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {
         // Token is only stored as a file.
-        self.git().update_token(key).await.with_info_lazy(|| WriteCmd::UpdateApiKey(self.user_dir.id().clone()))
+        self.git()
+            .update_token(key)
+            .await
+            .with_info_lazy(|| WriteCmd::UpdateApiKey(self.user_dir.id().clone()))
     }
 
     fn git(&self) -> GitDatabaseWriteCommands {

@@ -1,24 +1,25 @@
 pub mod profile;
 pub mod user;
 
-
-
-use axum::{Json, middleware::Next, response::Response, extract::Path, TypedHeader};
+use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
 use headers::{Header, HeaderValue};
-use hyper::{StatusCode, Request, header};
+use hyper::{header, Request, StatusCode};
 use tokio::sync::Mutex;
-use utoipa::{OpenApi, Modify, openapi::security::{SecurityScheme, ApiKeyValue}};
+use utoipa::{
+    openapi::security::{ApiKeyValue, SecurityScheme},
+    Modify, OpenApi,
+};
 
-use crate::server::{session::UserState};
+use crate::server::session::UserState;
 
 use self::{
     profile::Profile,
-    user::{UserId, ApiKey},
+    user::{ApiKey, UserId},
 };
 
-use tracing::{error};
+use tracing::error;
 
-use super::{GetRouterDatabaseHandle, GetUsers, GetApiKeys, ReadDatabase, db_write, WriteDatabase};
+use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -38,14 +39,13 @@ impl Modify for SecurityApiTokenDefault {
         if let Some(components) = openapi.components.as_mut() {
             components.add_security_scheme(
                 "api_key",
-                SecurityScheme::ApiKey(
-                    utoipa::openapi::security::ApiKey::Header(ApiKeyValue::new(API_KEY_HEADER_STR))
-                ),
+                SecurityScheme::ApiKey(utoipa::openapi::security::ApiKey::Header(
+                    ApiKeyValue::new(API_KEY_HEADER_STR),
+                )),
             )
         }
     }
 }
-
 
 // TODO: Add timeout for database commands
 
@@ -69,7 +69,8 @@ pub async fn register<S: GetRouterDatabaseHandle + GetUsers>(
     let mut write_commands = state.database().user_write_commands(&new_user_id);
     match write_commands.register().await {
         Ok(()) => {
-            state.users()
+            state
+                .users()
                 .write()
                 .await
                 .insert(new_user_id.clone(), Mutex::new(write_commands));
@@ -112,11 +113,11 @@ pub async fn login<S: GetApiKeys + WriteDatabase>(
         })?;
 
     let user_state = UserState::new(user_id);
-    state.api_keys()
+    state
+        .api_keys()
         .write()
         .await
         .insert(key.clone(), user_state);
-
 
     Ok(key.into())
 }
@@ -138,8 +139,10 @@ pub async fn get_profile<S: ReadDatabase>(
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: Validate user id
-    state.read_database()
-        .user_profile(&user_id).await
+    state
+        .read_database()
+        .user_profile(&user_id)
+        .await
         .map(|profile| profile.into())
         .map_err(|e| {
             error!("Get profile error: {e:?}");
@@ -164,13 +167,8 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
     Json(profile): Json<Profile>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let keys = state
-        .api_keys()
-        .read()
-        .await;
-    let user_id = keys.get(&api_key.0)
-        .ok_or(StatusCode::BAD_REQUEST)?
-        .id();
+    let keys = state.api_keys().read().await;
+    let user_id = keys.get(&api_key.0).ok_or(StatusCode::BAD_REQUEST)?.id();
 
     db_write!(state, user_id)?
         .await
@@ -184,7 +182,6 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
     Ok(())
 }
 
-
 const API_KEY_HEADER_STR: &str = "x-api-key";
 static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
 
@@ -193,7 +190,10 @@ pub async fn authenticate<T, S: GetApiKeys>(
     req: Request<T>,
     next: Next<T>,
 ) -> Result<Response, StatusCode> {
-    let header = req.headers().get(API_KEY_HEADER_STR).ok_or(StatusCode::BAD_REQUEST)?;
+    let header = req
+        .headers()
+        .get(API_KEY_HEADER_STR)
+        .ok_or(StatusCode::BAD_REQUEST)?;
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = ApiKey::new(key_str.to_string());
 
@@ -204,7 +204,6 @@ pub async fn authenticate<T, S: GetApiKeys>(
     }
 }
 
-
 pub struct ApiKeyHeader(ApiKey);
 
 impl Header for ApiKeyHeader {
@@ -213,10 +212,10 @@ impl Header for ApiKeyHeader {
     }
 
     fn decode<'i, I>(values: &mut I) -> Result<Self, headers::Error>
-        where
-            Self: Sized,
-            I: Iterator<Item = &'i headers::HeaderValue> {
-
+    where
+        Self: Sized,
+        I: Iterator<Item = &'i headers::HeaderValue>,
+    {
         let value = values.next().ok_or_else(headers::Error::invalid)?;
         let value = value.to_str().map_err(|_| headers::Error::invalid())?;
         Ok(ApiKeyHeader(ApiKey::new(value.to_string())))
