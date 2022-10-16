@@ -16,7 +16,7 @@ use crate::api::{
         user::{ApiKey, UserId},
         ApiDocCore,
     },
-    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
+    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, media::ApiDocMedia,
 };
 
 use super::{
@@ -80,7 +80,11 @@ impl App {
         Self { state }
     }
 
-    pub fn create_router(&self) -> Router {
+    pub fn state(&self) -> AppState {
+        self.state.clone()
+    }
+
+    pub fn create_core_server_router(&self) -> Router {
         let public = Router::new()
             .merge(
                 SwaggerUi::new("/swagger-ui/*tail")
@@ -128,6 +132,31 @@ impl App {
                 post({
                     let state = self.state.clone();
                     move |header, body| api::core::post_profile(header, body, state)
+                }),
+            )
+            .route_layer({
+                middleware::from_fn({
+                    let state = self.state.clone();
+                    move |req, next| api::core::authenticate(state.clone(), req, next)
+                })
+            });
+
+        Router::new().merge(public).merge(private)
+    }
+
+    pub fn create_media_server_router(&self) -> Router {
+        let public = Router::new()
+            .merge(
+                SwaggerUi::new("/swagger-ui/*tail")
+                    .url("/api-doc/openapi.json", ApiDocMedia::openapi()),
+            );
+
+        let private = Router::new()
+            .route(
+                api::media::PATH_GET_IMAGE,
+                get({
+                    let state = self.state.clone();
+                    move |user_id, image_name| api::media::get_image(user_id, image_name, state)
                 }),
             )
             .route_layer({

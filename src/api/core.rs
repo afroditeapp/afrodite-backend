@@ -1,5 +1,6 @@
 pub mod profile;
 pub mod user;
+pub mod internal;
 
 use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
 use headers::{Header, HeaderValue};
@@ -33,7 +34,7 @@ use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabas
 )]
 pub struct ApiDocCore;
 
-struct SecurityApiTokenDefault;
+pub struct SecurityApiTokenDefault;
 impl Modify for SecurityApiTokenDefault {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
         if let Some(components) = openapi.components.as_mut() {
@@ -168,7 +169,7 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
     state: S,
 ) -> Result<(), StatusCode> {
     let keys = state.api_keys().read().await;
-    let user_id = keys.get(&api_key.0).ok_or(StatusCode::BAD_REQUEST)?.id();
+    let user_id = keys.get(&api_key.0).ok_or(StatusCode::UNAUTHORIZED)?.id();
 
     db_write!(state, user_id)?
         .await
