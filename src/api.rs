@@ -1,4 +1,4 @@
-//! HTTP API types for all servers.
+//! HTTP API types and request handlers for all servers.
 
 pub mod core;
 pub mod media;
@@ -9,7 +9,7 @@ use tokio::sync::{Mutex, RwLock};
 
 use crate::server::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, UserState},
+    session::{SessionManager, UserState}, internal::{CoreServerInternalApi, MediaServerInternalApi},
 };
 
 use self::core::user::{ApiKey, UserId};
@@ -47,6 +47,14 @@ pub trait WriteDatabase {
 
 pub trait ReadDatabase {
     fn read_database(&self) -> ReadCommands;
+}
+
+pub trait GetCoreServerInternalApi {
+    fn core_server_internal_api(&self) -> CoreServerInternalApi;
+}
+
+pub trait GetMediaServerInternalApi {
+    fn media_server_internal_api(&self) -> MediaServerInternalApi;
 }
 
 /// Helper macro for getting write access to database.

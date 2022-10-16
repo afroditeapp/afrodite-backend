@@ -22,6 +22,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 mime = "0.3"
 headers = "0.3.8"
+reqwest = { version = "0.11", features = ["json"] }
 
 utoipa = { version = "2.0.1", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "2.0.1", features = ["axum"] }

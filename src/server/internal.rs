@@ -7,23 +7,28 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use headers::Header;
+use hyper::StatusCode;
+use reqwest::{Request, Client, Url};
 use tokio::sync::{Mutex, RwLock};
 
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::api::{
+use error_stack::{Result, ResultExt};
+
+use crate::{api::{
     self,
     core::{
         user::{ApiKey, UserId},
-        ApiDocCore, internal::ApiDocCoreInternal,
+        ApiDocCore, internal::{ApiDocCoreInternal, PATH_CHECK_API_KEY}, ApiKeyHeader,
     },
     GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, media::{ApiDocMedia, internal::ApiDocMediaInternal},
-};
+}, utils::IntoReportExt};
 
 use super::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, UserState}, app::AppState,
+    session::{SessionManager, UserState}, app::AppState, CORE_SERVER_INTERNAL_API_URL,
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
@@ -58,8 +63,80 @@ impl InternalApp {
                 api::media::internal::PATH_POST_IMAGE,
                 post({
                     let state = state.clone();
-                    move |header1, header2, body| api::media::internal::post_image(header1, header2, body, state)
+                    move |parameter1, parameter2, header1, header2, body| api::media::internal::post_image(parameter1, parameter2, header1, header2, body, state)
                 })
             )
+    }
+}
+
+
+#[derive(thiserror::Error, Debug)]
+pub enum HttpRequestError {
+    #[error("Reqwest error")]
+    Reqwest,
+
+    // Other errors
+    #[error("Serde deserialization error")]
+    SerdeDeserialize,
+}
+
+#[derive(Debug, Clone)]
+pub enum InternalApiRequest {
+    CheckApiKey,
+}
+
+impl std::fmt::Display for InternalApiRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("Internal API request: {:?}", self))
+    }
+}
+
+
+// TODO: Move url parsing to happen at startup so that url typos are
+// discovered earlier.
+
+pub struct CoreServerInternalApi {
+    client: Client,
+    base_url: Url,
+}
+
+impl CoreServerInternalApi {
+    pub fn new(client: Client) -> Self {
+        Self { client, base_url: Url::parse(CORE_SERVER_INTERNAL_API_URL).unwrap() }
+    }
+
+    pub async fn check_api_key(&self, api_key: ApiKey) -> Result<Option<UserId>, HttpRequestError> {
+        let request = self.client
+            .get(self.base_url.join(PATH_CHECK_API_KEY).unwrap())
+            .header(ApiKeyHeader::name(), api_key.as_str())
+            .build()
+            .unwrap();
+
+        let response = self.client.execute(request).await
+            .into_error_with_info(HttpRequestError::Reqwest, InternalApiRequest::CheckApiKey)?;
+
+            if response.status() == StatusCode::OK {
+                let id: UserId = response.json().await
+                    .into_error_with_info(HttpRequestError::SerdeDeserialize, InternalApiRequest::CheckApiKey)?;
+                Ok(Some(id))
+            } else {
+                Ok(None)
+            }
+    }
+}
+
+
+
+pub struct MediaServerInternalApi {
+    client: Client,
+}
+
+impl MediaServerInternalApi {
+    pub fn new(client: Client) -> Self {
+        Self { client }
+    }
+
+    pub async fn post_image() {
+
     }
 }

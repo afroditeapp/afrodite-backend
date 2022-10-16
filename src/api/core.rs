@@ -183,10 +183,10 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
     Ok(())
 }
 
-const API_KEY_HEADER_STR: &str = "x-api-key";
-static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
+pub const API_KEY_HEADER_STR: &str = "x-api-key";
+pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
 
-pub async fn authenticate<T, S: GetApiKeys>(
+pub async fn authenticate_core_api<T, S: GetApiKeys>(
     state: S,
     req: Request<T>,
     next: Next<T>,

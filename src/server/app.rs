@@ -16,17 +16,18 @@ use crate::api::{
         user::{ApiKey, UserId},
         ApiDocCore,
     },
-    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, media::ApiDocMedia,
+    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, media::ApiDocMedia, GetCoreServerInternalApi, GetMediaServerInternalApi,
 };
 
 use super::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, UserState},
+    session::{SessionManager, UserState}, internal::{CoreServerInternalApi, MediaServerInternalApi},
 };
 
 #[derive(Clone)]
 pub struct AppState {
     session_manager: Arc<SessionManager>,
+    client: reqwest::Client,
 }
 
 impl GetSessionManager for AppState {
@@ -67,6 +68,18 @@ impl WriteDatabase for AppState {
     }
 }
 
+impl GetCoreServerInternalApi for AppState {
+    fn core_server_internal_api(&self) -> CoreServerInternalApi {
+        CoreServerInternalApi::new(self.client.clone())
+    }
+}
+
+impl GetMediaServerInternalApi for AppState {
+    fn media_server_internal_api(&self) -> MediaServerInternalApi {
+        MediaServerInternalApi::new(self.client.clone())
+    }
+}
+
 pub struct App {
     state: AppState,
 }
@@ -75,6 +88,7 @@ impl App {
     pub async fn new(database_handle: RouterDatabaseHandle) -> Self {
         let state = AppState {
             session_manager: Arc::new(SessionManager::new(database_handle).await),
+            client: reqwest::Client::new(),
         };
 
         Self { state }
@@ -137,7 +151,7 @@ impl App {
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();
-                    move |req, next| api::core::authenticate(state.clone(), req, next)
+                    move |req, next| api::core::authenticate_core_api(state.clone(), req, next)
                 })
             });
 
@@ -162,7 +176,7 @@ impl App {
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();
-                    move |req, next| api::core::authenticate(state.clone(), req, next)
+                    move |req, next| api::media::authenticate_media_api(state.clone(), req, next)
                 })
             });
 

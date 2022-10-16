@@ -15,6 +15,9 @@ use crate::{
     server::{app::App, database::DatabaseManager, internal::InternalApp},
 };
 
+pub const CORE_SERVER_INTERNAL_API_URL: &str = "http://127.0.0.1:3001";
+pub const MEDIA_SERVER_INTERNAL_API_URL: &str = "http://127.0.0.1:4001";
+
 pub struct PihkaServer {
     config: Arc<Config>,
 }

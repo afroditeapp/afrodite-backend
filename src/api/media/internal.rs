@@ -43,17 +43,21 @@ pub const PATH_POST_IMAGE: &str = "/image/:user_id/:image_name";
     post,
     path = "/image/{user_id}/{image_name}",
     request_body(content = ImageFile, description = "Upload new image", content_type = "image/jpeg"),
+    params(UserId, ImageFileName),
     responses(
         (status = 200, description = "Image upload successfull"),
         (status = 500),
     ),
 )]
 pub async fn post_image<S>(
+    Path(user_id): Path<UserId>,
+    Path(image_file): Path<ImageFileName>,
     TypedHeader(content_type): TypedHeader<ContentType>,
     TypedHeader(content_lenght): TypedHeader<ContentLength>,
     image_bytes: BodyStream,
     state: S,
 ) -> Result<StatusCode, StatusCode> {
+    // TODO
     Ok(StatusCode::OK)
 }
 
