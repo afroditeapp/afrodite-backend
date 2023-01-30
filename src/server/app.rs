@@ -101,7 +101,7 @@ impl App {
     pub fn create_core_server_router(&self) -> Router {
         let public = Router::new()
             .merge(
-                SwaggerUi::new("/swagger-ui/*tail")
+                SwaggerUi::new("/swagger-ui")
                     .url("/api-doc/openapi.json", ApiDocCore::openapi()),
             )
             .route(
