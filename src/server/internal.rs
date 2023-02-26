@@ -21,9 +21,9 @@ use crate::{api::{
     self,
     core::{
         user::{ApiKey, UserId},
-        ApiDocCore, internal::{ApiDocCoreInternal, PATH_CHECK_API_KEY}, ApiKeyHeader,
+        internal::{PATH_CHECK_API_KEY}, ApiKeyHeader,
     },
-    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, media::{ApiDocMedia, internal::ApiDocMediaInternal},
+    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, ApiDoc,
 }, utils::IntoReportExt};
 
 use super::{
@@ -40,10 +40,6 @@ pub struct InternalApp;
 impl InternalApp {
     pub fn create_core_server_router(state: AppState) -> Router {
         Router::new()
-            .merge(
-                SwaggerUi::new("/swagger-ui/*tail")
-                    .url("/api-doc/openapi.json", ApiDocCoreInternal::openapi()),
-            )
             .route(
                 api::core::internal::PATH_CHECK_API_KEY,
                 get({
@@ -55,10 +51,6 @@ impl InternalApp {
 
     pub fn create_media_server_router(state: AppState) -> Router {
         Router::new()
-            .merge(
-                SwaggerUi::new("/swagger-ui/*tail")
-                    .url("/api-doc/openapi.json", ApiDocMediaInternal::openapi()),
-            )
             .route(
                 api::media::internal::PATH_POST_IMAGE,
                 post({

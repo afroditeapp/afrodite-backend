@@ -22,32 +22,6 @@ use tracing::error;
 
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase};
 
-#[derive(OpenApi)]
-#[openapi(
-    paths(register, login, get_profile, post_profile),
-    components(schemas(
-        user::UserId,
-        user::ApiKey,
-        profile::Profile,
-    )),
-    modifiers(&SecurityApiTokenDefault),
-)]
-pub struct ApiDocCore;
-
-pub struct SecurityApiTokenDefault;
-impl Modify for SecurityApiTokenDefault {
-    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        if let Some(components) = openapi.components.as_mut() {
-            components.add_security_scheme(
-                "api_key",
-                SecurityScheme::ApiKey(utoipa::openapi::security::ApiKey::Header(
-                    ApiKeyValue::new(API_KEY_HEADER_STR),
-                )),
-            )
-        }
-    }
-}
-
 // TODO: Add timeout for database commands
 
 pub const PATH_REGISTER: &str = "/register";

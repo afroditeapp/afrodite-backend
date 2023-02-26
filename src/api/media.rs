@@ -16,7 +16,6 @@ use crate::server::session::UserState;
 use self::{
     super::core::profile::Profile,
     super::core::user::{ApiKey, UserId},
-    super::core::SecurityApiTokenDefault,
 };
 
 use self::{
@@ -26,18 +25,6 @@ use self::{
 use tracing::error;
 
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, core::{ApiKeyHeader, API_KEY_HEADER_STR}, GetCoreServerInternalApi};
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(get_image),
-    components(schemas(
-        super::core::user::UserId,
-        super::core::user::ApiKey,
-        image::ImageFileName,
-    )),
-    modifiers(&SecurityApiTokenDefault),
-)]
-pub struct ApiDocMedia;
 
 pub const PATH_GET_IMAGE: &str = "/image/:user_id/:image_file";
 

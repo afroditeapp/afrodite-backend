@@ -15,7 +15,6 @@ use crate::server::session::UserState;
 use super::{
     super::core::profile::Profile,
     super::core::user::{ApiKey, UserId},
-    super::core::SecurityApiTokenDefault,
 };
 
 use super::{
@@ -26,16 +25,6 @@ use tracing::error;
 
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, super::core::ApiKeyHeader};
 
-#[derive(OpenApi)]
-#[openapi(
-    paths(post_image),
-    components(schemas(
-        super::super::core::user::ApiKey,
-        super::super::core::user::UserId,
-        super::image::ImageFile,
-    )),
-)]
-pub struct ApiDocMediaInternal;
 
 pub const PATH_POST_IMAGE: &str = "/image/:user_id/:image_name";
 

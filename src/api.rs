@@ -6,17 +6,57 @@ pub mod media;
 use std::collections::HashMap;
 
 use tokio::sync::{Mutex, RwLock};
+use utoipa::{OpenApi, openapi::{self, security::{SecurityScheme, ApiKeyValue}}, Modify};
 
 use crate::server::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     session::{SessionManager, UserState}, internal::{CoreServerInternalApi, MediaServerInternalApi},
 };
 
-use self::core::user::{ApiKey, UserId};
+use self::core::{user::{ApiKey, UserId}, API_KEY_HEADER_STR};
 
 // Paths
 
 pub const PATH_PREFIX: &str = "/api/v1/";
+
+// API docs
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        core::register,
+        core::login,
+        core::get_profile,
+        core::post_profile,
+        core::internal::check_api_key,
+        media::get_image,
+        media::internal::post_image,
+    ),
+    components(schemas(
+        core::user::UserId,
+        core::user::ApiKey,
+        core::profile::Profile,
+        media::image::ImageFileName,
+        media::image::ImageFile,
+    )),
+    modifiers(&SecurityApiTokenDefault),
+)]
+pub struct ApiDoc;
+
+pub struct SecurityApiTokenDefault;
+
+impl Modify for SecurityApiTokenDefault {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "api_key",
+                SecurityScheme::ApiKey(utoipa::openapi::security::ApiKey::Header(
+                    ApiKeyValue::new(API_KEY_HEADER_STR),
+                )),
+            )
+        }
+    }
+}
 
 // App state getters
 

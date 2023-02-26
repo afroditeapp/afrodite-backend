@@ -8,15 +8,15 @@ use axum::{
 use tokio::sync::{Mutex, RwLock};
 
 use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
 use crate::api::{
     self,
+    ApiDoc,
     core::{
         user::{ApiKey, UserId},
-        ApiDocCore,
+
     },
-    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, media::ApiDocMedia, GetCoreServerInternalApi, GetMediaServerInternalApi,
+    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, GetCoreServerInternalApi, GetMediaServerInternalApi,
 };
 
 use super::{
@@ -100,17 +100,6 @@ impl App {
 
     pub fn create_core_server_router(&self) -> Router {
         let public = Router::new()
-            .merge(
-                SwaggerUi::new("/swagger-ui")
-                    .url("/api-doc/openapi.json", ApiDocCore::openapi()),
-            )
-            .route(
-                "/openapi.json",
-                get({
-                    let state = self.state.clone();
-                    move || openapi(state.clone())
-                }),
-            )
             .route(
                 "/",
                 get({
@@ -159,11 +148,7 @@ impl App {
     }
 
     pub fn create_media_server_router(&self) -> Router {
-        let public = Router::new()
-            .merge(
-                SwaggerUi::new("/swagger-ui/*tail")
-                    .url("/api-doc/openapi.json", ApiDocMedia::openapi()),
-            );
+        let public = Router::new();
 
         let private = Router::new()
             .route(
@@ -189,7 +174,7 @@ async fn root(_state: AppState) -> &'static str {
 }
 
 async fn openapi(_state: AppState) -> Json<utoipa::openapi::OpenApi> {
-    ApiDocCore::openapi().into()
+    ApiDoc::openapi().into()
 }
 
 // #[cfg(test)]

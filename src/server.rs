@@ -9,10 +9,12 @@ use std::sync::Arc;
 
 use tokio::signal;
 use tracing::{debug, error, info};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     config::{Config, ServerMode},
-    server::{app::App, database::DatabaseManager, internal::InternalApp},
+    server::{app::App, database::DatabaseManager, internal::InternalApp}, api::ApiDoc,
 };
 
 pub const CORE_SERVER_INTERNAL_API_URL: &str = "http://127.0.0.1:3001";
@@ -43,6 +45,13 @@ impl PihkaServer {
             ServerMode::Core => (app.create_core_server_router(), 3000),
             ServerMode::Media => (app.create_media_server_router(), 4000),
         };
+
+        // TODO: Enable swagger-ui only if in debug mode.
+        let router = router.merge(
+            SwaggerUi::new("/swagger-ui")
+                .url("/api-doc/openapi.json", ApiDoc::openapi()),
+        );
+
         let addr = SocketAddr::from(([127, 0, 0, 1], port));
         info!("Public API is available on {}", addr);
         let server = axum::Server::bind(&addr).serve(router.into_make_service());
@@ -52,6 +61,13 @@ impl PihkaServer {
             ServerMode::Core => (InternalApp::create_core_server_router(app.state()), 3001),
             ServerMode::Media => (InternalApp::create_media_server_router(app.state()), 4001),
         };
+
+        // TODO: Enable swagger-ui only if in debug mode.
+        let internal_api_router = internal_api_router.merge(
+            SwaggerUi::new("/swagger-ui")
+                .url("/api-doc/openapi.json", ApiDoc::openapi()),
+        );
+
         let addr = SocketAddr::from(([127, 0, 0, 1], port));
         info!("Internal API is available on {}", addr);
         let internal_server = axum::Server::bind(&addr).serve(internal_api_router.into_make_service());

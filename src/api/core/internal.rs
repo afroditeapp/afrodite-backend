@@ -15,7 +15,6 @@ use crate::server::session::UserState;
 use self::{
     super::profile::Profile,
     super::user::{ApiKey, UserId},
-    super::SecurityApiTokenDefault,
 };
 
 use self::{
@@ -25,17 +24,6 @@ use self::{
 use tracing::error;
 
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, ApiKeyHeader};
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(check_api_key),
-    components(schemas(
-        super::user::ApiKey,
-        super::user::UserId,
-    )),
-    modifiers(&SecurityApiTokenDefault),
-)]
-pub struct ApiDocCoreInternal;
 
 pub const PATH_CHECK_API_KEY: &str = "/check_api_key";
 
