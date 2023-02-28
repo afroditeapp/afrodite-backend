@@ -7,13 +7,14 @@ pub mod internal;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use axum::Router;
 use tokio::signal;
 use tracing::{debug, error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    config::{Config, ServerMode},
+    config::{Config},
     server::{app::App, database::DatabaseManager, internal::InternalApp}, api::ApiDoc,
 };
 
@@ -35,45 +36,60 @@ impl PihkaServer {
         tracing_subscriber::fmt::init();
 
         let (database_manager, router_database_handle) =
-            DatabaseManager::new(self.config.database_dir.clone())
+            DatabaseManager::new(self.config.database_dir().to_path_buf())
                 .await
                 .expect("Database init failed");
 
-        // Public API. This can have WAN access.
+
         let app = App::new(router_database_handle).await;
-        let (router, port) = match self.config.mode {
-            ServerMode::Core => (app.create_core_server_router(), 3000),
-            ServerMode::Media => (app.create_media_server_router(), 4000),
+
+        // Public API. This can have WAN access.
+        let normal_api_server = {
+            let mut router = Router::new();
+
+            if self.config.components().core {
+                router = router.merge(app.create_core_server_router())
+            }
+
+            if self.config.components().media {
+                router = router.merge(app.create_media_server_router())
+            }
+
+            // TODO: Enable swagger-ui only if in debug mode.
+            let router = router.merge(
+                SwaggerUi::new("/swagger-ui")
+                    .url("/api-doc/openapi.json", ApiDoc::openapi()),
+            );
+
+            let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+            info!("Public API is available on {}", addr);
+            axum::Server::bind(&addr).serve(router.into_make_service())
         };
-
-        // TODO: Enable swagger-ui only if in debug mode.
-        let router = router.merge(
-            SwaggerUi::new("/swagger-ui")
-                .url("/api-doc/openapi.json", ApiDoc::openapi()),
-        );
-
-        let addr = SocketAddr::from(([127, 0, 0, 1], port));
-        info!("Public API is available on {}", addr);
-        let server = axum::Server::bind(&addr).serve(router.into_make_service());
 
         // Internal server to server API. This must be only LAN accessible.
-        let (internal_api_router, port) = match self.config.mode {
-            ServerMode::Core => (InternalApp::create_core_server_router(app.state()), 3001),
-            ServerMode::Media => (InternalApp::create_media_server_router(app.state()), 4001),
+        let internal_api_server = {
+            let mut router = Router::new();
+            if self.config.components().core {
+                router = router.merge(InternalApp::create_core_server_router(app.state()))
+            }
+
+            if self.config.components().media {
+                router = router.merge(InternalApp::create_media_server_router(app.state()))
+            }
+
+            // TODO: Enable swagger-ui only if in debug mode.
+            let router = router.merge(
+                SwaggerUi::new("/swagger-ui")
+                    .url("/api-doc/openapi.json", ApiDoc::openapi()),
+            );
+
+            let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+            info!("Internal API is available on {}", addr);
+            axum::Server::bind(&addr).serve(router.into_make_service())
         };
 
-        // TODO: Enable swagger-ui only if in debug mode.
-        let internal_api_router = internal_api_router.merge(
-            SwaggerUi::new("/swagger-ui")
-                .url("/api-doc/openapi.json", ApiDoc::openapi()),
-        );
-
-        let addr = SocketAddr::from(([127, 0, 0, 1], port));
-        info!("Internal API is available on {}", addr);
-        let internal_server = axum::Server::bind(&addr).serve(internal_api_router.into_make_service());
-
         let server_task = tokio::spawn(async move {
-            let shutdown_handle = server.with_graceful_shutdown(async {
+            let shutdown_handle = normal_api_server.with_graceful_shutdown(async {
                 match signal::ctrl_c().await {
                     Ok(()) => (),
                     Err(e) =>
@@ -92,7 +108,7 @@ impl PihkaServer {
         });
 
         let internal_server_task = tokio::spawn(async move {
-            let shutdown_handle = internal_server.with_graceful_shutdown(async {
+            let shutdown_handle = internal_api_server.with_graceful_shutdown(async {
                 match signal::ctrl_c().await {
                     Ok(()) => (),
                     Err(e) =>

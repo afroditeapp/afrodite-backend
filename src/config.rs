@@ -1,51 +1,61 @@
-use std::{path::PathBuf, convert::{TryFrom, TryInto}};
+pub mod file;
+pub mod args;
+
+use std::{path::{PathBuf, Path}, convert::{TryFrom, TryInto}, collections::HashSet};
 
 use clap::{arg, command, value_parser};
 
+use error_stack::{Result, ResultExt, Report};
+use serde::Deserialize;
+
+
+use crate::utils::IntoReportExt;
+
+use self::{file::{ConfigFileError, ConfigFile, Components}, args::{ArgsConfig, ServerComponent}};
+
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
+#[derive(thiserror::Error, Debug)]
+pub enum GetConfigError {
+    #[error("Get working directory error")]
+    GetWorkingDir,
+    #[error("File loading failed")]
+    LoadFileError,
+    #[error("Load config file")]
+    LoadConfig,
+}
+
 pub struct Config {
-    pub database_dir: PathBuf,
-    pub mode: ServerMode,
+    file: ConfigFile,
+    database: PathBuf,
 }
 
-pub fn get_config() -> Config {
-    let matches = command!()
-        .arg(
-            arg!(--database <DIR> "Set database directory")
-                .required(false)
-                .default_value("database")
-                .value_parser(value_parser!(PathBuf)),
-        )
-        .arg(
-            arg!(--mode <MODE> "Server mode")
-                .required(false)
-                .default_value("core")
-                .value_parser(["core", "media"])
-        )
-        .get_matches();
+impl Config {
+    pub fn database_dir(&self) -> &Path {
+        &self.database
+    }
 
-    Config {
-        database_dir: matches.get_one::<PathBuf>("database").unwrap().to_owned(),
-        mode: matches.get_one::<String>("mode").unwrap().as_str().try_into().unwrap(),
+    pub fn components(&self) -> &Components {
+        &self.file.components
     }
 }
 
+pub fn get_config() -> Result<Config, GetConfigError> {
+    let current_dir = std::env::current_dir()
+        .into_error(GetConfigError::GetWorkingDir)?;
+    let file_config =
+        file::ConfigFile::load(current_dir)
+            .change_context(GetConfigError::LoadFileError)?;
+    let args_config = args::get_config();
 
-#[derive(Debug)]
-pub enum ServerMode {
-    Core,
-    /// Run server which will serve public media files.
-    Media,
-}
+    let database = if let Some(database) = args_config.database_dir {
+        database
+    } else {
+        file_config.database.dir.clone()
+    };
 
-impl TryFrom<&str> for ServerMode {
-    type Error = ();
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(match value {
-            "core" => Self::Core,
-            "media" => Self::Media,
-            _ => return Err(()),
-        })
-    }
+    Ok(Config {
+        file: file_config,
+        database,
+    })
 }

@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.14", features = ["cargo"] }
+toml = "0.7.2"
 git2 = "0.15.0"
 uuid = { version = "1.1.2", features = ["v4"] }
 
