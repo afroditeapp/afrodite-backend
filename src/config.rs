@@ -11,7 +11,7 @@ use serde::Deserialize;
 
 use crate::utils::IntoReportExt;
 
-use self::{file::{ConfigFileError, ConfigFile, Components}, args::{ArgsConfig, ServerComponent}};
+use self::{file::{ConfigFileError, ConfigFile, Components, SocketConfig}, args::{ArgsConfig, ServerComponent}};
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
@@ -37,6 +37,19 @@ impl Config {
 
     pub fn components(&self) -> &Components {
         &self.file.components
+    }
+
+    pub fn socket(&self) -> &SocketConfig {
+        &self.file.socket
+    }
+
+    /// Server should run in debug mode.
+    ///
+    /// Debug mode changes:
+    /// * Swagger UI is enabled.
+    /// * Internal API is available at same port as the public API.
+    pub fn debug_mode(&self) -> bool {
+        self.file.debug.unwrap_or(false)
     }
 }
 

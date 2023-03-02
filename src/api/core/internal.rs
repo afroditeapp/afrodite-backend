@@ -25,11 +25,11 @@ use tracing::error;
 
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, ApiKeyHeader};
 
-pub const PATH_CHECK_API_KEY: &str = "/check_api_key";
+pub const PATH_CHECK_API_KEY: &str = "/internal/check_api_key";
 
 #[utoipa::path(
     get,
-    path = "/check_api_key",
+    path = "/internal/check_api_key",
     responses(
         (status = 200, description = "Check API key", body = [UserId]),
         (status = 404, description = "API key was invalid"),

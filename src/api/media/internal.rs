@@ -26,11 +26,11 @@ use tracing::error;
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, super::core::ApiKeyHeader};
 
 
-pub const PATH_POST_IMAGE: &str = "/image/:user_id/:image_name";
+pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
 
 #[utoipa::path(
     post,
-    path = "/image/{user_id}/{image_name}",
+    path = "/internal/image/{user_id}/{image_name}",
     request_body(content = ImageFile, description = "Upload new image", content_type = "image/jpeg"),
     params(UserId, ImageFileName),
     responses(

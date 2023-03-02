@@ -1,4 +1,4 @@
-use std::{path::{Path, PathBuf}, io::Write};
+use std::{path::{Path, PathBuf}, io::Write, net::SocketAddr};
 
 use error_stack::{Result, ResultExt, Report};
 use serde::Deserialize;
@@ -8,6 +8,10 @@ use crate::{utils::IntoReportExt, server::database::git::file};
 pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
+
+[socket]
+public_api = "127.0.0.1:3000"
+internal_api = "127.0.0.1:3001"
 
 [database]
 dir = "database"
@@ -34,8 +38,10 @@ pub enum ConfigFileError {
 
 #[derive(Debug, Deserialize)]
 pub struct ConfigFile {
+    pub debug: Option<bool>,
     pub components: Components,
     pub database: DatabaseConfig,
+    pub socket: SocketConfig,
 }
 
 impl ConfigFile {
@@ -83,4 +89,10 @@ pub struct Components {
 #[derive(Debug, Deserialize)]
 pub struct DatabaseConfig {
     pub dir: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SocketConfig {
+    pub public_api: SocketAddr,
+    pub internal_api: SocketAddr,
 }

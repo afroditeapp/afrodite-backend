@@ -8,7 +8,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::Router;
-use tokio::signal;
+use tokio::{signal, task::JoinHandle};
 use tracing::{debug, error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -19,7 +19,6 @@ use crate::{
 };
 
 pub const CORE_SERVER_INTERNAL_API_URL: &str = "http://127.0.0.1:3001";
-pub const MEDIA_SERVER_INTERNAL_API_URL: &str = "http://127.0.0.1:4001";
 
 pub struct PihkaServer {
     config: Arc<Config>,
@@ -40,55 +39,51 @@ impl PihkaServer {
                 .await
                 .expect("Database init failed");
 
-
         let app = App::new(router_database_handle).await;
 
+        let server_task = self.create_public_api_server_task(&app);
+        let internal_server_task = if self.config.debug_mode() {
+            None
+        } else {
+            Some(self.create_internal_api_server_task(&app))
+        };
+
+        // Wait until both tasks quit
+        server_task.await.expect("Public API server task panic detected");
+        if let Some(handle) = internal_server_task {
+            handle.await.expect("Internal API server task panic detected");
+        }
+
+        info!("Server quit started");
+
+        drop(app);
+        database_manager.close().await;
+
+        info!("Server quit done");
+    }
+
+    pub fn create_public_api_server_task(&self, app: &App) -> JoinHandle<()> {
         // Public API. This can have WAN access.
         let normal_api_server = {
-            let mut router = Router::new();
+            let router = self.create_public_router(&app);
+            let router = if self.config.debug_mode() {
+                router
+                    .merge(Self::create_swagger_ui())
+                    .merge(self.create_internal_router(&app))
+            } else {
+                router
+            };
 
-            if self.config.components().core {
-                router = router.merge(app.create_core_server_router())
-            }
-
-            if self.config.components().media {
-                router = router.merge(app.create_media_server_router())
-            }
-
-            // TODO: Enable swagger-ui only if in debug mode.
-            let router = router.merge(
-                SwaggerUi::new("/swagger-ui")
-                    .url("/api-doc/openapi.json", ApiDoc::openapi()),
-            );
-
-            let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+            let addr = self.config.socket().public_api;
             info!("Public API is available on {}", addr);
-            axum::Server::bind(&addr).serve(router.into_make_service())
+            if self.config.debug_mode() {
+                info!("Internal API is available on {}", addr);
+            }
+            axum::Server::bind(&addr)
+                .serve(router.into_make_service())
         };
 
-        // Internal server to server API. This must be only LAN accessible.
-        let internal_api_server = {
-            let mut router = Router::new();
-            if self.config.components().core {
-                router = router.merge(InternalApp::create_core_server_router(app.state()))
-            }
-
-            if self.config.components().media {
-                router = router.merge(InternalApp::create_media_server_router(app.state()))
-            }
-
-            // TODO: Enable swagger-ui only if in debug mode.
-            let router = router.merge(
-                SwaggerUi::new("/swagger-ui")
-                    .url("/api-doc/openapi.json", ApiDoc::openapi()),
-            );
-
-            let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
-            info!("Internal API is available on {}", addr);
-            axum::Server::bind(&addr).serve(router.into_make_service())
-        };
-
-        let server_task = tokio::spawn(async move {
+        tokio::spawn(async move {
             let shutdown_handle = normal_api_server.with_graceful_shutdown(async {
                 match signal::ctrl_c().await {
                     Ok(()) => (),
@@ -105,9 +100,25 @@ impl PihkaServer {
                     error!("Public API server future returned error: {}", e);
                 }
             }
-        });
+        })
+    }
 
-        let internal_server_task = tokio::spawn(async move {
+    pub fn create_internal_api_server_task(&self, app: &App) -> JoinHandle<()> {
+        // Internal server to server API. This must be only LAN accessible.
+        let internal_api_server = {
+            let router = self.create_internal_router(&app);
+            let router = if self.config.debug_mode() {
+                router.merge(Self::create_swagger_ui())
+            } else {
+                router
+            };
+
+            let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+            info!("Internal API is available on {}", addr);
+            axum::Server::bind(&addr).serve(router.into_make_service())
+        };
+
+        tokio::spawn(async move {
             let shutdown_handle = internal_api_server.with_graceful_shutdown(async {
                 match signal::ctrl_c().await {
                     Ok(()) => (),
@@ -124,16 +135,38 @@ impl PihkaServer {
                     error!("Internal API server future returned error: {}", e);
                 }
             }
-        });
+        })
+    }
 
-        server_task.await.expect("Public API server task panic detected");
-        internal_server_task.await.expect("Internal API server task panic detected");
+    pub fn create_public_router(&self, app: &App) -> Router {
+        let mut router = Router::new();
 
-        info!("Server quit started");
+        if self.config.components().core {
+            router = router.merge(app.create_core_server_router())
+        }
 
-        drop(app);
-        database_manager.close().await;
+        if self.config.components().media {
+            router = router.merge(app.create_media_server_router())
+        }
 
-        info!("Server quit done");
+        router
+    }
+
+    pub fn create_internal_router(&self, app: &App) -> Router {
+        let mut router = Router::new();
+        if self.config.components().core {
+            router = router.merge(InternalApp::create_core_server_router(app.state()))
+        }
+
+        if self.config.components().media {
+            router = router.merge(InternalApp::create_media_server_router(app.state()))
+        }
+
+        router
+    }
+
+    pub fn create_swagger_ui() -> SwaggerUi {
+        SwaggerUi::new("/swagger-ui")
+            .url("/api-doc/openapi.json", ApiDoc::openapi())
     }
 }
