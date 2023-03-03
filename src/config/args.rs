@@ -1,7 +1,9 @@
-use std::{path::PathBuf, convert::{TryFrom, TryInto}};
+use std::{
+    convert::{TryFrom, TryInto},
+    path::PathBuf,
+};
 
 use clap::{arg, command, value_parser};
-
 
 // Config given as command line arguments
 pub struct ArgsConfig {
@@ -18,10 +20,11 @@ pub fn get_config() -> ArgsConfig {
         .get_matches();
 
     ArgsConfig {
-        database_dir: matches.get_one::<PathBuf>("database").map(ToOwned::to_owned),
+        database_dir: matches
+            .get_one::<PathBuf>("database")
+            .map(ToOwned::to_owned),
     }
 }
-
 
 #[derive(Debug)]
 pub enum ServerComponent {

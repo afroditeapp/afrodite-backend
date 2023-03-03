@@ -11,17 +11,15 @@ use utoipa::OpenApi;
 
 use crate::api::{
     self,
-    ApiDoc,
-    core::{
-        user::{ApiKey, UserId},
-
-    },
-    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, GetCoreServerInternalApi, GetMediaServerInternalApi,
+    core::user::{ApiKey, UserId},
+    ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
+    GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
 };
 
 use super::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, UserState}, internal::{CoreServerInternalApi, MediaServerInternalApi},
+    internal::{CoreServerInternalApi, MediaServerInternalApi},
+    session::{SessionManager, UserState},
 };
 
 #[derive(Clone)]

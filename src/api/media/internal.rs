@@ -1,8 +1,13 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-
-use axum::{extract::{Path, BodyStream}, middleware::Next, response::Response, Json, TypedHeader, body::Bytes};
-use headers::{Header, HeaderValue, ContentType, ContentLength};
+use axum::{
+    body::Bytes,
+    extract::{BodyStream, Path},
+    middleware::Next,
+    response::Response,
+    Json, TypedHeader,
+};
+use headers::{ContentLength, ContentType, Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
 use tokio::sync::Mutex;
 use utoipa::{
@@ -17,14 +22,14 @@ use super::{
     super::core::user::{ApiKey, UserId},
 };
 
-use super::{
-    image::ImageFileName,
-};
+use super::image::ImageFileName;
 
 use tracing::error;
 
-use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, super::core::ApiKeyHeader};
-
+use super::{
+    super::core::ApiKeyHeader, db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers,
+    ReadDatabase, WriteDatabase,
+};
 
 pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
 

@@ -1,17 +1,23 @@
-pub mod file;
 pub mod args;
+pub mod file;
 
-use std::{path::{PathBuf, Path}, convert::{TryFrom, TryInto}, collections::HashSet};
+use std::{
+    collections::HashSet,
+    convert::{TryFrom, TryInto},
+    path::{Path, PathBuf},
+};
 
 use clap::{arg, command, value_parser};
 
-use error_stack::{Result, ResultExt, Report};
+use error_stack::{Report, Result, ResultExt};
 use serde::Deserialize;
-
 
 use crate::utils::IntoReportExt;
 
-use self::{file::{ConfigFileError, ConfigFile, Components, SocketConfig}, args::{ArgsConfig, ServerComponent}};
+use self::{
+    args::{ArgsConfig, ServerComponent},
+    file::{Components, ConfigFile, ConfigFileError, SocketConfig},
+};
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
@@ -54,11 +60,9 @@ impl Config {
 }
 
 pub fn get_config() -> Result<Config, GetConfigError> {
-    let current_dir = std::env::current_dir()
-        .into_error(GetConfigError::GetWorkingDir)?;
+    let current_dir = std::env::current_dir().into_error(GetConfigError::GetWorkingDir)?;
     let file_config =
-        file::ConfigFile::load(current_dir)
-            .change_context(GetConfigError::LoadFileError)?;
+        file::ConfigFile::load(current_dir).change_context(GetConfigError::LoadFileError)?;
     let args_config = args::get_config();
 
     let database = if let Some(database) = args_config.database_dir {

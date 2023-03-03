@@ -1,8 +1,8 @@
 pub mod app;
 pub mod database;
+pub mod internal;
 pub mod session;
 pub mod user;
-pub mod internal;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -14,8 +14,9 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    config::{Config},
-    server::{app::App, database::DatabaseManager, internal::InternalApp}, api::ApiDoc,
+    api::ApiDoc,
+    config::Config,
+    server::{app::App, database::DatabaseManager, internal::InternalApp},
 };
 
 pub const CORE_SERVER_INTERNAL_API_URL: &str = "http://127.0.0.1:3001";
@@ -49,9 +50,13 @@ impl PihkaServer {
         };
 
         // Wait until both tasks quit
-        server_task.await.expect("Public API server task panic detected");
+        server_task
+            .await
+            .expect("Public API server task panic detected");
         if let Some(handle) = internal_server_task {
-            handle.await.expect("Internal API server task panic detected");
+            handle
+                .await
+                .expect("Internal API server task panic detected");
         }
 
         info!("Server quit started");
@@ -79,16 +84,14 @@ impl PihkaServer {
             if self.config.debug_mode() {
                 info!("Internal API is available on {}", addr);
             }
-            axum::Server::bind(&addr)
-                .serve(router.into_make_service())
+            axum::Server::bind(&addr).serve(router.into_make_service())
         };
 
         tokio::spawn(async move {
             let shutdown_handle = normal_api_server.with_graceful_shutdown(async {
                 match signal::ctrl_c().await {
                     Ok(()) => (),
-                    Err(e) =>
-                        error!("Failed to listen CTRL+C. Error: {}", e),
+                    Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
                 }
             });
 
@@ -122,8 +125,7 @@ impl PihkaServer {
             let shutdown_handle = internal_api_server.with_graceful_shutdown(async {
                 match signal::ctrl_c().await {
                     Ok(()) => (),
-                    Err(e) =>
-                        error!("Failed to listen CTRL+C. Error: {}", e),
+                    Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
                 }
             });
 
@@ -166,7 +168,6 @@ impl PihkaServer {
     }
 
     pub fn create_swagger_ui() -> SwaggerUi {
-        SwaggerUi::new("/swagger-ui")
-            .url("/api-doc/openapi.json", ApiDoc::openapi())
+        SwaggerUi::new("/swagger-ui").url("/api-doc/openapi.json", ApiDoc::openapi())
     }
 }

@@ -9,7 +9,7 @@ use axum::{
 };
 use headers::Header;
 use hyper::StatusCode;
-use reqwest::{Request, Client, Url};
+use reqwest::{Client, Request, Url};
 use tokio::sync::{Mutex, RwLock};
 
 use utoipa::OpenApi;
@@ -17,18 +17,25 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use error_stack::{Result, ResultExt};
 
-use crate::{api::{
-    self,
-    core::{
-        user::{ApiKey, UserId},
-        internal::{PATH_CHECK_API_KEY}, ApiKeyHeader,
+use crate::{
+    api::{
+        self,
+        core::{
+            internal::PATH_CHECK_API_KEY,
+            user::{ApiKey, UserId},
+            ApiKeyHeader,
+        },
+        ApiDoc, GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase,
+        WriteDatabase,
     },
-    GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, ApiDoc,
-}, utils::IntoReportExt};
+    utils::IntoReportExt,
+};
 
 use super::{
+    app::AppState,
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, UserState}, app::AppState, CORE_SERVER_INTERNAL_API_URL,
+    session::{SessionManager, UserState},
+    CORE_SERVER_INTERNAL_API_URL,
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
@@ -39,28 +46,29 @@ pub struct InternalApp;
 
 impl InternalApp {
     pub fn create_core_server_router(state: AppState) -> Router {
-        Router::new()
-            .route(
-                api::core::internal::PATH_CHECK_API_KEY,
-                get({
-                    let state = state.clone();
-                    move |body| api::core::internal::check_api_key(body, state)
-                }),
-            )
+        Router::new().route(
+            api::core::internal::PATH_CHECK_API_KEY,
+            get({
+                let state = state.clone();
+                move |body| api::core::internal::check_api_key(body, state)
+            }),
+        )
     }
 
     pub fn create_media_server_router(state: AppState) -> Router {
-        Router::new()
-            .route(
-                api::media::internal::PATH_POST_IMAGE,
-                post({
-                    let state = state.clone();
-                    move |parameter1, parameter2, header1, header2, body| api::media::internal::post_image(parameter1, parameter2, header1, header2, body, state)
-                })
-            )
+        Router::new().route(
+            api::media::internal::PATH_POST_IMAGE,
+            post({
+                let state = state.clone();
+                move |parameter1, parameter2, header1, header2, body| {
+                    api::media::internal::post_image(
+                        parameter1, parameter2, header1, header2, body, state,
+                    )
+                }
+            }),
+        )
     }
 }
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum HttpRequestError {
@@ -83,7 +91,6 @@ impl std::fmt::Display for InternalApiRequest {
     }
 }
 
-
 // TODO: Move url parsing to happen at startup so that url typos are
 // discovered earlier.
 
@@ -94,30 +101,37 @@ pub struct CoreServerInternalApi {
 
 impl CoreServerInternalApi {
     pub fn new(client: Client) -> Self {
-        Self { client, base_url: Url::parse(CORE_SERVER_INTERNAL_API_URL).unwrap() }
+        Self {
+            client,
+            base_url: Url::parse(CORE_SERVER_INTERNAL_API_URL).unwrap(),
+        }
     }
 
     pub async fn check_api_key(&self, api_key: ApiKey) -> Result<Option<UserId>, HttpRequestError> {
-        let request = self.client
+        let request = self
+            .client
             .get(self.base_url.join(PATH_CHECK_API_KEY).unwrap())
             .header(ApiKeyHeader::name(), api_key.as_str())
             .build()
             .unwrap();
 
-        let response = self.client.execute(request).await
+        let response = self
+            .client
+            .execute(request)
+            .await
             .into_error_with_info(HttpRequestError::Reqwest, InternalApiRequest::CheckApiKey)?;
 
-            if response.status() == StatusCode::OK {
-                let id: UserId = response.json().await
-                    .into_error_with_info(HttpRequestError::SerdeDeserialize, InternalApiRequest::CheckApiKey)?;
-                Ok(Some(id))
-            } else {
-                Ok(None)
-            }
+        if response.status() == StatusCode::OK {
+            let id: UserId = response.json().await.into_error_with_info(
+                HttpRequestError::SerdeDeserialize,
+                InternalApiRequest::CheckApiKey,
+            )?;
+            Ok(Some(id))
+        } else {
+            Ok(None)
+        }
     }
 }
-
-
 
 pub struct MediaServerInternalApi {
     client: Client,
@@ -128,7 +142,5 @@ impl MediaServerInternalApi {
         Self { client }
     }
 
-    pub async fn post_image() {
-
-    }
+    pub async fn post_image() {}
 }

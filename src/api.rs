@@ -6,14 +6,24 @@ pub mod media;
 use std::collections::HashMap;
 
 use tokio::sync::{Mutex, RwLock};
-use utoipa::{OpenApi, openapi::{self, security::{SecurityScheme, ApiKeyValue}}, Modify};
+use utoipa::{
+    openapi::{
+        self,
+        security::{ApiKeyValue, SecurityScheme},
+    },
+    Modify, OpenApi,
+};
 
 use crate::server::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, UserState}, internal::{CoreServerInternalApi, MediaServerInternalApi},
+    internal::{CoreServerInternalApi, MediaServerInternalApi},
+    session::{SessionManager, UserState},
 };
 
-use self::core::{user::{ApiKey, UserId}, API_KEY_HEADER_STR};
+use self::core::{
+    user::{ApiKey, UserId},
+    API_KEY_HEADER_STR,
+};
 
 // Paths
 

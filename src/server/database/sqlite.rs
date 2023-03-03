@@ -33,9 +33,7 @@ pub struct SqliteDatabasePath {
 
 impl SqliteDatabasePath {
     pub fn new(database_dir: PathBuf) -> Self {
-        Self {
-            database_dir,
-        }
+        Self { database_dir }
     }
 
     pub fn path(&self) -> &Path {

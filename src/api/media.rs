@@ -1,4 +1,3 @@
-
 pub mod image;
 pub mod internal;
 
@@ -18,13 +17,15 @@ use self::{
     super::core::user::{ApiKey, UserId},
 };
 
-use self::{
-    image::ImageFileName,
-};
+use self::image::ImageFileName;
 
 use tracing::error;
 
-use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, core::{ApiKeyHeader, API_KEY_HEADER_STR}, GetCoreServerInternalApi};
+use super::{
+    core::{ApiKeyHeader, API_KEY_HEADER_STR},
+    db_write, GetApiKeys, GetCoreServerInternalApi, GetRouterDatabaseHandle, GetUsers,
+    ReadDatabase, WriteDatabase,
+};
 
 pub const PATH_GET_IMAGE: &str = "/image/:user_id/:image_file";
 
@@ -56,7 +57,6 @@ pub async fn get_image<S: ReadDatabase>(
     Ok(())
 }
 
-
 pub async fn authenticate_media_api<T, S: GetApiKeys + GetCoreServerInternalApi>(
     state: S,
     req: Request<T>,
@@ -76,7 +76,7 @@ pub async fn authenticate_media_api<T, S: GetApiKeys + GetCoreServerInternalApi>
             Ok(Some(user_id)) => {
                 // TODO: Cache this API key.
                 Ok(next.run(req).await)
-            },
+            }
             Ok(None) => Err(StatusCode::UNAUTHORIZED),
             Err(e) => {
                 // TODO: It is probably not good to log this because this can
