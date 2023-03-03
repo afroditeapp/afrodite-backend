@@ -18,11 +18,11 @@ use utoipa::{
 use crate::server::session::UserState;
 
 use super::{
-    super::profile::profile::Profile,
-    super::account::user::{ApiKey, AccountId},
+    super::profile::data::Profile,
+    super::account::data::{ApiKey, AccountId},
 };
 
-use super::image::ImageFileName;
+use super::data::ImageFileName;
 
 use tracing::error;
 

@@ -1,4 +1,4 @@
-pub mod image;
+pub mod data;
 pub mod internal;
 
 use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
@@ -13,11 +13,10 @@ use utoipa::{
 use crate::server::session::UserState;
 
 use self::{
-    super::profile::profile::Profile,
-    super::model::{ApiKey, AccountId},
+    super::model::{ApiKey, AccountId, Profile},
 };
 
-use self::image::ImageFileName;
+use self::data::ImageFileName;
 
 use tracing::error;
 

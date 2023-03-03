@@ -15,7 +15,7 @@ use self::{
     super::super::model::{Profile, ApiKey, AccountId},
 };
 
-use self::super::super::media::image::ImageFileName;
+use self::super::super::media::data::ImageFileName;
 
 use tracing::error;
 

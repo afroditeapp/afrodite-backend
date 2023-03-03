@@ -2,9 +2,9 @@
 
 pub use super::{
     account::{
-        user::{ApiKey, AccountId},
+        data::{ApiKey, AccountId},
     },
     profile::{
-        profile::Profile,
+        data::Profile,
     }
 };

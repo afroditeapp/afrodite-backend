@@ -1,4 +1,4 @@
-pub mod profile;
+pub mod data;
 
 use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
 use headers::{Header, HeaderValue};

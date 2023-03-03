@@ -49,11 +49,11 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::internal::post_image,
     ),
     components(schemas(
-        account::user::AccountId,
-        account::user::ApiKey,
-        profile::profile::Profile,
-        media::image::ImageFileName,
-        media::image::ImageFile,
+        account::data::AccountId,
+        account::data::ApiKey,
+        profile::data::Profile,
+        media::data::ImageFileName,
+        media::data::ImageFile,
     )),
     modifiers(&SecurityApiTokenDefault),
 )]
