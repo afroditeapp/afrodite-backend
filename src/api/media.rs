@@ -14,7 +14,7 @@ use crate::server::session::UserState;
 
 use self::{
     super::profile::profile::Profile,
-    super::account::user::{ApiKey, UserId},
+    super::model::{ApiKey, AccountId},
 };
 
 use self::image::ImageFileName;
@@ -32,7 +32,7 @@ pub const PATH_GET_IMAGE: &str = "/image/:user_id/:image_file";
 #[utoipa::path(
     get,
     path = "/image/{user_id}/{image_file}",
-    params(UserId, ImageFileName),
+    params(AccountId, ImageFileName),
     responses(
         (status = 200, description = "Get image file.", content_type = "image/jpeg"),
         (status = 500),
@@ -40,7 +40,7 @@ pub const PATH_GET_IMAGE: &str = "/image/:user_id/:image_file";
     security(("api_key" = [])),
 )]
 pub async fn get_image<S: ReadDatabase>(
-    Path(user_id): Path<UserId>,
+    Path(user_id): Path<AccountId>,
     Path(image_file): Path<ImageFileName>,
     state: S,
 ) -> Result<(), StatusCode> {

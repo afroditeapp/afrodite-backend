@@ -2,7 +2,7 @@ use error_stack::Result;
 
 use crate::{
     api::model::{
-        ApiKey, UserId, Profile,
+        ApiKey, AccountId, Profile,
     },
     server::database::{git::file::CoreFileNoHistory, git::util::GitUserDirPath},
 };
@@ -21,9 +21,9 @@ impl<'a> GitDatabaseReadCommands {
     }
 
     // Read user ID from file.
-    pub async fn user_id(self) -> Result<Option<UserId>, GitError> {
+    pub async fn user_id(self) -> Result<Option<AccountId>, GitError> {
         let text = self.profile.read_to_string_optional(CoreFile::Id).await?;
-        Ok(text.map(UserId::new))
+        Ok(text.map(AccountId::new))
     }
 
     pub async fn api_key(self) -> Result<Option<ApiKey>, GitError> {

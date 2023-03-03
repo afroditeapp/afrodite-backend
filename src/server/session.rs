@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use tokio::sync::{Mutex, RwLock};
 
-use crate::api::account::user::{ApiKey, UserId};
+use crate::api::account::user::{ApiKey, AccountId};
 
 use super::database::{write::WriteCommands, RouterDatabaseHandle};
 
@@ -10,7 +10,7 @@ pub struct SessionManager {
     /// Users which are logged in.
     pub api_keys: RwLock<HashMap<ApiKey, UserState>>,
     /// All users registered in the service.
-    pub users: RwLock<HashMap<UserId, Mutex<WriteCommands>>>,
+    pub users: RwLock<HashMap<AccountId, Mutex<WriteCommands>>>,
     pub database: RouterDatabaseHandle,
 }
 
@@ -56,15 +56,15 @@ impl SessionManager {
 }
 
 pub struct UserState {
-    user_id: UserId,
+    user_id: AccountId,
 }
 
 impl UserState {
-    pub fn new(user_id: UserId) -> Self {
+    pub fn new(user_id: AccountId) -> Self {
         Self { user_id }
     }
 
-    pub fn id(&self) -> &UserId {
+    pub fn id(&self) -> &AccountId {
         &self.user_id
     }
 }

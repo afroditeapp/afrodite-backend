@@ -13,7 +13,7 @@ use utoipa::{
 use crate::server::session::UserState;
 
 use self::{
-    user::{ApiKey, UserId},
+    user::{ApiKey, AccountId},
 };
 
 use tracing::error;
@@ -28,15 +28,15 @@ pub const PATH_REGISTER: &str = "/register";
     path = "/register",
     security(),
     responses(
-        (status = 200, description = "New profile created.", body = [UserId]),
+        (status = 200, description = "New profile created.", body = [AccountId]),
         (status = 500),
     )
 )]
 pub async fn register<S: GetRouterDatabaseHandle + GetUsers>(
     state: S,
-) -> Result<Json<UserId>, StatusCode> {
+) -> Result<Json<AccountId>, StatusCode> {
     // New unique UUID is generated every time so no special handling needed.
-    let new_user_id = UserId::new(uuid::Uuid::new_v4().simple().to_string());
+    let new_user_id = AccountId::new(uuid::Uuid::new_v4().simple().to_string());
 
     let mut write_commands = state.database().user_write_commands(&new_user_id);
     match write_commands.register().await {
@@ -61,17 +61,17 @@ pub const PATH_LOGIN: &str = "/login";
     post,
     path = "/login",
     security(),
-    request_body = UserId,
+    request_body = AccountId,
     responses(
         (status = 200, description = "Login successful.", body = [ApiKey]),
         (status = 500),
     ),
 )]
 pub async fn login<S: GetApiKeys + WriteDatabase>(
-    Json(user_id): Json<UserId>,
+    Json(user_id): Json<AccountId>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
-    // TODO: check that UserId contains only hexadecimals
+    // TODO: check that AccountId contains only hexadecimals
 
     let key = ApiKey::new(uuid::Uuid::new_v4().simple().to_string());
 

@@ -11,7 +11,7 @@ use utoipa::OpenApi;
 
 use crate::api::{
     self,
-    model::{ApiKey, UserId},
+    model::{ApiKey, AccountId},
     ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
     GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
 };
@@ -47,7 +47,7 @@ impl GetApiKeys for AppState {
 }
 
 impl GetUsers for AppState {
-    fn users(&self) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>> {
+    fn users(&self) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>> {
         &self.session_manager.users
     }
 }
@@ -61,7 +61,7 @@ impl ReadDatabase for AppState {
 impl WriteDatabase for AppState {
     fn write_database_with_db_macro_do_not_call_this_outside_macros(
         &self,
-    ) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>> {
+    ) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>> {
         &self.session_manager.users
     }
 }

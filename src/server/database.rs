@@ -14,7 +14,7 @@ use tokio_stream::StreamExt;
 use error_stack::{Result, ResultExt};
 
 use crate::{
-    api::model::UserId,
+    api::model::AccountId,
     utils::{AppendErr, ErrorContainer, ErrorConversion},
 };
 
@@ -163,7 +163,7 @@ impl RouterDatabaseHandle {
         self.root.history()
     }
 
-    pub fn user_write_commands(&self, user_id: &UserId) -> WriteCommands {
+    pub fn user_write_commands(&self, user_id: &AccountId) -> WriteCommands {
         let git_dir = self.root.history().user_git_dir(user_id);
         WriteCommands::new(
             git_dir,
@@ -210,7 +210,7 @@ impl RouterDatabaseHandle {
 
     async fn integrity_check_handle_user_id(
         &self,
-        user_id: UserId,
+        user_id: AccountId,
         read: &ReadCommands<'_>,
     ) -> Result<(), DatabaseError> {
         let git_write = || {
@@ -255,12 +255,12 @@ impl RouterDatabaseHandle {
             .git(&user_id)
             .user_id()
             .await
-            .with_info_lazy(|| ReadCmdIntegrity::UserId(user_id.clone()))?;
+            .with_info_lazy(|| ReadCmdIntegrity::AccountId(user_id.clone()))?;
         if git_user_id.filter(|id| *id == user_id).is_none() {
             git_write()
                 .update_user_id()
                 .await
-                .with_info_lazy(|| WriteCmdIntegrity::GitUserIdFile(user_id.clone()))?;
+                .with_info_lazy(|| WriteCmdIntegrity::GitAccountIdFile(user_id.clone()))?;
         }
 
         Ok(())
@@ -269,7 +269,7 @@ impl RouterDatabaseHandle {
 
 #[derive(Debug, Clone)]
 enum WriteCmdIntegrity {
-    GitUserIdFile(UserId),
+    GitAccountIdFile(AccountId),
 }
 
 impl std::fmt::Display for WriteCmdIntegrity {
@@ -280,7 +280,7 @@ impl std::fmt::Display for WriteCmdIntegrity {
 
 #[derive(Debug, Clone)]
 enum ReadCmdIntegrity {
-    UserId(UserId),
+    AccountId(AccountId),
 }
 
 impl std::fmt::Display for ReadCmdIntegrity {

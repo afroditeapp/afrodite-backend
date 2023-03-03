@@ -4,7 +4,7 @@ use tokio_stream::StreamExt;
 use crate::{
     api::model::{
         Profile,
-        ApiKey, UserId,
+        ApiKey, AccountId,
     },
     utils::ErrorConversion,
 };
@@ -17,9 +17,9 @@ use super::{
 
 #[derive(Debug, Clone)]
 pub enum ReadCmd {
-    UserApiKey(UserId),
+    UserApiKey(AccountId),
     Users,
-    UserProfile(UserId),
+    UserProfile(AccountId),
 }
 
 impl std::fmt::Display for ReadCmd {
@@ -41,14 +41,14 @@ impl<'a> ReadCommands<'a> {
         }
     }
 
-    pub async fn user_api_key(&self, user_id: &UserId) -> Result<Option<ApiKey>, DatabaseError> {
+    pub async fn user_api_key(&self, user_id: &AccountId) -> Result<Option<ApiKey>, DatabaseError> {
         self.git(user_id)
             .api_key()
             .await
             .with_info_lazy(|| ReadCmd::UserApiKey(user_id.clone()))
     }
 
-    pub async fn users<T: FnMut(UserId)>(&self, mut handler: T) -> Result<(), DatabaseError> {
+    pub async fn users<T: FnMut(AccountId)>(&self, mut handler: T) -> Result<(), DatabaseError> {
         let mut users = self.sqlite().users();
         while let Some(user_id) = users.try_next().await.with_info(ReadCmd::Users)? {
             handler(user_id)
@@ -57,14 +57,14 @@ impl<'a> ReadCommands<'a> {
         Ok(())
     }
 
-    pub async fn user_profile(&self, user_id: &UserId) -> Result<Profile, DatabaseError> {
+    pub async fn user_profile(&self, user_id: &AccountId) -> Result<Profile, DatabaseError> {
         self.sqlite()
             .user_profile(user_id)
             .await
             .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))
     }
 
-    pub(super) fn git(&self, user_id: &UserId) -> GitDatabaseReadCommands {
+    pub(super) fn git(&self, user_id: &AccountId) -> GitDatabaseReadCommands {
         self.git_repositories.user_git_dir(user_id).read()
     }
 

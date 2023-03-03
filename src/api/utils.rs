@@ -11,7 +11,7 @@ use crate::server::session::UserState;
 
 use super::model::{
     Profile,
-    ApiKey, UserId
+    ApiKey, AccountId
 };
 
 use tracing::error;

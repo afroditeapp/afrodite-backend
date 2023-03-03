@@ -2,11 +2,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams)]
-pub struct UserId {
+pub struct AccountId {
     user_id: String,
 }
 
-impl UserId {
+impl AccountId {
     /// TODO: validate user id?
     pub fn new(user_id: String) -> Self {
         Self { user_id }

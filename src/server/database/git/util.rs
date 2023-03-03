@@ -5,7 +5,7 @@ use std::{
 
 use error_stack::Result;
 
-use crate::api::model::UserId;
+use crate::api::model::AccountId;
 
 use super::{
     super::GitError,
@@ -32,7 +32,7 @@ impl DatabasePath {
     }
 
     /// Make sure that `id` does not contain special characters
-    pub fn user_git_dir(&self, id: &UserId) -> GitUserDirPath {
+    pub fn user_git_dir(&self, id: &AccountId) -> GitUserDirPath {
         GitUserDirPath {
             git_repository_path: self.database_dir.join(id.as_str()),
             id: id.clone(),
@@ -52,7 +52,7 @@ impl DatabasePath {
 
     //     while let Some(dir_entry) = user_dirs.next_entry().await? {
     //         let user_id_string = dir_entry.file_name().into_string().map_err(|_| GitError::Utf8)?;
-    //         let user_dir = self.user_git_dir(&UserId::new(user_id_string));
+    //         let user_dir = self.user_git_dir(&AccountId::new(user_id_string));
 
     //         handle_user_dir(user_dir).await?;
     //     }
@@ -67,7 +67,7 @@ pub struct GitUserDirPath {
     /// Absolute path to profile directory.
     git_repository_path: PathBuf,
     /// User id which is also directory name.
-    id: UserId,
+    id: AccountId,
     /// Common title for all current git operations.
     mode_msg: Option<String>,
 }
@@ -82,7 +82,7 @@ impl GitUserDirPath {
         self.git_repository_path.exists()
     }
 
-    pub fn id(&self) -> &UserId {
+    pub fn id(&self) -> &AccountId {
         &self.id
     }
 

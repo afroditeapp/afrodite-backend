@@ -3,7 +3,7 @@ use error_stack::Result;
 use crate::{
     api::model::{
         Profile,
-        ApiKey, UserId,
+        ApiKey, AccountId,
     },
     server::database::{
         git::util::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
@@ -16,9 +16,9 @@ use super::{git::write::GitDatabaseWriteCommands, sqlite::write::SqliteWriteComm
 
 #[derive(Debug, Clone)]
 pub enum WriteCmd {
-    Register(UserId),
-    UpdateProfile(UserId),
-    UpdateApiKey(UserId),
+    Register(AccountId),
+    UpdateProfile(AccountId),
+    UpdateApiKey(AccountId),
 }
 
 impl std::fmt::Display for WriteCmd {

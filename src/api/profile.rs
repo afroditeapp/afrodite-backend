@@ -11,9 +11,9 @@ use utoipa::{
 
 use crate::server::session::UserState;
 
-use self::{
-    profile::Profile,
-    super::account::user::{ApiKey, UserId},
+use super::model::{
+    Profile,
+    ApiKey, AccountId
 };
 
 use tracing::error;
@@ -28,7 +28,7 @@ pub const PATH_GET_PROFILE: &str = "/profile/:user_id";
 #[utoipa::path(
     get,
     path = "/profile/{user_id}",
-    params(UserId),
+    params(AccountId),
     responses(
         (status = 200, description = "Get profile.", body = [Profile]),
         (status = 500),
@@ -36,7 +36,7 @@ pub const PATH_GET_PROFILE: &str = "/profile/:user_id";
     security(("api_key" = [])),
 )]
 pub async fn get_profile<S: ReadDatabase>(
-    Path(user_id): Path<UserId>,
+    Path(user_id): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: Validate user id

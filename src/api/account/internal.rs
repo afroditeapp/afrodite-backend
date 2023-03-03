@@ -12,7 +12,7 @@ use utoipa::{
 use crate::server::session::UserState;
 
 use self::{
-    super::super::model::{Profile, ApiKey, UserId},
+    super::super::model::{Profile, ApiKey, AccountId},
 };
 
 use self::super::super::media::image::ImageFileName;
@@ -32,7 +32,7 @@ pub const PATH_CHECK_API_KEY: &str = "/internal/check_api_key";
     get,
     path = "/internal/check_api_key",
     responses(
-        (status = 200, description = "Check API key", body = [UserId]),
+        (status = 200, description = "Check API key", body = [AccountId]),
         (status = 404, description = "API key was invalid"),
     ),
     security(("api_key" = [])),
@@ -40,7 +40,7 @@ pub const PATH_CHECK_API_KEY: &str = "/internal/check_api_key";
 pub async fn check_api_key<S: GetApiKeys>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
-) -> Result<Json<UserId>, StatusCode> {
+) -> Result<Json<AccountId>, StatusCode> {
     state
         .api_keys()
         .read()

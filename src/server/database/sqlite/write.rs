@@ -1,6 +1,6 @@
 use error_stack::Result;
 
-use crate::api::model::{Profile, UserId};
+use crate::api::model::{Profile, AccountId};
 
 use super::{SqliteDatabaseError, SqliteWriteHandle};
 
@@ -15,7 +15,7 @@ impl<'a> SqliteWriteCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_user_id(&mut self, user_id: &UserId) -> Result<(), SqliteDatabaseError> {
+    pub async fn store_user_id(&mut self, user_id: &AccountId) -> Result<(), SqliteDatabaseError> {
         let id = user_id.as_str();
         sqlx::query!(
             r#"
@@ -33,7 +33,7 @@ impl<'a> SqliteWriteCommands<'a> {
 
     pub async fn update_user_profile(
         self,
-        user_id: &UserId,
+        user_id: &AccountId,
         profile_data: &Profile,
     ) -> Result<(), SqliteDatabaseError> {
         let id = user_id.as_str();

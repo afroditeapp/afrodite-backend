@@ -20,7 +20,7 @@ use error_stack::{Result, ResultExt};
 use crate::{
     api::{
         self,
-        model::{ApiKey, UserId},
+        model::{ApiKey, AccountId},
         account::internal::PATH_CHECK_API_KEY,
         utils::{
             ApiKeyHeader,
@@ -107,7 +107,7 @@ impl CoreServerInternalApi {
         }
     }
 
-    pub async fn check_api_key(&self, api_key: ApiKey) -> Result<Option<UserId>, HttpRequestError> {
+    pub async fn check_api_key(&self, api_key: ApiKey) -> Result<Option<AccountId>, HttpRequestError> {
         let request = self
             .client
             .get(self.base_url.join(PATH_CHECK_API_KEY).unwrap())
@@ -122,7 +122,7 @@ impl CoreServerInternalApi {
             .into_error_with_info(HttpRequestError::Reqwest, InternalApiRequest::CheckApiKey)?;
 
         if response.status() == StatusCode::OK {
-            let id: UserId = response.json().await.into_error_with_info(
+            let id: AccountId = response.json().await.into_error_with_info(
                 HttpRequestError::SerdeDeserialize,
                 InternalApiRequest::CheckApiKey,
             )?;

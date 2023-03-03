@@ -26,7 +26,7 @@ use crate::server::{
 };
 
 use self::model::{
-    ApiKey, UserId,
+    ApiKey, AccountId,
 };
 
 use utils::SecurityApiTokenDefault;
@@ -49,7 +49,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::internal::post_image,
     ),
     components(schemas(
-        account::user::UserId,
+        account::user::AccountId,
         account::user::ApiKey,
         profile::profile::Profile,
         media::image::ImageFileName,
@@ -78,14 +78,14 @@ pub trait GetApiKeys {
 
 pub trait GetUsers {
     /// All users registered in the service.
-    fn users(&self) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>>;
+    fn users(&self) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>>;
 }
 
 /// Use with db_write macro.
 pub trait WriteDatabase {
     fn write_database_with_db_macro_do_not_call_this_outside_macros(
         &self,
-    ) -> &RwLock<HashMap<UserId, Mutex<WriteCommands>>>;
+    ) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>>;
 }
 
 pub trait ReadDatabase {

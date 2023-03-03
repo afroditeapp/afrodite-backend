@@ -19,7 +19,7 @@ use crate::server::session::UserState;
 
 use super::{
     super::profile::profile::Profile,
-    super::account::user::{ApiKey, UserId},
+    super::account::user::{ApiKey, AccountId},
 };
 
 use super::image::ImageFileName;
@@ -37,14 +37,14 @@ pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
     post,
     path = "/internal/image/{user_id}/{image_name}",
     request_body(content = ImageFile, description = "Upload new image", content_type = "image/jpeg"),
-    params(UserId, ImageFileName),
+    params(AccountId, ImageFileName),
     responses(
         (status = 200, description = "Image upload successfull"),
         (status = 500),
     ),
 )]
 pub async fn post_image<S>(
-    Path(user_id): Path<UserId>,
+    Path(user_id): Path<AccountId>,
     Path(image_file): Path<ImageFileName>,
     TypedHeader(content_type): TypedHeader<ContentType>,
     TypedHeader(content_lenght): TypedHeader<ContentLength>,
