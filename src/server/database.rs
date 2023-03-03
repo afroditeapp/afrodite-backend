@@ -14,7 +14,7 @@ use tokio_stream::StreamExt;
 use error_stack::{Result, ResultExt};
 
 use crate::{
-    api::core::user::UserId,
+    api::model::UserId,
     utils::{AppendErr, ErrorContainer, ErrorConversion},
 };
 

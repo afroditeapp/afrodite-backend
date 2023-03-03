@@ -1,7 +1,12 @@
 //! HTTP API types and request handlers for all servers.
 
-pub mod core;
+// Routes
+pub mod account;
+pub mod profile;
 pub mod media;
+
+pub mod model;
+pub mod utils;
 
 use std::collections::HashMap;
 
@@ -20,10 +25,11 @@ use crate::server::{
     session::{SessionManager, UserState},
 };
 
-use self::core::{
-    user::{ApiKey, UserId},
-    API_KEY_HEADER_STR,
+use self::model::{
+    ApiKey, UserId,
 };
+
+use utils::SecurityApiTokenDefault;
 
 // Paths
 
@@ -34,18 +40,18 @@ pub const PATH_PREFIX: &str = "/api/v1/";
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        core::register,
-        core::login,
-        core::get_profile,
-        core::post_profile,
-        core::internal::check_api_key,
+        account::register,
+        account::login,
+        account::internal::check_api_key,
+        profile::get_profile,
+        profile::post_profile,
         media::get_image,
         media::internal::post_image,
     ),
     components(schemas(
-        core::user::UserId,
-        core::user::ApiKey,
-        core::profile::Profile,
+        account::user::UserId,
+        account::user::ApiKey,
+        profile::profile::Profile,
         media::image::ImageFileName,
         media::image::ImageFile,
     )),
@@ -53,20 +59,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
 )]
 pub struct ApiDoc;
 
-pub struct SecurityApiTokenDefault;
 
-impl Modify for SecurityApiTokenDefault {
-    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-        if let Some(components) = openapi.components.as_mut() {
-            components.add_security_scheme(
-                "api_key",
-                SecurityScheme::ApiKey(utoipa::openapi::security::ApiKey::Header(
-                    ApiKeyValue::new(API_KEY_HEADER_STR),
-                )),
-            )
-        }
-    }
-}
 
 // App state getters
 

@@ -11,7 +11,7 @@ use utoipa::OpenApi;
 
 use crate::api::{
     self,
-    core::user::{ApiKey, UserId},
+    model::{ApiKey, UserId},
     ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
     GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
 };
@@ -106,39 +106,39 @@ impl App {
                 }),
             )
             .route(
-                api::core::PATH_REGISTER,
+                api::account::PATH_REGISTER,
                 post({
                     let state = self.state.clone();
-                    move || api::core::register(state)
+                    move || api::account::register(state)
                 }),
             )
             .route(
-                api::core::PATH_LOGIN,
+                api::account::PATH_LOGIN,
                 post({
                     let state = self.state.clone();
-                    move |body| api::core::login(body, state)
+                    move |body| api::account::login(body, state)
                 }),
             );
 
         let private = Router::new()
             .route(
-                api::core::PATH_GET_PROFILE,
+                api::profile::PATH_GET_PROFILE,
                 get({
                     let state = self.state.clone();
-                    move |body| api::core::get_profile(body, state)
+                    move |body| api::profile::get_profile(body, state)
                 }),
             )
             .route(
-                api::core::PATH_POST_PROFILE,
+                api::profile::PATH_POST_PROFILE,
                 post({
                     let state = self.state.clone();
-                    move |header, body| api::core::post_profile(header, body, state)
+                    move |header, body| api::profile::post_profile(header, body, state)
                 }),
             )
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();
-                    move |req, next| api::core::authenticate_core_api(state.clone(), req, next)
+                    move |req, next| api::utils::authenticate_core_api(state.clone(), req, next)
                 })
             });
 

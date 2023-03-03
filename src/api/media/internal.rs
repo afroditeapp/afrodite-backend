@@ -18,8 +18,8 @@ use utoipa::{
 use crate::server::session::UserState;
 
 use super::{
-    super::core::profile::Profile,
-    super::core::user::{ApiKey, UserId},
+    super::profile::profile::Profile,
+    super::account::user::{ApiKey, UserId},
 };
 
 use super::image::ImageFileName;
@@ -27,7 +27,7 @@ use super::image::ImageFileName;
 use tracing::error;
 
 use super::{
-    super::core::ApiKeyHeader, db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers,
+    super::utils::ApiKeyHeader, db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers,
     ReadDatabase, WriteDatabase,
 };
 

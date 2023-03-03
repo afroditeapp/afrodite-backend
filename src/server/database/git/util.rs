@@ -5,7 +5,7 @@ use std::{
 
 use error_stack::Result;
 
-use crate::api::core::user::UserId;
+use crate::api::model::UserId;
 
 use super::{
     super::GitError,

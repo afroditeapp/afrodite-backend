@@ -1,9 +1,8 @@
 use error_stack::Result;
 
 use crate::{
-    api::core::{
-        profile::Profile,
-        user::{ApiKey, UserId},
+    api::model::{
+        ApiKey, UserId, Profile,
     },
     server::database::{git::file::CoreFileNoHistory, git::util::GitUserDirPath},
 };

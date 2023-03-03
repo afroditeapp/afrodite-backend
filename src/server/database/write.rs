@@ -1,9 +1,9 @@
 use error_stack::Result;
 
 use crate::{
-    api::core::{
-        profile::Profile,
-        user::{ApiKey, UserId},
+    api::model::{
+        Profile,
+        ApiKey, UserId,
     },
     server::database::{
         git::util::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,

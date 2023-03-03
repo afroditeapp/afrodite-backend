@@ -2,7 +2,7 @@ use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
 
 use super::{SqliteDatabaseError, SqliteReadHandle};
-use crate::api::core::{profile::Profile, user::UserId};
+use crate::api::model::{Profile, UserId};
 use crate::utils::IntoReportExt;
 
 pub struct SqliteReadCommands<'a> {

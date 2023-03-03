@@ -20,9 +20,9 @@ use error_stack::{Result, ResultExt};
 use crate::{
     api::{
         self,
-        core::{
-            internal::PATH_CHECK_API_KEY,
-            user::{ApiKey, UserId},
+        model::{ApiKey, UserId},
+        account::internal::PATH_CHECK_API_KEY,
+        utils::{
             ApiKeyHeader,
         },
         ApiDoc, GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase,
@@ -47,10 +47,10 @@ pub struct InternalApp;
 impl InternalApp {
     pub fn create_core_server_router(state: AppState) -> Router {
         Router::new().route(
-            api::core::internal::PATH_CHECK_API_KEY,
+            api::account::internal::PATH_CHECK_API_KEY,
             get({
                 let state = state.clone();
-                move |body| api::core::internal::check_api_key(body, state)
+                move |body| api::account::internal::check_api_key(body, state)
             }),
         )
     }

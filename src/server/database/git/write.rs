@@ -5,7 +5,7 @@ use tracing::error;
 use super::{super::git::GitDatabase, GitError};
 use crate::utils::IntoReportExt;
 use crate::{
-    api::core::{profile::Profile, user::ApiKey},
+    api::model::{Profile, ApiKey},
     server::database::{
         git::file::{CoreFile, CoreFileNoHistory},
         git::util::GitUserDirPath,

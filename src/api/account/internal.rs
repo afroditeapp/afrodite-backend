@@ -12,16 +12,17 @@ use utoipa::{
 use crate::server::session::UserState;
 
 use self::{
-    super::profile::Profile,
-    super::user::{ApiKey, UserId},
+    super::super::model::{Profile, ApiKey, UserId},
 };
 
 use self::super::super::media::image::ImageFileName;
 
 use tracing::error;
 
+use crate::api::utils::ApiKeyHeader;
+
 use super::{
-    db_write, ApiKeyHeader, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase,
+    db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase,
     WriteDatabase,
 };
 
@@ -44,7 +45,7 @@ pub async fn check_api_key<S: GetApiKeys>(
         .api_keys()
         .read()
         .await
-        .get(&api_key.0)
+        .get(api_key.key())
         .ok_or(StatusCode::NOT_FOUND)
         .map(|state| state.id().clone().into())
 }

@@ -1,6 +1,6 @@
 use error_stack::Result;
 
-use crate::api::core::{profile::Profile, user::UserId};
+use crate::api::model::{Profile, UserId};
 
 use super::{SqliteDatabaseError, SqliteWriteHandle};
 

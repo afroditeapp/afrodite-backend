@@ -2,9 +2,9 @@ use error_stack::Result;
 use tokio_stream::StreamExt;
 
 use crate::{
-    api::core::{
-        profile::Profile,
-        user::{ApiKey, UserId},
+    api::model::{
+        Profile,
+        ApiKey, UserId,
     },
     utils::ErrorConversion,
 };

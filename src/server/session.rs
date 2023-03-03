@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use tokio::sync::{Mutex, RwLock};
 
-use crate::api::core::user::{ApiKey, UserId};
+use crate::api::account::user::{ApiKey, UserId};
 
 use super::database::{write::WriteCommands, RouterDatabaseHandle};
 
