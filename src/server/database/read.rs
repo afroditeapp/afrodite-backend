@@ -4,7 +4,7 @@ use tokio_stream::StreamExt;
 use crate::{
     api::model::{
         Profile,
-        ApiKey, AccountId,
+        ApiKey, AccountId, AccountIdLight,
     },
     utils::ErrorConversion,
 };

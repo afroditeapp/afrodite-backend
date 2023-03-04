@@ -22,11 +22,11 @@ use utoipa::{
 use crate::server::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     internal::{CoreServerInternalApi, MediaServerInternalApi},
-    session::{SessionManager, UserState},
+    session::{SessionManager, AccountState},
 };
 
 use self::model::{
-    ApiKey, AccountId,
+    ApiKey, AccountId, AccountIdLight,
 };
 
 use utils::SecurityApiTokenDefault;
@@ -51,6 +51,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     ),
     components(schemas(
         account::data::AccountId,
+        account::data::AccountIdLight,
         account::data::ApiKey,
         account::data::Account,
         account::data::AccountState,
@@ -77,19 +78,19 @@ pub trait GetRouterDatabaseHandle {
 
 pub trait GetApiKeys {
     /// Users which are logged in.
-    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, UserState>>;
+    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, AccountState>>;
 }
 
 pub trait GetUsers {
     /// All users registered in the service.
-    fn users(&self) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>>;
+    fn users(&self) -> &RwLock<HashMap<AccountIdLight, Mutex<WriteCommands>>>;
 }
 
 /// Use with db_write macro.
 pub trait WriteDatabase {
     fn write_database_with_db_macro_do_not_call_this_outside_macros(
         &self,
-    ) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>>;
+    ) -> &RwLock<HashMap<AccountIdLight, Mutex<WriteCommands>>>;
 }
 
 pub trait ReadDatabase {
@@ -107,7 +108,7 @@ pub trait GetMediaServerInternalApi {
 /// Helper macro for getting write access to database.
 ///
 /// Might make return error StatusCode::INTERNAL_SERVER_ERROR
-/// if user ID does not exist.
+/// if AccountId does not exist.
 ///
 ///
 /// Example usage:
@@ -134,10 +135,40 @@ macro_rules! db_write {
             .write_database_with_db_macro_do_not_call_this_outside_macros()
             .read()
             .await
-            .get($user_id)
+            .get(&$user_id)
             .ok_or(StatusCode::INTERNAL_SERVER_ERROR) // User does not exists
             .map(|x| async { x.lock().await })
     };
 }
 
+
+/// Helper macro for converting ApiKey to AccountId.
+///
+/// Might make return error StatusCode::INTERNAL_SERVER_ERROR
+/// if ApiKey does not exist.
+///
+/// Example usage:
+///
+/// ```rust
+/// pub async fn axum_route_handler<S: GetApiKey>(
+///     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+///     state: S,
+/// ) -> Result<(), StatusCode> {
+///     let id = get_account_id!(state, api_key.key())?;
+///     Ok(())
+/// }
+/// ```
+macro_rules! get_account_id {
+    ($all_keys:expr, $api_key:expr) => {
+        $all_keys
+            .api_keys()
+            .read()
+            .await
+            .get($api_key)
+            .ok_or(StatusCode::UNAUTHORIZED)
+            .map(|x| x.id().as_light())
+    };
+}
+
 pub(crate) use db_write;
+pub(crate) use get_account_id;

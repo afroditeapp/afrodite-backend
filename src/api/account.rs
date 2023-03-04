@@ -10,10 +10,10 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::server::session::UserState;
+use crate::server::session::AccountState;
 
 use self::{
-    data::{ApiKey, AccountId, Account, Capabilities},
+    data::{ApiKey, AccountId, Account, Capabilities, AccountIdLight},
 };
 
 use tracing::error;
@@ -35,19 +35,22 @@ pub const PATH_REGISTER: &str = "/register";
 )]
 pub async fn register<S: GetRouterDatabaseHandle + GetUsers>(
     state: S,
-) -> Result<Json<AccountId>, StatusCode> {
-    // New unique UUID is generated every time so no special handling needed.
-    let new_user_id = AccountId::generate_new();
+) -> Result<Json<AccountIdLight>, StatusCode> {
+    // New unique UUID is generated every time so no special handling needed
+    // to avoid database collisions.
+    let id = AccountId::generate_new();
 
-    let mut write_commands = state.database().user_write_commands(&new_user_id);
+    let mut write_commands = state
+        .database()
+        .user_write_commands(&id);
     match write_commands.register().await {
         Ok(()) => {
             state
                 .users()
                 .write()
                 .await
-                .insert(new_user_id.clone(), Mutex::new(write_commands));
-            Ok(new_user_id.into())
+                .insert(id.as_light(), Mutex::new(write_commands));
+            Ok(id.as_light().into())
         }
         Err(e) => {
             error!("Error: {e:?}");
@@ -69,13 +72,13 @@ pub const PATH_LOGIN: &str = "/login";
     ),
 )]
 pub async fn login<S: GetApiKeys + WriteDatabase>(
-    Json(user_id): Json<AccountId>,
+    Json(id): Json<AccountIdLight>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
 
     let key = ApiKey::generate_new();
 
-    db_write!(state, &user_id)?
+    db_write!(state, &id)?
         .await
         .update_current_api_key(&key)
         .await
@@ -84,7 +87,7 @@ pub async fn login<S: GetApiKeys + WriteDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
         })?;
 
-    let user_state = UserState::new(user_id);
+    let user_state = AccountState::new(id.to_full());
     state
         .api_keys()
         .write()

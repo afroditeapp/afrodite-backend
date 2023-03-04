@@ -10,7 +10,7 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::server::session::UserState;
+use crate::server::session::AccountState;
 
 use self::{
     super::model::{ApiKey, AccountId, Profile},

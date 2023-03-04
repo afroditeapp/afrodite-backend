@@ -3,23 +3,29 @@ use utoipa::{IntoParams, ToSchema};
 
 /// AccountId is an UUID string. Server will generate an UUID string when
 /// generating a new AccountId.
-#[derive(Debug, Serialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams)]
+#[derive(Debug, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams)]
 pub struct AccountId {
     // String representation is used a lot in server code, so
     // it is better than using Uuid type directly.
     account_id: String,
+    light: AccountIdLight,
 }
 
 impl AccountId {
     pub fn generate_new() -> Self {
+        let id = uuid::Uuid::new_v4();
         Self {
-            account_id: uuid::Uuid::new_v4().simple().to_string(),
+            account_id: id.simple().to_string(),
+            light: AccountIdLight { account_id: id }
         }
     }
 
     pub fn parse(account_id: String) -> Result<Self, uuid::Error> {
         match uuid::Uuid::try_parse(&account_id) {
-            Ok(_) => Ok(Self { account_id }),
+            Ok(light) => Ok(Self {
+                account_id,
+                light: AccountIdLight { account_id: light },
+            }),
             Err(e) => Err(e),
         }
     }
@@ -30,6 +36,14 @@ impl AccountId {
 
     pub fn as_str(&self) -> &str {
         &self.account_id
+    }
+
+    pub fn as_light(&self) -> AccountIdLight {
+        self.light
+    }
+
+    pub fn formatter(&self) -> uuid::fmt::Simple {
+        self.light.account_id.simple()
     }
 }
 
@@ -48,6 +62,19 @@ impl <'de> Deserialize<'de> for AccountId {
 
         AccountId::parse(raw.account_id)
             .map_err(|_| D::Error::custom("Is not an UUID"))
+    }
+}
+
+/// AccoutId which is internally Uuid object.
+/// Consumes less memory.
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams, Copy)]
+pub struct AccountIdLight {
+    account_id: uuid::Uuid,
+}
+
+impl AccountIdLight {
+    pub fn to_full(&self) -> AccountId {
+        AccountId { account_id: self.account_id.simple().to_string(), light: self.clone() }
     }
 }
 

@@ -9,7 +9,7 @@ edition = "2021"
 clap = { version = "3.2.14", features = ["cargo"] }
 toml = "0.7.2"
 git2 = "0.15.0"
-uuid = { version = "1.1.2", features = ["v4"] }
+uuid = { version = "1.1.2", features = ["v4", "serde"] }
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

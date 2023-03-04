@@ -15,7 +15,7 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::server::session::UserState;
+use crate::{server::session::AccountState, api::model::AccountIdLight};
 
 use super::{
     super::profile::data::Profile,
@@ -44,7 +44,7 @@ pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
     ),
 )]
 pub async fn post_image<S>(
-    Path(user_id): Path<AccountId>,
+    Path(id): Path<AccountIdLight>,
     Path(image_file): Path<ImageFileName>,
     TypedHeader(content_type): TypedHeader<ContentType>,
     TypedHeader(content_lenght): TypedHeader<ContentLength>,

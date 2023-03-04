@@ -11,7 +11,7 @@ use utoipa::OpenApi;
 
 use crate::api::{
     self,
-    model::{ApiKey, AccountId},
+    model::{ApiKey, AccountId, AccountIdLight},
     ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
     GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
 };
@@ -19,7 +19,7 @@ use crate::api::{
 use super::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     internal::{CoreServerInternalApi, MediaServerInternalApi},
-    session::{SessionManager, UserState},
+    session::{SessionManager, AccountState},
 };
 
 #[derive(Clone)]
@@ -41,14 +41,14 @@ impl GetRouterDatabaseHandle for AppState {
 }
 
 impl GetApiKeys for AppState {
-    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, UserState>> {
+    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, AccountState>> {
         &self.session_manager.api_keys
     }
 }
 
 impl GetUsers for AppState {
-    fn users(&self) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>> {
-        &self.session_manager.users
+    fn users(&self) -> &RwLock<HashMap<AccountIdLight, Mutex<WriteCommands>>> {
+        &self.session_manager.accounts
     }
 }
 
@@ -61,8 +61,8 @@ impl ReadDatabase for AppState {
 impl WriteDatabase for AppState {
     fn write_database_with_db_macro_do_not_call_this_outside_macros(
         &self,
-    ) -> &RwLock<HashMap<AccountId, Mutex<WriteCommands>>> {
-        &self.session_manager.users
+    ) -> &RwLock<HashMap<AccountIdLight, Mutex<WriteCommands>>> {
+        &self.session_manager.accounts
     }
 }
 

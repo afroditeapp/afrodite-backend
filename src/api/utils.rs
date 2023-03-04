@@ -7,7 +7,7 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::server::session::UserState;
+use crate::server::session::AccountState;
 
 use super::model::{
     Profile,

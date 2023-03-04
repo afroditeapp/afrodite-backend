@@ -9,12 +9,12 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::server::session::UserState;
+use crate::server::session::AccountState;
 
-use super::model::{
+use super::{model::{
     Profile,
-    ApiKey, AccountId
-};
+    ApiKey, AccountId, AccountIdLight
+}, get_account_id};
 
 use tracing::error;
 
@@ -36,13 +36,13 @@ pub const PATH_GET_PROFILE: &str = "/profile/:user_id";
     security(("api_key" = [])),
 )]
 pub async fn get_profile<S: ReadDatabase>(
-    Path(user_id): Path<AccountId>,
+    Path(id): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: Validate user id
     state
         .read_database()
-        .user_profile(&user_id)
+        .user_profile(&id)
         .await
         .map(|profile| profile.into())
         .map_err(|e| {
@@ -68,10 +68,9 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
     Json(profile): Json<Profile>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let keys = state.api_keys().read().await;
-    let user_id = keys.get(api_key.key()).ok_or(StatusCode::UNAUTHORIZED)?.id();
+    let id = get_account_id!(state, api_key.key())?;
 
-    db_write!(state, user_id)?
+    db_write!(state, id)?
         .await
         .update_user_profile(&profile)
         .await
