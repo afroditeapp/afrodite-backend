@@ -42,6 +42,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     paths(
         account::register,
         account::login,
+        account::account_state,
         account::internal::check_api_key,
         profile::get_profile,
         profile::post_profile,
@@ -51,6 +52,9 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     components(schemas(
         account::data::AccountId,
         account::data::ApiKey,
+        account::data::Account,
+        account::data::AccountState,
+        account::data::Capabilities,
         profile::data::Profile,
         media::data::ImageFileName,
         media::data::ImageFile,

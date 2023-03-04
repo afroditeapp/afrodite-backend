@@ -13,12 +13,12 @@ use utoipa::{
 use crate::server::session::UserState;
 
 use self::{
-    data::{ApiKey, AccountId},
+    data::{ApiKey, AccountId, Account, Capabilities},
 };
 
 use tracing::error;
 
-use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase};
+use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, utils::ApiKeyHeader};
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -92,4 +92,41 @@ pub async fn login<S: GetApiKeys + WriteDatabase>(
         .insert(key.clone(), user_state);
 
     Ok(key.into())
+}
+
+
+pub const PATH_ACCOUNT_STATE: &str = "/account/state";
+
+#[utoipa::path(
+    get,
+    path = "/account/state",
+    responses(
+        (status = 200, description = "Request successfull.", body = [Account]),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn account_state<S: GetApiKeys + ReadDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    state: S,
+) -> Result<Json<Account>, StatusCode> {
+    let id = state
+        .api_keys()
+        .read()
+        .await
+        .get(api_key.key())
+        .ok_or(StatusCode::UNAUTHORIZED)?
+        .id();
+
+    // state
+    //     .read_database()
+    //     .user_profile(&id)
+    //     .await
+    //     .map(|profile| profile.into())
+    //     .map_err(|e| {
+    //         error!("Get profile error: {e:?}");
+    //         StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+    //     })
+
+        Ok(Account::new().into())
 }

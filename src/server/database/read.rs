@@ -57,11 +57,11 @@ impl<'a> ReadCommands<'a> {
         Ok(())
     }
 
-    pub async fn user_profile(&self, user_id: &AccountId) -> Result<Profile, DatabaseError> {
+    pub async fn user_profile(&self, id: &AccountId) -> Result<Profile, DatabaseError> {
         self.sqlite()
-            .user_profile(user_id)
+            .user_profile(id)
             .await
-            .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))
+            .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))
     }
 
     pub(super) fn git(&self, user_id: &AccountId) -> GitDatabaseReadCommands {

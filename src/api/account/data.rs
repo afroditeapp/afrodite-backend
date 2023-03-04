@@ -78,3 +78,39 @@ impl ApiKey {
         &self.api_key
     }
 }
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct Account {
+    state: AccountState,
+    capablities: Capabilities,
+}
+
+impl Account {
+    pub fn new() -> Self {
+        Self {
+            state: AccountState::InitialSetup,
+            capablities: Default::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub enum AccountState {
+    InitialSetup,
+    Normal,
+    Banned,
+    PendingDeletion,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema, Default)]
+pub struct Capabilities {
+    admin_modify_capablities: Option<bool>,
+    admin_setup_possible: Option<bool>,
+    admin_moderate_profiles: Option<bool>,
+    admin_moderate_images: Option<bool>,
+    admin_view_private_info: Option<bool>,
+    admin_view_profile_history: Option<bool>,
+    admin_ban_profile: Option<bool>,
+    banned_edit_profile: Option<bool>,
+    view_public_profiles: Option<bool>,
+}

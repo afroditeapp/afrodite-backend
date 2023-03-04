@@ -2,7 +2,7 @@
 
 pub use super::{
     account::{
-        data::{ApiKey, AccountId},
+        data::{ApiKey, AccountId, Account, AccountState, Capabilities},
     },
     profile::{
         data::Profile,
