@@ -40,9 +40,10 @@ impl<'a> SqliteReadCommands<'a> {
         )
         .fetch(self.handle.pool())
         .map(|result| {
-            result
+            let result = result
+                .into_error(SqliteDatabaseError::Fetch)?;
+            AccountId::parse(result.id)
                 .into_error(SqliteDatabaseError::Fetch)
-                .map(|data| AccountId::new(data.id))
         })
     }
 

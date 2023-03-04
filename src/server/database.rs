@@ -210,35 +210,35 @@ impl RouterDatabaseHandle {
 
     async fn integrity_check_handle_user_id(
         &self,
-        user_id: AccountId,
+        id: AccountId,
         read: &ReadCommands<'_>,
     ) -> Result<(), DatabaseError> {
         let git_write = || {
-            self.user_write_commands(&user_id)
+            self.user_write_commands(&id)
                 .git_with_mode_message("Integrity check".into())
         };
 
         // Check that user git repository exists
-        let git_dir = self.root.history().user_git_dir(&user_id);
+        let git_dir = self.root.history().user_git_dir(&id);
         if !git_dir.exists() {
             git_write()
                 .store_user_id()
                 .await
-                .with_info_lazy(|| WriteCmd::Register(user_id.clone()))?;
+                .with_info_lazy(|| WriteCmd::Register(id.clone()))?;
         }
 
         // Check profile file
         let git_profile = self
             .read()
-            .git(&user_id)
+            .git(&id)
             .profile()
             .await
-            .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
+            .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))?;
         let sqlite_profile = read
             .sqlite()
-            .user_profile(&user_id)
+            .user_profile(&id)
             .await
-            .with_info_lazy(|| ReadCmd::UserProfile(user_id.clone()))?;
+            .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))?;
         if git_profile
             .filter(|profile| *profile == sqlite_profile)
             .is_none()
@@ -246,21 +246,21 @@ impl RouterDatabaseHandle {
             git_write()
                 .update_user_profile(&sqlite_profile)
                 .await
-                .with_info_lazy(|| WriteCmd::UpdateProfile(user_id.clone()))?;
+                .with_info_lazy(|| WriteCmd::UpdateProfile(id.clone()))?;
         }
 
         // Check ID file
-        let git_user_id = self
+        let git_id = self
             .read()
-            .git(&user_id)
-            .user_id()
+            .git(&id)
+            .account_id()
             .await
-            .with_info_lazy(|| ReadCmdIntegrity::AccountId(user_id.clone()))?;
-        if git_user_id.filter(|id| *id == user_id).is_none() {
+            .with_info_lazy(|| ReadCmdIntegrity::AccountId(id.clone()))?;
+        if git_id.filter(|git_id| *git_id == id).is_none() {
             git_write()
                 .update_user_id()
                 .await
-                .with_info_lazy(|| WriteCmdIntegrity::GitAccountIdFile(user_id.clone()))?;
+                .with_info_lazy(|| WriteCmdIntegrity::GitAccountIdFile(id.clone()))?;
         }
 
         Ok(())

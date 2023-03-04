@@ -20,6 +20,7 @@ use tracing::error;
 
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase};
 
+// TODO: Update register and login to support Apple and Google single sign on.
 
 pub const PATH_REGISTER: &str = "/register";
 
@@ -29,14 +30,14 @@ pub const PATH_REGISTER: &str = "/register";
     security(),
     responses(
         (status = 200, description = "New profile created.", body = [AccountId]),
-        (status = 500),
+        (status = 500, description = "Internal server error."),
     )
 )]
 pub async fn register<S: GetRouterDatabaseHandle + GetUsers>(
     state: S,
 ) -> Result<Json<AccountId>, StatusCode> {
     // New unique UUID is generated every time so no special handling needed.
-    let new_user_id = AccountId::new(uuid::Uuid::new_v4().simple().to_string());
+    let new_user_id = AccountId::generate_new();
 
     let mut write_commands = state.database().user_write_commands(&new_user_id);
     match write_commands.register().await {
@@ -64,16 +65,15 @@ pub const PATH_LOGIN: &str = "/login";
     request_body = AccountId,
     responses(
         (status = 200, description = "Login successful.", body = [ApiKey]),
-        (status = 500),
+        (status = 500, description = "Internal server error."),
     ),
 )]
 pub async fn login<S: GetApiKeys + WriteDatabase>(
     Json(user_id): Json<AccountId>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
-    // TODO: check that AccountId contains only hexadecimals
 
-    let key = ApiKey::new(uuid::Uuid::new_v4().simple().to_string());
+    let key = ApiKey::generate_new();
 
     db_write!(state, &user_id)?
         .await

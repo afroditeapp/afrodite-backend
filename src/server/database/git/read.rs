@@ -20,10 +20,18 @@ impl<'a> GitDatabaseReadCommands {
         Self { profile }
     }
 
-    // Read user ID from file.
-    pub async fn user_id(self) -> Result<Option<AccountId>, GitError> {
-        let text = self.profile.read_to_string_optional(CoreFile::Id).await?;
-        Ok(text.map(AccountId::new))
+    // Read AccounId from file.
+    pub async fn account_id(self) -> Result<Option<AccountId>, GitError> {
+        let text = self.profile
+            .read_to_string_optional(CoreFile::Id).await?;
+        match text {
+            Some(raw_account_id) => {
+                AccountId::parse(raw_account_id)
+                    .into_error(GitError::AccountIdParsing)
+                    .map(Some)
+            }
+            None => Ok(None)
+        }
     }
 
     pub async fn api_key(self) -> Result<Option<ApiKey>, GitError> {

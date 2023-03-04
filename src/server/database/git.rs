@@ -72,6 +72,9 @@ pub enum GitError {
     SerdeSerialize,
     #[error("Serde deserialization failed")]
     SerdeDerialize,
+
+    #[error("AccountId parsing error")]
+    AccountIdParsing,
 }
 
 /// Git database for one user
