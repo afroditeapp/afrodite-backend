@@ -21,8 +21,8 @@ internal_api = "127.0.0.1:3001"
 dir = "database"
 
 [components]
-login = true
-core = true
+account = true
+profile = true
 media = true
 
 
@@ -80,8 +80,8 @@ impl ConfigFile {
 
 #[derive(Debug, Deserialize)]
 pub struct Components {
-    pub login: bool,
-    pub core: bool,
+    pub account: bool,
+    pub profile: bool,
     pub media: bool,
 }
 
