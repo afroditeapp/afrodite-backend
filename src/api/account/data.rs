@@ -6,7 +6,9 @@ use utoipa::{IntoParams, ToSchema};
 #[derive(Debug, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams)]
 pub struct AccountId {
     // String representation is used a lot in server code, so
-    // it is better than using Uuid type directly.
+    // it is better than using only Uuid type directly.
+
+    /// UUID string with Simple format.
     account_id: String,
     light: AccountIdLight,
 }
@@ -23,7 +25,7 @@ impl AccountId {
     pub fn parse(account_id: String) -> Result<Self, uuid::Error> {
         match uuid::Uuid::try_parse(&account_id) {
             Ok(light) => Ok(Self {
-                account_id,
+                account_id: light.as_simple().to_string(),
                 light: AccountIdLight { account_id: light },
             }),
             Err(e) => Err(e),
