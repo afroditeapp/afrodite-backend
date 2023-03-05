@@ -19,11 +19,11 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::server::{
+use crate::{server::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    internal::{CoreServerInternalApi, MediaServerInternalApi},
+    internal::{},
     session::{SessionManager, AccountState},
-};
+}, client::{account::AccountInternalApi, media::MediaInternalApi}};
 
 use self::model::{
     ApiKey, AccountId, AccountIdLight,
@@ -98,11 +98,11 @@ pub trait ReadDatabase {
 }
 
 pub trait GetCoreServerInternalApi {
-    fn core_server_internal_api(&self) -> CoreServerInternalApi;
+    fn core_server_internal_api(&self) -> AccountInternalApi;
 }
 
 pub trait GetMediaServerInternalApi {
-    fn media_server_internal_api(&self) -> MediaServerInternalApi;
+    fn media_server_internal_api(&self) -> MediaInternalApi;
 }
 
 /// Helper macro for getting write access to database.

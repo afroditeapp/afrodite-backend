@@ -6,6 +6,7 @@ use std::{
 
 use error_stack::{Report, Result, ResultExt};
 use serde::Deserialize;
+use url::Url;
 
 use crate::{server::database::git::file, utils::IntoReportExt};
 
@@ -25,7 +26,9 @@ account = true
 profile = true
 media = true
 
-
+# [external_services]
+# account_internal = "http://127.0.0.1:4000"
+# media_internal = "http://127.0.0.1:4000"
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -44,6 +47,7 @@ pub struct ConfigFile {
     pub components: Components,
     pub database: DatabaseConfig,
     pub socket: SocketConfig,
+    pub external_services: Option<ExternalServices>,
 }
 
 impl ConfigFile {
@@ -94,4 +98,11 @@ pub struct DatabaseConfig {
 pub struct SocketConfig {
     pub public_api: SocketAddr,
     pub internal_api: SocketAddr,
+}
+
+/// Base URLs for external services
+#[derive(Debug, Deserialize, Default)]
+pub struct ExternalServices {
+    pub account_internal: Option<Url>,
+    pub media_internal: Option<Url>,
 }

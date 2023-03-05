@@ -35,7 +35,6 @@ use super::{
     app::AppState,
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     session::{SessionManager, AccountState},
-    CORE_SERVER_INTERNAL_API_URL,
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
@@ -68,79 +67,4 @@ impl InternalApp {
             }),
         )
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum HttpRequestError {
-    #[error("Reqwest error")]
-    Reqwest,
-
-    // Other errors
-    #[error("Serde deserialization error")]
-    SerdeDeserialize,
-}
-
-#[derive(Debug, Clone)]
-pub enum InternalApiRequest {
-    CheckApiKey,
-}
-
-impl std::fmt::Display for InternalApiRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("Internal API request: {:?}", self))
-    }
-}
-
-// TODO: Move url parsing to happen at startup so that url typos are
-// discovered earlier.
-
-pub struct CoreServerInternalApi {
-    client: Client,
-    base_url: Url,
-}
-
-impl CoreServerInternalApi {
-    pub fn new(client: Client) -> Self {
-        Self {
-            client,
-            base_url: Url::parse(CORE_SERVER_INTERNAL_API_URL).unwrap(),
-        }
-    }
-
-    pub async fn check_api_key(&self, api_key: ApiKey) -> Result<Option<AccountIdLight>, HttpRequestError> {
-        let request = self
-            .client
-            .get(self.base_url.join(PATH_CHECK_API_KEY).unwrap())
-            .header(ApiKeyHeader::name(), api_key.as_str())
-            .build()
-            .unwrap();
-
-        let response = self
-            .client
-            .execute(request)
-            .await
-            .into_error_with_info(HttpRequestError::Reqwest, InternalApiRequest::CheckApiKey)?;
-
-        if response.status() == StatusCode::OK {
-            let id: AccountIdLight = response.json().await.into_error_with_info(
-                HttpRequestError::SerdeDeserialize,
-                InternalApiRequest::CheckApiKey,
-            )?;
-            Ok(Some(id))
-        } else {
-            Ok(None)
-        }
-    }
-}
-
-pub struct MediaServerInternalApi {
-    client: Client,
-}
-
-impl MediaServerInternalApi {
-    pub fn new(client: Client) -> Self {
-        Self { client }
-    }
-
-    pub async fn post_image() {}
 }

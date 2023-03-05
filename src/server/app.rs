@@ -9,16 +9,16 @@ use tokio::sync::{Mutex, RwLock};
 
 use utoipa::OpenApi;
 
-use crate::api::{
+use crate::{api::{
     self,
     model::{ApiKey, AccountId, AccountIdLight},
     ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
     GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
-};
+}, client::{media::{MediaInternalApi, MediaInternalApiUrls}, account::{AccountInternalApi, AccountInternalApiUrls}}, config::ClientApiUrls};
 
 use super::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    internal::{CoreServerInternalApi, MediaServerInternalApi},
+    internal::{},
     session::{SessionManager, AccountState},
 };
 
@@ -26,6 +26,7 @@ use super::{
 pub struct AppState {
     session_manager: Arc<SessionManager>,
     client: reqwest::Client,
+    api_urls: Arc<ClientApiUrls>,
 }
 
 impl GetSessionManager for AppState {
@@ -67,14 +68,20 @@ impl WriteDatabase for AppState {
 }
 
 impl GetCoreServerInternalApi for AppState {
-    fn core_server_internal_api(&self) -> CoreServerInternalApi {
-        CoreServerInternalApi::new(self.client.clone())
+    fn core_server_internal_api(&self) -> AccountInternalApi {
+        AccountInternalApi::new(
+            self.client.clone(),
+            &self.api_urls.account_internal
+        )
     }
 }
 
 impl GetMediaServerInternalApi for AppState {
-    fn media_server_internal_api(&self) -> MediaServerInternalApi {
-        MediaServerInternalApi::new(self.client.clone())
+    fn media_server_internal_api(&self) -> MediaInternalApi {
+        MediaInternalApi::new(
+            self.client.clone(),
+            &self.api_urls.media_internal
+        )
     }
 }
 
@@ -83,10 +90,14 @@ pub struct App {
 }
 
 impl App {
-    pub async fn new(database_handle: RouterDatabaseHandle) -> Self {
+    pub async fn new(
+        database_handle: RouterDatabaseHandle,
+        api_urls: Arc<ClientApiUrls>,
+    ) -> Self {
         let state = AppState {
             session_manager: Arc::new(SessionManager::new(database_handle).await),
             client: reqwest::Client::new(),
+            api_urls,
         };
 
         Self { state }

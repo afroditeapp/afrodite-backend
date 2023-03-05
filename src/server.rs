@@ -16,10 +16,8 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     api::ApiDoc,
     config::Config,
-    server::{app::App, database::DatabaseManager, internal::InternalApp},
+    server::{app::App, database::DatabaseManager, internal::InternalApp}, client::account::AccountInternalApiUrls,
 };
-
-pub const CORE_SERVER_INTERNAL_API_URL: &str = "http://127.0.0.1:3001";
 
 pub struct PihkaServer {
     config: Arc<Config>,
@@ -40,7 +38,7 @@ impl PihkaServer {
                 .await
                 .expect("Database init failed");
 
-        let app = App::new(router_database_handle).await;
+        let app = App::new(router_database_handle, self.config.external_service_urls()).await;
 
         let server_task = self.create_public_api_server_task(&app);
         let internal_server_task = if self.config.debug_mode() {

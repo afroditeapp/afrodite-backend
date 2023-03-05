@@ -1,5 +1,6 @@
 pub mod api;
 pub mod config;
+pub mod client;
 pub mod server;
 pub mod utils;
 
