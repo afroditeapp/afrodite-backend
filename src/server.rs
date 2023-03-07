@@ -38,7 +38,7 @@ impl PihkaServer {
                 .await
                 .expect("Database init failed");
 
-        let app = App::new(router_database_handle, self.config.external_service_urls()).await;
+        let app = App::new(router_database_handle, self.config.clone()).await;
 
         let server_task = self.create_public_api_server_task(&app);
         let internal_server_task = if self.config.debug_mode() {

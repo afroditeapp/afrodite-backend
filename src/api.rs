@@ -23,7 +23,7 @@ use crate::{server::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     internal::{},
     session::{SessionManager, AccountState},
-}, client::{account::AccountInternalApi, media::MediaInternalApi}};
+}, client::{account::AccountInternalApi, media::MediaInternalApi}, config::Config};
 
 use self::model::{
     ApiKey, AccountId, AccountIdLight,
@@ -103,6 +103,10 @@ pub trait GetCoreServerInternalApi {
 
 pub trait GetMediaServerInternalApi {
     fn media_server_internal_api(&self) -> MediaInternalApi;
+}
+
+pub trait GetConfig {
+    fn config(&self) -> &Config;
 }
 
 /// Helper macro for getting write access to database.

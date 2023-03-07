@@ -9,10 +9,10 @@ use utoipa::{
 
 use crate::server::session::AccountState;
 
-use super::model::{
+use super::{model::{
     Profile,
     ApiKey, AccountId
-};
+}, GetCoreServerInternalApi, GetConfig};
 
 use tracing::error;
 
@@ -21,7 +21,7 @@ use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabas
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
 
-pub async fn authenticate_core_api<T, S: GetApiKeys>(
+pub async fn authenticate_with_api_key<T, S: GetApiKeys + GetCoreServerInternalApi + GetConfig>(
     state: S,
     req: Request<T>,
     next: Next<T>,
@@ -30,11 +30,28 @@ pub async fn authenticate_core_api<T, S: GetApiKeys>(
         .headers()
         .get(API_KEY_HEADER_STR)
         .ok_or(StatusCode::BAD_REQUEST)?;
-    let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let key_str =
+        header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = ApiKey::new(key_str.to_string());
 
     if state.api_keys().read().await.contains_key(&key) {
         Ok(next.run(req).await)
+    } else if !state.config().components().account {
+        // Check ApiKey from external service
+
+        match state.core_server_internal_api().check_api_key(key).await {
+            Ok(Some(user_id)) => {
+                // TODO: Cache this API key.
+                Ok(next.run(req).await)
+            }
+            Ok(None) => Err(StatusCode::UNAUTHORIZED),
+            Err(e) => {
+                // NOTE: Logging every error is not good as it would spam
+                // the log, but maybe an error counter or logging just
+                // once for a while.
+                Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        }
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }

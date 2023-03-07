@@ -13,8 +13,8 @@ use crate::{api::{
     self,
     model::{ApiKey, AccountId, AccountIdLight},
     ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
-    GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
-}, client::{media::{MediaInternalApi, MediaInternalApiUrls}, account::{AccountInternalApi, AccountInternalApiUrls}}, config::ClientApiUrls};
+    GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, GetConfig,
+}, client::{media::{MediaInternalApi, MediaInternalApiUrls}, account::{AccountInternalApi, AccountInternalApiUrls}}, config::{ClientApiUrls, Config}};
 
 use super::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
@@ -26,7 +26,7 @@ use super::{
 pub struct AppState {
     session_manager: Arc<SessionManager>,
     client: reqwest::Client,
-    api_urls: Arc<ClientApiUrls>,
+    config: Arc<Config>,
 }
 
 impl GetSessionManager for AppState {
@@ -71,7 +71,7 @@ impl GetCoreServerInternalApi for AppState {
     fn core_server_internal_api(&self) -> AccountInternalApi {
         AccountInternalApi::new(
             self.client.clone(),
-            &self.api_urls.account_internal
+            &self.config.external_service_urls().account_internal
         )
     }
 }
@@ -80,8 +80,14 @@ impl GetMediaServerInternalApi for AppState {
     fn media_server_internal_api(&self) -> MediaInternalApi {
         MediaInternalApi::new(
             self.client.clone(),
-            &self.api_urls.media_internal
+            &self.config.external_service_urls().media_internal
         )
+    }
+}
+
+impl GetConfig for AppState {
+    fn config(&self) -> &Config {
+        &self.config
     }
 }
 
@@ -92,12 +98,12 @@ pub struct App {
 impl App {
     pub async fn new(
         database_handle: RouterDatabaseHandle,
-        api_urls: Arc<ClientApiUrls>,
+        config: Arc<Config>,
     ) -> Self {
         let state = AppState {
             session_manager: Arc::new(SessionManager::new(database_handle).await),
             client: reqwest::Client::new(),
-            api_urls,
+            config,
         };
 
         Self { state }
@@ -149,7 +155,7 @@ impl App {
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();
-                    move |req, next| api::utils::authenticate_core_api(state.clone(), req, next)
+                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
                 })
             });
 
@@ -170,7 +176,7 @@ impl App {
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();
-                    move |req, next| api::media::authenticate_media_api(state.clone(), req, next)
+                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
                 })
             });
 

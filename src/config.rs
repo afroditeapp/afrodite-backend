@@ -46,7 +46,7 @@ pub struct Config {
     file: ConfigFile,
     database: PathBuf,
     external_services: ExternalServices,
-    client_api_urls: Arc<ClientApiUrls>,
+    client_api_urls: ClientApiUrls,
 }
 
 impl Config {
@@ -75,8 +75,8 @@ impl Config {
         &self.external_services
     }
 
-    pub fn external_service_urls(&self) -> Arc<ClientApiUrls> {
-        self.client_api_urls.clone()
+    pub fn external_service_urls(&self) -> &ClientApiUrls {
+        &self.client_api_urls
     }
 }
 
@@ -104,7 +104,7 @@ pub fn get_config() -> Result<Config, GetConfigError> {
         file: file_config,
         database,
         external_services,
-        client_api_urls: Arc::new(client_api_urls),
+        client_api_urls,
     })
 }
 

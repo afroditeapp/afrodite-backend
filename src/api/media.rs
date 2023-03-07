@@ -55,34 +55,3 @@ pub async fn get_image<S: ReadDatabase>(
     //     })
     Ok(())
 }
-
-pub async fn authenticate_media_api<T, S: GetApiKeys + GetCoreServerInternalApi>(
-    state: S,
-    req: Request<T>,
-    next: Next<T>,
-) -> Result<Response, StatusCode> {
-    let header = req
-        .headers()
-        .get(API_KEY_HEADER_STR)
-        .ok_or(StatusCode::BAD_REQUEST)?;
-    let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
-    let key = ApiKey::new(key_str.to_string());
-
-    if state.api_keys().read().await.contains_key(&key) {
-        Ok(next.run(req).await)
-    } else {
-        match state.core_server_internal_api().check_api_key(key).await {
-            Ok(Some(user_id)) => {
-                // TODO: Cache this API key.
-                Ok(next.run(req).await)
-            }
-            Ok(None) => Err(StatusCode::UNAUTHORIZED),
-            Err(e) => {
-                // TODO: It is probably not good to log this because this can
-                // happen often if core server is not available.
-                error!("{}", e);
-                Err(StatusCode::INTERNAL_SERVER_ERROR)
-            }
-        }
-    }
-}
