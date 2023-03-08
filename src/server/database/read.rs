@@ -49,7 +49,7 @@ impl<'a> ReadCommands<'a> {
     }
 
     pub async fn users<T: FnMut(AccountId)>(&self, mut handler: T) -> Result<(), DatabaseError> {
-        let mut users = self.sqlite().users();
+        let mut users = self.sqlite().accounts();
         while let Some(user_id) = users.try_next().await.with_info(ReadCmd::Users)? {
             handler(user_id)
         }
@@ -59,7 +59,7 @@ impl<'a> ReadCommands<'a> {
 
     pub async fn user_profile(&self, id: &AccountId) -> Result<Profile, DatabaseError> {
         self.sqlite()
-            .user_profile(id)
+            .profile(id)
             .await
             .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))
     }

@@ -108,7 +108,7 @@ impl ApiKey {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct Account {
     state: AccountState,
     capablities: Capabilities,
@@ -123,7 +123,7 @@ impl Account {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum AccountState {
     InitialSetup,
     Normal,
@@ -131,7 +131,7 @@ pub enum AccountState {
     PendingDeletion,
 }
 
-#[derive(Debug, Deserialize, Serialize, ToSchema, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct Capabilities {
     admin_modify_capablities: Option<bool>,
     admin_setup_possible: Option<bool>,

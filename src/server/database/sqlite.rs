@@ -23,6 +23,11 @@ pub enum SqliteDatabaseError {
     Fetch,
     #[error("Running sqlx database migrations failed")]
     Migrate,
+
+    #[error("Deserialization error")]
+    SerdeDeserialize,
+    #[error("Serialization error")]
+    SerdeSerialize,
 }
 
 /// Path to directory which contains Sqlite files.

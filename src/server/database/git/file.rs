@@ -70,11 +70,11 @@ pub enum CoreFile {
     /// Plain text containing profile ID
     Id,
 
-    /// JSON text file
+    /// JSON text file for public profile.
     ProfileJson,
 
-    /// JSON text file
-    PrivateUserInfoJson,
+    /// JSON text file for private account state.
+    AccountStateJson,
 }
 
 impl GetGitPath for CoreFile {
@@ -82,7 +82,7 @@ impl GetGitPath for CoreFile {
         GitPath(match self {
             Self::Id => "id.txt.git",
             Self::ProfileJson => "profile.txt.git",
-            Self::PrivateUserInfoJson => "user.txt.git",
+            Self::AccountStateJson => "account.txt.git",
         })
     }
 }
@@ -92,7 +92,7 @@ impl GetLiveVersionPath for CoreFile {
         LiveVersionPath(match self {
             Self::Id => "id.txt",
             Self::ProfileJson => "profile.txt",
-            Self::PrivateUserInfoJson => "user.txt",
+            Self::AccountStateJson => "account.txt",
         })
     }
 }

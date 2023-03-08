@@ -16,6 +16,8 @@ use self::{
     data::{ApiKey, AccountId, Account, Capabilities, AccountIdLight},
 };
 
+use super::get_account_id;
+
 use tracing::error;
 
 use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, utils::ApiKeyHeader};
@@ -113,13 +115,7 @@ pub async fn account_state<S: GetApiKeys + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
-    let id = state
-        .api_keys()
-        .read()
-        .await
-        .get(api_key.key())
-        .ok_or(StatusCode::UNAUTHORIZED)?
-        .id();
+    let id = get_account_id!(state, api_key.key())?;
 
     // state
     //     .read_database()

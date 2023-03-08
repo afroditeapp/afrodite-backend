@@ -180,7 +180,7 @@ impl RouterDatabaseHandle {
     /// If not, then do commit with correct files.
     async fn check_git_integrity(&self) -> Result<(), DatabaseError> {
         let read = self.read();
-        let mut users = read.sqlite().users();
+        let mut users = read.sqlite().accounts();
         let mut error: ErrorContainer<DatabaseError> = None;
 
         while let Some(result) = users
@@ -236,7 +236,7 @@ impl RouterDatabaseHandle {
             .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))?;
         let sqlite_profile = read
             .sqlite()
-            .user_profile(&id)
+            .profile(&id)
             .await
             .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))?;
         if git_profile

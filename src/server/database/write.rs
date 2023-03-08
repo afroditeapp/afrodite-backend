@@ -54,7 +54,7 @@ impl WriteCommands {
             .await
             .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
         self.sqlite()
-            .store_user_id(self.user_dir.id())
+            .store_account_id(self.user_dir.id())
             .await
             .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))
     }
@@ -68,7 +68,7 @@ impl WriteCommands {
             .await
             .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))?;
         self.sqlite()
-            .update_user_profile(self.user_dir.id(), profile_data)
+            .update_profile(self.user_dir.id(), profile_data)
             .await
             .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))
     }

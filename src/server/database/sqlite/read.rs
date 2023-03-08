@@ -2,7 +2,7 @@ use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
 
 use super::{SqliteDatabaseError, SqliteReadHandle};
-use crate::api::model::{Profile, AccountId};
+use crate::api::model::{Profile, AccountId, Account};
 use crate::utils::IntoReportExt;
 
 pub struct SqliteReadCommands<'a> {
@@ -14,13 +14,13 @@ impl<'a> SqliteReadCommands<'a> {
         Self { handle }
     }
 
-    pub async fn user_profile(&self, user_id: &AccountId) -> Result<Profile, SqliteDatabaseError> {
-        let id = user_id.as_str();
+    pub async fn profile(&self, id: &AccountId) -> Result<Profile, SqliteDatabaseError> {
+        let id = id.as_str();
         let profile = sqlx::query!(
             r#"
-            SELECT name
-            FROM User
-            WHERE id = ?
+            SELECT profile_json
+            FROM Profile
+            WHERE account_id = ?
             "#,
             id
         )
@@ -28,21 +28,46 @@ impl<'a> SqliteReadCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
-        Ok(Profile::new(profile.name))
+        serde_json::from_str(&profile.profile_json)
+            .into_error(SqliteDatabaseError::SerdeDeserialize)
     }
 
-    pub fn users(&self) -> impl Stream<Item = Result<AccountId, SqliteDatabaseError>> + '_ {
+    pub async fn account_state(
+        &self, id: &AccountId
+    ) -> Result<Option<Account>, SqliteDatabaseError> {
+        let id = id.as_str();
+        let account = sqlx::query!(
+            r#"
+            SELECT state_json
+            FROM AccountState
+            WHERE account_id = ?
+            "#,
+            id
+        )
+        .fetch_optional(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        if let Some(account_state) = account {
+            serde_json::from_str(&account_state.state_json)
+                .into_error(SqliteDatabaseError::SerdeDeserialize)
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn accounts(&self) -> impl Stream<Item = Result<AccountId, SqliteDatabaseError>> + '_ {
         sqlx::query!(
             r#"
-            SELECT id
-            FROM User
+            SELECT account_id
+            FROM Account
             "#,
         )
         .fetch(self.handle.pool())
         .map(|result| {
             let result = result
                 .into_error(SqliteDatabaseError::Fetch)?;
-            AccountId::parse(result.id)
+            AccountId::parse(result.account_id)
                 .into_error(SqliteDatabaseError::Fetch)
         })
     }

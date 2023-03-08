@@ -9,6 +9,9 @@ Admin can give some capablities or also user actions can grant some of those.
 Initial admin must be set from the server settings. This admin has
 'admin_modify_capablities' and 'admin_setup_possible' capablities.
 
+Terms of Service updates are notified early using email, so no need to save
+accepted version to the server.
+
 ## Initial setup
 
 When user account is in this state the app launches to the account setup screen.

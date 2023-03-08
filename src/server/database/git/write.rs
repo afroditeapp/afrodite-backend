@@ -3,6 +3,7 @@ use std::io::Write;
 use tracing::error;
 
 use super::{super::git::GitDatabase, GitError};
+use crate::api::model::Account;
 use crate::utils::IntoReportExt;
 use crate::{
     api::model::{Profile, ApiKey},
@@ -59,6 +60,16 @@ impl GitDatabaseWriteCommands {
             })?;
 
             Ok(())
+        })
+        .await
+    }
+
+    pub async fn update_account_state(self, account: &Account) -> Result<(), GitError> {
+        let account = account.clone();
+        self.run_git_command(move |dir| {
+            dir.replace_file(CoreFile::AccountStateJson, "Update account state", move |file| {
+                serde_json::to_writer(file, &account).into_error(GitError::SerdeSerialize)
+            })
         })
         .await
     }

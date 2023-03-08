@@ -1,6 +1,6 @@
 use error_stack::Result;
 
-use crate::api::model::{Profile, AccountId};
+use crate::api::model::{Profile, AccountId, AccountState};
 
 use super::{SqliteDatabaseError, SqliteWriteHandle};
 
@@ -15,11 +15,11 @@ impl<'a> SqliteWriteCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_user_id(&mut self, user_id: &AccountId) -> Result<(), SqliteDatabaseError> {
-        let id = user_id.as_str();
+    pub async fn store_account_id(&mut self, id: &AccountId) -> Result<(), SqliteDatabaseError> {
+        let id = id.as_str();
         sqlx::query!(
             r#"
-            INSERT INTO User (id)
+            INSERT INTO Account (account_id)
             VALUES (?)
             "#,
             id
@@ -31,20 +31,47 @@ impl<'a> SqliteWriteCommands<'a> {
         Ok(())
     }
 
-    pub async fn update_user_profile(
+    pub async fn update_profile(
         self,
         user_id: &AccountId,
         profile_data: &Profile,
     ) -> Result<(), SqliteDatabaseError> {
         let id = user_id.as_str();
-        let name = profile_data.name();
+        let profile =
+            serde_json::to_string(profile_data)
+                .into_error(SqliteDatabaseError::SerdeSerialize)?;
         sqlx::query!(
             r#"
-            UPDATE User
-            SET name = ?
-            WHERE id = ?
+            UPDATE Profile
+            SET profile_json = ?
+            WHERE account_id = ?
             "#,
-            name,
+            profile,
+            id,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub async fn update_account_state(
+        self,
+        id: &AccountId,
+        account_state: &AccountState,
+    ) -> Result<(), SqliteDatabaseError> {
+        let id = id.as_str();
+        let state =
+            serde_json::to_string(account_state)
+                .into_error(SqliteDatabaseError::SerdeSerialize)?;
+        sqlx::query!(
+            r#"
+            UPDATE AccountState
+            SET state_json = ?
+            WHERE account_id = ?
+            "#,
+            state,
             id,
         )
         .execute(self.handle.pool())
