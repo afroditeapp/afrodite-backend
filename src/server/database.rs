@@ -180,7 +180,7 @@ impl RouterDatabaseHandle {
     /// If not, then do commit with correct files.
     async fn check_git_integrity(&self) -> Result<(), DatabaseError> {
         let read = self.read();
-        let mut users = read.sqlite().accounts();
+        let mut users = read.sqlite().account_ids();
         let mut error: ErrorContainer<DatabaseError> = None;
 
         while let Some(result) = users
@@ -222,7 +222,7 @@ impl RouterDatabaseHandle {
         let git_dir = self.root.history().user_git_dir(&id);
         if !git_dir.exists() {
             git_write()
-                .store_user_id()
+                .store_account_id()
                 .await
                 .with_info_lazy(|| WriteCmd::Register(id.clone()))?;
         }
@@ -233,12 +233,12 @@ impl RouterDatabaseHandle {
             .git(&id)
             .profile()
             .await
-            .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))?;
+            .with_info_lazy(|| ReadCmd::Profile(id.clone()))?;
         let sqlite_profile = read
             .sqlite()
             .profile(&id)
             .await
-            .with_info_lazy(|| ReadCmd::UserProfile(id.clone()))?;
+            .with_info_lazy(|| ReadCmd::Profile(id.clone()))?;
         if git_profile
             .filter(|profile| *profile == sqlite_profile)
             .is_none()
@@ -247,6 +247,27 @@ impl RouterDatabaseHandle {
                 .update_user_profile(&sqlite_profile)
                 .await
                 .with_info_lazy(|| WriteCmd::UpdateProfile(id.clone()))?;
+        }
+
+        // Check account state file
+        let git_account_state = self
+            .read()
+            .git(&id)
+            .account_state()
+            .await
+            .with_info_lazy(|| ReadCmd::AccountState(id.clone()))?;
+        let sqlite_account_state = read
+            .sqlite()
+            .account_state(&id)
+            .await
+            .with_info_lazy(|| ReadCmd::AccountState(id.clone()))?;
+        if git_account_state
+            .filter(|account_state| *account_state == sqlite_account_state)
+            .is_none() {
+                git_write()
+                    .update_account(&sqlite_account_state)
+                    .await
+                    .with_info_lazy(|| WriteCmd::UpdateAccountState(id.clone()))?;
         }
 
         // Check ID file

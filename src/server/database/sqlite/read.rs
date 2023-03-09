@@ -2,7 +2,7 @@ use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
 
 use super::{SqliteDatabaseError, SqliteReadHandle};
-use crate::api::model::{Profile, AccountId, Account};
+use crate::api::model::{Account, AccountId, Profile};
 use crate::utils::IntoReportExt;
 
 pub struct SqliteReadCommands<'a> {
@@ -34,7 +34,7 @@ impl<'a> SqliteReadCommands<'a> {
 
     pub async fn account_state(
         &self, id: &AccountId
-    ) -> Result<Option<Account>, SqliteDatabaseError> {
+    ) -> Result<Account, SqliteDatabaseError> {
         let id = id.as_str();
         let account = sqlx::query!(
             r#"
@@ -44,19 +44,15 @@ impl<'a> SqliteReadCommands<'a> {
             "#,
             id
         )
-        .fetch_optional(self.handle.pool())
+        .fetch_one(self.handle.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
-        if let Some(account_state) = account {
-            serde_json::from_str(&account_state.state_json)
+        serde_json::from_str(&account.state_json)
                 .into_error(SqliteDatabaseError::SerdeDeserialize)
-        } else {
-            Ok(None)
-        }
     }
 
-    pub fn accounts(&self) -> impl Stream<Item = Result<AccountId, SqliteDatabaseError>> + '_ {
+    pub fn account_ids(&self) -> impl Stream<Item = Result<AccountId, SqliteDatabaseError>> + '_ {
         sqlx::query!(
             r#"
             SELECT account_id

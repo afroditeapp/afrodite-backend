@@ -11,8 +11,10 @@ use utoipa::{
 
 use crate::server::session::AccountState;
 
+use self::data::Profile;
+
 use super::{model::{
-    Profile,
+    Account,
     ApiKey, AccountId, AccountIdLight
 }, get_account_id};
 
@@ -23,12 +25,12 @@ use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabas
 // TODO: Add timeout for database commands
 
 
-pub const PATH_GET_PROFILE: &str = "/profile/:user_id";
+pub const PATH_GET_PROFILE: &str = "/profile/:account_id";
 
 #[utoipa::path(
     get,
-    path = "/profile/{user_id}",
-    params(AccountId),
+    path = "/profile/{account_id}",
+    params(AccountIdLight),
     responses(
         (status = 200, description = "Get profile.", body = [Profile]),
         (status = 500),
@@ -36,13 +38,13 @@ pub const PATH_GET_PROFILE: &str = "/profile/:user_id";
     security(("api_key" = [])),
 )]
 pub async fn get_profile<S: ReadDatabase>(
-    Path(id): Path<AccountId>,
+    Path(account_id): Path<AccountIdLight>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: Validate user id
     state
         .read_database()
-        .user_profile(&id)
+        .user_profile(&account_id.to_full())
         .await
         .map(|profile| profile.into())
         .map_err(|e| {

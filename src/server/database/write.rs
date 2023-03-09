@@ -2,14 +2,14 @@ use error_stack::Result;
 
 use crate::{
     api::model::{
-        Profile,
-        ApiKey, AccountId,
+        Account,
+        ApiKey, AccountId, AccountState, Profile,
     },
     server::database::{
         git::util::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
         GitDatabaseOperationHandle,
     },
-    utils::ErrorConversion,
+    utils::ErrorConversion, config::Config,
 };
 
 use super::{git::write::GitDatabaseWriteCommands, sqlite::write::SqliteWriteCommands};
@@ -17,8 +17,11 @@ use super::{git::write::GitDatabaseWriteCommands, sqlite::write::SqliteWriteComm
 #[derive(Debug, Clone)]
 pub enum WriteCmd {
     Register(AccountId),
+    RegisterAccount(AccountId),
+    RegisterProfile(AccountId),
     UpdateProfile(AccountId),
     UpdateApiKey(AccountId),
+    UpdateAccountState(AccountId),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -48,15 +51,49 @@ impl WriteCommands {
         }
     }
 
-    pub async fn register(&mut self) -> Result<(), DatabaseError> {
+    pub async fn register(&mut self, config: &Config) -> Result<(), DatabaseError> {
+        let account_state = Account::default();
+        let profile = Profile::default();
+
         self.git()
-            .store_user_id()
+            .store_account_id()
             .await
             .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
+
+        if config.components().account {
+            self.git()
+                .update_account(&account_state)
+                .await
+                .with_info_lazy(|| WriteCmd::RegisterAccount(self.user_dir.id().clone()))?;
+        }
+
+        if config.components().profile {
+            self.git()
+                .update_user_profile(&profile)
+                .await
+                .with_info_lazy(|| WriteCmd::RegisterProfile(self.user_dir.id().clone()))?;
+        }
+
         self.sqlite()
             .store_account_id(self.user_dir.id())
             .await
-            .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))
+            .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
+
+        if config.components().account {
+            self.sqlite()
+                .store_account(self.user_dir.id(), &account_state)
+                .await
+                .with_info_lazy(|| WriteCmd::RegisterAccount(self.user_dir.id().clone()))?;
+        }
+
+        if config.components().profile {
+            self.sqlite()
+                .store_profile(self.user_dir.id(), &profile)
+                .await
+                .with_info_lazy(|| WriteCmd::RegisterProfile(self.user_dir.id().clone()))?;
+        }
+
+        Ok(())
     }
 
     pub async fn update_user_profile(

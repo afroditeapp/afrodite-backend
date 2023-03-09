@@ -2,7 +2,7 @@ use error_stack::Result;
 
 use crate::{
     api::model::{
-        ApiKey, AccountId, Profile, Account,
+        ApiKey, AccountId, Account, Profile,
     },
     server::database::{git::file::CoreFileNoHistory, git::util::GitUserDirPath},
 };

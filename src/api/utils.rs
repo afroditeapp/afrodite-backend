@@ -10,7 +10,7 @@ use utoipa::{
 use crate::server::session::AccountState;
 
 use super::{model::{
-    Profile,
+    Account,
     ApiKey, AccountId
 }, GetCoreServerInternalApi, GetConfig};
 
@@ -41,7 +41,8 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys + GetCoreServerInternalA
 
         match state.core_server_internal_api().check_api_key(key).await {
             Ok(Some(user_id)) => {
-                // TODO: Cache this API key.
+                // TODO: Cache this API key. Also needed for initializing
+                // database tables.
                 Ok(next.run(req).await)
             }
             Ok(None) => Err(StatusCode::UNAUTHORIZED),

@@ -17,7 +17,7 @@ impl AccountId {
     pub fn generate_new() -> Self {
         let id = uuid::Uuid::new_v4();
         Self {
-            account_id: id.simple().to_string(),
+            account_id: id.hyphenated().to_string(),
             light: AccountIdLight { account_id: id }
         }
     }
@@ -25,7 +25,7 @@ impl AccountId {
     pub fn parse(account_id: String) -> Result<Self, uuid::Error> {
         match uuid::Uuid::try_parse(&account_id) {
             Ok(light) => Ok(Self {
-                account_id: light.as_simple().to_string(),
+                account_id: light.as_hyphenated().to_string(),
                 light: AccountIdLight { account_id: light },
             }),
             Err(e) => Err(e),
@@ -44,8 +44,8 @@ impl AccountId {
         self.light
     }
 
-    pub fn formatter(&self) -> uuid::fmt::Simple {
-        self.light.account_id.simple()
+    pub fn formatter(&self) -> uuid::fmt::Hyphenated {
+        self.light.account_id.hyphenated()
     }
 }
 
@@ -76,7 +76,7 @@ pub struct AccountIdLight {
 
 impl AccountIdLight {
     pub fn to_full(&self) -> AccountId {
-        AccountId { account_id: self.account_id.simple().to_string(), light: self.clone() }
+        AccountId { account_id: self.account_id.hyphenated().to_string(), light: self.clone() }
     }
 }
 
@@ -108,7 +108,7 @@ impl ApiKey {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {
     state: AccountState,
     capablities: Capabilities,
@@ -123,7 +123,13 @@ impl Account {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+impl Default for Account {
+    fn default() -> Self {
+        Self { state: AccountState::InitialSetup, capablities: Capabilities::default() }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub enum AccountState {
     InitialSetup,
     Normal,
@@ -131,7 +137,7 @@ pub enum AccountState {
     PendingDeletion,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct Capabilities {
     admin_modify_capablities: Option<bool>,
     admin_setup_possible: Option<bool>,

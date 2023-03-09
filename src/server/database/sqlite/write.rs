@@ -1,6 +1,6 @@
 use error_stack::Result;
 
-use crate::api::model::{Profile, AccountId, AccountState};
+use crate::api::model::{Account, AccountId, AccountState, Profile};
 
 use super::{SqliteDatabaseError, SqliteWriteHandle};
 
@@ -23,6 +23,46 @@ impl<'a> SqliteWriteCommands<'a> {
             VALUES (?)
             "#,
             id
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub async fn store_profile(&mut self, id: &AccountId, profile: &Profile) -> Result<(), SqliteDatabaseError> {
+        let id = id.as_str();
+        let profile =
+            serde_json::to_string(profile)
+                .into_error(SqliteDatabaseError::SerdeSerialize)?;
+        sqlx::query!(
+            r#"
+            INSERT INTO Profile (account_id, profile_json)
+            VALUES (?, ?)
+            "#,
+            id,
+            profile,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub async fn store_account(&mut self, id: &AccountId, account: &Account) -> Result<(), SqliteDatabaseError> {
+        let id = id.as_str();
+        let account =
+            serde_json::to_string(account)
+                .into_error(SqliteDatabaseError::SerdeSerialize)?;
+        sqlx::query!(
+            r#"
+            INSERT INTO AccountState (account_id, state_json)
+            VALUES (?, ?)
+            "#,
+            id,
+            account,
         )
         .execute(self.handle.pool())
         .await
@@ -56,10 +96,10 @@ impl<'a> SqliteWriteCommands<'a> {
         Ok(())
     }
 
-    pub async fn update_account_state(
+    pub async fn update_account(
         self,
         id: &AccountId,
-        account_state: &AccountState,
+        account_state: &Account,
     ) -> Result<(), SqliteDatabaseError> {
         let id = id.as_str();
         let state =

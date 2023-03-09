@@ -3,10 +3,10 @@ use std::io::Write;
 use tracing::error;
 
 use super::{super::git::GitDatabase, GitError};
-use crate::api::model::Account;
+use crate::api::model::{Account, Profile};
 use crate::utils::IntoReportExt;
 use crate::{
-    api::model::{Profile, ApiKey},
+    api::model::{ApiKey},
     server::database::{
         git::file::{CoreFile, CoreFileNoHistory},
         git::util::GitUserDirPath,
@@ -50,7 +50,7 @@ impl GitDatabaseWriteCommands {
     }
 
     /// Create Git repository and store user id there.
-    pub async fn store_user_id(self) -> Result<(), GitError> {
+    pub async fn store_account_id(self) -> Result<(), GitError> {
         self.run_git_command(move |profile| {
             GitDatabase::create(&profile)?;
 
@@ -64,7 +64,7 @@ impl GitDatabaseWriteCommands {
         .await
     }
 
-    pub async fn update_account_state(self, account: &Account) -> Result<(), GitError> {
+    pub async fn update_account(self, account: &Account) -> Result<(), GitError> {
         let account = account.clone();
         self.run_git_command(move |dir| {
             dir.replace_file(CoreFile::AccountStateJson, "Update account state", move |file| {

@@ -21,7 +21,7 @@ impl SessionManager {
         let mut accounts = HashMap::new();
         database_handle
             .read()
-            .users(|user_id| {
+            .account_ids(|user_id| {
                 let write_commands = database_handle.user_write_commands(&user_id);
                 accounts.insert(user_id.as_light(), Mutex::new(write_commands));
             })

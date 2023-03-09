@@ -16,7 +16,7 @@ use self::{
     data::{ApiKey, AccountId, Account, Capabilities, AccountIdLight},
 };
 
-use super::get_account_id;
+use super::{get_account_id, GetConfig};
 
 use tracing::error;
 
@@ -35,7 +35,7 @@ pub const PATH_REGISTER: &str = "/register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn register<S: GetRouterDatabaseHandle + GetUsers>(
+pub async fn register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
     state: S,
 ) -> Result<Json<AccountIdLight>, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
@@ -45,7 +45,7 @@ pub async fn register<S: GetRouterDatabaseHandle + GetUsers>(
     let mut write_commands = state
         .database()
         .user_write_commands(&id);
-    match write_commands.register().await {
+    match write_commands.register(state.config()).await {
         Ok(()) => {
             state
                 .users()
@@ -67,7 +67,7 @@ pub const PATH_LOGIN: &str = "/login";
     post,
     path = "/login",
     security(),
-    request_body = AccountId,
+    request_body = AccountIdLight,
     responses(
         (status = 200, description = "Login successful.", body = [ApiKey]),
         (status = 500, description = "Internal server error."),
