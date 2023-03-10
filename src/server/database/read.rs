@@ -65,6 +65,13 @@ impl<'a> ReadCommands<'a> {
             .with_info_lazy(|| ReadCmd::Profile(id.clone()))
     }
 
+    pub async fn account(&self, id: &AccountId) -> Result<Account, DatabaseError> {
+        self.sqlite()
+            .account_state(id)
+            .await
+            .with_info_lazy(|| ReadCmd::AccountState(id.clone()))
+    }
+
     pub(super) fn git(&self, user_id: &AccountId) -> GitDatabaseReadCommands {
         self.git_repositories.user_git_dir(user_id).read()
     }

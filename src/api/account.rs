@@ -117,15 +117,13 @@ pub async fn account_state<S: GetApiKeys + ReadDatabase>(
 ) -> Result<Json<Account>, StatusCode> {
     let id = get_account_id!(state, api_key.key())?;
 
-    // state
-    //     .read_database()
-    //     .user_profile(&id)
-    //     .await
-    //     .map(|profile| profile.into())
-    //     .map_err(|e| {
-    //         error!("Get profile error: {e:?}");
-    //         StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-    //     })
-
-        Ok(Account::new().into())
+    state
+        .read_database()
+        .account(&id.to_full())
+        .await
+        .map(|account| account.into())
+        .map_err(|e| {
+            error!("Get profile error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })
 }
