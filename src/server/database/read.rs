@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     git::{read::GitDatabaseReadCommands, utils::DatabasePath},
-    sqlite::{read::SqliteReadCommands, SqliteReadHandle},
+    sqlite::{read::SqliteReadCommands, SqliteReadHandle, utils::SqliteSelectJson},
     DatabaseError,
 };
 
@@ -61,23 +61,10 @@ impl<'a> ReadCommands<'a> {
         Ok(())
     }
 
-    pub async fn user_profile(&self, id: &AccountId) -> Result<Profile, DatabaseError> {
-        self.sqlite()
-            .profile(id)
-            .await
-            .with_info_lazy(|| ReadCmd::Profile(id.clone()))
-    }
-
-    pub async fn account(&self, id: &AccountId) -> Result<Account, DatabaseError> {
-        self.sqlite()
-            .account_state(id)
-            .await
-            .with_info_lazy(|| ReadCmd::AccountState(id.clone()))
-    }
-
-    pub async fn account_setup(&self, id: &AccountId) -> Result<AccountSetup, DatabaseError> {
-        self.sqlite()
-            .account_setup(id)
+    pub async fn read_json<
+        T: SqliteSelectJson
+    >(&self, id: &AccountId) -> Result<T, DatabaseError> {
+        T::select_json(id, self.sqlite())
             .await
             .with_info_lazy(|| ReadCmd::AccountSetup(id.clone()))
     }

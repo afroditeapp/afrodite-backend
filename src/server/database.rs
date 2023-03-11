@@ -9,6 +9,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use serde::de::DeserializeOwned;
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
@@ -20,13 +21,13 @@ use crate::{
 };
 
 use self::{
-    git::{utils::DatabasePath, GitDatabaseOperationHandle, GitError},
+    git::{utils::DatabasePath, GitDatabaseOperationHandle, GitError, write::GitDatabaseWriteCommands, file::GitJsonFile},
     read::{ReadCmd, ReadCommands},
     sqlite::{
         SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle,
-        SqliteWriteHandle,
+        SqliteWriteHandle, utils::SqliteSelectJson,
     },
-    write::{WriteCmd, WriteCommands},
+    write::{WriteCmd, WriteCommands}, utils::GetReadWriteCmd,
 };
 use crate::utils::IntoReportExt;
 
@@ -228,69 +229,9 @@ impl RouterDatabaseHandle {
                 .with_info_lazy(|| WriteCmd::AccountId(id.clone()))?;
         }
 
-        // Check profile file
-        let git_profile: Option<Profile> = self
-            .read()
-            .git(&id)
-            .read_json()
-            .await
-            .with_info_lazy(|| ReadCmd::Profile(id.clone()))?;
-        let sqlite_profile = read
-            .sqlite()
-            .profile(&id)
-            .await
-            .with_info_lazy(|| ReadCmd::Profile(id.clone()))?;
-        if git_profile
-            .filter(|profile| *profile == sqlite_profile)
-            .is_none()
-        {
-            git_write()
-                .update_json(&sqlite_profile)
-                .await
-                .with_info_lazy(|| WriteCmd::Profile(id.clone()))?;
-        }
-
-        // Check account state file
-        let git_account_state: Option<Account> = self
-            .read()
-            .git(&id)
-            .read_json()
-            .await
-            .with_info_lazy(|| ReadCmd::AccountState(id.clone()))?;
-        let sqlite_account_state = read
-            .sqlite()
-            .account_state(&id)
-            .await
-            .with_info_lazy(|| ReadCmd::AccountState(id.clone()))?;
-        if git_account_state
-            .filter(|account_state| *account_state == sqlite_account_state)
-            .is_none() {
-                git_write()
-                    .update_json(&sqlite_account_state)
-                    .await
-                    .with_info_lazy(|| WriteCmd::AccountState(id.clone()))?;
-        }
-
-        // Check account state file
-        let git_account_setup: Option<AccountSetup> = self
-            .read()
-            .git(&id)
-            .read_json()
-            .await
-            .with_info_lazy(|| ReadCmd::AccountSetup(id.clone()))?;
-        let sqlite_account_setup = read
-            .sqlite()
-            .account_setup(&id)
-            .await
-            .with_info_lazy(|| ReadCmd::AccountSetup(id.clone()))?;
-        if git_account_setup
-            .filter(|data| *data == sqlite_account_setup)
-            .is_none() {
-                git_write()
-                    .update_json(&sqlite_account_setup)
-                    .await
-                    .with_info_lazy(|| WriteCmd::AccountSetup(id.clone()))?;
-        }
+        Self::check_integrity_json::<Profile>(&id, read, git_write).await?;
+        Self::check_integrity_json::<Account>(&id, read, git_write).await?;
+        Self::check_integrity_json::<AccountSetup>(&id, read, git_write).await?;
 
         // Check ID file
         let git_id = self
@@ -307,6 +248,33 @@ impl RouterDatabaseHandle {
         }
 
         Ok(())
+    }
+
+    async fn check_integrity_json<
+        T: DeserializeOwned + GitJsonFile + PartialEq + GetReadWriteCmd + SqliteSelectJson + Send + Clone + 'static
+    >(
+        id: &AccountId,
+        read: &ReadCommands<'_>,
+        write: impl Fn() -> GitDatabaseWriteCommands,
+    ) -> Result<(), DatabaseError> {
+        let git_data: Option<T> = read
+            .git(id)
+            .read_json()
+            .await
+            .with_read_cmd_info::<T>(id)?;
+        let sqlite_data = T::select_json(id, read.sqlite())
+            .await
+            .with_read_cmd_info::<T>(id)?;
+        if git_data
+            .filter(|data| *data == sqlite_data)
+            .is_none() {
+                write()
+                    .update_json(&sqlite_data)
+                    .await
+                    .with_write_cmd_info::<T>(id)
+        } else {
+            Ok(())
+        }
     }
 }
 

@@ -119,7 +119,7 @@ pub async fn account_state<S: GetApiKeys + ReadDatabase>(
 
     state
         .read_database()
-        .account(&id.to_full())
+        .read_json::<Account>(&id.to_full())
         .await
         .map(|account| account.into())
         .map_err(|e| {
@@ -152,7 +152,7 @@ pub async fn account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
 
     let account = state
         .read_database()
-        .account(&id.to_full())
+        .read_json::<Account>(&id.to_full())
         .await
         .map_err(|e| {
             error!("Get profile error: {e:?}");

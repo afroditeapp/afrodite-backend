@@ -1,6 +1,8 @@
+use async_trait::async_trait;
 use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
 
+use super::utils::SqliteSelectJson;
 use super::{SqliteDatabaseError, SqliteReadHandle};
 use crate::api::account::data::AccountSetup;
 use crate::api::model::{Account, AccountId, Profile};
@@ -34,49 +36,6 @@ impl<'a> SqliteReadCommands<'a> {
         Self { handle }
     }
 
-    pub async fn profile(&self, id: &AccountId) -> Result<Profile, SqliteDatabaseError> {
-        read_json!(
-            self,
-            id,
-            r#"
-            SELECT json_text
-            FROM Profile
-            WHERE account_id = ?
-            "#,
-            json_text
-        )
-    }
-
-    pub async fn account_state(
-        &self, id: &AccountId
-    ) -> Result<Account, SqliteDatabaseError> {
-        read_json!(
-            self,
-            id,
-            r#"
-            SELECT json_text
-            FROM AccountState
-            WHERE account_id = ?
-            "#,
-            json_text
-        )
-    }
-
-    pub async fn account_setup(
-        &self, id: &AccountId
-    ) -> Result<AccountSetup, SqliteDatabaseError> {
-        read_json!(
-            self,
-            id,
-            r#"
-            SELECT json_text
-            FROM AccountSetup
-            WHERE account_id = ?
-            "#,
-            json_text
-        )
-    }
-
     pub fn account_ids(&self) -> impl Stream<Item = Result<AccountId, SqliteDatabaseError>> + '_ {
         sqlx::query!(
             r#"
@@ -91,5 +50,60 @@ impl<'a> SqliteReadCommands<'a> {
             AccountId::parse(result.account_id)
                 .into_error(SqliteDatabaseError::Fetch)
         })
+    }
+}
+
+
+#[async_trait]
+impl SqliteSelectJson for Account {
+    async fn select_json(
+        id: &AccountId, read: &SqliteReadCommands,
+    ) -> Result<Self, SqliteDatabaseError> {
+        read_json!(
+            read,
+            id,
+            r#"
+            SELECT json_text
+            FROM AccountState
+            WHERE account_id = ?
+            "#,
+            json_text
+        )
+    }
+}
+
+#[async_trait]
+impl SqliteSelectJson for AccountSetup {
+    async fn select_json(
+        id: &AccountId, read: &SqliteReadCommands,
+    ) -> Result<Self, SqliteDatabaseError> {
+        read_json!(
+            read,
+            id,
+            r#"
+            SELECT json_text
+            FROM AccountSetup
+            WHERE account_id = ?
+            "#,
+            json_text
+        )
+    }
+}
+
+#[async_trait]
+impl SqliteSelectJson for Profile {
+    async fn select_json(
+        id: &AccountId, read: &SqliteReadCommands,
+    ) -> Result<Self, SqliteDatabaseError> {
+        read_json!(
+            read,
+            id,
+            r#"
+            SELECT json_text
+            FROM Profile
+            WHERE account_id = ?
+            "#,
+            json_text
+        )
     }
 }

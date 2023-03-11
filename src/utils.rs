@@ -111,6 +111,19 @@ pub trait ErrorConversion: ResultExt + Sized {
     ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info_lazy(
             Self::ERROR,
+            || T::write_cmd(id)
+        )
+    }
+
+    #[track_caller]
+    fn with_read_cmd_info<
+        T: GetReadWriteCmd,
+    >(
+        self,
+        id: &AccountId,
+    ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
+        self.change_context_with_info_lazy(
+            Self::ERROR,
             || T::read_cmd(id)
         )
     }
