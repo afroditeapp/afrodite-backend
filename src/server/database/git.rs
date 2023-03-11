@@ -1,6 +1,6 @@
 pub mod file;
 pub mod read;
-pub mod util;
+pub mod utils;
 pub mod write;
 
 use std::path::Path;
@@ -10,7 +10,7 @@ use error_stack::Result;
 use git2::{Repository, Signature, Tree};
 use tokio::sync::mpsc;
 
-use {file::GetGitPath, util::GitUserDirPath};
+use {file::GetGitPath, utils::GitUserDirPath};
 
 const REPOSITORY_USER_NAME: &str = "Pihka backend";
 const REPOSITORY_USER_EMAIL: &str = "email";

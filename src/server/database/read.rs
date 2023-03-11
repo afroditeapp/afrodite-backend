@@ -10,10 +10,12 @@ use crate::{
 };
 
 use super::{
-    git::{read::GitDatabaseReadCommands, util::DatabasePath},
+    git::{read::GitDatabaseReadCommands, utils::DatabasePath},
     sqlite::{read::SqliteReadCommands, SqliteReadHandle},
     DatabaseError,
 };
+
+
 
 #[derive(Debug, Clone)]
 pub enum ReadCmd {

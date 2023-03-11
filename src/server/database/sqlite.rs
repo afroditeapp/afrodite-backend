@@ -1,5 +1,6 @@
 pub mod read;
 pub mod write;
+pub mod utils;
 
 use std::path::{Path, PathBuf};
 

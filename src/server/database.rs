@@ -2,6 +2,7 @@ pub mod git;
 pub mod read;
 pub mod sqlite;
 pub mod write;
+pub mod utils;
 
 use std::{
     fs,
@@ -14,12 +15,12 @@ use tokio_stream::StreamExt;
 use error_stack::{Result, ResultExt};
 
 use crate::{
-    api::model::AccountId,
+    api::model::{AccountId, Profile, Account, AccountSetup},
     utils::{AppendErr, ErrorContainer, ErrorConversion},
 };
 
 use self::{
-    git::{util::DatabasePath, GitDatabaseOperationHandle, GitError},
+    git::{utils::DatabasePath, GitDatabaseOperationHandle, GitError},
     read::{ReadCmd, ReadCommands},
     sqlite::{
         SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle,
@@ -224,14 +225,14 @@ impl RouterDatabaseHandle {
             git_write()
                 .store_account_id()
                 .await
-                .with_info_lazy(|| WriteCmd::Register(id.clone()))?;
+                .with_info_lazy(|| WriteCmd::AccountId(id.clone()))?;
         }
 
         // Check profile file
-        let git_profile = self
+        let git_profile: Option<Profile> = self
             .read()
             .git(&id)
-            .profile()
+            .read_json()
             .await
             .with_info_lazy(|| ReadCmd::Profile(id.clone()))?;
         let sqlite_profile = read
@@ -244,16 +245,16 @@ impl RouterDatabaseHandle {
             .is_none()
         {
             git_write()
-                .update_user_profile(&sqlite_profile)
+                .update_json(&sqlite_profile)
                 .await
-                .with_info_lazy(|| WriteCmd::UpdateProfile(id.clone()))?;
+                .with_info_lazy(|| WriteCmd::Profile(id.clone()))?;
         }
 
         // Check account state file
-        let git_account_state = self
+        let git_account_state: Option<Account> = self
             .read()
             .git(&id)
-            .account_state()
+            .read_json()
             .await
             .with_info_lazy(|| ReadCmd::AccountState(id.clone()))?;
         let sqlite_account_state = read
@@ -265,16 +266,16 @@ impl RouterDatabaseHandle {
             .filter(|account_state| *account_state == sqlite_account_state)
             .is_none() {
                 git_write()
-                    .update_account(&sqlite_account_state)
+                    .update_json(&sqlite_account_state)
                     .await
-                    .with_info_lazy(|| WriteCmd::UpdateAccountState(id.clone()))?;
+                    .with_info_lazy(|| WriteCmd::AccountState(id.clone()))?;
         }
 
         // Check account state file
-        let git_account_setup = self
+        let git_account_setup: Option<AccountSetup> = self
             .read()
             .git(&id)
-            .account_setup()
+            .read_json()
             .await
             .with_info_lazy(|| ReadCmd::AccountSetup(id.clone()))?;
         let sqlite_account_setup = read
@@ -286,9 +287,9 @@ impl RouterDatabaseHandle {
             .filter(|data| *data == sqlite_account_setup)
             .is_none() {
                 git_write()
-                    .update_account_setup(&sqlite_account_setup)
+                    .update_json(&sqlite_account_setup)
                     .await
-                    .with_info_lazy(|| WriteCmd::UpdateAccountSetup(id.clone()))?;
+                    .with_info_lazy(|| WriteCmd::AccountSetup(id.clone()))?;
         }
 
         // Check ID file

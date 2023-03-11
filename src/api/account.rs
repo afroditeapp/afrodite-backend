@@ -162,7 +162,7 @@ pub async fn account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     if account.state() == AccountState::InitialSetup {
         db_write!(state, &id)?
             .await
-            .update_account_setup(&data)
+            .update_json(&data)
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");

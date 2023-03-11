@@ -74,7 +74,7 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
 
     db_write!(state, id)?
         .await
-        .update_user_profile(&profile)
+        .update_json(&profile)
         .await
         .map_err(|e| {
             error!("Post profile error: {e:?}");

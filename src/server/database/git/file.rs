@@ -1,5 +1,9 @@
 //! Types for files in different repositories
 
+use serde::{Serialize, de::DeserializeOwned};
+
+use crate::api::model::{Account, AccountSetup, Profile};
+
 #[derive(Debug)]
 pub struct GitPath<'a>(&'a str);
 
@@ -143,3 +147,20 @@ impl GetLiveVersionPath for CoreFileNoHistory {
 
 // TODO: Append only files (possibly for IP addresses). Set max limit for ip
 // address changes or something?
+
+
+pub trait GitJsonFile: Serialize + DeserializeOwned {
+    const FILE: CoreFile;
+}
+
+impl GitJsonFile for Profile {
+    const FILE: CoreFile = CoreFile::ProfileJson;
+}
+
+impl GitJsonFile for Account {
+    const FILE: CoreFile = CoreFile::AccountStateJson;
+}
+
+impl GitJsonFile for AccountSetup {
+    const FILE: CoreFile = CoreFile::AccountSetupJson;
+}

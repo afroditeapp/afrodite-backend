@@ -34,3 +34,5 @@ sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "sqlite" ] }
 
 thiserror = "1.0.37"
 error-stack = "0.2.3"
+
+async-trait = "0.1.66"

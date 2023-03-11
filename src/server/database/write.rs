@@ -1,4 +1,6 @@
 use error_stack::Result;
+use serde::Serialize;
+use sqlx::Sqlite;
 
 use crate::{
     api::model::{
@@ -6,24 +8,21 @@ use crate::{
         ApiKey, AccountId, AccountState, Profile, AccountSetup,
     },
     server::database::{
-        git::util::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
+        git::utils::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
         GitDatabaseOperationHandle,
     },
     utils::ErrorConversion, config::Config,
 };
 
-use super::{git::write::GitDatabaseWriteCommands, sqlite::write::SqliteWriteCommands};
+use super::{git::{write::GitDatabaseWriteCommands, file::GitJsonFile}, sqlite::{write::SqliteWriteCommands, SqliteDatabaseError, utils::SqliteUpdateJson}, utils::GetReadWriteCmd};
 
 #[derive(Debug, Clone)]
 pub enum WriteCmd {
-    Register(AccountId),
-    RegisterAccount(AccountId),
-    RegisterAccountSetup(AccountId),
-    RegisterProfile(AccountId),
-    UpdateProfile(AccountId),
-    UpdateApiKey(AccountId),
-    UpdateAccountState(AccountId),
-    UpdateAccountSetup(AccountId),
+    AccountId(AccountId),
+    Profile(AccountId),
+    ApiKey(AccountId),
+    AccountState(AccountId),
+    AccountSetup(AccountId),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -61,80 +60,52 @@ impl WriteCommands {
         self.git()
             .store_account_id()
             .await
-            .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
+            .with_info_lazy(|| WriteCmd::AccountId(self.user_dir.id().clone()))?;
 
         if config.components().account {
             self.git()
-                .update_account(&account_state)
+                .update_json(&account_state)
                 .await
-                .with_info_lazy(|| WriteCmd::RegisterAccount(self.user_dir.id().clone()))?;
+                .with_write_cmd_info::<Account>(self.user_dir.id())?;
 
             self.git()
-                .update_account_setup(&account_setup)
+                .update_json(&account_setup)
                 .await
-                .with_info_lazy(|| WriteCmd::RegisterAccountSetup(self.user_dir.id().clone()))?;
+                .with_write_cmd_info::<AccountSetup>(self.user_dir.id())?;
         }
 
         if config.components().profile {
             self.git()
-                .update_user_profile(&profile)
+                .update_json(&profile)
                 .await
-                .with_info_lazy(|| WriteCmd::RegisterProfile(self.user_dir.id().clone()))?;
+                .with_write_cmd_info::<Profile>(self.user_dir.id())?;
         }
 
         self.sqlite()
             .store_account_id(self.user_dir.id())
             .await
-            .with_info_lazy(|| WriteCmd::Register(self.user_dir.id().clone()))?;
+            .with_info_lazy(|| WriteCmd::AccountId(self.user_dir.id().clone()))?;
 
         if config.components().account {
             self.sqlite()
                 .store_account(self.user_dir.id(), &account_state)
                 .await
-                .with_info_lazy(|| WriteCmd::RegisterAccount(self.user_dir.id().clone()))?;
+                .with_write_cmd_info::<Account>(self.user_dir.id())?;
 
             self.sqlite()
                 .store_account_setup(self.user_dir.id(), &account_setup)
                 .await
-                .with_info_lazy(|| WriteCmd::RegisterAccountSetup(self.user_dir.id().clone()))?;
+                .with_write_cmd_info::<AccountSetup>(self.user_dir.id())?;
         }
 
         if config.components().profile {
             self.sqlite()
                 .store_profile(self.user_dir.id(), &profile)
                 .await
-                .with_info_lazy(|| WriteCmd::RegisterProfile(self.user_dir.id().clone()))?;
+                .with_write_cmd_info::<Profile>(self.user_dir.id())?;
         }
 
         Ok(())
-    }
-
-    pub async fn update_user_profile(
-        &mut self,
-        profile_data: &Profile,
-    ) -> Result<(), DatabaseError> {
-        self.git()
-            .update_user_profile(profile_data)
-            .await
-            .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))?;
-        self.sqlite()
-            .update_profile(self.user_dir.id(), profile_data)
-            .await
-            .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))
-    }
-
-    pub async fn update_account_setup(
-        &mut self,
-        data: &AccountSetup,
-    ) -> Result<(), DatabaseError> {
-        self.git()
-            .update_account_setup(data)
-            .await
-            .with_info_lazy(|| WriteCmd::UpdateAccountSetup(self.user_dir.id().clone()))?;
-        self.sqlite()
-            .update_account_setup(self.user_dir.id(), data)
-            .await
-            .with_info_lazy(|| WriteCmd::UpdateAccountSetup(self.user_dir.id().clone()))
     }
 
     pub async fn update_current_api_key(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {
@@ -142,7 +113,7 @@ impl WriteCommands {
         self.git()
             .update_token(key)
             .await
-            .with_info_lazy(|| WriteCmd::UpdateApiKey(self.user_dir.id().clone()))
+            .with_info_lazy(|| WriteCmd::ApiKey(self.user_dir.id().clone()))
     }
 
     fn git(&self) -> GitDatabaseWriteCommands {
@@ -157,5 +128,20 @@ impl WriteCommands {
 
     pub(super) fn sqlite(&self) -> SqliteWriteCommands {
         SqliteWriteCommands::new(&self.sqlite_database_write)
+    }
+
+    pub async fn update_json<
+        T: GetReadWriteCmd + Serialize + Clone + Send + GitJsonFile + SqliteUpdateJson + 'static
+    >(
+        &mut self,
+        data: &T,
+    ) -> Result<(), DatabaseError> {
+        self.git()
+            .update_json(data)
+            .await
+            .with_write_cmd_info::<T>(self.user_dir.id())?;
+        data.update_json(self.user_dir.id(), &self.sqlite())
+            .await
+            .with_write_cmd_info::<T>(self.user_dir.id())
     }
 }

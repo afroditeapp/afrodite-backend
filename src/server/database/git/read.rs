@@ -5,10 +5,10 @@ use crate::{
     api::model::{
         ApiKey, AccountId, Account, Profile, AccountSetup,
     },
-    server::database::{git::file::CoreFileNoHistory, git::util::GitUserDirPath},
+    server::database::{git::file::CoreFileNoHistory, git::utils::GitUserDirPath},
 };
 
-use super::{file::{CoreFile, GetLiveVersionPath}, GitError};
+use super::{file::{CoreFile, GetLiveVersionPath, GitJsonFile}, GitError};
 use crate::utils::IntoReportExt;
 
 /// Reading can be done async as Git library is not used.
@@ -43,24 +43,12 @@ impl<'a> GitDatabaseReadCommands {
         Ok(text.map(ApiKey::new))
     }
 
-    pub async fn profile(self) -> Result<Option<Profile>, GitError> {
-        self.read_generic(CoreFile::ProfileJson).await
-    }
-
-    pub async fn account_state(self) -> Result<Option<Account>, GitError> {
-        self.read_generic(CoreFile::AccountStateJson).await
-    }
-
-    pub async fn account_setup(self) -> Result<Option<AccountSetup>, GitError> {
-        self.read_generic(CoreFile::AccountSetupJson).await
-    }
-
-    async fn read_generic<T: DeserializeOwned, S: GetLiveVersionPath>(
-        self, file: S,
+    pub async fn read_json<T: DeserializeOwned + GitJsonFile>(
+        self
     ) -> Result<Option<T>, GitError> {
         let text = self
             .account_dir
-            .read_to_string_optional(file)
+            .read_to_string_optional(T::FILE)
             .await?;
         let profile = match text {
             None => return Ok(None),

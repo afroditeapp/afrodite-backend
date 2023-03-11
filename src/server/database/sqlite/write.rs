@@ -1,8 +1,9 @@
+use async_trait::async_trait;
 use error_stack::Result;
 
 use crate::api::{model::{Account, AccountId, AccountState, Profile}, account::data::AccountSetup};
 
-use super::{SqliteDatabaseError, SqliteWriteHandle};
+use super::{SqliteDatabaseError, SqliteWriteHandle, utils::{SqliteUpdateJson,}};
 
 use crate::utils::IntoReportExt;
 
@@ -87,54 +88,58 @@ impl<'a> SqliteWriteCommands<'a> {
             id
         )
     }
+}
 
-    pub async fn update_profile(
-        self,
-        id: &AccountId,
-        profile: &Profile,
+
+#[async_trait]
+impl SqliteUpdateJson for Account {
+    async fn update_json(
+        &self, id: &AccountId, write: &SqliteWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
-            self,
-            r#"
-            UPDATE Profile
-            SET json_text = ?
-            WHERE account_id = ?
-            "#,
-            profile,
-            id
-        )
-    }
-
-    pub async fn update_account(
-        self,
-        id: &AccountId,
-        account: &Account,
-    ) -> Result<(), SqliteDatabaseError> {
-        insert_or_update_json!(
-            self,
+            write,
             r#"
             UPDATE AccountState
             SET json_text = ?
             WHERE account_id = ?
             "#,
-            account,
+            self,
             id
         )
     }
+}
 
-    pub async fn update_account_setup(
-        self,
-        id: &AccountId,
-        account: &AccountSetup,
+#[async_trait]
+impl SqliteUpdateJson for AccountSetup {
+    async fn update_json(
+        &self, id: &AccountId, write: &SqliteWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
-            self,
+            write,
             r#"
             UPDATE AccountSetup
             SET json_text = ?
             WHERE account_id = ?
             "#,
-            account,
+            self,
+            id
+        )
+    }
+}
+
+#[async_trait]
+impl SqliteUpdateJson for Profile {
+    async fn update_json(
+        &self, id: &AccountId, write: &SqliteWriteCommands,
+    ) -> Result<(), SqliteDatabaseError> {
+        insert_or_update_json!(
+            write,
+            r#"
+            UPDATE Profile
+            SET json_text = ?
+            WHERE account_id = ?
+            "#,
+            self,
             id
         )
     }
