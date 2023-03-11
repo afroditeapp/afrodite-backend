@@ -15,7 +15,7 @@ use serde::Deserialize;
 use crate::{utils::IntoReportExt, client::{account::AccountInternalApiUrls, media::MediaInternalApiUrls}};
 
 use self::{
-    args::{ArgsConfig, ServerComponent},
+    args::{ArgsConfig, ServerComponent, TestMode},
     file::{Components, ConfigFile, ConfigFileError, SocketConfig, ExternalServices},
 };
 
@@ -44,9 +44,14 @@ pub struct ClientApiUrls {
 
 pub struct Config {
     file: ConfigFile,
+
+    // Server related configs
     database: PathBuf,
     external_services: ExternalServices,
     client_api_urls: ClientApiUrls,
+
+    // Other configs
+    test_mode: Option<TestMode>,
 }
 
 impl Config {
@@ -78,6 +83,11 @@ impl Config {
     pub fn external_service_urls(&self) -> &ClientApiUrls {
         &self.client_api_urls
     }
+
+    /// Launch testing and benchmark mode instead of the server mode.
+    pub fn test_mode(&self) -> Option<TestMode> {
+        self.test_mode.clone()
+    }
 }
 
 pub fn get_config() -> Result<Config, GetConfigError> {
@@ -105,6 +115,7 @@ pub fn get_config() -> Result<Config, GetConfigError> {
         database,
         external_services,
         client_api_urls,
+        test_mode: args_config.test_mode,
     })
 }
 
