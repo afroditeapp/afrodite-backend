@@ -2,8 +2,28 @@ use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
 
 use super::{SqliteDatabaseError, SqliteReadHandle};
+use crate::api::account::data::AccountSetup;
 use crate::api::model::{Account, AccountId, Profile};
 use crate::utils::IntoReportExt;
+
+macro_rules! read_json {
+    ($self:expr, $id:expr, $sql:literal, $str_field:ident) => {
+        {
+            let id = $id.as_str();
+            sqlx::query!(
+                $sql,
+                id
+            )
+            .fetch_one($self.handle.pool())
+            .await
+            .into_error(SqliteDatabaseError::Execute)
+            .and_then(|data|
+                serde_json::from_str(&data.$str_field)
+                    .into_error(SqliteDatabaseError::SerdeDeserialize)
+                )
+        }
+    };
+}
 
 pub struct SqliteReadCommands<'a> {
     handle: &'a SqliteReadHandle,
@@ -15,41 +35,46 @@ impl<'a> SqliteReadCommands<'a> {
     }
 
     pub async fn profile(&self, id: &AccountId) -> Result<Profile, SqliteDatabaseError> {
-        let id = id.as_str();
-        let profile = sqlx::query!(
+        read_json!(
+            self,
+            id,
             r#"
-            SELECT profile_json
+            SELECT json_text
             FROM Profile
             WHERE account_id = ?
             "#,
-            id
+            json_text
         )
-        .fetch_one(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        serde_json::from_str(&profile.profile_json)
-            .into_error(SqliteDatabaseError::SerdeDeserialize)
     }
 
     pub async fn account_state(
         &self, id: &AccountId
     ) -> Result<Account, SqliteDatabaseError> {
-        let id = id.as_str();
-        let account = sqlx::query!(
+        read_json!(
+            self,
+            id,
             r#"
-            SELECT state_json
+            SELECT json_text
             FROM AccountState
             WHERE account_id = ?
             "#,
-            id
+            json_text
         )
-        .fetch_one(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+    }
 
-        serde_json::from_str(&account.state_json)
-                .into_error(SqliteDatabaseError::SerdeDeserialize)
+    pub async fn account_setup(
+        &self, id: &AccountId
+    ) -> Result<AccountSetup, SqliteDatabaseError> {
+        read_json!(
+            self,
+            id,
+            r#"
+            SELECT json_text
+            FROM AccountSetup
+            WHERE account_id = ?
+            "#,
+            json_text
+        )
     }
 
     pub fn account_ids(&self) -> impl Stream<Item = Result<AccountId, SqliteDatabaseError>> + '_ {
@@ -67,21 +92,4 @@ impl<'a> SqliteReadCommands<'a> {
                 .into_error(SqliteDatabaseError::Fetch)
         })
     }
-
-    // pub async fn users<T: FnMut(AccountId)>(&self, mut handle_user: T) -> impl Stream {
-    //     let mut users = sqlx::query!(
-    //         r#"
-    //         SELECT id
-    //         FROM User
-    //         "#,
-    //     )
-    //     .fetch(self.handle.pool());
-
-    //     while let Some(data) = users.try_next().await.map_err(SqliteDatabaseError::Execute)? {
-    //         let id = AccountId::new(data.id);
-    //         handle_user(id)
-    //     }
-
-    //     Ok(())
-    // }
 }

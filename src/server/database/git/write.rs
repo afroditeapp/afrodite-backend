@@ -1,8 +1,12 @@
 use error_stack::Result;
+use serde::Serialize;
+use std::fmt::Debug;
 use std::io::Write;
 use tracing::error;
 
+use super::file::{GetLiveVersionPath, GetGitPath, GetReplaceMessage};
 use super::{super::git::GitDatabase, GitError};
+use crate::api::account::data::AccountSetup;
 use crate::api::model::{Account, Profile};
 use crate::utils::IntoReportExt;
 use crate::{
@@ -65,23 +69,15 @@ impl GitDatabaseWriteCommands {
     }
 
     pub async fn update_account(self, account: &Account) -> Result<(), GitError> {
-        let account = account.clone();
-        self.run_git_command(move |dir| {
-            dir.replace_file(CoreFile::AccountStateJson, "Update account state", move |file| {
-                serde_json::to_writer(file, &account).into_error(GitError::SerdeSerialize)
-            })
-        })
-        .await
+        self.update_json(account, CoreFile::AccountStateJson).await
+    }
+
+    pub async fn update_account_setup(self, data: &AccountSetup) -> Result<(), GitError> {
+        self.update_json(data, CoreFile::AccountSetupJson).await
     }
 
     pub async fn update_user_profile(self, profile_data: &Profile) -> Result<(), GitError> {
-        let profile_data = profile_data.clone();
-        self.run_git_command(move |profile_dir| {
-            profile_dir.replace_file(CoreFile::ProfileJson, "Update profile", move |file| {
-                serde_json::to_writer(file, &profile_data).into_error(GitError::SerdeSerialize)
-            })
-        })
-        .await
+        self.update_json(profile_data, CoreFile::ProfileJson).await
     }
 
     pub async fn update_token(self, key: &ApiKey) -> Result<(), GitError> {
@@ -104,4 +100,24 @@ impl GitDatabaseWriteCommands {
         })
         .await
     }
+
+    async fn update_json<
+        T: Serialize + Clone + Send + 'static,
+        S: GetLiveVersionPath + GetGitPath + GetReplaceMessage + Debug + Copy + Send + 'static
+    >(
+        self, data: &T, file: S,
+    ) -> Result<(), GitError> {
+        let data = data.clone();
+        self.run_git_command(move |dir| {
+            dir.replace_file(
+                file,
+                file.commit_message_for_replace(),
+                move |file| {
+                    serde_json::to_writer(file, &data).into_error(GitError::SerdeSerialize)
+                }
+            )
+        })
+        .await
+    }
+
 }

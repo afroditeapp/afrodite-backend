@@ -15,7 +15,7 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::{server::session::AccountState, api::model::AccountIdLight};
+use crate::{server::session::AccountStateInRam, api::model::AccountIdLight};
 
 use super::{
     super::profile::data::Profile,

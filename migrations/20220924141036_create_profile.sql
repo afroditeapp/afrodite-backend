@@ -5,7 +5,16 @@ CREATE TABLE IF NOT EXISTS Account(
 );
 
 CREATE TABLE IF NOT EXISTS AccountState(
-    state_json      TEXT     NOT NULL DEFAULT '',
+    json_text      TEXT     NOT NULL DEFAULT '',
+    account_id  TEXT PRIMARY KEY NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES Account (account_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS AccountSetup(
+    json_text   TEXT     NOT NULL DEFAULT '',
     account_id  TEXT PRIMARY KEY NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES Account (account_id)
@@ -18,7 +27,7 @@ CREATE TABLE IF NOT EXISTS AccountState(
 -- loaded from git directory at startup.
 
 CREATE TABLE IF NOT EXISTS Profile(
-    profile_json  TEXT     NOT NULL DEFAULT '',
+    json_text  TEXT     NOT NULL DEFAULT '',
     account_id    TEXT PRIMARY KEY NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES Account (account_id)

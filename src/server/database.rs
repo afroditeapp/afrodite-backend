@@ -270,6 +270,27 @@ impl RouterDatabaseHandle {
                     .with_info_lazy(|| WriteCmd::UpdateAccountState(id.clone()))?;
         }
 
+        // Check account state file
+        let git_account_setup = self
+            .read()
+            .git(&id)
+            .account_setup()
+            .await
+            .with_info_lazy(|| ReadCmd::AccountSetup(id.clone()))?;
+        let sqlite_account_setup = read
+            .sqlite()
+            .account_setup(&id)
+            .await
+            .with_info_lazy(|| ReadCmd::AccountSetup(id.clone()))?;
+        if git_account_setup
+            .filter(|data| *data == sqlite_account_setup)
+            .is_none() {
+                git_write()
+                    .update_account_setup(&sqlite_account_setup)
+                    .await
+                    .with_info_lazy(|| WriteCmd::UpdateAccountSetup(id.clone()))?;
+        }
+
         // Check ID file
         let git_id = self
             .read()

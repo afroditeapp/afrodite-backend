@@ -34,7 +34,7 @@ use crate::{
 use super::{
     app::AppState,
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, AccountState},
+    session::{SessionManager, AccountStateInRam},
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
@@ -44,7 +44,7 @@ use super::{
 pub struct InternalApp;
 
 impl InternalApp {
-    pub fn create_core_server_router(state: AppState) -> Router {
+    pub fn create_account_server_router(state: AppState) -> Router {
         Router::new().route(
             api::account::internal::PATH_CHECK_API_KEY,
             get({
@@ -52,6 +52,10 @@ impl InternalApp {
                 move |body| api::account::internal::check_api_key(body, state)
             }),
         )
+    }
+
+    pub fn create_profile_server_router(state: AppState) -> Router {
+        Router::new()
     }
 
     pub fn create_media_server_router(state: AppState) -> Router {

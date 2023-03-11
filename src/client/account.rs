@@ -33,7 +33,7 @@ use crate::{
 use crate::server::{
     app::AppState,
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, AccountState},
+    session::{SessionManager, AccountStateInRam},
 };
 
 use super::{HttpRequestError, get_api_url};

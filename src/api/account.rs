@@ -10,10 +10,10 @@ use utoipa::{
     Modify, OpenApi,
 };
 
-use crate::server::session::AccountState;
+use crate::server::session::AccountStateInRam;
 
 use self::{
-    data::{ApiKey, AccountId, Account, Capabilities, AccountIdLight},
+    data::{ApiKey, AccountId, Account, Capabilities, AccountIdLight, AccountSetup, AccountState},
 };
 
 use super::{get_account_id, GetConfig};
@@ -24,11 +24,11 @@ use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabas
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
-pub const PATH_REGISTER: &str = "/register";
+pub const PATH_REGISTER: &str = "/account/register";
 
 #[utoipa::path(
     post,
-    path = "/register",
+    path = "/account/register",
     security(),
     responses(
         (status = 200, description = "New profile created.", body = [AccountId]),
@@ -89,7 +89,7 @@ pub async fn login<S: GetApiKeys + WriteDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
         })?;
 
-    let user_state = AccountState::new(id.to_full());
+    let user_state = AccountStateInRam::new(id.to_full());
     state
         .api_keys()
         .write()
@@ -126,4 +126,50 @@ pub async fn account_state<S: GetApiKeys + ReadDatabase>(
             error!("Get profile error: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
         })
+}
+
+
+pub const PATH_ACCOUNT_SETUP: &str = "/account/setup";
+
+/// Setup non-changeable user information during `initial setup` state.
+#[utoipa::path(
+    post,
+    path = "/account/setup",
+    responses(
+        (status = 200, description = "Request successfull.", body = [Account]),
+        (
+            status = 500,
+            description = "Account state is not initial setup or some other error"),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Json(data): Json<AccountSetup>,
+    state: S,
+) -> Result<StatusCode, StatusCode> {
+    let id = get_account_id!(state, api_key.key())?;
+
+    let account = state
+        .read_database()
+        .account(&id.to_full())
+        .await
+        .map_err(|e| {
+            error!("Get profile error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })?;
+
+    if account.state() == AccountState::InitialSetup {
+        db_write!(state, &id)?
+            .await
+            .update_account_setup(&data)
+            .await
+            .map_err(|e| {
+                error!("Write database error: {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+            })
+            .map(|_| StatusCode::OK)
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }

@@ -3,7 +3,7 @@ use error_stack::Result;
 use crate::{
     api::model::{
         Account,
-        ApiKey, AccountId, AccountState, Profile,
+        ApiKey, AccountId, AccountState, Profile, AccountSetup,
     },
     server::database::{
         git::util::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
@@ -18,10 +18,12 @@ use super::{git::write::GitDatabaseWriteCommands, sqlite::write::SqliteWriteComm
 pub enum WriteCmd {
     Register(AccountId),
     RegisterAccount(AccountId),
+    RegisterAccountSetup(AccountId),
     RegisterProfile(AccountId),
     UpdateProfile(AccountId),
     UpdateApiKey(AccountId),
     UpdateAccountState(AccountId),
+    UpdateAccountSetup(AccountId),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -53,6 +55,7 @@ impl WriteCommands {
 
     pub async fn register(&mut self, config: &Config) -> Result<(), DatabaseError> {
         let account_state = Account::default();
+        let account_setup = AccountSetup::default();
         let profile = Profile::default();
 
         self.git()
@@ -65,6 +68,11 @@ impl WriteCommands {
                 .update_account(&account_state)
                 .await
                 .with_info_lazy(|| WriteCmd::RegisterAccount(self.user_dir.id().clone()))?;
+
+            self.git()
+                .update_account_setup(&account_setup)
+                .await
+                .with_info_lazy(|| WriteCmd::RegisterAccountSetup(self.user_dir.id().clone()))?;
         }
 
         if config.components().profile {
@@ -84,6 +92,11 @@ impl WriteCommands {
                 .store_account(self.user_dir.id(), &account_state)
                 .await
                 .with_info_lazy(|| WriteCmd::RegisterAccount(self.user_dir.id().clone()))?;
+
+            self.sqlite()
+                .store_account_setup(self.user_dir.id(), &account_setup)
+                .await
+                .with_info_lazy(|| WriteCmd::RegisterAccountSetup(self.user_dir.id().clone()))?;
         }
 
         if config.components().profile {
@@ -108,6 +121,20 @@ impl WriteCommands {
             .update_profile(self.user_dir.id(), profile_data)
             .await
             .with_info_lazy(|| WriteCmd::UpdateProfile(self.user_dir.id().clone()))
+    }
+
+    pub async fn update_account_setup(
+        &mut self,
+        data: &AccountSetup,
+    ) -> Result<(), DatabaseError> {
+        self.git()
+            .update_account_setup(data)
+            .await
+            .with_info_lazy(|| WriteCmd::UpdateAccountSetup(self.user_dir.id().clone()))?;
+        self.sqlite()
+            .update_account_setup(self.user_dir.id(), data)
+            .await
+            .with_info_lazy(|| WriteCmd::UpdateAccountSetup(self.user_dir.id().clone()))
     }
 
     pub async fn update_current_api_key(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {

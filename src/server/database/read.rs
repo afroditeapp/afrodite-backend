@@ -4,7 +4,7 @@ use tokio_stream::StreamExt;
 use crate::{
     api::model::{
         Account,
-        ApiKey, AccountId, AccountIdLight, Profile,
+        ApiKey, AccountId, AccountIdLight, Profile, AccountSetup,
     },
     utils::ErrorConversion,
 };
@@ -19,6 +19,7 @@ use super::{
 pub enum ReadCmd {
     AccountApiKey(AccountId),
     AccountState(AccountId),
+    AccountSetup(AccountId),
     Accounts,
     Profile(AccountId),
 }
@@ -70,6 +71,13 @@ impl<'a> ReadCommands<'a> {
             .account_state(id)
             .await
             .with_info_lazy(|| ReadCmd::AccountState(id.clone()))
+    }
+
+    pub async fn account_setup(&self, id: &AccountId) -> Result<AccountSetup, DatabaseError> {
+        self.sqlite()
+            .account_setup(id)
+            .await
+            .with_info_lazy(|| ReadCmd::AccountSetup(id.clone()))
     }
 
     pub(super) fn git(&self, user_id: &AccountId) -> GitDatabaseReadCommands {

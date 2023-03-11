@@ -141,8 +141,12 @@ impl PihkaServer {
     pub fn create_public_router(&self, app: &App) -> Router {
         let mut router = Router::new();
 
+        if self.config.components().account {
+            router = router.merge(app.create_account_server_router())
+        }
+
         if self.config.components().profile {
-            router = router.merge(app.create_core_server_router())
+            router = router.merge(app.create_profile_server_router())
         }
 
         if self.config.components().media {
@@ -154,8 +158,12 @@ impl PihkaServer {
 
     pub fn create_internal_router(&self, app: &App) -> Router {
         let mut router = Router::new();
+        if self.config.components().account {
+            router = router.merge(InternalApp::create_account_server_router(app.state()))
+        }
+
         if self.config.components().profile {
-            router = router.merge(InternalApp::create_core_server_router(app.state()))
+            router = router.merge(InternalApp::create_profile_server_router(app.state()))
         }
 
         if self.config.components().media {

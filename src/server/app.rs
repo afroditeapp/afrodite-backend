@@ -19,7 +19,7 @@ use crate::{api::{
 use super::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     internal::{},
-    session::{SessionManager, AccountState},
+    session::{SessionManager, AccountStateInRam},
 };
 
 #[derive(Clone)]
@@ -42,7 +42,7 @@ impl GetRouterDatabaseHandle for AppState {
 }
 
 impl GetApiKeys for AppState {
-    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, AccountState>> {
+    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, AccountStateInRam>> {
         &self.session_manager.api_keys
     }
 }
@@ -113,15 +113,8 @@ impl App {
         self.state.clone()
     }
 
-    pub fn create_core_server_router(&self) -> Router {
+    pub fn create_account_server_router(&self) -> Router {
         let public = Router::new()
-            .route(
-                "/",
-                get({
-                    let state = self.state.clone();
-                    move || root(state)
-                }),
-            )
             .route(
                 api::account::PATH_REGISTER,
                 post({
@@ -136,6 +129,34 @@ impl App {
                     move |body| api::account::login(body, state)
                 }),
             );
+
+        let private = Router::new()
+            .route(
+                api::account::PATH_ACCOUNT_STATE,
+                get({
+                    let state = self.state.clone();
+                    move |body| api::account::account_state(body, state)
+                }),
+            )
+            .route(
+                api::account::PATH_ACCOUNT_SETUP,
+                get({
+                    let state = self.state.clone();
+                    move |arg1, arg2| api::account::account_setup(arg1, arg2, state)
+                }),
+            )
+            .route_layer({
+                middleware::from_fn({
+                    let state = self.state.clone();
+                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
+                })
+            });
+
+        Router::new().merge(public).merge(private)
+    }
+
+    pub fn create_profile_server_router(&self) -> Router {
+        let public = Router::new();
 
         let private = Router::new()
             .route(

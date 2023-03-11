@@ -8,7 +8,7 @@ use super::database::{write::WriteCommands, RouterDatabaseHandle};
 
 pub struct SessionManager {
     /// Accounts which are logged in.
-    pub api_keys: RwLock<HashMap<ApiKey, AccountState>>,
+    pub api_keys: RwLock<HashMap<ApiKey, AccountStateInRam>>,
     /// All accounts registered in the service.
     pub accounts: RwLock<HashMap<AccountIdLight, Mutex<WriteCommands>>>,
     pub database: RouterDatabaseHandle,
@@ -40,7 +40,7 @@ impl SessionManager {
             if let Some(key) = key {
                 api_keys.insert(
                     key,
-                    AccountState {
+                    AccountStateInRam {
                         user_id: id.clone(),
                     },
                 );
@@ -55,11 +55,11 @@ impl SessionManager {
     }
 }
 
-pub struct AccountState {
+pub struct AccountStateInRam {
     user_id: AccountId,
 }
 
-impl AccountState {
+impl AccountStateInRam {
     pub fn new(user_id: AccountId) -> Self {
         Self { user_id }
     }

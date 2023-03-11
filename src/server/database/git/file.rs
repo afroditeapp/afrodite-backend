@@ -64,6 +64,10 @@ pub trait GetTmpPath {
     fn tmp_path(&self) -> TmpPath<'static>;
 }
 
+pub trait GetReplaceMessage {
+    fn commit_message_for_replace(&self) -> &'static str;
+}
+
 /// Files in profile repository
 #[derive(Debug, Clone, Copy)]
 pub enum CoreFile {
@@ -75,6 +79,10 @@ pub enum CoreFile {
 
     /// JSON text file for private account state.
     AccountStateJson,
+
+    /// JSON text file for private account data which does not change
+    /// after initial setup.
+    AccountSetupJson,
 }
 
 impl GetGitPath for CoreFile {
@@ -83,6 +91,7 @@ impl GetGitPath for CoreFile {
             Self::Id => "id.txt.git",
             Self::ProfileJson => "profile.txt.git",
             Self::AccountStateJson => "account.txt.git",
+            Self::AccountSetupJson => "account_setup.txt.git",
         })
     }
 }
@@ -93,7 +102,19 @@ impl GetLiveVersionPath for CoreFile {
             Self::Id => "id.txt",
             Self::ProfileJson => "profile.txt",
             Self::AccountStateJson => "account.txt",
+            Self::AccountSetupJson => "account_setup.txt",
         })
+    }
+}
+
+impl GetReplaceMessage for CoreFile {
+    fn commit_message_for_replace(&self) -> &'static str {
+        match self {
+            Self::Id => "Update id.txt.git",
+            Self::ProfileJson => "Update profile.txt.git",
+            Self::AccountStateJson => "Update account.txt.git",
+            Self::AccountSetupJson => "Update account_setup.txt.git",
+        }
     }
 }
 

@@ -121,6 +121,10 @@ impl Account {
             capablities: Default::default(),
         }
     }
+
+    pub fn state(&self) -> AccountState {
+        self.state
+    }
 }
 
 impl Default for Account {
@@ -129,7 +133,7 @@ impl Default for Account {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub enum AccountState {
     InitialSetup,
     Normal,
@@ -148,4 +152,9 @@ pub struct Capabilities {
     admin_ban_profile: Option<bool>,
     banned_edit_profile: Option<bool>,
     view_public_profiles: Option<bool>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
+pub struct AccountSetup {
+    name: String,
 }

@@ -22,7 +22,7 @@ use utoipa::{
 use crate::{server::{
     database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
     internal::{},
-    session::{SessionManager, AccountState},
+    session::{SessionManager, AccountStateInRam},
 }, client::{account::AccountInternalApi, media::MediaInternalApi}, config::Config};
 
 use self::model::{
@@ -43,6 +43,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         account::register,
         account::login,
         account::account_state,
+        account::account_setup,
         account::internal::check_api_key,
         profile::get_profile,
         profile::post_profile,
@@ -55,6 +56,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         account::data::ApiKey,
         account::data::Account,
         account::data::AccountState,
+        account::data::AccountSetup,
         account::data::Capabilities,
         profile::data::Profile,
         media::data::ImageFileName,
@@ -78,7 +80,7 @@ pub trait GetRouterDatabaseHandle {
 
 pub trait GetApiKeys {
     /// Users which are logged in.
-    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, AccountState>>;
+    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, AccountStateInRam>>;
 }
 
 pub trait GetUsers {

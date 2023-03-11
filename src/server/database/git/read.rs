@@ -1,13 +1,14 @@
 use error_stack::Result;
+use serde::de::DeserializeOwned;
 
 use crate::{
     api::model::{
-        ApiKey, AccountId, Account, Profile,
+        ApiKey, AccountId, Account, Profile, AccountSetup,
     },
     server::database::{git::file::CoreFileNoHistory, git::util::GitUserDirPath},
 };
 
-use super::{file::CoreFile, GitError};
+use super::{file::{CoreFile, GetLiveVersionPath}, GitError};
 use crate::utils::IntoReportExt;
 
 /// Reading can be done async as Git library is not used.
@@ -43,21 +44,23 @@ impl<'a> GitDatabaseReadCommands {
     }
 
     pub async fn profile(self) -> Result<Option<Profile>, GitError> {
-        let text = self
-            .account_dir
-            .read_to_string_optional(CoreFile::ProfileJson)
-            .await?;
-        let profile = match text {
-            None => return Ok(None),
-            Some(text) => serde_json::from_str(&text).into_error(GitError::SerdeDerialize)?,
-        };
-        Ok(profile)
+        self.read_generic(CoreFile::ProfileJson).await
     }
 
     pub async fn account_state(self) -> Result<Option<Account>, GitError> {
+        self.read_generic(CoreFile::AccountStateJson).await
+    }
+
+    pub async fn account_setup(self) -> Result<Option<AccountSetup>, GitError> {
+        self.read_generic(CoreFile::AccountSetupJson).await
+    }
+
+    async fn read_generic<T: DeserializeOwned, S: GetLiveVersionPath>(
+        self, file: S,
+    ) -> Result<Option<T>, GitError> {
         let text = self
             .account_dir
-            .read_to_string_optional(CoreFile::AccountStateJson)
+            .read_to_string_optional(file)
             .await?;
         let profile = match text {
             None => return Ok(None),
