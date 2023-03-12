@@ -14,13 +14,13 @@ use tokio::sync::{Mutex, RwLock};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use error_stack::{Result, ResultExt};
+use error_stack::{Result, ResultExt, IntoReport, Context};
 
 use crate::{
     api::{
         self,
         model::{ApiKey, AccountId, AccountIdLight},
-        account::internal::PATH_CHECK_API_KEY,
+        account::{internal::PATH_CHECK_API_KEY, PATH_REGISTER, PATH_LOGIN},
         utils::{
             ApiKeyHeader,
         },
@@ -36,8 +36,10 @@ use crate::server::{
     session::{SessionManager, AccountStateInRam},
 };
 
-use super::{HttpRequestError, get_api_url};
+use super::{HttpRequestError, get_api_url, StatusCodeError};
 
+
+// Internal API
 
 #[derive(Debug, Clone)]
 pub enum AccountInternalApiRequest {
@@ -104,6 +106,110 @@ impl <'a> AccountInternalApi<'a> {
             Ok(Some(id))
         } else {
             Ok(None)
+        }
+    }
+}
+
+
+// Public API
+
+#[derive(Debug, Clone)]
+pub enum AccountApiRequest {
+    Register,
+    Login,
+}
+
+impl std::fmt::Display for AccountApiRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("Account API request: {:?}", self))
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct AccountApiUrls {
+    register_url: Option<Url>,
+    login_url: Option<Url>,
+}
+
+impl AccountApiUrls {
+    pub fn new(base_url: Url) -> Result<Self, url::ParseError> {
+        Ok(Self {
+            register_url: Some(base_url.join(PATH_REGISTER)?),
+            login_url: Some(base_url.join(PATH_LOGIN)?),
+        })
+    }
+}
+
+
+pub struct AccountApi<'a> {
+    client: &'a Client,
+    urls: &'a AccountApiUrls,
+}
+
+impl <'a> AccountApi<'a> {
+    pub fn new(client: &'a Client, urls: &'a AccountApiUrls) -> Self {
+        Self {
+            client,
+            urls,
+        }
+    }
+
+    pub async fn register(&self) -> Result<AccountIdLight, HttpRequestError> {
+        let url = get_api_url(&self.urls.register_url)?;
+
+        let request = self
+            .client
+            .post(url)
+            .build()
+            .unwrap();
+
+        let response = self.client.execute(request).await
+            .into_error_with_info(
+                HttpRequestError::Reqwest,
+                AccountApiRequest::Register,
+            )?;
+
+        if response.status() == StatusCode::OK {
+            let id: AccountIdLight = response.json().await.into_error_with_info(
+                HttpRequestError::SerdeDeserialize,
+                AccountApiRequest::Register,
+            )?;
+            Ok(id)
+        } else {
+            Err(StatusCodeError(response.status())).into_error_with_info(
+                HttpRequestError::StatusCode,
+                AccountApiRequest::Register,
+            )
+        }
+    }
+
+    pub async fn login(&self, id: &AccountId) -> Result<ApiKey, HttpRequestError> {
+        let url = get_api_url(&self.urls.login_url)?;
+
+        let request = self
+            .client
+            .post(url)
+            .json(&id.as_light())
+            .build()
+            .unwrap();
+
+        let response = self.client.execute(request).await
+            .into_error_with_info(
+                HttpRequestError::Reqwest,
+                AccountApiRequest::Register,
+            )?;
+
+        if response.status() == StatusCode::OK {
+            let key: ApiKey = response.json().await.into_error_with_info(
+                HttpRequestError::SerdeDeserialize,
+                AccountApiRequest::Register,
+            )?;
+            Ok(key)
+        } else {
+            Err(StatusCodeError(response.status())).into_error_with_info(
+                HttpRequestError::StatusCode,
+                AccountApiRequest::Register,
+            )
         }
     }
 }

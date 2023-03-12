@@ -31,6 +31,9 @@ use self::{
 };
 use crate::utils::IntoReportExt;
 
+pub const DB_HISTORY_DIR_NAME: &str = "history";
+pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";
+
 pub type DatabeseEntryId = String;
 
 #[derive(thiserror::Error, Debug)]
@@ -61,13 +64,13 @@ impl DatabaseRoot {
             fs::create_dir(&root).into_error(DatabaseError::Init)?;
         }
 
-        let history = root.join("history");
+        let history = root.join(DB_HISTORY_DIR_NAME);
         if !history.exists() {
             fs::create_dir(&history).into_error(DatabaseError::Init)?;
         }
         let history = DatabasePath::new(history);
 
-        let current = root.join("current");
+        let current = root.join(DB_CURRENT_DATA_DIR_NAME);
         if !current.exists() {
             fs::create_dir(&current).into_error(DatabaseError::Init)?;
         }

@@ -36,3 +36,5 @@ thiserror = "1.0.37"
 error-stack = "0.2.3"
 
 async-trait = "0.1.66"
+
+rand = "0.8.5"

@@ -4,6 +4,11 @@ use std::{
 };
 
 use clap::{arg, command, value_parser, Command};
+use reqwest::Url;
+
+use crate::client::PublicApiUrls;
+
+use super::ClientApiUrls;
 
 // Config given as command line arguments
 pub struct ArgsConfig {
@@ -19,20 +24,40 @@ pub fn get_config() -> ArgsConfig {
                 .value_parser(value_parser!(PathBuf)),
         )
         .subcommand(Command::new("test")
-            .about("Run tests and benchmarkss")
+            .about("Run tests and benchmarks")
             .arg(arg!(--count <COUNT> "Bot user count")
                 .value_parser(value_parser!(u32))
                 .default_value("1")
                 .required(false))
+            .arg(arg!(--account <URL> "Base URL for account API")
+                .value_parser(value_parser!(Url))
+                .default_value("http://127.0.0.1:3000")
+                .required(false))
+            .arg(arg!(--profile <URL> "Base URL for profile API")
+                .value_parser(value_parser!(Url))
+                .default_value("http://127.0.0.1:3000")
+                .required(false))
+            .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
+            .arg(arg!(--"update-profile" "Update profile continuously"))
+            .arg(arg!(--"print-speed" "Print some speed information"))
             .arg(arg!(--forever "Run tests forever"))
             )
         .get_matches();
 
     let test_mode = match matches.subcommand() {
         Some(("test", sub_matches)) => {
+            let api_urls = PublicApiUrls::new(
+                sub_matches.get_one::<Url>("account").unwrap().clone(),
+                sub_matches.get_one::<Url>("profile").unwrap().clone(),
+            ).unwrap();
+
             Some(TestMode {
                 bot_count: *sub_matches.get_one::<u32>("count").unwrap(),
                 forever: sub_matches.is_present("forever"),
+                api_urls,
+                no_sleep: sub_matches.is_present("no-sleep"),
+                update_profile: sub_matches.is_present("update-profile"),
+                print_speed: sub_matches.is_present("print-speed"),
             })
         }
         _ => None,
@@ -70,4 +95,8 @@ impl TryFrom<&str> for ServerComponent {
 pub struct TestMode {
     pub bot_count: u32,
     pub forever: bool,
+    pub api_urls: PublicApiUrls,
+    pub no_sleep: bool,
+    pub update_profile: bool,
+    pub print_speed: bool,
 }
