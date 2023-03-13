@@ -167,6 +167,13 @@ impl App {
                 }),
             )
             .route(
+                api::profile::PATH_GET_DEFAULT_PROFILE,
+                get({
+                    let state = self.state.clone();
+                    move |body| api::profile::get_default_profile(body, state)
+                }),
+            )
+            .route(
                 api::profile::PATH_POST_PROFILE,
                 post({
                     let state = self.state.clone();

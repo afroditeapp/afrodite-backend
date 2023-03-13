@@ -53,6 +53,28 @@ pub async fn get_profile<S: ReadDatabase>(
         })
 }
 
+
+/// TODO: Remove this after benchmarking?
+pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile/default/:account_id";
+
+#[utoipa::path(
+    get,
+    path = "/profile/default/{account_id}",
+    params(AccountIdLight),
+    responses(
+        (status = 200, description = "Get default profile.", body = [Profile]),
+        (status = 500),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn get_default_profile<S: ReadDatabase>(
+    Path(account_id): Path<AccountIdLight>,
+    state: S,
+) -> Result<Json<Profile>, StatusCode> {
+    let default = Profile::default();
+    Ok(default.into())
+}
+
 pub const PATH_POST_PROFILE: &str = "/profile";
 
 #[utoipa::path(

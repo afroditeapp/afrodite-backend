@@ -22,7 +22,7 @@ use error_stack::{Result, ResultExt, IntoReport, Context};
 
 use tracing::{error, log::warn};
 
-use crate::{api::model::{AccountId, ApiKey, Profile}, client::{ApiClient, PublicApiUrls, HttpRequestError}, config::args::TestMode};
+use crate::{api::{model::{AccountId, ApiKey, Profile}, self}, client::{ApiClient, PublicApiUrls, HttpRequestError}, config::args::{TestMode, Test}};
 
 static COUNTERS: Counters = Counters::new();
 
@@ -126,7 +126,12 @@ impl Bot {
         }
 
         let time = Instant::now();
-        self.api.profile().get_profile(key.clone(), id.clone()).await?;
+        match self.config.test {
+            Test::Normal =>
+                self.api.profile().get_profile(key.clone(), id.clone()).await?,
+            Test::Default =>
+                self.api.profile().get_default_profile(key.clone(), id.clone()).await?,
+        };
         COUNTERS.inc_get_profile();
 
         if print_info {

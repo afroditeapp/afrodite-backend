@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use clap::{arg, command, value_parser, Command};
+use clap::{arg, command, value_parser, Command, PossibleValue};
 use reqwest::Url;
 
 use crate::client::PublicApiUrls;
@@ -40,6 +40,10 @@ pub fn get_config() -> ArgsConfig {
             .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
             .arg(arg!(--"update-profile" "Update profile continuously"))
             .arg(arg!(--"print-speed" "Print some speed information"))
+            .arg(arg!(--"test" <NAME> "Select custom test")
+                    .value_parser(value_parser!(Test))
+                    .required(false)
+                    .default_value("normal"))
             .arg(arg!(--forever "Run tests forever"))
             )
         .get_matches();
@@ -58,6 +62,9 @@ pub fn get_config() -> ArgsConfig {
                 no_sleep: sub_matches.is_present("no-sleep"),
                 update_profile: sub_matches.is_present("update-profile"),
                 print_speed: sub_matches.is_present("print-speed"),
+                test: sub_matches.get_one::<Test>("test")
+                    .map(ToOwned::to_owned)
+                    .unwrap(),
             })
         }
         _ => None,
@@ -99,4 +106,70 @@ pub struct TestMode {
     pub no_sleep: bool,
     pub update_profile: bool,
     pub print_speed: bool,
+    pub test: Test,
+}
+
+#[derive(Debug, Clone)]
+pub enum Test {
+    Normal,
+    Default,
+}
+
+impl Test {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Normal => "normal",
+            Self::Default => "default",
+        }
+    }
+}
+
+impl TryFrom<&str> for Test {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(match value {
+            "normal" => Self::Normal,
+            "default" => Self::Default,
+            _ => return Err(()),
+        })
+    }
+}
+
+impl clap::builder::ValueParserFactory for Test {
+    type Parser = TestNameParser;
+    fn value_parser() -> Self::Parser {
+        TestNameParser
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TestNameParser;
+
+impl clap::builder::TypedValueParser for TestNameParser {
+    type Value = Test;
+
+    fn parse_ref(
+            &self,
+            cmd: &clap::Command,
+            arg: Option<&clap::Arg>,
+            value: &std::ffi::OsStr,
+        ) -> Result<Self::Value, clap::Error> {
+            value
+                .to_str()
+                .ok_or(clap::Error::raw(clap::ErrorKind::InvalidUtf8, "Text was not UTF-8."))?
+                .try_into()
+                .map_err(|_| clap::Error::raw(clap::ErrorKind::InvalidValue, "Unknown test"))
+    }
+
+    fn possible_values(
+            &self,
+        ) -> Option<Box<dyn Iterator<Item = clap::PossibleValue<'static>> + '_>> {
+            Some(
+                Box::new(
+                    [Test::Normal, Test::Default]
+                        .iter()
+                        .map(|value| PossibleValue::new(value.as_str()))
+                )
+            )
+    }
 }

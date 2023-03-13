@@ -25,7 +25,7 @@ use crate::{
             ApiKeyHeader,
         },
         ApiDoc, GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase,
-        WriteDatabase, profile::{PATH_GET_PROFILE, PATH_POST_PROFILE},
+        WriteDatabase, profile::{PATH_GET_PROFILE, PATH_POST_PROFILE, PATH_GET_DEFAULT_PROFILE},
     },
     utils::IntoReportExt, server::internal::{},
 };
@@ -57,6 +57,7 @@ impl std::fmt::Display for ProfileApiRequest {
 #[derive(Debug, Default, Clone)]
 pub struct ProfileApiUrls {
     get_profile: Option<Url>,
+    get_default_profile: Option<Url>,
     post_profile: Option<Url>,
 }
 
@@ -64,6 +65,7 @@ impl ProfileApiUrls {
     pub fn new(base_url: Url) -> Result<Self, url::ParseError> {
         Ok(Self {
             get_profile: Some(base_url.join(PATH_GET_PROFILE)?),
+            get_default_profile: Some(base_url.join(PATH_GET_DEFAULT_PROFILE)?),
             post_profile: Some(base_url.join(PATH_POST_PROFILE)?),
         })
     }
@@ -121,6 +123,46 @@ impl <'a> ProfileApi<'a> {
             )
         }
     }
+
+    pub async fn get_default_profile(
+        &self,
+        api_key: ApiKey,
+        profile_account_id: AccountId,
+    ) -> Result<Profile, HttpRequestError> {
+        let url = get_api_url(&self.urls.get_default_profile)?
+            .join(profile_account_id.as_str())
+            .into_error_with_info(
+                HttpRequestError::ApiUrlJoinError,
+                ProfileApiRequest::GetProfile,
+            )?;
+
+        let request = self
+            .client
+            .get(url)
+            .header(ApiKeyHeader::name(), api_key.as_str())
+            .build()
+            .unwrap();
+
+        let response = self.client.execute(request).await
+            .into_error_with_info(
+                HttpRequestError::Reqwest,
+                ProfileApiRequest::GetProfile,
+            )?;
+
+        if response.status() == StatusCode::OK {
+            let id: Profile = response.json().await.into_error_with_info(
+                HttpRequestError::SerdeDeserialize,
+                ProfileApiRequest::GetProfile,
+            )?;
+            Ok(id)
+        } else {
+            Err(StatusCodeError(response.status())).into_error_with_info(
+                HttpRequestError::StatusCode,
+                ProfileApiRequest::GetProfile,
+            )
+        }
+    }
+
 
     pub async fn post_profile(&self, api_key: ApiKey, profile: Profile) -> Result<(), HttpRequestError> {
         let url = get_api_url(&self.urls.post_profile)?;
