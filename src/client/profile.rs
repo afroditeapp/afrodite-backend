@@ -1,34 +1,21 @@
-
-
-
-
 use headers::Header;
 use hyper::StatusCode;
 use reqwest::{Client, Url};
 
-
-
-
-
-use error_stack::{Result};
+use error_stack::Result;
 
 use crate::{
     api::{
-        model::{ApiKey, AccountId, Profile},
-        utils::{
-            ApiKeyHeader,
-        }, profile::{PATH_GET_PROFILE, PATH_POST_PROFILE, PATH_GET_DEFAULT_PROFILE},
+        model::{AccountId, ApiKey, Profile},
+        profile::{PATH_GET_DEFAULT_PROFILE, PATH_GET_PROFILE, PATH_POST_PROFILE},
+        utils::ApiKeyHeader,
     },
     utils::IntoReportExt,
 };
 
-
-
-use super::{HttpRequestError, get_api_url, StatusCodeError};
-
+use super::{get_api_url, HttpRequestError, StatusCodeError};
 
 // Public API
-
 
 #[derive(Debug, Clone)]
 pub enum ProfileApiRequest {
@@ -59,18 +46,14 @@ impl ProfileApiUrls {
     }
 }
 
-
 pub struct ProfileApi<'a> {
     client: &'a Client,
     urls: &'a ProfileApiUrls,
 }
 
-impl <'a> ProfileApi<'a> {
+impl<'a> ProfileApi<'a> {
     pub fn new(client: &'a Client, urls: &'a ProfileApiUrls) -> Self {
-        Self {
-            client,
-            urls,
-        }
+        Self { client, urls }
     }
 
     pub async fn get_profile(
@@ -92,11 +75,11 @@ impl <'a> ProfileApi<'a> {
             .build()
             .unwrap();
 
-        let response = self.client.execute(request).await
-            .into_error_with_info(
-                HttpRequestError::Reqwest,
-                ProfileApiRequest::GetProfile,
-            )?;
+        let response = self
+            .client
+            .execute(request)
+            .await
+            .into_error_with_info(HttpRequestError::Reqwest, ProfileApiRequest::GetProfile)?;
 
         if response.status() == StatusCode::OK {
             let id: Profile = response.json().await.into_error_with_info(
@@ -105,10 +88,8 @@ impl <'a> ProfileApi<'a> {
             )?;
             Ok(id)
         } else {
-            Err(StatusCodeError(response.status())).into_error_with_info(
-                HttpRequestError::StatusCode,
-                ProfileApiRequest::GetProfile,
-            )
+            Err(StatusCodeError(response.status()))
+                .into_error_with_info(HttpRequestError::StatusCode, ProfileApiRequest::GetProfile)
         }
     }
 
@@ -131,11 +112,11 @@ impl <'a> ProfileApi<'a> {
             .build()
             .unwrap();
 
-        let response = self.client.execute(request).await
-            .into_error_with_info(
-                HttpRequestError::Reqwest,
-                ProfileApiRequest::GetProfile,
-            )?;
+        let response = self
+            .client
+            .execute(request)
+            .await
+            .into_error_with_info(HttpRequestError::Reqwest, ProfileApiRequest::GetProfile)?;
 
         if response.status() == StatusCode::OK {
             let id: Profile = response.json().await.into_error_with_info(
@@ -144,15 +125,16 @@ impl <'a> ProfileApi<'a> {
             )?;
             Ok(id)
         } else {
-            Err(StatusCodeError(response.status())).into_error_with_info(
-                HttpRequestError::StatusCode,
-                ProfileApiRequest::GetProfile,
-            )
+            Err(StatusCodeError(response.status()))
+                .into_error_with_info(HttpRequestError::StatusCode, ProfileApiRequest::GetProfile)
         }
     }
 
-
-    pub async fn post_profile(&self, api_key: ApiKey, profile: Profile) -> Result<(), HttpRequestError> {
+    pub async fn post_profile(
+        &self,
+        api_key: ApiKey,
+        profile: Profile,
+    ) -> Result<(), HttpRequestError> {
         let url = get_api_url(&self.urls.post_profile)?;
 
         let request = self
@@ -163,18 +145,16 @@ impl <'a> ProfileApi<'a> {
             .build()
             .unwrap();
 
-        let response = self.client.execute(request).await
-            .into_error_with_info(
-                HttpRequestError::Reqwest,
-                ProfileApiRequest::PostProfile,
-            )?;
+        let response = self
+            .client
+            .execute(request)
+            .await
+            .into_error_with_info(HttpRequestError::Reqwest, ProfileApiRequest::PostProfile)?;
         if response.status() == StatusCode::OK {
             Ok(())
         } else {
-            Err(StatusCodeError(response.status())).into_error_with_info(
-                HttpRequestError::StatusCode,
-                ProfileApiRequest::PostProfile,
-            )
+            Err(StatusCodeError(response.status()))
+                .into_error_with_info(HttpRequestError::StatusCode, ProfileApiRequest::PostProfile)
         }
     }
 }

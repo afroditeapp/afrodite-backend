@@ -7,14 +7,10 @@ pub mod read;
 pub mod utils;
 pub mod write;
 
-
-
-
 use error_stack::Result;
 use tokio::sync::mpsc;
 
-use {utils::GitUserDirPath};
-
+use utils::GitUserDirPath;
 
 /// Every running database write operation should keep this handle. When server
 /// quit is started main function waits that all handles are dropped.
@@ -84,19 +80,12 @@ pub struct GitDatabase<'a> {
 
 impl<'a> GitDatabase<'a> {
     pub fn create(profile: &'a GitUserDirPath) -> Result<Self, GitError> {
-
-        let repository = Self {
-            profile,
-        };
+        let repository = Self { profile };
 
         Ok(repository)
     }
 
     pub fn open(profile: &'a GitUserDirPath) -> Result<Self, GitError> {
-
-        Ok(Self {
-            profile,
-        })
+        Ok(Self { profile })
     }
-
 }

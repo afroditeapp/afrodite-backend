@@ -1,33 +1,29 @@
+pub mod current;
 pub mod file;
+pub mod history;
 pub mod read;
 pub mod sqlite;
-pub mod current;
-pub mod write;
 pub mod utils;
-pub mod history;
+pub mod write;
 
 use std::{
     fs,
     path::{Path, PathBuf},
 };
 
-
-
-
-
 use error_stack::{Result, ResultExt};
 
-use crate::{
-    api::model::{AccountId, AccountIdLight},
-};
+use crate::api::model::{AccountId, AccountIdLight};
 
 use self::{
+    current::read::SqliteReadCommands,
     file::{GitDatabaseOperationHandle, GitError},
+    history::read::HistoryReadCommands,
     sqlite::{
-        SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle,
-        SqliteWriteHandle, DatabaseType,
+        DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
+        SqliteWriteCloseHandle, SqliteWriteHandle,
     },
-    write::{WriteCommands}, current::read::SqliteReadCommands, history::read::HistoryReadCommands,
+    write::WriteCommands,
 };
 use crate::utils::IntoReportExt;
 
@@ -173,11 +169,7 @@ pub struct RouterDatabaseHandle {
 
 impl RouterDatabaseHandle {
     pub fn user_write_commands(&self, id: AccountIdLight) -> WriteCommands {
-        WriteCommands::new(
-            id,
-            self.sqlite_write.clone(),
-            self.history_write.clone(),
-        )
+        WriteCommands::new(id, self.sqlite_write.clone(), self.history_write.clone())
     }
 
     pub fn read(&self) -> SqliteReadCommands<'_> {

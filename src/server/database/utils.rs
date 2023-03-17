@@ -1,15 +1,6 @@
-use crate::api::model::{Account, AccountSetup, Profile, AccountIdLight};
+use crate::api::model::{Account, AccountIdLight, AccountSetup, Profile};
 
 use super::{read::ReadCmd, write::WriteCmd};
-
-
-
-
-
-
-
-
-
 
 pub trait GetReadWriteCmd {
     fn read_cmd(id: AccountIdLight) -> ReadCmd;

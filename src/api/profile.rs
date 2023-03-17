@@ -2,24 +2,17 @@ pub mod data;
 
 use axum::{extract::Path, Json, TypedHeader};
 
-use hyper::{StatusCode};
-
-
-
-
+use hyper::StatusCode;
 
 use self::data::Profile;
 
-use super::{model::{
-    AccountIdLight
-}, get_account_id};
+use super::{get_account_id, model::AccountIdLight};
 
 use tracing::error;
 
-use super::{db_write, GetApiKeys, ReadDatabase, WriteDatabase, utils::ApiKeyHeader};
+use super::{db_write, utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 // TODO: Add timeout for database commands
-
 
 pub const PATH_GET_PROFILE: &str = "/profile/:account_id";
 
@@ -48,7 +41,6 @@ pub async fn get_profile<S: ReadDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
         })
 }
-
 
 /// TODO: Remove this after benchmarking?
 pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile/default/:account_id";

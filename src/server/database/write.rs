@@ -1,19 +1,19 @@
 use error_stack::Result;
 use serde::Serialize;
 
-
 use crate::{
-    api::model::{
-        Account,
-        ApiKey, Profile, AccountSetup, AccountIdLight,
-    },
-    server::database::{
-        sqlite::SqliteWriteHandle, DatabaseError,
-    },
-    utils::ErrorConversion, config::Config,
+    api::model::{Account, AccountIdLight, AccountSetup, ApiKey, Profile},
+    config::Config,
+    server::database::{sqlite::SqliteWriteHandle, DatabaseError},
+    utils::ErrorConversion,
 };
 
-use super::{current::{write::SqliteWriteCommands}, utils::{GetReadWriteCmd}, sqlite::{SqliteUpdateJson, HistoryUpdateJson}, history::write::HistoryWriteCommands};
+use super::{
+    current::write::SqliteWriteCommands,
+    history::write::HistoryWriteCommands,
+    sqlite::{HistoryUpdateJson, SqliteUpdateJson},
+    utils::GetReadWriteCmd,
+};
 
 #[derive(Debug, Clone)]
 pub enum WriteCmd {
@@ -49,7 +49,11 @@ impl WriteCommands {
         }
     }
 
-    pub async fn register(&mut self, id: AccountIdLight, config: &Config) -> Result<(), DatabaseError> {
+    pub async fn register(
+        &mut self,
+        id: AccountIdLight,
+        config: &Config,
+    ) -> Result<(), DatabaseError> {
         let account_state = Account::default();
         let account_setup = AccountSetup::default();
         let profile = Profile::default();
@@ -94,7 +98,7 @@ impl WriteCommands {
     }
 
     pub async fn update_json<
-        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + 'static
+        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + 'static,
     >(
         &mut self,
         data: &T,

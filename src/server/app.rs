@@ -9,16 +9,20 @@ use tokio::sync::{Mutex, RwLock};
 
 use utoipa::OpenApi;
 
-use crate::{api::{
-    self,
-    model::{ApiKey, AccountIdLight},
-    ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
-    GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, GetConfig,
-}, client::{media::{MediaInternalApi}, account::{AccountInternalApi}}, config::{Config}};
+use crate::{
+    api::{
+        self,
+        model::{AccountIdLight, ApiKey},
+        ApiDoc, GetApiKeys, GetConfig, GetCoreServerInternalApi, GetMediaServerInternalApi,
+        GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
+    },
+    client::{account::AccountInternalApi, media::MediaInternalApi},
+    config::Config,
+};
 
 use super::{
-    database::{write::WriteCommands, RouterDatabaseHandle, current::read::SqliteReadCommands},
-    session::{SessionManager, AccountStateInRam},
+    database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle},
+    session::{AccountStateInRam, SessionManager},
 };
 
 #[derive(Clone)]
@@ -70,7 +74,7 @@ impl GetCoreServerInternalApi for AppState {
     fn core_server_internal_api(&self) -> AccountInternalApi {
         AccountInternalApi::new(
             self.client.clone(),
-            &self.config.external_service_urls().account_internal
+            &self.config.external_service_urls().account_internal,
         )
     }
 }
@@ -79,7 +83,7 @@ impl GetMediaServerInternalApi for AppState {
     fn media_server_internal_api(&self) -> MediaInternalApi {
         MediaInternalApi::new(
             self.client.clone(),
-            &self.config.external_service_urls().media_internal
+            &self.config.external_service_urls().media_internal,
         )
     }
 }
@@ -95,10 +99,7 @@ pub struct App {
 }
 
 impl App {
-    pub async fn new(
-        database_handle: RouterDatabaseHandle,
-        config: Arc<Config>,
-    ) -> Self {
+    pub async fn new(database_handle: RouterDatabaseHandle, config: Arc<Config>) -> Self {
         let state = AppState {
             session_manager: Arc::new(SessionManager::new(database_handle).await),
             client: reqwest::Client::new(),

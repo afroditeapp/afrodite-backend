@@ -1,24 +1,17 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::{
-    extract::{BodyStream, Path}, TypedHeader,
+    extract::{BodyStream, Path},
+    TypedHeader,
 };
 use headers::{ContentLength, ContentType};
-use hyper::{StatusCode};
+use hyper::StatusCode;
 
+use crate::api::model::AccountIdLight;
 
-
-use crate::{api::model::AccountIdLight};
-
-use super::{
-    super::account::data::{AccountId},
-};
+use super::super::account::data::AccountId;
 
 use super::data::ImageFileName;
-
-
-
-
 
 pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
 

@@ -2,23 +2,23 @@
 
 use std::sync::Arc;
 
-use error_stack::{Result, IntoReport};
+use error_stack::{IntoReport, Result};
 
 use hyper::StatusCode;
 use reqwest::{Client, Url};
 
-use self::{account::{AccountApiUrls, AccountApi}, profile::{ProfileApiUrls, ProfileApi}};
+use self::{
+    account::{AccountApi, AccountApiUrls},
+    profile::{ProfileApi, ProfileApiUrls},
+};
 
 pub mod account;
 pub mod media;
 pub mod profile;
 
-
-
 #[derive(thiserror::Error, Debug)]
 #[error("Wrong status code: {0}")]
 pub struct StatusCodeError(StatusCode);
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum HttpRequestError {
@@ -41,7 +41,6 @@ pub enum HttpRequestError {
 
 // TODO: Move url parsing to happen at startup so that url typos are
 // discovered earlier.
-
 
 #[derive(Debug, Clone)]
 pub struct PublicApiUrls {
@@ -77,10 +76,8 @@ impl ApiClient {
     }
 }
 
-
 pub fn get_api_url(url: &Option<Url>) -> Result<Url, HttpRequestError> {
-    url
-        .as_ref()
+    url.as_ref()
         .ok_or(HttpRequestError::ApiUrlNotConfigured)
         .map(Clone::clone)
         .into_report()

@@ -1,10 +1,4 @@
-use crate::{
-    api::model::{
-        AccountIdLight,
-    },
-};
-
-
+use crate::api::model::AccountIdLight;
 
 #[derive(Debug, Clone)]
 pub enum ReadCmd {

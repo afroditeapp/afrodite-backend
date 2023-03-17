@@ -2,13 +2,20 @@
 
 mod bot;
 
-use std::{sync::Arc, fs};
+use std::{fs, sync::Arc};
 
-use tokio::{sync::{mpsc, watch}, select, signal};
-use tracing::{info, error};
+use tokio::{
+    select, signal,
+    sync::{mpsc, watch},
+};
+use tracing::{error, info};
 
-use crate::{config::{Config, args::TestMode}, server::database::{DB_HISTORY_DIR_NAME}, api::model::AccountId, test::bot::Bot};
-
+use crate::{
+    api::model::AccountId,
+    config::{args::TestMode, Config},
+    server::database::DB_HISTORY_DIR_NAME,
+    test::bot::Bot,
+};
 
 pub struct TestRunner {
     config: Arc<Config>,
@@ -38,11 +45,22 @@ impl TestRunner {
 
         for dir in fs::read_dir(history).expect("Getting dir iterator failed") {
             let dir = dir.expect("Dir entry reading failed");
-            let id = dir.file_name().to_str().expect("Dir name contained non utf-8 bytes").to_string();
+            let id = dir
+                .file_name()
+                .to_str()
+                .expect("Dir name contained non utf-8 bytes")
+                .to_string();
             match AccountId::parse(id) {
                 Ok(id) => {
                     if bot_number <= self.test_config.bot_count {
-                        Bot::spawn(bot_number, api_urls.clone(), self.test_config.clone(), id, bot_quit_receiver.clone(), bot_running_handle.clone());
+                        Bot::spawn(
+                            bot_number,
+                            api_urls.clone(),
+                            self.test_config.clone(),
+                            id,
+                            bot_quit_receiver.clone(),
+                            bot_running_handle.clone(),
+                        );
                         bot_number += 1;
                     } else {
                         break;
@@ -57,11 +75,21 @@ impl TestRunner {
 
         // Create remaining bots
         while bot_number <= self.test_config.bot_count {
-            Bot::spawn(bot_number, api_urls.clone(), self.test_config.clone(), None, bot_quit_receiver.clone(), bot_running_handle.clone());
+            Bot::spawn(
+                bot_number,
+                api_urls.clone(),
+                self.test_config.clone(),
+                None,
+                bot_quit_receiver.clone(),
+                bot_running_handle.clone(),
+            );
             bot_number += 1;
         }
 
-        info!("Bots are now created. Count: {}", self.test_config.bot_count);
+        info!(
+            "Bots are now created. Count: {}",
+            self.test_config.bot_count
+        );
 
         drop(bot_running_handle);
         drop(bot_quit_receiver);
@@ -76,15 +104,13 @@ impl TestRunner {
             _ = wait_all_bots.recv() => ()
         }
 
-
         drop(quit_handle); // Singnal quit to bots.
-
 
         // Wait that all bot_running_handles are dropped.
         loop {
             match wait_all_bots.recv().await {
                 None => break,
-                Some(()) => ()
+                Some(()) => (),
             }
         }
 

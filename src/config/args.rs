@@ -8,8 +8,6 @@ use reqwest::Url;
 
 use crate::client::PublicApiUrls;
 
-
-
 // Config given as command line arguments
 pub struct ArgsConfig {
     pub database_dir: Option<PathBuf>,
@@ -23,29 +21,38 @@ pub fn get_config() -> ArgsConfig {
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
         )
-        .subcommand(Command::new("test")
-            .about("Run tests and benchmarks")
-            .arg(arg!(--count <COUNT> "Bot user count")
-                .value_parser(value_parser!(u32))
-                .default_value("1")
-                .required(false))
-            .arg(arg!(--account <URL> "Base URL for account API")
-                .value_parser(value_parser!(Url))
-                .default_value("http://127.0.0.1:3000")
-                .required(false))
-            .arg(arg!(--profile <URL> "Base URL for profile API")
-                .value_parser(value_parser!(Url))
-                .default_value("http://127.0.0.1:3000")
-                .required(false))
-            .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
-            .arg(arg!(--"update-profile" "Update profile continuously"))
-            .arg(arg!(--"print-speed" "Print some speed information"))
-            .arg(arg!(--"test" <NAME> "Select custom test")
-                    .value_parser(value_parser!(Test))
-                    .required(false)
-                    .default_value("normal"))
-            .arg(arg!(--forever "Run tests forever"))
-            )
+        .subcommand(
+            Command::new("test")
+                .about("Run tests and benchmarks")
+                .arg(
+                    arg!(--count <COUNT> "Bot user count")
+                        .value_parser(value_parser!(u32))
+                        .default_value("1")
+                        .required(false),
+                )
+                .arg(
+                    arg!(--account <URL> "Base URL for account API")
+                        .value_parser(value_parser!(Url))
+                        .default_value("http://127.0.0.1:3000")
+                        .required(false),
+                )
+                .arg(
+                    arg!(--profile <URL> "Base URL for profile API")
+                        .value_parser(value_parser!(Url))
+                        .default_value("http://127.0.0.1:3000")
+                        .required(false),
+                )
+                .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
+                .arg(arg!(--"update-profile" "Update profile continuously"))
+                .arg(arg!(--"print-speed" "Print some speed information"))
+                .arg(
+                    arg!(--"test" <NAME> "Select custom test")
+                        .value_parser(value_parser!(Test))
+                        .required(false)
+                        .default_value("normal"),
+                )
+                .arg(arg!(--forever "Run tests forever")),
+        )
         .get_matches();
 
     let test_mode = match matches.subcommand() {
@@ -53,7 +60,8 @@ pub fn get_config() -> ArgsConfig {
             let api_urls = PublicApiUrls::new(
                 sub_matches.get_one::<Url>("account").unwrap().clone(),
                 sub_matches.get_one::<Url>("profile").unwrap().clone(),
-            ).unwrap();
+            )
+            .unwrap();
 
             Some(TestMode {
                 bot_count: *sub_matches.get_one::<u32>("count").unwrap(),
@@ -62,7 +70,8 @@ pub fn get_config() -> ArgsConfig {
                 no_sleep: sub_matches.is_present("no-sleep"),
                 update_profile: sub_matches.is_present("update-profile"),
                 print_speed: sub_matches.is_present("print-speed"),
-                test: sub_matches.get_one::<Test>("test")
+                test: sub_matches
+                    .get_one::<Test>("test")
                     .map(ToOwned::to_owned)
                     .unwrap(),
             })
@@ -149,27 +158,28 @@ impl clap::builder::TypedValueParser for TestNameParser {
     type Value = Test;
 
     fn parse_ref(
-            &self,
-            _cmd: &clap::Command,
-            _arg: Option<&clap::Arg>,
-            value: &std::ffi::OsStr,
-        ) -> Result<Self::Value, clap::Error> {
-            value
-                .to_str()
-                .ok_or(clap::Error::raw(clap::ErrorKind::InvalidUtf8, "Text was not UTF-8."))?
-                .try_into()
-                .map_err(|_| clap::Error::raw(clap::ErrorKind::InvalidValue, "Unknown test"))
+        &self,
+        _cmd: &clap::Command,
+        _arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        value
+            .to_str()
+            .ok_or(clap::Error::raw(
+                clap::ErrorKind::InvalidUtf8,
+                "Text was not UTF-8.",
+            ))?
+            .try_into()
+            .map_err(|_| clap::Error::raw(clap::ErrorKind::InvalidValue, "Unknown test"))
     }
 
     fn possible_values(
-            &self,
-        ) -> Option<Box<dyn Iterator<Item = clap::PossibleValue<'static>> + '_>> {
-            Some(
-                Box::new(
-                    [Test::Normal, Test::Default]
-                        .iter()
-                        .map(|value| PossibleValue::new(value.as_str()))
-                )
-            )
+        &self,
+    ) -> Option<Box<dyn Iterator<Item = clap::PossibleValue<'static>> + '_>> {
+        Some(Box::new(
+            [Test::Normal, Test::Default]
+                .iter()
+                .map(|value| PossibleValue::new(value.as_str())),
+        ))
     }
 }

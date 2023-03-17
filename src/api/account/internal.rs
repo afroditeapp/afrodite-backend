@@ -2,23 +2,11 @@
 
 use axum::{Json, TypedHeader};
 
-use hyper::{StatusCode};
-
-
-
-
-
-
-
-
-
-
+use hyper::StatusCode;
 
 use crate::api::utils::ApiKeyHeader;
 
-use super::{
-    GetApiKeys, data::AccountIdLight,
-};
+use super::{data::AccountIdLight, GetApiKeys};
 
 pub const PATH_CHECK_API_KEY: &str = "/internal/check_api_key";
 

@@ -3,21 +3,21 @@ pub mod internal;
 
 use axum::{Json, TypedHeader};
 
-use hyper::{StatusCode};
+use hyper::StatusCode;
 use tokio::sync::Mutex;
-
 
 use crate::server::session::AccountStateInRam;
 
-use self::{
-    data::{ApiKey, AccountId, Account, AccountIdLight, AccountSetup, AccountState},
-};
+use self::data::{Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey};
 
 use super::{get_account_id, GetConfig};
 
 use tracing::error;
 
-use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, utils::ApiKeyHeader};
+use super::{
+    db_write, utils::ApiKeyHeader, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase,
+    WriteDatabase,
+};
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -39,9 +39,7 @@ pub async fn register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
     // to avoid database collisions.
     let id = AccountId::generate_new();
 
-    let mut write_commands = state
-        .database()
-        .user_write_commands(id.as_light());
+    let mut write_commands = state.database().user_write_commands(id.as_light());
     match write_commands.register(id.as_light(), state.config()).await {
         Ok(()) => {
             state
@@ -74,7 +72,6 @@ pub async fn login<S: GetApiKeys + WriteDatabase>(
     Json(id): Json<AccountIdLight>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
-
     let key = ApiKey::generate_new();
 
     db_write!(state, &id)?
@@ -95,7 +92,6 @@ pub async fn login<S: GetApiKeys + WriteDatabase>(
 
     Ok(key.into())
 }
-
 
 pub const PATH_ACCOUNT_STATE: &str = "/account/state";
 
@@ -124,7 +120,6 @@ pub async fn account_state<S: GetApiKeys + ReadDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
         })
 }
-
 
 pub const PATH_ACCOUNT_SETUP: &str = "/account/setup";
 

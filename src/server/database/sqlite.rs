@@ -1,17 +1,13 @@
+use crate::api::model::AccountIdLight;
 
-use crate::api::model::{AccountIdLight};
-
-use super::{history::read::HistoryReadCommands};
-
+use super::history::read::HistoryReadCommands;
 
 use async_trait::async_trait;
 
-
-use super::current::{write::SqliteWriteCommands, read::SqliteReadCommands};
+use super::current::{read::SqliteReadCommands, write::SqliteWriteCommands};
 use super::history::write::HistoryWriteCommands;
 
 use error_stack::Result;
-
 
 use std::path::{Path, PathBuf};
 
@@ -159,7 +155,6 @@ impl SqliteReadHandle {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub enum DatabaseType {
     Current,
@@ -175,32 +170,36 @@ impl DatabaseType {
     }
 }
 
-
-
 #[async_trait]
 pub trait SqliteUpdateJson {
     async fn update_json(
-        &self, id: AccountIdLight, write: &SqliteWriteCommands,
+        &self,
+        id: AccountIdLight,
+        write: &SqliteWriteCommands,
     ) -> Result<(), SqliteDatabaseError>;
 }
 
 #[async_trait]
 pub trait SqliteSelectJson: Sized {
     async fn select_json(
-        id: AccountIdLight, read: &SqliteReadCommands,
+        id: AccountIdLight,
+        read: &SqliteReadCommands,
     ) -> Result<Self, SqliteDatabaseError>;
 }
 
 #[async_trait]
 pub trait HistoryUpdateJson {
     async fn history_update_json(
-        &self, id: AccountIdLight, write: &HistoryWriteCommands,
+        &self,
+        id: AccountIdLight,
+        write: &HistoryWriteCommands,
     ) -> Result<(), SqliteDatabaseError>;
 }
 
 #[async_trait]
 pub trait HistorySelectJson: Sized {
     async fn history_select_json(
-        id: AccountIdLight, read: &HistoryReadCommands,
+        id: AccountIdLight,
+        read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError>;
 }

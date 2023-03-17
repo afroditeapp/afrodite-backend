@@ -1,24 +1,27 @@
-use std::{time::{Duration, Instant}, sync::{Arc, atomic::{AtomicU64, Ordering}}};
+use std::{
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
+    time::{Duration, Instant},
+};
 
 use reqwest::Client;
-use tokio::{select, sync::{mpsc, watch}, time::sleep};
+use tokio::{
+    select,
+    sync::{mpsc, watch},
+    time::sleep,
+};
 
-
-
-
-
-
-
-
-
-
-
-
-use error_stack::{Result};
+use error_stack::Result;
 
 use tracing::{error, log::warn};
 
-use crate::{api::{model::{AccountId, ApiKey, Profile}}, client::{ApiClient, PublicApiUrls, HttpRequestError}, config::args::{TestMode, Test}};
+use crate::{
+    api::model::{AccountId, ApiKey, Profile},
+    client::{ApiClient, HttpRequestError, PublicApiUrls},
+    config::args::{Test, TestMode},
+};
 
 static COUNTERS: Counters = Counters::new();
 
@@ -51,7 +54,6 @@ impl Bot {
     }
 
     pub async fn run(self, mut bot_quit_receiver: watch::Receiver<()>) {
-
         loop {
             select! {
                 result = bot_quit_receiver.changed() => {
@@ -69,13 +71,12 @@ impl Bot {
         }
     }
 
-    async fn run_bot(&self) -> Result<(), HttpRequestError>  {
+    async fn run_bot(&self) -> Result<(), HttpRequestError> {
         let id = if let Some(id) = self.id.as_ref() {
             id.clone()
         } else {
             self.api.account().register().await?.to_full()
         };
-
 
         let key = self.api.account().login(&id).await?;
 
@@ -87,8 +88,9 @@ impl Bot {
                 &id,
                 &key,
                 &mut update_profile_timer,
-                self.config.print_speed && print_info_timer.passed() && self.bot_id == 1
-            ).await?;
+                self.config.print_speed && print_info_timer.passed() && self.bot_id == 1,
+            )
+            .await?;
 
             if !self.config.forever {
                 break;
@@ -114,7 +116,10 @@ impl Bot {
         if self.config.update_profile && update_profile_timer.passed() {
             let profile = rand::random::<u32>();
             let profile = Profile::new(format!("{}", profile));
-            self.api.profile().post_profile(key.clone(), profile).await?;
+            self.api
+                .profile()
+                .post_profile(key.clone(), profile)
+                .await?;
 
             if print_info {
                 warn!("post_profile: {:?}", time.elapsed());
@@ -123,15 +128,27 @@ impl Bot {
 
         let time = Instant::now();
         match self.config.test {
-            Test::Normal =>
-                self.api.profile().get_profile(key.clone(), id.clone()).await?,
-            Test::Default =>
-                self.api.profile().get_default_profile(key.clone(), id.clone()).await?,
+            Test::Normal => {
+                self.api
+                    .profile()
+                    .get_profile(key.clone(), id.clone())
+                    .await?
+            }
+            Test::Default => {
+                self.api
+                    .profile()
+                    .get_default_profile(key.clone(), id.clone())
+                    .await?
+            }
         };
         COUNTERS.inc_get_profile();
 
         if print_info {
-            warn!("get_profile: {:?}, total: {}", time.elapsed(), COUNTERS.reset_get_profile());
+            warn!(
+                "get_profile: {:?}, total: {}",
+                time.elapsed(),
+                COUNTERS.reset_get_profile()
+            );
         }
 
         Ok(())
@@ -158,7 +175,6 @@ impl Counters {
         self.get_profile.swap(0, Ordering::Relaxed)
     }
 }
-
 
 pub struct Timer {
     previous: Instant,
@@ -202,7 +218,6 @@ impl AvgTime {
         }
     }
 
-
     pub fn track(&mut self) {
         self.previous = Instant::now();
     }
@@ -213,7 +228,7 @@ impl AvgTime {
         self.counter += 1;
 
         if self.counter >= self.calculate_avg_when_couter {
-            self.current_avg = Duration::from_micros(self.total/self.counter);
+            self.current_avg = Duration::from_micros(self.total / self.counter);
 
             self.counter = 0;
             self.total = 0;

@@ -1,11 +1,8 @@
 // Re-export commonly used API data types.
 
 pub use super::{
-    account::{
-        data::{ApiKey, AccountId, AccountIdLight,
-            Account, AccountState, Capabilities, AccountSetup},
+    account::data::{
+        Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey, Capabilities,
     },
-    profile::{
-        data::Profile,
-    }
+    profile::data::Profile,
 };

@@ -1,32 +1,19 @@
-
-
-
-
 use headers::Header;
 use hyper::StatusCode;
 use reqwest::{Client, Url};
 
-
-
-
-
-use error_stack::{Result};
+use error_stack::Result;
 
 use crate::{
     api::{
-        model::{ApiKey, AccountId, AccountIdLight},
-        account::{internal::PATH_CHECK_API_KEY, PATH_REGISTER, PATH_LOGIN},
-        utils::{
-            ApiKeyHeader,
-        },
+        account::{internal::PATH_CHECK_API_KEY, PATH_LOGIN, PATH_REGISTER},
+        model::{AccountId, AccountIdLight, ApiKey},
+        utils::ApiKeyHeader,
     },
     utils::IntoReportExt,
 };
 
-
-
-use super::{HttpRequestError, get_api_url, StatusCodeError};
-
+use super::{get_api_url, HttpRequestError, StatusCodeError};
 
 // Internal API
 
@@ -54,21 +41,20 @@ impl AccountInternalApiUrls {
     }
 }
 
-
 pub struct AccountInternalApi<'a> {
     client: Client,
     urls: &'a AccountInternalApiUrls,
 }
 
-impl <'a> AccountInternalApi<'a> {
+impl<'a> AccountInternalApi<'a> {
     pub fn new(client: Client, urls: &'a AccountInternalApiUrls) -> Self {
-        Self {
-            client,
-            urls,
-        }
+        Self { client, urls }
     }
 
-    pub async fn check_api_key(&self, api_key: ApiKey) -> Result<Option<AccountIdLight>, HttpRequestError> {
+    pub async fn check_api_key(
+        &self,
+        api_key: ApiKey,
+    ) -> Result<Option<AccountIdLight>, HttpRequestError> {
         let url = get_api_url(&self.urls.check_api_key_url)?;
 
         let request = self
@@ -78,14 +64,10 @@ impl <'a> AccountInternalApi<'a> {
             .build()
             .unwrap();
 
-        let response = self
-            .client
-            .execute(request)
-            .await
-            .into_error_with_info(
-                HttpRequestError::Reqwest,
-                 AccountInternalApiRequest::CheckApiKey
-                )?;
+        let response = self.client.execute(request).await.into_error_with_info(
+            HttpRequestError::Reqwest,
+            AccountInternalApiRequest::CheckApiKey,
+        )?;
 
         if response.status() == StatusCode::OK {
             let id: AccountIdLight = response.json().await.into_error_with_info(
@@ -98,7 +80,6 @@ impl <'a> AccountInternalApi<'a> {
         }
     }
 }
-
 
 // Public API
 
@@ -129,34 +110,26 @@ impl AccountApiUrls {
     }
 }
 
-
 pub struct AccountApi<'a> {
     client: &'a Client,
     urls: &'a AccountApiUrls,
 }
 
-impl <'a> AccountApi<'a> {
+impl<'a> AccountApi<'a> {
     pub fn new(client: &'a Client, urls: &'a AccountApiUrls) -> Self {
-        Self {
-            client,
-            urls,
-        }
+        Self { client, urls }
     }
 
     pub async fn register(&self) -> Result<AccountIdLight, HttpRequestError> {
         let url = get_api_url(&self.urls.register_url)?;
 
-        let request = self
-            .client
-            .post(url)
-            .build()
-            .unwrap();
+        let request = self.client.post(url).build().unwrap();
 
-        let response = self.client.execute(request).await
-            .into_error_with_info(
-                HttpRequestError::Reqwest,
-                AccountApiRequest::Register,
-            )?;
+        let response = self
+            .client
+            .execute(request)
+            .await
+            .into_error_with_info(HttpRequestError::Reqwest, AccountApiRequest::Register)?;
 
         if response.status() == StatusCode::OK {
             let id: AccountIdLight = response.json().await.into_error_with_info(
@@ -165,28 +138,21 @@ impl <'a> AccountApi<'a> {
             )?;
             Ok(id)
         } else {
-            Err(StatusCodeError(response.status())).into_error_with_info(
-                HttpRequestError::StatusCode,
-                AccountApiRequest::Register,
-            )
+            Err(StatusCodeError(response.status()))
+                .into_error_with_info(HttpRequestError::StatusCode, AccountApiRequest::Register)
         }
     }
 
     pub async fn login(&self, id: &AccountId) -> Result<ApiKey, HttpRequestError> {
         let url = get_api_url(&self.urls.login_url)?;
 
-        let request = self
-            .client
-            .post(url)
-            .json(&id.as_light())
-            .build()
-            .unwrap();
+        let request = self.client.post(url).json(&id.as_light()).build().unwrap();
 
-        let response = self.client.execute(request).await
-            .into_error_with_info(
-                HttpRequestError::Reqwest,
-                AccountApiRequest::Register,
-            )?;
+        let response = self
+            .client
+            .execute(request)
+            .await
+            .into_error_with_info(HttpRequestError::Reqwest, AccountApiRequest::Register)?;
 
         if response.status() == StatusCode::OK {
             let key: ApiKey = response.json().await.into_error_with_info(
@@ -195,10 +161,8 @@ impl <'a> AccountApi<'a> {
             )?;
             Ok(key)
         } else {
-            Err(StatusCodeError(response.status())).into_error_with_info(
-                HttpRequestError::StatusCode,
-                AccountApiRequest::Register,
-            )
+            Err(StatusCodeError(response.status()))
+                .into_error_with_info(HttpRequestError::StatusCode, AccountApiRequest::Register)
         }
     }
 }

@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize, de::Error};
+use serde::{de::Error, Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 /// AccountId is an UUID string. Server will generate an UUID string when
@@ -7,7 +7,6 @@ use utoipa::{IntoParams, ToSchema};
 pub struct AccountId {
     // String representation is used a lot in server code, so
     // it is better than using only Uuid type directly.
-
     /// UUID string with Simple format.
     account_id: String,
     light: AccountIdLight,
@@ -18,7 +17,7 @@ impl AccountId {
         let id = uuid::Uuid::new_v4();
         Self {
             account_id: id.hyphenated().to_string(),
-            light: AccountIdLight { account_id: id }
+            light: AccountIdLight { account_id: id },
         }
     }
 
@@ -49,12 +48,11 @@ impl AccountId {
     }
 }
 
-impl <'de> Deserialize<'de> for AccountId {
+impl<'de> Deserialize<'de> for AccountId {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de> {
-
-
+    where
+        D: serde::Deserializer<'de>,
+    {
         #[derive(Deserialize)]
         pub struct AccountIdRaw {
             account_id: String,
@@ -62,8 +60,7 @@ impl <'de> Deserialize<'de> for AccountId {
 
         let raw = AccountIdRaw::deserialize(deserializer)?;
 
-        AccountId::parse(raw.account_id)
-            .map_err(|_| D::Error::custom("Is not an UUID"))
+        AccountId::parse(raw.account_id).map_err(|_| D::Error::custom("Is not an UUID"))
     }
 }
 
@@ -76,7 +73,10 @@ pub struct AccountIdLight {
 
 impl AccountIdLight {
     pub fn to_full(&self) -> AccountId {
-        AccountId { account_id: self.account_id.hyphenated().to_string(), light: self.clone() }
+        AccountId {
+            account_id: self.account_id.hyphenated().to_string(),
+            light: self.clone(),
+        }
     }
 
     pub fn as_uuid(&self) -> uuid::Uuid {
@@ -138,7 +138,10 @@ impl Account {
 
 impl Default for Account {
     fn default() -> Self {
-        Self { state: AccountState::InitialSetup, capablities: Capabilities::default() }
+        Self {
+            state: AccountState::InitialSetup,
+            capablities: Capabilities::default(),
+        }
     }
 }
 

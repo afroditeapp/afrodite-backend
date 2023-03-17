@@ -1,9 +1,9 @@
 pub mod api;
-pub mod config;
 pub mod client;
+pub mod config;
 pub mod server;
-pub mod utils;
 pub mod test;
+pub mod utils;
 
 use server::PihkaServer;
 use test::TestRunner;

@@ -1,20 +1,18 @@
 pub mod args;
 pub mod file;
 
-use std::{
-    path::{Path, PathBuf},
+use std::path::{Path, PathBuf};
+
+use error_stack::{IntoReport, Result, ResultExt};
+
+use crate::{
+    client::{account::AccountInternalApiUrls, media::MediaInternalApiUrls},
+    utils::IntoReportExt,
 };
 
-
-
-use error_stack::{Result, ResultExt, IntoReport};
-
-
-use crate::{utils::IntoReportExt, client::{account::AccountInternalApiUrls, media::MediaInternalApiUrls}};
-
 use self::{
-    args::{TestMode},
-    file::{Components, ConfigFile, SocketConfig, ExternalServices},
+    args::TestMode,
+    file::{Components, ConfigFile, ExternalServices, SocketConfig},
 };
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
@@ -29,8 +27,9 @@ pub enum GetConfigError {
     LoadConfig,
 
     // External service configuration errors
-
-    #[error("External service 'account internal' is required because account component is disabled.")]
+    #[error(
+        "External service 'account internal' is required because account component is disabled."
+    )]
     ExternalServiceAccountInternalMissing,
 }
 
@@ -102,11 +101,7 @@ pub fn get_config() -> Result<Config, GetConfigError> {
 
     let external_services = file_config.external_services.take().unwrap_or_default();
 
-    let client_api_urls =
-        create_client_api_urls(
-            &file_config.components,
-            &external_services,
-        )?;
+    let client_api_urls = create_client_api_urls(&file_config.components, &external_services)?;
 
     Ok(Config {
         file: file_config,
@@ -132,7 +127,6 @@ pub fn create_client_api_urls(
     } else {
         AccountInternalApiUrls::default()
     };
-
 
     Ok(ClientApiUrls {
         account_internal,

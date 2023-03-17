@@ -7,15 +7,9 @@ use utoipa::{
     Modify,
 };
 
+use super::{model::ApiKey, GetConfig, GetCoreServerInternalApi};
 
-
-use super::{model::{
-    ApiKey
-}, GetCoreServerInternalApi, GetConfig};
-
-
-
-use super::{GetApiKeys};
+use super::GetApiKeys;
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
@@ -29,8 +23,7 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys + GetCoreServerInternalA
         .headers()
         .get(API_KEY_HEADER_STR)
         .ok_or(StatusCode::BAD_REQUEST)?;
-    let key_str =
-        header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
+    let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = ApiKey::new(key_str.to_string());
 
     if state.api_keys().read().await.contains_key(&key) {

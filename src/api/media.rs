@@ -1,25 +1,15 @@
 pub mod data;
 pub mod internal;
 
-use axum::{extract::Path};
+use axum::extract::Path;
 
-use hyper::{StatusCode};
+use hyper::StatusCode;
 
-
-
-
-
-use self::{
-    super::model::{AccountId},
-};
+use self::super::model::AccountId;
 
 use self::data::ImageFileName;
 
-
-
-use super::{
-    ReadDatabase,
-};
+use super::ReadDatabase;
 
 pub const PATH_GET_IMAGE: &str = "/image/:user_id/:image_file";
 

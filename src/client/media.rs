@@ -1,27 +1,8 @@
-
-
-
-
-
-
 use reqwest::{Client, Url};
 
+use error_stack::Result;
 
-
-
-
-use error_stack::{Result};
-
-use crate::{
-    api::{
-        account::internal::PATH_CHECK_API_KEY,
-    },
-};
-
-
-
-
-
+use crate::api::account::internal::PATH_CHECK_API_KEY;
 
 #[derive(Debug, Clone)]
 pub enum MediaInternalApiRequest {
@@ -33,7 +14,6 @@ impl std::fmt::Display for MediaInternalApiRequest {
         f.write_fmt(format_args!("Media internal API request: {:?}", self))
     }
 }
-
 
 #[derive(Debug, Default)]
 pub struct MediaInternalApiUrls {
@@ -54,12 +34,8 @@ pub struct MediaInternalApi<'a> {
     urls: &'a MediaInternalApiUrls,
 }
 
-impl <'a> MediaInternalApi<'a> {
+impl<'a> MediaInternalApi<'a> {
     pub fn new(client: Client, urls: &'a MediaInternalApiUrls) -> Self {
-        Self {
-            client,
-            urls,
-        }
+        Self { client, urls }
     }
-
 }

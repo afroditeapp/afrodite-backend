@@ -2,8 +2,8 @@
 
 // Routes
 pub mod account;
-pub mod profile;
 pub mod media;
+pub mod profile;
 
 pub mod model;
 pub mod utils;
@@ -11,18 +11,18 @@ pub mod utils;
 use std::collections::HashMap;
 
 use tokio::sync::{Mutex, RwLock};
-use utoipa::{
-    Modify, OpenApi,
+use utoipa::{Modify, OpenApi};
+
+use crate::{
+    client::{account::AccountInternalApi, media::MediaInternalApi},
+    config::Config,
+    server::{
+        database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle},
+        session::{AccountStateInRam, SessionManager},
+    },
 };
 
-use crate::{server::{
-    database::{ write::WriteCommands, RouterDatabaseHandle, current::read::SqliteReadCommands},
-    session::{SessionManager, AccountStateInRam},
-}, client::{account::AccountInternalApi, media::MediaInternalApi}, config::Config};
-
-use self::model::{
-    ApiKey, AccountIdLight,
-};
+use self::model::{AccountIdLight, ApiKey};
 
 use utils::SecurityApiTokenDefault;
 
@@ -60,8 +60,6 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     modifiers(&SecurityApiTokenDefault),
 )]
 pub struct ApiDoc;
-
-
 
 // App state getters
 
@@ -141,7 +139,6 @@ macro_rules! db_write {
             .map(|x| async { x.lock().await })
     };
 }
-
 
 /// Helper macro for converting ApiKey to AccountId.
 ///

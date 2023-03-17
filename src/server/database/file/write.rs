@@ -7,10 +7,9 @@ use tracing::error;
 use super::file::{GetReplaceMessage, GitJsonFile};
 use super::{super::file::GitDatabase, GitError};
 
-
 use crate::utils::IntoReportExt;
 use crate::{
-    api::model::{ApiKey},
+    api::model::ApiKey,
     server::database::{
         file::file::{CoreFile, CoreFileNoHistory},
         file::utils::GitUserDirPath,
@@ -89,22 +88,16 @@ impl GitDatabaseWriteCommands {
         .await
     }
 
-    pub async fn update_json<
-        T: Serialize + Clone + Send + GitJsonFile + 'static,
-    >(
-        self, data: &T,
+    pub async fn update_json<T: Serialize + Clone + Send + GitJsonFile + 'static>(
+        self,
+        data: &T,
     ) -> Result<(), GitError> {
         let data = data.clone();
         self.run_git_command(move |dir| {
-            dir.replace_file(
-                T::FILE,
-                T::FILE.commit_message_for_replace(),
-                move |file| {
-                    serde_json::to_writer(file, &data).into_error(GitError::SerdeSerialize)
-                }
-            )
+            dir.replace_file(T::FILE, T::FILE.commit_message_for_replace(), move |file| {
+                serde_json::to_writer(file, &data).into_error(GitError::SerdeSerialize)
+            })
         })
         .await
     }
-
 }

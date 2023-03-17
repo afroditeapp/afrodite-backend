@@ -1,29 +1,13 @@
 //! Routes for server to server connections
 
-
-
 use axum::{
-    routing::{get, post}, Router,
+    routing::{get, post},
+    Router,
 };
 
+use crate::api::{self};
 
-
-
-
-
-
-
-
-
-use crate::{
-    api::{
-        self,
-    },
-};
-
-use super::{
-    app::AppState,
-};
+use super::app::AppState;
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
