@@ -137,7 +137,7 @@ impl GitUserDirPath {
             Some(mode_msg) => format!("{}\n\n{}", mode_msg, commit_msg),
             None => commit_msg.to_owned(),
         };
-        git.commit(file, &msg)?;
+
 
         let live_file_path = self.git_repository_path.join(file.live_path().as_str());
         fs::rename(&git_file_path, &live_file_path).into_error_with_info_lazy(

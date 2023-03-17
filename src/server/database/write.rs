@@ -5,24 +5,24 @@ use sqlx::Sqlite;
 use crate::{
     api::model::{
         Account,
-        ApiKey, AccountId, AccountState, Profile, AccountSetup,
+        ApiKey, AccountId, AccountState, Profile, AccountSetup, AccountIdLight,
     },
     server::database::{
-        git::utils::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
+        file::utils::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
         GitDatabaseOperationHandle,
     },
     utils::ErrorConversion, config::Config,
 };
 
-use super::{git::{write::GitDatabaseWriteCommands, file::GitJsonFile}, sqlite::{write::SqliteWriteCommands, SqliteDatabaseError, utils::SqliteUpdateJson}, utils::GetReadWriteCmd};
+use super::{file::{write::GitDatabaseWriteCommands, file::GitJsonFile}, current::{write::SqliteWriteCommands}, utils::{GetReadWriteCmd}, sqlite::{SqliteUpdateJson, HistoryUpdateJson}, history::write::HistoryWriteCommands};
 
 #[derive(Debug, Clone)]
 pub enum WriteCmd {
-    AccountId(AccountId),
-    Profile(AccountId),
-    ApiKey(AccountId),
-    AccountState(AccountId),
-    AccountSetup(AccountId),
+    AccountId(AccountIdLight),
+    Profile(AccountIdLight),
+    ApiKey(AccountIdLight),
+    AccountState(AccountIdLight),
+    AccountSetup(AccountIdLight),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -31,117 +31,77 @@ impl std::fmt::Display for WriteCmd {
     }
 }
 
-/// Write methods should be mutable to make sure that there is no concurrent
-/// Git user directory writing.
 pub struct WriteCommands {
-    user_dir: GitUserDirPath,
-    database_handle: GitDatabaseOperationHandle,
     sqlite_database_write: SqliteWriteHandle,
+    history_write: SqliteWriteHandle,
+    id: AccountIdLight,
 }
 
 impl WriteCommands {
     pub fn new(
-        user_dir: GitUserDirPath,
-        database_handle: GitDatabaseOperationHandle,
+        id: AccountIdLight,
         sqlite_database_write: SqliteWriteHandle,
+        history_write: SqliteWriteHandle,
     ) -> Self {
         Self {
-            user_dir,
-            database_handle,
+            id,
             sqlite_database_write,
+            history_write,
         }
     }
 
-    pub async fn register(&mut self, config: &Config) -> Result<(), DatabaseError> {
+    pub async fn register(&mut self, id: AccountIdLight, config: &Config) -> Result<(), DatabaseError> {
         let account_state = Account::default();
         let account_setup = AccountSetup::default();
         let profile = Profile::default();
 
-        self.git()
-            .store_account_id()
+        self.current()
+            .store_account_id(id)
             .await
-            .with_info_lazy(|| WriteCmd::AccountId(self.user_dir.id().clone()))?;
+            .with_info_lazy(|| WriteCmd::AccountId(id))?;
 
         if config.components().account {
-            self.git()
-                .update_json(&account_state)
+            self.current()
+                .store_account(id, &account_state)
                 .await
-                .with_write_cmd_info::<Account>(self.user_dir.id())?;
+                .with_write_cmd_info::<Account>(id)?;
 
-            self.git()
-                .update_json(&account_setup)
+            self.current()
+                .store_account_setup(id, &account_setup)
                 .await
-                .with_write_cmd_info::<AccountSetup>(self.user_dir.id())?;
+                .with_write_cmd_info::<AccountSetup>(id)?;
         }
 
         if config.components().profile {
-            self.git()
-                .update_json(&profile)
+            self.current()
+                .store_profile(id, &profile)
                 .await
-                .with_write_cmd_info::<Profile>(self.user_dir.id())?;
-        }
-
-        self.sqlite()
-            .store_account_id(self.user_dir.id())
-            .await
-            .with_info_lazy(|| WriteCmd::AccountId(self.user_dir.id().clone()))?;
-
-        if config.components().account {
-            self.sqlite()
-                .store_account(self.user_dir.id(), &account_state)
-                .await
-                .with_write_cmd_info::<Account>(self.user_dir.id())?;
-
-            self.sqlite()
-                .store_account_setup(self.user_dir.id(), &account_setup)
-                .await
-                .with_write_cmd_info::<AccountSetup>(self.user_dir.id())?;
-        }
-
-        if config.components().profile {
-            self.sqlite()
-                .store_profile(self.user_dir.id(), &profile)
-                .await
-                .with_write_cmd_info::<Profile>(self.user_dir.id())?;
+                .with_write_cmd_info::<Profile>(id)?;
         }
 
         Ok(())
     }
 
     pub async fn update_current_api_key(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {
-        // Token is only stored as a file.
-        self.git()
-            .update_token(key)
-            .await
-            .with_info_lazy(|| WriteCmd::ApiKey(self.user_dir.id().clone()))
+        todo!("add to api key to database")
     }
 
-    fn git(&self) -> GitDatabaseWriteCommands {
-        GitDatabaseWriteCommands::new(self.user_dir.clone(), self.database_handle.clone(), None)
-    }
-
-    /// Use constant title for commit messages when using write commands
-    /// through returned object.
-    pub(super) fn git_with_mode_message(&self, message: Option<&str>) -> GitDatabaseWriteCommands {
-        GitDatabaseWriteCommands::new(self.user_dir.clone(), self.database_handle.clone(), message)
-    }
-
-    pub(super) fn sqlite(&self) -> SqliteWriteCommands {
+    pub(super) fn current(&self) -> SqliteWriteCommands {
         SqliteWriteCommands::new(&self.sqlite_database_write)
     }
 
+    pub(super) fn history(&self) -> HistoryWriteCommands {
+        HistoryWriteCommands::new(&self.sqlite_database_write)
+    }
+
     pub async fn update_json<
-        T: GetReadWriteCmd + Serialize + Clone + Send + GitJsonFile + SqliteUpdateJson + 'static
+        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + 'static
     >(
         &mut self,
         data: &T,
     ) -> Result<(), DatabaseError> {
-        self.git()
-            .update_json(data)
+        data.update_json(self.id, &self.current())
             .await
-            .with_write_cmd_info::<T>(self.user_dir.id())?;
-        data.update_json(self.user_dir.id(), &self.sqlite())
-            .await
-            .with_write_cmd_info::<T>(self.user_dir.id())
+            .with_write_cmd_info::<T>(self.id)
     }
 }

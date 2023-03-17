@@ -5,15 +5,15 @@ use std::io::Write;
 use tracing::error;
 
 use super::file::{GetLiveVersionPath, GetGitPath, GetReplaceMessage, GitJsonFile};
-use super::{super::git::GitDatabase, GitError};
+use super::{super::file::GitDatabase, GitError};
 use crate::api::account::data::AccountSetup;
 use crate::api::model::{Account, Profile};
 use crate::utils::IntoReportExt;
 use crate::{
     api::model::{ApiKey},
     server::database::{
-        git::file::{CoreFile, CoreFileNoHistory},
-        git::utils::GitUserDirPath,
+        file::file::{CoreFile, CoreFileNoHistory},
+        file::utils::GitUserDirPath,
         GitDatabaseOperationHandle,
     },
 };

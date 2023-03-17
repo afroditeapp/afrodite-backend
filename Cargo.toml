@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.2.14", features = ["cargo"] }
 toml = "0.7.2"
-git2 = "0.15.0"
 uuid = { version = "1.1.2", features = ["v4", "serde"] }
 
 serde = { version = "1.0", features = ["derive"] }
@@ -30,7 +29,7 @@ utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 
 
-sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "sqlite" ] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
 
 thiserror = "1.0.37"
 error-stack = "0.2.3"

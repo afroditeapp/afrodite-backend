@@ -1,7 +1,7 @@
 use error_stack::{Context, IntoReport, Report, Result, ResultExt};
 use tokio::sync::oneshot;
 
-use crate::{server::database::{git::GitError, sqlite::SqliteDatabaseError, DatabaseError, utils::GetReadWriteCmd}, api::model::AccountId};
+use crate::{server::database::{file::GitError, sqlite::SqliteDatabaseError, DatabaseError, utils::GetReadWriteCmd}, api::model::{AccountId, AccountIdLight}};
 
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;
@@ -107,7 +107,7 @@ pub trait ErrorConversion: ResultExt + Sized {
         T: GetReadWriteCmd,
     >(
         self,
-        id: &AccountId,
+        id: AccountIdLight,
     ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info_lazy(
             Self::ERROR,
@@ -120,7 +120,7 @@ pub trait ErrorConversion: ResultExt + Sized {
         T: GetReadWriteCmd,
     >(
         self,
-        id: &AccountId,
+        id: AccountIdLight,
     ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info_lazy(
             Self::ERROR,

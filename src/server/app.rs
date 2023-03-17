@@ -17,7 +17,7 @@ use crate::{api::{
 }, client::{media::{MediaInternalApi, MediaInternalApiUrls}, account::{AccountInternalApi, AccountInternalApiUrls}}, config::{ClientApiUrls, Config}};
 
 use super::{
-    database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
+    database::{write::WriteCommands, RouterDatabaseHandle, current::read::SqliteReadCommands},
     internal::{},
     session::{SessionManager, AccountStateInRam},
 };
@@ -54,7 +54,7 @@ impl GetUsers for AppState {
 }
 
 impl ReadDatabase for AppState {
-    fn read_database(&self) -> ReadCommands {
+    fn read_database(&self) -> SqliteReadCommands<'_> {
         self.session_manager.database.read()
     }
 }

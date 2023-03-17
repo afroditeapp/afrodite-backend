@@ -2,16 +2,17 @@ use async_trait::async_trait;
 use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
 
-use super::utils::SqliteSelectJson;
-use super::{SqliteDatabaseError, SqliteReadHandle};
+
+use super::super::sqlite::{SqliteSelectJson, SqliteDatabaseError, SqliteReadHandle};
 use crate::api::account::data::AccountSetup;
-use crate::api::model::{Account, AccountId, Profile};
+use crate::api::model::{Account, AccountId, Profile, AccountIdLight};
+use crate::server::database::sqlite::HistorySelectJson;
 use crate::utils::IntoReportExt;
 
 macro_rules! read_json {
     ($self:expr, $id:expr, $sql:literal, $str_field:ident) => {
         {
-            let id = $id.as_str();
+            let id = $id.as_uuid();
             sqlx::query!(
                 $sql,
                 id
@@ -27,11 +28,11 @@ macro_rules! read_json {
     };
 }
 
-pub struct SqliteReadCommands<'a> {
+pub struct HistoryReadCommands<'a> {
     handle: &'a SqliteReadHandle,
 }
 
-impl<'a> SqliteReadCommands<'a> {
+impl<'a> HistoryReadCommands<'a> {
     pub fn new(handle: &'a SqliteReadHandle) -> Self {
         Self { handle }
     }
@@ -55,9 +56,9 @@ impl<'a> SqliteReadCommands<'a> {
 
 
 #[async_trait]
-impl SqliteSelectJson for Account {
-    async fn select_json(
-        id: &AccountId, read: &SqliteReadCommands,
+impl HistorySelectJson for Account {
+    async fn history_select_json(
+        id: AccountIdLight, read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError> {
         read_json!(
             read,
@@ -73,9 +74,9 @@ impl SqliteSelectJson for Account {
 }
 
 #[async_trait]
-impl SqliteSelectJson for AccountSetup {
-    async fn select_json(
-        id: &AccountId, read: &SqliteReadCommands,
+impl HistorySelectJson for AccountSetup {
+    async fn history_select_json(
+        id: AccountIdLight, read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError> {
         read_json!(
             read,
@@ -91,9 +92,9 @@ impl SqliteSelectJson for AccountSetup {
 }
 
 #[async_trait]
-impl SqliteSelectJson for Profile {
-    async fn select_json(
-        id: &AccountId, read: &SqliteReadCommands,
+impl HistorySelectJson for Profile {
+    async fn history_select_json(
+        id: AccountIdLight, read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError> {
         read_json!(
             read,

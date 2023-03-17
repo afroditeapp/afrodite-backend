@@ -44,7 +44,7 @@ pub async fn get_profile<S: ReadDatabase>(
     // TODO: Validate user id
     state
         .read_database()
-        .read_json::<Profile>(&account_id.to_full())
+        .read_json::<Profile>(account_id)
         .await
         .map(|profile| profile.into())
         .map_err(|e| {

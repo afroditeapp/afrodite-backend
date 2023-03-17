@@ -1,16 +1,16 @@
 use async_trait::async_trait;
 use error_stack::Result;
 
-use crate::api::{model::{Account, AccountId, AccountState, Profile}, account::data::AccountSetup};
+use crate::api::{model::{Account, AccountId, AccountState, Profile, AccountIdLight}, account::data::AccountSetup};
 
-use super::{SqliteDatabaseError, SqliteWriteHandle, utils::{SqliteUpdateJson,}};
+use super::super::sqlite::{SqliteDatabaseError, SqliteWriteHandle, SqliteUpdateJson};
 
 use crate::utils::IntoReportExt;
 
 macro_rules! insert_or_update_json {
     ($self:expr, $sql:literal, $data:expr, $id:expr) => {
         {
-            let id = $id.as_str();
+            let id = $id.as_uuid();
             let data =
                 serde_json::to_string($data)
                     .into_error(SqliteDatabaseError::SerdeSerialize)?;
@@ -37,8 +37,8 @@ impl<'a> SqliteWriteCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_account_id(&mut self, id: &AccountId) -> Result<(), SqliteDatabaseError> {
-        let id = id.as_str();
+    pub async fn store_account_id(&mut self, id: AccountIdLight) -> Result<(), SqliteDatabaseError> {
+        let id = id.as_uuid();
         sqlx::query!(
             r#"
             INSERT INTO Account (account_id)
@@ -53,7 +53,7 @@ impl<'a> SqliteWriteCommands<'a> {
         Ok(())
     }
 
-    pub async fn store_profile(&mut self, id: &AccountId, profile: &Profile) -> Result<(), SqliteDatabaseError> {
+    pub async fn store_profile(&mut self, id: AccountIdLight, profile: &Profile) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             self,
             r#"
@@ -65,7 +65,7 @@ impl<'a> SqliteWriteCommands<'a> {
         )
     }
 
-    pub async fn store_account(&mut self, id: &AccountId, account: &Account) -> Result<(), SqliteDatabaseError> {
+    pub async fn store_account(&mut self, id: AccountIdLight, account: &Account) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             self,
             r#"
@@ -77,7 +77,7 @@ impl<'a> SqliteWriteCommands<'a> {
         )
     }
 
-    pub async fn store_account_setup(&mut self, id: &AccountId, account: &AccountSetup) -> Result<(), SqliteDatabaseError> {
+    pub async fn store_account_setup(&mut self, id: AccountIdLight, account: &AccountSetup) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             self,
             r#"
@@ -94,7 +94,7 @@ impl<'a> SqliteWriteCommands<'a> {
 #[async_trait]
 impl SqliteUpdateJson for Account {
     async fn update_json(
-        &self, id: &AccountId, write: &SqliteWriteCommands,
+        &self, id: AccountIdLight, write: &SqliteWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,
@@ -112,7 +112,7 @@ impl SqliteUpdateJson for Account {
 #[async_trait]
 impl SqliteUpdateJson for AccountSetup {
     async fn update_json(
-        &self, id: &AccountId, write: &SqliteWriteCommands,
+        &self, id: AccountIdLight, write: &SqliteWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,
@@ -130,7 +130,7 @@ impl SqliteUpdateJson for AccountSetup {
 #[async_trait]
 impl SqliteUpdateJson for Profile {
     async fn update_json(
-        &self, id: &AccountId, write: &SqliteWriteCommands,
+        &self, id: AccountIdLight, write: &SqliteWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,

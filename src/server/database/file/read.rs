@@ -5,7 +5,7 @@ use crate::{
     api::model::{
         ApiKey, AccountId, Account, Profile, AccountSetup,
     },
-    server::database::{git::file::CoreFileNoHistory, git::utils::GitUserDirPath},
+    server::database::{file::file::CoreFileNoHistory, file::utils::GitUserDirPath},
 };
 
 use super::{file::{CoreFile, GetLiveVersionPath, GitJsonFile}, GitError};

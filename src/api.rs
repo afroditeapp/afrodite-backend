@@ -20,7 +20,7 @@ use utoipa::{
 };
 
 use crate::{server::{
-    database::{read::ReadCommands, write::WriteCommands, RouterDatabaseHandle},
+    database::{ write::WriteCommands, RouterDatabaseHandle, current::read::SqliteReadCommands},
     internal::{},
     session::{SessionManager, AccountStateInRam},
 }, client::{account::AccountInternalApi, media::MediaInternalApi}, config::Config};
@@ -96,7 +96,7 @@ pub trait WriteDatabase {
 }
 
 pub trait ReadDatabase {
-    fn read_database(&self) -> ReadCommands;
+    fn read_database(&self) -> SqliteReadCommands<'_>;
 }
 
 pub trait GetCoreServerInternalApi {

@@ -1,18 +1,29 @@
-pub mod read;
-pub mod write;
-pub mod utils;
+
+use crate::api::model::{Account, AccountId, AccountSetup, Profile, AccountIdLight};
+
+use super::{read::ReadCmd, write::WriteCmd, history::read::HistoryReadCommands};
+
+
+use async_trait::async_trait;
+use serde::Serialize;
+
+use super::current::{write::SqliteWriteCommands, read::SqliteReadCommands};
+use super::history::write::HistoryWriteCommands;
+
+use error_stack::Result;
+
 
 use std::path::{Path, PathBuf};
 
-use error_stack::Result;
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
-    SqlitePool,
+    SqlitePool, Database,
 };
 
 use crate::utils::IntoReportExt;
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
+pub const HISTORY_FILE_NAME: &str = "history.db";
 
 #[derive(thiserror::Error, Debug)]
 pub enum SqliteDatabaseError {
@@ -66,8 +77,9 @@ pub struct SqliteWriteHandle {
 impl SqliteWriteHandle {
     pub async fn new(
         dir: SqliteDatabasePath,
+        db_type: DatabaseType,
     ) -> Result<(Self, SqliteWriteCloseHandle), SqliteDatabaseError> {
-        let db_path = dir.path().join(DATABASE_FILE_NAME);
+        let db_path = dir.path().join(db_type.to_file_name());
 
         let run_initial_setup = !db_path.exists();
 
@@ -120,8 +132,9 @@ pub struct SqliteReadHandle {
 impl SqliteReadHandle {
     pub async fn new(
         dir: SqliteDatabasePath,
+        db_type: DatabaseType,
     ) -> Result<(Self, SqliteReadCloseHandle), SqliteDatabaseError> {
-        let db_path = dir.path().join(DATABASE_FILE_NAME);
+        let db_path = dir.path().join(db_type.to_file_name());
 
         let pool = SqlitePoolOptions::new()
             .max_connections(16)
@@ -144,4 +157,50 @@ impl SqliteReadHandle {
     pub fn pool(&self) -> &SqlitePool {
         &self.pool
     }
+}
+
+
+#[derive(Debug, Clone)]
+pub enum DatabaseType {
+    Current,
+    History,
+}
+
+impl DatabaseType {
+    pub fn to_file_name(&self) -> &str {
+        match self {
+            DatabaseType::Current => DATABASE_FILE_NAME,
+            DatabaseType::History => HISTORY_FILE_NAME,
+        }
+    }
+}
+
+
+
+#[async_trait]
+pub trait SqliteUpdateJson {
+    async fn update_json(
+        &self, id: AccountIdLight, write: &SqliteWriteCommands,
+    ) -> Result<(), SqliteDatabaseError>;
+}
+
+#[async_trait]
+pub trait SqliteSelectJson: Sized {
+    async fn select_json(
+        id: AccountIdLight, read: &SqliteReadCommands,
+    ) -> Result<Self, SqliteDatabaseError>;
+}
+
+#[async_trait]
+pub trait HistoryUpdateJson {
+    async fn history_update_json(
+        &self, id: AccountIdLight, write: &HistoryWriteCommands,
+    ) -> Result<(), SqliteDatabaseError>;
+}
+
+#[async_trait]
+pub trait HistorySelectJson: Sized {
+    async fn history_select_json(
+        id: AccountIdLight, read: &HistoryReadCommands,
+    ) -> Result<Self, SqliteDatabaseError>;
 }

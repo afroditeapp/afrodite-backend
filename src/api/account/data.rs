@@ -71,15 +71,24 @@ impl <'de> Deserialize<'de> for AccountId {
 /// Consumes less memory.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams, Copy)]
 pub struct AccountIdLight {
-    account_id: uuid::Uuid,
+    pub account_id: uuid::Uuid,
 }
 
 impl AccountIdLight {
     pub fn to_full(&self) -> AccountId {
         AccountId { account_id: self.account_id.hyphenated().to_string(), light: self.clone() }
     }
+
+    pub fn as_uuid(&self) -> uuid::Uuid {
+        self.account_id
+    }
 }
 
+impl From<AccountIdLight> for uuid::Uuid {
+    fn from(value: AccountIdLight) -> Self {
+        value.account_id
+    }
+}
 
 /// This is just a random string.
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]

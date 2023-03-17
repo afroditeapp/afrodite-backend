@@ -44,8 +44,8 @@ pub async fn register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
 
     let mut write_commands = state
         .database()
-        .user_write_commands(&id);
-    match write_commands.register(state.config()).await {
+        .user_write_commands(id.as_light());
+    match write_commands.register(id.as_light(), state.config()).await {
         Ok(()) => {
             state
                 .users()
@@ -119,7 +119,7 @@ pub async fn account_state<S: GetApiKeys + ReadDatabase>(
 
     state
         .read_database()
-        .read_json::<Account>(&id.to_full())
+        .read_json::<Account>(id)
         .await
         .map(|account| account.into())
         .map_err(|e| {
@@ -152,7 +152,7 @@ pub async fn account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
 
     let account = state
         .read_database()
-        .read_json::<Account>(&id.to_full())
+        .read_json::<Account>(id)
         .await
         .map_err(|e| {
             error!("Get profile error: {e:?}");
