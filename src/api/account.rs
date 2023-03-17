@@ -1,19 +1,16 @@
 pub mod data;
 pub mod internal;
 
-use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
-use headers::{Header, HeaderValue};
-use hyper::{header, Request, StatusCode};
+use axum::{Json, TypedHeader};
+
+use hyper::{StatusCode};
 use tokio::sync::Mutex;
-use utoipa::{
-    openapi::security::{ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
-};
+
 
 use crate::server::session::AccountStateInRam;
 
 use self::{
-    data::{ApiKey, AccountId, Account, Capabilities, AccountIdLight, AccountSetup, AccountState},
+    data::{ApiKey, AccountId, Account, AccountIdLight, AccountSetup, AccountState},
 };
 
 use super::{get_account_id, GetConfig};

@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 use error_stack::Result;
 
-use crate::{api::{model::{Account, AccountId, AccountState, Profile, AccountIdLight}, account::data::AccountSetup}, server::database::sqlite::HistoryUpdateJson};
+use crate::{api::{model::{Account, Profile, AccountIdLight}, account::data::AccountSetup}, server::database::sqlite::HistoryUpdateJson};
 
 use super::super::sqlite::{
-    SqliteDatabaseError, SqliteWriteHandle, SqliteUpdateJson};
+    SqliteDatabaseError, SqliteWriteHandle};
 
 
 use crate::utils::IntoReportExt;

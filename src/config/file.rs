@@ -8,7 +8,7 @@ use error_stack::{Report, Result, ResultExt};
 use serde::Deserialize;
 use url::Url;
 
-use crate::{server::database::file::file, utils::IntoReportExt};
+use crate::{utils::IntoReportExt};
 
 pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 

@@ -1,9 +1,7 @@
 use crate::{
     api::model::{
-        Account,
-        ApiKey, AccountId, AccountIdLight, Profile, AccountSetup,
+        AccountIdLight,
     },
-    utils::ErrorConversion,
 };
 
 

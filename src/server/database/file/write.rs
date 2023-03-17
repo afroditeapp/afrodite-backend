@@ -1,13 +1,13 @@
 use error_stack::Result;
 use serde::Serialize;
-use std::fmt::Debug;
+
 use std::io::Write;
 use tracing::error;
 
-use super::file::{GetLiveVersionPath, GetGitPath, GetReplaceMessage, GitJsonFile};
+use super::file::{GetReplaceMessage, GitJsonFile};
 use super::{super::file::GitDatabase, GitError};
-use crate::api::account::data::AccountSetup;
-use crate::api::model::{Account, Profile};
+
+
 use crate::utils::IntoReportExt;
 use crate::{
     api::model::{ApiKey},

@@ -1,7 +1,7 @@
 use error_stack::{Context, IntoReport, Report, Result, ResultExt};
 use tokio::sync::oneshot;
 
-use crate::{server::database::{file::GitError, sqlite::SqliteDatabaseError, DatabaseError, utils::GetReadWriteCmd}, api::model::{AccountId, AccountIdLight}};
+use crate::{server::database::{file::GitError, sqlite::SqliteDatabaseError, DatabaseError, utils::GetReadWriteCmd}, api::model::{AccountIdLight}};
 
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;

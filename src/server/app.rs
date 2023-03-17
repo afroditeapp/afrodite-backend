@@ -11,14 +11,13 @@ use utoipa::OpenApi;
 
 use crate::{api::{
     self,
-    model::{ApiKey, AccountId, AccountIdLight},
+    model::{ApiKey, AccountIdLight},
     ApiDoc, GetApiKeys, GetCoreServerInternalApi, GetMediaServerInternalApi,
     GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase, GetConfig,
-}, client::{media::{MediaInternalApi, MediaInternalApiUrls}, account::{AccountInternalApi, AccountInternalApiUrls}}, config::{ClientApiUrls, Config}};
+}, client::{media::{MediaInternalApi}, account::{AccountInternalApi}}, config::{Config}};
 
 use super::{
     database::{write::WriteCommands, RouterDatabaseHandle, current::read::SqliteReadCommands},
-    internal::{},
     session::{SessionManager, AccountStateInRam},
 };
 

@@ -1,40 +1,28 @@
 //! Routes for server to server connections
 
-use std::{collections::HashMap, sync::Arc};
+
 
 use axum::{
-    middleware,
-    routing::{get, post},
-    Json, Router,
+    routing::{get, post}, Router,
 };
-use headers::Header;
-use hyper::StatusCode;
-use reqwest::{Client, Request, Url};
-use tokio::sync::{Mutex, RwLock};
 
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
-use error_stack::{Result, ResultExt};
+
+
+
+
+
+
+
 
 use crate::{
     api::{
         self,
-        model::{ApiKey, AccountId, AccountIdLight},
-        account::internal::PATH_CHECK_API_KEY,
-        utils::{
-            ApiKeyHeader,
-        },
-        ApiDoc, GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase,
-        WriteDatabase,
     },
-    utils::IntoReportExt,
 };
 
 use super::{
     app::AppState,
-    database::{ write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, AccountStateInRam},
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
@@ -54,7 +42,7 @@ impl InternalApp {
         )
     }
 
-    pub fn create_profile_server_router(state: AppState) -> Router {
+    pub fn create_profile_server_router(_state: AppState) -> Router {
         Router::new()
     }
 

@@ -1,11 +1,11 @@
 
-use crate::api::model::{Account, AccountId, AccountSetup, Profile, AccountIdLight};
+use crate::api::model::{AccountIdLight};
 
-use super::{read::ReadCmd, write::WriteCmd, history::read::HistoryReadCommands};
+use super::{history::read::HistoryReadCommands};
 
 
 use async_trait::async_trait;
-use serde::Serialize;
+
 
 use super::current::{write::SqliteWriteCommands, read::SqliteReadCommands};
 use super::history::write::HistoryWriteCommands;
@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
-    SqlitePool, Database,
+    SqlitePool,
 };
 
 use crate::utils::IntoReportExt;

@@ -1,29 +1,24 @@
 pub mod data;
 pub mod internal;
 
-use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
-use headers::{Header, HeaderValue};
-use hyper::{header, Request, StatusCode};
-use tokio::sync::Mutex;
-use utoipa::{
-    openapi::security::{ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
-};
+use axum::{extract::Path};
 
-use crate::server::session::AccountStateInRam;
+use hyper::{StatusCode};
+
+
+
+
 
 use self::{
-    super::model::{ApiKey, AccountId, Profile},
+    super::model::{AccountId},
 };
 
 use self::data::ImageFileName;
 
-use tracing::error;
+
 
 use super::{
-    utils::{ApiKeyHeader, API_KEY_HEADER_STR},
-    db_write, GetApiKeys, GetCoreServerInternalApi, GetRouterDatabaseHandle, GetUsers,
-    ReadDatabase, WriteDatabase,
+    ReadDatabase,
 };
 
 pub const PATH_GET_IMAGE: &str = "/image/:user_id/:image_file";
@@ -39,9 +34,9 @@ pub const PATH_GET_IMAGE: &str = "/image/:user_id/:image_file";
     security(("api_key" = [])),
 )]
 pub async fn get_image<S: ReadDatabase>(
-    Path(user_id): Path<AccountId>,
-    Path(image_file): Path<ImageFileName>,
-    state: S,
+    Path(_user_id): Path<AccountId>,
+    Path(_image_file): Path<ImageFileName>,
+    _state: S,
 ) -> Result<(), StatusCode> {
     // TODO: Validate user id
     // state

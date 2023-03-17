@@ -7,7 +7,7 @@ use std::{sync::Arc, fs};
 use tokio::{sync::{mpsc, watch}, select, signal};
 use tracing::{info, error};
 
-use crate::{config::{Config, args::TestMode, ClientApiUrls}, server::database::{DatabaseManager, DB_HISTORY_DIR_NAME}, api::model::AccountId, test::bot::Bot};
+use crate::{config::{Config, args::TestMode}, server::database::{DB_HISTORY_DIR_NAME}, api::model::AccountId, test::bot::Bot};
 
 
 pub struct TestRunner {

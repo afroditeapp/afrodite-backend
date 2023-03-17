@@ -1,40 +1,28 @@
 
-use std::{collections::HashMap, sync::Arc};
 
-use axum::{
-    middleware,
-    routing::{get, post},
-    Json, Router,
-};
+
+
 use headers::Header;
 use hyper::StatusCode;
-use reqwest::{Client, Request, Url};
-use tokio::sync::{Mutex, RwLock};
+use reqwest::{Client, Url};
 
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
-use error_stack::{Result, ResultExt, IntoReport, Context};
+
+
+
+use error_stack::{Result};
 
 use crate::{
     api::{
-        self,
-        model::{ApiKey, AccountId, AccountIdLight, Profile},
-        account::{internal::PATH_CHECK_API_KEY, PATH_REGISTER, PATH_LOGIN},
+        model::{ApiKey, AccountId, Profile},
         utils::{
             ApiKeyHeader,
-        },
-        ApiDoc, GetApiKeys, GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase,
-        WriteDatabase, profile::{PATH_GET_PROFILE, PATH_POST_PROFILE, PATH_GET_DEFAULT_PROFILE},
+        }, profile::{PATH_GET_PROFILE, PATH_POST_PROFILE, PATH_GET_DEFAULT_PROFILE},
     },
-    utils::IntoReportExt, server::internal::{},
+    utils::IntoReportExt,
 };
 
-use crate::server::{
-    app::AppState,
-    database::{ write::WriteCommands, RouterDatabaseHandle},
-    session::{SessionManager, AccountStateInRam},
-};
+
 
 use super::{HttpRequestError, get_api_url, StatusCodeError};
 

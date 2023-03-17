@@ -3,26 +3,22 @@ use std::{time::{Duration, Instant}, sync::{Arc, atomic::{AtomicU64, Ordering}}}
 use reqwest::Client;
 use tokio::{select, sync::{mpsc, watch}, time::sleep};
 
-use std::{collections::HashMap};
 
-use axum::{
-    middleware,
-    routing::{get, post},
-    Json, Router,
-};
-use headers::Header;
-use hyper::StatusCode;
-use reqwest::{ Request, Url};
-use tokio::sync::{Mutex, RwLock};
 
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
-use error_stack::{Result, ResultExt, IntoReport, Context};
+
+
+
+
+
+
+
+
+use error_stack::{Result};
 
 use tracing::{error, log::warn};
 
-use crate::{api::{model::{AccountId, ApiKey, Profile}, self}, client::{ApiClient, PublicApiUrls, HttpRequestError}, config::args::{TestMode, Test}};
+use crate::{api::{model::{AccountId, ApiKey, Profile}}, client::{ApiClient, PublicApiUrls, HttpRequestError}, config::args::{TestMode, Test}};
 
 static COUNTERS: Counters = Counters::new();
 

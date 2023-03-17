@@ -7,13 +7,13 @@ pub mod read;
 pub mod utils;
 pub mod write;
 
-use std::path::Path;
 
-use crate::utils::IntoReportExt;
+
+
 use error_stack::Result;
 use tokio::sync::mpsc;
 
-use {file::GetGitPath, utils::GitUserDirPath};
+use {utils::GitUserDirPath};
 
 
 /// Every running database write operation should keep this handle. When server
@@ -85,7 +85,7 @@ pub struct GitDatabase<'a> {
 impl<'a> GitDatabase<'a> {
     pub fn create(profile: &'a GitUserDirPath) -> Result<Self, GitError> {
 
-        let mut repository = Self {
+        let repository = Self {
             profile,
         };
 

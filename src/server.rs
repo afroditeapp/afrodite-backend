@@ -9,14 +9,14 @@ use std::sync::Arc;
 
 use axum::Router;
 use tokio::{signal, task::JoinHandle};
-use tracing::{debug, error, info};
+use tracing::{error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     api::ApiDoc,
     config::Config,
-    server::{app::App, database::DatabaseManager, internal::InternalApp}, client::account::AccountInternalApiUrls,
+    server::{app::App, database::DatabaseManager, internal::InternalApp},
 };
 
 pub struct PihkaServer {

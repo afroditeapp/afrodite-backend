@@ -132,8 +132,8 @@ impl GitUserDirPath {
         write_handle(&mut git_file)?;
         drop(git_file);
 
-        let mut git = GitDatabase::open(self)?;
-        let msg = match self.mode_msg.as_ref() {
+        let _git = GitDatabase::open(self)?;
+        let _msg = match self.mode_msg.as_ref() {
             Some(mode_msg) => format!("{}\n\n{}", mode_msg, commit_msg),
             None => commit_msg.to_owned(),
         };

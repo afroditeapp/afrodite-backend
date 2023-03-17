@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
-use tracing_subscriber::registry::Data;
+
 
 
 use super::super::sqlite::{SqliteSelectJson, SqliteDatabaseError, SqliteReadHandle};
@@ -40,7 +40,7 @@ impl<'a> SqliteReadCommands<'a> {
         Self { handle }
     }
 
-    pub async fn user_api_key(&self, id: &AccountId) -> Result<Option<ApiKey>, DatabaseError> {
+    pub async fn user_api_key(&self, _id: &AccountId) -> Result<Option<ApiKey>, DatabaseError> {
         todo!()
     }
 

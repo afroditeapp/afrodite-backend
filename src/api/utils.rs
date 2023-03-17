@@ -1,22 +1,21 @@
-use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
+use axum::{middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
-use tokio::sync::Mutex;
+
 use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
+    Modify,
 };
 
-use crate::server::session::AccountStateInRam;
+
 
 use super::{model::{
-    Account,
-    ApiKey, AccountId
+    ApiKey
 }, GetCoreServerInternalApi, GetConfig};
 
-use tracing::error;
 
-use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase};
+
+use super::{GetApiKeys};
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
@@ -40,13 +39,13 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys + GetCoreServerInternalA
         // Check ApiKey from external service
 
         match state.core_server_internal_api().check_api_key(key).await {
-            Ok(Some(user_id)) => {
+            Ok(Some(_user_id)) => {
                 // TODO: Cache this API key. Also needed for initializing
                 // database tables.
                 Ok(next.run(req).await)
             }
             Ok(None) => Err(StatusCode::UNAUTHORIZED),
-            Err(e) => {
+            Err(_e) => {
                 // NOTE: Logging every error is not good as it would spam
                 // the log, but maybe an error counter or logging just
                 // once for a while.

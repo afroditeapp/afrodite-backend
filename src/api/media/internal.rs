@@ -1,35 +1,24 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::{
-    body::Bytes,
-    extract::{BodyStream, Path},
-    middleware::Next,
-    response::Response,
-    Json, TypedHeader,
+    extract::{BodyStream, Path}, TypedHeader,
 };
-use headers::{ContentLength, ContentType, Header, HeaderValue};
-use hyper::{header, Request, StatusCode};
-use tokio::sync::Mutex;
-use utoipa::{
-    openapi::security::{ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
-};
+use headers::{ContentLength, ContentType};
+use hyper::{StatusCode};
 
-use crate::{server::session::AccountStateInRam, api::model::AccountIdLight};
+
+
+use crate::{api::model::AccountIdLight};
 
 use super::{
-    super::profile::data::Profile,
-    super::account::data::{ApiKey, AccountId},
+    super::account::data::{AccountId},
 };
 
 use super::data::ImageFileName;
 
-use tracing::error;
 
-use super::{
-    super::utils::ApiKeyHeader, db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers,
-    ReadDatabase, WriteDatabase,
-};
+
+
 
 pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
 
@@ -44,12 +33,12 @@ pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
     ),
 )]
 pub async fn post_image<S>(
-    Path(id): Path<AccountIdLight>,
-    Path(image_file): Path<ImageFileName>,
-    TypedHeader(content_type): TypedHeader<ContentType>,
-    TypedHeader(content_lenght): TypedHeader<ContentLength>,
-    image_bytes: BodyStream,
-    state: S,
+    Path(_id): Path<AccountIdLight>,
+    Path(_image_file): Path<ImageFileName>,
+    TypedHeader(_content_type): TypedHeader<ContentType>,
+    TypedHeader(_content_lenght): TypedHeader<ContentLength>,
+    _image_bytes: BodyStream,
+    _state: S,
 ) -> Result<StatusCode, StatusCode> {
     // TODO
     Ok(StatusCode::OK)

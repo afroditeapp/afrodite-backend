@@ -3,7 +3,7 @@ use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
 
 
-use super::super::sqlite::{SqliteSelectJson, SqliteDatabaseError, SqliteReadHandle};
+use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 use crate::api::account::data::AccountSetup;
 use crate::api::model::{Account, AccountId, Profile, AccountIdLight};
 use crate::server::database::sqlite::HistorySelectJson;

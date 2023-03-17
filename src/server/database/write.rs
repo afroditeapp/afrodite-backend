@@ -1,20 +1,19 @@
 use error_stack::Result;
 use serde::Serialize;
-use sqlx::Sqlite;
+
 
 use crate::{
     api::model::{
         Account,
-        ApiKey, AccountId, AccountState, Profile, AccountSetup, AccountIdLight,
+        ApiKey, Profile, AccountSetup, AccountIdLight,
     },
     server::database::{
-        file::utils::GitUserDirPath, sqlite::SqliteWriteHandle, DatabaseError,
-        GitDatabaseOperationHandle,
+        sqlite::SqliteWriteHandle, DatabaseError,
     },
     utils::ErrorConversion, config::Config,
 };
 
-use super::{file::{write::GitDatabaseWriteCommands, file::GitJsonFile}, current::{write::SqliteWriteCommands}, utils::{GetReadWriteCmd}, sqlite::{SqliteUpdateJson, HistoryUpdateJson}, history::write::HistoryWriteCommands};
+use super::{current::{write::SqliteWriteCommands}, utils::{GetReadWriteCmd}, sqlite::{SqliteUpdateJson, HistoryUpdateJson}, history::write::HistoryWriteCommands};
 
 #[derive(Debug, Clone)]
 pub enum WriteCmd {
@@ -82,7 +81,7 @@ impl WriteCommands {
         Ok(())
     }
 
-    pub async fn update_current_api_key(&mut self, key: &ApiKey) -> Result<(), DatabaseError> {
+    pub async fn update_current_api_key(&mut self, _key: &ApiKey) -> Result<(), DatabaseError> {
         todo!("add to api key to database")
     }
 

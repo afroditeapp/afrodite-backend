@@ -12,21 +12,16 @@ use std::collections::HashMap;
 
 use tokio::sync::{Mutex, RwLock};
 use utoipa::{
-    openapi::{
-        self,
-        security::{ApiKeyValue, SecurityScheme},
-    },
     Modify, OpenApi,
 };
 
 use crate::{server::{
     database::{ write::WriteCommands, RouterDatabaseHandle, current::read::SqliteReadCommands},
-    internal::{},
     session::{SessionManager, AccountStateInRam},
 }, client::{account::AccountInternalApi, media::MediaInternalApi}, config::Config};
 
 use self::model::{
-    ApiKey, AccountId, AccountIdLight,
+    ApiKey, AccountIdLight,
 };
 
 use utils::SecurityApiTokenDefault;

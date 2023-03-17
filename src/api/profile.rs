@@ -1,26 +1,22 @@
 pub mod data;
 
-use axum::{extract::Path, middleware::Next, response::Response, Json, TypedHeader};
-use headers::{Header, HeaderValue};
-use hyper::{header, Request, StatusCode};
-use tokio::sync::Mutex;
-use utoipa::{
-    openapi::security::{ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
-};
+use axum::{extract::Path, Json, TypedHeader};
 
-use crate::server::session::AccountStateInRam;
+use hyper::{StatusCode};
+
+
+
+
 
 use self::data::Profile;
 
 use super::{model::{
-    Account,
-    ApiKey, AccountId, AccountIdLight
+    AccountIdLight
 }, get_account_id};
 
 use tracing::error;
 
-use super::{db_write, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase, WriteDatabase, utils::ApiKeyHeader};
+use super::{db_write, GetApiKeys, ReadDatabase, WriteDatabase, utils::ApiKeyHeader};
 
 // TODO: Add timeout for database commands
 
@@ -68,8 +64,8 @@ pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile/default/:account_id";
     security(("api_key" = [])),
 )]
 pub async fn get_default_profile<S: ReadDatabase>(
-    Path(account_id): Path<AccountIdLight>,
-    state: S,
+    Path(_account_id): Path<AccountIdLight>,
+    _state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     let default = Profile::default();
     Ok(default.into())

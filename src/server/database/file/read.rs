@@ -3,12 +3,12 @@ use serde::de::DeserializeOwned;
 
 use crate::{
     api::model::{
-        ApiKey, AccountId, Account, Profile, AccountSetup,
+        ApiKey, AccountId,
     },
     server::database::{file::file::CoreFileNoHistory, file::utils::GitUserDirPath},
 };
 
-use super::{file::{CoreFile, GetLiveVersionPath, GitJsonFile}, GitError};
+use super::{file::{CoreFile, GitJsonFile}, GitError};
 use crate::utils::IntoReportExt;
 
 /// Reading can be done async as Git library is not used.

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{Result, IntoReport};
 
 use hyper::StatusCode;
 use reqwest::{Client, Url};

@@ -2,21 +2,19 @@ pub mod args;
 pub mod file;
 
 use std::{
-    collections::HashSet,
-    convert::{TryFrom, TryInto},
-    path::{Path, PathBuf}, sync::Arc,
+    path::{Path, PathBuf},
 };
 
-use clap::{arg, command, value_parser};
 
-use error_stack::{Report, Result, ResultExt, IntoReport};
-use serde::Deserialize;
+
+use error_stack::{Result, ResultExt, IntoReport};
+
 
 use crate::{utils::IntoReportExt, client::{account::AccountInternalApiUrls, media::MediaInternalApiUrls}};
 
 use self::{
-    args::{ArgsConfig, ServerComponent, TestMode},
-    file::{Components, ConfigFile, ConfigFileError, SocketConfig, ExternalServices},
+    args::{TestMode},
+    file::{Components, ConfigFile, SocketConfig, ExternalServices},
 };
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;

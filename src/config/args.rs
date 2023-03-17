@@ -8,7 +8,7 @@ use reqwest::Url;
 
 use crate::client::PublicApiUrls;
 
-use super::ClientApiUrls;
+
 
 // Config given as command line arguments
 pub struct ArgsConfig {
@@ -150,8 +150,8 @@ impl clap::builder::TypedValueParser for TestNameParser {
 
     fn parse_ref(
             &self,
-            cmd: &clap::Command,
-            arg: Option<&clap::Arg>,
+            _cmd: &clap::Command,
+            _arg: Option<&clap::Arg>,
             value: &std::ffi::OsStr,
         ) -> Result<Self::Value, clap::Error> {
             value
