@@ -6,7 +6,7 @@ use hyper::StatusCode;
 
 use crate::api::utils::ApiKeyHeader;
 
-use super::{data::AccountIdLight, GetApiKeys};
+use super::{data::{AccountIdInternal, AccountIdLight}, GetApiKeys};
 
 pub const PATH_CHECK_API_KEY: &str = "/internal/check_api_key";
 

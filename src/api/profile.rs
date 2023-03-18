@@ -6,11 +6,11 @@ use hyper::StatusCode;
 
 use self::data::Profile;
 
-use super::{get_account_id, model::AccountIdLight};
+use super::{model::AccountIdLight, utils::{get_account, get_account_from_api_key}, GetUsers};
 
 use tracing::error;
 
-use super::{db_write, utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
+use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 // TODO: Add timeout for database commands
 
@@ -26,11 +26,14 @@ pub const PATH_GET_PROFILE: &str = "/profile/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_profile<S: ReadDatabase>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn get_profile<S: ReadDatabase + GetUsers>(
+    Path(id): Path<AccountIdLight>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: Validate user id
+
+    let account_id = get_account(&state, id, |account| account.id()).await?;
+
     state
         .read_database()
         .read_json::<Profile>(account_id)
@@ -80,11 +83,10 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase>(
     Json(profile): Json<Profile>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let id = get_account_id!(state, api_key.key())?;
+    let account_id = get_account_from_api_key(&state, api_key.key(), |account| account.id()).await?;
 
-    db_write!(state, id)?
-        .await
-        .update_json(&profile)
+    state.write_database()
+        .update_json(account_id, &profile)
         .await
         .map_err(|e| {
             error!("Post profile error: {e:?}");

@@ -1,19 +1,19 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::{Mutex, RwLock};
 
 use crate::api::{
     account::data::{AccountId, ApiKey},
-    model::AccountIdLight,
+    model::{AccountIdInternal, AccountIdLight, AccountState},
 };
 
 use super::database::{write::WriteCommands, RouterDatabaseHandle};
 
 pub struct SessionManager {
     /// Accounts which are logged in.
-    pub api_keys: RwLock<HashMap<ApiKey, AccountStateInRam>>,
+    pub api_keys: RwLock<HashMap<ApiKey, Arc<AccountStateInRam>>>,
     /// All accounts registered in the service.
-    pub accounts: RwLock<HashMap<AccountIdLight, Mutex<WriteCommands>>>,
+    pub accounts: RwLock<HashMap<AccountIdLight, Arc<AccountStateInRam>>>,
     pub database: RouterDatabaseHandle,
 }
 
@@ -24,28 +24,27 @@ impl SessionManager {
         let mut accounts = HashMap::new();
         database_handle
             .read()
-            .account_ids(|user_id| {
-                let write_commands = database_handle.user_write_commands(user_id);
-                accounts.insert(user_id, Mutex::new(write_commands));
+            .account_ids(|id| {
+                let state = AccountStateInRam {
+                    id
+                };
+                accounts.insert(id.as_light(), Arc::new(state));
             })
             .await
-            .expect("User ID reading failed.");
+            .expect("Account ID reading failed.");
 
         let mut api_keys = HashMap::new();
-        for id in accounts.keys() {
-            let id = &id.to_full();
+        for state in accounts.values() {
             let key = database_handle
                 .read()
-                .user_api_key(id)
+                .user_api_key(state.id)
                 .await
                 .expect("API key reading failed.");
 
             if let Some(key) = key {
                 api_keys.insert(
                     key,
-                    AccountStateInRam {
-                        user_id: id.clone(),
-                    },
+                    state.clone(),
                 );
             }
         }
@@ -59,19 +58,19 @@ impl SessionManager {
 }
 
 pub struct AccountStateInRam {
-    user_id: AccountId,
+    id: AccountIdInternal,
 }
 
 impl AccountStateInRam {
-    pub fn new(user_id: AccountId) -> Self {
-        Self { user_id }
+    pub fn new(id: AccountIdInternal) -> Self {
+        Self { id }
     }
 
-    pub fn id(&self) -> &AccountId {
-        &self.user_id
+    pub fn id(&self) -> AccountIdInternal {
+        self.id
     }
 
     pub fn id_light(&self) -> AccountIdLight {
-        self.user_id.as_light()
+        self.id.as_light()
     }
 }

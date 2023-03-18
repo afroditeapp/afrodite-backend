@@ -64,6 +64,33 @@ impl<'de> Deserialize<'de> for AccountId {
     }
 }
 
+/// Used with database
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, Copy)]
+pub struct AccountIdInternal {
+    pub account_id: uuid::Uuid,
+    pub account_row_id: i64,
+}
+
+impl AccountIdInternal {
+    pub fn as_uuid(&self) -> uuid::Uuid {
+        self.account_id
+    }
+
+    pub fn row_id(&self) -> i64 {
+        self.account_row_id
+    }
+
+    pub fn as_light(&self) -> AccountIdLight {
+        AccountIdLight { account_id: self.account_id }
+    }
+}
+
+impl From<AccountIdInternal> for uuid::Uuid {
+    fn from(value: AccountIdInternal) -> Self {
+        value.account_id
+    }
+}
+
 /// AccoutId which is internally Uuid object.
 /// Consumes less memory.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams, Copy)]
@@ -81,6 +108,10 @@ impl AccountIdLight {
 
     pub fn as_uuid(&self) -> uuid::Uuid {
         self.account_id
+    }
+
+    pub fn to_string(&self) -> String {
+        self.account_id.hyphenated().to_string()
     }
 }
 

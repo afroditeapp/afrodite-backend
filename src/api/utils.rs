@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
@@ -7,7 +9,9 @@ use utoipa::{
     Modify,
 };
 
-use super::{model::ApiKey, GetConfig, GetCoreServerInternalApi};
+use crate::server::session::AccountStateInRam;
+
+use super::{model::{ApiKey, AccountIdInternal, AccountIdLight}, GetConfig, GetCoreServerInternalApi, GetUsers};
 
 use super::GetApiKeys;
 
@@ -93,4 +97,34 @@ impl Modify for SecurityApiTokenDefault {
             )
         }
     }
+}
+
+
+
+pub async fn get_account<S: GetUsers, T>(
+    state: &S,
+    id: AccountIdLight,
+    fun: impl Fn(&Arc<AccountStateInRam>) -> T
+) -> Result<T, StatusCode> {
+    state
+        .users()
+        .read()
+        .await
+        .get(&id)
+        .ok_or(StatusCode::UNAUTHORIZED)
+        .map(fun)
+}
+
+pub async fn get_account_from_api_key<S: GetApiKeys, T>(
+    state: &S,
+    id: &ApiKey,
+    fun: impl Fn(&Arc<AccountStateInRam>) -> T
+) -> Result<T, StatusCode> {
+    state
+        .api_keys()
+        .read()
+        .await
+        .get(&id)
+        .ok_or(StatusCode::UNAUTHORIZED)
+        .map(fun)
 }

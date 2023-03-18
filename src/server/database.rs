@@ -13,7 +13,7 @@ use std::{
 
 use error_stack::{Result, ResultExt};
 
-use crate::api::model::{AccountId, AccountIdLight};
+use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config};
 
 use self::{
     current::read::SqliteReadCommands,
@@ -23,7 +23,7 @@ use self::{
         DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
         SqliteWriteCloseHandle, SqliteWriteHandle,
     },
-    write::WriteCommands,
+    write::WriteCommands, read::ReadCommands,
 };
 use crate::utils::IntoReportExt;
 
@@ -98,7 +98,7 @@ impl DatabaseRoot {
     }
 }
 
-/// Handle Git and SQLite databases
+/// Handle SQLite databases
 pub struct DatabaseManager {
     sqlite_write_close: SqliteWriteCloseHandle,
     sqlite_read_close: SqliteReadCloseHandle,
@@ -124,12 +124,12 @@ impl DatabaseManager {
                 .change_context(DatabaseError::Init)?;
 
         let (history_write, history_write_close) =
-            SqliteWriteHandle::new(root.current(), DatabaseType::History)
+            SqliteWriteHandle::new(root.history(), DatabaseType::History)
                 .await
                 .change_context(DatabaseError::Init)?;
 
         let (history_read, history_read_close) =
-            SqliteReadHandle::new(root.current(), DatabaseType::History)
+            SqliteReadHandle::new(root.history(), DatabaseType::History)
                 .await
                 .change_context(DatabaseError::Init)?;
 
@@ -168,12 +168,24 @@ pub struct RouterDatabaseHandle {
 }
 
 impl RouterDatabaseHandle {
-    pub fn user_write_commands(&self, id: AccountIdLight) -> WriteCommands {
-        WriteCommands::new(id, self.sqlite_write.clone(), self.history_write.clone())
+    pub fn user_write_commands(&self) -> WriteCommands {
+        WriteCommands::new(&self.sqlite_write, &self.history_write)
     }
 
-    pub fn read(&self) -> SqliteReadCommands<'_> {
-        SqliteReadCommands::new(&self.sqlite_read)
+    pub async fn register(
+        &self,
+        id_light: AccountIdLight,
+        config: &Config,
+    ) -> Result<AccountIdInternal, DatabaseError> {
+        WriteCommands::register(
+            id_light,
+            config,
+            self.sqlite_write.clone(),
+        ).await
+    }
+
+    pub fn read(&self) -> ReadCommands<'_> {
+        ReadCommands::new(&self.sqlite_read)
     }
 
     pub fn history(&self) -> HistoryReadCommands<'_> {

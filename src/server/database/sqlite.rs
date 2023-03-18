@@ -1,4 +1,4 @@
-use crate::api::model::AccountIdLight;
+use crate::api::model::AccountIdInternal;
 
 use super::history::read::HistoryReadCommands;
 
@@ -36,6 +36,9 @@ pub enum SqliteDatabaseError {
     SerdeDeserialize,
     #[error("Serialization error")]
     SerdeSerialize,
+
+    #[error("Time parsing error")]
+    TimeParsing,
 }
 
 /// Path to directory which contains Sqlite files.
@@ -85,6 +88,7 @@ impl SqliteWriteHandle {
                 SqliteConnectOptions::new()
                     .filename(db_path)
                     .create_if_missing(true)
+                    .foreign_keys(true)
                     .journal_mode(sqlite::SqliteJournalMode::Wal),
             )
             .await
@@ -138,6 +142,7 @@ impl SqliteReadHandle {
                 SqliteConnectOptions::new()
                     .filename(db_path)
                     .create_if_missing(false)
+                    .foreign_keys(true)
                     .journal_mode(sqlite::SqliteJournalMode::Wal),
             )
             .await
@@ -174,7 +179,7 @@ impl DatabaseType {
 pub trait SqliteUpdateJson {
     async fn update_json(
         &self,
-        id: AccountIdLight,
+        id: AccountIdInternal,
         write: &SqliteWriteCommands,
     ) -> Result<(), SqliteDatabaseError>;
 }
@@ -182,7 +187,7 @@ pub trait SqliteUpdateJson {
 #[async_trait]
 pub trait SqliteSelectJson: Sized {
     async fn select_json(
-        id: AccountIdLight,
+        id: AccountIdInternal,
         read: &SqliteReadCommands,
     ) -> Result<Self, SqliteDatabaseError>;
 }
@@ -191,7 +196,7 @@ pub trait SqliteSelectJson: Sized {
 pub trait HistoryUpdateJson {
     async fn history_update_json(
         &self,
-        id: AccountIdLight,
+        id: AccountIdInternal,
         write: &HistoryWriteCommands,
     ) -> Result<(), SqliteDatabaseError>;
 }
@@ -199,7 +204,7 @@ pub trait HistoryUpdateJson {
 #[async_trait]
 pub trait HistorySelectJson: Sized {
     async fn history_select_json(
-        id: AccountIdLight,
+        id: AccountIdInternal,
         read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError>;
 }

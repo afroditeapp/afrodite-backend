@@ -6,7 +6,7 @@ use error_stack::Result;
 
 use crate::{
     api::{
-        model::{AccountId, ApiKey, Profile},
+        model::{AccountId, ApiKey, Profile, AccountIdLight},
         profile::{PATH_GET_DEFAULT_PROFILE, PATH_GET_PROFILE, PATH_POST_PROFILE},
         utils::ApiKeyHeader,
     },
@@ -59,10 +59,10 @@ impl<'a> ProfileApi<'a> {
     pub async fn get_profile(
         &self,
         api_key: ApiKey,
-        profile_account_id: AccountId,
+        profile_account_id: AccountIdLight,
     ) -> Result<Profile, HttpRequestError> {
         let url = get_api_url(&self.urls.get_profile)?
-            .join(profile_account_id.as_str())
+            .join(&profile_account_id.to_string())
             .into_error_with_info(
                 HttpRequestError::ApiUrlJoinError,
                 ProfileApiRequest::GetProfile,
@@ -96,10 +96,10 @@ impl<'a> ProfileApi<'a> {
     pub async fn get_default_profile(
         &self,
         api_key: ApiKey,
-        profile_account_id: AccountId,
+        profile_account_id: AccountIdLight,
     ) -> Result<Profile, HttpRequestError> {
         let url = get_api_url(&self.urls.get_default_profile)?
-            .join(profile_account_id.as_str())
+            .join(&profile_account_id.to_string())
             .into_error_with_info(
                 HttpRequestError::ApiUrlJoinError,
                 ProfileApiRequest::GetProfile,

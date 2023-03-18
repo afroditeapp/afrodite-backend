@@ -1,36 +1,69 @@
--- Add migration script here
 
-CREATE TABLE IF NOT EXISTS Account(
-    account_id TEXT PRIMARY KEY NOT NULL
+-- Tables used with current and history data
+
+CREATE TABLE IF NOT EXISTS AccountId(
+    account_row_id  INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id      BLOB    NOT NULL    UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS AccountState(
-    json_text      TEXT     NOT NULL DEFAULT '',
-    account_id  TEXT PRIMARY KEY NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES Account (account_id)
+-- Tables for current data
+
+CREATE TABLE IF NOT EXISTS ApiKey(
+    account_row_id  INTEGER PRIMARY KEY,
+    api_key         TEXT                UNIQUE,  -- Can be null
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Account(
+    account_row_id  INTEGER PRIMARY KEY,
+    json_text       TEXT    NOT NULL    DEFAULT '',
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS AccountSetup(
-    json_text   TEXT     NOT NULL DEFAULT '',
-    account_id  TEXT PRIMARY KEY NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES Account (account_id)
+    account_row_id  INTEGER PRIMARY KEY,
+    json_text       TEXT    NOT NULL    DEFAULT '',
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 
-
--- ApiKeys do net need SQLite storage as those are
--- loaded from git directory at startup.
-
 CREATE TABLE IF NOT EXISTS Profile(
-    json_text  TEXT     NOT NULL DEFAULT '',
-    account_id    TEXT PRIMARY KEY NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES Account (account_id)
+    account_row_id  INTEGER PRIMARY KEY,
+    json_text       TEXT    NOT NULL    DEFAULT '',
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Tables for history
+
+CREATE TABLE IF NOT EXISTS HistoryAccount(
+    row_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_row_id  INTEGER NOT NULL,
+    unix_time       INTEGER NOT NULL,
+    json_text       TEXT    NOT NULL,
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS HistoryProfile(
+    row_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_row_id  INTEGER NOT NULL,
+    unix_time       INTEGER NOT NULL,
+    json_text       TEXT    NOT NULL,
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

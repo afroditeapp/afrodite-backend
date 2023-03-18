@@ -2,7 +2,7 @@ use error_stack::{Context, IntoReport, Report, Result, ResultExt};
 use tokio::sync::oneshot;
 
 use crate::{
-    api::model::AccountIdLight,
+    api::model::AccountIdInternal,
     server::database::{
         file::GitError, sqlite::SqliteDatabaseError, utils::GetReadWriteCmd, DatabaseError,
     },
@@ -110,7 +110,7 @@ pub trait ErrorConversion: ResultExt + Sized {
     #[track_caller]
     fn with_write_cmd_info<T: GetReadWriteCmd>(
         self,
-        id: AccountIdLight,
+        id: AccountIdInternal,
     ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info_lazy(Self::ERROR, || T::write_cmd(id))
     }
@@ -118,7 +118,7 @@ pub trait ErrorConversion: ResultExt + Sized {
     #[track_caller]
     fn with_read_cmd_info<T: GetReadWriteCmd>(
         self,
-        id: AccountIdLight,
+        id: AccountIdInternal,
     ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info_lazy(Self::ERROR, || T::read_cmd(id))
     }

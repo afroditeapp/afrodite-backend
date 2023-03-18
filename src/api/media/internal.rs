@@ -7,7 +7,7 @@ use axum::{
 use headers::{ContentLength, ContentType};
 use hyper::StatusCode;
 
-use crate::api::model::AccountIdLight;
+use crate::api::model::AccountIdInternal;
 
 use super::super::account::data::AccountId;
 
@@ -26,7 +26,7 @@ pub const PATH_POST_IMAGE: &str = "/internal/image/:user_id/:image_name";
     ),
 )]
 pub async fn post_image<S>(
-    Path(_id): Path<AccountIdLight>,
+    Path(_id): Path<AccountIdInternal>,
     Path(_image_file): Path<ImageFileName>,
     TypedHeader(_content_type): TypedHeader<ContentType>,
     TypedHeader(_content_lenght): TypedHeader<ContentLength>,

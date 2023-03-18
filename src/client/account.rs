@@ -7,7 +7,7 @@ use error_stack::Result;
 use crate::{
     api::{
         account::{internal::PATH_CHECK_API_KEY, PATH_LOGIN, PATH_REGISTER},
-        model::{AccountId, AccountIdLight, ApiKey},
+        model::{AccountId, AccountIdInternal, ApiKey, AccountIdLight},
         utils::ApiKeyHeader,
     },
     utils::IntoReportExt,
@@ -54,7 +54,7 @@ impl<'a> AccountInternalApi<'a> {
     pub async fn check_api_key(
         &self,
         api_key: ApiKey,
-    ) -> Result<Option<AccountIdLight>, HttpRequestError> {
+    ) -> Result<Option<AccountIdInternal>, HttpRequestError> {
         let url = get_api_url(&self.urls.check_api_key_url)?;
 
         let request = self
@@ -70,7 +70,7 @@ impl<'a> AccountInternalApi<'a> {
         )?;
 
         if response.status() == StatusCode::OK {
-            let id: AccountIdLight = response.json().await.into_error_with_info(
+            let id: AccountIdInternal = response.json().await.into_error_with_info(
                 HttpRequestError::SerdeDeserialize,
                 AccountInternalApiRequest::CheckApiKey,
             )?;
@@ -143,10 +143,10 @@ impl<'a> AccountApi<'a> {
         }
     }
 
-    pub async fn login(&self, id: &AccountId) -> Result<ApiKey, HttpRequestError> {
+    pub async fn login(&self, id: AccountIdLight) -> Result<ApiKey, HttpRequestError> {
         let url = get_api_url(&self.urls.login_url)?;
 
-        let request = self.client.post(url).json(&id.as_light()).build().unwrap();
+        let request = self.client.post(url).json(&id).build().unwrap();
 
         let response = self
             .client

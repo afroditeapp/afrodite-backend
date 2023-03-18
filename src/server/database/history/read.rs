@@ -1,14 +1,16 @@
 use async_trait::async_trait;
 use error_stack::Result;
+use time::OffsetDateTime;
 use tokio_stream::{Stream, StreamExt};
 
 use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
+use super::HistoryData;
 use crate::api::account::data::AccountSetup;
-use crate::api::model::{Account, AccountId, AccountIdLight, Profile};
+use crate::api::model::{Account, AccountId, AccountIdInternal, Profile, AccountState};
 use crate::server::database::sqlite::HistorySelectJson;
 use crate::utils::IntoReportExt;
 
-macro_rules! read_json {
+macro_rules! read_history {
     ($self:expr, $id:expr, $sql:literal, $str_field:ident) => {{
         let id = $id.as_uuid();
         sqlx::query!($sql, id)
@@ -31,74 +33,44 @@ impl<'a> HistoryReadCommands<'a> {
         Self { handle }
     }
 
-    pub fn account_ids(&self) -> impl Stream<Item = Result<AccountId, SqliteDatabaseError>> + '_ {
-        sqlx::query!(
+    pub async fn account_state_stream(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> impl Stream<Item = Result<HistoryData<AccountState>, SqliteDatabaseError>> + '_ {
+
+        #[derive(sqlx::FromRow)]
+        struct HistoryAccount {
+            row_id: i64,
+            unix_time: i64,
+            json_text: String,
+        }
+
+        sqlx::query_as::<_, HistoryAccount>(
             r#"
-            SELECT account_id
-            FROM Account
-            "#,
+            SELECT row_id, unix_time, json_text
+            FROM HistoryAccount
+            WHERE account_row_id = ?
+            "#
         )
+        .bind(account_id.row_id())
         .fetch(self.handle.pool())
-        .map(|result| {
-            let result = result.into_error(SqliteDatabaseError::Fetch)?;
-            AccountId::parse(result.account_id).into_error(SqliteDatabaseError::Fetch)
+        .map(move |result| {
+            result
+                .into_error(SqliteDatabaseError::Fetch)
+                .and_then(|data| {
+                    let value = serde_json::from_str(&data.json_text)
+                        .into_error(SqliteDatabaseError::SerdeDeserialize)?;
+                    let unix_time = OffsetDateTime::from_unix_timestamp(data.unix_time)
+                        .into_error(SqliteDatabaseError::TimeParsing)?;
+                    Ok(
+                        HistoryData {
+                            row_id: data.row_id,
+                            account_id: account_id.as_light(),
+                            unix_time,
+                            data: value,
+                        }
+                    )
+                })
         })
-    }
-}
-
-#[async_trait]
-impl HistorySelectJson for Account {
-    async fn history_select_json(
-        id: AccountIdLight,
-        read: &HistoryReadCommands,
-    ) -> Result<Self, SqliteDatabaseError> {
-        read_json!(
-            read,
-            id,
-            r#"
-            SELECT json_text
-            FROM AccountState
-            WHERE account_id = ?
-            "#,
-            json_text
-        )
-    }
-}
-
-#[async_trait]
-impl HistorySelectJson for AccountSetup {
-    async fn history_select_json(
-        id: AccountIdLight,
-        read: &HistoryReadCommands,
-    ) -> Result<Self, SqliteDatabaseError> {
-        read_json!(
-            read,
-            id,
-            r#"
-            SELECT json_text
-            FROM AccountSetup
-            WHERE account_id = ?
-            "#,
-            json_text
-        )
-    }
-}
-
-#[async_trait]
-impl HistorySelectJson for Profile {
-    async fn history_select_json(
-        id: AccountIdLight,
-        read: &HistoryReadCommands,
-    ) -> Result<Self, SqliteDatabaseError> {
-        read_json!(
-            read,
-            id,
-            r#"
-            SELECT json_text
-            FROM Profile
-            WHERE account_id = ?
-            "#,
-            json_text
-        )
     }
 }

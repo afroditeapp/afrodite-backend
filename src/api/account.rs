@@ -1,21 +1,22 @@
 pub mod data;
 pub mod internal;
 
+use std::sync::Arc;
+
 use axum::{Json, TypedHeader};
 
 use hyper::StatusCode;
-use tokio::sync::Mutex;
 
 use crate::server::session::AccountStateInRam;
 
 use self::data::{Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey};
 
-use super::{get_account_id, GetConfig};
+use super::{GetConfig, utils::{get_account, get_account_from_api_key}};
 
 use tracing::error;
 
 use super::{
-    db_write, utils::ApiKeyHeader, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase,
+    utils::ApiKeyHeader, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase,
     WriteDatabase,
 };
 
@@ -39,14 +40,17 @@ pub async fn register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
     // to avoid database collisions.
     let id = AccountId::generate_new();
 
-    let mut write_commands = state.database().user_write_commands(id.as_light());
-    match write_commands.register(id.as_light(), state.config()).await {
-        Ok(()) => {
+    let register = state
+        .database()
+        .register(id.as_light(), state.config());
+    match register.await {
+        Ok(internal_id) => {
+            let account_state = AccountStateInRam::new(internal_id);
             state
                 .users()
                 .write()
                 .await
-                .insert(id.as_light(), Mutex::new(write_commands));
+                .insert(id.as_light(), Arc::new(account_state));
             Ok(id.as_light().into())
         }
         Err(e) => {
@@ -68,27 +72,27 @@ pub const PATH_LOGIN: &str = "/login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn login<S: GetApiKeys + WriteDatabase>(
+pub async fn login<S: GetApiKeys + WriteDatabase + GetUsers>(
     Json(id): Json<AccountIdLight>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
     let key = ApiKey::generate_new();
+    let account_state = get_account(&state, id, |account| account.clone()).await?;
 
-    db_write!(state, &id)?
-        .await
-        .update_current_api_key(&key)
+    state
+        .write_database()
+        .update_api_key(account_state.id(), Some(&key))
         .await
         .map_err(|e| {
             error!("Login error: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
         })?;
 
-    let user_state = AccountStateInRam::new(id.to_full());
     state
         .api_keys()
         .write()
         .await
-        .insert(key.clone(), user_state);
+        .insert(key.clone(), account_state);
 
     Ok(key.into())
 }
@@ -108,7 +112,7 @@ pub async fn account_state<S: GetApiKeys + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
-    let id = get_account_id!(state, api_key.key())?;
+    let id = get_account_from_api_key(&state, api_key.key(), |a| a.id()).await?;
 
     state
         .read_database()
@@ -140,7 +144,7 @@ pub async fn account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     Json(data): Json<AccountSetup>,
     state: S,
 ) -> Result<StatusCode, StatusCode> {
-    let id = get_account_id!(state, api_key.key())?;
+    let id = get_account_from_api_key(&state, api_key.key(), |a| a.id()).await?;
 
     let account = state
         .read_database()
@@ -152,9 +156,8 @@ pub async fn account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
         })?;
 
     if account.state() == AccountState::InitialSetup {
-        db_write!(state, &id)?
-            .await
-            .update_json(&data)
+        state.write_database()
+            .update_json(id, &data)
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");

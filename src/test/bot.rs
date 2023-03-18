@@ -18,7 +18,7 @@ use error_stack::Result;
 use tracing::{error, log::warn};
 
 use crate::{
-    api::model::{AccountId, ApiKey, Profile},
+    api::model::{AccountId, ApiKey, Profile, AccountIdLight},
     client::{ApiClient, HttpRequestError, PublicApiUrls},
     config::args::{Test, TestMode},
 };
@@ -27,7 +27,7 @@ static COUNTERS: Counters = Counters::new();
 
 pub struct Bot {
     bot_id: u32,
-    id: Option<AccountId>,
+    id: Option<AccountIdLight>,
     config: Arc<TestMode>,
     api: ApiClient,
     _bot_running_handle: mpsc::Sender<()>,
@@ -38,7 +38,7 @@ impl Bot {
         bot_id: u32,
         urls: Arc<PublicApiUrls>,
         config: Arc<TestMode>,
-        id: impl Into<Option<AccountId>>,
+        id: impl Into<Option<AccountIdLight>>,
         bot_quit_receiver: watch::Receiver<()>,
         _bot_running_handle: mpsc::Sender<()>,
     ) {
@@ -75,17 +75,17 @@ impl Bot {
         let id = if let Some(id) = self.id.as_ref() {
             id.clone()
         } else {
-            self.api.account().register().await?.to_full()
+            self.api.account().register().await?
         };
 
-        let key = self.api.account().login(&id).await?;
+        let key = self.api.account().login(id).await?;
 
         let mut update_profile_timer = Timer::new(Duration::from_millis(1000));
         let mut print_info_timer = Timer::new(Duration::from_millis(1000));
 
         loop {
             self.run_normal_test(
-                &id,
+                id,
                 &key,
                 &mut update_profile_timer,
                 self.config.print_speed && print_info_timer.passed() && self.bot_id == 1,
@@ -102,7 +102,7 @@ impl Bot {
 
     async fn run_normal_test(
         &self,
-        id: &AccountId,
+        id: AccountIdLight,
         key: &ApiKey,
         update_profile_timer: &mut Timer,
         print_info: bool,
@@ -131,13 +131,13 @@ impl Bot {
             Test::Normal => {
                 self.api
                     .profile()
-                    .get_profile(key.clone(), id.clone())
+                    .get_profile(key.clone(), id)
                     .await?
             }
             Test::Default => {
                 self.api
                     .profile()
-                    .get_default_profile(key.clone(), id.clone())
+                    .get_default_profile(key.clone(), id)
                     .await?
             }
         };

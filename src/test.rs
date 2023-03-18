@@ -11,7 +11,7 @@ use tokio::{
 use tracing::{error, info};
 
 use crate::{
-    api::model::AccountId,
+    api::model::{AccountId, AccountIdLight},
     config::{args::TestMode, Config},
     server::database::DB_HISTORY_DIR_NAME,
     test::bot::Bot,
@@ -57,7 +57,7 @@ impl TestRunner {
                             bot_number,
                             api_urls.clone(),
                             self.test_config.clone(),
-                            id,
+                            id.as_light(),
                             bot_quit_receiver.clone(),
                             bot_running_handle.clone(),
                         );

@@ -2,7 +2,7 @@ use error_stack::Result;
 use serde::Serialize;
 
 use crate::{
-    api::model::{Account, AccountIdLight, AccountSetup, ApiKey, Profile},
+    api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight},
     config::Config,
     server::database::{sqlite::SqliteWriteHandle, DatabaseError},
     utils::ErrorConversion,
@@ -18,10 +18,10 @@ use super::{
 #[derive(Debug, Clone)]
 pub enum WriteCmd {
     AccountId(AccountIdLight),
-    Profile(AccountIdLight),
-    ApiKey(AccountIdLight),
-    AccountState(AccountIdLight),
-    AccountSetup(AccountIdLight),
+    Profile(AccountIdInternal),
+    ApiKey(AccountIdInternal),
+    AccountState(AccountIdInternal),
+    AccountSetup(AccountIdInternal),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -30,63 +30,70 @@ impl std::fmt::Display for WriteCmd {
     }
 }
 
-pub struct WriteCommands {
-    sqlite_database_write: SqliteWriteHandle,
-    history_write: SqliteWriteHandle,
-    id: AccountIdLight,
+pub struct WriteCommands<'a> {
+    sqlite_database_write: &'a SqliteWriteHandle,
+    history_write: &'a SqliteWriteHandle,
 }
 
-impl WriteCommands {
+impl <'a> WriteCommands<'a> {
     pub fn new(
-        id: AccountIdLight,
-        sqlite_database_write: SqliteWriteHandle,
-        history_write: SqliteWriteHandle,
+        sqlite_database_write: &'a SqliteWriteHandle,
+        history_write: &'a SqliteWriteHandle,
     ) -> Self {
         Self {
-            id,
             sqlite_database_write,
             history_write,
         }
     }
 
     pub async fn register(
-        &mut self,
-        id: AccountIdLight,
+        id_light: AccountIdLight,
         config: &Config,
-    ) -> Result<(), DatabaseError> {
-        let account_state = Account::default();
+        sqlite_database_write: SqliteWriteHandle,
+    ) -> Result<AccountIdInternal, DatabaseError> {
+        let current = SqliteWriteCommands::new(&sqlite_database_write);
+
+        let account = Account::default();
         let account_setup = AccountSetup::default();
         let profile = Profile::default();
 
-        self.current()
-            .store_account_id(id)
+        let id = current
+            .store_account_id(id_light)
             .await
-            .with_info_lazy(|| WriteCmd::AccountId(id))?;
+            .with_info_lazy(|| WriteCmd::AccountId(id_light))?;
+
+        current
+            .store_api_key(id, None)
+            .await
+            .with_info_lazy(|| WriteCmd::ApiKey(id))?;
 
         if config.components().account {
-            self.current()
-                .store_account(id, &account_state)
+            current
+                .store_account(id, &account)
                 .await
                 .with_write_cmd_info::<Account>(id)?;
 
-            self.current()
+            current
                 .store_account_setup(id, &account_setup)
                 .await
                 .with_write_cmd_info::<AccountSetup>(id)?;
         }
 
         if config.components().profile {
-            self.current()
+            current
                 .store_profile(id, &profile)
                 .await
                 .with_write_cmd_info::<Profile>(id)?;
         }
 
-        Ok(())
+        Ok(id)
     }
 
-    pub async fn update_current_api_key(&mut self, _key: &ApiKey) -> Result<(), DatabaseError> {
-        todo!("add to api key to database")
+    pub async fn update_api_key(&self, id: AccountIdInternal, key: Option<&ApiKey>) -> Result<(), DatabaseError> {
+        self.current()
+            .update_api_key(id, key)
+            .await
+            .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))
     }
 
     pub(super) fn current(&self) -> SqliteWriteCommands {
@@ -98,13 +105,14 @@ impl WriteCommands {
     }
 
     pub async fn update_json<
-        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + 'static,
+        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + 'static,
     >(
         &mut self,
+        id: AccountIdInternal,
         data: &T,
     ) -> Result<(), DatabaseError> {
-        data.update_json(self.id, &self.current())
+        data.update_json(id, &self.current())
             .await
-            .with_write_cmd_info::<T>(self.id)
+            .with_write_cmd_info::<T>(id)
     }
 }
