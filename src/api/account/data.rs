@@ -91,7 +91,7 @@ impl From<AccountIdInternal> for uuid::Uuid {
     }
 }
 
-/// AccoutId which is internally Uuid object.
+/// AccountId which is internally Uuid object.
 /// Consumes less memory.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams, Copy)]
 pub struct AccountIdLight {
@@ -148,53 +148,53 @@ impl ApiKey {
     }
 }
 
-/// This is just a really long random string.
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-pub struct RefreshToken {
-    token: String,
-}
+// /// This is just a really long random string.
+// #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+// pub struct RefreshToken {
+//     token: String,
+// }
 
-impl RefreshToken {
-    pub fn generate_new() -> Self {
-        let mut token = String::new();
+// impl RefreshToken {
+//     pub fn generate_new() -> Self {
+//         let mut token = String::new();
 
-        for _ in 1..=124 {
-            token.push_str(uuid::Uuid::new_v4().simple().to_string().as_str())
-        }
+//         for _ in 1..=124 {
+//             token.push_str(uuid::Uuid::new_v4().simple().to_string().as_str())
+//         }
 
-        Self {
-            token
-        }
-    }
+//         Self {
+//             token
+//         }
+//     }
 
-    pub fn from_string(token: String) -> Self {
-        Self { token }
-    }
+//     pub fn from_string(token: String) -> Self {
+//         Self { token }
+//     }
 
-    pub fn into_string(self) -> String {
-        self.token
-    }
+//     pub fn into_string(self) -> String {
+//         self.token
+//     }
 
-    pub fn as_str(&self) -> &str {
-        &self.token
-    }
-}
+//     pub fn as_str(&self) -> &str {
+//         &self.token
+//     }
+// }
 
-/// ApiKey and RefreshToken
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-pub struct AuthPair {
-    refresh: RefreshToken,
-    key: ApiKey,
-}
+// /// ApiKey and RefreshToken
+// #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+// pub struct AuthPair {
+//     refresh: RefreshToken,
+//     key: ApiKey,
+// }
 
-impl AuthPair {
-    pub fn new(refresh: RefreshToken, key: ApiKey) -> Self {
-        Self {
-            refresh,
-            key,
-        }
-    }
-}
+// impl AuthPair {
+//     pub fn new(refresh: RefreshToken, key: ApiKey) -> Self {
+//         Self {
+//             refresh,
+//             key,
+//         }
+//     }
+// }
 
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]

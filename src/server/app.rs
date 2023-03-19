@@ -119,14 +119,14 @@ impl App {
                 api::account::PATH_REGISTER,
                 post({
                     let state = self.state.clone();
-                    move || api::account::register(state)
+                    move || api::account::post_register(state)
                 }),
             )
             .route(
                 api::account::PATH_LOGIN,
                 post({
                     let state = self.state.clone();
-                    move |body| api::account::login(body, state)
+                    move |body| api::account::post_login(body, state)
                 }),
             );
 
@@ -135,14 +135,14 @@ impl App {
                 api::account::PATH_ACCOUNT_STATE,
                 get({
                     let state = self.state.clone();
-                    move |body| api::account::account_state(body, state)
+                    move |body| api::account::get_account_state(body, state)
                 }),
             )
             .route(
                 api::account::PATH_ACCOUNT_SETUP,
                 get({
                     let state = self.state.clone();
-                    move |arg1, arg2| api::account::account_setup(arg1, arg2, state)
+                    move |arg1, arg2| api::account::post_account_setup(arg1, arg2, state)
                 }),
             )
             .route_layer({

@@ -35,10 +35,10 @@ pub const PATH_PREFIX: &str = "/api/v1/";
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        account::register,
-        account::login,
-        account::account_state,
-        account::account_setup,
+        account::post_register,
+        account::post_login,
+        account::post_account_setup,
+        account::get_account_state,
         account::internal::check_api_key,
         profile::get_profile,
         profile::get_default_profile,

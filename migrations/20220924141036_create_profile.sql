@@ -17,6 +17,15 @@ CREATE TABLE IF NOT EXISTS ApiKey(
             ON UPDATE CASCADE
 );
 
+-- CREATE TABLE IF NOT EXISTS RefreshToken(
+--     account_row_id  INTEGER PRIMARY KEY,
+--     refresh_token   TEXT                UNIQUE,  -- Can be null
+--     FOREIGN KEY (account_row_id)
+--         REFERENCES AccountId (account_row_id)
+--             ON DELETE CASCADE
+--             ON UPDATE CASCADE
+-- );
+
 CREATE TABLE IF NOT EXISTS Account(
     account_row_id  INTEGER PRIMARY KEY,
     json_text       TEXT    NOT NULL    DEFAULT '',

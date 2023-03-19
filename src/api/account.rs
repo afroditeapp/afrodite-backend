@@ -34,7 +34,7 @@ pub const PATH_REGISTER: &str = "/account/register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
+pub async fn post_register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
     state: S,
 ) -> Result<Json<AccountIdLight>, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
@@ -70,11 +70,11 @@ pub const PATH_LOGIN: &str = "/account/login";
     security(),
     request_body = AccountIdLight,
     responses(
-        (status = 200, description = "Login successful.", body = [AuthPair]),
+        (status = 200, description = "Login successful.", body = [ApiKey]),
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn login<S: GetApiKeys + WriteDatabase + GetUsers>(
+pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
     Json(id): Json<AccountIdLight>,
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
@@ -99,30 +99,29 @@ pub async fn login<S: GetApiKeys + WriteDatabase + GetUsers>(
     Ok(key.into())
 }
 
-pub const PATH_API_KEY: &str = "/account/api_key";
+// pub const PATH_REFRESH_API_KEY: &str = "/account/refresh_api_key";
 
-/// Get app refresh token which is used for getting new API keys.
-#[utoipa::path(
-    post,
-    path = "/account/api_key",
-    security(),
-    request_body = AccountIdLight,
-    responses(
-        (status = 200, description = "Login successful.", body = [ApiKey]),
-        (status = 500, description = "Internal server error."),
-    ),
-)]
-pub async fn api_key<S: GetApiKeys + WriteDatabase + GetUsers>(
-    Json(id): Json<AccountIdLight>,
-    state: S,
-) -> Result<Json<ApiKey>, StatusCode> {
-    let key = ApiKey::generate_new();
-    let account_state = get_account(&state, id, |account| account.clone()).await?;
+// /// Get app refresh token which is used for getting new API keys.
+// #[utoipa::path(
+//     post,
+//     path = "/account/refresh_api_key",
+//     request_body = AuthPair,
+//     responses(
+//         (status = 200, description = "Login successful.", body = [ApiKey]),
+//         (status = 401, description = "Invalid API key."),
+//         (status = 500, description = "Internal server error."),
+//     ),
+//     security(("api_key" = [])),
+// )]
+// pub async fn post_refresh_api_key<S: GetApiKeys + WriteDatabase + GetUsers>(
+//     Json(id): Json<AccountIdLight>,
+//     state: S,
+// ) -> Result<Json<ApiKey>, StatusCode> {
+//     let key = ApiKey::generate_new();
+//     let account_state = get_account(&state, id, |account| account.clone()).await?;
 
-    todo!()
-}
-
-
+//     todo!()
+// }
 
 
 pub const PATH_ACCOUNT_STATE: &str = "/account/state";
@@ -132,11 +131,12 @@ pub const PATH_ACCOUNT_STATE: &str = "/account/state";
     path = "/account/state",
     responses(
         (status = 200, description = "Request successfull.", body = [Account]),
+        (status = 401, description = "Invalid API key."),
         (status = 500, description = "Internal server error."),
     ),
     security(("api_key" = [])),
 )]
-pub async fn account_state<S: GetApiKeys + ReadDatabase>(
+pub async fn get_account_state<S: GetApiKeys + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
@@ -161,13 +161,14 @@ pub const PATH_ACCOUNT_SETUP: &str = "/account/setup";
     path = "/account/setup",
     responses(
         (status = 200, description = "Request successfull.", body = [Account]),
+        (status = 401, description = "Invalid API key."),
         (
             status = 500,
             description = "Account state is not initial setup or some other error"),
     ),
     security(("api_key" = [])),
 )]
-pub async fn account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
+pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(data): Json<AccountSetup>,
     state: S,
