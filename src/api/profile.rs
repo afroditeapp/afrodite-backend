@@ -48,6 +48,8 @@ pub async fn get_profile<S: ReadDatabase + GetUsers>(
 /// TODO: Remove this after benchmarking?
 pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile/default/:account_id";
 
+
+/// TODO: Remove this at some point
 #[utoipa::path(
     get,
     path = "/profile/default/{account_id}",

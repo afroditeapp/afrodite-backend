@@ -24,6 +24,7 @@ use super::{
 
 pub const PATH_REGISTER: &str = "/account/register";
 
+/// Register new account. Returns new account ID which is UUID.
 #[utoipa::path(
     post,
     path = "/account/register",
@@ -60,15 +61,16 @@ pub async fn register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
     }
 }
 
-pub const PATH_LOGIN: &str = "/login";
+pub const PATH_LOGIN: &str = "/account/login";
 
+/// Get new refresh token and ApiKey.
 #[utoipa::path(
     post,
-    path = "/login",
+    path = "/account/login",
     security(),
     request_body = AccountIdLight,
     responses(
-        (status = 200, description = "Login successful.", body = [ApiKey]),
+        (status = 200, description = "Login successful.", body = [AuthPair]),
         (status = 500, description = "Internal server error."),
     ),
 )]
@@ -96,6 +98,32 @@ pub async fn login<S: GetApiKeys + WriteDatabase + GetUsers>(
 
     Ok(key.into())
 }
+
+pub const PATH_API_KEY: &str = "/account/api_key";
+
+/// Get app refresh token which is used for getting new API keys.
+#[utoipa::path(
+    post,
+    path = "/account/api_key",
+    security(),
+    request_body = AccountIdLight,
+    responses(
+        (status = 200, description = "Login successful.", body = [ApiKey]),
+        (status = 500, description = "Internal server error."),
+    ),
+)]
+pub async fn api_key<S: GetApiKeys + WriteDatabase + GetUsers>(
+    Json(id): Json<AccountIdLight>,
+    state: S,
+) -> Result<Json<ApiKey>, StatusCode> {
+    let key = ApiKey::generate_new();
+    let account_state = get_account(&state, id, |account| account.clone()).await?;
+
+    todo!()
+}
+
+
+
 
 pub const PATH_ACCOUNT_STATE: &str = "/account/state";
 

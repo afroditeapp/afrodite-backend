@@ -1,5 +1,5 @@
 use serde::{de::Error, Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
+use utoipa::{IntoParams, ToSchema, openapi::Ref};
 
 /// AccountId is an UUID string. Server will generate an UUID string when
 /// generating a new AccountId.
@@ -147,6 +147,55 @@ impl ApiKey {
         &self.api_key
     }
 }
+
+/// This is just a really long random string.
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+pub struct RefreshToken {
+    token: String,
+}
+
+impl RefreshToken {
+    pub fn generate_new() -> Self {
+        let mut token = String::new();
+
+        for _ in 1..=124 {
+            token.push_str(uuid::Uuid::new_v4().simple().to_string().as_str())
+        }
+
+        Self {
+            token
+        }
+    }
+
+    pub fn from_string(token: String) -> Self {
+        Self { token }
+    }
+
+    pub fn into_string(self) -> String {
+        self.token
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.token
+    }
+}
+
+/// ApiKey and RefreshToken
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+pub struct AuthPair {
+    refresh: RefreshToken,
+    key: ApiKey,
+}
+
+impl AuthPair {
+    pub fn new(refresh: RefreshToken, key: ApiKey) -> Self {
+        Self {
+            refresh,
+            key,
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {

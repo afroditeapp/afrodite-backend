@@ -41,6 +41,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         account::account_setup,
         account::internal::check_api_key,
         profile::get_profile,
+        profile::get_default_profile,
         profile::post_profile,
         media::get_image,
         media::internal::post_image,
