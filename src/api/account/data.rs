@@ -239,10 +239,13 @@ pub struct Capabilities {
     admin_setup_possible: Option<bool>,
     admin_moderate_profiles: Option<bool>,
     admin_moderate_images: Option<bool>,
+    /// View public and private profiles.
+    admin_view_all_profiles: Option<bool>,
     admin_view_private_info: Option<bool>,
     admin_view_profile_history: Option<bool>,
     admin_ban_profile: Option<bool>,
     banned_edit_profile: Option<bool>,
+    /// View public profiles
     view_public_profiles: Option<bool>,
 }
 

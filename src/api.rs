@@ -48,7 +48,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     ),
     components(schemas(
         account::data::AccountId,
-        account::data::AccountIdInternal,
+        account::data::AccountIdLight,
         account::data::ApiKey,
         account::data::Account,
         account::data::AccountState,

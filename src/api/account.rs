@@ -22,15 +22,15 @@ use super::{
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
-pub const PATH_REGISTER: &str = "/account/register";
+pub const PATH_REGISTER: &str = "/account_api/register";
 
 /// Register new account. Returns new account ID which is UUID.
 #[utoipa::path(
     post,
-    path = "/account/register",
+    path = "/account_api/register",
     security(),
     responses(
-        (status = 200, description = "New profile created.", body = [AccountId]),
+        (status = 200, description = "New profile created.", body = [AccountIdLight]),
         (status = 500, description = "Internal server error."),
     )
 )]
@@ -61,12 +61,12 @@ pub async fn post_register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
     }
 }
 
-pub const PATH_LOGIN: &str = "/account/login";
+pub const PATH_LOGIN: &str = "/account_api/login";
 
-/// Get new refresh token and ApiKey.
+/// Get new ApiKey.
 #[utoipa::path(
     post,
-    path = "/account/login",
+    path = "/account_api/login",
     security(),
     request_body = AccountIdLight,
     responses(
@@ -124,14 +124,15 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
 // }
 
 
-pub const PATH_ACCOUNT_STATE: &str = "/account/state";
+pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
 
+/// Get current account state.
 #[utoipa::path(
     get,
-    path = "/account/state",
+    path = "/account_api/state",
     responses(
         (status = 200, description = "Request successfull.", body = [Account]),
-        (status = 401, description = "Invalid API key."),
+        (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("api_key" = [])),
@@ -153,15 +154,15 @@ pub async fn get_account_state<S: GetApiKeys + ReadDatabase>(
         })
 }
 
-pub const PATH_ACCOUNT_SETUP: &str = "/account/setup";
+pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
 
 /// Setup non-changeable user information during `initial setup` state.
 #[utoipa::path(
     post,
-    path = "/account/setup",
+    path = "/account_api/setup",
     responses(
         (status = 200, description = "Request successfull.", body = [Account]),
-        (status = 401, description = "Invalid API key."),
+        (status = 401, description = "Unauthorized."),
         (
             status = 500,
             description = "Account state is not initial setup or some other error"),

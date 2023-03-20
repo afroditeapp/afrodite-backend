@@ -4,7 +4,7 @@ use tokio::sync::{Mutex, RwLock};
 
 use crate::api::{
     account::data::{AccountId, ApiKey},
-    model::{AccountIdInternal, AccountIdLight, AccountState},
+    model::{AccountIdInternal, AccountIdLight, AccountState, Account},
 };
 
 use super::database::{write::WriteCommands, RouterDatabaseHandle};
