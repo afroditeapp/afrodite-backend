@@ -6,4 +6,5 @@ pub use super::{
         AccountIdLight,
     },
     profile::data::Profile,
+    media::data::{NewModerationRequest, ModerationRequest, ModerationRequestList, HandleModerationRequest}
 };

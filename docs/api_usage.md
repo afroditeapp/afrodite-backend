@@ -16,8 +16,9 @@ user all questions and fill in user details.
 All textual data will be sent with `/account/setup` that path will only be
 used when account state is in initial setup.
 
-Client initial setup will create new image moderation request with two images
-using path `/media/moderation/request`.
+Client initial setup will create new image moderation request with one flagged
+as real camera image and one other image. Check section 'image moderation request'
+to see how to do that.
 
 The client initial setup will then request state transfer to `normal` state
 using path `/account/complete_initial_setup`. Account server will check that all
@@ -61,11 +62,28 @@ When profile is opened from the grid then it's information is get with
 
 You can set profile visibility in the grid using `/account/settings/profile_visibility`.
 
-### Image moderation
+### Profile editing
+
+#### Image moderation request
+
+Send or update current image moderation using HTTP PUT to
+`/media_api/moderation/request`. HTTP GET to that same address will
+get current moderation request status.
+
+Before sending new moderation request images must be loaded to moderation
+slots using HTTP PUT `/media_api/moderation/request/slot/{image_slot}`. Image
+slots `camera` and `image1` are available.
+
+### Admin features
+
+#### Image moderation
 
 If capability 'admin_moderate_images' can be found the client displays option to
 go image moderation mode. In that mode the app will fetch all images which need
-moderation using `/media/admin/moderation/page/next`. Images in that request
-will be downloaded using `/media/images/IMG`. It does not matter if image is
+moderation using `/media_api/admin/moderation/page/next`.
+That path will get next set of not handled image moderations.
+Images in that request
+will be downloaded using `/media_api/images/{account_id}/{image_id}`.
+It does not matter if image is
 accepted or not. Moderation requests have an unique id. That id can be accepted
-or not using `/media/admin/moderation/handle_request`.
+or not using `/media_admin/admin/moderation/handle_request/{request_id}`.

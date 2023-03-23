@@ -44,6 +44,11 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         profile::get_default_profile,
         profile::post_profile,
         media::get_image,
+        media::get_moderation_request,
+        media::get_moderation_request_list,
+        media::put_moderation_request,
+        media::put_image_to_moderation_slot,
+        media::post_handle_moderation_request,
         media::internal::post_image,
     ),
     components(schemas(
@@ -57,6 +62,10 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         profile::data::Profile,
         media::data::ImageFileName,
         media::data::ImageFile,
+        media::data::NewModerationRequest,
+        media::data::ModerationRequest,
+        media::data::ModerationRequestList,
+        media::data::HandleModerationRequest,
     )),
     modifiers(&SecurityApiTokenDefault),
 )]

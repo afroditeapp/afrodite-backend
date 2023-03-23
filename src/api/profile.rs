@@ -78,6 +78,7 @@ pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile_api/default/:account_id";
     params(AccountIdLight),
     responses(
         (status = 200, description = "Get default profile.", body = [Profile]),
+        (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
     security(("api_key" = [])),
@@ -96,13 +97,14 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 ///
 /// Writes the profile to the database only if it is changed.
 ///
-/// TODO: string lenght validation
+/// TODO: string lenght validation, limit saving new profiles
 #[utoipa::path(
     post,
     path = "/profile_api/profile",
     request_body = Profile,
     responses(
         (status = 200, description = "Update profile", body = [Profile]),
+        (status = 401, description = "Unauthorized."),
         (
             status = 500,
             description = "Profile validation in route handler failed or database error."
