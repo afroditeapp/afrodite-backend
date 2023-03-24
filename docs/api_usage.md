@@ -21,7 +21,7 @@ as real camera image and one other image. Check section 'image moderation reques
 to see how to do that.
 
 The client initial setup will then request state transfer to `normal` state
-using path `/account/complete_initial_setup`. Account server will check that all
+using path `/account_api/complete_setup`. Account server will check that all
 required information is set to the account and then also check is there really
 an moderation request created using internal media server API.
 

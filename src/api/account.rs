@@ -162,10 +162,11 @@ pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
     path = "/account_api/setup",
     responses(
         (status = 200, description = "Request successfull.", body = [Account]),
+        (status = 406, description = "Current state is not initial setup."),
         (status = 401, description = "Unauthorized."),
         (
             status = 500,
-            description = "Account state is not initial setup or some other error"),
+            description = "Internal server error."),
     ),
     security(("api_key" = [])),
 )]
@@ -197,4 +198,29 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
+}
+
+pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
+
+/// Complete initial setup.
+///
+/// Request to this handler will complete if client is in `initial setup`,
+/// setup information is set and image moderation request has been made.
+///
+#[utoipa::path(
+    post,
+    path = "/account_api/complete_setup",
+    responses(
+        (status = 200, description = "Request successfull."),
+        (status = 406, description = "Current state is not initial setup."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
+    state: S,
+) -> Result<(), StatusCode> {
+
+    Err(StatusCode::NOT_ACCEPTABLE)
 }

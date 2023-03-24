@@ -4,7 +4,7 @@ use axum::{extract::Path, Json, TypedHeader};
 
 use hyper::StatusCode;
 
-use self::data::Profile;
+use self::data::{Profile, Location};
 
 use super::{model::AccountIdLight, utils::{get_account, get_account_from_api_key}, GetUsers};
 
@@ -144,6 +144,75 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
             error!("post_profile: write profile, {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
         })?;
+
+    Ok(())
+}
+
+
+pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
+
+/// Update location
+#[utoipa::path(
+    put,
+    path = "/profile_api/location",
+    request_body = Location,
+    responses(
+        (status = 200, description = "Update successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn put_location<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+    Json(location): Json<Location>,
+    state: S,
+) -> Result<(), StatusCode> {
+
+    Ok(())
+}
+
+
+pub const PATH_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
+
+/// Get next page of profile list.
+#[utoipa::path(
+    get,
+    path = "/profile_api/page/next",
+    responses(
+        (status = 200, description = "Update successfull.", body = ProfilePage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn get_next_profile_page<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+    Json(location): Json<Location>,
+    state: S,
+) -> Result<(), StatusCode> {
+
+    Ok(())
+}
+
+
+pub const PATH_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
+
+/// Reset profile paging.
+///
+/// After this request getting next profiles will continue from the nearest
+/// profiles.
+#[utoipa::path(
+    post,
+    path = "/profile_api/page/reset",
+    responses(
+        (status = 200, description = "Update successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn post_reset_profile_paging<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+    state: S,
+) -> Result<(), StatusCode> {
 
     Ok(())
 }

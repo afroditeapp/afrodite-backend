@@ -5,6 +5,6 @@ pub use super::{
         Account, AccountId, AccountIdInternal, AccountSetup, AccountState, ApiKey, Capabilities,
         AccountIdLight,
     },
-    profile::data::Profile,
+    profile::data::{Profile, ProfileInternal, Location, ProfilePage, ProfileLink},
     media::data::{NewModerationRequest, ModerationRequest, ModerationRequestList, HandleModerationRequest}
 };
