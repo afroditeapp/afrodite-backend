@@ -9,7 +9,7 @@ use hyper::StatusCode;
 
 use crate::server::session::AccountStateInRam;
 
-use self::data::{Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey};
+use self::data::{Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus};
 
 use super::{GetConfig, utils::{get_account, get_account_from_api_key}};
 
@@ -223,4 +223,102 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
 ) -> Result<(), StatusCode> {
 
     Err(StatusCode::NOT_ACCEPTABLE)
+}
+
+
+pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
+
+/// Update profile visiblity value.
+///
+/// This will check that the first image moderation request has been moderated
+/// before this turns the profile public.
+///
+/// Sets capablity `view_public_profiles` on or off depending on the value.
+#[utoipa::path(
+    put,
+    path = "/account_api/settings/profile_visibility",
+    request_body(content = BooleanSetting),
+    responses(
+        (status = 200, description = "Update successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn put_setting_profile_visiblity<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+    Json(data): Json<BooleanSetting>,
+    state: S,
+) -> Result<(), StatusCode> {
+
+    Ok(())
+}
+
+
+pub const PATH_POST_DELETE: &str = "/account_api/delete";
+
+/// Delete account.
+///
+/// Changes account state to `pending deletion` from all possible states.
+/// Previous state will be saved, so it will be possible to stop automatic
+/// deletion process.
+#[utoipa::path(
+    put,
+    path = "/account_api/delete",
+    responses(
+        (status = 200, description = "State changed to 'pending deletion' successfully."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn post_delete<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+    state: S,
+) -> Result<(), StatusCode> {
+
+    Ok(())
+}
+
+pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
+
+/// Get deletion status.
+///
+/// Get information when account will be really deleted.
+#[utoipa::path(
+    get,
+    path = "/account_api/delete",
+    responses(
+        (status = 200, description = "Get was successfull.", body = DeleteStatus),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn get_deletion_status<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+    state: S,
+) -> Result<DeleteStatus, StatusCode> {
+
+    Err(StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+
+pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
+
+/// Cancel account deletion.
+///
+/// Account state will move to previous state.
+#[utoipa::path(
+    delete,
+    path = "/account_api/delete",
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn delete_cancel_deletion<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+    state: S,
+) -> Result<DeleteStatus, StatusCode> {
+
+    Err(StatusCode::INTERNAL_SERVER_ERROR)
 }

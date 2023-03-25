@@ -60,7 +60,7 @@ When profile is opened from the grid then it's information is get with
 
 ### Settings
 
-You can set profile visibility in the grid using `/account/settings/profile_visibility`.
+You can set profile visibility in the grid using `/account_api/settings/profile_visibility`.
 
 ### Profile editing
 
@@ -73,6 +73,12 @@ get current moderation request status.
 Before sending new moderation request images must be loaded to moderation
 slots using HTTP PUT `/media_api/moderation/request/slot/{image_slot}`. Image
 slots `camera` and `image1` are available.
+
+### Account deletion
+
+Account can be moved to `pending deletion` state with `/account_api/delete`.
+Also deletion date can be queried with HTTP GET to that address.
+HTTP DELETE to that address will cancel deletetion request.
 
 ### Admin features
 

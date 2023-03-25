@@ -253,3 +253,14 @@ pub struct Capabilities {
 pub struct AccountSetup {
     name: String,
 }
+
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct BooleanSetting {
+    value: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct DeleteStatus {
+    delete_date: String,
+}
