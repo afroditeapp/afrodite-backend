@@ -80,6 +80,98 @@ Account can be moved to `pending deletion` state with `/account_api/delete`.
 Also deletion date can be queried with HTTP GET to that address.
 HTTP DELETE to that address will cancel deletetion request.
 
+### Account ban status
+
+If account is in `banned` state, HTTP GET to `/account_api/ban_status` can be
+used for querying ban status.
+
+### Profile flagging
+
+Account can flag profiles with HTTP POST to `/profile_api/flag/{account_id}`.
+
+### Account data export
+
+Each server has different data on it, so client asks account data export from
+each server. Server produces ZIP of account data at some point.
+
+Account data export can be created with HTTP POST to
+`/{api}/data_export_request`. HTTP GET to that returns status of the current
+request. When data request is complete
+`/{api}/data_export_request/{zip_file_name}` can be used to download the file.
+
+### Likes
+
+#### Like profiles
+
+Use HTTP POST to `/account_api/like/{account_id}` to like a profile. Response
+will tell if it was a match. To remove a
+like use HTTP DELETE.
+
+Use HTTP GET to `/account_api/my_likes/page/next` get next page of my likes.
+HTTP POST to `/account_api/my_likes/page/reset` to reset paging.
+
+Paging will start from the latest likes.
+
+#### View received likes
+
+Use HTTP GET to `/account_api/received_likes/page/next` get next page of my
+likes. HTTP POST to `/account_api/received_likes/page/reset` to reset paging.
+
+Likes will be removed from these lists when match is formed. Paging will start
+from the latest likes.
+
+### Bloking
+
+#### Block account
+
+To block visiblity and interactions to specific account use HTTP POST to
+`/account_api/block/{account_id}`. Block can be reverted using HTTP DELETE to
+that same address.
+
+HTTP GET `/account_api/my_blocks/page/next` can used to get next list of account
+which I have been bloked. HTTP POST `/account_api/my_blocks/page/reset` will
+reset the paging.
+
+#### Be blocked
+
+Blocked account will get notification about the bloking using WebSocket.
+This notification will repeat until received_blocks is queried at least once.
+
+Use HTTP GET to `/account_api/received_blocks/page/next` get next page of received
+blocks. HTTP POST to `/account_api/received_blocks/page/reset` to reset paging.
+
+### Chat
+
+#### Sending messages
+
+HTTP POST to `/chat_api/message/send/{account_id}` sends a new message. Message
+ID will be returned. Messages can only be sent to matches.
+
+If WebSocket is connected, message delivery info will be received from it.
+
+HTTP GET to `/chat_api/message/status/{message_id}` will tell is the message delivered.
+
+Server saves hashes of latest 5 messages in an conversation. These will be used
+for verifying flagged chat reports.
+
+#### Receiving messages
+
+When messages available event is received from WebSocket or as push
+notification, the user can then get new messages using HTTP GET
+`/chat_api/message/list_new`. Those messages can be marked as received using
+HTTP POST `/chat_api/message/mark_received` with a list of message IDs.
+
+### Chat flagging
+
+Chat can be flagged with HTTP POST to `/chat_api/flag/{chat_id}`. Latest 5
+messages in the chat will be sent to the server for admin moderation.
+
+##### WebSocket and push notifications
+
+Chat service has WebSocket for sendng events to users. If that is connected,
+then push notifications are disabled from server. Other servers can also use
+this API for sending events to clients.
+
 ### Admin features
 
 #### Image moderation
@@ -93,3 +185,17 @@ will be downloaded using `/media_api/images/{account_id}/{image_id}`.
 It does not matter if image is
 accepted or not. Moderation requests have an unique id. That id can be accepted
 or not using `/media_admin/admin/moderation/handle_request/{request_id}`.
+
+#### Flagged profiles moderation
+
+Admin can get next page of flagged profiles with HTTP GET to
+`/profile_api/admin/moderation/page/next`. The profiles will be handled with
+HTTP POST to
+`/profile_api/admin/moderfation/handle_flagged/{account_id}`.
+
+#### Flagged chat moderation
+
+Admin can get next page of flagged chats with HTTP GET to
+`/chat_api/admin/moderation/page/next`. The profiles will be handled with
+HTTP POST to
+`/chat_api/admin/moderfation/handle_flagged/{chat_id}`.
