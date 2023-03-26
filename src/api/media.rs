@@ -7,7 +7,7 @@ use axum::extract::Path;
 
 use hyper::StatusCode;
 
-use self::super::model::AccountId;
+use self::super::model::SlotId;
 
 use self::data::{ImageFileName, NewModerationRequest, ModerationRequestList};
 
@@ -101,6 +101,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
 #[utoipa::path(
     put,
     path = "/media_api/moderation/request/slot/{slot_id}",
+    params(SlotId),
     request_body(content = String, content_type = "image/jpeg"),
     responses(
         (status = 200, description = "Sending or updating new image moderation request was successfull."),

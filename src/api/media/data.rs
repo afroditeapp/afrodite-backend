@@ -37,3 +37,8 @@ pub struct ModerationRequestList {
 pub struct HandleModerationRequest {
     accept: bool,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct SlotId {
+    slot_id: String,
+}

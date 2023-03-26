@@ -68,6 +68,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         account::data::AccountSetup,
         account::data::Capabilities,
         account::data::BooleanSetting,
+        account::data::DeleteStatus,
         profile::data::Profile,
         profile::data::ProfilePage,
         profile::data::ProfileLink,
@@ -78,8 +79,14 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::data::ModerationRequest,
         media::data::ModerationRequestList,
         media::data::HandleModerationRequest,
+        media::data::SlotId,
     )),
     modifiers(&SecurityApiTokenDefault),
+    info(
+        title = "pihka-backend",
+        description = "Pihka backend API",
+        version = "0.1.0"
+    )
 )]
 pub struct ApiDoc;
 

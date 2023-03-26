@@ -174,6 +174,6 @@ impl PihkaServer {
     }
 
     pub fn create_swagger_ui() -> SwaggerUi {
-        SwaggerUi::new("/swagger-ui").url("/api-doc/openapi.json", ApiDoc::openapi())
+        SwaggerUi::new("/swagger-ui").url("/api-doc/pihka_api.json", ApiDoc::openapi())
     }
 }
