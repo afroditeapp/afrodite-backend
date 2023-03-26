@@ -101,7 +101,6 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
 #[utoipa::path(
     put,
     path = "/media_api/moderation/request/slot/{slot_id}",
-    params(SlotId),
     request_body(content = String, content_type = "image/jpeg"),
     responses(
         (status = 200, description = "Sending or updating new image moderation request was successfull."),
@@ -112,7 +111,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     security(("api_key" = [])),
 )]
 pub async fn put_image_to_moderation_slot<S: ReadDatabase>(
-    Path(slot_name): Path<String>,
+    Path(slot_id): Path<String>,
     image: Bytes,
     _state: S,
 ) -> Result<(), StatusCode> {

@@ -38,3 +38,9 @@ async-trait = "0.1.66"
 
 rand = "0.8.5"
 time = "0.3.20"
+
+api_client = { path = "./api_client" }
+
+
+[workspace]
+members = ["api_client"]

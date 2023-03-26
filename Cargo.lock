@@ -35,6 +35,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 
 [[package]]
+name = "api_client"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1070,6 +1082,7 @@ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 name = "pihka-backend"
 version = "0.1.0"
 dependencies = [
+ "api_client",
  "async-trait",
  "axum",
  "clap",
@@ -1278,6 +1291,7 @@ dependencies = [
  "js-sys",
  "log",
  "mime",
+ "mime_guess",
  "native-tls",
  "once_cell",
  "percent-encoding",
