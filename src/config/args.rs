@@ -60,8 +60,7 @@ pub fn get_config() -> ArgsConfig {
             let api_urls = PublicApiUrls::new(
                 sub_matches.get_one::<Url>("account").unwrap().clone(),
                 sub_matches.get_one::<Url>("profile").unwrap().clone(),
-            )
-            .unwrap();
+            );
 
             Some(TestMode {
                 bot_count: *sub_matches.get_one::<u32>("count").unwrap(),

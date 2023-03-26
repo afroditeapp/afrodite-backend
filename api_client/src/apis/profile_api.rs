@@ -71,7 +71,7 @@ pub enum PutLocationError {
 
 
 /// TODO: Remove this at some point
-pub async fn get_default_profile(configuration: &configuration::Configuration, account_id: &str) -> Result<Vec<crate::models::Profile>, Error<GetDefaultProfileError>> {
+pub async fn get_default_profile(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::Profile, Error<GetDefaultProfileError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -143,7 +143,7 @@ pub async fn get_next_profile_page(configuration: &configuration::Configuration,
 }
 
 /// Get account's current profile.  Profile can include version UUID which can be used for caching.  # Access Public profile access requires `view_public_profiles` capability. Public and private profile access requires `admin_view_all_profiles` capablility.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
-pub async fn get_profile(configuration: &configuration::Configuration, account_id: &str) -> Result<Vec<crate::models::Profile>, Error<GetProfileError>> {
+pub async fn get_profile(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::Profile, Error<GetProfileError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -179,7 +179,7 @@ pub async fn get_profile(configuration: &configuration::Configuration, account_i
 }
 
 /// Update profile information.  Writes the profile to the database only if it is changed.  TODO: string lenght validation, limit saving new profiles
-pub async fn post_profile(configuration: &configuration::Configuration, profile: crate::models::Profile) -> Result<Vec<crate::models::Profile>, Error<PostProfileError>> {
+pub async fn post_profile(configuration: &configuration::Configuration, profile: crate::models::Profile) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -207,7 +207,7 @@ pub async fn post_profile(configuration: &configuration::Configuration, profile:
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        Ok(())
     } else {
         let local_var_entity: Option<PostProfileError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };

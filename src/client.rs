@@ -2,10 +2,14 @@
 
 use std::sync::Arc;
 
+use api_client::{apis::configuration::{Configuration}, models::ApiKey};
 use error_stack::{IntoReport, Result};
 
 use hyper::StatusCode;
 use reqwest::{Client, Url};
+use tracing::info;
+
+use crate::api;
 
 use self::{
     account::{AccountApi, AccountApiUrls},
@@ -37,42 +41,82 @@ pub enum HttpRequestError {
 
     #[error("Joining text to URL failed")]
     ApiUrlJoinError,
-}
 
-// TODO: Move url parsing to happen at startup so that url typos are
-// discovered earlier.
+    #[error("Missing value")]
+    MissingValue,
+
+    #[error("API request failed")]
+    ApiRequest,
+}
 
 #[derive(Debug, Clone)]
 pub struct PublicApiUrls {
-    pub account: AccountApiUrls,
-    pub proifle: ProfileApiUrls,
+    pub account_base_url: Url,
+    pub profile_base_url: Url,
 }
 
 impl PublicApiUrls {
-    pub fn new(account_base_url: Url, profile_base_url: Url) -> Result<Self, url::ParseError> {
-        Ok(Self {
-            account: AccountApiUrls::new(account_base_url)?,
-            proifle: ProfileApiUrls::new(profile_base_url)?,
-        })
+    pub fn new(account_base_url: Url, profile_base_url: Url) -> Self {
+        Self {
+            account_base_url,
+            profile_base_url
+        }
     }
 }
 
 pub struct ApiClient {
-    client: Client,
-    urls: Arc<PublicApiUrls>,
+    account: Configuration,
+    profile: Configuration,
 }
 
 impl ApiClient {
-    pub fn new(client: Client, urls: Arc<PublicApiUrls>) -> Self {
-        Self { client, urls }
+    pub fn new(
+        base_urls: PublicApiUrls,
+    ) -> Self {
+        let account_path = base_urls
+            .account_base_url
+            .as_str()
+            .trim_end_matches('/')
+            .to_string();
+        let account = Configuration {
+            base_path: account_path,
+            ..Configuration::default()
+        };
+        info!("Account API base url: {}", account.base_path);
+
+        let profile_path = base_urls
+            .profile_base_url
+            .as_str()
+            .trim_end_matches('/')
+            .to_string();
+
+        // Clone will also clone reqwest Client
+        let mut profile = account.clone();
+        profile.base_path = profile_path;
+        info!("Profile API base url: {}", profile.base_path);
+
+
+        Self {
+            account,
+            profile,
+        }
     }
 
-    pub fn account(&self) -> AccountApi {
-        AccountApi::new(&self.client, &self.urls.as_ref().account)
+    pub fn account(&self) -> &Configuration {
+        &self.account
     }
 
-    pub fn profile(&self) -> ProfileApi {
-        ProfileApi::new(&self.client, &self.urls.as_ref().proifle)
+    pub fn profile(&self) -> &Configuration {
+        &self.profile
+    }
+
+    pub fn set_api_key(&mut self, key: ApiKey) {
+        let config_key = api_client::apis::configuration::ApiKey {
+            prefix: None,
+            key: key.api_key,
+        };
+        self.account.api_key = Some(config_key.clone());
+        self.profile.api_key = Some(config_key);
     }
 }
 

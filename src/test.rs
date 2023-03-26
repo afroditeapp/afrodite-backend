@@ -10,8 +10,10 @@ use tokio::{
 };
 use tracing::{error, info};
 
+use api_client::{models::AccountIdLight, models::ApiKey};
+
 use crate::{
-    api::model::{AccountId, AccountIdLight},
+    api::model::{AccountId},
     config::{args::TestMode, Config},
     server::database::DB_HISTORY_DIR_NAME,
     test::bot::Bot,
@@ -53,11 +55,11 @@ impl TestRunner {
             match AccountId::parse(id) {
                 Ok(id) => {
                     if bot_number <= self.test_config.bot_count {
+                        let id = AccountIdLight::new(id.as_uuid());
                         Bot::spawn(
                             bot_number,
-                            api_urls.clone(),
                             self.test_config.clone(),
-                            id.as_light(),
+                            id,
                             bot_quit_receiver.clone(),
                             bot_running_handle.clone(),
                         );
@@ -77,7 +79,6 @@ impl TestRunner {
         while bot_number <= self.test_config.bot_count {
             Bot::spawn(
                 bot_number,
-                api_urls.clone(),
                 self.test_config.clone(),
                 None,
                 bot_quit_receiver.clone(),

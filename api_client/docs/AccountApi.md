@@ -45,7 +45,7 @@ This endpoint does not need any parameter.
 
 ## get_account_state
 
-> Vec<crate::models::Account> get_account_state()
+> crate::models::Account get_account_state()
 Get current account state.
 
 Get current account state.
@@ -56,7 +56,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Vec<crate::models::Account>**](Account.md)
+[**crate::models::Account**](Account.md)
 
 ### Authorization
 
@@ -99,7 +99,7 @@ This endpoint does not need any parameter.
 
 ## post_account_setup
 
-> Vec<crate::models::Account> post_account_setup()
+> crate::models::Account post_account_setup()
 Setup non-changeable user information during `initial setup` state.
 
 Setup non-changeable user information during `initial setup` state.
@@ -110,7 +110,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Vec<crate::models::Account>**](Account.md)
+[**crate::models::Account**](Account.md)
 
 ### Authorization
 
@@ -180,7 +180,7 @@ This endpoint does not need any parameter.
 
 ## post_login
 
-> Vec<crate::models::ApiKey> post_login(account_id_light)
+> crate::models::ApiKey post_login(account_id_light)
 Get new ApiKey.
 
 Get new ApiKey.
@@ -194,7 +194,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**Vec<crate::models::ApiKey>**](ApiKey.md)
+[**crate::models::ApiKey**](ApiKey.md)
 
 ### Authorization
 
@@ -210,7 +210,7 @@ No authorization required
 
 ## post_register
 
-> Vec<crate::models::AccountIdLight> post_register()
+> crate::models::AccountIdLight post_register()
 Register new account. Returns new account ID which is UUID.
 
 Register new account. Returns new account ID which is UUID.
@@ -221,7 +221,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Vec<crate::models::AccountIdLight>**](AccountIdLight.md)
+[**crate::models::AccountIdLight**](AccountIdLight.md)
 
 ### Authorization
 

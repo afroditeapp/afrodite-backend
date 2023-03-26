@@ -6,6 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use api_client::{apis::{account_api::{post_register, post_login}, configuration::ApiKey, profile_api::{post_profile, get_profile, get_default_profile}}, models::{AccountIdLight, Profile}};
 use reqwest::Client;
 use tokio::{
     select,
@@ -18,9 +19,8 @@ use error_stack::Result;
 use tracing::{error, log::warn};
 
 use crate::{
-    api::model::{AccountId, ApiKey, Profile, AccountIdLight},
-    client::{ApiClient, HttpRequestError, PublicApiUrls},
-    config::args::{Test, TestMode},
+    client::{ApiClient, HttpRequestError},
+    config::args::{Test, TestMode}, utils::IntoReportExt, api::model::AccountId,
 };
 
 static COUNTERS: Counters = Counters::new();
@@ -36,7 +36,6 @@ pub struct Bot {
 impl Bot {
     pub fn spawn(
         bot_id: u32,
-        urls: Arc<PublicApiUrls>,
         config: Arc<TestMode>,
         id: impl Into<Option<AccountIdLight>>,
         bot_quit_receiver: watch::Receiver<()>,
@@ -45,15 +44,15 @@ impl Bot {
         let bot = Self {
             bot_id,
             id: id.into(),
+            api: ApiClient::new(config.api_urls.clone()),
             config,
-            api: ApiClient::new(Client::new(), urls),
             _bot_running_handle,
         };
 
         tokio::spawn(bot.run(bot_quit_receiver));
     }
 
-    pub async fn run(self, mut bot_quit_receiver: watch::Receiver<()>) {
+    pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
         loop {
             select! {
                 result = bot_quit_receiver.changed() => {
@@ -71,22 +70,29 @@ impl Bot {
         }
     }
 
-    async fn run_bot(&self) -> Result<(), HttpRequestError> {
+    async fn run_bot(&mut self) -> Result<(), HttpRequestError> {
         let id = if let Some(id) = self.id.as_ref() {
             id.clone()
         } else {
-            self.api.account().register().await?
+            post_register(self.api.account())
+                .await
+                .into_error(HttpRequestError::ApiRequest)?
         };
 
-        let key = self.api.account().login(id).await?;
+        let key = post_login(self.api.account(), id)
+            .await
+            .into_error(HttpRequestError::ApiRequest)?;
+
+        self.api.set_api_key(key);
 
         let mut update_profile_timer = Timer::new(Duration::from_millis(1000));
         let mut print_info_timer = Timer::new(Duration::from_millis(1000));
 
+        let id = crate::api::model::AccountIdLight::new(id.account_id).to_full();
+
         loop {
             self.run_normal_test(
-                id,
-                &key,
+                &id,
                 &mut update_profile_timer,
                 self.config.print_speed && print_info_timer.passed() && self.bot_id == 1,
             )
@@ -102,8 +108,7 @@ impl Bot {
 
     async fn run_normal_test(
         &self,
-        id: AccountIdLight,
-        key: &ApiKey,
+        id: &AccountId,
         update_profile_timer: &mut Timer,
         print_info: bool,
     ) -> Result<(), HttpRequestError> {
@@ -116,10 +121,9 @@ impl Bot {
         if self.config.update_profile && update_profile_timer.passed() {
             let profile = rand::random::<u32>();
             let profile = Profile::new(format!("{}", profile));
-            self.api
-                .profile()
-                .post_profile(key.clone(), profile)
-                .await?;
+            post_profile(self.api.profile(), profile)
+                .await
+                .into_error(HttpRequestError::ApiRequest)?;
 
             if print_info {
                 warn!("post_profile: {:?}", time.elapsed());
@@ -129,16 +133,14 @@ impl Bot {
         let time = Instant::now();
         match self.config.test {
             Test::Normal => {
-                self.api
-                    .profile()
-                    .get_profile(key.clone(), id)
-                    .await?
+                get_profile(self.api.profile(), id.as_str())
+                    .await
+                    .into_error(HttpRequestError::ApiRequest)?;
             }
             Test::Default => {
-                self.api
-                    .profile()
-                    .get_default_profile(key.clone(), id)
-                    .await?
+                get_default_profile(self.api.profile(), id.as_str())
+                    .await
+                    .into_error(HttpRequestError::ApiRequest)?;
             }
         };
         COUNTERS.inc_get_profile();

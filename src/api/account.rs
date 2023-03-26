@@ -30,7 +30,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
     path = "/account_api/register",
     security(),
     responses(
-        (status = 200, description = "New profile created.", body = [AccountIdLight]),
+        (status = 200, description = "New profile created.", body = AccountIdLight),
         (status = 500, description = "Internal server error."),
     )
 )]
@@ -70,7 +70,7 @@ pub const PATH_LOGIN: &str = "/account_api/login";
     security(),
     request_body = AccountIdLight,
     responses(
-        (status = 200, description = "Login successful.", body = [ApiKey]),
+        (status = 200, description = "Login successful.", body = ApiKey),
         (status = 500, description = "Internal server error."),
     ),
 )]
@@ -107,7 +107,7 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
 //     path = "/account/refresh_api_key",
 //     request_body = AuthPair,
 //     responses(
-//         (status = 200, description = "Login successful.", body = [ApiKey]),
+//         (status = 200, description = "Login successful.", body = ApiKey),
 //         (status = 401, description = "Invalid API key."),
 //         (status = 500, description = "Internal server error."),
 //     ),
@@ -131,7 +131,7 @@ pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
     get,
     path = "/account_api/state",
     responses(
-        (status = 200, description = "Request successfull.", body = [Account]),
+        (status = 200, description = "Request successfull.", body = Account),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -161,7 +161,7 @@ pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
     post,
     path = "/account_api/setup",
     responses(
-        (status = 200, description = "Request successfull.", body = [Account]),
+        (status = 200, description = "Request successfull.", body = Account),
         (status = 406, description = "Current state is not initial setup."),
         (status = 401, description = "Unauthorized."),
         (

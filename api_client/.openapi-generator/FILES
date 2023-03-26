@@ -35,7 +35,6 @@ src/apis/media_api.rs
 src/apis/mediainternal_api.rs
 src/apis/mod.rs
 src/apis/profile_api.rs
-src/lib.rs
 src/models/account.rs
 src/models/account_id.rs
 src/models/account_id_light.rs

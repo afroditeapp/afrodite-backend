@@ -24,7 +24,7 @@ pub enum CheckApiKeyError {
 }
 
 
-pub async fn check_api_key(configuration: &configuration::Configuration, ) -> Result<Vec<crate::models::AccountId>, Error<CheckApiKeyError>> {
+pub async fn check_api_key(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountId, Error<CheckApiKeyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

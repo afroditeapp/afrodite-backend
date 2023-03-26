@@ -15,7 +15,7 @@ Method | HTTP request | Description
 
 ## get_default_profile
 
-> Vec<crate::models::Profile> get_default_profile(account_id)
+> crate::models::Profile get_default_profile(account_id)
 TODO: Remove this at some point
 
 TODO: Remove this at some point
@@ -29,7 +29,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**Vec<crate::models::Profile>**](Profile.md)
+[**crate::models::Profile**](Profile.md)
 
 ### Authorization
 
@@ -72,7 +72,7 @@ This endpoint does not need any parameter.
 
 ## get_profile
 
-> Vec<crate::models::Profile> get_profile(account_id)
+> crate::models::Profile get_profile(account_id)
 Get account's current profile.
 
 Get account's current profile.  Profile can include version UUID which can be used for caching.  # Access Public profile access requires `view_public_profiles` capability. Public and private profile access requires `admin_view_all_profiles` capablility.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
@@ -86,7 +86,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**Vec<crate::models::Profile>**](Profile.md)
+[**crate::models::Profile**](Profile.md)
 
 ### Authorization
 
@@ -102,7 +102,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_profile
 
-> Vec<crate::models::Profile> post_profile(profile)
+> post_profile(profile)
 Update profile information.
 
 Update profile information.  Writes the profile to the database only if it is changed.  TODO: string lenght validation, limit saving new profiles
@@ -116,7 +116,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**Vec<crate::models::Profile>**](Profile.md)
+ (empty response body)
 
 ### Authorization
 
@@ -125,7 +125,7 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

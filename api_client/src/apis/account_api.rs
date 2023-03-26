@@ -134,7 +134,7 @@ pub async fn delete_cancel_deletion(configuration: &configuration::Configuration
 }
 
 /// Get current account state.
-pub async fn get_account_state(configuration: &configuration::Configuration, ) -> Result<Vec<crate::models::Account>, Error<GetAccountStateError>> {
+pub async fn get_account_state(configuration: &configuration::Configuration, ) -> Result<crate::models::Account, Error<GetAccountStateError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -206,7 +206,7 @@ pub async fn get_deletion_status(configuration: &configuration::Configuration, )
 }
 
 /// Setup non-changeable user information during `initial setup` state.
-pub async fn post_account_setup(configuration: &configuration::Configuration, ) -> Result<Vec<crate::models::Account>, Error<PostAccountSetupError>> {
+pub async fn post_account_setup(configuration: &configuration::Configuration, ) -> Result<crate::models::Account, Error<PostAccountSetupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -314,7 +314,7 @@ pub async fn post_delete(configuration: &configuration::Configuration, ) -> Resu
 }
 
 /// Get new ApiKey.
-pub async fn post_login(configuration: &configuration::Configuration, account_id_light: crate::models::AccountIdLight) -> Result<Vec<crate::models::ApiKey>, Error<PostLoginError>> {
+pub async fn post_login(configuration: &configuration::Configuration, account_id_light: crate::models::AccountIdLight) -> Result<crate::models::ApiKey, Error<PostLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -343,7 +343,7 @@ pub async fn post_login(configuration: &configuration::Configuration, account_id
 }
 
 /// Register new account. Returns new account ID which is UUID.
-pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<Vec<crate::models::AccountIdLight>, Error<PostRegisterError>> {
+pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountIdLight, Error<PostRegisterError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

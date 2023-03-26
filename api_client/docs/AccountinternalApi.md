@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 ## check_api_key
 
-> Vec<crate::models::AccountId> check_api_key()
+> crate::models::AccountId check_api_key()
 
 
 ### Parameters
@@ -19,7 +19,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Vec<crate::models::AccountId>**](AccountId.md)
+[**crate::models::AccountId**](AccountId.md)
 
 ### Authorization
 

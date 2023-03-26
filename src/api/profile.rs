@@ -33,7 +33,7 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     path = "/profile_api/profile/{account_id}",
     params(AccountIdLight),
     responses(
-        (status = 200, description = "Get current profile.", body = [Profile]),
+        (status = 200, description = "Get current profile.", body = Profile),
         (status = 401, description = "Unauthorized."),
         (
             status = 500,
@@ -77,7 +77,7 @@ pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile_api/default/:account_id";
     path = "/profile_api/default/{account_id}",
     params(AccountIdLight),
     responses(
-        (status = 200, description = "Get default profile.", body = [Profile]),
+        (status = 200, description = "Get default profile.", body = Profile),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
@@ -103,7 +103,7 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
     path = "/profile_api/profile",
     request_body = Profile,
     responses(
-        (status = 200, description = "Update profile", body = [Profile]),
+        (status = 200, description = "Update profile"),
         (status = 401, description = "Unauthorized."),
         (
             status = 500,

@@ -46,6 +46,10 @@ impl AccountId {
     pub fn formatter(&self) -> uuid::fmt::Hyphenated {
         self.light.account_id.hyphenated()
     }
+
+    pub fn as_uuid(&self) -> uuid::Uuid {
+        self.light.as_uuid()
+    }
 }
 
 impl<'de> Deserialize<'de> for AccountId {
@@ -99,6 +103,12 @@ pub struct AccountIdLight {
 }
 
 impl AccountIdLight {
+    pub fn new(account_id: uuid::Uuid) -> Self {
+        Self {
+            account_id
+        }
+    }
+
     pub fn to_full(&self) -> AccountId {
         AccountId {
             account_id: self.account_id.hyphenated().to_string(),
