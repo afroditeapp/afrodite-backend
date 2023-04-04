@@ -5,6 +5,7 @@ pub mod read;
 pub mod sqlite;
 pub mod utils;
 pub mod write;
+pub mod index;
 
 use std::{
     fs,
