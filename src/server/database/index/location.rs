@@ -63,6 +63,14 @@ impl LocationIndex {
     pub fn height(&self) -> usize {
         self.height as usize
     }
+
+    pub fn last_row_index(&self) -> usize {
+        self.height() - 1
+    }
+
+    pub fn last_column_index(&self) -> usize {
+        self.width() - 1
+    }
 }
 
 #[derive(Debug)]
@@ -155,14 +163,14 @@ impl VisitedMaxCorners {
 /// Each iteration starts from top right corner.
 pub struct LocationIndexIterator {
     index: Arc<LocationIndex>,
-    init_position_y: usize,
-    init_position_x: usize,
-    x: usize,
-    y: usize,
+    init_position_y: isize,
+    init_position_x: isize,
+    x: isize,
+    y: isize,
     /// How many rounds cursor has moved. Checking initial position counts one.
-    iteration_count: usize,
-    iter_init_position_x: usize,
-    iter_init_position_y: usize,
+    iteration_count: isize,
+    iter_init_position_x: isize,
+    iter_init_position_y: isize,
     /// Move direction for cursor
     direction: Direction,
     /// No more new cells available.
@@ -181,30 +189,30 @@ impl LocationIndexIterator {
             iteration_count: 0,
             iter_init_position_x: 0,
             iter_init_position_y: 0,
-            direction: Direction::Right,
+            direction: Direction::Down,
             completed: false,
             visited_max_corners: VisitedMaxCorners::default(),
          }
     }
 
     pub fn reset(&mut self, x: u16, y: u16) {
-        let x = x as usize;
-        let y = y as usize;
-        self.x = x.min(self.index.width() - 1);
-        self.y = y.min(self.index.height() - 1);
+        let x = x as isize;
+        let y = y as isize;
+        self.x = x.min(self.index.width() as isize - 1);
+        self.y = y.min(self.index.height() as isize - 1);
         self.init_position_x = self.x;
         self.init_position_y = self.y;
         self.iter_init_position_x = self.x;
         self.iter_init_position_y = self.y;
         self.iteration_count = 0;
-        self.direction = Direction::Right;
+        self.direction = Direction::Down;
         self.completed = false;
         self.visited_max_corners = VisitedMaxCorners::default();
     }
 
     /// Get next cell where are profiles.
     ///
-    /// Returns key for HashMap.
+    /// Returns key for HashMap. Key is (y, x)
     pub fn next(&mut self) -> Option<(u16, u16)> {
         if self.completed {
             return None;
@@ -212,7 +220,7 @@ impl LocationIndexIterator {
 
         loop {
             let data_position = if self.current_cell_has_profiles() {
-                Some((self.x as u16, self.y as u16))
+                Some((self.y as u16, self.x as u16))
             } else {
                 None
             };
@@ -231,42 +239,39 @@ impl LocationIndexIterator {
         }
     }
 
-    /// Left side max index which can be read currently.
-    fn current_left_max_index(&self) -> usize {
-        self.init_position_x
-            .checked_sub(self.iteration_count)
-            .unwrap_or(0)
+    /// Left side max area index.
+    fn current_left_max_index(&self) -> isize {
+        self.init_position_x - self.iteration_count
     }
 
-    /// Right side max index which can be read currently.
-    fn current_right_max_index(&self) -> usize {
-        self.init_position_x
-            .checked_add(self.iteration_count)
-            .unwrap_or(self.index.width() - 1)
-            .min(self.index.width() - 1)
+    /// Right side max area index.
+    fn current_right_max_index(&self) -> isize {
+        self.init_position_x + self.iteration_count
     }
 
-    /// Top side max index which can be read currently.
-    fn current_top_max_index(&self) -> usize {
-        self.init_position_y
-            .checked_sub(self.iteration_count)
-            .unwrap_or(0)
+    /// Top side max area index.
+    fn current_top_max_index(&self) -> isize {
+        self.init_position_y - self.iteration_count
     }
 
-    /// Bottom side max index which can be read currently.
-    fn current_bottom_max_index(&self) -> usize {
-        self.init_position_y
-            .checked_add(self.iteration_count)
-            .unwrap_or(self.index.height() - 1)
-            .min(self.index.height() - 1)
+    /// Bottom side max area index.
+    fn current_bottom_max_index(&self) -> isize {
+        self.init_position_y + self.iteration_count
     }
 
     fn current_cell_has_profiles(&self) -> bool {
-        self.current_cell().profiles()
+        self.current_cell().map(|cell| cell.profiles()).unwrap_or(false)
     }
 
-    fn current_cell(&self) -> &CellData {
-        &self.index.data()[(self.y, self.x)]
+    fn current_cell(&self) -> Option<&CellData> {
+        if self.y < 0 || self.y >= self.index.height() as isize {
+            return None;
+        }
+        if self.x < 0 || self.x >= self.index.width() as isize {
+            return None;
+        }
+
+        Some(&self.index.data()[(self.y as usize, self.x as usize)])
     }
 
     /// Move position according to cell next index information.
@@ -286,22 +291,63 @@ impl LocationIndexIterator {
 
         // Make move
         match self.direction {
-            Direction::Up =>
-                self.y = self.current_cell()
-                    .next_up()
-                    .max(self.current_top_max_index()),
-            Direction::Down =>
-                self.y = self.current_cell()
-                    .next_down()
-                    .min(self.current_bottom_max_index()),
-            Direction::Left =>
-                self.x = self.current_cell()
-                    .next_left()
-                    .max(self.current_left_max_index()),
-            Direction::Right =>
-                self.x = self.current_cell()
-                    .next_right()
-                    .min(self.current_right_max_index()),
+            Direction::Up => {
+                if self.y >= self.index.height() as isize {
+                    // Bottom: outside matrix
+                    self.y = self.index.last_row_index() as isize;
+                } else if self.y <= 0 {
+                    // Top: top line or outside matrix
+                    self.y = self.current_top_max_index();
+                } else {
+                    // Normal: inside matrix area and not the first row.
+                    self.y = self.current_cell()
+                        .map_or(0, |c| c.next_up() as isize)
+                        .max(self.current_top_max_index())
+                }
+            }
+            Direction::Down => {
+                if self.y >= self.index.last_row_index() as isize {
+                    // Bottom: outside matrix or bottom row
+                    self.y = self.current_bottom_max_index();
+                } else if self.y < 0 {
+                    // Top: top line or outside matrix
+                    self.y = 0;
+                } else {
+                    // Normal: inside matrix area and not the last row.
+                    self.y = self.current_cell()
+                        .map_or(self.index.last_row_index() as isize, |c| c.next_down() as isize)
+                        .min(self.current_bottom_max_index())
+                }
+            }
+            Direction::Left => {
+                if self.x > self.index.last_column_index() as isize {
+                    // Right: outside matrix
+                    self.x = self.index.last_column_index() as isize;
+                } else if self.x <= 0 {
+                    // Left: left column or outside matrix
+                    self.x = self.current_left_max_index();
+                } else {
+                    // Normal: inside matrix area and not the left column.
+                    self.x = self.current_cell()
+                        .map_or(0 as isize, |c| c.next_left() as isize)
+                        .max(self.current_left_max_index())
+                }
+            }
+            Direction::Right => {
+                if self.x >= self.index.last_column_index() as isize {
+                    // Right: outside matrix or last column
+                    self.x = self.current_right_max_index();
+                } else if self.x < 0 {
+                    // Left: outside matrix
+                    self.x = 0;
+                } else {
+                    // Normal: inside matrix area and not the right column.
+                    self.x = self.current_cell()
+                        .map_or(self.index.last_column_index() as isize, |c| c.next_right() as isize)
+                        .min(self.current_right_max_index())
+                }
+            }
+
         }
 
         // Change direction if needed
@@ -327,9 +373,10 @@ impl LocationIndexIterator {
     fn current_round_complete(&self) -> bool {
         self.iter_init_position_x == self.x &&
         self.iter_init_position_y == self.y &&
-        self.direction == Direction::Right
+        self.direction == Direction::Down
     }
 
+    /// Top left corner starts the game
     fn move_to_next_round_init_pos(&mut self) {
         self.iteration_count += 1;
         self.direction = Direction::Down;
@@ -338,19 +385,22 @@ impl LocationIndexIterator {
         self.y = self.current_top_max_index();
         self.iter_init_position_x = self.x;
         self.iter_init_position_y = self.y;
+
+        // Move to next than the iter init position
+        self.y += 1;
     }
 
     fn update_visited_max_corners(&mut self) {
-        if self.y == 0 && self.x == 0 {
+        if self.y <= 0 && self.x <= 0 {
             self.visited_max_corners.top_left = true;
         }
-        if self.y == 0 && self.x == self.index.width() - 1  {
+        if self.y <= 0 && self.x >= self.index.width() as isize  {
             self.visited_max_corners.top_right = true;
         }
-        if self.y == self.index.height() - 1 && self.x == 0 {
+        if self.y >= self.index.height() as isize && self.x <= 0 {
             self.visited_max_corners.bottom_left = true;
         }
-        if self.y == self.index.height() - 1 && self.x == self.index.width() - 1  {
+        if self.y >= self.index.height() as isize && self.x >= self.index.width() as isize {
             self.visited_max_corners.bottom_right = true;
         }
     }
@@ -372,6 +422,19 @@ mod tests {
         index.data[(0,4)].set_profiles(true);
         index.data[(9,0)].set_profiles(true);
         index.data[(9,4)].set_profiles(true);
+        index
+    }
+
+    fn mirror_index() -> LocationIndex {
+        let index =
+            LocationIndex::new(
+                10.try_into().unwrap(),
+                5.try_into().unwrap(),
+            );
+        index.data[(0,0)].set_profiles(true);
+        index.data[(0,9)].set_profiles(true);
+        index.data[(4,0)].set_profiles(true);
+        index.data[(4,9)].set_profiles(true);
         index
     }
 
@@ -420,6 +483,131 @@ mod tests {
         assert!(n == Some((9,4)), "was: {n:?}");
         let n = iter.next();
         assert!(n == Some((9,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == None, "was: {n:?}");
+    }
+
+    #[test]
+    fn iterator_top_right_works() {
+        let mut iter =
+            LocationIndexIterator::new(index().into());
+            iter.reset(4, 0);
+
+        let n = iter.next();
+        assert!(n == Some((0,4)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((9,4)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((9,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == None, "was: {n:?}");
+    }
+
+    #[test]
+    fn iterator_bottom_right_works() {
+        let mut iter =
+            LocationIndexIterator::new(index().into());
+            iter.reset(4, 9);
+
+        let n = iter.next();
+        assert!(n == Some((9,4)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((9,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,4)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == None, "was: {n:?}");
+    }
+
+    #[test]
+    fn iterator_bottom_left_works() {
+        let mut iter =
+            LocationIndexIterator::new(index().into());
+            iter.reset(0, 9);
+
+        let n = iter.next();
+        assert!(n == Some((9,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((9,4)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,4)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == None, "was: {n:?}");
+    }
+
+    #[test]
+    fn mirror_iterator_top_left_works() {
+        let mut iter =
+            LocationIndexIterator::new(mirror_index().into());
+
+        let n = iter.next();
+        assert!(n == Some((0,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((4,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,9)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((4,9)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == None, "was: {n:?}");
+    }
+
+    #[test]
+    fn mirror_iterator_top_right_works() {
+        let mut iter =
+            LocationIndexIterator::new(mirror_index().into());
+            iter.reset(9, 0);
+
+        let n = iter.next();
+        assert!(n == Some((0,9)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((4,9)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((4,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == None, "was: {n:?}");
+    }
+
+    #[test]
+    fn mirror_iterator_bottom_right_works() {
+        let mut iter =
+            LocationIndexIterator::new(mirror_index().into());
+            iter.reset(9, 4);
+
+        let n = iter.next();
+        assert!(n == Some((4,9)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,9)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((4,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == None, "was: {n:?}");
+    }
+
+    #[test]
+    fn mirror_iterator_bottom_left_works() {
+        let mut iter =
+            LocationIndexIterator::new(mirror_index().into());
+            iter.reset(0, 4);
+
+        let n = iter.next();
+        assert!(n == Some((4,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,0)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((0,9)), "was: {n:?}");
+        let n = iter.next();
+        assert!(n == Some((4,9)), "was: {n:?}");
         let n = iter.next();
         assert!(n == None, "was: {n:?}");
     }
