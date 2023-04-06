@@ -22,11 +22,36 @@
 //!
 //! Matrix indexes are used like a key for HashMap<(u16,u16), Vec<AccountId>>
 
-use std::{sync::{atomic::{AtomicI16, AtomicU16, Ordering, AtomicBool}, Arc}, num::NonZeroU16};
+use std::{sync::{atomic::{AtomicI16, AtomicU16, Ordering, AtomicBool}, Arc}, num::NonZeroU16, ops::Index};
 
 use nalgebra::{DMatrix, VecStorage, Dyn};
 
 use crate::api::account::data;
+
+
+#[derive(Debug, Hash, PartialEq, Clone, Copy)]
+pub struct LocationIndexKey {
+    pub y: u16,
+    pub x: u16,
+}
+
+impl LocationIndexKey {
+    fn x(&self) -> usize {
+        self.x as usize
+    }
+
+    fn y(&self) -> usize {
+        self.y as usize
+    }
+}
+
+impl Index<LocationIndexKey> for DMatrix<CellData> {
+    type Output = <Self as Index<(usize, usize)>>::Output;
+
+    fn index(&self, key: LocationIndexKey) -> &Self::Output {
+        &self[(key.y as usize, key.x as usize)]
+    }
+}
 
 /// Origin (0,0) = (y, x) is at top left corner.
 pub struct LocationIndex {
@@ -160,7 +185,8 @@ impl VisitedMaxCorners {
 /// Iterator for location index
 ///
 /// Start from one cell and enlarge area clockwise.
-/// Each iteration starts from top right corner.
+/// Each iteration starts from one cell down of top right corner.
+/// Iteration ends to top right corner.
 pub struct LocationIndexIterator {
     index: Arc<LocationIndex>,
     init_position_y: isize,
@@ -211,9 +237,14 @@ impl LocationIndexIterator {
     }
 
     /// Get next cell where are profiles.
+    pub fn next(&mut self) -> Option<LocationIndexKey> {
+        self.next_raw().map(|(y, x)| LocationIndexKey { y, x })
+    }
+
+    /// Get next cell where are profiles.
     ///
     /// Returns key for HashMap. Key is (y, x)
-    pub fn next(&mut self) -> Option<(u16, u16)> {
+    fn next_raw(&mut self) -> Option<(u16, u16)> {
         if self.completed {
             return None;
         }
@@ -407,6 +438,114 @@ impl LocationIndexIterator {
 }
 
 
+/// Update index.
+///
+/// Create only one IndexUpdater as it modifies the LocationIndex.
+pub struct IndexUpdater {
+    index: Arc<LocationIndex>,
+}
+
+impl IndexUpdater {
+    pub fn new(index: Arc<LocationIndex>) -> Self {
+        Self {
+            index,
+        }
+    }
+
+    pub fn flag_cell_to_have_profiles(&mut self, key: LocationIndexKey) {
+        if self.index.data[key].profiles() {
+            return;
+        }
+
+        self.index.data[key].set_profiles(true);
+
+        // Update right side of row
+        for c in self.index.data.row(key.y()).iter().skip(key.x() + 1) {
+            c.set_next_left(key.x());
+
+            if c.profiles() {
+                break
+            }
+        }
+
+        // Update left side of row
+        for c in self.index.data.row(key.y()).iter().rev().skip(self.index.width() - key.x()) {
+            c.set_next_right(key.x());
+
+            if c.profiles() {
+                break
+            }
+        }
+
+        // Update bottom side of column
+        for c in self.index.data.column(key.x()).iter().skip(key.y() + 1) {
+            c.set_next_up(key.y());
+
+            if c.profiles() {
+                break
+            }
+        }
+
+        // Update top side of column
+        for c in self.index.data.column(key.x()).iter().rev().skip(self.index.height() - key.y()) {
+            c.set_next_down(key.y());
+
+            if c.profiles() {
+                break
+            }
+        }
+    }
+
+    pub fn remove_profile_flag_from_cell(&mut self, key: LocationIndexKey) {
+        if !self.index.data[key].profiles() {
+            return;
+        }
+
+        let cell = &self.index.data[key];
+        cell.set_profiles(false);
+
+        let next_right = cell.next_right();
+        let next_left = cell.next_left();
+        let next_up = cell.next_up();
+        let next_down = cell.next_down();
+
+        // Update right side of row
+        for c in self.index.data.row(key.y()).iter().skip(key.x() + 1) {
+            c.set_next_left(next_left);
+
+            if c.profiles() {
+                break
+            }
+        }
+
+        // Update left side of row
+        for c in self.index.data.row(key.y()).iter().rev().skip(self.index.width() - key.x()) {
+            c.set_next_right(next_right);
+
+            if c.profiles() {
+                break
+            }
+        }
+
+        // Update bottom side of column
+        for c in self.index.data.column(key.x()).iter().skip(key.y() + 1) {
+            c.set_next_up(next_up);
+
+            if c.profiles() {
+                break
+            }
+        }
+
+        // Update top side of column
+        for c in self.index.data.column(key.x()).iter().rev().skip(self.index.height() - key.y()) {
+            c.set_next_down(next_down);
+
+            if c.profiles() {
+                break
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -475,15 +614,15 @@ mod tests {
         let mut iter =
             LocationIndexIterator::new(index().into());
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
     }
 
@@ -493,15 +632,15 @@ mod tests {
             LocationIndexIterator::new(index().into());
             iter.reset(4, 0);
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
     }
 
@@ -511,15 +650,15 @@ mod tests {
             LocationIndexIterator::new(index().into());
             iter.reset(4, 9);
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
     }
 
@@ -529,15 +668,15 @@ mod tests {
             LocationIndexIterator::new(index().into());
             iter.reset(0, 9);
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((9,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,4)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
     }
 
@@ -546,15 +685,15 @@ mod tests {
         let mut iter =
             LocationIndexIterator::new(mirror_index().into());
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
     }
 
@@ -564,15 +703,15 @@ mod tests {
             LocationIndexIterator::new(mirror_index().into());
             iter.reset(9, 0);
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
     }
 
@@ -582,15 +721,15 @@ mod tests {
             LocationIndexIterator::new(mirror_index().into());
             iter.reset(9, 4);
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
     }
 
@@ -600,15 +739,73 @@ mod tests {
             LocationIndexIterator::new(mirror_index().into());
             iter.reset(0, 4);
 
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,0)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((0,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == Some((4,9)), "was: {n:?}");
-        let n = iter.next();
+        let n = iter.next_raw();
         assert!(n == None, "was: {n:?}");
+    }
+
+    // IndexUpdater
+
+    fn index_for_updater() -> LocationIndex {
+        LocationIndex::new(
+            3.try_into().unwrap(),
+            3.try_into().unwrap(),
+        )
+    }
+
+    #[test]
+    fn simple_index_update() {
+        let index: Arc<_> = index_for_updater().into();
+        let mut updater = IndexUpdater::new(index.clone());
+        updater.flag_cell_to_have_profiles(LocationIndexKey { x: 1, y: 1 });
+
+        let test_cell = |key: (usize, usize), up: usize, down: usize, left: usize, right: usize| {
+            assert!(index.data[key].next_up() == up);
+            assert!(index.data[key].next_down() == down);
+            assert!(index.data[key].next_left() == left);
+            assert!(index.data[key].next_right() == right);
+        };
+
+        // Check middle column
+        test_cell((0, 1), 0, 1, 0, 2);
+        test_cell((1, 1), 0, 2, 0, 2);
+        test_cell((2, 1), 1, 2, 0, 2);
+
+        // Check middle row
+        test_cell((1, 0), 0, 2, 0, 1);
+        test_cell((1, 1), 0, 2, 0, 2);
+        test_cell((1, 2), 0, 2, 1, 2);
+    }
+
+    #[test]
+    fn simple_index_remove_test() {
+        let index: Arc<_> = index_for_updater().into();
+        let mut updater = IndexUpdater::new(index.clone());
+        updater.flag_cell_to_have_profiles(LocationIndexKey { x: 1, y: 1 });
+        updater.remove_profile_flag_from_cell(LocationIndexKey { x: 1, y: 1 });
+
+        let test_cell = |key: (usize, usize), up: usize, down: usize, left: usize, right: usize| {
+            assert!(index.data[key].next_up() == up);
+            assert!(index.data[key].next_down() == down);
+            assert!(index.data[key].next_left() == left);
+            assert!(index.data[key].next_right() == right);
+        };
+
+        // Check middle column
+        test_cell((0, 1), 0, 2, 0, 2);
+        test_cell((1, 1), 0, 2, 0, 2);
+        test_cell((2, 1), 0, 2, 0, 2);
+
+        // Check middle row
+        test_cell((1, 0), 0, 2, 0, 2);
+        test_cell((1, 1), 0, 2, 0, 2);
+        test_cell((1, 2), 0, 2, 0, 2);
     }
 }
