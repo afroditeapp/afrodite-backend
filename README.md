@@ -14,7 +14,16 @@ sqlx database setup
 RUST_LOG=debug cargo run
 ```
 
+Add `debug = true` to config file and restart server.
+
 <http://localhost:3000/swagger-ui/>
+
+### Ubuntu 20.04
+
+```
+sudo apt install libssl-dev
+cargo install sqlx-cli
+```
 
 ### MacOS
 

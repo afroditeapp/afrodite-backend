@@ -4,7 +4,7 @@ use tokio::sync::oneshot;
 use crate::{
     api::model::AccountIdInternal,
     server::database::{
-        file::GitError, sqlite::SqliteDatabaseError, utils::GetReadWriteCmd, DatabaseError,
+        file::GitError, sqlite::SqliteDatabaseError, utils::GetReadWriteCmd, DatabaseError, write::HistoryWrite,
     },
 };
 
@@ -113,6 +113,14 @@ pub trait ErrorConversion: ResultExt + Sized {
         id: AccountIdInternal,
     ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info_lazy(Self::ERROR, || T::write_cmd(id))
+    }
+
+    #[track_caller]
+    fn with_history_write_cmd_info<T: GetReadWriteCmd>(
+        self,
+        id: AccountIdInternal,
+    ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
+        self.change_context_with_info_lazy(Self::ERROR, || HistoryWrite(T::write_cmd(id)))
     }
 
     #[track_caller]

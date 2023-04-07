@@ -4,7 +4,7 @@ use super::history::read::HistoryReadCommands;
 
 use async_trait::async_trait;
 
-use super::current::{read::SqliteReadCommands, write::SqliteWriteCommands};
+use super::current::{read::SqliteReadCommands, write::CurrentDataWriteCommands};
 use super::history::write::HistoryWriteCommands;
 
 use error_stack::Result;
@@ -65,6 +65,28 @@ impl SqliteWriteCloseHandle {
     /// Call this before closing the server.
     pub async fn close(self) {
         self.pool.close().await
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CurrentDataWriteHandle {
+    pub handle: SqliteWriteHandle,
+}
+
+impl CurrentDataWriteHandle {
+    pub fn pool(&self) -> &SqlitePool {
+        self.handle.pool()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct HistoryWriteHandle {
+    pub handle: SqliteWriteHandle,
+}
+
+impl HistoryWriteHandle {
+    pub fn pool(&self) -> &SqlitePool {
+        self.handle.pool()
     }
 }
 
@@ -180,7 +202,7 @@ pub trait SqliteUpdateJson {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &SqliteWriteCommands,
+        write: &CurrentDataWriteCommands,
     ) -> Result<(), SqliteDatabaseError>;
 }
 

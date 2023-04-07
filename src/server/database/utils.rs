@@ -36,3 +36,8 @@ impl GetReadWriteCmd for Profile {
         WriteCmd::Profile(id)
     }
 }
+
+
+pub fn current_unix_time() -> i64 {
+    time::OffsetDateTime::now_utc().unix_timestamp()
+}

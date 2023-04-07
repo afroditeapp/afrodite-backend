@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 use error_stack::Result;
 
-use crate::api::{
+use crate::{api::{
     account::data::AccountSetup,
     model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey}, self,
-};
+}, server::database::sqlite::CurrentDataWriteHandle};
 
 use super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson, SqliteWriteHandle};
 
@@ -23,12 +23,12 @@ macro_rules! insert_or_update_json {
     }};
 }
 
-pub struct SqliteWriteCommands<'a> {
-    handle: &'a SqliteWriteHandle,
+pub struct CurrentDataWriteCommands<'a> {
+    handle: &'a CurrentDataWriteHandle,
 }
 
-impl<'a> SqliteWriteCommands<'a> {
-    pub fn new(handle: &'a SqliteWriteHandle) -> Self {
+impl<'a> CurrentDataWriteCommands<'a> {
+    pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
         Self { handle }
     }
 
@@ -153,7 +153,7 @@ impl SqliteUpdateJson for Account {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &SqliteWriteCommands,
+        write: &CurrentDataWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,
@@ -173,7 +173,7 @@ impl SqliteUpdateJson for AccountSetup {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &SqliteWriteCommands,
+        write: &CurrentDataWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,
@@ -193,7 +193,7 @@ impl SqliteUpdateJson for Profile {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &SqliteWriteCommands,
+        write: &CurrentDataWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,

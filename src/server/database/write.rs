@@ -9,9 +9,9 @@ use crate::{
 };
 
 use super::{
-    current::write::SqliteWriteCommands,
+    current::write::CurrentDataWriteCommands,
     history::write::HistoryWriteCommands,
-    sqlite::{HistoryUpdateJson, SqliteUpdateJson},
+    sqlite::{HistoryUpdateJson, SqliteUpdateJson, CurrentDataWriteHandle, HistoryWriteHandle},
     utils::GetReadWriteCmd,
 };
 
@@ -30,18 +30,29 @@ impl std::fmt::Display for WriteCmd {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct HistoryWrite(pub WriteCmd);
+
+
+impl std::fmt::Display for HistoryWrite {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("Write command: {:?}", self))
+    }
+}
+
+
 pub struct WriteCommands<'a> {
-    sqlite_database_write: &'a SqliteWriteHandle,
-    history_write: &'a SqliteWriteHandle,
+    current_write: &'a CurrentDataWriteHandle,
+    history_write: &'a HistoryWriteHandle,
 }
 
 impl <'a> WriteCommands<'a> {
     pub fn new(
-        sqlite_database_write: &'a SqliteWriteHandle,
-        history_write: &'a SqliteWriteHandle,
+        current_write: &'a CurrentDataWriteHandle,
+        history_write: &'a HistoryWriteHandle,
     ) -> Self {
         Self {
-            sqlite_database_write,
+            current_write,
             history_write,
         }
     }
@@ -49,9 +60,11 @@ impl <'a> WriteCommands<'a> {
     pub async fn register(
         id_light: AccountIdLight,
         config: &Config,
-        sqlite_database_write: SqliteWriteHandle,
+        current_data_write: CurrentDataWriteHandle,
+        history_wirte: HistoryWriteHandle,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        let current = SqliteWriteCommands::new(&sqlite_database_write);
+        let current = CurrentDataWriteCommands::new(&current_data_write);
+        let history = HistoryWriteCommands::new(&history_wirte);
 
         let account = Account::default();
         let account_setup = AccountSetup::default();
@@ -61,6 +74,11 @@ impl <'a> WriteCommands<'a> {
             .store_account_id(id_light)
             .await
             .with_info_lazy(|| WriteCmd::AccountId(id_light))?;
+
+        history
+            .store_account_id(id)
+            .await
+            .with_info_lazy(|| HistoryWrite(WriteCmd::AccountId(id_light)))?;
 
         current
             .store_api_key(id, None)
@@ -73,10 +91,20 @@ impl <'a> WriteCommands<'a> {
                 .await
                 .with_write_cmd_info::<Account>(id)?;
 
+            history
+                .store_account(id, &account)
+                .await
+                .with_history_write_cmd_info::<Account>(id)?;
+
             current
                 .store_account_setup(id, &account_setup)
                 .await
                 .with_write_cmd_info::<AccountSetup>(id)?;
+
+            history
+                .store_account_setup(id, &account_setup)
+                .await
+                .with_history_write_cmd_info::<AccountSetup>(id)?;
         }
 
         if config.components().profile {
@@ -84,6 +112,11 @@ impl <'a> WriteCommands<'a> {
                 .store_profile(id, &profile)
                 .await
                 .with_write_cmd_info::<Profile>(id)?;
+
+            history
+                .store_profile(id, &profile)
+                .await
+                .with_history_write_cmd_info::<Profile>(id)?;
         }
 
         Ok(id)
@@ -96,16 +129,16 @@ impl <'a> WriteCommands<'a> {
             .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))
     }
 
-    pub(super) fn current(&self) -> SqliteWriteCommands {
-        SqliteWriteCommands::new(&self.sqlite_database_write)
+    pub(super) fn current(&self) -> CurrentDataWriteCommands {
+        CurrentDataWriteCommands::new(&self.current_write)
     }
 
     pub(super) fn history(&self) -> HistoryWriteCommands {
-        HistoryWriteCommands::new(&self.sqlite_database_write)
+        HistoryWriteCommands::new(&self.history_write)
     }
 
     pub async fn update_json<
-        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + 'static,
+        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + 'static,
     >(
         &mut self,
         id: AccountIdInternal,
@@ -113,6 +146,10 @@ impl <'a> WriteCommands<'a> {
     ) -> Result<(), DatabaseError> {
         data.update_json(id, &self.current())
             .await
-            .with_write_cmd_info::<T>(id)
+            .with_write_cmd_info::<T>(id)?;
+        
+        data.history_update_json(id, &self.history())
+            .await
+            .with_history_write_cmd_info::<T>(id)
     }
 }

@@ -22,7 +22,7 @@ use self::{
     history::read::HistoryReadCommands,
     sqlite::{
         DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
-        SqliteWriteCloseHandle, SqliteWriteHandle,
+        SqliteWriteCloseHandle, SqliteWriteHandle, CurrentDataWriteHandle, HistoryWriteHandle,
     },
     write::WriteCommands, read::ReadCommands,
 };
@@ -142,9 +142,9 @@ impl DatabaseManager {
         };
 
         let router_handle = RouterDatabaseHandle {
-            sqlite_write,
+            sqlite_write: CurrentDataWriteHandle { handle: sqlite_write },
             sqlite_read,
-            history_write,
+            history_write: HistoryWriteHandle { handle: history_write },
             history_read,
             root,
         };
@@ -162,9 +162,9 @@ impl DatabaseManager {
 
 pub struct RouterDatabaseHandle {
     root: DatabaseRoot,
-    sqlite_write: SqliteWriteHandle,
+    sqlite_write: CurrentDataWriteHandle,
     sqlite_read: SqliteReadHandle,
-    history_write: SqliteWriteHandle,
+    history_write: HistoryWriteHandle,
     history_read: SqliteReadHandle,
 }
 
@@ -182,6 +182,7 @@ impl RouterDatabaseHandle {
             id_light,
             config,
             self.sqlite_write.clone(),
+            self.history_write.clone(),
         ).await
     }
 
