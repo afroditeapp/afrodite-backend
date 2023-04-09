@@ -7,11 +7,10 @@ use axum::{Json, TypedHeader};
 
 use hyper::StatusCode;
 
-use crate::server::session::AccountStateInRam;
 
 use self::data::{Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus};
 
-use super::{GetConfig, utils::{get_account, get_account_from_api_key}};
+use super::{GetConfig, utils::{}};
 
 use tracing::error;
 
@@ -34,7 +33,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
+pub async fn post_register<S: GetRouterDatabaseHandle + GetConfig>(
     state: S,
 ) -> Result<Json<AccountIdLight>, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
@@ -45,13 +44,7 @@ pub async fn post_register<S: GetRouterDatabaseHandle + GetUsers + GetConfig>(
         .database()
         .register(id.as_light(), state.config());
     match register.await {
-        Ok(internal_id) => {
-            let account_state = AccountStateInRam::new(internal_id);
-            state
-                .users()
-                .write()
-                .await
-                .insert(id.as_light(), Arc::new(account_state));
+        Ok(id) => {
             Ok(id.as_light().into())
         }
         Err(e) => {
@@ -79,22 +72,20 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
     state: S,
 ) -> Result<Json<ApiKey>, StatusCode> {
     let key = ApiKey::generate_new();
-    let account_state = get_account(&state, id, |account| account.clone()).await?;
+
+    let id = state.users().get_internal_id(id).await.map_err(|e| {
+        error!("Login error: {e:?}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     state
         .write_database()
-        .update_api_key(account_state.id(), Some(&key))
+        .set_new_api_key(id, key.clone())
         .await
         .map_err(|e| {
             error!("Login error: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
         })?;
-
-    state
-        .api_keys()
-        .write()
-        .await
-        .insert(key.clone(), account_state);
 
     Ok(key.into())
 }
@@ -141,7 +132,11 @@ pub async fn get_account_state<S: GetApiKeys + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
-    let id = get_account_from_api_key(&state, api_key.key(), |a| a.id()).await?;
+    let id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     state
         .read_database()
@@ -160,8 +155,9 @@ pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
 #[utoipa::path(
     post,
     path = "/account_api/setup",
+    request_body(content = AccountSetup),
     responses(
-        (status = 200, description = "Request successfull.", body = Account),
+        (status = 200, description = "Request successfull."),
         (status = 406, description = "Current state is not initial setup."),
         (status = 401, description = "Unauthorized."),
         (
@@ -175,7 +171,11 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     Json(data): Json<AccountSetup>,
     state: S,
 ) -> Result<StatusCode, StatusCode> {
-    let id = get_account_from_api_key(&state, api_key.key(), |a| a.id()).await?;
+    let id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let account = state
         .read_database()
@@ -196,7 +196,7 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
             })
             .map(|_| StatusCode::OK)
     } else {
-        Err(StatusCode::INTERNAL_SERVER_ERROR)
+        Err(StatusCode::NOT_ACCEPTABLE)
     }
 }
 

@@ -14,7 +14,7 @@ pub const PATH_CHECK_API_KEY: &str = "/internal/check_api_key";
     get,
     path = "/internal/check_api_key",
     responses(
-        (status = 200, description = "Check API key", body = AccountId),
+        (status = 200, description = "Check API key", body = AccountIdLight),
         (status = 404, description = "API key was invalid"),
     ),
     security(("api_key" = [])),
@@ -25,9 +25,8 @@ pub async fn check_api_key<S: GetApiKeys>(
 ) -> Result<Json<AccountIdLight>, StatusCode> {
     state
         .api_keys()
-        .read()
+        .api_key_exists(api_key.key())
         .await
-        .get(api_key.key())
         .ok_or(StatusCode::NOT_FOUND)
-        .map(|state| state.id().as_light().into())
+        .map(|id| id.as_light().into())
 }

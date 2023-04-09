@@ -6,6 +6,7 @@ pub mod sqlite;
 pub mod utils;
 pub mod write;
 pub mod index;
+pub mod cache;
 
 use std::{
     fs,
@@ -24,7 +25,7 @@ use self::{
         DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
         SqliteWriteCloseHandle, SqliteWriteHandle, CurrentDataWriteHandle, HistoryWriteHandle,
     },
-    write::WriteCommands, read::ReadCommands,
+    write::WriteCommands, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager},
 };
 use crate::utils::IntoReportExt;
 
@@ -39,6 +40,8 @@ pub enum DatabaseError {
     Git,
     #[error("SQLite error")]
     Sqlite,
+    #[error("Cache error")]
+    Cache,
 
     // Other errors
     #[error("Database initialization error")]
@@ -111,6 +114,7 @@ impl DatabaseManager {
     /// Runs also some blocking file system code.
     pub async fn new<T: AsRef<Path>>(
         database_dir: T,
+        config: &Config,
     ) -> Result<(Self, RouterDatabaseHandle), DatabaseError> {
         let root = DatabaseRoot::new(database_dir)?;
 
@@ -141,12 +145,16 @@ impl DatabaseManager {
             history_read_close,
         };
 
+        let read_commands = SqliteReadCommands::new(&sqlite_read);
+        let cache = DatabaseCache::new(read_commands, config).await.change_context(DatabaseError::Cache)?;
+
         let router_handle = RouterDatabaseHandle {
             sqlite_write: CurrentDataWriteHandle { handle: sqlite_write },
             sqlite_read,
             history_write: HistoryWriteHandle { handle: history_write },
             history_read,
             root,
+            cache,
         };
 
         Ok((database_manager, router_handle))
@@ -166,11 +174,12 @@ pub struct RouterDatabaseHandle {
     sqlite_read: SqliteReadHandle,
     history_write: HistoryWriteHandle,
     history_read: SqliteReadHandle,
+    cache: DatabaseCache,
 }
 
 impl RouterDatabaseHandle {
     pub fn user_write_commands(&self) -> WriteCommands {
-        WriteCommands::new(&self.sqlite_write, &self.history_write)
+        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache)
     }
 
     pub async fn register(
@@ -183,15 +192,24 @@ impl RouterDatabaseHandle {
             config,
             self.sqlite_write.clone(),
             self.history_write.clone(),
+            &self.cache
         ).await
     }
 
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(&self.sqlite_read)
+        ReadCommands::new(&self.sqlite_read, &self.cache)
     }
 
     pub fn history(&self) -> HistoryReadCommands<'_> {
         HistoryReadCommands::new(&self.history_read)
+    }
+
+    pub fn api_key_manager(&self) -> ApiKeyManager<'_> {
+        ApiKeyManager::new(&self.cache)
+    }
+
+    pub fn account_id_manager(&self) -> AccountIdManager<'_> {
+        AccountIdManager::new(&self.cache)
     }
 }
 

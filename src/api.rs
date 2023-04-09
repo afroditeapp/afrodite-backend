@@ -17,8 +17,8 @@ use crate::{
     client::{account::AccountInternalApi, media::MediaInternalApi},
     config::Config,
     server::{
-        database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle, read::ReadCommands},
-        session::{AccountStateInRam, SessionManager},
+        database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}},
+        session::{SessionManager},
     },
 };
 
@@ -102,12 +102,12 @@ pub trait GetRouterDatabaseHandle {
 
 pub trait GetApiKeys {
     /// Users which are logged in.
-    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, Arc<AccountStateInRam>>>;
+    fn api_keys(&self) -> ApiKeyManager<'_>;
 }
 
 pub trait GetUsers {
     /// All users registered in the service.
-    fn users(&self) -> &RwLock<HashMap<AccountIdLight, Arc<AccountStateInRam>>>;
+    fn users(&self) -> AccountIdManager<'_>;
 }
 
 

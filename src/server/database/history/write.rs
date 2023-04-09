@@ -16,7 +16,7 @@ use crate::utils::IntoReportExt;
 
 macro_rules! insert_or_update_json {
     ($self:expr, $sql:literal, $data:expr, $unix_time:expr, $id:expr) => {{
-        let id = $id.as_uuid();
+        let id = $id.row_id();
         let unix_time = $unix_time;
         let data = serde_json::to_string($data).into_error(SqliteDatabaseError::SerdeSerialize)?;
         sqlx::query!($sql, data, unix_time, id,)

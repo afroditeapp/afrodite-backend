@@ -21,8 +21,8 @@ use crate::{
 };
 
 use super::{
-    database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle, read::ReadCommands},
-    session::{AccountStateInRam, SessionManager},
+    database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache},
+    session::{ SessionManager},
 };
 
 #[derive(Clone)]
@@ -45,14 +45,14 @@ impl GetRouterDatabaseHandle for AppState {
 }
 
 impl GetApiKeys for AppState {
-    fn api_keys(&self) -> &RwLock<HashMap<ApiKey, Arc<AccountStateInRam>>> {
-        &self.session_manager.api_keys
+    fn api_keys(&self) -> ApiKeyManager<'_> {
+        self.session_manager.database.api_key_manager()
     }
 }
 
 impl GetUsers for AppState {
-    fn users(&self) -> &RwLock<HashMap<AccountIdLight, Arc<AccountStateInRam>>> {
-        &self.session_manager.accounts
+    fn users(&self) -> AccountIdManager<'_> {
+        self.session_manager.database.account_id_manager()
     }
 }
 

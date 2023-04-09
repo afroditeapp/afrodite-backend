@@ -1,9 +1,11 @@
 
+use std::fmt::Debug;
+
 use tokio_stream::StreamExt;
 
-use crate::{api::model::{AccountIdInternal, ApiKey}, utils::ErrorConversion};
+use crate::{api::model::{AccountIdInternal, ApiKey, AccountIdLight}, utils::ErrorConversion};
 
-use super::{current::read::SqliteReadCommands, sqlite::{SqliteReadHandle, SqliteSelectJson}, DatabaseError, utils::GetReadWriteCmd};
+use super::{current::read::SqliteReadCommands, sqlite::{SqliteReadHandle, SqliteSelectJson}, DatabaseError, utils::GetReadWriteCmd, cache::{ReadCacheJson, DatabaseCache}};
 
 use error_stack::{Result, ResultExt};
 
@@ -24,16 +26,18 @@ impl std::fmt::Display for ReadCmd {
 
 pub struct ReadCommands<'a> {
     sqlite: SqliteReadCommands<'a>,
+    cache: &'a DatabaseCache,
 }
 
 impl<'a> ReadCommands<'a> {
-    pub fn new(sqlite: &'a SqliteReadHandle) -> Self {
+    pub fn new(sqlite: &'a SqliteReadHandle, cache: &'a DatabaseCache) -> Self {
         Self {
-            sqlite: SqliteReadCommands::new(sqlite),
+            sqlite: SqliteReadCommands::new(sqlite), cache
         }
     }
 
-    pub async fn user_api_key(&self, id: AccountIdInternal) -> Result<Option<ApiKey>, DatabaseError> {
+    pub async fn user_api_key(&self, id: AccountIdLight) -> Result<Option<ApiKey>, DatabaseError> {
+        let id = self.cache.to_account_id_internal(id).await.change_context(DatabaseError::Cache)?;
         self.sqlite.api_key(id).await
             .change_context(DatabaseError::Sqlite)
     }
@@ -48,11 +52,16 @@ impl<'a> ReadCommands<'a> {
     }
 
     pub async fn read_json<
-        T: SqliteSelectJson + GetReadWriteCmd
+        T: SqliteSelectJson + GetReadWriteCmd + ReadCacheJson
     >(&self, id: AccountIdInternal) -> Result<T, DatabaseError> {
-        T::select_json(id, &self.sqlite)
-            .await
-            .with_info_lazy(|| T::read_cmd(id))
+        if T::CACHED_JSON {
+            T::read_from_cache(id.as_light(), self.cache)
+                .await
+                .with_info_lazy(|| T::read_cmd(id))
+        } else {
+            T::select_json(id, &self.sqlite)
+                .await
+                .with_info_lazy(|| T::read_cmd(id))
+        }
     }
-
 }

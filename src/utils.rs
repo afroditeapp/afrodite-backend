@@ -4,7 +4,7 @@ use tokio::sync::oneshot;
 use crate::{
     api::model::AccountIdInternal,
     server::database::{
-        file::GitError, sqlite::SqliteDatabaseError, utils::GetReadWriteCmd, DatabaseError, write::HistoryWrite,
+        file::GitError, sqlite::SqliteDatabaseError, utils::GetReadWriteCmd, DatabaseError, write::{HistoryWrite, CacheWrite}, cache::CacheError,
     },
 };
 
@@ -124,6 +124,14 @@ pub trait ErrorConversion: ResultExt + Sized {
     }
 
     #[track_caller]
+    fn with_cache_write_cmd_info<T: GetReadWriteCmd>(
+        self,
+        id: AccountIdInternal,
+    ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
+        self.change_context_with_info_lazy(Self::ERROR, || CacheWrite(T::write_cmd(id)))
+    }
+
+    #[track_caller]
     fn with_read_cmd_info<T: GetReadWriteCmd>(
         self,
         id: AccountIdInternal,
@@ -140,6 +148,11 @@ impl<T> ErrorConversion for Result<T, GitError> {
 impl<T> ErrorConversion for Result<T, SqliteDatabaseError> {
     type Err = DatabaseError;
     const ERROR: <Self as ErrorConversion>::Err = DatabaseError::Sqlite;
+}
+
+impl<T> ErrorConversion for Result<T, CacheError> {
+    type Err = DatabaseError;
+    const ERROR: <Self as ErrorConversion>::Err = DatabaseError::Cache;
 }
 
 pub type ErrorContainer<E> = Option<Report<E>>;

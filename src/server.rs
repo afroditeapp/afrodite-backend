@@ -34,7 +34,7 @@ impl PihkaServer {
         tracing_subscriber::fmt::init();
 
         let (database_manager, router_database_handle) =
-            DatabaseManager::new(self.config.database_dir().to_path_buf())
+            DatabaseManager::new(self.config.database_dir().to_path_buf(), &self.config)
                 .await
                 .expect("Database init failed");
 

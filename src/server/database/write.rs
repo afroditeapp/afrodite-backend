@@ -1,4 +1,4 @@
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use serde::Serialize;
 
 use crate::{
@@ -12,7 +12,7 @@ use super::{
     current::write::CurrentDataWriteCommands,
     history::write::HistoryWriteCommands,
     sqlite::{HistoryUpdateJson, SqliteUpdateJson, CurrentDataWriteHandle, HistoryWriteHandle},
-    utils::GetReadWriteCmd,
+    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson},
 };
 
 #[derive(Debug, Clone)]
@@ -36,24 +36,38 @@ pub struct HistoryWrite(pub WriteCmd);
 
 impl std::fmt::Display for HistoryWrite {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("Write command: {:?}", self))
+        f.write_fmt(format_args!("History write command: {:?}", self))
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct CacheWrite(pub WriteCmd);
+
+
+impl std::fmt::Display for CacheWrite {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("Cache write command: {:?}", self))
+    }
+}
+
 
 
 pub struct WriteCommands<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
+    cache: &'a DatabaseCache,
 }
 
 impl <'a> WriteCommands<'a> {
     pub fn new(
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
+        cache: &'a DatabaseCache,
     ) -> Self {
         Self {
             current_write,
             history_write,
+            cache,
         }
     }
 
@@ -62,6 +76,7 @@ impl <'a> WriteCommands<'a> {
         config: &Config,
         current_data_write: CurrentDataWriteHandle,
         history_wirte: HistoryWriteHandle,
+        cache: &DatabaseCache,
     ) -> Result<AccountIdInternal, DatabaseError> {
         let current = CurrentDataWriteCommands::new(&current_data_write);
         let history = HistoryWriteCommands::new(&history_wirte);
@@ -80,6 +95,11 @@ impl <'a> WriteCommands<'a> {
             .await
             .with_info_lazy(|| HistoryWrite(WriteCmd::AccountId(id_light)))?;
 
+        cache
+            .insert_account_if_not_exists(id)
+            .await
+            .with_info_lazy(|| CacheWrite(WriteCmd::AccountId(id_light)))?;
+
         current
             .store_api_key(id, None)
             .await
@@ -96,6 +116,11 @@ impl <'a> WriteCommands<'a> {
                 .await
                 .with_history_write_cmd_info::<Account>(id)?;
 
+            cache
+                .write_cache(id.as_light(), |cache| cache.account = Some(account.clone().into()))
+                .await
+                .with_history_write_cmd_info::<Account>(id)?;
+
             current
                 .store_account_setup(id, &account_setup)
                 .await
@@ -105,6 +130,7 @@ impl <'a> WriteCommands<'a> {
                 .store_account_setup(id, &account_setup)
                 .await
                 .with_history_write_cmd_info::<AccountSetup>(id)?;
+
         }
 
         if config.components().profile {
@@ -117,14 +143,23 @@ impl <'a> WriteCommands<'a> {
                 .store_profile(id, &profile)
                 .await
                 .with_history_write_cmd_info::<Profile>(id)?;
+
+            cache
+                .write_cache(id.as_light(), |cache| cache.profile = Some(profile.clone().into()))
+                .await
+                .with_history_write_cmd_info::<Profile>(id)?;
         }
 
         Ok(id)
     }
 
-    pub async fn update_api_key(&self, id: AccountIdInternal, key: Option<&ApiKey>) -> Result<(), DatabaseError> {
+    pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
         self.current()
-            .update_api_key(id, key)
+            .update_api_key(id, Some(&key))
+            .await
+            .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))?;
+
+        self.cache.update_api_key(id.as_light(), key)
             .await
             .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))
     }
@@ -138,7 +173,7 @@ impl <'a> WriteCommands<'a> {
     }
 
     pub async fn update_json<
-        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + 'static,
+        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + WriteCacheJson + Sync + 'static,
     >(
         &mut self,
         id: AccountIdInternal,
@@ -150,6 +185,14 @@ impl <'a> WriteCommands<'a> {
         
         data.history_update_json(id, &self.history())
             .await
-            .with_history_write_cmd_info::<T>(id)
+            .with_history_write_cmd_info::<T>(id)?;
+        
+        if T::CACHED_JSON {
+            data.write_to_cache(id.as_light(), &self.cache)
+                .await
+                .with_cache_write_cmd_info::<T>(id)
+        } else {
+            Ok(())
+        }
     }
 }

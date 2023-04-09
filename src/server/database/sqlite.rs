@@ -1,4 +1,4 @@
-use crate::api::model::AccountIdInternal;
+use crate::api::model::{AccountIdInternal, AccountIdLight};
 
 use super::history::read::HistoryReadCommands;
 

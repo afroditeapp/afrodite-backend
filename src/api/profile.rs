@@ -6,7 +6,7 @@ use hyper::StatusCode;
 
 use self::data::{Profile, Location};
 
-use super::{model::AccountIdLight, utils::{get_account, get_account_from_api_key}, GetUsers};
+use super::{model::AccountIdLight, utils::{}, GetUsers};
 
 use tracing::error;
 
@@ -49,16 +49,15 @@ pub async fn get_profile<S: ReadDatabase + GetUsers>(
     // TODO: Validate user id
 
     // TODO: check capablities
-
-    let requested_profile_id = get_account(
-        &state,
-        requested_profile,
-        |account| account.id(),
-    ).await?;
+    
+    let requested_profile = state.users().get_internal_id(requested_profile).await.map_err(|e| {
+        error!("get_profile: {e:?}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     state
         .read_database()
-        .read_json::<Profile>(requested_profile_id)
+        .read_json::<Profile>(requested_profile)
         .await
         .map(|profile| profile.into())
         .map_err(|e| {
@@ -117,7 +116,11 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     Json(mut profile): Json<Profile>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = get_account_from_api_key(&state, api_key.key(), |account| account.id()).await?;
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let mut old_profile: Profile =
         state.read_database()

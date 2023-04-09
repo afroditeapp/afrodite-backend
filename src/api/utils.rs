@@ -9,8 +9,6 @@ use utoipa::{
     Modify,
 };
 
-use crate::server::session::AccountStateInRam;
-
 use super::{model::{ApiKey, AccountIdInternal, AccountIdLight}, GetConfig, GetCoreServerInternalApi, GetUsers};
 
 use super::GetApiKeys;
@@ -30,7 +28,7 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys + GetCoreServerInternalA
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = ApiKey::new(key_str.to_string());
 
-    if state.api_keys().read().await.contains_key(&key) {
+    if state.api_keys().api_key_exists(&key).await.is_some() {
         Ok(next.run(req).await)
     } else if !state.config().components().account {
         // Check ApiKey from external service
@@ -43,7 +41,7 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys + GetCoreServerInternalA
             }
             Ok(None) => Err(StatusCode::UNAUTHORIZED),
             Err(_e) => {
-                // NOTE: Logging every error is not good as it would spam
+                // TODO: NOTE: Logging every error is not good as it would spam
                 // the log, but maybe an error counter or logging just
                 // once for a while.
                 Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -101,30 +99,30 @@ impl Modify for SecurityApiTokenDefault {
 
 
 
-pub async fn get_account<S: GetUsers, T>(
-    state: &S,
-    id: AccountIdLight,
-    fun: impl Fn(&Arc<AccountStateInRam>) -> T
-) -> Result<T, StatusCode> {
-    state
-        .users()
-        .read()
-        .await
-        .get(&id)
-        .ok_or(StatusCode::UNAUTHORIZED)
-        .map(fun)
-}
+// pub async fn get_account<S: GetUsers, T>(
+//     state: &S,
+//     id: AccountIdLight,
+//     fun: impl Fn(&Arc<AccountStateInRam>) -> T
+// ) -> Result<T, StatusCode> {
+//     state
+//         .users()
+//         .read()
+//         .await
+//         .get(&id)
+//         .ok_or(StatusCode::UNAUTHORIZED)
+//         .map(fun)
+// }
 
-pub async fn get_account_from_api_key<S: GetApiKeys, T>(
-    state: &S,
-    id: &ApiKey,
-    fun: impl Fn(&Arc<AccountStateInRam>) -> T
-) -> Result<T, StatusCode> {
-    state
-        .api_keys()
-        .read()
-        .await
-        .get(&id)
-        .ok_or(StatusCode::UNAUTHORIZED)
-        .map(fun)
-}
+// pub async fn get_account_from_api_key<S: GetApiKeys, T>(
+//     state: &S,
+//     id: &ApiKey,
+//     fun: impl Fn(&Arc<AccountStateInRam>) -> T
+// ) -> Result<T, StatusCode> {
+//     state
+//         .api_keys()
+//         .read()
+//         .await
+//         .get(&id)
+//         .ok_or(StatusCode::UNAUTHORIZED)
+//         .map(fun)
+// }
