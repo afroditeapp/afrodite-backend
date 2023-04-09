@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Arc, hash::Hash};
 use async_trait::async_trait;
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
+use tracing::info;
 
 use crate::{api::model::{AccountIdLight, Account, Profile, AccountIdInternal, ApiKey, AccountSetup}, config::Config};
 
@@ -42,6 +43,7 @@ impl DatabaseCache {
         };
 
         // Load data from database to memory.
+        info!("Starting to load data from database to memory");
 
         let mut accounts = read.account_ids_stream();
 
@@ -53,11 +55,11 @@ impl DatabaseCache {
         let read_account = cache.accounts.read().await;
         let ids = read_account.values();
         for id in ids {
-            let write = id.write().await;
-            let internal_id = write.account_id_internal;
+            let mut entry = id.write().await;
+            let internal_id = entry.account_id_internal;
 
             let api_key = read
-                .api_key(write.account_id_internal)
+                .api_key(entry.account_id_internal)
                 .await
                 .change_context(CacheError::Init)?;
 
@@ -72,26 +74,16 @@ impl DatabaseCache {
 
             if config.components().account {
                 let account = Account::select_json(internal_id, &read).await.change_context(CacheError::Init)?;
-                cache
-                    .write_cache(
-                        internal_id.as_light(), 
-                        |entry| entry.account = Some(account.clone().into())
-                    )
-                    .await
-                    .change_context(CacheError::Init)?;
+                entry.account = Some(account.clone().into())
             }
 
             if config.components().profile {
                 let profile = Profile::select_json(internal_id, &read).await.change_context(CacheError::Init)?;
-                cache
-                    .write_cache(
-                        internal_id.as_light(), 
-                        |entry| entry.profile = Some(profile.clone().into())
-                    )
-                    .await
-                    .change_context(CacheError::Init)?;
+                entry.profile = Some(profile.clone().into());
             }
         }
+
+        info!("Loading to memory complete");
 
         drop(read_account);
         Ok(cache)

@@ -14,6 +14,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use tracing::info;
 
 use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config};
 
@@ -116,6 +117,8 @@ impl DatabaseManager {
         database_dir: T,
         config: &Config,
     ) -> Result<(Self, RouterDatabaseHandle), DatabaseError> {
+        info!("Creating DatabaseManager");
+
         let root = DatabaseRoot::new(database_dir)?;
 
         let (sqlite_write, sqlite_write_close) =
@@ -156,6 +159,7 @@ impl DatabaseManager {
             root,
             cache,
         };
+        info!("DatabaseManager created");
 
         Ok((database_manager, router_handle))
     }
