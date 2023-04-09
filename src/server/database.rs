@@ -20,7 +20,7 @@ use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::
 
 use self::{
     current::read::SqliteReadCommands,
-    file::{GitDatabaseOperationHandle, GitError},
+    file::{GitDatabaseOperationHandle, GitError, utils::FilesDir},
     history::read::HistoryReadCommands,
     sqlite::{
         DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
@@ -32,6 +32,7 @@ use crate::utils::IntoReportExt;
 
 pub const DB_HISTORY_DIR_NAME: &str = "history";
 pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";
+pub const DB_FILES_DIR_NAME: &str = "files";
 
 pub type DatabeseEntryId = String;
 
@@ -76,6 +77,12 @@ impl DatabaseRoot {
             fs::create_dir(&current).into_error(DatabaseError::Init)?;
         }
         let current = SqliteDatabasePath::new(current);
+
+        let files = root.join(DB_FILES_DIR_NAME);
+        if !files.exists() {
+            fs::create_dir(&files).into_error(DatabaseError::Init)?;
+        }
+        let files = FilesDir::new(files);
 
         Ok(Self {
             root,

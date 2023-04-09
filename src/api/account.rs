@@ -19,6 +19,9 @@ use super::{
     WriteDatabase,
 };
 
+// TODO: Cache and databases can go different state if for example /account_api/setup is
+//       spammed. This can be a feature as effects are one account only?
+
 // TODO: Update register and login to support Apple and Google single sign on.
 
 pub const PATH_REGISTER: &str = "/account_api/register";
@@ -170,7 +173,7 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(data): Json<AccountSetup>,
     state: S,
-) -> Result<StatusCode, StatusCode> {
+) -> Result<(), StatusCode> {
     let id = state
         .api_keys()
         .api_key_exists(api_key.key())
@@ -194,7 +197,6 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
                 error!("Write database error: {e:?}");
                 StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
             })
-            .map(|_| StatusCode::OK)
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -219,10 +221,39 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("api_key" = [])),
 )]
 pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
+    let id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    Err(StatusCode::NOT_ACCEPTABLE)
+    let mut account = state
+        .read_database()
+        .read_json::<Account>(id)
+        .await
+        .map_err(|e| {
+            error!("Get Account error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })?;
+
+    // TODO: Check that image request is done
+
+    if account.state() == AccountState::InitialSetup {
+        account.complete_setup();
+
+        state.write_database()
+            .update_json(id, &account)
+            .await
+            .map_err(|e| {
+                error!("Write database error: {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+            })
+    } else {
+        Err(StatusCode::NOT_ACCEPTABLE)
+    }
 }
 
 

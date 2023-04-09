@@ -224,6 +224,12 @@ impl Account {
     pub fn state(&self) -> AccountState {
         self.state
     }
+
+    pub fn complete_setup(&mut self) {
+        if self.state == AccountState::InitialSetup {
+            self.state = AccountState::Normal;
+        }
+    }
 }
 
 impl Default for Account {
@@ -245,16 +251,35 @@ pub enum AccountState {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct Capabilities {
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_modify_capablities: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_setup_possible: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_moderate_profiles: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_moderate_images: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     /// View public and private profiles.
     admin_view_all_profiles: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_view_private_info: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_view_profile_history: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin_ban_profile: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     banned_edit_profile: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     /// View public profiles
     view_public_profiles: Option<bool>,
 }
