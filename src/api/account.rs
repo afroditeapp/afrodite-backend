@@ -82,7 +82,7 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
     })?;
 
     state
-        .write_database()
+        .write_database(id.as_light())
         .set_new_api_key(id, key.clone())
         .await
         .map_err(|e| {
@@ -190,7 +190,7 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
         })?;
 
     if account.state() == AccountState::InitialSetup {
-        state.write_database()
+        state.write_database(id.as_light())
             .update_json(id, &data)
             .await
             .map_err(|e| {
@@ -244,7 +244,7 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();
 
-        state.write_database()
+        state.write_database(id.as_light())
             .update_json(id, &account)
             .await
             .map_err(|e| {

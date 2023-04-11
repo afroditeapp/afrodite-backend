@@ -65,8 +65,9 @@ impl ReadDatabase for AppState {
 impl WriteDatabase for AppState {
     fn write_database(
         &self,
+        lock_id: AccountIdLight,
     ) -> WriteCommands<'_> {
-        self.database().user_write_commands()
+        self.database().user_write_commands(lock_id)
     }
 }
 

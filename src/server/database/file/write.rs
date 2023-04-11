@@ -5,51 +5,27 @@ use std::io::Write;
 use tracing::error;
 
 use super::file::{};
-use super::{super::file::GitDatabase, GitError};
+use super::utils::FileDir;
+use super::{FileError};
 
 use crate::utils::IntoReportExt;
 use crate::{
     api::model::ApiKey,
     server::database::{
         file::file::{},
-        file::utils::AccountFilesDir,
-        GitDatabaseOperationHandle,
+        file::utils::AccountDir,
+        FileOperationHandle,
     },
 };
 
-/// Make sure that you do not make concurrent writes.
-pub struct GitDatabaseWriteCommands {
-    profile: AccountFilesDir,
-    /// This keeps database operation running even if quit singal is received.
-    handle: GitDatabaseOperationHandle,
+pub struct FileWriteCommands<'a> {
+    dir: &'a FileDir,
 }
 
-impl GitDatabaseWriteCommands {
+impl <'a> FileWriteCommands<'a> {
     pub fn new(
-        mut profile: AccountFilesDir,
-        handle: GitDatabaseOperationHandle,
-        common_message: Option<&str>,
+        dir: &'a FileDir,
     ) -> Self {
-
-        Self { profile, handle }
+        Self { dir }
     }
-
-    async fn run_git_command<T: FnOnce(AccountFilesDir) -> Result<(), GitError> + Send + 'static>(
-        self,
-        command: T,
-    ) -> Result<(), GitError> {
-        let task = tokio::task::spawn_blocking(|| {
-            let result = command(self.profile);
-            drop(self.handle);
-            result
-        });
-
-        // TODO: This might log user data here?
-        let result = task.await.unwrap();
-        if let Err(e) = &result {
-            error!("Database write command error {e:?}");
-        }
-        result
-    }
-
 }

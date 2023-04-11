@@ -49,7 +49,7 @@ pub async fn get_profile<S: ReadDatabase + GetUsers>(
     // TODO: Validate user id
 
     // TODO: check capablities
-    
+
     let requested_profile = state.users().get_internal_id(requested_profile).await.map_err(|e| {
         error!("get_profile: {e:?}");
         StatusCode::INTERNAL_SERVER_ERROR
@@ -140,7 +140,7 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
 
     profile.generate_new_version();
 
-    state.write_database()
+    state.write_database(account_id.as_light())
         .update_json(account_id, &profile)
         .await
         .map_err(|e| {

@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use error_stack::{Result, ResultExt};
 use serde::Serialize;
+use tokio::sync::{MutexGuard, Mutex};
 
 use crate::{
     api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight},
@@ -50,12 +53,14 @@ impl std::fmt::Display for CacheWrite {
     }
 }
 
-
+/// One Account can do only one write command at a time.
+pub struct AccountWriteLock;
 
 pub struct WriteCommands<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
+    locking_id: AccountIdLight,
 }
 
 impl <'a> WriteCommands<'a> {
@@ -63,11 +68,13 @@ impl <'a> WriteCommands<'a> {
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
+        locking_id: AccountIdLight,
     ) -> Self {
         Self {
             current_write,
             history_write,
             cache,
+            locking_id,
         }
     }
 
@@ -154,6 +161,49 @@ impl <'a> WriteCommands<'a> {
     }
 
     pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
+        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
+        let lock = mutex.lock().await;
+        WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, &lock).set_new_api_key(id, key).await
+    }
+
+    pub async fn update_json<
+        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + WriteCacheJson + Sync + 'static,
+    >(
+        &mut self,
+        id: AccountIdInternal,
+        data: &T,
+    ) -> Result<(), DatabaseError> {
+        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
+        let lock = mutex.lock().await;
+        WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, &lock).update_json(id, data).await
+    }
+}
+
+
+struct WriteCommandsInternal<'a> {
+    current_write: &'a CurrentDataWriteHandle,
+    history_write: &'a HistoryWriteHandle,
+    cache: &'a DatabaseCache,
+    lock: &'a AccountWriteLock,
+}
+
+impl <'a> WriteCommandsInternal<'a> {
+    pub fn new(
+        current_write: &'a CurrentDataWriteHandle,
+        history_write: &'a HistoryWriteHandle,
+        cache: &'a DatabaseCache,
+        lock: &'a AccountWriteLock,
+    ) -> Self {
+        Self {
+            current_write,
+            history_write,
+            cache,
+            lock,
+        }
+    }
+
+
+    pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
         self.current()
             .update_api_key(id, Some(&key))
             .await
@@ -162,14 +212,6 @@ impl <'a> WriteCommands<'a> {
         self.cache.update_api_key(id.as_light(), key)
             .await
             .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))
-    }
-
-    pub(super) fn current(&self) -> CurrentDataWriteCommands {
-        CurrentDataWriteCommands::new(&self.current_write)
-    }
-
-    pub(super) fn history(&self) -> HistoryWriteCommands {
-        HistoryWriteCommands::new(&self.history_write)
     }
 
     pub async fn update_json<
@@ -182,11 +224,11 @@ impl <'a> WriteCommands<'a> {
         data.update_json(id, &self.current())
             .await
             .with_write_cmd_info::<T>(id)?;
-        
+
         data.history_update_json(id, &self.history())
             .await
             .with_history_write_cmd_info::<T>(id)?;
-        
+
         if T::CACHED_JSON {
             data.write_to_cache(id.as_light(), &self.cache)
                 .await
@@ -195,4 +237,13 @@ impl <'a> WriteCommands<'a> {
             Ok(())
         }
     }
+
+    fn current(&self) -> CurrentDataWriteCommands {
+        CurrentDataWriteCommands::new(&self.current_write)
+    }
+
+    fn history(&self) -> HistoryWriteCommands {
+        HistoryWriteCommands::new(&self.history_write)
+    }
+
 }

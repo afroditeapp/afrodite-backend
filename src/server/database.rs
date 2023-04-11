@@ -20,19 +20,19 @@ use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::
 
 use self::{
     current::read::SqliteReadCommands,
-    file::{GitDatabaseOperationHandle, GitError, utils::FilesDir},
+    file::{FileOperationHandle, FileError, utils::FileDir, read::FileReadCommands, write::FileWriteCommands},
     history::read::HistoryReadCommands,
     sqlite::{
         DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
         SqliteWriteCloseHandle, SqliteWriteHandle, CurrentDataWriteHandle, HistoryWriteHandle,
     },
-    write::WriteCommands, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager},
+    write::{WriteCommands}, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager},
 };
 use crate::utils::IntoReportExt;
 
 pub const DB_HISTORY_DIR_NAME: &str = "history";
 pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";
-pub const DB_FILES_DIR_NAME: &str = "files";
+pub const DB_FILE_DIR_NAME: &str = "file";
 
 pub type DatabeseEntryId = String;
 
@@ -57,6 +57,7 @@ pub struct DatabaseRoot {
     root: PathBuf,
     history: SqliteDatabasePath,
     current: SqliteDatabasePath,
+    file_dir: FileDir,
 }
 
 impl DatabaseRoot {
@@ -78,16 +79,17 @@ impl DatabaseRoot {
         }
         let current = SqliteDatabasePath::new(current);
 
-        let files = root.join(DB_FILES_DIR_NAME);
-        if !files.exists() {
-            fs::create_dir(&files).into_error(DatabaseError::Init)?;
+        let file_dir = root.join(DB_FILE_DIR_NAME);
+        if !file_dir.exists() {
+            fs::create_dir(&file_dir).into_error(DatabaseError::Init)?;
         }
-        let files = FilesDir::new(files);
+        let file_dir = FileDir::new(file_dir);
 
         Ok(Self {
             root,
             history,
             current,
+            file_dir,
         })
     }
 
@@ -107,6 +109,10 @@ impl DatabaseRoot {
 
     pub fn current_ref(&self) -> &SqliteDatabasePath {
         &self.current
+    }
+
+    pub fn file_dir(&self) -> &FileDir {
+        &self.file_dir
     }
 }
 
@@ -189,8 +195,8 @@ pub struct RouterDatabaseHandle {
 }
 
 impl RouterDatabaseHandle {
-    pub fn user_write_commands(&self) -> WriteCommands {
-        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache)
+    pub fn user_write_commands(&self, lock_id: AccountIdLight) -> WriteCommands {
+        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, lock_id)
     }
 
     pub async fn register(
@@ -213,6 +219,14 @@ impl RouterDatabaseHandle {
 
     pub fn history(&self) -> HistoryReadCommands<'_> {
         HistoryReadCommands::new(&self.history_read)
+    }
+
+    pub fn read_files(&self) -> FileReadCommands<'_> {
+        FileReadCommands::new(&self.root.file_dir)
+    }
+
+    pub fn write_files(&self) -> FileWriteCommands<'_> {
+        FileWriteCommands::new(&self.root.file_dir)
     }
 
     pub fn api_key_manager(&self) -> ApiKeyManager<'_> {

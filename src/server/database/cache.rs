@@ -1,7 +1,7 @@
-use std::{collections::HashMap, sync::Arc, hash::Hash};
+use std::{collections::HashMap, sync::Arc, hash::Hash, future::Future};
 
 use async_trait::async_trait;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Mutex, MutexGuard};
 use tokio_stream::StreamExt;
 use tracing::info;
 
@@ -10,7 +10,7 @@ use crate::{api::model::{AccountIdLight, Account, Profile, AccountIdInternal, Ap
 use error_stack::{Result, ResultExt};
 use serde::Serialize;
 
-use super::{current::read::SqliteReadCommands, DatabaseError, sqlite::{SqliteDatabaseError, SqliteSelectJson}};
+use super::{current::read::SqliteReadCommands, DatabaseError, sqlite::{SqliteDatabaseError, SqliteSelectJson}, write::AccountWriteLock};
 
 
 #[derive(thiserror::Error, Debug)]
@@ -37,7 +37,7 @@ pub struct DatabaseCache {
 
 impl DatabaseCache {
     pub async fn new(read: SqliteReadCommands<'_>, config: &Config) -> Result<Self, CacheError> {
-        let cache = Self { 
+        let cache = Self {
             api_keys: RwLock::new(HashMap::new()),
             accounts: RwLock::new(HashMap::new()),
         };
@@ -102,7 +102,7 @@ impl DatabaseCache {
 
     pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {
         let cache_entry = self.accounts.read().await.get(&id).ok_or(CacheError::KeyNotExists)?.clone();
-        
+
         let mut api_key_guard = self.api_keys.write().await;
         if api_key_guard.get(&api_key).is_none() {
             api_key_guard.insert(api_key, cache_entry);
@@ -118,7 +118,7 @@ impl DatabaseCache {
         Ok(())
     }
 
-    pub async fn api_key_exists(&self, api_key: &ApiKey) -> Option<AccountIdInternal> {        
+    pub async fn api_key_exists(&self, api_key: &ApiKey) -> Option<AccountIdInternal> {
         let api_key_guard = self.api_keys.read().await;
         if let Some(entry) = api_key_guard.get(api_key) {
             Some(entry.read().await.account_id_internal)
@@ -187,17 +187,25 @@ impl DatabaseCache {
             .map(|current_data| *current_data.as_mut() = data)?;
         Ok(())
     }
+
+    pub async fn get_write_lock_simple(&self, id: AccountIdLight) -> Result<Arc<Mutex<AccountWriteLock>>, CacheError> {
+        let guard = self.accounts.read().await;
+        let cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.read().await;
+
+        Ok(cache_entry.write_lock.clone())
+    }
 }
 
 pub struct CacheEntry {
     pub account_id_internal: AccountIdInternal,
     pub profile: Option<Box<Profile>>,
     pub account: Option<Box<Account>>,
+    pub write_lock: Arc<Mutex<AccountWriteLock>>,
 }
 
 impl CacheEntry {
     pub fn new(account_id_internal: AccountIdInternal) -> Self {
-        Self { profile: None, account: None, account_id_internal }
+        Self { profile: None, account: None, account_id_internal, write_lock: Mutex::new(AccountWriteLock).into() }
     }
 }
 
@@ -225,8 +233,8 @@ impl ReadCacheJson for Account {
         cache: &DatabaseCache,
     ) -> Result<Self, CacheError> {
         let data_in_cache = cache
-            .read_cache(id, |entry| 
-                entry.account.as_ref().map(|account| 
+            .read_cache(id, |entry|
+                entry.account.as_ref().map(|account|
                     account.as_ref().clone()))
             .await?;
         data_in_cache.ok_or(CacheError::NotInCache.into())
@@ -242,8 +250,8 @@ impl ReadCacheJson for Profile {
         cache: &DatabaseCache,
     ) -> Result<Self, CacheError> {
         let data_in_cache = cache
-            .read_cache(id, |entry| 
-                entry.profile.as_ref().map(|data| 
+            .read_cache(id, |entry|
+                entry.profile.as_ref().map(|data|
                     data.as_ref().clone()))
             .await?;
         data_in_cache.ok_or(CacheError::NotInCache.into())
@@ -272,7 +280,7 @@ impl WriteCacheJson for Account {
         cache: &DatabaseCache,
     ) -> Result<(), CacheError> {
         cache.write_cache(
-            id, 
+            id,
             |entry| entry.account.as_mut().map(
                 |data| *data.as_mut() = self.clone()
             )
@@ -289,7 +297,7 @@ impl WriteCacheJson for Profile {
         cache: &DatabaseCache,
     ) -> Result<(), CacheError> {
         cache.write_cache(
-            id, 
+            id,
             |entry| entry.profile.as_mut().map(
                 |data| *data.as_mut() = self.clone()
             )
@@ -297,4 +305,3 @@ impl WriteCacheJson for Profile {
             .await.map(|_| ())
     }
 }
-

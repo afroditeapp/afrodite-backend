@@ -4,7 +4,7 @@ use tokio::sync::oneshot;
 use crate::{
     api::model::AccountIdInternal,
     server::database::{
-        file::GitError, sqlite::SqliteDatabaseError, utils::GetReadWriteCmd, DatabaseError, write::{HistoryWrite, CacheWrite}, cache::CacheError,
+        file::FileError, sqlite::SqliteDatabaseError, utils::GetReadWriteCmd, DatabaseError, write::{HistoryWrite, CacheWrite}, cache::CacheError,
     },
 };
 
@@ -140,7 +140,7 @@ pub trait ErrorConversion: ResultExt + Sized {
     }
 }
 
-impl<T> ErrorConversion for Result<T, GitError> {
+impl<T> ErrorConversion for Result<T, FileError> {
     type Err = DatabaseError;
     const ERROR: <Self as ErrorConversion>::Err = DatabaseError::Git;
 }

@@ -8,53 +8,169 @@ use error_stack::Result;
 use crate::api::model::{AccountId, AccountIdLight};
 
 use super::{
-    super::GitError,
-    file::{GetStaticFileName},
-    read::GitDatabaseReadCommands,
-    GitDatabase,
+    super::FileError,
+    file::{GetStaticFileName, ImageSlot},
+    read::FileReadCommands,
 };
 
 use crate::utils::IntoReportExt;
 
+pub const SLOT_DIR_NAME: &str = "slot";
+pub const IMAGE_DIR_NAME: &str = "image";
+pub const EXPORT_DIR_NAME: &str = "export";
+
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
-pub struct FilesDir {
-    database_dir: PathBuf,
+pub struct FileDir {
+    dir: PathBuf,
 }
 
-impl FilesDir {
-    pub fn new<T: AsRef<Path>>(database_dir: T) -> Self {
+impl FileDir {
+    pub fn new<T: AsRef<Path>>(file_dir: T) -> Self {
         Self {
-            database_dir: database_dir.as_ref().to_path_buf(),
+            dir: file_dir.as_ref().to_path_buf(),
         }
     }
 
-    pub fn user_git_dir(&self, id: &AccountIdLight) -> AccountFilesDir {
-        AccountFilesDir {
-            account_dir: self.database_dir.join(id.to_string()),
+    pub fn slot(&self, id: &AccountIdLight, slot: ImageSlot) -> PathToFile {
+        let mut dir = self.dir.clone();
+        dir.push(id.to_string());
+        dir.push(SLOT_DIR_NAME);
+        dir.push(slot.file_name().as_str());
+        PathToFile { path: dir }
+    }
+
+    pub fn account_dir(&self, id: &AccountIdLight) -> AccountDir {
+        let mut dir = self.dir.clone();
+        dir.push(id.to_string());
+        AccountDir {
+            dir,
         }
     }
 
     pub fn path(&self) -> &Path {
-        &self.database_dir
+        &self.dir
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct AccountFilesDir {
-    account_dir: PathBuf,
+pub struct AccountDir {
+    dir: PathBuf,
 }
 
-impl AccountFilesDir {
-    /// Absolute path to profile directory
+impl AccountDir {
     pub fn path(&self) -> &PathBuf {
-        &self.account_dir
+        &self.dir
     }
 
-    pub fn exists(&self) -> bool {
-        self.account_dir.exists()
+    pub fn slot_dir(mut self, ) -> SlotDir {
+        self.dir.push(SLOT_DIR_NAME);
+        SlotDir {
+            dir: self.dir,
+        }
     }
 
+    pub fn export_dir(mut self) -> ExportDir {
+        self.dir.push(EXPORT_DIR_NAME);
+        ExportDir {
+            dir: self.dir,
+        }
+    }
+
+    pub fn image_dir(mut self) -> ImageDir {
+        self.dir.push(IMAGE_DIR_NAME);
+        ImageDir {
+            dir: self.dir,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SlotDir {
+    dir: PathBuf,
+}
+
+
+impl SlotDir {
+    pub fn path(&self) -> &PathBuf {
+        &self.dir
+    }
+
+}
+
+#[derive(Debug, Clone)]
+pub struct ImageDir {
+    dir: PathBuf,
+}
+
+
+impl ImageDir {
+    pub fn path(&self) -> &PathBuf {
+        &self.dir
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ExportDir {
+    dir: PathBuf,
+}
+
+
+impl ExportDir {
+    pub fn path(&self) -> &PathBuf {
+        &self.dir
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SlotFile {
+    path: PathBuf,
+}
+
+
+impl SlotFile {
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ImageFile {
+    path: PathBuf,
+}
+
+
+impl ImageFile {
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PathToFile {
+    path: PathBuf,
+}
+
+
+impl PathToFile {
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
+    pub async fn create_parent_dirs(&self) -> Result<(), FileError> {
+        if let Some(parent_dir) = self.path.parent() {
+            if !parent_dir.exists() {
+                tokio::fs::create_dir_all(parent_dir)
+                    .await
+                    .into_error(FileError::IoFileCreate)
+            } else {
+                Ok(())
+            }
+        } else {
+            Ok(())
+        }
+    }
+}
 
 /*
 
@@ -157,4 +273,3 @@ impl AccountFilesDir {
     }
 
  */
-}

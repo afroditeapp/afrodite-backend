@@ -1,17 +1,20 @@
 pub mod data;
 pub mod internal;
 
-use axum::Json;
+use axum::{Json, TypedHeader};
 use axum::body::Bytes;
 use axum::extract::Path;
 
 use hyper::StatusCode;
 
+use crate::server::database::file::file::ImageSlot;
+
 use self::super::model::SlotId;
 
 use self::data::{ImageFileName, NewModerationRequest, ModerationRequestList};
 
-use super::ReadDatabase;
+use super::utils::ApiKeyHeader;
+use super::{ReadDatabase, GetApiKeys};
 use super::model::AccountIdLight;
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
@@ -110,11 +113,25 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_image_to_moderation_slot<S: ReadDatabase>(
+pub async fn put_image_to_moderation_slot<S: GetApiKeys>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(slot_id): Path<String>,
     image: Bytes,
-    _state: S,
+    state: S,
 ) -> Result<(), StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let slot = match slot_id.as_str() {
+        "slot1" => ImageSlot::Image1,
+        "slot2" => ImageSlot::Image2,
+        "slot3" => ImageSlot::Image3,
+        _ => return Err(StatusCode::NOT_ACCEPTABLE),
+    };
+
 
     // TODO: Validate user id
     // state

@@ -3,22 +3,21 @@ use serde::de::DeserializeOwned;
 
 use crate::{
     api::model::{AccountId, ApiKey},
-    server::database::{ file::utils::AccountFilesDir},
+    server::database::{ file::utils::AccountDir},
 };
 
 use super::{
-    GitError,
+    FileError, utils::FileDir,
 };
 use crate::utils::IntoReportExt;
 
-/// Reading can be done async as Git library is not used.
-pub struct GitDatabaseReadCommands {
-    account_dir: AccountFilesDir,
+
+pub struct FileReadCommands<'a> {
+    dir: &'a FileDir,
 }
 
-impl<'a> GitDatabaseReadCommands {
-    pub fn new(account_dir: AccountFilesDir) -> Self {
-        Self { account_dir }
+impl <'a> FileReadCommands<'a> {
+    pub fn new(dir: &'a FileDir) -> Self {
+        Self { dir }
     }
-
 }
