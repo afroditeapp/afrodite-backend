@@ -2,10 +2,12 @@ pub mod data;
 pub mod internal;
 
 use axum::{Json, TypedHeader};
-use axum::body::Bytes;
-use axum::extract::Path;
+use axum::body::{Bytes, StreamBody};
+use axum::extract::{Path, BodyStream};
 
 use hyper::StatusCode;
+
+use tracing::error;
 
 use crate::server::database::file::file::ImageSlot;
 
@@ -14,7 +16,7 @@ use self::super::model::SlotId;
 use self::data::{ImageFileName, NewModerationRequest, ModerationRequestList};
 
 use super::utils::ApiKeyHeader;
-use super::{ReadDatabase, GetApiKeys};
+use super::{ReadDatabase, GetApiKeys, WriteDatabase};
 use super::model::AccountIdLight;
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
@@ -113,10 +115,10 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_image_to_moderation_slot<S: GetApiKeys>(
+pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(slot_id): Path<String>,
-    image: Bytes,
+    image: BodyStream,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
@@ -132,17 +134,13 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys>(
         _ => return Err(StatusCode::NOT_ACCEPTABLE),
     };
 
-
-    // TODO: Validate user id
-    // state
-    //     .read_database()
-    //     .user_profile(&user_id)
-    //     .await
-    //     .map(|profile| ()) // TODO: Read and send image.
-    //     .map_err(|e| {
-    //         error!("Get profile error: {e:?}");
-    //         StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-    //     })
+    state.write_database(account_id.as_light())
+        .save_to_slot(account_id, slot, image)
+        .await
+        .map_err(|e| {
+            error!("Error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     Ok(())
 }
 

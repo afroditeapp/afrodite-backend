@@ -1,21 +1,23 @@
 use std::sync::Arc;
 
+use axum::extract::BodyStream;
 use error_stack::{Result, ResultExt};
 use serde::Serialize;
 use tokio::sync::{MutexGuard, Mutex};
+use tokio_stream::StreamExt;
 
 use crate::{
     api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight},
     config::Config,
     server::database::{sqlite::SqliteWriteHandle, DatabaseError},
-    utils::ErrorConversion,
+    utils::{ErrorConversion, IntoReportExt},
 };
 
 use super::{
     current::write::CurrentDataWriteCommands,
     history::write::HistoryWriteCommands,
     sqlite::{HistoryUpdateJson, SqliteUpdateJson, CurrentDataWriteHandle, HistoryWriteHandle},
-    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson},
+    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson}, file::{utils::{SlotFile, FileDir}, file::ImageSlot},
 };
 
 #[derive(Debug, Clone)]
@@ -60,6 +62,7 @@ pub struct WriteCommands<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
+    file_dir: &'a FileDir,
     locking_id: AccountIdLight,
 }
 
@@ -68,12 +71,14 @@ impl <'a> WriteCommands<'a> {
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
+        file_dir: &'a FileDir,
         locking_id: AccountIdLight,
     ) -> Self {
         Self {
             current_write,
             history_write,
             cache,
+            file_dir,
             locking_id,
         }
     }
@@ -163,7 +168,7 @@ impl <'a> WriteCommands<'a> {
     pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
         let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
         let lock = mutex.lock().await;
-        WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, &lock).set_new_api_key(id, key).await
+        self.to_internal(&lock).set_new_api_key(id, key).await
     }
 
     pub async fn update_json<
@@ -175,7 +180,17 @@ impl <'a> WriteCommands<'a> {
     ) -> Result<(), DatabaseError> {
         let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
         let lock = mutex.lock().await;
-        WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, &lock).update_json(id, data).await
+        self.to_internal(&lock).update_json(id, data).await
+    }
+
+    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<(), DatabaseError> {
+        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
+        let lock = mutex.lock().await;
+        self.to_internal(&lock).save_to_slot(id, slot, stream).await
+    }
+
+    fn to_internal<'b>(&'b self, lock: &'b AccountWriteLock) -> WriteCommandsInternal<'b>{
+        WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, self.file_dir, lock)
     }
 }
 
@@ -184,6 +199,7 @@ struct WriteCommandsInternal<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
+    file_dir: &'a FileDir,
     lock: &'a AccountWriteLock,
 }
 
@@ -192,16 +208,17 @@ impl <'a> WriteCommandsInternal<'a> {
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
+        file_dir: &'a FileDir,
         lock: &'a AccountWriteLock,
     ) -> Self {
         Self {
             current_write,
             history_write,
             cache,
+            file_dir,
             lock,
         }
     }
-
 
     pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
         self.current()
@@ -236,6 +253,12 @@ impl <'a> WriteCommandsInternal<'a> {
         } else {
             Ok(())
         }
+    }
+
+    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<(), DatabaseError> {
+        let path = self.file_dir.slot(id.as_light(), slot);
+        path.save_stream(stream).await.change_context(DatabaseError::File)?;
+        Ok(())
     }
 
     fn current(&self) -> CurrentDataWriteCommands {

@@ -44,6 +44,8 @@ pub enum DatabaseError {
     Sqlite,
     #[error("Cache error")]
     Cache,
+    #[error("File error")]
+    File,
 
     // Other errors
     #[error("Database initialization error")]
@@ -196,7 +198,7 @@ pub struct RouterDatabaseHandle {
 
 impl RouterDatabaseHandle {
     pub fn user_write_commands(&self, lock_id: AccountIdLight) -> WriteCommands {
-        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, lock_id)
+        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock_id)
     }
 
     pub async fn register(

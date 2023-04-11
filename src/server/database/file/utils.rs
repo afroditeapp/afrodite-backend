@@ -3,7 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use axum::extract::BodyStream;
 use error_stack::Result;
+use tokio::io::AsyncWriteExt;
+use tokio_stream::StreamExt;
 
 use crate::api::model::{AccountId, AccountIdLight};
 
@@ -32,7 +35,7 @@ impl FileDir {
         }
     }
 
-    pub fn slot(&self, id: &AccountIdLight, slot: ImageSlot) -> PathToFile {
+    pub fn slot(&self, id: AccountIdLight, slot: ImageSlot) -> PathToFile {
         let mut dir = self.dir.clone();
         dir.push(id.to_string());
         dir.push(SLOT_DIR_NAME);
@@ -40,7 +43,7 @@ impl FileDir {
         PathToFile { path: dir }
     }
 
-    pub fn account_dir(&self, id: &AccountIdLight) -> AccountDir {
+    pub fn account_dir(&self, id: AccountIdLight) -> AccountDir {
         let mut dir = self.dir.clone();
         dir.push(id.to_string());
         AccountDir {
@@ -169,6 +172,20 @@ impl PathToFile {
         } else {
             Ok(())
         }
+    }
+
+    pub async fn save_stream(&self, mut stream: BodyStream) -> Result<(), FileError> {
+        self.create_parent_dirs().await?;
+
+        let mut file = tokio::fs::File::create(&self.path).await.into_error(FileError::IoFileCreate)?;
+
+        while let Some(result) = stream.next().await {
+            let mut data = result.into_error(FileError::StreamReadFailed)?;
+            file.write_all_buf(&mut data).await.into_error(FileError::IoFileWrite)?;
+        }
+        file.flush().await.into_error(FileError::IoFileFlush)?;
+        file.sync_all().await.into_error(FileError::IoFileSync)?;
+        Ok(())
     }
 }
 

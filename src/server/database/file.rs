@@ -39,6 +39,10 @@ pub enum FileError {
     IoFileRead,
     #[error("File writing failed")]
     IoFileWrite,
+    #[error("File flushing failed")]
+    IoFileFlush,
+    #[error("File sync failed")]
+    IoFileSync,
 
     // Serde
     #[error("Serde serialization failed")]
@@ -48,4 +52,7 @@ pub enum FileError {
 
     #[error("AccountId parsing error")]
     AccountIdParsing,
+
+    #[error("Stream reading failed")]
+    StreamReadFailed,
 }
