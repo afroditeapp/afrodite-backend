@@ -103,6 +103,8 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
 ///
 /// Slots "camera" and "image1" are available.
 ///
+/// TODO: resize and check images at some point
+///
 #[utoipa::path(
     put,
     path = "/media_api/moderation/request/slot/{slot_id}",

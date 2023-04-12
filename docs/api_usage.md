@@ -73,6 +73,8 @@ get current moderation request status.
 Before sending new moderation request images must be loaded to moderation
 slots using HTTP PUT `/media_api/moderation/request/slot/{image_slot}`. Image
 slots `camera` and `image1` are available.
+HTTP GET to that address will
+return the image in the slot if there is one.
 
 ### Account deletion
 

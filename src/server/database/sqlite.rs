@@ -39,6 +39,9 @@ pub enum SqliteDatabaseError {
 
     #[error("Time parsing error")]
     TimeParsing,
+
+    #[error("TryFrom error")]
+    TryFromError,
 }
 
 /// Path to directory which contains Sqlite files.
