@@ -7,7 +7,7 @@ use tokio_stream::{Stream, StreamExt};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
-use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber};
+use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId};
 use crate::api::model::{Account, AccountId, AccountIdInternal, ApiKey, Profile, ModerationRequest, NewModerationRequest};
 use crate::server::database::read::ReadCmd;
 use crate::server::database::utils::GetReadWriteCmd;
@@ -122,5 +122,51 @@ impl<'a> CurrentReadMediaCommands<'a> {
             .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
         Ok((data, ModerationRequestQueueNumber { number: request.queue_number}))
+    }
+
+    pub async fn get_in_progress_moderations(
+        &self,
+        moderator_id: AccountIdInternal,
+    ) -> Result<Vec<ModerationId>, SqliteDatabaseError> {
+        let account_row_id = moderator_id.row_id();
+        let state_accepted = ModerationRequestState::Accepted as i64;
+        let state_denied = ModerationRequestState::Denied as i64;
+        let data = sqlx::query!(
+            r#"
+            SELECT row_id
+            FROM MediaModeration
+            WHERE account_row_id = ? AND state_number != ? AND state_number != ?
+            "#,
+            account_row_id,
+            state_accepted,
+            state_denied,
+        )
+        .fetch_all(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?
+        .into_iter().map(|r| ModerationId { moderation_row_id: r.row_id}).collect();
+
+        Ok(data)
+    }
+
+    pub async fn get_next_active_queue_number(
+        &self,
+        sub_queue: i64,
+    ) -> Result<Option<ModerationRequestQueueNumber>, SqliteDatabaseError> {
+        let data = sqlx::query!(
+            r#"
+            SELECT queue_number
+            FROM MediaModerationQueueNumber
+            WHERE sub_queue = ?
+            ORDER BY queue_number ASC
+            LIMIT 1
+            "#,
+            sub_queue,
+        )
+        .fetch_optional(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        Ok(data.map(|r| ModerationRequestQueueNumber { number: r.queue_number}))
     }
 }

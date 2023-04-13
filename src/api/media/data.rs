@@ -37,7 +37,7 @@ pub struct ModerationRequest {
 }
 
 impl ModerationRequest {
-    pub fn new(moderation_request_id: i64, account_id: AccountIdLight, state: ModerationRequestState, request: NewModerationRequest) -> Self { Self { moderation_request_id, account_id, state_number: queue_number, request } }
+    pub fn new(moderation_request_id: i64, account_id: AccountIdLight, state: ModerationRequestState, request: NewModerationRequest) -> Self { Self { moderation_request_id, account_id, state_number: state, request } }
 }
 
 #[derive(thiserror::Error, Debug)]
