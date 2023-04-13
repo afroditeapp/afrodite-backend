@@ -1,6 +1,7 @@
 use crate::api::model::{AccountIdInternal, AccountIdLight};
 
 use super::history::read::HistoryReadCommands;
+use super::read::ReadCommands;
 
 use async_trait::async_trait;
 
@@ -73,12 +74,21 @@ impl SqliteWriteCloseHandle {
 
 #[derive(Debug, Clone)]
 pub struct CurrentDataWriteHandle {
-    pub handle: SqliteWriteHandle,
+    handle: SqliteWriteHandle,
+    read_handle: SqliteReadHandle,
 }
 
 impl CurrentDataWriteHandle {
+    pub fn new(handle: SqliteWriteHandle) -> Self {
+        Self { handle, read_handle: SqliteReadHandle { pool: handle.pool.clone() } }
+    }
+
     pub fn pool(&self) -> &SqlitePool {
         self.handle.pool()
+    }
+
+    pub fn read(&self) -> SqliteReadCommands<'_> {
+        SqliteReadCommands::new(&self.read_handle)
     }
 }
 

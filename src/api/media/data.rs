@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tower::util::Optional;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{api::model::AccountIdLight, server::database::file::file::ImageSlot};
@@ -20,11 +21,11 @@ pub struct NewModerationRequest {
     /// Use slot 1 image as camera image.
     camera_image: bool,
     /// Include slot 1 image in moderation request.
-    image1: bool,
+    image1: String,
     /// Include slot 2 image in moderation request.
-    image2: bool,
+    image2: Option<String>,
     /// Include slot 3 image in moderation request.
-    image3: bool,
+    image3: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -36,7 +37,7 @@ pub struct ModerationRequest {
 }
 
 impl ModerationRequest {
-    pub fn new(moderation_request_id: i64, account_id: AccountIdLight, queue_number: ModerationRequestState, request: NewModerationRequest) -> Self { Self { moderation_request_id, account_id, state_number: queue_number, request } }
+    pub fn new(moderation_request_id: i64, account_id: AccountIdLight, state: ModerationRequestState, request: NewModerationRequest) -> Self { Self { moderation_request_id, account_id, state_number: queue_number, request } }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -48,24 +49,29 @@ pub enum ModerationRequestStateParsingError {
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[repr(i64)]
 pub enum ModerationRequestState {
-    InQueue0 = 0,
-    InQueue1 = 1,
-    InQueue2 = 2,
-    InQueue3 = 3,
-    HandledAccepted = 10,
-    HandledDenied = 11,
+    Waiting = 0,
+    InProgress = 1,
+    Accepted = 2,
+    Denied = 3,
+}
+
+impl ModerationRequestState {
+    pub fn completed(&self) -> bool {
+        match self {
+            Self::Accepted | Self::Denied => true,
+            _ => false,
+        }
+    }
 }
 
 impl TryFrom<i64> for ModerationRequestState {
     type Error = ModerationRequestStateParsingError;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         let value = match value {
-            0 => Self::InQueue0,
-            1 => Self::InQueue1,
-            2 => Self::InQueue2,
-            3 => Self::InQueue3,
-            10 => Self::HandledAccepted,
-            11 => Self::HandledDenied,
+            0 => Self::Waiting,
+            1 => Self::InProgress,
+            2 => Self::Accepted,
+            3 => Self::Denied,
             _ => return Err(ModerationRequestStateParsingError::ParsingError(value)),
         };
 
@@ -86,4 +92,19 @@ pub struct HandleModerationRequest {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotId {
     slot_id: String,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct ModerationId {
+    pub moderation_row_id: i64,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct ModerationRequestId {
+    pub request_row_id: i64,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct ModerationRequestQueueNumber {
+    pub number: i64,
 }

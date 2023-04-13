@@ -167,7 +167,7 @@ impl DatabaseManager {
         let cache = DatabaseCache::new(read_commands, config).await.change_context(DatabaseError::Cache)?;
 
         let router_handle = RouterDatabaseHandle {
-            sqlite_write: CurrentDataWriteHandle { handle: sqlite_write },
+            sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
             sqlite_read,
             history_write: HistoryWriteHandle { handle: history_write },
             history_read,

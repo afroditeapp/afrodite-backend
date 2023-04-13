@@ -1,7 +1,11 @@
+pub mod media;
+
 use api_client::models::new_moderation_request;
 use async_trait::async_trait;
 use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
+
+use self::media::CurrentReadMediaCommands;
 
 use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
@@ -33,6 +37,11 @@ pub struct SqliteReadCommands<'a> {
 impl<'a> SqliteReadCommands<'a> {
     pub fn new(handle: &'a SqliteReadHandle) -> Self {
         Self { handle }
+    }
+
+
+    pub fn media(&self) -> CurrentReadMediaCommands<'_> {
+        CurrentReadMediaCommands::new(self.handle)
     }
 
     pub fn account_ids_stream(
@@ -72,50 +81,6 @@ impl<'a> SqliteReadCommands<'a> {
                 .map(ApiKey::new)
         })
         .into_error(SqliteDatabaseError::Fetch)
-    }
-
-    pub async fn current_media_moderation_request(
-        &self,
-        id_internal: AccountIdInternal,
-    ) -> Result<Option<ModerationRequest>, SqliteDatabaseError> {
-        let id = id_internal.row_id();
-        sqlx::query!(
-            r#"
-            SELECT row_id, state_number, json_text
-            FROM MediaModerationRequest
-            WHERE account_row_id = ?
-            "#,
-            id
-        )
-        .fetch_optional(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)
-        .and_then(|result| {
-            if let Some(r) = result{
-                serde_json::from_str(&r.json_text)
-                    .into_error(SqliteDatabaseError::SerdeDeserialize)
-                    .and_then(
-                        |new_moderation_request| {
-                            match r.state_number.try_into() {
-                                Ok(state) => Ok((new_moderation_request, state)),
-                                Err(e) => Err(e).into_error(SqliteDatabaseError::TryFromError),
-                            }
-                        }
-                    )
-                    .map(
-                        |(new_moderation_request, state): (_, ModerationRequestState)| {
-                            ModerationRequest::new(
-                                r.row_id,
-                                 id_internal.as_light(),
-                                  state,
-                                   new_moderation_request,
-                                ).into()
-                        }
-                    )
-            } else {
-                Ok(None)
-            }
-        })
     }
 }
 

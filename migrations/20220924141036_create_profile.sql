@@ -54,23 +54,44 @@ CREATE TABLE IF NOT EXISTS Profile(
 );
 
 
--- CREATE TABLE IF NOT EXISTS MediaModerationQueueNumber(
---     row_id          INTEGER PRIMARY KEY AUTOINCREMENT,
---     account_row_id  INTEGER NOT NULL,
---     FOREIGN KEY (account_row_id)
---         REFERENCES AccountId (account_row_id)
---             ON DELETE CASCADE
---             ON UPDATE CASCADE
--- );
-
--- Completed request will be deleted
-CREATE TABLE IF NOT EXISTS MediaModerationRequest(
-    row_id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    account_row_id  INTEGER NOT NULL,
-    state_number    INTEGER NOT NULL,
-    json_text       TEXT    NOT NULL    DEFAULT '',
+-- Active queue numbers only
+CREATE TABLE IF NOT EXISTS MediaModerationQueueNumber(
+    queue_number    INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_row_id  INTEGER NOT NULL    UNIQUE,  -- One number per account
+    sub_queue       INTEGER NOT NULL,
     FOREIGN KEY (account_row_id)
         REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS MediaModerationRequest(
+    request_row_id  INTEGER PRIMARY KEY  NOT NULL, -- Not null needed here for sqlx
+    account_row_id  INTEGER NOT NULL     UNIQUE,   -- One request per account
+    queue_number    INTEGER NOT NULL,
+    json_text       TEXT    NOT NULL,
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (queue_number)
+        REFERENCES MediaModerationQueueNumber (queue_number)
+            ON DELETE NO ACTION
+            ON UPDATE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS MediaModeration(
+    row_id          INTEGER PRIMARY KEY,
+    account_row_id  INTEGER NOT NULL,       -- What admin account is moderating
+    request_row_id  INTEGER NOT NULL,       -- What request is in moderation
+    state_number    INTEGER NOT NULL,       -- State of the moderation
+    json_text       TEXT    NOT NULL,       -- What was moderated
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (request_row_id)
+        REFERENCES MediaModerationRequest (request_row_id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

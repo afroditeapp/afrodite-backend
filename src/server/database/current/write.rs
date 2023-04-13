@@ -1,3 +1,5 @@
+pub mod media;
+
 
 use async_trait::async_trait;
 use error_stack::Result;
@@ -6,6 +8,8 @@ use crate::{api::{
     account::data::AccountSetup,
     model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest}, self, media::data::ModerationRequestState,
 }, server::database::sqlite::CurrentDataWriteHandle};
+
+use self::media::CurrentWriteMediaCommands;
 
 use super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson, SqliteWriteHandle};
 
@@ -31,6 +35,10 @@ pub struct CurrentDataWriteCommands<'a> {
 impl<'a> CurrentDataWriteCommands<'a> {
     pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
         Self { handle }
+    }
+
+    pub fn media(&self) -> CurrentWriteMediaCommands<'_> {
+        CurrentWriteMediaCommands::new(self.handle)
     }
 
     pub async fn store_account_id(
@@ -73,86 +81,6 @@ impl<'a> CurrentDataWriteCommands<'a> {
         .execute(self.handle.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
-
-        Ok(())
-    }
-
-
-    /// Used when a user creates a new moderation request
-    pub async fn create_new_media_moderation_request(
-        &self,
-        id: AccountIdInternal,
-        request: NewModerationRequest,
-    ) -> Result<(), SqliteDatabaseError> {
-        let account_row_id = id.row_id();
-        // Delete current, so new row id is created.
-        sqlx::query!(
-            r#"
-            DELETE FROM MediaModerationRequest
-            WHERE account_row_id = ?
-            "#,
-            account_row_id,
-        )
-        .execute(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        let state_number = ModerationRequestState::InQueue0 as i64;
-        let request_info = serde_json::to_string(&request).into_error(SqliteDatabaseError::SerdeSerialize)?;
-        sqlx::query!(
-            r#"
-            INSERT INTO MediaModerationRequest (account_row_id, state_number, json_text)
-            VALUES (?, ?, ?)
-            "#,
-            account_row_id,
-            state_number,
-            request_info,
-        )
-        .execute(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        Ok(())
-    }
-
-    pub async fn update_media_moderation_request(
-        &self,
-        id: AccountIdInternal,
-        request: NewModerationRequest,
-    ) -> Result<(), SqliteDatabaseError> {
-        let account_row_id = id.row_id();
-
-        let current_request = sqlx::query!(
-            r#"
-            SELECT row_id
-            FROM MediaModerationRequest
-            WHERE account_row_id = ?
-            "#,
-            account_row_id,
-        )
-        .fetch_optional(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        // match current_request {
-        //     Some(r) => {
-
-        //     }
-        //     None => {
-        //         sqlx::query!(
-        //             r#"
-        //             INSERT INTO ApiKey (api_key, account_row_id)
-        //             VALUES (?, ?)
-        //             "#,
-        //             api_key,
-        //             id,
-        //         )
-        //         .execute(self.handle.pool())
-        //         .await
-        //         .into_error(SqliteDatabaseError::Execute)?;
-
-        //     }
-        // }
 
         Ok(())
     }

@@ -76,6 +76,30 @@ slots `camera` and `image1` are available.
 HTTP GET to that address will
 return the image in the slot if there is one.
 
+##### Implementation details
+
+User sets a new image to a slot. New UUID is created for that image.
+UUID is returned to the user in the upload HTTP response.
+If user uploads a new image the existing image in the slot is deleted.
+
+After all images are uploaded user will make a new media moderation
+request to the server. If user does not have a queue number, then it
+will be assigned to the user. Queue ID is valid until it is removed (by user
+removing the request or
+by admin handling the moderation request).
+
+User will have a possiblity to remove the moderation request or update it.
+Updating the moderation request can change the contents of the request
+(image UUIDs included), but not the queue number.
+
+When admin starts handling the request the request is copied so that it is
+immutable. This prevents the user updating the request anymore.
+After that the admin can mark the request as accepted or denied.
+The Queue ID is removed from active Queue IDs table.
+
+After these events the request still exists but it is handled. Only creating a
+new moderation request deletes the previous one.
+
 ### Account deletion
 
 Account can be moved to `pending deletion` state with `/account_api/delete`.
