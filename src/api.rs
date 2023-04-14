@@ -80,6 +80,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::data::ModerationRequestList,
         media::data::HandleModerationRequest,
         media::data::SlotId,
+        media::data::ContentId,
     )),
     modifiers(&SecurityApiTokenDefault),
     info(

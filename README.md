@@ -48,3 +48,7 @@ cargo install sqlx-cli
 ```
 openapi-generator-cli generate -i http://localhost:3000/api-doc/pihka_api.json -g rust -o api_client --package-name api_client
 ```
+
+## Reset database
+
+`sqlx database drop && sqlx database create && sqlx migrate run`

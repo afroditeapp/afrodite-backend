@@ -53,6 +53,19 @@ CREATE TABLE IF NOT EXISTS Profile(
             ON UPDATE CASCADE
 );
 
+-- Tables for media features
+
+CREATE TABLE IF NOT EXISTS MediaContent(
+    content_row_id   INTEGER PRIMARY KEY,
+    content_id       BLOB    NOT NULL       UNIQUE,  -- Content UUID should be unique
+    account_row_id   INTEGER NOT NULL,
+    moderation_state INTEGER NOT NULL,
+    slot_number      INTEGER NOT NULL,
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
 
 -- Active queue numbers only
 CREATE TABLE IF NOT EXISTS MediaModerationQueueNumber(
@@ -130,6 +143,8 @@ CREATE TABLE IF NOT EXISTS HistoryProfile(
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+-- TODO: History for new media tables.
 
 -- Deletion is just ignored as it happens automatically when new
 -- request is created.

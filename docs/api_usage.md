@@ -77,10 +77,44 @@ HTTP GET to that address will
 return the image in the slot if there is one.
 
 ##### Implementation details
+###### Uploading images (and other file related things)
 
-User sets a new image to a slot. New UUID is created for that image.
-UUID is returned to the user in the upload HTTP response.
-If user uploads a new image the existing image in the slot is deleted.
+Server contains directory structure like this:
+
+- account1
+    - image
+        - content_id.l.jpg
+        - content_id.h.jpg
+    - tmp
+        - content_id.raw.jpg (user uploaded)
+    - export
+        - export1.zip
+- account2
+    - ...
+
+A user can upload an image to the server using image slot pahts. When server
+gets new image upload from the user it creates new content ID (UUID) for the image.
+The image will be saved to the user's `tmp` directory.
+
+After upload completes, HTTP response is not yet sent. Server starts a new
+process for image processing. The image will be decoded with a Rust image
+decoder. After that new images with different qualities are encoded. The new
+image files will be saved to the `tmp` directory. The image process quits at this
+point. Server will move the new files to the user's `image` directory.
+After that HTTP response with new content ID is returned to the user.
+
+Images have different states. If image is in `InSlot` state, another upload to
+that same slot will delete the previous image. When moderation request for
+a image is started the image's state will go to `InModeration` state. After
+moderation completes the image state turns to `Moderated`. SQLite will be used
+for storing the image state information. Images also have a boolean value for
+preventing other normal users accessing images other than those on the current
+profile. Also hidden profiles have additional access check for images - only
+matches can download the current profile images.
+
+Directory named `export` is used for saving data export zip-files.
+
+###### Moderation request
 
 After all images are uploaded user will make a new media moderation
 request to the server. If user does not have a queue number, then it
@@ -94,8 +128,8 @@ Updating the moderation request can change the contents of the request
 
 When admin starts handling the request the request is copied so that it is
 immutable. This prevents the user updating the request anymore.
-After that the admin can mark the request as accepted or denied.
 The Queue ID is removed from active Queue IDs table.
+After that the admin can mark the request as accepted or denied.
 
 After these events the request still exists but it is handled. Only creating a
 new moderation request deletes the previous one.

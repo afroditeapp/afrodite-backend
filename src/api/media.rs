@@ -13,7 +13,7 @@ use crate::server::database::file::file::ImageSlot;
 
 use self::super::model::SlotId;
 
-use self::data::{ImageFileName, NewModerationRequest, ModerationRequestList};
+use self::data::{ImageFileName, NewModerationRequest, ModerationRequestList, ContentId};
 
 use super::utils::ApiKeyHeader;
 use super::{ReadDatabase, GetApiKeys, WriteDatabase};
@@ -110,7 +110,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     path = "/media_api/moderation/request/slot/{slot_id}",
     request_body(content = String, content_type = "image/jpeg"),
     responses(
-        (status = 200, description = "Sending or updating new image moderation request was successfull."),
+        (status = 200, description = "Sending or updating new image moderation request was successfull.", body = ContentId),
         (status = 401, description = "Unauthorized."),
         (status = 406, description = "Unknown slot ID."),
         (status = 500, description = "Internal server error."),
@@ -122,7 +122,7 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
     Path(slot_id): Path<String>,
     image: BodyStream,
     state: S,
-) -> Result<(), StatusCode> {
+) -> Result<Json<ContentId>, StatusCode> {
     let account_id = state
         .api_keys()
         .api_key_exists(api_key.key())
@@ -136,16 +136,15 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
         _ => return Err(StatusCode::NOT_ACCEPTABLE),
     };
 
-    state.write_database(account_id.as_light())
+    let content_id = state.write_database(account_id.as_light())
         .save_to_slot(account_id, slot, image)
         .await
         .map_err(|e| {
             error!("Error: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
-    Ok(())
+    Ok(content_id.into())
 }
-
 
 pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str =
     "/media_api/admin/moderation/page/next";

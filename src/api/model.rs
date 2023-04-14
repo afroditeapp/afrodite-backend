@@ -7,6 +7,6 @@ pub use super::{
     },
     profile::data::{Profile, ProfileInternal, Location, ProfilePage, ProfileLink},
     media::data::{NewModerationRequest, ModerationRequest,
-        ModerationRequestList, HandleModerationRequest, SlotId,
+        ModerationRequestList, HandleModerationRequest, SlotId, ContentId
     }
 };

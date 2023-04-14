@@ -7,8 +7,9 @@ use tokio_stream::{Stream, StreamExt};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
-use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId};
-use crate::api::model::{Account, AccountId, AccountIdInternal, ApiKey, Profile, ModerationRequest, NewModerationRequest};
+use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, Content, ContentState};
+use crate::api::model::{Account, AccountId, AccountIdInternal, ApiKey, Profile, ModerationRequest, NewModerationRequest, ContentId};
+use crate::server::database::file::file::ImageSlot;
 use crate::server::database::read::ReadCmd;
 use crate::server::database::utils::GetReadWriteCmd;
 use crate::server::database::DatabaseError;
@@ -35,6 +36,31 @@ pub struct CurrentReadMediaCommands<'a> {
 impl<'a> CurrentReadMediaCommands<'a> {
     pub fn new(handle: &'a SqliteReadHandle) -> Self {
         Self { handle }
+    }
+
+    pub async fn get_content_id_from_slot(
+        &self,
+        slot_owner: AccountIdInternal,
+        slot: ImageSlot,
+    ) -> Result<Option<ContentId>, SqliteDatabaseError> {
+        let required_state = ContentState::InSlot as i64;
+        let required_slot = slot as i64;
+        let request = sqlx::query_as!(
+            ContentId,
+            r#"
+            SELECT content_id as "content_id: _"
+            FROM MediaContent
+            WHERE account_row_id = ? AND moderation_state = ? AND slot_number = ?
+            "#,
+            slot_owner.account_row_id,
+            required_state,
+            required_slot,
+        )
+        .fetch_optional(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        Ok(request)
     }
 
     pub async fn current_media_moderation_request(

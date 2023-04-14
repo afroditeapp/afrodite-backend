@@ -43,6 +43,9 @@ pub enum SqliteDatabaseError {
 
     #[error("TryFrom error")]
     TryFromError,
+
+    #[error("Content slot not empty")]
+    ContentSlotNotEmpty,
 }
 
 /// Path to directory which contains Sqlite files.

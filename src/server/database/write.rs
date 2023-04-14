@@ -7,7 +7,7 @@ use tokio::sync::{MutexGuard, Mutex};
 use tokio_stream::StreamExt;
 
 use crate::{
-    api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight},
+    api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId},
     config::Config,
     server::database::{sqlite::SqliteWriteHandle, DatabaseError},
     utils::{ErrorConversion, IntoReportExt},
@@ -183,7 +183,7 @@ impl <'a> WriteCommands<'a> {
         self.to_internal(&lock).update_json(id, data).await
     }
 
-    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<(), DatabaseError> {
+    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<ContentId, DatabaseError> {
         let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
         let lock = mutex.lock().await;
         self.to_internal(&lock).save_to_slot(id, slot, stream).await
@@ -255,10 +255,27 @@ impl <'a> WriteCommandsInternal<'a> {
         }
     }
 
-    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<(), DatabaseError> {
-        let path = self.file_dir.slot(id.as_light(), slot);
-        path.save_stream(stream).await.change_context(DatabaseError::File)?;
-        Ok(())
+    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<ContentId, DatabaseError> {
+        let current_content_in_slot = self.current_write.read().media().get_content_id_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+
+        if let Some(current_id) = current_content_in_slot {
+            let path = self.file_dir.image_content(id.as_light(), current_id);
+            if path.exists() {
+                path.remove().await.change_context(DatabaseError::File)?;
+            }
+            self.current().media().delete_image_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+        }
+
+        let content_id = ContentId::new_random_id();
+        self.current().media().store_content_id_to_slot(id, content_id, slot).await.change_context(DatabaseError::Sqlite)?;
+        let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
+        raw_img.save_stream(stream).await.change_context(DatabaseError::File)?;
+
+        // TODO: real image safety checks and processing
+        let processed_content_path = self.file_dir.image_content(id.as_light(), content_id);
+        raw_img.move_to(&processed_content_path).await.change_context(DatabaseError::File)?;
+
+        Ok(content_id)
     }
 
     fn current(&self) -> CurrentDataWriteCommands {

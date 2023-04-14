@@ -43,6 +43,8 @@ pub enum FileError {
     IoFileFlush,
     #[error("File sync failed")]
     IoFileSync,
+    #[error("File remove failed")]
+    IoFileRemove,
 
     // Serde
     #[error("Serde serialization failed")]

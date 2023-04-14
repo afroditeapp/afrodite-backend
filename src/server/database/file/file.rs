@@ -25,10 +25,11 @@ pub trait GetStaticFileName {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[repr(i64)]
 pub enum ImageSlot {
-    Image1,
-    Image2,
-    Image3,
+    Image1 = 0,
+    Image2 = 1,
+    Image3 = 2,
 }
 
 impl GetStaticFileName for ImageSlot {

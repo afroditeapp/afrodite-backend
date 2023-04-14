@@ -8,7 +8,7 @@ use error_stack::Result;
 use tokio::io::AsyncWriteExt;
 use tokio_stream::StreamExt;
 
-use crate::api::model::{AccountId, AccountIdLight};
+use crate::api::model::{AccountId, AccountIdLight, ContentId};
 
 use super::{
     super::FileError,
@@ -18,9 +18,11 @@ use super::{
 
 use crate::utils::IntoReportExt;
 
-pub const SLOT_DIR_NAME: &str = "slot";
-pub const IMAGE_DIR_NAME: &str = "image";
+pub const TMP_DIR_NAME: &str = "tmp";
+pub const IMAGE_DIR_NAME: &str = "images";
 pub const EXPORT_DIR_NAME: &str = "export";
+
+pub const RAW_IMAGE_FILE_NAME_ENDING: &str = ".raw.jpg";
 
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
@@ -35,11 +37,19 @@ impl FileDir {
         }
     }
 
-    pub fn slot(&self, id: AccountIdLight, slot: ImageSlot) -> PathToFile {
+    pub fn unprocessed_image_upload(&self, id: AccountIdLight, content: ContentId) -> PathToFile {
         let mut dir = self.dir.clone();
         dir.push(id.to_string());
-        dir.push(SLOT_DIR_NAME);
-        dir.push(slot.file_name().as_str());
+        dir.push(TMP_DIR_NAME);
+        dir.push(content.raw_jpg_image());
+        PathToFile { path: dir }
+    }
+
+    pub fn image_content(&self, id: AccountIdLight, content_id: ContentId) -> PathToFile {
+        let mut dir = self.dir.clone();
+        dir.push(id.to_string());
+        dir.push(IMAGE_DIR_NAME);
+        dir.push(content_id.jpg_image());
         PathToFile { path: dir }
     }
 
@@ -67,7 +77,7 @@ impl AccountDir {
     }
 
     pub fn slot_dir(mut self, ) -> SlotDir {
-        self.dir.push(SLOT_DIR_NAME);
+        self.dir.push(TMP_DIR_NAME);
         SlotDir {
             dir: self.dir,
         }
@@ -186,6 +196,18 @@ impl PathToFile {
         file.flush().await.into_error(FileError::IoFileFlush)?;
         file.sync_all().await.into_error(FileError::IoFileSync)?;
         Ok(())
+    }
+
+    pub async fn move_to(self, new_location: &Self) -> Result<(), FileError> {
+        tokio::fs::rename(self.path, new_location.path()).await.into_error(FileError::IoFileRename)
+    }
+
+    pub async fn remove(self) -> Result<(), FileError> {
+        tokio::fs::remove_file(&self.path).await.into_error(FileError::IoFileRemove)
+    }
+
+    pub fn exists(&self) -> bool {
+        self.path.exists()
     }
 }
 

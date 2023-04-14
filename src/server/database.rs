@@ -32,7 +32,7 @@ use crate::utils::IntoReportExt;
 
 pub const DB_HISTORY_DIR_NAME: &str = "history";
 pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";
-pub const DB_FILE_DIR_NAME: &str = "file";
+pub const DB_FILE_DIR_NAME: &str = "files";
 
 pub type DatabeseEntryId = String;
 

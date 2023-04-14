@@ -8,8 +8,8 @@ use error_stack::Result;
 
 use crate::{api::{
     account::data::AccountSetup,
-    model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest}, self, media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId},
-}, server::database::sqlite::CurrentDataWriteHandle};
+    model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest, ContentId}, self, media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, ContentState},
+}, server::database::{sqlite::CurrentDataWriteHandle, file::file::ImageSlot}};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson, SqliteWriteHandle};
 
@@ -28,6 +28,8 @@ macro_rules! insert_or_update_json {
     }};
 }
 
+pub struct DeletedSomething;
+
 pub struct CurrentWriteMediaCommands<'a> {
     handle: &'a CurrentDataWriteHandle,
 }
@@ -35,6 +37,66 @@ pub struct CurrentWriteMediaCommands<'a> {
 impl<'a> CurrentWriteMediaCommands<'a> {
     pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
         Self { handle }
+    }
+
+    pub async fn store_content_id_to_slot(
+        &self,
+        content_uploader: AccountIdInternal,
+        content_id: ContentId,
+        slot: ImageSlot,
+    ) -> Result<(), SqliteDatabaseError> {
+        if !self.handle.read().media().get_content_id_from_slot(content_uploader, slot).await?.is_some() {
+            return Err(SqliteDatabaseError::ContentSlotNotEmpty.into());
+        }
+
+        let content_uuid = content_id.as_uuid();
+        let account_row_id = content_uploader.row_id();
+        let state = ContentState::InSlot as i64;
+        let slot = slot as i64;
+        sqlx::query!(
+            r#"
+            INSERT INTO MediaContent (content_id, account_row_id, moderation_state, slot_number)
+            VALUES (?, ?, ?, ?)
+            "#,
+            content_uuid,
+            account_row_id,
+            state,
+            slot,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub async fn delete_image_from_slot(
+        &self,
+        request_creator: AccountIdInternal,
+        slot: ImageSlot,
+    ) -> Result<Option<DeletedSomething>, SqliteDatabaseError> {
+        let account_row_id = request_creator.row_id();
+        let in_slot_state = ContentState::InSlot as i64;
+        let slot = slot as i64;
+        let deleted_count = sqlx::query!(
+            r#"
+            DELETE FROM MediaContent
+            WHERE account_row_id = ? AND moderation_state = ? AND slot_number = ?
+            "#,
+            account_row_id,
+            in_slot_state,
+            slot,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?
+        .rows_affected();
+
+        if deleted_count > 0 {
+            Ok(Some(DeletedSomething))
+        } else {
+            Ok(None)
+        }
     }
 
     async fn delete_queue_number_of_account(
