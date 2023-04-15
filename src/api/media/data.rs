@@ -125,9 +125,9 @@ impl TryFrom<i64> for ContentState {
 }
 
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct ModerationRequestList {
-    list: Vec<ModerationRequest>,
+#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct ModerationList {
+    pub list: Vec<Moderation>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -197,7 +197,14 @@ pub struct ModerationId {
     pub account_id: AccountIdInternal,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Moderation {
+    pub request_id: ModerationRequestId,
+    pub moderator_id: AccountIdLight,
+    pub content: NewModerationRequest,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct ModerationRequestId {
     pub request_row_id: i64,
 }

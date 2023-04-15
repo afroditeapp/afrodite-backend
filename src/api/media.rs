@@ -17,7 +17,7 @@ use crate::server::database::file::file::ImageSlot;
 
 use self::super::model::SlotId;
 
-use self::data::{ImageFileName, NewModerationRequest, ModerationRequestList, ContentId};
+use self::data::{ImageFileName, NewModerationRequest, ContentId, ModerationRequest, ModerationList};
 
 use super::utils::ApiKeyHeader;
 use super::{ReadDatabase, GetApiKeys, WriteDatabase};
@@ -29,7 +29,6 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
 #[utoipa::path(
     get,
     path = "/media_api/image/{account_id}/{image_file}",
-    params(AccountIdLight, ContentId),
     responses(
         (status = 200, description = "Get image file.", content_type = "image/jpeg"),
         (status = 401, description = "Unauthorized."),
@@ -38,7 +37,7 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
     security(("api_key" = [])),
 )]
 pub async fn get_image<S: ReadDatabase>(
-    Path(accouunt_id): Path<AccountIdLight>,
+    Path(account_id): Path<AccountIdLight>,
     Path(content_id): Path<ContentId>,
     state: S,
 ) -> Result<([(HeaderName, &'static str); 1], Vec<u8>), StatusCode> {
@@ -48,7 +47,7 @@ pub async fn get_image<S: ReadDatabase>(
     // version. Or check will the connection be closed if there is an error. And
     // set content lenght? Or use ServeFile service from tower middleware.
 
-    let data = state.read_database().image(accouunt_id, content_id).await.map_err(|e| {
+    let data = state.read_database().image(account_id, content_id).await.map_err(|e| {
         error!("{}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
@@ -127,7 +126,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
 
 /// Set image to moderation request slot.
 ///
-/// Slots "camera" and "image1" are available.
+/// Slots from 0 to 2 are available.
 ///
 /// TODO: resize and check images at some point
 ///
@@ -145,7 +144,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
 )]
 pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Path(slot_id): Path<String>,
+    Path(slot_number): Path<u8>,
     image: BodyStream,
     state: S,
 ) -> Result<Json<ContentId>, StatusCode> {
@@ -155,10 +154,10 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let slot = match slot_id.as_str() {
-        "slot1" => ImageSlot::Image1,
-        "slot2" => ImageSlot::Image2,
-        "slot3" => ImageSlot::Image3,
+    let slot = match slot_number {
+        0 => ImageSlot::Image1,
+        1 => ImageSlot::Image2,
+        2 => ImageSlot::Image3,
         _ => return Err(StatusCode::NOT_ACCEPTABLE),
     };
 
@@ -175,7 +174,8 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
 pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str =
     "/media_api/admin/moderation/page/next";
 
-/// Get list of next moderation requests in moderation queue.
+/// Get current list of moderation requests in my moderation queue.
+/// Additional requests will be added to my queue if necessary.
 ///
 /// ## Access
 ///
@@ -183,19 +183,34 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str =
 /// route.
 ///
 #[utoipa::path(
-    get,
+    patch,
     path = "/media_api/admin/moderation/page/next",
     responses(
-        (status = 200, description = "Get moderation request list was successfull.", body = ModerationRequestList),
+        (status = 200, description = "Get moderation request list was successfull.", body = ModerationList),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_moderation_request_list<S: ReadDatabase>(
-    _state: S,
-) -> Result<Json<ModerationRequestList>, StatusCode> {
-    Err(StatusCode::NOT_MODIFIED)
+pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    state: S,
+) -> Result<Json<ModerationList>, StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let data = state.write_database(account_id.as_light())
+        .moderation_get_list_and_create_new_if_necessary(account_id)
+        .await
+        .map_err(|e| {
+            error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(ModerationList { list: data}.into())
 }
 
 

@@ -2,6 +2,7 @@
 
 
 use core::num;
+use std::char::MAX;
 
 use async_trait::async_trait;
 use error_stack::Result;
@@ -10,7 +11,7 @@ use sqlx::{Transaction, Sqlite};
 
 use crate::{api::{
     account::data::AccountSetup,
-    model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest, ContentId}, self, media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, ContentState, ContentIdInternal},
+    model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest, ContentId, ModerationList}, self, media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, ContentState, ContentIdInternal, Moderation},
 }, server::database::{sqlite::CurrentDataWriteHandle, file::file::ImageSlot}};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson, SqliteWriteHandle};
@@ -298,11 +299,52 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         Ok(())
     }
 
-    pub async fn create_moderation(
+    pub async fn moderation_get_list_and_create_new_if_necessary(
+        &self,
+        moderator_id: AccountIdInternal,
+    ) -> Result<Vec<Moderation>, SqliteDatabaseError> {
+        let mut moderations = self.handle.read().media().get_in_progress_moderations(moderator_id).await?;
+        const MAX_COUNT: usize = 5;
+        if moderations.len() >= MAX_COUNT {
+            return Ok(moderations);
+        }
+
+        for _ in moderations.len()..MAX_COUNT {
+            match self.create_moderation_from_next_request_in_queue(moderator_id).await? {
+                None => break,
+                Some(moderation) => moderations.push(moderation),
+            }
+        }
+
+        Ok(moderations)
+    }
+
+    async fn create_moderation_from_next_request_in_queue(
+        &self,
+        moderator_id: AccountIdInternal,
+    ) -> Result<Option<Moderation>, SqliteDatabaseError> {
+        // TODO: Really support multiple sub queues after account premium mode
+        // is implemented.
+
+        let id = self.handle.read().media().get_next_active_moderation_request(0).await?;
+
+        match id {
+            None => Ok(None),
+            Some(id) => {
+                let moderation = self.create_moderation(id, moderator_id).await?;
+                Ok(Some(moderation))
+            }
+        }
+    }
+
+    async fn create_moderation(
         &self,
         target_id: ModerationRequestId,
         moderator_id: AccountIdInternal,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> Result<Moderation, SqliteDatabaseError> {
+        // TODO: Currently is possible that two moderators moderate the same
+        // request. Should that be prevented?
+
         let (content, queue_number) = self.handle.read().media()
             .get_moderation_request_content(target_id).await?;
         let content_string = serde_json::to_string(&content)
@@ -326,7 +368,13 @@ impl<'a> CurrentWriteMediaCommands<'a> {
 
         self.delete_queue_number(queue_number).await?;
 
-        Ok(())
+        let moderation = Moderation {
+            request_id: ModerationRequestId { request_row_id: target_id.request_row_id },
+            moderator_id: moderator_id.as_light(),
+            content
+        };
+
+        Ok(moderation)
     }
 
     /// Update moderation state of Moderation.

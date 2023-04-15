@@ -9,7 +9,7 @@ use tokio_stream::{Stream, StreamExt};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
-use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, Content, ContentState, ContentIdInternal};
+use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, Content, ContentState, ContentIdInternal, Moderation};
 use crate::api::model::{Account, AccountId, AccountIdInternal, ApiKey, Profile, ModerationRequest, NewModerationRequest, ContentId};
 use crate::server::database::file::file::ImageSlot;
 use crate::server::database::read::ReadCmd;
@@ -30,9 +30,6 @@ macro_rules! read_json {
             })
     }};
 }
-
-// TODO: make possible to change MediaConent state
-// TODO: Change image state if moderation passes
 
 pub struct CurrentReadMediaCommands<'a> {
     handle: &'a SqliteReadHandle,
@@ -193,39 +190,49 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_in_progress_moderations(
         &self,
         moderator_id: AccountIdInternal,
-    ) -> Result<Vec<ModerationId>, SqliteDatabaseError> {
+    ) -> Result<Vec<Moderation>, SqliteDatabaseError> {
         let account_row_id = moderator_id.row_id();
-        let state_accepted = ModerationRequestState::Accepted as i64;
-        let state_denied = ModerationRequestState::Denied as i64;
-        let data = sqlx::query_as!(
-            ModerationRequestId,
+        let state_in_progress = ModerationRequestState::InProgress as i64;
+        let data = sqlx::query!(
             r#"
-            SELECT request_row_id
+            SELECT request_row_id, json_text
             FROM MediaModeration
-            WHERE account_row_id = ? AND state_number != ? AND state_number != ?
+            WHERE account_row_id = ? AND state_number = ?
             "#,
             account_row_id,
-            state_accepted,
-            state_denied,
+            state_in_progress,
         )
         .fetch_all(self.handle.pool())
         .await
-        .into_error(SqliteDatabaseError::Fetch)?
-        .into_iter().map(|r| ModerationId { request_id: r, account_id: moderator_id}).collect();
+        .into_error(SqliteDatabaseError::Fetch)?;
 
-        Ok(data)
+        let mut new_data = vec![];
+        for r in data.into_iter() {
+            let data: NewModerationRequest = serde_json::from_str(&r.json_text)
+                .into_error(SqliteDatabaseError::SerdeDeserialize)?;
+
+            let moderation = Moderation {
+                moderator_id: moderator_id.as_light(),
+                request_id: ModerationRequestId { request_row_id: r.request_row_id },
+                content: data,
+            };
+            new_data.push(moderation);
+        }
+
+        Ok(new_data)
     }
 
-    pub async fn get_next_active_queue_number(
+    pub async fn get_next_active_moderation_request(
         &self,
         sub_queue: i64,
-    ) -> Result<Option<ModerationRequestQueueNumber>, SqliteDatabaseError> {
+    ) -> Result<Option<ModerationRequestId>, SqliteDatabaseError> {
         let data = sqlx::query!(
             r#"
-            SELECT queue_number
+            SELECT request_row_id
             FROM MediaModerationQueueNumber
+                INNER JOIN MediaModerationRequest ON MediaModerationRequest.queue_number = MediaModerationQueueNumber.queue_number
             WHERE sub_queue = ?
-            ORDER BY queue_number ASC
+            ORDER BY MediaModerationQueueNumber.queue_number ASC
             LIMIT 1
             "#,
             sub_queue,
@@ -234,7 +241,12 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        Ok(data.map(|r| ModerationRequestQueueNumber { number: r.queue_number}))
+        let request_row_id = match data.map(|r| r.request_row_id).flatten() {
+            None => return Ok(None),
+            Some(id) => id,
+        };
+
+        Ok(Some(ModerationRequestId { request_row_id }))
     }
 
     pub async fn moderation(

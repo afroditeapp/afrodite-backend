@@ -1,6 +1,7 @@
 
 use std::fmt::Debug;
 
+use api_client::models::ModerationRequest;
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
@@ -77,5 +78,14 @@ impl<'a> ReadCommands<'a> {
 
     pub async fn moderation_request(&self, account_id: AccountIdInternal) -> Result<Option<NewModerationRequest>, DatabaseError> {
         self.sqlite.media().current_moderation_request(account_id).await.change_context(DatabaseError::Sqlite).map(|r| r.map(|request| request.into_request()))
+    }
+
+    pub async fn moderation_request_from_queue(&self, account_id: AccountIdInternal) -> Result<Option<ModerationRequest>, DatabaseError> {
+        let next_queue_number = self.sqlite.media()
+            .get_next_active_moderation_request(0)
+            .await
+            .change_context(DatabaseError::Sqlite)?;
+
+        unimplemented!()
     }
 }

@@ -9,6 +9,7 @@ use server::PihkaServer;
 use test::TestRunner;
 
 fn main() {
+    // TODO: print commit ID to logs if build directory was clean
     let config = config::get_config().unwrap();
 
     let runtime = tokio::runtime::Runtime::new().unwrap();

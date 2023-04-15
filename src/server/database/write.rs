@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use std::{sync::Arc, future::Future};
 
+use api_client::models::AccountId;
 use axum::extract::BodyStream;
 use error_stack::{Result, ResultExt, Report};
 use serde::Serialize;
@@ -7,7 +8,7 @@ use tokio::sync::{MutexGuard, Mutex};
 use tokio_stream::StreamExt;
 
 use crate::{
-    api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId, NewModerationRequest},
+    api::{model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId, NewModerationRequest}, media::data::Moderation},
     config::Config,
     server::database::{sqlite::SqliteWriteHandle, DatabaseError},
     utils::{ErrorConversion, IntoReportExt, AppendErrorTo},
@@ -28,6 +29,7 @@ pub enum WriteCmd {
     AccountState(AccountIdInternal),
     AccountSetup(AccountIdInternal),
     MediaModerationRequest(AccountIdInternal),
+    MediaModeration(AccountIdInternal),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -55,6 +57,16 @@ impl std::fmt::Display for CacheWrite {
         f.write_fmt(format_args!("Cache write command: {:?}", self))
     }
 }
+
+// TODO: remove
+// macro_rules! lock {
+//     ($test:expr) => {
+//         let s = $test;
+//         let mutex = s.cache.get_write_lock_simple(s.locking_id).await.change_context(DatabaseError::Cache)?;
+//         let lock = mutex.lock().await;
+//         s.to_internal(&lock)
+//     };
+// }
 
 /// One Account can do only one write command at a time.
 pub struct AccountWriteLock;
@@ -196,6 +208,23 @@ impl <'a> WriteCommands<'a> {
         self.to_internal(&lock).set_moderation_request(account_id, request).await
     }
 
+    pub async fn moderation_get_list_and_create_new_if_necessary(&self, account_id: AccountIdInternal) -> Result<Vec<Moderation>, DatabaseError> {
+        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
+        let lock = mutex.lock().await;
+        self.to_internal(&lock).moderation_get_list_and_create_new_if_necessary(account_id).await
+    }
+
+    async fn lock_and_run(&self, account_id: AccountIdInternal) -> Result<(), DatabaseError> {
+        // TOOD: remove
+        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
+        let lock = mutex.lock().await;
+        let commands = self.to_internal(&lock);
+        // let x = move |c: WriteCommandsInternal| c.cache;
+        //let x = x(commands);
+
+        Ok(())
+    }
+
     fn to_internal<'b>(&'b self, lock: &'b AccountWriteLock) -> WriteCommandsInternal<'b>{
         WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, self.file_dir, lock)
     }
@@ -311,6 +340,14 @@ impl <'a> WriteCommandsInternal<'a> {
             .create_new_moderation_request(account_id, request)
             .await
             .with_info_lazy(|| WriteCmd::MediaModerationRequest(account_id))
+    }
+
+    pub async fn moderation_get_list_and_create_new_if_necessary(self, account_id: AccountIdInternal) -> Result<Vec<Moderation>, DatabaseError> {
+        self.current()
+            .media()
+            .moderation_get_list_and_create_new_if_necessary(account_id)
+            .await
+            .with_info_lazy(|| WriteCmd::MediaModeration(account_id))
     }
 
     fn current(&self) -> CurrentDataWriteCommands {
