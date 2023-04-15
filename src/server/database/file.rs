@@ -45,6 +45,16 @@ pub enum FileError {
     IoFileSync,
     #[error("File remove failed")]
     IoFileRemove,
+    #[error("Iterating directory contents failed")]
+    IoDirIter,
+
+    #[error("Missing file name")]
+    MissingFileName,
+    #[error("Invalid file name")]
+    InvalidFileName,
+    #[error("Invalid directory")]
+    InvalidDirectory,
+
 
     // Serde
     #[error("Serde serialization failed")]

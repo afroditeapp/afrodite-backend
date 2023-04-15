@@ -5,10 +5,12 @@ use core::num;
 
 use async_trait::async_trait;
 use error_stack::Result;
+use hyper::header::TRANSFER_ENCODING;
+use sqlx::{Transaction, Sqlite};
 
 use crate::{api::{
     account::data::AccountSetup,
-    model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest, ContentId}, self, media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, ContentState},
+    model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest, ContentId}, self, media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, ContentState, ContentIdInternal},
 }, server::database::{sqlite::CurrentDataWriteHandle, file::file::ImageSlot}};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson, SqliteWriteHandle};
@@ -28,6 +30,51 @@ macro_rules! insert_or_update_json {
     }};
 }
 
+#[must_use]
+pub struct DatabaseTransaction<'a> {
+    transaction: Transaction<'a, Sqlite>,
+}
+
+impl <'a> DatabaseTransaction<'a> {
+    pub async fn store_content_id_to_slot(
+        handle: &'a CurrentDataWriteHandle,
+        content_uploader: AccountIdInternal,
+        content_id: ContentId,
+        slot: ImageSlot,
+    ) -> Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
+        let content_uuid = content_id.as_uuid();
+        let account_row_id = content_uploader.row_id();
+        let state = ContentState::InSlot as i64;
+        let slot = slot as i64;
+
+        let mut transaction = handle.pool().try_begin().await.into_error(SqliteDatabaseError::TransactionBegin)?.ok_or(SqliteDatabaseError::TransactionBegin)?;
+
+        sqlx::query!(
+            r#"
+            INSERT INTO MediaContent (content_id, account_row_id, moderation_state, slot_number)
+            VALUES (?, ?, ?, ?)
+            "#,
+            content_uuid,
+            account_row_id,
+            state,
+            slot,
+        )
+        .execute(&mut transaction)
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(DatabaseTransaction { transaction })
+    }
+
+    pub async fn commit(self) -> Result<(), SqliteDatabaseError> {
+        self.transaction.commit().await.into_error(SqliteDatabaseError::TransactionCommit)
+    }
+
+    pub async fn rollback(self) -> Result<(), SqliteDatabaseError> {
+        self.transaction.rollback().await.into_error(SqliteDatabaseError::TransactionRollback)
+    }
+}
+
 pub struct DeletedSomething;
 
 pub struct CurrentWriteMediaCommands<'a> {
@@ -39,35 +86,40 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_content_id_to_slot(
-        &self,
-        content_uploader: AccountIdInternal,
+    async fn update_content_state(
+        transaction: &mut Transaction<'_, Sqlite>,
         content_id: ContentId,
-        slot: ImageSlot,
+        new_state: ContentState,
     ) -> Result<(), SqliteDatabaseError> {
-        if !self.handle.read().media().get_content_id_from_slot(content_uploader, slot).await?.is_some() {
-            return Err(SqliteDatabaseError::ContentSlotNotEmpty.into());
-        }
+        let state = new_state as i64;
 
-        let content_uuid = content_id.as_uuid();
-        let account_row_id = content_uploader.row_id();
-        let state = ContentState::InSlot as i64;
-        let slot = slot as i64;
         sqlx::query!(
             r#"
-            INSERT INTO MediaContent (content_id, account_row_id, moderation_state, slot_number)
-            VALUES (?, ?, ?, ?)
+            UPDATE MediaContent
+            SET moderation_state = ?
+            WHERE content_id = ?
             "#,
-            content_uuid,
-            account_row_id,
             state,
-            slot,
+            content_id.content_id,
         )
-        .execute(self.handle.pool())
+        .execute(transaction)
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
         Ok(())
+    }
+
+    pub async fn store_content_id_to_slot(
+        self,
+        content_uploader: AccountIdInternal,
+        content_id: ContentId,
+        slot: ImageSlot,
+    ) -> Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
+        if !self.handle.read().media().get_content_id_from_slot(content_uploader, slot).await?.is_some() {
+            return Err(SqliteDatabaseError::ContentSlotNotEmpty.into());
+        }
+
+        DatabaseTransaction::store_content_id_to_slot(self.handle, content_uploader, content_id, slot).await
     }
 
     pub async fn delete_image_from_slot(
@@ -162,8 +214,6 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         Ok(())
     }
 
-
-
     /// Used when a user creates a new moderation request
     async fn create_new_moderation_request_queue_number(
         &self,
@@ -188,7 +238,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
 
 
     /// Used when a user creates a new moderation request
-    pub async fn create_new_media_moderation_request(
+    pub async fn create_new_moderation_request(
         &self,
         request_creator: AccountIdInternal,
         request: NewModerationRequest,
@@ -215,7 +265,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         Ok(())
     }
 
-    pub async fn update_media_moderation_request(
+    pub async fn update_moderation_request(
         &self,
         request_owner_account_id: AccountIdInternal,
         new_request: NewModerationRequest,
@@ -248,7 +298,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         moderator_id: AccountIdInternal,
     ) -> Result<(), SqliteDatabaseError> {
         let (content, queue_number) = self.handle.read().media()
-            .get_media_moderation_request_content(target_id).await?;
+            .get_moderation_request_content(target_id).await?;
         let content_string = serde_json::to_string(&content)
             .into_error(SqliteDatabaseError::SerdeSerialize)?;
         let account_row_id = moderator_id.row_id();
@@ -273,26 +323,63 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         Ok(())
     }
 
+    /// Update moderation state of Moderation.
+    ///
+    /// Also updates
     pub async fn update_moderation(
         &self,
-        moderation: ModerationId,
+        moderation_id: ModerationId,
         state: ModerationRequestState,
     ) -> Result<(), SqliteDatabaseError> {
-        let state_number = state as i64;
+        let content = self.handle.read().media().moderation(moderation_id).await?;
 
-        sqlx::query!(
-            r#"
-            UPDATE MediaModeration
-            SET state_number = ?
-            WHERE row_id = ?
-            "#,
-            state_number,
-            moderation.moderation_row_id,
-        )
-        .execute(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+        let mut transaction = self.handle.pool().begin().await.into_error(SqliteDatabaseError::TransactionBegin)?;
 
-        Ok(())
+        async fn actions(
+            transaction: &mut Transaction<'_, Sqlite>,
+            moderation: ModerationId,
+            state: ModerationRequestState,
+            content: NewModerationRequest,
+        ) -> Result<(), SqliteDatabaseError> {
+            let new_content_state = match state {
+                ModerationRequestState::Accepted => ContentState::ModeratedAsAccepted,
+                ModerationRequestState::Denied => ContentState::ModeratedAsDenied,
+                ModerationRequestState::InProgress => ContentState::InModeration,
+                ModerationRequestState::Waiting => ContentState::InSlot,
+            };
+
+            for c in content.content() {
+                CurrentWriteMediaCommands::update_content_state(transaction, c, new_content_state).await?;
+            }
+
+            let state_number = state as i64;
+            sqlx::query!(
+                r#"
+                UPDATE MediaModeration
+                SET state_number = ?
+                WHERE account_row_id = ? AND request_row_id = ?
+                "#,
+                state_number,
+                moderation.account_id.account_row_id,
+                moderation.request_id.request_row_id,
+            )
+            .execute(transaction)
+            .await
+            .into_error(SqliteDatabaseError::Execute)?;
+
+            Ok(())
+        }
+
+        match actions(&mut transaction, moderation_id, state, content).await {
+            Ok(()) =>  {
+                transaction.commit().await.into_error(SqliteDatabaseError::TransactionCommit)
+            }
+            Err(e) => {
+                match transaction.rollback().await.into_error(SqliteDatabaseError::TransactionRollback) {
+                    Ok(()) => Err(e),
+                    Err(another_error) => Err(another_error.attach(e)),
+                }
+            }
+        }
     }
 }

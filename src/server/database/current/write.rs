@@ -37,7 +37,7 @@ impl<'a> CurrentDataWriteCommands<'a> {
         Self { handle }
     }
 
-    pub fn media(&self) -> CurrentWriteMediaCommands<'_> {
+    pub fn media(self) -> CurrentWriteMediaCommands<'a> {
         CurrentWriteMediaCommands::new(self.handle)
     }
 

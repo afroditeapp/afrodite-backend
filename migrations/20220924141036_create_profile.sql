@@ -94,11 +94,11 @@ CREATE TABLE IF NOT EXISTS MediaModerationRequest(
 );
 
 CREATE TABLE IF NOT EXISTS MediaModeration(
-    row_id          INTEGER PRIMARY KEY,
     account_row_id  INTEGER NOT NULL,       -- What admin account is moderating
     request_row_id  INTEGER NOT NULL,       -- What request is in moderation
     state_number    INTEGER NOT NULL,       -- State of the moderation
     json_text       TEXT    NOT NULL,       -- What was moderated
+    PRIMARY KEY (account_row_id, request_row_id),
     FOREIGN KEY (account_row_id)
         REFERENCES AccountId (account_row_id)
             ON DELETE CASCADE

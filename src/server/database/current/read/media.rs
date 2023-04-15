@@ -7,7 +7,7 @@ use tokio_stream::{Stream, StreamExt};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
-use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, Content, ContentState};
+use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, Content, ContentState, ContentIdInternal};
 use crate::api::model::{Account, AccountId, AccountIdInternal, ApiKey, Profile, ModerationRequest, NewModerationRequest, ContentId};
 use crate::server::database::file::file::ImageSlot;
 use crate::server::database::read::ReadCmd;
@@ -29,6 +29,9 @@ macro_rules! read_json {
     }};
 }
 
+// TODO: make possible to change MediaConent state
+// TODO: Change image state if moderation passes
+
 pub struct CurrentReadMediaCommands<'a> {
     handle: &'a SqliteReadHandle,
 }
@@ -42,13 +45,13 @@ impl<'a> CurrentReadMediaCommands<'a> {
         &self,
         slot_owner: AccountIdInternal,
         slot: ImageSlot,
-    ) -> Result<Option<ContentId>, SqliteDatabaseError> {
+    ) -> Result<Option<ContentIdInternal>, SqliteDatabaseError> {
         let required_state = ContentState::InSlot as i64;
         let required_slot = slot as i64;
         let request = sqlx::query_as!(
-            ContentId,
+            ContentIdInternal,
             r#"
-            SELECT content_id as "content_id: _"
+            SELECT content_row_id, content_id as "content_id: _"
             FROM MediaContent
             WHERE account_row_id = ? AND moderation_state = ? AND slot_number = ?
             "#,
@@ -63,11 +66,11 @@ impl<'a> CurrentReadMediaCommands<'a> {
         Ok(request)
     }
 
-    pub async fn current_media_moderation_request(
+    pub async fn current_moderation_request(
         &self,
-        id: AccountIdInternal,
+        request_creator: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, SqliteDatabaseError> {
-        let account_row_id = id.row_id();
+        let account_row_id = request_creator.row_id();
         let request = sqlx::query!(
             r#"
             SELECT request_row_id, queue_number, json_text
@@ -121,14 +124,14 @@ impl<'a> CurrentReadMediaCommands<'a> {
 
         Ok(Some(ModerationRequest::new(
             request.request_row_id,
-            id.as_light(),
+            request_creator.as_light(),
             state,
             data,
         )))
 
     }
 
-    pub async fn get_media_moderation_request_content(
+    pub async fn get_moderation_request_content(
         &self,
         id: ModerationRequestId,
     ) -> Result<(NewModerationRequest, ModerationRequestQueueNumber), SqliteDatabaseError> {
@@ -157,9 +160,10 @@ impl<'a> CurrentReadMediaCommands<'a> {
         let account_row_id = moderator_id.row_id();
         let state_accepted = ModerationRequestState::Accepted as i64;
         let state_denied = ModerationRequestState::Denied as i64;
-        let data = sqlx::query!(
+        let data = sqlx::query_as!(
+            ModerationRequestId,
             r#"
-            SELECT row_id
+            SELECT request_row_id
             FROM MediaModeration
             WHERE account_row_id = ? AND state_number != ? AND state_number != ?
             "#,
@@ -170,7 +174,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .fetch_all(self.handle.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?
-        .into_iter().map(|r| ModerationId { moderation_row_id: r.row_id}).collect();
+        .into_iter().map(|r| ModerationId { request_id: r, account_id: moderator_id}).collect();
 
         Ok(data)
     }
@@ -194,5 +198,29 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .into_error(SqliteDatabaseError::Fetch)?;
 
         Ok(data.map(|r| ModerationRequestQueueNumber { number: r.queue_number}))
+    }
+
+    pub async fn moderation(
+        &self,
+        moderation: ModerationId,
+    ) -> Result<NewModerationRequest, SqliteDatabaseError> {
+        let account_row_id = moderation.account_id.row_id();
+        let content_to_be_moderated = sqlx::query!(
+            r#"
+            SELECT json_text
+            FROM MediaModeration
+            WHERE account_row_id = ? AND request_row_id = ?
+            "#,
+            account_row_id,
+            moderation.request_id.request_row_id,
+        )
+        .fetch_one(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        let data: NewModerationRequest = serde_json::from_str(&content_to_be_moderated.json_text)
+            .into_error(SqliteDatabaseError::SerdeDeserialize)?;
+
+        Ok(data)
     }
 }

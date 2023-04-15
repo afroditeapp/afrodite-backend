@@ -3,7 +3,7 @@ use tower::util::Optional;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{api::model::AccountIdLight, server::database::file::file::ImageSlot};
+use crate::{api::model::{AccountIdLight, AccountIdInternal}, server::database::file::file::ImageSlot};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ImageFileName {
@@ -22,11 +22,17 @@ pub struct NewModerationRequest {
     /// Use slot 1 image as camera image.
     camera_image: bool,
     /// Include slot 1 image in moderation request.
-    image1: String,
+    image1: ContentId,
     /// Include slot 2 image in moderation request.
-    image2: Option<String>,
+    image2: Option<ContentId>,
     /// Include slot 3 image in moderation request.
-    image3: Option<String>,
+    image3: Option<ContentId>,
+}
+
+impl NewModerationRequest {
+    pub fn content(&self) -> impl Iterator<Item=ContentId> {
+        [Some(self.image1), self.image2, self.image3].into_iter().flatten()
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -88,9 +94,15 @@ pub enum ContentState {
     InSlot = 0,
     /// Content is in moderation. User can not remove the content.
     InModeration = 1,
-    /// Content is moderated. User can not remove the content.
-    Moderated = 2,
+    /// Content is moderated as accepted. User can not remove the content.
+    ModeratedAsAccepted = 2,
+    /// Content is moderated as denied. Making new moderation request removes
+    /// the content.
+    ModeratedAsDenied = 3,
 }
+
+// TODO: Remove content with state ModeratedAsDenied when new moderation request
+// is created. Get content id from Moderation table.
 
 impl TryFrom<i64> for ContentState {
     type Error = StateParsingError;
@@ -98,7 +110,8 @@ impl TryFrom<i64> for ContentState {
         let value = match value {
             0 => Self::InSlot,
             1 => Self::InModeration,
-            2 => Self::Moderated,
+            2 => Self::ModeratedAsAccepted,
+            3 => Self::ModeratedAsDenied,
             _ => return Err(StateParsingError::ParsingError(value)),
         };
 
@@ -161,9 +174,22 @@ pub struct Content {
     pub slot_number: i64,
 }
 
+#[derive(Debug, Clone)]
+pub struct ContentIdInternal {
+    pub content_id: uuid::Uuid,
+    pub content_row_id: i64,
+}
+
+impl ContentIdInternal {
+    pub fn as_content_id(&self) -> ContentId {
+        ContentId { content_id: self.content_id }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct ModerationId {
-    pub moderation_row_id: i64,
+    pub request_id: ModerationRequestId,
+    pub account_id: AccountIdInternal,
 }
 
 #[derive(Debug, Copy, Clone)]

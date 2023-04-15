@@ -1,12 +1,12 @@
 use std::{
     fs,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, future::IntoFuture,
 };
 
 use axum::extract::BodyStream;
 use error_stack::Result;
 use tokio::io::AsyncWriteExt;
-use tokio_stream::StreamExt;
+use tokio_stream::{StreamExt, wrappers::ReadDirStream};
 
 use crate::api::model::{AccountId, AccountIdLight, ContentId};
 
@@ -22,8 +22,6 @@ pub const TMP_DIR_NAME: &str = "tmp";
 pub const IMAGE_DIR_NAME: &str = "images";
 pub const EXPORT_DIR_NAME: &str = "export";
 
-pub const RAW_IMAGE_FILE_NAME_ENDING: &str = ".raw.jpg";
-
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
 pub struct FileDir {
@@ -37,20 +35,12 @@ impl FileDir {
         }
     }
 
-    pub fn unprocessed_image_upload(&self, id: AccountIdLight, content: ContentId) -> PathToFile {
-        let mut dir = self.dir.clone();
-        dir.push(id.to_string());
-        dir.push(TMP_DIR_NAME);
-        dir.push(content.raw_jpg_image());
-        PathToFile { path: dir }
+    pub fn unprocessed_image_upload(&self, id: AccountIdLight, content: ContentId) -> TmpImageFile {
+        self.account_dir(id).tmp_dir().unprocessed_image_upload(content)
     }
 
-    pub fn image_content(&self, id: AccountIdLight, content_id: ContentId) -> PathToFile {
-        let mut dir = self.dir.clone();
-        dir.push(id.to_string());
-        dir.push(IMAGE_DIR_NAME);
-        dir.push(content_id.jpg_image());
-        PathToFile { path: dir }
+    pub fn image_content(&self, id: AccountIdLight, content_id: ContentId) -> ImageFile {
+        self.account_dir(id).image_dir().image_content(content_id)
     }
 
     pub fn account_dir(&self, id: AccountIdLight) -> AccountDir {
@@ -59,6 +49,10 @@ impl FileDir {
         AccountDir {
             dir,
         }
+    }
+
+    pub fn tmp_dir(&self, id: AccountIdLight) -> TmpDir {
+        self.account_dir(id).tmp_dir()
     }
 
     pub fn path(&self) -> &Path {
@@ -72,25 +66,25 @@ pub struct AccountDir {
 }
 
 impl AccountDir {
-    pub fn path(&self) -> &PathBuf {
+    fn path(&self) -> &PathBuf {
         &self.dir
     }
 
-    pub fn slot_dir(mut self, ) -> SlotDir {
+    fn tmp_dir(mut self) -> TmpDir {
         self.dir.push(TMP_DIR_NAME);
-        SlotDir {
+        TmpDir {
             dir: self.dir,
         }
     }
 
-    pub fn export_dir(mut self) -> ExportDir {
+    fn export_dir(mut self) -> ExportDir {
         self.dir.push(EXPORT_DIR_NAME);
         ExportDir {
             dir: self.dir,
         }
     }
 
-    pub fn image_dir(mut self) -> ImageDir {
+    fn image_dir(mut self) -> ImageDir {
         self.dir.push(IMAGE_DIR_NAME);
         ImageDir {
             dir: self.dir,
@@ -99,27 +93,57 @@ impl AccountDir {
 }
 
 #[derive(Debug, Clone)]
-pub struct SlotDir {
+pub struct TmpDir {
     dir: PathBuf,
 }
 
 
-impl SlotDir {
+impl TmpDir {
     pub fn path(&self) -> &PathBuf {
         &self.dir
     }
 
+    /// Remove dir contents
+    ///
+    /// Does not do anything if dir does not exists.
+    pub async fn remove_contents_if_exists(&self) -> Result<(), FileError> {
+        if !self.dir.exists() {
+            return Ok(())
+        }
+
+        if self.dir.file_name().ok_or(FileError::MissingFileName)?.to_string_lossy() == TMP_DIR_NAME {
+            let iter = tokio::fs::read_dir(&self.dir).await.into_error(FileError::IoDirIter)?;
+            let mut s = ReadDirStream::new(iter);
+            while let Some(entry) = s.next().await {
+                let entry = entry.into_error(FileError::IoDirIter)?;
+                tokio::fs::remove_file(entry.path()).await.into_error(FileError::IoFileRemove)?;
+            }
+            Ok(())
+        } else {
+            Err(FileError::InvalidDirectory.into())
+        }
+    }
+
+    pub fn unprocessed_image_upload(mut self, id: ContentId) -> TmpImageFile {
+        self.dir.push(id.raw_jpg_image());
+        TmpImageFile { path: PathToFile { path: self.dir }}
+    }
 }
+
 
 #[derive(Debug, Clone)]
 pub struct ImageDir {
     dir: PathBuf,
 }
 
-
 impl ImageDir {
     pub fn path(&self) -> &PathBuf {
         &self.dir
+    }
+
+    pub fn image_content(mut self, content_id: ContentId) -> ImageFile {
+        self.dir.push(content_id.jpg_image());
+        ImageFile { path: PathToFile { path: self.dir }}
     }
 }
 
@@ -136,31 +160,37 @@ impl ExportDir {
 }
 
 #[derive(Debug, Clone)]
-pub struct SlotFile {
-    path: PathBuf,
-}
-
-
-impl SlotFile {
-    pub fn path(&self) -> &PathBuf {
-        &self.path
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct ImageFile {
-    path: PathBuf,
+    path: PathToFile,
 }
-
 
 impl ImageFile {
-    pub fn path(&self) -> &PathBuf {
-        &self.path
+    pub async fn remove_if_exists(self) -> Result<(), FileError> {
+        self.path.remove_if_exists().await
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct PathToFile {
+pub struct TmpImageFile {
+    path: PathToFile,
+}
+
+impl TmpImageFile {
+    pub async fn save_stream(&self, stream: BodyStream) -> Result<(), FileError> {
+        self.path.save_stream(stream).await
+    }
+
+    pub async fn move_to(self, new_location: &ImageFile) -> Result<(), FileError> {
+        self.path.move_to(&new_location.path).await
+    }
+
+    pub async fn remove_if_exists(self) -> Result<(), FileError> {
+        self.path.remove_if_exists().await
+    }
+}
+
+#[derive(Debug, Clone)]
+struct PathToFile {
     path: PathBuf,
 }
 
@@ -202,7 +232,11 @@ impl PathToFile {
         tokio::fs::rename(self.path, new_location.path()).await.into_error(FileError::IoFileRename)
     }
 
-    pub async fn remove(self) -> Result<(), FileError> {
+    pub async fn remove_if_exists(self) -> Result<(), FileError> {
+        if !self.exists() {
+            return Ok(());
+        }
+
         tokio::fs::remove_file(&self.path).await.into_error(FileError::IoFileRemove)
     }
 
@@ -210,105 +244,3 @@ impl PathToFile {
         self.path.exists()
     }
 }
-
-/*
-
-
-    pub async fn read_to_string_optional<T: GetLiveVersionPath>(
-        &self,
-        file: T,
-    ) -> Result<Option<String>, GitError> {
-        let path = self.account_dir.join(file.live_path().as_str());
-        if !path.is_file() {
-            return Ok(None);
-        }
-        tokio::fs::read_to_string(path)
-            .await
-            .into_error_with_info(GitError::IoFileRead, file.live_path())
-            .map(Some)
-    }
-
-    pub async fn read_to_string<T: GetLiveVersionPath>(&self, file: T) -> Result<String, GitError> {
-        let path = self.account_dir.join(file.live_path().as_str());
-        tokio::fs::read_to_string(path)
-            .await
-            .into_error_with_info(GitError::IoFileRead, file.live_path())
-    }
-
-    /// Open file for reading.
-    pub fn open_file<T: GetLiveVersionPath>(&self, file: T) -> Result<fs::File, GitError> {
-        let path = self.account_dir.join(file.live_path().as_str());
-        fs::File::open(path).into_error_with_info(GitError::IoFileOpen, file.live_path())
-    }
-
-    /// Replace file using new file. Creates the file if it does not exists.
-    pub fn replace_file<
-        T: GetStaticFileName + GetLiveVersionPath + Copy,
-        U: FnMut(&mut fs::File) -> Result<(), GitError>,
-    >(
-        &self,
-        file: T,
-        commit_msg: &str,
-        mut write_handle: U,
-    ) -> Result<(), GitError> {
-        let git_file_path = self.account_dir.join(file.git_path().as_str());
-        let mut git_file = fs::File::create(&git_file_path)
-            .into_error_with_info_lazy(GitError::IoFileCreate, || {
-                git_file_path.clone().to_string_lossy().to_string()
-            })?;
-
-        write_handle(&mut git_file)?;
-        drop(git_file);
-
-        let _git = GitDatabase::open(self)?;
-        let _msg = match self.mode_msg.as_ref() {
-            Some(mode_msg) => format!("{}\n\n{}", mode_msg, commit_msg),
-            None => commit_msg.to_owned(),
-        };
-
-        let live_file_path = self.account_dir.join(file.live_path().as_str());
-        fs::rename(&git_file_path, &live_file_path).into_error_with_info_lazy(
-            GitError::IoFileRename,
-            || {
-                format!(
-                    "from: {} to: {}",
-                    git_file_path.to_string_lossy(),
-                    live_file_path.to_string_lossy(),
-                )
-            },
-        )
-    }
-
-    pub fn replace_no_history_file<
-        T: GetTmpPath + GetLiveVersionPath + Copy,
-        U: FnMut(&mut fs::File) -> Result<(), GitError>,
-    >(
-        &self,
-        file: T,
-        mut write_handle: U,
-    ) -> Result<(), GitError> {
-        let tmp_file_path = self.account_dir.join(file.tmp_path().as_str());
-        let mut tmp_file = fs::File::create(&tmp_file_path)
-            .into_error_with_info(GitError::IoFileCreate, file.tmp_path())?;
-
-        write_handle(&mut tmp_file)?;
-        drop(tmp_file);
-
-        let live_file_path = self.account_dir.join(file.live_path().as_str());
-        fs::rename(&tmp_file_path, &live_file_path).into_error_with_info_lazy(
-            GitError::IoFileRename,
-            || {
-                format!(
-                    "from: {} to: {}",
-                    tmp_file_path.to_string_lossy(),
-                    live_file_path.to_string_lossy(),
-                )
-            },
-        )
-    }
-
-    pub fn read(&self) -> GitDatabaseReadCommands {
-        GitDatabaseReadCommands::new(self.clone())
-    }
-
- */

@@ -32,6 +32,12 @@ pub enum SqliteDatabaseError {
     Fetch,
     #[error("Running sqlx database migrations failed")]
     Migrate,
+    #[error("Starting transaction failed")]
+    TransactionBegin,
+    #[error("Rollbacking transaction failed")]
+    TransactionRollback,
+    #[error("Commiting transaction failed")]
+    TransactionCommit,
 
     #[error("Deserialization error")]
     SerdeDeserialize,
