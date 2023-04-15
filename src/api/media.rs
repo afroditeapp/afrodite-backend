@@ -1,12 +1,16 @@
 pub mod data;
 pub mod internal;
 
+use axum::response::{Response, IntoResponse};
 use axum::{Json, TypedHeader};
 use axum::body::{Bytes, StreamBody};
 use axum::extract::{Path, BodyStream};
 
+use headers::{Header, HeaderName};
 use hyper::StatusCode;
 
+use tokio::stream;
+use tokio_stream::Stream;
 use tracing::error;
 
 use crate::server::database::file::file::ImageSlot;
@@ -25,7 +29,7 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
 #[utoipa::path(
     get,
     path = "/media_api/image/{account_id}/{image_file}",
-    params(AccountIdLight, ImageFileName),
+    params(AccountIdLight, ContentId),
     responses(
         (status = 200, description = "Get image file.", content_type = "image/jpeg"),
         (status = 401, description = "Unauthorized."),
@@ -34,12 +38,22 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
     security(("api_key" = [])),
 )]
 pub async fn get_image<S: ReadDatabase>(
-    Path(_account_id): Path<AccountIdLight>,
-    Path(_image_file): Path<ImageFileName>,
-    _state: S,
-) -> Result<(), StatusCode> {
+    Path(accouunt_id): Path<AccountIdLight>,
+    Path(content_id): Path<ContentId>,
+    state: S,
+) -> Result<([(HeaderName, &'static str); 1], Vec<u8>), StatusCode> {
+    // TODO: Add access restrictions.
 
-    Ok(())
+    // TODO: Change to use stream when error handling is improved in future axum
+    // version. Or check will the connection be closed if there is an error. And
+    // set content lenght? Or use ServeFile service from tower middleware.
+
+    let data = state.read_database().image(accouunt_id, content_id).await.map_err(|e| {
+        error!("{}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(([(axum::http::header::CONTENT_TYPE, "image/jpeg")], data))
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
@@ -50,23 +64,36 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     get,
     path = "/media_api/moderation/request",
     responses(
-        (status = 200, description = "Get moderation request was successfull.", body = ModerationRequest),
+        (status = 200, description = "Get moderation request was successfull.", body = NewModerationRequest),
         (status = 304, description = "No moderation request found."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_moderation_request<S: ReadDatabase>(
-    Json(moderation_request): Json<NewModerationRequest>,
-    _state: S,
-) -> Result<(), StatusCode> {
-    Err(StatusCode::NOT_MODIFIED)
+pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    state: S,
+) -> Result<NewModerationRequest, StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let request = state.read_database().moderation_request(account_id).await.map_err(|e| {
+        error!("{}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+        .ok_or(StatusCode::NOT_MODIFIED)?;
+
+    Ok(request)
 }
 
 /// Create new or override old moderation request.
 ///
-/// Set images to moderation request slots first.
+/// Make sure that moderation request has content IDs which points to your own
+/// image slots.
 ///
 #[utoipa::path(
     put,
@@ -75,26 +102,25 @@ pub async fn get_moderation_request<S: ReadDatabase>(
     responses(
         (status = 200, description = "Sending or updating new image moderation request was successfull."),
         (status = 401, description = "Unauthorized."),
-        (status = 406, description = "Images not found in the slots defined in the request."),
-        (status = 500, description = "Internal server error."),
+        (status = 500, description = "Internal server error or request content was invalid."),
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_moderation_request<S: ReadDatabase>(
+pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(moderation_request): Json<NewModerationRequest>,
-    _state: S,
+    state: S,
 ) -> Result<(), StatusCode> {
-    // TODO: Validate user id
-    // state
-    //     .read_database()
-    //     .user_profile(&user_id)
-    //     .await
-    //     .map(|profile| ()) // TODO: Read and send image.
-    //     .map_err(|e| {
-    //         error!("Get profile error: {e:?}");
-    //         StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-    //     })
-    Err(StatusCode::NOT_ACCEPTABLE)
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    state.write_database(account_id.as_light()).set_moderation_request(account_id, moderation_request).await.map_err(|e| {
+        error!("{}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })
 }
 
 pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/slot/:slot_id";

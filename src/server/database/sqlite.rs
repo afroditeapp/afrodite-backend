@@ -52,6 +52,8 @@ pub enum SqliteDatabaseError {
 
     #[error("Content slot not empty")]
     ContentSlotNotEmpty,
+    #[error("ModerationRequestContentIsInvalid")]
+    ModerationRequestContentInvalid,
 }
 
 /// Path to directory which contains Sqlite files.

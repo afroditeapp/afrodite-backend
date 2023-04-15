@@ -7,6 +7,7 @@ use axum::extract::BodyStream;
 use error_stack::Result;
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{StreamExt, wrappers::ReadDirStream};
+use tokio_util::io::ReaderStream;
 
 use crate::api::model::{AccountId, AccountIdLight, ContentId};
 
@@ -168,6 +169,14 @@ impl ImageFile {
     pub async fn remove_if_exists(self) -> Result<(), FileError> {
         self.path.remove_if_exists().await
     }
+
+    pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
+        self.path.read_stream().await
+    }
+
+    pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
+        self.path.read_all().await
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -226,6 +235,15 @@ impl PathToFile {
         file.flush().await.into_error(FileError::IoFileFlush)?;
         file.sync_all().await.into_error(FileError::IoFileSync)?;
         Ok(())
+    }
+
+    pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
+        let file = tokio::fs::File::open(&self.path).await.into_error(FileError::IoFileOpen)?;
+        Ok(ReaderStream::new(file))
+    }
+
+    pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
+        tokio::fs::read(&self.path).await.into_error(FileError::IoFileOpen)
     }
 
     pub async fn move_to(self, new_location: &Self) -> Result<(), FileError> {

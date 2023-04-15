@@ -7,7 +7,7 @@ use tokio::sync::{MutexGuard, Mutex};
 use tokio_stream::StreamExt;
 
 use crate::{
-    api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId},
+    api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId, NewModerationRequest},
     config::Config,
     server::database::{sqlite::SqliteWriteHandle, DatabaseError},
     utils::{ErrorConversion, IntoReportExt, AppendErrorTo},
@@ -27,6 +27,7 @@ pub enum WriteCmd {
     ApiKey(AccountIdInternal),
     AccountState(AccountIdInternal),
     AccountSetup(AccountIdInternal),
+    MediaModerationRequest(AccountIdInternal),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -189,6 +190,12 @@ impl <'a> WriteCommands<'a> {
         self.to_internal(&lock).save_to_slot(id, slot, stream).await
     }
 
+    pub async fn set_moderation_request(&self, account_id: AccountIdInternal, request: NewModerationRequest) -> Result<(), DatabaseError> {
+        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
+        let lock = mutex.lock().await;
+        self.to_internal(&lock).set_moderation_request(account_id, request).await
+    }
+
     fn to_internal<'b>(&'b self, lock: &'b AccountWriteLock) -> WriteCommandsInternal<'b>{
         WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, self.file_dir, lock)
     }
@@ -295,6 +302,15 @@ impl <'a> WriteCommandsInternal<'a> {
                 }
             }
         }
+    }
+
+
+    pub async fn set_moderation_request(&self, account_id: AccountIdInternal, request: NewModerationRequest) -> Result<(), DatabaseError> {
+        self.current()
+            .media()
+            .create_new_moderation_request(account_id, request)
+            .await
+            .with_info_lazy(|| WriteCmd::MediaModerationRequest(account_id))
     }
 
     fn current(&self) -> CurrentDataWriteCommands {

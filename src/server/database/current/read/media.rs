@@ -1,5 +1,7 @@
 
 
+use std::collections::HashSet;
+
 use api_client::models::new_moderation_request;
 use async_trait::async_trait;
 use error_stack::Result;
@@ -64,6 +66,41 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .into_error(SqliteDatabaseError::Fetch)?;
 
         Ok(request)
+    }
+
+    /// Validate moderation request content.
+    ///
+    /// Returns `Err(SqliteDatabaseError::ModerationRequestContentInvalid)` if the
+    /// content is invalid.
+    pub async fn content_validate_moderation_request_content(
+        &self,
+        content_owner: AccountIdInternal,
+        request_content: &NewModerationRequest,
+    ) -> Result<(), SqliteDatabaseError> {
+        let requested_content_set: HashSet<ContentId> = request_content.content().collect();
+
+        let required_state = ContentState::InSlot as i64;
+        let request = sqlx::query_as!(
+            ContentId,
+            r#"
+            SELECT content_id as "content_id: _"
+            FROM MediaContent
+            WHERE account_row_id = ? AND moderation_state = ?
+            "#,
+            content_owner.account_row_id,
+            required_state,
+        )
+        .fetch_all(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        let database_content_set: HashSet<ContentId> = request.into_iter().collect();
+
+        if requested_content_set == database_content_set {
+            Ok(())
+        } else {
+            Err(SqliteDatabaseError::ModerationRequestContentInvalid.into())
+        }
     }
 
     pub async fn current_moderation_request(

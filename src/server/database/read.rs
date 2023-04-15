@@ -2,10 +2,11 @@
 use std::fmt::Debug;
 
 use tokio_stream::StreamExt;
+use tokio_util::io::ReaderStream;
 
-use crate::{api::model::{AccountIdInternal, ApiKey, AccountIdLight}, utils::ErrorConversion};
+use crate::{api::model::{AccountIdInternal, ApiKey, AccountIdLight, ContentId, NewModerationRequest}, utils::ErrorConversion};
 
-use super::{current::read::SqliteReadCommands, sqlite::{SqliteReadHandle, SqliteSelectJson}, DatabaseError, utils::GetReadWriteCmd, cache::{ReadCacheJson, DatabaseCache}};
+use super::{current::read::SqliteReadCommands, sqlite::{SqliteReadHandle, SqliteSelectJson}, DatabaseError, utils::GetReadWriteCmd, cache::{ReadCacheJson, DatabaseCache}, file::utils::FileDir};
 
 use error_stack::{Result, ResultExt};
 
@@ -27,12 +28,13 @@ impl std::fmt::Display for ReadCmd {
 pub struct ReadCommands<'a> {
     sqlite: SqliteReadCommands<'a>,
     cache: &'a DatabaseCache,
+    files: &'a FileDir,
 }
 
 impl<'a> ReadCommands<'a> {
-    pub fn new(sqlite: &'a SqliteReadHandle, cache: &'a DatabaseCache) -> Self {
+    pub fn new(sqlite: &'a SqliteReadHandle, cache: &'a DatabaseCache, files: &'a FileDir) -> Self {
         Self {
-            sqlite: SqliteReadCommands::new(sqlite), cache
+            sqlite: SqliteReadCommands::new(sqlite), cache, files,
         }
     }
 
@@ -63,5 +65,17 @@ impl<'a> ReadCommands<'a> {
                 .await
                 .with_info_lazy(|| T::read_cmd(id))
         }
+    }
+
+    pub async fn image_stream(&self, account_id: AccountIdLight, content_id: ContentId) -> Result<ReaderStream<tokio::fs::File>, DatabaseError> {
+        self.files.image_content(account_id, content_id).read_stream().await.change_context(DatabaseError::File)
+    }
+
+    pub async fn image(&self, account_id: AccountIdLight, content_id: ContentId) -> Result<Vec<u8>, DatabaseError> {
+        self.files.image_content(account_id, content_id).read_all().await.change_context(DatabaseError::File)
+    }
+
+    pub async fn moderation_request(&self, account_id: AccountIdInternal) -> Result<Option<NewModerationRequest>, DatabaseError> {
+        self.sqlite.media().current_moderation_request(account_id).await.change_context(DatabaseError::Sqlite).map(|r| r.map(|request| request.into_request()))
     }
 }

@@ -216,7 +216,7 @@ impl RouterDatabaseHandle {
     }
 
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(&self.sqlite_read, &self.cache)
+        ReadCommands::new(&self.sqlite_read, &self.cache, &self.root.file_dir)
     }
 
     pub fn history(&self) -> HistoryReadCommands<'_> {

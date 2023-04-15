@@ -45,7 +45,12 @@ pub struct ModerationRequest {
 
 impl ModerationRequest {
     pub fn new(moderation_request_id: i64, account_id: AccountIdLight, state: ModerationRequestState, request: NewModerationRequest) -> Self { Self { moderation_request_id, account_id, state_number: state, request } }
+
+    pub fn into_request(self) -> NewModerationRequest {
+        self.request
+    }
 }
+
 
 #[derive(thiserror::Error, Debug)]
 pub enum StateParsingError {
@@ -136,7 +141,7 @@ pub struct SlotId {
 }
 
 /// Content ID for media content for example images
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
 pub struct ContentId {
     pub content_id: Uuid,
 }

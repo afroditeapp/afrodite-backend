@@ -238,11 +238,17 @@ impl<'a> CurrentWriteMediaCommands<'a> {
 
 
     /// Used when a user creates a new moderation request
+    ///
+    /// Moderation request content must content ids which point to your own
+    /// image slots. Otherwise this returns an error.
     pub async fn create_new_moderation_request(
         &self,
         request_creator: AccountIdInternal,
         request: NewModerationRequest,
     ) -> Result<(), SqliteDatabaseError> {
+
+        self.handle.read().media().content_validate_moderation_request_content(request_creator, &request).await?;
+
         // Delete old queue number and request
         self.delete_moderation_request(request_creator).await?;
 
