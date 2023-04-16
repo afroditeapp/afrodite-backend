@@ -1,10 +1,13 @@
+use std::sync::Arc;
+
 use error_stack::Result;
 use sqlx::error::DatabaseError;
+use tokio::sync::Mutex;
 use tracing_subscriber::registry::Data;
 
 use crate::api::model::{Account, AccountIdInternal, AccountSetup, Profile, ApiKey, AccountIdLight};
 
-use super::{read::ReadCmd, write::WriteCmd, cache::{DatabaseCache, CacheError}};
+use super::{read::ReadCmd, write::{WriteCmd, AccountWriteLock}, cache::{DatabaseCache, CacheError}};
 
 pub trait GetReadWriteCmd {
     fn read_cmd(id: AccountIdInternal) -> ReadCmd;
@@ -58,6 +61,10 @@ impl <'a> ApiKeyManager<'a> {
 
     pub async fn api_key_exists(&self, api_key: &ApiKey) -> Option<AccountIdInternal> {
         self.cache.api_key_exists(api_key).await
+    }
+
+    pub async fn api_key_exists_with_account_lock(&self, api_key: &ApiKey) -> Option<(AccountIdInternal, Arc<Mutex<AccountWriteLock>>)> {
+        self.cache.api_key_exists_with_account_lock(api_key).await
     }
 
     pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {

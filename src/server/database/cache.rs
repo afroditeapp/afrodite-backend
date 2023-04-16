@@ -28,11 +28,16 @@ pub enum CacheError {
     Init,
 }
 
+pub struct AccountEntry {
+    pub lock: Arc<Mutex<AccountWriteLock>>,
+    pub cache: RwLock<CacheEntry>,
+}
+
 pub struct DatabaseCache {
     /// Accounts which are logged in.
-    api_keys: RwLock<HashMap<ApiKey, Arc<RwLock<CacheEntry>>>>,
+    api_keys: RwLock<HashMap<ApiKey, Arc<AccountEntry>>>,
     /// All accounts registered in the service.
-    accounts: RwLock<HashMap<AccountIdLight, Arc<RwLock<CacheEntry>>>>,
+    accounts: RwLock<HashMap<AccountIdLight, Arc<AccountEntry>>>,
 }
 
 impl DatabaseCache {
@@ -54,8 +59,8 @@ impl DatabaseCache {
 
         let read_account = cache.accounts.read().await;
         let ids = read_account.values();
-        for id in ids {
-            let mut entry = id.write().await;
+        for lock_and_cache in ids {
+            let mut entry = lock_and_cache.cache.write().await;
             let internal_id = entry.account_id_internal;
 
             let api_key = read
@@ -68,7 +73,7 @@ impl DatabaseCache {
                 if write_api_keys.contains_key(&key) {
                     return Err(CacheError::AlreadyExists.into()).change_context(CacheError::Init)
                 } else {
-                    write_api_keys.insert(key, id.clone());
+                    write_api_keys.insert(key, lock_and_cache.clone());
                 }
             }
 
@@ -92,8 +97,9 @@ impl DatabaseCache {
     pub async fn insert_account_if_not_exists(&self, id: AccountIdInternal) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_light()).is_none() {
-            let value = Arc::new(RwLock::new(CacheEntry::new(id)));
-            data.insert(id.as_light(), value);
+            let lock = Arc::new(Mutex::new(AccountWriteLock));
+            let value = RwLock::new(CacheEntry::new(id));
+            data.insert(id.as_light(), AccountEntry { lock, cache: value }.into());
             Ok(())
         } else {
             Err(CacheError::AlreadyExists.into())
@@ -121,7 +127,17 @@ impl DatabaseCache {
     pub async fn api_key_exists(&self, api_key: &ApiKey) -> Option<AccountIdInternal> {
         let api_key_guard = self.api_keys.read().await;
         if let Some(entry) = api_key_guard.get(api_key) {
-            Some(entry.read().await.account_id_internal)
+            Some(entry.cache.read().await.account_id_internal)
+        } else {
+            None
+        }
+    }
+
+    pub async fn api_key_exists_with_account_lock(&self, api_key: &ApiKey) -> Option<(AccountIdInternal, Arc<Mutex<AccountWriteLock>>)> {
+        let api_key_guard = self.api_keys.read().await;
+        if let Some(entry) = api_key_guard.get(api_key) {
+            let id = entry.cache.read().await.account_id_internal;
+            Some((id, entry.lock.clone()))
         } else {
             None
         }
@@ -129,26 +145,26 @@ impl DatabaseCache {
 
     pub async fn to_account_id_internal(&self, id: AccountIdLight) -> Result<AccountIdInternal, CacheError> {
         let guard = self.accounts.read().await;
-        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.read().await
+        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await
             .account_id_internal;
         Ok(data)
     }
 
     pub async fn read_cache<T>(&self, id: AccountIdLight, cache_operation: impl Fn(&CacheEntry) -> T) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
-        let cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.read().await;
+        let cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await;
         Ok(cache_operation(&cache_entry))
     }
 
     pub async fn write_cache<T>(&self, id: AccountIdLight, cache_operation: impl Fn(&mut CacheEntry) -> T) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
-        let mut cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.write().await;
+        let mut cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.write().await;
         Ok(cache_operation(&mut cache_entry))
     }
 
     pub async fn account(&self, id: AccountIdLight) -> Result<Account, CacheError> {
         let guard = self.accounts.read().await;
-        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.read().await
+        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await
             .account
             .as_ref()
             .map(|data| data.as_ref().clone())
@@ -159,7 +175,7 @@ impl DatabaseCache {
 
     pub async fn profile(&self, id: AccountIdLight) -> Result<Profile, CacheError> {
         let guard = self.accounts.read().await;
-        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.read().await
+        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await
             .profile
             .as_ref()
             .map(|data| data.as_ref().clone())
@@ -170,7 +186,7 @@ impl DatabaseCache {
 
     pub async fn update_profile(&self, id: AccountIdLight, profile: Profile) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
-        data.get_mut(&id).ok_or(CacheError::KeyNotExists)?.write().await
+        data.get_mut(&id).ok_or(CacheError::KeyNotExists)?.cache.write().await
             .profile
             .as_mut()
             .ok_or(CacheError::NotInCache)
@@ -180,7 +196,7 @@ impl DatabaseCache {
 
     pub async fn update_account(&self, id: AccountIdLight, data: Account) -> Result<(), CacheError> {
         let mut write_guard = self.accounts.write().await;
-        write_guard.get_mut(&id).ok_or(CacheError::KeyNotExists)?.write().await
+        write_guard.get_mut(&id).ok_or(CacheError::KeyNotExists)?.cache.write().await
             .account
             .as_mut()
             .ok_or(CacheError::NotInCache)
@@ -190,9 +206,9 @@ impl DatabaseCache {
 
     pub async fn get_write_lock_simple(&self, id: AccountIdLight) -> Result<Arc<Mutex<AccountWriteLock>>, CacheError> {
         let guard = self.accounts.read().await;
-        let cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.read().await;
+        let lock = guard.get(&id).ok_or(CacheError::KeyNotExists)?.lock.clone();
 
-        Ok(cache_entry.write_lock.clone())
+        Ok(lock)
     }
 }
 
@@ -200,12 +216,11 @@ pub struct CacheEntry {
     pub account_id_internal: AccountIdInternal,
     pub profile: Option<Box<Profile>>,
     pub account: Option<Box<Account>>,
-    pub write_lock: Arc<Mutex<AccountWriteLock>>,
 }
 
 impl CacheEntry {
     pub fn new(account_id_internal: AccountIdInternal) -> Self {
-        Self { profile: None, account: None, account_id_internal, write_lock: Mutex::new(AccountWriteLock).into() }
+        Self { profile: None, account: None, account_id_internal }
     }
 }
 

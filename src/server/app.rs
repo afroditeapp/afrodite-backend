@@ -65,9 +65,8 @@ impl ReadDatabase for AppState {
 impl WriteDatabase for AppState {
     fn write_database(
         &self,
-        lock_id: AccountIdLight,
     ) -> WriteManager<'_> {
-        WriteManager::new(self.database(), lock_id)
+        WriteManager::new(self.database())
     }
 }
 

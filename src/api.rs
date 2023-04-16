@@ -115,7 +115,6 @@ pub trait GetUsers {
 pub trait WriteDatabase {
     fn write_database(
         &self,
-        lock_id: AccountIdLight,
     ) -> WriteManager<'_>;
 }
 

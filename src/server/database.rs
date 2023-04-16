@@ -7,6 +7,7 @@ pub mod utils;
 pub mod write;
 pub mod index;
 pub mod cache;
+pub mod commands;
 
 use std::{
     fs,
@@ -14,7 +15,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
 use tracing::info;
 
 use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config};
@@ -27,7 +28,7 @@ use self::{
         DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
         SqliteWriteCloseHandle, SqliteWriteHandle, CurrentDataWriteHandle, HistoryWriteHandle,
     },
-    write::{WriteCommands}, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager},
+    write::{WriteCommands, WriteCommandsAccount, AccountWriteLock}, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager},
 };
 use crate::utils::IntoReportExt;
 
@@ -200,9 +201,13 @@ pub struct RouterDatabaseHandle {
 }
 
 impl RouterDatabaseHandle {
-    pub async fn user_write_commands(&self, lock_id: AccountIdLight) -> WriteCommands {
-        let l = self.mutex.lock().await;
-        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock_id, l)
+    pub async fn user_write_commands(&self) -> WriteCommands {
+        let lock = self.mutex.lock().await;
+        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock)
+    }
+
+    pub async fn user_write_commands_account<'b>(&'b self, lock: MutexGuard<'b, AccountWriteLock>) -> WriteCommandsAccount<'b> {
+        WriteCommandsAccount::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock)
     }
 
     pub async fn register(

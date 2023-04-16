@@ -1,4 +1,4 @@
-use std::{sync::Arc, future::Future};
+    use std::{sync::Arc, future::Future};
 
 use api_client::models::AccountId;
 use axum::extract::BodyStream;
@@ -69,29 +69,31 @@ impl std::fmt::Display for CacheWrite {
 // }
 
 /// One Account can do only one write command at a time.
-/// TODO: Remove. Now only one can access write commands at a time.
 pub struct AccountWriteLock;
 
 pub struct WriteManager<'a> {
     database: &'a RouterDatabaseHandle,
-    lock_id: AccountIdLight,
 }
 
 impl<'a> WriteManager<'a> {
-    pub fn new(database: &'a RouterDatabaseHandle, lock_id: AccountIdLight) -> Self { Self { database, lock_id } }
+    pub fn new(database: &'a RouterDatabaseHandle) -> Self { Self { database } }
 
+    /// Lock writes using global lock.
     pub async fn lock(self) -> WriteCommands<'a> {
-        self.database.user_write_commands(self.lock_id).await
+        self.database.user_write_commands().await
+    }
+
+    /// Lock writes using account specific lock.
+    pub async fn lock_account<'b>(&'b self, lock: MutexGuard<'b, AccountWriteLock>) -> WriteCommandsAccount<'b> {
+        self.database.user_write_commands_account(lock).await
     }
 }
-
 
 pub struct WriteCommands<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
-    locking_id: AccountIdLight,
     _lock: MutexGuard<'a, ()>,
 }
 
@@ -101,7 +103,6 @@ impl <'a> WriteCommands<'a> {
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
-        locking_id: AccountIdLight,
         lock: MutexGuard<'a, ()>,
     ) -> Self {
         Self {
@@ -109,7 +110,6 @@ impl <'a> WriteCommands<'a> {
             history_write,
             cache,
             file_dir,
-            locking_id,
             _lock: lock,
         }
     }
@@ -194,84 +194,6 @@ impl <'a> WriteCommands<'a> {
         }
 
         Ok(id)
-    }
-
-    pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
-        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
-        let lock = mutex.lock().await;
-        self.to_internal(&lock).set_new_api_key(id, key).await
-    }
-
-    pub async fn update_json<
-        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + WriteCacheJson + Sync + 'static,
-    >(
-        &mut self,
-        id: AccountIdInternal,
-        data: &T,
-    ) -> Result<(), DatabaseError> {
-        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
-        let lock = mutex.lock().await;
-        self.to_internal(&lock).update_json(id, data).await
-    }
-
-    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<ContentId, DatabaseError> {
-        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
-        let lock = mutex.lock().await;
-        self.to_internal(&lock).save_to_slot(id, slot, stream).await
-    }
-
-    pub async fn set_moderation_request(&self, account_id: AccountIdInternal, request: NewModerationRequest) -> Result<(), DatabaseError> {
-        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
-        let lock = mutex.lock().await;
-        self.to_internal(&lock).set_moderation_request(account_id, request).await
-    }
-
-    pub async fn moderation_get_list_and_create_new_if_necessary(&self, account_id: AccountIdInternal) -> Result<Vec<Moderation>, DatabaseError> {
-        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
-        let lock = mutex.lock().await;
-        self.to_internal(&lock).moderation_get_list_and_create_new_if_necessary(account_id).await
-    }
-
-    async fn lock_and_run(&self, account_id: AccountIdInternal) -> Result<(), DatabaseError> {
-        // TOOD: remove
-        let mutex = self.cache.get_write_lock_simple(self.locking_id).await.change_context(DatabaseError::Cache)?;
-        let lock = mutex.lock().await;
-        let commands = self.to_internal(&lock);
-        // let x = move |c: WriteCommandsInternal| c.cache;
-        //let x = x(commands);
-
-        Ok(())
-    }
-
-    fn to_internal<'b>(&'b self, lock: &'b AccountWriteLock) -> WriteCommandsInternal<'b>{
-        WriteCommandsInternal::new(self.current_write, self.history_write, self.cache, self.file_dir, lock)
-    }
-}
-
-
-struct WriteCommandsInternal<'a> {
-    current_write: &'a CurrentDataWriteHandle,
-    history_write: &'a HistoryWriteHandle,
-    cache: &'a DatabaseCache,
-    file_dir: &'a FileDir,
-    lock: &'a AccountWriteLock,
-}
-
-impl <'a> WriteCommandsInternal<'a> {
-    pub fn new(
-        current_write: &'a CurrentDataWriteHandle,
-        history_write: &'a HistoryWriteHandle,
-        cache: &'a DatabaseCache,
-        file_dir: &'a FileDir,
-        lock: &'a AccountWriteLock,
-    ) -> Self {
-        Self {
-            current_write,
-            history_write,
-            cache,
-            file_dir,
-            lock,
-        }
     }
 
     pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
@@ -366,6 +288,84 @@ impl <'a> WriteCommandsInternal<'a> {
             .moderation_get_list_and_create_new_if_necessary(account_id)
             .await
             .with_info_lazy(|| WriteCmd::MediaModeration(account_id))
+    }
+
+    fn current(&self) -> CurrentDataWriteCommands {
+        CurrentDataWriteCommands::new(&self.current_write)
+    }
+
+    fn history(&self) -> HistoryWriteCommands {
+        HistoryWriteCommands::new(&self.history_write)
+    }
+
+}
+
+
+pub struct WriteCommandsAccount<'a> {
+    current_write: &'a CurrentDataWriteHandle,
+    history_write: &'a HistoryWriteHandle,
+    cache: &'a DatabaseCache,
+    file_dir: &'a FileDir,
+    lock: MutexGuard<'a, AccountWriteLock>,
+}
+
+impl <'a> WriteCommandsAccount<'a> {
+    pub fn new(
+        current_write: &'a CurrentDataWriteHandle,
+        history_write: &'a HistoryWriteHandle,
+        cache: &'a DatabaseCache,
+        file_dir: &'a FileDir,
+        lock: MutexGuard<'a, AccountWriteLock>,
+    ) -> Self {
+        Self {
+            current_write,
+            history_write,
+            cache,
+            file_dir,
+            lock,
+        }
+    }
+
+    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<ContentId, DatabaseError> {
+        let current_content_in_slot = self.current_write.read().media().get_content_id_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+
+        if let Some(current_id) = current_content_in_slot {
+            let path = self.file_dir.image_content(id.as_light(), current_id.as_content_id());
+            path.remove_if_exists().await.change_context(DatabaseError::File)?;
+            self.current().media().delete_image_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+        }
+
+        // Also clear tmp dir if previous image writing failed and there is no
+        // content ID in the database about it.
+        self.file_dir.tmp_dir(id.as_light()).remove_contents_if_exists().await.change_context(DatabaseError::File)?;
+
+        let content_id = ContentId::new_random_id();
+        let transaction = self.current().media().store_content_id_to_slot(id, content_id, slot).await.change_context(DatabaseError::Sqlite)?;
+
+        let file_operations = || {
+            async {
+                let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
+                raw_img.save_stream(stream).await.change_context(DatabaseError::File)?;
+
+                // TODO: real image safety checks and processing
+                let processed_content_path = self.file_dir.image_content(id.as_light(), content_id);
+                raw_img.move_to(&processed_content_path).await.change_context(DatabaseError::File)?;
+
+                Ok::<ContentId, Report<DatabaseError>>(content_id)
+            }
+        };
+
+        match file_operations().await {
+            Ok(id) =>  {
+                transaction.commit().await.change_context(DatabaseError::Sqlite).map(|_| id)
+            }
+            Err(e) => {
+                match transaction.rollback().await.change_context(DatabaseError::Sqlite) {
+                    Ok(()) => Err(e),
+                    Err(another_error) => Err(another_error.attach(e)),
+                }
+            }
+        }
     }
 
     fn current(&self) -> CurrentDataWriteCommands {
