@@ -140,7 +140,7 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
 
     profile.generate_new_version();
 
-    state.write_database(account_id.as_light())
+    state.write_database(account_id.as_light()).lock().await
         .update_json(account_id, &profile)
         .await
         .map_err(|e| {

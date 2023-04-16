@@ -17,7 +17,7 @@ use crate::{
     client::{account::AccountInternalApi, media::MediaInternalApi},
     config::Config,
     server::{
-        database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}},
+        database::{current::read::SqliteReadCommands, write::{WriteCommands, WriteManager}, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}},
         session::{SessionManager},
     },
 };
@@ -116,7 +116,7 @@ pub trait WriteDatabase {
     fn write_database(
         &self,
         lock_id: AccountIdLight,
-    ) -> WriteCommands<'_>;
+    ) -> WriteManager<'_>;
 }
 
 pub trait ReadDatabase {

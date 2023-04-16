@@ -18,7 +18,7 @@ use super::{
     current::write::CurrentDataWriteCommands,
     history::write::HistoryWriteCommands,
     sqlite::{HistoryUpdateJson, SqliteUpdateJson, CurrentDataWriteHandle, HistoryWriteHandle},
-    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson}, file::{utils::{ FileDir}, file::ImageSlot},
+    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson}, file::{utils::{ FileDir}, file::ImageSlot}, RouterDatabaseHandle,
 };
 
 #[derive(Debug, Clone)]
@@ -69,7 +69,22 @@ impl std::fmt::Display for CacheWrite {
 // }
 
 /// One Account can do only one write command at a time.
+/// TODO: Remove. Now only one can access write commands at a time.
 pub struct AccountWriteLock;
+
+pub struct WriteManager<'a> {
+    database: &'a RouterDatabaseHandle,
+    lock_id: AccountIdLight,
+}
+
+impl<'a> WriteManager<'a> {
+    pub fn new(database: &'a RouterDatabaseHandle, lock_id: AccountIdLight) -> Self { Self { database, lock_id } }
+
+    pub async fn lock(self) -> WriteCommands<'a> {
+        self.database.user_write_commands(self.lock_id).await
+    }
+}
+
 
 pub struct WriteCommands<'a> {
     current_write: &'a CurrentDataWriteHandle,
@@ -77,6 +92,7 @@ pub struct WriteCommands<'a> {
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     locking_id: AccountIdLight,
+    _lock: MutexGuard<'a, ()>,
 }
 
 impl <'a> WriteCommands<'a> {
@@ -86,6 +102,7 @@ impl <'a> WriteCommands<'a> {
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         locking_id: AccountIdLight,
+        lock: MutexGuard<'a, ()>,
     ) -> Self {
         Self {
             current_write,
@@ -93,6 +110,7 @@ impl <'a> WriteCommands<'a> {
             cache,
             file_dir,
             locking_id,
+            _lock: lock,
         }
     }
 

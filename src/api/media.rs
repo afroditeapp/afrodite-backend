@@ -116,7 +116,7 @@ pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    state.write_database(account_id.as_light()).set_moderation_request(account_id, moderation_request).await.map_err(|e| {
+    state.write_database(account_id.as_light()).lock().await.set_moderation_request(account_id, moderation_request).await.map_err(|e| {
         error!("{}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })
@@ -161,7 +161,7 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
         _ => return Err(StatusCode::NOT_ACCEPTABLE),
     };
 
-    let content_id = state.write_database(account_id.as_light())
+    let content_id = state.write_database(account_id.as_light()).lock().await
         .save_to_slot(account_id, slot, image)
         .await
         .map_err(|e| {
@@ -202,7 +202,7 @@ pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let data = state.write_database(account_id.as_light())
+    let data = state.write_database(account_id.as_light()).lock().await
         .moderation_get_list_and_create_new_if_necessary(account_id)
         .await
         .map_err(|e| {

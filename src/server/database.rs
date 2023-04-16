@@ -14,6 +14,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use tokio::sync::Mutex;
 use tracing::info;
 
 use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config};
@@ -173,6 +174,7 @@ impl DatabaseManager {
             history_read,
             root,
             cache,
+            mutex: Mutex::new(()),
         };
         info!("DatabaseManager created");
 
@@ -194,11 +196,13 @@ pub struct RouterDatabaseHandle {
     history_write: HistoryWriteHandle,
     history_read: SqliteReadHandle,
     cache: DatabaseCache,
+    mutex: Mutex<()>,
 }
 
 impl RouterDatabaseHandle {
-    pub fn user_write_commands(&self, lock_id: AccountIdLight) -> WriteCommands {
-        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock_id)
+    pub async fn user_write_commands(&self, lock_id: AccountIdLight) -> WriteCommands {
+        let l = self.mutex.lock().await;
+        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock_id, l)
     }
 
     pub async fn register(

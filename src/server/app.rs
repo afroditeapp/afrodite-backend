@@ -21,7 +21,7 @@ use crate::{
 };
 
 use super::{
-    database::{current::read::SqliteReadCommands, write::WriteCommands, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache},
+    database::{current::read::SqliteReadCommands, write::{WriteCommands, WriteManager}, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache},
     session::{ SessionManager},
 };
 
@@ -66,8 +66,8 @@ impl WriteDatabase for AppState {
     fn write_database(
         &self,
         lock_id: AccountIdLight,
-    ) -> WriteCommands<'_> {
-        self.database().user_write_commands(lock_id)
+    ) -> WriteManager<'_> {
+        WriteManager::new(self.database(), lock_id)
     }
 }
 
