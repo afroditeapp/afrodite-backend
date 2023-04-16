@@ -11,14 +11,14 @@ pub mod commands;
 
 use std::{
     fs,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, sync::Arc,
 };
 
 use error_stack::{Result, ResultExt};
 use tokio::sync::{Mutex, MutexGuard};
 use tracing::info;
 
-use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config};
+use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config, server::database::commands::{WriteCommandRunner, WriteCommand}};
 
 use self::{
     current::read::SqliteReadCommands,
@@ -28,7 +28,7 @@ use self::{
         DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
         SqliteWriteCloseHandle, SqliteWriteHandle, CurrentDataWriteHandle, HistoryWriteHandle,
     },
-    write::{WriteCommands, WriteCommandsAccount, AccountWriteLock}, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager},
+    write::{WriteCommands, WriteCommandsAccount, AccountWriteLock}, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager}, commands::{WriteCommandRunnerQuitHandle, WriteCommandRunnerHandle},
 };
 use crate::utils::IntoReportExt;
 
@@ -49,11 +49,19 @@ pub enum DatabaseError {
     #[error("File error")]
     File,
 
+    #[error("Database command sending failed")]
+    CommandSendingFailed,
+    #[error("Database command result receiving failed")]
+    CommandResultReceivingFailed,
+
     // Other errors
     #[error("Database initialization error")]
     Init,
     #[error("Database SQLite and Git integrity check")]
     Integrity,
+
+    #[error("Command runner quit too early")]
+    CommandRunnerQuit,
 }
 
 /// Absolsute path to database root directory.
@@ -120,20 +128,21 @@ impl DatabaseRoot {
     }
 }
 
-/// Handle SQLite databases
+/// Handle SQLite databases and write command runner.
 pub struct DatabaseManager {
     sqlite_write_close: SqliteWriteCloseHandle,
     sqlite_read_close: SqliteReadCloseHandle,
     history_write_close: SqliteWriteCloseHandle,
     history_read_close: SqliteReadCloseHandle,
+    write_command_runner_close: WriteCommandRunnerQuitHandle,
 }
 
 impl DatabaseManager {
     /// Runs also some blocking file system code.
     pub async fn new<T: AsRef<Path>>(
         database_dir: T,
-        config: &Config,
-    ) -> Result<(Self, RouterDatabaseHandle), DatabaseError> {
+        config: Arc<Config>,
+    ) -> Result<(Self, RouterDatabaseReadHandle), DatabaseError> {
         info!("Creating DatabaseManager");
 
         let root = DatabaseRoot::new(database_dir)?;
@@ -158,28 +167,48 @@ impl DatabaseManager {
                 .await
                 .change_context(DatabaseError::Init)?;
 
+
+
+        let read_commands = SqliteReadCommands::new(&sqlite_read);
+        let cache = DatabaseCache::new(read_commands, &config).await.change_context(DatabaseError::Cache)?;
+
+        let router_write_handle = RouterDatabaseWriteHandle {
+            sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
+            sqlite_read,
+            history_write: HistoryWriteHandle { handle: history_write },
+            history_read,
+            root: root.into(),
+            cache: cache.into(),
+        };
+
+        let sqlite_read = router_write_handle.sqlite_read.clone();
+        let history_read = router_write_handle.history_read.clone();
+        let root = router_write_handle.root.clone();
+        let cache = router_write_handle.cache.clone();
+
+        let (write_handle, receiver) = WriteCommandRunner::new_channel();
+
+        let router_read_handle = RouterDatabaseReadHandle {
+            sqlite_read,
+            history_read,
+            root,
+            cache,
+            write_handle,
+        };
+
+        let write_command_runner_close = WriteCommandRunner::new(router_write_handle, receiver, config);
+
         let database_manager = DatabaseManager {
             sqlite_write_close,
             sqlite_read_close,
             history_write_close,
             history_read_close,
+            write_command_runner_close,
         };
 
-        let read_commands = SqliteReadCommands::new(&sqlite_read);
-        let cache = DatabaseCache::new(read_commands, config).await.change_context(DatabaseError::Cache)?;
-
-        let router_handle = RouterDatabaseHandle {
-            sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
-            sqlite_read,
-            history_write: HistoryWriteHandle { handle: history_write },
-            history_read,
-            root,
-            cache,
-            mutex: Mutex::new(()),
-        };
         info!("DatabaseManager created");
 
-        Ok((database_manager, router_handle))
+        Ok((database_manager, router_read_handle))
     }
 
     pub async fn close(self) {
@@ -187,23 +216,26 @@ impl DatabaseManager {
         self.sqlite_write_close.close().await;
         self.history_read_close.close().await;
         self.history_write_close.close().await;
+
+        match self.write_command_runner_close.quit().await {
+            Ok(()) => (),
+            Err(e) => tracing::error!("Write command runner quit failed: {}", e),
+        }
     }
 }
 
-pub struct RouterDatabaseHandle {
-    root: DatabaseRoot,
+pub struct RouterDatabaseWriteHandle {
+    root: Arc<DatabaseRoot>,
     sqlite_write: CurrentDataWriteHandle,
     sqlite_read: SqliteReadHandle,
     history_write: HistoryWriteHandle,
     history_read: SqliteReadHandle,
-    cache: DatabaseCache,
-    mutex: Mutex<()>,
+    cache: Arc<DatabaseCache>,
 }
 
-impl RouterDatabaseHandle {
-    pub async fn user_write_commands(&self) -> WriteCommands {
-        let lock = self.mutex.lock().await;
-        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock)
+impl RouterDatabaseWriteHandle {
+    pub fn user_write_commands(&self) -> WriteCommands {
+        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir)
     }
 
     pub async fn user_write_commands_account<'b>(&'b self, lock: MutexGuard<'b, AccountWriteLock>) -> WriteCommandsAccount<'b> {
@@ -223,7 +255,17 @@ impl RouterDatabaseHandle {
             &self.cache
         ).await
     }
+}
 
+pub struct RouterDatabaseReadHandle {
+    root: Arc<DatabaseRoot>,
+    sqlite_read: SqliteReadHandle,
+    history_read: SqliteReadHandle,
+    cache: Arc<DatabaseCache>,
+    write_handle: WriteCommandRunnerHandle,
+}
+
+impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
         ReadCommands::new(&self.sqlite_read, &self.cache, &self.root.file_dir)
     }
@@ -236,10 +278,6 @@ impl RouterDatabaseHandle {
         FileReadCommands::new(&self.root.file_dir)
     }
 
-    pub fn write_files(&self) -> FileWriteCommands<'_> {
-        FileWriteCommands::new(&self.root.file_dir)
-    }
-
     pub fn api_key_manager(&self) -> ApiKeyManager<'_> {
         ApiKeyManager::new(&self.cache)
     }
@@ -247,7 +285,12 @@ impl RouterDatabaseHandle {
     pub fn account_id_manager(&self) -> AccountIdManager<'_> {
         AccountIdManager::new(&self.cache)
     }
+
+    pub fn write(&self) -> &WriteCommandRunnerHandle {
+        &self.write_handle
+    }
 }
+
 
 #[derive(Debug, Clone)]
 enum WriteCmdIntegrity {

@@ -14,14 +14,14 @@ use crate::{
         self,
         model::{AccountIdInternal, ApiKey, AccountIdLight},
         ApiDoc, GetApiKeys, GetConfig, GetCoreServerInternalApi, GetMediaServerInternalApi,
-        GetRouterDatabaseHandle, GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
+        GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
     },
     client::{account::AccountInternalApi, media::MediaInternalApi},
     config::Config,
 };
 
 use super::{
-    database::{current::read::SqliteReadCommands, write::{WriteCommands, WriteManager}, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache},
+    database::{current::read::SqliteReadCommands, write::{WriteCommands}, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache, commands::{WriteCommandRunnerQuitHandle, WriteCommandRunnerHandle}, RouterDatabaseReadHandle},
     session::{ SessionManager},
 };
 
@@ -35,12 +35,6 @@ pub struct AppState {
 impl GetSessionManager for AppState {
     fn session_manager(&self) -> &SessionManager {
         &self.session_manager
-    }
-}
-
-impl GetRouterDatabaseHandle for AppState {
-    fn database(&self) -> &RouterDatabaseHandle {
-        &self.session_manager.database
     }
 }
 
@@ -65,8 +59,8 @@ impl ReadDatabase for AppState {
 impl WriteDatabase for AppState {
     fn write_database(
         &self,
-    ) -> WriteManager<'_> {
-        WriteManager::new(self.database())
+    ) -> &WriteCommandRunnerHandle {
+        self.session_manager.database.write()
     }
 }
 
@@ -99,7 +93,7 @@ pub struct App {
 }
 
 impl App {
-    pub async fn new(database_handle: RouterDatabaseHandle, config: Arc<Config>) -> Self {
+    pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>) -> Self {
         let state = AppState {
             session_manager: Arc::new(SessionManager::new(database_handle).await),
             client: reqwest::Client::new(),

@@ -17,7 +17,7 @@ use crate::{
     client::{account::AccountInternalApi, media::MediaInternalApi},
     config::Config,
     server::{
-        database::{current::read::SqliteReadCommands, write::{WriteCommands, WriteManager}, RouterDatabaseHandle, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}},
+        database::{current::read::SqliteReadCommands, write::{WriteCommands}, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, commands::WriteCommandRunnerHandle},
         session::{SessionManager},
     },
 };
@@ -97,10 +97,6 @@ pub trait GetSessionManager {
     fn session_manager(&self) -> &SessionManager;
 }
 
-pub trait GetRouterDatabaseHandle {
-    fn database(&self) -> &RouterDatabaseHandle;
-}
-
 pub trait GetApiKeys {
     /// Users which are logged in.
     fn api_keys(&self) -> ApiKeyManager<'_>;
@@ -115,7 +111,7 @@ pub trait GetUsers {
 pub trait WriteDatabase {
     fn write_database(
         &self,
-    ) -> WriteManager<'_>;
+    ) -> &WriteCommandRunnerHandle;
 }
 
 pub trait ReadDatabase {

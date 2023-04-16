@@ -7,14 +7,14 @@ use crate::api::{
     model::{AccountIdInternal, AccountIdLight, AccountState, Account},
 };
 
-use super::database::{write::WriteCommands, RouterDatabaseHandle};
+use super::database::{write::WriteCommands, RouterDatabaseReadHandle, commands::WriteCommandRunnerHandle};
 
 pub struct SessionManager {
-    pub database: RouterDatabaseHandle,
+    pub database: RouterDatabaseReadHandle,
 }
 
 impl SessionManager {
-    pub async fn new(database_handle: RouterDatabaseHandle) -> Self {
+    pub async fn new(database_handle: RouterDatabaseReadHandle) -> Self {
         Self {
             database: database_handle,
         }

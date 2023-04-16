@@ -63,17 +63,13 @@ impl <'a> ApiKeyManager<'a> {
         self.cache.api_key_exists(api_key).await
     }
 
-    pub async fn api_key_exists_with_account_lock(&self, api_key: &ApiKey) -> Option<(AccountIdInternal, Arc<Mutex<AccountWriteLock>>)> {
-        self.cache.api_key_exists_with_account_lock(api_key).await
-    }
+    // pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {
+    //     self.cache.update_api_key(id, api_key).await
+    // }
 
-    pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {
-        self.cache.update_api_key(id, api_key).await
-    }
-
-    pub async fn delete_api_key(&self, api_key: ApiKey) -> Result<(), CacheError> {
-        self.cache.delete_api_key(api_key).await
-    }
+    // pub async fn delete_api_key(&self, api_key: ApiKey) -> Result<(), CacheError> {
+    //     self.cache.delete_api_key(api_key).await
+    // }
 }
 
 pub struct AccountIdManager<'a> {

@@ -16,7 +16,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     api::ApiDoc,
     config::Config,
-    server::{app::App, database::DatabaseManager, internal::InternalApp},
+    server::{app::App, database::{DatabaseManager, commands::WriteCommandRunner}, internal::InternalApp},
 };
 
 pub struct PihkaServer {
@@ -34,7 +34,7 @@ impl PihkaServer {
         tracing_subscriber::fmt::init();
 
         let (database_manager, router_database_handle) =
-            DatabaseManager::new(self.config.database_dir().to_path_buf(), &self.config)
+            DatabaseManager::new(self.config.database_dir().to_path_buf(), self.config.clone())
                 .await
                 .expect("Database init failed");
 

@@ -1,4 +1,4 @@
-    use std::{sync::Arc, future::Future};
+    use std::{sync::Arc, future::Future, time::Duration};
 
 use api_client::models::AccountId;
 use axum::extract::BodyStream;
@@ -6,6 +6,7 @@ use error_stack::{Result, ResultExt, Report};
 use serde::Serialize;
 use tokio::sync::{MutexGuard, Mutex};
 use tokio_stream::StreamExt;
+use tracing::info;
 
 use crate::{
     api::{model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId, NewModerationRequest}, media::data::Moderation},
@@ -18,7 +19,7 @@ use super::{
     current::write::CurrentDataWriteCommands,
     history::write::HistoryWriteCommands,
     sqlite::{HistoryUpdateJson, SqliteUpdateJson, CurrentDataWriteHandle, HistoryWriteHandle},
-    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson}, file::{utils::{ FileDir}, file::ImageSlot}, RouterDatabaseHandle,
+    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson}, file::{utils::{ FileDir}, file::ImageSlot},
 };
 
 #[derive(Debug, Clone)]
@@ -71,30 +72,11 @@ impl std::fmt::Display for CacheWrite {
 /// One Account can do only one write command at a time.
 pub struct AccountWriteLock;
 
-pub struct WriteManager<'a> {
-    database: &'a RouterDatabaseHandle,
-}
-
-impl<'a> WriteManager<'a> {
-    pub fn new(database: &'a RouterDatabaseHandle) -> Self { Self { database } }
-
-    /// Lock writes using global lock.
-    pub async fn lock(self) -> WriteCommands<'a> {
-        self.database.user_write_commands().await
-    }
-
-    /// Lock writes using account specific lock.
-    pub async fn lock_account<'b>(&'b self, lock: MutexGuard<'b, AccountWriteLock>) -> WriteCommandsAccount<'b> {
-        self.database.user_write_commands_account(lock).await
-    }
-}
-
 pub struct WriteCommands<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
-    _lock: MutexGuard<'a, ()>,
 }
 
 impl <'a> WriteCommands<'a> {
@@ -103,14 +85,12 @@ impl <'a> WriteCommands<'a> {
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
-        lock: MutexGuard<'a, ()>,
     ) -> Self {
         Self {
             current_write,
             history_write,
             cache,
             file_dir,
-            _lock: lock,
         }
     }
 
@@ -121,6 +101,9 @@ impl <'a> WriteCommands<'a> {
         history_wirte: HistoryWriteHandle,
         cache: &DatabaseCache,
     ) -> Result<AccountIdInternal, DatabaseError> {
+        tracing::error!("sleep start");
+        tokio::time::sleep(Duration::from_secs(30)).await;
+        tracing::error!("sleep end");
         let current = CurrentDataWriteCommands::new(&current_data_write);
         let history = HistoryWriteCommands::new(&history_wirte);
 

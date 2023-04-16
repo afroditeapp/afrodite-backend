@@ -15,7 +15,7 @@ use super::{GetConfig, utils::{}};
 use tracing::error;
 
 use super::{
-    utils::ApiKeyHeader, GetApiKeys, GetRouterDatabaseHandle, GetUsers, ReadDatabase,
+    utils::ApiKeyHeader, GetApiKeys, GetUsers, ReadDatabase,
     WriteDatabase,
 };
 
@@ -36,7 +36,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_register<S: GetRouterDatabaseHandle + GetConfig>(
+pub async fn post_register<S: WriteDatabase + GetConfig>(
     state: S,
 ) -> Result<Json<AccountIdLight>, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
@@ -44,8 +44,8 @@ pub async fn post_register<S: GetRouterDatabaseHandle + GetConfig>(
     let id = AccountId::generate_new();
 
     let register = state
-        .database()
-        .register(id.as_light(), state.config());
+        .write_database()
+        .register(id.as_light());
     match register.await {
         Ok(id) => {
             Ok(id.as_light().into())
@@ -82,7 +82,7 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
     })?;
 
     state
-        .write_database().lock().await
+        .write_database()
         .set_new_api_key(id, key.clone())
         .await
         .map_err(|e| {
@@ -190,8 +190,8 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
         })?;
 
     if account.state() == AccountState::InitialSetup {
-        state.write_database().lock().await
-            .update_json(id, &data)
+        state.write_database()
+            .update_account_setup(id, data)
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
@@ -244,8 +244,8 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();
 
-        state.write_database().lock().await
-            .update_json(id, &account)
+        state.write_database()
+            .update_account(id, account)
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
