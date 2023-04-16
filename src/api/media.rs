@@ -6,7 +6,7 @@ use axum::{Json, TypedHeader};
 use axum::body::{Bytes, StreamBody};
 use axum::extract::{Path, BodyStream};
 
-use headers::{Header, HeaderName};
+use headers::{Header, HeaderName, ContentType};
 use hyper::StatusCode;
 
 use tokio::stream;
@@ -40,7 +40,7 @@ pub async fn get_image<S: ReadDatabase>(
     Path(account_id): Path<AccountIdLight>,
     Path(content_id): Path<ContentId>,
     state: S,
-) -> Result<([(HeaderName, &'static str); 1], Vec<u8>), StatusCode> {
+) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
     // TODO: Add access restrictions.
 
     // TODO: Change to use stream when error handling is improved in future axum
@@ -52,7 +52,7 @@ pub async fn get_image<S: ReadDatabase>(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    Ok(([(axum::http::header::CONTENT_TYPE, "image/jpeg")], data))
+    Ok((TypedHeader(ContentType::jpeg()), data))
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
