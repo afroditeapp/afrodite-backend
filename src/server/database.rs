@@ -15,7 +15,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::{Mutex, MutexGuard, OwnedSemaphorePermit};
 use tracing::info;
 
 use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config, server::database::commands::{WriteCommandRunner, WriteCommand}};
@@ -224,6 +224,7 @@ impl DatabaseManager {
     }
 }
 
+#[derive(Clone)]
 pub struct RouterDatabaseWriteHandle {
     root: Arc<DatabaseRoot>,
     sqlite_write: CurrentDataWriteHandle,
@@ -238,8 +239,8 @@ impl RouterDatabaseWriteHandle {
         WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir)
     }
 
-    pub async fn user_write_commands_account<'b>(&'b self, lock: MutexGuard<'b, AccountWriteLock>) -> WriteCommandsAccount<'b> {
-        WriteCommandsAccount::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir, lock)
+    pub fn user_write_commands_account<'b>(&'b self) -> WriteCommandsAccount<'b> {
+        WriteCommandsAccount::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir)
     }
 
     pub async fn register(

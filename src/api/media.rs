@@ -161,16 +161,23 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
         _ => return Err(StatusCode::NOT_ACCEPTABLE),
     };
 
-    // let content_id = state.write_database()
-    //     .save_to_slot(account_id, slot, image)
-    //     .await
-    //     .map_err(|e| {
-    //         error!("Error: {e:?}");
-    //         StatusCode::INTERNAL_SERVER_ERROR
-    //     })?;
-    // Ok(content_id.into())
+    let content_id = state.write_database()
+        .save_to_tmp(account_id, image)
+        .await
+        .map_err(|e| {
+            error!("Error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
-    todo!()
+    state.write_database()
+        .save_to_slot(account_id, content_id, slot)
+        .await
+        .map_err(|e| {
+            error!("Error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(content_id.into())
 }
 
 pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str =

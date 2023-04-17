@@ -59,19 +59,16 @@ impl std::fmt::Display for CacheWrite {
     }
 }
 
-// TODO: remove
-// macro_rules! lock {
-//     ($test:expr) => {
-//         let s = $test;
-//         let mutex = s.cache.get_write_lock_simple(s.locking_id).await.change_context(DatabaseError::Cache)?;
-//         let lock = mutex.lock().await;
-//         s.to_internal(&lock)
-//     };
-// }
+// TODO: If one commands does multiple writes to database, move writes to happen
+// in a transaction.
+
+// TODO: When server starts, check that latest history data matches with current
+// data.
 
 /// One Account can do only one write command at a time.
 pub struct AccountWriteLock;
 
+/// Globally synchronous write commands.
 pub struct WriteCommands<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
@@ -110,6 +107,8 @@ impl <'a> WriteCommands<'a> {
         let account = Account::default();
         let account_setup = AccountSetup::default();
         let profile = Profile::default();
+
+        // TODO: Use transactions here. One for current and other for history.
 
         let id = current
             .store_account_id(id_light)
@@ -214,49 +213,6 @@ impl <'a> WriteCommands<'a> {
         }
     }
 
-    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<ContentId, DatabaseError> {
-        let current_content_in_slot = self.current_write.read().media().get_content_id_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
-
-        if let Some(current_id) = current_content_in_slot {
-            let path = self.file_dir.image_content(id.as_light(), current_id.as_content_id());
-            path.remove_if_exists().await.change_context(DatabaseError::File)?;
-            self.current().media().delete_image_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
-        }
-
-        // Also clear tmp dir if previous image writing failed and there is no
-        // content ID in the database about it.
-        self.file_dir.tmp_dir(id.as_light()).remove_contents_if_exists().await.change_context(DatabaseError::File)?;
-
-        let content_id = ContentId::new_random_id();
-        let transaction = self.current().media().store_content_id_to_slot(id, content_id, slot).await.change_context(DatabaseError::Sqlite)?;
-
-        let file_operations = || {
-            async {
-                let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
-                raw_img.save_stream(stream).await.change_context(DatabaseError::File)?;
-
-                // TODO: real image safety checks and processing
-                let processed_content_path = self.file_dir.image_content(id.as_light(), content_id);
-                raw_img.move_to(&processed_content_path).await.change_context(DatabaseError::File)?;
-
-                Ok::<ContentId, Report<DatabaseError>>(content_id)
-            }
-        };
-
-        match file_operations().await {
-            Ok(id) =>  {
-                transaction.commit().await.change_context(DatabaseError::Sqlite).map(|_| id)
-            }
-            Err(e) => {
-                match transaction.rollback().await.change_context(DatabaseError::Sqlite) {
-                    Ok(()) => Err(e),
-                    Err(another_error) => Err(another_error.attach(e)),
-                }
-            }
-        }
-    }
-
-
     pub async fn set_moderation_request(&self, account_id: AccountIdInternal, request: NewModerationRequest) -> Result<(), DatabaseError> {
         self.current()
             .media()
@@ -273,6 +229,43 @@ impl <'a> WriteCommands<'a> {
             .with_info_lazy(|| WriteCmd::MediaModeration(account_id))
     }
 
+    /// Completes previous sava_to_tmp.
+    pub async fn save_to_slot(&self, id: AccountIdInternal, content_id: ContentId, slot: ImageSlot) -> Result<(), DatabaseError> {
+
+        // Remove previous slot image.
+        let current_content_in_slot = self.current_write.read().media().get_content_id_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+        if let Some(current_id) = current_content_in_slot {
+            let path = self.file_dir.image_content(id.as_light(), current_id.as_content_id());
+            path.remove_if_exists().await.change_context(DatabaseError::File)?;
+            self.current().media().delete_image_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+        }
+
+        let transaction = self.current().media().store_content_id_to_slot(id, content_id, slot).await.change_context(DatabaseError::Sqlite)?;
+
+        let file_operations = || {
+            async {
+                // Move image from tmp to image dir
+                let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
+                let processed_content_path = self.file_dir.image_content(id.as_light(), content_id);
+                raw_img.move_to(&processed_content_path).await.change_context(DatabaseError::File)?;
+
+                Ok::<(), Report<DatabaseError>>(())
+            }
+        };
+
+        match file_operations().await {
+            Ok(()) =>  {
+                transaction.commit().await.change_context(DatabaseError::Sqlite)
+            }
+            Err(e) => {
+                match transaction.rollback().await.change_context(DatabaseError::Sqlite) {
+                    Ok(()) => Err(e),
+                    Err(another_error) => Err(another_error.attach(e)),
+                }
+            }
+        }
+    }
+
     fn current(&self) -> CurrentDataWriteCommands {
         CurrentDataWriteCommands::new(&self.current_write)
     }
@@ -284,12 +277,15 @@ impl <'a> WriteCommands<'a> {
 }
 
 
+/// Commands that can run concurrently with other write commands, but which have
+/// limitation that one account can execute only one command at a time.
+/// It possible to run this and normal write command concurrently for
+/// one account.
 pub struct WriteCommandsAccount<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
-    lock: MutexGuard<'a, AccountWriteLock>,
 }
 
 impl <'a> WriteCommandsAccount<'a> {
@@ -298,57 +294,28 @@ impl <'a> WriteCommandsAccount<'a> {
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
-        lock: MutexGuard<'a, AccountWriteLock>,
     ) -> Self {
         Self {
             current_write,
             history_write,
             cache,
             file_dir,
-            lock,
         }
     }
 
-    pub async fn save_to_slot(&self, id: AccountIdInternal, slot: ImageSlot, stream: BodyStream) -> Result<ContentId, DatabaseError> {
-        let current_content_in_slot = self.current_write.read().media().get_content_id_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+    pub async fn save_to_tmp(&self, id: AccountIdInternal, stream: BodyStream) -> Result<ContentId, DatabaseError> {
+        let content_id = ContentId::new_random_id();
 
-        if let Some(current_id) = current_content_in_slot {
-            let path = self.file_dir.image_content(id.as_light(), current_id.as_content_id());
-            path.remove_if_exists().await.change_context(DatabaseError::File)?;
-            self.current().media().delete_image_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
-        }
-
-        // Also clear tmp dir if previous image writing failed and there is no
+        // Clear tmp dir if previous image writing failed and there is no
         // content ID in the database about it.
         self.file_dir.tmp_dir(id.as_light()).remove_contents_if_exists().await.change_context(DatabaseError::File)?;
 
-        let content_id = ContentId::new_random_id();
-        let transaction = self.current().media().store_content_id_to_slot(id, content_id, slot).await.change_context(DatabaseError::Sqlite)?;
+        let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
+        raw_img.save_stream(stream).await.change_context(DatabaseError::File)?;
 
-        let file_operations = || {
-            async {
-                let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
-                raw_img.save_stream(stream).await.change_context(DatabaseError::File)?;
+        // TODO: image safety checks and processing
 
-                // TODO: real image safety checks and processing
-                let processed_content_path = self.file_dir.image_content(id.as_light(), content_id);
-                raw_img.move_to(&processed_content_path).await.change_context(DatabaseError::File)?;
-
-                Ok::<ContentId, Report<DatabaseError>>(content_id)
-            }
-        };
-
-        match file_operations().await {
-            Ok(id) =>  {
-                transaction.commit().await.change_context(DatabaseError::Sqlite).map(|_| id)
-            }
-            Err(e) => {
-                match transaction.rollback().await.change_context(DatabaseError::Sqlite) {
-                    Ok(()) => Err(e),
-                    Err(another_error) => Err(another_error.attach(e)),
-                }
-            }
-        }
+        Ok(content_id)
     }
 
     fn current(&self) -> CurrentDataWriteCommands {
