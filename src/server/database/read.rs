@@ -127,9 +127,9 @@ impl<'a> ReadCommands<'a> {
 
     pub async fn moderation_request_from_queue(
         &self,
-        account_id: AccountIdInternal,
+        _account_id: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, DatabaseError> {
-        let next_queue_number = self
+        let _next_queue_number = self
             .sqlite
             .media()
             .get_next_active_moderation_request(0)

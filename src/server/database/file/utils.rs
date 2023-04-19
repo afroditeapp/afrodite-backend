@@ -1,6 +1,4 @@
 use std::{
-    fs,
-    future::IntoFuture,
     path::{Path, PathBuf},
 };
 
@@ -10,12 +8,11 @@ use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
 
-use crate::api::model::{AccountId, AccountIdLight, ContentId};
+use crate::api::model::{AccountIdLight, ContentId};
 
 use super::{
     super::FileError,
-    file::{GetStaticFileName, ImageSlot},
-    read::FileReadCommands,
+    file::{GetStaticFileName},
 };
 
 use crate::utils::IntoReportExt;

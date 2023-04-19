@@ -1,8 +1,8 @@
 //! Types related to files
 
-use serde::{de::DeserializeOwned, Serialize};
 
-use crate::api::model::{Account, AccountSetup, Profile};
+
+
 
 #[derive(Debug)]
 pub struct StaticFileName<'a>(&'a str);

@@ -1,7 +1,7 @@
 pub mod data;
 pub mod internal;
 
-use std::sync::Arc;
+
 
 use axum::{Json, TypedHeader};
 
@@ -269,8 +269,8 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     security(("api_key" = [])),
 )]
 pub async fn put_setting_profile_visiblity<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    Json(data): Json<BooleanSetting>,
-    state: S,
+    Json(_data): Json<BooleanSetting>,
+    _state: S,
 ) -> Result<(), StatusCode> {
     Ok(())
 }
@@ -293,7 +293,7 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
     security(("api_key" = [])),
 )]
 pub async fn post_delete<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    state: S,
+    _state: S,
 ) -> Result<(), StatusCode> {
     Ok(())
 }
@@ -314,7 +314,7 @@ pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
     security(("api_key" = [])),
 )]
 pub async fn get_deletion_status<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    state: S,
+    _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
@@ -335,7 +335,7 @@ pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
     security(("api_key" = [])),
 )]
 pub async fn delete_cancel_deletion<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    state: S,
+    _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }

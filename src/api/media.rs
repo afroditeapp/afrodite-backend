@@ -1,16 +1,16 @@
 pub mod data;
 pub mod internal;
 
-use axum::body::{Bytes, StreamBody};
+
 use axum::extract::{BodyStream, Path};
-use axum::response::{IntoResponse, Response};
+
 use axum::{Json, TypedHeader};
 
-use headers::{ContentType, Header, HeaderName};
+use headers::{ContentType};
 use hyper::StatusCode;
 
-use tokio::stream;
-use tokio_stream::Stream;
+
+
 use tracing::error;
 
 use crate::server::database::file::file::ImageSlot;
@@ -18,7 +18,7 @@ use crate::server::database::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, ImageFileName, ModerationList, ModerationRequest, NewModerationRequest,
+    ContentId, ModerationList, NewModerationRequest,
 };
 
 use super::model::AccountIdLight;
@@ -264,8 +264,8 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     security(("api_key" = [])),
 )]
 pub async fn post_handle_moderation_request<S: ReadDatabase>(
-    Path(request_id): Path<uuid::Uuid>,
-    Json(moderation_request): Json<NewModerationRequest>,
+    Path(_request_id): Path<uuid::Uuid>,
+    Json(_moderation_request): Json<NewModerationRequest>,
     _state: S,
 ) -> Result<(), StatusCode> {
     Err(StatusCode::NOT_ACCEPTABLE)

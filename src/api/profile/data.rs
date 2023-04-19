@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::api::model::AccountIdLight;
+
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default)]
 pub struct Profile {

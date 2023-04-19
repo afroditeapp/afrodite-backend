@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
-use tower::util::Optional;
+
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight},
-    server::database::file::file::ImageSlot,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

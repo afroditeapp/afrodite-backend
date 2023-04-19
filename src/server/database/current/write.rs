@@ -5,11 +5,9 @@ use error_stack::Result;
 
 use crate::{
     api::{
-        self,
         account::data::AccountSetup,
-        media::data::ModerationRequestState,
         model::{
-            Account, AccountIdInternal, AccountIdLight, ApiKey, NewModerationRequest, Profile,
+            Account, AccountIdInternal, AccountIdLight, ApiKey, Profile,
         },
     },
     server::database::sqlite::CurrentDataWriteHandle,
@@ -17,7 +15,7 @@ use crate::{
 
 use self::media::CurrentWriteMediaCommands;
 
-use super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson, SqliteWriteHandle};
+use super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson};
 
 use crate::utils::IntoReportExt;
 

@@ -1,6 +1,6 @@
 pub mod media;
 
-use api_client::models::new_moderation_request;
+
 use async_trait::async_trait;
 use error_stack::Result;
 use tokio_stream::{Stream, StreamExt};
@@ -9,14 +9,14 @@ use self::media::CurrentReadMediaCommands;
 
 use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
-use crate::api::media::data::ModerationRequestState;
+
 use crate::api::model::{
-    Account, AccountId, AccountIdInternal, ApiKey, ModerationRequest, Profile,
+    Account, AccountIdInternal, ApiKey, Profile,
 };
-use crate::server::database::read::ReadCmd;
-use crate::server::database::utils::GetReadWriteCmd;
-use crate::server::database::DatabaseError;
-use crate::utils::{ErrorConversion, IntoReportExt};
+
+
+
+use crate::utils::{IntoReportExt};
 
 macro_rules! read_json {
     ($self:expr, $id:expr, $sql:literal, $str_field:ident) => {{

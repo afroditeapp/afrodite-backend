@@ -1,28 +1,26 @@
-use core::num;
-use std::char::MAX;
 
-use async_trait::async_trait;
+
+
+
 use error_stack::Result;
-use hyper::header::TRANSFER_ENCODING;
+
 use sqlx::{Sqlite, Transaction};
 
 use crate::{
     api::{
-        self,
-        account::data::AccountSetup,
         media::data::{
-            ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
+            ContentState, Moderation, ModerationId, ModerationRequestId,
             ModerationRequestQueueNumber, ModerationRequestState,
         },
         model::{
-            Account, AccountIdInternal, AccountIdLight, ApiKey, ContentId, ModerationList,
-            NewModerationRequest, Profile,
+            AccountIdInternal, ContentId,
+            NewModerationRequest,
         },
     },
     server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle},
 };
 
-use super::super::super::sqlite::{SqliteDatabaseError, SqliteUpdateJson, SqliteWriteHandle};
+use super::super::super::sqlite::{SqliteDatabaseError};
 
 use crate::utils::IntoReportExt;
 

@@ -9,12 +9,11 @@ use std::{
 use api_client::{
     apis::{
         account_api::{post_login, post_register},
-        configuration::ApiKey,
         profile_api::{get_default_profile, get_profile, post_profile},
     },
     models::{AccountIdLight, Profile},
 };
-use reqwest::Client;
+
 use tokio::{
     select,
     sync::{mpsc, watch},

@@ -1,18 +1,17 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{sync::Arc};
 
 use axum::{
     middleware,
     routing::{get, post},
     Json, Router,
 };
-use tokio::sync::{Mutex, RwLock};
+
 
 use utoipa::OpenApi;
 
 use crate::{
     api::{
         self,
-        model::{AccountIdInternal, AccountIdLight, ApiKey},
         ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase,
     },
     config::Config,
@@ -20,12 +19,9 @@ use crate::{
 
 use super::{
     database::{
-        cache::DatabaseCache,
-        commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
-        current::read::SqliteReadCommands,
+        commands::{WriteCommandRunnerHandle},
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},
-        write::WriteCommands,
         RouterDatabaseReadHandle,
     },
     internal::{InternalApiClient, InternalApiManager},

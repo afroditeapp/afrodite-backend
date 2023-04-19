@@ -1,7 +1,7 @@
-use std::{collections::HashMap, future::Future, hash::Hash, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use async_trait::async_trait;
-use tokio::sync::{Mutex, MutexGuard, RwLock};
+use tokio::sync::{Mutex, RwLock};
 use tokio_stream::StreamExt;
 use tracing::info;
 
@@ -11,13 +11,12 @@ use crate::{
 };
 
 use error_stack::{Result, ResultExt};
-use serde::Serialize;
+
 
 use super::{
     current::read::SqliteReadCommands,
-    sqlite::{SqliteDatabaseError, SqliteSelectJson},
+    sqlite::{SqliteSelectJson},
     write::AccountWriteLock,
-    DatabaseError,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -316,8 +315,8 @@ pub trait ReadCacheJson: Sized + Send {
     const CACHED_JSON: bool = false;
 
     async fn read_from_cache(
-        id: AccountIdLight,
-        cache: &DatabaseCache,
+        _id: AccountIdLight,
+        _cache: &DatabaseCache,
     ) -> Result<Self, CacheError> {
         Err(CacheError::NotInCache.into())
     }
@@ -366,8 +365,8 @@ impl ReadCacheJson for Profile {
 pub trait WriteCacheJson: Sized + Send + ReadCacheJson {
     async fn write_to_cache(
         &self,
-        id: AccountIdLight,
-        cache: &DatabaseCache,
+        _id: AccountIdLight,
+        _cache: &DatabaseCache,
     ) -> Result<(), CacheError> {
         Err(CacheError::NotInCache.into())
     }

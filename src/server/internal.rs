@@ -1,17 +1,17 @@
 //! Routes for server to server connections
 
-use std::sync::Arc;
 
-use api_client::apis::{accountinternal_api, configuration::Configuration, ResponseContent};
+
+use api_client::apis::{accountinternal_api, configuration::Configuration};
 use axum::{
     routing::{get, post},
     Router,
 };
 
-use error_stack::{IntoReport, Result};
+use error_stack::{Result};
 
 use hyper::StatusCode;
-use reqwest::{Client, Url};
+
 use tracing::info;
 
 use crate::{api, config::InternalApiUrls, utils::IntoReportExt};
@@ -166,7 +166,7 @@ impl<'a> InternalApiManager<'a> {
             let result = accountinternal_api::check_api_key(self.api_client.account()?).await;
 
             match result {
-                Ok(res) => {
+                Ok(_res) => {
                     // TODO: Cache this API key. Also needed for initializing
                     // database tables.
                     Ok(AuthResponse::Ok)

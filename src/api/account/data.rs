@@ -1,5 +1,5 @@
 use serde::{de::Error, Deserialize, Serialize};
-use utoipa::{openapi::Ref, IntoParams, ToSchema};
+use utoipa::{IntoParams, ToSchema};
 
 /// AccountId is an UUID string. Server will generate an UUID string when
 /// generating a new AccountId.

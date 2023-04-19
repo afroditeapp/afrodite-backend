@@ -11,7 +11,7 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use api_client::{models::AccountIdLight, models::ApiKey};
+use api_client::{models::AccountIdLight};
 
 use crate::{
     api::model::AccountId,
@@ -42,7 +42,7 @@ impl TestRunner {
         let (quit_handle, bot_quit_receiver) = watch::channel(());
 
         let mut bot_number = 1;
-        let api_urls = Arc::new(self.test_config.api_urls.clone());
+        let _api_urls = Arc::new(self.test_config.api_urls.clone());
 
         let history = self.config.database_dir().join(DB_HISTORY_DIR_NAME);
 

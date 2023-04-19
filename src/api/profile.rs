@@ -171,8 +171,8 @@ pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
     security(("api_key" = [])),
 )]
 pub async fn put_location<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    Json(location): Json<Location>,
-    state: S,
+    Json(_location): Json<Location>,
+    _state: S,
 ) -> Result<(), StatusCode> {
     Ok(())
 }
@@ -191,8 +191,8 @@ pub const PATH_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     security(("api_key" = [])),
 )]
 pub async fn get_next_profile_page<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    Json(location): Json<Location>,
-    state: S,
+    Json(_location): Json<Location>,
+    _state: S,
 ) -> Result<(), StatusCode> {
     Ok(())
 }
@@ -214,7 +214,7 @@ pub const PATH_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     security(("api_key" = [])),
 )]
 pub async fn post_reset_profile_paging<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    state: S,
+    _state: S,
 ) -> Result<(), StatusCode> {
     Ok(())
 }

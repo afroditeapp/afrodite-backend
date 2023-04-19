@@ -1,13 +1,10 @@
-use error_stack::Result;
-use serde::de::DeserializeOwned;
 
-use crate::{
-    api::model::{AccountId, ApiKey},
-    server::database::file::utils::AccountDir,
-};
 
-use super::{utils::FileDir, FileError};
-use crate::utils::IntoReportExt;
+
+
+
+use super::{utils::FileDir};
+
 
 pub struct FileReadCommands<'a> {
     dir: &'a FileDir,

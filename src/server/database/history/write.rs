@@ -4,7 +4,7 @@ use error_stack::Result;
 use crate::{
     api::{
         account::data::AccountSetup,
-        model::{Account, AccountIdInternal, AccountIdLight, Profile},
+        model::{Account, AccountIdInternal, Profile},
     },
     server::database::{
         sqlite::{HistoryUpdateJson, HistoryWriteHandle},
@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-use super::super::sqlite::{SqliteDatabaseError, SqliteWriteHandle};
+use super::super::sqlite::{SqliteDatabaseError};
 
 use crate::utils::IntoReportExt;
 

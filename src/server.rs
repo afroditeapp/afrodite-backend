@@ -16,7 +16,7 @@ use crate::{
     config::Config,
     server::{
         app::App,
-        database::{commands::WriteCommandRunner, DatabaseManager},
+        database::{DatabaseManager},
         internal::InternalApp,
     },
 };

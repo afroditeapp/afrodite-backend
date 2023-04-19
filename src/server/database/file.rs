@@ -7,10 +7,10 @@ pub mod read;
 pub mod utils;
 pub mod write;
 
-use error_stack::Result;
+
 use tokio::sync::mpsc;
 
-use utils::AccountDir;
+
 
 /// Every running database write operation should keep this handle. When server
 /// quit is started main function waits that all handles are dropped.

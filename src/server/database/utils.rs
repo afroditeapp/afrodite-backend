@@ -1,9 +1,9 @@
-use std::sync::Arc;
+
 
 use error_stack::Result;
-use sqlx::error::DatabaseError;
-use tokio::sync::Mutex;
-use tracing_subscriber::registry::Data;
+
+
+
 
 use crate::api::model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile,
@@ -12,7 +12,7 @@ use crate::api::model::{
 use super::{
     cache::{CacheError, DatabaseCache},
     read::ReadCmd,
-    write::{AccountWriteLock, WriteCmd},
+    write::{WriteCmd},
 };
 
 pub trait GetReadWriteCmd {

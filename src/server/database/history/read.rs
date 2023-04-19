@@ -1,13 +1,13 @@
-use async_trait::async_trait;
+
 use error_stack::Result;
 use time::OffsetDateTime;
 use tokio_stream::{Stream, StreamExt};
 
 use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 use super::HistoryData;
-use crate::api::account::data::AccountSetup;
-use crate::api::model::{Account, AccountId, AccountIdInternal, AccountState, Profile};
-use crate::server::database::sqlite::HistorySelectJson;
+
+use crate::api::model::{AccountIdInternal, AccountState};
+
 use crate::utils::IntoReportExt;
 
 macro_rules! read_history {

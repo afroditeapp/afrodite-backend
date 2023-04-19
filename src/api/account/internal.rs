@@ -7,7 +7,7 @@ use hyper::StatusCode;
 use crate::api::utils::ApiKeyHeader;
 
 use super::{
-    data::{AccountIdInternal, AccountIdLight},
+    data::{AccountIdLight},
     GetApiKeys,
 };
 

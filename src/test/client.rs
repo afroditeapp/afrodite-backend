@@ -1,15 +1,15 @@
 //! Access REST API from Rust
 
-use std::sync::Arc;
+
 
 use api_client::{apis::configuration::Configuration, models::ApiKey};
 use error_stack::{IntoReport, Result};
 
 use hyper::StatusCode;
-use reqwest::{Client, Url};
+use reqwest::{Url};
 use tracing::info;
 
-use crate::api;
+
 
 #[derive(thiserror::Error, Debug)]
 #[error("Wrong status code: {0}")]

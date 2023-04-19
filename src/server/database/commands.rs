@@ -3,19 +3,19 @@
 
 use std::{collections::HashSet, future::Future, sync::Arc};
 
-use api_client::models::AccountId;
-use axum::{extract::BodyStream, RequestPartsExt};
-use error_stack::{Report, Result, ResultExt};
-use nalgebra::allocator::SameShapeAllocator;
-use serde::Serialize;
+
+use axum::{extract::BodyStream};
+use error_stack::{Result};
+
+
 use tokio::{
     sync::{
-        mpsc, oneshot, Mutex, MutexGuard, OwnedSemaphorePermit, RwLock, Semaphore, SemaphorePermit,
+        mpsc, oneshot, OwnedSemaphorePermit, RwLock, Semaphore,
     },
     task::JoinHandle,
 };
 use tokio_stream::StreamExt;
-use tracing::instrument::WithSubscriber;
+
 
 use crate::{
     api::{
@@ -26,24 +26,19 @@ use crate::{
         },
     },
     config::Config,
-    server::database::{sqlite::SqliteWriteHandle, write::WriteCommands, DatabaseError},
-    utils::{AppendErrorTo, ErrorConversion, IntoReportExt},
+    server::database::{write::WriteCommands, DatabaseError},
+    utils::{ErrorConversion, IntoReportExt},
 };
 
 use super::{
-    cache::{DatabaseCache, WriteCacheJson},
-    current::write::CurrentDataWriteCommands,
-    file::{file::ImageSlot, utils::FileDir},
-    history::write::HistoryWriteCommands,
-    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
-    utils::GetReadWriteCmd,
-    write::AccountWriteLock,
+    file::{file::ImageSlot},
+    sqlite::{SqliteUpdateJson},
     RouterDatabaseWriteHandle,
 };
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 
-use tokio::sync::oneshot::{Receiver, Sender};
+
 
 pub type ResultSender<T> = oneshot::Sender<Result<T, DatabaseError>>;
 
@@ -576,5 +571,5 @@ impl ConcurrentWriteCommandRunner {
         self.write_handle.user_write_commands()
     }
 
-    async fn handle_cmd_in_task(cmd: ConcurrentWriteCommand) {}
+    async fn handle_cmd_in_task(_cmd: ConcurrentWriteCommand) {}
 }

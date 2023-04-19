@@ -1,4 +1,4 @@
-use std::sync::Arc;
+
 
 use axum::{middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
@@ -12,11 +12,10 @@ use utoipa::{
 use crate::server::internal::AuthResponse;
 
 use super::{
-    model::{AccountIdInternal, AccountIdLight, ApiKey},
-    GetConfig, GetInternalApi, GetUsers,
+    model::{ApiKey}, GetInternalApi,
 };
 
-use super::GetApiKeys;
+
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);

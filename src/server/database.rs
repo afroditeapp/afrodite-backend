@@ -16,22 +16,21 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use tokio::sync::{Mutex, MutexGuard, OwnedSemaphorePermit};
+
 use tracing::info;
 
 use crate::{
     api::model::{AccountId, AccountIdInternal, AccountIdLight},
     config::Config,
-    server::database::commands::{WriteCommand, WriteCommandRunner},
+    server::database::commands::{WriteCommandRunner},
 };
 
 use self::{
-    cache::{CacheEntry, DatabaseCache},
+    cache::{DatabaseCache},
     commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
     current::read::SqliteReadCommands,
     file::{
-        read::FileReadCommands, utils::FileDir, write::FileWriteCommands, FileError,
-        FileOperationHandle,
+        read::FileReadCommands, utils::FileDir, FileError,
     },
     history::read::HistoryReadCommands,
     read::ReadCommands,
@@ -40,7 +39,7 @@ use self::{
         SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
     },
     utils::{AccountIdManager, ApiKeyManager},
-    write::{AccountWriteLock, WriteCommands, WriteCommandsAccount},
+    write::{WriteCommands, WriteCommandsAccount},
 };
 use crate::utils::IntoReportExt;
 

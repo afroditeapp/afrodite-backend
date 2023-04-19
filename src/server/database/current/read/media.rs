@@ -1,25 +1,25 @@
 use std::collections::HashSet;
 
-use api_client::models::new_moderation_request;
-use async_trait::async_trait;
-use error_stack::Result;
-use tokio_stream::{Stream, StreamExt};
 
-use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
-use crate::api::account::data::AccountSetup;
+
+use error_stack::Result;
+use tokio_stream::{StreamExt};
+
+use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
+
 use crate::api::media::data::{
-    Content, ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
+    ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
     ModerationRequestQueueNumber, ModerationRequestState,
 };
 use crate::api::model::{
-    Account, AccountId, AccountIdInternal, ApiKey, ContentId, ModerationRequest,
-    NewModerationRequest, Profile,
+    AccountIdInternal, ContentId, ModerationRequest,
+    NewModerationRequest,
 };
 use crate::server::database::file::file::ImageSlot;
-use crate::server::database::read::ReadCmd;
-use crate::server::database::utils::GetReadWriteCmd;
-use crate::server::database::DatabaseError;
-use crate::utils::{ErrorConversion, IntoReportExt};
+
+
+
+use crate::utils::{IntoReportExt};
 
 macro_rules! read_json {
     ($self:expr, $id:expr, $sql:literal, $str_field:ident) => {{
