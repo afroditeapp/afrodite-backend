@@ -21,6 +21,7 @@ pub const PATH_INTERNAL_GET_MODERATION_REQUEST_FOR_ACCOUNT: &str = "/internal/me
 #[utoipa::path(
     get,
     path = "/internal/media_api/moderation/request/{account_id}",
+    params(AccountIdLight),
     responses(
         (status = 200, description = "Get moderation request was successfull."),
         (status = 404, description = "No account or moderation request found."),

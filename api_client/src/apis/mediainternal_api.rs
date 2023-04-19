@@ -15,27 +15,28 @@ use crate::apis::ResponseContent;
 use super::{Error, configuration};
 
 
-/// struct for typed errors of method [`post_image`]
+/// struct for typed errors of method [`internal_get_moderation_request_for_account`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostImageError {
+pub enum InternalGetModerationRequestForAccountError {
+    Status404(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
 
-pub async fn post_image(configuration: &configuration::Configuration, account_id: &str, image_file: &str, image_file2: crate::models::ImageFile) -> Result<(), Error<PostImageError>> {
+/// Check that current moderation request for account exists. 
+pub async fn internal_get_moderation_request_for_account(configuration: &configuration::Configuration, account_id: &str) -> Result<(), Error<InternalGetModerationRequestForAccountError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/internal/image/{account_id}/{image_file}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), image_file=crate::apis::urlencode(image_file));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+    let local_var_uri_str = format!("{}/internal/media_api/moderation/request/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&image_file2);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -46,7 +47,7 @@ pub async fn post_image(configuration: &configuration::Configuration, account_id
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PostImageError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<InternalGetModerationRequestForAccountError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

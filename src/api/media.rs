@@ -28,7 +28,8 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
 /// Get profile image
 #[utoipa::path(
     get,
-    path = "/media_api/image/{account_id}/{image_file}",
+    path = "/media_api/image/{account_id}/{content_id}",
+    params(AccountIdLight, ContentId),
     responses(
         (status = 200, description = "Get image file.", content_type = "image/jpeg"),
         (status = 401, description = "Unauthorized."),
@@ -133,6 +134,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
 #[utoipa::path(
     put,
     path = "/media_api/moderation/request/slot/{slot_id}",
+    params(SlotId),
     request_body(content = String, content_type = "image/jpeg"),
     responses(
         (status = 200, description = "Sending or updating new image moderation request was successfull.", body = ContentId),
@@ -144,7 +146,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
 )]
 pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Path(slot_number): Path<u8>,
+    Path(slot_number): Path<SlotId>,
     image: BodyStream,
     state: S,
 ) -> Result<Json<ContentId>, StatusCode> {
@@ -154,7 +156,7 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let slot = match slot_number {
+    let slot = match slot_number.slot_id {
         0 => ImageSlot::Image1,
         1 => ImageSlot::Image2,
         2 => ImageSlot::Image3,

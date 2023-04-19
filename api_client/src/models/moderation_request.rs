@@ -16,17 +16,20 @@ pub struct ModerationRequest {
     #[serde(rename = "account_id")]
     pub account_id: Box<crate::models::AccountIdLight>,
     #[serde(rename = "moderation_request_id")]
-    pub moderation_request_id: uuid::Uuid,
-    #[serde(rename = "queue_position")]
-    pub queue_position: i64,
+    pub moderation_request_id: i64,
+    #[serde(rename = "request")]
+    pub request: Box<crate::models::NewModerationRequest>,
+    #[serde(rename = "state_number")]
+    pub state_number: crate::models::ModerationRequestState,
 }
 
 impl ModerationRequest {
-    pub fn new(account_id: crate::models::AccountIdLight, moderation_request_id: uuid::Uuid, queue_position: i64) -> ModerationRequest {
+    pub fn new(account_id: crate::models::AccountIdLight, moderation_request_id: i64, request: crate::models::NewModerationRequest, state_number: crate::models::ModerationRequestState) -> ModerationRequest {
         ModerationRequest {
             account_id: Box::new(account_id),
             moderation_request_id,
-            queue_position,
+            request: Box::new(request),
+            state_number,
         }
     }
 }

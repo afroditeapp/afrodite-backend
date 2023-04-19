@@ -35,13 +35,13 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_register**](docs/AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update profile visiblity value.
 *AccountinternalApi* | [**check_api_key**](docs/AccountinternalApi.md#check_api_key) | **GET** /internal/check_api_key | 
-*MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{image_file} | Get profile image
+*MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
-*MediaApi* | [**get_moderation_request_list**](docs/MediaApi.md#get_moderation_request_list) | **GET** /media_api/admin/moderation/page/next | Get list of next moderation requests in moderation queue.
+*MediaApi* | [**patch_moderation_request_list**](docs/MediaApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
 *MediaApi* | [**post_handle_moderation_request**](docs/MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{request_id} | Handle moderation request.
 *MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
-*MediainternalApi* | [**post_image**](docs/MediainternalApi.md#post_image) | **POST** /internal/image/{account_id}/{image_file} | 
+*MediainternalApi* | [**internal_get_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists.
 *ProfileApi* | [**get_default_profile**](docs/ProfileApi.md#get_default_profile) | **GET** /profile_api/default/{account_id} | TODO: Remove this at some point
 *ProfileApi* | [**get_next_profile_page**](docs/ProfileApi.md#get_next_profile_page) | **GET** /profile_api/page/next | Get next page of profile list.
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
@@ -60,13 +60,17 @@ Class | Method | HTTP request | Description
  - [ApiKey](docs/ApiKey.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [Capabilities](docs/Capabilities.md)
+ - [ContentId](docs/ContentId.md)
  - [DeleteStatus](docs/DeleteStatus.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [ImageFile](docs/ImageFile.md)
  - [ImageFileName](docs/ImageFileName.md)
  - [Location](docs/Location.md)
+ - [Moderation](docs/Moderation.md)
+ - [ModerationList](docs/ModerationList.md)
  - [ModerationRequest](docs/ModerationRequest.md)
- - [ModerationRequestList](docs/ModerationRequestList.md)
+ - [ModerationRequestId](docs/ModerationRequestId.md)
+ - [ModerationRequestState](docs/ModerationRequestState.md)
  - [NewModerationRequest](docs/NewModerationRequest.md)
  - [Profile](docs/Profile.md)
  - [ProfileLink](docs/ProfileLink.md)

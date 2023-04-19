@@ -33,10 +33,10 @@ pub enum GetModerationRequestError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_moderation_request_list`]
+/// struct for typed errors of method [`patch_moderation_request_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetModerationRequestListError {
+pub enum PatchModerationRequestListError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -68,19 +68,18 @@ pub enum PutImageToModerationSlotError {
 #[serde(untagged)]
 pub enum PutModerationRequestError {
     Status401(),
-    Status406(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
 
 /// Get profile image
-pub async fn get_image(configuration: &configuration::Configuration, account_id: &str, image_file: &str) -> Result<(), Error<GetImageError>> {
+pub async fn get_image(configuration: &configuration::Configuration, account_id: &str, content_id: &str) -> Result<(), Error<GetImageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/image/{account_id}/{image_file}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), image_file=crate::apis::urlencode(image_file));
+    let local_var_uri_str = format!("{}/media_api/image/{account_id}/{content_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), content_id=crate::apis::urlencode(content_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -111,7 +110,7 @@ pub async fn get_image(configuration: &configuration::Configuration, account_id:
 }
 
 /// Get current moderation request. 
-pub async fn get_moderation_request(configuration: &configuration::Configuration, ) -> Result<crate::models::ModerationRequest, Error<GetModerationRequestError>> {
+pub async fn get_moderation_request(configuration: &configuration::Configuration, ) -> Result<crate::models::NewModerationRequest, Error<GetModerationRequestError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -146,14 +145,14 @@ pub async fn get_moderation_request(configuration: &configuration::Configuration
     }
 }
 
-/// Get list of next moderation requests in moderation queue.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
-pub async fn get_moderation_request_list(configuration: &configuration::Configuration, ) -> Result<crate::models::ModerationRequestList, Error<GetModerationRequestListError>> {
+/// Get current list of moderation requests in my moderation queue. Additional requests will be added to my queue if necessary.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
+pub async fn patch_moderation_request_list(configuration: &configuration::Configuration, ) -> Result<crate::models::ModerationList, Error<PatchModerationRequestListError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
     let local_var_uri_str = format!("{}/media_api/admin/moderation/page/next", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::PATCH, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
@@ -176,7 +175,7 @@ pub async fn get_moderation_request_list(configuration: &configuration::Configur
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetModerationRequestListError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PatchModerationRequestListError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -219,13 +218,13 @@ pub async fn post_handle_moderation_request(configuration: &configuration::Confi
     }
 }
 
-/// Set image to moderation request slot.  Slots \"camera\" and \"image1\" are available. 
-pub async fn put_image_to_moderation_slot(configuration: &configuration::Configuration, slot_id: &str, body: &str) -> Result<(), Error<PutImageToModerationSlotError>> {
+/// Set image to moderation request slot.  Slots from 0 to 2 are available.  TODO: resize and check images at some point 
+pub async fn put_image_to_moderation_slot(configuration: &configuration::Configuration, slot_id: i32, body: &str) -> Result<crate::models::ContentId, Error<PutImageToModerationSlotError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/moderation/request/slot/{slot_id}", local_var_configuration.base_path, slot_id=crate::apis::urlencode(slot_id));
+    let local_var_uri_str = format!("{}/media_api/moderation/request/slot/{slot_id}", local_var_configuration.base_path, slot_id=slot_id);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -248,7 +247,7 @@ pub async fn put_image_to_moderation_slot(configuration: &configuration::Configu
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
+        serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PutImageToModerationSlotError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
@@ -256,7 +255,7 @@ pub async fn put_image_to_moderation_slot(configuration: &configuration::Configu
     }
 }
 
-/// Create new or override old moderation request.  Set images to moderation request slots first. 
+/// Create new or override old moderation request.  Make sure that moderation request has content IDs which points to your own image slots. 
 pub async fn put_moderation_request(configuration: &configuration::Configuration, new_moderation_request: crate::models::NewModerationRequest) -> Result<(), Error<PutModerationRequestError>> {
     let local_var_configuration = configuration;
 

@@ -13,17 +13,24 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct NewModerationRequest {
-    #[serde(rename = "camera", skip_serializing_if = "Option::is_none")]
-    pub camera: Option<bool>,
+    /// Use slot 1 image as camera image.
+    #[serde(rename = "camera_image")]
+    pub camera_image: bool,
     #[serde(rename = "image1")]
-    pub image1: bool,
+    pub image1: Box<crate::models::ContentId>,
+    #[serde(rename = "image2", skip_serializing_if = "Option::is_none")]
+    pub image2: Option<Box<crate::models::ContentId>>,
+    #[serde(rename = "image3", skip_serializing_if = "Option::is_none")]
+    pub image3: Option<Box<crate::models::ContentId>>,
 }
 
 impl NewModerationRequest {
-    pub fn new(image1: bool) -> NewModerationRequest {
+    pub fn new(camera_image: bool, image1: crate::models::ContentId) -> NewModerationRequest {
         NewModerationRequest {
-            camera: None,
-            image1,
+            camera_image,
+            image1: Box::new(image1),
+            image2: None,
+            image3: None,
         }
     }
 }

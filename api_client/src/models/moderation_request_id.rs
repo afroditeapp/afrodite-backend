@@ -12,15 +12,15 @@
 
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
-pub struct SlotId {
-    #[serde(rename = "slot_id")]
-    pub slot_id: i32,
+pub struct ModerationRequestId {
+    #[serde(rename = "request_row_id")]
+    pub request_row_id: i64,
 }
 
-impl SlotId {
-    pub fn new(slot_id: i32) -> SlotId {
-        SlotId {
-            slot_id,
+impl ModerationRequestId {
+    pub fn new(request_row_id: i64) -> ModerationRequestId {
+        ModerationRequestId {
+            request_row_id,
         }
     }
 }

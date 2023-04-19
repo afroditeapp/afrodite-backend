@@ -99,18 +99,21 @@ This endpoint does not need any parameter.
 
 ## post_account_setup
 
-> crate::models::Account post_account_setup()
+> post_account_setup(account_setup)
 Setup non-changeable user information during `initial setup` state.
 
 Setup non-changeable user information during `initial setup` state.
 
 ### Parameters
 
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_setup** | [**AccountSetup**](AccountSetup.md) |  | [required] |
 
 ### Return type
 
-[**crate::models::Account**](Account.md)
+ (empty response body)
 
 ### Authorization
 
@@ -118,8 +121,8 @@ This endpoint does not need any parameter.
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: application/json
+- **Content-Type**: application/json
+- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

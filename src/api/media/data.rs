@@ -11,6 +11,11 @@ pub struct ImageFileName {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct SlotNumber {
+    pub slot_number: u8,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ImageFile {
     #[schema(value_type = String, format = Binary)]
     data: Vec<u8>,
@@ -58,7 +63,7 @@ pub enum StateParsingError {
     ParsingError(i64),
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, ToSchema)]
 #[repr(i64)]
 pub enum ModerationRequestState {
     Waiting = 0,
@@ -137,7 +142,7 @@ pub struct HandleModerationRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotId {
-    slot_id: String,
+    pub slot_id: u8,
 }
 
 /// Content ID for media content for example images
@@ -197,14 +202,14 @@ pub struct ModerationId {
     pub account_id: AccountIdInternal,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Moderation {
     pub request_id: ModerationRequestId,
     pub moderator_id: AccountIdLight,
     pub content: NewModerationRequest,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ModerationRequestId {
     pub request_row_id: i64,
 }

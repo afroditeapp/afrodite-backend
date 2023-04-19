@@ -12,15 +12,15 @@
 
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
-pub struct SlotId {
-    #[serde(rename = "slot_id")]
-    pub slot_id: i32,
+pub struct ModerationList {
+    #[serde(rename = "list")]
+    pub list: Vec<crate::models::Moderation>,
 }
 
-impl SlotId {
-    pub fn new(slot_id: i32) -> SlotId {
-        SlotId {
-            slot_id,
+impl ModerationList {
+    pub fn new(list: Vec<crate::models::Moderation>) -> ModerationList {
+        ModerationList {
+            list,
         }
     }
 }

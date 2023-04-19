@@ -4,14 +4,16 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**post_image**](MediainternalApi.md#post_image) | **POST** /internal/image/{account_id}/{image_file} | 
+[**internal_get_moderation_request_for_account**](MediainternalApi.md#internal_get_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists.
 
 
 
-## post_image
+## internal_get_moderation_request_for_account
 
-> post_image(account_id, image_file, image_file2)
+> internal_get_moderation_request_for_account(account_id)
+Check that current moderation request for account exists.
 
+Check that current moderation request for account exists. 
 
 ### Parameters
 
@@ -19,8 +21,6 @@ Method | HTTP request | Description
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
-**image_file** | **String** |  | [required] |
-**image_file2** | [**ImageFile**](ImageFile.md) | Upload new image | [required] |
 
 ### Return type
 
@@ -32,7 +32,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: image/jpeg
+- **Content-Type**: Not defined
 - **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
