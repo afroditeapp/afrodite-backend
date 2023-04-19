@@ -1,17 +1,24 @@
-use std::{collections::HashMap, sync::Arc, hash::Hash, future::Future};
+use std::{collections::HashMap, future::Future, hash::Hash, sync::Arc};
 
 use async_trait::async_trait;
-use tokio::sync::{RwLock, Mutex, MutexGuard};
+use tokio::sync::{Mutex, MutexGuard, RwLock};
 use tokio_stream::StreamExt;
 use tracing::info;
 
-use crate::{api::model::{AccountIdLight, Account, Profile, AccountIdInternal, ApiKey, AccountSetup}, config::Config};
+use crate::{
+    api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile},
+    config::Config,
+};
 
 use error_stack::{Result, ResultExt};
 use serde::Serialize;
 
-use super::{current::read::SqliteReadCommands, DatabaseError, sqlite::{SqliteDatabaseError, SqliteSelectJson}, write::AccountWriteLock};
-
+use super::{
+    current::read::SqliteReadCommands,
+    sqlite::{SqliteDatabaseError, SqliteSelectJson},
+    write::AccountWriteLock,
+    DatabaseError,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum CacheError {
@@ -71,19 +78,23 @@ impl DatabaseCache {
             if let Some(key) = api_key {
                 let mut write_api_keys = cache.api_keys.write().await;
                 if write_api_keys.contains_key(&key) {
-                    return Err(CacheError::AlreadyExists.into()).change_context(CacheError::Init)
+                    return Err(CacheError::AlreadyExists.into()).change_context(CacheError::Init);
                 } else {
                     write_api_keys.insert(key, lock_and_cache.clone());
                 }
             }
 
             if config.components().account {
-                let account = Account::select_json(internal_id, &read).await.change_context(CacheError::Init)?;
+                let account = Account::select_json(internal_id, &read)
+                    .await
+                    .change_context(CacheError::Init)?;
                 entry.account = Some(account.clone().into())
             }
 
             if config.components().profile {
-                let profile = Profile::select_json(internal_id, &read).await.change_context(CacheError::Init)?;
+                let profile = Profile::select_json(internal_id, &read)
+                    .await
+                    .change_context(CacheError::Init)?;
                 entry.profile = Some(profile.clone().into());
             }
         }
@@ -94,7 +105,10 @@ impl DatabaseCache {
         Ok(cache)
     }
 
-    pub async fn insert_account_if_not_exists(&self, id: AccountIdInternal) -> Result<(), CacheError> {
+    pub async fn insert_account_if_not_exists(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_light()).is_none() {
             let lock = Arc::new(Mutex::new(AccountWriteLock));
@@ -106,8 +120,18 @@ impl DatabaseCache {
         }
     }
 
-    pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {
-        let cache_entry = self.accounts.read().await.get(&id).ok_or(CacheError::KeyNotExists)?.clone();
+    pub async fn update_api_key(
+        &self,
+        id: AccountIdLight,
+        api_key: ApiKey,
+    ) -> Result<(), CacheError> {
+        let cache_entry = self
+            .accounts
+            .read()
+            .await
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .clone();
 
         let mut api_key_guard = self.api_keys.write().await;
         if api_key_guard.get(&api_key).is_none() {
@@ -133,7 +157,10 @@ impl DatabaseCache {
         }
     }
 
-    pub async fn api_key_exists_with_account_lock(&self, api_key: &ApiKey) -> Option<(AccountIdInternal, Arc<Mutex<AccountWriteLock>>)> {
+    pub async fn api_key_exists_with_account_lock(
+        &self,
+        api_key: &ApiKey,
+    ) -> Option<(AccountIdInternal, Arc<Mutex<AccountWriteLock>>)> {
         let api_key_guard = self.api_keys.read().await;
         if let Some(entry) = api_key_guard.get(api_key) {
             let id = entry.cache.read().await.account_id_internal;
@@ -143,28 +170,59 @@ impl DatabaseCache {
         }
     }
 
-    pub async fn to_account_id_internal(&self, id: AccountIdLight) -> Result<AccountIdInternal, CacheError> {
+    pub async fn to_account_id_internal(
+        &self,
+        id: AccountIdLight,
+    ) -> Result<AccountIdInternal, CacheError> {
         let guard = self.accounts.read().await;
-        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await
+        let data = guard
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .read()
+            .await
             .account_id_internal;
         Ok(data)
     }
 
-    pub async fn read_cache<T>(&self, id: AccountIdLight, cache_operation: impl Fn(&CacheEntry) -> T) -> Result<T, CacheError> {
+    pub async fn read_cache<T>(
+        &self,
+        id: AccountIdLight,
+        cache_operation: impl Fn(&CacheEntry) -> T,
+    ) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
-        let cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await;
+        let cache_entry = guard
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .read()
+            .await;
         Ok(cache_operation(&cache_entry))
     }
 
-    pub async fn write_cache<T>(&self, id: AccountIdLight, cache_operation: impl Fn(&mut CacheEntry) -> T) -> Result<T, CacheError> {
+    pub async fn write_cache<T>(
+        &self,
+        id: AccountIdLight,
+        cache_operation: impl Fn(&mut CacheEntry) -> T,
+    ) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
-        let mut cache_entry = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.write().await;
+        let mut cache_entry = guard
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .write()
+            .await;
         Ok(cache_operation(&mut cache_entry))
     }
 
     pub async fn account(&self, id: AccountIdLight) -> Result<Account, CacheError> {
         let guard = self.accounts.read().await;
-        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await
+        let data = guard
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .read()
+            .await
             .account
             .as_ref()
             .map(|data| data.as_ref().clone())
@@ -175,7 +233,12 @@ impl DatabaseCache {
 
     pub async fn profile(&self, id: AccountIdLight) -> Result<Profile, CacheError> {
         let guard = self.accounts.read().await;
-        let data = guard.get(&id).ok_or(CacheError::KeyNotExists)?.cache.read().await
+        let data = guard
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .read()
+            .await
             .profile
             .as_ref()
             .map(|data| data.as_ref().clone())
@@ -184,9 +247,17 @@ impl DatabaseCache {
         Ok(data)
     }
 
-    pub async fn update_profile(&self, id: AccountIdLight, profile: Profile) -> Result<(), CacheError> {
+    pub async fn update_profile(
+        &self,
+        id: AccountIdLight,
+        profile: Profile,
+    ) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
-        data.get_mut(&id).ok_or(CacheError::KeyNotExists)?.cache.write().await
+        data.get_mut(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .write()
+            .await
             .profile
             .as_mut()
             .ok_or(CacheError::NotInCache)
@@ -194,9 +265,18 @@ impl DatabaseCache {
         Ok(())
     }
 
-    pub async fn update_account(&self, id: AccountIdLight, data: Account) -> Result<(), CacheError> {
+    pub async fn update_account(
+        &self,
+        id: AccountIdLight,
+        data: Account,
+    ) -> Result<(), CacheError> {
         let mut write_guard = self.accounts.write().await;
-        write_guard.get_mut(&id).ok_or(CacheError::KeyNotExists)?.cache.write().await
+        write_guard
+            .get_mut(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .write()
+            .await
             .account
             .as_mut()
             .ok_or(CacheError::NotInCache)
@@ -204,7 +284,10 @@ impl DatabaseCache {
         Ok(())
     }
 
-    pub async fn get_write_lock_simple(&self, id: AccountIdLight) -> Result<Arc<Mutex<AccountWriteLock>>, CacheError> {
+    pub async fn get_write_lock_simple(
+        &self,
+        id: AccountIdLight,
+    ) -> Result<Arc<Mutex<AccountWriteLock>>, CacheError> {
         let guard = self.accounts.read().await;
         let lock = guard.get(&id).ok_or(CacheError::KeyNotExists)?.lock.clone();
 
@@ -220,7 +303,11 @@ pub struct CacheEntry {
 
 impl CacheEntry {
     pub fn new(account_id_internal: AccountIdInternal) -> Self {
-        Self { profile: None, account: None, account_id_internal }
+        Self {
+            profile: None,
+            account: None,
+            account_id_internal,
+        }
     }
 }
 
@@ -238,7 +325,6 @@ pub trait ReadCacheJson: Sized + Send {
 
 impl ReadCacheJson for AccountSetup {}
 
-
 #[async_trait]
 impl ReadCacheJson for Account {
     const CACHED_JSON: bool = true;
@@ -248,9 +334,12 @@ impl ReadCacheJson for Account {
         cache: &DatabaseCache,
     ) -> Result<Self, CacheError> {
         let data_in_cache = cache
-            .read_cache(id, |entry|
-                entry.account.as_ref().map(|account|
-                    account.as_ref().clone()))
+            .read_cache(id, |entry| {
+                entry
+                    .account
+                    .as_ref()
+                    .map(|account| account.as_ref().clone())
+            })
             .await?;
         data_in_cache.ok_or(CacheError::NotInCache.into())
     }
@@ -265,14 +354,13 @@ impl ReadCacheJson for Profile {
         cache: &DatabaseCache,
     ) -> Result<Self, CacheError> {
         let data_in_cache = cache
-            .read_cache(id, |entry|
-                entry.profile.as_ref().map(|data|
-                    data.as_ref().clone()))
+            .read_cache(id, |entry| {
+                entry.profile.as_ref().map(|data| data.as_ref().clone())
+            })
             .await?;
         data_in_cache.ok_or(CacheError::NotInCache.into())
     }
 }
-
 
 #[async_trait]
 pub trait WriteCacheJson: Sized + Send + ReadCacheJson {
@@ -294,13 +382,15 @@ impl WriteCacheJson for Account {
         id: AccountIdLight,
         cache: &DatabaseCache,
     ) -> Result<(), CacheError> {
-        cache.write_cache(
-            id,
-            |entry| entry.account.as_mut().map(
-                |data| *data.as_mut() = self.clone()
-            )
-        )
-            .await.map(|_| ())
+        cache
+            .write_cache(id, |entry| {
+                entry
+                    .account
+                    .as_mut()
+                    .map(|data| *data.as_mut() = self.clone())
+            })
+            .await
+            .map(|_| ())
     }
 }
 
@@ -311,12 +401,14 @@ impl WriteCacheJson for Profile {
         id: AccountIdLight,
         cache: &DatabaseCache,
     ) -> Result<(), CacheError> {
-        cache.write_cache(
-            id,
-            |entry| entry.profile.as_mut().map(
-                |data| *data.as_mut() = self.clone()
-            )
-        )
-            .await.map(|_| ())
+        cache
+            .write_cache(id, |entry| {
+                entry
+                    .profile
+                    .as_mut()
+                    .map(|data| *data.as_mut() = self.clone())
+            })
+            .await
+            .map(|_| ())
     }
 }

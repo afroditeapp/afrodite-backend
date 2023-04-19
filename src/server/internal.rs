@@ -14,17 +14,14 @@ use hyper::StatusCode;
 use reqwest::{Client, Url};
 use tracing::info;
 
-use crate::{api, utils::IntoReportExt, config::InternalApiUrls};
+use crate::{api, config::InternalApiUrls, utils::IntoReportExt};
 
-
-use crate::{api::{model::ApiKey}, config::Config};
+use crate::{api::model::ApiKey, config::Config};
 
 use super::{app::AppState, database::utils::ApiKeyManager};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
-
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum InternalApiError {
@@ -39,7 +36,6 @@ pub enum InternalApiError {
 
     #[error("Media API URL not configured")]
     MediaApiUrlNotConfigured,
-
     // #[error("Wrong status code")]
     // StatusCode,
 
@@ -49,7 +45,6 @@ pub enum InternalApiError {
     // #[error("Missing value")]
     // MissingValue,
 }
-
 
 /// Internal route handlers for server to server communication.
 pub struct InternalApp;
@@ -76,7 +71,7 @@ impl InternalApp {
                 let state = state.clone();
                 move |parameter1| {
                     api::media::internal::internal_get_moderation_request_for_account(
-                        parameter1, state
+                        parameter1, state,
                     )
                 }
             }),
@@ -85,9 +80,7 @@ impl InternalApp {
 }
 
 // TOOD: PrintWarningsTriggersAtomics?
-pub struct PrintWarningsTriggersAtomics {
-
-}
+pub struct PrintWarningsTriggersAtomics {}
 
 pub struct InternalApiClient {
     account: Option<Configuration>,
@@ -95,55 +88,46 @@ pub struct InternalApiClient {
 }
 
 impl InternalApiClient {
-    pub fn new(
-        base_urls: InternalApiUrls,
-    ) -> Self {
+    pub fn new(base_urls: InternalApiUrls) -> Self {
         let client = reqwest::Client::new();
 
-        let account = base_urls
-            .account_base_url
-            .map(|url| {
-                let url = url.as_str()
-                .trim_end_matches('/')
-                .to_string();
+        let account = base_urls.account_base_url.map(|url| {
+            let url = url.as_str().trim_end_matches('/').to_string();
 
-                info!("Account internal API base url: {}", url);
+            info!("Account internal API base url: {}", url);
 
-                Configuration {
-                    base_path: url,
-                    client: client.clone(),
-                    ..Configuration::default()
-                }
-            });
+            Configuration {
+                base_path: url,
+                client: client.clone(),
+                ..Configuration::default()
+            }
+        });
 
-        let media = base_urls
-            .media_base_url
-            .map(|url| {
-                let url = url.as_str()
-                .trim_end_matches('/')
-                .to_string();
+        let media = base_urls.media_base_url.map(|url| {
+            let url = url.as_str().trim_end_matches('/').to_string();
 
-                info!("Media internal API base url: {}", url);
+            info!("Media internal API base url: {}", url);
 
-                Configuration {
-                    base_path: url,
-                    client: client.clone(),
-                    ..Configuration::default()
-                }
-            });
+            Configuration {
+                base_path: url,
+                client: client.clone(),
+                ..Configuration::default()
+            }
+        });
 
-        Self {
-            account,
-            media,
-        }
+        Self { account, media }
     }
 
     pub fn account(&self) -> Result<&Configuration, InternalApiError> {
-        self.account.as_ref().ok_or(InternalApiError::AccountApiUrlNotConfigured.into())
+        self.account
+            .as_ref()
+            .ok_or(InternalApiError::AccountApiUrlNotConfigured.into())
     }
 
     pub fn media(&self) -> Result<&Configuration, InternalApiError> {
-        self.media.as_ref().ok_or(InternalApiError::MediaApiUrlNotConfigured.into())
+        self.media
+            .as_ref()
+            .ok_or(InternalApiError::MediaApiUrlNotConfigured.into())
     }
 }
 
@@ -160,8 +144,18 @@ pub struct InternalApiManager<'a> {
     keys: ApiKeyManager<'a>,
 }
 
-impl <'a> InternalApiManager<'a> {
-    pub fn new(config: &'a Config, api_client: &'a InternalApiClient, keys: ApiKeyManager<'a>) -> Self { Self { config, api_client, keys } }
+impl<'a> InternalApiManager<'a> {
+    pub fn new(
+        config: &'a Config,
+        api_client: &'a InternalApiClient,
+        keys: ApiKeyManager<'a>,
+    ) -> Self {
+        Self {
+            config,
+            api_client,
+            keys,
+        }
+    }
 
     pub async fn check_api_key(&self, key: ApiKey) -> Result<AuthResponse, InternalApiError> {
         if self.keys.api_key_exists(&key).await.is_some() {
@@ -178,14 +172,14 @@ impl <'a> InternalApiManager<'a> {
                     Ok(AuthResponse::Ok)
                 }
                 Err(api_client::apis::Error::ResponseError(response))
-                    if response.status == StatusCode::UNAUTHORIZED => {
-
+                    if response.status == StatusCode::UNAUTHORIZED =>
+                {
                     // TODO: NOTE: Logging every error is not good as it would spam
                     // the log, but maybe an error counter or logging just
                     // once for a while.
                     Ok(AuthResponse::Unauthorized)
                 }
-                Err(e) => Err(e).into_error(InternalApiError::ApiRequest)
+                Err(e) => Err(e).into_error(InternalApiError::ApiRequest),
             }
         } else {
             Ok(AuthResponse::Unauthorized)

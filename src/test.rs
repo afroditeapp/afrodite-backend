@@ -1,7 +1,7 @@
 //! Run test suite and benchmarks
 
-pub mod client;
 mod bot;
+pub mod client;
 
 use std::{fs, sync::Arc};
 
@@ -14,7 +14,7 @@ use tracing::{error, info};
 use api_client::{models::AccountIdLight, models::ApiKey};
 
 use crate::{
-    api::model::{AccountId},
+    api::model::AccountId,
     config::{args::TestMode, Config},
     server::database::DB_HISTORY_DIR_NAME,
     test::bot::Bot,

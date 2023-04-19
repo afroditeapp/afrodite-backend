@@ -1,25 +1,34 @@
-    use std::{sync::Arc, future::Future, time::Duration};
+
+use std::{future::Future, sync::Arc, time::Duration};
 
 use api_client::models::AccountId;
 use axum::extract::BodyStream;
-use error_stack::{Result, ResultExt, Report};
+use error_stack::{Report, Result, ResultExt};
 use serde::Serialize;
-use tokio::sync::{MutexGuard, Mutex};
+use tokio::sync::{Mutex, MutexGuard};
 use tokio_stream::StreamExt;
 use tracing::info;
 
 use crate::{
-    api::{model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId, NewModerationRequest}, media::data::Moderation},
+    api::{
+        media::data::Moderation,
+        model::{
+            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
+            NewModerationRequest, Profile,
+        },
+    },
     config::Config,
     server::database::{sqlite::SqliteWriteHandle, DatabaseError},
-    utils::{ErrorConversion, IntoReportExt, AppendErrorTo},
+    utils::{AppendErrorTo, ErrorConversion, IntoReportExt},
 };
 
 use super::{
+    cache::{DatabaseCache, WriteCacheJson},
     current::write::CurrentDataWriteCommands,
+    file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
-    sqlite::{HistoryUpdateJson, SqliteUpdateJson, CurrentDataWriteHandle, HistoryWriteHandle},
-    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson}, file::{utils::{ FileDir}, file::ImageSlot},
+    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+    utils::GetReadWriteCmd,
 };
 
 #[derive(Debug, Clone)]
@@ -42,7 +51,6 @@ impl std::fmt::Display for WriteCmd {
 #[derive(Debug, Clone)]
 pub struct HistoryWrite(pub WriteCmd);
 
-
 impl std::fmt::Display for HistoryWrite {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("History write command: {:?}", self))
@@ -51,7 +59,6 @@ impl std::fmt::Display for HistoryWrite {
 
 #[derive(Debug, Clone)]
 pub struct CacheWrite(pub WriteCmd);
-
 
 impl std::fmt::Display for CacheWrite {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -76,7 +83,7 @@ pub struct WriteCommands<'a> {
     file_dir: &'a FileDir,
 }
 
-impl <'a> WriteCommands<'a> {
+impl<'a> WriteCommands<'a> {
     pub fn new(
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
@@ -142,7 +149,9 @@ impl <'a> WriteCommands<'a> {
                 .with_history_write_cmd_info::<Account>(id)?;
 
             cache
-                .write_cache(id.as_light(), |cache| cache.account = Some(account.clone().into()))
+                .write_cache(id.as_light(), |cache| {
+                    cache.account = Some(account.clone().into())
+                })
                 .await
                 .with_history_write_cmd_info::<Account>(id)?;
 
@@ -155,7 +164,6 @@ impl <'a> WriteCommands<'a> {
                 .store_account_setup(id, &account_setup)
                 .await
                 .with_history_write_cmd_info::<AccountSetup>(id)?;
-
         }
 
         if config.components().profile {
@@ -170,7 +178,9 @@ impl <'a> WriteCommands<'a> {
                 .with_history_write_cmd_info::<Profile>(id)?;
 
             cache
-                .write_cache(id.as_light(), |cache| cache.profile = Some(profile.clone().into()))
+                .write_cache(id.as_light(), |cache| {
+                    cache.profile = Some(profile.clone().into())
+                })
                 .await
                 .with_history_write_cmd_info::<Profile>(id)?;
         }
@@ -178,19 +188,32 @@ impl <'a> WriteCommands<'a> {
         Ok(id)
     }
 
-    pub async fn set_new_api_key(&self, id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
+    pub async fn set_new_api_key(
+        &self,
+        id: AccountIdInternal,
+        key: ApiKey,
+    ) -> Result<(), DatabaseError> {
         self.current()
             .update_api_key(id, Some(&key))
             .await
             .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))?;
 
-        self.cache.update_api_key(id.as_light(), key)
+        self.cache
+            .update_api_key(id.as_light(), key)
             .await
             .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))
     }
 
     pub async fn update_json<
-        T: GetReadWriteCmd + Serialize + Clone + Send + SqliteUpdateJson + HistoryUpdateJson + WriteCacheJson + Sync + 'static,
+        T: GetReadWriteCmd
+            + Serialize
+            + Clone
+            + Send
+            + SqliteUpdateJson
+            + HistoryUpdateJson
+            + WriteCacheJson
+            + Sync
+            + 'static,
     >(
         &mut self,
         id: AccountIdInternal,
@@ -213,7 +236,11 @@ impl <'a> WriteCommands<'a> {
         }
     }
 
-    pub async fn set_moderation_request(&self, account_id: AccountIdInternal, request: NewModerationRequest) -> Result<(), DatabaseError> {
+    pub async fn set_moderation_request(
+        &self,
+        account_id: AccountIdInternal,
+        request: NewModerationRequest,
+    ) -> Result<(), DatabaseError> {
         self.current()
             .media()
             .create_new_moderation_request(account_id, request)
@@ -221,7 +248,10 @@ impl <'a> WriteCommands<'a> {
             .with_info_lazy(|| WriteCmd::MediaModerationRequest(account_id))
     }
 
-    pub async fn moderation_get_list_and_create_new_if_necessary(self, account_id: AccountIdInternal) -> Result<Vec<Moderation>, DatabaseError> {
+    pub async fn moderation_get_list_and_create_new_if_necessary(
+        self,
+        account_id: AccountIdInternal,
+    ) -> Result<Vec<Moderation>, DatabaseError> {
         self.current()
             .media()
             .moderation_get_list_and_create_new_if_necessary(account_id)
@@ -230,35 +260,68 @@ impl <'a> WriteCommands<'a> {
     }
 
     /// Completes previous sava_to_tmp.
-    pub async fn save_to_slot(&self, id: AccountIdInternal, content_id: ContentId, slot: ImageSlot) -> Result<(), DatabaseError> {
-
+    pub async fn save_to_slot(
+        &self,
+        id: AccountIdInternal,
+        content_id: ContentId,
+        slot: ImageSlot,
+    ) -> Result<(), DatabaseError> {
         // Remove previous slot image.
-        let current_content_in_slot = self.current_write.read().media().get_content_id_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+        let current_content_in_slot = self
+            .current_write
+            .read()
+            .media()
+            .get_content_id_from_slot(id, slot)
+            .await
+            .change_context(DatabaseError::Sqlite)?;
         if let Some(current_id) = current_content_in_slot {
-            let path = self.file_dir.image_content(id.as_light(), current_id.as_content_id());
-            path.remove_if_exists().await.change_context(DatabaseError::File)?;
-            self.current().media().delete_image_from_slot(id, slot).await.change_context(DatabaseError::Sqlite)?;
+            let path = self
+                .file_dir
+                .image_content(id.as_light(), current_id.as_content_id());
+            path.remove_if_exists()
+                .await
+                .change_context(DatabaseError::File)?;
+            self.current()
+                .media()
+                .delete_image_from_slot(id, slot)
+                .await
+                .change_context(DatabaseError::Sqlite)?;
         }
 
-        let transaction = self.current().media().store_content_id_to_slot(id, content_id, slot).await.change_context(DatabaseError::Sqlite)?;
+        let transaction = self
+            .current()
+            .media()
+            .store_content_id_to_slot(id, content_id, slot)
+            .await
+            .change_context(DatabaseError::Sqlite)?;
 
         let file_operations = || {
             async {
                 // Move image from tmp to image dir
-                let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
+                let raw_img = self
+                    .file_dir
+                    .unprocessed_image_upload(id.as_light(), content_id);
                 let processed_content_path = self.file_dir.image_content(id.as_light(), content_id);
-                raw_img.move_to(&processed_content_path).await.change_context(DatabaseError::File)?;
+                raw_img
+                    .move_to(&processed_content_path)
+                    .await
+                    .change_context(DatabaseError::File)?;
 
                 Ok::<(), Report<DatabaseError>>(())
             }
         };
 
         match file_operations().await {
-            Ok(()) =>  {
-                transaction.commit().await.change_context(DatabaseError::Sqlite)
-            }
+            Ok(()) => transaction
+                .commit()
+                .await
+                .change_context(DatabaseError::Sqlite),
             Err(e) => {
-                match transaction.rollback().await.change_context(DatabaseError::Sqlite) {
+                match transaction
+                    .rollback()
+                    .await
+                    .change_context(DatabaseError::Sqlite)
+                {
                     Ok(()) => Err(e),
                     Err(another_error) => Err(another_error.attach(e)),
                 }
@@ -273,9 +336,7 @@ impl <'a> WriteCommands<'a> {
     fn history(&self) -> HistoryWriteCommands {
         HistoryWriteCommands::new(&self.history_write)
     }
-
 }
-
 
 /// Commands that can run concurrently with other write commands, but which have
 /// limitation that one account can execute only one command at a time.
@@ -288,7 +349,7 @@ pub struct WriteCommandsAccount<'a> {
     file_dir: &'a FileDir,
 }
 
-impl <'a> WriteCommandsAccount<'a> {
+impl<'a> WriteCommandsAccount<'a> {
     pub fn new(
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
@@ -303,15 +364,28 @@ impl <'a> WriteCommandsAccount<'a> {
         }
     }
 
-    pub async fn save_to_tmp(&self, id: AccountIdInternal, stream: BodyStream) -> Result<ContentId, DatabaseError> {
+    pub async fn save_to_tmp(
+        &self,
+        id: AccountIdInternal,
+        stream: BodyStream,
+    ) -> Result<ContentId, DatabaseError> {
         let content_id = ContentId::new_random_id();
 
         // Clear tmp dir if previous image writing failed and there is no
         // content ID in the database about it.
-        self.file_dir.tmp_dir(id.as_light()).remove_contents_if_exists().await.change_context(DatabaseError::File)?;
+        self.file_dir
+            .tmp_dir(id.as_light())
+            .remove_contents_if_exists()
+            .await
+            .change_context(DatabaseError::File)?;
 
-        let raw_img = self.file_dir.unprocessed_image_upload(id.as_light(), content_id);
-        raw_img.save_stream(stream).await.change_context(DatabaseError::File)?;
+        let raw_img = self
+            .file_dir
+            .unprocessed_image_upload(id.as_light(), content_id);
+        raw_img
+            .save_stream(stream)
+            .await
+            .change_context(DatabaseError::File)?;
 
         // TODO: image safety checks and processing
 
@@ -325,5 +399,4 @@ impl <'a> WriteCommandsAccount<'a> {
     fn history(&self) -> HistoryWriteCommands {
         HistoryWriteCommands::new(&self.history_write)
     }
-
 }

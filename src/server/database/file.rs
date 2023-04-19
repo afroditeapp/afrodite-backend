@@ -55,7 +55,6 @@ pub enum FileError {
     #[error("Invalid directory")]
     InvalidDirectory,
 
-
     // Serde
     #[error("Serde serialization failed")]
     SerdeSerialize,

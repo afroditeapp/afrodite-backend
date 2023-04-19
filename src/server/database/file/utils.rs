@@ -1,12 +1,13 @@
 use std::{
     fs,
-    path::{Path, PathBuf}, future::IntoFuture,
+    future::IntoFuture,
+    path::{Path, PathBuf},
 };
 
 use axum::extract::BodyStream;
 use error_stack::Result;
 use tokio::io::AsyncWriteExt;
-use tokio_stream::{StreamExt, wrappers::ReadDirStream};
+use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
 
 use crate::api::model::{AccountId, AccountIdLight, ContentId};
@@ -37,7 +38,9 @@ impl FileDir {
     }
 
     pub fn unprocessed_image_upload(&self, id: AccountIdLight, content: ContentId) -> TmpImageFile {
-        self.account_dir(id).tmp_dir().unprocessed_image_upload(content)
+        self.account_dir(id)
+            .tmp_dir()
+            .unprocessed_image_upload(content)
     }
 
     pub fn image_content(&self, id: AccountIdLight, content_id: ContentId) -> ImageFile {
@@ -47,9 +50,7 @@ impl FileDir {
     pub fn account_dir(&self, id: AccountIdLight) -> AccountDir {
         let mut dir = self.dir.clone();
         dir.push(id.to_string());
-        AccountDir {
-            dir,
-        }
+        AccountDir { dir }
     }
 
     pub fn tmp_dir(&self, id: AccountIdLight) -> TmpDir {
@@ -73,23 +74,17 @@ impl AccountDir {
 
     fn tmp_dir(mut self) -> TmpDir {
         self.dir.push(TMP_DIR_NAME);
-        TmpDir {
-            dir: self.dir,
-        }
+        TmpDir { dir: self.dir }
     }
 
     fn export_dir(mut self) -> ExportDir {
         self.dir.push(EXPORT_DIR_NAME);
-        ExportDir {
-            dir: self.dir,
-        }
+        ExportDir { dir: self.dir }
     }
 
     fn image_dir(mut self) -> ImageDir {
         self.dir.push(IMAGE_DIR_NAME);
-        ImageDir {
-            dir: self.dir,
-        }
+        ImageDir { dir: self.dir }
     }
 }
 
@@ -97,7 +92,6 @@ impl AccountDir {
 pub struct TmpDir {
     dir: PathBuf,
 }
-
 
 impl TmpDir {
     pub fn path(&self) -> &PathBuf {
@@ -109,15 +103,25 @@ impl TmpDir {
     /// Does not do anything if dir does not exists.
     pub async fn remove_contents_if_exists(&self) -> Result<(), FileError> {
         if !self.dir.exists() {
-            return Ok(())
+            return Ok(());
         }
 
-        if self.dir.file_name().ok_or(FileError::MissingFileName)?.to_string_lossy() == TMP_DIR_NAME {
-            let iter = tokio::fs::read_dir(&self.dir).await.into_error(FileError::IoDirIter)?;
+        if self
+            .dir
+            .file_name()
+            .ok_or(FileError::MissingFileName)?
+            .to_string_lossy()
+            == TMP_DIR_NAME
+        {
+            let iter = tokio::fs::read_dir(&self.dir)
+                .await
+                .into_error(FileError::IoDirIter)?;
             let mut s = ReadDirStream::new(iter);
             while let Some(entry) = s.next().await {
                 let entry = entry.into_error(FileError::IoDirIter)?;
-                tokio::fs::remove_file(entry.path()).await.into_error(FileError::IoFileRemove)?;
+                tokio::fs::remove_file(entry.path())
+                    .await
+                    .into_error(FileError::IoFileRemove)?;
             }
             Ok(())
         } else {
@@ -127,10 +131,11 @@ impl TmpDir {
 
     pub fn unprocessed_image_upload(mut self, id: ContentId) -> TmpImageFile {
         self.dir.push(id.raw_jpg_image());
-        TmpImageFile { path: PathToFile { path: self.dir }}
+        TmpImageFile {
+            path: PathToFile { path: self.dir },
+        }
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct ImageDir {
@@ -144,7 +149,9 @@ impl ImageDir {
 
     pub fn image_content(mut self, content_id: ContentId) -> ImageFile {
         self.dir.push(content_id.jpg_image());
-        ImageFile { path: PathToFile { path: self.dir }}
+        ImageFile {
+            path: PathToFile { path: self.dir },
+        }
     }
 }
 
@@ -152,7 +159,6 @@ impl ImageDir {
 pub struct ExportDir {
     dir: PathBuf,
 }
-
 
 impl ExportDir {
     pub fn path(&self) -> &PathBuf {
@@ -203,7 +209,6 @@ struct PathToFile {
     path: PathBuf,
 }
 
-
 impl PathToFile {
     pub fn path(&self) -> &PathBuf {
         &self.path
@@ -226,11 +231,15 @@ impl PathToFile {
     pub async fn save_stream(&self, mut stream: BodyStream) -> Result<(), FileError> {
         self.create_parent_dirs().await?;
 
-        let mut file = tokio::fs::File::create(&self.path).await.into_error(FileError::IoFileCreate)?;
+        let mut file = tokio::fs::File::create(&self.path)
+            .await
+            .into_error(FileError::IoFileCreate)?;
 
         while let Some(result) = stream.next().await {
             let mut data = result.into_error(FileError::StreamReadFailed)?;
-            file.write_all_buf(&mut data).await.into_error(FileError::IoFileWrite)?;
+            file.write_all_buf(&mut data)
+                .await
+                .into_error(FileError::IoFileWrite)?;
         }
         file.flush().await.into_error(FileError::IoFileFlush)?;
         file.sync_all().await.into_error(FileError::IoFileSync)?;
@@ -238,16 +247,22 @@ impl PathToFile {
     }
 
     pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
-        let file = tokio::fs::File::open(&self.path).await.into_error(FileError::IoFileOpen)?;
+        let file = tokio::fs::File::open(&self.path)
+            .await
+            .into_error(FileError::IoFileOpen)?;
         Ok(ReaderStream::new(file))
     }
 
     pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
-        tokio::fs::read(&self.path).await.into_error(FileError::IoFileOpen)
+        tokio::fs::read(&self.path)
+            .await
+            .into_error(FileError::IoFileOpen)
     }
 
     pub async fn move_to(self, new_location: &Self) -> Result<(), FileError> {
-        tokio::fs::rename(self.path, new_location.path()).await.into_error(FileError::IoFileRename)
+        tokio::fs::rename(self.path, new_location.path())
+            .await
+            .into_error(FileError::IoFileRename)
     }
 
     pub async fn remove_if_exists(self) -> Result<(), FileError> {
@@ -255,7 +270,9 @@ impl PathToFile {
             return Ok(());
         }
 
-        tokio::fs::remove_file(&self.path).await.into_error(FileError::IoFileRemove)
+        tokio::fs::remove_file(&self.path)
+            .await
+            .into_error(FileError::IoFileRemove)
     }
 
     pub fn exists(&self) -> bool {

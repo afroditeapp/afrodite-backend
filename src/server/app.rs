@@ -12,15 +12,23 @@ use utoipa::OpenApi;
 use crate::{
     api::{
         self,
-        model::{AccountIdInternal, ApiKey, AccountIdLight},
-        ApiDoc, GetApiKeys, GetConfig,
-        GetUsers, ReadDatabase, WriteDatabase, GetInternalApi,
+        model::{AccountIdInternal, AccountIdLight, ApiKey},
+        ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase,
     },
     config::Config,
 };
 
 use super::{
-    database::{current::read::SqliteReadCommands, write::{WriteCommands}, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache, commands::{WriteCommandRunnerQuitHandle, WriteCommandRunnerHandle}, RouterDatabaseReadHandle}, internal::{InternalApiManager, InternalApiClient},
+    database::{
+        cache::DatabaseCache,
+        commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
+        current::read::SqliteReadCommands,
+        read::ReadCommands,
+        utils::{AccountIdManager, ApiKeyManager},
+        write::WriteCommands,
+        RouterDatabaseReadHandle,
+    },
+    internal::{InternalApiClient, InternalApiManager},
 };
 
 #[derive(Clone)]
@@ -29,7 +37,6 @@ pub struct AppState {
     internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
 }
-
 
 impl GetApiKeys for AppState {
     fn api_keys(&self) -> ApiKeyManager<'_> {
@@ -50,9 +57,7 @@ impl ReadDatabase for AppState {
 }
 
 impl WriteDatabase for AppState {
-    fn write_database(
-        &self,
-    ) -> &WriteCommandRunnerHandle {
+    fn write_database(&self) -> &WriteCommandRunnerHandle {
         self.database.write()
     }
 }

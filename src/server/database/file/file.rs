@@ -19,7 +19,6 @@ impl std::fmt::Display for StaticFileName<'_> {
     }
 }
 
-
 pub trait GetStaticFileName {
     fn file_name(&self) -> StaticFileName<'static>;
 }

@@ -7,17 +7,16 @@ use axum::{Json, TypedHeader};
 
 use hyper::StatusCode;
 
+use self::data::{
+    Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting,
+    DeleteStatus,
+};
 
-use self::data::{Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus};
-
-use super::{GetConfig, utils::{}};
+use super::{ GetConfig};
 
 use tracing::error;
 
-use super::{
-    utils::ApiKeyHeader, GetApiKeys, GetUsers, ReadDatabase,
-    WriteDatabase,
-};
+use super::{utils::ApiKeyHeader, GetApiKeys, GetUsers, ReadDatabase, WriteDatabase};
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -40,13 +39,9 @@ pub async fn post_register<S: WriteDatabase + GetConfig>(
     // to avoid database collisions.
     let id = AccountId::generate_new();
 
-    let register = state
-        .write_database()
-        .register(id.as_light());
+    let register = state.write_database().register(id.as_light());
     match register.await {
-        Ok(id) => {
-            Ok(id.as_light().into())
-        }
+        Ok(id) => Ok(id.as_light().into()),
         Err(e) => {
             error!("Error: {e:?}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -113,7 +108,6 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
 
 //     todo!()
 // }
-
 
 pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
 
@@ -187,7 +181,8 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
         })?;
 
     if account.state() == AccountState::InitialSetup {
-        state.write_database()
+        state
+            .write_database()
             .update_account_setup(id, data)
             .await
             .map_err(|e| {
@@ -241,7 +236,8 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();
 
-        state.write_database()
+        state
+            .write_database()
             .update_account(id, account)
             .await
             .map_err(|e| {
@@ -252,7 +248,6 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
         Err(StatusCode::NOT_ACCEPTABLE)
     }
 }
-
 
 pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
@@ -277,10 +272,8 @@ pub async fn put_setting_profile_visiblity<S: GetApiKeys + WriteDatabase + ReadD
     Json(data): Json<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {
-
     Ok(())
 }
-
 
 pub const PATH_POST_DELETE: &str = "/account_api/delete";
 
@@ -302,7 +295,6 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
 pub async fn post_delete<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     state: S,
 ) -> Result<(), StatusCode> {
-
     Ok(())
 }
 
@@ -324,10 +316,8 @@ pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
 pub async fn get_deletion_status<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     state: S,
 ) -> Result<DeleteStatus, StatusCode> {
-
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
-
 
 pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
 
@@ -347,6 +337,5 @@ pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
 pub async fn delete_cancel_deletion<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     state: S,
 ) -> Result<DeleteStatus, StatusCode> {
-
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }

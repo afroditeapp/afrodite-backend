@@ -7,14 +7,17 @@ use axum::{
 use headers::{ContentLength, ContentType};
 use hyper::StatusCode;
 
-use crate::api::{model::{AccountIdInternal, AccountIdLight}, ReadDatabase, GetUsers};
+use crate::api::{
+    model::{AccountIdInternal, AccountIdLight},
+    GetUsers, ReadDatabase,
+};
 
 use super::{super::account::data::AccountId, data::NewModerationRequest};
 
 use super::data::ImageFileName;
 
-
-pub const PATH_INTERNAL_GET_MODERATION_REQUEST_FOR_ACCOUNT: &str = "/internal/media_api/moderation/request/:account_id";
+pub const PATH_INTERNAL_GET_MODERATION_REQUEST_FOR_ACCOUNT: &str =
+    "/internal/media_api/moderation/request/:account_id";
 
 /// Check that current moderation request for account exists.
 ///
@@ -41,10 +44,14 @@ pub async fn internal_get_moderation_request_for_account<S: ReadDatabase + GetUs
             StatusCode::NOT_FOUND
         })?;
 
-    let _request = state.read_database().moderation_request(account_id).await.map_err(|e| {
-        tracing::error!("{}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
+    let _request = state
+        .read_database()
+        .moderation_request(account_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
         .ok_or(StatusCode::NOT_FOUND)?;
 
     Ok(())

@@ -10,7 +10,9 @@ use self::media::CurrentReadMediaCommands;
 use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
 use crate::api::media::data::ModerationRequestState;
-use crate::api::model::{Account, AccountId, AccountIdInternal, ApiKey, Profile, ModerationRequest};
+use crate::api::model::{
+    Account, AccountId, AccountIdInternal, ApiKey, ModerationRequest, Profile,
+};
 use crate::server::database::read::ReadCmd;
 use crate::server::database::utils::GetReadWriteCmd;
 use crate::server::database::DatabaseError;
@@ -39,7 +41,6 @@ impl<'a> SqliteReadCommands<'a> {
         Self { handle }
     }
 
-
     pub fn media(&self) -> CurrentReadMediaCommands<'_> {
         CurrentReadMediaCommands::new(self.handle)
     }
@@ -55,9 +56,7 @@ impl<'a> SqliteReadCommands<'a> {
             "#,
         )
         .fetch(self.handle.pool())
-        .map(|result| {
-            result.into_error(SqliteDatabaseError::Fetch)
-        })
+        .map(|result| result.into_error(SqliteDatabaseError::Fetch))
     }
 
     pub async fn api_key(
@@ -75,11 +74,7 @@ impl<'a> SqliteReadCommands<'a> {
         )
         .fetch_one(self.handle.pool())
         .await
-        .map(|result| {
-            result
-                .api_key
-                .map(ApiKey::new)
-        })
+        .map(|result| result.api_key.map(ApiKey::new))
         .into_error(SqliteDatabaseError::Fetch)
     }
 }

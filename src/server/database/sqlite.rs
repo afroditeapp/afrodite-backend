@@ -92,7 +92,9 @@ pub struct CurrentDataWriteHandle {
 impl CurrentDataWriteHandle {
     pub fn new(handle: SqliteWriteHandle) -> Self {
         Self {
-            read_handle: SqliteReadHandle { pool: handle.pool.clone() },
+            read_handle: SqliteReadHandle {
+                pool: handle.pool.clone(),
+            },
             handle,
         }
     }

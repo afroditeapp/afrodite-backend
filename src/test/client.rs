@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use api_client::{apis::configuration::{Configuration}, models::ApiKey};
+use api_client::{apis::configuration::Configuration, models::ApiKey};
 use error_stack::{IntoReport, Result};
 
 use hyper::StatusCode;
@@ -50,7 +50,7 @@ impl PublicApiUrls {
     pub fn new(account_base_url: Url, profile_base_url: Url) -> Self {
         Self {
             account_base_url,
-            profile_base_url
+            profile_base_url,
         }
     }
 }
@@ -61,9 +61,7 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(
-        base_urls: PublicApiUrls,
-    ) -> Self {
+    pub fn new(base_urls: PublicApiUrls) -> Self {
         let account_path = base_urls
             .account_base_url
             .as_str()
@@ -86,11 +84,7 @@ impl ApiClient {
         profile.base_path = profile_path;
         info!("Profile API base url: {}", profile.base_path);
 
-
-        Self {
-            account,
-            profile,
-        }
+        Self { account, profile }
     }
 
     pub fn account(&self) -> &Configuration {

@@ -6,7 +6,14 @@ use std::{
     time::{Duration, Instant},
 };
 
-use api_client::{apis::{account_api::{post_register, post_login}, configuration::ApiKey, profile_api::{post_profile, get_profile, get_default_profile}}, models::{AccountIdLight, Profile}};
+use api_client::{
+    apis::{
+        account_api::{post_login, post_register},
+        configuration::ApiKey,
+        profile_api::{get_default_profile, get_profile, post_profile},
+    },
+    models::{AccountIdLight, Profile},
+};
 use reqwest::Client;
 use tokio::{
     select,
@@ -21,8 +28,9 @@ use tracing::{error, log::warn};
 use super::client::{ApiClient, HttpRequestError};
 
 use crate::{
-
-    config::args::{Test, TestMode}, utils::IntoReportExt, api::model::AccountId,
+    api::model::AccountId,
+    config::args::{Test, TestMode},
+    utils::IntoReportExt,
 };
 
 static COUNTERS: Counters = Counters::new();

@@ -11,7 +11,10 @@ use utoipa::{
 
 use crate::server::internal::AuthResponse;
 
-use super::{model::{ApiKey, AccountIdInternal, AccountIdLight}, GetConfig, GetUsers, GetInternalApi};
+use super::{
+    model::{AccountIdInternal, AccountIdLight, ApiKey},
+    GetConfig, GetInternalApi, GetUsers,
+};
 
 use super::GetApiKeys;
 
@@ -81,8 +84,6 @@ impl Modify for SecurityApiTokenDefault {
         }
     }
 }
-
-
 
 // pub async fn get_account<S: GetUsers, T>(
 //     state: &S,

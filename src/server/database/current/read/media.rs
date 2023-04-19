@@ -1,5 +1,3 @@
-
-
 use std::collections::HashSet;
 
 use api_client::models::new_moderation_request;
@@ -9,8 +7,14 @@ use tokio_stream::{Stream, StreamExt};
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use crate::api::account::data::AccountSetup;
-use crate::api::media::data::{ModerationRequestState, ModerationRequestId, ModerationRequestQueueNumber, ModerationId, Content, ContentState, ContentIdInternal, Moderation};
-use crate::api::model::{Account, AccountId, AccountIdInternal, ApiKey, Profile, ModerationRequest, NewModerationRequest, ContentId};
+use crate::api::media::data::{
+    Content, ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
+    ModerationRequestQueueNumber, ModerationRequestState,
+};
+use crate::api::model::{
+    Account, AccountId, AccountIdInternal, ApiKey, ContentId, ModerationRequest,
+    NewModerationRequest, Profile,
+};
 use crate::server::database::file::file::ImageSlot;
 use crate::server::database::read::ReadCmd;
 use crate::server::database::utils::GetReadWriteCmd;
@@ -122,7 +126,6 @@ impl<'a> CurrentReadMediaCommands<'a> {
             Some(r) => r,
         };
 
-
         let moderation_states = sqlx::query!(
             r#"
             SELECT state_number, json_text
@@ -136,12 +139,14 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .into_error(SqliteDatabaseError::Fetch)?;
 
         let (state, data) = match moderation_states.first() {
-            None => {
-                (ModerationRequestState::Waiting, &request.json_text)
-            }
+            None => (ModerationRequestState::Waiting, &request.json_text),
             Some(first) => {
-                let accepted = moderation_states.iter().find(|r| r.state_number == ModerationRequestState::Accepted as i64);
-                let denied = moderation_states.iter().find(|r| r.state_number == ModerationRequestState::Denied as i64);
+                let accepted = moderation_states
+                    .iter()
+                    .find(|r| r.state_number == ModerationRequestState::Accepted as i64);
+                let denied = moderation_states
+                    .iter()
+                    .find(|r| r.state_number == ModerationRequestState::Denied as i64);
 
                 if let Some(accepted) = accepted {
                     (ModerationRequestState::Accepted, &accepted.json_text)
@@ -153,8 +158,8 @@ impl<'a> CurrentReadMediaCommands<'a> {
             }
         };
 
-        let data: NewModerationRequest = serde_json::from_str(data)
-            .into_error(SqliteDatabaseError::SerdeDeserialize)?;
+        let data: NewModerationRequest =
+            serde_json::from_str(data).into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
         Ok(Some(ModerationRequest::new(
             request.request_row_id,
@@ -162,7 +167,6 @@ impl<'a> CurrentReadMediaCommands<'a> {
             state,
             data,
         )))
-
     }
 
     pub async fn get_moderation_request_content(
@@ -184,7 +188,12 @@ impl<'a> CurrentReadMediaCommands<'a> {
         let data: NewModerationRequest = serde_json::from_str(&request.json_text)
             .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
-        Ok((data, ModerationRequestQueueNumber { number: request.queue_number}))
+        Ok((
+            data,
+            ModerationRequestQueueNumber {
+                number: request.queue_number,
+            },
+        ))
     }
 
     pub async fn get_in_progress_moderations(
@@ -213,7 +222,9 @@ impl<'a> CurrentReadMediaCommands<'a> {
 
             let moderation = Moderation {
                 moderator_id: moderator_id.as_light(),
-                request_id: ModerationRequestId { request_row_id: r.request_row_id },
+                request_id: ModerationRequestId {
+                    request_row_id: r.request_row_id,
+                },
                 content: data,
             };
             new_data.push(moderation);

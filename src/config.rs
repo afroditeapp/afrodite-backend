@@ -6,9 +6,7 @@ use std::path::{Path, PathBuf};
 use error_stack::{IntoReport, Result, ResultExt};
 use reqwest::Url;
 
-use crate::{
-    utils::IntoReportExt,
-};
+use crate::utils::IntoReportExt;
 
 use self::{
     args::TestMode,
@@ -31,9 +29,7 @@ pub enum GetConfigError {
         "External service 'account internal' is required because account component is disabled."
     )]
     ExternalServiceAccountInternalMissing,
-    #[error(
-        "External service 'media internal' is required because media component is disabled."
-    )]
+    #[error("External service 'media internal' is required because media component is disabled.")]
     ExternalServiceMediaInternalMissing,
 }
 
@@ -117,10 +113,13 @@ pub struct InternalApiUrls {
 }
 
 impl InternalApiUrls {
-    pub fn new(account_base_url: Option<Url>, media_base_url: Option<Url>) -> Self { Self { account_base_url, media_base_url } }
-
+    pub fn new(account_base_url: Option<Url>, media_base_url: Option<Url>) -> Self {
+        Self {
+            account_base_url,
+            media_base_url,
+        }
+    }
 }
-
 
 pub fn create_client_api_urls(
     components: &Components,

@@ -3,7 +3,10 @@ use tower::util::Optional;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{api::model::{AccountIdLight, AccountIdInternal}, server::database::file::file::ImageSlot};
+use crate::{
+    api::model::{AccountIdInternal, AccountIdLight},
+    server::database::file::file::ImageSlot,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ImageFileName {
@@ -21,7 +24,6 @@ pub struct ImageFile {
     data: Vec<u8>,
 }
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct NewModerationRequest {
     /// Use slot 1 image as camera image.
@@ -35,8 +37,10 @@ pub struct NewModerationRequest {
 }
 
 impl NewModerationRequest {
-    pub fn content(&self) -> impl Iterator<Item=ContentId> {
-        [Some(self.image1), self.image2, self.image3].into_iter().flatten()
+    pub fn content(&self) -> impl Iterator<Item = ContentId> {
+        [Some(self.image1), self.image2, self.image3]
+            .into_iter()
+            .flatten()
     }
 }
 
@@ -49,13 +53,24 @@ pub struct ModerationRequest {
 }
 
 impl ModerationRequest {
-    pub fn new(moderation_request_id: i64, account_id: AccountIdLight, state: ModerationRequestState, request: NewModerationRequest) -> Self { Self { moderation_request_id, account_id, state_number: state, request } }
+    pub fn new(
+        moderation_request_id: i64,
+        account_id: AccountIdLight,
+        state: ModerationRequestState,
+        request: NewModerationRequest,
+    ) -> Self {
+        Self {
+            moderation_request_id,
+            account_id,
+            state_number: state,
+            request,
+        }
+    }
 
     pub fn into_request(self) -> NewModerationRequest {
         self.request
     }
 }
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum StateParsingError {
@@ -96,7 +111,6 @@ impl TryFrom<i64> for ModerationRequestState {
     }
 }
 
-
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[repr(i64)]
 pub enum ContentState {
@@ -129,7 +143,6 @@ impl TryFrom<i64> for ContentState {
     }
 }
 
-
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationList {
     pub list: Vec<Moderation>,
@@ -159,9 +172,7 @@ impl ContentId {
     }
 
     pub fn new(content_id: Uuid) -> Self {
-        Self {
-            content_id
-        }
+        Self { content_id }
     }
 
     pub fn as_uuid(&self) -> Uuid {
@@ -192,7 +203,9 @@ pub struct ContentIdInternal {
 
 impl ContentIdInternal {
     pub fn as_content_id(&self) -> ContentId {
-        ContentId { content_id: self.content_id }
+        ContentId {
+            content_id: self.content_id,
+        }
     }
 }
 

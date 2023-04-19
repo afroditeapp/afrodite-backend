@@ -1,56 +1,104 @@
 //! Database writing commands
 //!
 
-use std::{sync::Arc, future::Future, collections::HashSet};
+use std::{collections::HashSet, future::Future, sync::Arc};
 
 use api_client::models::AccountId;
 use axum::{extract::BodyStream, RequestPartsExt};
-use error_stack::{Result, ResultExt, Report};
+use error_stack::{Report, Result, ResultExt};
 use nalgebra::allocator::SameShapeAllocator;
 use serde::Serialize;
-use tokio::{sync::{MutexGuard, Mutex, mpsc, oneshot, Semaphore, SemaphorePermit, OwnedSemaphorePermit, RwLock}, task::JoinHandle};
+use tokio::{
+    sync::{
+        mpsc, oneshot, Mutex, MutexGuard, OwnedSemaphorePermit, RwLock, Semaphore, SemaphorePermit,
+    },
+    task::JoinHandle,
+};
 use tokio_stream::StreamExt;
 use tracing::instrument::WithSubscriber;
 
 use crate::{
-    api::{model::{Account, AccountIdInternal, AccountSetup, ApiKey, Profile, AccountIdLight, ContentId, NewModerationRequest}, media::data::Moderation},
+    api::{
+        media::data::Moderation,
+        model::{
+            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
+            NewModerationRequest, Profile,
+        },
+    },
     config::Config,
-    server::database::{sqlite::SqliteWriteHandle, DatabaseError, write::WriteCommands},
-    utils::{ErrorConversion, IntoReportExt, AppendErrorTo},
+    server::database::{sqlite::SqliteWriteHandle, write::WriteCommands, DatabaseError},
+    utils::{AppendErrorTo, ErrorConversion, IntoReportExt},
 };
 
 use super::{
+    cache::{DatabaseCache, WriteCacheJson},
     current::write::CurrentDataWriteCommands,
+    file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
-    sqlite::{HistoryUpdateJson, SqliteUpdateJson, CurrentDataWriteHandle, HistoryWriteHandle},
-    utils::GetReadWriteCmd, cache::{DatabaseCache, WriteCacheJson}, file::{utils::{ FileDir}, file::ImageSlot}, RouterDatabaseWriteHandle, write::AccountWriteLock,
+    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+    utils::GetReadWriteCmd,
+    write::AccountWriteLock,
+    RouterDatabaseWriteHandle,
 };
-
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 
-use tokio::sync::oneshot::{Sender, Receiver};
+use tokio::sync::oneshot::{Receiver, Sender};
 
 pub type ResultSender<T> = oneshot::Sender<Result<T, DatabaseError>>;
 
 /// Synchronized write commands.
 #[derive(Debug)]
 pub enum WriteCommand {
-    Register{ s: ResultSender<AccountIdInternal>, account_id: AccountIdLight },
-    SetNewApiKey{ s: ResultSender<()>, account_id: AccountIdInternal, key: ApiKey },
-    UpdateAccount{ s: ResultSender<()>, account_id: AccountIdInternal, account: Account },
-    UpdateAccountSetup{ s: ResultSender<()>, account_id: AccountIdInternal, account_setup: AccountSetup },
-    UpdateProfile{ s: ResultSender<()>, account_id: AccountIdInternal, profile: Profile },
-    SetModerationRequest{ s: ResultSender<()>, account_id: AccountIdInternal, request: NewModerationRequest },
-    GetModerationListAndCreateNewIfNecessary { s: ResultSender<Vec<Moderation>>, account_id: AccountIdInternal },
-    SaveToSlot { s: ResultSender<()>, account_id: AccountIdInternal, content_id: ContentId, slot: ImageSlot },
+    Register {
+        s: ResultSender<AccountIdInternal>,
+        account_id: AccountIdLight,
+    },
+    SetNewApiKey {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        key: ApiKey,
+    },
+    UpdateAccount {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        account: Account,
+    },
+    UpdateAccountSetup {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        account_setup: AccountSetup,
+    },
+    UpdateProfile {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        profile: Profile,
+    },
+    SetModerationRequest {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        request: NewModerationRequest,
+    },
+    GetModerationListAndCreateNewIfNecessary {
+        s: ResultSender<Vec<Moderation>>,
+        account_id: AccountIdInternal,
+    },
+    SaveToSlot {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        content_id: ContentId,
+        slot: ImageSlot,
+    },
 }
-
 
 /// Concurrent write commands.
 #[derive(Debug)]
 pub enum ConcurrentWriteCommand {
-    SaveToTmp { s: ResultSender<ContentId>, account_id: AccountIdInternal, data_stream: BodyStream },
+    SaveToTmp {
+        s: ResultSender<ContentId>,
+        account_id: AccountIdInternal,
+        data_stream: BodyStream,
+    },
 }
 
 #[derive(Debug)]
@@ -61,8 +109,14 @@ pub struct WriteCommandRunnerQuitHandle {
 
 impl WriteCommandRunnerQuitHandle {
     pub async fn quit(self) -> Result<(), DatabaseError> {
-        let e1 = self.handle.await.into_error(DatabaseError::CommandRunnerQuit);
-        let e2 = self.handle_for_concurrent.await.into_error(DatabaseError::CommandRunnerQuit);
+        let e1 = self
+            .handle
+            .await
+            .into_error(DatabaseError::CommandRunnerQuit);
+        let e2 = self
+            .handle_for_concurrent
+            .await
+            .into_error(DatabaseError::CommandRunnerQuit);
 
         match (e1, e2) {
             (Ok(()), Ok(())) => Ok(()),
@@ -70,7 +124,7 @@ impl WriteCommandRunnerQuitHandle {
             (Err(mut e1), Err(e2)) => {
                 e1.extend_one(e2);
                 Err(e1)
-            },
+            }
         }
     }
 }
@@ -82,52 +136,145 @@ pub struct WriteCommandRunnerHandle {
 }
 
 impl WriteCommandRunnerHandle {
-    pub async fn register(&self, account_id: AccountIdLight) -> Result<AccountIdInternal, DatabaseError> {
-        self.send_event(|s| WriteCommand::Register { s, account_id }).await
+    pub async fn register(
+        &self,
+        account_id: AccountIdLight,
+    ) -> Result<AccountIdInternal, DatabaseError> {
+        self.send_event(|s| WriteCommand::Register { s, account_id })
+            .await
     }
 
-    pub async fn set_new_api_key(&self, account_id: AccountIdInternal, key: ApiKey) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::SetNewApiKey { s, account_id, key }).await
+    pub async fn set_new_api_key(
+        &self,
+        account_id: AccountIdInternal,
+        key: ApiKey,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::SetNewApiKey { s, account_id, key })
+            .await
     }
 
-    pub async fn update_account(&self, account_id: AccountIdInternal, account: Account) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::UpdateAccount { s, account_id, account }).await
+    pub async fn update_account(
+        &self,
+        account_id: AccountIdInternal,
+        account: Account,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::UpdateAccount {
+            s,
+            account_id,
+            account,
+        })
+        .await
     }
 
-    pub async fn update_account_setup(&self, account_id: AccountIdInternal, account_setup: AccountSetup) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::UpdateAccountSetup { s, account_id, account_setup }).await
+    pub async fn update_account_setup(
+        &self,
+        account_id: AccountIdInternal,
+        account_setup: AccountSetup,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::UpdateAccountSetup {
+            s,
+            account_id,
+            account_setup,
+        })
+        .await
     }
 
-    pub async fn update_profile(&self, account_id: AccountIdInternal, profile: Profile) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::UpdateProfile { s, account_id, profile }).await
+    pub async fn update_profile(
+        &self,
+        account_id: AccountIdInternal,
+        profile: Profile,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::UpdateProfile {
+            s,
+            account_id,
+            profile,
+        })
+        .await
     }
 
-    pub async fn set_moderation_request(&self, account_id: AccountIdInternal, request: NewModerationRequest) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::SetModerationRequest { s, account_id, request }).await
+    pub async fn set_moderation_request(
+        &self,
+        account_id: AccountIdInternal,
+        request: NewModerationRequest,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::SetModerationRequest {
+            s,
+            account_id,
+            request,
+        })
+        .await
     }
 
-    pub async fn get_moderation_list_and_create_if_necessary(&self, account_id: AccountIdInternal) -> Result<Vec<Moderation>, DatabaseError> {
-        self.send_event(|s| WriteCommand::GetModerationListAndCreateNewIfNecessary { s, account_id }).await
+    pub async fn get_moderation_list_and_create_if_necessary(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<Vec<Moderation>, DatabaseError> {
+        self.send_event(|s| WriteCommand::GetModerationListAndCreateNewIfNecessary {
+            s,
+            account_id,
+        })
+        .await
     }
 
-    pub async fn save_to_slot(&self, account_id: AccountIdInternal, content_id: ContentId, slot: ImageSlot) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::SaveToSlot { s, account_id, content_id, slot }).await
+    pub async fn save_to_slot(
+        &self,
+        account_id: AccountIdInternal,
+        content_id: ContentId,
+        slot: ImageSlot,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::SaveToSlot {
+            s,
+            account_id,
+            content_id,
+            slot,
+        })
+        .await
     }
 
-    pub async fn save_to_tmp(&self, account_id: AccountIdInternal, data_stream: BodyStream) -> Result<ContentId, DatabaseError> {
-        self.send_event_to_concurrent_runner(|s| (account_id.as_light(), ConcurrentWriteCommand::SaveToTmp { s, account_id, data_stream })).await
+    pub async fn save_to_tmp(
+        &self,
+        account_id: AccountIdInternal,
+        data_stream: BodyStream,
+    ) -> Result<ContentId, DatabaseError> {
+        self.send_event_to_concurrent_runner(|s| {
+            (
+                account_id.as_light(),
+                ConcurrentWriteCommand::SaveToTmp {
+                    s,
+                    account_id,
+                    data_stream,
+                },
+            )
+        })
+        .await
     }
 
-    async fn send_event<T>(&self, get_event: impl FnOnce(ResultSender<T>) -> WriteCommand) -> Result<T, DatabaseError> {
+    async fn send_event<T>(
+        &self,
+        get_event: impl FnOnce(ResultSender<T>) -> WriteCommand,
+    ) -> Result<T, DatabaseError> {
         let (result_sender, receiver) = oneshot::channel();
-        self.sender.send(get_event(result_sender)).await.into_error(DatabaseError::CommandSendingFailed)?;
-        receiver.await.into_error(DatabaseError::CommandResultReceivingFailed)?
+        self.sender
+            .send(get_event(result_sender))
+            .await
+            .into_error(DatabaseError::CommandSendingFailed)?;
+        receiver
+            .await
+            .into_error(DatabaseError::CommandResultReceivingFailed)?
     }
 
-    async fn send_event_to_concurrent_runner<T>(&self, get_event: impl FnOnce(ResultSender<T>) -> ConcurrentMessage) -> Result<T, DatabaseError> {
+    async fn send_event_to_concurrent_runner<T>(
+        &self,
+        get_event: impl FnOnce(ResultSender<T>) -> ConcurrentMessage,
+    ) -> Result<T, DatabaseError> {
         let (result_sender, receiver) = oneshot::channel();
-        self.sender_for_concurrent.send(get_event(result_sender)).await.into_error(DatabaseError::CommandSendingFailed)?;
-        receiver.await.into_error(DatabaseError::CommandResultReceivingFailed)?
+        self.sender_for_concurrent
+            .send(get_event(result_sender))
+            .await
+            .into_error(DatabaseError::CommandSendingFailed)?;
+        receiver
+            .await
+            .into_error(DatabaseError::CommandResultReceivingFailed)?
     }
 }
 
@@ -137,25 +284,29 @@ pub struct WriteCommandRunner {
     config: Arc<Config>,
 }
 
-
 impl WriteCommandRunner {
     pub fn new_channel() -> (WriteCommandRunnerHandle, WriteCommandReceivers) {
         let (sender, receiver) = mpsc::channel(1);
         let (sender_for_concurrent, receiver_for_concurrent) = mpsc::channel(1);
 
-
         let runner_handle = WriteCommandRunnerHandle {
             sender,
             sender_for_concurrent,
         };
-        (runner_handle, WriteCommandReceivers {
-            receiver,
-            receiver_for_concurrent,
-        })
+        (
+            runner_handle,
+            WriteCommandReceivers {
+                receiver,
+                receiver_for_concurrent,
+            },
+        )
     }
 
-
-    pub fn new(write_handle: RouterDatabaseWriteHandle, receiver: WriteCommandReceivers, config: Arc<Config>) -> WriteCommandRunnerQuitHandle {
+    pub fn new(
+        write_handle: RouterDatabaseWriteHandle,
+        receiver: WriteCommandReceivers,
+        config: Arc<Config>,
+    ) -> WriteCommandRunnerQuitHandle {
         let runner = Self {
             receiver: receiver.receiver,
             write_handle: write_handle.clone(),
@@ -187,29 +338,64 @@ impl WriteCommandRunner {
                 None => {
                     tracing::info!("Write command runner closed");
                     break;
-                },
+                }
             }
         }
     }
 
     pub async fn handle_cmd(&self, cmd: WriteCommand) {
         match cmd {
-            WriteCommand::SetNewApiKey { s, account_id, key } =>
-                self.write().set_new_api_key(account_id, key).await.send(s),
-            WriteCommand::Register { s, account_id } =>
-                self.write_handle.register(account_id, &self.config).await.send(s),
-            WriteCommand::UpdateAccount { s, account_id, account } =>
-                self.write().update_json(account_id, &account).await.send(s),
-            WriteCommand::UpdateAccountSetup { s, account_id, account_setup } =>
-                self.write().update_json(account_id, &account_setup).await.send(s),
-            WriteCommand::UpdateProfile { s, account_id, profile } =>
-                self.write().update_json(account_id, &profile).await.send(s),
-            WriteCommand::SetModerationRequest { s, account_id, request } =>
-                self.write().set_moderation_request(account_id, request).await.send(s),
-            WriteCommand::GetModerationListAndCreateNewIfNecessary { s, account_id } =>
-                self.write().moderation_get_list_and_create_new_if_necessary(account_id).await.send(s),
-            WriteCommand::SaveToSlot { s, account_id, content_id, slot } =>
-                self.write().save_to_slot(account_id, content_id, slot).await.send(s),
+            WriteCommand::SetNewApiKey { s, account_id, key } => {
+                self.write().set_new_api_key(account_id, key).await.send(s)
+            }
+            WriteCommand::Register { s, account_id } => self
+                .write_handle
+                .register(account_id, &self.config)
+                .await
+                .send(s),
+            WriteCommand::UpdateAccount {
+                s,
+                account_id,
+                account,
+            } => self.write().update_json(account_id, &account).await.send(s),
+            WriteCommand::UpdateAccountSetup {
+                s,
+                account_id,
+                account_setup,
+            } => self
+                .write()
+                .update_json(account_id, &account_setup)
+                .await
+                .send(s),
+            WriteCommand::UpdateProfile {
+                s,
+                account_id,
+                profile,
+            } => self.write().update_json(account_id, &profile).await.send(s),
+            WriteCommand::SetModerationRequest {
+                s,
+                account_id,
+                request,
+            } => self
+                .write()
+                .set_moderation_request(account_id, request)
+                .await
+                .send(s),
+            WriteCommand::GetModerationListAndCreateNewIfNecessary { s, account_id } => self
+                .write()
+                .moderation_get_list_and_create_new_if_necessary(account_id)
+                .await
+                .send(s),
+            WriteCommand::SaveToSlot {
+                s,
+                account_id,
+                content_id,
+                slot,
+            } => self
+                .write()
+                .save_to_slot(account_id, content_id, slot)
+                .await
+                .send(s),
         }
     }
 
@@ -222,7 +408,7 @@ trait SendBack<T>: Sized {
     fn send(self, s: ResultSender<T>);
 }
 
-impl <D> SendBack<D> for Result<D, DatabaseError> {
+impl<D> SendBack<D> for Result<D, DatabaseError> {
     fn send(self, s: ResultSender<D>) {
         match s.send(self) {
             Ok(()) => (),
@@ -241,7 +427,6 @@ pub struct WriteCommandReceivers {
     receiver: mpsc::Receiver<WriteCommand>,
     receiver_for_concurrent: mpsc::Receiver<ConcurrentMessage>,
 }
-
 
 pub struct ConcurrentWriteCommandRunner {
     receiver: mpsc::Receiver<ConcurrentMessage>,
@@ -265,7 +450,10 @@ impl AccountWriteLockManager {
     #[must_use]
     async fn set_as_running(&self, a: AccountIdLight) -> Option<AccountWriteLockHandle> {
         if self.locks.write().await.insert(a) {
-           Some(AccountWriteLockHandle { locks: self.locks.clone(), account: a })
+            Some(AccountWriteLockHandle {
+                locks: self.locks.clone(),
+                account: a,
+            })
         } else {
             None
         }
@@ -284,7 +472,6 @@ impl ConcurrentWriteCommandRunner {
         write_handle: RouterDatabaseWriteHandle,
         config: Arc<Config>,
     ) -> Self {
-
         Self {
             receiver,
             write_handle,
@@ -317,7 +504,10 @@ impl ConcurrentWriteCommandRunner {
                             self.handle_cmd(cmd, permit, lock).await;
                         }
                         Err(e) => {
-                            tracing::error!("Task limiter was closed. Skipping all next commands. Error: {}", e);
+                            tracing::error!(
+                                "Task limiter was closed. Skipping all next commands. Error: {}",
+                                e
+                            );
                             skip = true;
                             lock.release().await;
                         }
@@ -326,7 +516,7 @@ impl ConcurrentWriteCommandRunner {
                 None => {
                     tracing::info!("Concurrent write command runner closed");
                     break;
-                },
+                }
             }
         }
 
@@ -340,15 +530,38 @@ impl ConcurrentWriteCommandRunner {
         }
     }
 
-    async fn handle_cmd(&mut self, cmd: ConcurrentWriteCommand, p: OwnedSemaphorePermit, l: AccountWriteLockHandle) {
+    async fn handle_cmd(
+        &mut self,
+        cmd: ConcurrentWriteCommand,
+        p: OwnedSemaphorePermit,
+        l: AccountWriteLockHandle,
+    ) {
         match cmd {
-            ConcurrentWriteCommand::SaveToTmp { s, account_id, data_stream } => {
-                self.start_cmd_task(p, l, s, move |w| async move { w.user_write_commands_account().save_to_tmp(account_id, data_stream).await}).await;
+            ConcurrentWriteCommand::SaveToTmp {
+                s,
+                account_id,
+                data_stream,
+            } => {
+                self.start_cmd_task(p, l, s, move |w| async move {
+                    w.user_write_commands_account()
+                        .save_to_tmp(account_id, data_stream)
+                        .await
+                })
+                .await;
             }
         }
     }
 
-    async fn start_cmd_task<T: Send + 'static, F: Future<Output = Result<T, DatabaseError>> + Send + 'static>(&mut self, permit: OwnedSemaphorePermit, l: AccountWriteLockHandle, s: ResultSender<T>, f: impl FnOnce(RouterDatabaseWriteHandle) -> F + Send + 'static) {
+    async fn start_cmd_task<
+        T: Send + 'static,
+        F: Future<Output = Result<T, DatabaseError>> + Send + 'static,
+    >(
+        &mut self,
+        permit: OwnedSemaphorePermit,
+        l: AccountWriteLockHandle,
+        s: ResultSender<T>,
+        f: impl FnOnce(RouterDatabaseWriteHandle) -> F + Send + 'static,
+    ) {
         let w = self.write_handle.clone();
 
         self.task_handles.push(tokio::spawn(async move {
@@ -363,7 +576,5 @@ impl ConcurrentWriteCommandRunner {
         self.write_handle.user_write_commands()
     }
 
-    async fn handle_cmd_in_task(cmd: ConcurrentWriteCommand) {
-
-    }
+    async fn handle_cmd_in_task(cmd: ConcurrentWriteCommand) {}
 }

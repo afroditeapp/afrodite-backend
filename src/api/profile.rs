@@ -4,9 +4,9 @@ use axum::{extract::Path, Json, TypedHeader};
 
 use hyper::StatusCode;
 
-use self::data::{Profile, Location};
+use self::data::{Location, Profile};
 
-use super::{model::AccountIdLight, utils::{}, GetUsers};
+use super::{ model::AccountIdLight, GetUsers};
 
 use tracing::error;
 
@@ -50,10 +50,14 @@ pub async fn get_profile<S: ReadDatabase + GetUsers>(
 
     // TODO: check capablities
 
-    let requested_profile = state.users().get_internal_id(requested_profile).await.map_err(|e| {
-        error!("get_profile: {e:?}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let requested_profile = state
+        .users()
+        .get_internal_id(requested_profile)
+        .await
+        .map_err(|e| {
+            error!("get_profile: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     state
         .read_database()
@@ -68,7 +72,6 @@ pub async fn get_profile<S: ReadDatabase + GetUsers>(
 
 /// TODO: Remove this after benchmarking?
 pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile_api/default/:account_id";
-
 
 /// TODO: Remove this at some point
 #[utoipa::path(
@@ -123,24 +126,26 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let mut old_profile: Profile =
-        state.read_database()
-        .read_json(account_id)
-        .await
-        .map_err(|e| {
-            error!("post_profile: read current profile, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })?;
+        state
+            .read_database()
+            .read_json(account_id)
+            .await
+            .map_err(|e| {
+                error!("post_profile: read current profile, {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+            })?;
 
     old_profile.remove_version();
     profile.remove_version();
 
     if profile == old_profile {
-        return Ok(())
+        return Ok(());
     }
 
     profile.generate_new_version();
 
-    state.write_database()
+    state
+        .write_database()
         .update_profile(account_id, profile)
         .await
         .map_err(|e| {
@@ -150,7 +155,6 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
 
     Ok(())
 }
-
 
 pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
 
@@ -170,10 +174,8 @@ pub async fn put_location<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     Json(location): Json<Location>,
     state: S,
 ) -> Result<(), StatusCode> {
-
     Ok(())
 }
-
 
 pub const PATH_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 
@@ -192,10 +194,8 @@ pub async fn get_next_profile_page<S: GetApiKeys + WriteDatabase + ReadDatabase>
     Json(location): Json<Location>,
     state: S,
 ) -> Result<(), StatusCode> {
-
     Ok(())
 }
-
 
 pub const PATH_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 
@@ -216,6 +216,5 @@ pub const PATH_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 pub async fn post_reset_profile_paging<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     state: S,
 ) -> Result<(), StatusCode> {
-
     Ok(())
 }

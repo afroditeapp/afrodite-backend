@@ -1,13 +1,19 @@
 pub mod media;
 
-
 use async_trait::async_trait;
 use error_stack::Result;
 
-use crate::{api::{
-    account::data::AccountSetup,
-    model::{Account, AccountIdInternal, Profile, AccountIdLight, ApiKey, NewModerationRequest}, self, media::data::ModerationRequestState,
-}, server::database::sqlite::CurrentDataWriteHandle};
+use crate::{
+    api::{
+        self,
+        account::data::AccountSetup,
+        media::data::ModerationRequestState,
+        model::{
+            Account, AccountIdInternal, AccountIdLight, ApiKey, NewModerationRequest, Profile,
+        },
+    },
+    server::database::sqlite::CurrentDataWriteHandle,
+};
 
 use self::media::CurrentWriteMediaCommands;
 

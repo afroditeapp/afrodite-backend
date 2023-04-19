@@ -1,34 +1,46 @@
+pub mod cache;
+pub mod commands;
 pub mod current;
 pub mod file;
 pub mod history;
+pub mod index;
 pub mod read;
 pub mod sqlite;
 pub mod utils;
 pub mod write;
-pub mod index;
-pub mod cache;
-pub mod commands;
 
 use std::{
     fs,
-    path::{Path, PathBuf}, sync::Arc,
+    path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use error_stack::{Result, ResultExt};
 use tokio::sync::{Mutex, MutexGuard, OwnedSemaphorePermit};
 use tracing::info;
 
-use crate::{api::model::{AccountId, AccountIdInternal, AccountIdLight}, config::Config, server::database::commands::{WriteCommandRunner, WriteCommand}};
+use crate::{
+    api::model::{AccountId, AccountIdInternal, AccountIdLight},
+    config::Config,
+    server::database::commands::{WriteCommand, WriteCommandRunner},
+};
 
 use self::{
+    cache::{CacheEntry, DatabaseCache},
+    commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
     current::read::SqliteReadCommands,
-    file::{FileOperationHandle, FileError, utils::FileDir, read::FileReadCommands, write::FileWriteCommands},
-    history::read::HistoryReadCommands,
-    sqlite::{
-        DatabaseType, SqliteDatabasePath, SqliteReadCloseHandle, SqliteReadHandle,
-        SqliteWriteCloseHandle, SqliteWriteHandle, CurrentDataWriteHandle, HistoryWriteHandle,
+    file::{
+        read::FileReadCommands, utils::FileDir, write::FileWriteCommands, FileError,
+        FileOperationHandle,
     },
-    write::{WriteCommands, WriteCommandsAccount, AccountWriteLock}, read::ReadCommands, cache::{CacheEntry, DatabaseCache}, utils::{ApiKeyManager, AccountIdManager}, commands::{WriteCommandRunnerQuitHandle, WriteCommandRunnerHandle},
+    history::read::HistoryReadCommands,
+    read::ReadCommands,
+    sqlite::{
+        CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
+        SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
+    },
+    utils::{AccountIdManager, ApiKeyManager},
+    write::{AccountWriteLock, WriteCommands, WriteCommandsAccount},
 };
 use crate::utils::IntoReportExt;
 
@@ -167,15 +179,17 @@ impl DatabaseManager {
                 .await
                 .change_context(DatabaseError::Init)?;
 
-
-
         let read_commands = SqliteReadCommands::new(&sqlite_read);
-        let cache = DatabaseCache::new(read_commands, &config).await.change_context(DatabaseError::Cache)?;
+        let cache = DatabaseCache::new(read_commands, &config)
+            .await
+            .change_context(DatabaseError::Cache)?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
             sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
             sqlite_read,
-            history_write: HistoryWriteHandle { handle: history_write },
+            history_write: HistoryWriteHandle {
+                handle: history_write,
+            },
             history_read,
             root: root.into(),
             cache: cache.into(),
@@ -196,7 +210,8 @@ impl DatabaseManager {
             write_handle,
         };
 
-        let write_command_runner_close = WriteCommandRunner::new(router_write_handle, receiver, config);
+        let write_command_runner_close =
+            WriteCommandRunner::new(router_write_handle, receiver, config);
 
         let database_manager = DatabaseManager {
             sqlite_write_close,
@@ -236,11 +251,21 @@ pub struct RouterDatabaseWriteHandle {
 
 impl RouterDatabaseWriteHandle {
     pub fn user_write_commands(&self) -> WriteCommands {
-        WriteCommands::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir)
+        WriteCommands::new(
+            &self.sqlite_write,
+            &self.history_write,
+            &self.cache,
+            &self.root.file_dir,
+        )
     }
 
     pub fn user_write_commands_account<'b>(&'b self) -> WriteCommandsAccount<'b> {
-        WriteCommandsAccount::new(&self.sqlite_write, &self.history_write, &self.cache, &self.root.file_dir)
+        WriteCommandsAccount::new(
+            &self.sqlite_write,
+            &self.history_write,
+            &self.cache,
+            &self.root.file_dir,
+        )
     }
 
     pub async fn register(
@@ -253,8 +278,9 @@ impl RouterDatabaseWriteHandle {
             config,
             self.sqlite_write.clone(),
             self.history_write.clone(),
-            &self.cache
-        ).await
+            &self.cache,
+        )
+        .await
     }
 }
 
@@ -291,7 +317,6 @@ impl RouterDatabaseReadHandle {
         &self.write_handle
     }
 }
-
 
 #[derive(Debug, Clone)]
 enum WriteCmdIntegrity {

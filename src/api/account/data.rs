@@ -1,5 +1,5 @@
 use serde::{de::Error, Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema, openapi::Ref};
+use utoipa::{openapi::Ref, IntoParams, ToSchema};
 
 /// AccountId is an UUID string. Server will generate an UUID string when
 /// generating a new AccountId.
@@ -85,7 +85,9 @@ impl AccountIdInternal {
     }
 
     pub fn as_light(&self) -> AccountIdLight {
-        AccountIdLight { account_id: self.account_id }
+        AccountIdLight {
+            account_id: self.account_id,
+        }
     }
 }
 
@@ -104,9 +106,7 @@ pub struct AccountIdLight {
 
 impl AccountIdLight {
     pub fn new(account_id: uuid::Uuid) -> Self {
-        Self {
-            account_id
-        }
+        Self { account_id }
     }
 
     pub fn to_full(&self) -> AccountId {
@@ -206,7 +206,6 @@ impl ApiKey {
 //     }
 // }
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {
     state: AccountState,
@@ -288,7 +287,6 @@ pub struct Capabilities {
 pub struct AccountSetup {
     name: String,
 }
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BooleanSetting {

@@ -1,13 +1,15 @@
-
 use async_trait::async_trait;
 use error_stack::Result;
 
 use crate::{
     api::{
         account::data::AccountSetup,
-        model::{Account, AccountIdInternal, Profile, AccountIdLight},
+        model::{Account, AccountIdInternal, AccountIdLight, Profile},
     },
-    server::database::{sqlite::{HistoryUpdateJson, HistoryWriteHandle}, utils::current_unix_time},
+    server::database::{
+        sqlite::{HistoryUpdateJson, HistoryWriteHandle},
+        utils::current_unix_time,
+    },
 };
 
 use super::super::sqlite::{SqliteDatabaseError, SqliteWriteHandle};
@@ -37,10 +39,7 @@ impl<'a> HistoryWriteCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_account_id(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), SqliteDatabaseError> {
+    pub async fn store_account_id(&self, id: AccountIdInternal) -> Result<(), SqliteDatabaseError> {
         let row_id = id.row_id();
         let id = id.as_uuid();
         sqlx::query!(
@@ -113,8 +112,6 @@ impl<'a> HistoryWriteCommands<'a> {
     }
 }
 
-
-
 #[async_trait]
 impl HistoryUpdateJson for Account {
     async fn history_update_json(
@@ -126,7 +123,6 @@ impl HistoryUpdateJson for Account {
     }
 }
 
-
 #[async_trait]
 impl HistoryUpdateJson for AccountSetup {
     async fn history_update_json(
@@ -137,7 +133,6 @@ impl HistoryUpdateJson for AccountSetup {
         write.store_account_setup(id, self).await
     }
 }
-
 
 #[async_trait]
 impl HistoryUpdateJson for Profile {

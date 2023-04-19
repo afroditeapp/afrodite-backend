@@ -5,9 +5,15 @@ use sqlx::error::DatabaseError;
 use tokio::sync::Mutex;
 use tracing_subscriber::registry::Data;
 
-use crate::api::model::{Account, AccountIdInternal, AccountSetup, Profile, ApiKey, AccountIdLight};
+use crate::api::model::{
+    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile,
+};
 
-use super::{read::ReadCmd, write::{WriteCmd, AccountWriteLock}, cache::{DatabaseCache, CacheError}};
+use super::{
+    cache::{CacheError, DatabaseCache},
+    read::ReadCmd,
+    write::{AccountWriteLock, WriteCmd},
+};
 
 pub trait GetReadWriteCmd {
     fn read_cmd(id: AccountIdInternal) -> ReadCmd;
@@ -44,17 +50,15 @@ impl GetReadWriteCmd for Profile {
     }
 }
 
-
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()
 }
-
 
 pub struct ApiKeyManager<'a> {
     cache: &'a DatabaseCache,
 }
 
-impl <'a> ApiKeyManager<'a> {
+impl<'a> ApiKeyManager<'a> {
     pub fn new(cache: &'a DatabaseCache) -> Self {
         Self { cache }
     }
@@ -76,12 +80,15 @@ pub struct AccountIdManager<'a> {
     cache: &'a DatabaseCache,
 }
 
-impl <'a> AccountIdManager<'a> {
+impl<'a> AccountIdManager<'a> {
     pub fn new(cache: &'a DatabaseCache) -> Self {
         Self { cache }
     }
 
-    pub async fn get_internal_id(&self, id: AccountIdLight) -> Result<AccountIdInternal, CacheError> {
+    pub async fn get_internal_id(
+        &self,
+        id: AccountIdLight,
+    ) -> Result<AccountIdInternal, CacheError> {
         self.cache.to_account_id_internal(id).await
     }
 }

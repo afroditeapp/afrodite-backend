@@ -6,7 +6,7 @@ use tokio_stream::{Stream, StreamExt};
 use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 use super::HistoryData;
 use crate::api::account::data::AccountSetup;
-use crate::api::model::{Account, AccountId, AccountIdInternal, Profile, AccountState};
+use crate::api::model::{Account, AccountId, AccountIdInternal, AccountState, Profile};
 use crate::server::database::sqlite::HistorySelectJson;
 use crate::utils::IntoReportExt;
 
@@ -37,7 +37,6 @@ impl<'a> HistoryReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> impl Stream<Item = Result<HistoryData<AccountState>, SqliteDatabaseError>> + '_ {
-
         #[derive(sqlx::FromRow)]
         struct HistoryAccount {
             row_id: i64,
@@ -50,7 +49,7 @@ impl<'a> HistoryReadCommands<'a> {
             SELECT row_id, unix_time, json_text
             FROM HistoryAccount
             WHERE account_row_id = ?
-            "#
+            "#,
         )
         .bind(account_id.row_id())
         .fetch(self.handle.pool())
@@ -62,14 +61,12 @@ impl<'a> HistoryReadCommands<'a> {
                         .into_error(SqliteDatabaseError::SerdeDeserialize)?;
                     let unix_time = OffsetDateTime::from_unix_timestamp(data.unix_time)
                         .into_error(SqliteDatabaseError::TimeParsing)?;
-                    Ok(
-                        HistoryData {
-                            row_id: data.row_id,
-                            account_id: account_id.as_light(),
-                            unix_time,
-                            data: value,
-                        }
-                    )
+                    Ok(HistoryData {
+                        row_id: data.row_id,
+                        account_id: account_id.as_light(),
+                        unix_time,
+                        data: value,
+                    })
                 })
         })
     }

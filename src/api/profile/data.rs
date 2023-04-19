@@ -12,7 +12,10 @@ pub struct Profile {
 
 impl Profile {
     pub fn new(name: String) -> Self {
-        Self { name, version: None }
+        Self {
+            name,
+            version: None,
+        }
     }
 
     pub fn name(&self) -> &str {
@@ -30,13 +33,9 @@ impl Profile {
     pub fn generate_new_version(&mut self) {
         self.version = Some(uuid::Uuid::new_v4());
     }
-
-
 }
 
-
 // TODO: Create ProfileInternal and have all attributes there.
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct ProfileInternal {
@@ -47,7 +46,10 @@ pub struct ProfileInternal {
 
 impl ProfileInternal {
     pub fn new(name: String) -> Self {
-        Self { profile: Profile::new(name), public: None }
+        Self {
+            profile: Profile::new(name),
+            public: None,
+        }
     }
 
     pub fn profile(&self) -> &Profile {
@@ -58,7 +60,6 @@ impl ProfileInternal {
         self.public.unwrap_or_default()
     }
 }
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct Location {

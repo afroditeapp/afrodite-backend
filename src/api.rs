@@ -16,12 +16,18 @@ use utoipa::{Modify, OpenApi};
 use crate::{
     config::Config,
     server::{
-        database::{current::read::SqliteReadCommands, write::{WriteCommands}, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, commands::WriteCommandRunnerHandle},
+        database::{
+            commands::WriteCommandRunnerHandle,
+            current::read::SqliteReadCommands,
+            read::ReadCommands,
+            utils::{AccountIdManager, ApiKeyManager},
+            write::WriteCommands,
+        },
         internal::InternalApiManager,
     },
 };
 
-use self::model::{AccountIdInternal, ApiKey, AccountIdLight};
+use self::model::{AccountIdInternal, AccountIdLight, ApiKey};
 
 use utils::SecurityApiTokenDefault;
 
@@ -105,11 +111,8 @@ pub trait GetUsers {
     fn users(&self) -> AccountIdManager<'_>;
 }
 
-
 pub trait WriteDatabase {
-    fn write_database(
-        &self,
-    ) -> &WriteCommandRunnerHandle;
+    fn write_database(&self) -> &WriteCommandRunnerHandle;
 }
 
 pub trait ReadDatabase {

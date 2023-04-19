@@ -1,12 +1,12 @@
 pub mod data;
 pub mod internal;
 
-use axum::response::{Response, IntoResponse};
-use axum::{Json, TypedHeader};
 use axum::body::{Bytes, StreamBody};
-use axum::extract::{Path, BodyStream};
+use axum::extract::{BodyStream, Path};
+use axum::response::{IntoResponse, Response};
+use axum::{Json, TypedHeader};
 
-use headers::{Header, HeaderName, ContentType};
+use headers::{ContentType, Header, HeaderName};
 use hyper::StatusCode;
 
 use tokio::stream;
@@ -17,11 +17,13 @@ use crate::server::database::file::file::ImageSlot;
 
 use self::super::model::SlotId;
 
-use self::data::{ImageFileName, NewModerationRequest, ContentId, ModerationRequest, ModerationList};
+use self::data::{
+    ContentId, ImageFileName, ModerationList, ModerationRequest, NewModerationRequest,
+};
 
-use super::utils::ApiKeyHeader;
-use super::{ReadDatabase, GetApiKeys, WriteDatabase};
 use super::model::AccountIdLight;
+use super::utils::ApiKeyHeader;
+use super::{GetApiKeys, ReadDatabase, WriteDatabase};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
 
@@ -48,10 +50,14 @@ pub async fn get_image<S: ReadDatabase>(
     // version. Or check will the connection be closed if there is an error. And
     // set content lenght? Or use ServeFile service from tower middleware.
 
-    let data = state.read_database().image(account_id, content_id).await.map_err(|e| {
-        error!("{}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let data = state
+        .read_database()
+        .image(account_id, content_id)
+        .await
+        .map_err(|e| {
+            error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok((TypedHeader(ContentType::jpeg()), data))
 }
@@ -81,10 +87,14 @@ pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let request = state.read_database().moderation_request(account_id).await.map_err(|e| {
-        error!("{}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
+    let request = state
+        .read_database()
+        .moderation_request(account_id)
+        .await
+        .map_err(|e| {
+            error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
         .ok_or(StatusCode::NOT_MODIFIED)?;
 
     Ok(request)
@@ -117,10 +127,14 @@ pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    state.write_database().set_moderation_request(account_id, moderation_request).await.map_err(|e| {
-        error!("{}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })
+    state
+        .write_database()
+        .set_moderation_request(account_id, moderation_request)
+        .await
+        .map_err(|e| {
+            error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
 }
 
 pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/slot/:slot_id";
@@ -163,7 +177,8 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
         _ => return Err(StatusCode::NOT_ACCEPTABLE),
     };
 
-    let content_id = state.write_database()
+    let content_id = state
+        .write_database()
         .save_to_tmp(account_id, image)
         .await
         .map_err(|e| {
@@ -171,7 +186,8 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    state.write_database()
+    state
+        .write_database()
         .save_to_slot(account_id, content_id, slot)
         .await
         .map_err(|e| {
@@ -182,8 +198,7 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
     Ok(content_id.into())
 }
 
-pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str =
-    "/media_api/admin/moderation/page/next";
+pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/next";
 
 /// Get current list of moderation requests in my moderation queue.
 /// Additional requests will be added to my queue if necessary.
@@ -222,9 +237,8 @@ pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok(ModerationList { list: data}.into())
+    Ok(ModerationList { list: data }.into())
 }
-
 
 pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     "/media_api/admin/moderation/handle_request/:request_id";
