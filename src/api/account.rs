@@ -19,9 +19,6 @@ use super::{
     WriteDatabase,
 };
 
-// TODO: Cache and databases can go different state if for example /account_api/setup is
-//       spammed. This can be a feature as effects are one account only?
-
 // TODO: Update register and login to support Apple and Google single sign on.
 
 pub const PATH_REGISTER: &str = "/account_api/register";

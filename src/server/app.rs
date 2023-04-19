@@ -13,46 +13,39 @@ use crate::{
     api::{
         self,
         model::{AccountIdInternal, ApiKey, AccountIdLight},
-        ApiDoc, GetApiKeys, GetConfig, GetCoreServerInternalApi, GetMediaServerInternalApi,
-        GetSessionManager, GetUsers, ReadDatabase, WriteDatabase,
+        ApiDoc, GetApiKeys, GetConfig,
+        GetUsers, ReadDatabase, WriteDatabase, GetInternalApi,
     },
-    client::{account::AccountInternalApi, media::MediaInternalApi},
     config::Config,
 };
 
 use super::{
-    database::{current::read::SqliteReadCommands, write::{WriteCommands}, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache, commands::{WriteCommandRunnerQuitHandle, WriteCommandRunnerHandle}, RouterDatabaseReadHandle},
-    session::{ SessionManager},
+    database::{current::read::SqliteReadCommands, write::{WriteCommands}, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, cache::DatabaseCache, commands::{WriteCommandRunnerQuitHandle, WriteCommandRunnerHandle}, RouterDatabaseReadHandle}, internal::{InternalApiManager, InternalApiClient},
 };
 
 #[derive(Clone)]
 pub struct AppState {
-    session_manager: Arc<SessionManager>,
-    client: reqwest::Client,
+    database: Arc<RouterDatabaseReadHandle>,
+    internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
 }
 
-impl GetSessionManager for AppState {
-    fn session_manager(&self) -> &SessionManager {
-        &self.session_manager
-    }
-}
 
 impl GetApiKeys for AppState {
     fn api_keys(&self) -> ApiKeyManager<'_> {
-        self.session_manager.database.api_key_manager()
+        self.database.api_key_manager()
     }
 }
 
 impl GetUsers for AppState {
     fn users(&self) -> AccountIdManager<'_> {
-        self.session_manager.database.account_id_manager()
+        self.database.account_id_manager()
     }
 }
 
 impl ReadDatabase for AppState {
     fn read_database(&self) -> ReadCommands<'_> {
-        self.session_manager.database.read()
+        self.database.read()
     }
 }
 
@@ -60,25 +53,13 @@ impl WriteDatabase for AppState {
     fn write_database(
         &self,
     ) -> &WriteCommandRunnerHandle {
-        self.session_manager.database.write()
+        self.database.write()
     }
 }
 
-impl GetCoreServerInternalApi for AppState {
-    fn core_server_internal_api(&self) -> AccountInternalApi {
-        AccountInternalApi::new(
-            self.client.clone(),
-            &self.config.external_service_urls().account_internal,
-        )
-    }
-}
-
-impl GetMediaServerInternalApi for AppState {
-    fn media_server_internal_api(&self) -> MediaInternalApi {
-        MediaInternalApi::new(
-            self.client.clone(),
-            &self.config.external_service_urls().media_internal,
-        )
+impl GetInternalApi for AppState {
+    fn internal_api(&self) -> InternalApiManager {
+        InternalApiManager::new(&self.config, &self.internal_api, self.api_keys())
     }
 }
 
@@ -95,8 +76,8 @@ pub struct App {
 impl App {
     pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>) -> Self {
         let state = AppState {
-            session_manager: Arc::new(SessionManager::new(database_handle).await),
-            client: reqwest::Client::new(),
+            database: Arc::new(database_handle),
+            internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             config,
         };
 

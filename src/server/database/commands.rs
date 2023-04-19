@@ -343,7 +343,7 @@ impl ConcurrentWriteCommandRunner {
     async fn handle_cmd(&mut self, cmd: ConcurrentWriteCommand, p: OwnedSemaphorePermit, l: AccountWriteLockHandle) {
         match cmd {
             ConcurrentWriteCommand::SaveToTmp { s, account_id, data_stream } => {
-                self.start_cmd_task(p, l, s, move |w| async move { w.user_write_commands_account().save_to_tmp(account_id, data_stream).await});
+                self.start_cmd_task(p, l, s, move |w| async move { w.user_write_commands_account().save_to_tmp(account_id, data_stream).await}).await;
             }
         }
     }

@@ -11,15 +11,6 @@ use tracing::info;
 
 use crate::api;
 
-use self::{
-    account::{AccountApi, AccountApiUrls},
-    profile::{ProfileApi, ProfileApiUrls},
-};
-
-pub mod account;
-pub mod media;
-pub mod profile;
-
 #[derive(thiserror::Error, Debug)]
 #[error("Wrong status code: {0}")]
 pub struct StatusCodeError(StatusCode);

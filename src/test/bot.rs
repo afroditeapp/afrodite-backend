@@ -18,8 +18,10 @@ use error_stack::Result;
 
 use tracing::{error, log::warn};
 
+use super::client::{ApiClient, HttpRequestError};
+
 use crate::{
-    client::{ApiClient, HttpRequestError},
+
     config::args::{Test, TestMode}, utils::IntoReportExt, api::model::AccountId,
 };
 

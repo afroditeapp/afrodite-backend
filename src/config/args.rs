@@ -6,7 +6,7 @@ use std::{
 use clap::{arg, command, value_parser, Command, PossibleValue};
 use reqwest::Url;
 
-use crate::client::PublicApiUrls;
+use crate::test::client::PublicApiUrls;
 
 // Config given as command line arguments
 pub struct ArgsConfig {

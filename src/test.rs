@@ -1,5 +1,6 @@
 //! Run test suite and benchmarks
 
+pub mod client;
 mod bot;
 
 use std::{fs, sync::Arc};

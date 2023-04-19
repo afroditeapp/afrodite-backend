@@ -14,11 +14,10 @@ use tokio::sync::{Mutex, RwLock};
 use utoipa::{Modify, OpenApi};
 
 use crate::{
-    client::{account::AccountInternalApi, media::MediaInternalApi},
     config::Config,
     server::{
         database::{current::read::SqliteReadCommands, write::{WriteCommands}, read::ReadCommands, utils::{ApiKeyManager, AccountIdManager}, commands::WriteCommandRunnerHandle},
-        session::{SessionManager},
+        internal::InternalApiManager,
     },
 };
 
@@ -57,7 +56,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::put_image_to_moderation_slot,
         media::post_handle_moderation_request,
         media::patch_moderation_request_list,
-        media::internal::post_image,
+        media::internal::internal_get_moderation_request_for_account,
     ),
     components(schemas(
         account::data::AccountId,
@@ -93,10 +92,6 @@ pub struct ApiDoc;
 
 // App state getters
 
-pub trait GetSessionManager {
-    fn session_manager(&self) -> &SessionManager;
-}
-
 pub trait GetApiKeys {
     /// Users which are logged in.
     fn api_keys(&self) -> ApiKeyManager<'_>;
@@ -118,12 +113,8 @@ pub trait ReadDatabase {
     fn read_database(&self) -> ReadCommands<'_>;
 }
 
-pub trait GetCoreServerInternalApi {
-    fn core_server_internal_api(&self) -> AccountInternalApi;
-}
-
-pub trait GetMediaServerInternalApi {
-    fn media_server_internal_api(&self) -> MediaInternalApi;
+pub trait GetInternalApi {
+    fn internal_api(&self) -> InternalApiManager;
 }
 
 pub trait GetConfig {

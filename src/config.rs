@@ -4,9 +4,9 @@ pub mod file;
 use std::path::{Path, PathBuf};
 
 use error_stack::{IntoReport, Result, ResultExt};
+use reqwest::Url;
 
 use crate::{
-    client::{account::AccountInternalApiUrls, media::MediaInternalApiUrls},
     utils::IntoReportExt,
 };
 
@@ -31,12 +31,10 @@ pub enum GetConfigError {
         "External service 'account internal' is required because account component is disabled."
     )]
     ExternalServiceAccountInternalMissing,
-}
-
-#[derive(Debug)]
-pub struct ClientApiUrls {
-    pub account_internal: AccountInternalApiUrls,
-    pub media_internal: MediaInternalApiUrls,
+    #[error(
+        "External service 'media internal' is required because media component is disabled."
+    )]
+    ExternalServiceMediaInternalMissing,
 }
 
 pub struct Config {
@@ -45,7 +43,7 @@ pub struct Config {
     // Server related configs
     database: PathBuf,
     external_services: ExternalServices,
-    client_api_urls: ClientApiUrls,
+    client_api_urls: InternalApiUrls,
 
     // Other configs
     test_mode: Option<TestMode>,
@@ -77,7 +75,7 @@ impl Config {
         &self.external_services
     }
 
-    pub fn external_service_urls(&self) -> &ClientApiUrls {
+    pub fn external_service_urls(&self) -> &InternalApiUrls {
         &self.client_api_urls
     }
 
@@ -112,24 +110,46 @@ pub fn get_config() -> Result<Config, GetConfigError> {
     })
 }
 
+#[derive(Debug, Clone)]
+pub struct InternalApiUrls {
+    pub account_base_url: Option<Url>,
+    pub media_base_url: Option<Url>,
+}
+
+impl InternalApiUrls {
+    pub fn new(account_base_url: Option<Url>, media_base_url: Option<Url>) -> Self { Self { account_base_url, media_base_url } }
+
+}
+
+
 pub fn create_client_api_urls(
     components: &Components,
     external_services: &ExternalServices,
-) -> Result<ClientApiUrls, GetConfigError> {
+) -> Result<InternalApiUrls, GetConfigError> {
     let account_internal = if !components.account {
         let url = external_services
             .account_internal
             .as_ref()
             .ok_or(GetConfigError::ExternalServiceAccountInternalMissing)
             .into_report()?;
-        AccountInternalApiUrls::new(url.clone())
-            .change_context(GetConfigError::ExternalServiceAccountInternalMissing)?
+        Some(url.clone())
     } else {
-        AccountInternalApiUrls::default()
+        None
     };
 
-    Ok(ClientApiUrls {
-        account_internal,
-        media_internal: MediaInternalApiUrls::default(),
+    let media_internal = if !components.media && components.account {
+        let url = external_services
+            .media_internal
+            .as_ref()
+            .ok_or(GetConfigError::ExternalServiceMediaInternalMissing)
+            .into_report()?;
+        Some(url.clone())
+    } else {
+        None
+    };
+
+    Ok(InternalApiUrls {
+        account_base_url: account_internal,
+        media_base_url: media_internal,
     })
 }

@@ -1,8 +1,6 @@
 pub mod app;
 pub mod database;
 pub mod internal;
-pub mod session;
-pub mod user;
 
 use std::net::SocketAddr;
 use std::sync::Arc;

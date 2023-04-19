@@ -7,35 +7,44 @@ use axum::{
 use headers::{ContentLength, ContentType};
 use hyper::StatusCode;
 
-use crate::api::model::{AccountIdInternal, AccountIdLight};
+use crate::api::{model::{AccountIdInternal, AccountIdLight}, ReadDatabase, GetUsers};
 
-use super::super::account::data::AccountId;
+use super::{super::account::data::AccountId, data::NewModerationRequest};
 
 use super::data::ImageFileName;
 
-pub const PATH_POST_IMAGE: &str = "/internal/image/:account_id/:image_file";
 
+pub const PATH_INTERNAL_GET_MODERATION_REQUEST_FOR_ACCOUNT: &str = "/internal/media_api/moderation/request/:account_id";
+
+/// Check that current moderation request for account exists.
+///
 #[utoipa::path(
-    post,
-    path = "/internal/image/{account_id}/{image_file}",
-    request_body(content = ImageFile, description = "Upload new image", content_type = "image/jpeg"),
-    params(AccountIdLight, ImageFileName),
+    get,
+    path = "/internal/media_api/moderation/request/{account_id}",
     responses(
-        (status = 200, description = "Image upload successfull"),
-        (status = 500),
+        (status = 200, description = "Get moderation request was successfull."),
+        (status = 404, description = "No account or moderation request found."),
+        (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_image<S>(
-    Path(_id): Path<AccountIdLight>,
-    Path(_image_file): Path<ImageFileName>,
-    TypedHeader(_content_type): TypedHeader<ContentType>,
-    TypedHeader(_content_lenght): TypedHeader<ContentLength>,
-    _image_bytes: BodyStream,
-    _state: S,
-) -> Result<StatusCode, StatusCode> {
-    // TODO
-    Ok(StatusCode::OK)
-}
+pub async fn internal_get_moderation_request_for_account<S: ReadDatabase + GetUsers>(
+    Path(account_id): Path<AccountIdLight>,
+    state: S,
+) -> Result<(), StatusCode> {
+    let account_id = state
+        .users()
+        .get_internal_id(account_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("{}", e);
+            StatusCode::NOT_FOUND
+        })?;
 
-// TODO: Post image handler, setup internal server, implement database image
-// reading and writing.
+    let _request = state.read_database().moderation_request(account_id).await.map_err(|e| {
+        tracing::error!("{}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    Ok(())
+}
