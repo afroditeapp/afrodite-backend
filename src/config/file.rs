@@ -5,7 +5,7 @@ use std::{
 };
 
 use error_stack::{Report, Result, ResultExt};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::utils::IntoReportExt;
@@ -41,7 +41,7 @@ pub enum ConfigFileError {
     LoadConfig,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
     pub debug: Option<bool>,
     pub components: Components,
@@ -82,26 +82,26 @@ impl ConfigFile {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct Components {
     pub account: bool,
     pub profile: bool,
     pub media: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DatabaseConfig {
     pub dir: PathBuf,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct SocketConfig {
     pub public_api: SocketAddr,
     pub internal_api: SocketAddr,
 }
 
 /// Base URLs for external services
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Serialize, Clone)]
 pub struct ExternalServices {
     pub account_internal: Option<Url>,
     pub media_internal: Option<Url>,

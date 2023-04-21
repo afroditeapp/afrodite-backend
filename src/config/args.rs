@@ -42,6 +42,20 @@ pub fn get_config() -> ArgsConfig {
                         .default_value("http://127.0.0.1:3000")
                         .required(false),
                 )
+                .arg(
+                    arg!(--media <URL> "Base URL for media API")
+                        .value_parser(value_parser!(Url))
+                        .default_value("http://127.0.0.1:3000")
+                        .required(false),
+                )
+                .arg(
+                    arg!(--"test-database" <DIR> "Directory for test database")
+                        .value_parser(value_parser!(PathBuf))
+                        .default_value("tmp_databases")
+                        .required(false),
+                )
+                .arg(arg!(--"microservice-media" "Start media API as microservice"))
+                .arg(arg!(--"microservice-profile" "Start profile API as microservice"))
                 .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
                 .arg(arg!(--"update-profile" "Update profile continuously"))
                 .arg(arg!(--"print-speed" "Print some speed information"))
@@ -60,12 +74,12 @@ pub fn get_config() -> ArgsConfig {
             let api_urls = PublicApiUrls::new(
                 sub_matches.get_one::<Url>("account").unwrap().clone(),
                 sub_matches.get_one::<Url>("profile").unwrap().clone(),
+                sub_matches.get_one::<Url>("media").unwrap().clone(),
             );
 
             Some(TestMode {
                 bot_count: *sub_matches.get_one::<u32>("count").unwrap(),
                 forever: sub_matches.is_present("forever"),
-                api_urls,
                 no_sleep: sub_matches.is_present("no-sleep"),
                 update_profile: sub_matches.is_present("update-profile"),
                 print_speed: sub_matches.is_present("print-speed"),
@@ -73,6 +87,15 @@ pub fn get_config() -> ArgsConfig {
                     .get_one::<Test>("test")
                     .map(ToOwned::to_owned)
                     .unwrap(),
+                server: ServerConfig {
+                    api_urls,
+                    test_database_dir: sub_matches
+                        .get_one::<PathBuf>("test-database")
+                        .map(ToOwned::to_owned)
+                        .unwrap(),
+                    microservice_media: sub_matches.is_present("microservice-media"),
+                    microservice_profile: sub_matches.is_present("microservice-profile"),
+                },
             })
         }
         _ => None,
@@ -110,11 +133,19 @@ impl TryFrom<&str> for ServerComponent {
 pub struct TestMode {
     pub bot_count: u32,
     pub forever: bool,
-    pub api_urls: PublicApiUrls,
     pub no_sleep: bool,
     pub update_profile: bool,
     pub print_speed: bool,
     pub test: Test,
+    pub server: ServerConfig,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServerConfig {
+    pub api_urls: PublicApiUrls,
+    pub test_database_dir: PathBuf,
+    pub microservice_media: bool,
+    pub microservice_profile: bool,
 }
 
 #[derive(Debug, Clone)]

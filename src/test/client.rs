@@ -9,8 +9,6 @@ use hyper::StatusCode;
 use reqwest::{Url};
 use tracing::info;
 
-
-
 #[derive(thiserror::Error, Debug)]
 #[error("Wrong status code: {0}")]
 pub struct StatusCodeError(StatusCode);
@@ -44,13 +42,15 @@ pub enum HttpRequestError {
 pub struct PublicApiUrls {
     pub account_base_url: Url,
     pub profile_base_url: Url,
+    pub media_base_url: Url,
 }
 
 impl PublicApiUrls {
-    pub fn new(account_base_url: Url, profile_base_url: Url) -> Self {
+    pub fn new(account_base_url: Url, profile_base_url: Url, media_base_url: Url) -> Self {
         Self {
             account_base_url,
             profile_base_url,
+            media_base_url,
         }
     }
 }

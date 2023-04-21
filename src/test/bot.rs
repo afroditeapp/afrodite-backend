@@ -53,7 +53,7 @@ impl Bot {
         let bot = Self {
             bot_id,
             id: id.into(),
-            api: ApiClient::new(config.api_urls.clone()),
+            api: ApiClient::new(config.server.api_urls.clone()),
             config,
             _bot_running_handle,
         };

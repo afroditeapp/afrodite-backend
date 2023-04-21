@@ -118,7 +118,7 @@ impl PihkaServer {
                 router
             };
 
-            let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+            let addr = self.config.socket().internal_api;
             info!("Internal API is available on {}", addr);
             axum::Server::bind(&addr).serve(router.into_make_service())
         };

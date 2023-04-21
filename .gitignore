@@ -1,5 +1,6 @@
 /target
 /database
 /database-media
+/tmp_databases
 
 server_config.toml

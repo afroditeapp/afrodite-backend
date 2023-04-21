@@ -105,9 +105,7 @@ impl<'a> WriteCommands<'a> {
         history_wirte: HistoryWriteHandle,
         cache: &DatabaseCache,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        tracing::error!("sleep start");
-        tokio::time::sleep(Duration::from_secs(30)).await;
-        tracing::error!("sleep end");
+
         let current = CurrentDataWriteCommands::new(&current_data_write);
         let history = HistoryWriteCommands::new(&history_wirte);
 
