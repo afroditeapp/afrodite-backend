@@ -56,10 +56,9 @@ impl<'a> DatabaseTransaction<'a> {
 
         let mut transaction = handle
             .pool()
-            .try_begin()
+            .begin()
             .await
-            .into_error(SqliteDatabaseError::TransactionBegin)?
-            .ok_or(SqliteDatabaseError::TransactionBegin)?;
+            .into_error(SqliteDatabaseError::TransactionBegin)?;
 
         sqlx::query!(
             r#"
@@ -133,7 +132,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         content_id: ContentId,
         slot: ImageSlot,
     ) -> Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
-        if !self
+        if self
             .handle
             .read()
             .media()

@@ -1,7 +1,7 @@
 
 use std::fmt::{Debug, Display};
 
-use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile, get_default_profile}, media_api::put_image_to_moderation_slot}, models::Profile};
+use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile, get_default_profile}, media_api::put_image_to_moderation_slot}, models::{Profile, ContentId}, manual_additions::put_image_to_moderation_slot_fixed};
 use async_trait::async_trait;
 use nalgebra::U8;
 
@@ -14,21 +14,34 @@ use super::{super::super::client::{ApiClient, TestError}, BotAction};
 use crate::{
     api::model::AccountId,
     config::args::{Test, TestMode},
-    utils::IntoReportExt, server::database::file::file::ImageSlot,
+    utils::IntoReportExt, server::database::file::file::ImageSlot, test::bot::utils::image::ImageProvider,
 };
 
 use super::BotState;
 
 
+#[derive(Debug, Default)]
+pub struct MediaState {
+    slots: [Option<ContentId>; 3],
+}
+
+impl MediaState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
 
 
 #[derive(Debug)]
-pub struct SendImageToSlot(pub u32);
+pub struct SendImageToSlot(pub i32);
 
 #[async_trait]
 impl BotAction for SendImageToSlot {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-       // put_image_to_moderation_slot(state.api.media(), self.0, body)
+        let content_id = put_image_to_moderation_slot_fixed(
+            state.api.media(), self.0, ImageProvider::jpeg_image()
+        ).await.into_error(TestError::ApiRequest)?;
+        state.media.slots[self.0 as usize] = Some(content_id);
         Ok(())
     }
 }

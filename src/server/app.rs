@@ -2,7 +2,7 @@ use std::{sync::Arc};
 
 use axum::{
     middleware,
-    routing::{get, post},
+    routing::{get, post, put, patch},
     Json, Router,
 };
 
@@ -175,6 +175,41 @@ impl App {
                 get({
                     let state = self.state.clone();
                     move |user_id, image_name| api::media::get_image(user_id, image_name, state)
+                }),
+            )
+            .route(
+                api::media::PATH_MODERATION_REQUEST,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::media::get_moderation_request(param1, state)
+                }),
+            )
+            .route(
+                api::media::PATH_MODERATION_REQUEST,
+                put({
+                    let state = self.state.clone();
+                    move |param1, param2| api::media::put_moderation_request(param1, param2, state)
+                }),
+            )
+            .route(
+                api::media::PATH_MODERATION_REQUEST_SLOT,
+                put({
+                    let state = self.state.clone();
+                    move |param1, param2, param3| api::media::put_image_to_moderation_slot(param1, param2, param3, state)
+                }),
+            )
+            .route(
+                api::media::PATH_ADMIN_MODERATION_PAGE_NEXT,
+                patch({
+                    let state = self.state.clone();
+                    move |param1| api::media::patch_moderation_request_list(param1, state)
+                }),
+            )
+            .route(
+                api::media::PATH_ADMIN_MODERATION_HANDLE_REQUEST,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::media::post_handle_moderation_request(param1, param2, state)
                 }),
             )
             .route_layer({

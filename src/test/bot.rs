@@ -26,7 +26,7 @@ use error_stack::{Result, ResultExt};
 
 use tracing::{error, log::warn, info};
 
-use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothing}, utils::{Counters, Timer}, qa::Qa};
+use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothing, media::MediaState}, utils::{Counters, Timer}, qa::Qa};
 
 use super::client::{ApiClient, TestError};
 
@@ -46,12 +46,13 @@ pub struct BotState {
     pub previous_action: &'static dyn BotAction,
     pub action_history: Vec<&'static dyn BotAction>,
     pub benchmark: BenchmarkState,
+    pub media: MediaState,
 }
 
 impl BotState {
     pub fn new(
         id: Option<AccountIdLight>, config: Arc<TestMode>, task_id: u32, bot_id: u32, api: ApiClient
-    ) -> Self { Self { id, config, task_id, bot_id, api, benchmark: BenchmarkState::new(), previous_action: &DoNothing, action_history: vec![] } }
+    ) -> Self { Self { id, config, task_id, bot_id, api, benchmark: BenchmarkState::new(), previous_action: &DoNothing, action_history: vec![], media: MediaState::new() } }
 
     pub fn id(&self) -> Result<AccountIdLight, TestError> {
         self.id.ok_or(TestError::AccountIdMissing.into())

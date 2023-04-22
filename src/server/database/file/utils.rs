@@ -257,6 +257,8 @@ impl PathToFile {
     }
 
     pub async fn move_to(self, new_location: &Self) -> Result<(), FileError> {
+        new_location.create_parent_dirs().await?;
+
         tokio::fs::rename(self.path, new_location.path())
             .await
             .into_error(FileError::IoFileRename)

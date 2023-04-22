@@ -10,7 +10,7 @@ use tokio::time::sleep;
 
 use crate::test::client::TestError;
 
-use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, RequireAccountState, Register, Login}}, Completed, utils::{Timer, Counters}, benchmark::UpdateProfileBenchmark};
+use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, RequireAccountState, Register, Login}, media::SendImageToSlot, AssertFailure}, Completed, utils::{Timer, Counters}, benchmark::UpdateProfileBenchmark};
 
 
 use error_stack::{Result, FutureExt, ResultExt};
@@ -63,6 +63,11 @@ impl Qa {
             &Login,
             &RequireAccountState(AccountState::InitialSetup),
             &SetAccountSetup,
+            &RequireAccountState(AccountState::InitialSetup),
+            &SendImageToSlot(0),
+            &SendImageToSlot(1),
+            &SendImageToSlot(2),
+            &AssertFailure(SendImageToSlot(3)),
             &RequireAccountState(AccountState::InitialSetup),
         ];
         let actions = [

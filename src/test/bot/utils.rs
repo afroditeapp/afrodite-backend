@@ -1,5 +1,6 @@
 pub mod name;
 pub mod assert;
+pub mod image;
 
 use std::{
     sync::{

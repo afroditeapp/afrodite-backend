@@ -1,4 +1,4 @@
-use std::{path::{PathBuf, Path}, net::{SocketAddrV4, SocketAddr}, env, time::Duration, os::unix::process::CommandExt};
+use std::{path::{PathBuf, Path}, net::{SocketAddrV4, SocketAddr}, env, time::Duration, os::unix::process::CommandExt, sync::Arc};
 
 use crate::config::{Config, args::TestMode, file::{ConfigFile, CONFIG_FILE_NAME, Components, SocketConfig, ExternalServices}};
 
@@ -14,11 +14,12 @@ pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
 
 pub struct ServerManager {
     servers: Vec<ServerInstance>,
+    config: Arc<TestMode>
 }
 
 impl ServerManager {
 
-    pub async fn new(config: &TestMode) -> Self {
+    pub async fn new(config: Arc<TestMode>) -> Self {
         let dir = config.server.test_database_dir.clone();
         if !dir.exists() {
             std::fs::create_dir_all(&dir).unwrap();
@@ -57,7 +58,7 @@ impl ServerManager {
             },
             external_services.clone(),
         );
-        let mut servers = vec![ServerInstance::new(dir.clone(), account_config)];
+        let mut servers = vec![ServerInstance::new(dir.clone(), account_config, &config)];
 
         if config.server.microservice_media {
             let server_config = new_config(
@@ -69,7 +70,7 @@ impl ServerManager {
                 },
                 external_services.clone()
             );
-            servers.push(ServerInstance::new(dir.clone(), server_config));
+            servers.push(ServerInstance::new(dir.clone(), server_config, &config));
         }
 
         if config.server.microservice_profile {
@@ -82,7 +83,7 @@ impl ServerManager {
                 },
                 external_services
             );
-            servers.push(ServerInstance::new(dir.clone(), server_config));
+            servers.push(ServerInstance::new(dir.clone(), server_config, &config));
         }
 
         // TODO: Poll API instead waiting?
@@ -90,12 +91,13 @@ impl ServerManager {
 
         Self {
             servers,
+            config,
         }
     }
 
     pub async fn close(self) {
         for s in self.servers {
-            s.close_and_remove_data().await;
+            s.close_and_maeby_remove_data(!self.config.no_clean).await;
         }
     }
 
@@ -126,10 +128,10 @@ pub struct ServerInstance {
 
 impl ServerInstance {
 
-    pub fn new(dir: PathBuf, config: ConfigFile) -> Self {
+    pub fn new(dir: PathBuf, config: ConfigFile, args_config: &TestMode) -> Self {
 
         let id = uuid::Uuid::new_v4();
-        let dir = dir.join(format!("{}{}", SERVER_INSTANCE_DIR_START, id.hyphenated()));
+        let dir = dir.join(format!("{}{}_{}", SERVER_INSTANCE_DIR_START, time::OffsetDateTime::now_utc(), id.hyphenated()));
         std::fs::create_dir(&dir).unwrap();
 
         let config = toml::to_string_pretty(&config).unwrap();
@@ -144,10 +146,16 @@ impl ServerInstance {
 
         info!("start_cmd: {:?}", &start_cmd);
 
+        let log_value = if args_config.server.log_debug {
+            "debug"
+        } else {
+            "warn"
+        };
+
         let mut command = std::process::Command::new(start_cmd);
         command
             .current_dir(&dir)
-            .env("RUST_LOG", "warn")
+            .env("RUST_LOG", log_value)
             .process_group(0);
 
         let mut tokio_command: tokio::process::Command = command.into();
@@ -166,16 +174,18 @@ impl ServerInstance {
         self.server.try_wait().unwrap().is_none()
     }
 
-    async fn close_and_remove_data(mut self) {
+    async fn close_and_maeby_remove_data(mut self, remove: bool) {
         let id = self.server.id().unwrap();
         nix::sys::signal::kill(Pid::from_raw(id.try_into().unwrap()), Signal::SIGINT).unwrap(); // CTRL-C
         self.server.wait().await.unwrap();
 
-        let dir = self.dir.file_name().unwrap().to_string_lossy();
-        if dir.starts_with(SERVER_INSTANCE_DIR_START) {
-            std::fs::remove_dir_all(self.dir).unwrap();
-        } else {
-            panic!("Not database instance dir {}", dir);
+        if remove {
+            let dir = self.dir.file_name().unwrap().to_string_lossy();
+            if dir.starts_with(SERVER_INSTANCE_DIR_START) {
+                std::fs::remove_dir_all(self.dir).unwrap();
+            } else {
+                panic!("Not database instance dir {}", dir);
+            }
         }
     }
 }

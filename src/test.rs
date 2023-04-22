@@ -41,7 +41,7 @@ impl TestRunner {
 
         ApiClient::new(self.test_config.server.api_urls.clone()).print_to_log();
 
-        let server = ServerManager::new(&self.test_config).await;
+        let server = ServerManager::new(self.test_config.clone()).await;
 
         let (bot_running_handle, mut wait_all_bots) = mpsc::channel(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());

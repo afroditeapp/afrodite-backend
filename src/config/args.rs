@@ -63,8 +63,10 @@ pub fn get_config() -> ArgsConfig {
                 .arg(arg!(--"microservice-media" "Start media API as microservice"))
                 .arg(arg!(--"microservice-profile" "Start profile API as microservice"))
                 .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
+                .arg(arg!(--"no-clean" "Do not remove created database files"))
                 .arg(arg!(--"update-profile" "Update profile continuously"))
                 .arg(arg!(--"print-speed" "Print some speed information"))
+                .arg(arg!(--"log-debug" "Enable debug logging for server instances"))
                 .arg(
                     arg!(--"test" <NAME> "Select custom test")
                         .value_parser(value_parser!(Test))
@@ -88,6 +90,7 @@ pub fn get_config() -> ArgsConfig {
                 task_count: *sub_matches.get_one::<u32>("tasks").unwrap(),
                 forever: sub_matches.is_present("forever"),
                 no_sleep: sub_matches.is_present("no-sleep"),
+                no_clean: sub_matches.is_present("no-clean"),
                 update_profile: sub_matches.is_present("update-profile"),
                 print_speed: sub_matches.is_present("print-speed"),
                 test: sub_matches
@@ -102,6 +105,7 @@ pub fn get_config() -> ArgsConfig {
                         .unwrap(),
                     microservice_media: sub_matches.is_present("microservice-media"),
                     microservice_profile: sub_matches.is_present("microservice-profile"),
+                    log_debug: sub_matches.is_present("log-debug"),
                 },
             })
         }
@@ -142,6 +146,7 @@ pub struct TestMode {
     pub task_count: u32,
     pub forever: bool,
     pub no_sleep: bool,
+    pub no_clean: bool,
     pub update_profile: bool,
     pub print_speed: bool,
     pub test: Test,
@@ -154,6 +159,7 @@ pub struct ServerConfig {
     pub test_database_dir: PathBuf,
     pub microservice_media: bool,
     pub microservice_profile: bool,
+    pub log_debug: bool,
 }
 
 #[derive(Debug, Clone)]

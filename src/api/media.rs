@@ -80,7 +80,7 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
 pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
-) -> Result<NewModerationRequest, StatusCode> {
+) -> Result<Json<NewModerationRequest>, StatusCode> {
     let account_id = state
         .api_keys()
         .api_key_exists(api_key.key())
@@ -97,7 +97,7 @@ pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
         })?
         .ok_or(StatusCode::NOT_MODIFIED)?;
 
-    Ok(request)
+    Ok(request.into())
 }
 
 /// Create new or override old moderation request.

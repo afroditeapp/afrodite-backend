@@ -257,7 +257,7 @@ impl<'a> WriteCommands<'a> {
             .with_info_lazy(|| WriteCmd::MediaModeration(account_id))
     }
 
-    /// Completes previous sava_to_tmp.
+    /// Completes previous save_to_tmp.
     pub async fn save_to_slot(
         &self,
         id: AccountIdInternal,

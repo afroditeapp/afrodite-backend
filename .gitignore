@@ -4,3 +4,5 @@
 /tmp_databases
 
 server_config.toml
+
+.vscode

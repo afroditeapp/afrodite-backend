@@ -49,3 +49,19 @@ impl BotAction for DoNothing {
         Ok(())
     }
 }
+
+#[derive(Debug)]
+pub struct AssertFailure<T: BotAction>(pub T);
+
+#[async_trait]
+impl <T: BotAction> BotAction for AssertFailure<T> {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        match self.0.excecute(state).await {
+            Err(e) => match e.current_context() {
+                TestError::ApiRequest => Ok(()),
+                _ => Err(e),
+            },
+            Ok(()) => Err(TestError::AssertError("API request did not fail".to_string()).into()),
+        }
+    }
+}
