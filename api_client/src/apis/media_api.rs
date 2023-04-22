@@ -74,7 +74,7 @@ pub enum PutModerationRequestError {
 
 
 /// Get profile image
-pub async fn get_image(configuration: &configuration::Configuration, account_id: &str, content_id: &str) -> Result<(), Error<GetImageError>> {
+pub async fn get_image(configuration: &configuration::Configuration, account_id: &str, content_id: &str) -> Result<std::path::PathBuf, Error<GetImageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -101,7 +101,7 @@ pub async fn get_image(configuration: &configuration::Configuration, account_id:
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
+        serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<GetImageError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
@@ -181,13 +181,13 @@ pub async fn patch_moderation_request_list(configuration: &configuration::Config
     }
 }
 
-/// Handle moderation request.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
-pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, request_id: &str, handle_moderation_request: crate::models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
+/// Handle moderation request of some account.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
+pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, account_id: &str, handle_moderation_request: crate::models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/admin/moderation/handle_request/{request_id}", local_var_configuration.base_path, request_id=crate::apis::urlencode(request_id));
+    let local_var_uri_str = format!("{}/media_api/admin/moderation/handle_request/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -219,7 +219,7 @@ pub async fn post_handle_moderation_request(configuration: &configuration::Confi
 }
 
 /// Set image to moderation request slot.  Slots from 0 to 2 are available.  TODO: resize and check images at some point 
-pub async fn put_image_to_moderation_slot(configuration: &configuration::Configuration, slot_id: i32, body: &str) -> Result<crate::models::ContentId, Error<PutImageToModerationSlotError>> {
+pub async fn put_image_to_moderation_slot(configuration: &configuration::Configuration, slot_id: i32, body: std::path::PathBuf) -> Result<crate::models::ContentId, Error<PutImageToModerationSlotError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

@@ -122,6 +122,10 @@ impl ApiClient {
         &self.profile
     }
 
+    pub fn media(&self) -> &Configuration {
+        &self.media
+    }
+
     pub fn set_api_key(&mut self, key: ApiKey) {
         let config_key = api_client::apis::configuration::ApiKey {
             prefix: None,

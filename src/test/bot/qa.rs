@@ -63,6 +63,7 @@ impl Qa {
             &Login,
             &RequireAccountState(AccountState::InitialSetup),
             &SetAccountSetup,
+            &RequireAccountState(AccountState::InitialSetup),
         ];
         let actions = [
             &UpdateProfileBenchmark as &dyn BotAction,

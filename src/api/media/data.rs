@@ -221,7 +221,7 @@ pub struct Moderation {
     pub content: NewModerationRequest,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationRequestId {
     pub request_row_id: i64,
 }

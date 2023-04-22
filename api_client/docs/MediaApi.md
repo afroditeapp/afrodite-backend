@@ -7,7 +7,7 @@ Method | HTTP request | Description
 [**get_image**](MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
 [**get_moderation_request**](MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 [**patch_moderation_request_list**](MediaApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
-[**post_handle_moderation_request**](MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{request_id} | Handle moderation request.
+[**post_handle_moderation_request**](MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 [**put_image_to_moderation_slot**](MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 [**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
 
@@ -15,7 +15,7 @@ Method | HTTP request | Description
 
 ## get_image
 
-> get_image(account_id, content_id)
+> std::path::PathBuf get_image(account_id, content_id)
 Get profile image
 
 Get profile image
@@ -30,7 +30,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
- (empty response body)
+[**std::path::PathBuf**](std::path::PathBuf.md)
 
 ### Authorization
 
@@ -39,7 +39,7 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: image/jpeg
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -100,17 +100,17 @@ This endpoint does not need any parameter.
 
 ## post_handle_moderation_request
 
-> post_handle_moderation_request(request_id, handle_moderation_request)
-Handle moderation request.
+> post_handle_moderation_request(account_id, handle_moderation_request)
+Handle moderation request of some account.
 
-Handle moderation request.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
+Handle moderation request of some account.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
 
 ### Parameters
 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**request_id** | **uuid::Uuid** |  | [required] |
+**account_id** | **uuid::Uuid** |  | [required] |
 **handle_moderation_request** | [**HandleModerationRequest**](HandleModerationRequest.md) |  | [required] |
 
 ### Return type
@@ -142,7 +142,7 @@ Set image to moderation request slot.  Slots from 0 to 2 are available.  TODO: r
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **slot_id** | **i32** |  | [required] |
-**body** | **String** |  | [required] |
+**body** | **std::path::PathBuf** |  | [required] |
 
 ### Return type
 

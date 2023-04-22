@@ -18,7 +18,7 @@ use crate::server::database::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, ModerationList, NewModerationRequest,
+    ContentId, ModerationList, NewModerationRequest, HandleModerationRequest, ModerationRequestId,
 };
 
 use super::model::AccountIdLight;
@@ -33,7 +33,7 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
     path = "/media_api/image/{account_id}/{content_id}",
     params(AccountIdLight, ContentId),
     responses(
-        (status = 200, description = "Get image file.", content_type = "image/jpeg"),
+        (status = 200, description = "Get image file.", body = Vec<u8>, content_type = "image/jpeg"),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
@@ -149,7 +149,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     put,
     path = "/media_api/moderation/request/slot/{slot_id}",
     params(SlotId),
-    request_body(content = String, content_type = "image/jpeg"),
+    request_body(content = Vec<u8>, content_type = "image/jpeg"),
     responses(
         (status = 200, description = "Sending or updating new image moderation request was successfull.", body = ContentId),
         (status = 401, description = "Unauthorized."),
@@ -243,7 +243,7 @@ pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
 pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     "/media_api/admin/moderation/handle_request/:request_id";
 
-/// Handle moderation request.
+/// Handle moderation request of some account.
 ///
 /// ## Access
 ///
@@ -252,8 +252,9 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
 ///
 #[utoipa::path(
     post,
-    path = "/media_api/admin/moderation/handle_request/{request_id}",
+    path = "/media_api/admin/moderation/handle_request/{account_id}",
     request_body(content = HandleModerationRequest),
+    params(AccountIdLight),
     responses(
         (status = 200, description = "Handling moderation request was successfull."),
         (status = 401, description = "Unauthorized."),
@@ -264,8 +265,8 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     security(("api_key" = [])),
 )]
 pub async fn post_handle_moderation_request<S: ReadDatabase>(
-    Path(_request_id): Path<uuid::Uuid>,
-    Json(_moderation_request): Json<NewModerationRequest>,
+    Path(moderation_request_owner_account_id): Path<AccountIdLight>,
+    Json(_moderation_request): Json<HandleModerationRequest>,
     _state: S,
 ) -> Result<(), StatusCode> {
     Err(StatusCode::NOT_ACCEPTABLE)
