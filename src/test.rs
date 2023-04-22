@@ -18,7 +18,7 @@ use crate::{
     api::model::AccountId,
     config::{args::TestMode, Config},
     server::database::DB_HISTORY_DIR_NAME,
-    test::{bot::Bot, server::ServerManager},
+    test::{bot::{BotManager}, server::ServerManager, client::ApiClient},
 };
 
 pub struct TestRunner {
@@ -39,29 +39,32 @@ impl TestRunner {
 
         info!("Testing mode");
 
+        ApiClient::new(self.test_config.server.api_urls.clone()).print_to_log();
+
         let server = ServerManager::new(&self.test_config).await;
 
         let (bot_running_handle, mut wait_all_bots) = mpsc::channel(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());
 
-        let mut bot_number = 1;
+        let mut task_number = 0;
         let _api_urls = Arc::new(self.test_config.server.api_urls.clone());
 
         // Create remaining bots
-        while bot_number <= self.test_config.bot_count {
-            Bot::spawn(
-                bot_number,
+        while task_number < self.test_config.task_count {
+            BotManager::spawn(
+                task_number,
                 self.test_config.clone(),
                 None,
                 bot_quit_receiver.clone(),
                 bot_running_handle.clone(),
             );
-            bot_number += 1;
+            task_number += 1;
         }
 
         info!(
-            "Bots are now created. Count: {}",
-            self.test_config.bot_count
+            "Bot tasks are now created. Task count: {}, Bot count per task: {}",
+            self.test_config.task_count,
+            self.test_config.bot_count,
         );
 
         drop(bot_running_handle);

@@ -1,7 +1,5 @@
 //! Access REST API from Rust
 
-
-
 use api_client::{apis::configuration::Configuration, models::ApiKey};
 use error_stack::{IntoReport, Result};
 
@@ -14,7 +12,7 @@ use tracing::info;
 pub struct StatusCodeError(StatusCode);
 
 #[derive(thiserror::Error, Debug)]
-pub enum HttpRequestError {
+pub enum TestError {
     #[error("Reqwest error")]
     Reqwest,
 
@@ -36,6 +34,9 @@ pub enum HttpRequestError {
 
     #[error("API request failed")]
     ApiRequest,
+
+    #[error("Account ID missing from bot state")]
+    AccountIdMissing,
 }
 
 #[derive(Debug, Clone)]
@@ -55,13 +56,17 @@ impl PublicApiUrls {
     }
 }
 
+#[derive(Debug)]
 pub struct ApiClient {
     account: Configuration,
     profile: Configuration,
+    media: Configuration,
 }
 
 impl ApiClient {
     pub fn new(base_urls: PublicApiUrls) -> Self {
+        let client = reqwest::Client::new();
+
         let account_path = base_urls
             .account_base_url
             .as_str()
@@ -69,22 +74,39 @@ impl ApiClient {
             .to_string();
         let account = Configuration {
             base_path: account_path,
+            client: client.clone(),
             ..Configuration::default()
         };
-        info!("Account API base url: {}", account.base_path);
 
         let profile_path = base_urls
             .profile_base_url
             .as_str()
             .trim_end_matches('/')
             .to_string();
+        let profile = Configuration {
+            base_path: profile_path,
+            client: client.clone(),
+            ..Configuration::default()
+        };
 
-        // Clone will also clone reqwest Client
-        let mut profile = account.clone();
-        profile.base_path = profile_path;
-        info!("Profile API base url: {}", profile.base_path);
+        let media_path = base_urls
+            .media_base_url
+            .as_str()
+            .trim_end_matches('/')
+            .to_string();
+        let media = Configuration {
+            base_path: media_path,
+            client: client.clone(),
+            ..Configuration::default()
+        };
 
-        Self { account, profile }
+        Self { account, profile, media }
+    }
+
+    pub fn print_to_log(&self) {
+        info!("Account API base url: {}", self.account.base_path);
+        info!("Profile API base url: {}", self.profile.base_path);
+        info!("Media API base url: {}", self.media.base_path);
     }
 
     pub fn account(&self) -> &Configuration {
@@ -101,13 +123,18 @@ impl ApiClient {
             key: key.api_key,
         };
         self.account.api_key = Some(config_key.clone());
-        self.profile.api_key = Some(config_key);
+        self.profile.api_key = Some(config_key.clone());
+        self.media.api_key = Some(config_key.clone());
+    }
+
+    pub fn is_api_key_available(&self) -> bool {
+        self.account.api_key.is_some() && self.profile.api_key.is_some() && self.profile.api_key.is_some()
     }
 }
 
-pub fn get_api_url(url: &Option<Url>) -> Result<Url, HttpRequestError> {
+pub fn get_api_url(url: &Option<Url>) -> Result<Url, TestError> {
     url.as_ref()
-        .ok_or(HttpRequestError::ApiUrlNotConfigured)
+        .ok_or(TestError::ApiUrlNotConfigured)
         .map(Clone::clone)
         .into_report()
 }

@@ -25,7 +25,13 @@ pub fn get_config() -> ArgsConfig {
             Command::new("test")
                 .about("Run tests and benchmarks")
                 .arg(
-                    arg!(--count <COUNT> "Bot user count")
+                    arg!(--bots <COUNT> "Bot count per task")
+                        .value_parser(value_parser!(u32))
+                        .default_value("1")
+                        .required(false),
+                )
+                .arg(
+                    arg!(--tasks <COUNT> "Task count")
                         .value_parser(value_parser!(u32))
                         .default_value("1")
                         .required(false),
@@ -78,7 +84,8 @@ pub fn get_config() -> ArgsConfig {
             );
 
             Some(TestMode {
-                bot_count: *sub_matches.get_one::<u32>("count").unwrap(),
+                bot_count: *sub_matches.get_one::<u32>("bots").unwrap(),
+                task_count: *sub_matches.get_one::<u32>("tasks").unwrap(),
                 forever: sub_matches.is_present("forever"),
                 no_sleep: sub_matches.is_present("no-sleep"),
                 update_profile: sub_matches.is_present("update-profile"),
@@ -132,6 +139,7 @@ impl TryFrom<&str> for ServerComponent {
 #[derive(Debug, Clone)]
 pub struct TestMode {
     pub bot_count: u32,
+    pub task_count: u32,
     pub forever: bool,
     pub no_sleep: bool,
     pub update_profile: bool,

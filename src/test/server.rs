@@ -1,4 +1,4 @@
-use std::{path::{PathBuf, Path}, net::{SocketAddrV4, SocketAddr}, env, time::Duration};
+use std::{path::{PathBuf, Path}, net::{SocketAddrV4, SocketAddr}, env, time::Duration, os::unix::process::CommandExt};
 
 use crate::config::{Config, args::TestMode, file::{ConfigFile, CONFIG_FILE_NAME, Components, SocketConfig, ExternalServices}};
 
@@ -26,12 +26,16 @@ impl ServerManager {
 
         info!("data dir: {:?}", dir);
 
-        // Create Account server
+        let check_host = |url: &Url, name| {
+            let host = url.host_str().unwrap();
+            if !(host == "127.0.0.1" || host == "localhost") {
+                panic!("{} address was not 127.0.0.1. value: {}", name, host);
+            }
+        };
+        check_host(&config.server.api_urls.account_base_url, "account server");
+        check_host(&config.server.api_urls.profile_base_url, "profile server");
+        check_host(&config.server.api_urls.media_base_url, "media server");
 
-        let host = config.server.api_urls.account_base_url.host_str().unwrap();
-        if host != "127.0.0.1" { // TODO: or localhost and check all
-            panic!("Domain was not 127.0.0.1. value: {}", host);
-        }
         let account_port = config.server.api_urls.account_base_url.port().unwrap();
         let media_port = config.server.api_urls.media_base_url.port().unwrap();
         let profile_port = config.server.api_urls.profile_base_url.port().unwrap();
@@ -140,9 +144,14 @@ impl ServerInstance {
 
         info!("start_cmd: {:?}", &start_cmd);
 
-        let server = tokio::process::Command::new(start_cmd)
+        let mut command = std::process::Command::new(start_cmd);
+        command
             .current_dir(&dir)
             .env("RUST_LOG", "warn")
+            .process_group(0);
+
+        let mut tokio_command: tokio::process::Command = command.into();
+        let server = tokio_command
             .kill_on_drop(true)
             .spawn()
             .unwrap();
