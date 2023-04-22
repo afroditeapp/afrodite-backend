@@ -1,7 +1,3 @@
-pub mod account;
-pub mod profile;
-pub mod media;
-pub mod admin;
 
 use std::fmt::{Debug, Display};
 
@@ -13,7 +9,7 @@ use error_stack::{Result, FutureExt, ResultExt};
 
 use tracing::{error, log::warn};
 
-use super::super::client::{ApiClient, TestError};
+use super::{super::super::client::{ApiClient, TestError}, BotAction};
 
 use crate::{
     api::model::AccountId,
@@ -24,27 +20,13 @@ use crate::{
 use super::BotState;
 
 
-#[async_trait]
-pub trait BotAction: Debug + Send + Sync + 'static {
-    async fn excecute(&self, state: &mut BotState) -> Result<(), TestError> {
-        self
-            .excecute_impl(state)
-            .await
-            .attach_printable_lazy(|| format!("{:?}", self))
-    }
-
-    async fn excecute_impl(
-        &self,
-        state: &mut BotState
-    ) -> Result<(), TestError>;
-}
 
 
 #[derive(Debug)]
-pub struct DoNothing;
+pub struct ModerateMediaModerationRequest;
 
 #[async_trait]
-impl BotAction for DoNothing {
+impl BotAction for ModerateMediaModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         Ok(())
     }

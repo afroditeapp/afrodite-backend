@@ -49,7 +49,12 @@ impl TestRunner {
         let mut task_number = 0;
         let _api_urls = Arc::new(self.test_config.server.api_urls.clone());
 
-        // Create remaining bots
+        info!(
+            "Task count: {}, Bot count per task: {}",
+            self.test_config.task_count,
+            self.test_config.bot_count,
+        );
+
         while task_number < self.test_config.task_count {
             BotManager::spawn(
                 task_number,
@@ -62,9 +67,7 @@ impl TestRunner {
         }
 
         info!(
-            "Bot tasks are now created. Task count: {}, Bot count per task: {}",
-            self.test_config.task_count,
-            self.test_config.bot_count,
+            "Bot tasks are now created",
         );
 
         drop(bot_running_handle);

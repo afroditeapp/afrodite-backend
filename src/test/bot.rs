@@ -1,13 +1,14 @@
 mod actions;
 mod benchmark;
 mod utils;
+mod qa;
 
 use std::{
     sync::{
         atomic::{AtomicU64, Ordering},
         Arc,
     },
-    time::{Duration, Instant}, fmt::Debug,
+    time::{Duration, Instant}, fmt::Debug, vec,
 };
 
 use api_client::{
@@ -23,9 +24,9 @@ use tokio::{
 
 use error_stack::{Result, ResultExt};
 
-use tracing::{error, log::warn};
+use tracing::{error, log::warn, info};
 
-use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothing}, utils::{Counters, Timer}};
+use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothing}, utils::{Counters, Timer}, qa::Qa};
 
 use super::client::{ApiClient, TestError};
 
@@ -43,13 +44,14 @@ pub struct BotState {
     pub bot_id: u32,
     pub api: ApiClient,
     pub previous_action: &'static dyn BotAction,
+    pub action_history: Vec<&'static dyn BotAction>,
     pub benchmark: BenchmarkState,
 }
 
 impl BotState {
     pub fn new(
         id: Option<AccountIdLight>, config: Arc<TestMode>, task_id: u32, bot_id: u32, api: ApiClient
-    ) -> Self { Self { id, config, task_id, bot_id, api, benchmark: BenchmarkState::new(), previous_action: &DoNothing } }
+    ) -> Self { Self { id, config, task_id, bot_id, api, benchmark: BenchmarkState::new(), previous_action: &DoNothing, action_history: vec![] } }
 
     pub fn id(&self) -> Result<AccountIdLight, TestError> {
         self.id.ok_or(TestError::AccountIdMissing.into())
@@ -73,11 +75,15 @@ pub struct Completed;
 #[async_trait]
 pub trait BotStruct: Debug + Send + 'static {
     fn next_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState);
+    fn state(&self) -> &BotState;
 
     async fn run_action(&mut self) -> Result<Option<Completed>, TestError> {
-        self.run_action_impl()
-            .await
-            .attach_printable_lazy(|| format!("{:?}", self))
+        let mut result = self.run_action_impl()
+            .await;
+        if let Test::Qa = self.state().config.test {
+            result = result.attach_printable_lazy(|| format!("{:?}", self.state().action_history))
+        }
+        result.attach_printable_lazy(|| format!("{:?}", self))
     }
 
     async fn run_action_impl(&mut self) -> Result<Option<Completed>, TestError> {
@@ -86,9 +92,16 @@ pub trait BotStruct: Debug + Send + 'static {
             (Some(action), state) => {
                 let result = action.excecute(state).await.map(|_| None);
                 state.previous_action = action;
+                if let Test::Qa = state.config.test {
+                    state.action_history.push(action)
+                }
                 result
             }
         }
+    }
+
+    fn notify_task_bot_count_decreased(&mut self, bot_count: usize) {
+        let _ = bot_count;
     }
 }
 
@@ -109,8 +122,10 @@ impl BotManager {
     ) {
         let id = id.into();
         let bot = match config.test {
-            Test::Normal | Test::Default =>
+            Test::BenchmarkDefault | Test::BenchmarkNormal =>
                 Self::benchmark(task_id, id, config, _bot_running_handle),
+            Test::Qa =>
+                Self::qa(task_id, id, config, _bot_running_handle),
         };
 
         tokio::spawn(bot.run(bot_quit_receiver));
@@ -121,12 +136,45 @@ impl BotManager {
         for bot_i in 0..config.bot_count {
             let state = BotState::new(id, config.clone(), task_id, bot_i, ApiClient::new(config.server.api_urls.clone()));
             let benchmark = match config.test {
-                Test::Normal =>
+                Test::BenchmarkNormal =>
                     Benchmark::get_profile_benchmark(state),
-                Test::Default =>
+                Test::BenchmarkDefault =>
                     Benchmark::get_default_profile_benchmark(state),
+                _ => panic!("Invalid test {:?}", config.test),
             };
             bots.push(Box::new(benchmark))
+        }
+
+        Self {
+            bots,
+            _bot_running_handle,
+            task_id,
+        }
+    }
+
+    pub fn qa(task_id: u32, id: Option<AccountIdLight>, config: Arc<TestMode>, _bot_running_handle: mpsc::Sender<()>) -> Self {
+        if task_id >= 1 {
+            panic!("Only task count 1 is supported for QA tests");
+        }
+
+        let bot_count = if config.bot_count <= 1 {
+            warn!("Increasing bot count to 2");
+            2
+        } else {
+            config.bot_count
+        };
+
+        let mut bots = Vec::<Box<dyn BotStruct>>::new();
+        for bot_i in 0..bot_count {
+            let state = BotState::new(id, config.clone(), task_id, bot_i, ApiClient::new(config.server.api_urls.clone()));
+
+            let bot = match bot_i {
+                0 =>
+                    Qa::admin(state),
+                _ =>
+                    Qa::user(state),
+            };
+            bots.push(Box::new(bot))
         }
 
         Self {
@@ -144,36 +192,42 @@ impl BotManager {
                         break
                     }
                 }
-                result = self.run_bot() => {
-                    if let Err(e) = result {
-                        error!("Task {} returned error: {:?}", self.task_id, e);
-                    }
+                _ = self.run_bot() => {
                     break;
                 }
             }
         }
     }
 
-    async fn run_bot(&mut self) -> Result<(), TestError> {
+    async fn run_bot(&mut self) {
+        let mut errors = false;
         loop {
             if self.bots.is_empty() {
-                return Ok(());
+                if errors {
+                    error!("All bots closed. Errors occurred.");
+                } else {
+                    info!("All bots closed. No errors.");
+                }
+                return;
             }
 
-            if let Some(remove_i) = self.iter_bot_list().await {
-                self.bots.swap_remove(remove_i);
+            if let Some(remove_i) = self.iter_bot_list(&mut errors).await {
+                self.bots
+                    .swap_remove(remove_i)
+                    .notify_task_bot_count_decreased(self.bots.len());
             }
         }
     }
 
     /// If Some(bot_index) is returned remove the bot.
-    async fn iter_bot_list(&mut self) -> Option<usize> {
+    async fn iter_bot_list(&mut self, errors: &mut bool) -> Option<usize> {
         for (i, b) in self.bots.iter_mut().enumerate() {
             match b.run_action().await {
                 Ok(None) => (),
                 Ok(Some(Completed)) => return Some(i),
                 Err(e) => {
-                    error!("Taks {}, bot returned error: {}", self.task_id, e);
+                    error!("Task {}, bot returned error: {:?}", self.task_id, e);
+                    *errors = true;
                     return Some(i);
                 }
             }

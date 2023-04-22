@@ -1,5 +1,7 @@
 //! Access REST API from Rust
 
+use std::fmt::Debug;
+
 use api_client::{apis::configuration::Configuration, models::ApiKey};
 use error_stack::{IntoReport, Result};
 
@@ -37,6 +39,9 @@ pub enum TestError {
 
     #[error("Account ID missing from bot state")]
     AccountIdMissing,
+
+    #[error("Assert error. message: {0}")]
+    AssertError(String),
 }
 
 #[derive(Debug, Clone)]

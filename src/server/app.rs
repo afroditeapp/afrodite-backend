@@ -116,7 +116,7 @@ impl App {
             )
             .route(
                 api::account::PATH_ACCOUNT_SETUP,
-                get({
+                post({
                     let state = self.state.clone();
                     move |arg1, arg2| api::account::post_account_setup(arg1, arg2, state)
                 }),

@@ -8,7 +8,7 @@ use tokio::time::sleep;
 
 use crate::test::client::TestError;
 
-use super::{BotState, BotStruct, actions::{BotAction, Register, Login, ChangeProfileText}, Completed, utils::{Timer, Counters}};
+use super::{BotState, BotStruct, actions::{BotAction, account::{Register, Login}, profile::ChangeProfileText}, Completed, utils::{Timer, Counters}};
 
 
 use error_stack::{Result, FutureExt, ResultExt};
@@ -100,6 +100,9 @@ impl Benchmark {
 impl BotStruct for Benchmark {
     fn next_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState) {
         (self.actions.next(), &mut self.state)
+    }
+    fn state(&self) -> &BotState {
+        &self.state
     }
 }
 

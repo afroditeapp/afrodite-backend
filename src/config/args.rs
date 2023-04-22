@@ -69,7 +69,7 @@ pub fn get_config() -> ArgsConfig {
                     arg!(--"test" <NAME> "Select custom test")
                         .value_parser(value_parser!(Test))
                         .required(false)
-                        .default_value("normal"),
+                        .default_value(TEST_NAME_QA),
                 )
                 .arg(arg!(--forever "Run tests forever")),
         )
@@ -158,15 +158,21 @@ pub struct ServerConfig {
 
 #[derive(Debug, Clone)]
 pub enum Test {
-    Normal,
-    Default,
+    Qa,
+    BenchmarkNormal,
+    BenchmarkDefault,
 }
+
+const TEST_NAME_QA: &str = "qa";
+const TEST_NAME_BENCHMARK_NORMAL: &str = "benchmark-normal";
+const TEST_NAME_BENCHMARK_DEFAULT: &str = "benchmark-default";
 
 impl Test {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::Normal => "normal",
-            Self::Default => "default",
+            Self::Qa => TEST_NAME_QA,
+            Self::BenchmarkNormal => TEST_NAME_BENCHMARK_NORMAL,
+            Self::BenchmarkDefault => TEST_NAME_BENCHMARK_DEFAULT,
         }
     }
 }
@@ -175,8 +181,9 @@ impl TryFrom<&str> for Test {
     type Error = ();
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value {
-            "normal" => Self::Normal,
-            "default" => Self::Default,
+            TEST_NAME_QA => Self::Qa,
+            TEST_NAME_BENCHMARK_NORMAL => Self::BenchmarkNormal,
+            TEST_NAME_BENCHMARK_DEFAULT => Self::BenchmarkDefault,
             _ => return Err(()),
         })
     }
@@ -215,7 +222,7 @@ impl clap::builder::TypedValueParser for TestNameParser {
         &self,
     ) -> Option<Box<dyn Iterator<Item = clap::PossibleValue<'static>> + '_>> {
         Some(Box::new(
-            [Test::Normal, Test::Default]
+            [Test::Qa, Test::BenchmarkNormal, Test::BenchmarkDefault]
                 .iter()
                 .map(|value| PossibleValue::new(value.as_str())),
         ))
