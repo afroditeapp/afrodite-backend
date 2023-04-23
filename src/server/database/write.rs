@@ -24,7 +24,7 @@ use crate::{
 
 use super::{
     cache::{DatabaseCache, WriteCacheJson},
-    current::write::CurrentDataWriteCommands,
+    current::CurrentDataWriteCommands,
     file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
     sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
@@ -251,7 +251,7 @@ impl<'a> WriteCommands<'a> {
         account_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DatabaseError> {
         self.current()
-            .media()
+            .media_admin()
             .moderation_get_list_and_create_new_if_necessary(account_id)
             .await
             .with_info_lazy(|| WriteCmd::MediaModeration(account_id))

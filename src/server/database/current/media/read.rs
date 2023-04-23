@@ -21,20 +21,6 @@ use crate::server::database::file::file::ImageSlot;
 
 use crate::utils::{IntoReportExt};
 
-macro_rules! read_json {
-    ($self:expr, $id:expr, $sql:literal, $str_field:ident) => {{
-        let id = $id.row_id();
-        sqlx::query!($sql, id)
-            .fetch_one($self.handle.pool())
-            .await
-            .into_error(SqliteDatabaseError::Execute)
-            .and_then(|data| {
-                serde_json::from_str(&data.$str_field)
-                    .into_error(SqliteDatabaseError::SerdeDeserialize)
-            })
-    }};
-}
-
 pub struct CurrentReadMediaCommands<'a> {
     handle: &'a SqliteReadHandle,
 }

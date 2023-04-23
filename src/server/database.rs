@@ -28,7 +28,7 @@ use crate::{
 use self::{
     cache::{DatabaseCache},
     commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
-    current::read::SqliteReadCommands,
+    current::SqliteReadCommands,
     file::{
         read::FileReadCommands, utils::FileDir, FileError,
     },
