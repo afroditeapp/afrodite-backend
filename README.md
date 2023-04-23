@@ -51,4 +51,14 @@ openapi-generator-cli generate -i http://localhost:3000/api-doc/pihka_api.json -
 
 ## Reset database
 
-`sqlx database drop && sqlx database create && sqlx migrate run`
+```
+sqlx database drop && sqlx database create && sqlx migrate run
+```
+
+## Manual database modifications
+
+Open database with sqlite3 `sqlite3 database.file`.
+
+Run command `PRAGMA foreign_keys = ON;`
+
+All data: `.dump`

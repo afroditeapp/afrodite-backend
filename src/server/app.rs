@@ -121,6 +121,13 @@ impl App {
                     move |arg1, arg2| api::account::post_account_setup(arg1, arg2, state)
                 }),
             )
+            .route(
+                api::account::PATH_ACCOUNT_COMPLETE_SETUP,
+                post({
+                    let state = self.state.clone();
+                    move |arg1| api::account::post_complete_setup(arg1, state)
+                }),
+            )
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();

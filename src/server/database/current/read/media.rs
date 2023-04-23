@@ -111,7 +111,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
         let account_row_id = request_creator.row_id();
         let request = sqlx::query!(
             r#"
-            SELECT request_row_id, queue_number, json_text
+            SELECT request_row_id, json_text
             FROM MediaModerationRequest
             WHERE account_row_id = ?
             "#,

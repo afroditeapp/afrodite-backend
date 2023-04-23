@@ -132,7 +132,7 @@ pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
         .set_moderation_request(account_id, moderation_request)
         .await
         .map_err(|e| {
-            error!("{}", e);
+            error!("{:?}", e);
             StatusCode::INTERNAL_SERVER_ERROR
         })
 }

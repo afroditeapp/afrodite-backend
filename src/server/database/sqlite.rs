@@ -4,6 +4,9 @@ use super::history::read::HistoryReadCommands;
 
 
 use async_trait::async_trait;
+use sqlx::Row;
+use sqlx::sqlite::SqliteRow;
+use tracing::log::info;
 
 use super::current::{read::SqliteReadCommands, write::CurrentDataWriteCommands};
 use super::history::write::HistoryWriteCommands;
@@ -258,4 +261,19 @@ pub trait HistorySelectJson: Sized {
         id: AccountIdInternal,
         read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError>;
+}
+
+
+pub async fn print_sqlite_version(pool: &SqlitePool) -> Result<(), SqliteDatabaseError> {
+    let q = sqlx::query("SELECT sqlite_version()")
+        .map(|x: SqliteRow| {
+            let r: String = x.get(0);
+            r
+        })
+        .fetch_one(pool)
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+    info!("SQLite version: {}", q);
+    Ok(())
 }

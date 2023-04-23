@@ -14,7 +14,7 @@ use hyper::StatusCode;
 
 use tracing::info;
 
-use crate::{api, config::InternalApiUrls, utils::IntoReportExt};
+use crate::{api::{self, model::AccountIdLight}, config::InternalApiUrls, utils::IntoReportExt};
 
 use crate::{api::model::ApiKey, config::Config};
 
@@ -184,5 +184,9 @@ impl<'a> InternalApiManager<'a> {
         } else {
             Ok(AuthResponse::Unauthorized)
         }
+    }
+
+    pub async fn media_get_moderation_request_for_account(&self, account_id: AccountIdLight) -> Result<AuthResponse, InternalApiError> {
+       todo!()
     }
 }

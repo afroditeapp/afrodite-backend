@@ -1,7 +1,7 @@
 
 use std::fmt::{Debug, Display};
 
-use api_client::{apis::{account_api::{post_register, post_login, post_account_setup, get_account_state}, profile_api::{post_profile, get_profile, get_default_profile}}, models::{Profile, account_setup, AccountSetup, AccountState}};
+use api_client::{apis::{account_api::{post_register, post_login, post_account_setup, get_account_state, post_complete_setup}, profile_api::{post_profile, get_profile, get_default_profile}}, models::{Profile, account_setup, AccountSetup, AccountState}};
 use async_trait::async_trait;
 use nalgebra::U8;
 
@@ -56,10 +56,10 @@ impl BotAction for Login {
 }
 
 #[derive(Debug)]
-pub struct RequireAccountState(pub AccountState);
+pub struct AssertAccountState(pub AccountState);
 
 #[async_trait]
-impl BotAction for RequireAccountState {
+impl BotAction for AssertAccountState {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let state = get_account_state(state.api.account())
             .await
@@ -79,6 +79,20 @@ impl BotAction for SetAccountSetup {
             name: NameProvider::men_first_name().to_string(),
         };
         post_account_setup(state.api.account(), setup)
+            .await
+            .into_error(TestError::ApiRequest)?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct CompleteAccountSetup;
+
+#[async_trait]
+impl BotAction for CompleteAccountSetup {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        post_complete_setup(state.api.account())
             .await
             .into_error(TestError::ApiRequest)?;
 

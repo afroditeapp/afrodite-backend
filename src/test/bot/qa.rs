@@ -10,7 +10,7 @@ use tokio::time::sleep;
 
 use crate::test::client::TestError;
 
-use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, RequireAccountState, Register, Login}, media::SendImageToSlot, AssertFailure}, Completed, utils::{Timer, Counters}, benchmark::UpdateProfileBenchmark};
+use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, AssertAccountState, Register, Login, CompleteAccountSetup}, media::{SendImageToSlot, MakeModerationRequest}, AssertFailure}, Completed, utils::{Timer, Counters}, benchmark::UpdateProfileBenchmark};
 
 
 use error_stack::{Result, FutureExt, ResultExt};
@@ -61,14 +61,30 @@ impl Qa {
         let setup = [
             &Register as &dyn BotAction,
             &Login,
-            &RequireAccountState(AccountState::InitialSetup),
+            &AssertAccountState(AccountState::InitialSetup),
+            // Setup account information
             &SetAccountSetup,
-            &RequireAccountState(AccountState::InitialSetup),
+            &AssertFailure(CompleteAccountSetup), // No image moderation request
+            &AssertAccountState(AccountState::InitialSetup),
+
+            // Send moderation request
+
+            &AssertFailure(MakeModerationRequest { camera: false }), // No images
             &SendImageToSlot(0),
+            &MakeModerationRequest { camera: false },
+            &AssertFailure(CompleteAccountSetup), // One image is not enough
+            &AssertAccountState(AccountState::InitialSetup),
+
             &SendImageToSlot(1),
-            &SendImageToSlot(2),
-            &AssertFailure(SendImageToSlot(3)),
-            &RequireAccountState(AccountState::InitialSetup),
+            &MakeModerationRequest { camera: false },
+            &AssertFailure(CompleteAccountSetup), // Camera image not set
+            &AssertAccountState(AccountState::InitialSetup),
+
+            &MakeModerationRequest { camera: true },
+            &CompleteAccountSetup,
+            &AssertAccountState(AccountState::Normal),
+
+            &AssertFailure(SendImageToSlot(3)), // Max 3 slots
         ];
         let actions = [
             &UpdateProfileBenchmark as &dyn BotAction,

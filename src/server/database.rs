@@ -22,7 +22,7 @@ use tracing::info;
 use crate::{
     api::model::{AccountId, AccountIdInternal, AccountIdLight},
     config::Config,
-    server::database::commands::{WriteCommandRunner},
+    server::database::{commands::{WriteCommandRunner}, sqlite::print_sqlite_version},
 };
 
 use self::{
@@ -162,6 +162,10 @@ impl DatabaseManager {
             SqliteWriteHandle::new(root.current(), DatabaseType::Current)
                 .await
                 .change_context(DatabaseError::Init)?;
+
+        print_sqlite_version(sqlite_write.pool())
+            .await
+            .change_context(DatabaseError::Init)?;
 
         let (sqlite_read, sqlite_read_close) =
             SqliteReadHandle::new(root.current(), DatabaseType::Current)

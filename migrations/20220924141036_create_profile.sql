@@ -86,11 +86,14 @@ CREATE TABLE IF NOT EXISTS MediaModerationRequest(
     FOREIGN KEY (account_row_id)
         REFERENCES AccountId (account_row_id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    FOREIGN KEY (queue_number)
-        REFERENCES MediaModerationQueueNumber (queue_number)
-            ON DELETE NO ACTION
-            ON UPDATE NO ACTION
+            ON UPDATE CASCADE
+    -- TODO: Disabled foregin key contraint for queue_number to make deletion
+    -- possible. Figure out could queue_number be deleted here or constraint SET
+    -- NULL? Or just use current version?
+    -- FOREIGN KEY (queue_number)
+    --    REFERENCES MediaModerationQueueNumber (queue_number)
+    --        ON DELETE NO ACTION
+    --        ON UPDATE NO ACTION
 );
 
 CREATE TABLE IF NOT EXISTS MediaModeration(

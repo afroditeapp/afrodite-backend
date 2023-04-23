@@ -12,7 +12,7 @@ use self::data::{
     DeleteStatus,
 };
 
-use super::{ GetConfig};
+use super::{ GetConfig, GetInternalApi};
 
 use tracing::error;
 
@@ -212,7 +212,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
+pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase + GetInternalApi>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
