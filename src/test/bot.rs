@@ -158,24 +158,26 @@ impl BotManager {
             panic!("Only task count 1 is supported for QA tests");
         }
 
-        let bot_count = if config.bot_count <= 1 {
-            warn!("Increasing bot count to 2");
-            2
-        } else {
-            config.bot_count
-        };
+        let required_bots = qa::test_count() + 1;
+
+        if (config.bot_count as usize) < required_bots {
+            warn!("Increasing bot count to {}", required_bots);
+        }
 
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
-        for bot_i in 0..bot_count {
-            let state = BotState::new(id, config.clone(), task_id, bot_i, ApiClient::new(config.server.api_urls.clone()));
+        let new_bot_state = |bot_i| BotState::new(id, config.clone(), task_id, bot_i, ApiClient::new(config.server.api_urls.clone()));
 
-            let bot = match bot_i {
-                0 =>
-                    Qa::admin(state),
-                _ =>
-                    Qa::user(state),
-            };
-            bots.push(Box::new(bot))
+        bots.push(Box::new(Qa::admin(new_bot_state(0))));
+
+        for (i, (test_name, test)) in qa::ALL_QA_TESTS.into_iter().map(|tests| *tests).flatten().enumerate() {
+            let state = new_bot_state(i as u32 + 1);
+            let actions = test
+                .into_iter()
+                .map(|actions| *actions)
+                .flatten()
+                .map(|action| *action);
+            let bot = Qa::user_test(state, test_name, Box::new(actions));
+            bots.push(Box::new(bot));
         }
 
         Self {

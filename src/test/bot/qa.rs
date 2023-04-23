@@ -1,6 +1,9 @@
 //! QA testing
 //!
 
+pub mod account;
+pub mod profile;
+pub mod media;
 
 use std::{fmt::Debug, time::{Duration, Instant}, sync::atomic::AtomicBool};
 
@@ -9,6 +12,8 @@ use async_trait::async_trait;
 use tokio::time::sleep;
 
 use crate::test::client::TestError;
+
+use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS};
 
 use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, AssertAccountState, Register, Login, CompleteAccountSetup}, media::{SendImageToSlot, MakeModerationRequest}, AssertFailure}, Completed, utils::{Timer, Counters}, benchmark::UpdateProfileBenchmark};
 
@@ -27,6 +32,31 @@ use crate::{
 
 static ADMIN_QUIT_NOTIFICATION: AtomicBool = AtomicBool::new(false);
 
+pub type SingleTest = (&'static str, &'static [&'static [&'static dyn BotAction]]);
+
+#[macro_export]
+macro_rules! test {
+    ($s:expr,[ $( $actions:expr, )* ] ) => {
+        (
+            $s,
+            &[
+                &[   $( &($actions) as &dyn BotAction, )*    ]
+            ]
+        )
+    };
+}
+
+pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[
+    ACCOUNT_TESTS,
+    MEDIA_TESTS,
+];
+
+pub fn test_count() -> usize {
+    ALL_QA_TESTS
+        .iter()
+        .map(|tests| tests.len())
+        .sum()
+}
 
 #[derive(Debug)]
 pub struct QaState {
@@ -47,54 +77,26 @@ impl QaState {
 
 pub struct Qa {
     state: BotState,
+    test_name: &'static str,
     actions: Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>,
 }
 
 impl Debug for Qa {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Qa").finish()
+        f.debug_tuple(self.test_name).finish()
     }
 }
 
 impl Qa {
-    pub fn user(state: BotState) -> Self {
-        let setup = [
-            &Register as &dyn BotAction,
-            &Login,
-            &AssertAccountState(AccountState::InitialSetup),
-            // Setup account information
-            &SetAccountSetup,
-            &AssertFailure(CompleteAccountSetup), // No image moderation request
-            &AssertAccountState(AccountState::InitialSetup),
-
-            // Send moderation request
-
-            &AssertFailure(MakeModerationRequest { camera: false }), // No images
-            &SendImageToSlot(0),
-            &MakeModerationRequest { camera: false },
-            &AssertFailure(CompleteAccountSetup), // One image is not enough
-            &AssertAccountState(AccountState::InitialSetup),
-
-            &SendImageToSlot(1),
-            &MakeModerationRequest { camera: false },
-            &AssertFailure(CompleteAccountSetup), // Camera image not set
-            &AssertAccountState(AccountState::InitialSetup),
-
-            &MakeModerationRequest { camera: true },
-            &CompleteAccountSetup,
-            &AssertAccountState(AccountState::Normal),
-
-            &AssertFailure(SendImageToSlot(3)), // Max 3 slots
-        ];
-        let actions = [
-            &UpdateProfileBenchmark as &dyn BotAction,
-        ];
-        let iter = setup
-            .into_iter()
-            .chain(actions.into_iter());
+    pub fn user_test(
+        state: BotState,
+        test_name: &'static str,
+        actions: Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>,
+    ) -> Self {
         Self {
             state,
-            actions: Box::new(iter),
+            test_name,
+            actions,
         }
     }
 
@@ -114,6 +116,7 @@ impl Qa {
             }));
         Self {
             state,
+            test_name: "Admin bot",
             actions: Box::new(iter),
         }
     }
