@@ -41,6 +41,10 @@ impl NewModerationRequest {
             .into_iter()
             .flatten()
     }
+
+    pub fn camera(&self) -> bool {
+        self.camera_image
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

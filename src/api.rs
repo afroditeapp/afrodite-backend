@@ -60,7 +60,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::put_image_to_moderation_slot,
         media::post_handle_moderation_request,
         media::patch_moderation_request_list,
-        media::internal::internal_get_moderation_request_for_account,
+        media::internal::internal_get_check_moderation_request_for_account,
     ),
     components(schemas(
         account::data::AccountId,

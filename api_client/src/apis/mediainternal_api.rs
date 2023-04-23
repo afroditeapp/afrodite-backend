@@ -15,10 +15,10 @@ use crate::apis::ResponseContent;
 use super::{Error, configuration};
 
 
-/// struct for typed errors of method [`internal_get_moderation_request_for_account`]
+/// struct for typed errors of method [`internal_get_check_moderation_request_for_account`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum InternalGetModerationRequestForAccountError {
+pub enum InternalGetCheckModerationRequestForAccountError {
     Status404(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -26,7 +26,7 @@ pub enum InternalGetModerationRequestForAccountError {
 
 
 /// Check that current moderation request for account exists. 
-pub async fn internal_get_moderation_request_for_account(configuration: &configuration::Configuration, account_id: &str) -> Result<(), Error<InternalGetModerationRequestForAccountError>> {
+pub async fn internal_get_check_moderation_request_for_account(configuration: &configuration::Configuration, account_id: &str) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -47,7 +47,7 @@ pub async fn internal_get_moderation_request_for_account(configuration: &configu
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<InternalGetModerationRequestForAccountError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<InternalGetCheckModerationRequestForAccountError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

@@ -288,6 +288,12 @@ pub struct AccountSetup {
     name: String,
 }
 
+impl AccountSetup {
+    pub fn is_empty(&self) -> bool {
+        self.name.is_empty()
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BooleanSetting {
     value: bool,

@@ -41,7 +41,7 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**post_handle_moderation_request**](docs/MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 *MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
-*MediainternalApi* | [**internal_get_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists.
+*MediainternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists.
 *ProfileApi* | [**get_default_profile**](docs/ProfileApi.md#get_default_profile) | **GET** /profile_api/default/{account_id} | TODO: Remove this at some point
 *ProfileApi* | [**get_next_profile_page**](docs/ProfileApi.md#get_next_profile_page) | **GET** /profile_api/page/next | Get next page of profile list.
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.

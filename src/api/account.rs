@@ -206,7 +206,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     path = "/account_api/complete_setup",
     responses(
         (status = 200, description = "Request successfull."),
-        (status = 406, description = "Current state is not initial setup."),
+        (status = 406, description = "Current state is not initial setup, AccountSetup is empty or moderation request does not contain camera image."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -222,16 +222,36 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase + 
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
+    let account_setup = state
+        .read_database()
+        .read_json::<AccountSetup>(id)
+        .await
+        .map_err(|e| {
+            error!("Complete setup error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })?;
+
+    if account_setup.is_empty() {
+        return Err(StatusCode::NOT_ACCEPTABLE)
+    }
+
+    state
+        .internal_api()
+        .media_check_moderation_request_for_account(id)
+        .await
+        .map_err(|e| {
+            error!("Complete setup error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
     let mut account = state
         .read_database()
         .read_json::<Account>(id)
         .await
         .map_err(|e| {
-            error!("Get Account error: {e:?}");
+            error!("Complete setup error: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
         })?;
-
-    // TODO: Check that image request is done
 
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();

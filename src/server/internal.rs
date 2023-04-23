@@ -2,23 +2,23 @@
 
 
 
-use api_client::apis::{accountinternal_api, configuration::Configuration};
+use api_client::apis::{accountinternal_api, configuration::Configuration, mediainternal_api};
 use axum::{
     routing::{get, post},
     Router,
 };
 
-use error_stack::{Result};
+use error_stack::{Result, ResultExt};
 
 use hyper::StatusCode;
 
 use tracing::info;
 
-use crate::{api::{self, model::AccountIdLight}, config::InternalApiUrls, utils::IntoReportExt};
+use crate::{api::{self, model::{AccountIdLight, AccountIdInternal}, media::internal::internal_get_check_moderation_request_for_account}, config::InternalApiUrls, utils::IntoReportExt};
 
 use crate::{api::model::ApiKey, config::Config};
 
-use super::{app::AppState, database::utils::ApiKeyManager};
+use super::{app::AppState, database::{utils::ApiKeyManager, read::ReadCommands}};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -42,8 +42,11 @@ pub enum InternalApiError {
     // #[error("Joining text to URL failed")]
     // ApiUrlJoinError,
 
-    // #[error("Missing value")]
-    // MissingValue,
+    #[error("Missing value")]
+    MissingValue,
+
+    #[error("Invalid value")]
+    InvalidValue,
 }
 
 /// Internal route handlers for server to server communication.
@@ -66,11 +69,11 @@ impl InternalApp {
 
     pub fn create_media_server_router(state: AppState) -> Router {
         Router::new().route(
-            api::media::internal::PATH_INTERNAL_GET_MODERATION_REQUEST_FOR_ACCOUNT,
+            api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
             post({
                 let state = state.clone();
                 move |parameter1| {
-                    api::media::internal::internal_get_moderation_request_for_account(
+                    api::media::internal::internal_get_check_moderation_request_for_account(
                         parameter1, state,
                     )
                 }
@@ -142,6 +145,7 @@ pub struct InternalApiManager<'a> {
     config: &'a Config,
     api_client: &'a InternalApiClient,
     keys: ApiKeyManager<'a>,
+    read_database: ReadCommands<'a>,
 }
 
 impl<'a> InternalApiManager<'a> {
@@ -149,11 +153,13 @@ impl<'a> InternalApiManager<'a> {
         config: &'a Config,
         api_client: &'a InternalApiClient,
         keys: ApiKeyManager<'a>,
+        read_database: ReadCommands<'a>,
     ) -> Self {
         Self {
             config,
             api_client,
             keys,
+            read_database,
         }
     }
 
@@ -186,7 +192,30 @@ impl<'a> InternalApiManager<'a> {
         }
     }
 
-    pub async fn media_get_moderation_request_for_account(&self, account_id: AccountIdLight) -> Result<AuthResponse, InternalApiError> {
-       todo!()
+    pub async fn media_check_moderation_request_for_account(&self, account_id: AccountIdInternal) -> Result<(), InternalApiError> {
+        if self.config.components().media {
+            let request = self.read_database
+                .moderation_request(account_id)
+                .await
+                .change_context(InternalApiError::DatabaseError)?
+                .ok_or(InternalApiError::MissingValue)?;
+
+            if request.camera() {
+                Ok(())
+            } else {
+                Err(InternalApiError::MissingValue.into())
+            }
+        } else {
+            mediainternal_api::internal_get_check_moderation_request_for_account(
+                self.api_client.media()?,
+                &account_id.as_light().to_string()
+            ).await
+                .into_error(InternalApiError::MissingValue)
+        }
     }
+
+    // TODO: Prevent creating a new moderation request when there is camera
+    // image in the current one. Or also make possible to change the ongoing
+    // moderation request but leave the camera image. Where information about
+    // the camera image should be stored?
 }
