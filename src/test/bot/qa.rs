@@ -15,7 +15,7 @@ use crate::test::client::TestError;
 
 use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS};
 
-use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, AssertAccountState, Register, Login, CompleteAccountSetup}, media::{SendImageToSlot, MakeModerationRequest}, AssertFailure}, Completed, utils::{Timer, Counters}, benchmark::UpdateProfileBenchmark};
+use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, AssertAccountState, Register, Login, CompleteAccountSetup}, media::{SendImageToSlot, MakeModerationRequest}, AssertFailure, SleepMillis}, Completed, utils::{Timer, Counters}, benchmark::UpdateProfileBenchmark};
 
 
 use error_stack::{Result, FutureExt, ResultExt};
@@ -104,8 +104,15 @@ impl Qa {
         let setup = [
             &Register as &dyn BotAction,
             &Login,
+            SetAccountSetup::admin(),
+            &SendImageToSlot(0),
+            &SendImageToSlot(1),
+            &MakeModerationRequest { camera: true },
+            &CompleteAccountSetup,
+            &AssertAccountState(AccountState::Normal),
         ];
         let admin_actions = [
+            &SleepMillis(250) as &dyn BotAction,
             &ModerateMediaModerationRequest as &dyn BotAction,
         ];
 

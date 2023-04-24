@@ -169,7 +169,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         // TODO: Currently is possible that two moderators moderate the same
         // request. Should that be prevented?
 
-        let (content, queue_number) = self
+        let (content, queue_number, request_creator_id) = self
             .handle
             .read()
             .media()
@@ -197,6 +197,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         self.delete_queue_number(queue_number).await?;
 
         let moderation = Moderation {
+            request_creator_id,
             request_id: ModerationRequestId {
                 request_row_id: target_id.request_row_id,
             },

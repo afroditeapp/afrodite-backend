@@ -13,7 +13,7 @@ use crate::api::media::data::{
 };
 use crate::api::model::{
     AccountIdInternal, ContentId, ModerationRequest,
-    NewModerationRequest,
+    NewModerationRequest, AccountIdLight,
 };
 use crate::server::database::file::file::ImageSlot;
 
@@ -158,11 +158,12 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_moderation_request_content(
         &self,
         id: ModerationRequestId,
-    ) -> Result<(NewModerationRequest, ModerationRequestQueueNumber), SqliteDatabaseError> {
+    ) -> Result<(NewModerationRequest, ModerationRequestQueueNumber, AccountIdLight), SqliteDatabaseError> {
         let request = sqlx::query!(
             r#"
-            SELECT json_text, queue_number
+            SELECT json_text, queue_number, account_id as "account_id: uuid::Uuid"
             FROM MediaModerationRequest
+            INNER JOIN AccountId on AccountId.account_row_id = MediaModerationRequest.account_row_id
             WHERE request_row_id = ?
             "#,
             id.request_row_id,
@@ -179,6 +180,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             ModerationRequestQueueNumber {
                 number: request.queue_number,
             },
+            AccountIdLight::new(request.account_id),
         ))
     }
 
@@ -190,9 +192,10 @@ impl<'a> CurrentReadMediaCommands<'a> {
         let state_in_progress = ModerationRequestState::InProgress as i64;
         let data = sqlx::query!(
             r#"
-            SELECT request_row_id, json_text
+            SELECT request_row_id, MediaModeration.account_row_id, json_text, account_id as "account_id: uuid::Uuid"
             FROM MediaModeration
-            WHERE account_row_id = ? AND state_number = ?
+            INNER JOIN AccountId on AccountId.account_row_id = MediaModeration.account_row_id
+            WHERE MediaModeration.account_row_id = ? AND state_number = ?
             "#,
             account_row_id,
             state_in_progress,
@@ -207,6 +210,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
                 .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
             let moderation = Moderation {
+                request_creator_id: AccountIdLight::new(r.account_id),
                 moderator_id: moderator_id.as_light(),
                 request_id: ModerationRequestId {
                     request_row_id: r.request_row_id,

@@ -216,7 +216,7 @@ impl App {
                 api::media::PATH_ADMIN_MODERATION_HANDLE_REQUEST,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2| api::media::post_handle_moderation_request(param1, param2, state)
+                    move |param1, param2, param3| api::media::post_handle_moderation_request(param1, param2, param3, state)
                 }),
             )
             .route_layer({

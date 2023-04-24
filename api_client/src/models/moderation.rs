@@ -17,15 +17,18 @@ pub struct Moderation {
     pub content: Box<crate::models::NewModerationRequest>,
     #[serde(rename = "moderator_id")]
     pub moderator_id: Box<crate::models::AccountIdLight>,
+    #[serde(rename = "request_creator_id")]
+    pub request_creator_id: Box<crate::models::AccountIdLight>,
     #[serde(rename = "request_id")]
     pub request_id: Box<crate::models::ModerationRequestId>,
 }
 
 impl Moderation {
-    pub fn new(content: crate::models::NewModerationRequest, moderator_id: crate::models::AccountIdLight, request_id: crate::models::ModerationRequestId) -> Moderation {
+    pub fn new(content: crate::models::NewModerationRequest, moderator_id: crate::models::AccountIdLight, request_creator_id: crate::models::AccountIdLight, request_id: crate::models::ModerationRequestId) -> Moderation {
         Moderation {
             content: Box::new(content),
             moderator_id: Box::new(moderator_id),
+            request_creator_id: Box::new(request_creator_id),
             request_id: Box::new(request_id),
         }
     }

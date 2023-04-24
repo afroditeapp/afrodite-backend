@@ -25,7 +25,7 @@ use super::model::AccountIdLight;
 use super::utils::ApiKeyHeader;
 use super::{GetApiKeys, ReadDatabase, WriteDatabase};
 
-pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:image_file";
+pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
 /// Get profile image
 #[utoipa::path(
@@ -228,6 +228,8 @@ pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
+    // TODO: Access restrictions
+
     let data = state
         .write_database()
         .get_moderation_list_and_create_if_necessary(account_id)
@@ -241,7 +243,7 @@ pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
 }
 
 pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
-    "/media_api/admin/moderation/handle_request/:request_id";
+    "/media_api/admin/moderation/handle_request/:account_id";
 
 /// Handle moderation request of some account.
 ///
@@ -264,10 +266,21 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_handle_moderation_request<S: ReadDatabase>(
+pub async fn post_handle_moderation_request<S: ReadDatabase + WriteDatabase + GetApiKeys>(
     Path(moderation_request_owner_account_id): Path<AccountIdLight>,
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(_moderation_request): Json<HandleModerationRequest>,
-    _state: S,
+    state: S,
 ) -> Result<(), StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    // TODO: Access restrictions
+
+   // state.write_database().
+
     Err(StatusCode::NOT_ACCEPTABLE)
 }

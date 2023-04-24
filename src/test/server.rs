@@ -111,6 +111,7 @@ fn new_config(
 ) -> ConfigFile {
     ConfigFile {
         debug: None,
+        admin_email: "admin@example.com".to_string(),
         components,
         database: crate::config::file::DatabaseConfig { dir: "database_dir".into() },
         socket: SocketConfig {

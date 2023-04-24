@@ -3,7 +3,7 @@ pub mod profile;
 pub mod media;
 pub mod admin;
 
-use std::fmt::{Debug, Display};
+use std::{fmt::{Debug, Display}, time::Duration};
 
 use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile, get_default_profile}}, models::Profile};
 use async_trait::async_trait;
@@ -63,5 +63,18 @@ impl <T: BotAction> BotAction for AssertFailure<T> {
             },
             Ok(()) => Err(TestError::AssertError("API request did not fail".to_string()).into()),
         }
+    }
+}
+
+
+/// Sleep milliseconds
+#[derive(Debug)]
+pub struct SleepMillis(pub u64);
+
+#[async_trait]
+impl BotAction for SleepMillis {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        tokio::time::sleep(Duration::from_millis(self.0)).await;
+        Ok(())
     }
 }

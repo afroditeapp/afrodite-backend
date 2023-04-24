@@ -52,7 +52,7 @@ pub const ACCOUNT_TESTS: &[SingleTest] = &[
         [
             Register,
             Login,
-            SetAccountSetup,
+            SetAccountSetup::new(),
             AssertFailure(CompleteAccountSetup),
             AssertAccountState(AccountState::InitialSetup),
         ]
@@ -62,7 +62,7 @@ pub const ACCOUNT_TESTS: &[SingleTest] = &[
         [
             Register,
             Login,
-            SetAccountSetup,
+            SetAccountSetup::new(),
             SendImageToSlot(0),
             SendImageToSlot(1),
             MakeModerationRequest { camera: false },
@@ -75,7 +75,7 @@ pub const ACCOUNT_TESTS: &[SingleTest] = &[
         [
             Register,
             Login,
-            SetAccountSetup,
+            SetAccountSetup::new(),
             SendImageToSlot(0),
             SendImageToSlot(1),
             MakeModerationRequest { camera: true },

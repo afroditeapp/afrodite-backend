@@ -212,7 +212,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase + GetInternalApi>(
+pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase + GetInternalApi + GetConfig>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
@@ -255,6 +255,10 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase + 
 
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();
+
+        if account_setup.email() == state.config().admin_email() {
+            account.add_admin_capablities();
+        }
 
         state
             .write_database()

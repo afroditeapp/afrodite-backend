@@ -25,7 +25,7 @@ pub enum InternalGetCheckModerationRequestForAccountError {
 }
 
 
-/// Check that current moderation request for account exists. 
+/// Check that current moderation request for account exists. Requires also that request contains camera image. 
 pub async fn internal_get_check_moderation_request_for_account(configuration: &configuration::Configuration, account_id: &str) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
     let local_var_configuration = configuration;
 

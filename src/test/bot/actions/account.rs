@@ -70,13 +70,31 @@ impl BotAction for AssertAccountState {
 }
 
 #[derive(Debug)]
-pub struct SetAccountSetup;
+pub struct SetAccountSetup { pub email: Option<&'static str> }
+
+impl SetAccountSetup {
+    pub const fn new() -> Self {
+        Self {
+            email: None
+        }
+    }
+
+    pub const fn admin() -> &'static dyn BotAction {
+        &Self {
+            email: Some("admin@example.com"),
+        }
+    }
+}
 
 #[async_trait]
 impl BotAction for SetAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let name = NameProvider::men_first_name().to_string();
         let setup = AccountSetup {
-            name: NameProvider::men_first_name().to_string(),
+            email: self.email
+                .map(|email| email.to_string())
+                .unwrap_or(format!("{}@example.com", &name)),
+            name,
         };
         post_account_setup(state.api.account(), setup)
             .await

@@ -229,6 +229,10 @@ impl Account {
             self.state = AccountState::Normal;
         }
     }
+
+    pub fn add_admin_capablities(&mut self) {
+        self.capablities.admin_moderate_images = Some(true);
+    }
 }
 
 impl Default for Account {
@@ -286,11 +290,16 @@ pub struct Capabilities {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct AccountSetup {
     name: String,
+    email: String,
 }
 
 impl AccountSetup {
     pub fn is_empty(&self) -> bool {
         self.name.is_empty()
+    }
+
+    pub fn email(&self) -> &str {
+        &self.email
     }
 }
 

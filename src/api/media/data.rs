@@ -220,6 +220,7 @@ pub struct ModerationId {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Moderation {
+    pub request_creator_id: AccountIdLight,
     pub request_id: ModerationRequestId,
     pub moderator_id: AccountIdLight,
     pub content: NewModerationRequest,

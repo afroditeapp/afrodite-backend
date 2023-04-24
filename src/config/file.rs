@@ -14,6 +14,8 @@ pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
+admin_email = "admin@example.com"
+
 [socket]
 public_api = "127.0.0.1:3000"
 internal_api = "127.0.0.1:3001"
@@ -44,6 +46,7 @@ pub enum ConfigFileError {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
     pub debug: Option<bool>,
+    pub admin_email: String,
     pub components: Components,
     pub database: DatabaseConfig,
     pub socket: SocketConfig,

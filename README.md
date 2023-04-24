@@ -62,3 +62,7 @@ Open database with sqlite3 `sqlite3 database.file`.
 Run command `PRAGMA foreign_keys = ON;`
 
 All data: `.dump`
+
+## Count lines of code
+
+`find src -name '*.rs' | xargs wc -l`

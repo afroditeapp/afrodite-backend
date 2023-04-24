@@ -79,6 +79,10 @@ impl Config {
     pub fn test_mode(&self) -> Option<TestMode> {
         self.test_mode.clone()
     }
+
+    pub fn admin_email(&self) -> &str {
+        &self.file.admin_email
+    }
 }
 
 pub fn get_config() -> Result<Config, GetConfigError> {

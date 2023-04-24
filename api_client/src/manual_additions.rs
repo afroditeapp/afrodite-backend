@@ -1,12 +1,20 @@
 
 
-use crate::{models::AccountIdLight, apis::{configuration, Error, media_api::{GetImageError, PutImageToModerationSlotError}, ResponseContent}};
+use crate::{models::{AccountIdLight, ContentId}, apis::{configuration, Error, media_api::{GetImageError, PutImageToModerationSlotError}, ResponseContent}};
 
 impl Copy for AccountIdLight {}
 
 impl AccountIdLight {
     pub fn to_string(&self) -> String {
         self.account_id.hyphenated().to_string()
+    }
+}
+
+impl Copy for ContentId {}
+
+impl ContentId {
+    pub fn to_string(&self) -> String {
+        self.content_id.hyphenated().to_string()
     }
 }
 
