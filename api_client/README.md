@@ -35,6 +35,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_register**](docs/AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update profile visiblity value.
 *AccountinternalApi* | [**check_api_key**](docs/AccountinternalApi.md#check_api_key) | **GET** /internal/check_api_key | 
+*AccountinternalApi* | [**internal_get_account_state**](docs/AccountinternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
 *MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 *MediaApi* | [**patch_moderation_request_list**](docs/MediaApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.

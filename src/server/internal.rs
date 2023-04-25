@@ -2,7 +2,7 @@
 
 
 
-use api_client::apis::{accountinternal_api, configuration::Configuration, mediainternal_api};
+use api_client::{apis::{accountinternal_api, configuration::Configuration, mediainternal_api}};
 use axum::{
     routing::{get, post},
     Router,
@@ -12,13 +12,13 @@ use error_stack::{Result, ResultExt};
 
 use hyper::StatusCode;
 
-use tracing::info;
+use tracing::{info, error};
 
-use crate::{api::{self, model::{AccountIdLight, AccountIdInternal}, media::internal::internal_get_check_moderation_request_for_account}, config::InternalApiUrls, utils::IntoReportExt};
+use crate::{api::{self, model::{AccountIdLight, AccountIdInternal, Account, Capabilities, AccountState}, media::internal::internal_get_check_moderation_request_for_account}, config::InternalApiUrls, utils::IntoReportExt};
 
 use crate::{api::model::ApiKey, config::Config};
 
-use super::{app::AppState, database::{utils::ApiKeyManager, read::ReadCommands}};
+use super::{app::AppState, database::{utils::{ApiKeyManager, AccountIdManager}, read::ReadCommands}};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -55,10 +55,17 @@ pub struct InternalApp;
 impl InternalApp {
     pub fn create_account_server_router(state: AppState) -> Router {
         Router::new().route(
-            api::account::internal::PATH_CHECK_API_KEY,
+            api::account::internal::PATH_INTERNAL_CHECK_API_KEY,
             get({
                 let state = state.clone();
                 move |body| api::account::internal::check_api_key(body, state)
+            }),
+        )
+        .route(
+            api::account::internal::PATH_INTERNAL_GET_ACCOUNT_STATE,
+            get({
+                let state = state.clone();
+                move |param1| api::account::internal::internal_get_account_state(param1, state)
             }),
         )
     }
@@ -146,6 +153,7 @@ pub struct InternalApiManager<'a> {
     api_client: &'a InternalApiClient,
     keys: ApiKeyManager<'a>,
     read_database: ReadCommands<'a>,
+    account_id_manager: AccountIdManager<'a>,
 }
 
 impl<'a> InternalApiManager<'a> {
@@ -154,22 +162,27 @@ impl<'a> InternalApiManager<'a> {
         api_client: &'a InternalApiClient,
         keys: ApiKeyManager<'a>,
         read_database: ReadCommands<'a>,
+        account_id_manager: AccountIdManager<'a>
     ) -> Self {
         Self {
             config,
             api_client,
             keys,
             read_database,
+            account_id_manager,
         }
     }
 
+    /// Check that API key is valid. Use this only from ApiKey checker handler.
+    /// This function will cache the account ID, so it can be found using normal
+    /// database calls after this runs.
     pub async fn check_api_key(&self, key: ApiKey) -> Result<AuthResponse, InternalApiError> {
         if self.keys.api_key_exists(&key).await.is_some() {
             Ok(AuthResponse::Ok)
         } else if !self.config.components().account {
             // Check ApiKey from external service
 
-            let result = accountinternal_api::check_api_key(self.api_client.account()?).await;
+            let result = accountinternal_api::check_api_key(self.api_client.account()?, api_client::models::ApiKey { api_key: key.into_string() }).await;
 
             match result {
                 Ok(_res) => {
@@ -189,6 +202,50 @@ impl<'a> InternalApiManager<'a> {
             }
         } else {
             Ok(AuthResponse::Unauthorized)
+        }
+    }
+
+    pub async fn get_account_state(&self, account_id: AccountIdInternal) -> Result<Account, InternalApiError> {
+        if self.config.components().account {
+            self
+                .read_database
+                .read_json::<Account>(account_id)
+                .await
+                .change_context(InternalApiError::DatabaseError)
+        } else {
+            // TODO: Save account state to cache?
+
+            let account = accountinternal_api::internal_get_account_state(self.api_client.account()?, &account_id.as_light().to_string()).await.into_error(InternalApiError::ApiRequest)?;
+
+            let state = match account.state {
+                api_client::models::AccountState::InitialSetup => AccountState::InitialSetup,
+                api_client::models::AccountState::Normal => AccountState::Normal,
+                api_client::models::AccountState::Banned => AccountState::Banned,
+                api_client::models::AccountState::PendingDeletion => AccountState::PendingDeletion,
+            };
+
+            macro_rules! copy_capablities {
+                ($account:expr,  $( $name:ident , )* ) => {
+                    Capabilities {
+                        $( $name: $account.capablities.$name.unwrap_or(false), )*
+                    }
+                };
+            }
+            let capabilities = copy_capablities!(
+                account,
+                admin_modify_capablities,
+                admin_setup_possible,
+                admin_moderate_profiles,
+                admin_moderate_images,
+                admin_view_all_profiles,
+                admin_view_private_info,
+                admin_view_profile_history,
+                admin_ban_profile,
+                banned_edit_profile,
+                view_public_profiles,
+            );
+
+            Ok(Account::new_from(state, capabilities))
         }
     }
 

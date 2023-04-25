@@ -48,6 +48,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         account::get_deletion_status,
         account::delete_cancel_deletion,
         account::internal::check_api_key,
+        account::internal::internal_get_account_state,
         profile::get_profile,
         profile::get_default_profile,
         profile::get_next_profile_page,

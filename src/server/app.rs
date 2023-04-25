@@ -60,7 +60,7 @@ impl WriteDatabase for AppState {
 
 impl GetInternalApi for AppState {
     fn internal_api(&self) -> InternalApiManager {
-        InternalApiManager::new(&self.config, &self.internal_api, self.api_keys(), self.read_database())
+        InternalApiManager::new(&self.config, &self.internal_api, self.api_keys(), self.read_database(), self.database.account_id_manager())
     }
 }
 

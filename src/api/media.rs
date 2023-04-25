@@ -23,7 +23,7 @@ use self::data::{
 
 use super::model::AccountIdLight;
 use super::utils::ApiKeyHeader;
-use super::{GetApiKeys, ReadDatabase, WriteDatabase};
+use super::{GetApiKeys, ReadDatabase, WriteDatabase, GetInternalApi};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
@@ -266,21 +266,27 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_handle_moderation_request<S: ReadDatabase + WriteDatabase + GetApiKeys>(
+pub async fn post_handle_moderation_request<S: GetInternalApi + WriteDatabase + GetApiKeys>(
     Path(moderation_request_owner_account_id): Path<AccountIdLight>,
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(_moderation_request): Json<HandleModerationRequest>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
+    let admin_account_id = state
         .api_keys()
         .api_key_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    // TODO: Access restrictions
+    let account = state.internal_api().get_account_state(admin_account_id).await.map_err(|e| {
+        error!("{e:?}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-   // state.write_database().
-
-    Err(StatusCode::NOT_ACCEPTABLE)
+    if account.capablities().admin_moderate_images {
+        //state.write_database().
+        unimplemented!()
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
 }

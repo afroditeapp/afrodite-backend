@@ -220,9 +220,22 @@ impl Account {
         }
     }
 
+    pub fn new_from(state: AccountState, capablities: Capabilities) -> Self {
+        Self {
+            state,
+            capablities,
+        }
+    }
+
     pub fn state(&self) -> AccountState {
         self.state
     }
+
+
+    pub fn capablities(&self) -> &Capabilities {
+        &self.capablities
+    }
+
 
     pub fn complete_setup(&mut self) {
         if self.state == AccountState::InitialSetup {
@@ -231,7 +244,8 @@ impl Account {
     }
 
     pub fn add_admin_capablities(&mut self) {
-        self.capablities.admin_moderate_images = Some(true);
+        self.capablities.admin_moderate_images = true;
+        // TOOD: Other capablities as well?
     }
 }
 
@@ -252,40 +266,35 @@ pub enum AccountState {
     PendingDeletion,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
-pub struct Capabilities {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_modify_capablities: Option<bool>,
+macro_rules! define_capablities {
+    ($( $(#[doc = $text:literal ])? $name:ident , )* ) => {
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_setup_possible: Option<bool>,
+        #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
+        pub struct Capabilities {
+            $(
+                $(#[doc = $text])?
+                #[serde(default, skip_serializing_if = "std::ops::Not::not")] // Skips false
+                pub $name: bool,
+            )*
+        }
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_moderate_profiles: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_moderate_images: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    /// View public and private profiles.
-    admin_view_all_profiles: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_view_private_info: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_view_profile_history: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    admin_ban_profile: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    banned_edit_profile: Option<bool>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    /// View public profiles
-    view_public_profiles: Option<bool>,
+    };
 }
+
+define_capablities!(
+    admin_modify_capablities,
+    admin_setup_possible,
+    admin_moderate_profiles,
+    admin_moderate_images,
+    /// View public and private profiles.
+    admin_view_all_profiles,
+    admin_view_private_info,
+    admin_view_profile_history,
+    admin_ban_profile,
+    banned_edit_profile,
+    /// View public profiles
+    view_public_profiles,
+);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct AccountSetup {
