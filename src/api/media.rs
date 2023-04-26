@@ -2,6 +2,8 @@ pub mod data;
 pub mod internal;
 
 
+use std::f32::consts::E;
+
 use axum::extract::{BodyStream, Path};
 
 use axum::{Json, TypedHeader};
@@ -23,7 +25,7 @@ use self::data::{
 
 use super::model::AccountIdLight;
 use super::utils::ApiKeyHeader;
-use super::{GetApiKeys, ReadDatabase, WriteDatabase, GetInternalApi};
+use super::{GetApiKeys, ReadDatabase, WriteDatabase, GetInternalApi, GetUsers};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
@@ -260,16 +262,14 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     responses(
         (status = 200, description = "Handling moderation request was successfull."),
         (status = 401, description = "Unauthorized."),
-        (status = 404, description = "Request ID does not exists."),
-        (status = 406, description = "Already handled."),
         (status = 500, description = "Internal server error."),
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_handle_moderation_request<S: GetInternalApi + WriteDatabase + GetApiKeys>(
+pub async fn post_handle_moderation_request<S: GetInternalApi + WriteDatabase + GetApiKeys + GetUsers>(
     Path(moderation_request_owner_account_id): Path<AccountIdLight>,
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Json(_moderation_request): Json<HandleModerationRequest>,
+    Json(moderation_decision): Json<HandleModerationRequest>,
     state: S,
 ) -> Result<(), StatusCode> {
     let admin_account_id = state
@@ -284,8 +284,15 @@ pub async fn post_handle_moderation_request<S: GetInternalApi + WriteDatabase + 
     })?;
 
     if account.capablities().admin_moderate_images {
-        //state.write_database().
-        unimplemented!()
+        let moderation_request_owner = state.users().get_internal_id(moderation_request_owner_account_id).await.map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        state.write_database().update_moderation(admin_account_id, moderation_request_owner, moderation_decision).await.map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }

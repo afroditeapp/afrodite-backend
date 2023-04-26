@@ -19,7 +19,7 @@ use tokio_stream::StreamExt;
 
 use crate::{
     api::{
-        media::data::Moderation,
+        media::data::{Moderation, HandleModerationRequest},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
             NewModerationRequest, Profile,
@@ -83,6 +83,12 @@ pub enum WriteCommand {
         account_id: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
+    },
+    UpdateModeration {
+        s: ResultSender<()>,
+        moderator_id: AccountIdInternal,
+        moderation_request_owner: AccountIdInternal,
+        result: HandleModerationRequest,
     },
 }
 
@@ -207,6 +213,21 @@ impl WriteCommandRunnerHandle {
         self.send_event(|s| WriteCommand::GetModerationListAndCreateNewIfNecessary {
             s,
             account_id,
+        })
+        .await
+    }
+
+    pub async fn update_moderation(
+        &self,
+        moderator_id: AccountIdInternal,
+        moderation_request_owner: AccountIdInternal,
+        result: HandleModerationRequest,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::UpdateModeration {
+            s,
+            moderator_id,
+            moderation_request_owner,
+            result,
         })
         .await
     }
@@ -391,6 +412,16 @@ impl WriteCommandRunner {
                 .save_to_slot(account_id, content_id, slot)
                 .await
                 .send(s),
+            WriteCommand::UpdateModeration {
+                s,
+                moderator_id,
+                moderation_request_owner,
+                result
+            } => self
+                .write()
+                .update_moderation(moderator_id, moderation_request_owner, result)
+                .await
+                .send(s)
         }
     }
 

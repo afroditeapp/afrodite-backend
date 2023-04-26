@@ -11,7 +11,7 @@ use tokio_stream::StreamExt;
 
 use crate::{
     api::{
-        media::data::Moderation,
+        media::data::{Moderation, HandleModerationRequest},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
             NewModerationRequest, Profile,
@@ -40,6 +40,7 @@ pub enum WriteCmd {
     AccountSetup(AccountIdInternal),
     MediaModerationRequest(AccountIdInternal),
     MediaModeration(AccountIdInternal),
+    MediaModerationUpdate(AccountIdInternal),
 }
 
 impl std::fmt::Display for WriteCmd {
@@ -255,6 +256,19 @@ impl<'a> WriteCommands<'a> {
             .moderation_get_list_and_create_new_if_necessary(account_id)
             .await
             .with_info_lazy(|| WriteCmd::MediaModeration(account_id))
+    }
+
+    pub async fn update_moderation(
+        self,
+        moderator_id: AccountIdInternal,
+        moderation_request_owner: AccountIdInternal,
+        result: HandleModerationRequest,
+    ) -> Result<(), DatabaseError> {
+        self.current()
+            .media_admin()
+            .update_moderation(moderator_id, moderation_request_owner, result)
+            .await
+            .with_info_lazy(|| WriteCmd::MediaModerationUpdate(moderator_id))
     }
 
     /// Completes previous save_to_tmp.

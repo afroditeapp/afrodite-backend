@@ -153,7 +153,7 @@ pub struct ModerationList {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct HandleModerationRequest {
-    accept: bool,
+    pub accept: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

@@ -11,7 +11,7 @@ use crate::{
     api::{
         media::data::{
             ContentState, Moderation, ModerationId, ModerationRequestId,
-            ModerationRequestQueueNumber, ModerationRequestState,
+            ModerationRequestQueueNumber, ModerationRequestState, HandleModerationRequest,
         },
         model::{
             AccountIdInternal, ContentId,
@@ -210,12 +210,32 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
 
     /// Update moderation state of Moderation.
     ///
-    /// Also updates
+    /// Also updates content state.
     pub async fn update_moderation(
         &self,
-        moderation_id: ModerationId,
-        state: ModerationRequestState,
+        moderator_id: AccountIdInternal,
+        moderation_request_owner: AccountIdInternal,
+        result: HandleModerationRequest,
     ) -> Result<(), SqliteDatabaseError> {
+
+        let account_row_id = moderation_request_owner.row_id();
+        let request = sqlx::query!(
+            r#"
+            SELECT request_row_id
+            FROM MediaModerationRequest
+            WHERE account_row_id = ?
+            "#,
+            account_row_id,
+        )
+        .fetch_one(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        let moderation_id = ModerationId {
+            request_id: ModerationRequestId { request_row_id: request.request_row_id },
+            account_id: moderator_id,
+        };
+
         let content = self.handle.read().media().moderation(moderation_id).await?;
 
         let mut transaction = self
@@ -260,6 +280,12 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
 
             Ok(())
         }
+
+        let state = if result.accept {
+            ModerationRequestState::Accepted
+        } else {
+            ModerationRequestState::Denied
+        };
 
         match actions(&mut transaction, moderation_id, state, content).await {
             Ok(()) => transaction
