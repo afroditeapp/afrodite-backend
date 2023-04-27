@@ -14,6 +14,11 @@ use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 // TODO: Add timeout for database commands
 
+// TODO: Add moderation request state information to HTTP GET
+// TODO: Add image content IDs to profiles
+// TODO: Profile visibility updates update updates microservice stuff
+// TODO: Add location index and location updating support
+
 pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 
 /// Get account's current profile.
