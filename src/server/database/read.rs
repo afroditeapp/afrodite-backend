@@ -1,11 +1,10 @@
 use std::fmt::Debug;
 
-use api_client::models::ModerationRequest;
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
-    api::model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, NewModerationRequest},
+    api::{model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, ModerationRequestContent}, media::data::ModerationRequest},
     utils::ErrorConversion,
 };
 
@@ -116,7 +115,7 @@ impl<'a> ReadCommands<'a> {
     pub async fn moderation_request(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<Option<NewModerationRequest>, DatabaseError> {
+    ) -> Result<Option<ModerationRequest>, DatabaseError> {
         self.sqlite
             .media()
             .current_moderation_request(account_id)

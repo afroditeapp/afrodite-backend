@@ -1,9 +1,6 @@
 pub mod data;
 pub mod internal;
 
-
-use std::f32::consts::E;
-
 use axum::extract::{BodyStream, Path};
 
 use axum::{Json, TypedHeader};
@@ -20,7 +17,7 @@ use crate::server::database::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, ModerationList, NewModerationRequest, HandleModerationRequest, ModerationRequestId,
+    ContentId, ModerationList, ModerationRequestContent, HandleModerationRequest, ModerationRequestId, ModerationRequest,
 };
 
 use super::model::AccountIdLight;
@@ -72,7 +69,7 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     get,
     path = "/media_api/moderation/request",
     responses(
-        (status = 200, description = "Get moderation request was successfull.", body = NewModerationRequest),
+        (status = 200, description = "Get moderation request was successfull.", body = ModerationRequest),
         (status = 304, description = "No moderation request found."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
@@ -82,7 +79,7 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
 pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
-) -> Result<Json<NewModerationRequest>, StatusCode> {
+) -> Result<Json<ModerationRequest>, StatusCode> {
     let account_id = state
         .api_keys()
         .api_key_exists(api_key.key())
@@ -110,7 +107,7 @@ pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
 #[utoipa::path(
     put,
     path = "/media_api/moderation/request",
-    request_body(content = NewModerationRequest),
+    request_body(content = ModerationRequestContent),
     responses(
         (status = 200, description = "Sending or updating new image moderation request was successfull."),
         (status = 401, description = "Unauthorized."),
@@ -120,7 +117,7 @@ pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
 )]
 pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Json(moderation_request): Json<NewModerationRequest>,
+    Json(moderation_request): Json<ModerationRequestContent>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state

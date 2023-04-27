@@ -46,7 +46,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_moderation_request
 
-> crate::models::NewModerationRequest get_moderation_request()
+> crate::models::ModerationRequest get_moderation_request()
 Get current moderation request.
 
 Get current moderation request. 
@@ -57,7 +57,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::NewModerationRequest**](NewModerationRequest.md)
+[**crate::models::ModerationRequest**](ModerationRequest.md)
 
 ### Authorization
 
@@ -162,7 +162,7 @@ Name | Type | Description  | Required | Notes
 
 ## put_moderation_request
 
-> put_moderation_request(new_moderation_request)
+> put_moderation_request(moderation_request_content)
 Create new or override old moderation request.
 
 Create new or override old moderation request.  Make sure that moderation request has content IDs which points to your own image slots. 
@@ -172,7 +172,7 @@ Create new or override old moderation request.  Make sure that moderation reques
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**new_moderation_request** | [**NewModerationRequest**](NewModerationRequest.md) |  | [required] |
+**moderation_request_content** | [**ModerationRequestContent**](ModerationRequestContent.md) |  | [required] |
 
 ### Return type
 

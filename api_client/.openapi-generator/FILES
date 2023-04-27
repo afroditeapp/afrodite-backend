@@ -23,9 +23,9 @@ docs/MediainternalApi.md
 docs/Moderation.md
 docs/ModerationList.md
 docs/ModerationRequest.md
+docs/ModerationRequestContent.md
 docs/ModerationRequestId.md
 docs/ModerationRequestState.md
-docs/NewModerationRequest.md
 docs/Profile.md
 docs/ProfileApi.md
 docs/ProfileLink.md
@@ -57,9 +57,9 @@ src/models/mod.rs
 src/models/moderation.rs
 src/models/moderation_list.rs
 src/models/moderation_request.rs
+src/models/moderation_request_content.rs
 src/models/moderation_request_id.rs
 src/models/moderation_request_state.rs
-src/models/new_moderation_request.rs
 src/models/profile.rs
 src/models/profile_link.rs
 src/models/profile_page.rs

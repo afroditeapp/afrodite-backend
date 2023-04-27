@@ -15,7 +15,7 @@ use crate::{
         },
         model::{
             AccountIdInternal, ContentId,
-            NewModerationRequest,
+            ModerationRequestContent,
         },
     },
     server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, current::media::write::CurrentWriteMediaCommands},
@@ -249,7 +249,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             transaction: &mut Transaction<'_, Sqlite>,
             moderation: ModerationId,
             state: ModerationRequestState,
-            content: NewModerationRequest,
+            content: ModerationRequestContent,
         ) -> Result<(), SqliteDatabaseError> {
             let new_content_state = match state {
                 ModerationRequestState::Accepted => ContentState::ModeratedAsAccepted,

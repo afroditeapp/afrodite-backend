@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**content** | [**crate::models::NewModerationRequest**](NewModerationRequest.md) |  | 
+**content** | [**crate::models::ModerationRequestContent**](ModerationRequestContent.md) |  | 
 **moderator_id** | [**crate::models::AccountIdLight**](AccountIdLight.md) |  | 
 **request_creator_id** | [**crate::models::AccountIdLight**](AccountIdLight.md) |  | 
 **request_id** | [**crate::models::ModerationRequestId**](ModerationRequestId.md) |  | 

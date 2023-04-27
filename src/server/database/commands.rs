@@ -22,7 +22,7 @@ use crate::{
         media::data::{Moderation, HandleModerationRequest},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            NewModerationRequest, Profile,
+            ModerationRequestContent, Profile,
         },
     },
     config::Config,
@@ -72,7 +72,7 @@ pub enum WriteCommand {
     SetModerationRequest {
         s: ResultSender<()>,
         account_id: AccountIdInternal,
-        request: NewModerationRequest,
+        request: ModerationRequestContent,
     },
     GetModerationListAndCreateNewIfNecessary {
         s: ResultSender<Vec<Moderation>>,
@@ -196,7 +196,7 @@ impl WriteCommandRunnerHandle {
     pub async fn set_moderation_request(
         &self,
         account_id: AccountIdInternal,
-        request: NewModerationRequest,
+        request: ModerationRequestContent,
     ) -> Result<(), DatabaseError> {
         self.send_event(|s| WriteCommand::SetModerationRequest {
             s,

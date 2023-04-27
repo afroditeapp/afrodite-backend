@@ -257,7 +257,7 @@ impl<'a> InternalApiManager<'a> {
                 .change_context(InternalApiError::DatabaseError)?
                 .ok_or(InternalApiError::MissingValue)?;
 
-            if request.camera() {
+            if request.content.camera() {
                 Ok(())
             } else {
                 Err(InternalApiError::MissingValue.into())

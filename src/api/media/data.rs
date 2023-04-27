@@ -24,7 +24,7 @@ pub struct ImageFile {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct NewModerationRequest {
+pub struct ModerationRequestContent {
     /// Use slot 1 image as camera image.
     camera_image: bool,
     /// Include slot 1 image in moderation request.
@@ -35,7 +35,7 @@ pub struct NewModerationRequest {
     image3: Option<ContentId>,
 }
 
-impl NewModerationRequest {
+impl ModerationRequestContent {
     pub fn content(&self) -> impl Iterator<Item = ContentId> {
         [Some(self.image1), self.image2, self.image3]
             .into_iter()
@@ -48,31 +48,40 @@ impl NewModerationRequest {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct ModerationRequest {
+pub struct ModerationRequestInternal {
     moderation_request_id: i64,
     account_id: AccountIdLight,
-    state_number: ModerationRequestState,
-    request: NewModerationRequest,
+    state: ModerationRequestState,
+    content: ModerationRequestContent,
 }
 
-impl ModerationRequest {
+impl ModerationRequestInternal {
     pub fn new(
         moderation_request_id: i64,
         account_id: AccountIdLight,
         state: ModerationRequestState,
-        request: NewModerationRequest,
+        content: ModerationRequestContent,
     ) -> Self {
         Self {
             moderation_request_id,
             account_id,
-            state_number: state,
-            request,
+            state,
+            content,
         }
     }
 
-    pub fn into_request(self) -> NewModerationRequest {
-        self.request
+    pub fn into_request(self) -> ModerationRequest {
+        ModerationRequest {
+            content: self.content,
+            state: self.state,
+        }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct ModerationRequest {
+    pub state: ModerationRequestState,
+    pub content: ModerationRequestContent,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -223,7 +232,7 @@ pub struct Moderation {
     pub request_creator_id: AccountIdLight,
     pub request_id: ModerationRequestId,
     pub moderator_id: AccountIdLight,
-    pub content: NewModerationRequest,
+    pub content: ModerationRequestContent,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]

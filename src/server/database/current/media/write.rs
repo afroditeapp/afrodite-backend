@@ -15,7 +15,7 @@ use crate::{
         },
         model::{
             AccountIdInternal, ContentId,
-            NewModerationRequest,
+            ModerationRequestContent,
         },
     },
     server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle},
@@ -223,7 +223,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
     pub async fn create_new_moderation_request(
         &self,
         request_creator: AccountIdInternal,
-        request: NewModerationRequest,
+        request: ModerationRequestContent,
     ) -> Result<(), SqliteDatabaseError> {
         self.handle
             .read()
@@ -259,7 +259,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
     pub async fn update_moderation_request(
         &self,
         request_owner_account_id: AccountIdInternal,
-        new_request: NewModerationRequest,
+        new_request: ModerationRequestContent,
     ) -> Result<(), SqliteDatabaseError> {
         // It does not matter if update is done even if moderation would be on
         // going.

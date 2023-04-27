@@ -47,8 +47,6 @@ pub enum PatchModerationRequestListError {
 #[serde(untagged)]
 pub enum PostHandleModerationRequestError {
     Status401(),
-    Status404(),
-    Status406(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -110,7 +108,7 @@ pub async fn get_image(configuration: &configuration::Configuration, account_id:
 }
 
 /// Get current moderation request. 
-pub async fn get_moderation_request(configuration: &configuration::Configuration, ) -> Result<crate::models::NewModerationRequest, Error<GetModerationRequestError>> {
+pub async fn get_moderation_request(configuration: &configuration::Configuration, ) -> Result<crate::models::ModerationRequest, Error<GetModerationRequestError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -256,7 +254,7 @@ pub async fn put_image_to_moderation_slot(configuration: &configuration::Configu
 }
 
 /// Create new or override old moderation request.  Make sure that moderation request has content IDs which points to your own image slots. 
-pub async fn put_moderation_request(configuration: &configuration::Configuration, new_moderation_request: crate::models::NewModerationRequest) -> Result<(), Error<PutModerationRequestError>> {
+pub async fn put_moderation_request(configuration: &configuration::Configuration, moderation_request_content: crate::models::ModerationRequestContent) -> Result<(), Error<PutModerationRequestError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -275,7 +273,7 @@ pub async fn put_moderation_request(configuration: &configuration::Configuration
         };
         local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&new_moderation_request);
+    local_var_req_builder = local_var_req_builder.json(&moderation_request_content);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

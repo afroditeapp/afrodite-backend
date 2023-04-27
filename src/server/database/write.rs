@@ -14,7 +14,7 @@ use crate::{
         media::data::{Moderation, HandleModerationRequest},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            NewModerationRequest, Profile,
+            ModerationRequestContent, Profile,
         },
     },
     config::Config,
@@ -238,7 +238,7 @@ impl<'a> WriteCommands<'a> {
     pub async fn set_moderation_request(
         &self,
         account_id: AccountIdInternal,
-        request: NewModerationRequest,
+        request: ModerationRequestContent,
     ) -> Result<(), DatabaseError> {
         self.current()
             .media()

@@ -12,8 +12,8 @@ use crate::api::media::data::{
     ModerationRequestQueueNumber, ModerationRequestState,
 };
 use crate::api::model::{
-    AccountIdInternal, ContentId, ModerationRequest,
-    NewModerationRequest, AccountIdLight,
+    AccountIdInternal, ContentId, ModerationRequestInternal,
+    ModerationRequestContent, AccountIdLight,
 };
 use crate::server::database::file::file::ImageSlot;
 
@@ -62,7 +62,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn content_validate_moderation_request_content(
         &self,
         content_owner: AccountIdInternal,
-        request_content: &NewModerationRequest,
+        request_content: &ModerationRequestContent,
     ) -> Result<(), SqliteDatabaseError> {
         let requested_content_set: HashSet<ContentId> = request_content.content().collect();
 
@@ -93,7 +93,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn current_moderation_request(
         &self,
         request_creator: AccountIdInternal,
-    ) -> Result<Option<ModerationRequest>, SqliteDatabaseError> {
+    ) -> Result<Option<ModerationRequestInternal>, SqliteDatabaseError> {
         let account_row_id = request_creator.row_id();
         let request = sqlx::query!(
             r#"
@@ -144,10 +144,10 @@ impl<'a> CurrentReadMediaCommands<'a> {
             }
         };
 
-        let data: NewModerationRequest =
+        let data: ModerationRequestContent =
             serde_json::from_str(data).into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
-        Ok(Some(ModerationRequest::new(
+        Ok(Some(ModerationRequestInternal::new(
             request.request_row_id,
             request_creator.as_light(),
             state,
@@ -158,7 +158,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_moderation_request_content(
         &self,
         id: ModerationRequestId,
-    ) -> Result<(NewModerationRequest, ModerationRequestQueueNumber, AccountIdLight), SqliteDatabaseError> {
+    ) -> Result<(ModerationRequestContent, ModerationRequestQueueNumber, AccountIdLight), SqliteDatabaseError> {
         let request = sqlx::query!(
             r#"
             SELECT json_text, queue_number, account_id as "account_id: uuid::Uuid"
@@ -172,7 +172,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        let data: NewModerationRequest = serde_json::from_str(&request.json_text)
+        let data: ModerationRequestContent = serde_json::from_str(&request.json_text)
             .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
         Ok((
@@ -206,7 +206,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
 
         let mut new_data = vec![];
         for r in data.into_iter() {
-            let data: NewModerationRequest = serde_json::from_str(&r.json_text)
+            let data: ModerationRequestContent = serde_json::from_str(&r.json_text)
                 .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
             let moderation = Moderation {
@@ -253,7 +253,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn moderation(
         &self,
         moderation: ModerationId,
-    ) -> Result<NewModerationRequest, SqliteDatabaseError> {
+    ) -> Result<ModerationRequestContent, SqliteDatabaseError> {
         let account_row_id = moderation.account_id.row_id();
         let content_to_be_moderated = sqlx::query!(
             r#"
@@ -268,7 +268,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        let data: NewModerationRequest = serde_json::from_str(&content_to_be_moderated.json_text)
+        let data: ModerationRequestContent = serde_json::from_str(&content_to_be_moderated.json_text)
             .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
         Ok(data)

@@ -13,23 +13,17 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ModerationRequest {
-    #[serde(rename = "account_id")]
-    pub account_id: Box<crate::models::AccountIdLight>,
-    #[serde(rename = "moderation_request_id")]
-    pub moderation_request_id: i64,
-    #[serde(rename = "request")]
-    pub request: Box<crate::models::NewModerationRequest>,
-    #[serde(rename = "state_number")]
-    pub state_number: crate::models::ModerationRequestState,
+    #[serde(rename = "content")]
+    pub content: Box<crate::models::ModerationRequestContent>,
+    #[serde(rename = "state")]
+    pub state: crate::models::ModerationRequestState,
 }
 
 impl ModerationRequest {
-    pub fn new(account_id: crate::models::AccountIdLight, moderation_request_id: i64, request: crate::models::NewModerationRequest, state_number: crate::models::ModerationRequestState) -> ModerationRequest {
+    pub fn new(content: crate::models::ModerationRequestContent, state: crate::models::ModerationRequestState) -> ModerationRequest {
         ModerationRequest {
-            account_id: Box::new(account_id),
-            moderation_request_id,
-            request: Box::new(request),
-            state_number,
+            content: Box::new(content),
+            state,
         }
     }
 }
