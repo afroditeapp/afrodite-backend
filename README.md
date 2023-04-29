@@ -66,3 +66,9 @@ All data: `.dump`
 ## Count lines of code
 
 `find src -name '*.rs' | xargs wc -l`
+
+Commit count:
+
+```
+git rev-list --count HEAD
+```
