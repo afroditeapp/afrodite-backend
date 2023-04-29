@@ -2,7 +2,6 @@ pub mod app;
 pub mod database;
 pub mod internal;
 
-
 use std::sync::Arc;
 
 use axum::Router;
@@ -14,11 +13,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     api::ApiDoc,
     config::Config,
-    server::{
-        app::App,
-        database::{DatabaseManager},
-        internal::InternalApp,
-    },
+    server::{app::App, database::DatabaseManager, internal::InternalApp},
 };
 
 pub struct PihkaServer {

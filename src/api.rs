@@ -8,9 +8,6 @@ pub mod profile;
 pub mod model;
 pub mod utils;
 
-
-
-
 use utoipa::{Modify, OpenApi};
 
 use crate::{
@@ -24,8 +21,6 @@ use crate::{
         internal::InternalApiManager,
     },
 };
-
-
 
 use utils::SecurityApiTokenDefault;
 

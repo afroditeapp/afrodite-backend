@@ -1,34 +1,30 @@
-
-use std::{marker::PhantomData, fmt::{Debug}};
-
+use std::{fmt::Debug, marker::PhantomData};
 
 use axum::extract::BodyStream;
 use error_stack::{Report, Result, ResultExt};
 
-
-
-
-
-
 use crate::{
     api::{
-        media::data::{Moderation, HandleModerationRequest},
+        media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
             ModerationRequestContent,
         },
     },
     config::Config,
-    server::database::{DatabaseError},
-    utils::{ErrorConversion, ConvertCommandError},
+    server::database::DatabaseError,
+    utils::{ConvertCommandError, ErrorConversion},
 };
 
 use super::{
-    cache::{DatabaseCache, WriteCacheJson, CacheError},
+    cache::{CacheError, DatabaseCache, WriteCacheJson},
     current::CurrentDataWriteCommands,
     file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
-    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson, SqliteDatabaseError},
+    sqlite::{
+        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
+        SqliteUpdateJson,
+    },
 };
 
 pub struct NoId;
@@ -59,15 +55,16 @@ impl From<(AccountIdLight, ContentId)> for DatabaseId {
     }
 }
 
-
 impl From<NoId> for DatabaseId {
     fn from(_: NoId) -> Self {
         DatabaseId::Empty
     }
 }
 
-pub type WriteResult<T, Err, WriteContext = T> = std::result::Result<T, WriteError<error_stack::Report<Err>, WriteContext>>;
-pub type HistoryWriteResult<T, Err, WriteContext = T> = std::result::Result<T, HistoryWriteError<error_stack::Report<Err>, WriteContext>>;
+pub type WriteResult<T, Err, WriteContext = T> =
+    std::result::Result<T, WriteError<error_stack::Report<Err>, WriteContext>>;
+pub type HistoryWriteResult<T, Err, WriteContext = T> =
+    std::result::Result<T, HistoryWriteError<error_stack::Report<Err>, WriteContext>>;
 
 #[derive(Debug)]
 pub struct WriteError<Err, Target = ()> {
@@ -75,21 +72,34 @@ pub struct WriteError<Err, Target = ()> {
     pub t: PhantomData<Target>,
 }
 
-impl <Target> From<error_stack::Report<SqliteDatabaseError>> for WriteError<error_stack::Report<SqliteDatabaseError>, Target> {
+impl<Target> From<error_stack::Report<SqliteDatabaseError>>
+    for WriteError<error_stack::Report<SqliteDatabaseError>, Target>
+{
     fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
-        Self { t: PhantomData, e: value }
+        Self {
+            t: PhantomData,
+            e: value,
+        }
     }
 }
 
-impl <Target> From<error_stack::Report<CacheError>> for WriteError<error_stack::Report<CacheError>, Target> {
+impl<Target> From<error_stack::Report<CacheError>>
+    for WriteError<error_stack::Report<CacheError>, Target>
+{
     fn from(value: error_stack::Report<CacheError>) -> Self {
-        Self { t: PhantomData, e: value }
+        Self {
+            t: PhantomData,
+            e: value,
+        }
     }
 }
 
-impl <Target> From<CacheError> for WriteError<error_stack::Report<CacheError>, Target> {
+impl<Target> From<CacheError> for WriteError<error_stack::Report<CacheError>, Target> {
     fn from(value: CacheError) -> Self {
-        Self { t: PhantomData, e: value.into() }
+        Self {
+            t: PhantomData,
+            e: value.into(),
+        }
     }
 }
 
@@ -99,9 +109,14 @@ pub struct HistoryWriteError<Err, Target = ()> {
     pub t: PhantomData<Target>,
 }
 
-impl <Target> From<error_stack::Report<SqliteDatabaseError>> for HistoryWriteError<error_stack::Report<SqliteDatabaseError>, Target> {
+impl<Target> From<error_stack::Report<SqliteDatabaseError>>
+    for HistoryWriteError<error_stack::Report<SqliteDatabaseError>, Target>
+{
     fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
-        Self { t: PhantomData, e: value }
+        Self {
+            t: PhantomData,
+            e: value,
+        }
     }
 }
 
@@ -144,7 +159,6 @@ impl<'a> WriteCommands<'a> {
         history_wirte: HistoryWriteHandle,
         cache: &DatabaseCache,
     ) -> Result<AccountIdInternal, DatabaseError> {
-
         let current = CurrentDataWriteCommands::new(&current_data_write);
         let history = HistoryWriteCommands::new(&history_wirte);
 
@@ -153,36 +167,18 @@ impl<'a> WriteCommands<'a> {
 
         // TODO: Use transactions here. One for current and other for history.
 
-        let id = current
-            .store_account_id(id_light)
-            .await
-            .convert(id_light)?;
+        let id = current.store_account_id(id_light).await.convert(id_light)?;
 
-        history
-            .store_account_id(id)
-            .await
-            .convert(id)?;
+        history.store_account_id(id).await.convert(id)?;
 
-        cache
-            .insert_account_if_not_exists(id)
-            .await
-            .convert(id)?;
+        cache.insert_account_if_not_exists(id).await.convert(id)?;
 
-        current
-            .store_api_key(id, None)
-            .await
-            .convert(id)?;
+        current.store_api_key(id, None).await.convert(id)?;
 
         if config.components().account {
-            current
-                .store_account(id, &account)
-                .await
-                .convert(id)?;
+            current.store_account(id, &account).await.convert(id)?;
 
-            history
-                .store_account(id, &account)
-                .await
-                .convert(id)?;
+            history.store_account(id, &account).await.convert(id)?;
 
             cache
                 .write_cache(id.as_light(), |cache| {
@@ -203,10 +199,7 @@ impl<'a> WriteCommands<'a> {
         }
 
         if config.components().profile {
-            let profile = current.profile()
-                .init_profile(id)
-                .await
-                .convert(id)?;
+            let profile = current.profile().init_profile(id).await.convert(id)?;
 
             // TOOD: update history code
             // history
@@ -242,8 +235,7 @@ impl<'a> WriteCommands<'a> {
     }
 
     pub async fn update_data<
-        T:
-            Clone
+        T: Clone
             + Debug
             + Send
             + SqliteUpdateJson
@@ -263,11 +255,15 @@ impl<'a> WriteCommands<'a> {
         // Empty implementation if not really cacheable.
         data.write_to_cache(id.as_light(), &self.cache)
             .await
-            .with_info_lazy(|| format!("Cache update {:?} failed, id: {:?}", PhantomData::<T>, id))?;
+            .with_info_lazy(|| {
+                format!("Cache update {:?} failed, id: {:?}", PhantomData::<T>, id)
+            })?;
 
         data.history_update_json(id, &self.history())
             .await
-            .with_info_lazy(|| format!("History update {:?} failed, id: {:?}", PhantomData::<T>, id))
+            .with_info_lazy(|| {
+                format!("History update {:?} failed, id: {:?}", PhantomData::<T>, id)
+            })
     }
 
     pub async fn set_moderation_request(

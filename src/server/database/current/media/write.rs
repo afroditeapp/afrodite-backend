@@ -1,30 +1,18 @@
-
-
-
-
 use error_stack::Result;
 
 use sqlx::{Sqlite, Transaction};
 
-
 use crate::{
     api::{
-        media::data::{
-            ContentState,
-            ModerationRequestQueueNumber, ModerationRequest,
-        },
-        model::{
-            AccountIdInternal, ContentId,
-            ModerationRequestContent,
-        },
+        media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber},
+        model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
     server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
 };
 
-use super::super::super::sqlite::{SqliteDatabaseError};
+use super::super::super::sqlite::SqliteDatabaseError;
 
 use crate::utils::IntoReportExt;
-
 
 #[must_use]
 pub struct DatabaseTransaction<'a> {

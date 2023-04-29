@@ -1,9 +1,7 @@
 use std::collections::HashSet;
 
-
-
 use error_stack::Result;
-use tokio_stream::{StreamExt};
+use tokio_stream::StreamExt;
 
 use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 
@@ -12,15 +10,13 @@ use crate::api::media::data::{
     ModerationRequestQueueNumber, ModerationRequestState,
 };
 use crate::api::model::{
-    AccountIdInternal, ContentId, ModerationRequestInternal,
-    ModerationRequestContent, AccountIdLight,
+    AccountIdInternal, AccountIdLight, ContentId, ModerationRequestContent,
+    ModerationRequestInternal,
 };
 use crate::server::database::file::file::ImageSlot;
 
-
-
 use crate::server::database::read::ReadResult;
-use crate::utils::{IntoReportExt};
+use crate::utils::IntoReportExt;
 
 pub struct CurrentReadMediaCommands<'a> {
     handle: &'a SqliteReadHandle,
@@ -81,7 +77,8 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        let database_content_set: HashSet<ContentId> = request.into_iter().map(|r| r.content_id).collect();
+        let database_content_set: HashSet<ContentId> =
+            request.into_iter().map(|r| r.content_id).collect();
 
         if requested_content_set == database_content_set {
             Ok(())
@@ -158,7 +155,14 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_moderation_request_content(
         &self,
         id: ModerationRequestId,
-    ) -> Result<(ModerationRequestContent, ModerationRequestQueueNumber, AccountIdLight), SqliteDatabaseError> {
+    ) -> Result<
+        (
+            ModerationRequestContent,
+            ModerationRequestQueueNumber,
+            AccountIdLight,
+        ),
+        SqliteDatabaseError,
+    > {
         let request = sqlx::query!(
             r#"
             SELECT json_text, queue_number, account_id as "account_id: uuid::Uuid"
@@ -268,8 +272,9 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        let data: ModerationRequestContent = serde_json::from_str(&content_to_be_moderated.json_text)
-            .into_error(SqliteDatabaseError::SerdeDeserialize)?;
+        let data: ModerationRequestContent =
+            serde_json::from_str(&content_to_be_moderated.json_text)
+                .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
         Ok(data)
     }

@@ -1,4 +1,3 @@
-
 pub struct NameProvider;
 
 impl NameProvider {
@@ -24,27 +23,11 @@ impl NameProvider {
 // https://www.mtvuutiset.fi/artikkeli/tassa-ovat-suomen-kaikkien-aikojen-suosituimmat-etunimet-loydatko-omasi/3198590
 
 pub const FIRST_NAMES_WOMAN: &[&str] = &[
-    "Maria",
-    "Helana",
-    "Johanna",
-    "Anneli",
-    "Kaarina",
-    "Marjatta",
-    "Anna",
-    "Liisa",
-    "Annikki",
+    "Maria", "Helana", "Johanna", "Anneli", "Kaarina", "Marjatta", "Anna", "Liisa", "Annikki",
     "Hannele",
 ];
 
 pub const FIRST_NAMES_MEN: &[&str] = &[
-    "Juhani",
-    "Johannes",
-    "Olavi",
-    "Antero",
-    "Tapani",
-    "Kalevi",
-    "Tapio",
-    "Matti",
-    "Mikael",
+    "Juhani", "Johannes", "Olavi", "Antero", "Tapani", "Kalevi", "Tapio", "Matti", "Mikael",
     "Ilmari",
 ];

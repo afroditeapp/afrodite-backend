@@ -5,10 +5,8 @@ use axum::extract::{BodyStream, Path};
 
 use axum::{Json, TypedHeader};
 
-use headers::{ContentType};
+use headers::ContentType;
 use hyper::StatusCode;
-
-
 
 use tracing::error;
 
@@ -17,12 +15,12 @@ use crate::server::database::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, ModerationList, ModerationRequestContent, HandleModerationRequest, ModerationRequest,
+    ContentId, HandleModerationRequest, ModerationList, ModerationRequest, ModerationRequestContent,
 };
 
 use super::model::AccountIdLight;
 use super::utils::ApiKeyHeader;
-use super::{GetApiKeys, ReadDatabase, WriteDatabase, GetInternalApi, GetUsers};
+use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
@@ -263,7 +261,9 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_handle_moderation_request<S: GetInternalApi + WriteDatabase + GetApiKeys + GetUsers>(
+pub async fn post_handle_moderation_request<
+    S: GetInternalApi + WriteDatabase + GetApiKeys + GetUsers,
+>(
     Path(moderation_request_owner_account_id): Path<AccountIdLight>,
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(moderation_decision): Json<HandleModerationRequest>,
@@ -275,21 +275,37 @@ pub async fn post_handle_moderation_request<S: GetInternalApi + WriteDatabase + 
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let account = state.internal_api().get_account_state(admin_account_id).await.map_err(|e| {
-        error!("{e:?}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
-
-    if account.capablities().admin_moderate_images {
-        let moderation_request_owner = state.users().get_internal_id(moderation_request_owner_account_id).await.map_err(|e| {
+    let account = state
+        .internal_api()
+        .get_account_state(admin_account_id)
+        .await
+        .map_err(|e| {
             error!("{e:?}");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-        state.write_database().update_moderation(admin_account_id, moderation_request_owner, moderation_decision).await.map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })
+    if account.capablities().admin_moderate_images {
+        let moderation_request_owner = state
+            .users()
+            .get_internal_id(moderation_request_owner_account_id)
+            .await
+            .map_err(|e| {
+                error!("{e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+
+        state
+            .write_database()
+            .update_moderation(
+                admin_account_id,
+                moderation_request_owner,
+                moderation_decision,
+            )
+            .await
+            .map_err(|e| {
+                error!("{e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }

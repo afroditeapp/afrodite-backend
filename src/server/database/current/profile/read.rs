@@ -1,24 +1,12 @@
-
 use async_trait::async_trait;
 use error_stack::Result;
-
-
 
 use crate::server::database::current::SqliteReadCommands;
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 
+use crate::api::model::*;
 
-use crate::api::model::{
-    *
-};
-
-use crate::utils::{IntoReportExt};
-
-
-
-
-
-
+use crate::utils::IntoReportExt;
 
 pub struct CurrentReadProfileCommands<'a> {
     handle: &'a SqliteReadHandle,
@@ -28,7 +16,6 @@ impl<'a> CurrentReadProfileCommands<'a> {
     pub fn new(handle: &'a SqliteReadHandle) -> Self {
         Self { handle }
     }
-
 }
 
 #[async_trait]

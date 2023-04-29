@@ -33,8 +33,6 @@ use std::{
 
 use nalgebra::{DMatrix, Dyn, VecStorage};
 
-
-
 #[derive(Debug, Hash, PartialEq, Clone, Copy)]
 pub struct LocationIndexKey {
     pub y: u16,

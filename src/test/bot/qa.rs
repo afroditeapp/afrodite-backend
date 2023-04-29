@@ -2,29 +2,27 @@
 //!
 
 pub mod account;
-pub mod profile;
 pub mod media;
+pub mod profile;
 
 use std::{fmt::Debug, sync::atomic::AtomicBool};
 
-use api_client::{models::AccountState};
+use api_client::models::AccountState;
 use async_trait::async_trait;
-
-
-
 
 use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS};
 
-use super::{BotState, BotStruct, actions::{BotAction, admin::ModerateMediaModerationRequest, account::{SetAccountSetup, AssertAccountState, Register, Login, CompleteAccountSetup}, media::{SendImageToSlot, MakeModerationRequest}, SleepMillis}};
+use super::{
+    actions::{
+        account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
+        admin::ModerateMediaModerationRequest,
+        media::{MakeModerationRequest, SendImageToSlot},
+        BotAction, SleepMillis,
+    },
+    BotState, BotStruct,
+};
 
-
-
-
-use tracing::{log::info};
-
-
-
-
+use tracing::log::info;
 
 static ADMIN_QUIT_NOTIFICATION: AtomicBool = AtomicBool::new(false);
 
@@ -42,16 +40,10 @@ macro_rules! test {
     };
 }
 
-pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[
-    ACCOUNT_TESTS,
-    MEDIA_TESTS,
-];
+pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[ACCOUNT_TESTS, MEDIA_TESTS];
 
 pub fn test_count() -> usize {
-    ALL_QA_TESTS
-        .iter()
-        .map(|tests| tests.len())
-        .sum()
+    ALL_QA_TESTS.iter().map(|tests| tests.len()).sum()
 }
 
 #[derive(Debug)]
@@ -112,11 +104,12 @@ impl Qa {
             &ModerateMediaModerationRequest as &dyn BotAction,
         ];
 
-        let iter = setup
-            .into_iter()
-            .chain(admin_actions.into_iter().cycle().take_while(|_| {
-                !ADMIN_QUIT_NOTIFICATION.load(std::sync::atomic::Ordering::Relaxed)
-            }));
+        let iter =
+            setup
+                .into_iter()
+                .chain(admin_actions.into_iter().cycle().take_while(|_| {
+                    !ADMIN_QUIT_NOTIFICATION.load(std::sync::atomic::Ordering::Relaxed)
+                }));
         Self {
             state,
             test_name: "Admin bot",
@@ -134,7 +127,6 @@ impl BotStruct for Qa {
     fn state(&self) -> &BotState {
         &self.state
     }
-
 
     fn notify_task_bot_count_decreased(&mut self, bot_count: usize) {
         if bot_count <= 1 {

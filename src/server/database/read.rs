@@ -4,22 +4,28 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
-    api::{model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId}, media::data::ModerationRequest},
-    utils::{ErrorConversion, ConvertCommandError},
+    api::{
+        media::data::ModerationRequest,
+        model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId},
+    },
+    utils::{ConvertCommandError, ErrorConversion},
 };
 
 use super::{
-    cache::{DatabaseCache, ReadCacheJson, CacheError},
+    cache::{CacheError, DatabaseCache, ReadCacheJson},
     current::SqliteReadCommands,
     file::{utils::FileDir, FileError},
-    sqlite::{SqliteReadHandle, SqliteSelectJson, SqliteDatabaseError},
-    DatabaseError, write::{NoId},
+    sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson},
+    write::NoId,
+    DatabaseError,
 };
 
-use error_stack::{Result};
+use error_stack::Result;
 
-pub type ReadResult<T, Err, WriteContext = T> = std::result::Result<T, ReadError<error_stack::Report<Err>, WriteContext>>;
-pub type HistoryReadResult<T, Err, WriteContext = T> = std::result::Result<T, HistoryReadError<error_stack::Report<Err>, WriteContext>>;
+pub type ReadResult<T, Err, WriteContext = T> =
+    std::result::Result<T, ReadError<error_stack::Report<Err>, WriteContext>>;
+pub type HistoryReadResult<T, Err, WriteContext = T> =
+    std::result::Result<T, HistoryReadError<error_stack::Report<Err>, WriteContext>>;
 
 #[derive(Debug)]
 pub struct ReadError<Err, Target = ()> {
@@ -27,39 +33,65 @@ pub struct ReadError<Err, Target = ()> {
     pub t: PhantomData<Target>,
 }
 
-impl <Target> From<error_stack::Report<SqliteDatabaseError>> for ReadError<error_stack::Report<SqliteDatabaseError>, Target> {
+impl<Target> From<error_stack::Report<SqliteDatabaseError>>
+    for ReadError<error_stack::Report<SqliteDatabaseError>, Target>
+{
     fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
-        Self { t: PhantomData, e: value }
+        Self {
+            t: PhantomData,
+            e: value,
+        }
     }
 }
 
-impl <Target> From<error_stack::Report<CacheError>> for ReadError<error_stack::Report<CacheError>, Target> {
+impl<Target> From<error_stack::Report<CacheError>>
+    for ReadError<error_stack::Report<CacheError>, Target>
+{
     fn from(value: error_stack::Report<CacheError>) -> Self {
-        Self { t: PhantomData, e: value }
+        Self {
+            t: PhantomData,
+            e: value,
+        }
     }
 }
 
-impl <Target> From<error_stack::Report<FileError>> for ReadError<error_stack::Report<FileError>, Target> {
+impl<Target> From<error_stack::Report<FileError>>
+    for ReadError<error_stack::Report<FileError>, Target>
+{
     fn from(value: error_stack::Report<FileError>) -> Self {
-        Self { t: PhantomData, e: value }
+        Self {
+            t: PhantomData,
+            e: value,
+        }
     }
 }
 
-impl <Target> From<SqliteDatabaseError> for ReadError<error_stack::Report<SqliteDatabaseError>, Target> {
+impl<Target> From<SqliteDatabaseError>
+    for ReadError<error_stack::Report<SqliteDatabaseError>, Target>
+{
     fn from(value: SqliteDatabaseError) -> Self {
-        Self { t: PhantomData, e: value.into() }
+        Self {
+            t: PhantomData,
+            e: value.into(),
+        }
     }
 }
 
-impl <Target> From<CacheError> for ReadError<error_stack::Report<CacheError>, Target> {
+impl<Target> From<CacheError> for ReadError<error_stack::Report<CacheError>, Target> {
     fn from(value: CacheError) -> Self {
-        Self { t: PhantomData, e: value.into() }
+        Self {
+            t: PhantomData,
+            e: value.into(),
+        }
     }
 }
 
-impl <Target> From<FileError> for ReadError<error_stack::Report<FileError>, Target> {
+impl<Target> From<FileError> for ReadError<error_stack::Report<FileError>, Target> {
     fn from(value: FileError) -> Self {
-        Self { t: PhantomData, e: value.into() }
+        Self {
+            t: PhantomData,
+            e: value.into(),
+        }
     }
 }
 
@@ -69,9 +101,14 @@ pub struct HistoryReadError<Err, Target = ()> {
     pub t: PhantomData<Target>,
 }
 
-impl <Target> From<error_stack::Report<SqliteDatabaseError>> for HistoryReadError<error_stack::Report<SqliteDatabaseError>, Target> {
+impl<Target> From<error_stack::Report<SqliteDatabaseError>>
+    for HistoryReadError<error_stack::Report<SqliteDatabaseError>, Target>
+{
     fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
-        Self { t: PhantomData, e: value }
+        Self {
+            t: PhantomData,
+            e: value,
+        }
     }
 }
 
@@ -91,15 +128,8 @@ impl<'a> ReadCommands<'a> {
     }
 
     pub async fn user_api_key(&self, id: AccountIdLight) -> Result<Option<ApiKey>, DatabaseError> {
-        let id = self
-            .cache
-            .to_account_id_internal(id)
-            .await
-            .convert(id)?;
-        self.sqlite
-            .api_key(id)
-            .await
-            .convert(id)
+        let id = self.cache.to_account_id_internal(id).await.convert(id)?;
+        self.sqlite.api_key(id).await.convert(id)
     }
 
     pub async fn account_ids<T: FnMut(AccountIdInternal)>(
@@ -121,7 +151,9 @@ impl<'a> ReadCommands<'a> {
         if T::CACHED_JSON {
             T::read_from_cache(id.as_light(), self.cache)
                 .await
-                .with_info_lazy(|| format!("Cache read {:?} failed, id: {:?}", PhantomData::<T>, id))
+                .with_info_lazy(|| {
+                    format!("Cache read {:?} failed, id: {:?}", PhantomData::<T>, id)
+                })
         } else {
             T::select_json(id, &self.sqlite)
                 .await

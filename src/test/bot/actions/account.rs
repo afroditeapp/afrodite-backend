@@ -1,18 +1,20 @@
+use std::fmt::Debug;
 
-use std::fmt::{Debug};
-
-use api_client::{apis::{account_api::{post_register, post_login, post_account_setup, get_account_state, post_complete_setup}}, models::{AccountSetup, AccountState}};
+use api_client::{
+    apis::account_api::{
+        get_account_state, post_account_setup, post_complete_setup, post_login, post_register,
+    },
+    models::{AccountSetup, AccountState},
+};
 use async_trait::async_trait;
 
+use error_stack::Result;
 
-use error_stack::{Result};
-
-
-
-use super::{super::super::client::{TestError}, BotAction};
+use super::{super::super::client::TestError, BotAction};
 
 use crate::{
-    utils::IntoReportExt, test::bot::utils::{name::NameProvider, assert::bot_assert_eq},
+    test::bot::utils::{assert::bot_assert_eq, name::NameProvider},
+    utils::IntoReportExt,
 };
 
 use super::BotState;
@@ -68,13 +70,13 @@ impl BotAction for AssertAccountState {
 }
 
 #[derive(Debug)]
-pub struct SetAccountSetup { pub email: Option<&'static str> }
+pub struct SetAccountSetup {
+    pub email: Option<&'static str>,
+}
 
 impl SetAccountSetup {
     pub const fn new() -> Self {
-        Self {
-            email: None
-        }
+        Self { email: None }
     }
 
     pub const fn admin() -> &'static dyn BotAction {
@@ -89,7 +91,8 @@ impl BotAction for SetAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let name = NameProvider::men_first_name().to_string();
         let setup = AccountSetup {
-            email: self.email
+            email: self
+                .email
                 .map(|email| email.to_string())
                 .unwrap_or(format!("{}@example.com", &name)),
             name,

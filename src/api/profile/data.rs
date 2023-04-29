@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema, IntoParams};
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::media::data::{ContentId};
-
+use crate::api::media::data::ContentId;
 
 /// Profile's database data
 #[derive(Debug, Clone)]
@@ -32,7 +31,12 @@ pub struct Profile {
 
 impl Profile {
     pub fn into_update(self) -> ProfileUpdate {
-        ProfileUpdate { profile_text: self.profile_text, image1: self.image1, image2: self.image2, image3: self.image3 }
+        ProfileUpdate {
+            profile_text: self.profile_text,
+            image1: self.image1,
+            image2: self.image2,
+            image3: self.image3,
+        }
     }
 }
 
@@ -81,7 +85,9 @@ impl ProfileUpdateInternal {
     pub fn new(new_data: ProfileUpdate) -> Self {
         Self {
             new_data,
-            version: ProfileVersion { version_uuid: uuid::Uuid::new_v4() },
+            version: ProfileVersion {
+                version_uuid: uuid::Uuid::new_v4(),
+            },
         }
     }
 }
@@ -131,7 +137,7 @@ pub struct ProfileLink {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
 pub struct ProfileVersion {
-    version_uuid: uuid::Uuid
+    version_uuid: uuid::Uuid,
 }
 
 impl sqlx::Type<sqlx::Sqlite> for ProfileVersion {
@@ -144,12 +150,18 @@ impl sqlx::Type<sqlx::Sqlite> for ProfileVersion {
     }
 }
 
-impl <'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
-    fn encode_by_ref<'q>(&self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+impl<'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
+    fn encode_by_ref<'q>(
+        &self,
+        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
         self.version_uuid.encode_by_ref(buf)
     }
 
-    fn encode<'q>(self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull
+    fn encode<'q>(
+        self,
+        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull
     where
         Self: Sized,
     {
@@ -166,7 +178,10 @@ impl <'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
 }
 
 impl sqlx::Decode<'_, sqlx::Sqlite> for ProfileVersion {
-    fn decode(value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
-        <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value).map(|id| ProfileVersion { version_uuid: id})
+    fn decode(
+        value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef,
+    ) -> Result<Self, sqlx::error::BoxDynError> {
+        <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value)
+            .map(|id| ProfileVersion { version_uuid: id })
     }
 }

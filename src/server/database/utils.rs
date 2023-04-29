@@ -1,17 +1,11 @@
-
-
 use error_stack::Result;
 
-
-
-
-use crate::{api::model::{
-    AccountIdInternal, AccountIdLight, ApiKey,
-}, utils::ConvertCommandError};
-
-use super::{
-    cache::{CacheError, DatabaseCache},
+use crate::{
+    api::model::{AccountIdInternal, AccountIdLight, ApiKey},
+    utils::ConvertCommandError,
 };
+
+use super::cache::{CacheError, DatabaseCache};
 
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()

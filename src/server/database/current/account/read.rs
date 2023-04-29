@@ -1,21 +1,15 @@
-
 use async_trait::async_trait;
 use error_stack::Result;
 
-
-
+use crate::api::account::data::AccountSetup;
 use crate::server::database::current::SqliteReadCommands;
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteSelectJson};
-use crate::api::account::data::AccountSetup;
 
-use crate::api::model::{
-    *
-};
+use crate::api::model::*;
 
-use crate::utils::{IntoReportExt};
+use crate::utils::IntoReportExt;
 
 use crate::read_json;
-
 
 #[async_trait]
 impl SqliteSelectJson for Account {
@@ -35,8 +29,6 @@ impl SqliteSelectJson for Account {
         )
     }
 }
-
-
 
 #[async_trait]
 impl SqliteSelectJson for AccountSetup {

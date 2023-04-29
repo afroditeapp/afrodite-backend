@@ -227,21 +227,16 @@ impl Account {
     }
 
     pub fn new_from(state: AccountState, capablities: Capabilities) -> Self {
-        Self {
-            state,
-            capablities,
-        }
+        Self { state, capablities }
     }
 
     pub fn state(&self) -> AccountState {
         self.state
     }
 
-
     pub fn capablities(&self) -> &Capabilities {
         &self.capablities
     }
-
 
     pub fn complete_setup(&mut self) {
         if self.state == AccountState::InitialSetup {

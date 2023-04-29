@@ -1,9 +1,5 @@
 //! Types related to files
 
-
-
-
-
 #[derive(Debug)]
 pub struct StaticFileName<'a>(&'a str);
 

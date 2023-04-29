@@ -1,8 +1,6 @@
 //! Routes for server to server connections
 
-
-
-use api_client::{apis::{accountinternal_api, configuration::Configuration, mediainternal_api}};
+use api_client::apis::{accountinternal_api, configuration::Configuration, mediainternal_api};
 use axum::{
     routing::{get, post},
     Router,
@@ -12,13 +10,26 @@ use error_stack::{Result, ResultExt};
 
 use hyper::StatusCode;
 
-use tracing::{info, error};
+use tracing::{error, info};
 
-use crate::{api::{self, model::{AccountIdInternal, Account, Capabilities, AccountState}}, config::InternalApiUrls, utils::IntoReportExt};
+use crate::{
+    api::{
+        self,
+        model::{Account, AccountIdInternal, AccountState, Capabilities},
+    },
+    config::InternalApiUrls,
+    utils::IntoReportExt,
+};
 
 use crate::{api::model::ApiKey, config::Config};
 
-use super::{app::AppState, database::{utils::{ApiKeyManager, AccountIdManager}, read::ReadCommands}};
+use super::{
+    app::AppState,
+    database::{
+        read::ReadCommands,
+        utils::{AccountIdManager, ApiKeyManager},
+    },
+};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -41,7 +52,6 @@ pub enum InternalApiError {
 
     // #[error("Joining text to URL failed")]
     // ApiUrlJoinError,
-
     #[error("Missing value")]
     MissingValue,
 
@@ -54,20 +64,21 @@ pub struct InternalApp;
 
 impl InternalApp {
     pub fn create_account_server_router(state: AppState) -> Router {
-        Router::new().route(
-            api::account::internal::PATH_INTERNAL_CHECK_API_KEY,
-            get({
-                let state = state.clone();
-                move |body| api::account::internal::check_api_key(body, state)
-            }),
-        )
-        .route(
-            api::account::internal::PATH_INTERNAL_GET_ACCOUNT_STATE,
-            get({
-                let state = state.clone();
-                move |param1| api::account::internal::internal_get_account_state(param1, state)
-            }),
-        )
+        Router::new()
+            .route(
+                api::account::internal::PATH_INTERNAL_CHECK_API_KEY,
+                get({
+                    let state = state.clone();
+                    move |body| api::account::internal::check_api_key(body, state)
+                }),
+            )
+            .route(
+                api::account::internal::PATH_INTERNAL_GET_ACCOUNT_STATE,
+                get({
+                    let state = state.clone();
+                    move |param1| api::account::internal::internal_get_account_state(param1, state)
+                }),
+            )
     }
 
     pub fn create_profile_server_router(_state: AppState) -> Router {
@@ -162,7 +173,7 @@ impl<'a> InternalApiManager<'a> {
         api_client: &'a InternalApiClient,
         keys: ApiKeyManager<'a>,
         read_database: ReadCommands<'a>,
-        account_id_manager: AccountIdManager<'a>
+        account_id_manager: AccountIdManager<'a>,
     ) -> Self {
         Self {
             config,
@@ -182,7 +193,13 @@ impl<'a> InternalApiManager<'a> {
         } else if !self.config.components().account {
             // Check ApiKey from external service
 
-            let result = accountinternal_api::check_api_key(self.api_client.account()?, api_client::models::ApiKey { api_key: key.into_string() }).await;
+            let result = accountinternal_api::check_api_key(
+                self.api_client.account()?,
+                api_client::models::ApiKey {
+                    api_key: key.into_string(),
+                },
+            )
+            .await;
 
             match result {
                 Ok(_res) => {
@@ -205,17 +222,24 @@ impl<'a> InternalApiManager<'a> {
         }
     }
 
-    pub async fn get_account_state(&self, account_id: AccountIdInternal) -> Result<Account, InternalApiError> {
+    pub async fn get_account_state(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<Account, InternalApiError> {
         if self.config.components().account {
-            self
-                .read_database
+            self.read_database
                 .read_json::<Account>(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)
         } else {
             // TODO: Save account state to cache?
 
-            let account = accountinternal_api::internal_get_account_state(self.api_client.account()?, &account_id.as_light().to_string()).await.into_error(InternalApiError::ApiRequest)?;
+            let account = accountinternal_api::internal_get_account_state(
+                self.api_client.account()?,
+                &account_id.as_light().to_string(),
+            )
+            .await
+            .into_error(InternalApiError::ApiRequest)?;
 
             let state = match account.state {
                 api_client::models::AccountState::InitialSetup => AccountState::InitialSetup,
@@ -249,9 +273,13 @@ impl<'a> InternalApiManager<'a> {
         }
     }
 
-    pub async fn media_check_moderation_request_for_account(&self, account_id: AccountIdInternal) -> Result<(), InternalApiError> {
+    pub async fn media_check_moderation_request_for_account(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<(), InternalApiError> {
         if self.config.components().media {
-            let request = self.read_database
+            let request = self
+                .read_database
                 .moderation_request(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)?
@@ -265,9 +293,10 @@ impl<'a> InternalApiManager<'a> {
         } else {
             mediainternal_api::internal_get_check_moderation_request_for_account(
                 self.api_client.media()?,
-                &account_id.as_light().to_string()
-            ).await
-                .into_error(InternalApiError::MissingValue)
+                &account_id.as_light().to_string(),
+            )
+            .await
+            .into_error(InternalApiError::MissingValue)
         }
     }
 

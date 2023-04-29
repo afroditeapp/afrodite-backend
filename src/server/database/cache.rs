@@ -6,16 +6,22 @@ use tokio_stream::StreamExt;
 use tracing::info;
 
 use crate::{
-    api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdateInternal},
-    config::Config, utils::ConvertCommandError, server::database::write::NoId,
+    api::model::{
+        Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal,
+        ProfileUpdateInternal,
+    },
+    config::Config,
+    server::database::write::NoId,
+    utils::ConvertCommandError,
 };
 
 use error_stack::{Result, ResultExt};
 
-
 use super::{
-    sqlite::{SqliteSelectJson},
-    write::{AccountWriteLock, WriteResult}, current::SqliteReadCommands, read::ReadResult,
+    current::SqliteReadCommands,
+    read::ReadResult,
+    sqlite::SqliteSelectJson,
+    write::{AccountWriteLock, WriteResult},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -371,7 +377,10 @@ impl ReadCacheJson for Profile {
     ) -> Result<Self, CacheError> {
         let data_in_cache = cache
             .read_cache(id, |entry| {
-                entry.profile.as_ref().map(|data| data.as_ref().clone().into())
+                entry
+                    .profile
+                    .as_ref()
+                    .map(|data| data.as_ref().clone().into())
             })
             .await?;
         data_in_cache.ok_or(CacheError::NotInCache.into())
@@ -440,16 +449,13 @@ impl WriteCacheJson for ProfileUpdateInternal {
     ) -> Result<(), CacheError> {
         cache
             .write_cache(id, |entry| {
-                entry
-                    .profile
-                    .as_mut()
-                    .map(|data| {
-                        data.image1 = self.new_data.image1;
-                        data.image2 = self.new_data.image2;
-                        data.image3 = self.new_data.image3;
-                        data.profile_text = self.new_data.profile_text.clone();
-                        data.version_uuid = self.version;
-                    })
+                entry.profile.as_mut().map(|data| {
+                    data.image1 = self.new_data.image1;
+                    data.image2 = self.new_data.image2;
+                    data.image3 = self.new_data.image3;
+                    data.profile_text = self.new_data.profile_text.clone();
+                    data.version_uuid = self.version;
+                })
             })
             .await
             .map(|_| ())

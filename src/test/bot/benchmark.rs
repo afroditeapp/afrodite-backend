@@ -1,28 +1,33 @@
 //! Bots for benchmarking
 
-use std::{fmt::Debug, time::{Duration, Instant}};
+use std::{
+    fmt::Debug,
+    time::{Duration, Instant},
+};
 
-use api_client::apis::profile_api::{get_profile};
+use api_client::apis::profile_api::get_profile;
 use async_trait::async_trait;
 use tokio::time::sleep;
 
 use crate::test::client::TestError;
 
-use super::{BotState, BotStruct, actions::{BotAction, account::{Register, Login}, profile::ChangeProfileText}, utils::{Timer, Counters}};
-
-
-use error_stack::{Result};
-
-use tracing::{log::info};
-
-
-
-use crate::{
-    utils::IntoReportExt,
+use super::{
+    actions::{
+        account::{Login, Register},
+        profile::ChangeProfileText,
+        BotAction,
+    },
+    utils::{Counters, Timer},
+    BotState, BotStruct,
 };
 
-static COUNTERS: Counters = Counters::new();
+use error_stack::Result;
 
+use tracing::log::info;
+
+use crate::utils::IntoReportExt;
+
+static COUNTERS: Counters = Counters::new();
 
 #[derive(Debug)]
 pub struct BenchmarkState {
@@ -54,19 +59,14 @@ impl Debug for Benchmark {
 
 impl Benchmark {
     pub fn get_profile_benchmark(state: BotState) -> Self {
-        let setup = [
-            &Register as &dyn BotAction,
-            &Login,
-        ];
+        let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
             &UpdateProfileBenchmark as &dyn BotAction,
             &ActionsBeforeIteration,
             &GetProfile,
-            &ActionsAfterIteration
+            &ActionsAfterIteration,
         ];
-        let iter = setup
-            .into_iter()
-            .chain(benchmark.into_iter().cycle());
+        let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
         Self {
             state,
             actions: Box::new(iter),
@@ -74,19 +74,14 @@ impl Benchmark {
     }
 
     pub fn get_default_profile_benchmark(state: BotState) -> Self {
-        let setup = [
-            &Register as &dyn BotAction,
-            &Login,
-        ];
+        let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
             &UpdateProfileBenchmark as &dyn BotAction,
             &ActionsBeforeIteration,
             &GetDefaultProfile,
-            &ActionsAfterIteration
+            &ActionsAfterIteration,
         ];
-        let iter = setup
-            .into_iter()
-            .chain(benchmark.into_iter().cycle());
+        let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
         Self {
             state,
             actions: Box::new(iter),
@@ -165,7 +160,6 @@ impl BotAction for ActionsBeforeIteration {
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 struct ActionsAfterIteration;

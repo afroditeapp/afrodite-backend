@@ -3,23 +3,18 @@
 
 use std::{collections::HashSet, future::Future, sync::Arc};
 
-
-use axum::{extract::BodyStream};
-use error_stack::{Result};
-
+use axum::extract::BodyStream;
+use error_stack::Result;
 
 use tokio::{
-    sync::{
-        mpsc, oneshot, OwnedSemaphorePermit, RwLock, Semaphore,
-    },
+    sync::{mpsc, oneshot, OwnedSemaphorePermit, RwLock, Semaphore},
     task::JoinHandle,
 };
 use tokio_stream::StreamExt;
 
-
 use crate::{
     api::{
-        media::data::{Moderation, HandleModerationRequest},
+        media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
             ModerationRequestContent, ProfileUpdateInternal,
@@ -30,14 +25,9 @@ use crate::{
     utils::{ErrorConversion, IntoReportExt},
 };
 
-use super::{
-    file::{file::ImageSlot},
-    RouterDatabaseWriteHandle,
-};
+use super::{file::file::ImageSlot, RouterDatabaseWriteHandle};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
-
-
 
 pub type ResultSender<T> = oneshot::Sender<Result<T, DatabaseError>>;
 
@@ -415,12 +405,12 @@ impl WriteCommandRunner {
                 s,
                 moderator_id,
                 moderation_request_owner,
-                result
+                result,
             } => self
                 .write()
                 .update_moderation(moderator_id, moderation_request_owner, result)
                 .await
-                .send(s)
+                .send(s),
         }
     }
 

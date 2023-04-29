@@ -1,20 +1,13 @@
-
-
-
 use async_trait::async_trait;
 use error_stack::Result;
 
-
-
+use crate::api::account::data::AccountSetup;
 use crate::server::database::current::CurrentDataWriteCommands;
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteUpdateJson};
-use crate::api::account::data::AccountSetup;
 
-use crate::api::model::{
-    *
-};
+use crate::api::model::*;
 
-use crate::utils::{IntoReportExt};
+use crate::utils::IntoReportExt;
 
 use crate::insert_or_update_json;
 
@@ -37,7 +30,6 @@ impl SqliteUpdateJson for Account {
         )
     }
 }
-
 
 #[async_trait]
 impl SqliteUpdateJson for AccountSetup {

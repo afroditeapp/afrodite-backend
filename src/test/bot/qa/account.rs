@@ -1,26 +1,17 @@
+use api_client::models::AccountState;
 
+use crate::test::bot::actions::BotAction;
 
-
-
-use api_client::{models::AccountState};
-
-
-
-use crate::test::{bot::actions::BotAction};
-
-use super::{super::actions::{account::{SetAccountSetup, AssertAccountState, Register, Login, CompleteAccountSetup}, media::{SendImageToSlot, MakeModerationRequest}, AssertFailure}, SingleTest};
-
-
-
-
-
-
-
-
-
+use super::{
+    super::actions::{
+        account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
+        media::{MakeModerationRequest, SendImageToSlot},
+        AssertFailure,
+    },
+    SingleTest,
+};
 
 use crate::test;
-
 
 pub const ACCOUNT_TESTS: &[SingleTest] = &[
     test!(

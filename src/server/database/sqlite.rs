@@ -1,14 +1,13 @@
-use crate::api::model::{AccountIdInternal};
+use crate::api::model::AccountIdInternal;
 
 use super::history::read::HistoryReadCommands;
 
-
 use async_trait::async_trait;
-use sqlx::Row;
 use sqlx::sqlite::SqliteRow;
+use sqlx::Row;
 use tracing::log::info;
 
-use super::current::{SqliteReadCommands, CurrentDataWriteCommands};
+use super::current::{CurrentDataWriteCommands, SqliteReadCommands};
 use super::history::write::HistoryWriteCommands;
 
 use error_stack::Result;
@@ -262,7 +261,6 @@ pub trait HistorySelectJson: Sized {
         read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError>;
 }
-
 
 pub async fn print_sqlite_version(pool: &SqlitePool) -> Result<(), SqliteDatabaseError> {
     let q = sqlx::query("SELECT sqlite_version()")

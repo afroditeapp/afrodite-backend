@@ -2,9 +2,6 @@ pub mod account;
 pub mod media;
 pub mod profile;
 
-
-
-
 use tokio_stream::{Stream, StreamExt};
 
 use self::media::admin_write::CurrentWriteMediaAdminCommands;
@@ -13,19 +10,15 @@ use self::media::write::CurrentWriteMediaCommands;
 use self::profile::read::CurrentReadProfileCommands;
 use self::profile::write::CurrentWriteProfileCommands;
 
-use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 use super::read::ReadResult;
 use super::sqlite::CurrentDataWriteHandle;
-use super::write::{WriteResult, NoId};
+use super::write::{NoId, WriteResult};
 use crate::api::account::data::AccountSetup;
+use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 
-use crate::api::model::{
-    Account, AccountIdInternal, ApiKey, AccountIdLight,
-};
+use crate::api::model::{Account, AccountIdInternal, AccountIdLight, ApiKey};
 
-
-
-use crate::utils::{IntoReportExt};
+use crate::utils::IntoReportExt;
 
 #[macro_export]
 macro_rules! read_json {
@@ -84,7 +77,11 @@ impl<'a> SqliteReadCommands<'a> {
             "#,
         )
         .fetch(self.handle.pool())
-        .map(|result| result.into_error(SqliteDatabaseError::Fetch).map_err(|e| e.into()))
+        .map(|result| {
+            result
+                .into_error(SqliteDatabaseError::Fetch)
+                .map_err(|e| e.into())
+        })
     }
 
     pub async fn api_key(
@@ -172,7 +169,6 @@ impl<'a> CurrentDataWriteCommands<'a> {
 
         Ok(())
     }
-
 
     pub async fn store_account(
         &self,

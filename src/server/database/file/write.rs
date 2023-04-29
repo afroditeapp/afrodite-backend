@@ -1,14 +1,4 @@
-
-
-
-
-
-
 use super::utils::FileDir;
-
-
-
-
 
 pub struct FileWriteCommands<'a> {
     dir: &'a FileDir,

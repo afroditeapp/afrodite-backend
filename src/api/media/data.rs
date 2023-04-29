@@ -1,12 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use sqlx::{Encode};
+use sqlx::Encode;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{
-    api::model::{AccountIdInternal, AccountIdLight},
-};
+use crate::api::model::{AccountIdInternal, AccountIdLight};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ImageFileName {
@@ -179,7 +177,9 @@ pub struct ContentId {
 
 impl ContentId {
     pub fn new_random_id() -> Self {
-        Self { content_id: Uuid::new_v4() }
+        Self {
+            content_id: Uuid::new_v4(),
+        }
     }
 
     pub fn new(content_id: Uuid) -> Self {
@@ -209,12 +209,18 @@ impl sqlx::Type<sqlx::Sqlite> for ContentId {
     }
 }
 
-impl <'a> sqlx::Encode<'a, sqlx::Sqlite> for ContentId {
-    fn encode_by_ref<'q>(&self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+impl<'a> sqlx::Encode<'a, sqlx::Sqlite> for ContentId {
+    fn encode_by_ref<'q>(
+        &self,
+        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
         self.content_id.encode_by_ref(buf)
     }
 
-    fn encode<'q>(self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull
+    fn encode<'q>(
+        self,
+        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull
     where
         Self: Sized,
     {
@@ -231,7 +237,9 @@ impl <'a> sqlx::Encode<'a, sqlx::Sqlite> for ContentId {
 }
 
 impl sqlx::Decode<'_, sqlx::Sqlite> for ContentId {
-    fn decode(value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+    fn decode(
+        value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef,
+    ) -> Result<Self, sqlx::error::BoxDynError> {
         <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value).map(|id| ContentId::new(id))
     }
 }

@@ -1,30 +1,22 @@
-
-
-
-
 use error_stack::Result;
 
-use sqlx::{Sqlite, Transaction, Row};
-
+use sqlx::{Row, Sqlite, Transaction};
 
 use crate::{
     api::{
         media::data::{
-            ContentState, Moderation, ModerationId, ModerationRequestId,
-            ModerationRequestQueueNumber, ModerationRequestState, HandleModerationRequest,
+            ContentState, HandleModerationRequest, Moderation, ModerationId, ModerationRequestId,
+            ModerationRequestQueueNumber, ModerationRequestState,
         },
-        model::{
-            AccountIdInternal, ContentId,
-            ModerationRequestContent,
-        },
+        model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult}, utils::ConvertCommandError,
+    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
+    utils::ConvertCommandError,
 };
 
-use super::super::super::sqlite::{SqliteDatabaseError};
+use super::super::super::sqlite::SqliteDatabaseError;
 
 use crate::utils::IntoReportExt;
-
 
 #[must_use]
 pub struct DatabaseTransaction<'a> {
@@ -218,7 +210,6 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
     ) -> WriteResult<(), SqliteDatabaseError, Moderation> {
-
         let account_row_id = moderation_request_owner.row_id();
         let request = sqlx::query!(
             r#"
@@ -233,7 +224,9 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         .into_error(SqliteDatabaseError::Fetch)?;
 
         let moderation_id = ModerationId {
-            request_id: ModerationRequestId { request_row_id: request.request_row_id },
+            request_id: ModerationRequestId {
+                request_row_id: request.request_row_id,
+            },
             account_id: moderator_id,
         };
 
@@ -260,8 +253,12 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             };
 
             for c in content.content() {
-                CurrentWriteMediaAdminCommands::update_content_state(transaction, c, new_content_state)
-                    .await?;
+                CurrentWriteMediaAdminCommands::update_content_state(
+                    transaction,
+                    c,
+                    new_content_state,
+                )
+                .await?;
             }
 
             let state_number = state as i64;
@@ -329,5 +326,4 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
 
         Ok(())
     }
-
 }

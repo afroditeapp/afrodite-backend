@@ -1,11 +1,6 @@
-use image::{ImageBuffer, Rgb, codecs::jpeg::JpegEncoder};
+use image::{codecs::jpeg::JpegEncoder, ImageBuffer, Rgb};
 
-
-
-
-pub struct ImageProvider {
-
-}
+pub struct ImageProvider {}
 
 impl ImageProvider {
     pub fn jpeg_image() -> Vec<u8> {

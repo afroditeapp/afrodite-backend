@@ -1,19 +1,10 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-use axum::{
-    extract::{Path},
-};
+use axum::extract::Path;
 
 use hyper::StatusCode;
 
-use crate::api::{
-    model::{AccountIdLight},
-    GetUsers, ReadDatabase,
-};
-
-
-
-
+use crate::api::{model::AccountIdLight, GetUsers, ReadDatabase};
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";

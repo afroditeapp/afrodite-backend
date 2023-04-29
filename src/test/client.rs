@@ -6,7 +6,7 @@ use api_client::{apis::configuration::Configuration, models::ApiKey};
 use error_stack::{IntoReport, Result};
 
 use hyper::StatusCode;
-use reqwest::{Url};
+use reqwest::Url;
 use tracing::info;
 
 #[derive(thiserror::Error, Debug)]
@@ -105,7 +105,11 @@ impl ApiClient {
             ..Configuration::default()
         };
 
-        Self { account, profile, media }
+        Self {
+            account,
+            profile,
+            media,
+        }
     }
 
     pub fn print_to_log(&self) {
@@ -137,7 +141,9 @@ impl ApiClient {
     }
 
     pub fn is_api_key_available(&self) -> bool {
-        self.account.api_key.is_some() && self.profile.api_key.is_some() && self.profile.api_key.is_some()
+        self.account.api_key.is_some()
+            && self.profile.api_key.is_some()
+            && self.profile.api_key.is_some()
     }
 }
 

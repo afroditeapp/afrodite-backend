@@ -4,9 +4,9 @@ use axum::{extract::Path, Json, TypedHeader};
 
 use hyper::StatusCode;
 
-use self::data::{Location, Profile, ProfileUpdate, ProfileUpdateInternal, ProfileInternal};
+use self::data::{Location, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal};
 
-use super::{ model::AccountIdLight, GetUsers};
+use super::{model::AccountIdLight, GetUsers};
 
 use tracing::error;
 

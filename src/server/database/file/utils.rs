@@ -1,6 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use axum::extract::BodyStream;
 use error_stack::Result;
@@ -8,12 +6,12 @@ use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
 
-use crate::{api::model::{AccountIdLight, ContentId}, server::database::read::ReadResult};
-
-use super::{
-    super::FileError,
-    file::{GetStaticFileName},
+use crate::{
+    api::model::{AccountIdLight, ContentId},
+    server::database::read::ReadResult,
 };
+
+use super::{super::FileError, file::GetStaticFileName};
 
 use crate::utils::IntoReportExt;
 
@@ -173,7 +171,9 @@ impl ImageFile {
         self.path.remove_if_exists().await
     }
 
-    pub async fn read_stream(&self) -> ReadResult<ReaderStream<tokio::fs::File>, FileError, ImageFile> {
+    pub async fn read_stream(
+        &self,
+    ) -> ReadResult<ReaderStream<tokio::fs::File>, FileError, ImageFile> {
         self.path.read_stream().await.map_err(|e| e.into())
     }
 

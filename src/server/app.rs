@@ -1,25 +1,23 @@
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     middleware,
-    routing::{get, post, put, patch},
+    routing::{get, patch, post, put},
     Json, Router,
 };
-
 
 use utoipa::OpenApi;
 
 use crate::{
     api::{
-        self,
-        ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase,
+        self, ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase,
     },
     config::Config,
 };
 
 use super::{
     database::{
-        commands::{WriteCommandRunnerHandle},
+        commands::WriteCommandRunnerHandle,
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},
         RouterDatabaseReadHandle,
@@ -60,7 +58,13 @@ impl WriteDatabase for AppState {
 
 impl GetInternalApi for AppState {
     fn internal_api(&self) -> InternalApiManager {
-        InternalApiManager::new(&self.config, &self.internal_api, self.api_keys(), self.read_database(), self.database.account_id_manager())
+        InternalApiManager::new(
+            &self.config,
+            &self.internal_api,
+            self.api_keys(),
+            self.read_database(),
+            self.database.account_id_manager(),
+        )
     }
 }
 
@@ -195,7 +199,9 @@ impl App {
                 api::media::PATH_MODERATION_REQUEST_SLOT,
                 put({
                     let state = self.state.clone();
-                    move |param1, param2, param3| api::media::put_image_to_moderation_slot(param1, param2, param3, state)
+                    move |param1, param2, param3| {
+                        api::media::put_image_to_moderation_slot(param1, param2, param3, state)
+                    }
                 }),
             )
             .route(
@@ -209,7 +215,9 @@ impl App {
                 api::media::PATH_ADMIN_MODERATION_HANDLE_REQUEST,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2, param3| api::media::post_handle_moderation_request(param1, param2, param3, state)
+                    move |param1, param2, param3| {
+                        api::media::post_handle_moderation_request(param1, param2, param3, state)
+                    }
                 }),
             )
             .route_layer({

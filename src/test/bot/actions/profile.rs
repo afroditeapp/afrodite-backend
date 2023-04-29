@@ -1,20 +1,14 @@
+use std::fmt::Debug;
 
-use std::fmt::{Debug};
-
-use api_client::{apis::{profile_api::{post_profile}}, models::{ProfileUpdate}};
+use api_client::{apis::profile_api::post_profile, models::ProfileUpdate};
 use async_trait::async_trait;
-use error_stack::{Result};
+use error_stack::Result;
 
+use super::{super::super::client::TestError, BotAction};
 
-
-use super::{super::super::client::{TestError}, BotAction};
-
-use crate::{
-    utils::IntoReportExt,
-};
+use crate::utils::IntoReportExt;
 
 use super::BotState;
-
 
 #[derive(Debug)]
 pub struct ChangeProfileText;

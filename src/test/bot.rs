@@ -1,17 +1,11 @@
 mod actions;
 mod benchmark;
-mod utils;
 mod qa;
+mod utils;
 
-use std::{
-    sync::{
-        Arc,
-    }, fmt::Debug, vec,
-};
+use std::{fmt::Debug, sync::Arc, vec};
 
-use api_client::{
-    models::{AccountIdLight},
-};
+use api_client::models::AccountIdLight;
 
 use async_trait::async_trait;
 use tokio::{
@@ -21,15 +15,17 @@ use tokio::{
 
 use error_stack::{Result, ResultExt};
 
-use tracing::{error, log::warn, info};
+use tracing::{error, info, log::warn};
 
-use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothing, media::MediaState}, qa::Qa};
+use self::{
+    actions::{media::MediaState, BotAction, DoNothing},
+    benchmark::{Benchmark, BenchmarkState},
+    qa::Qa,
+};
 
 use super::client::{ApiClient, TestError};
 
-use crate::{
-    config::args::{Test, TestMode},
-};
+use crate::config::args::{Test, TestMode};
 
 #[derive(Debug)]
 pub struct BotState {
@@ -46,15 +42,33 @@ pub struct BotState {
 
 impl BotState {
     pub fn new(
-        id: Option<AccountIdLight>, config: Arc<TestMode>, task_id: u32, bot_id: u32, api: ApiClient
-    ) -> Self { Self { id, config, task_id, bot_id, api, benchmark: BenchmarkState::new(), previous_action: &DoNothing, action_history: vec![], media: MediaState::new() } }
+        id: Option<AccountIdLight>,
+        config: Arc<TestMode>,
+        task_id: u32,
+        bot_id: u32,
+        api: ApiClient,
+    ) -> Self {
+        Self {
+            id,
+            config,
+            task_id,
+            bot_id,
+            api,
+            benchmark: BenchmarkState::new(),
+            previous_action: &DoNothing,
+            action_history: vec![],
+            media: MediaState::new(),
+        }
+    }
 
     pub fn id(&self) -> Result<AccountIdLight, TestError> {
         self.id.ok_or(TestError::AccountIdMissing.into())
     }
 
     pub fn id_string(&self) -> Result<String, TestError> {
-        self.id.ok_or(TestError::AccountIdMissing.into()).map(|id| id.to_string())
+        self.id
+            .ok_or(TestError::AccountIdMissing.into())
+            .map(|id| id.to_string())
     }
 
     pub fn is_first_bot(&self) -> bool {
@@ -74,8 +88,7 @@ pub trait BotStruct: Debug + Send + 'static {
     fn state(&self) -> &BotState;
 
     async fn run_action(&mut self) -> Result<Option<Completed>, TestError> {
-        let mut result = self.run_action_impl()
-            .await;
+        let mut result = self.run_action_impl().await;
         if let Test::Qa = self.state().config.test {
             result = result.attach_printable_lazy(|| format!("{:?}", self.state().action_history))
         }
@@ -101,7 +114,6 @@ pub trait BotStruct: Debug + Send + 'static {
     }
 }
 
-
 pub struct BotManager {
     bots: Vec<Box<dyn BotStruct>>,
     _bot_running_handle: mpsc::Sender<()>,
@@ -118,24 +130,33 @@ impl BotManager {
     ) {
         let id = id.into();
         let bot = match config.test {
-            Test::BenchmarkDefault | Test::BenchmarkNormal =>
-                Self::benchmark(task_id, id, config, _bot_running_handle),
-            Test::Qa =>
-                Self::qa(task_id, id, config, _bot_running_handle),
+            Test::BenchmarkDefault | Test::BenchmarkNormal => {
+                Self::benchmark(task_id, id, config, _bot_running_handle)
+            }
+            Test::Qa => Self::qa(task_id, id, config, _bot_running_handle),
         };
 
         tokio::spawn(bot.run(bot_quit_receiver));
     }
 
-    pub fn benchmark(task_id: u32, id: Option<AccountIdLight>, config: Arc<TestMode>, _bot_running_handle: mpsc::Sender<()>) -> Self {
+    pub fn benchmark(
+        task_id: u32,
+        id: Option<AccountIdLight>,
+        config: Arc<TestMode>,
+        _bot_running_handle: mpsc::Sender<()>,
+    ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
         for bot_i in 0..config.bot_count {
-            let state = BotState::new(id, config.clone(), task_id, bot_i, ApiClient::new(config.server.api_urls.clone()));
+            let state = BotState::new(
+                id,
+                config.clone(),
+                task_id,
+                bot_i,
+                ApiClient::new(config.server.api_urls.clone()),
+            );
             let benchmark = match config.test {
-                Test::BenchmarkNormal =>
-                    Benchmark::get_profile_benchmark(state),
-                Test::BenchmarkDefault =>
-                    Benchmark::get_default_profile_benchmark(state),
+                Test::BenchmarkNormal => Benchmark::get_profile_benchmark(state),
+                Test::BenchmarkDefault => Benchmark::get_default_profile_benchmark(state),
                 _ => panic!("Invalid test {:?}", config.test),
             };
             bots.push(Box::new(benchmark))
@@ -148,7 +169,12 @@ impl BotManager {
         }
     }
 
-    pub fn qa(task_id: u32, id: Option<AccountIdLight>, config: Arc<TestMode>, _bot_running_handle: mpsc::Sender<()>) -> Self {
+    pub fn qa(
+        task_id: u32,
+        id: Option<AccountIdLight>,
+        config: Arc<TestMode>,
+        _bot_running_handle: mpsc::Sender<()>,
+    ) -> Self {
         if task_id >= 1 {
             panic!("Only task count 1 is supported for QA tests");
         }
@@ -160,11 +186,24 @@ impl BotManager {
         }
 
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
-        let new_bot_state = |bot_i| BotState::new(id, config.clone(), task_id, bot_i, ApiClient::new(config.server.api_urls.clone()));
+        let new_bot_state = |bot_i| {
+            BotState::new(
+                id,
+                config.clone(),
+                task_id,
+                bot_i,
+                ApiClient::new(config.server.api_urls.clone()),
+            )
+        };
 
         bots.push(Box::new(Qa::admin(new_bot_state(0))));
 
-        for (i, (test_name, test)) in qa::ALL_QA_TESTS.into_iter().map(|tests| *tests).flatten().enumerate() {
+        for (i, (test_name, test)) in qa::ALL_QA_TESTS
+            .into_iter()
+            .map(|tests| *tests)
+            .flatten()
+            .enumerate()
+        {
             let state = new_bot_state(i as u32 + 1);
             let actions = test
                 .into_iter()

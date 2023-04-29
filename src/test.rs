@@ -1,10 +1,10 @@
 //! Run test suite and benchmarks
 
 mod bot;
-mod server;
 pub mod client;
+mod server;
 
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use tokio::{
     select, signal,
@@ -12,11 +12,9 @@ use tokio::{
 };
 use tracing::{error, info};
 
-
-
 use crate::{
     config::{args::TestMode, Config},
-    test::{bot::{BotManager}, server::ServerManager, client::ApiClient},
+    test::{bot::BotManager, client::ApiClient, server::ServerManager},
 };
 
 pub struct TestRunner {
@@ -49,8 +47,7 @@ impl TestRunner {
 
         info!(
             "Task count: {}, Bot count per task: {}",
-            self.test_config.task_count,
-            self.test_config.bot_count,
+            self.test_config.task_count, self.test_config.bot_count,
         );
 
         while task_number < self.test_config.task_count {
@@ -64,13 +61,10 @@ impl TestRunner {
             task_number += 1;
         }
 
-        info!(
-            "Bot tasks are now created",
-        );
+        info!("Bot tasks are now created",);
 
         drop(bot_running_handle);
         drop(bot_quit_receiver);
-
 
         select! {
             result = signal::ctrl_c() => {

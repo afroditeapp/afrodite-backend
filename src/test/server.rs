@@ -1,24 +1,25 @@
-use std::{path::{PathBuf}, net::{SocketAddrV4}, env, time::Duration, os::unix::process::CommandExt, sync::Arc};
+use std::{
+    env, net::SocketAddrV4, os::unix::process::CommandExt, path::PathBuf, sync::Arc, time::Duration,
+};
 
-use crate::config::{args::TestMode, file::{ConfigFile, CONFIG_FILE_NAME, Components, SocketConfig, ExternalServices}};
-
-
+use crate::config::{
+    args::TestMode,
+    file::{Components, ConfigFile, ExternalServices, SocketConfig, CONFIG_FILE_NAME},
+};
 
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use tokio::process::Child;
 use tracing::info;
 
-
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
 
 pub struct ServerManager {
     servers: Vec<ServerInstance>,
-    config: Arc<TestMode>
+    config: Arc<TestMode>,
 }
 
 impl ServerManager {
-
     pub async fn new(config: Arc<TestMode>) -> Self {
         let dir = config.server.test_database_dir.clone();
         if !dir.exists() {
@@ -42,8 +43,14 @@ impl ServerManager {
         let profile_port = config.server.api_urls.profile_base_url.port().unwrap();
 
         let external_services = Some(ExternalServices {
-            account_internal: format!("http://127.0.0.1:{}", account_port+1).parse::<Url>().unwrap().into(),
-            media_internal: format!("http://127.0.0.1:{}", media_port+1).parse::<Url>().unwrap().into(),
+            account_internal: format!("http://127.0.0.1:{}", account_port + 1)
+                .parse::<Url>()
+                .unwrap()
+                .into(),
+            media_internal: format!("http://127.0.0.1:{}", media_port + 1)
+                .parse::<Url>()
+                .unwrap()
+                .into(),
         });
 
         let localhost_ip = "127.0.0.1".parse().unwrap();
@@ -66,9 +73,9 @@ impl ServerManager {
                 SocketAddrV4::new(localhost_ip, media_port + 1),
                 Components {
                     media: true,
-                    .. Components::default()
+                    ..Components::default()
                 },
-                external_services.clone()
+                external_services.clone(),
             );
             servers.push(ServerInstance::new(dir.clone(), server_config, &config));
         }
@@ -79,9 +86,9 @@ impl ServerManager {
                 SocketAddrV4::new(localhost_ip, profile_port + 1),
                 Components {
                     profile: true,
-                    .. Components::default()
+                    ..Components::default()
                 },
-                external_services
+                external_services,
             );
             servers.push(ServerInstance::new(dir.clone(), server_config, &config));
         }
@@ -89,10 +96,7 @@ impl ServerManager {
         // TODO: Poll API instead waiting?
         tokio::time::sleep(Duration::from_millis(1000)).await;
 
-        Self {
-            servers,
-            config,
-        }
+        Self { servers, config }
     }
 
     pub async fn close(self) {
@@ -100,7 +104,6 @@ impl ServerManager {
             s.close_and_maeby_remove_data(!self.config.no_clean).await;
         }
     }
-
 }
 
 fn new_config(
@@ -113,7 +116,9 @@ fn new_config(
         debug: None,
         admin_email: "admin@example.com".to_string(),
         components,
-        database: crate::config::file::DatabaseConfig { dir: "database_dir".into() },
+        database: crate::config::file::DatabaseConfig {
+            dir: "database_dir".into(),
+        },
         socket: SocketConfig {
             public_api: public_api.into(),
             internal_api: internal_api.into(),
@@ -128,11 +133,14 @@ pub struct ServerInstance {
 }
 
 impl ServerInstance {
-
     pub fn new(dir: PathBuf, config: ConfigFile, args_config: &TestMode) -> Self {
-
         let id = uuid::Uuid::new_v4();
-        let dir = dir.join(format!("{}{}_{}", SERVER_INSTANCE_DIR_START, time::OffsetDateTime::now_utc(), id.hyphenated()));
+        let dir = dir.join(format!(
+            "{}{}_{}",
+            SERVER_INSTANCE_DIR_START,
+            time::OffsetDateTime::now_utc(),
+            id.hyphenated()
+        ));
         std::fs::create_dir(&dir).unwrap();
 
         let config = toml::to_string_pretty(&config).unwrap();
@@ -160,15 +168,9 @@ impl ServerInstance {
             .process_group(0);
 
         let mut tokio_command: tokio::process::Command = command.into();
-        let server = tokio_command
-            .kill_on_drop(true)
-            .spawn()
-            .unwrap();
+        let server = tokio_command.kill_on_drop(true).spawn().unwrap();
 
-        Self {
-            server,
-            dir
-        }
+        Self { server, dir }
     }
 
     fn running(&mut self) -> bool {

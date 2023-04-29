@@ -22,16 +22,14 @@ use tracing::info;
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight},
     config::Config,
-    server::database::{commands::{WriteCommandRunner}, sqlite::print_sqlite_version},
+    server::database::{commands::WriteCommandRunner, sqlite::print_sqlite_version},
 };
 
 use self::{
-    cache::{DatabaseCache},
+    cache::DatabaseCache,
     commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
     current::SqliteReadCommands,
-    file::{
-        read::FileReadCommands, utils::FileDir, FileError,
-    },
+    file::{read::FileReadCommands, utils::FileDir, FileError},
     history::read::HistoryReadCommands,
     read::ReadCommands,
     sqlite::{

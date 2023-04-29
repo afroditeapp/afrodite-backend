@@ -1,20 +1,10 @@
+use std::fmt::Debug;
 
-use std::fmt::{Debug};
+use error_stack::Result;
 
+use super::super::super::client::TestError;
 
-
-
-use error_stack::{Result};
-
-
-
-use super::{super::super::client::{TestError}};
-
-
-
-pub fn bot_assert_eq<
-    T: Debug + PartialEq,
->(value: T, expected: T) -> Result<(), TestError> {
+pub fn bot_assert_eq<T: Debug + PartialEq>(value: T, expected: T) -> Result<(), TestError> {
     if value == expected {
         Ok(())
     } else {

@@ -1,40 +1,28 @@
 pub mod account;
-pub mod profile;
-pub mod media;
 pub mod admin;
+pub mod media;
+pub mod profile;
 
-use std::{fmt::{Debug}, time::Duration};
-
+use std::{fmt::Debug, time::Duration};
 
 use async_trait::async_trait;
 
+use error_stack::{FutureExt, Result, ResultExt};
 
-use error_stack::{Result, FutureExt, ResultExt};
-
-
-
-use super::super::client::{TestError};
-
-
+use super::super::client::TestError;
 
 use super::BotState;
-
 
 #[async_trait]
 pub trait BotAction: Debug + Send + Sync + 'static {
     async fn excecute(&self, state: &mut BotState) -> Result<(), TestError> {
-        self
-            .excecute_impl(state)
+        self.excecute_impl(state)
             .await
             .attach_printable_lazy(|| format!("{:?}", self))
     }
 
-    async fn excecute_impl(
-        &self,
-        state: &mut BotState
-    ) -> Result<(), TestError>;
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError>;
 }
-
 
 #[derive(Debug)]
 pub struct DoNothing;
@@ -50,7 +38,7 @@ impl BotAction for DoNothing {
 pub struct AssertFailure<T: BotAction>(pub T);
 
 #[async_trait]
-impl <T: BotAction> BotAction for AssertFailure<T> {
+impl<T: BotAction> BotAction for AssertFailure<T> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         match self.0.excecute(state).await {
             Err(e) => match e.current_context() {
@@ -61,7 +49,6 @@ impl <T: BotAction> BotAction for AssertFailure<T> {
         }
     }
 }
-
 
 /// Sleep milliseconds
 #[derive(Debug)]

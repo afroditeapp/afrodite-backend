@@ -1,18 +1,15 @@
 pub mod data;
 pub mod internal;
 
-
-
 use axum::{Json, TypedHeader};
 
 use hyper::StatusCode;
 
 use self::data::{
-    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting,
-    DeleteStatus,
+    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus,
 };
 
-use super::{ GetConfig, GetInternalApi};
+use super::{GetConfig, GetInternalApi};
 
 use tracing::error;
 
@@ -212,7 +209,9 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase + GetInternalApi + GetConfig>(
+pub async fn post_complete_setup<
+    S: GetApiKeys + ReadDatabase + WriteDatabase + GetInternalApi + GetConfig,
+>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
@@ -232,7 +231,7 @@ pub async fn post_complete_setup<S: GetApiKeys + ReadDatabase + WriteDatabase + 
         })?;
 
     if account_setup.is_empty() {
-        return Err(StatusCode::NOT_ACCEPTABLE)
+        return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
     state

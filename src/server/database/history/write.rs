@@ -4,15 +4,17 @@ use error_stack::Result;
 use crate::{
     api::{
         account::data::AccountSetup,
-        model::{Account, AccountIdInternal, Profile, ProfileUpdateInternal, AccountIdLight},
+        model::{Account, AccountIdInternal, AccountIdLight, Profile, ProfileUpdateInternal},
     },
     server::database::{
         sqlite::{HistoryUpdateJson, HistoryWriteHandle},
-        utils::current_unix_time, write::HistoryWriteResult,
-    }, utils::ConvertCommandError,
+        utils::current_unix_time,
+        write::HistoryWriteResult,
+    },
+    utils::ConvertCommandError,
 };
 
-use super::super::sqlite::{SqliteDatabaseError};
+use super::super::sqlite::SqliteDatabaseError;
 
 use crate::utils::IntoReportExt;
 
@@ -39,7 +41,10 @@ impl<'a> HistoryWriteCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_account_id(&self, id: AccountIdInternal) -> HistoryWriteResult<(), SqliteDatabaseError, AccountIdLight> {
+    pub async fn store_account_id(
+        &self,
+        id: AccountIdInternal,
+    ) -> HistoryWriteResult<(), SqliteDatabaseError, AccountIdLight> {
         let row_id = id.row_id();
         let id = id.as_uuid();
         sqlx::query!(
