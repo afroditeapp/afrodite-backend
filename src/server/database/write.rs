@@ -8,7 +8,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent,
+            ModerationRequestContent, ProfileInternal,
         },
     },
     config::Config,
@@ -209,7 +209,7 @@ impl<'a> WriteCommands<'a> {
 
             cache
                 .write_cache(id.as_light(), |cache| {
-                    cache.profile = Some(profile.clone().into())
+                    cache.profile.as_mut().map(|p| p.data = profile.clone());
                 })
                 .await
                 .convert(id)?;
@@ -370,6 +370,28 @@ impl<'a> WriteCommands<'a> {
                 }
             }
         }
+    }
+
+    pub async fn profile_update_visibility(
+        self,
+        id: AccountIdInternal,
+        public: bool,
+        update_only_if_no_value: bool,
+    ) -> Result<(), DatabaseError> {
+        self.cache.write_cache(id.as_light(), |e| {
+            e.profile.as_mut().map(|p| {
+                // Handle race condition between remote fetch and update.
+                // Update will override the initial fetch.
+                if update_only_if_no_value {
+                    if p.public.is_none() {
+                        p.public = Some(public);
+                    }
+                } else {
+                    p.public = Some(public);
+                }
+            }
+            );
+        }).await.convert(id)
     }
 
     fn current(&self) -> CurrentDataWriteCommands {

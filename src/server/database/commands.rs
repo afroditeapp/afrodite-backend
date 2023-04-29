@@ -17,7 +17,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileUpdateInternal,
+            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal,
         },
     },
     config::Config,
@@ -57,6 +57,12 @@ pub enum WriteCommand {
         s: ResultSender<()>,
         account_id: AccountIdInternal,
         profile: ProfileUpdateInternal,
+    },
+    UpdateProfileVisiblity {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        public: bool,
+        update_only_if_none: bool,
     },
     SetModerationRequest {
         s: ResultSender<()>,
@@ -178,6 +184,21 @@ impl WriteCommandRunnerHandle {
             s,
             account_id,
             profile,
+        })
+        .await
+    }
+
+    pub async fn update_profile_visiblity(
+        &self,
+        account_id: AccountIdInternal,
+        public: bool,
+        update_only_if_none: bool,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::UpdateProfileVisiblity {
+            s,
+            account_id,
+            public,
+            update_only_if_none,
         })
         .await
     }
@@ -377,6 +398,12 @@ impl WriteCommandRunner {
                 account_id,
                 profile,
             } => self.write().update_data(account_id, &profile).await.send(s),
+            WriteCommand::UpdateProfileVisiblity {
+                s,
+                account_id,
+                public,
+                update_only_if_none,
+            } => self.write().profile_update_visibility(account_id, public, update_only_if_none).await.send(s),
             WriteCommand::SetModerationRequest {
                 s,
                 account_id,

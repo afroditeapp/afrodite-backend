@@ -1,4 +1,5 @@
 pub mod data;
+pub mod internal;
 
 use axum::{extract::Path, Json, TypedHeader};
 
@@ -6,7 +7,7 @@ use hyper::StatusCode;
 
 use self::data::{Location, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal};
 
-use super::{model::AccountIdLight, GetUsers};
+use super::{model::AccountIdLight, GetUsers, GetInternalApi};
 
 use tracing::error;
 
@@ -14,8 +15,6 @@ use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 // TODO: Add timeout for database commands
 
-// TODO: Add image content IDs to profiles
-// TODO: Profile visibility updates update updates microservice stuff
 // TODO: Add location index and location updating support
 
 pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
@@ -46,12 +45,10 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_profile<S: ReadDatabase + GetUsers>(
+pub async fn get_profile<S: ReadDatabase + GetUsers + GetInternalApi + WriteDatabase>(
     Path(requested_profile): Path<AccountIdLight>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
-    // TODO: Validate user id
-
     // TODO: check capablities
 
     let requested_profile = state
@@ -63,18 +60,50 @@ pub async fn get_profile<S: ReadDatabase + GetUsers>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    state
-        .read_database()
-        .read_json::<ProfileInternal>(requested_profile)
-        .await
-        .map(|profile| {
-            let profile: Profile = profile.into();
-            profile.into()
-        })
+    let visibility = state.read_database().profile_visibility(requested_profile).await
         .map_err(|e| {
             error!("get_profile: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let visiblity = match visibility {
+        Some(v) => v,
+        None => {
+            let account = state.internal_api().get_account_state(requested_profile).await
+                .map_err(|e| {
+                    error!("get_profile: {e:?}");
+                    StatusCode::INTERNAL_SERVER_ERROR
+                })?;
+            let visibility = account.capablities().view_public_profiles;
+            state.write_database().update_profile_visiblity(
+                requested_profile, visibility, true
+            )
+                .await
+                .map_err(|e| {
+                    error!("get_profile: {e:?}");
+                    StatusCode::INTERNAL_SERVER_ERROR
+                })?;
+
+            visibility
+        },
+    };
+
+    if visiblity {
+        state
+            .read_database()
+            .read_json::<ProfileInternal>(requested_profile)
+            .await
+            .map(|profile| {
+                let profile: Profile = profile.into();
+                profile.into()
+            })
+            .map_err(|e| {
+                error!("get_profile: {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }
 
 pub const PATH_POST_PROFILE: &str = "/profile_api/profile";

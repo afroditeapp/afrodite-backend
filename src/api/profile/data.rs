@@ -9,7 +9,7 @@ use crate::api::media::data::ContentId;
 pub struct ProfileInternal {
     pub name: String,
     pub profile_text: String,
-    pub public: bool,
+    pub public: bool, // TODO: remove public
     pub image1: Option<ContentId>,
     pub image2: Option<ContentId>,
     pub image3: Option<ContentId>,

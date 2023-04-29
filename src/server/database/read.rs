@@ -197,6 +197,16 @@ impl<'a> ReadCommands<'a> {
             .map(|r| r.map(|request| request.into_request()))
     }
 
+    pub async fn profile_visibility(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<Option<bool>, DatabaseError> {
+        self.cache
+            .read_cache(account_id.as_light(), |e| e.profile.as_ref().map(|p| p.public).flatten())
+            .await
+            .convert(account_id)
+    }
+
     // pub async fn moderation_request_from_queue(
     //     &self,
     //     _account_id: AccountIdInternal,

@@ -291,10 +291,35 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_setting_profile_visiblity<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    Json(_data): Json<BooleanSetting>,
-    _state: S,
+pub async fn put_setting_profile_visiblity<S: GetApiKeys + WriteDatabase + ReadDatabase + GetInternalApi>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Json(new_value): Json<BooleanSetting>,
+    state: S,
 ) -> Result<(), StatusCode> {
+    let id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let account = state
+        .read_database()
+        .read_json::<Account>(id)
+        .await
+        .map_err(|e| {
+            error!("put_setting_profile_visiblity: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    if account.state() != AccountState::Normal {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+
+    state.internal_api().profile_api_set_profile_visiblity(id, new_value).await.map_err(|e| {
+        error!("put_setting_profile_visiblity: {e:?}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
     Ok(())
 }
 

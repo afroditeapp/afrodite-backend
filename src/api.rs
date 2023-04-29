@@ -49,6 +49,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         profile::post_profile,
         profile::post_reset_profile_paging,
         profile::put_location,
+        profile::internal::internal_post_update_profile_visibility,
         media::get_image,
         media::get_moderation_request,
         media::put_moderation_request,
@@ -56,6 +57,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::post_handle_moderation_request,
         media::patch_moderation_request_list,
         media::internal::internal_get_check_moderation_request_for_account,
+        media::internal::internal_post_update_profile_image_visibility,
     ),
     components(schemas(
         account::data::AccountIdLight,

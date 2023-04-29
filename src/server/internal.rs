@@ -1,6 +1,6 @@
 //! Routes for server to server connections
 
-use api_client::apis::{accountinternal_api, configuration::Configuration, mediainternal_api};
+use api_client::{apis::{accountinternal_api, configuration::Configuration, mediainternal_api}, models::boolean_setting};
 use axum::{
     routing::{get, post},
     Router,
@@ -15,7 +15,7 @@ use tracing::{error, info};
 use crate::{
     api::{
         self,
-        model::{Account, AccountIdInternal, AccountState, Capabilities},
+        model::{Account, AccountIdInternal, AccountState, Capabilities, BooleanSetting, Profile, ProfileInternal},
     },
     config::InternalApiUrls,
     utils::IntoReportExt,
@@ -27,7 +27,7 @@ use super::{
     app::AppState,
     database::{
         read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager},
+        utils::{AccountIdManager, ApiKeyManager}, commands::WriteCommandRunnerHandle,
     },
 };
 
@@ -81,8 +81,18 @@ impl InternalApp {
             )
     }
 
-    pub fn create_profile_server_router(_state: AppState) -> Router {
-        Router::new()
+    pub fn create_profile_server_router(state: AppState) -> Router {
+        Router::new().route(
+            api::profile::internal::PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY,
+            post({
+                let state = state.clone();
+                move |p1, p2| {
+                    api::profile::internal::internal_post_update_profile_visibility(
+                        p1, p2, state,
+                    )
+                }
+            }),
+        )
     }
 
     pub fn create_media_server_router(state: AppState) -> Router {
@@ -93,6 +103,16 @@ impl InternalApp {
                 move |parameter1| {
                     api::media::internal::internal_get_check_moderation_request_for_account(
                         parameter1, state,
+                    )
+                }
+            }))
+        .route(
+            api::media::internal::PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY,
+            post({
+                let state = state.clone();
+                move |p1, p2, p3| {
+                    api::media::internal::internal_post_update_profile_image_visibility(
+                        p1, p2, p3, state,
                     )
                 }
             }),
@@ -164,6 +184,7 @@ pub struct InternalApiManager<'a> {
     api_client: &'a InternalApiClient,
     keys: ApiKeyManager<'a>,
     read_database: ReadCommands<'a>,
+    write_database: &'a WriteCommandRunnerHandle,
     account_id_manager: AccountIdManager<'a>,
 }
 
@@ -173,6 +194,7 @@ impl<'a> InternalApiManager<'a> {
         api_client: &'a InternalApiClient,
         keys: ApiKeyManager<'a>,
         read_database: ReadCommands<'a>,
+        write_database: &'a WriteCommandRunnerHandle,
         account_id_manager: AccountIdManager<'a>,
     ) -> Self {
         Self {
@@ -180,6 +202,7 @@ impl<'a> InternalApiManager<'a> {
             api_client,
             keys,
             read_database,
+            write_database,
             account_id_manager,
         }
     }
@@ -297,6 +320,51 @@ impl<'a> InternalApiManager<'a> {
             )
             .await
             .into_error(InternalApiError::MissingValue)
+        }
+    }
+
+    /// Profile visiblity is set first to the profile server and in addition
+    /// to changing the visibility the current proifle is returned (used for
+    /// changing visibility for media server).
+    pub async fn profile_api_set_profile_visiblity(
+        &self,
+        account_id: AccountIdInternal,
+        boolean_setting: BooleanSetting,
+    ) -> Result<(), InternalApiError> {
+        if self.config.components().profile {
+
+            self.write_database.update_profile_visiblity(
+                account_id,
+                boolean_setting.value,
+                false // False overrides updates
+            ).await.change_context(InternalApiError::DatabaseError)?;
+
+            let profile: ProfileInternal = self.read_database
+                .read_json(account_id)
+                .await
+                .change_context(InternalApiError::DatabaseError)?;
+
+            self.media_api_profile_visiblity(account_id, boolean_setting, profile.into()).await.change_context(InternalApiError::ApiRequest)?;
+
+            Ok(())
+        } else {
+            // TODO: Request internal profile api
+            todo!()
+        }
+    }
+
+    pub async fn media_api_profile_visiblity(
+        &self,
+        account_id: AccountIdInternal,
+        boolean_setting: BooleanSetting,
+        current_profile: Profile,
+    ) -> Result<(), InternalApiError> {
+        if self.config.components().media {
+            // TODO: Save visibility information to cache?
+            Ok(())
+        } else {
+            // TODO: request to internal media API
+            Ok(())
         }
     }
 

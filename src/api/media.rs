@@ -56,6 +56,8 @@ pub async fn get_image<S: ReadDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
+    // TODO: If visiblity values are not cached then ask from profile server.
+
     Ok((TypedHeader(ContentType::jpeg()), data))
 }
 

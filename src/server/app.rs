@@ -63,6 +63,7 @@ impl GetInternalApi for AppState {
             &self.internal_api,
             self.api_keys(),
             self.read_database(),
+            self.write_database(),
             self.database.account_id_manager(),
         )
     }
@@ -130,6 +131,13 @@ impl App {
                 post({
                     let state = self.state.clone();
                     move |arg1| api::account::post_complete_setup(arg1, state)
+                }),
+            )
+            .route(
+                api::account::PATH_SETTING_PROFILE_VISIBILITY,
+                post({
+                    let state = self.state.clone();
+                    move |p1, p2| api::account::put_setting_profile_visiblity(p1, p2, state)
                 }),
             )
             .route_layer({

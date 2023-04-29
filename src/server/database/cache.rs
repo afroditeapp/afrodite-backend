@@ -100,7 +100,7 @@ impl DatabaseCache {
                 let profile = ProfileInternal::select_json(internal_id, &read)
                     .await
                     .change_context(CacheError::Init)?;
-                entry.profile = Some(profile.clone().into());
+                entry.profile = Some(Box::new(profile.clone().into()));
             }
         }
 
@@ -194,7 +194,7 @@ impl DatabaseCache {
         &self,
         id: AccountIdLight,
         cache_operation: impl Fn(&CacheEntry) -> T,
-    ) -> Result<T, CacheError> {
+    ) -> ReadResult<T, CacheError> {
         let guard = self.accounts.read().await;
         let cache_entry = guard
             .get(&id)
@@ -236,40 +236,6 @@ impl DatabaseCache {
         Ok(data)
     }
 
-    // pub async fn profile(&self, id: AccountIdLight) -> Result<Profile, CacheError> {
-    //     let guard = self.accounts.read().await;
-    //     let data = guard
-    //         .get(&id)
-    //         .ok_or(CacheError::KeyNotExists)?
-    //         .cache
-    //         .read()
-    //         .await
-    //         .profile
-    //         .as_ref()
-    //         .map(|data| data.as_ref().clone())
-    //         .ok_or(CacheError::NotInCache)?;
-
-    //     Ok(data.into())
-    // }
-
-    // pub async fn update_profile_internal(
-    //     &self,
-    //     id: AccountIdLight,
-    //     profile: ProfileInternal,
-    // ) -> Result<(), CacheError> {
-    //     let mut data = self.accounts.write().await;
-    //     data.get_mut(&id)
-    //         .ok_or(CacheError::KeyNotExists)?
-    //         .cache
-    //         .write()
-    //         .await
-    //         .profile
-    //         .as_mut()
-    //         .ok_or(CacheError::NotInCache)
-    //         .map(|data| *data.as_mut() = profile)?;
-    //     Ok(())
-    // }
-
     pub async fn update_account(
         &self,
         id: AccountIdLight,
@@ -300,9 +266,23 @@ impl DatabaseCache {
     }
 }
 
+pub struct CachedProfile {
+    /// If None there is no profile visibility value fetched from account server.
+    pub public: Option<bool>,
+    pub data: ProfileInternal,
+}
+
+impl From<ProfileInternal> for CachedProfile {
+    fn from(value: ProfileInternal) -> Self {
+        Self {
+            public: None,
+            data: value,
+        }
+    }
+}
 pub struct CacheEntry {
     pub account_id_internal: AccountIdInternal,
-    pub profile: Option<Box<ProfileInternal>>,
+    pub profile: Option<Box<CachedProfile>>,
     pub account: Option<Box<Account>>,
 }
 
@@ -345,7 +325,8 @@ impl ReadCacheJson for Account {
                     .as_ref()
                     .map(|account| account.as_ref().clone())
             })
-            .await?;
+            .await
+            .attach(id)?;
         data_in_cache.ok_or(CacheError::NotInCache.into())
     }
 }
@@ -360,10 +341,11 @@ impl ReadCacheJson for ProfileInternal {
     ) -> Result<Self, CacheError> {
         let data_in_cache = cache
             .read_cache(id, |entry| {
-                entry.profile.as_ref().map(|data| data.as_ref().clone())
+                entry.profile.as_ref().map(|data| data.data.clone())
             })
-            .await?;
-        data_in_cache.ok_or(CacheError::NotInCache.into())
+            .await
+            .attach(id)?;
+        data_in_cache.ok_or(CacheError::NotInCache.into()).map(|p| p)
     }
 }
 
@@ -380,9 +362,10 @@ impl ReadCacheJson for Profile {
                 entry
                     .profile
                     .as_ref()
-                    .map(|data| data.as_ref().clone().into())
+                    .map(|data| data.as_ref().data.clone().into())
             })
-            .await?;
+            .await
+            .attach(id)?;
         data_in_cache.ok_or(CacheError::NotInCache.into())
     }
 }
@@ -432,7 +415,7 @@ impl WriteCacheJson for ProfileInternal {
                 entry
                     .profile
                     .as_mut()
-                    .map(|data| *data.as_mut() = self.clone())
+                    .map(|data| data.as_mut().data = self.clone())
             })
             .await
             .map(|_| ())
@@ -449,7 +432,7 @@ impl WriteCacheJson for ProfileUpdateInternal {
     ) -> Result<(), CacheError> {
         cache
             .write_cache(id, |entry| {
-                entry.profile.as_mut().map(|data| {
+                entry.profile.as_mut().map(|d| &mut d.data).map(|data| {
                     data.image1 = self.new_data.image1;
                     data.image2 = self.new_data.image2;
                     data.image3 = self.new_data.image3;
