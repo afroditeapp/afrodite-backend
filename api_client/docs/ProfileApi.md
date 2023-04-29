@@ -4,43 +4,12 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_default_profile**](ProfileApi.md#get_default_profile) | **GET** /profile_api/default/{account_id} | TODO: Remove this at some point
 [**get_next_profile_page**](ProfileApi.md#get_next_profile_page) | **GET** /profile_api/page/next | Get next page of profile list.
 [**get_profile**](ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
 [**post_profile**](ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 [**post_reset_profile_paging**](ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 [**put_location**](ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location
 
-
-
-## get_default_profile
-
-> crate::models::Profile get_default_profile(account_id)
-TODO: Remove this at some point
-
-TODO: Remove this at some point
-
-### Parameters
-
-
-Name | Type | Description  | Required | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
-
-### Return type
-
-[**crate::models::Profile**](Profile.md)
-
-### Authorization
-
-[api_key](../README.md#api_key)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
 ## get_next_profile_page
@@ -102,7 +71,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_profile
 
-> post_profile(profile)
+> post_profile(profile_update)
 Update profile information.
 
 Update profile information.  Writes the profile to the database only if it is changed.  TODO: string lenght validation, limit saving new profiles
@@ -112,7 +81,7 @@ Update profile information.  Writes the profile to the database only if it is ch
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**profile** | [**Profile**](Profile.md) |  | [required] |
+**profile_update** | [**ProfileUpdate**](ProfileUpdate.md) |  | [required] |
 
 ### Return type
 

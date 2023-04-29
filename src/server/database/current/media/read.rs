@@ -67,10 +67,9 @@ impl<'a> CurrentReadMediaCommands<'a> {
         let requested_content_set: HashSet<ContentId> = request_content.content().collect();
 
         let required_state = ContentState::InSlot as i64;
-        let request = sqlx::query_as!(
-            ContentId,
+        let request = sqlx::query!(
             r#"
-            SELECT content_id as "content_id: _"
+            SELECT content_id as "content_id: ContentId"
             FROM MediaContent
             WHERE account_row_id = ? AND moderation_state = ?
             "#,
@@ -81,7 +80,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        let database_content_set: HashSet<ContentId> = request.into_iter().collect();
+        let database_content_set: HashSet<ContentId> = request.into_iter().map(|r| r.content_id).collect();
 
         if requested_content_set == database_content_set {
             Ok(())

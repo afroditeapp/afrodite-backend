@@ -15,7 +15,6 @@ use tracing::{error, info};
 use api_client::{models::AccountIdLight};
 
 use crate::{
-    api::model::AccountId,
     config::{args::TestMode, Config},
     server::database::DB_HISTORY_DIR_NAME,
     test::{bot::{BotManager}, server::ServerManager, client::ApiClient},

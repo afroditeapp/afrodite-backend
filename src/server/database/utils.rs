@@ -6,7 +6,7 @@ use error_stack::Result;
 
 
 use crate::api::model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile,
+    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileUpdateInternal, ProfileInternal,
 };
 
 use super::{
@@ -15,40 +15,50 @@ use super::{
     write::{WriteCmd},
 };
 
-pub trait GetReadWriteCmd {
-    fn read_cmd(id: AccountIdInternal) -> ReadCmd;
-    fn write_cmd(id: AccountIdInternal) -> WriteCmd;
-}
+// pub trait GetReadWriteCmd {
+//     fn read_cmd(id: AccountIdInternal) -> ReadCmd;
+//     fn write_cmd(id: AccountIdInternal) -> WriteCmd;
+// }
 
-impl GetReadWriteCmd for Account {
-    fn read_cmd(id: AccountIdInternal) -> ReadCmd {
-        ReadCmd::AccountState(id)
-    }
+// impl GetReadWriteCmd for Account {
+//     fn read_cmd(id: AccountIdInternal) -> ReadCmd {
+//         ReadCmd::AccountState(id)
+//     }
 
-    fn write_cmd(id: AccountIdInternal) -> WriteCmd {
-        WriteCmd::AccountState(id)
-    }
-}
+//     fn write_cmd(id: AccountIdInternal) -> WriteCmd {
+//         WriteCmd::AccountState(id)
+//     }
+// }
 
-impl GetReadWriteCmd for AccountSetup {
-    fn read_cmd(id: AccountIdInternal) -> ReadCmd {
-        ReadCmd::AccountSetup(id)
-    }
+// impl GetReadWriteCmd for AccountSetup {
+//     fn read_cmd(id: AccountIdInternal) -> ReadCmd {
+//         ReadCmd::AccountSetup(id)
+//     }
 
-    fn write_cmd(id: AccountIdInternal) -> WriteCmd {
-        WriteCmd::AccountSetup(id)
-    }
-}
+//     fn write_cmd(id: AccountIdInternal) -> WriteCmd {
+//         WriteCmd::AccountSetup(id)
+//     }
+// }
 
-impl GetReadWriteCmd for Profile {
-    fn read_cmd(id: AccountIdInternal) -> ReadCmd {
-        ReadCmd::Profile(id)
-    }
+// impl GetReadWriteCmd for ProfileUpdateInternal {
+//     fn read_cmd(id: AccountIdInternal) -> ReadCmd {
+//         ReadCmd::Profile(id)
+//     }
 
-    fn write_cmd(id: AccountIdInternal) -> WriteCmd {
-        WriteCmd::Profile(id)
-    }
-}
+//     fn write_cmd(id: AccountIdInternal) -> WriteCmd {
+//         WriteCmd::ProfileUpdate(id)
+//     }
+// }
+
+// impl GetReadWriteCmd for ProfileInternal {
+//     fn read_cmd(id: AccountIdInternal) -> ReadCmd {
+//         ReadCmd::Profile(id)
+//     }
+
+//     fn write_cmd(id: AccountIdInternal) -> WriteCmd {
+//         WriteCmd::ProfileUpdate(id)
+//     }
+// }
 
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()

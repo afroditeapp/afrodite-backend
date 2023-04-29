@@ -4,7 +4,7 @@ use axum::{extract::Path, Json, TypedHeader};
 
 use hyper::StatusCode;
 
-use self::data::{Location, Profile};
+use self::data::{Location, Profile, ProfileUpdate, ProfileUpdateInternal, ProfileInternal};
 
 use super::{ model::AccountIdLight, GetUsers};
 
@@ -65,36 +65,16 @@ pub async fn get_profile<S: ReadDatabase + GetUsers>(
 
     state
         .read_database()
-        .read_json::<Profile>(requested_profile)
+        .read_json::<ProfileInternal>(requested_profile)
         .await
-        .map(|profile| profile.into())
+        .map(|profile| {
+            let profile: Profile = profile.into();
+            profile.into()
+        })
         .map_err(|e| {
             error!("get_profile: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
         })
-}
-
-/// TODO: Remove this after benchmarking?
-pub const PATH_GET_DEFAULT_PROFILE: &str = "/profile_api/default/:account_id";
-
-/// TODO: Remove this at some point
-#[utoipa::path(
-    get,
-    path = "/profile_api/default/{account_id}",
-    params(AccountIdLight),
-    responses(
-        (status = 200, description = "Get default profile.", body = Profile),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("api_key" = [])),
-)]
-pub async fn get_default_profile<S: ReadDatabase>(
-    Path(_account_id): Path<AccountIdLight>,
-    _state: S,
-) -> Result<Json<Profile>, StatusCode> {
-    let default = Profile::default();
-    Ok(default.into())
 }
 
 pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
@@ -107,7 +87,7 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 #[utoipa::path(
     post,
     path = "/profile_api/profile",
-    request_body = Profile,
+    request_body = ProfileUpdate,
     responses(
         (status = 200, description = "Update profile"),
         (status = 401, description = "Unauthorized."),
@@ -120,7 +100,7 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 )]
 pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Json(mut profile): Json<Profile>,
+    Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
@@ -129,7 +109,7 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let mut old_profile: Profile =
+    let old_profile: ProfileInternal =
         state
             .read_database()
             .read_json(account_id)
@@ -138,19 +118,17 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
                 error!("post_profile: read current profile, {e:?}");
                 StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
             })?;
+    let old_profile: Profile = old_profile.into();
 
-    old_profile.remove_version();
-    profile.remove_version();
-
-    if profile == old_profile {
+    if profile == old_profile.into_update() {
         return Ok(());
     }
 
-    profile.generate_new_version();
+    let new = ProfileUpdateInternal::new(profile);
 
     state
         .write_database()
-        .update_profile(account_id, profile)
+        .update_profile(account_id, new)
         .await
         .map_err(|e| {
             error!("post_profile: write profile, {e:?}");

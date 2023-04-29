@@ -46,7 +46,13 @@ CREATE TABLE IF NOT EXISTS AccountSetup(
 
 CREATE TABLE IF NOT EXISTS Profile(
     account_row_id  INTEGER PRIMARY KEY,
-    json_text       TEXT    NOT NULL    DEFAULT '',
+    version_uuid    BLOB    NOT NULL,
+    public          BOOLEAN NOT NULL    DEFAULT 0,
+    image1          BLOB                DEFAULT NULL, -- Images can be not set
+    image2          BLOB                DEFAULT NULL,
+    image3          BLOB                DEFAULT NULL,
+    name            TEXT    NOT NULL    DEFAULT '',
+    profile_text    TEXT    NOT NULL    DEFAULT '',
     FOREIGN KEY (account_row_id)
         REFERENCES AccountId (account_row_id)
             ON DELETE CASCADE

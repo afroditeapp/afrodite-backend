@@ -6,7 +6,6 @@ use crate::{
     server::database::{
         cache::CacheError,
         sqlite::SqliteDatabaseError,
-        utils::GetReadWriteCmd,
         write::{CacheWrite, HistoryWrite},
         DatabaseError,
     },
@@ -111,37 +110,37 @@ pub trait ErrorConversion: ResultExt + Sized {
         self.change_context_with_info_lazy(Self::ERROR, info)
     }
 
-    #[track_caller]
-    fn with_write_cmd_info<T: GetReadWriteCmd>(
-        self,
-        id: AccountIdInternal,
-    ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-        self.change_context_with_info_lazy(Self::ERROR, || T::write_cmd(id))
-    }
+    // #[track_caller]
+    // fn with_write_cmd_info<T: GetReadWriteCmd>(
+    //     self,
+    //     id: AccountIdInternal,
+    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
+    //     self.change_context_with_info_lazy(Self::ERROR, || T::write_cmd(id))
+    // }
 
-    #[track_caller]
-    fn with_history_write_cmd_info<T: GetReadWriteCmd>(
-        self,
-        id: AccountIdInternal,
-    ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-        self.change_context_with_info_lazy(Self::ERROR, || HistoryWrite(T::write_cmd(id)))
-    }
+    // #[track_caller]
+    // fn with_history_write_cmd_info<T: GetReadWriteCmd>(
+    //     self,
+    //     id: AccountIdInternal,
+    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
+    //     self.change_context_with_info_lazy(Self::ERROR, || HistoryWrite(T::write_cmd(id)))
+    // }
 
-    #[track_caller]
-    fn with_cache_write_cmd_info<T: GetReadWriteCmd>(
-        self,
-        id: AccountIdInternal,
-    ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-        self.change_context_with_info_lazy(Self::ERROR, || CacheWrite(T::write_cmd(id)))
-    }
+    // #[track_caller]
+    // fn with_cache_write_cmd_info<T: GetReadWriteCmd>(
+    //     self,
+    //     id: AccountIdInternal,
+    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
+    //     self.change_context_with_info_lazy(Self::ERROR, || CacheWrite(T::write_cmd(id)))
+    // }
 
-    #[track_caller]
-    fn with_read_cmd_info<T: GetReadWriteCmd>(
-        self,
-        id: AccountIdInternal,
-    ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-        self.change_context_with_info_lazy(Self::ERROR, || T::read_cmd(id))
-    }
+    // #[track_caller]
+    // fn with_read_cmd_info<T: GetReadWriteCmd>(
+    //     self,
+    //     id: AccountIdInternal,
+    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
+    //     self.change_context_with_info_lazy(Self::ERROR, || T::read_cmd(id))
+    // }
 }
 
 impl<T> ErrorConversion for Result<T, SqliteDatabaseError> {

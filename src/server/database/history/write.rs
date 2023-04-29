@@ -4,7 +4,7 @@ use error_stack::Result;
 use crate::{
     api::{
         account::data::AccountSetup,
-        model::{Account, AccountIdInternal, Profile},
+        model::{Account, AccountIdInternal, Profile, ProfileUpdateInternal},
     },
     server::database::{
         sqlite::{HistoryUpdateJson, HistoryWriteHandle},
@@ -135,12 +135,13 @@ impl HistoryUpdateJson for AccountSetup {
 }
 
 #[async_trait]
-impl HistoryUpdateJson for Profile {
+impl HistoryUpdateJson for ProfileUpdateInternal {
     async fn history_update_json(
         &self,
         id: AccountIdInternal,
         write: &HistoryWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
-        write.store_profile(id, self).await
+        // TODO: history for profile
+        Ok(())
     }
 }

@@ -20,7 +20,7 @@ use error_stack::{Result, ResultExt};
 use tracing::info;
 
 use crate::{
-    api::model::{AccountId, AccountIdInternal, AccountIdLight},
+    api::model::{AccountIdInternal, AccountIdLight},
     config::Config,
     server::database::{commands::{WriteCommandRunner}, sqlite::print_sqlite_version},
 };
@@ -321,24 +321,24 @@ impl RouterDatabaseReadHandle {
     }
 }
 
-#[derive(Debug, Clone)]
-enum WriteCmdIntegrity {
-    GitAccountIdFile(AccountId),
-}
+// #[derive(Debug, Clone)]
+// enum WriteCmdIntegrity {
+//     GitAccountIdFile(AccountId),
+// }
 
-impl std::fmt::Display for WriteCmdIntegrity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("Integrity write command: {:?}", self))
-    }
-}
+// impl std::fmt::Display for WriteCmdIntegrity {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         f.write_fmt(format_args!("Integrity write command: {:?}", self))
+//     }
+// }
 
-#[derive(Debug, Clone)]
-enum ReadCmdIntegrity {
-    AccountId(AccountId),
-}
+// #[derive(Debug, Clone)]
+// enum ReadCmdIntegrity {
+//     AccountId(AccountId),
+// }
 
-impl std::fmt::Display for ReadCmdIntegrity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("Read command: {:?}", self))
-    }
-}
+// impl std::fmt::Display for ReadCmdIntegrity {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         f.write_fmt(format_args!("Read command: {:?}", self))
+//     }
+// }

@@ -43,7 +43,6 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
 *MediainternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
-*ProfileApi* | [**get_default_profile**](docs/ProfileApi.md#get_default_profile) | **GET** /profile_api/default/{account_id} | TODO: Remove this at some point
 *ProfileApi* | [**get_next_profile_page**](docs/ProfileApi.md#get_next_profile_page) | **GET** /profile_api/page/next | Get next page of profile list.
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
@@ -54,14 +53,12 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [Account](docs/Account.md)
- - [AccountId](docs/AccountId.md)
  - [AccountIdLight](docs/AccountIdLight.md)
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountState](docs/AccountState.md)
  - [ApiKey](docs/ApiKey.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [Capabilities](docs/Capabilities.md)
- - [ContentId](docs/ContentId.md)
  - [DeleteStatus](docs/DeleteStatus.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [ImageFile](docs/ImageFile.md)
@@ -76,6 +73,7 @@ Class | Method | HTTP request | Description
  - [Profile](docs/Profile.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
+ - [ProfileUpdate](docs/ProfileUpdate.md)
  - [SlotId](docs/SlotId.md)
 
 

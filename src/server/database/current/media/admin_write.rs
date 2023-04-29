@@ -319,7 +319,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             WHERE content_id = ?
             "#,
             state,
-            content_id.content_id,
+            content_id,
         )
         .execute(transaction)
         .await

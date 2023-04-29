@@ -12,7 +12,6 @@ use tracing::{error, log::warn};
 use super::{super::super::client::{ApiClient, TestError}, BotAction};
 
 use crate::{
-    api::model::AccountId,
     config::args::{Test, TestMode},
     utils::IntoReportExt, test::bot::utils::{name::NameProvider, assert::bot_assert_eq},
 };

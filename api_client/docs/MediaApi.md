@@ -131,7 +131,7 @@ Name | Type | Description  | Required | Notes
 
 ## put_image_to_moderation_slot
 
-> crate::models::ContentId put_image_to_moderation_slot(slot_id, body)
+> uuid::Uuid put_image_to_moderation_slot(slot_id, body)
 Set image to moderation request slot.
 
 Set image to moderation request slot.  Slots from 0 to 2 are available.  TODO: resize and check images at some point 
@@ -146,7 +146,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::ContentId**](ContentId.md)
+[**uuid::Uuid**](uuid::Uuid.md)
 
 ### Authorization
 

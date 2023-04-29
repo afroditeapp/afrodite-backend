@@ -18,7 +18,6 @@ use tracing::{error, log::warn, log::info};
 use super::super::super::client::{ApiClient};
 
 use crate::{
-    api::model::AccountId,
     config::args::{Test, TestMode},
     utils::IntoReportExt,
 };

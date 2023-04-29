@@ -3,70 +3,70 @@ use utoipa::{IntoParams, ToSchema};
 
 /// AccountId is an UUID string. Server will generate an UUID string when
 /// generating a new AccountId.
-#[derive(Debug, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams)]
-pub struct AccountId {
-    // String representation is used a lot in server code, so
-    // it is better than using only Uuid type directly.
-    /// UUID string with Simple format.
-    account_id: String,
-    light: AccountIdLight,
-}
+// #[derive(Debug, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams)]
+// pub struct AccountId {
+//     // String representation is used a lot in server code, so
+//     // it is better than using only Uuid type directly.
+//     /// UUID string with Simple format.
+//     account_id: String,
+//     light: AccountIdLight,
+// }
 
-impl AccountId {
-    pub fn generate_new() -> Self {
-        let id = uuid::Uuid::new_v4();
-        Self {
-            account_id: id.hyphenated().to_string(),
-            light: AccountIdLight { account_id: id },
-        }
-    }
+// impl AccountId {
+//     pub fn generate_new() -> Self {
+//         let id = uuid::Uuid::new_v4();
+//         Self {
+//             account_id: id.hyphenated().to_string(),
+//             light: AccountIdLight { account_id: id },
+//         }
+//     }
 
-    pub fn parse(account_id: String) -> Result<Self, uuid::Error> {
-        match uuid::Uuid::try_parse(&account_id) {
-            Ok(light) => Ok(Self {
-                account_id: light.as_hyphenated().to_string(),
-                light: AccountIdLight { account_id: light },
-            }),
-            Err(e) => Err(e),
-        }
-    }
+//     pub fn parse(account_id: String) -> Result<Self, uuid::Error> {
+//         match uuid::Uuid::try_parse(&account_id) {
+//             Ok(light) => Ok(Self {
+//                 account_id: light.as_hyphenated().to_string(),
+//                 light: AccountIdLight { account_id: light },
+//             }),
+//             Err(e) => Err(e),
+//         }
+//     }
 
-    pub fn into_string(self) -> String {
-        self.account_id
-    }
+//     pub fn into_string(self) -> String {
+//         self.account_id
+//     }
 
-    pub fn as_str(&self) -> &str {
-        &self.account_id
-    }
+//     pub fn as_str(&self) -> &str {
+//         &self.account_id
+//     }
 
-    pub fn as_light(&self) -> AccountIdLight {
-        self.light
-    }
+//     pub fn as_light(&self) -> AccountIdLight {
+//         self.light
+//     }
 
-    pub fn formatter(&self) -> uuid::fmt::Hyphenated {
-        self.light.account_id.hyphenated()
-    }
+//     pub fn formatter(&self) -> uuid::fmt::Hyphenated {
+//         self.light.account_id.hyphenated()
+//     }
 
-    pub fn as_uuid(&self) -> uuid::Uuid {
-        self.light.as_uuid()
-    }
-}
+//     pub fn as_uuid(&self) -> uuid::Uuid {
+//         self.light.as_uuid()
+//     }
+// }
 
-impl<'de> Deserialize<'de> for AccountId {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        pub struct AccountIdRaw {
-            account_id: String,
-        }
+// impl<'de> Deserialize<'de> for AccountId {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: serde::Deserializer<'de>,
+//     {
+//         #[derive(Deserialize)]
+//         pub struct AccountIdRaw {
+//             account_id: String,
+//         }
 
-        let raw = AccountIdRaw::deserialize(deserializer)?;
+//         let raw = AccountIdRaw::deserialize(deserializer)?;
 
-        AccountId::parse(raw.account_id).map_err(|_| D::Error::custom("Is not an UUID"))
-    }
-}
+//         AccountId::parse(raw.account_id).map_err(|_| D::Error::custom("Is not an UUID"))
+//     }
+// }
 
 /// Used with database
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, Copy)]
@@ -109,12 +109,12 @@ impl AccountIdLight {
         Self { account_id }
     }
 
-    pub fn to_full(&self) -> AccountId {
-        AccountId {
-            account_id: self.account_id.hyphenated().to_string(),
-            light: self.clone(),
-        }
-    }
+    // pub fn to_full(&self) -> AccountId {
+    //     AccountId {
+    //         account_id: self.account_id.hyphenated().to_string(),
+    //         light: self.clone(),
+    //     }
+    // }
 
     pub fn as_uuid(&self) -> uuid::Uuid {
         self.account_id

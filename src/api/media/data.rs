@@ -171,32 +171,30 @@ pub struct SlotId {
 }
 
 /// Content ID for media content for example images
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
-pub struct ContentId {
-    pub content_id: Uuid,
-}
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash, sqlx::Type)]
+#[into_params(names("content_id"))]
+#[sqlx(transparent)]
+pub struct ContentId(uuid::Uuid);
 
 impl ContentId {
     pub fn new_random_id() -> Self {
-        Self {
-            content_id: Uuid::new_v4(),
-        }
+        Self(Uuid::new_v4())
     }
 
     pub fn new(content_id: Uuid) -> Self {
-        Self { content_id }
+        Self(content_id)
     }
 
     pub fn as_uuid(&self) -> Uuid {
-        self.content_id
+        self.0
     }
 
     pub fn raw_jpg_image(&self) -> String {
-        format!("{}.raw.jpg", self.content_id.as_hyphenated())
+        format!("{}.raw.jpg", self.0.as_hyphenated())
     }
 
     pub fn jpg_image(&self) -> String {
-        format!("{}.jpg", self.content_id.as_hyphenated())
+        format!("{}.jpg", self.0.as_hyphenated())
     }
 }
 
@@ -215,9 +213,7 @@ pub struct ContentIdInternal {
 
 impl ContentIdInternal {
     pub fn as_content_id(&self) -> ContentId {
-        ContentId {
-            content_id: self.content_id,
-        }
+        ContentId::new(self.content_id)
     }
 }
 

@@ -8,7 +8,7 @@ use axum::{Json, TypedHeader};
 use hyper::StatusCode;
 
 use self::data::{
-    Account, AccountId, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting,
+    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting,
     DeleteStatus,
 };
 
@@ -37,9 +37,9 @@ pub async fn post_register<S: WriteDatabase + GetConfig>(
 ) -> Result<Json<AccountIdLight>, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
     // to avoid database collisions.
-    let id = AccountId::generate_new();
+    let id = AccountIdLight::new(uuid::Uuid::new_v4());
 
-    let register = state.write_database().register(id.as_light());
+    let register = state.write_database().register(id);
     match register.await {
         Ok(id) => Ok(id.as_light().into()),
         Err(e) => {

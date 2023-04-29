@@ -10,6 +10,8 @@ use tokio_stream::{Stream, StreamExt};
 use self::media::admin_write::CurrentWriteMediaAdminCommands;
 use self::media::read::CurrentReadMediaCommands;
 use self::media::write::CurrentWriteMediaCommands;
+use self::profile::read::CurrentReadProfileCommands;
+use self::profile::write::CurrentWriteProfileCommands;
 
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use super::sqlite::CurrentDataWriteHandle;
@@ -65,6 +67,10 @@ impl<'a> SqliteReadCommands<'a> {
         CurrentReadMediaCommands::new(self.handle)
     }
 
+    pub fn profile(&self) -> CurrentReadProfileCommands<'_> {
+        CurrentReadProfileCommands::new(self.handle)
+    }
+
     pub fn account_ids_stream(
         &self,
     ) -> impl Stream<Item = Result<AccountIdInternal, SqliteDatabaseError>> + '_ {
@@ -99,10 +105,6 @@ impl<'a> SqliteReadCommands<'a> {
     }
 }
 
-
-
-
-
 pub struct CurrentDataWriteCommands<'a> {
     handle: &'a CurrentDataWriteHandle,
 }
@@ -118,6 +120,10 @@ impl<'a> CurrentDataWriteCommands<'a> {
 
     pub fn media_admin(self) -> CurrentWriteMediaAdminCommands<'a> {
         CurrentWriteMediaAdminCommands::new(self.handle)
+    }
+
+    pub fn profile(self) -> CurrentWriteProfileCommands<'a> {
+        CurrentWriteProfileCommands::new(self.handle)
     }
 
     pub async fn store_account_id(
@@ -164,21 +170,6 @@ impl<'a> CurrentDataWriteCommands<'a> {
         Ok(())
     }
 
-    pub async fn store_profile(
-        &self,
-        id: AccountIdInternal,
-        profile: &Profile,
-    ) -> Result<(), SqliteDatabaseError> {
-        insert_or_update_json!(
-            self,
-            r#"
-            INSERT INTO Profile (json_text, account_row_id)
-            VALUES (?, ?)
-            "#,
-            profile,
-            id
-        )
-    }
 
     pub async fn store_account(
         &self,

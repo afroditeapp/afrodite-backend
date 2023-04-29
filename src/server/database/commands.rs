@@ -22,7 +22,7 @@ use crate::{
         media::data::{Moderation, HandleModerationRequest},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, Profile,
+            ModerationRequestContent, Profile, ProfileUpdateInternal,
         },
     },
     config::Config,
@@ -67,7 +67,7 @@ pub enum WriteCommand {
     UpdateProfile {
         s: ResultSender<()>,
         account_id: AccountIdInternal,
-        profile: Profile,
+        profile: ProfileUpdateInternal,
     },
     SetModerationRequest {
         s: ResultSender<()>,
@@ -183,7 +183,7 @@ impl WriteCommandRunnerHandle {
     pub async fn update_profile(
         &self,
         account_id: AccountIdInternal,
-        profile: Profile,
+        profile: ProfileUpdateInternal,
     ) -> Result<(), DatabaseError> {
         self.send_event(|s| WriteCommand::UpdateProfile {
             s,
@@ -373,21 +373,21 @@ impl WriteCommandRunner {
                 s,
                 account_id,
                 account,
-            } => self.write().update_json(account_id, &account).await.send(s),
+            } => self.write().update_data(account_id, &account).await.send(s),
             WriteCommand::UpdateAccountSetup {
                 s,
                 account_id,
                 account_setup,
             } => self
                 .write()
-                .update_json(account_id, &account_setup)
+                .update_data(account_id, &account_setup)
                 .await
                 .send(s),
             WriteCommand::UpdateProfile {
                 s,
                 account_id,
                 profile,
-            } => self.write().update_json(account_id, &profile).await.send(s),
+            } => self.write().update_data(account_id, &profile).await.send(s),
             WriteCommand::SetModerationRequest {
                 s,
                 account_id,

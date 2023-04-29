@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, marker::PhantomData};
 
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
@@ -13,26 +13,71 @@ use super::{
     current::SqliteReadCommands,
     file::utils::FileDir,
     sqlite::{SqliteReadHandle, SqliteSelectJson},
-    utils::GetReadWriteCmd,
-    DatabaseError,
+    DatabaseError, write::{DatabaseId, NoId},
 };
 
 use error_stack::{Result, ResultExt};
 
+// #[derive(Debug, Clone)]
+// pub enum ReadCmd {
+//     AccountApiKey(AccountIdInternal),
+//     AccountState(AccountIdInternal),
+//     AccountSetup(AccountIdInternal),
+//     Accounts,
+//     Profile(AccountIdInternal),
+// }
+
+// impl std::fmt::Display for ReadCmd {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         f.write_fmt(format_args!("Read command: {:?}", self))
+//     }
+// }
+
 #[derive(Debug, Clone)]
-pub enum ReadCmd {
-    AccountApiKey(AccountIdInternal),
-    AccountState(AccountIdInternal),
-    AccountSetup(AccountIdInternal),
-    Accounts,
-    Profile(AccountIdInternal),
+pub struct ReadCmd<T: Debug>(DatabaseId, PhantomData<T>);
+
+impl <T: Debug> ReadCmd<T> {
+    pub fn new(id: impl Into<DatabaseId>) -> Self {
+        Self(id.into(), PhantomData)
+    }
 }
 
-impl std::fmt::Display for ReadCmd {
+impl <T: Debug> std::fmt::Display for ReadCmd<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("Read command: {:?}", self))
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct HistoryRead<T: Debug>(DatabaseId, PhantomData<T>);
+
+impl <T: Debug> HistoryRead<T> {
+    pub fn new(id: impl Into<DatabaseId>) -> Self {
+        Self(id.into(), PhantomData)
+    }
+}
+
+impl <T: Debug> std::fmt::Display for HistoryRead<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("History read command: {:?}", self))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CacheRead<T: Debug>(DatabaseId, PhantomData<T>);
+
+impl <T: Debug> CacheRead<T> {
+    pub fn new(id: impl Into<DatabaseId>) -> Self {
+        Self(id.into(), PhantomData)
+    }
+}
+
+impl <T: Debug> std::fmt::Display for CacheRead<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("Cache write command: {:?}", self))
+    }
+}
+
 
 pub struct ReadCommands<'a> {
     sqlite: SqliteReadCommands<'a>,
@@ -66,25 +111,25 @@ impl<'a> ReadCommands<'a> {
         mut handler: T,
     ) -> Result<(), DatabaseError> {
         let mut users = self.sqlite.account_ids_stream();
-        while let Some(user_id) = users.try_next().await.with_info(ReadCmd::Accounts)? {
+        while let Some(user_id) = users.try_next().await.with_info(ReadCmd::<AccountIdInternal>::new(NoId))? {
             handler(user_id)
         }
 
         Ok(())
     }
 
-    pub async fn read_json<T: SqliteSelectJson + GetReadWriteCmd + ReadCacheJson>(
+    pub async fn read_json<T: SqliteSelectJson + Debug + ReadCacheJson + Send + Sync + 'static>(
         &self,
         id: AccountIdInternal,
     ) -> Result<T, DatabaseError> {
         if T::CACHED_JSON {
             T::read_from_cache(id.as_light(), self.cache)
                 .await
-                .with_info_lazy(|| T::read_cmd(id))
+                .with_info_lazy(|| CacheRead::<T>::new(id))
         } else {
             T::select_json(id, &self.sqlite)
                 .await
-                .with_info_lazy(|| T::read_cmd(id))
+                .with_info_lazy(|| ReadCmd::<T>::new(id))
         }
     }
 

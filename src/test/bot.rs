@@ -31,7 +31,6 @@ use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothin
 use super::client::{ApiClient, TestError};
 
 use crate::{
-    api::model::{AccountId},
     config::args::{Test, TestMode},
     utils::IntoReportExt,
 };

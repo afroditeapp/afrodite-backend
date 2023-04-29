@@ -1,5 +1,5 @@
 
-use std::{time::Duration};
+use std::{time::Duration, marker::PhantomData, fmt::{Debug, format}};
 
 
 use axum::extract::BodyStream;
@@ -14,7 +14,7 @@ use crate::{
         media::data::{Moderation, HandleModerationRequest},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, Profile,
+            ModerationRequestContent, Profile, ProfileUpdateInternal, ProfileUpdate, ProfileInternal,
         },
     },
     config::Config,
@@ -28,40 +28,75 @@ use super::{
     file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
     sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
-    utils::GetReadWriteCmd,
 };
 
-#[derive(Debug, Clone)]
-pub enum WriteCmd {
-    AccountId(AccountIdLight),
-    Profile(AccountIdInternal),
-    ApiKey(AccountIdInternal),
-    AccountState(AccountIdInternal),
-    AccountSetup(AccountIdInternal),
-    MediaModerationRequest(AccountIdInternal),
-    MediaModeration(AccountIdInternal),
-    MediaModerationUpdate(AccountIdInternal),
+pub struct NoId;
+
+#[derive(Debug, Clone, Copy)]
+pub enum DatabaseId {
+    Light(AccountIdLight),
+    Internal(AccountIdInternal),
+    Empty,
 }
 
-impl std::fmt::Display for WriteCmd {
+impl From<AccountIdLight> for DatabaseId {
+    fn from(value: AccountIdLight) -> Self {
+        DatabaseId::Light(value)
+    }
+}
+
+impl From<AccountIdInternal> for DatabaseId {
+    fn from(value: AccountIdInternal) -> Self {
+        DatabaseId::Internal(value)
+    }
+}
+
+impl From<NoId> for DatabaseId {
+    fn from(value: NoId) -> Self {
+        DatabaseId::Empty
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WriteCmd<T: Debug>(DatabaseId, PhantomData<T>);
+
+impl <T: Debug> WriteCmd<T> {
+    pub fn new(id: impl Into<DatabaseId>) -> Self {
+        Self(id.into(), PhantomData)
+    }
+}
+
+impl <T: Debug> std::fmt::Display for WriteCmd<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("Write command: {:?}", self))
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct HistoryWrite(pub WriteCmd);
+pub struct HistoryWrite<T: Debug>(DatabaseId, PhantomData<T>);
 
-impl std::fmt::Display for HistoryWrite {
+impl <T: Debug> HistoryWrite<T> {
+    pub fn new(id: impl Into<DatabaseId>) -> Self {
+        Self(id.into(), PhantomData)
+    }
+}
+
+impl <T: Debug> std::fmt::Display for HistoryWrite<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("History write command: {:?}", self))
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct CacheWrite(pub WriteCmd);
+pub struct CacheWrite<T: Debug>(DatabaseId, PhantomData<T>);
 
-impl std::fmt::Display for CacheWrite {
+impl <T: Debug> CacheWrite<T> {
+    pub fn new(id: impl Into<DatabaseId>) -> Self {
+        Self(id.into(), PhantomData)
+    }
+}
+
+impl <T: Debug> std::fmt::Display for CacheWrite<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("Cache write command: {:?}", self))
     }
@@ -112,76 +147,76 @@ impl<'a> WriteCommands<'a> {
 
         let account = Account::default();
         let account_setup = AccountSetup::default();
-        let profile = Profile::default();
 
         // TODO: Use transactions here. One for current and other for history.
 
         let id = current
             .store_account_id(id_light)
             .await
-            .with_info_lazy(|| WriteCmd::AccountId(id_light))?;
+            .with_info_lazy(|| WriteCmd::<AccountIdLight>::new(id_light))?;
 
         history
             .store_account_id(id)
             .await
-            .with_info_lazy(|| HistoryWrite(WriteCmd::AccountId(id_light)))?;
+            .with_info_lazy(|| HistoryWrite::<AccountIdLight>::new(id_light))?;
 
         cache
             .insert_account_if_not_exists(id)
             .await
-            .with_info_lazy(|| CacheWrite(WriteCmd::AccountId(id_light)))?;
+            .with_info_lazy(|| CacheWrite::<AccountIdLight>::new(id_light))?;
 
         current
             .store_api_key(id, None)
             .await
-            .with_info_lazy(|| WriteCmd::ApiKey(id))?;
+            .with_info_lazy(|| WriteCmd::<ApiKey>::new(id))?;
 
         if config.components().account {
             current
                 .store_account(id, &account)
                 .await
-                .with_write_cmd_info::<Account>(id)?;
+                .with_info_lazy(|| WriteCmd::<Account>::new(id))?;
 
             history
                 .store_account(id, &account)
                 .await
-                .with_history_write_cmd_info::<Account>(id)?;
+                .with_info_lazy(|| HistoryWrite::<Account>::new(id))?;
 
             cache
                 .write_cache(id.as_light(), |cache| {
                     cache.account = Some(account.clone().into())
                 })
                 .await
-                .with_history_write_cmd_info::<Account>(id)?;
+                .with_info_lazy(|| CacheWrite::<Account>::new(id))?;
 
             current
                 .store_account_setup(id, &account_setup)
                 .await
-                .with_write_cmd_info::<AccountSetup>(id)?;
+                .with_info_lazy(|| WriteCmd::<AccountSetup>::new(id))?;
 
             history
                 .store_account_setup(id, &account_setup)
                 .await
-                .with_history_write_cmd_info::<AccountSetup>(id)?;
+                .with_info_lazy(|| HistoryWrite::<AccountSetup>::new(id))?;
         }
 
         if config.components().profile {
-            current
-                .store_profile(id, &profile)
+            let profile = current.profile()
+                .init_profile(id)
                 .await
-                .with_write_cmd_info::<Profile>(id)?;
+                .with_info_lazy(|| WriteCmd::<ProfileInternal>::new(id))?;
 
-            history
-                .store_profile(id, &profile)
-                .await
-                .with_history_write_cmd_info::<Profile>(id)?;
+            // TOOD: update history code
+            // history
+            //     .store_profile(id, &profile)
+            //     .await
+            //     .with_history_write_cmd_info::<Profile>(id)?;
 
             cache
                 .write_cache(id.as_light(), |cache| {
                     cache.profile = Some(profile.clone().into())
                 })
                 .await
-                .with_history_write_cmd_info::<Profile>(id)?;
+                .with_info_lazy(|| CacheWrite::<ProfileInternal>::new(id))?;
         }
 
         Ok(id)
@@ -195,18 +230,18 @@ impl<'a> WriteCommands<'a> {
         self.current()
             .update_api_key(id, Some(&key))
             .await
-            .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))?;
+            .with_info_lazy(|| WriteCmd::<ApiKey>::new(id.as_light()))?;
 
         self.cache
             .update_api_key(id.as_light(), key)
             .await
-            .with_info_lazy(|| WriteCmd::AccountId(id.as_light()))
+            .with_info_lazy(|| CacheWrite::<ApiKey>::new(id.as_light()))
     }
 
-    pub async fn update_json<
-        T: GetReadWriteCmd
-            + Serialize
-            + Clone
+    pub async fn update_data<
+        T:
+            Clone
+            + Debug
             + Send
             + SqliteUpdateJson
             + HistoryUpdateJson
@@ -220,19 +255,16 @@ impl<'a> WriteCommands<'a> {
     ) -> Result<(), DatabaseError> {
         data.update_json(id, &self.current())
             .await
-            .with_write_cmd_info::<T>(id)?;
+            .with_info_lazy(|| WriteCmd::<T>::new(id))?;
 
         data.history_update_json(id, &self.history())
             .await
-            .with_history_write_cmd_info::<T>(id)?;
+            .with_info_lazy(|| HistoryWrite::<T>::new(id))?;
 
-        if T::CACHED_JSON {
-            data.write_to_cache(id.as_light(), &self.cache)
-                .await
-                .with_cache_write_cmd_info::<T>(id)
-        } else {
-            Ok(())
-        }
+        // Empty implementation if not really cacheable.
+        data.write_to_cache(id.as_light(), &self.cache)
+            .await
+            .with_info_lazy(|| CacheWrite::<T>::new(id))
     }
 
     pub async fn set_moderation_request(
@@ -244,7 +276,7 @@ impl<'a> WriteCommands<'a> {
             .media()
             .create_new_moderation_request(account_id, request)
             .await
-            .with_info_lazy(|| WriteCmd::MediaModerationRequest(account_id))
+            .with_info_lazy(|| WriteCmd::<ModerationRequestContent>::new(account_id))
     }
 
     pub async fn moderation_get_list_and_create_new_if_necessary(
@@ -255,7 +287,7 @@ impl<'a> WriteCommands<'a> {
             .media_admin()
             .moderation_get_list_and_create_new_if_necessary(account_id)
             .await
-            .with_info_lazy(|| WriteCmd::MediaModeration(account_id))
+            .with_info_lazy(|| WriteCmd::<Moderation>::new(account_id))
     }
 
     pub async fn update_moderation(
@@ -268,7 +300,7 @@ impl<'a> WriteCommands<'a> {
             .media_admin()
             .update_moderation(moderator_id, moderation_request_owner, result)
             .await
-            .with_info_lazy(|| WriteCmd::MediaModerationUpdate(moderator_id))
+            .with_info_lazy(|| WriteCmd::<Moderation>::new(moderator_id))
     }
 
     /// Completes previous save_to_tmp.
