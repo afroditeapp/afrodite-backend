@@ -15,6 +15,7 @@ use self::profile::write::CurrentWriteProfileCommands;
 
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
 use super::sqlite::CurrentDataWriteHandle;
+use super::write::{WriteError, WriteResult};
 use crate::api::account::data::AccountSetup;
 
 use crate::api::model::{
@@ -129,7 +130,7 @@ impl<'a> CurrentDataWriteCommands<'a> {
     pub async fn store_account_id(
         &self,
         id: AccountIdLight,
-    ) -> Result<AccountIdInternal, SqliteDatabaseError> {
+    ) -> WriteResult<AccountIdInternal, SqliteDatabaseError, AccountIdLight> {
         let id = id.as_uuid();
         let insert_result = sqlx::query!(
             r#"
@@ -152,7 +153,7 @@ impl<'a> CurrentDataWriteCommands<'a> {
         &self,
         id: AccountIdInternal,
         api_key: Option<ApiKey>,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
         let api_key = api_key.as_ref().map(|k| k.as_str());
         let id = id.row_id();
         sqlx::query!(
@@ -175,7 +176,7 @@ impl<'a> CurrentDataWriteCommands<'a> {
         &self,
         id: AccountIdInternal,
         account: &Account,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> WriteResult<(), SqliteDatabaseError, Account> {
         insert_or_update_json!(
             self,
             r#"
@@ -191,7 +192,7 @@ impl<'a> CurrentDataWriteCommands<'a> {
         &self,
         id: AccountIdInternal,
         account: &AccountSetup,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> WriteResult<(), SqliteDatabaseError, AccountSetup> {
         insert_or_update_json!(
             self,
             r#"
@@ -207,7 +208,7 @@ impl<'a> CurrentDataWriteCommands<'a> {
         &self,
         id: AccountIdInternal,
         api_key: Option<&ApiKey>,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
         let api_key = api_key.as_ref().map(|k| k.as_str());
         let id = id.row_id();
         sqlx::query!(

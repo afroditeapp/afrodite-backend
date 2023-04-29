@@ -18,7 +18,7 @@ use crate::{
             ModerationRequestContent,
         },
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, current::media::write::CurrentWriteMediaCommands},
+    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, current::media::write::CurrentWriteMediaCommands, write::WriteResult},
 };
 
 use super::super::super::sqlite::{SqliteDatabaseError};
@@ -113,7 +113,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
     pub async fn moderation_get_list_and_create_new_if_necessary(
         &self,
         moderator_id: AccountIdInternal,
-    ) -> Result<Vec<Moderation>, SqliteDatabaseError> {
+    ) -> WriteResult<Vec<Moderation>, SqliteDatabaseError> {
         let mut moderations = self
             .handle
             .read()
@@ -216,7 +216,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         moderator_id: AccountIdInternal,
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> WriteResult<(), SqliteDatabaseError, Moderation> {
 
         let account_row_id = moderation_request_owner.row_id();
         let request = sqlx::query!(
@@ -291,15 +291,16 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             Ok(()) => transaction
                 .commit()
                 .await
-                .into_error(SqliteDatabaseError::TransactionCommit),
+                .into_error(SqliteDatabaseError::TransactionCommit)
+                .map_err(|e| e.into()),
             Err(e) => {
                 match transaction
                     .rollback()
                     .await
                     .into_error(SqliteDatabaseError::TransactionRollback)
                 {
-                    Ok(()) => Err(e),
-                    Err(another_error) => Err(another_error.attach(e)),
+                    Ok(()) => Err(e.into()),
+                    Err(another_error) => Err(another_error.attach(e).into()),
                 }
             }
         }

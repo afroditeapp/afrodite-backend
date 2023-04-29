@@ -12,7 +12,6 @@ use crate::api::model::{
 use super::{
     cache::{CacheError, DatabaseCache},
     read::ReadCmd,
-    write::{WriteCmd},
 };
 
 // pub trait GetReadWriteCmd {

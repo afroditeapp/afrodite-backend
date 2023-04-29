@@ -104,6 +104,12 @@ pub struct AccountIdLight {
     pub account_id: uuid::Uuid,
 }
 
+impl std::fmt::Display for AccountIdLight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("Test"))
+    }
+}
+
 impl AccountIdLight {
     pub fn new(account_id: uuid::Uuid) -> Self {
         Self { account_id }

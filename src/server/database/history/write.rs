@@ -4,12 +4,12 @@ use error_stack::Result;
 use crate::{
     api::{
         account::data::AccountSetup,
-        model::{Account, AccountIdInternal, Profile, ProfileUpdateInternal},
+        model::{Account, AccountIdInternal, Profile, ProfileUpdateInternal, AccountIdLight},
     },
     server::database::{
         sqlite::{HistoryUpdateJson, HistoryWriteHandle},
-        utils::current_unix_time,
-    },
+        utils::current_unix_time, write::HistoryWriteResult,
+    }, utils::ConvertCommandError,
 };
 
 use super::super::sqlite::{SqliteDatabaseError};
@@ -39,7 +39,7 @@ impl<'a> HistoryWriteCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_account_id(&self, id: AccountIdInternal) -> Result<(), SqliteDatabaseError> {
+    pub async fn store_account_id(&self, id: AccountIdInternal) -> HistoryWriteResult<(), SqliteDatabaseError, AccountIdLight> {
         let row_id = id.row_id();
         let id = id.as_uuid();
         sqlx::query!(
@@ -61,7 +61,7 @@ impl<'a> HistoryWriteCommands<'a> {
         &self,
         id: AccountIdInternal,
         account: &Account,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> HistoryWriteResult<(), SqliteDatabaseError, Account> {
         let unix_time = current_unix_time();
         insert_or_update_json!(
             self,
@@ -79,7 +79,7 @@ impl<'a> HistoryWriteCommands<'a> {
         &self,
         id: AccountIdInternal,
         account: &AccountSetup,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> HistoryWriteResult<(), SqliteDatabaseError, AccountSetup> {
         let unix_time = current_unix_time();
         insert_or_update_json!(
             self,
@@ -97,7 +97,7 @@ impl<'a> HistoryWriteCommands<'a> {
         &self,
         id: AccountIdInternal,
         profile: &Profile,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> HistoryWriteResult<(), SqliteDatabaseError, Profile> {
         let unix_time = current_unix_time();
         insert_or_update_json!(
             self,
@@ -119,7 +119,7 @@ impl HistoryUpdateJson for Account {
         id: AccountIdInternal,
         write: &HistoryWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
-        write.store_account(id, self).await
+        write.store_account(id, self).await.attach(id)
     }
 }
 
@@ -130,7 +130,7 @@ impl HistoryUpdateJson for AccountSetup {
         id: AccountIdInternal,
         write: &HistoryWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
-        write.store_account_setup(id, self).await
+        write.store_account_setup(id, self).await.attach(id)
     }
 }
 

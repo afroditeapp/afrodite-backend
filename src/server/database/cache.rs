@@ -7,7 +7,7 @@ use tracing::info;
 
 use crate::{
     api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal},
-    config::Config,
+    config::Config, utils::ConvertCommandError,
 };
 
 use error_stack::{Result, ResultExt};
@@ -15,7 +15,7 @@ use error_stack::{Result, ResultExt};
 
 use super::{
     sqlite::{SqliteSelectJson},
-    write::AccountWriteLock, current::SqliteReadCommands,
+    write::{AccountWriteLock, WriteResult}, current::SqliteReadCommands,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -59,7 +59,7 @@ impl DatabaseCache {
 
         while let Some(id) = accounts.next().await {
             let id = id.change_context(CacheError::Init)?;
-            cache.insert_account_if_not_exists(id).await?;
+            cache.insert_account_if_not_exists(id).await.attach(id)?;
         }
 
         let read_account = cache.accounts.read().await;
@@ -106,7 +106,7 @@ impl DatabaseCache {
     pub async fn insert_account_if_not_exists(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(), CacheError> {
+    ) -> WriteResult<(), CacheError, AccountIdInternal> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_light()).is_none() {
             let lock = Arc::new(Mutex::new(AccountWriteLock));
@@ -122,7 +122,7 @@ impl DatabaseCache {
         &self,
         id: AccountIdLight,
         api_key: ApiKey,
-    ) -> Result<(), CacheError> {
+    ) -> WriteResult<(), CacheError, ApiKey> {
         let cache_entry = self
             .accounts
             .read()
@@ -140,7 +140,7 @@ impl DatabaseCache {
         }
     }
 
-    pub async fn delete_api_key(&self, api_key: ApiKey) -> Result<(), CacheError> {
+    pub async fn delete_api_key(&self, api_key: ApiKey) -> WriteResult<(), CacheError, ApiKey> {
         let mut guard = self.api_keys.write().await;
         guard.remove(&api_key).ok_or(CacheError::KeyNotExists)?;
         Ok(())
@@ -202,7 +202,7 @@ impl DatabaseCache {
         &self,
         id: AccountIdLight,
         cache_operation: impl Fn(&mut CacheEntry) -> T,
-    ) -> Result<T, CacheError> {
+    ) -> WriteResult<T, CacheError, T> {
         let guard = self.accounts.read().await;
         let mut cache_entry = guard
             .get(&id)
@@ -267,7 +267,7 @@ impl DatabaseCache {
         &self,
         id: AccountIdLight,
         data: Account,
-    ) -> Result<(), CacheError> {
+    ) -> WriteResult<(), CacheError, Account> {
         let mut write_guard = self.accounts.write().await;
         write_guard
             .get_mut(&id)
@@ -406,6 +406,7 @@ impl WriteCacheJson for Account {
             })
             .await
             .map(|_| ())
+            .attach(id)
     }
 }
 
@@ -425,6 +426,7 @@ impl WriteCacheJson for ProfileInternal {
             })
             .await
             .map(|_| ())
+            .attach(id)
     }
 }
 
@@ -450,5 +452,6 @@ impl WriteCacheJson for ProfileUpdateInternal {
             })
             .await
             .map(|_| ())
+            .attach(id)
     }
 }

@@ -11,14 +11,14 @@ use crate::{
     api::{
         media::data::{
             ContentState, Moderation, ModerationId, ModerationRequestId,
-            ModerationRequestQueueNumber, ModerationRequestState,
+            ModerationRequestQueueNumber, ModerationRequestState, ModerationRequest,
         },
         model::{
             AccountIdInternal, ContentId,
             ModerationRequestContent,
         },
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle},
+    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
 };
 
 use super::super::super::sqlite::{SqliteDatabaseError};
@@ -224,7 +224,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         &self,
         request_creator: AccountIdInternal,
         request: ModerationRequestContent,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> WriteResult<(), SqliteDatabaseError, ModerationRequest> {
         self.handle
             .read()
             .media()

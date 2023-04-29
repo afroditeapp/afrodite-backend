@@ -2,7 +2,7 @@
 
 
 use async_trait::async_trait;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use tokio_stream::{Stream, StreamExt};
 
 
@@ -14,6 +14,7 @@ use crate::api::model::{
     *
 };
 
+use crate::server::database::write::WriteResult;
 use crate::utils::{IntoReportExt};
 
 use crate::insert_or_update_json;
@@ -31,7 +32,7 @@ impl<'a> CurrentWriteProfileCommands<'a> {
     pub async fn init_profile(
         &self,
         id: AccountIdInternal,
-    ) -> Result<ProfileInternal, SqliteDatabaseError> {
+    ) -> WriteResult<ProfileInternal, SqliteDatabaseError, Profile> {
         let version = uuid::Uuid::new_v4();
         sqlx::query!(
             r#"

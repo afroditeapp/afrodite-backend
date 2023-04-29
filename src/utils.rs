@@ -1,4 +1,7 @@
+use std::fmt::Debug;
+
 use error_stack::{Context, IntoReport, Report, Result, ResultExt};
+use sqlx::Sqlite;
 use tokio::sync::oneshot;
 
 use crate::{
@@ -6,7 +9,7 @@ use crate::{
     server::database::{
         cache::CacheError,
         sqlite::SqliteDatabaseError,
-        write::{CacheWrite, HistoryWrite},
+        write::{DatabaseId, WriteResult, WriteError, HistoryWriteResult, HistoryWriteError},
         DatabaseError,
     },
 };
@@ -109,38 +112,6 @@ pub trait ErrorConversion: ResultExt + Sized {
     ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
         self.change_context_with_info_lazy(Self::ERROR, info)
     }
-
-    // #[track_caller]
-    // fn with_write_cmd_info<T: GetReadWriteCmd>(
-    //     self,
-    //     id: AccountIdInternal,
-    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-    //     self.change_context_with_info_lazy(Self::ERROR, || T::write_cmd(id))
-    // }
-
-    // #[track_caller]
-    // fn with_history_write_cmd_info<T: GetReadWriteCmd>(
-    //     self,
-    //     id: AccountIdInternal,
-    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-    //     self.change_context_with_info_lazy(Self::ERROR, || HistoryWrite(T::write_cmd(id)))
-    // }
-
-    // #[track_caller]
-    // fn with_cache_write_cmd_info<T: GetReadWriteCmd>(
-    //     self,
-    //     id: AccountIdInternal,
-    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-    //     self.change_context_with_info_lazy(Self::ERROR, || CacheWrite(T::write_cmd(id)))
-    // }
-
-    // #[track_caller]
-    // fn with_read_cmd_info<T: GetReadWriteCmd>(
-    //     self,
-    //     id: AccountIdInternal,
-    // ) -> Result<<Self as ResultExt>::Ok, Self::Err> {
-    //     self.change_context_with_info_lazy(Self::ERROR, || T::read_cmd(id))
-    // }
 }
 
 impl<T> ErrorConversion for Result<T, SqliteDatabaseError> {
@@ -151,6 +122,151 @@ impl<T> ErrorConversion for Result<T, SqliteDatabaseError> {
 impl<T> ErrorConversion for Result<T, CacheError> {
     type Err = DatabaseError;
     const ERROR: <Self as ErrorConversion>::Err = DatabaseError::Cache;
+}
+
+pub trait ConvertCommandError<D>: Sized {
+    type Err;
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError>;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, Self::Err>;
+}
+
+impl <D, CmdContext> ConvertCommandError<D> for WriteResult<
+D,
+SqliteDatabaseError,
+CmdContext
+> {
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(WriteError { e, t}) => {
+                Err(e).with_info_lazy(||
+                    format!("Write command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+
+    type Err = SqliteDatabaseError;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, SqliteDatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(WriteError { e, t}) => {
+                Err(e).attach_printable_lazy(||
+                    format!("Write command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+}
+
+impl <D, CmdContext> ConvertCommandError<D> for WriteResult<
+D,
+CacheError,
+CmdContext
+> {
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(WriteError { e, t}) => {
+                Err(e).with_info_lazy(||
+                    format!("Cache write command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+
+    type Err = CacheError;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, CacheError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(WriteError { e, t}) => {
+                Err(e).attach_printable_lazy(||
+                    format!("Cache write command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+}
+
+impl <D, CmdContext> ConvertCommandError<D> for HistoryWriteResult<
+D,
+SqliteDatabaseError,
+CmdContext
+> {
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(HistoryWriteError { e, t}) => {
+                Err(e).with_info_lazy(||
+                    format!("History write command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+
+    type Err = SqliteDatabaseError;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, SqliteDatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(HistoryWriteError { e, t}) => {
+                Err(e).attach_printable_lazy(||
+                    format!("History write command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
 }
 
 pub type ErrorContainer<E> = Option<Report<E>>;
