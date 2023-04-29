@@ -1,4 +1,4 @@
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 /// AccountId is an UUID string. Server will generate an UUID string when

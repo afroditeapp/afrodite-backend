@@ -14,7 +14,7 @@ use hyper::StatusCode;
 
 use tracing::{info, error};
 
-use crate::{api::{self, model::{AccountIdLight, AccountIdInternal, Account, Capabilities, AccountState}, media::internal::internal_get_check_moderation_request_for_account}, config::InternalApiUrls, utils::IntoReportExt};
+use crate::{api::{self, model::{AccountIdInternal, Account, Capabilities, AccountState}}, config::InternalApiUrls, utils::IntoReportExt};
 
 use crate::{api::model::ApiKey, config::Config};
 

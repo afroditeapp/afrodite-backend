@@ -5,34 +5,30 @@ mod qa;
 
 use std::{
     sync::{
-        atomic::{AtomicU64, Ordering},
         Arc,
-    },
-    time::{Duration, Instant}, fmt::Debug, vec,
+    }, fmt::Debug, vec,
 };
 
 use api_client::{
-    models::{AccountIdLight, Profile},
+    models::{AccountIdLight},
 };
 
 use async_trait::async_trait;
 use tokio::{
     select,
     sync::{mpsc, watch},
-    time::sleep,
 };
 
 use error_stack::{Result, ResultExt};
 
 use tracing::{error, log::warn, info};
 
-use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothing, media::MediaState}, utils::{Counters, Timer}, qa::Qa};
+use self::{benchmark::{Benchmark, BenchmarkState}, actions::{BotAction, DoNothing, media::MediaState}, qa::Qa};
 
 use super::client::{ApiClient, TestError};
 
 use crate::{
     config::args::{Test, TestMode},
-    utils::IntoReportExt,
 };
 
 #[derive(Debug)]

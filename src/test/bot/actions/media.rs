@@ -1,18 +1,17 @@
 
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug};
 
-use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile}, media_api::{put_image_to_moderation_slot, put_moderation_request}}, models::{Profile, ContentId, ModerationRequestContent}, manual_additions::put_image_to_moderation_slot_fixed};
+use api_client::{apis::{media_api::{put_moderation_request}}, models::{ContentId, ModerationRequestContent}, manual_additions::put_image_to_moderation_slot_fixed};
 use async_trait::async_trait;
 
-use error_stack::{Result, FutureExt, ResultExt, Report};
+use error_stack::{Result};
 
-use tracing::{error, log::warn};
 
-use super::{super::super::client::{ApiClient, TestError}, BotAction};
+
+use super::{super::super::client::{TestError}, BotAction};
 
 use crate::{
-    config::args::{Test, TestMode},
-    utils::IntoReportExt, server::database::file::file::ImageSlot, test::bot::utils::image::ImageProvider,
+    utils::IntoReportExt, test::bot::utils::image::ImageProvider,
 };
 
 use super::BotState;

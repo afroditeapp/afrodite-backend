@@ -1,15 +1,15 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 
-use axum::{Json, TypedHeader, extract::Path};
+use axum::{Json, extract::Path};
 
-use error_stack::ResultExt;
+
 use hyper::StatusCode;
 
-use crate::api::{utils::ApiKeyHeader, ReadDatabase, GetUsers};
+use crate::api::{ReadDatabase, GetUsers};
 
 use super::{
-    data::{AccountIdLight, ApiKey, AccountState, Account},
+    data::{AccountIdLight, ApiKey, Account},
     GetApiKeys,
 };
 

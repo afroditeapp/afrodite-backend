@@ -6,7 +6,7 @@ use error_stack::Result;
 
 
 use crate::{api::model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileUpdateInternal, ProfileInternal,
+    AccountIdInternal, AccountIdLight, ApiKey,
 }, utils::ConvertCommandError};
 
 use super::{

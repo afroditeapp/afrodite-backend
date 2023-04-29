@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize, __private::de};
+use serde::{Deserialize, Serialize};
 
-use sqlx::{Encode, Sqlite};
+use sqlx::{Encode};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 

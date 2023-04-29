@@ -1,18 +1,17 @@
 
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug};
 
-use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile}, media_api}, models::Profile};
+use api_client::{apis::{media_api}};
 use async_trait::async_trait;
-use nalgebra::U8;
 
-use error_stack::{Result, FutureExt, ResultExt};
 
-use tracing::{error, log::warn};
+use error_stack::{Result};
 
-use super::{super::super::client::{ApiClient, TestError}, BotAction};
+
+
+use super::{super::super::client::{TestError}, BotAction};
 
 use crate::{
-    config::args::{Test, TestMode},
     utils::IntoReportExt,
 };
 

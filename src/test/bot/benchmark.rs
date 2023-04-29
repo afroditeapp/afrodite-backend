@@ -8,17 +8,16 @@ use tokio::time::sleep;
 
 use crate::test::client::TestError;
 
-use super::{BotState, BotStruct, actions::{BotAction, account::{Register, Login}, profile::ChangeProfileText}, Completed, utils::{Timer, Counters}};
+use super::{BotState, BotStruct, actions::{BotAction, account::{Register, Login}, profile::ChangeProfileText}, utils::{Timer, Counters}};
 
 
-use error_stack::{Result, FutureExt, ResultExt};
+use error_stack::{Result};
 
-use tracing::{error, log::warn, log::info};
+use tracing::{log::info};
 
-use super::super::client::{ApiClient};
+
 
 use crate::{
-    config::args::{Test, TestMode},
     utils::IntoReportExt,
 };
 

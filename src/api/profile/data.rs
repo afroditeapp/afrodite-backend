@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{ToSchema, IntoParams};
 use uuid::Uuid;
 
-use crate::api::media::data::{ContentIdInternal, ContentId};
+use crate::api::media::data::{ContentId};
 
 
 /// Profile's database data

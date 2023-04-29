@@ -6,7 +6,7 @@ use tokio_stream::StreamExt;
 use tracing::info;
 
 use crate::{
-    api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal},
+    api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdateInternal},
     config::Config, utils::ConvertCommandError, server::database::write::NoId,
 };
 

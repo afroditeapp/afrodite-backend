@@ -4,8 +4,8 @@
 
 use error_stack::Result;
 
-use sqlx::{Sqlite, Transaction, query::Query, Row, sqlite::SqliteRow};
-use tracing::instrument::WithSubscriber;
+use sqlx::{Sqlite, Transaction, Row};
+
 
 use crate::{
     api::{
@@ -18,7 +18,7 @@ use crate::{
             ModerationRequestContent,
         },
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, current::media::write::CurrentWriteMediaCommands, write::WriteResult}, utils::ConvertCommandError,
+    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult}, utils::ConvertCommandError,
 };
 
 use super::super::super::sqlite::{SqliteDatabaseError};

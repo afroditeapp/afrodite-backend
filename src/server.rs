@@ -2,7 +2,7 @@ pub mod app;
 pub mod database;
 pub mod internal;
 
-use std::net::SocketAddr;
+
 use std::sync::Arc;
 
 use axum::Router;

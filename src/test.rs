@@ -4,7 +4,7 @@ mod bot;
 mod server;
 pub mod client;
 
-use std::{fs, sync::Arc};
+use std::{sync::Arc};
 
 use tokio::{
     select, signal,
@@ -12,11 +12,10 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use api_client::{models::AccountIdLight};
+
 
 use crate::{
     config::{args::TestMode, Config},
-    server::database::DB_HISTORY_DIR_NAME,
     test::{bot::{BotManager}, server::ServerManager, client::ApiClient},
 };
 

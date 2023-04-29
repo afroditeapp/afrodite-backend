@@ -138,8 +138,8 @@ impl HistoryUpdateJson for AccountSetup {
 impl HistoryUpdateJson for ProfileUpdateInternal {
     async fn history_update_json(
         &self,
-        id: AccountIdInternal,
-        write: &HistoryWriteCommands,
+        _id: AccountIdInternal,
+        _write: &HistoryWriteCommands,
     ) -> Result<(), SqliteDatabaseError> {
         // TODO: history for profile
         Ok(())

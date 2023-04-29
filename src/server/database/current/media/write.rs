@@ -4,14 +4,14 @@
 
 use error_stack::Result;
 
-use sqlx::{Sqlite, Transaction, query::Query, Row, sqlite::SqliteRow};
-use tracing::instrument::WithSubscriber;
+use sqlx::{Sqlite, Transaction};
+
 
 use crate::{
     api::{
         media::data::{
-            ContentState, Moderation, ModerationId, ModerationRequestId,
-            ModerationRequestQueueNumber, ModerationRequestState, ModerationRequest,
+            ContentState,
+            ModerationRequestQueueNumber, ModerationRequest,
         },
         model::{
             AccountIdInternal, ContentId,

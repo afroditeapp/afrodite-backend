@@ -22,7 +22,7 @@ use crate::{
         media::data::{Moderation, HandleModerationRequest},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, Profile, ProfileUpdateInternal,
+            ModerationRequestContent, ProfileUpdateInternal,
         },
     },
     config::Config,
@@ -32,7 +32,6 @@ use crate::{
 
 use super::{
     file::{file::ImageSlot},
-    sqlite::{SqliteUpdateJson},
     RouterDatabaseWriteHandle,
 };
 

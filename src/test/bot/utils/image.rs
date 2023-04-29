@@ -1,4 +1,4 @@
-use image::{ImageBuffer, Rgb, Rgba, codecs::jpeg::JpegEncoder};
+use image::{ImageBuffer, Rgb, codecs::jpeg::JpegEncoder};
 
 
 

@@ -17,7 +17,7 @@ use crate::server::database::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, ModerationList, ModerationRequestContent, HandleModerationRequest, ModerationRequestId, ModerationRequest,
+    ContentId, ModerationList, ModerationRequestContent, HandleModerationRequest, ModerationRequest,
 };
 
 use super::model::AccountIdLight;

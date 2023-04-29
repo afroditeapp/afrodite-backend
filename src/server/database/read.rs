@@ -4,7 +4,7 @@ use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use crate::{
-    api::{model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, ModerationRequestContent}, media::data::ModerationRequest},
+    api::{model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId}, media::data::ModerationRequest},
     utils::{ErrorConversion, ConvertCommandError},
 };
 
@@ -13,10 +13,10 @@ use super::{
     current::SqliteReadCommands,
     file::{utils::FileDir, FileError},
     sqlite::{SqliteReadHandle, SqliteSelectJson, SqliteDatabaseError},
-    DatabaseError, write::{DatabaseId, NoId},
+    DatabaseError, write::{NoId},
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 
 pub type ReadResult<T, Err, WriteContext = T> = std::result::Result<T, ReadError<error_stack::Report<Err>, WriteContext>>;
 pub type HistoryReadResult<T, Err, WriteContext = T> = std::result::Result<T, HistoryReadError<error_stack::Report<Err>, WriteContext>>;
