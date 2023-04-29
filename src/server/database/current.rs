@@ -14,8 +14,9 @@ use self::profile::read::CurrentReadProfileCommands;
 use self::profile::write::CurrentWriteProfileCommands;
 
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
+use super::read::ReadResult;
 use super::sqlite::CurrentDataWriteHandle;
-use super::write::{WriteError, WriteResult};
+use super::write::{WriteError, WriteResult, NoId};
 use crate::api::account::data::AccountSetup;
 
 use crate::api::model::{
@@ -74,7 +75,7 @@ impl<'a> SqliteReadCommands<'a> {
 
     pub fn account_ids_stream(
         &self,
-    ) -> impl Stream<Item = Result<AccountIdInternal, SqliteDatabaseError>> + '_ {
+    ) -> impl Stream<Item = ReadResult<AccountIdInternal, SqliteDatabaseError, NoId>> + '_ {
         sqlx::query_as!(
             AccountIdInternal,
             r#"
@@ -83,13 +84,13 @@ impl<'a> SqliteReadCommands<'a> {
             "#,
         )
         .fetch(self.handle.pool())
-        .map(|result| result.into_error(SqliteDatabaseError::Fetch))
+        .map(|result| result.into_error(SqliteDatabaseError::Fetch).map_err(|e| e.into()))
     }
 
     pub async fn api_key(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<ApiKey>, SqliteDatabaseError> {
+    ) -> ReadResult<Option<ApiKey>, SqliteDatabaseError, ApiKey> {
         let id = id.row_id();
         sqlx::query!(
             r#"
@@ -103,6 +104,7 @@ impl<'a> SqliteReadCommands<'a> {
         .await
         .map(|result| result.api_key.map(ApiKey::new))
         .into_error(SqliteDatabaseError::Fetch)
+        .map_err(|e| e.into())
     }
 }
 

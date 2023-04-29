@@ -5,79 +5,75 @@ use tokio_util::io::ReaderStream;
 
 use crate::{
     api::{model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, ModerationRequestContent}, media::data::ModerationRequest},
-    utils::ErrorConversion,
+    utils::{ErrorConversion, ConvertCommandError},
 };
 
 use super::{
-    cache::{DatabaseCache, ReadCacheJson},
+    cache::{DatabaseCache, ReadCacheJson, CacheError},
     current::SqliteReadCommands,
-    file::utils::FileDir,
-    sqlite::{SqliteReadHandle, SqliteSelectJson},
+    file::{utils::FileDir, FileError},
+    sqlite::{SqliteReadHandle, SqliteSelectJson, SqliteDatabaseError},
     DatabaseError, write::{DatabaseId, NoId},
 };
 
 use error_stack::{Result, ResultExt};
 
-// #[derive(Debug, Clone)]
-// pub enum ReadCmd {
-//     AccountApiKey(AccountIdInternal),
-//     AccountState(AccountIdInternal),
-//     AccountSetup(AccountIdInternal),
-//     Accounts,
-//     Profile(AccountIdInternal),
-// }
+pub type ReadResult<T, Err, WriteContext = T> = std::result::Result<T, ReadError<error_stack::Report<Err>, WriteContext>>;
+pub type HistoryReadResult<T, Err, WriteContext = T> = std::result::Result<T, HistoryReadError<error_stack::Report<Err>, WriteContext>>;
 
-// impl std::fmt::Display for ReadCmd {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_fmt(format_args!("Read command: {:?}", self))
-//     }
-// }
+#[derive(Debug)]
+pub struct ReadError<Err, Target = ()> {
+    pub e: Err,
+    pub t: PhantomData<Target>,
+}
 
-#[derive(Debug, Clone)]
-pub struct ReadCmd<T: Debug>(DatabaseId, PhantomData<T>);
-
-impl <T: Debug> ReadCmd<T> {
-    pub fn new(id: impl Into<DatabaseId>) -> Self {
-        Self(id.into(), PhantomData)
+impl <Target> From<error_stack::Report<SqliteDatabaseError>> for ReadError<error_stack::Report<SqliteDatabaseError>, Target> {
+    fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
+        Self { t: PhantomData, e: value }
     }
 }
 
-impl <T: Debug> std::fmt::Display for ReadCmd<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("Read command: {:?}", self))
+impl <Target> From<error_stack::Report<CacheError>> for ReadError<error_stack::Report<CacheError>, Target> {
+    fn from(value: error_stack::Report<CacheError>) -> Self {
+        Self { t: PhantomData, e: value }
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct HistoryRead<T: Debug>(DatabaseId, PhantomData<T>);
-
-impl <T: Debug> HistoryRead<T> {
-    pub fn new(id: impl Into<DatabaseId>) -> Self {
-        Self(id.into(), PhantomData)
+impl <Target> From<error_stack::Report<FileError>> for ReadError<error_stack::Report<FileError>, Target> {
+    fn from(value: error_stack::Report<FileError>) -> Self {
+        Self { t: PhantomData, e: value }
     }
 }
 
-impl <T: Debug> std::fmt::Display for HistoryRead<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("History read command: {:?}", self))
+impl <Target> From<SqliteDatabaseError> for ReadError<error_stack::Report<SqliteDatabaseError>, Target> {
+    fn from(value: SqliteDatabaseError) -> Self {
+        Self { t: PhantomData, e: value.into() }
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CacheRead<T: Debug>(DatabaseId, PhantomData<T>);
-
-impl <T: Debug> CacheRead<T> {
-    pub fn new(id: impl Into<DatabaseId>) -> Self {
-        Self(id.into(), PhantomData)
+impl <Target> From<CacheError> for ReadError<error_stack::Report<CacheError>, Target> {
+    fn from(value: CacheError) -> Self {
+        Self { t: PhantomData, e: value.into() }
     }
 }
 
-impl <T: Debug> std::fmt::Display for CacheRead<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("Cache write command: {:?}", self))
+impl <Target> From<FileError> for ReadError<error_stack::Report<FileError>, Target> {
+    fn from(value: FileError) -> Self {
+        Self { t: PhantomData, e: value.into() }
     }
 }
 
+#[derive(Debug)]
+pub struct HistoryReadError<Err, Target = ()> {
+    pub e: Err,
+    pub t: PhantomData<Target>,
+}
+
+impl <Target> From<error_stack::Report<SqliteDatabaseError>> for HistoryReadError<error_stack::Report<SqliteDatabaseError>, Target> {
+    fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
+        Self { t: PhantomData, e: value }
+    }
+}
 
 pub struct ReadCommands<'a> {
     sqlite: SqliteReadCommands<'a>,
@@ -99,11 +95,11 @@ impl<'a> ReadCommands<'a> {
             .cache
             .to_account_id_internal(id)
             .await
-            .change_context(DatabaseError::Cache)?;
+            .convert(id)?;
         self.sqlite
             .api_key(id)
             .await
-            .change_context(DatabaseError::Sqlite)
+            .convert(id)
     }
 
     pub async fn account_ids<T: FnMut(AccountIdInternal)>(
@@ -111,7 +107,7 @@ impl<'a> ReadCommands<'a> {
         mut handler: T,
     ) -> Result<(), DatabaseError> {
         let mut users = self.sqlite.account_ids_stream();
-        while let Some(user_id) = users.try_next().await.with_info(ReadCmd::<AccountIdInternal>::new(NoId))? {
+        while let Some(user_id) = users.try_next().await.convert(NoId)? {
             handler(user_id)
         }
 
@@ -125,11 +121,11 @@ impl<'a> ReadCommands<'a> {
         if T::CACHED_JSON {
             T::read_from_cache(id.as_light(), self.cache)
                 .await
-                .with_info_lazy(|| CacheRead::<T>::new(id))
+                .with_info_lazy(|| format!("Cache read {:?} failed, id: {:?}", PhantomData::<T>, id))
         } else {
             T::select_json(id, &self.sqlite)
                 .await
-                .with_info_lazy(|| ReadCmd::<T>::new(id))
+                .with_info_lazy(|| format!("Read {:?} failed, id: {:?}", PhantomData::<T>, id))
         }
     }
 
@@ -142,7 +138,7 @@ impl<'a> ReadCommands<'a> {
             .image_content(account_id, content_id)
             .read_stream()
             .await
-            .change_context(DatabaseError::File)
+            .convert((account_id, content_id))
     }
 
     pub async fn image(
@@ -154,7 +150,7 @@ impl<'a> ReadCommands<'a> {
             .image_content(account_id, content_id)
             .read_all()
             .await
-            .change_context(DatabaseError::File)
+            .convert((account_id, content_id))
     }
 
     pub async fn moderation_request(
@@ -165,21 +161,21 @@ impl<'a> ReadCommands<'a> {
             .media()
             .current_moderation_request(account_id)
             .await
-            .change_context(DatabaseError::Sqlite)
+            .convert(account_id)
             .map(|r| r.map(|request| request.into_request()))
     }
 
-    pub async fn moderation_request_from_queue(
-        &self,
-        _account_id: AccountIdInternal,
-    ) -> Result<Option<ModerationRequest>, DatabaseError> {
-        let _next_queue_number = self
-            .sqlite
-            .media()
-            .get_next_active_moderation_request(0)
-            .await
-            .change_context(DatabaseError::Sqlite)?;
+    // pub async fn moderation_request_from_queue(
+    //     &self,
+    //     _account_id: AccountIdInternal,
+    // ) -> Result<Option<ModerationRequest>, DatabaseError> {
+    //     let _next_queue_number = self
+    //         .sqlite
+    //         .media()
+    //         .get_next_active_moderation_request(0)
+    //         .await
+    //         .convert(_account_id)?;
 
-        unimplemented!()
-    }
+    //     unimplemented!()
+    // }
 }

@@ -10,7 +10,7 @@ use crate::{
         cache::CacheError,
         sqlite::SqliteDatabaseError,
         write::{DatabaseId, WriteResult, WriteError, HistoryWriteResult, HistoryWriteError},
-        DatabaseError,
+        DatabaseError, read::{ReadResult, ReadError, HistoryReadResult, HistoryReadError}, file::FileError,
     },
 };
 
@@ -122,6 +122,11 @@ impl<T> ErrorConversion for Result<T, SqliteDatabaseError> {
 impl<T> ErrorConversion for Result<T, CacheError> {
     type Err = DatabaseError;
     const ERROR: <Self as ErrorConversion>::Err = DatabaseError::Cache;
+}
+
+impl<T> ErrorConversion for Result<T, FileError> {
+    type Err = DatabaseError;
+    const ERROR: <Self as ErrorConversion>::Err = DatabaseError::File;
 }
 
 pub trait ConvertCommandError<D>: Sized {
@@ -268,6 +273,177 @@ CmdContext
         }
     }
 }
+
+impl <D, CmdContext> ConvertCommandError<D> for ReadResult<
+D,
+SqliteDatabaseError,
+CmdContext
+> {
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(ReadError { e, t}) => {
+                Err(e).with_info_lazy(||
+                    format!("Read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+
+    type Err = SqliteDatabaseError;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, SqliteDatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(ReadError { e, t}) => {
+                Err(e).attach_printable_lazy(||
+                    format!("Read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+}
+
+impl <D, CmdContext> ConvertCommandError<D> for ReadResult<
+D,
+CacheError,
+CmdContext
+> {
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(ReadError { e, t}) => {
+                Err(e).with_info_lazy(||
+                    format!("Cache read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+
+    type Err = CacheError;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, CacheError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(ReadError { e, t}) => {
+                Err(e).attach_printable_lazy(||
+                    format!("Cache read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+}
+
+
+impl <D, CmdContext> ConvertCommandError<D> for ReadResult<
+D,
+FileError,
+CmdContext
+> {
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(ReadError { e, t}) => {
+                Err(e).with_info_lazy(||
+                    format!("File read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+
+    type Err = FileError;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, FileError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(ReadError { e, t}) => {
+                Err(e).attach_printable_lazy(||
+                    format!("File read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+}
+
+impl <D, CmdContext> ConvertCommandError<D> for HistoryReadResult<
+D,
+SqliteDatabaseError,
+CmdContext
+> {
+    #[track_caller]
+    fn convert<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, DatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(HistoryReadError { e, t}) => {
+                Err(e).with_info_lazy(||
+                    format!("History read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+
+    type Err = SqliteDatabaseError;
+
+    #[track_caller]
+    fn attach<
+        I: Into<DatabaseId>,
+    >(
+        self,
+        id: I,
+    ) -> Result<D, SqliteDatabaseError> {
+        match self {
+            Ok(d) => Ok(d),
+            Err(HistoryReadError { e, t}) => {
+                Err(e).attach_printable_lazy(||
+                    format!("History read command: {:?}, id: {:?}", t, id.into())
+                )
+            }
+        }
+    }
+}
+
+
 
 pub type ErrorContainer<E> = Option<Report<E>>;
 

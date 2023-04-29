@@ -18,15 +18,6 @@ use crate::utils::{IntoReportExt};
 
 use crate::insert_or_update_json;
 
-
-
-
-
-
-
-
-
-
 #[async_trait]
 impl SqliteUpdateJson for Account {
     async fn update_json(

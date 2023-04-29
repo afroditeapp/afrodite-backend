@@ -7,7 +7,7 @@ use tracing::info;
 
 use crate::{
     api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal},
-    config::Config, utils::ConvertCommandError,
+    config::Config, utils::ConvertCommandError, server::database::write::NoId,
 };
 
 use error_stack::{Result, ResultExt};
@@ -15,7 +15,7 @@ use error_stack::{Result, ResultExt};
 
 use super::{
     sqlite::{SqliteSelectJson},
-    write::{AccountWriteLock, WriteResult}, current::SqliteReadCommands,
+    write::{AccountWriteLock, WriteResult}, current::SqliteReadCommands, read::ReadResult,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -57,8 +57,8 @@ impl DatabaseCache {
 
         let mut accounts = read.account_ids_stream();
 
-        while let Some(id) = accounts.next().await {
-            let id = id.change_context(CacheError::Init)?;
+        while let Some(r) = accounts.next().await {
+            let id = r.attach(NoId).change_context(CacheError::Init)?;
             cache.insert_account_if_not_exists(id).await.attach(id)?;
         }
 
@@ -71,6 +71,7 @@ impl DatabaseCache {
             let api_key = read
                 .api_key(entry.account_id_internal)
                 .await
+                .attach(entry.account_id_internal)
                 .change_context(CacheError::Init)?;
 
             if let Some(key) = api_key {
@@ -171,7 +172,7 @@ impl DatabaseCache {
     pub async fn to_account_id_internal(
         &self,
         id: AccountIdLight,
-    ) -> Result<AccountIdInternal, CacheError> {
+    ) -> ReadResult<AccountIdInternal, CacheError, AccountIdLight> {
         let guard = self.accounts.read().await;
         let data = guard
             .get(&id)

@@ -18,7 +18,7 @@ use crate::{
             ModerationRequestContent,
         },
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, current::media::write::CurrentWriteMediaCommands, write::WriteResult},
+    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, current::media::write::CurrentWriteMediaCommands, write::WriteResult}, utils::ConvertCommandError,
 };
 
 use super::super::super::sqlite::{SqliteDatabaseError};
@@ -150,7 +150,8 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             .read()
             .media()
             .get_next_active_moderation_request(0)
-            .await?;
+            .await
+            .attach(moderator_id)?;
 
         match id {
             None => Ok(None),

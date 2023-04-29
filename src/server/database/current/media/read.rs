@@ -19,6 +19,7 @@ use crate::server::database::file::file::ImageSlot;
 
 
 
+use crate::server::database::read::ReadResult;
 use crate::utils::{IntoReportExt};
 
 pub struct CurrentReadMediaCommands<'a> {
@@ -92,7 +93,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn current_moderation_request(
         &self,
         request_creator: AccountIdInternal,
-    ) -> Result<Option<ModerationRequestInternal>, SqliteDatabaseError> {
+    ) -> ReadResult<Option<ModerationRequestInternal>, SqliteDatabaseError> {
         let account_row_id = request_creator.row_id();
         let request = sqlx::query!(
             r#"
@@ -225,7 +226,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_next_active_moderation_request(
         &self,
         sub_queue: i64,
-    ) -> Result<Option<ModerationRequestId>, SqliteDatabaseError> {
+    ) -> ReadResult<Option<ModerationRequestId>, SqliteDatabaseError> {
         let data = sqlx::query!(
             r#"
             SELECT request_row_id

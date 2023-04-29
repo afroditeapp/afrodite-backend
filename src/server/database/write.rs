@@ -37,6 +37,7 @@ pub struct NoId;
 pub enum DatabaseId {
     Light(AccountIdLight),
     Internal(AccountIdInternal),
+    Content(AccountIdLight, ContentId),
     Empty,
 }
 
@@ -52,31 +53,21 @@ impl From<AccountIdInternal> for DatabaseId {
     }
 }
 
+impl From<(AccountIdLight, ContentId)> for DatabaseId {
+    fn from(value: (AccountIdLight, ContentId)) -> Self {
+        DatabaseId::Content(value.0, value.1)
+    }
+}
+
+
 impl From<NoId> for DatabaseId {
-    fn from(value: NoId) -> Self {
+    fn from(_: NoId) -> Self {
         DatabaseId::Empty
     }
 }
 
-// pub type WriteResult<T, Err, WriteContext> = std::result::Result<T, (PhantomData<WriteContext>, error_stack::Report<Err>)>;
-
-// impl <WriteContext> From<error_stack::Report<SqliteDatabaseError>> for (PhantomData<WriteContext>, error_stack::Report<SqliteDatabaseError>) {
-//     fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
-//         Err((PhantomData, value))
-//     }
-// }
-
 pub type WriteResult<T, Err, WriteContext = T> = std::result::Result<T, WriteError<error_stack::Report<Err>, WriteContext>>;
-
 pub type HistoryWriteResult<T, Err, WriteContext = T> = std::result::Result<T, HistoryWriteError<error_stack::Report<Err>, WriteContext>>;
-
-
-// impl <WriteContext> From<error_stack::Report<SqliteDatabaseError>> for (PhantomData<WriteContext>, error_stack::Report<SqliteDatabaseError>) {
-//     fn from(value: error_stack::Report<SqliteDatabaseError>) -> Self {
-//         Err((PhantomData, value))
-//     }
-// }
-
 
 #[derive(Debug)]
 pub struct WriteError<Err, Target = ()> {
@@ -113,69 +104,6 @@ impl <Target> From<error_stack::Report<SqliteDatabaseError>> for HistoryWriteErr
         Self { t: PhantomData, e: value }
     }
 }
-
-// #[derive(Debug, Clone)]
-// pub struct WriteCmd<T: Debug, R = T>(PhantomData<T>, pub R);
-
-// impl <T: Debug> WriteCmd<T, ()> {
-//     pub fn empty() -> Self {
-//         Self(PhantomData, ())
-//     }
-// }
-
-// impl <T: Debug, R> WriteCmd<T, R> {
-//     pub fn new(d: R) -> Self {
-//         Self(PhantomData, d)
-//     }
-// }
-
-// impl <T: Debug> std::fmt::Display for WriteCmd<T, ()> {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_fmt(format_args!("Write command: {:?}", self))
-//     }
-// }
-
-// #[derive(Debug, Clone)]
-// pub struct HistoryWrite<T: Debug, R = T>(PhantomData<T>, pub R);
-
-// impl <T: Debug> HistoryWrite<T, ()> {
-//     pub fn empty() -> Self {
-//         Self(PhantomData, ())
-//     }
-// }
-
-// impl <T: Debug, R> HistoryWrite<T, R> {
-//     pub fn new(d: R) -> Self {
-//         Self(PhantomData, d)
-//     }
-// }
-
-// impl <T: Debug> std::fmt::Display for HistoryWrite<T, ()> {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_fmt(format_args!("History write command: {:?}", self))
-//     }
-// }
-
-// #[derive(Debug, Clone)]
-// pub struct CacheWrite<T: Debug, R = T>(PhantomData<T>, pub R);
-
-// impl <T: Debug> CacheWrite<T, ()> {
-//     pub fn empty() -> Self {
-//         Self(PhantomData, ())
-//     }
-// }
-
-// impl <T: Debug, R> CacheWrite<T, R> {
-//     pub fn new(d: R) -> Self {
-//         Self(PhantomData, d)
-//     }
-// }
-
-// impl <T: Debug> std::fmt::Display for CacheWrite<T, ()> {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_fmt(format_args!("Cache write command: {:?}", self))
-//     }
-// }
 
 // TODO: If one commands does multiple writes to database, move writes to happen
 // in a transaction.
@@ -330,16 +258,16 @@ impl<'a> WriteCommands<'a> {
     ) -> Result<(), DatabaseError> {
         data.update_json(id, &self.current())
             .await
-            .with_info_lazy(|| "")?;
-
-        data.history_update_json(id, &self.history())
-            .await
-            .with_info_lazy(|| "")?;
+            .with_info_lazy(|| format!("Update {:?} failed, id: {:?}", PhantomData::<T>, id))?;
 
         // Empty implementation if not really cacheable.
         data.write_to_cache(id.as_light(), &self.cache)
             .await
-            .with_info_lazy(|| "")
+            .with_info_lazy(|| format!("Cache update {:?} failed, id: {:?}", PhantomData::<T>, id))?;
+
+        data.history_update_json(id, &self.history())
+            .await
+            .with_info_lazy(|| format!("History update {:?} failed, id: {:?}", PhantomData::<T>, id))
     }
 
     pub async fn set_moderation_request(

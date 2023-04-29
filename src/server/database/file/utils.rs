@@ -8,7 +8,7 @@ use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
 
-use crate::api::model::{AccountIdLight, ContentId};
+use crate::{api::model::{AccountIdLight, ContentId}, server::database::read::ReadResult};
 
 use super::{
     super::FileError,
@@ -173,12 +173,12 @@ impl ImageFile {
         self.path.remove_if_exists().await
     }
 
-    pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
-        self.path.read_stream().await
+    pub async fn read_stream(&self) -> ReadResult<ReaderStream<tokio::fs::File>, FileError, ImageFile> {
+        self.path.read_stream().await.map_err(|e| e.into())
     }
 
-    pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
-        self.path.read_all().await
+    pub async fn read_all(&self) -> ReadResult<Vec<u8>, FileError, ImageFile> {
+        self.path.read_all().await.map_err(|e| e.into())
     }
 }
 
