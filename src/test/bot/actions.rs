@@ -5,7 +5,7 @@ pub mod admin;
 
 use std::{fmt::{Debug, Display}, time::Duration};
 
-use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile, get_default_profile}}, models::Profile};
+use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile}}, models::Profile};
 use async_trait::async_trait;
 use nalgebra::U8;
 

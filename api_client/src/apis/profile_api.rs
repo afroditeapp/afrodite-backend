@@ -15,15 +15,6 @@ use crate::apis::ResponseContent;
 use super::{Error, configuration};
 
 
-/// struct for typed errors of method [`get_default_profile`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetDefaultProfileError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_next_profile_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -69,42 +60,6 @@ pub enum PutLocationError {
     UnknownValue(serde_json::Value),
 }
 
-
-/// TODO: Remove this at some point
-pub async fn get_default_profile(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::Profile, Error<GetDefaultProfileError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/profile_api/default/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
-    };
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
-    } else {
-        let local_var_entity: Option<GetDefaultProfileError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
 
 /// Get next page of profile list.
 pub async fn get_next_profile_page(configuration: &configuration::Configuration, ) -> Result<crate::models::ProfilePage, Error<GetNextProfilePageError>> {
@@ -179,7 +134,7 @@ pub async fn get_profile(configuration: &configuration::Configuration, account_i
 }
 
 /// Update profile information.  Writes the profile to the database only if it is changed.  TODO: string lenght validation, limit saving new profiles
-pub async fn post_profile(configuration: &configuration::Configuration, profile: crate::models::Profile) -> Result<(), Error<PostProfileError>> {
+pub async fn post_profile(configuration: &configuration::Configuration, profile_update: crate::models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -198,7 +153,7 @@ pub async fn post_profile(configuration: &configuration::Configuration, profile:
         };
         local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&profile);
+    local_var_req_builder = local_var_req_builder.json(&profile_update);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

@@ -1,7 +1,7 @@
 
 use std::fmt::{Debug, Display};
 
-use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile, get_default_profile}, media_api::{put_image_to_moderation_slot, put_moderation_request}}, models::{Profile, ContentId, ModerationRequestContent}, manual_additions::put_image_to_moderation_slot_fixed};
+use api_client::{apis::{account_api::{post_register, post_login}, profile_api::{post_profile, get_profile}, media_api::{put_image_to_moderation_slot, put_moderation_request}}, models::{Profile, ContentId, ModerationRequestContent}, manual_additions::put_image_to_moderation_slot_fixed};
 use async_trait::async_trait;
 
 use error_stack::{Result, FutureExt, ResultExt, Report};

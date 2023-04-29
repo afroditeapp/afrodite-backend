@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, __private::de};
 
+use sqlx::{Encode, Sqlite};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -171,30 +172,67 @@ pub struct SlotId {
 }
 
 /// Content ID for media content for example images
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash, sqlx::Type)]
-#[into_params(names("content_id"))]
-#[sqlx(transparent)]
-pub struct ContentId(uuid::Uuid);
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
+pub struct ContentId {
+    pub content_id: uuid::Uuid,
+}
 
 impl ContentId {
     pub fn new_random_id() -> Self {
-        Self(Uuid::new_v4())
+        Self { content_id: Uuid::new_v4() }
     }
 
     pub fn new(content_id: Uuid) -> Self {
-        Self(content_id)
+        Self { content_id }
     }
 
     pub fn as_uuid(&self) -> Uuid {
-        self.0
+        self.content_id
     }
 
     pub fn raw_jpg_image(&self) -> String {
-        format!("{}.raw.jpg", self.0.as_hyphenated())
+        format!("{}.raw.jpg", self.content_id.as_hyphenated())
     }
 
     pub fn jpg_image(&self) -> String {
-        format!("{}.jpg", self.0.as_hyphenated())
+        format!("{}.jpg", self.content_id.as_hyphenated())
+    }
+}
+
+impl sqlx::Type<sqlx::Sqlite> for ContentId {
+    fn type_info() -> <sqlx::Sqlite as sqlx::Database>::TypeInfo {
+        <Uuid as sqlx::Type<sqlx::Sqlite>>::type_info()
+    }
+
+    fn compatible(ty: &<sqlx::Sqlite as sqlx::Database>::TypeInfo) -> bool {
+        <Uuid as sqlx::Type<sqlx::Sqlite>>::compatible(ty)
+    }
+}
+
+impl <'a> sqlx::Encode<'a, sqlx::Sqlite> for ContentId {
+    fn encode_by_ref<'q>(&self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        self.content_id.encode_by_ref(buf)
+    }
+
+    fn encode<'q>(self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull
+    where
+        Self: Sized,
+    {
+        self.content_id.encode_by_ref(buf)
+    }
+
+    fn produces(&self) -> Option<<sqlx::Sqlite as sqlx::Database>::TypeInfo> {
+        <Uuid as sqlx::Encode<'a, sqlx::Sqlite>>::produces(&self.content_id)
+    }
+
+    fn size_hint(&self) -> usize {
+        self.content_id.size_hint()
+    }
+}
+
+impl sqlx::Decode<'_, sqlx::Sqlite> for ContentId {
+    fn decode(value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+        <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value).map(|id| ContentId::new(id))
     }
 }
 

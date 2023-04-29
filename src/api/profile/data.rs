@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use utoipa::{ToSchema, IntoParams};
+use uuid::Uuid;
 
 use crate::api::media::data::{ContentIdInternal, ContentId};
 
@@ -80,7 +81,7 @@ impl ProfileUpdateInternal {
     pub fn new(new_data: ProfileUpdate) -> Self {
         Self {
             new_data,
-            version: ProfileVersion(uuid::Uuid::new_v4()),
+            version: ProfileVersion { version_uuid: uuid::Uuid::new_v4() },
         }
     }
 }
@@ -128,7 +129,44 @@ pub struct ProfileLink {
     version: uuid::Uuid,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash, sqlx::Type)]
-#[into_params(names("version_uuid"))]
-#[sqlx(transparent)]
-pub struct ProfileVersion(uuid::Uuid);
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
+pub struct ProfileVersion {
+    version_uuid: uuid::Uuid
+}
+
+impl sqlx::Type<sqlx::Sqlite> for ProfileVersion {
+    fn type_info() -> <sqlx::Sqlite as sqlx::Database>::TypeInfo {
+        <Uuid as sqlx::Type<sqlx::Sqlite>>::type_info()
+    }
+
+    fn compatible(ty: &<sqlx::Sqlite as sqlx::Database>::TypeInfo) -> bool {
+        <Uuid as sqlx::Type<sqlx::Sqlite>>::compatible(ty)
+    }
+}
+
+impl <'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
+    fn encode_by_ref<'q>(&self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull {
+        self.version_uuid.encode_by_ref(buf)
+    }
+
+    fn encode<'q>(self, buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer) -> sqlx::encode::IsNull
+    where
+        Self: Sized,
+    {
+        self.version_uuid.encode_by_ref(buf)
+    }
+
+    fn produces(&self) -> Option<<sqlx::Sqlite as sqlx::Database>::TypeInfo> {
+        <Uuid as sqlx::Encode<'a, sqlx::Sqlite>>::produces(&self.version_uuid)
+    }
+
+    fn size_hint(&self) -> usize {
+        self.version_uuid.size_hint()
+    }
+}
+
+impl sqlx::Decode<'_, sqlx::Sqlite> for ProfileVersion {
+    fn decode(value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef) -> Result<Self, sqlx::error::BoxDynError> {
+        <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value).map(|id| ProfileVersion { version_uuid: id})
+    }
+}

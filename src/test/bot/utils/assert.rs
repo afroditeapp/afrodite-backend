@@ -1,7 +1,7 @@
 
 use std::fmt::{Debug, Display};
 
-use api_client::{apis::{account_api::{post_register, post_login, post_account_setup, get_account_state}, profile_api::{post_profile, get_profile, get_default_profile}}, models::{Profile, account_setup, AccountSetup, AccountState}};
+use api_client::{apis::{account_api::{post_register, post_login, post_account_setup, get_account_state}, profile_api::{post_profile, get_profile}}, models::{Profile, account_setup, AccountSetup, AccountState}};
 use async_trait::async_trait;
 
 use error_stack::{Result, FutureExt, ResultExt};

@@ -59,6 +59,7 @@ Class | Method | HTTP request | Description
  - [ApiKey](docs/ApiKey.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [Capabilities](docs/Capabilities.md)
+ - [ContentId](docs/ContentId.md)
  - [DeleteStatus](docs/DeleteStatus.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [ImageFile](docs/ImageFile.md)
@@ -74,6 +75,7 @@ Class | Method | HTTP request | Description
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
+ - [ProfileVersion](docs/ProfileVersion.md)
  - [SlotId](docs/SlotId.md)
 
 

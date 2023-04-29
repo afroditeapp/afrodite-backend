@@ -2,7 +2,7 @@
 
 use std::{fmt::Debug, time::{Duration, Instant}};
 
-use api_client::apis::profile_api::{get_profile, get_default_profile};
+use api_client::apis::profile_api::{get_profile};
 use async_trait::async_trait;
 use tokio::time::sleep;
 
@@ -118,13 +118,14 @@ impl BotAction for GetProfile {
     }
 }
 
+// TODO: remove GetDefaultProfile
 #[derive(Debug)]
 pub struct GetDefaultProfile;
 
 #[async_trait]
 impl BotAction for GetDefaultProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_default_profile(state.api.profile(), &state.id_string()?)
+        get_profile(state.api.profile(), &state.id_string()?)
             .await
             .into_error(TestError::ApiRequest)?;
         Ok(())

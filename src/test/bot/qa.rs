@@ -7,7 +7,7 @@ pub mod media;
 
 use std::{fmt::Debug, time::{Duration, Instant}, sync::atomic::AtomicBool};
 
-use api_client::{apis::profile_api::{get_profile, get_default_profile}, models::AccountState};
+use api_client::{apis::profile_api::{get_profile}, models::AccountState};
 use async_trait::async_trait;
 use tokio::time::sleep;
 

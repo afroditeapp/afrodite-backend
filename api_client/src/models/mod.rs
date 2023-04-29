@@ -1,7 +1,5 @@
 pub mod account;
 pub use self::account::Account;
-pub mod account_id;
-pub use self::account_id::AccountId;
 pub mod account_id_light;
 pub use self::account_id_light::AccountIdLight;
 pub mod account_setup;
@@ -44,5 +42,9 @@ pub mod profile_link;
 pub use self::profile_link::ProfileLink;
 pub mod profile_page;
 pub use self::profile_page::ProfilePage;
+pub mod profile_update;
+pub use self::profile_update::ProfileUpdate;
+pub mod profile_version;
+pub use self::profile_version::ProfileVersion;
 pub mod slot_id;
 pub use self::slot_id::SlotId;

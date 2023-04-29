@@ -11,6 +11,7 @@ docs/AccountinternalApi.md
 docs/ApiKey.md
 docs/BooleanSetting.md
 docs/Capabilities.md
+docs/ContentId.md
 docs/DeleteStatus.md
 docs/HandleModerationRequest.md
 docs/ImageFile.md
@@ -29,6 +30,7 @@ docs/ProfileApi.md
 docs/ProfileLink.md
 docs/ProfilePage.md
 docs/ProfileUpdate.md
+docs/ProfileVersion.md
 docs/SlotId.md
 git_push.sh
 src/apis/account_api.rs
@@ -45,6 +47,7 @@ src/models/account_state.rs
 src/models/api_key.rs
 src/models/boolean_setting.rs
 src/models/capabilities.rs
+src/models/content_id.rs
 src/models/delete_status.rs
 src/models/handle_moderation_request.rs
 src/models/image_file.rs
@@ -61,4 +64,5 @@ src/models/profile.rs
 src/models/profile_link.rs
 src/models/profile_page.rs
 src/models/profile_update.rs
+src/models/profile_version.rs
 src/models/slot_id.rs
