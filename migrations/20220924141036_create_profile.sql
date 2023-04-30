@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS AccountSetup(
 CREATE TABLE IF NOT EXISTS Profile(
     account_row_id  INTEGER PRIMARY KEY,
     version_uuid    BLOB    NOT NULL,
-    public          BOOLEAN NOT NULL    DEFAULT 0,    --- TODO: remove
     image1          BLOB                DEFAULT NULL, -- Images can be not set
     image2          BLOB                DEFAULT NULL,
     image3          BLOB                DEFAULT NULL,

@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use error_stack::Result;
 
 use crate::server::database::current::CurrentDataWriteCommands;
+use crate::server::database::index::location::LocationIndexKey;
 use crate::server::database::sqlite::{
     CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
 };
@@ -59,6 +60,31 @@ impl SqliteUpdateJson for ProfileUpdateInternal {
             self.new_data.image2,
             self.new_data.image3,
             self.version,
+            id.account_row_id,
+        )
+        .execute(write.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl SqliteUpdateJson for LocationIndexKey {
+    async fn update_json(
+        &self,
+        id: AccountIdInternal,
+        write: &CurrentDataWriteCommands,
+    ) -> Result<(), SqliteDatabaseError> {
+        sqlx::query!(
+            r#"
+            UPDATE Profile
+            SET location_key_x = ?, location_key_y = ?
+            WHERE account_row_id = ?
+            "#,
+            self.x,
+            self.y,
             id.account_row_id,
         )
         .execute(write.handle.pool())

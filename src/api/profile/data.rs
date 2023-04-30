@@ -9,7 +9,6 @@ use crate::api::{media::data::ContentId, model::AccountIdLight};
 pub struct ProfileInternal {
     pub name: String,
     pub profile_text: String,
-    pub public: bool, // TODO: remove public
     pub image1: Option<ContentId>,
     pub image2: Option<ContentId>,
     pub image3: Option<ContentId>,
@@ -126,13 +125,22 @@ pub struct Location {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ProfilePage {
-    latitude: Vec<ProfileLink>,
+    pub profiles: Vec<ProfileLink>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileLink {
     id: AccountIdLight,
     version: ProfileVersion,
+}
+
+impl ProfileLink {
+    pub fn new(id: AccountIdLight, profile: &ProfileInternal) -> Self {
+        Self {
+            id,
+            version: profile.version_uuid,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]

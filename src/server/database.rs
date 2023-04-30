@@ -183,7 +183,13 @@ impl DatabaseManager {
                 .change_context(DatabaseError::Init)?;
 
         let read_commands = SqliteReadCommands::new(&sqlite_read);
-        let cache = DatabaseCache::new(read_commands, &config)
+        let index = LocationIndexManager::new(config.clone());
+        let cache = DatabaseCache::new(
+            read_commands,
+            LocationIndexIteratorGetter::new(&index),
+            LocationIndexWriterGetter::new(&index),
+            &config
+        )
             .await
             .change_context(DatabaseError::Cache)?;
 
@@ -196,7 +202,7 @@ impl DatabaseManager {
             history_read,
             root: root.into(),
             cache: cache.into(),
-            location: LocationIndexManager::new(config.clone()).into(),
+            location: index.into(),
         };
 
         let sqlite_read = router_write_handle.sqlite_read.clone();

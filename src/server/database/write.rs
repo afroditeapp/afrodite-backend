@@ -409,11 +409,9 @@ impl<'a> WriteCommands<'a> {
         let write_to_index = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
         let new_location_key = write_to_index.coordinates_to_key(coordinates);
 
-        // TODO: Also update history?
         // TODO: Create new database table for location.
-        // TODO: add read and write location methods
-        // TODO: load profiles to location cache when server starts
-
+        // TODO: Also update history?
+        new_location_key.update_json(id, &self.current()).await.change_context(DatabaseError::Sqlite)?;
         write_to_index.update_profile_location(id.as_light(), location.current_position, new_location_key).await;
 
         Ok(())
@@ -497,6 +495,20 @@ impl<'a> WriteCommandsAccount<'a> {
         let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await;
         self.cache.write_cache(id.as_light(), |e| e.profile.as_mut().map(move |p| p.location.current_iterator = next_state)).await.convert(id)?;
         Ok(profiles.unwrap_or(Vec::new()))
+    }
+
+    pub async fn reset_profile_iterator(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DatabaseError> {
+        let location = self.cache.read_cache(id.as_light(), |e| e.profile.as_ref().map(|p| p.location.clone())).await
+            .convert(id)?
+            .ok_or(DatabaseError::FeatureDisabled)?;
+
+        let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
+        let next_state = iterator.reset_iterator(location.current_iterator, location.current_position);
+        self.cache.write_cache(id.as_light(), |e| e.profile.as_mut().map(move |p| p.location.current_iterator = next_state)).await.convert(id)?;
+        Ok(())
     }
 
     fn current(&self) -> CurrentDataWriteCommands {

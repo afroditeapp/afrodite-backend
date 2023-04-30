@@ -17,7 +17,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal,
+            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal, ProfileLink, Location,
         },
     },
     config::Config,
@@ -64,6 +64,11 @@ pub enum WriteCommand {
         public: bool,
         update_only_if_none: bool,
     },
+    UpdateProfileLocation {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        location: Location,
+    },
     SetModerationRequest {
         s: ResultSender<()>,
         account_id: AccountIdInternal,
@@ -94,6 +99,14 @@ pub enum ConcurrentWriteCommand {
         s: ResultSender<ContentId>,
         account_id: AccountIdInternal,
         data_stream: BodyStream,
+    },
+    ResetProfileIterator {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+    },
+    NextProfiles {
+        s: ResultSender<Vec<ProfileLink>>,
+        account_id: AccountIdInternal,
     },
 }
 
@@ -203,6 +216,19 @@ impl WriteCommandRunnerHandle {
         .await
     }
 
+    pub async fn update_profile_location(
+        &self,
+        account_id: AccountIdInternal,
+        location: Location,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::UpdateProfileLocation {
+            s,
+            account_id,
+            location
+        })
+        .await
+    }
+
     pub async fn set_moderation_request(
         &self,
         account_id: AccountIdInternal,
@@ -270,6 +296,32 @@ impl WriteCommandRunnerHandle {
                     account_id,
                     data_stream,
                 },
+            )
+        })
+        .await
+    }
+
+    pub async fn next_profiles(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<Vec<ProfileLink>, DatabaseError> {
+        self.send_event_to_concurrent_runner(|s| {
+            (
+                account_id.as_light(),
+                ConcurrentWriteCommand::NextProfiles { s, account_id }
+            )
+        })
+        .await
+    }
+
+    pub async fn reset_profile_iterator(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<(), DatabaseError> {
+        self.send_event_to_concurrent_runner(|s| {
+            (
+                account_id.as_light(),
+                ConcurrentWriteCommand::ResetProfileIterator { s, account_id }
             )
         })
         .await
@@ -404,6 +456,11 @@ impl WriteCommandRunner {
                 public,
                 update_only_if_none,
             } => self.write().profile_update_visibility(account_id, public, update_only_if_none).await.send(s),
+            WriteCommand::UpdateProfileLocation {
+                s,
+                account_id,
+                location,
+            } => self.write().profile_update_location(account_id, location).await.send(s),
             WriteCommand::SetModerationRequest {
                 s,
                 account_id,
@@ -587,6 +644,28 @@ impl ConcurrentWriteCommandRunner {
                 self.start_cmd_task(p, l, s, move |w| async move {
                     w.user_write_commands_account()
                         .save_to_tmp(account_id, data_stream)
+                        .await
+                })
+                .await;
+            }
+            ConcurrentWriteCommand::NextProfiles {
+                s,
+                account_id
+            } => {
+                self.start_cmd_task(p, l, s, move |w| async move {
+                    w.user_write_commands_account()
+                        .next_profiles(account_id)
+                        .await
+                })
+                .await;
+            }
+            ConcurrentWriteCommand::ResetProfileIterator {
+                s,
+                account_id
+            } => {
+                self.start_cmd_task(p, l, s, move |w| async move {
+                    w.user_write_commands_account()
+                        .reset_profile_iterator(account_id)
                         .await
                 })
                 .await;

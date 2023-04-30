@@ -5,7 +5,7 @@ use axum::{extract::Path, Json, TypedHeader};
 
 use hyper::StatusCode;
 
-use self::data::{Location, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal};
+use self::data::{Location, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal, ProfilePage};
 
 use super::{model::AccountIdLight, GetUsers, GetInternalApi};
 
@@ -14,8 +14,6 @@ use tracing::error;
 use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 // TODO: Add timeout for database commands
-
-// TODO: Add location index and location updating support
 
 pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 
@@ -181,18 +179,34 @@ pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_location<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    Json(_location): Json<Location>,
-    _state: S,
+pub async fn put_location<S: GetApiKeys + WriteDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Json(location): Json<Location>,
+    state: S,
 ) -> Result<(), StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    state
+        .write_database()
+        .update_profile_location(account_id, location)
+        .await
+        .map_err(|e| {
+            error!("put_location, {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
     Ok(())
 }
 
-pub const PATH_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
+pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 
-/// Get next page of profile list.
+/// Post (updates iterator) to get next page of profile list.
 #[utoipa::path(
-    get,
+    post,
     path = "/profile_api/page/next",
     responses(
         (status = 200, description = "Update successfull.", body = ProfilePage),
@@ -201,14 +215,30 @@ pub const PATH_GET_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_next_profile_page<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    Json(_location): Json<Location>,
-    _state: S,
-) -> Result<(), StatusCode> {
-    Ok(())
+pub async fn post_get_next_profile_page<S: GetApiKeys + WriteDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Json(location): Json<Location>,
+    state: S,
+) -> Result<Json<ProfilePage>, StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let data = state
+        .write_database()
+        .next_profiles(account_id)
+        .await
+        .map_err(|e| {
+            error!("put_location, {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(ProfilePage { profiles: data }.into())
 }
 
-pub const PATH_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
+pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 
 /// Reset profile paging.
 ///
@@ -225,7 +255,23 @@ pub const PATH_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     security(("api_key" = [])),
 )]
 pub async fn post_reset_profile_paging<S: GetApiKeys + WriteDatabase + ReadDatabase>(
-    _state: S,
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    state: S,
 ) -> Result<(), StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    state
+        .write_database()
+        .reset_profile_iterator(account_id)
+        .await
+        .map_err(|e| {
+            error!("post_reset_profile_paging, {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
     Ok(())
 }

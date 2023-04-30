@@ -8,7 +8,7 @@ use tracing::info;
 use crate::{
     api::model::{
         Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal,
-        ProfileUpdateInternal,
+        ProfileUpdateInternal, ProfileLink,
     },
     config::Config,
     server::database::write::NoId,
@@ -21,7 +21,7 @@ use super::{
     current::SqliteReadCommands,
     read::ReadResult,
     sqlite::SqliteSelectJson,
-    write::{AccountWriteLock, WriteResult}, index::location::{LocationIndexIterator, LocationIndexKey, LocationIndexIteratorState},
+    write::{AccountWriteLock, WriteResult}, index::{location::{LocationIndexIterator, LocationIndexKey, LocationIndexIteratorState}, LocationIndexManager, LocationIndexWriterGetter, LocationIndexIteratorGetter},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -37,6 +37,9 @@ pub enum CacheError {
 
     #[error("Cache init error")]
     Init,
+
+    #[error("Cache init failed because operation was not enabled")]
+    InitFeatureNotEnabled,
 }
 
 pub struct AccountEntry {
@@ -51,7 +54,7 @@ pub struct DatabaseCache {
 }
 
 impl DatabaseCache {
-    pub async fn new(read: SqliteReadCommands<'_>, config: &Config) -> Result<Self, CacheError> {
+    pub async fn new(read: SqliteReadCommands<'_>, index_iterator: LocationIndexIteratorGetter<'_>, index_writer: LocationIndexWriterGetter<'_>, config: &Config) -> Result<Self, CacheError> {
         let cache = Self {
             api_keys: RwLock::new(HashMap::new()),
             accounts: RwLock::new(HashMap::new()),
@@ -99,7 +102,20 @@ impl DatabaseCache {
                 let profile = ProfileInternal::select_json(internal_id, &read)
                     .await
                     .change_context(CacheError::Init)?;
-                entry.profile = Some(Box::new(profile.clone().into()));
+
+                let mut profile_data: CachedProfile = profile.into();
+
+                let location_key = LocationIndexKey::select_json(internal_id, &read)
+                    .await
+                    .change_context(CacheError::Init)?;
+                profile_data.location.current_position = location_key;
+                let index_iterator = index_iterator.get().ok_or(CacheError::InitFeatureNotEnabled)?;
+                profile_data.location.current_iterator = index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
+
+                let index_writer = index_writer.get().ok_or(CacheError::InitFeatureNotEnabled)?;
+                index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
+
+                entry.profile = Some(Box::new(profile_data));
             }
         }
 

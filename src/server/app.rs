@@ -168,6 +168,27 @@ impl App {
                     move |header, body| api::profile::post_profile(header, body, state)
                 }),
             )
+            .route(
+                api::profile::PATH_PUT_LOCATION,
+                put({
+                    let state = self.state.clone();
+                    move |p1, p2| api::profile::put_location(p1, p2, state)
+                }),
+            )
+            .route(
+                api::profile::PATH_POST_NEXT_PROFILE_PAGE,
+                post({
+                    let state = self.state.clone();
+                    move |p1, p2| api::profile::post_get_next_profile_page(p1, p2, state)
+                }),
+            )
+            .route(
+                api::profile::PATH_POST_RESET_PROFILE_PAGING,
+                post({
+                    let state = self.state.clone();
+                    move |p1| api::profile::post_reset_profile_paging(p1, state)
+                }),
+            )
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();

@@ -93,6 +93,16 @@ impl <'a> LocationIndexIteratorHandle<'a> {
             },
         }
     }
+
+    pub fn reset_iterator(
+        &self,
+        previous_iterator_state: LocationIndexIteratorState,
+        location: LocationIndexKey,
+    ) -> LocationIndexIteratorState {
+        let mut iterator = previous_iterator_state.to_iterator(self.index.clone());
+        iterator.reset(location.x, location.y);
+        iterator.into()
+    }
 }
 
 #[derive(Debug)]
