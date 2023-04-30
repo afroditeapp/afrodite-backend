@@ -8,7 +8,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileInternal,
+            ModerationRequestContent, ProfileInternal, ProfileLink, Location,
         },
     },
     config::Config,
@@ -23,8 +23,8 @@ use super::{
     history::write::HistoryWriteCommands,
     sqlite::{
         CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
-        SqliteUpdateJson,
-    },
+        SqliteUpdateJson, SqliteSelectJson,
+    }, index::{LocationIndexWriteHandle, LocationIndexIteratorHandle, LocationIndexIteratorGetter, LocationIndexWriterGetter},
 };
 
 pub struct NoId;
@@ -135,6 +135,7 @@ pub struct WriteCommands<'a> {
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
+    location: LocationIndexWriterGetter<'a>,
 }
 
 impl<'a> WriteCommands<'a> {
@@ -143,12 +144,14 @@ impl<'a> WriteCommands<'a> {
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
+        location: LocationIndexWriterGetter<'a>,
     ) -> Self {
         Self {
             current_write,
             history_write,
             cache,
             file_dir,
+            location,
         }
     }
 
@@ -394,6 +397,28 @@ impl<'a> WriteCommands<'a> {
         }).await.convert(id)
     }
 
+    pub async fn profile_update_location(
+        self,
+        id: AccountIdInternal,
+        coordinates: Location,
+    ) -> Result<(), DatabaseError> {
+        let location = self.cache.read_cache(id.as_light(), |e| e.profile.as_ref().map(|p| p.location.clone())).await
+            .convert(id)?
+            .ok_or(DatabaseError::FeatureDisabled)?;
+
+        let write_to_index = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
+        let new_location_key = write_to_index.coordinates_to_key(coordinates);
+
+        // TODO: Also update history?
+        // TODO: Create new database table for location.
+        // TODO: add read and write location methods
+        // TODO: load profiles to location cache when server starts
+
+        write_to_index.update_profile_location(id.as_light(), location.current_position, new_location_key).await;
+
+        Ok(())
+    }
+
     fn current(&self) -> CurrentDataWriteCommands {
         CurrentDataWriteCommands::new(&self.current_write)
     }
@@ -412,6 +437,7 @@ pub struct WriteCommandsAccount<'a> {
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
+    location: LocationIndexIteratorGetter<'a>,
 }
 
 impl<'a> WriteCommandsAccount<'a> {
@@ -420,12 +446,14 @@ impl<'a> WriteCommandsAccount<'a> {
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
+        location: LocationIndexIteratorGetter<'a>,
     ) -> Self {
         Self {
             current_write,
             history_write,
             cache,
             file_dir,
+            location,
         }
     }
 
@@ -455,6 +483,20 @@ impl<'a> WriteCommandsAccount<'a> {
         // TODO: image safety checks and processing
 
         Ok(content_id)
+    }
+
+    pub async fn next_profiles(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<ProfileLink>, DatabaseError> {
+        let location = self.cache.read_cache(id.as_light(), |e| e.profile.as_ref().map(|p| p.location.clone())).await
+            .convert(id)?
+            .ok_or(DatabaseError::FeatureDisabled)?;
+
+        let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
+        let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await;
+        self.cache.write_cache(id.as_light(), |e| e.profile.as_mut().map(move |p| p.location.current_iterator = next_state)).await.convert(id)?;
+        Ok(profiles.unwrap_or(Vec::new()))
     }
 
     fn current(&self) -> CurrentDataWriteCommands {

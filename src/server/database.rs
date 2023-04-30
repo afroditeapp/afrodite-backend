@@ -37,7 +37,7 @@ use self::{
         SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
     },
     utils::{AccountIdManager, ApiKeyManager},
-    write::{WriteCommands, WriteCommandsAccount},
+    write::{WriteCommands, WriteCommandsAccount}, index::{LocationIndexManager, LocationIndexWriterGetter, LocationIndexIteratorGetter},
 };
 use crate::utils::IntoReportExt;
 
@@ -68,6 +68,8 @@ pub enum DatabaseError {
     Init,
     #[error("Database SQLite and Git integrity check")]
     Integrity,
+    #[error("Feature disabled from config file")]
+    FeatureDisabled,
 
     #[error("Command runner quit too early")]
     CommandRunnerQuit,
@@ -194,6 +196,7 @@ impl DatabaseManager {
             history_read,
             root: root.into(),
             cache: cache.into(),
+            location: LocationIndexManager::new(config.clone()).into(),
         };
 
         let sqlite_read = router_write_handle.sqlite_read.clone();
@@ -248,6 +251,7 @@ pub struct RouterDatabaseWriteHandle {
     history_write: HistoryWriteHandle,
     history_read: SqliteReadHandle,
     cache: Arc<DatabaseCache>,
+    location: Arc<LocationIndexManager>,
 }
 
 impl RouterDatabaseWriteHandle {
@@ -257,6 +261,7 @@ impl RouterDatabaseWriteHandle {
             &self.history_write,
             &self.cache,
             &self.root.file_dir,
+            LocationIndexWriterGetter::new(&self.location),
         )
     }
 
@@ -266,6 +271,7 @@ impl RouterDatabaseWriteHandle {
             &self.history_write,
             &self.cache,
             &self.root.file_dir,
+            LocationIndexIteratorGetter::new(&self.location),
         )
     }
 

@@ -28,12 +28,12 @@ use std::{
     sync::{
         atomic::{AtomicBool, AtomicU16, Ordering},
         Arc,
-    },
+    }, fmt::Debug,
 };
 
 use nalgebra::{DMatrix, Dyn, VecStorage};
 
-#[derive(Debug, Hash, PartialEq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Clone, Copy, Default, Eq)]
 pub struct LocationIndexKey {
     pub y: u16,
     pub x: u16,
@@ -98,6 +98,12 @@ impl LocationIndex {
 
     pub fn last_column_index(&self) -> usize {
         self.width() - 1
+    }
+}
+
+impl Debug for LocationIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("LocationIndex")
     }
 }
 
@@ -184,11 +190,79 @@ impl VisitedMaxCorners {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct LocationIndexIteratorState {
+    init_position_y: isize,
+    init_position_x: isize,
+    x: isize,
+    y: isize,
+    /// How many rounds cursor has moved. Checking initial position counts one.
+    iteration_count: isize,
+    iter_init_position_x: isize,
+    iter_init_position_y: isize,
+    /// Move direction for cursor
+    direction: Direction,
+    /// No more new cells available.
+    completed: bool,
+    visited_max_corners: VisitedMaxCorners,
+}
+
+impl LocationIndexIteratorState {
+    pub fn new() -> Self {
+        Self {
+            y: 0,
+            x: 0,
+            init_position_y: 0,
+            init_position_x: 0,
+            iteration_count: 0,
+            iter_init_position_x: 0,
+            iter_init_position_y: 0,
+            direction: Direction::Down,
+            completed: false,
+            visited_max_corners: VisitedMaxCorners::default(),
+        }
+    }
+
+    pub fn to_iterator(&self, index: Arc<LocationIndex>) -> LocationIndexIterator {
+        LocationIndexIterator {
+            index,
+            init_position_y: self.init_position_y,
+            init_position_x: self.init_position_x,
+            x: self.x,
+            y: self.y,
+            iteration_count: self.iteration_count,
+            iter_init_position_x: self.iter_init_position_x,
+            iter_init_position_y: self.iter_init_position_y,
+            direction: self.direction,
+            completed: self.completed,
+            visited_max_corners: self.visited_max_corners
+        }
+    }
+}
+
+impl From<LocationIndexIterator> for LocationIndexIteratorState {
+    fn from(value: LocationIndexIterator) -> Self {
+        Self {
+            init_position_y: value.init_position_y,
+            init_position_x: value.init_position_x,
+            x: value.x,
+            y: value.y,
+            iteration_count: value.iteration_count,
+            iter_init_position_x: value.iter_init_position_x,
+            iter_init_position_y: value.iter_init_position_y,
+            direction: value.direction,
+            completed: value.completed,
+            visited_max_corners: value.visited_max_corners
+        }
+    }
+}
+
 /// Iterator for location index
 ///
 /// Start from one cell and enlarge area clockwise.
 /// Each iteration starts from one cell down of top right corner.
 /// Iteration ends to top right corner.
+#[derive(Debug, Clone)]
 pub struct LocationIndexIterator {
     index: Arc<LocationIndex>,
     init_position_y: isize,
@@ -208,19 +282,7 @@ pub struct LocationIndexIterator {
 
 impl LocationIndexIterator {
     pub fn new(index: Arc<LocationIndex>) -> Self {
-        Self {
-            index,
-            y: 0,
-            x: 0,
-            init_position_y: 0,
-            init_position_x: 0,
-            iteration_count: 0,
-            iter_init_position_x: 0,
-            iter_init_position_y: 0,
-            direction: Direction::Down,
-            completed: false,
-            visited_max_corners: VisitedMaxCorners::default(),
-        }
+        LocationIndexIteratorState::new().to_iterator(index)
     }
 
     pub fn reset(&mut self, x: u16, y: u16) {

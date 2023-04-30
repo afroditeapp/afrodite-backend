@@ -21,7 +21,7 @@ use super::{
     current::SqliteReadCommands,
     read::ReadResult,
     sqlite::SqliteSelectJson,
-    write::{AccountWriteLock, WriteResult},
+    write::{AccountWriteLock, WriteResult}, index::location::{LocationIndexIterator, LocationIndexKey, LocationIndexIteratorState},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -40,7 +40,6 @@ pub enum CacheError {
 }
 
 pub struct AccountEntry {
-    pub lock: Arc<Mutex<AccountWriteLock>>,
     pub cache: RwLock<CacheEntry>,
 }
 
@@ -116,9 +115,8 @@ impl DatabaseCache {
     ) -> WriteResult<(), CacheError, AccountIdInternal> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_light()).is_none() {
-            let lock = Arc::new(Mutex::new(AccountWriteLock));
             let value = RwLock::new(CacheEntry::new(id));
-            data.insert(id.as_light(), AccountEntry { lock, cache: value }.into());
+            data.insert(id.as_light(), AccountEntry { cache: value }.into());
             Ok(())
         } else {
             Err(CacheError::AlreadyExists.into())
@@ -162,19 +160,6 @@ impl DatabaseCache {
         }
     }
 
-    pub async fn api_key_exists_with_account_lock(
-        &self,
-        api_key: &ApiKey,
-    ) -> Option<(AccountIdInternal, Arc<Mutex<AccountWriteLock>>)> {
-        let api_key_guard = self.api_keys.read().await;
-        if let Some(entry) = api_key_guard.get(api_key) {
-            let id = entry.cache.read().await.account_id_internal;
-            Some((id, entry.lock.clone()))
-        } else {
-            None
-        }
-    }
-
     pub async fn to_account_id_internal(
         &self,
         id: AccountIdLight,
@@ -208,7 +193,7 @@ impl DatabaseCache {
     pub async fn write_cache<T>(
         &self,
         id: AccountIdLight,
-        cache_operation: impl Fn(&mut CacheEntry) -> T,
+        cache_operation: impl FnOnce(&mut CacheEntry) -> T,
     ) -> WriteResult<T, CacheError, T> {
         let guard = self.accounts.read().await;
         let mut cache_entry = guard
@@ -254,22 +239,13 @@ impl DatabaseCache {
             .map(|current_data| *current_data.as_mut() = data)?;
         Ok(())
     }
-
-    pub async fn get_write_lock_simple(
-        &self,
-        id: AccountIdLight,
-    ) -> Result<Arc<Mutex<AccountWriteLock>>, CacheError> {
-        let guard = self.accounts.read().await;
-        let lock = guard.get(&id).ok_or(CacheError::KeyNotExists)?.lock.clone();
-
-        Ok(lock)
-    }
 }
 
 pub struct CachedProfile {
     /// If None there is no profile visibility value fetched from account server.
     pub public: Option<bool>,
     pub data: ProfileInternal,
+    pub location: LocationData,
 }
 
 impl From<ProfileInternal> for CachedProfile {
@@ -277,9 +253,17 @@ impl From<ProfileInternal> for CachedProfile {
         Self {
             public: None,
             data: value,
+            location: LocationData { current_position: LocationIndexKey::default(), current_iterator: LocationIndexIteratorState::new() }
         }
     }
 }
+
+#[derive(Clone)]
+pub struct LocationData {
+    pub current_position: LocationIndexKey,
+    pub current_iterator: LocationIndexIteratorState,
+}
+
 pub struct CacheEntry {
     pub account_id_internal: AccountIdInternal,
     pub profile: Option<Box<CachedProfile>>,

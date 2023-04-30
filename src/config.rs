@@ -10,7 +10,7 @@ use crate::utils::IntoReportExt;
 
 use self::{
     args::TestMode,
-    file::{Components, ConfigFile, ExternalServices, SocketConfig},
+    file::{Components, ConfigFile, ExternalServices, SocketConfig, LocationConfig},
 };
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
@@ -33,6 +33,7 @@ pub enum GetConfigError {
     ExternalServiceMediaInternalMissing,
 }
 
+#[derive(Debug)]
 pub struct Config {
     file: ConfigFile,
 
@@ -56,6 +57,10 @@ impl Config {
 
     pub fn socket(&self) -> &SocketConfig {
         &self.file.socket
+    }
+
+    pub fn location(&self) -> &LocationConfig {
+        &self.file.location
     }
 
     /// Server should run in debug mode.

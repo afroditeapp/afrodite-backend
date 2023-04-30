@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::media::data::ContentId;
+use crate::api::{media::data::ContentId, model::AccountIdLight};
 
 /// Profile's database data
 #[derive(Debug, Clone)]
@@ -120,8 +120,8 @@ impl ProfileUpdateInternal {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct Location {
-    latitude: f64,
-    longitude: f64,
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
@@ -131,8 +131,8 @@ pub struct ProfilePage {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileLink {
-    id: uuid::Uuid,
-    version: uuid::Uuid,
+    id: AccountIdLight,
+    version: ProfileVersion,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]

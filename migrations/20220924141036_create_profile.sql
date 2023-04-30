@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS Profile(
     image1          BLOB                DEFAULT NULL, -- Images can be not set
     image2          BLOB                DEFAULT NULL,
     image3          BLOB                DEFAULT NULL,
+    location_key_x  INTEGER NOT NULL    DEFAULT 0,
+    location_key_y  INTEGER NOT NULL    DEFAULT 0,
     name            TEXT    NOT NULL    DEFAULT '',
     profile_text    TEXT    NOT NULL    DEFAULT '',
     FOREIGN KEY (account_row_id)

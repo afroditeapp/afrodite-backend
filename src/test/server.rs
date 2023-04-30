@@ -4,7 +4,7 @@ use std::{
 
 use crate::config::{
     args::TestMode,
-    file::{Components, ConfigFile, ExternalServices, SocketConfig, CONFIG_FILE_NAME},
+    file::{Components, ConfigFile, ExternalServices, SocketConfig, CONFIG_FILE_NAME, LocationConfig},
 };
 
 use nix::{sys::signal::Signal, unistd::Pid};
@@ -122,6 +122,13 @@ fn new_config(
         socket: SocketConfig {
             public_api: public_api.into(),
             internal_api: internal_api.into(),
+        },
+        location: LocationConfig {
+            latitude_top_left: 70.1,
+            longitude_top_left: 19.5,
+            latitude_bottom_right: 59.8,
+            longitude_bottom_right: 31.58,
+            index_cell_square_km: 100.try_into().unwrap(),
         },
         external_services,
     }
