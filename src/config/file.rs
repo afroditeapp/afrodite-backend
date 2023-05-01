@@ -138,12 +138,12 @@ pub struct LocationConfig {
     pub latitude_top_left: f64,
     /// "x-axis" angle for top left corner of the location index.
     pub longitude_top_left: f64,
-    /// Index cell map size.
-    pub index_cell_square_km: NonZeroU8,
     /// Minimun "y-axis" angle for bottom right corner of the location index.
     /// Index can in reality end further away.
     pub latitude_bottom_right: f64,
     /// Minimum "x-axis" angle for top left corner of the location index.
     /// Index can in reality end further away.
     pub longitude_bottom_right: f64,
+    /// Index cell map size.
+    pub index_cell_square_km: NonZeroU8,
 }

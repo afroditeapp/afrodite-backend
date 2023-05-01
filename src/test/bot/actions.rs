@@ -185,6 +185,34 @@ impl <T: PartialEq + Send + Sync + 'static + Debug> BotAction for AssertEqualsFn
     }
 }
 
+pub struct RepeatUntilFn<T: PartialEq>(pub fn(PreviousValue, &BotState) -> T, pub T, pub &'static dyn BotAction);
+
+impl <T: PartialEq> Debug for RepeatUntilFn<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("RepeatUntilFn for action {:?}", self.2))
+    }
+}
+
+#[async_trait]
+impl <T: PartialEq + Send + Sync + 'static + Debug> BotAction for RepeatUntilFn<T> {
+    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+        if !self.2.previous_value_supported() {
+            return Err(TestError::AssertError(format!("Previous value not supported for action {:?}", self.2)).into());
+        }
+
+        loop {
+            self.2.excecute(state, task_state).await?;
+
+            let value = self.0(state.previous_value.clone(), state);
+            if value == self.1 {
+                break;
+            }
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub struct RunActions(pub ActionArray);
 

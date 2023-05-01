@@ -162,23 +162,23 @@ pub struct ServerConfig {
     pub log_debug: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Test {
     Qa,
-    BenchmarkNormal,
-    BenchmarkDefault,
+    BenchmarkGetProfile,
+    BenchmarkGetProfileList,
 }
 
 const TEST_NAME_QA: &str = "qa";
-const TEST_NAME_BENCHMARK_NORMAL: &str = "benchmark-normal";
-const TEST_NAME_BENCHMARK_DEFAULT: &str = "benchmark-default";
+const TEST_NAME_BENCHMARK_GET_PROFILE: &str = "benchmark-get-profile";
+const TEST_NAME_BENCHMARK_GET_PROFILE_LIST: &str = "benchmark-get-profile-list";
 
 impl Test {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Qa => TEST_NAME_QA,
-            Self::BenchmarkNormal => TEST_NAME_BENCHMARK_NORMAL,
-            Self::BenchmarkDefault => TEST_NAME_BENCHMARK_DEFAULT,
+            Self::BenchmarkGetProfile => TEST_NAME_BENCHMARK_GET_PROFILE,
+            Self::BenchmarkGetProfileList => TEST_NAME_BENCHMARK_GET_PROFILE_LIST,
         }
     }
 }
@@ -188,8 +188,8 @@ impl TryFrom<&str> for Test {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value {
             TEST_NAME_QA => Self::Qa,
-            TEST_NAME_BENCHMARK_NORMAL => Self::BenchmarkNormal,
-            TEST_NAME_BENCHMARK_DEFAULT => Self::BenchmarkDefault,
+            TEST_NAME_BENCHMARK_GET_PROFILE => Self::BenchmarkGetProfile,
+            TEST_NAME_BENCHMARK_GET_PROFILE_LIST => Self::BenchmarkGetProfileList,
             _ => return Err(()),
         })
     }
@@ -228,7 +228,7 @@ impl clap::builder::TypedValueParser for TestNameParser {
         &self,
     ) -> Option<Box<dyn Iterator<Item = clap::PossibleValue<'static>> + '_>> {
         Some(Box::new(
-            [Test::Qa, Test::BenchmarkNormal, Test::BenchmarkDefault]
+            [Test::Qa, Test::BenchmarkGetProfile, Test::BenchmarkGetProfileList]
                 .iter()
                 .map(|value| PossibleValue::new(value.as_str())),
         ))

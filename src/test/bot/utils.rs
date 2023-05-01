@@ -1,6 +1,7 @@
 pub mod assert;
 pub mod image;
 pub mod name;
+pub mod location;
 
 use std::{
     fmt::Debug,

@@ -147,7 +147,7 @@ impl BotManager {
     ) {
         let id = id.into();
         let bot = match config.test {
-            Test::BenchmarkDefault | Test::BenchmarkNormal => {
+            Test::BenchmarkGetProfileList | Test::BenchmarkGetProfile => {
                 Self::benchmark(task_id, id, config, _bot_running_handle)
             }
             Test::Qa => Self::qa(task_id, id, config, _bot_running_handle),
@@ -163,21 +163,38 @@ impl BotManager {
         _bot_running_handle: mpsc::Sender<()>,
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
-        for bot_i in 0..config.bot_count {
-            let state = BotState::new(
-                id,
-                config.clone(),
-                task_id,
-                bot_i,
-                ApiClient::new(config.server.api_urls.clone()),
-            );
-            let benchmark = match config.test {
-                Test::BenchmarkNormal => Benchmark::get_profile_benchmark(state),
-                Test::BenchmarkDefault => Benchmark::get_default_profile_benchmark(state),
-                _ => panic!("Invalid test {:?}", config.test),
-            };
-            bots.push(Box::new(benchmark))
-        }
+
+        match config.test {
+            Test::BenchmarkGetProfile => {
+                for bot_i in 0..config.bot_count {
+                    let state = BotState::new(
+                        id,
+                        config.clone(),
+                        task_id,
+                        bot_i,
+                        ApiClient::new(config.server.api_urls.clone()),
+                    );
+                    bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
+                }
+            },
+            Test::BenchmarkGetProfileList => {
+                for bot_i in 0..config.bot_count {
+                    let state = BotState::new(
+                        id,
+                        config.clone(),
+                        task_id,
+                        bot_i,
+                        ApiClient::new(config.server.api_urls.clone()),
+                    );
+                    let benchmark = match bot_i {
+                        0 => Benchmark::benchmark_get_profile_list(state),
+                        _ => Benchmark::benchmark_get_profile_list_bot(state),
+                    };
+                    bots.push(Box::new(benchmark))
+                }
+            },
+            _ => panic!("Invalid test {:?}", config.test),
+        };
 
         Self {
             bots,

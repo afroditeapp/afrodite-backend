@@ -1,9 +1,9 @@
 use std::{
-    env, net::SocketAddrV4, os::unix::process::CommandExt, path::PathBuf, sync::Arc, time::Duration,
+    env, net::SocketAddrV4, os::unix::process::CommandExt, path::PathBuf, sync::Arc, time::Duration, num::NonZeroU8,
 };
 
 use crate::config::{
-    args::TestMode,
+    args::{TestMode, Test},
     file::{Components, ConfigFile, ExternalServices, SocketConfig, CONFIG_FILE_NAME, LocationConfig},
 };
 
@@ -13,6 +13,25 @@ use tokio::process::Child;
 use tracing::info;
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
+
+pub const DEFAULT_LOCATION_CONFIG: LocationConfig = LocationConfig {
+    latitude_top_left: 70.1,
+    longitude_top_left: 19.5,
+    latitude_bottom_right: 59.8,
+    longitude_bottom_right: 31.58,
+    index_cell_square_km: match NonZeroU8::new(100) {
+        Some(value) => value,
+        None => panic!(),
+    },
+};
+
+pub const DEFAULT_LOCATION_CONFIG_BENCHMARK: LocationConfig = LocationConfig {
+    index_cell_square_km: match NonZeroU8::new(1) {
+        Some(value) => value,
+        None => panic!(),
+    },
+    ..DEFAULT_LOCATION_CONFIG
+};
 
 pub struct ServerManager {
     servers: Vec<ServerInstance>,
@@ -56,6 +75,7 @@ impl ServerManager {
         let localhost_ip = "127.0.0.1".parse().unwrap();
 
         let account_config = new_config(
+            &config,
             SocketAddrV4::new(localhost_ip, account_port),
             SocketAddrV4::new(localhost_ip, account_port + 1),
             Components {
@@ -69,6 +89,7 @@ impl ServerManager {
 
         if config.server.microservice_media {
             let server_config = new_config(
+                &config,
                 SocketAddrV4::new(localhost_ip, media_port),
                 SocketAddrV4::new(localhost_ip, media_port + 1),
                 Components {
@@ -82,6 +103,7 @@ impl ServerManager {
 
         if config.server.microservice_profile {
             let server_config = new_config(
+                &config,
                 SocketAddrV4::new(localhost_ip, profile_port),
                 SocketAddrV4::new(localhost_ip, profile_port + 1),
                 Components {
@@ -92,9 +114,6 @@ impl ServerManager {
             );
             servers.push(ServerInstance::new(dir.clone(), server_config, &config));
         }
-
-        // TODO: Poll API instead waiting?
-        tokio::time::sleep(Duration::from_millis(1000)).await;
 
         Self { servers, config }
     }
@@ -107,6 +126,7 @@ impl ServerManager {
 }
 
 fn new_config(
+    config: &TestMode,
     public_api: SocketAddrV4,
     internal_api: SocketAddrV4,
     components: Components,
@@ -123,12 +143,10 @@ fn new_config(
             public_api: public_api.into(),
             internal_api: internal_api.into(),
         },
-        location: LocationConfig {
-            latitude_top_left: 70.1,
-            longitude_top_left: 19.5,
-            latitude_bottom_right: 59.8,
-            longitude_bottom_right: 31.58,
-            index_cell_square_km: 100.try_into().unwrap(),
+        location: if config.test == Test::BenchmarkGetProfileList {
+            DEFAULT_LOCATION_CONFIG_BENCHMARK
+        } else {
+            DEFAULT_LOCATION_CONFIG
         },
         external_services,
     }

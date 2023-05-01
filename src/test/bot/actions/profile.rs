@@ -6,7 +6,7 @@ use error_stack::Result;
 
 use super::{super::super::client::TestError, BotAction, PreviousValue};
 
-use crate::utils::IntoReportExt;
+use crate::{utils::IntoReportExt, config::file::LocationConfig};
 
 use super::BotState;
 
@@ -26,12 +26,25 @@ impl BotAction for ChangeProfileText {
 }
 
 #[derive(Debug)]
-pub struct UpdateLocation { pub lat: f32, pub lon: f32 }
+pub struct UpdateLocation(pub Location);
 
 #[async_trait]
 impl BotAction for UpdateLocation {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        profile_api::put_location(state.api.profile(), Location::new(self.lat, self.lon))
+        profile_api::put_location(state.api.profile(), self.0)
+            .await
+            .into_error(TestError::ApiRequest)?;
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct UpdateLocationRandom(pub LocationConfig);
+
+#[async_trait]
+impl BotAction for UpdateLocationRandom {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        profile_api::put_location(state.api.profile(), self.0.generate_random_location())
             .await
             .into_error(TestError::ApiRequest)?;
         Ok(())
@@ -52,10 +65,10 @@ impl BotAction for ResetProfileIterator {
 }
 
 #[derive(Debug)]
-pub struct GetProfiles;
+pub struct GetProfileList;
 
 #[async_trait]
-impl BotAction for GetProfiles {
+impl BotAction for GetProfileList {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let data = profile_api::post_get_next_profile_page(state.api.profile())
             .await

@@ -9,13 +9,13 @@ use api_client::apis::profile_api::get_profile;
 use async_trait::async_trait;
 use tokio::time::sleep;
 
-use crate::test::client::TestError;
+use crate::{test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK}, config::file::DEFAULT_CONFIG_FILE_TEXT};
 
 use super::{
     actions::{
-        account::{Login, Register},
-        profile::ChangeProfileText,
-        BotAction,
+        account::{Login, Register, SetProfileVisibility},
+        profile::{ChangeProfileText, UpdateLocation, UpdateLocationRandom, ResetProfileIterator, GetProfileList},
+        BotAction, RunActions, TO_NORMAL_STATE, RepeatUntilFn,
     },
     utils::{Counters, Timer},
     BotState, BotStruct, TaskState,
@@ -58,7 +58,7 @@ impl Debug for Benchmark {
 }
 
 impl Benchmark {
-    pub fn get_profile_benchmark(state: BotState) -> Self {
+    pub fn benchmark_get_profile(state: BotState) -> Self {
         let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
             &UpdateProfileBenchmark as &dyn BotAction,
@@ -73,15 +73,31 @@ impl Benchmark {
         }
     }
 
-    pub fn get_default_profile_benchmark(state: BotState) -> Self {
-        let setup = [&Register as &dyn BotAction, &Login];
+    pub fn benchmark_get_profile_list(state: BotState) -> Self {
+        let setup = [
+            &RunActions(TO_NORMAL_STATE) as &dyn BotAction,
+        ];
         let benchmark = [
             &UpdateProfileBenchmark as &dyn BotAction,
             &ActionsBeforeIteration,
-            &GetDefaultProfile,
+            &ResetProfileIterator,
+            &RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileList),
             &ActionsAfterIteration,
         ];
         let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+        Self {
+            state,
+            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
+        }
+    }
+
+    pub fn benchmark_get_profile_list_bot(state: BotState) -> Self {
+        let benchmark = [
+            &RunActions(TO_NORMAL_STATE) as &dyn BotAction,
+            &UpdateLocationRandom(DEFAULT_LOCATION_CONFIG_BENCHMARK),
+            &SetProfileVisibility(true),
+        ];
+        let iter = benchmark.into_iter();
         Self {
             state,
             actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
@@ -107,20 +123,6 @@ pub struct GetProfile;
 
 #[async_trait]
 impl BotAction for GetProfile {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile(state.api.profile(), &state.id_string()?)
-            .await
-            .into_error(TestError::ApiRequest)?;
-        Ok(())
-    }
-}
-
-// TODO: remove GetDefaultProfile
-#[derive(Debug)]
-pub struct GetDefaultProfile;
-
-#[async_trait]
-impl BotAction for GetDefaultProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         get_profile(state.api.profile(), &state.id_string()?)
             .await

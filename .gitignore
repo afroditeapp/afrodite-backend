@@ -6,3 +6,4 @@
 server_config.toml
 
 .vscode
+.DS_STORE
