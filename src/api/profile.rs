@@ -217,7 +217,6 @@ pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 )]
 pub async fn post_get_next_profile_page<S: GetApiKeys + WriteDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Json(location): Json<Location>,
     state: S,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     let account_id = state

@@ -5,12 +5,12 @@ pub mod account;
 pub mod media;
 pub mod profile;
 
-use std::{fmt::Debug, sync::atomic::AtomicBool};
+use std::{fmt::Debug, sync::atomic::AtomicBool, iter::Peekable};
 
 use api_client::models::AccountState;
 use async_trait::async_trait;
 
-use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS};
+use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS, profile::PROFILE_TESTS};
 
 use super::{
     actions::{
@@ -40,7 +40,7 @@ macro_rules! test {
     };
 }
 
-pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[ACCOUNT_TESTS, MEDIA_TESTS];
+pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[ACCOUNT_TESTS, MEDIA_TESTS, PROFILE_TESTS];
 
 pub fn test_count() -> usize {
     ALL_QA_TESTS.iter().map(|tests| tests.len()).sum()
@@ -66,7 +66,7 @@ impl QaState {
 pub struct Qa {
     state: BotState,
     test_name: &'static str,
-    actions: Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>,
+    actions: Peekable<Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>>,
 }
 
 impl Debug for Qa {
@@ -84,7 +84,7 @@ impl Qa {
         Self {
             state,
             test_name,
-            actions,
+            actions: actions.peekable(),
         }
     }
 
@@ -113,15 +113,20 @@ impl Qa {
         Self {
             state,
             test_name: "Admin bot",
-            actions: Box::new(iter),
+            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
         }
     }
 }
 
 #[async_trait]
 impl BotStruct for Qa {
-    fn next_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState) {
-        (self.actions.next(), &mut self.state)
+    fn peek_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState) {
+        let action = self.actions.peek().map(|a| *a);
+        (action, &mut self.state)
+    }
+
+    fn next_action(&mut self) {
+        self.actions.next();
     }
 
     fn state(&self) -> &BotState {

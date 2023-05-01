@@ -43,11 +43,13 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
 *MediainternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
-*ProfileApi* | [**get_next_profile_page**](docs/ProfileApi.md#get_next_profile_page) | **GET** /profile_api/page/next | Get next page of profile list.
+*MediainternalApi* | [**internal_post_update_profile_image_visibility**](docs/MediainternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
+*ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 *ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location
+*ProfileinternalApi* | [**internal_post_update_profile_visibility**](docs/ProfileinternalApi.md#internal_post_update_profile_visibility) | **POST** /internal/profile_api/visiblity/{account_id}/{value} | 
 
 
 ## Documentation For Models

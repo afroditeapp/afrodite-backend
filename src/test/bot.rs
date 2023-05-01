@@ -18,7 +18,7 @@ use error_stack::{Result, ResultExt};
 use tracing::{error, info, log::warn};
 
 use self::{
-    actions::{media::MediaState, BotAction, DoNothing},
+    actions::{media::MediaState, BotAction, DoNothing, PreviousValue},
     benchmark::{Benchmark, BenchmarkState},
     qa::Qa,
 };
@@ -26,6 +26,11 @@ use self::{
 use super::client::{ApiClient, TestError};
 
 use crate::config::args::{Test, TestMode};
+
+#[derive(Debug, Default)]
+pub struct TaskState {
+    pub bot_count_update_location_to_lat_lon_10: u64,
+}
 
 #[derive(Debug)]
 pub struct BotState {
@@ -35,6 +40,7 @@ pub struct BotState {
     pub bot_id: u32,
     pub api: ApiClient,
     pub previous_action: &'static dyn BotAction,
+    pub previous_value: PreviousValue,
     pub action_history: Vec<&'static dyn BotAction>,
     pub benchmark: BenchmarkState,
     pub media: MediaState,
@@ -56,6 +62,7 @@ impl BotState {
             api,
             benchmark: BenchmarkState::new(),
             previous_action: &DoNothing,
+            previous_value: PreviousValue::Empty,
             action_history: vec![],
             media: MediaState::new(),
         }
@@ -80,30 +87,40 @@ impl BotState {
     }
 }
 
+/// Bot completed
 pub struct Completed;
 
 #[async_trait]
 pub trait BotStruct: Debug + Send + 'static {
-    fn next_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState);
+    fn peek_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState);
+    fn next_action(&mut self);
     fn state(&self) -> &BotState;
 
-    async fn run_action(&mut self) -> Result<Option<Completed>, TestError> {
-        let mut result = self.run_action_impl().await;
+    async fn run_action(&mut self, task_state: &mut TaskState) -> Result<Option<Completed>, TestError> {
+        let mut result = self.run_action_impl(task_state).await;
         if let Test::Qa = self.state().config.test {
             result = result.attach_printable_lazy(|| format!("{:?}", self.state().action_history))
         }
         result.attach_printable_lazy(|| format!("{:?}", self))
     }
 
-    async fn run_action_impl(&mut self) -> Result<Option<Completed>, TestError> {
-        match self.next_action_and_state() {
+    async fn run_action_impl(&mut self, task_state: &mut TaskState) -> Result<Option<Completed>, TestError> {
+        match self.peek_action_and_state() {
             (None, _) => Ok(Some(Completed)),
             (Some(action), state) => {
-                let result = action.excecute(state).await.map(|_| None);
+                let result = action.excecute(state, task_state).await;
+
+                let result = match result {
+                    Err(e) if e.current_context() == &TestError::BotIsWaiting => return Ok(None),
+                    Err(e) => Err(e),
+                    Ok(()) => Ok(None)
+                };
+
                 state.previous_action = action;
                 if let Test::Qa = state.config.test {
                     state.action_history.push(action)
                 }
+                self.next_action();
                 result
             }
         }
@@ -238,6 +255,7 @@ impl BotManager {
 
     async fn run_bot(&mut self) {
         let mut errors = false;
+        let mut task_state: TaskState = TaskState::default();
         loop {
             if self.bots.is_empty() {
                 if errors {
@@ -248,7 +266,7 @@ impl BotManager {
                 return;
             }
 
-            if let Some(remove_i) = self.iter_bot_list(&mut errors).await {
+            if let Some(remove_i) = self.iter_bot_list(&mut errors, &mut task_state).await {
                 self.bots
                     .swap_remove(remove_i)
                     .notify_task_bot_count_decreased(self.bots.len());
@@ -257,9 +275,9 @@ impl BotManager {
     }
 
     /// If Some(bot_index) is returned remove the bot.
-    async fn iter_bot_list(&mut self, errors: &mut bool) -> Option<usize> {
+    async fn iter_bot_list(&mut self, errors: &mut bool, task_state: &mut TaskState) -> Option<usize> {
         for (i, b) in self.bots.iter_mut().enumerate() {
-            match b.run_action().await {
+            match b.run_action(task_state).await {
                 Ok(None) => (),
                 Ok(Some(Completed)) => return Some(i),
                 Err(e) => {

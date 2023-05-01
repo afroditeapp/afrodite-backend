@@ -2,19 +2,19 @@ use std::fmt::Debug;
 
 use api_client::{
     apis::account_api::{
-        get_account_state, post_account_setup, post_complete_setup, post_login, post_register,
+        get_account_state, post_account_setup, post_complete_setup, post_login, post_register, self,
     },
-    models::{AccountSetup, AccountState},
+    models::{AccountSetup, AccountState, BooleanSetting},
 };
 use async_trait::async_trait;
 
 use error_stack::Result;
 
-use super::{super::super::client::TestError, BotAction};
+use super::{super::super::client::TestError, BotAction, ActionArray};
 
 use crate::{
-    test::bot::utils::{assert::bot_assert_eq, name::NameProvider},
-    utils::IntoReportExt,
+    test::bot::{utils::{assert::bot_assert_eq, name::NameProvider}, TaskState},
+    utils::IntoReportExt, action_array,
 };
 
 use super::BotState;
@@ -112,6 +112,20 @@ pub struct CompleteAccountSetup;
 impl BotAction for CompleteAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         post_complete_setup(state.api.account())
+            .await
+            .into_error(TestError::ApiRequest)?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct SetProfileVisibility(pub bool);
+
+#[async_trait]
+impl BotAction for SetProfileVisibility {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        account_api::put_setting_profile_visiblity(state.api.account(), BooleanSetting::new(self.0))
             .await
             .into_error(TestError::ApiRequest)?;
 

@@ -14,16 +14,16 @@
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProfileLink {
     #[serde(rename = "id")]
-    pub id: uuid::Uuid,
+    pub id: Box<crate::models::AccountIdLight>,
     #[serde(rename = "version")]
-    pub version: uuid::Uuid,
+    pub version: Box<crate::models::ProfileVersion>,
 }
 
 impl ProfileLink {
-    pub fn new(id: uuid::Uuid, version: uuid::Uuid) -> ProfileLink {
+    pub fn new(id: crate::models::AccountIdLight, version: crate::models::ProfileVersion) -> ProfileLink {
         ProfileLink {
-            id,
-            version,
+            id: Box::new(id),
+            version: Box::new(version),
         }
     }
 }

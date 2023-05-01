@@ -289,11 +289,11 @@ impl CoordinateManager {
     }
 
     fn longitude_min(&self) -> f64 {
-        self.config.location().longitude_bottom_right
+        self.config.location().longitude_top_left
     }
 
     fn longitude_max(&self) -> f64 {
-        self.config.location().longitude_top_left
+        self.config.location().longitude_bottom_right
     }
 
     fn latitude_min(&self) -> f64 {

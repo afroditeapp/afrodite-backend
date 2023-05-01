@@ -2,7 +2,7 @@
 
 use std::{
     fmt::Debug,
-    time::{Duration, Instant},
+    time::{Duration, Instant}, iter::Peekable,
 };
 
 use api_client::apis::profile_api::get_profile;
@@ -18,7 +18,7 @@ use super::{
         BotAction,
     },
     utils::{Counters, Timer},
-    BotState, BotStruct,
+    BotState, BotStruct, TaskState,
 };
 
 use error_stack::Result;
@@ -48,7 +48,7 @@ impl BenchmarkState {
 
 pub struct Benchmark {
     state: BotState,
-    actions: Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>,
+    actions: Peekable<Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>>,
 }
 
 impl Debug for Benchmark {
@@ -69,7 +69,7 @@ impl Benchmark {
         let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
         Self {
             state,
-            actions: Box::new(iter),
+            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
         }
     }
 
@@ -84,15 +84,18 @@ impl Benchmark {
         let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
         Self {
             state,
-            actions: Box::new(iter),
+            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
         }
     }
 }
 
 #[async_trait]
 impl BotStruct for Benchmark {
-    fn next_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState) {
-        (self.actions.next(), &mut self.state)
+    fn peek_action_and_state(&mut self) -> (Option<&'static dyn BotAction>, &mut BotState) {
+        (self.actions.peek().copied(), &mut self.state)
+    }
+    fn next_action(&mut self) {
+        self.actions.next();
     }
     fn state(&self) -> &BotState {
         &self.state
@@ -131,11 +134,11 @@ pub struct UpdateProfileBenchmark;
 
 #[async_trait]
 impl BotAction for UpdateProfileBenchmark {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
         let time = Instant::now();
 
         if state.config.update_profile && state.benchmark.update_profile_timer.passed() {
-            ChangeProfileText.excecute(state).await?;
+            ChangeProfileText.excecute(state, task_state).await?;
 
             if state.is_first_bot() {
                 info!("post_profile: {:?}", time.elapsed());

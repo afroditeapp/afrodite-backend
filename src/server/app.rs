@@ -135,7 +135,7 @@ impl App {
             )
             .route(
                 api::account::PATH_SETTING_PROFILE_VISIBILITY,
-                post({
+                put({
                     let state = self.state.clone();
                     move |p1, p2| api::account::put_setting_profile_visiblity(p1, p2, state)
                 }),
@@ -179,7 +179,7 @@ impl App {
                 api::profile::PATH_POST_NEXT_PROFILE_PAGE,
                 post({
                     let state = self.state.clone();
-                    move |p1, p2| api::profile::post_get_next_profile_page(p1, p2, state)
+                    move |p1| api::profile::post_get_next_profile_page(p1, state)
                 }),
             )
             .route(

@@ -112,8 +112,9 @@ impl DatabaseCache {
                 let index_iterator = index_iterator.get().ok_or(CacheError::InitFeatureNotEnabled)?;
                 profile_data.location.current_iterator = index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
 
+                // TODO: Add to location index only if visiblity is public
                 let index_writer = index_writer.get().ok_or(CacheError::InitFeatureNotEnabled)?;
-                index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
+                //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
 
                 entry.profile = Some(Box::new(profile_data));
             }
@@ -123,6 +124,11 @@ impl DatabaseCache {
 
         drop(read_account);
         Ok(cache)
+    }
+
+    pub async fn load_state_from_external_services() {
+        // TODO
+        //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
     }
 
     pub async fn insert_account_if_not_exists(
@@ -209,7 +215,7 @@ impl DatabaseCache {
     pub async fn write_cache<T>(
         &self,
         id: AccountIdLight,
-        cache_operation: impl FnOnce(&mut CacheEntry) -> T,
+        cache_operation: impl FnOnce(&mut CacheEntry) -> Result<T, CacheError>,
     ) -> WriteResult<T, CacheError, T> {
         let guard = self.accounts.read().await;
         let mut cache_entry = guard
@@ -218,7 +224,7 @@ impl DatabaseCache {
             .cache
             .write()
             .await;
-        Ok(cache_operation(&mut cache_entry))
+        Ok(cache_operation(&mut cache_entry)?)
     }
 
     pub async fn account(&self, id: AccountIdLight) -> Result<Account, CacheError> {
@@ -257,6 +263,7 @@ impl DatabaseCache {
     }
 }
 
+#[derive(Debug)]
 pub struct CachedProfile {
     /// If None there is no profile visibility value fetched from account server.
     pub public: Option<bool>,
@@ -274,12 +281,13 @@ impl From<ProfileInternal> for CachedProfile {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LocationData {
     pub current_position: LocationIndexKey,
     pub current_iterator: LocationIndexIteratorState,
 }
 
+#[derive(Debug)]
 pub struct CacheEntry {
     pub account_id_internal: AccountIdInternal,
     pub profile: Option<Box<CachedProfile>>,
@@ -395,7 +403,8 @@ impl WriteCacheJson for Account {
                 entry
                     .account
                     .as_mut()
-                    .map(|data| *data.as_mut() = self.clone())
+                    .map(|data| *data.as_mut() = self.clone());
+                Ok(())
             })
             .await
             .map(|_| ())
@@ -415,7 +424,8 @@ impl WriteCacheJson for ProfileInternal {
                 entry
                     .profile
                     .as_mut()
-                    .map(|data| data.as_mut().data = self.clone())
+                    .map(|data| data.as_mut().data = self.clone());
+                Ok(())
             })
             .await
             .map(|_| ())
@@ -438,7 +448,8 @@ impl WriteCacheJson for ProfileUpdateInternal {
                     data.image3 = self.new_data.image3;
                     data.profile_text = self.new_data.profile_text.clone();
                     data.version_uuid = self.version;
-                })
+                });
+                Ok(())
             })
             .await
             .map(|_| ())

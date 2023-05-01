@@ -13,14 +13,14 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProfilePage {
-    #[serde(rename = "latitude")]
-    pub latitude: Vec<crate::models::ProfileLink>,
+    #[serde(rename = "profiles")]
+    pub profiles: Vec<crate::models::ProfileLink>,
 }
 
 impl ProfilePage {
-    pub fn new(latitude: Vec<crate::models::ProfileLink>) -> ProfilePage {
+    pub fn new(profiles: Vec<crate::models::ProfileLink>) -> ProfilePage {
         ProfilePage {
-            latitude,
+            profiles,
         }
     }
 }

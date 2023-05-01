@@ -31,6 +31,7 @@ docs/ProfileLink.md
 docs/ProfilePage.md
 docs/ProfileUpdate.md
 docs/ProfileVersion.md
+docs/ProfileinternalApi.md
 docs/SlotId.md
 git_push.sh
 src/apis/account_api.rs
@@ -40,6 +41,7 @@ src/apis/media_api.rs
 src/apis/mediainternal_api.rs
 src/apis/mod.rs
 src/apis/profile_api.rs
+src/apis/profileinternal_api.rs
 src/models/account.rs
 src/models/account_id_light.rs
 src/models/account_setup.rs

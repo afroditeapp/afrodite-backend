@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    cache::{CacheError, DatabaseCache, WriteCacheJson},
+    cache::{CacheError, DatabaseCache, WriteCacheJson, CachedProfile},
     current::CurrentDataWriteCommands,
     file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
@@ -185,7 +185,8 @@ impl<'a> WriteCommands<'a> {
 
             cache
                 .write_cache(id.as_light(), |cache| {
-                    cache.account = Some(account.clone().into())
+                    cache.account = Some(account.clone().into());
+                    Ok(())
                 })
                 .await
                 .convert(id)?;
@@ -212,7 +213,9 @@ impl<'a> WriteCommands<'a> {
 
             cache
                 .write_cache(id.as_light(), |cache| {
-                    cache.profile.as_mut().map(|p| p.data = profile.clone());
+                    let p: CachedProfile = profile.into();
+                    cache.profile = Some(p.into());
+                    Ok(())
                 })
                 .await
                 .convert(id)?;
@@ -381,20 +384,30 @@ impl<'a> WriteCommands<'a> {
         public: bool,
         update_only_if_no_value: bool,
     ) -> Result<(), DatabaseError> {
-        self.cache.write_cache(id.as_light(), |e| {
-            e.profile.as_mut().map(|p| {
-                // Handle race condition between remote fetch and update.
-                // Update will override the initial fetch.
-                if update_only_if_no_value {
-                    if p.public.is_none() {
-                        p.public = Some(public);
-                    }
-                } else {
+        let (visiblity, location, profile_link) = self.cache.write_cache(id.as_light(), |e| {
+            let p = e.profile.as_mut().ok_or(CacheError::InitFeatureNotEnabled)?;
+
+            // Handle race condition between remote fetch and update.
+            // Update will override the initial fetch.
+            if update_only_if_no_value {
+                if p.public.is_none() {
                     p.public = Some(public);
                 }
+            } else {
+                p.public = Some(public);
             }
-            );
-        }).await.convert(id)
+
+            Ok((p.public.unwrap_or_default(), p.location.current_position, ProfileLink::new(id.as_light(), &p.data)))
+        }).await.convert(id)?;
+
+        let index = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
+        if visiblity {
+            index.update_profile_link(id.as_light(), profile_link, location).await;
+        } else {
+            index.remove_profile_link(id.as_light(), location).await;
+        }
+
+        Ok(())
     }
 
     pub async fn profile_update_location(
@@ -402,7 +415,11 @@ impl<'a> WriteCommands<'a> {
         id: AccountIdInternal,
         coordinates: Location,
     ) -> Result<(), DatabaseError> {
-        let location = self.cache.read_cache(id.as_light(), |e| e.profile.as_ref().map(|p| p.location.clone())).await
+        let location = self.cache
+            .read_cache(id.as_light(), |e|
+            {
+                e.profile.as_ref().map(|p| p.location.clone()) }
+            ).await
             .convert(id)?
             .ok_or(DatabaseError::FeatureDisabled)?;
 
@@ -493,7 +510,12 @@ impl<'a> WriteCommandsAccount<'a> {
 
         let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
         let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await;
-        self.cache.write_cache(id.as_light(), |e| e.profile.as_mut().map(move |p| p.location.current_iterator = next_state)).await.convert(id)?;
+        self.cache.write_cache(id.as_light(), |e|
+        {
+            e.profile.as_mut().map(move |p| p.location.current_iterator = next_state);
+            Ok(())
+        }).await.convert(id)?;
+
         Ok(profiles.unwrap_or(Vec::new()))
     }
 
@@ -507,7 +529,10 @@ impl<'a> WriteCommandsAccount<'a> {
 
         let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
         let next_state = iterator.reset_iterator(location.current_iterator, location.current_position);
-        self.cache.write_cache(id.as_light(), |e| e.profile.as_mut().map(move |p| p.location.current_iterator = next_state)).await.convert(id)?;
+        self.cache.write_cache(id.as_light(), |e| {
+            e.profile.as_mut().map(move |p| p.location.current_iterator = next_state);
+            Ok(())
+        }).await.convert(id)?;
         Ok(())
     }
 

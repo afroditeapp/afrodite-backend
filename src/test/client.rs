@@ -13,7 +13,7 @@ use tracing::info;
 #[error("Wrong status code: {0}")]
 pub struct StatusCodeError(StatusCode);
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, PartialEq)]
 pub enum TestError {
     #[error("Reqwest error")]
     Reqwest,
@@ -42,6 +42,9 @@ pub enum TestError {
 
     #[error("Assert error. message: {0}")]
     AssertError(String),
+
+    #[error("Not an error. Just an indication that bot is waiting.")]
+    BotIsWaiting,
 }
 
 #[derive(Debug, Clone)]

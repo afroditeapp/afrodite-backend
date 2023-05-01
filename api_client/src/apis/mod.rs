@@ -95,5 +95,6 @@ pub mod accountinternal_api;
 pub mod media_api;
 pub mod mediainternal_api;
 pub mod profile_api;
+pub mod profileinternal_api;
 
 pub mod configuration;
