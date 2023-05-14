@@ -158,7 +158,7 @@ impl App {
                 api::profile::PATH_GET_PROFILE,
                 get({
                     let state = self.state.clone();
-                    move |body| api::profile::get_profile(body, state)
+                    move |param1, param2| api::profile::get_profile(param1, param2, state)
                 }),
             )
             .route(

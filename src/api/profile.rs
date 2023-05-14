@@ -43,11 +43,18 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_profile<S: ReadDatabase + GetUsers + GetInternalApi + WriteDatabase>(
+pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(requested_profile): Path<AccountIdLight>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: check capablities
+
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let requested_profile = state
         .users()
@@ -57,6 +64,22 @@ pub async fn get_profile<S: ReadDatabase + GetUsers + GetInternalApi + WriteData
             error!("get_profile: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
+
+    if account_id.as_light() == requested_profile.as_light() {
+        return state
+            .read_database()
+            .read_json::<ProfileInternal>(requested_profile)
+            .await
+            .map(|profile| {
+                let profile: Profile = profile.into();
+                profile.into()
+            })
+            .map_err(|e| {
+                error!("get_profile: {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })
+    }
+
 
     let visibility = state.read_database().profile_visibility(requested_profile).await
         .map_err(|e| {
