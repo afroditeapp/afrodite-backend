@@ -4,13 +4,14 @@
 pub mod account;
 pub mod media;
 pub mod profile;
+pub mod common;
 
 use std::{fmt::Debug, sync::atomic::AtomicBool, iter::Peekable};
 
 use api_client::models::AccountState;
 use async_trait::async_trait;
 
-use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS, profile::PROFILE_TESTS};
+use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS, profile::PROFILE_TESTS, common::COMMON_TESTS};
 
 use super::{
     actions::{
@@ -40,7 +41,12 @@ macro_rules! test {
     };
 }
 
-pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[ACCOUNT_TESTS, MEDIA_TESTS, PROFILE_TESTS];
+pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[
+    ACCOUNT_TESTS,
+    MEDIA_TESTS,
+    PROFILE_TESTS,
+    COMMON_TESTS,
+];
 
 pub fn test_count() -> usize {
     ALL_QA_TESTS.iter().map(|tests| tests.len()).sum()

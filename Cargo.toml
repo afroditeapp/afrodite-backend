@@ -17,7 +17,7 @@ tokio = { version = "1", features = ["full"] }
 tokio-stream = "0.1.10"
 tokio-util = { version = "0.7.7", features = ["io"]}
 hyper = { version = "0.14", features = ["full"] }
-axum = { version = "0.6", features = ["headers"] }
+axum = { version = "0.6", features = ["headers", "ws"] }
 tower = "0.4.13"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -25,6 +25,7 @@ mime = "0.3"
 headers = "0.3.8"
 reqwest = { version = "0.11", features = ["json"] }
 url = { version = "2.3.1", features = ["serde"] }
+bytes = "1.4.0"
 
 utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
@@ -49,7 +50,8 @@ base64 = "0.21.0"
 rand = "0.8.5"
 nix = { version = "0.26.2", default-features = false, features = ["signal"] }
 image = { version = "0.24.6", default-features = false, features = ["jpeg"] }
-api_client = { path = "./api_client" }
+tokio-tungstenite = "0.19.0"
+api_client = { path = "./api_client" } # Used also for internal API requests
 
 [workspace]
 members = ["api_client"]

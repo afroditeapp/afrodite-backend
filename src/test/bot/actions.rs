@@ -2,6 +2,7 @@ pub mod account;
 pub mod admin;
 pub mod media;
 pub mod profile;
+pub mod common;
 
 use std::collections::HashSet;
 use std::{fmt::Debug, time::Duration};

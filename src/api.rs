@@ -4,6 +4,7 @@
 pub mod account;
 pub mod media;
 pub mod profile;
+pub mod common;
 
 pub mod model;
 pub mod utils;
@@ -33,6 +34,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        common::get_connect_websocket,
         account::post_register,
         account::post_login,
         account::post_sign_in_with_login,
@@ -61,6 +63,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::internal::internal_post_update_profile_image_visibility,
     ),
     components(schemas(
+        common::EventToClient,
         account::data::AccountIdLight,
         account::data::ApiKey,
         account::data::Account,

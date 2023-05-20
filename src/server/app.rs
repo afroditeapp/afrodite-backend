@@ -1,4 +1,7 @@
-use std::sync::Arc;
+pub mod connected_routes;
+pub mod connection;
+
+use std::sync::{Arc};
 
 use axum::{
     middleware,
@@ -6,6 +9,7 @@ use axum::{
     Json, Router,
 };
 
+use tokio::{sync::mpsc, io::DuplexStream};
 use utoipa::OpenApi;
 
 use crate::{
@@ -14,6 +18,8 @@ use crate::{
     },
     config::Config,
 };
+
+use self::connected_routes::ConnectedApp;
 
 use super::{
     database::{
@@ -30,6 +36,7 @@ pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
     internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
+    pub ws_http_sender: mpsc::Sender<DuplexStream>,
 }
 
 impl GetApiKeys for AppState {
@@ -80,18 +87,39 @@ pub struct App {
 }
 
 impl App {
-    pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>) -> Self {
+    /// Returns also the WebSocket HTTP connection stream
+    pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>) -> (Self, mpsc::Receiver<DuplexStream>) {
+        let (ws_http_sender, ws_http_receive) = mpsc::channel(1);
+
         let state = AppState {
             database: Arc::new(database_handle),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             config,
+            ws_http_sender,
         };
 
-        Self { state }
+        (Self { state }, ws_http_receive)
     }
 
     pub fn state(&self) -> AppState {
         self.state.clone()
+    }
+
+    pub fn create_common_server_router(&self) -> Router {
+        Router::new()
+            .route(
+                api::common::PATH_CONNECT,
+                get({
+                    let state = self.state.clone();
+                    move |param1, param2, param3,| api::common::get_connect_websocket(param1, param2, param3, state)
+                }),
+            )
+            .route_layer({
+                middleware::from_fn({
+                    let state = self.state.clone();
+                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
+                })
+            })
     }
 
     pub fn create_account_server_router(&self) -> Router {
@@ -118,152 +146,40 @@ impl App {
                 }),
             );
 
-        let private = Router::new()
-            .route(
-                api::account::PATH_ACCOUNT_STATE,
-                get({
-                    let state = self.state.clone();
-                    move |body| api::account::get_account_state(body, state)
-                }),
+        if self.state.config.debug_mode() {
+            public.merge(
+                ConnectedApp::new(self.state.clone())
+                    .private_account_server_router()
             )
-            .route(
-                api::account::PATH_ACCOUNT_SETUP,
-                post({
-                    let state = self.state.clone();
-                    move |arg1, arg2| api::account::post_account_setup(arg1, arg2, state)
-                }),
-            )
-            .route(
-                api::account::PATH_ACCOUNT_COMPLETE_SETUP,
-                post({
-                    let state = self.state.clone();
-                    move |arg1| api::account::post_complete_setup(arg1, state)
-                }),
-            )
-            .route(
-                api::account::PATH_SETTING_PROFILE_VISIBILITY,
-                put({
-                    let state = self.state.clone();
-                    move |p1, p2| api::account::put_setting_profile_visiblity(p1, p2, state)
-                }),
-            )
-            .route_layer({
-                middleware::from_fn({
-                    let state = self.state.clone();
-                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
-                })
-            });
-
-        Router::new().merge(public).merge(private)
+        } else {
+            public
+        }
     }
 
     pub fn create_profile_server_router(&self) -> Router {
         let public = Router::new();
 
-        let private = Router::new()
-            .route(
-                api::profile::PATH_GET_PROFILE,
-                get({
-                    let state = self.state.clone();
-                    move |param1, param2| api::profile::get_profile(param1, param2, state)
-                }),
+        if self.state.config.debug_mode() {
+            public.merge(
+                ConnectedApp::new(self.state.clone())
+                    .private_profile_server_router()
             )
-            .route(
-                api::profile::PATH_POST_PROFILE,
-                post({
-                    let state = self.state.clone();
-                    move |header, body| api::profile::post_profile(header, body, state)
-                }),
-            )
-            .route(
-                api::profile::PATH_PUT_LOCATION,
-                put({
-                    let state = self.state.clone();
-                    move |p1, p2| api::profile::put_location(p1, p2, state)
-                }),
-            )
-            .route(
-                api::profile::PATH_POST_NEXT_PROFILE_PAGE,
-                post({
-                    let state = self.state.clone();
-                    move |p1| api::profile::post_get_next_profile_page(p1, state)
-                }),
-            )
-            .route(
-                api::profile::PATH_POST_RESET_PROFILE_PAGING,
-                post({
-                    let state = self.state.clone();
-                    move |p1| api::profile::post_reset_profile_paging(p1, state)
-                }),
-            )
-            .route_layer({
-                middleware::from_fn({
-                    let state = self.state.clone();
-                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
-                })
-            });
-
-        Router::new().merge(public).merge(private)
+        } else {
+            public
+        }
     }
 
     pub fn create_media_server_router(&self) -> Router {
         let public = Router::new();
 
-        let private = Router::new()
-            .route(
-                api::media::PATH_GET_IMAGE,
-                get({
-                    let state = self.state.clone();
-                    move |user_id, image_name| api::media::get_image(user_id, image_name, state)
-                }),
+        if self.state.config.debug_mode() {
+            public.merge(
+                ConnectedApp::new(self.state.clone())
+                    .private_media_server_router()
             )
-            .route(
-                api::media::PATH_MODERATION_REQUEST,
-                get({
-                    let state = self.state.clone();
-                    move |param1| api::media::get_moderation_request(param1, state)
-                }),
-            )
-            .route(
-                api::media::PATH_MODERATION_REQUEST,
-                put({
-                    let state = self.state.clone();
-                    move |param1, param2| api::media::put_moderation_request(param1, param2, state)
-                }),
-            )
-            .route(
-                api::media::PATH_MODERATION_REQUEST_SLOT,
-                put({
-                    let state = self.state.clone();
-                    move |param1, param2, param3| {
-                        api::media::put_image_to_moderation_slot(param1, param2, param3, state)
-                    }
-                }),
-            )
-            .route(
-                api::media::PATH_ADMIN_MODERATION_PAGE_NEXT,
-                patch({
-                    let state = self.state.clone();
-                    move |param1| api::media::patch_moderation_request_list(param1, state)
-                }),
-            )
-            .route(
-                api::media::PATH_ADMIN_MODERATION_HANDLE_REQUEST,
-                post({
-                    let state = self.state.clone();
-                    move |param1, param2, param3| {
-                        api::media::post_handle_moderation_request(param1, param2, param3, state)
-                    }
-                }),
-            )
-            .route_layer({
-                middleware::from_fn({
-                    let state = self.state.clone();
-                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
-                })
-            });
-
-        Router::new().merge(public).merge(private)
+        } else {
+            public
+        }
     }
 }
 

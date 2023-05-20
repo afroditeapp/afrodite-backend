@@ -2,10 +2,11 @@ pub mod app;
 pub mod database;
 pub mod internal;
 
-use std::sync::Arc;
+use std::{sync::Arc, task::Poll};
 
-use axum::Router;
-use tokio::{signal, task::JoinHandle};
+use axum::{Router, BoxError};
+use hyper::server::accept::Accept;
+use tokio::{signal, task::JoinHandle, io::DuplexStream, sync::mpsc};
 use tracing::{error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -37,7 +38,10 @@ impl PihkaServer {
         .await
         .expect("Database init failed");
 
-        let app = App::new(router_database_handle, self.config.clone()).await;
+        let (app, ws_http_receiver) = App::new(router_database_handle, self.config.clone()).await;
+
+        let ws_http_task =
+            self.create_ws_http_connection_manager(&app, ws_http_receiver);
 
         let server_task = self.create_public_api_server_task(&app);
         let internal_server_task = if self.config.debug_mode() {
@@ -46,7 +50,7 @@ impl PihkaServer {
             Some(self.create_internal_api_server_task(&app))
         };
 
-        // Wait until both tasks quit
+        // Wait until all tasks quit
         server_task
             .await
             .expect("Public API server task panic detected");
@@ -55,6 +59,9 @@ impl PihkaServer {
                 .await
                 .expect("Internal API server task panic detected");
         }
+        ws_http_task
+            .await
+            .expect("WebSocket HTTP server task panic detected");
 
         info!("Server quit started");
 
@@ -62,6 +69,37 @@ impl PihkaServer {
         database_manager.close().await;
 
         info!("Server quit done");
+    }
+
+    pub fn create_ws_http_connection_manager(
+        &self,
+        app: &App,
+        ws_http_receiver: mpsc::Receiver<DuplexStream>
+    ) -> JoinHandle<()> {
+        let router = self.create_public_router(&app);
+
+        tokio::spawn(async move {
+            let normal_api_server =
+                hyper::Server::builder(WsHttpAccept { receiver: ws_http_receiver })
+                    .serve(router.into_make_service());
+
+            let shutdown_handle =
+                normal_api_server.with_graceful_shutdown(async {
+                    match signal::ctrl_c().await {
+                        Ok(()) => (),
+                        Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
+                    }
+                });
+
+            match shutdown_handle.await {
+                Ok(()) => {
+                    info!("WebSocket HTTP server future returned Ok()");
+                }
+                Err(e) => {
+                    error!("WebSocket HTTP server future returned error: {}", e);
+                }
+            }
+        })
     }
 
     pub fn create_public_api_server_task(&self, app: &App) -> JoinHandle<()> {
@@ -138,7 +176,7 @@ impl PihkaServer {
     }
 
     pub fn create_public_router(&self, app: &App) -> Router {
-        let mut router = Router::new();
+        let mut router = app.create_common_server_router();
 
         if self.config.components().account {
             router = router.merge(app.create_account_server_router())
@@ -174,5 +212,24 @@ impl PihkaServer {
 
     pub fn create_swagger_ui() -> SwaggerUi {
         SwaggerUi::new("/swagger-ui").url("/api-doc/pihka_api.json", ApiDoc::openapi())
+    }
+}
+
+
+
+struct WsHttpAccept {
+    receiver: mpsc::Receiver<DuplexStream>,
+}
+
+impl Accept for WsHttpAccept {
+    type Conn = DuplexStream;
+    type Error = BoxError;
+
+    fn poll_accept(
+            mut self: std::pin::Pin<&mut Self>,
+            cx: &mut std::task::Context<'_>,
+        ) -> std::task::Poll<Option<Result<Self::Conn, Self::Error>>> {
+        let stream = std::task::ready!(self.receiver.poll_recv(cx));
+        Poll::Ready(stream.map(|s| Ok(s)))
     }
 }

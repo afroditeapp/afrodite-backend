@@ -148,6 +148,10 @@ impl ApiClient {
             && self.profile.api_key.is_some()
             && self.profile.api_key.is_some()
     }
+
+    pub fn api_key(&self) -> Option<String> {
+        self.account.api_key.clone().map(|k| k.key)
+    }
 }
 
 pub fn get_api_url(url: &Option<Url>) -> Result<Url, TestError> {
