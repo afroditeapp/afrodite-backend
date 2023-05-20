@@ -6,10 +6,10 @@ use axum::{Json, TypedHeader};
 use hyper::StatusCode;
 
 use self::data::{
-    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus,
+    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus, SignInWithLoginInfo,
 };
 
-use super::{GetConfig, GetInternalApi};
+use super::{GetConfig, GetInternalApi, utils::{validate_sign_in_with_google_token, validate_sign_in_with_apple_token}};
 
 use tracing::error;
 
@@ -80,6 +80,44 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
         })?;
 
     Ok(key.into())
+}
+
+pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
+
+/// Start new session with sign in with Apple or Google. Creates new account if
+/// it does not exists.
+#[utoipa::path(
+    post,
+    path = "/account_api/sign_in_with_login",
+    security(),
+    request_body = SignInWithLoginInfo,
+    responses(
+        (status = 200, description = "Login or account creation successful.", body = ApiKey),
+        (status = 500, description = "Internal server error."),
+    ),
+)]
+pub async fn post_sign_in_with_login<S: GetApiKeys + WriteDatabase + GetUsers>(
+    Json(tokens): Json<SignInWithLoginInfo>,
+    state: S,
+) -> Result<Json<ApiKey>, StatusCode> {
+
+    if let Some(google) = tokens.google_token {
+        if validate_sign_in_with_google_token(google).await.unwrap() {
+            let key = ApiKey::generate_new();
+            Ok(key.into())
+        } else {
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    } else if let Some(apple) = tokens.apple_token {
+        if validate_sign_in_with_apple_token(apple).await.unwrap() {
+            let key = ApiKey::generate_new();
+            Ok(key.into())
+        } else {
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }
 
 // pub const PATH_REFRESH_API_KEY: &str = "/account/refresh_api_key";

@@ -35,6 +35,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     paths(
         account::post_register,
         account::post_login,
+        account::post_sign_in_with_login,
         account::post_account_setup,
         account::post_complete_setup,
         account::post_delete,
@@ -68,6 +69,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         account::data::Capabilities,
         account::data::BooleanSetting,
         account::data::DeleteStatus,
+        account::data::SignInWithLoginInfo,
         profile::data::Profile,
         profile::data::ProfilePage,
         profile::data::ProfileLink,

@@ -109,6 +109,13 @@ impl App {
                     let state = self.state.clone();
                     move |body| api::account::post_login(body, state)
                 }),
+            )
+            .route(
+                api::account::PATH_SIGN_IN_WITH_LOGIN,
+                post({
+                    let state = self.state.clone();
+                    move |body| api::account::post_sign_in_with_login(body, state)
+                }),
             );
 
         let private = Router::new()

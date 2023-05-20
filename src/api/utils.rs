@@ -1,7 +1,12 @@
 use axum::{middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
-use hyper::{header, Request, StatusCode};
+use hyper::{header, Request, StatusCode, http::request, Method};
 
+use jsonwebtoken::{DecodingKey, jwk::{Jwk, JwkSet}, Validation};
+use serde::Deserialize;
+use serde_json::Value;
+use tracing::log::info;
+use url::Url;
 use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
@@ -105,3 +110,65 @@ impl Modify for SecurityApiTokenDefault {
 //         .ok_or(StatusCode::UNAUTHORIZED)
 //         .map(fun)
 // }
+
+
+#[derive(Debug, Deserialize)]
+struct GoogleInfo {
+    iss: Option<String>,
+    sub: Option<String>,
+    jti: Option<String>,
+    exp: Option<String>,
+    iat: Option<String>,
+    client_id: Option<String>,
+    scope: Option<String>,
+}
+
+pub async fn validate_sign_in_with_google_token(token: String) -> Result<bool, ()> {
+    // info!("{:?}", &token);
+    // use base64::Engine;
+    // let token = base64::engine::general_purpose::STANDARD_NO_PAD.decode(&token).unwrap();
+    // let token =  String::from_utf8(token).unwrap();
+    info!("{:?}", &token);
+
+    let not_validated_header = jsonwebtoken::decode_header(&token).map_err(|_| ())?;
+    info!("{:?}", &not_validated_header);
+    let wanted_kid = not_validated_header.kid.unwrap();
+
+
+    let x = reqwest::Request::new(Method::GET, Url::parse("https://www.googleapis.com/oauth2/v3/certs").unwrap());
+    let c = reqwest::Client::new();
+    let r = c.execute(x).await.unwrap();
+    info!("{:?}", &r);
+    let jwk_set: JwkSet = r.json().await.unwrap();
+    info!("{:?}", &jwk_set);
+    let jwk = jwk_set.find(&wanted_kid).unwrap();
+    let key = &DecodingKey::from_jwk(&jwk).unwrap();
+    info!("decoding key successfull");
+    let v =  &Validation::new(jwk.common.algorithm.unwrap());
+    info!("{:?}", &v);
+    let d = jsonwebtoken::decode::<Value>(&token, key, v);
+    match d {
+        Ok(value) => {
+            // TODO: check aud and azp. There is Validation struct in jsonwebtoken
+            info!("{:?}", value);
+            Ok(true)
+        }
+        Err(e) => {
+            tracing::error!("{:?}", e);
+            Ok(false)
+        }
+    }
+}
+
+
+
+pub async fn validate_sign_in_with_apple_token(token: String) -> Result<bool, ()> {
+    info!("{:?}", &token);
+
+    let not_validated_header = jsonwebtoken::decode_header(&token).map_err(|_| ())?;
+    info!("{:?}", &not_validated_header);
+
+    // TODO: validation
+
+    Ok(true)
+}

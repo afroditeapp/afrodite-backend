@@ -52,7 +52,7 @@ pub async fn get_image<S: ReadDatabase>(
         .image(account_id, content_id)
         .await
         .map_err(|e| {
-            error!("{}", e);
+            error!("{:?}", e);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 

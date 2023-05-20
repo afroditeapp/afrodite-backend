@@ -248,3 +248,9 @@ pub struct BooleanSetting {
 pub struct DeleteStatus {
     delete_date: String,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct SignInWithLoginInfo {
+   pub apple_token: Option<String>,
+   pub google_token: Option<String>,
+}

@@ -41,13 +41,15 @@ async-trait = "0.1.66"
 time = "0.3.20"
 nalgebra = "0.32.2"
 
+jsonwebtoken = "8.3.0"
+base64 = "0.21.0"
+
 # Test mode related dependencies
 
 rand = "0.8.5"
 nix = { version = "0.26.2", default-features = false, features = ["signal"] }
 image = { version = "0.24.6", default-features = false, features = ["jpeg"] }
 api_client = { path = "./api_client" }
-
 
 [workspace]
 members = ["api_client"]
