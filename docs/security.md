@@ -49,3 +49,27 @@ this case also works!
 
 Best to investigate first how google single sign on works before changing
 anything.
+
+
+----------------------------------------------
+
+New plan as WebSocket method seems to have same probablity to session hijacking
+as the normal API key auth.
+
+
+1. Add refresh token support to the app. The login route will return the refresh
+token (base64 encoded very long random value, 1 KiB number) and the current
+access token (old API key; base64 encoded, 256 bit lenght). The access token
+will only be useful when server has debug mode enabled, as client IP address
+will not be validated in that case. When it is disabled the IP address is not
+currently set.
+
+2. The client connects websocket to the server. First the client will send the
+refresh token as Binary message to the server. If it is not valid, the server
+just disconnects. If it is valid, then the server will send a new refresh token
+to the client, set current IP address for the account and after that the new
+access token as Binary message. The access token is valid until WebSocket
+closes. The server will send events to server using Text messages.
+
+3. All microservices have their own refresh token and access token. The account
+server will set those up and return in login information.
