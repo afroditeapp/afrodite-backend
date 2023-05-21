@@ -1,4 +1,6 @@
-use axum::{middleware::Next, response::Response};
+use std::net::SocketAddr;
+
+use axum::{middleware::Next, response::Response, extract::ConnectInfo};
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode, http::request, Method};
 
@@ -14,14 +16,15 @@ use utoipa::{
 
 use crate::server::internal::AuthResponse;
 
-use super::{model::ApiKey, GetInternalApi};
+use super::{model::ApiKey, GetInternalApi, GetApiKeys};
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
 
-pub async fn authenticate_with_api_key<T, S: GetInternalApi>(
+pub async fn authenticate_with_api_key<T, S: GetApiKeys>(
     state: S,
-    req: Request<T>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    mut req: Request<T>,
     next: Next<T>,
 ) -> Result<Response, StatusCode> {
     let header = req
@@ -31,10 +34,11 @@ pub async fn authenticate_with_api_key<T, S: GetInternalApi>(
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = ApiKey::new(key_str.to_string());
 
-    match state.internal_api().check_api_key(key).await {
-        Ok(AuthResponse::Ok) => Ok(next.run(req).await),
-        Ok(AuthResponse::Unauthorized) => Err(StatusCode::UNAUTHORIZED),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    if let Some(id) = state.api_keys().api_key_and_connection_exists(&key, addr).await {
+        req.extensions_mut().insert(id);
+        Ok(next.run(req).await)
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
     }
 }
 

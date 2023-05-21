@@ -1,4 +1,4 @@
-use std::{fmt::Debug, marker::PhantomData};
+use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
 
 use axum::extract::BodyStream;
 use error_stack::{Report, Result, ResultExt};
@@ -8,7 +8,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileInternal, ProfileLink, Location,
+            ModerationRequestContent, ProfileInternal, ProfileLink, Location, AuthPair,
         },
     },
     config::Config,
@@ -177,6 +177,7 @@ impl<'a> WriteCommands<'a> {
         cache.insert_account_if_not_exists(id).await.convert(id)?;
 
         current.store_api_key(id, None).await.convert(id)?;
+        current.store_refresh_token(id, None).await.convert(id)?;
 
         if config.components().account {
             current.store_account(id, &account).await.convert(id)?;
@@ -224,20 +225,63 @@ impl<'a> WriteCommands<'a> {
         Ok(id)
     }
 
-    pub async fn set_new_api_key(
+    pub async fn set_new_auth_pair(
         &self,
         id: AccountIdInternal,
-        key: ApiKey,
+        pair: AuthPair,
+        address: Option<SocketAddr>,
     ) -> Result<(), DatabaseError> {
+        let current_access_token = self.current_write.read().access_token(id).await.convert(id)?;
+
         self.current()
-            .update_api_key(id, Some(&key))
+            .update_api_key(id, Some(&pair.access))
+            .await
+            .convert(id)?;
+
+        self.current()
+            .update_refresh_token(id, Some(&pair.refresh))
             .await
             .convert(id)?;
 
         self.cache
-            .update_api_key(id.as_light(), key)
+            .update_access_token_and_connection(id.as_light(), current_access_token, pair.access, address)
             .await
             .convert(id)
+    }
+
+    /// Remove current connection address, access and refresh tokens.
+    pub async fn logout(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DatabaseError> {
+        self.current()
+            .update_refresh_token(id, None)
+            .await
+            .convert(id)?;
+
+        self.end_connection_session(id).await?;
+
+        Ok(())
+    }
+
+    /// Remove current connection address and access token.
+    pub async fn end_connection_session(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DatabaseError> {
+        let current_access_token = self.current_write.read().access_token(id).await.convert(id)?;
+
+        self.cache
+            .delete_access_token_and_connection(id.as_light(), current_access_token)
+            .await
+            .convert(id)?;
+
+        self.current()
+            .update_api_key(id, None)
+            .await
+            .convert(id)?;
+
+        Ok(())
     }
 
     pub async fn update_data<

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, net::SocketAddr};
 
 use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock};
@@ -43,6 +43,7 @@ pub enum CacheError {
 }
 
 pub struct AccountEntry {
+    pub account_id_internal: AccountIdInternal,
     pub cache: RwLock<CacheEntry>,
 }
 
@@ -73,13 +74,10 @@ impl DatabaseCache {
         let read_account = cache.accounts.read().await;
         let ids = read_account.values();
         for lock_and_cache in ids {
-            let mut entry = lock_and_cache.cache.write().await;
-            let internal_id = entry.account_id_internal;
-
             let api_key = read
-                .api_key(entry.account_id_internal)
+                .access_token(lock_and_cache.account_id_internal)
                 .await
-                .attach(entry.account_id_internal)
+                .attach(lock_and_cache.account_id_internal)
                 .change_context(CacheError::Init)?;
 
             if let Some(key) = api_key {
@@ -91,21 +89,23 @@ impl DatabaseCache {
                 }
             }
 
+            let mut entry = lock_and_cache.cache.write().await;
+
             if config.components().account {
-                let account = Account::select_json(internal_id, &read)
+                let account = Account::select_json(lock_and_cache.account_id_internal, &read)
                     .await
                     .change_context(CacheError::Init)?;
                 entry.account = Some(account.clone().into())
             }
 
             if config.components().profile {
-                let profile = ProfileInternal::select_json(internal_id, &read)
+                let profile = ProfileInternal::select_json(lock_and_cache.account_id_internal, &read)
                     .await
                     .change_context(CacheError::Init)?;
 
                 let mut profile_data: CachedProfile = profile.into();
 
-                let location_key = LocationIndexKey::select_json(internal_id, &read)
+                let location_key = LocationIndexKey::select_json(lock_and_cache.account_id_internal, &read)
                     .await
                     .change_context(CacheError::Init)?;
                 profile_data.location.current_position = location_key;
@@ -137,18 +137,20 @@ impl DatabaseCache {
     ) -> WriteResult<(), CacheError, AccountIdInternal> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_light()).is_none() {
-            let value = RwLock::new(CacheEntry::new(id));
-            data.insert(id.as_light(), AccountEntry { cache: value }.into());
+            let value = RwLock::new(CacheEntry::new());
+            data.insert(id.as_light(), AccountEntry { cache: value, account_id_internal: id }.into());
             Ok(())
         } else {
             Err(CacheError::AlreadyExists.into())
         }
     }
 
-    pub async fn update_api_key(
+    pub async fn update_access_token_and_connection(
         &self,
         id: AccountIdLight,
-        api_key: ApiKey,
+        current_access_token: Option<ApiKey>,
+        new_access_token: ApiKey,
+        address: Option<SocketAddr>,
     ) -> WriteResult<(), CacheError, ApiKey> {
         let cache_entry = self
             .accounts
@@ -158,25 +160,59 @@ impl DatabaseCache {
             .ok_or(CacheError::KeyNotExists)?
             .clone();
 
-        let mut api_key_guard = self.api_keys.write().await;
-        if api_key_guard.get(&api_key).is_none() {
-            api_key_guard.insert(api_key, cache_entry);
+        let mut tokens = self.api_keys.write().await;
+
+        if let Some(current) = current_access_token {
+            tokens.remove(&current);
+        }
+
+        // Avoid collisions.
+        if tokens.get(&new_access_token).is_none() {
+            cache_entry.cache.write().await.current_connection = address;
+            tokens.insert(new_access_token, cache_entry);
             Ok(())
         } else {
             Err(CacheError::AlreadyExists.into())
         }
     }
 
-    pub async fn delete_api_key(&self, api_key: ApiKey) -> WriteResult<(), CacheError, ApiKey> {
-        let mut guard = self.api_keys.write().await;
-        guard.remove(&api_key).ok_or(CacheError::KeyNotExists)?;
+    pub async fn delete_access_token_and_connection(&self, id: AccountIdLight, token: Option<ApiKey>) -> WriteResult<(), CacheError, ApiKey> {
+        let cache_entry = self
+            .accounts
+            .read()
+            .await
+            .get(&id)
+            .ok_or(CacheError::KeyNotExists)?
+            .clone();
+
+        cache_entry.cache.write().await.current_connection = None;
+
+        if let Some(token) = token {
+            let mut tokens = self.api_keys.write().await;
+            let account = tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
+        }
+
         Ok(())
     }
 
-    pub async fn api_key_exists(&self, api_key: &ApiKey) -> Option<AccountIdInternal> {
-        let api_key_guard = self.api_keys.read().await;
-        if let Some(entry) = api_key_guard.get(api_key) {
-            Some(entry.cache.read().await.account_id_internal)
+    pub async fn access_token_exists(&self, token: &ApiKey) -> Option<AccountIdInternal> {
+        let tokens = self.api_keys.read().await;
+        if let Some(entry) = tokens.get(token) {
+            Some(entry.account_id_internal)
+        } else {
+            None
+        }
+    }
+
+    pub async fn access_token_and_connection_exists(&self, access_token: &ApiKey, connection: SocketAddr) -> Option<AccountIdInternal> {
+        let tokens = self.api_keys.read().await;
+        if let Some(entry) = tokens.get(access_token) {
+            let r = entry.cache.read().await;
+            if r.current_connection == Some(connection) {
+                Some(entry.account_id_internal)
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -190,9 +226,6 @@ impl DatabaseCache {
         let data = guard
             .get(&id)
             .ok_or(CacheError::KeyNotExists)?
-            .cache
-            .read()
-            .await
             .account_id_internal;
         Ok(data)
     }
@@ -289,17 +322,17 @@ pub struct LocationData {
 
 #[derive(Debug)]
 pub struct CacheEntry {
-    pub account_id_internal: AccountIdInternal,
     pub profile: Option<Box<CachedProfile>>,
     pub account: Option<Box<Account>>,
+    pub current_connection: Option<SocketAddr>,
 }
 
 impl CacheEntry {
-    pub fn new(account_id_internal: AccountIdInternal) -> Self {
+    pub fn new() -> Self {
         Self {
             profile: None,
             account: None,
-            account_id_internal,
+            current_connection: None,
         }
     }
 }

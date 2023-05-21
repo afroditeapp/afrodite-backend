@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use error_stack::Result;
 
 use crate::{
@@ -21,7 +23,11 @@ impl<'a> ApiKeyManager<'a> {
     }
 
     pub async fn api_key_exists(&self, api_key: &ApiKey) -> Option<AccountIdInternal> {
-        self.cache.api_key_exists(api_key).await
+        self.cache.access_token_exists(api_key).await
+    }
+
+    pub async fn api_key_and_connection_exists(&self, api_key: &ApiKey, connection: SocketAddr) -> Option<AccountIdInternal> {
+        self.cache.access_token_and_connection_exists(api_key, connection).await
     }
 
     // pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {

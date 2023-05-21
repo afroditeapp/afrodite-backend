@@ -1,3 +1,4 @@
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -63,6 +64,17 @@ impl From<AccountIdLight> for uuid::Uuid {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+pub struct LoginResult {
+    pub account: AuthPair,
+
+    /// If None profile microservice is disabled.
+    pub profile: Option<AuthPair>,
+
+    /// If None media microservice is disabled.
+    pub media: Option<AuthPair>,
+}
+
 /// This is just a random string.
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct ApiKey {
@@ -90,53 +102,71 @@ impl ApiKey {
     }
 }
 
-// /// This is just a really long random string.
-// #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-// pub struct RefreshToken {
-//     token: String,
-// }
+/// This is just a really long random number which is Base64 encoded.
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+pub struct RefreshToken {
+    token: String,
+}
 
-// impl RefreshToken {
-//     pub fn generate_new() -> Self {
-//         let mut token = String::new();
+impl RefreshToken {
+    pub fn generate_new_with_bytes() -> (Self, Vec<u8>) {
+        let mut token = Vec::new();
 
-//         for _ in 1..=124 {
-//             token.push_str(uuid::Uuid::new_v4().simple().to_string().as_str())
-//         }
+        // TODO: use longer refresh token
+        for _ in 1..=2 {
+            token.extend(uuid::Uuid::new_v4().to_bytes_le())
+        }
 
-//         Self {
-//             token
-//         }
-//     }
+        (Self::from_bytes(&token), token)
+    }
 
-//     pub fn from_string(token: String) -> Self {
-//         Self { token }
-//     }
+    pub fn generate_new() -> Self {
+        let (token, bytes) = Self::generate_new_with_bytes();
+        token
+    }
 
-//     pub fn into_string(self) -> String {
-//         self.token
-//     }
+    pub fn from_bytes(data: &[u8]) -> Self {
+        Self {
+            token: base64::engine::general_purpose::STANDARD.encode(data),
+        }
+    }
 
-//     pub fn as_str(&self) -> &str {
-//         &self.token
-//     }
-// }
+    /// String must be base64 encoded
+    /// TODO: add checks?
+    pub fn from_string(token: String) -> Self {
+        Self { token }
+    }
 
-// /// ApiKey and RefreshToken
-// #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-// pub struct AuthPair {
-//     refresh: RefreshToken,
-//     key: ApiKey,
-// }
+    /// Base64 string
+    pub fn into_string(self) -> String {
+        self.token
+    }
 
-// impl AuthPair {
-//     pub fn new(refresh: RefreshToken, key: ApiKey) -> Self {
-//         Self {
-//             refresh,
-//             key,
-//         }
-//     }
-// }
+    /// Base64 string
+    pub fn as_str(&self) -> &str {
+        &self.token
+    }
+
+    pub fn bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
+        base64::engine::general_purpose::STANDARD.decode(&self.token)
+    }
+}
+
+/// AccessToken and RefreshToken
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+pub struct AuthPair {
+    pub refresh: RefreshToken,
+    pub access: ApiKey,
+}
+
+impl AuthPair {
+    pub fn new(refresh: RefreshToken, access: ApiKey) -> Self {
+        Self {
+            refresh,
+            access,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {

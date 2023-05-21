@@ -6,7 +6,7 @@ use axum::{Json, TypedHeader};
 use hyper::StatusCode;
 
 use self::data::{
-    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus, SignInWithLoginInfo,
+    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus, SignInWithLoginInfo, LoginResult, RefreshToken, AuthPair,
 };
 
 use super::{GetConfig, GetInternalApi, utils::{validate_sign_in_with_google_token, validate_sign_in_with_apple_token}};
@@ -14,6 +14,8 @@ use super::{GetConfig, GetInternalApi, utils::{validate_sign_in_with_google_toke
 use tracing::error;
 
 use super::{utils::ApiKeyHeader, GetApiKeys, GetUsers, ReadDatabase, WriteDatabase};
+
+use tokio_stream::StreamExt;
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -55,31 +57,41 @@ pub const PATH_LOGIN: &str = "/account_api/login";
     security(),
     request_body = AccountIdLight,
     responses(
-        (status = 200, description = "Login successful.", body = ApiKey),
+        (status = 200, description = "Login successful.", body = LoginResult),
         (status = 500, description = "Internal server error."),
     ),
 )]
 pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
     Json(id): Json<AccountIdLight>,
     state: S,
-) -> Result<Json<ApiKey>, StatusCode> {
-    let key = ApiKey::generate_new();
+) -> Result<Json<LoginResult>, StatusCode> {
+    let access = ApiKey::generate_new();
+    let refresh = RefreshToken::generate_new();
 
     let id = state.users().get_internal_id(id).await.map_err(|e| {
         error!("Login error: {e:?}");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
+    let account = AuthPair { access, refresh };
+
     state
         .write_database()
-        .set_new_api_key(id, key.clone())
+        .set_new_auth_pair(id, account.clone(), None)
         .await
         .map_err(|e| {
             error!("Login error: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
         })?;
 
-    Ok(key.into())
+    // TODO: microservice support
+
+    let result = LoginResult {
+        account,
+        profile: None,
+        media: None,
+    };
+    Ok(result.into())
 }
 
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";

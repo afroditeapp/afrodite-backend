@@ -14,28 +14,29 @@ use serde::{Deserialize, Serialize};
 use tokio::{io::{DuplexStream, AsyncReadExt, AsyncWriteExt, AsyncWrite, AsyncRead}, sync::mpsc};
 use utoipa::ToSchema;
 
-use crate::server::app::AppState;
+use crate::{server::app::AppState, utils::IntoReportExt};
 
-use super::{GetConfig, GetInternalApi, utils::{validate_sign_in_with_google_token, validate_sign_in_with_apple_token}, model::{AccountIdLight, AccountIdInternal}};
+use super::{GetConfig, GetInternalApi, utils::{validate_sign_in_with_google_token, validate_sign_in_with_apple_token}, model::{AccountIdLight, AccountIdInternal, RefreshToken, ApiKey, AuthPair}};
 
 use tracing::error;
 
 use super::{utils::ApiKeyHeader, GetApiKeys, GetUsers, ReadDatabase, WriteDatabase};
 
+use error_stack::{Result, ResultExt, IntoReport};
+
 
 pub const PATH_CONNECT: &str = "/common_api/connect";
 
-/// Connect to server using WebSocket after getting API key and two factor
-/// connection token.
+/// Connect to server using WebSocket after getting refresh and access tokens.
+/// Connection is required as API access is allowed for connected clients.
 ///
-/// After WebSocket is connected the client should send the two factor
-/// connection token to the WebSocket as text/string. The server will response
-/// with text/string "ok" if the token is valid. If invalid token is detected,
-/// then the server ends the connection and invalidates the API key (user needs
-/// to log in again).
+/// Send the current refersh token as Binary. The server will send the next
+/// refresh token (Binary) and after that the new access token (Text). After
+/// that API can be used.
 ///
-/// After successfull token validation. The client can use binary channel for
-/// HTTP requests. Events from server are informed as JSON texts.
+/// The access token is valid until this WebSocket is closed. Server might send
+/// events as Text which is JSON.
+///
 #[utoipa::path(
     get,
     path = "/common_api/connect",
@@ -48,13 +49,16 @@ pub const PATH_CONNECT: &str = "/common_api/connect";
 )]
 pub async fn get_connect_websocket(
     websocket: WebSocketUpgrade,
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    TypedHeader(access_token): TypedHeader<ApiKeyHeader>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     state: AppState,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> std::result::Result<impl IntoResponse, StatusCode> {
+    // NOTE: This handler does not have authentication layer enabled, so
+    // authentication must be done manually.
+
     let id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .api_key_exists(access_token.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -62,91 +66,111 @@ pub async fn get_connect_websocket(
 }
 
 async fn handle_socket(
-    mut socket: WebSocket,
+    socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
     state: AppState,
 ) {
+    match handle_socket_result(socket, address, id, &state).await {
+        Ok(()) => {
+            match state.write_database().end_connection_session(id).await {
+                Ok(()) => (),
+                Err(e) => {
+                    error!("WebSocket: {e:?}");
+                }
+            }
+        },
+        Err(e) => {
+            error!("WebSocket: {e:?}");
+
+            match state.write_database().logout(id).await {
+                Ok(()) => (),
+                Err(e) => {
+                    error!("WebSocket: {e:?}");
+                }
+            }
+        }
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum WebSocketError {
+    #[error("Receive error")]
+    Receive,
+    #[error("Received something else than refresh token")]
+    ReceiveMissingRefreshToken,
+    #[error("Send error")]
+    Send,
+
+    // Database errors
+    #[error("Database: No refresh token")]
+    DatabaseNoRefreshToken,
+    #[error("Invalid refresh token in database")]
+    InvalidRefreshTokenInDatabase,
+    #[error("Database: account logout failed")]
+    DatabaseLogoutFailed,
+    #[error("Database: saving new tokens failed")]
+    DatabaseSaveTokens,
+}
+
+async fn handle_socket_result(
+    mut socket: WebSocket,
+    address: SocketAddr,
+    id: AccountIdInternal,
+    state: &AppState,
+) -> Result<(), WebSocketError> {
     // TODO: add close server notification select? Or probably not needed as
     // server should shutdown after main future?
 
-    // Connection token protocol check.
-    let mut socket = match socket.recv().await {
-        Some(Ok(Message::Text(msg))) => {
-            if msg == "token" { // TODO: get token from database
-                match socket.send(Message::Text("ok".to_string())).await {
-                    Ok(()) => socket,
-                    Err(e) => {
-                        error!("{:?}", e);
-                        return;
-                    }
-                }
-            } else {
-                // TODO: invalidate API key
-                return
+    let current_refresh_token =
+        state.read_database()
+            .account_refresh_token(id)
+            .await
+            .change_context(WebSocketError::DatabaseNoRefreshToken)?
+            .ok_or(WebSocketError::DatabaseNoRefreshToken)?
+            .bytes()
+            .into_error(WebSocketError::InvalidRefreshTokenInDatabase)?;
+
+    // Refresh token check.
+    match socket
+        .recv()
+        .await
+        .ok_or(WebSocketError::Receive)?
+        .into_error(WebSocketError::Receive)?
+    {
+        Message::Binary(refresh_token) => {
+            if refresh_token != current_refresh_token {
+                state.write_database().logout(id).await.change_context(WebSocketError::DatabaseLogoutFailed)?;
+                return Ok(());
             }
         },
-        Some(Err(e)) => {
-            error!("{:?}", e);
-            return;
-        }
-        Some(Ok(_)) | None => return,
+        _ => return Err(WebSocketError::ReceiveMissingRefreshToken).into_report(),
     };
 
-    // TODO: enable account connected flag for the account?
+    // Refresh token matched
 
-    let mut data = BytesMut::new();
-    let (mut ws_side, axum_side) = tokio::io::duplex(512);
-    match state.ws_http_sender.send(axum_side).await {
-        Ok(()) => (),
-        Err(e) => {
-            error!("{:?}", e);
-            return;
-        }
-    }
+    let (new_refresh_token, new_refresh_token_bytes) = RefreshToken::generate_new_with_bytes();
+    let new_access_token = ApiKey::generate_new();
+
+    socket.send(Message::Binary(new_refresh_token_bytes)).await.into_error(WebSocketError::Send)?;
+
+    state.write_database().set_new_auth_pair(id, AuthPair { access: new_access_token.clone(), refresh: new_refresh_token}, Some(address)).await.change_context(WebSocketError::DatabaseSaveTokens)?;
+
+    socket.send(Message::Text(new_access_token.into_string())).await.into_error(WebSocketError::Send)?;
 
     loop {
         tokio::select! {
-            result = ws_side.read_buf(&mut data) => {
-                match result {
-                    Ok(_) => {
-                        match socket.send(Message::Binary(data.to_vec())).await {
-                            Err(e) => {
-                                error!("{:?}", e);
-                                break;
-                            }
-                            Ok(()) => (),
-                        }
-                        data.clear();
-                    }
-                    Err(e) => {
-                        error!("{:?}", e);
-                        break;
-                    }
-                }
-            }
             result = socket.recv() => {
                 match result {
-                    Some(Ok(Message::Binary(data))) => {
-                        match ws_side.write_all(&data).await {
-                            Ok(()) => (),
-                            Err(e) => {
-                                error!("{:?}", e);
-                                break;
-                            }
-                        }
-                    }
-                    Some(Err(e)) => {
-                        error!("{:?}", e);
-                        break;
-                    }
-                    Some(Ok(_)) | None => break,
+                    Some(Err(_)) | None => break,
+                    Some(Ok(_)) => continue,
                 }
             }
+            // TODO: event sending at some point?
         }
     }
 
-    // TODO: clear account connected flag?
+    Ok(())
 }
 
 
@@ -154,40 +178,3 @@ async fn handle_socket(
 pub enum EventToClient {
     AccountStateChanged,
 }
-
-// struct WsHttpConnection {
-//     stream: DuplexStream,
-// }
-
-// impl AsyncWrite for WsHttpConnection {
-//     fn poll_write(
-//             mut self: std::pin::Pin<&mut Self>,
-//             cx: &mut std::task::Context<'_>,
-//             buf: &[u8],
-//         ) -> std::task::Poll<Result<usize, std::io::Error>> {
-//         std::pin::Pin::new(&mut self.stream).poll_write(cx, buf)
-//     }
-//     fn poll_flush(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), std::io::Error>> {
-//         std::pin::Pin::new(&mut self.stream).poll_flush(cx)
-//     }
-
-//     fn poll_shutdown(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), std::io::Error>> {
-//         std::pin::Pin::new(&mut self.stream).poll_shutdown(cx)
-//     }
-// }
-
-// impl AsyncRead for WsHttpConnection {
-//     fn poll_read(
-//         mut self: std::pin::Pin<&mut Self>,
-//         cx: &mut std::task::Context<'_>,
-//         buf: &mut tokio::io::ReadBuf<'_>,
-//     ) -> std::task::Poll<std::io::Result<()>> {
-//         std::pin::Pin::new(&mut self.stream).poll_read(cx, buf)
-//     }
-// }
-
-// impl Connection for WsHttpConnection {
-//     fn connected(&self) -> hyper::client::connect::Connected {
-//         Connected::new()
-//     }
-// }

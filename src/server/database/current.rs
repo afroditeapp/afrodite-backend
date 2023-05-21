@@ -2,6 +2,7 @@ pub mod account;
 pub mod media;
 pub mod profile;
 
+use error_stack::IntoReport;
 use tokio_stream::{Stream, StreamExt};
 
 use self::media::admin_write::CurrentWriteMediaAdminCommands;
@@ -16,7 +17,7 @@ use super::write::{NoId, WriteResult};
 use crate::api::account::data::AccountSetup;
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 
-use crate::api::model::{Account, AccountIdInternal, AccountIdLight, ApiKey};
+use crate::api::model::{Account, AccountIdInternal, AccountIdLight, ApiKey, RefreshToken};
 
 use crate::utils::IntoReportExt;
 
@@ -84,7 +85,7 @@ impl<'a> SqliteReadCommands<'a> {
         })
     }
 
-    pub async fn api_key(
+    pub async fn access_token(
         &self,
         id: AccountIdInternal,
     ) -> ReadResult<Option<ApiKey>, SqliteDatabaseError, ApiKey> {
@@ -100,6 +101,26 @@ impl<'a> SqliteReadCommands<'a> {
         .fetch_one(self.handle.pool())
         .await
         .map(|result| result.api_key.map(ApiKey::new))
+        .into_error(SqliteDatabaseError::Fetch)
+        .map_err(|e| e.into())
+    }
+
+    pub async fn refresh_token(
+        &self,
+        id: AccountIdInternal,
+    ) -> ReadResult<Option<RefreshToken>, SqliteDatabaseError, RefreshToken> {
+        let id = id.row_id();
+        sqlx::query!(
+            r#"
+            SELECT refresh_token
+            FROM RefreshToken
+            WHERE account_row_id = ?
+            "#,
+            id
+        )
+        .fetch_one(self.handle.pool())
+        .await
+        .map(|result| result.refresh_token.as_deref().map(RefreshToken::from_bytes))
         .into_error(SqliteDatabaseError::Fetch)
         .map_err(|e| e.into())
     }
@@ -170,6 +191,32 @@ impl<'a> CurrentDataWriteCommands<'a> {
         Ok(())
     }
 
+    pub async fn store_refresh_token(
+        &self,
+        id: AccountIdInternal,
+        refresh_token: Option<RefreshToken>,
+    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
+        let refresh_token = if let Some(t) = refresh_token {
+            Some(t.bytes().into_error(SqliteDatabaseError::DataFormatConversion)?)
+        } else {
+            None
+        };
+        let id = id.row_id();
+        sqlx::query!(
+            r#"
+            INSERT INTO RefreshToken (refresh_token, account_row_id)
+            VALUES (?, ?)
+            "#,
+            refresh_token,
+            id,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
     pub async fn store_account(
         &self,
         id: AccountIdInternal,
@@ -216,6 +263,33 @@ impl<'a> CurrentDataWriteCommands<'a> {
             WHERE account_row_id = ?
             "#,
             api_key,
+            id,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub async fn update_refresh_token(
+        &self,
+        id: AccountIdInternal,
+        refresh_token: Option<&RefreshToken>,
+    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
+        let refresh_token = if let Some(t) = refresh_token {
+            Some(t.bytes().into_error(SqliteDatabaseError::DataFormatConversion)?)
+        } else {
+            None
+        };
+        let id = id.row_id();
+        sqlx::query!(
+            r#"
+            UPDATE RefreshToken
+            SET refresh_token = ?
+            WHERE account_row_id = ?
+            "#,
+            refresh_token,
             id,
         )
         .execute(self.handle.pool())

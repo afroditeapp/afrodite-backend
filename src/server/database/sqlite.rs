@@ -51,6 +51,9 @@ pub enum SqliteDatabaseError {
 
     #[error("TryFrom error")]
     TryFromError,
+    #[error("Data format conversion error")]
+    DataFormatConversion,
+
 
     #[error("Content slot not empty")]
     ContentSlotNotEmpty,

@@ -36,7 +36,6 @@ pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
     internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
-    pub ws_http_sender: mpsc::Sender<DuplexStream>,
 }
 
 impl GetApiKeys for AppState {
@@ -88,17 +87,14 @@ pub struct App {
 
 impl App {
     /// Returns also the WebSocket HTTP connection stream
-    pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>) -> (Self, mpsc::Receiver<DuplexStream>) {
-        let (ws_http_sender, ws_http_receive) = mpsc::channel(1);
-
+    pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>) -> Self {
         let state = AppState {
             database: Arc::new(database_handle),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             config,
-            ws_http_sender,
         };
 
-        (Self { state }, ws_http_receive)
+        Self { state }
     }
 
     pub fn state(&self) -> AppState {
@@ -114,12 +110,7 @@ impl App {
                     move |param1, param2, param3,| api::common::get_connect_websocket(param1, param2, param3, state)
                 }),
             )
-            .route_layer({
-                middleware::from_fn({
-                    let state = self.state.clone();
-                    move |req, next| api::utils::authenticate_with_api_key(state.clone(), req, next)
-                })
-            })
+            // This route checks the access token by itself.
     }
 
     pub fn create_account_server_router(&self) -> Router {
@@ -146,40 +137,28 @@ impl App {
                 }),
             );
 
-        if self.state.config.debug_mode() {
-            public.merge(
-                ConnectedApp::new(self.state.clone())
-                    .private_account_server_router()
-            )
-        } else {
-            public
-        }
+        public.merge(
+            ConnectedApp::new(self.state.clone())
+                .private_account_server_router()
+        )
     }
 
     pub fn create_profile_server_router(&self) -> Router {
         let public = Router::new();
 
-        if self.state.config.debug_mode() {
-            public.merge(
-                ConnectedApp::new(self.state.clone())
-                    .private_profile_server_router()
-            )
-        } else {
-            public
-        }
+        public.merge(
+            ConnectedApp::new(self.state.clone())
+                .private_profile_server_router()
+        )
     }
 
     pub fn create_media_server_router(&self) -> Router {
         let public = Router::new();
 
-        if self.state.config.debug_mode() {
-            public.merge(
-                ConnectedApp::new(self.state.clone())
-                    .private_media_server_router()
-            )
-        } else {
-            public
-        }
+        public.merge(
+            ConnectedApp::new(self.state.clone())
+                .private_media_server_router()
+        )
     }
 }
 

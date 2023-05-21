@@ -6,7 +6,7 @@ use tokio_util::io::ReaderStream;
 use crate::{
     api::{
         media::data::ModerationRequest,
-        model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId},
+        model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken},
     },
     utils::{ConvertCommandError, ErrorConversion},
 };
@@ -127,9 +127,13 @@ impl<'a> ReadCommands<'a> {
         }
     }
 
-    pub async fn user_api_key(&self, id: AccountIdLight) -> Result<Option<ApiKey>, DatabaseError> {
+    pub async fn account_access_token(&self, id: AccountIdLight) -> Result<Option<ApiKey>, DatabaseError> {
         let id = self.cache.to_account_id_internal(id).await.convert(id)?;
-        self.sqlite.api_key(id).await.convert(id)
+        self.sqlite.access_token(id).await.convert(id)
+    }
+
+    pub async fn account_refresh_token(&self, id: AccountIdInternal) -> Result<Option<RefreshToken>, DatabaseError> {
+        self.sqlite.refresh_token(id).await.convert(id)
     }
 
     pub async fn account_ids<T: FnMut(AccountIdInternal)>(

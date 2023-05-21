@@ -1,7 +1,7 @@
 //! Database writing commands
 //!
 
-use std::{collections::HashSet, future::Future, sync::Arc};
+use std::{collections::HashSet, future::Future, sync::Arc, net::SocketAddr};
 
 use axum::extract::BodyStream;
 use error_stack::Result;
@@ -17,7 +17,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal, ProfileLink, Location,
+            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal, ProfileLink, Location, AuthPair,
         },
     },
     config::Config,
@@ -38,10 +38,19 @@ pub enum WriteCommand {
         s: ResultSender<AccountIdInternal>,
         account_id: AccountIdLight,
     },
-    SetNewApiKey {
+    SetNewAuthPair {
         s: ResultSender<()>,
         account_id: AccountIdInternal,
-        key: ApiKey,
+        pair: AuthPair,
+        address: Option<SocketAddr>,
+    },
+    Logout {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+    },
+    EndConnectionSession {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
     },
     UpdateAccount {
         s: ResultSender<()>,
@@ -153,12 +162,29 @@ impl WriteCommandRunnerHandle {
             .await
     }
 
-    pub async fn set_new_api_key(
+    pub async fn set_new_auth_pair(
         &self,
         account_id: AccountIdInternal,
-        key: ApiKey,
+        pair: AuthPair,
+        address: Option<SocketAddr>,
     ) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::SetNewApiKey { s, account_id, key })
+        self.send_event(|s| WriteCommand::SetNewAuthPair {  s, account_id, pair, address })
+            .await
+    }
+
+    pub async fn logout(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::Logout {  s, account_id })
+            .await
+    }
+
+    pub async fn end_connection_session(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::EndConnectionSession {  s, account_id })
             .await
     }
 
@@ -423,8 +449,14 @@ impl WriteCommandRunner {
 
     pub async fn handle_cmd(&self, cmd: WriteCommand) {
         match cmd {
-            WriteCommand::SetNewApiKey { s, account_id, key } => {
-                self.write().set_new_api_key(account_id, key).await.send(s)
+            WriteCommand::Logout { s, account_id} => {
+                self.write().logout(account_id).await.send(s)
+            }
+            WriteCommand::EndConnectionSession { s, account_id} => {
+                self.write().end_connection_session(account_id).await.send(s)
+            }
+            WriteCommand::SetNewAuthPair { s, account_id, pair, address } => {
+                self.write().set_new_auth_pair(account_id, pair, address).await.send(s)
             }
             WriteCommand::Register { s, account_id } => self
                 .write_handle
