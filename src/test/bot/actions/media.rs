@@ -57,8 +57,8 @@ impl BotAction for MakeModerationRequest {
             image1: Box::new(state.media.slots[0].clone().unwrap_or(ContentId {
                 content_id: uuid::Uuid::new_v4(),
             })),
-            image2: state.media.slots[1].clone().map(|id| Box::new(id)),
-            image3: state.media.slots[2].clone().map(|id| Box::new(id)),
+            image2: state.media.slots[1].clone().map(|id| Some(Box::new(id))),
+            image3: state.media.slots[2].clone().map(|id| Some(Box::new(id))),
         };
 
         put_moderation_request(state.api.media(), new)

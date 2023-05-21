@@ -46,11 +46,13 @@ impl BotAction for Login {
         if state.api.is_api_key_available() {
             return Ok(());
         }
-        let key = post_login(state.api.account(), state.id()?)
+        let login_result = post_login(state.api.account(), state.id()?)
             .await
             .into_error(TestError::ApiRequest)?;
 
-        state.api.set_api_key(key);
+        let key = login_result.account.access;
+
+        state.api.set_api_key(*key);
         Ok(())
     }
 }

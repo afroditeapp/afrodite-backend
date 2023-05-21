@@ -24,8 +24,8 @@ impl BotAction for ModerateMediaModerationRequest {
         for request in list.list {
             let images = [
                 Some(request.content.image1),
-                request.content.image2,
-                request.content.image3,
+                request.content.image2.flatten(),
+                request.content.image3.flatten(),
             ];
             for content_id in images.iter().flatten() {
                 api_client::manual_additions::get_image_fixed(

@@ -33,9 +33,11 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_delete**](docs/AccountApi.md#post_delete) | **PUT** /account_api/delete | Delete account.
 *AccountApi* | [**post_login**](docs/AccountApi.md#post_login) | **POST** /account_api/login | Get new ApiKey.
 *AccountApi* | [**post_register**](docs/AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
+*AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update profile visiblity value.
 *AccountinternalApi* | [**check_api_key**](docs/AccountinternalApi.md#check_api_key) | **GET** /internal/check_api_key | 
 *AccountinternalApi* | [**internal_get_account_state**](docs/AccountinternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
+*CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
 *MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 *MediaApi* | [**patch_moderation_request_list**](docs/MediaApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
@@ -59,14 +61,17 @@ Class | Method | HTTP request | Description
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountState](docs/AccountState.md)
  - [ApiKey](docs/ApiKey.md)
+ - [AuthPair](docs/AuthPair.md)
  - [BooleanSetting](docs/BooleanSetting.md)
  - [Capabilities](docs/Capabilities.md)
  - [ContentId](docs/ContentId.md)
  - [DeleteStatus](docs/DeleteStatus.md)
+ - [EventToClient](docs/EventToClient.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [ImageFile](docs/ImageFile.md)
  - [ImageFileName](docs/ImageFileName.md)
  - [Location](docs/Location.md)
+ - [LoginResult](docs/LoginResult.md)
  - [Moderation](docs/Moderation.md)
  - [ModerationList](docs/ModerationList.md)
  - [ModerationRequest](docs/ModerationRequest.md)
@@ -78,6 +83,8 @@ Class | Method | HTTP request | Description
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
+ - [RefreshToken](docs/RefreshToken.md)
+ - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SlotId](docs/SlotId.md)
 
 

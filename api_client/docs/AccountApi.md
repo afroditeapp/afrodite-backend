@@ -12,6 +12,7 @@ Method | HTTP request | Description
 [**post_delete**](AccountApi.md#post_delete) | **PUT** /account_api/delete | Delete account.
 [**post_login**](AccountApi.md#post_login) | **POST** /account_api/login | Get new ApiKey.
 [**post_register**](AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
+[**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update profile visiblity value.
 
 
@@ -183,7 +184,7 @@ This endpoint does not need any parameter.
 
 ## post_login
 
-> crate::models::ApiKey post_login(account_id_light)
+> crate::models::LoginResult post_login(account_id_light)
 Get new ApiKey.
 
 Get new ApiKey.
@@ -197,7 +198,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::ApiKey**](ApiKey.md)
+[**crate::models::LoginResult**](LoginResult.md)
 
 ### Authorization
 
@@ -233,6 +234,36 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_sign_in_with_login
+
+> crate::models::ApiKey post_sign_in_with_login(sign_in_with_login_info)
+Start new session with sign in with Apple or Google. Creates new account if
+
+Start new session with sign in with Apple or Google. Creates new account if it does not exists.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**sign_in_with_login_info** | [**SignInWithLoginInfo**](SignInWithLoginInfo.md) |  | [required] |
+
+### Return type
+
+[**crate::models::ApiKey**](ApiKey.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
