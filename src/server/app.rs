@@ -19,7 +19,7 @@ use crate::{
     config::Config,
 };
 
-use self::connected_routes::ConnectedApp;
+use self::{connected_routes::ConnectedApp, connection::WebSocketManager};
 
 use super::{
     database::{
@@ -83,31 +83,33 @@ impl GetConfig for AppState {
 
 pub struct App {
     state: AppState,
+    ws_manager: Option<WebSocketManager>,
 }
 
 impl App {
     /// Returns also the WebSocket HTTP connection stream
-    pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>) -> Self {
+    pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>, ws_manager: WebSocketManager) -> Self {
         let state = AppState {
             database: Arc::new(database_handle),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             config,
         };
 
-        Self { state }
+        Self { state, ws_manager: Some(ws_manager) }
     }
 
     pub fn state(&self) -> AppState {
         self.state.clone()
     }
 
-    pub fn create_common_server_router(&self) -> Router {
+    pub fn create_common_server_router(&mut self) -> Router {
         Router::new()
             .route(
                 api::common::PATH_CONNECT,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2, param3,| api::common::get_connect_websocket(param1, param2, param3, state)
+                    let ws_manager = self.ws_manager.take().unwrap(); // Only one instance required.
+                    move |param1, param2, param3,| api::common::get_connect_websocket(param1, param2, param3, state, ws_manager)
                 }),
             )
             // This route checks the access token by itself.

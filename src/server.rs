@@ -14,7 +14,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     api::ApiDoc,
     config::Config,
-    server::{app::App, database::DatabaseManager, internal::InternalApp},
+    server::{app::{App, connection::WebSocketManager}, database::DatabaseManager, internal::InternalApp},
 };
 
 pub struct PihkaServer {
@@ -38,14 +38,25 @@ impl PihkaServer {
         .await
         .expect("Database init failed");
 
-        let app = App::new(router_database_handle, self.config.clone()).await;
+        let (ws_manager, mut ws_quit_ready, server_quit_handle) = WebSocketManager::new();
 
-        let server_task = self.create_public_api_server_task(&app);
+        let mut app = App::new(router_database_handle, self.config.clone(), ws_manager).await;
+
+        let server_task = self.create_public_api_server_task(&mut app);
         let internal_server_task = if self.config.debug_mode() {
             None
         } else {
             Some(self.create_internal_api_server_task(&app))
         };
+
+        match signal::ctrl_c().await {
+            Ok(()) => (),
+            Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
+        }
+
+        info!("Server quit started");
+
+        drop(server_quit_handle);
 
         // Wait until all tasks quit
         server_task
@@ -57,7 +68,12 @@ impl PihkaServer {
                 .expect("Internal API server task panic detected");
         }
 
-        info!("Server quit started");
+        loop {
+            match ws_quit_ready.recv().await {
+                Some(()) => (),
+                None => break,
+            }
+        }
 
         drop(app);
         database_manager.close().await;
@@ -65,10 +81,10 @@ impl PihkaServer {
         info!("Server quit done");
     }
 
-    pub fn create_public_api_server_task(&self, app: &App) -> JoinHandle<()> {
+    pub fn create_public_api_server_task(&self, app: &mut App) -> JoinHandle<()> {
         // Public API. This can have WAN access.
         let normal_api_server = {
-            let router = self.create_public_router(&app);
+            let router = self.create_public_router(app);
             let router = if self.config.debug_mode() {
                 router
                     .merge(Self::create_swagger_ui())
@@ -138,7 +154,7 @@ impl PihkaServer {
         })
     }
 
-    pub fn create_public_router(&self, app: &App) -> Router {
+    pub fn create_public_router(&self, app: &mut App) -> Router {
         let mut router = app.create_common_server_router();
 
         if self.config.components().account {

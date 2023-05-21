@@ -9,12 +9,14 @@ use std::{net::SocketAddr, task::{self, ready, Poll}};
 use axum::{Json, TypedHeader, extract::{WebSocketUpgrade, ConnectInfo, ws::{WebSocket, Message}}, response::IntoResponse, BoxError};
 
 use bytes::BytesMut;
+use futures::StreamExt;
 use hyper::{StatusCode, client::connect::{Connection, Connected}, server::accept::Accept};
 use serde::{Deserialize, Serialize};
 use tokio::{io::{DuplexStream, AsyncReadExt, AsyncWriteExt, AsyncWrite, AsyncRead}, sync::mpsc};
+use tokio_stream::wrappers::WatchStream;
 use utoipa::ToSchema;
 
-use crate::{server::app::AppState, utils::IntoReportExt};
+use crate::{server::app::{AppState, connection::WebSocketManager}, utils::IntoReportExt};
 
 use super::{GetConfig, GetInternalApi, utils::{validate_sign_in_with_google_token, validate_sign_in_with_apple_token}, model::{AccountIdLight, AccountIdInternal, RefreshToken, ApiKey, AuthPair}};
 
@@ -52,6 +54,7 @@ pub async fn get_connect_websocket(
     TypedHeader(access_token): TypedHeader<ApiKeyHeader>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     state: AppState,
+    ws_manager: WebSocketManager,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
     // NOTE: This handler does not have authentication layer enabled, so
     // authentication must be done manually.
@@ -62,7 +65,7 @@ pub async fn get_connect_websocket(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    Ok(websocket.on_upgrade(move |socket| handle_socket(socket, addr, id, state)))
+    Ok(websocket.on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager)))
 }
 
 async fn handle_socket(
@@ -70,27 +73,35 @@ async fn handle_socket(
     address: SocketAddr,
     id: AccountIdInternal,
     state: AppState,
+    mut ws_manager: WebSocketManager,
 ) {
-    match handle_socket_result(socket, address, id, &state).await {
-        Ok(()) => {
-            match state.write_database().end_connection_session(id).await {
-                Ok(()) => (),
+    tokio::select! {
+        _ = ws_manager.server_quit_watcher.recv() => (),
+        r = handle_socket_result(socket, address, id, &state) => {
+            match r {
+                Ok(()) => {
+                    match state.write_database().end_connection_session(id).await {
+                        Ok(()) => (),
+                        Err(e) => {
+                            error!("WebSocket: {e:?}");
+                        }
+                    }
+                },
                 Err(e) => {
                     error!("WebSocket: {e:?}");
-                }
-            }
-        },
-        Err(e) => {
-            error!("WebSocket: {e:?}");
 
-            match state.write_database().logout(id).await {
-                Ok(()) => (),
-                Err(e) => {
-                    error!("WebSocket: {e:?}");
+                    match state.write_database().logout(id).await {
+                        Ok(()) => (),
+                        Err(e) => {
+                            error!("WebSocket: {e:?}");
+                        }
+                    }
                 }
             }
         }
     }
+
+    drop(ws_manager.quit_handle);
 }
 
 #[derive(thiserror::Error, Debug)]
