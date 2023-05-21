@@ -67,6 +67,7 @@ pub fn get_config() -> ArgsConfig {
                 .arg(arg!(--"update-profile" "Update profile continuously"))
                 .arg(arg!(--"print-speed" "Print some speed information"))
                 .arg(arg!(--"log-debug" "Enable debug logging for server instances"))
+                .arg(arg!(--"early-quit" "First error quits"))
                 .arg(
                     arg!(--"test" <NAME> "Select custom test")
                         .value_parser(value_parser!(Test))
@@ -93,6 +94,7 @@ pub fn get_config() -> ArgsConfig {
                 no_clean: sub_matches.is_present("no-clean"),
                 update_profile: sub_matches.is_present("update-profile"),
                 print_speed: sub_matches.is_present("print-speed"),
+                early_quit: sub_matches.is_present("early-quit"),
                 test: sub_matches
                     .get_one::<Test>("test")
                     .map(ToOwned::to_owned)
@@ -149,6 +151,7 @@ pub struct TestMode {
     pub no_clean: bool,
     pub update_profile: bool,
     pub print_speed: bool,
+    pub early_quit: bool,
     pub test: Test,
     pub server: ServerConfig,
 }

@@ -18,6 +18,11 @@ pub enum TestError {
     #[error("Reqwest error")]
     Reqwest,
 
+    #[error("WebSocket error")]
+    WebSocket,
+    #[error("WebSocket wrong value received")]
+    WebSocketWrongValue,
+
     // Other errors
     #[error("Serde deserialization error")]
     SerdeDeserialize,
@@ -133,17 +138,17 @@ impl ApiClient {
         &self.media
     }
 
-    pub fn set_api_key(&mut self, key: ApiKey) {
-        let config_key = api_client::apis::configuration::ApiKey {
+    pub fn set_access_token(&mut self, token: String) {
+        let token = api_client::apis::configuration::ApiKey {
             prefix: None,
-            key: key.api_key,
+            key: token,
         };
-        self.account.api_key = Some(config_key.clone());
-        self.profile.api_key = Some(config_key.clone());
-        self.media.api_key = Some(config_key.clone());
+        self.account.api_key = Some(token.clone());
+        self.profile.api_key = Some(token.clone());
+        self.media.api_key = Some(token.clone());
     }
 
-    pub fn is_api_key_available(&self) -> bool {
+    pub fn is_access_token_available(&self) -> bool {
         self.account.api_key.is_some()
             && self.profile.api_key.is_some()
             && self.profile.api_key.is_some()

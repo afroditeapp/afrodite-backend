@@ -10,11 +10,12 @@ use api_client::models::AccountIdLight;
 use async_trait::async_trait;
 use tokio::{
     select,
-    sync::{mpsc, watch},
+    sync::{mpsc, watch}, net::TcpStream,
 };
 
 use error_stack::{Result, ResultExt};
 
+use tokio_tungstenite::{WebSocketStream, MaybeTlsStream};
 use tracing::{error, info, log::warn};
 
 use self::{
@@ -32,6 +33,15 @@ pub struct TaskState {
     pub bot_count_update_location_to_lat_lon_10: u64,
 }
 
+pub type WsConnection = WebSocketStream<MaybeTlsStream<TcpStream>>;
+
+#[derive(Debug, Default)]
+pub struct BotConnections {
+    account: Option<WsConnection>,
+    profile: Option<WsConnection>,
+    media: Option<WsConnection>,
+}
+
 #[derive(Debug)]
 pub struct BotState {
     pub id: Option<AccountIdLight>,
@@ -44,6 +54,8 @@ pub struct BotState {
     pub action_history: Vec<&'static dyn BotAction>,
     pub benchmark: BenchmarkState,
     pub media: MediaState,
+    pub connections: BotConnections,
+    pub refresh_token: Option<Vec<u8>>,
 }
 
 impl BotState {
@@ -65,6 +77,8 @@ impl BotState {
             previous_value: PreviousValue::Empty,
             action_history: vec![],
             media: MediaState::new(),
+            connections: BotConnections::default(),
+            refresh_token: None,
         }
     }
 
@@ -135,6 +149,7 @@ pub struct BotManager {
     bots: Vec<Box<dyn BotStruct>>,
     _bot_running_handle: mpsc::Sender<()>,
     task_id: u32,
+    config: Arc<TestMode>,
 }
 
 impl BotManager {
@@ -200,6 +215,7 @@ impl BotManager {
             bots,
             _bot_running_handle,
             task_id,
+            config,
         }
     }
 
@@ -252,6 +268,7 @@ impl BotManager {
             bots,
             _bot_running_handle,
             task_id,
+            config,
         }
     }
 
@@ -274,6 +291,11 @@ impl BotManager {
         let mut errors = false;
         let mut task_state: TaskState = TaskState::default();
         loop {
+            if self.config.early_quit && errors {
+                error!("Error occurred.");
+                return;
+            }
+
             if self.bots.is_empty() {
                 if errors {
                     error!("All bots closed. Errors occurred.");

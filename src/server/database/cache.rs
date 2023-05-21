@@ -204,11 +204,13 @@ impl DatabaseCache {
         }
     }
 
+    /// Checks that connection comes from the same IP address. WebSocket is
+    /// using the cached SocketAddr, so check the IP only.
     pub async fn access_token_and_connection_exists(&self, access_token: &ApiKey, connection: SocketAddr) -> Option<AccountIdInternal> {
         let tokens = self.api_keys.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
-            if r.current_connection == Some(connection) {
+            if r.current_connection.map(|a| a.ip()) == Some(connection.ip()) {
                 Some(entry.account_id_internal)
             } else {
                 None

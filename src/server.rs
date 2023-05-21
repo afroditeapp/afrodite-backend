@@ -2,7 +2,7 @@ pub mod app;
 pub mod database;
 pub mod internal;
 
-use std::{sync::Arc, task::Poll};
+use std::{sync::Arc, task::Poll, net::SocketAddr};
 
 use axum::{Router, BoxError};
 use hyper::server::accept::Accept;
@@ -82,7 +82,7 @@ impl PihkaServer {
             if self.config.debug_mode() {
                 info!("Internal API is available on {}", addr);
             }
-            axum::Server::bind(&addr).serve(router.into_make_service())
+            axum::Server::bind(&addr).serve(router.into_make_service_with_connect_info::<SocketAddr>())
         };
 
         tokio::spawn(async move {
@@ -116,7 +116,7 @@ impl PihkaServer {
 
             let addr = self.config.socket().internal_api;
             info!("Internal API is available on {}", addr);
-            axum::Server::bind(&addr).serve(router.into_make_service())
+            axum::Server::bind(&addr).serve(router.into_make_service_with_connect_info::<SocketAddr>())
         };
 
         tokio::spawn(async move {
