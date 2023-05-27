@@ -7,6 +7,8 @@ use std::{sync::Arc, task::Poll, net::SocketAddr};
 use axum::{Router, BoxError};
 use hyper::server::accept::Accept;
 use tokio::{signal, task::JoinHandle, io::DuplexStream, sync::mpsc};
+use tower::ServiceBuilder;
+use tower_http::trace::{TraceLayer, DefaultOnResponse};
 use tracing::{error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -98,6 +100,15 @@ impl PihkaServer {
             if self.config.debug_mode() {
                 info!("Internal API is available on {}", addr);
             }
+
+            let router = if self.config.debug_mode() {
+                router.route_layer(
+                    TraceLayer::new_for_http()
+                )
+            } else {
+                router
+            };
+
             axum::Server::bind(&addr).serve(router.into_make_service_with_connect_info::<SocketAddr>())
         };
 

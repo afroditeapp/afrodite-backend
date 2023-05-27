@@ -453,7 +453,7 @@ impl WriteCommandRunner {
                 self.write().logout(account_id).await.send(s)
             }
             WriteCommand::EndConnectionSession { s, account_id} => {
-                self.write().end_connection_session(account_id).await.send(s)
+                self.write().end_connection_session(account_id, false).await.send(s)
             }
             WriteCommand::SetNewAuthPair { s, account_id, pair, address } => {
                 self.write().set_new_auth_pair(account_id, pair, address).await.send(s)

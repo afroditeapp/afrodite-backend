@@ -259,7 +259,7 @@ impl<'a> WriteCommands<'a> {
             .await
             .convert(id)?;
 
-        self.end_connection_session(id).await?;
+        self.end_connection_session(id, true).await?;
 
         Ok(())
     }
@@ -268,8 +268,13 @@ impl<'a> WriteCommands<'a> {
     pub async fn end_connection_session(
         &self,
         id: AccountIdInternal,
+        remove_access_token: bool,
     ) -> Result<(), DatabaseError> {
-        let current_access_token = self.current_write.read().access_token(id).await.convert(id)?;
+        let current_access_token = if remove_access_token {
+            self.current_write.read().access_token(id).await.convert(id)?
+        } else {
+            None
+        };
 
         self.cache
             .delete_access_token_and_connection(id.as_light(), current_access_token)
