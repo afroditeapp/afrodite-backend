@@ -28,6 +28,7 @@ headers = "0.3.8"
 reqwest = { version = "0.11", features = ["json"] }
 url = { version = "2.3.1", features = ["serde"] }
 bytes = "1.4.0"
+http = "0.2.9"
 
 utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }

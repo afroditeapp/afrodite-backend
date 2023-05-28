@@ -10,7 +10,7 @@ use crate::utils::IntoReportExt;
 
 use self::{
     args::TestMode,
-    file::{Components, ConfigFile, ExternalServices, SocketConfig, LocationConfig},
+    file::{Components, ConfigFile, ExternalServices, SocketConfig, LocationConfig, SignInWithGoogleConfig},
 };
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
@@ -31,6 +31,9 @@ pub enum GetConfigError {
     ExternalServiceAccountInternalMissing,
     #[error("External service 'media internal' is required because media component is disabled.")]
     ExternalServiceMediaInternalMissing,
+
+    #[error("Parsing String constant to Url failed.")]
+    ConstUrlParsingFailed,
 }
 
 #[derive(Debug)]
@@ -41,6 +44,7 @@ pub struct Config {
     database: PathBuf,
     external_services: ExternalServices,
     client_api_urls: InternalApiUrls,
+    sign_in_with_urls: SignInWithUrls,
 
     // Other configs
     test_mode: Option<TestMode>,
@@ -80,6 +84,14 @@ impl Config {
         &self.client_api_urls
     }
 
+    pub fn sign_in_with_urls(&self) -> &SignInWithUrls {
+        &self.sign_in_with_urls
+    }
+
+    pub fn sign_in_with_google_config(&self) -> Option<&SignInWithGoogleConfig> {
+        self.file.sign_in_with_google.as_ref()
+    }
+
     /// Launch testing and benchmark mode instead of the server mode.
     pub fn test_mode(&self) -> Option<TestMode> {
         self.test_mode.clone()
@@ -112,6 +124,7 @@ pub fn get_config() -> Result<Config, GetConfigError> {
         external_services,
         client_api_urls,
         test_mode: args_config.test_mode,
+        sign_in_with_urls: SignInWithUrls::new()?,
     })
 }
 
@@ -160,4 +173,22 @@ pub fn create_client_api_urls(
         account_base_url: account_internal,
         media_base_url: media_internal,
     })
+}
+
+
+const GOOGLE_PUBLIC_KEY_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
+
+#[derive(Debug, Clone)]
+pub struct SignInWithUrls {
+    /// Request to this should return JwkSet.
+    pub google_public_keys: Url,
+}
+
+impl SignInWithUrls {
+    pub fn new() -> Result<Self, GetConfigError> {
+        Ok(Self {
+            google_public_keys: Url::parse(GOOGLE_PUBLIC_KEY_URL)
+                .into_error(GetConfigError::ConstUrlParsingFailed)?,
+        })
+    }
 }

@@ -19,7 +19,7 @@ use crate::{
             read::ReadCommands,
             utils::{AccountIdManager, ApiKeyManager},
         },
-        internal::InternalApiManager,
+        internal::InternalApiManager, app::sign_in_with::SignInWithManager,
     },
 };
 
@@ -121,6 +121,10 @@ pub trait WriteDatabase {
 
 pub trait ReadDatabase {
     fn read_database(&self) -> ReadCommands<'_>;
+}
+
+pub trait SignInWith {
+    fn sign_in_with_manager(&self) -> &SignInWithManager;
 }
 
 pub trait GetInternalApi {

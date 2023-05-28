@@ -1,5 +1,6 @@
 pub mod connected_routes;
 pub mod connection;
+pub mod sign_in_with;
 
 use std::sync::{Arc};
 
@@ -14,12 +15,12 @@ use utoipa::OpenApi;
 
 use crate::{
     api::{
-        self, ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase,
+        self, ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase, SignInWith,
     },
     config::Config,
 };
 
-use self::{connected_routes::ConnectedApp, connection::WebSocketManager};
+use self::{connected_routes::ConnectedApp, connection::WebSocketManager, sign_in_with::SignInWithManager};
 
 use super::{
     database::{
@@ -36,6 +37,7 @@ pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
     internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
+    sign_in_with: Arc<SignInWithManager>,
 }
 
 impl GetApiKeys for AppState {
@@ -59,6 +61,12 @@ impl ReadDatabase for AppState {
 impl WriteDatabase for AppState {
     fn write_database(&self) -> &WriteCommandRunnerHandle {
         self.database.write()
+    }
+}
+
+impl SignInWith for AppState {
+    fn sign_in_with_manager(&self) -> &SignInWithManager {
+        &self.sign_in_with
     }
 }
 
@@ -87,12 +95,12 @@ pub struct App {
 }
 
 impl App {
-    /// Returns also the WebSocket HTTP connection stream
     pub async fn new(database_handle: RouterDatabaseReadHandle, config: Arc<Config>, ws_manager: WebSocketManager) -> Self {
         let state = AppState {
+            config: config.clone(),
             database: Arc::new(database_handle),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
-            config,
+            sign_in_with: SignInWithManager::new(config).into(),
         };
 
         Self { state, ws_manager: Some(ws_manager) }

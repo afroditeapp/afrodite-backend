@@ -6,6 +6,8 @@ pub type WsQuitReady = mpsc::Receiver<()>;
 pub type ServerQuitHandle = broadcast::Sender<()>;
 
 
+/// Handle to WebSocket connections. Server main loop should use this
+/// when closing the server.
 #[derive(Debug)]
 pub struct WebSocketManager {
     /// This must be dropped, so that the server quits.

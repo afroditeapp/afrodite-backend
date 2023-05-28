@@ -18,7 +18,7 @@ use utoipa::ToSchema;
 
 use crate::{server::app::{AppState, connection::WebSocketManager}, utils::IntoReportExt};
 
-use super::{GetConfig, GetInternalApi, utils::{validate_sign_in_with_google_token, validate_sign_in_with_apple_token}, model::{AccountIdLight, AccountIdInternal, RefreshToken, ApiKey, AuthPair}};
+use super::{GetConfig, GetInternalApi, utils::{}, model::{AccountIdLight, AccountIdInternal, RefreshToken, ApiKey, AuthPair}};
 
 use tracing::error;
 

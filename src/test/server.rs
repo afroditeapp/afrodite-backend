@@ -149,6 +149,7 @@ fn new_config(
             DEFAULT_LOCATION_CONFIG
         },
         external_services,
+        sign_in_with_google: None,
     }
 }
 

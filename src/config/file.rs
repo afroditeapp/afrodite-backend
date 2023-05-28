@@ -51,6 +51,11 @@ media = true
 # [external_services]
 # account_internal = "http://127.0.0.1:4000"
 # media_internal = "http://127.0.0.1:4000"
+
+# [sign_in_with_google]
+# client_id_android = "id"
+# client_id_ios = "id"
+# client_id_server = "id"
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -72,6 +77,7 @@ pub struct ConfigFile {
     pub socket: SocketConfig,
     pub location: LocationConfig,
     pub external_services: Option<ExternalServices>,
+    pub sign_in_with_google: Option<SignInWithGoogleConfig>,
 }
 
 impl ConfigFile {
@@ -146,4 +152,11 @@ pub struct LocationConfig {
     pub longitude_bottom_right: f64,
     /// Index cell map size.
     pub index_cell_square_km: NonZeroU8,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct SignInWithGoogleConfig {
+    pub client_id_android: String,
+    pub client_id_ios: String,
+    pub client_id_server: String,
 }
