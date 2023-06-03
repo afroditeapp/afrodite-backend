@@ -8,7 +8,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileInternal, ProfileLink, Location, AuthPair,
+            ModerationRequestContent, ProfileInternal, ProfileLink, Location, AuthPair, SignInWithInfo,
         },
     },
     config::Config,
@@ -157,6 +157,7 @@ impl<'a> WriteCommands<'a> {
 
     pub async fn register(
         id_light: AccountIdLight,
+        sign_in_with_info: SignInWithInfo,
         config: &Config,
         current_data_write: CurrentDataWriteHandle,
         history_wirte: HistoryWriteHandle,
@@ -201,6 +202,12 @@ impl<'a> WriteCommands<'a> {
                 .store_account_setup(id, &account_setup)
                 .await
                 .convert(id)?;
+
+            current
+                .store_sign_in_with_info(id, &sign_in_with_info)
+                .await
+                .convert(id)?;
+
         }
 
         if config.components().profile {

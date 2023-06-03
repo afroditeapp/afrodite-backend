@@ -20,7 +20,7 @@ use error_stack::{Result, ResultExt};
 use tracing::info;
 
 use crate::{
-    api::model::{AccountIdInternal, AccountIdLight},
+    api::model::{AccountIdInternal, AccountIdLight, SignInWithInfo},
     config::Config,
     server::database::{commands::WriteCommandRunner, sqlite::print_sqlite_version},
 };
@@ -284,10 +284,12 @@ impl RouterDatabaseWriteHandle {
     pub async fn register(
         &self,
         id_light: AccountIdLight,
+        sign_in_with_info: SignInWithInfo,
         config: &Config,
     ) -> Result<AccountIdInternal, DatabaseError> {
         WriteCommands::register(
             id_light,
+            sign_in_with_info,
             config,
             self.sqlite_write.clone(),
             self.history_write.clone(),
@@ -323,7 +325,7 @@ impl RouterDatabaseReadHandle {
     }
 
     pub fn account_id_manager(&self) -> AccountIdManager<'_> {
-        AccountIdManager::new(&self.cache)
+        AccountIdManager::new(&self.cache, &self.sqlite_read)
     }
 
     pub fn write(&self) -> &WriteCommandRunnerHandle {

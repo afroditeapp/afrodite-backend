@@ -1,13 +1,14 @@
 use std::net::SocketAddr;
 
 use error_stack::Result;
+use sqlx::sqlite::SqliteError;
 
 use crate::{
-    api::model::{AccountIdInternal, AccountIdLight, ApiKey},
+    api::model::{AccountIdInternal, AccountIdLight, ApiKey, GoogleAccountId},
     utils::ConvertCommandError,
 };
 
-use super::cache::{CacheError, DatabaseCache};
+use super::{cache::{CacheError, DatabaseCache}, sqlite::SqliteReadHandle, current::SqliteReadCommands, write::DatabaseId, DatabaseError};
 
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()
@@ -41,11 +42,12 @@ impl<'a> ApiKeyManager<'a> {
 
 pub struct AccountIdManager<'a> {
     cache: &'a DatabaseCache,
+    read_handle: SqliteReadCommands<'a>,
 }
 
 impl<'a> AccountIdManager<'a> {
-    pub fn new(cache: &'a DatabaseCache) -> Self {
-        Self { cache }
+    pub fn new(cache: &'a DatabaseCache, read_handle: &'a SqliteReadHandle) -> Self {
+        Self { cache, read_handle: SqliteReadCommands::new(read_handle) }
     }
 
     pub async fn get_internal_id(
@@ -53,5 +55,12 @@ impl<'a> AccountIdManager<'a> {
         id: AccountIdLight,
     ) -> Result<AccountIdInternal, CacheError> {
         self.cache.to_account_id_internal(id).await.attach(id)
+    }
+
+    pub async fn get_account_with_google_account_id(
+        &self,
+        id: GoogleAccountId,
+    ) -> Result<Option<AccountIdInternal>, DatabaseError> {
+        self.read_handle.get_account_with_google_account_id(id).await.convert(DatabaseId::Empty)
     }
 }

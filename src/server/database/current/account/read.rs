@@ -11,6 +11,8 @@ use crate::utils::IntoReportExt;
 
 use crate::read_json;
 
+// TODO: Move some code from current.rs here.
+
 #[async_trait]
 impl SqliteSelectJson for Account {
     async fn select_json(

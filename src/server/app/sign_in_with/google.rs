@@ -99,8 +99,8 @@ struct GoogleTokenClaims {
 }
 
 pub struct GoogleAccountInfo {
-    id: String,
-    email: String,
+    pub id: String,
+    pub email: String,
 }
 struct GooglePublicKeys {
     keys: JwkSet,

@@ -284,3 +284,12 @@ pub struct SignInWithLoginInfo {
    pub apple_token: Option<String>,
    pub google_token: Option<String>,
 }
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct SignInWithInfo {
+   pub google_account_id: Option<GoogleAccountId>,
+}
+
+#[derive(Debug, Clone, sqlx::Type, PartialEq)]
+#[sqlx(transparent)]
+pub struct GoogleAccountId(pub String);

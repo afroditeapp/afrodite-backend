@@ -17,7 +17,7 @@ use crate::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal, ProfileLink, Location, AuthPair,
+            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal, ProfileLink, Location, AuthPair, SignInWithInfo,
         },
     },
     config::Config,
@@ -36,6 +36,7 @@ pub type ResultSender<T> = oneshot::Sender<Result<T, DatabaseError>>;
 pub enum WriteCommand {
     Register {
         s: ResultSender<AccountIdInternal>,
+        sign_in_with_info: SignInWithInfo,
         account_id: AccountIdLight,
     },
     SetNewAuthPair {
@@ -157,8 +158,9 @@ impl WriteCommandRunnerHandle {
     pub async fn register(
         &self,
         account_id: AccountIdLight,
+        sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        self.send_event(|s| WriteCommand::Register { s, account_id })
+        self.send_event(|s| WriteCommand::Register { s, sign_in_with_info, account_id })
             .await
     }
 
@@ -458,9 +460,9 @@ impl WriteCommandRunner {
             WriteCommand::SetNewAuthPair { s, account_id, pair, address } => {
                 self.write().set_new_auth_pair(account_id, pair, address).await.send(s)
             }
-            WriteCommand::Register { s, account_id } => self
+            WriteCommand::Register { s, sign_in_with_info, account_id } => self
                 .write_handle
-                .register(account_id, &self.config)
+                .register(account_id, sign_in_with_info, &self.config)
                 .await
                 .send(s),
             WriteCommand::UpdateAccount {

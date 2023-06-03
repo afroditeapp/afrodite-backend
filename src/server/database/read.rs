@@ -6,7 +6,7 @@ use tokio_util::io::ReaderStream;
 use crate::{
     api::{
         media::data::ModerationRequest,
-        model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken},
+        model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken, GoogleAccountId},
     },
     utils::{ConvertCommandError, ErrorConversion},
 };

@@ -128,6 +128,7 @@ impl<T> ErrorConversion for Result<T, FileError> {
 
 pub trait ConvertCommandError<D>: Sized {
     type Err;
+    /// Use DatabaseId::Empty if there is no real ID.
     #[track_caller]
     fn convert<I: Into<DatabaseId>>(self, id: I) -> Result<D, DatabaseError>;
 

@@ -73,3 +73,12 @@ closes. The server will send events to server using Text messages.
 
 3. All microservices have their own refresh token and access token. The account
 server will set those up and return in login information.
+
+
+# Chat
+
+Chat most likely contain sensitive information, so only to be delivered chat
+messages should be stored on the server. Delivered messages are not stored on
+the server. Server makes JWT token from every chat message, which client can
+send back in case conversation is reported. Messages stored to the server use
+cesar cipher to make accidental reading of chat message contents not possible.
