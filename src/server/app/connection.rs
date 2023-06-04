@@ -1,4 +1,4 @@
-use tokio::sync::{broadcast, mpsc, watch};
+use tokio::sync::{broadcast, mpsc};
 
 pub type WsQuitReady = mpsc::Receiver<()>;
 

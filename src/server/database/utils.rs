@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use error_stack::Result;
-use sqlx::sqlite::SqliteError;
+
 
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight, ApiKey, GoogleAccountId},

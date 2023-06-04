@@ -1,42 +1,28 @@
 use std::{sync::Arc, time::Instant};
 
-use api_client::{
-    apis::{accountinternal_api, configuration::Configuration, mediainternal_api},
-    models::boolean_setting,
-};
-use axum::{
-    routing::{get, post},
-    Router,
-};
 
-use error_stack::{IntoReport, Result, ResultExt};
+
+
+use error_stack::{IntoReport, Result};
 
 use headers::{CacheControl, HeaderMapExt};
-use hyper::{Method, StatusCode};
+use hyper::{Method};
 
 use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
     DecodingKey, Validation,
 };
 use serde::Deserialize;
-use serde_json::Value;
+
 use tokio::sync::RwLock;
-use tracing::{error, info};
-use url::Url;
+use tracing::{error};
+
 
 use crate::{
-    api::{
-        self,
-        model::{
-            Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
-            ProfileInternal,
-        },
-    },
-    config::InternalApiUrls,
     utils::IntoReportExt,
 };
 
-use crate::{api::model::ApiKey, config::Config};
+use crate::{config::Config};
 
 // TODO: Send serverAuthCode to server. Get refresh and access tokens from
 // google with that and save the tokens to database. After server receives app's

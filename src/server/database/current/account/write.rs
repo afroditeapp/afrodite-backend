@@ -11,14 +11,13 @@ use crate::utils::IntoReportExt;
 
 use crate::insert_or_update_json;
 
-use sqlx::{Sqlite, Transaction};
+
 
 use crate::{
     api::{
-        media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber},
-        model::{AccountIdInternal, ContentId, ModerationRequestContent},
+        model::{AccountIdInternal},
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
+    server::database::{sqlite::CurrentDataWriteHandle, write::WriteResult},
 };
 
 pub struct CurrentWriteAccountCommands<'a> {

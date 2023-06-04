@@ -7,8 +7,8 @@ use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, AuthPair, ContentId,
-            Location, ModerationRequestContent, ProfileInternal, ProfileLink, SignInWithInfo,
+            Account, AccountIdInternal, AccountIdLight, AccountSetup, AuthPair, ContentId,
+            Location, ModerationRequestContent, ProfileLink, SignInWithInfo,
         },
     },
     config::Config,
@@ -22,12 +22,11 @@ use super::{
     file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
     index::{
-        LocationIndexIteratorGetter, LocationIndexIteratorHandle, LocationIndexWriteHandle,
+        LocationIndexIteratorGetter,
         LocationIndexWriterGetter,
     },
     sqlite::{
-        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
-        SqliteSelectJson, SqliteUpdateJson,
+        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError, SqliteUpdateJson,
     },
 };
 

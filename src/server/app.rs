@@ -5,12 +5,11 @@ pub mod sign_in_with;
 use std::sync::Arc;
 
 use axum::{
-    middleware,
-    routing::{get, patch, post, put},
+    routing::{get, post},
     Json, Router,
 };
 
-use tokio::{io::DuplexStream, sync::mpsc};
+
 use utoipa::OpenApi;
 
 use crate::{

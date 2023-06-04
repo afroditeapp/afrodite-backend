@@ -2,7 +2,7 @@
 
 use std::fmt::Debug;
 
-use api_client::{apis::configuration::Configuration, models::ApiKey};
+use api_client::{apis::configuration::Configuration};
 use error_stack::{IntoReport, Result};
 
 use hyper::StatusCode;

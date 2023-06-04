@@ -1,14 +1,13 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use async_trait::async_trait;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{RwLock};
 use tokio_stream::StreamExt;
 use tracing::info;
 
 use crate::{
     api::model::{
-        Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal,
-        ProfileLink, ProfileUpdateInternal,
+        Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdateInternal,
     },
     config::Config,
     server::database::write::NoId,
@@ -20,12 +19,12 @@ use error_stack::{Result, ResultExt};
 use super::{
     current::SqliteReadCommands,
     index::{
-        location::{LocationIndexIterator, LocationIndexIteratorState, LocationIndexKey},
-        LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter,
+        location::{LocationIndexIteratorState, LocationIndexKey},
+        LocationIndexIteratorGetter, LocationIndexWriterGetter,
     },
     read::ReadResult,
     sqlite::SqliteSelectJson,
-    write::{AccountWriteLock, WriteResult},
+    write::{WriteResult},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -129,7 +128,7 @@ impl DatabaseCache {
                     .reset_iterator(profile_data.location.current_iterator, location_key);
 
                 // TODO: Add to location index only if visiblity is public
-                let index_writer = index_writer
+                let _index_writer = index_writer
                     .get()
                     .ok_or(CacheError::InitFeatureNotEnabled)?;
                 //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
@@ -218,7 +217,7 @@ impl DatabaseCache {
 
         if let Some(token) = token {
             let mut tokens = self.api_keys.write().await;
-            let account = tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
+            let _account = tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
         }
 
         Ok(())

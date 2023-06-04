@@ -1,18 +1,12 @@
-use api_client::models::Location;
+
 
 use crate::test::bot::actions::{
-    account::SetProfileVisibility,
-    common::TestWebSocket,
-    profile::{GetProfileList, ResetProfileIterator, UpdateLocation},
-    ActionArray, AssertEquals, AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil,
-    TO_NORMAL_STATE,
+    common::TestWebSocket, BotAction,
 };
 
 use super::{
     super::actions::{
         account::{Login, Register},
-        media::SendImageToSlot,
-        AssertFailure,
     },
     SingleTest,
 };

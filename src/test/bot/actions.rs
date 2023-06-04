@@ -7,7 +7,7 @@ pub mod profile;
 use std::collections::HashSet;
 use std::{fmt::Debug, time::Duration};
 
-use api_client::models::{AccountState, Location};
+use api_client::models::{AccountState};
 use async_trait::async_trait;
 
 use error_stack::{FutureExt, Result, ResultExt};
@@ -60,13 +60,13 @@ pub trait BotAction: Debug + Send + Sync + 'static {
             .attach_printable_lazy(|| format!("{:?}", self))
     }
 
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn excecute_impl(&self, _state: &mut BotState) -> Result<(), TestError> {
         Ok(())
     }
     async fn excecute_impl_task_state(
         &self,
         state: &mut BotState,
-        task_state: &mut TaskState,
+        _task_state: &mut TaskState,
     ) -> Result<(), TestError> {
         self.excecute_impl(state).await
     }

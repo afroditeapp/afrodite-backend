@@ -166,7 +166,7 @@ pub async fn post_sign_in_with_login<
             login_impl(id, state).await.map(|d| d.into())
         }
     } else if let Some(apple) = tokens.apple_token {
-        let info = state
+        let _info = state
             .sign_in_with_manager()
             .validate_apple_token(apple)
             .await

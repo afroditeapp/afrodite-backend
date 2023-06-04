@@ -7,7 +7,7 @@ use crate::{
     api::{
         media::data::ModerationRequest,
         model::{
-            AccountIdInternal, AccountIdLight, ApiKey, ContentId, GoogleAccountId, RefreshToken,
+            AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken,
         },
     },
     utils::{ConvertCommandError, ErrorConversion},

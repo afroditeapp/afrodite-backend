@@ -2,7 +2,6 @@
 
 use api_client::{
     apis::{accountinternal_api, configuration::Configuration, mediainternal_api},
-    models::boolean_setting,
 };
 use axum::{
     routing::{get, post},
@@ -367,9 +366,9 @@ impl<'a> InternalApiManager<'a> {
 
     pub async fn media_api_profile_visiblity(
         &self,
-        account_id: AccountIdInternal,
-        boolean_setting: BooleanSetting,
-        current_profile: Profile,
+        _account_id: AccountIdInternal,
+        _boolean_setting: BooleanSetting,
+        _current_profile: Profile,
     ) -> Result<(), InternalApiError> {
         if self.config.components().media {
             // TODO: Save visibility information to cache?

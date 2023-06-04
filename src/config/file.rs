@@ -1,7 +1,7 @@
 use std::{
     io::Write,
     net::SocketAddr,
-    num::{NonZeroU16, NonZeroU8},
+    num::{NonZeroU8},
     path::{Path, PathBuf},
 };
 

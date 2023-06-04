@@ -11,7 +11,6 @@ use async_trait::async_trait;
 use tokio::time::sleep;
 
 use crate::{
-    config::file::DEFAULT_CONFIG_FILE_TEXT,
     test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK},
 };
 
@@ -19,7 +18,7 @@ use super::{
     actions::{
         account::{Login, Register, SetProfileVisibility},
         profile::{
-            ChangeProfileText, GetProfileList, ResetProfileIterator, UpdateLocation,
+            ChangeProfileText, GetProfileList, ResetProfileIterator,
             UpdateLocationRandom,
         },
         BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,

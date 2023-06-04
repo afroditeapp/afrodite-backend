@@ -9,7 +9,7 @@ use crate::api::{
     GetInternalApi, GetUsers, ReadDatabase,
 };
 
-use tracing::{error, info};
+use tracing::{error};
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";

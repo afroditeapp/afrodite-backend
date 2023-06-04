@@ -1,38 +1,22 @@
-use std::{sync::Arc, time::Instant};
+use std::{sync::Arc};
 
-use api_client::{
-    apis::{accountinternal_api, configuration::Configuration, mediainternal_api},
-    models::boolean_setting,
-};
-use axum::{
-    routing::{get, post},
-    Router,
-};
 
-use error_stack::{IntoReport, Result, ResultExt};
 
-use headers::{CacheControl, HeaderMapExt};
-use hyper::{Method, StatusCode};
 
-use jsonwebtoken::{
-    jwk::{Jwk, JwkSet},
-    DecodingKey, Validation,
-};
-use serde::Deserialize;
-use serde_json::Value;
-use tokio::sync::RwLock;
+use error_stack::{IntoReport, Result};
+
+
+
+
+
+
+
+
 use tracing::{error, info};
-use url::Url;
+
 
 use crate::{
-    api::{
-        self,
-        model::{
-            Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
-            ProfileInternal,
-        },
-    },
-    config::{Config, InternalApiUrls},
+    config::{Config},
     utils::IntoReportExt,
 };
 

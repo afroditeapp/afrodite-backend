@@ -2,24 +2,21 @@ use std::net::SocketAddr;
 
 use axum::{extract::ConnectInfo, middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
-use hyper::{header, http::request, Method, Request, StatusCode};
+use hyper::{header, Request, StatusCode};
 
-use jsonwebtoken::{
-    jwk::{Jwk, JwkSet},
-    DecodingKey, Validation,
-};
-use serde::Deserialize;
-use serde_json::Value;
-use tracing::log::info;
-use url::Url;
+
+
+
+
+
 use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
 };
 
-use crate::server::internal::AuthResponse;
 
-use super::{model::ApiKey, GetApiKeys, GetInternalApi};
+
+use super::{model::ApiKey, GetApiKeys};
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);

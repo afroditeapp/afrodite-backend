@@ -16,8 +16,8 @@ use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, AuthPair, ContentId,
-            Location, ModerationRequestContent, Profile, ProfileInternal, ProfileLink,
+            Account, AccountIdInternal, AccountIdLight, AccountSetup, AuthPair, ContentId,
+            Location, ModerationRequestContent, ProfileLink,
             ProfileUpdateInternal, SignInWithInfo,
         },
     },

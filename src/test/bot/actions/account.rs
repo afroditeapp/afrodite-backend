@@ -16,14 +16,12 @@ use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{client::IntoClientRequest, Message};
 use url::Url;
 
-use super::{super::super::client::TestError, ActionArray, BotAction};
+use super::{super::super::client::TestError, BotAction};
 
 use crate::{
-    action_array,
     api::{common::PATH_CONNECT, utils::API_KEY_HEADER_STR},
     test::bot::{
-        utils::{assert::bot_assert_eq, name::NameProvider},
-        TaskState, WsConnection,
+        utils::{assert::bot_assert_eq, name::NameProvider}, WsConnection,
     },
     utils::IntoReportExt,
 };

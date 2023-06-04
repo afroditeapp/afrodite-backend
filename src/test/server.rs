@@ -1,6 +1,6 @@
 use std::{
     env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf,
-    sync::Arc, time::Duration,
+    sync::Arc,
 };
 
 use crate::config::{

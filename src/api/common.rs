@@ -4,7 +4,6 @@
 
 use std::{
     net::SocketAddr,
-    task::{self, ready, Poll},
 };
 
 use axum::{
@@ -12,23 +11,17 @@ use axum::{
         ws::{Message, WebSocket},
         ConnectInfo, WebSocketUpgrade,
     },
-    response::IntoResponse,
-    BoxError, Json, TypedHeader,
+    response::IntoResponse, TypedHeader,
 };
 
-use bytes::BytesMut;
+
 use futures::StreamExt;
 use hyper::{
-    client::connect::{Connected, Connection},
-    server::accept::Accept,
     StatusCode,
 };
 use serde::{Deserialize, Serialize};
-use tokio::{
-    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, DuplexStream},
-    sync::mpsc,
-};
-use tokio_stream::wrappers::WatchStream;
+
+
 use utoipa::ToSchema;
 
 use crate::{
@@ -37,13 +30,12 @@ use crate::{
 };
 
 use super::{
-    model::{AccountIdInternal, AccountIdLight, ApiKey, AuthPair, RefreshToken},
-    GetConfig, GetInternalApi,
+    model::{AccountIdInternal, ApiKey, AuthPair, RefreshToken},
 };
 
 use tracing::error;
 
-use super::{utils::ApiKeyHeader, GetApiKeys, GetUsers, ReadDatabase, WriteDatabase};
+use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 use error_stack::{IntoReport, Result, ResultExt};
 

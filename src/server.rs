@@ -2,16 +2,15 @@ pub mod app;
 pub mod database;
 pub mod internal;
 
-use std::{net::SocketAddr, pin::Pin, sync::Arc, task::Poll};
+use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
-use axum::{BoxError, Router};
+use axum::{Router};
 use futures::future::poll_fn;
 use hyper::server::{
     accept::Accept,
     conn::{AddrIncoming, Http},
 };
 use tokio::{
-    io::DuplexStream,
     net::TcpListener,
     signal,
     sync::{broadcast, mpsc},
@@ -19,8 +18,8 @@ use tokio::{
 };
 use tokio_rustls::rustls::ServerConfig;
 use tokio_rustls::TlsAcceptor;
-use tower::{MakeService, ServiceBuilder};
-use tower_http::trace::{DefaultOnResponse, TraceLayer};
+use tower::{MakeService};
+use tower_http::trace::{TraceLayer};
 use tracing::{error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;

@@ -121,7 +121,7 @@ impl RefreshToken {
     }
 
     pub fn generate_new() -> Self {
-        let (token, bytes) = Self::generate_new_with_bytes();
+        let (token, _bytes) = Self::generate_new_with_bytes();
         token
     }
 

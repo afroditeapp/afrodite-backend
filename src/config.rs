@@ -10,7 +10,7 @@ use std::{
 
 use error_stack::{IntoReport, Result, ResultExt};
 use reqwest::Url;
-use rustls_pemfile::{certs, pkcs8_private_keys, rsa_private_keys};
+use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
 
 use crate::utils::IntoReportExt;
