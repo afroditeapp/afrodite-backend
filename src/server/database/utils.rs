@@ -61,6 +61,6 @@ impl<'a> AccountIdManager<'a> {
         &self,
         id: GoogleAccountId,
     ) -> Result<Option<AccountIdInternal>, DatabaseError> {
-        self.read_handle.get_account_with_google_account_id(id).await.convert(DatabaseId::Empty)
+        self.read_handle.account().get_account_with_google_account_id(id).await.convert(DatabaseId::Empty)
     }
 }

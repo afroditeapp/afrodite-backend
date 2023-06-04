@@ -164,6 +164,7 @@ impl<'a> WriteCommands<'a> {
         cache: &DatabaseCache,
     ) -> Result<AccountIdInternal, DatabaseError> {
         let current = CurrentDataWriteCommands::new(&current_data_write);
+        let account_commands = current.clone().account();
         let history = HistoryWriteCommands::new(&history_wirte);
 
         let account = Account::default();
@@ -171,17 +172,17 @@ impl<'a> WriteCommands<'a> {
 
         // TODO: Use transactions here. One for current and other for history.
 
-        let id = current.store_account_id(id_light).await.convert(id_light)?;
+        let id = account_commands.store_account_id(id_light).await.convert(id_light)?;
 
         history.store_account_id(id).await.convert(id)?;
 
         cache.insert_account_if_not_exists(id).await.convert(id)?;
 
-        current.store_api_key(id, None).await.convert(id)?;
-        current.store_refresh_token(id, None).await.convert(id)?;
+        account_commands.store_api_key(id, None).await.convert(id)?;
+        account_commands.store_refresh_token(id, None).await.convert(id)?;
 
         if config.components().account {
-            current.store_account(id, &account).await.convert(id)?;
+            account_commands.store_account(id, &account).await.convert(id)?;
 
             history.store_account(id, &account).await.convert(id)?;
 
@@ -193,7 +194,7 @@ impl<'a> WriteCommands<'a> {
                 .await
                 .convert(id)?;
 
-            current
+            account_commands
                 .store_account_setup(id, &account_setup)
                 .await
                 .convert(id)?;
@@ -203,11 +204,10 @@ impl<'a> WriteCommands<'a> {
                 .await
                 .convert(id)?;
 
-            current
+            account_commands
                 .store_sign_in_with_info(id, &sign_in_with_info)
                 .await
                 .convert(id)?;
-
         }
 
         if config.components().profile {
@@ -238,14 +238,16 @@ impl<'a> WriteCommands<'a> {
         pair: AuthPair,
         address: Option<SocketAddr>,
     ) -> Result<(), DatabaseError> {
-        let current_access_token = self.current_write.read().access_token(id).await.convert(id)?;
+        let current_access_token = self.current_write.read().account().access_token(id).await.convert(id)?;
 
         self.current()
+            .account()
             .update_api_key(id, Some(&pair.access))
             .await
             .convert(id)?;
 
         self.current()
+            .account()
             .update_refresh_token(id, Some(&pair.refresh))
             .await
             .convert(id)?;
@@ -262,6 +264,7 @@ impl<'a> WriteCommands<'a> {
         id: AccountIdInternal,
     ) -> Result<(), DatabaseError> {
         self.current()
+            .account()
             .update_refresh_token(id, None)
             .await
             .convert(id)?;
@@ -278,7 +281,7 @@ impl<'a> WriteCommands<'a> {
         remove_access_token: bool,
     ) -> Result<(), DatabaseError> {
         let current_access_token = if remove_access_token {
-            self.current_write.read().access_token(id).await.convert(id)?
+            self.current_write.read().account().access_token(id).await.convert(id)?
         } else {
             None
         };
@@ -289,6 +292,7 @@ impl<'a> WriteCommands<'a> {
             .convert(id)?;
 
         self.current()
+            .account()
             .update_api_key(id, None)
             .await
             .convert(id)?;

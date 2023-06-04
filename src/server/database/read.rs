@@ -129,18 +129,19 @@ impl<'a> ReadCommands<'a> {
 
     pub async fn account_access_token(&self, id: AccountIdLight) -> Result<Option<ApiKey>, DatabaseError> {
         let id = self.cache.to_account_id_internal(id).await.convert(id)?;
-        self.sqlite.access_token(id).await.convert(id)
+        self.sqlite.account().access_token(id).await.convert(id)
     }
 
     pub async fn account_refresh_token(&self, id: AccountIdInternal) -> Result<Option<RefreshToken>, DatabaseError> {
-        self.sqlite.refresh_token(id).await.convert(id)
+        self.sqlite.account().refresh_token(id).await.convert(id)
     }
 
     pub async fn account_ids<T: FnMut(AccountIdInternal)>(
         &self,
         mut handler: T,
     ) -> Result<(), DatabaseError> {
-        let mut users = self.sqlite.account_ids_stream();
+        let account = self.sqlite.account();
+        let mut users = account.account_ids_stream();
         while let Some(user_id) = users.try_next().await.convert(NoId)? {
             handler(user_id)
         }

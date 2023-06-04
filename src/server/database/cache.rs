@@ -64,7 +64,8 @@ impl DatabaseCache {
         // Load data from database to memory.
         info!("Starting to load data from database to memory");
 
-        let mut accounts = read.account_ids_stream();
+        let account = read.account();
+        let mut accounts = account.account_ids_stream();
 
         while let Some(r) = accounts.next().await {
             let id = r.attach(NoId).change_context(CacheError::Init)?;
@@ -75,6 +76,7 @@ impl DatabaseCache {
         let ids = read_account.values();
         for lock_and_cache in ids {
             let api_key = read
+                .account()
                 .access_token(lock_and_cache.account_id_internal)
                 .await
                 .attach(lock_and_cache.account_id_internal)
