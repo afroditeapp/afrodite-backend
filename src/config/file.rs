@@ -56,6 +56,12 @@ media = true
 # client_id_android = "id"
 # client_id_ios = "id"
 # client_id_server = "id"
+
+# [tls]
+# public_api_cert = "server_config/public_api.cert"
+# public_api_key = "server_config/public_api.key"
+# internal_api_cert = "server_config/internal_api.cert"
+# internal_api_key = "server_config/internal_api.key"
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -78,6 +84,8 @@ pub struct ConfigFile {
     pub location: LocationConfig,
     pub external_services: Option<ExternalServices>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
+    /// TLS is required if debug setting is false.
+    pub tls: Option<TlsConfig>,
 }
 
 impl ConfigFile {
@@ -159,4 +167,12 @@ pub struct SignInWithGoogleConfig {
     pub client_id_android: String,
     pub client_id_ios: String,
     pub client_id_server: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct TlsConfig {
+    pub public_api_cert: PathBuf,
+    pub public_api_key: PathBuf,
+    pub internal_api_cert: PathBuf,
+    pub internal_api_key: PathBuf,
 }

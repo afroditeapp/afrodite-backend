@@ -133,7 +133,7 @@ fn new_config(
     external_services: Option<ExternalServices>,
 ) -> ConfigFile {
     ConfigFile {
-        debug: None,
+        debug: Some(true),
         admin_email: "admin@example.com".to_string(),
         components,
         database: crate::config::file::DatabaseConfig {
@@ -150,6 +150,7 @@ fn new_config(
         },
         external_services,
         sign_in_with_google: None,
+        tls: None,
     }
 }
 

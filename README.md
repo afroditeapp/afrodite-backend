@@ -72,3 +72,42 @@ Commit count:
 ```
 git rev-list --count HEAD
 ```
+
+
+# TLS certificate generation
+
+## Root certificate
+
+Generate private key:
+
+```
+openssl genrsa -out root-private-key.key 4096
+```
+
+Create certificate signing request (CSR):
+```
+openssl req -new -sha256 -key root-private-key.key -out root-csr.csr
+```
+
+100 years = 36500 days
+
+Sign root certificate:
+```
+openssl x509 -req -sha256 -days 36500 -in root-csr.csr -signkey root-private-key.key -out root.crt
+```
+
+## Server certificate
+
+Use domain as Common Name. IP address does not work with Dart and Rustls.
+
+```
+openssl genrsa -out server-private-key.key 4096
+openssl req -new -sha256 -key server-private-key.key -out server.csr
+openssl x509 -req -in server.csr -CA ../root/root.crt -CAkey ../root/root-private-key.key -CAcreateserial -out server.crt -days 365 -sha256
+```
+
+## Viewing certificates
+
+```
+openssl x509 -in server.crt -text -noout
+```

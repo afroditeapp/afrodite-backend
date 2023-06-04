@@ -1,10 +1,12 @@
 pub mod args;
 pub mod file;
 
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}, io::BufReader, vec, sync::Arc};
 
 use error_stack::{IntoReport, Result, ResultExt};
 use reqwest::Url;
+use tokio_rustls::rustls::{ServerConfig, PrivateKey, Certificate};
+use rustls_pemfile::{pkcs8_private_keys, certs, rsa_private_keys};
 
 use crate::utils::IntoReportExt;
 
@@ -34,6 +36,11 @@ pub enum GetConfigError {
 
     #[error("Parsing String constant to Url failed.")]
     ConstUrlParsingFailed,
+
+    #[error("TLS config is required when debug mode is off")]
+    TlsConfigMissing,
+    #[error("TLS config creation error")]
+    CreateTlsConfig,
 }
 
 #[derive(Debug)]
@@ -48,6 +55,10 @@ pub struct Config {
 
     // Other configs
     test_mode: Option<TestMode>,
+
+    // TLS
+    public_api_tls_config: Option<Arc<ServerConfig>>,
+    internal_api_tls_config: Option<Arc<ServerConfig>>,
 }
 
 impl Config {
@@ -100,6 +111,14 @@ impl Config {
     pub fn admin_email(&self) -> &str {
         &self.file.admin_email
     }
+
+    pub fn public_api_tls_config(&self) -> Option<&Arc<ServerConfig>> {
+        self.public_api_tls_config.as_ref()
+    }
+
+    pub fn internal_api_tls_config(&self) -> Option<&Arc<ServerConfig>> {
+        self.internal_api_tls_config.as_ref()
+    }
 }
 
 pub fn get_config() -> Result<Config, GetConfigError> {
@@ -118,6 +137,31 @@ pub fn get_config() -> Result<Config, GetConfigError> {
 
     let client_api_urls = create_client_api_urls(&file_config.components, &external_services)?;
 
+
+    let public_api_tls_config = match file_config.tls.clone() {
+        Some(tls_config) => {
+            Some(Arc::new(generate_server_config(
+                tls_config.public_api_key.as_path(),
+                tls_config.public_api_cert.as_path(),
+            )?))
+        }
+        None => None,
+    };
+
+    let internal_api_tls_config = match file_config.tls.clone() {
+        Some(tls_config) => {
+            Some(Arc::new(generate_server_config(
+                tls_config.internal_api_key.as_path(),
+                tls_config.internal_api_cert.as_path(),
+            )?))
+        }
+        None => None,
+    };
+
+    if public_api_tls_config.is_none() && !file_config.debug.unwrap_or_default() {
+        return Err(GetConfigError::TlsConfigMissing).into_report().attach_printable("TLS must be configured when debug mode is false");
+    }
+
     Ok(Config {
         file: file_config,
         database,
@@ -125,6 +169,8 @@ pub fn get_config() -> Result<Config, GetConfigError> {
         client_api_urls,
         test_mode: args_config.test_mode,
         sign_in_with_urls: SignInWithUrls::new()?,
+        public_api_tls_config,
+        internal_api_tls_config,
     })
 }
 
@@ -191,4 +237,35 @@ impl SignInWithUrls {
                 .into_error(GetConfigError::ConstUrlParsingFailed)?,
         })
     }
+}
+
+fn generate_server_config(key_path: &Path, cert_path: &Path) -> Result<ServerConfig, GetConfigError> {
+    let mut key_reader = BufReader::new(std::fs::File::open(key_path).into_error(GetConfigError::CreateTlsConfig)?);
+    let all_keys = rsa_private_keys(&mut key_reader).into_error(GetConfigError::CreateTlsConfig)?;
+
+    let key = if let [key] = &all_keys[..] {
+        PrivateKey(key.clone())
+    } else if all_keys.is_empty() {
+        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("No key found");
+    } else {
+        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("Only one key supported");
+    };
+
+    let mut cert_reader = BufReader::new(std::fs::File::open(cert_path).into_error(GetConfigError::CreateTlsConfig)?);
+    let all_certs = certs(&mut cert_reader).into_error(GetConfigError::CreateTlsConfig)?;
+    let cert = if let [cert] = &all_certs[..] {
+        Certificate(cert.clone())
+    } else if all_certs.is_empty() {
+        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("No cert found");
+    } else {
+        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("Only one cert supported");
+    };
+
+    let config = ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth() // TODO: configure at some point
+        .with_single_cert(vec![cert], key)
+        .into_error(GetConfigError::CreateTlsConfig)?;
+
+    Ok(config)
 }
