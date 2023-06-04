@@ -5,9 +5,11 @@ use axum::{extract::Path, Json, TypedHeader};
 
 use hyper::StatusCode;
 
-use self::data::{Location, Profile, ProfileInternal, ProfileUpdate, ProfileUpdateInternal, ProfilePage};
+use self::data::{
+    Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal,
+};
 
-use super::{model::AccountIdLight, GetUsers, GetInternalApi};
+use super::{model::AccountIdLight, GetInternalApi, GetUsers};
 
 use tracing::error;
 
@@ -43,7 +45,9 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteDatabase>(
+pub async fn get_profile<
+    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteDatabase,
+>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(requested_profile): Path<AccountIdLight>,
     state: S,
@@ -77,11 +81,13 @@ pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalAp
             .map_err(|e| {
                 error!("get_profile: {e:?}");
                 StatusCode::INTERNAL_SERVER_ERROR
-            })
+            });
     }
 
-
-    let visibility = state.read_database().profile_visibility(requested_profile).await
+    let visibility = state
+        .read_database()
+        .profile_visibility(requested_profile)
+        .await
         .map_err(|e| {
             error!("get_profile: {e:?}");
             StatusCode::INTERNAL_SERVER_ERROR
@@ -90,15 +96,18 @@ pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalAp
     let visiblity = match visibility {
         Some(v) => v,
         None => {
-            let account = state.internal_api().get_account_state(requested_profile).await
+            let account = state
+                .internal_api()
+                .get_account_state(requested_profile)
+                .await
                 .map_err(|e| {
                     error!("get_profile: {e:?}");
                     StatusCode::INTERNAL_SERVER_ERROR
                 })?;
             let visibility = account.capablities().view_public_profiles;
-            state.write_database().update_profile_visiblity(
-                requested_profile, visibility, true
-            )
+            state
+                .write_database()
+                .update_profile_visiblity(requested_profile, visibility, true)
                 .await
                 .map_err(|e| {
                     error!("get_profile: {e:?}");
@@ -106,7 +115,7 @@ pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalAp
                 })?;
 
             visibility
-        },
+        }
     };
 
     if visiblity {

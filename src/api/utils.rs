@@ -1,10 +1,13 @@
 use std::net::SocketAddr;
 
-use axum::{middleware::Next, response::Response, extract::ConnectInfo};
+use axum::{extract::ConnectInfo, middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
-use hyper::{header, Request, StatusCode, http::request, Method};
+use hyper::{header, http::request, Method, Request, StatusCode};
 
-use jsonwebtoken::{DecodingKey, jwk::{Jwk, JwkSet}, Validation};
+use jsonwebtoken::{
+    jwk::{Jwk, JwkSet},
+    DecodingKey, Validation,
+};
 use serde::Deserialize;
 use serde_json::Value;
 use tracing::log::info;
@@ -16,7 +19,7 @@ use utoipa::{
 
 use crate::server::internal::AuthResponse;
 
-use super::{model::ApiKey, GetInternalApi, GetApiKeys};
+use super::{model::ApiKey, GetApiKeys, GetInternalApi};
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
@@ -34,7 +37,11 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys>(
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = ApiKey::new(key_str.to_string());
 
-    if let Some(id) = state.api_keys().api_key_and_connection_exists(&key, addr).await {
+    if let Some(id) = state
+        .api_keys()
+        .api_key_and_connection_exists(&key, addr)
+        .await
+    {
         req.extensions_mut().insert(id);
         Ok(next.run(req).await)
     } else {

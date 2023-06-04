@@ -9,13 +9,14 @@ use api_client::models::AccountIdLight;
 
 use async_trait::async_trait;
 use tokio::{
+    net::TcpStream,
     select,
-    sync::{mpsc, watch}, net::TcpStream,
+    sync::{mpsc, watch},
 };
 
 use error_stack::{Result, ResultExt};
 
-use tokio_tungstenite::{WebSocketStream, MaybeTlsStream};
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tracing::{error, info, log::warn};
 
 use self::{
@@ -110,7 +111,10 @@ pub trait BotStruct: Debug + Send + 'static {
     fn next_action(&mut self);
     fn state(&self) -> &BotState;
 
-    async fn run_action(&mut self, task_state: &mut TaskState) -> Result<Option<Completed>, TestError> {
+    async fn run_action(
+        &mut self,
+        task_state: &mut TaskState,
+    ) -> Result<Option<Completed>, TestError> {
         let mut result = self.run_action_impl(task_state).await;
         if let Test::Qa = self.state().config.test {
             result = result.attach_printable_lazy(|| format!("{:?}", self.state().action_history))
@@ -118,7 +122,10 @@ pub trait BotStruct: Debug + Send + 'static {
         result.attach_printable_lazy(|| format!("{:?}", self))
     }
 
-    async fn run_action_impl(&mut self, task_state: &mut TaskState) -> Result<Option<Completed>, TestError> {
+    async fn run_action_impl(
+        &mut self,
+        task_state: &mut TaskState,
+    ) -> Result<Option<Completed>, TestError> {
         match self.peek_action_and_state() {
             (None, _) => Ok(Some(Completed)),
             (Some(action), state) => {
@@ -127,7 +134,7 @@ pub trait BotStruct: Debug + Send + 'static {
                 let result = match result {
                     Err(e) if e.current_context() == &TestError::BotIsWaiting => return Ok(None),
                     Err(e) => Err(e),
-                    Ok(()) => Ok(None)
+                    Ok(()) => Ok(None),
                 };
 
                 state.previous_action = action;
@@ -191,7 +198,7 @@ impl BotManager {
                     );
                     bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
                 }
-            },
+            }
             Test::BenchmarkGetProfileList => {
                 for bot_i in 0..config.bot_count {
                     let state = BotState::new(
@@ -207,7 +214,7 @@ impl BotManager {
                     };
                     bots.push(Box::new(benchmark))
                 }
-            },
+            }
             _ => panic!("Invalid test {:?}", config.test),
         };
 
@@ -314,7 +321,11 @@ impl BotManager {
     }
 
     /// If Some(bot_index) is returned remove the bot.
-    async fn iter_bot_list(&mut self, errors: &mut bool, task_state: &mut TaskState) -> Option<usize> {
+    async fn iter_bot_list(
+        &mut self,
+        errors: &mut bool,
+        task_state: &mut TaskState,
+    ) -> Option<usize> {
         for (i, b) in self.bots.iter_mut().enumerate() {
             match b.run_action(task_state).await {
                 Ok(None) => (),

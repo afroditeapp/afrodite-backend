@@ -6,7 +6,9 @@ use tokio_util::io::ReaderStream;
 use crate::{
     api::{
         media::data::ModerationRequest,
-        model::{AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken, GoogleAccountId},
+        model::{
+            AccountIdInternal, AccountIdLight, ApiKey, ContentId, GoogleAccountId, RefreshToken,
+        },
     },
     utils::{ConvertCommandError, ErrorConversion},
 };
@@ -127,12 +129,18 @@ impl<'a> ReadCommands<'a> {
         }
     }
 
-    pub async fn account_access_token(&self, id: AccountIdLight) -> Result<Option<ApiKey>, DatabaseError> {
+    pub async fn account_access_token(
+        &self,
+        id: AccountIdLight,
+    ) -> Result<Option<ApiKey>, DatabaseError> {
         let id = self.cache.to_account_id_internal(id).await.convert(id)?;
         self.sqlite.account().access_token(id).await.convert(id)
     }
 
-    pub async fn account_refresh_token(&self, id: AccountIdInternal) -> Result<Option<RefreshToken>, DatabaseError> {
+    pub async fn account_refresh_token(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<RefreshToken>, DatabaseError> {
         self.sqlite.account().refresh_token(id).await.convert(id)
     }
 
@@ -207,7 +215,9 @@ impl<'a> ReadCommands<'a> {
         account_id: AccountIdInternal,
     ) -> Result<Option<bool>, DatabaseError> {
         self.cache
-            .read_cache(account_id.as_light(), |e| e.profile.as_ref().map(|p| p.public).flatten())
+            .read_cache(account_id.as_light(), |e| {
+                e.profile.as_ref().map(|p| p.public).flatten()
+            })
             .await
             .convert(account_id)
     }

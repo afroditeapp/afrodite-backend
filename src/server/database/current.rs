@@ -19,7 +19,10 @@ use super::write::{NoId, WriteResult};
 use crate::api::account::data::AccountSetup;
 use crate::server::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 
-use crate::api::model::{Account, AccountIdInternal, AccountIdLight, ApiKey, RefreshToken, SignInWithInfo, GoogleAccountId};
+use crate::api::model::{
+    Account, AccountIdInternal, AccountIdLight, ApiKey, GoogleAccountId, RefreshToken,
+    SignInWithInfo,
+};
 
 use crate::utils::IntoReportExt;
 

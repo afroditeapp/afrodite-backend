@@ -2,20 +2,27 @@
 
 use std::{
     fmt::Debug,
-    time::{Duration, Instant}, iter::Peekable,
+    iter::Peekable,
+    time::{Duration, Instant},
 };
 
 use api_client::apis::profile_api::get_profile;
 use async_trait::async_trait;
 use tokio::time::sleep;
 
-use crate::{test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK}, config::file::DEFAULT_CONFIG_FILE_TEXT};
+use crate::{
+    config::file::DEFAULT_CONFIG_FILE_TEXT,
+    test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK},
+};
 
 use super::{
     actions::{
         account::{Login, Register, SetProfileVisibility},
-        profile::{ChangeProfileText, UpdateLocation, UpdateLocationRandom, ResetProfileIterator, GetProfileList},
-        BotAction, RunActions, TO_NORMAL_STATE, RepeatUntilFn,
+        profile::{
+            ChangeProfileText, GetProfileList, ResetProfileIterator, UpdateLocation,
+            UpdateLocationRandom,
+        },
+        BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
     },
     utils::{Counters, Timer},
     BotState, BotStruct, TaskState,
@@ -69,14 +76,14 @@ impl Benchmark {
         let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
         Self {
             state,
-            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
+            actions: (Box::new(iter)
+                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
+                .peekable(),
         }
     }
 
     pub fn benchmark_get_profile_list(state: BotState) -> Self {
-        let setup = [
-            &RunActions(TO_NORMAL_STATE) as &dyn BotAction,
-        ];
+        let setup = [&RunActions(TO_NORMAL_STATE) as &dyn BotAction];
         let benchmark = [
             &UpdateProfileBenchmark as &dyn BotAction,
             &ActionsBeforeIteration,
@@ -87,7 +94,9 @@ impl Benchmark {
         let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
         Self {
             state,
-            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
+            actions: (Box::new(iter)
+                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
+                .peekable(),
         }
     }
 
@@ -100,7 +109,9 @@ impl Benchmark {
         let iter = benchmark.into_iter();
         Self {
             state,
-            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
+            actions: (Box::new(iter)
+                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
+                .peekable(),
         }
     }
 }
@@ -136,7 +147,11 @@ pub struct UpdateProfileBenchmark;
 
 #[async_trait]
 impl BotAction for UpdateProfileBenchmark {
-    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         let time = Instant::now();
 
         if state.config.update_profile && state.benchmark.update_profile_timer.passed() {

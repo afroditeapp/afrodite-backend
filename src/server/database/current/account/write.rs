@@ -80,7 +80,10 @@ impl<'a> CurrentWriteAccountCommands<'a> {
         refresh_token: Option<RefreshToken>,
     ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
         let refresh_token = if let Some(t) = refresh_token {
-            Some(t.bytes().into_error(SqliteDatabaseError::DataFormatConversion)?)
+            Some(
+                t.bytes()
+                    .into_error(SqliteDatabaseError::DataFormatConversion)?,
+            )
         } else {
             None
         };
@@ -182,7 +185,10 @@ impl<'a> CurrentWriteAccountCommands<'a> {
         refresh_token: Option<&RefreshToken>,
     ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
         let refresh_token = if let Some(t) = refresh_token {
-            Some(t.bytes().into_error(SqliteDatabaseError::DataFormatConversion)?)
+            Some(
+                t.bytes()
+                    .into_error(SqliteDatabaseError::DataFormatConversion)?,
+            )
         } else {
             None
         };
@@ -225,7 +231,6 @@ impl<'a> CurrentWriteAccountCommands<'a> {
         Ok(())
     }
 }
-
 
 #[async_trait]
 impl SqliteUpdateJson for Account {

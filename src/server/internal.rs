@@ -1,6 +1,9 @@
 //! Routes for server to server connections
 
-use api_client::{apis::{accountinternal_api, configuration::Configuration, mediainternal_api}, models::boolean_setting};
+use api_client::{
+    apis::{accountinternal_api, configuration::Configuration, mediainternal_api},
+    models::boolean_setting,
+};
 use axum::{
     routing::{get, post},
     Router,
@@ -15,7 +18,10 @@ use tracing::{error, info};
 use crate::{
     api::{
         self,
-        model::{Account, AccountIdInternal, AccountState, Capabilities, BooleanSetting, Profile, ProfileInternal},
+        model::{
+            Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
+            ProfileInternal,
+        },
     },
     config::InternalApiUrls,
     utils::IntoReportExt,
@@ -26,8 +32,9 @@ use crate::{api::model::ApiKey, config::Config};
 use super::{
     app::AppState,
     database::{
+        commands::WriteCommandRunnerHandle,
         read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager}, commands::WriteCommandRunnerHandle,
+        utils::{AccountIdManager, ApiKeyManager},
     },
 };
 
@@ -87,36 +94,36 @@ impl InternalApp {
             post({
                 let state = state.clone();
                 move |p1, p2| {
-                    api::profile::internal::internal_post_update_profile_visibility(
-                        p1, p2, state,
-                    )
+                    api::profile::internal::internal_post_update_profile_visibility(p1, p2, state)
                 }
             }),
         )
     }
 
     pub fn create_media_server_router(state: AppState) -> Router {
-        Router::new().route(
-            api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
-            post({
-                let state = state.clone();
-                move |parameter1| {
-                    api::media::internal::internal_get_check_moderation_request_for_account(
-                        parameter1, state,
-                    )
-                }
-            }))
-        .route(
-            api::media::internal::PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY,
-            post({
-                let state = state.clone();
-                move |p1, p2, p3| {
-                    api::media::internal::internal_post_update_profile_image_visibility(
-                        p1, p2, p3, state,
-                    )
-                }
-            }),
-        )
+        Router::new()
+            .route(
+                api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
+                post({
+                    let state = state.clone();
+                    move |parameter1| {
+                        api::media::internal::internal_get_check_moderation_request_for_account(
+                            parameter1, state,
+                        )
+                    }
+                }),
+            )
+            .route(
+                api::media::internal::PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY,
+                post({
+                    let state = state.clone();
+                    move |p1, p2, p3| {
+                        api::media::internal::internal_post_update_profile_image_visibility(
+                            p1, p2, p3, state,
+                        )
+                    }
+                }),
+            )
     }
 }
 
@@ -332,19 +339,24 @@ impl<'a> InternalApiManager<'a> {
         boolean_setting: BooleanSetting,
     ) -> Result<(), InternalApiError> {
         if self.config.components().profile {
+            self.write_database
+                .update_profile_visiblity(
+                    account_id,
+                    boolean_setting.value,
+                    false, // False overrides updates
+                )
+                .await
+                .change_context(InternalApiError::DatabaseError)?;
 
-            self.write_database.update_profile_visiblity(
-                account_id,
-                boolean_setting.value,
-                false // False overrides updates
-            ).await.change_context(InternalApiError::DatabaseError)?;
-
-            let profile: ProfileInternal = self.read_database
+            let profile: ProfileInternal = self
+                .read_database
                 .read_json(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)?;
 
-            self.media_api_profile_visiblity(account_id, boolean_setting, profile.into()).await.change_context(InternalApiError::ApiRequest)?;
+            self.media_api_profile_visiblity(account_id, boolean_setting, profile.into())
+                .await
+                .change_context(InternalApiError::ApiRequest)?;
 
             Ok(())
         } else {

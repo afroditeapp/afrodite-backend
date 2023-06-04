@@ -1,8 +1,8 @@
 pub mod account;
 pub mod admin;
+pub mod common;
 pub mod media;
 pub mod profile;
-pub mod common;
 
 use std::collections::HashSet;
 use std::{fmt::Debug, time::Duration};
@@ -12,8 +12,8 @@ use async_trait::async_trait;
 
 use error_stack::{FutureExt, Result, ResultExt};
 
-use self::account::{Register, Login, SetAccountSetup, CompleteAccountSetup, AssertAccountState};
-use self::media::{SendImageToSlot, MakeModerationRequest};
+use self::account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup};
+use self::media::{MakeModerationRequest, SendImageToSlot};
 
 use super::super::client::TestError;
 
@@ -50,18 +50,30 @@ impl PreviousValue {
 /// previous_value_supported.
 #[async_trait]
 pub trait BotAction: Debug + Send + Sync + 'static {
-    async fn excecute(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         self.excecute_impl_task_state(state, task_state)
             .await
             .attach_printable_lazy(|| format!("{:?}", self))
     }
 
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> { Ok(()) }
-    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        Ok(())
+    }
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         self.excecute_impl(state).await
     }
 
-    fn previous_value_supported(&self) -> bool { false }
+    fn previous_value_supported(&self) -> bool {
+        false
+    }
 }
 
 #[derive(Debug)]
@@ -79,7 +91,11 @@ pub struct AssertFailure<T: BotAction>(pub T);
 
 #[async_trait]
 impl<T: BotAction> BotAction for AssertFailure<T> {
-    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         match self.0.excecute(state, task_state).await {
             Err(e) => match e.current_context() {
                 TestError::ApiRequest => Ok(()),
@@ -102,13 +118,16 @@ impl BotAction for SleepMillis {
     }
 }
 
-
 /// Bot sleeps (this task is not removed) until the function evalues true.
 pub struct SleepUntil(pub fn(&TaskState) -> bool);
 
 #[async_trait]
 impl BotAction for SleepUntil {
-    async fn excecute_impl_task_state(&self, _state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute_impl_task_state(
+        &self,
+        _state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         if self.0(task_state) {
             Ok(())
         } else {
@@ -127,7 +146,11 @@ pub struct ModifyTaskState(pub fn(&mut TaskState));
 
 #[async_trait]
 impl BotAction for ModifyTaskState {
-    async fn excecute_impl_task_state(&self, _state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute_impl_task_state(
+        &self,
+        _state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         self.0(task_state);
         Ok(())
     }
@@ -139,66 +162,105 @@ impl Debug for ModifyTaskState {
     }
 }
 
-
 #[derive(Debug)]
 pub struct AssertEquals(pub PreviousValue, pub &'static dyn BotAction);
 
 #[async_trait]
 impl BotAction for AssertEquals {
-    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         if !self.1.previous_value_supported() {
-            return Err(TestError::AssertError(format!("Previous value not supported for action {:?}", self.1)).into());
+            return Err(TestError::AssertError(format!(
+                "Previous value not supported for action {:?}",
+                self.1
+            ))
+            .into());
         }
 
         self.1.excecute(state, task_state).await?;
 
         if self.0 != state.previous_value {
-            Err(TestError::AssertError(format!("action: {:?}, was: {:?}, expected: {:?}", self.1, state.previous_value, self.0)).into())
+            Err(TestError::AssertError(format!(
+                "action: {:?}, was: {:?}, expected: {:?}",
+                self.1, state.previous_value, self.0
+            ))
+            .into())
         } else {
             Ok(())
         }
     }
 }
 
-pub struct AssertEqualsFn<T: PartialEq>(pub fn(PreviousValue, &BotState) -> T, pub T, pub &'static dyn BotAction);
+pub struct AssertEqualsFn<T: PartialEq>(
+    pub fn(PreviousValue, &BotState) -> T,
+    pub T,
+    pub &'static dyn BotAction,
+);
 
-impl <T: PartialEq> Debug for AssertEqualsFn<T> {
+impl<T: PartialEq> Debug for AssertEqualsFn<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("AssertEqualsFn for action {:?}", self.2))
     }
 }
 
 #[async_trait]
-impl <T: PartialEq + Send + Sync + 'static + Debug> BotAction for AssertEqualsFn<T> {
-    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+impl<T: PartialEq + Send + Sync + 'static + Debug> BotAction for AssertEqualsFn<T> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         if !self.2.previous_value_supported() {
-            return Err(TestError::AssertError(format!("Previous value not supported for action {:?}", self.2)).into());
+            return Err(TestError::AssertError(format!(
+                "Previous value not supported for action {:?}",
+                self.2
+            ))
+            .into());
         }
 
         self.2.excecute(state, task_state).await?;
 
         let value = self.0(state.previous_value.clone(), state);
         if value != self.1 {
-            Err(TestError::AssertError(format!("action: {:?}, was: {:?}, expected: {:?}", self.2, value, self.1)).into())
+            Err(TestError::AssertError(format!(
+                "action: {:?}, was: {:?}, expected: {:?}",
+                self.2, value, self.1
+            ))
+            .into())
         } else {
             Ok(())
         }
     }
 }
 
-pub struct RepeatUntilFn<T: PartialEq>(pub fn(PreviousValue, &BotState) -> T, pub T, pub &'static dyn BotAction);
+pub struct RepeatUntilFn<T: PartialEq>(
+    pub fn(PreviousValue, &BotState) -> T,
+    pub T,
+    pub &'static dyn BotAction,
+);
 
-impl <T: PartialEq> Debug for RepeatUntilFn<T> {
+impl<T: PartialEq> Debug for RepeatUntilFn<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("RepeatUntilFn for action {:?}", self.2))
     }
 }
 
 #[async_trait]
-impl <T: PartialEq + Send + Sync + 'static + Debug> BotAction for RepeatUntilFn<T> {
-    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+impl<T: PartialEq + Send + Sync + 'static + Debug> BotAction for RepeatUntilFn<T> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         if !self.2.previous_value_supported() {
-            return Err(TestError::AssertError(format!("Previous value not supported for action {:?}", self.2)).into());
+            return Err(TestError::AssertError(format!(
+                "Previous value not supported for action {:?}",
+                self.2
+            ))
+            .into());
         }
 
         loop {
@@ -219,7 +281,11 @@ pub struct RunActions(pub ActionArray);
 
 #[async_trait]
 impl BotAction for RunActions {
-    async fn excecute_impl_task_state(&self, state: &mut BotState, task_state: &mut TaskState) -> Result<(), TestError> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
         for a in self.0.iter() {
             a.excecute(state, task_state).await?;
         }

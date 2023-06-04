@@ -1,9 +1,11 @@
-
-
-
 use api_client::models::Location;
 
-use crate::test::bot::actions::{BotAction, ActionArray, TO_NORMAL_STATE, AssertEquals, profile::{UpdateLocation, GetProfileList, ResetProfileIterator}, RunActions, ModifyTaskState, SleepUntil, AssertEqualsFn, account::SetProfileVisibility};
+use crate::test::bot::actions::{
+    account::SetProfileVisibility,
+    profile::{GetProfileList, ResetProfileIterator, UpdateLocation},
+    ActionArray, AssertEquals, AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil,
+    TO_NORMAL_STATE,
+};
 
 use super::{
     super::actions::{
@@ -16,7 +18,10 @@ use super::{
 
 use crate::test;
 
-const LOCATION_LAT_LON_10: Location = Location { latitude: 10.0, longitude: 10.0 };
+const LOCATION_LAT_LON_10: Location = Location {
+    latitude: 10.0,
+    longitude: 10.0,
+};
 
 pub const PROFILE_TESTS: &[SingleTest] = &[
     test!(
@@ -41,5 +46,5 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
             ResetProfileIterator,
             AssertEqualsFn(|v, _| v.profile_count(), 1, &GetProfileList),
         ]
-    )
+    ),
 ];

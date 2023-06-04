@@ -1,31 +1,51 @@
 //! Common routes to all microservices
 
-
 // TODO: add app version route
 
+use std::{
+    net::SocketAddr,
+    task::{self, ready, Poll},
+};
 
-use std::{net::SocketAddr, task::{self, ready, Poll}};
-
-use axum::{Json, TypedHeader, extract::{WebSocketUpgrade, ConnectInfo, ws::{WebSocket, Message}}, response::IntoResponse, BoxError};
+use axum::{
+    extract::{
+        ws::{Message, WebSocket},
+        ConnectInfo, WebSocketUpgrade,
+    },
+    response::IntoResponse,
+    BoxError, Json, TypedHeader,
+};
 
 use bytes::BytesMut;
 use futures::StreamExt;
-use hyper::{StatusCode, client::connect::{Connection, Connected}, server::accept::Accept};
+use hyper::{
+    client::connect::{Connected, Connection},
+    server::accept::Accept,
+    StatusCode,
+};
 use serde::{Deserialize, Serialize};
-use tokio::{io::{DuplexStream, AsyncReadExt, AsyncWriteExt, AsyncWrite, AsyncRead}, sync::mpsc};
+use tokio::{
+    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, DuplexStream},
+    sync::mpsc,
+};
 use tokio_stream::wrappers::WatchStream;
 use utoipa::ToSchema;
 
-use crate::{server::app::{AppState, connection::WebSocketManager}, utils::IntoReportExt};
+use crate::{
+    server::app::{connection::WebSocketManager, AppState},
+    utils::IntoReportExt,
+};
 
-use super::{GetConfig, GetInternalApi, utils::{}, model::{AccountIdLight, AccountIdInternal, RefreshToken, ApiKey, AuthPair}};
+use super::{
+    model::{AccountIdInternal, AccountIdLight, ApiKey, AuthPair, RefreshToken},
+    GetConfig, GetInternalApi,
+};
 
 use tracing::error;
 
 use super::{utils::ApiKeyHeader, GetApiKeys, GetUsers, ReadDatabase, WriteDatabase};
 
-use error_stack::{Result, ResultExt, IntoReport};
-
+use error_stack::{IntoReport, Result, ResultExt};
 
 pub const PATH_CONNECT: &str = "/common_api/connect";
 
@@ -133,14 +153,14 @@ async fn handle_socket_result(
     // TODO: add close server notification select? Or probably not needed as
     // server should shutdown after main future?
 
-    let current_refresh_token =
-        state.read_database()
-            .account_refresh_token(id)
-            .await
-            .change_context(WebSocketError::DatabaseNoRefreshToken)?
-            .ok_or(WebSocketError::DatabaseNoRefreshToken)?
-            .bytes()
-            .into_error(WebSocketError::InvalidRefreshTokenInDatabase)?;
+    let current_refresh_token = state
+        .read_database()
+        .account_refresh_token(id)
+        .await
+        .change_context(WebSocketError::DatabaseNoRefreshToken)?
+        .ok_or(WebSocketError::DatabaseNoRefreshToken)?
+        .bytes()
+        .into_error(WebSocketError::InvalidRefreshTokenInDatabase)?;
 
     // Refresh token check.
     match socket
@@ -151,10 +171,14 @@ async fn handle_socket_result(
     {
         Message::Binary(refresh_token) => {
             if refresh_token != current_refresh_token {
-                state.write_database().logout(id).await.change_context(WebSocketError::DatabaseLogoutFailed)?;
+                state
+                    .write_database()
+                    .logout(id)
+                    .await
+                    .change_context(WebSocketError::DatabaseLogoutFailed)?;
                 return Ok(());
             }
-        },
+        }
         _ => return Err(WebSocketError::ReceiveMissingRefreshToken).into_report(),
     };
 
@@ -163,11 +187,28 @@ async fn handle_socket_result(
     let (new_refresh_token, new_refresh_token_bytes) = RefreshToken::generate_new_with_bytes();
     let new_access_token = ApiKey::generate_new();
 
-    socket.send(Message::Binary(new_refresh_token_bytes)).await.into_error(WebSocketError::Send)?;
+    socket
+        .send(Message::Binary(new_refresh_token_bytes))
+        .await
+        .into_error(WebSocketError::Send)?;
 
-    state.write_database().set_new_auth_pair(id, AuthPair { access: new_access_token.clone(), refresh: new_refresh_token}, Some(address)).await.change_context(WebSocketError::DatabaseSaveTokens)?;
+    state
+        .write_database()
+        .set_new_auth_pair(
+            id,
+            AuthPair {
+                access: new_access_token.clone(),
+                refresh: new_refresh_token,
+            },
+            Some(address),
+        )
+        .await
+        .change_context(WebSocketError::DatabaseSaveTokens)?;
 
-    socket.send(Message::Text(new_access_token.into_string())).await.into_error(WebSocketError::Send)?;
+    socket
+        .send(Message::Text(new_access_token.into_string()))
+        .await
+        .into_error(WebSocketError::Send)?;
 
     loop {
         tokio::select! {
@@ -183,7 +224,6 @@ async fn handle_socket_result(
 
     Ok(())
 }
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum EventToClient {

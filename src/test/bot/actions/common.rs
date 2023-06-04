@@ -1,12 +1,15 @@
-use std::{fmt::Debug, collections::HashSet};
+use std::{collections::HashSet, fmt::Debug};
 
-use api_client::{apis::profile_api::{post_profile, self}, models::{ProfileUpdate, Location}};
+use api_client::{
+    apis::profile_api::{self, post_profile},
+    models::{Location, ProfileUpdate},
+};
 use async_trait::async_trait;
 use error_stack::Result;
 
 use super::{super::super::client::TestError, BotAction, PreviousValue};
 
-use crate::{utils::IntoReportExt, config::file::LocationConfig};
+use crate::{config::file::LocationConfig, utils::IntoReportExt};
 
 use super::BotState;
 

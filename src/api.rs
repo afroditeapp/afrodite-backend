@@ -2,9 +2,9 @@
 
 // Routes
 pub mod account;
+pub mod common;
 pub mod media;
 pub mod profile;
-pub mod common;
 
 pub mod model;
 pub mod utils;
@@ -14,12 +14,13 @@ use utoipa::{Modify, OpenApi};
 use crate::{
     config::Config,
     server::{
+        app::sign_in_with::SignInWithManager,
         database::{
             commands::WriteCommandRunnerHandle,
             read::ReadCommands,
             utils::{AccountIdManager, ApiKeyManager},
         },
-        internal::InternalApiManager, app::sign_in_with::SignInWithManager,
+        internal::InternalApiManager,
     },
 };
 

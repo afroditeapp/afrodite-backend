@@ -129,18 +129,12 @@ pub async fn put_image_to_moderation_slot_fixed(
     }
 }
 
-
-pub async fn api_available(
-    configuration: &configuration::Configuration,
-) -> Result<(), ()> {
+pub async fn api_available(configuration: &configuration::Configuration) -> Result<(), ()> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!(
-        "{}/",
-        local_var_configuration.base_path,
-    );
+    let local_var_uri_str = format!("{}/", local_var_configuration.base_path,);
     let mut local_var_req_builder =
         local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
@@ -158,7 +152,10 @@ pub async fn api_available(
     };
 
     let local_var_req = local_var_req_builder.build().map_err(|_| ())?;
-    let _ = local_var_client.execute(local_var_req).await.map_err(|_| ())?;
+    let _ = local_var_client
+        .execute(local_var_req)
+        .await
+        .map_err(|_| ())?;
 
     Ok(())
 }

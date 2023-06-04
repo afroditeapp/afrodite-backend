@@ -2,16 +2,18 @@
 //!
 
 pub mod account;
+pub mod common;
 pub mod media;
 pub mod profile;
-pub mod common;
 
-use std::{fmt::Debug, sync::atomic::AtomicBool, iter::Peekable};
+use std::{fmt::Debug, iter::Peekable, sync::atomic::AtomicBool};
 
 use api_client::models::AccountState;
 use async_trait::async_trait;
 
-use self::{account::ACCOUNT_TESTS, media::MEDIA_TESTS, profile::PROFILE_TESTS, common::COMMON_TESTS};
+use self::{
+    account::ACCOUNT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS, profile::PROFILE_TESTS,
+};
 
 use super::{
     actions::{
@@ -41,12 +43,8 @@ macro_rules! test {
     };
 }
 
-pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[
-    ACCOUNT_TESTS,
-    MEDIA_TESTS,
-    PROFILE_TESTS,
-    COMMON_TESTS,
-];
+pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] =
+    &[ACCOUNT_TESTS, MEDIA_TESTS, PROFILE_TESTS, COMMON_TESTS];
 
 pub fn test_count() -> usize {
     ALL_QA_TESTS.iter().map(|tests| tests.len()).sum()
@@ -119,7 +117,9 @@ impl Qa {
         Self {
             state,
             test_name: "Admin bot",
-            actions: (Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>).peekable(),
+            actions: (Box::new(iter)
+                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
+                .peekable(),
         }
     }
 }

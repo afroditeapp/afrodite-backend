@@ -1,12 +1,15 @@
-use std::{fmt::Debug, collections::HashSet};
+use std::{collections::HashSet, fmt::Debug};
 
-use api_client::{apis::profile_api::{post_profile, self}, models::{ProfileUpdate, Location}};
+use api_client::{
+    apis::profile_api::{self, post_profile},
+    models::{Location, ProfileUpdate},
+};
 use async_trait::async_trait;
 use error_stack::Result;
 
 use super::{super::super::client::TestError, BotAction, PreviousValue};
 
-use crate::{utils::IntoReportExt, config::file::LocationConfig};
+use crate::{config::file::LocationConfig, utils::IntoReportExt};
 
 use super::BotState;
 
@@ -73,10 +76,13 @@ impl BotAction for GetProfileList {
         let data = profile_api::post_get_next_profile_page(state.api.profile())
             .await
             .into_error(TestError::ApiRequest)?;
-        let value = HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.id.to_string()));
+        let value =
+            HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.id.to_string()));
         state.previous_value = PreviousValue::Profiles(value);
         Ok(())
     }
 
-    fn previous_value_supported(&self) -> bool { true }
+    fn previous_value_supported(&self) -> bool {
+        true
+    }
 }

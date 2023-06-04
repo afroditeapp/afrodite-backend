@@ -231,9 +231,13 @@ impl clap::builder::TypedValueParser for TestNameParser {
         &self,
     ) -> Option<Box<dyn Iterator<Item = clap::PossibleValue<'static>> + '_>> {
         Some(Box::new(
-            [Test::Qa, Test::BenchmarkGetProfile, Test::BenchmarkGetProfileList]
-                .iter()
-                .map(|value| PossibleValue::new(value.as_str())),
+            [
+                Test::Qa,
+                Test::BenchmarkGetProfile,
+                Test::BenchmarkGetProfileList,
+            ]
+            .iter()
+            .map(|value| PossibleValue::new(value.as_str())),
         ))
     }
 }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, net::SocketAddr};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock};
@@ -8,7 +8,7 @@ use tracing::info;
 use crate::{
     api::model::{
         Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal,
-        ProfileUpdateInternal, ProfileLink,
+        ProfileLink, ProfileUpdateInternal,
     },
     config::Config,
     server::database::write::NoId,
@@ -19,9 +19,13 @@ use error_stack::{Result, ResultExt};
 
 use super::{
     current::SqliteReadCommands,
+    index::{
+        location::{LocationIndexIterator, LocationIndexIteratorState, LocationIndexKey},
+        LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter,
+    },
     read::ReadResult,
     sqlite::SqliteSelectJson,
-    write::{AccountWriteLock, WriteResult}, index::{location::{LocationIndexIterator, LocationIndexKey, LocationIndexIteratorState}, LocationIndexManager, LocationIndexWriterGetter, LocationIndexIteratorGetter},
+    write::{AccountWriteLock, WriteResult},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -55,7 +59,12 @@ pub struct DatabaseCache {
 }
 
 impl DatabaseCache {
-    pub async fn new(read: SqliteReadCommands<'_>, index_iterator: LocationIndexIteratorGetter<'_>, index_writer: LocationIndexWriterGetter<'_>, config: &Config) -> Result<Self, CacheError> {
+    pub async fn new(
+        read: SqliteReadCommands<'_>,
+        index_iterator: LocationIndexIteratorGetter<'_>,
+        index_writer: LocationIndexWriterGetter<'_>,
+        config: &Config,
+    ) -> Result<Self, CacheError> {
         let cache = Self {
             api_keys: RwLock::new(HashMap::new()),
             accounts: RwLock::new(HashMap::new()),
@@ -101,21 +110,28 @@ impl DatabaseCache {
             }
 
             if config.components().profile {
-                let profile = ProfileInternal::select_json(lock_and_cache.account_id_internal, &read)
-                    .await
-                    .change_context(CacheError::Init)?;
+                let profile =
+                    ProfileInternal::select_json(lock_and_cache.account_id_internal, &read)
+                        .await
+                        .change_context(CacheError::Init)?;
 
                 let mut profile_data: CachedProfile = profile.into();
 
-                let location_key = LocationIndexKey::select_json(lock_and_cache.account_id_internal, &read)
-                    .await
-                    .change_context(CacheError::Init)?;
+                let location_key =
+                    LocationIndexKey::select_json(lock_and_cache.account_id_internal, &read)
+                        .await
+                        .change_context(CacheError::Init)?;
                 profile_data.location.current_position = location_key;
-                let index_iterator = index_iterator.get().ok_or(CacheError::InitFeatureNotEnabled)?;
-                profile_data.location.current_iterator = index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
+                let index_iterator = index_iterator
+                    .get()
+                    .ok_or(CacheError::InitFeatureNotEnabled)?;
+                profile_data.location.current_iterator = index_iterator
+                    .reset_iterator(profile_data.location.current_iterator, location_key);
 
                 // TODO: Add to location index only if visiblity is public
-                let index_writer = index_writer.get().ok_or(CacheError::InitFeatureNotEnabled)?;
+                let index_writer = index_writer
+                    .get()
+                    .ok_or(CacheError::InitFeatureNotEnabled)?;
                 //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
 
                 entry.profile = Some(Box::new(profile_data));
@@ -140,7 +156,14 @@ impl DatabaseCache {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_light()).is_none() {
             let value = RwLock::new(CacheEntry::new());
-            data.insert(id.as_light(), AccountEntry { cache: value, account_id_internal: id }.into());
+            data.insert(
+                id.as_light(),
+                AccountEntry {
+                    cache: value,
+                    account_id_internal: id,
+                }
+                .into(),
+            );
             Ok(())
         } else {
             Err(CacheError::AlreadyExists.into())
@@ -178,7 +201,11 @@ impl DatabaseCache {
         }
     }
 
-    pub async fn delete_access_token_and_connection(&self, id: AccountIdLight, token: Option<ApiKey>) -> WriteResult<(), CacheError, ApiKey> {
+    pub async fn delete_access_token_and_connection(
+        &self,
+        id: AccountIdLight,
+        token: Option<ApiKey>,
+    ) -> WriteResult<(), CacheError, ApiKey> {
         let cache_entry = self
             .accounts
             .read()
@@ -208,7 +235,11 @@ impl DatabaseCache {
 
     /// Checks that connection comes from the same IP address. WebSocket is
     /// using the cached SocketAddr, so check the IP only.
-    pub async fn access_token_and_connection_exists(&self, access_token: &ApiKey, connection: SocketAddr) -> Option<AccountIdInternal> {
+    pub async fn access_token_and_connection_exists(
+        &self,
+        access_token: &ApiKey,
+        connection: SocketAddr,
+    ) -> Option<AccountIdInternal> {
         let tokens = self.api_keys.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
@@ -313,7 +344,10 @@ impl From<ProfileInternal> for CachedProfile {
         Self {
             public: None,
             data: value,
-            location: LocationData { current_position: LocationIndexKey::default(), current_iterator: LocationIndexIteratorState::new() }
+            location: LocationData {
+                current_position: LocationIndexKey::default(),
+                current_iterator: LocationIndexIteratorState::new(),
+            },
         }
     }
 }
@@ -390,7 +424,9 @@ impl ReadCacheJson for ProfileInternal {
             })
             .await
             .attach(id)?;
-        data_in_cache.ok_or(CacheError::NotInCache.into()).map(|p| p)
+        data_in_cache
+            .ok_or(CacheError::NotInCache.into())
+            .map(|p| p)
     }
 }
 

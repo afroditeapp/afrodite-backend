@@ -2,16 +2,25 @@ pub mod app;
 pub mod database;
 pub mod internal;
 
-use std::{sync::Arc, task::Poll, net::SocketAddr, pin::Pin};
+use std::{net::SocketAddr, pin::Pin, sync::Arc, task::Poll};
 
-use axum::{Router, BoxError};
+use axum::{BoxError, Router};
 use futures::future::poll_fn;
-use hyper::server::{accept::Accept, conn::{AddrIncoming, Http}};
+use hyper::server::{
+    accept::Accept,
+    conn::{AddrIncoming, Http},
+};
+use tokio::{
+    io::DuplexStream,
+    net::TcpListener,
+    signal,
+    sync::{broadcast, mpsc},
+    task::JoinHandle,
+};
 use tokio_rustls::rustls::ServerConfig;
-use tokio::{signal, task::JoinHandle, io::DuplexStream, sync::{mpsc, broadcast}, net::TcpListener};
 use tokio_rustls::TlsAcceptor;
-use tower::{ServiceBuilder, MakeService};
-use tower_http::trace::{TraceLayer, DefaultOnResponse};
+use tower::{MakeService, ServiceBuilder};
+use tower_http::trace::{DefaultOnResponse, TraceLayer};
 use tracing::{error, info};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -19,7 +28,11 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{
     api::ApiDoc,
     config::Config,
-    server::{app::{App, connection::WebSocketManager}, database::DatabaseManager, internal::InternalApp},
+    server::{
+        app::{connection::WebSocketManager, App},
+        database::DatabaseManager,
+        internal::InternalApp,
+    },
 };
 
 use self::app::connection::ServerQuitWatcher;
@@ -46,15 +59,21 @@ impl PihkaServer {
         .expect("Database init failed");
 
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
-        let (ws_manager, mut ws_quit_ready) = WebSocketManager::new(server_quit_watcher.resubscribe());
+        let (ws_manager, mut ws_quit_ready) =
+            WebSocketManager::new(server_quit_watcher.resubscribe());
 
         let mut app = App::new(router_database_handle, self.config.clone(), ws_manager).await;
 
-        let server_task = self.create_public_api_server_task(&mut app, server_quit_watcher.resubscribe()).await;
+        let server_task = self
+            .create_public_api_server_task(&mut app, server_quit_watcher.resubscribe())
+            .await;
         let internal_server_task = if self.config.debug_mode() {
             None
         } else {
-            Some(self.create_internal_api_server_task(&app, server_quit_watcher.resubscribe()).await)
+            Some(
+                self.create_internal_api_server_task(&app, server_quit_watcher.resubscribe())
+                    .await,
+            )
         };
 
         match signal::ctrl_c().await {
@@ -90,7 +109,11 @@ impl PihkaServer {
     }
 
     /// Public API. This can have WAN access.
-    pub async fn create_public_api_server_task(&self, app: &mut App, quit_notification: ServerQuitWatcher) -> JoinHandle<()> {
+    pub async fn create_public_api_server_task(
+        &self,
+        app: &mut App,
+        quit_notification: ServerQuitWatcher,
+    ) -> JoinHandle<()> {
         let router = {
             let router = self.create_public_router(app);
             let router = if self.config.debug_mode() {
@@ -101,9 +124,7 @@ impl PihkaServer {
                 router
             };
             let router = if self.config.debug_mode() {
-                router.route_layer(
-                    TraceLayer::new_for_http()
-                )
+                router.route_layer(TraceLayer::new_for_http())
             } else {
                 router
             };
@@ -117,7 +138,8 @@ impl PihkaServer {
         }
 
         if let Some(tls_config) = self.config.public_api_tls_config() {
-            self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification).await
+            self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification)
+                .await
         } else {
             self.create_server_task_no_tls(router, addr, "Public API")
         }
@@ -128,11 +150,13 @@ impl PihkaServer {
         addr: SocketAddr,
         router: Router,
         tls_config: Arc<ServerConfig>,
-        mut quit_notification: ServerQuitWatcher
+        mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
-
-        let listener = TcpListener::bind(addr).await.expect("Address not available");
-        let mut listener = AddrIncoming::from_listener(listener).expect("AddrIncoming creation failed");
+        let listener = TcpListener::bind(addr)
+            .await
+            .expect("Address not available");
+        let mut listener =
+            AddrIncoming::from_listener(listener).expect("AddrIncoming creation failed");
         listener.set_sleep_on_errors(true);
 
         let protocol = Arc::new(Http::new());
@@ -203,9 +227,15 @@ impl PihkaServer {
         })
     }
 
-    pub fn create_server_task_no_tls(&self, router: Router, addr: SocketAddr, name_for_log_message: &'static str) -> JoinHandle<()> {
+    pub fn create_server_task_no_tls(
+        &self,
+        router: Router,
+        addr: SocketAddr,
+        name_for_log_message: &'static str,
+    ) -> JoinHandle<()> {
         let normal_api_server = {
-            axum::Server::bind(&addr).serve(router.into_make_service_with_connect_info::<SocketAddr>())
+            axum::Server::bind(&addr)
+                .serve(router.into_make_service_with_connect_info::<SocketAddr>())
         };
 
         tokio::spawn(async move {
@@ -227,10 +257,12 @@ impl PihkaServer {
         })
     }
 
-
     // Internal server to server API. This must be only LAN accessible.
-    pub async fn create_internal_api_server_task(&self, app: &App, quit_notification: ServerQuitWatcher) -> JoinHandle<()> {
-
+    pub async fn create_internal_api_server_task(
+        &self,
+        app: &App,
+        quit_notification: ServerQuitWatcher,
+    ) -> JoinHandle<()> {
         let router = self.create_internal_router(&app);
         let router = if self.config.debug_mode() {
             router.merge(Self::create_swagger_ui())
@@ -241,7 +273,8 @@ impl PihkaServer {
         let addr = self.config.socket().internal_api;
         info!("Internal API is available on {}", addr);
         if let Some(tls_config) = self.config.internal_api_tls_config() {
-            self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification).await
+            self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification)
+                .await
         } else {
             self.create_server_task_no_tls(router, addr, "Internal API")
         }

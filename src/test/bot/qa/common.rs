@@ -1,11 +1,12 @@
-
-
-
-
-
 use api_client::models::Location;
 
-use crate::test::bot::actions::{BotAction, ActionArray, TO_NORMAL_STATE, AssertEquals, profile::{UpdateLocation, GetProfileList, ResetProfileIterator}, RunActions, ModifyTaskState, SleepUntil, AssertEqualsFn, account::SetProfileVisibility, common::TestWebSocket};
+use crate::test::bot::actions::{
+    account::SetProfileVisibility,
+    common::TestWebSocket,
+    profile::{GetProfileList, ResetProfileIterator, UpdateLocation},
+    ActionArray, AssertEquals, AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil,
+    TO_NORMAL_STATE,
+};
 
 use super::{
     super::actions::{
@@ -18,13 +19,7 @@ use super::{
 
 use crate::test;
 
-pub const COMMON_TESTS: &[SingleTest] = &[
-    test!(
-        "WebSocket HTTP connection works",
-        [
-            Register,
-            Login,
-            TestWebSocket,
-        ]
-    ),
-];
+pub const COMMON_TESTS: &[SingleTest] = &[test!(
+    "WebSocket HTTP connection works",
+    [Register, Login, TestWebSocket,]
+)];

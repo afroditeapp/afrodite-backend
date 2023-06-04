@@ -1,18 +1,26 @@
 pub mod args;
 pub mod file;
 
-use std::{path::{Path, PathBuf}, io::BufReader, vec, sync::Arc};
+use std::{
+    io::BufReader,
+    path::{Path, PathBuf},
+    sync::Arc,
+    vec,
+};
 
 use error_stack::{IntoReport, Result, ResultExt};
 use reqwest::Url;
-use tokio_rustls::rustls::{ServerConfig, PrivateKey, Certificate};
-use rustls_pemfile::{pkcs8_private_keys, certs, rsa_private_keys};
+use rustls_pemfile::{certs, pkcs8_private_keys, rsa_private_keys};
+use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
 
 use crate::utils::IntoReportExt;
 
 use self::{
     args::TestMode,
-    file::{Components, ConfigFile, ExternalServices, SocketConfig, LocationConfig, SignInWithGoogleConfig},
+    file::{
+        Components, ConfigFile, ExternalServices, LocationConfig, SignInWithGoogleConfig,
+        SocketConfig,
+    },
 };
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
@@ -137,29 +145,26 @@ pub fn get_config() -> Result<Config, GetConfigError> {
 
     let client_api_urls = create_client_api_urls(&file_config.components, &external_services)?;
 
-
     let public_api_tls_config = match file_config.tls.clone() {
-        Some(tls_config) => {
-            Some(Arc::new(generate_server_config(
-                tls_config.public_api_key.as_path(),
-                tls_config.public_api_cert.as_path(),
-            )?))
-        }
+        Some(tls_config) => Some(Arc::new(generate_server_config(
+            tls_config.public_api_key.as_path(),
+            tls_config.public_api_cert.as_path(),
+        )?)),
         None => None,
     };
 
     let internal_api_tls_config = match file_config.tls.clone() {
-        Some(tls_config) => {
-            Some(Arc::new(generate_server_config(
-                tls_config.internal_api_key.as_path(),
-                tls_config.internal_api_cert.as_path(),
-            )?))
-        }
+        Some(tls_config) => Some(Arc::new(generate_server_config(
+            tls_config.internal_api_key.as_path(),
+            tls_config.internal_api_cert.as_path(),
+        )?)),
         None => None,
     };
 
     if public_api_tls_config.is_none() && !file_config.debug.unwrap_or_default() {
-        return Err(GetConfigError::TlsConfigMissing).into_report().attach_printable("TLS must be configured when debug mode is false");
+        return Err(GetConfigError::TlsConfigMissing)
+            .into_report()
+            .attach_printable("TLS must be configured when debug mode is false");
     }
 
     Ok(Config {
@@ -221,7 +226,6 @@ pub fn create_client_api_urls(
     })
 }
 
-
 const GOOGLE_PUBLIC_KEY_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 
 #[derive(Debug, Clone)]
@@ -239,26 +243,39 @@ impl SignInWithUrls {
     }
 }
 
-fn generate_server_config(key_path: &Path, cert_path: &Path) -> Result<ServerConfig, GetConfigError> {
-    let mut key_reader = BufReader::new(std::fs::File::open(key_path).into_error(GetConfigError::CreateTlsConfig)?);
+fn generate_server_config(
+    key_path: &Path,
+    cert_path: &Path,
+) -> Result<ServerConfig, GetConfigError> {
+    let mut key_reader =
+        BufReader::new(std::fs::File::open(key_path).into_error(GetConfigError::CreateTlsConfig)?);
     let all_keys = rsa_private_keys(&mut key_reader).into_error(GetConfigError::CreateTlsConfig)?;
 
     let key = if let [key] = &all_keys[..] {
         PrivateKey(key.clone())
     } else if all_keys.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("No key found");
+        return Err(GetConfigError::CreateTlsConfig)
+            .into_report()
+            .attach_printable("No key found");
     } else {
-        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("Only one key supported");
+        return Err(GetConfigError::CreateTlsConfig)
+            .into_report()
+            .attach_printable("Only one key supported");
     };
 
-    let mut cert_reader = BufReader::new(std::fs::File::open(cert_path).into_error(GetConfigError::CreateTlsConfig)?);
+    let mut cert_reader =
+        BufReader::new(std::fs::File::open(cert_path).into_error(GetConfigError::CreateTlsConfig)?);
     let all_certs = certs(&mut cert_reader).into_error(GetConfigError::CreateTlsConfig)?;
     let cert = if let [cert] = &all_certs[..] {
         Certificate(cert.clone())
     } else if all_certs.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("No cert found");
+        return Err(GetConfigError::CreateTlsConfig)
+            .into_report()
+            .attach_printable("No cert found");
     } else {
-        return Err(GetConfigError::CreateTlsConfig).into_report().attach_printable("Only one cert supported");
+        return Err(GetConfigError::CreateTlsConfig)
+            .into_report()
+            .attach_printable("Only one cert supported");
     };
 
     let config = ServerConfig::builder()

@@ -1,10 +1,13 @@
 use std::{
-    env, net::SocketAddrV4, os::unix::process::CommandExt, path::PathBuf, sync::Arc, time::Duration, num::NonZeroU8,
+    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf,
+    sync::Arc, time::Duration,
 };
 
 use crate::config::{
-    args::{TestMode, Test},
-    file::{Components, ConfigFile, ExternalServices, SocketConfig, CONFIG_FILE_NAME, LocationConfig},
+    args::{Test, TestMode},
+    file::{
+        Components, ConfigFile, ExternalServices, LocationConfig, SocketConfig, CONFIG_FILE_NAME,
+    },
 };
 
 use nix::{sys::signal::Signal, unistd::Pid};

@@ -4,7 +4,10 @@ use axum::{extract::Path, Json};
 
 use hyper::StatusCode;
 
-use crate::api::{model::{AccountIdLight, Profile, BooleanSetting}, GetUsers, ReadDatabase, GetInternalApi};
+use crate::api::{
+    model::{AccountIdLight, BooleanSetting, Profile},
+    GetInternalApi, GetUsers, ReadDatabase,
+};
 
 use tracing::{error, info};
 
@@ -21,7 +24,9 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn internal_post_update_profile_visibility<S: ReadDatabase + GetUsers + GetInternalApi>(
+pub async fn internal_post_update_profile_visibility<
+    S: ReadDatabase + GetUsers + GetInternalApi,
+>(
     Path(account_id): Path<AccountIdLight>,
     Path(value): Path<BooleanSetting>,
     state: S,
@@ -35,8 +40,12 @@ pub async fn internal_post_update_profile_visibility<S: ReadDatabase + GetUsers 
             StatusCode::NOT_FOUND
         })?;
 
-    state.internal_api().profile_api_set_profile_visiblity(account_id, value).await.map_err(|e| {
-        error!("{:?}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })
+    state
+        .internal_api()
+        .profile_api_set_profile_visiblity(account_id, value)
+        .await
+        .map_err(|e| {
+            error!("{:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
 }

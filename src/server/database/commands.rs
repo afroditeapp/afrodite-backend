@@ -1,7 +1,7 @@
 //! Database writing commands
 //!
 
-use std::{collections::HashSet, future::Future, sync::Arc, net::SocketAddr};
+use std::{collections::HashSet, future::Future, net::SocketAddr, sync::Arc};
 
 use axum::extract::BodyStream;
 use error_stack::Result;
@@ -16,8 +16,9 @@ use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileUpdateInternal, Profile, ProfileInternal, ProfileLink, Location, AuthPair, SignInWithInfo,
+            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, AuthPair, ContentId,
+            Location, ModerationRequestContent, Profile, ProfileInternal, ProfileLink,
+            ProfileUpdateInternal, SignInWithInfo,
         },
     },
     config::Config,
@@ -160,8 +161,12 @@ impl WriteCommandRunnerHandle {
         account_id: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        self.send_event(|s| WriteCommand::Register { s, sign_in_with_info, account_id })
-            .await
+        self.send_event(|s| WriteCommand::Register {
+            s,
+            sign_in_with_info,
+            account_id,
+        })
+        .await
     }
 
     pub async fn set_new_auth_pair(
@@ -170,15 +175,17 @@ impl WriteCommandRunnerHandle {
         pair: AuthPair,
         address: Option<SocketAddr>,
     ) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::SetNewAuthPair {  s, account_id, pair, address })
-            .await
+        self.send_event(|s| WriteCommand::SetNewAuthPair {
+            s,
+            account_id,
+            pair,
+            address,
+        })
+        .await
     }
 
-    pub async fn logout(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::Logout {  s, account_id })
+    pub async fn logout(&self, account_id: AccountIdInternal) -> Result<(), DatabaseError> {
+        self.send_event(|s| WriteCommand::Logout { s, account_id })
             .await
     }
 
@@ -186,7 +193,7 @@ impl WriteCommandRunnerHandle {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::EndConnectionSession {  s, account_id })
+        self.send_event(|s| WriteCommand::EndConnectionSession { s, account_id })
             .await
     }
 
@@ -252,7 +259,7 @@ impl WriteCommandRunnerHandle {
         self.send_event(|s| WriteCommand::UpdateProfileLocation {
             s,
             account_id,
-            location
+            location,
         })
         .await
     }
@@ -336,7 +343,7 @@ impl WriteCommandRunnerHandle {
         self.send_event_to_concurrent_runner(|s| {
             (
                 account_id.as_light(),
-                ConcurrentWriteCommand::NextProfiles { s, account_id }
+                ConcurrentWriteCommand::NextProfiles { s, account_id },
             )
         })
         .await
@@ -349,7 +356,7 @@ impl WriteCommandRunnerHandle {
         self.send_event_to_concurrent_runner(|s| {
             (
                 account_id.as_light(),
-                ConcurrentWriteCommand::ResetProfileIterator { s, account_id }
+                ConcurrentWriteCommand::ResetProfileIterator { s, account_id },
             )
         })
         .await
@@ -451,16 +458,27 @@ impl WriteCommandRunner {
 
     pub async fn handle_cmd(&self, cmd: WriteCommand) {
         match cmd {
-            WriteCommand::Logout { s, account_id} => {
-                self.write().logout(account_id).await.send(s)
-            }
-            WriteCommand::EndConnectionSession { s, account_id} => {
-                self.write().end_connection_session(account_id, false).await.send(s)
-            }
-            WriteCommand::SetNewAuthPair { s, account_id, pair, address } => {
-                self.write().set_new_auth_pair(account_id, pair, address).await.send(s)
-            }
-            WriteCommand::Register { s, sign_in_with_info, account_id } => self
+            WriteCommand::Logout { s, account_id } => self.write().logout(account_id).await.send(s),
+            WriteCommand::EndConnectionSession { s, account_id } => self
+                .write()
+                .end_connection_session(account_id, false)
+                .await
+                .send(s),
+            WriteCommand::SetNewAuthPair {
+                s,
+                account_id,
+                pair,
+                address,
+            } => self
+                .write()
+                .set_new_auth_pair(account_id, pair, address)
+                .await
+                .send(s),
+            WriteCommand::Register {
+                s,
+                sign_in_with_info,
+                account_id,
+            } => self
                 .write_handle
                 .register(account_id, sign_in_with_info, &self.config)
                 .await
@@ -489,12 +507,20 @@ impl WriteCommandRunner {
                 account_id,
                 public,
                 update_only_if_none,
-            } => self.write().profile_update_visibility(account_id, public, update_only_if_none).await.send(s),
+            } => self
+                .write()
+                .profile_update_visibility(account_id, public, update_only_if_none)
+                .await
+                .send(s),
             WriteCommand::UpdateProfileLocation {
                 s,
                 account_id,
                 location,
-            } => self.write().profile_update_location(account_id, location).await.send(s),
+            } => self
+                .write()
+                .profile_update_location(account_id, location)
+                .await
+                .send(s),
             WriteCommand::SetModerationRequest {
                 s,
                 account_id,
@@ -682,10 +708,7 @@ impl ConcurrentWriteCommandRunner {
                 })
                 .await;
             }
-            ConcurrentWriteCommand::NextProfiles {
-                s,
-                account_id
-            } => {
+            ConcurrentWriteCommand::NextProfiles { s, account_id } => {
                 self.start_cmd_task(p, l, s, move |w| async move {
                     w.user_write_commands_account()
                         .next_profiles(account_id)
@@ -693,10 +716,7 @@ impl ConcurrentWriteCommandRunner {
                 })
                 .await;
             }
-            ConcurrentWriteCommand::ResetProfileIterator {
-                s,
-                account_id
-            } => {
+            ConcurrentWriteCommand::ResetProfileIterator { s, account_id } => {
                 self.start_cmd_task(p, l, s, move |w| async move {
                     w.user_write_commands_account()
                         .reset_profile_iterator(account_id)

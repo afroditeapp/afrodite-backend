@@ -7,8 +7,8 @@ use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation},
         model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, ContentId,
-            ModerationRequestContent, ProfileInternal, ProfileLink, Location, AuthPair, SignInWithInfo,
+            Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, AuthPair, ContentId,
+            Location, ModerationRequestContent, ProfileInternal, ProfileLink, SignInWithInfo,
         },
     },
     config::Config,
@@ -17,14 +17,18 @@ use crate::{
 };
 
 use super::{
-    cache::{CacheError, DatabaseCache, WriteCacheJson, CachedProfile},
+    cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
     current::CurrentDataWriteCommands,
     file::{file::ImageSlot, utils::FileDir},
     history::write::HistoryWriteCommands,
+    index::{
+        LocationIndexIteratorGetter, LocationIndexIteratorHandle, LocationIndexWriteHandle,
+        LocationIndexWriterGetter,
+    },
     sqlite::{
         CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
-        SqliteUpdateJson, SqliteSelectJson,
-    }, index::{LocationIndexWriteHandle, LocationIndexIteratorHandle, LocationIndexIteratorGetter, LocationIndexWriterGetter},
+        SqliteSelectJson, SqliteUpdateJson,
+    },
 };
 
 pub struct NoId;
@@ -172,17 +176,26 @@ impl<'a> WriteCommands<'a> {
 
         // TODO: Use transactions here. One for current and other for history.
 
-        let id = account_commands.store_account_id(id_light).await.convert(id_light)?;
+        let id = account_commands
+            .store_account_id(id_light)
+            .await
+            .convert(id_light)?;
 
         history.store_account_id(id).await.convert(id)?;
 
         cache.insert_account_if_not_exists(id).await.convert(id)?;
 
         account_commands.store_api_key(id, None).await.convert(id)?;
-        account_commands.store_refresh_token(id, None).await.convert(id)?;
+        account_commands
+            .store_refresh_token(id, None)
+            .await
+            .convert(id)?;
 
         if config.components().account {
-            account_commands.store_account(id, &account).await.convert(id)?;
+            account_commands
+                .store_account(id, &account)
+                .await
+                .convert(id)?;
 
             history.store_account(id, &account).await.convert(id)?;
 
@@ -238,7 +251,13 @@ impl<'a> WriteCommands<'a> {
         pair: AuthPair,
         address: Option<SocketAddr>,
     ) -> Result<(), DatabaseError> {
-        let current_access_token = self.current_write.read().account().access_token(id).await.convert(id)?;
+        let current_access_token = self
+            .current_write
+            .read()
+            .account()
+            .access_token(id)
+            .await
+            .convert(id)?;
 
         self.current()
             .account()
@@ -253,16 +272,18 @@ impl<'a> WriteCommands<'a> {
             .convert(id)?;
 
         self.cache
-            .update_access_token_and_connection(id.as_light(), current_access_token, pair.access, address)
+            .update_access_token_and_connection(
+                id.as_light(),
+                current_access_token,
+                pair.access,
+                address,
+            )
             .await
             .convert(id)
     }
 
     /// Remove current connection address, access and refresh tokens.
-    pub async fn logout(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DatabaseError> {
+    pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
         self.current()
             .account()
             .update_refresh_token(id, None)
@@ -281,7 +302,12 @@ impl<'a> WriteCommands<'a> {
         remove_access_token: bool,
     ) -> Result<(), DatabaseError> {
         let current_access_token = if remove_access_token {
-            self.current_write.read().account().access_token(id).await.convert(id)?
+            self.current_write
+                .read()
+                .account()
+                .access_token(id)
+                .await
+                .convert(id)?
         } else {
             None
         };
@@ -444,25 +470,38 @@ impl<'a> WriteCommands<'a> {
         public: bool,
         update_only_if_no_value: bool,
     ) -> Result<(), DatabaseError> {
-        let (visiblity, location, profile_link) = self.cache.write_cache(id.as_light(), |e| {
-            let p = e.profile.as_mut().ok_or(CacheError::InitFeatureNotEnabled)?;
+        let (visiblity, location, profile_link) = self
+            .cache
+            .write_cache(id.as_light(), |e| {
+                let p = e
+                    .profile
+                    .as_mut()
+                    .ok_or(CacheError::InitFeatureNotEnabled)?;
 
-            // Handle race condition between remote fetch and update.
-            // Update will override the initial fetch.
-            if update_only_if_no_value {
-                if p.public.is_none() {
+                // Handle race condition between remote fetch and update.
+                // Update will override the initial fetch.
+                if update_only_if_no_value {
+                    if p.public.is_none() {
+                        p.public = Some(public);
+                    }
+                } else {
                     p.public = Some(public);
                 }
-            } else {
-                p.public = Some(public);
-            }
 
-            Ok((p.public.unwrap_or_default(), p.location.current_position, ProfileLink::new(id.as_light(), &p.data)))
-        }).await.convert(id)?;
+                Ok((
+                    p.public.unwrap_or_default(),
+                    p.location.current_position,
+                    ProfileLink::new(id.as_light(), &p.data),
+                ))
+            })
+            .await
+            .convert(id)?;
 
         let index = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
         if visiblity {
-            index.update_profile_link(id.as_light(), profile_link, location).await;
+            index
+                .update_profile_link(id.as_light(), profile_link, location)
+                .await;
         } else {
             index.remove_profile_link(id.as_light(), location).await;
         }
@@ -475,11 +514,12 @@ impl<'a> WriteCommands<'a> {
         id: AccountIdInternal,
         coordinates: Location,
     ) -> Result<(), DatabaseError> {
-        let location = self.cache
-            .read_cache(id.as_light(), |e|
-            {
-                e.profile.as_ref().map(|p| p.location.clone()) }
-            ).await
+        let location = self
+            .cache
+            .read_cache(id.as_light(), |e| {
+                e.profile.as_ref().map(|p| p.location.clone())
+            })
+            .await
             .convert(id)?
             .ok_or(DatabaseError::FeatureDisabled)?;
 
@@ -488,8 +528,13 @@ impl<'a> WriteCommands<'a> {
 
         // TODO: Create new database table for location.
         // TODO: Also update history?
-        new_location_key.update_json(id, &self.current()).await.change_context(DatabaseError::Sqlite)?;
-        write_to_index.update_profile_location(id.as_light(), location.current_position, new_location_key).await;
+        new_location_key
+            .update_json(id, &self.current())
+            .await
+            .change_context(DatabaseError::Sqlite)?;
+        write_to_index
+            .update_profile_location(id.as_light(), location.current_position, new_location_key)
+            .await;
 
         Ok(())
     }
@@ -564,35 +609,52 @@ impl<'a> WriteCommandsAccount<'a> {
         &self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileLink>, DatabaseError> {
-        let location = self.cache.read_cache(id.as_light(), |e| e.profile.as_ref().map(|p| p.location.clone())).await
+        let location = self
+            .cache
+            .read_cache(id.as_light(), |e| {
+                e.profile.as_ref().map(|p| p.location.clone())
+            })
+            .await
             .convert(id)?
             .ok_or(DatabaseError::FeatureDisabled)?;
 
         let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
         let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await;
-        self.cache.write_cache(id.as_light(), |e|
-        {
-            e.profile.as_mut().map(move |p| p.location.current_iterator = next_state);
-            Ok(())
-        }).await.convert(id)?;
+        self.cache
+            .write_cache(id.as_light(), |e| {
+                e.profile
+                    .as_mut()
+                    .map(move |p| p.location.current_iterator = next_state);
+                Ok(())
+            })
+            .await
+            .convert(id)?;
 
         Ok(profiles.unwrap_or(Vec::new()))
     }
 
-    pub async fn reset_profile_iterator(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<(), DatabaseError> {
-        let location = self.cache.read_cache(id.as_light(), |e| e.profile.as_ref().map(|p| p.location.clone())).await
+    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
+        let location = self
+            .cache
+            .read_cache(id.as_light(), |e| {
+                e.profile.as_ref().map(|p| p.location.clone())
+            })
+            .await
             .convert(id)?
             .ok_or(DatabaseError::FeatureDisabled)?;
 
         let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
-        let next_state = iterator.reset_iterator(location.current_iterator, location.current_position);
-        self.cache.write_cache(id.as_light(), |e| {
-            e.profile.as_mut().map(move |p| p.location.current_iterator = next_state);
-            Ok(())
-        }).await.convert(id)?;
+        let next_state =
+            iterator.reset_iterator(location.current_iterator, location.current_position);
+        self.cache
+            .write_cache(id.as_light(), |e| {
+                e.profile
+                    .as_mut()
+                    .map(move |p| p.location.current_iterator = next_state);
+                Ok(())
+            })
+            .await
+            .convert(id)?;
         Ok(())
     }
 

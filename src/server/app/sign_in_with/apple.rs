@@ -1,20 +1,23 @@
-
-
-
 use std::{sync::Arc, time::Instant};
 
-use api_client::{apis::{accountinternal_api, configuration::Configuration, mediainternal_api}, models::boolean_setting};
+use api_client::{
+    apis::{accountinternal_api, configuration::Configuration, mediainternal_api},
+    models::boolean_setting,
+};
 use axum::{
     routing::{get, post},
     Router,
 };
 
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{IntoReport, Result, ResultExt};
 
-use headers::{HeaderMapExt, CacheControl};
-use hyper::{StatusCode, Method};
+use headers::{CacheControl, HeaderMapExt};
+use hyper::{Method, StatusCode};
 
-use jsonwebtoken::{jwk::{JwkSet, Jwk}, DecodingKey, Validation};
+use jsonwebtoken::{
+    jwk::{Jwk, JwkSet},
+    DecodingKey, Validation,
+};
 use serde::Deserialize;
 use serde_json::Value;
 use tokio::sync::RwLock;
@@ -24,9 +27,12 @@ use url::Url;
 use crate::{
     api::{
         self,
-        model::{Account, AccountIdInternal, AccountState, Capabilities, BooleanSetting, Profile, ProfileInternal},
+        model::{
+            Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
+            ProfileInternal,
+        },
     },
-    config::{InternalApiUrls, Config},
+    config::{Config, InternalApiUrls},
     utils::IntoReportExt,
 };
 
@@ -48,13 +54,14 @@ pub struct SignInWithAppleManager {
 
 impl SignInWithAppleManager {
     pub fn new(config: Arc<Config>, client: reqwest::Client) -> Self {
-        Self {
-            client,
-            config,
-        }
+        Self { client, config }
     }
-    pub async fn validate_apple_token(&self, token: String) -> Result<AppleAccountId, SignInWithAppleError> {
-        let not_validated_header = jsonwebtoken::decode_header(&token).into_error(SignInWithAppleError::InvalidTokenHeader)?;
+    pub async fn validate_apple_token(
+        &self,
+        token: String,
+    ) -> Result<AppleAccountId, SignInWithAppleError> {
+        let not_validated_header = jsonwebtoken::decode_header(&token)
+            .into_error(SignInWithAppleError::InvalidTokenHeader)?;
         info!("{:?}", &not_validated_header);
 
         Err(SignInWithAppleError::InvalidToken).into_report()

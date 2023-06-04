@@ -31,13 +31,14 @@ use self::{
     current::SqliteReadCommands,
     file::{read::FileReadCommands, utils::FileDir, FileError},
     history::read::HistoryReadCommands,
+    index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
     sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
         SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
     },
     utils::{AccountIdManager, ApiKeyManager},
-    write::{WriteCommands, WriteCommandsAccount}, index::{LocationIndexManager, LocationIndexWriterGetter, LocationIndexIteratorGetter},
+    write::{WriteCommands, WriteCommandsAccount},
 };
 use crate::utils::IntoReportExt;
 
@@ -188,10 +189,10 @@ impl DatabaseManager {
             read_commands,
             LocationIndexIteratorGetter::new(&index),
             LocationIndexWriterGetter::new(&index),
-            &config
+            &config,
         )
-            .await
-            .change_context(DatabaseError::Cache)?;
+        .await
+        .change_context(DatabaseError::Cache)?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
             sqlite_write: CurrentDataWriteHandle::new(sqlite_write),

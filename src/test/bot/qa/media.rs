@@ -11,13 +11,7 @@ use super::{
 
 use crate::test;
 
-pub const MEDIA_TESTS: &[SingleTest] = &[
-    test!(
-        "Save image to slot: max 3 slots",
-        [
-            Register,
-            Login,
-            AssertFailure(SendImageToSlot(3)),
-        ]
-    )
-];
+pub const MEDIA_TESTS: &[SingleTest] = &[test!(
+    "Save image to slot: max 3 slots",
+    [Register, Login, AssertFailure(SendImageToSlot(3)),]
+)];

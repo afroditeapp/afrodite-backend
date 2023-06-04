@@ -6,7 +6,7 @@ mod server;
 
 use std::{sync::Arc, time::Duration};
 
-use api_client::{manual_additions, apis::configuration::Configuration};
+use api_client::{apis::configuration::Configuration, manual_additions};
 use tokio::{
     select, signal,
     sync::{mpsc, watch},
@@ -46,9 +46,7 @@ impl TestRunner {
         let mut task_number = 0;
         let api_urls = Arc::new(self.test_config.server.api_urls.clone());
 
-        info!(
-            "Waiting API availability..."
-        );
+        info!("Waiting API availability...");
 
         let quit_now = select! {
             result = signal::ctrl_c() => {
@@ -66,9 +64,7 @@ impl TestRunner {
         };
 
         if !quit_now {
-            info!(
-                "...API ready"
-            );
+            info!("...API ready");
 
             info!(
                 "Task count: {}, Bot count per task: {}",
@@ -116,7 +112,6 @@ impl TestRunner {
         server.close().await;
     }
 }
-
 
 async fn wait_that_servers_start(api: ApiClient) {
     check_api(api.account()).await;

@@ -15,7 +15,7 @@ use std::collections::HashSet;
 
 use tokio_stream::StreamExt;
 
-use super::super::super::sqlite::{SqliteReadHandle};
+use super::super::super::sqlite::SqliteReadHandle;
 
 use crate::api::media::data::{
     ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
@@ -29,9 +29,7 @@ use crate::server::database::file::file::ImageSlot;
 
 use crate::server::database::read::ReadResult;
 
-
 use crate::read_json;
-
 
 pub struct CurrentReadAccountCommands<'a> {
     handle: &'a SqliteReadHandle,
@@ -95,7 +93,12 @@ impl<'a> CurrentReadAccountCommands<'a> {
         )
         .fetch_one(self.handle.pool())
         .await
-        .map(|result| result.refresh_token.as_deref().map(RefreshToken::from_bytes))
+        .map(|result| {
+            result
+                .refresh_token
+                .as_deref()
+                .map(RefreshToken::from_bytes)
+        })
         .into_error(SqliteDatabaseError::Fetch)
         .map_err(|e| e.into())
     }
@@ -137,10 +140,14 @@ impl<'a> CurrentReadAccountCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)
         .map_err(|e| e.into())
-        .map(|r| r.map(|r| AccountIdInternal { account_id: r.account_id, account_row_id: r.account_row_id }))
+        .map(|r| {
+            r.map(|r| AccountIdInternal {
+                account_id: r.account_id,
+                account_row_id: r.account_row_id,
+            })
+        })
     }
 }
-
 
 #[async_trait]
 impl SqliteSelectJson for Account {

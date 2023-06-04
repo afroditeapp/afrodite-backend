@@ -1,7 +1,8 @@
 use std::{
     io::Write,
     net::SocketAddr,
-    path::{Path, PathBuf}, num::{NonZeroU16, NonZeroU8},
+    num::{NonZeroU16, NonZeroU8},
+    path::{Path, PathBuf},
 };
 
 use error_stack::{Report, Result, ResultExt};
@@ -21,7 +22,6 @@ use crate::utils::IntoReportExt;
 // Suomen eteläisin kärki (Hanko) ja Suomen itäisin piste
 // latitude_bottom_right = 59.8
 // longitude_bottom_right = 31.58
-
 
 pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
@@ -144,7 +144,6 @@ pub struct ExternalServices {
     pub account_internal: Option<Url>,
     pub media_internal: Option<Url>,
 }
-
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LocationConfig {

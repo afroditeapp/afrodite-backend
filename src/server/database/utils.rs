@@ -8,7 +8,13 @@ use crate::{
     utils::ConvertCommandError,
 };
 
-use super::{cache::{CacheError, DatabaseCache}, sqlite::SqliteReadHandle, current::SqliteReadCommands, write::DatabaseId, DatabaseError};
+use super::{
+    cache::{CacheError, DatabaseCache},
+    current::SqliteReadCommands,
+    sqlite::SqliteReadHandle,
+    write::DatabaseId,
+    DatabaseError,
+};
 
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()
@@ -27,8 +33,14 @@ impl<'a> ApiKeyManager<'a> {
         self.cache.access_token_exists(api_key).await
     }
 
-    pub async fn api_key_and_connection_exists(&self, api_key: &ApiKey, connection: SocketAddr) -> Option<AccountIdInternal> {
-        self.cache.access_token_and_connection_exists(api_key, connection).await
+    pub async fn api_key_and_connection_exists(
+        &self,
+        api_key: &ApiKey,
+        connection: SocketAddr,
+    ) -> Option<AccountIdInternal> {
+        self.cache
+            .access_token_and_connection_exists(api_key, connection)
+            .await
     }
 
     // pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {
@@ -47,7 +59,10 @@ pub struct AccountIdManager<'a> {
 
 impl<'a> AccountIdManager<'a> {
     pub fn new(cache: &'a DatabaseCache, read_handle: &'a SqliteReadHandle) -> Self {
-        Self { cache, read_handle: SqliteReadCommands::new(read_handle) }
+        Self {
+            cache,
+            read_handle: SqliteReadCommands::new(read_handle),
+        }
     }
 
     pub async fn get_internal_id(
@@ -61,6 +76,10 @@ impl<'a> AccountIdManager<'a> {
         &self,
         id: GoogleAccountId,
     ) -> Result<Option<AccountIdInternal>, DatabaseError> {
-        self.read_handle.account().get_account_with_google_account_id(id).await.convert(DatabaseId::Empty)
+        self.read_handle
+            .account()
+            .get_account_with_google_account_id(id)
+            .await
+            .convert(DatabaseId::Empty)
     }
 }

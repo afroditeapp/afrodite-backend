@@ -23,12 +23,13 @@
 //! Matrix indexes are used like a key for HashMap<(u16,u16), Vec<AccountId>>
 
 use std::{
+    fmt::Debug,
     num::NonZeroU16,
     ops::Index,
     sync::{
         atomic::{AtomicBool, AtomicU16, Ordering},
         Arc,
-    }, fmt::Debug,
+    },
 };
 
 use nalgebra::{DMatrix, Dyn, VecStorage};
@@ -235,7 +236,7 @@ impl LocationIndexIteratorState {
             iter_init_position_y: self.iter_init_position_y,
             direction: self.direction,
             completed: self.completed,
-            visited_max_corners: self.visited_max_corners
+            visited_max_corners: self.visited_max_corners,
         }
     }
 }
@@ -252,7 +253,7 @@ impl From<LocationIndexIterator> for LocationIndexIteratorState {
             iter_init_position_y: value.iter_init_position_y,
             direction: value.direction,
             completed: value.completed,
-            visited_max_corners: value.visited_max_corners
+            visited_max_corners: value.visited_max_corners,
         }
     }
 }

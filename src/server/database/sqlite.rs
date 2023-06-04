@@ -54,7 +54,6 @@ pub enum SqliteDatabaseError {
     #[error("Data format conversion error")]
     DataFormatConversion,
 
-
     #[error("Content slot not empty")]
     ContentSlotNotEmpty,
     #[error("ModerationRequestContentIsInvalid")]

@@ -4,10 +4,12 @@ use axum::{extract::Path, Json};
 
 use hyper::StatusCode;
 
-use crate::api::{model::{AccountIdLight, Profile, BooleanSetting}, GetUsers, ReadDatabase, GetInternalApi};
+use crate::api::{
+    model::{AccountIdLight, BooleanSetting, Profile},
+    GetInternalApi, GetUsers, ReadDatabase,
+};
 
 use tracing::{error, info};
-
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
@@ -55,7 +57,6 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadDatabase +
     }
 }
 
-
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
     "/internal/media_api/visibility/:account_id/:value";
 
@@ -70,7 +71,9 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn internal_post_update_profile_image_visibility<S: ReadDatabase + GetUsers + GetInternalApi>(
+pub async fn internal_post_update_profile_image_visibility<
+    S: ReadDatabase + GetUsers + GetInternalApi,
+>(
     Path(account_id): Path<AccountIdLight>,
     Path(value): Path<BooleanSetting>,
     Json(profile): Json<Profile>,
@@ -85,8 +88,12 @@ pub async fn internal_post_update_profile_image_visibility<S: ReadDatabase + Get
             StatusCode::NOT_FOUND
         })?;
 
-    state.internal_api().media_api_profile_visiblity(account_id, value, profile).await.map_err(|e| {
-        error!("{:?}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })
+    state
+        .internal_api()
+        .media_api_profile_visiblity(account_id, value, profile)
+        .await
+        .map_err(|e| {
+            error!("{:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
 }

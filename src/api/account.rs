@@ -7,10 +7,11 @@ use futures::FutureExt;
 use hyper::StatusCode;
 
 use self::data::{
-    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, BooleanSetting, DeleteStatus, SignInWithLoginInfo, LoginResult, RefreshToken, AuthPair, SignInWithInfo, GoogleAccountId,
+    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, AuthPair, BooleanSetting,
+    DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 
-use super::{GetConfig, GetInternalApi, utils::{}, SignInWith};
+use super::{GetConfig, GetInternalApi, SignInWith};
 
 use tracing::error;
 
@@ -35,7 +36,9 @@ pub const PATH_REGISTER: &str = "/account_api/register";
 pub async fn post_register<S: WriteDatabase + GetConfig>(
     state: S,
 ) -> Result<Json<AccountIdLight>, StatusCode> {
-    register_impl(&state, SignInWithInfo::default()).await.map(|id| id.into())
+    register_impl(&state, SignInWithInfo::default())
+        .await
+        .map(|id| id.into())
 }
 
 pub async fn register_impl<S: WriteDatabase + GetConfig>(
@@ -73,7 +76,7 @@ pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
     Json(id): Json<AccountIdLight>,
     state: S,
 ) -> Result<Json<LoginResult>, StatusCode> {
-   login_impl(id, state).await.map(|d| d.into())
+    login_impl(id, state).await.map(|d| d.into())
 }
 
 async fn login_impl<S: GetApiKeys + WriteDatabase + GetUsers>(
@@ -109,7 +112,6 @@ async fn login_impl<S: GetApiKeys + WriteDatabase + GetUsers>(
     Ok(result.into())
 }
 
-
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 
 /// Start new session with sign in with Apple or Google. Creates new account if
@@ -124,19 +126,25 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_sign_in_with_login<S: GetApiKeys + WriteDatabase + GetUsers + SignInWith + GetConfig>(
+pub async fn post_sign_in_with_login<
+    S: GetApiKeys + WriteDatabase + GetUsers + SignInWith + GetConfig,
+>(
     Json(tokens): Json<SignInWithLoginInfo>,
     state: S,
 ) -> Result<Json<LoginResult>, StatusCode> {
-
     if let Some(google) = tokens.google_token {
-        let info = state.sign_in_with_manager().validate_google_token(google).await
+        let info = state
+            .sign_in_with_manager()
+            .validate_google_token(google)
+            .await
             .map_err(|e| {
                 error!("{e:?}");
                 StatusCode::INTERNAL_SERVER_ERROR
             })?;
         let google_id = GoogleAccountId(info.id);
-        let already_existing_account = state.users().get_account_with_google_account_id(google_id.clone())
+        let already_existing_account = state
+            .users()
+            .get_account_with_google_account_id(google_id.clone())
             .await
             .map_err(|e| {
                 error!("{e:?}");
@@ -144,17 +152,28 @@ pub async fn post_sign_in_with_login<S: GetApiKeys + WriteDatabase + GetUsers + 
             })?;
 
         if let Some(already_existing_account) = already_existing_account {
-            login_impl(already_existing_account.as_light(), state).await.map(|d| d.into())
+            login_impl(already_existing_account.as_light(), state)
+                .await
+                .map(|d| d.into())
         } else {
-            let id = register_impl(&state, SignInWithInfo { google_account_id: Some(google_id) }).await?;
+            let id = register_impl(
+                &state,
+                SignInWithInfo {
+                    google_account_id: Some(google_id),
+                },
+            )
+            .await?;
             login_impl(id, state).await.map(|d| d.into())
         }
     } else if let Some(apple) = tokens.apple_token {
-        let info = state.sign_in_with_manager().validate_apple_token(apple).await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        let info = state
+            .sign_in_with_manager()
+            .validate_apple_token(apple)
+            .await
+            .map_err(|e| {
+                error!("{e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
         // if validate_sign_in_with_apple_token(apple).await.unwrap() {
         //     let key = ApiKey::generate_new();
@@ -377,7 +396,9 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_setting_profile_visiblity<S: GetApiKeys + WriteDatabase + ReadDatabase + GetInternalApi>(
+pub async fn put_setting_profile_visiblity<
+    S: GetApiKeys + WriteDatabase + ReadDatabase + GetInternalApi,
+>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(new_value): Json<BooleanSetting>,
     state: S,
@@ -398,13 +419,17 @@ pub async fn put_setting_profile_visiblity<S: GetApiKeys + WriteDatabase + ReadD
         })?;
 
     if account.state() != AccountState::Normal {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR)
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    state.internal_api().profile_api_set_profile_visiblity(id, new_value).await.map_err(|e| {
-        error!("put_setting_profile_visiblity: {e:?}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    state
+        .internal_api()
+        .profile_api_set_profile_visiblity(id, new_value)
+        .await
+        .map_err(|e| {
+            error!("put_setting_profile_visiblity: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok(())
 }
