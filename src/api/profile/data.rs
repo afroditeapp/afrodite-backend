@@ -9,9 +9,6 @@ use crate::api::{media::data::ContentId, model::AccountIdLight};
 pub struct ProfileInternal {
     pub name: String,
     pub profile_text: String,
-    pub image1: Option<ContentId>,
-    pub image2: Option<ContentId>,
-    pub image3: Option<ContentId>,
     /// Version used for caching profile in client side.
     pub version_uuid: ProfileVersion,
 }
@@ -21,9 +18,6 @@ pub struct ProfileInternal {
 pub struct Profile {
     pub name: String,
     pub profile_text: String,
-    pub image1: Option<ContentId>,
-    pub image2: Option<ContentId>,
-    pub image3: Option<ContentId>,
     /// Version used for caching profile in client side.
     pub version: ProfileVersion,
 }
@@ -32,9 +26,6 @@ impl Profile {
     pub fn into_update(self) -> ProfileUpdate {
         ProfileUpdate {
             profile_text: self.profile_text,
-            image1: self.image1,
-            image2: self.image2,
-            image3: self.image3,
         }
     }
 }
@@ -44,9 +35,6 @@ impl From<ProfileInternal> for Profile {
         Self {
             name: value.name,
             profile_text: value.profile_text,
-            image1: value.image1,
-            image2: value.image2,
-            image3: value.image3,
             version: value.version_uuid,
         }
     }
@@ -55,9 +43,6 @@ impl From<ProfileInternal> for Profile {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default)]
 pub struct ProfileUpdate {
     pub profile_text: String,
-    pub image1: Option<ContentId>,
-    pub image2: Option<ContentId>,
-    pub image3: Option<ContentId>,
 }
 
 impl Profile {

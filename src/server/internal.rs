@@ -314,7 +314,7 @@ impl<'a> InternalApiManager<'a> {
                 .change_context(InternalApiError::DatabaseError)?
                 .ok_or(InternalApiError::MissingValue)?;
 
-            if request.content.camera() {
+            if request.content.slot_1_is_security_image() {
                 Ok(())
             } else {
                 Err(InternalApiError::MissingValue.into())

@@ -7,19 +7,8 @@ use uuid::Uuid;
 use crate::api::model::{AccountIdInternal, AccountIdLight};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct ImageFileName {
-    image_file: String,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotNumber {
     pub slot_number: u8,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct ImageFile {
-    #[schema(value_type = String, format = Binary)]
-    data: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -41,8 +30,12 @@ impl ModerationRequestContent {
             .flatten()
     }
 
-    pub fn camera(&self) -> bool {
+    pub fn slot_1_is_security_image(&self) -> bool {
         self.camera_image
+    }
+
+    pub fn slot_1(&self) -> ContentId {
+        self.image1
     }
 }
 
@@ -89,7 +82,7 @@ pub enum StateParsingError {
     ParsingError(i64),
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, ToSchema)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, ToSchema, PartialEq)]
 #[repr(i64)]
 pub enum ModerationRequestState {
     Waiting = 0,
@@ -134,6 +127,16 @@ pub enum ContentState {
     /// Content is moderated as denied. Making new moderation request removes
     /// the content.
     ModeratedAsDenied = 3,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+#[repr(i64)]
+pub enum MediaContentType {
+    NotSet = 0,
+    /// Normal image.
+    Normal = 1,
+    /// Security image.
+    Security = 2,
 }
 
 // TODO: Remove content with state ModeratedAsDenied when new moderation request
@@ -266,6 +269,7 @@ impl ContentIdInternal {
 #[derive(Debug, Copy, Clone)]
 pub struct ModerationId {
     pub request_id: ModerationRequestId,
+    /// Moderator AccountId
     pub account_id: AccountIdInternal,
 }
 
@@ -285,4 +289,40 @@ pub struct ModerationRequestId {
 #[derive(Debug, Copy, Clone)]
 pub struct ModerationRequestQueueNumber {
     pub number: i64,
+}
+
+#[derive(Debug, Clone)]
+pub struct CurrentAccountMediaInternal {
+    pub security_content_id: Option<ContentIdInternal>,
+    pub profile_content_id: Option<ContentIdInternal>,
+    pub grid_crop_size: f64,
+    pub grid_crop_x: f64,
+    pub grid_crop_y: f64,
+}
+
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct PrimaryImage {
+    pub content_id: Option<ContentId>,
+    pub grid_crop_size: f64,
+    pub grid_crop_x: f64,
+    pub grid_crop_y: f64,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct SecurityImage {
+    pub content_id: Option<ContentId>,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct ImageAccessCheck {
+    /// If false image access is allowed when profile is set as public.
+    /// If true image access is allowed when users are a match.
+    pub is_match: bool,
+}
+
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct NormalImages {
+    data: Vec<ContentId>,
 }

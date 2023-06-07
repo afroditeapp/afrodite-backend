@@ -56,9 +56,6 @@ CREATE TABLE IF NOT EXISTS AccountSetup(
 CREATE TABLE IF NOT EXISTS Profile(
     account_row_id  INTEGER PRIMARY KEY,
     version_uuid    BLOB    NOT NULL,
-    image1          BLOB                DEFAULT NULL, -- Images can be not set
-    image2          BLOB                DEFAULT NULL,
-    image3          BLOB                DEFAULT NULL,
     location_key_x  INTEGER NOT NULL    DEFAULT 0,
     location_key_y  INTEGER NOT NULL    DEFAULT 0,
     name            TEXT    NOT NULL    DEFAULT '',
@@ -71,11 +68,33 @@ CREATE TABLE IF NOT EXISTS Profile(
 
 -- Tables for media features
 
+CREATE TABLE IF NOT EXISTS CurrentAccountMedia(        -- Currently selected images for account
+    account_row_id            INTEGER NOT NULL,
+    security_content_row_id   INTEGER,
+    profile_content_row_id    INTEGER,
+    grid_crop_size            REAL NOT NULL DEFAULT 1.0, -- image's max square size multipler
+    grid_crop_x               REAL NOT NULL DEFAULT 0.0, -- X coordinate for square top left corner. Counted from top left corner of the original image.
+    grid_crop_y               REAL NOT NULL DEFAULT 0.0, -- Y coordinate for square top left corner. Counted from top left corner of the original image.
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (security_content_row_id)
+        REFERENCES MediaContent (content_row_id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_content_row_id)
+        REFERENCES MediaContent (content_row_id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS MediaContent(
     content_row_id   INTEGER PRIMARY KEY,
     content_id       BLOB    NOT NULL       UNIQUE,  -- Content UUID should be unique
     account_row_id   INTEGER NOT NULL,
     moderation_state INTEGER NOT NULL,
+    content_type     INTEGER NOT NULL       DEFAULT 0, -- Moderator sets this. 0 not set, 1 normal, 2 security
     slot_number      INTEGER NOT NULL,
     FOREIGN KEY (account_row_id)
         REFERENCES AccountId (account_row_id)
@@ -124,6 +143,19 @@ CREATE TABLE IF NOT EXISTS MediaModeration(
             ON UPDATE CASCADE,
     FOREIGN KEY (request_row_id)
         REFERENCES MediaModerationRequest (request_row_id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Profile(
+    account_row_id  INTEGER PRIMARY KEY,
+    version_uuid    BLOB    NOT NULL,
+    location_key_x  INTEGER NOT NULL    DEFAULT 0,
+    location_key_y  INTEGER NOT NULL    DEFAULT 0,
+    name            TEXT    NOT NULL    DEFAULT '',
+    profile_text    TEXT    NOT NULL    DEFAULT '',
+    FOREIGN KEY (account_row_id)
+        REFERENCES AccountId (account_row_id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

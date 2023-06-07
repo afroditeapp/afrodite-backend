@@ -50,7 +50,7 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadDatabase +
         })?
         .ok_or(StatusCode::NOT_FOUND)?;
 
-    if request.content.camera() {
+    if request.content.slot_1_is_security_image() {
         Ok(())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)

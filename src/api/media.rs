@@ -1,7 +1,7 @@
 pub mod data;
 pub mod internal;
 
-use axum::extract::{BodyStream, Path};
+use axum::extract::{BodyStream, Path, Query};
 
 use axum::{Json, TypedHeader};
 
@@ -15,7 +15,7 @@ use crate::server::database::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, HandleModerationRequest, ModerationList, ModerationRequest, ModerationRequestContent,
+    ContentId, HandleModerationRequest, ModerationList, ModerationRequest, ModerationRequestContent, PrimaryImage, SecurityImage, ImageAccessCheck,
 };
 
 use super::model::AccountIdLight;
@@ -24,11 +24,15 @@ use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
+// TODO:
+//       Security image should only be downloadable for the owner of the image
+//       or admin with moderation rights.
+
 /// Get profile image
 #[utoipa::path(
     get,
     path = "/media_api/image/{account_id}/{content_id}",
-    params(AccountIdLight, ContentId),
+    params(AccountIdLight, ContentId, ImageAccessCheck),
     responses(
         (status = 200, description = "Get image file.", body = Vec<u8>, content_type = "image/jpeg"),
         (status = 401, description = "Unauthorized."),
@@ -39,6 +43,7 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 pub async fn get_image<S: ReadDatabase>(
     Path(account_id): Path<AccountIdLight>,
     Path(content_id): Path<ContentId>,
+    Query(access_check): Query<ImageAccessCheck>,
     state: S,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
     // TODO: Add access restrictions.
@@ -56,9 +61,98 @@ pub async fn get_image<S: ReadDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    // TODO: If visiblity values are not cached then ask from profile server.
-
     Ok((TypedHeader(ContentType::jpeg()), data))
+}
+
+pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:account_id";
+
+/// Get current public image for selected profile
+#[utoipa::path(
+    get,
+    path = "/media_api/primary_image_info/{account_id}",
+    params(AccountIdLight, ContentId, ImageAccessCheck),
+    responses(
+        (status = 200, description = "Get primary image info.", body = PrimaryImage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn get_primary_image_info<S: ReadDatabase>(
+    Path(account_id): Path<AccountIdLight>,
+    Query(access_check): Query<ImageAccessCheck>,
+    state: S,
+) -> Result<Json<PrimaryImage>, StatusCode> {
+
+    Err(StatusCode::UNAUTHORIZED)
+}
+
+pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
+
+/// Get current security image for selected profile. Only for admins.
+#[utoipa::path(
+    get,
+    path = "/media_api/security_image_info/{account_id}",
+    params(AccountIdLight, ContentId),
+    responses(
+        (status = 200, description = "Get security image info.", body = SecurityImage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn get_security_image_info<S: ReadDatabase>(
+    Path(account_id): Path<AccountIdLight>,
+    state: S,
+) -> Result<Json<SecurityImage>, StatusCode> {
+
+    Err(StatusCode::UNAUTHORIZED)
+}
+
+pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_info/:account_id";
+
+/// Get list of all normal images on the server for one account.
+#[utoipa::path(
+    get,
+    path = "/media_api/all_normal_images/{account_id}",
+    params(AccountIdLight, ContentId),
+    responses(
+        (status = 200, description = "Get list of available primary images.", body = NormalImages),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn get_all_normal_images<S: ReadDatabase>(
+    Path(account_id): Path<AccountIdLight>,
+    state: S,
+) -> Result<Json<SecurityImage>, StatusCode> {
+
+    Err(StatusCode::UNAUTHORIZED)
+}
+
+pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image/:account_id";
+
+/// Set primary image for account. Image content ID can not be empty.
+#[utoipa::path(
+    put,
+    path = "/media_api/primary_image/{account_id}",
+    params(AccountIdLight, ContentId),
+    request_body(content = PrimaryImage),
+    responses(
+        (status = 200, description = "Primary image update successfull"),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn put_primary_image<S: ReadDatabase>(
+    Path(account_id): Path<AccountIdLight>,
+    Json(new_image): Json<PrimaryImage>,
+    state: S,
+) -> Result<Json<SecurityImage>, StatusCode> {
+
+    Err(StatusCode::UNAUTHORIZED)
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";

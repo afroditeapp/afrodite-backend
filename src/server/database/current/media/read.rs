@@ -7,7 +7,7 @@ use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 
 use crate::api::media::data::{
     ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
-    ModerationRequestQueueNumber, ModerationRequestState,
+    ModerationRequestQueueNumber, ModerationRequestState, CurrentAccountMediaInternal,
 };
 use crate::api::model::{
     AccountIdInternal, AccountIdLight, ContentId, ModerationRequestContent,
@@ -25,6 +25,67 @@ pub struct CurrentReadMediaCommands<'a> {
 impl<'a> CurrentReadMediaCommands<'a> {
     pub fn new(handle: &'a SqliteReadHandle) -> Self {
         Self { handle }
+    }
+
+    pub async fn get_current_account_media(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<CurrentAccountMediaInternal, SqliteDatabaseError> {
+        let request = sqlx::query!(
+            r#"
+            SELECT security_content_row_id,
+                profile_content_row_id,
+                grid_crop_size,
+                grid_crop_x,
+                grid_crop_y
+            FROM CurrentAccountMedia
+            WHERE account_row_id = ?
+            "#,
+            id.account_row_id,
+        )
+        .fetch_one(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        let security = if let Some(id) = request.security_content_row_id {
+            Some(self.get_content_id_from_row_id(id).await?)
+        } else {
+            None
+        };
+
+        let profile = if let Some(id) = request.profile_content_row_id {
+            Some(self.get_content_id_from_row_id(id).await?)
+        } else {
+            None
+        };
+
+        Ok(CurrentAccountMediaInternal {
+            security_content_id: security,
+            profile_content_id: profile,
+            grid_crop_size: request.grid_crop_size,
+            grid_crop_x: request.grid_crop_x,
+            grid_crop_y: request.grid_crop_y,
+        })
+    }
+
+    async fn get_content_id_from_row_id(
+        &self,
+        id: i64,
+    ) -> Result<ContentIdInternal, SqliteDatabaseError> {
+        let request = sqlx::query!(
+            r#"
+            SELECT content_id as "content_id: uuid::Uuid"
+            FROM MediaContent
+            WHERE account_row_id = ?
+            "#,
+            id,
+        )
+        .fetch_one(self.handle.pool())
+        .await
+        .map(|r| ContentIdInternal { content_id: r.content_id, content_row_id: id })
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        Ok(request)
     }
 
     pub async fn get_content_id_from_slot(

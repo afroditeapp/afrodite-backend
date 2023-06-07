@@ -29,9 +29,6 @@ impl SqliteSelectJson for ProfileInternal {
             ProfileInternal,
             r#"
             SELECT
-                image1 as "image1: _",
-                image2 as "image2: _",
-                image3 as "image3: _",
                 version_uuid as "version_uuid: _",
                 name,
                 profile_text

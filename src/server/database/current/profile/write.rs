@@ -53,12 +53,9 @@ impl SqliteUpdateJson for ProfileUpdateInternal {
         sqlx::query!(
             r#"
             UPDATE Profile
-            SET image1 = ?, image2 = ?, image3 = ?, version_uuid = ?
+            SET version_uuid = ?
             WHERE account_row_id = ?
             "#,
-            self.new_data.image1,
-            self.new_data.image2,
-            self.new_data.image3,
             self.version,
             id.account_row_id,
         )

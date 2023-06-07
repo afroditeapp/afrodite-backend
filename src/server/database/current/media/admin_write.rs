@@ -6,7 +6,7 @@ use crate::{
     api::{
         media::data::{
             ContentState, HandleModerationRequest, Moderation, ModerationId, ModerationRequestId,
-            ModerationRequestQueueNumber, ModerationRequestState,
+            ModerationRequestQueueNumber, ModerationRequestState, CurrentAccountMediaInternal, MediaContentType,
         },
         model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
@@ -223,6 +223,9 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
+        let currently_selected_images =
+            self.handle.read().media().get_current_account_media(moderation_request_owner).await?;
+
         let moderation_id = ModerationId {
             request_id: ModerationRequestId {
                 request_row_id: request.request_row_id,
@@ -240,7 +243,9 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             .into_error(SqliteDatabaseError::TransactionBegin)?;
 
         async fn actions(
-            transaction: &mut Transaction<'_, Sqlite>,
+            mut transaction: &mut Transaction<'_, Sqlite>,
+            moderation_request_owner: AccountIdInternal,
+            current_images_for_request_owner: CurrentAccountMediaInternal,
             moderation: ModerationId,
             state: ModerationRequestState,
             content: ModerationRequestContent,
@@ -254,11 +259,18 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
 
             for c in content.content() {
                 CurrentWriteMediaAdminCommands::update_content_state(
-                    transaction,
+                    &mut transaction,
                     c,
                     new_content_state,
+                    content.slot_1_is_security_image() && content.slot_1() == c
                 )
                 .await?;
+            }
+
+            if content.slot_1_is_security_image() &&
+                state == ModerationRequestState::Accepted &&
+                current_images_for_request_owner.security_content_id.is_none() {
+                CurrentWriteMediaAdminCommands::update_current_security_image(transaction, moderation_request_owner, content).await?;
             }
 
             let state_number = state as i64;
@@ -285,7 +297,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             ModerationRequestState::Denied
         };
 
-        match actions(&mut transaction, moderation_id, state, content).await {
+        match actions(&mut transaction, moderation_request_owner, currently_selected_images, moderation_id, state, content).await {
             Ok(()) => transaction
                 .commit()
                 .await
@@ -304,20 +316,51 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         }
     }
 
+    async fn update_current_security_image(
+        transaction: &mut Transaction<'_, Sqlite>,
+        moderation_request_owner: AccountIdInternal,
+        content: ModerationRequestContent,
+    ) -> Result<(), SqliteDatabaseError> {
+        let request_owner_id = moderation_request_owner.row_id();
+        let security_img_content_id = content.slot_1().content_id;
+        sqlx::query!(
+            r#"
+            UPDATE CurrentAccountMedia
+            SET security_content_row_id = mc.content_row_id
+            FROM (SELECT content_id, content_row_id FROM MediaContent) AS mc
+            WHERE account_row_id = ? AND mc.content_id = ?
+            "#,
+            request_owner_id,
+            security_img_content_id,
+        )
+        .execute(transaction)
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
     async fn update_content_state(
         transaction: &mut Transaction<'_, Sqlite>,
         content_id: ContentId,
         new_state: ContentState,
+        is_security: bool,
     ) -> Result<(), SqliteDatabaseError> {
         let state = new_state as i64;
+        let content_type = if is_security {
+            MediaContentType::Security as i64
+        } else {
+            MediaContentType::Normal as i64
+        };
 
         sqlx::query!(
             r#"
             UPDATE MediaContent
-            SET moderation_state = ?
+            SET moderation_state = ?, content_type = ?
             WHERE content_id = ?
             "#,
             state,
+            content_type,
             content_id,
         )
         .execute(transaction)

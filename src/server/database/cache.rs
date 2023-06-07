@@ -515,9 +515,6 @@ impl WriteCacheJson for ProfileUpdateInternal {
         cache
             .write_cache(id, |entry| {
                 entry.profile.as_mut().map(|d| &mut d.data).map(|data| {
-                    data.image1 = self.new_data.image1;
-                    data.image2 = self.new_data.image2;
-                    data.image3 = self.new_data.image3;
                     data.profile_text = self.new_data.profile_text.clone();
                     data.version_uuid = self.version;
                 });
