@@ -62,6 +62,7 @@ pub fn get_config() -> ArgsConfig {
                 )
                 .arg(arg!(--"microservice-media" "Start media API as microservice"))
                 .arg(arg!(--"microservice-profile" "Start profile API as microservice"))
+                .arg(arg!(--"microservice-chat" "Start chat API as microservice"))
                 .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
                 .arg(arg!(--"no-clean" "Do not remove created database files"))
                 .arg(arg!(--"update-profile" "Update profile continuously"))
@@ -107,6 +108,7 @@ pub fn get_config() -> ArgsConfig {
                         .unwrap(),
                     microservice_media: sub_matches.is_present("microservice-media"),
                     microservice_profile: sub_matches.is_present("microservice-profile"),
+                    microservice_chat: sub_matches.is_present("microservice-chat"),
                     log_debug: sub_matches.is_present("log-debug"),
                 },
             })
@@ -162,6 +164,7 @@ pub struct ServerConfig {
     pub test_database_dir: PathBuf,
     pub microservice_media: bool,
     pub microservice_profile: bool,
+    pub microservice_chat: bool,
     pub log_debug: bool,
 }
 

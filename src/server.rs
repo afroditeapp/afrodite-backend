@@ -294,6 +294,10 @@ impl PihkaServer {
             router = router.merge(app.create_media_server_router())
         }
 
+        if self.config.components().chat {
+            router = router.merge(app.create_chat_server_router())
+        }
+
         router
     }
 
@@ -309,6 +313,10 @@ impl PihkaServer {
 
         if self.config.components().media {
             router = router.merge(InternalApp::create_media_server_router(app.state()))
+        }
+
+        if self.config.components().chat {
+            router = router.merge(InternalApp::create_chat_server_router(app.state()))
         }
 
         router

@@ -210,4 +210,18 @@ impl ConnectedApp {
 
         Router::new().merge(private)
     }
+
+    pub fn private_chat_server_router(&self) -> Router {
+        let private = Router::new()
+            // .route(
+            //     api::media::PATH_GET_IMAGE,
+            //     get({
+            //         let state = self.state.clone();
+            //         move |param1, param2, param3| api::media::get_image(param1, param2, param3, state)
+            //     }),
+            // )
+          ;
+
+        Router::new().merge(private)
+    }
 }

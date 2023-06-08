@@ -124,6 +124,21 @@ impl InternalApp {
                 }),
             )
     }
+
+    pub fn create_chat_server_router(state: AppState) -> Router {
+        Router::new()
+            // .route(
+            //     api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
+            //     post({
+            //         let state = state.clone();
+            //         move |parameter1| {
+            //             api::media::internal::internal_get_check_moderation_request_for_account(
+            //                 parameter1, state,
+            //             )
+            //         }
+            //     }),
+            // )
+    }
 }
 
 // TOOD: PrintWarningsTriggersAtomics?

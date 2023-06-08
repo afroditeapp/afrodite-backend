@@ -91,6 +91,7 @@ impl Config {
     /// Debug mode changes:
     /// * Swagger UI is enabled.
     /// * Internal API is available at same port as the public API.
+    /// * Disabling HTTPS is possbile.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }

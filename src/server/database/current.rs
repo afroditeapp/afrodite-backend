@@ -1,11 +1,10 @@
 pub mod account;
 pub mod media;
 pub mod profile;
+pub mod chat;
 
-
-
-
-use self::account::read::CurrentReadAccountCommands;
+use self::chat::write::CurrentWriteChatCommands;
+use self::{account::read::CurrentReadAccountCommands, chat::read::CurrentReadChatCommands};
 use self::account::write::CurrentWriteAccountCommands;
 use self::media::admin_write::CurrentWriteMediaAdminCommands;
 use self::media::read::CurrentReadMediaCommands;
@@ -13,15 +12,9 @@ use self::media::write::CurrentWriteMediaCommands;
 use self::profile::read::CurrentReadProfileCommands;
 use self::profile::write::CurrentWriteProfileCommands;
 
-
 use super::sqlite::CurrentDataWriteHandle;
 
-
 use crate::server::database::sqlite::{SqliteReadHandle};
-
-
-
-
 
 #[macro_export]
 macro_rules! read_json {
@@ -72,6 +65,10 @@ impl<'a> SqliteReadCommands<'a> {
     pub fn profile(&self) -> CurrentReadProfileCommands<'_> {
         CurrentReadProfileCommands::new(self.handle)
     }
+
+    pub fn chat(&self) -> CurrentReadChatCommands<'_> {
+        CurrentReadChatCommands::new(self.handle)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -98,5 +95,9 @@ impl<'a> CurrentDataWriteCommands<'a> {
 
     pub fn profile(self) -> CurrentWriteProfileCommands<'a> {
         CurrentWriteProfileCommands::new(self.handle)
+    }
+
+    pub fn chat(self) -> CurrentWriteChatCommands<'a> {
+        CurrentWriteChatCommands::new(self.handle)
     }
 }

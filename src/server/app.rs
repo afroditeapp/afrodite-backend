@@ -171,6 +171,12 @@ impl App {
 
         public.merge(ConnectedApp::new(self.state.clone()).private_media_server_router())
     }
+
+    pub fn create_chat_server_router(&self) -> Router {
+        let public = Router::new();
+
+        public.merge(ConnectedApp::new(self.state.clone()).private_chat_server_router())
+    }
 }
 
 async fn root(_state: AppState) -> &'static str {

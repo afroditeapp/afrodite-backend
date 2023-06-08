@@ -47,6 +47,7 @@ dir = "database"
 account = true
 profile = true
 media = true
+chat = true
 
 # [external_services]
 # account_internal = "http://127.0.0.1:4000"
@@ -125,6 +126,7 @@ pub struct Components {
     pub account: bool,
     pub profile: bool,
     pub media: bool,
+    pub chat: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

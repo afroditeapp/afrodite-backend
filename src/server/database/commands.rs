@@ -4,6 +4,7 @@
 pub mod account;
 pub mod media;
 pub mod profile;
+pub mod chat;
 
 use std::{collections::HashSet, future::Future, net::SocketAddr, sync::Arc};
 
@@ -30,7 +31,7 @@ use crate::{
     utils::{ErrorConversion, IntoReportExt},
 };
 
-use self::{media::{MediaWriteCommandRunnerHandle, MediaWriteCommand}, profile::{ProfileWriteCommandRunnerHandle, ProfileWriteCommand}, account::{AccountWriteCommand, AccountWriteCommandRunnerHandle}};
+use self::{media::{MediaWriteCommandRunnerHandle, MediaWriteCommand}, profile::{ProfileWriteCommandRunnerHandle, ProfileWriteCommand}, account::{AccountWriteCommand, AccountWriteCommandRunnerHandle}, chat::{ChatWriteCommand, ChatWriteCommandRunnerHandle}};
 
 use super::{file::file::ImageSlot, RouterDatabaseWriteHandle};
 
@@ -58,6 +59,7 @@ pub enum WriteCommand {
     Account(AccountWriteCommand),
     Profile(ProfileWriteCommand),
     Media(MediaWriteCommand),
+    Chat(ChatWriteCommand),
 }
 
 impl From<AccountWriteCommand> for WriteCommand {
@@ -75,6 +77,12 @@ impl From<ProfileWriteCommand> for WriteCommand {
 impl From<MediaWriteCommand> for WriteCommand {
     fn from(value: MediaWriteCommand) -> Self {
         Self::Media(value)
+    }
+}
+
+impl From<ChatWriteCommand> for WriteCommand {
+    fn from(value: ChatWriteCommand) -> Self {
+        Self::Chat(value)
     }
 }
 
@@ -148,6 +156,12 @@ impl WriteCommandRunnerHandle {
         &self,
     ) -> ProfileWriteCommandRunnerHandle {
         ProfileWriteCommandRunnerHandle { handle: self }
+    }
+
+    pub fn chat(
+        &self,
+    ) -> ChatWriteCommandRunnerHandle {
+        ChatWriteCommandRunnerHandle { handle: self }
     }
 
     pub async fn set_new_auth_pair(
@@ -337,6 +351,7 @@ impl WriteCommandRunner {
             WriteCommand::Account(cmd) => self.handle_account_cmd(cmd).await,
             WriteCommand::Profile(cmd) => self.handle_profile_cmd(cmd).await,
             WriteCommand::Media(cmd) => self.handle_media_cmd(cmd).await,
+            WriteCommand::Chat(cmd) => self.handle_chat_cmd(cmd).await,
         }
     }
 

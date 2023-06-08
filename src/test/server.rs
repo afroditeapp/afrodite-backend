@@ -85,6 +85,7 @@ impl ServerManager {
                 account: true,
                 profile: !config.server.microservice_profile,
                 media: !config.server.microservice_media,
+                chat: !config.server.microservice_chat,
             },
             external_services.clone(),
         );
