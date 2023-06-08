@@ -222,6 +222,7 @@ pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
 
     state
         .write_database()
+        .media()
         .set_moderation_request(account_id, moderation_request)
         .await
         .map_err(|e| {
@@ -281,6 +282,7 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
 
     state
         .write_database()
+        .media()
         .save_to_slot(account_id, content_id, slot)
         .await
         .map_err(|e| {
@@ -325,6 +327,7 @@ pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
 
     let data = state
         .write_database()
+        .media()
         .get_moderation_list_and_create_if_necessary(account_id)
         .await
         .map_err(|e| {
@@ -392,6 +395,7 @@ pub async fn post_handle_moderation_request<
 
         state
             .write_database()
+            .media()
             .update_moderation(
                 admin_account_id,
                 moderation_request_owner,

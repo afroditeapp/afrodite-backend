@@ -49,7 +49,8 @@ pub async fn register_impl<S: WriteDatabase + GetConfig>(
     // to avoid database collisions.
     let id = AccountIdLight::new(uuid::Uuid::new_v4());
 
-    let register = state.write_database().register(id, sign_in_with);
+    let a = state.write_database().account();
+    let register = a.register(id, sign_in_with);
     match register.await {
         Ok(id) => Ok(id.as_light().into()),
         Err(e) => {
@@ -285,6 +286,7 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
     if account.state() == AccountState::InitialSetup {
         state
             .write_database()
+            .account()
             .update_account_setup(id, data)
             .await
             .map_err(|e| {
@@ -366,6 +368,7 @@ pub async fn post_complete_setup<
 
         state
             .write_database()
+            .account()
             .update_account(id, account)
             .await
             .map_err(|e| {

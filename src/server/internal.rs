@@ -339,6 +339,7 @@ impl<'a> InternalApiManager<'a> {
     ) -> Result<(), InternalApiError> {
         if self.config.components().profile {
             self.write_database
+                .profile()
                 .update_profile_visiblity(
                     account_id,
                     boolean_setting.value,

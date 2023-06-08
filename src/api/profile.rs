@@ -107,6 +107,7 @@ pub async fn get_profile<
             let visibility = account.capablities().view_public_profiles;
             state
                 .write_database()
+                .profile()
                 .update_profile_visiblity(requested_profile, visibility, true)
                 .await
                 .map_err(|e| {
@@ -187,6 +188,7 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
 
     state
         .write_database()
+        .profile()
         .update_profile(account_id, new)
         .await
         .map_err(|e| {
@@ -224,6 +226,7 @@ pub async fn put_location<S: GetApiKeys + WriteDatabase>(
 
     state
         .write_database()
+        .profile()
         .update_profile_location(account_id, location)
         .await
         .map_err(|e| {
