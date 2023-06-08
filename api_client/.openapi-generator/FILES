@@ -17,8 +17,7 @@ docs/ContentId.md
 docs/DeleteStatus.md
 docs/EventToClient.md
 docs/HandleModerationRequest.md
-docs/ImageFile.md
-docs/ImageFileName.md
+docs/ImageAccessCheck.md
 docs/Location.md
 docs/LoginResult.md
 docs/MediaApi.md
@@ -29,6 +28,8 @@ docs/ModerationRequest.md
 docs/ModerationRequestContent.md
 docs/ModerationRequestId.md
 docs/ModerationRequestState.md
+docs/NormalImages.md
+docs/PrimaryImage.md
 docs/Profile.md
 docs/ProfileApi.md
 docs/ProfileLink.md
@@ -37,6 +38,7 @@ docs/ProfileUpdate.md
 docs/ProfileVersion.md
 docs/ProfileinternalApi.md
 docs/RefreshToken.md
+docs/SecurityImage.md
 docs/SignInWithLoginInfo.md
 docs/SlotId.md
 git_push.sh
@@ -61,8 +63,7 @@ src/models/content_id.rs
 src/models/delete_status.rs
 src/models/event_to_client.rs
 src/models/handle_moderation_request.rs
-src/models/image_file.rs
-src/models/image_file_name.rs
+src/models/image_access_check.rs
 src/models/location.rs
 src/models/login_result.rs
 src/models/mod.rs
@@ -72,11 +73,14 @@ src/models/moderation_request.rs
 src/models/moderation_request_content.rs
 src/models/moderation_request_id.rs
 src/models/moderation_request_state.rs
+src/models/normal_images.rs
+src/models/primary_image.rs
 src/models/profile.rs
 src/models/profile_link.rs
 src/models/profile_page.rs
 src/models/profile_update.rs
 src/models/profile_version.rs
 src/models/refresh_token.rs
+src/models/security_image.rs
 src/models/sign_in_with_login_info.rs
 src/models/slot_id.rs

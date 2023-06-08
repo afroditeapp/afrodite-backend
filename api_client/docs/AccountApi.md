@@ -241,7 +241,7 @@ No authorization required
 
 ## post_sign_in_with_login
 
-> crate::models::ApiKey post_sign_in_with_login(sign_in_with_login_info)
+> crate::models::LoginResult post_sign_in_with_login(sign_in_with_login_info)
 Start new session with sign in with Apple or Google. Creates new account if
 
 Start new session with sign in with Apple or Google. Creates new account if it does not exists.
@@ -255,7 +255,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::ApiKey**](ApiKey.md)
+[**crate::models::LoginResult**](LoginResult.md)
 
 ### Authorization
 

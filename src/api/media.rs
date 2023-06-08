@@ -70,7 +70,7 @@ pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:ac
 #[utoipa::path(
     get,
     path = "/media_api/primary_image_info/{account_id}",
-    params(AccountIdLight, ContentId, ImageAccessCheck),
+    params(AccountIdLight, ImageAccessCheck),
     responses(
         (status = 200, description = "Get primary image info.", body = PrimaryImage),
         (status = 401, description = "Unauthorized."),
@@ -93,7 +93,7 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
 #[utoipa::path(
     get,
     path = "/media_api/security_image_info/{account_id}",
-    params(AccountIdLight, ContentId),
+    params(AccountIdLight),
     responses(
         (status = 200, description = "Get security image info.", body = SecurityImage),
         (status = 401, description = "Unauthorized."),
@@ -115,7 +115,7 @@ pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_
 #[utoipa::path(
     get,
     path = "/media_api/all_normal_images/{account_id}",
-    params(AccountIdLight, ContentId),
+    params(AccountIdLight),
     responses(
         (status = 200, description = "Get list of available primary images.", body = NormalImages),
         (status = 401, description = "Unauthorized."),
@@ -137,7 +137,7 @@ pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image/:account_id";
 #[utoipa::path(
     put,
     path = "/media_api/primary_image/{account_id}",
-    params(AccountIdLight, ContentId),
+    params(AccountIdLight),
     request_body(content = PrimaryImage),
     responses(
         (status = 200, description = "Primary image update successfull"),

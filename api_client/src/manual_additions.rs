@@ -32,6 +32,7 @@ pub async fn get_image_fixed(
     configuration: &configuration::Configuration,
     account_id: &str,
     content_id: &str,
+    is_match: bool,
 ) -> Result<Vec<u8>, Error<GetImageError>> {
     let local_var_configuration = configuration;
 
@@ -46,6 +47,7 @@ pub async fn get_image_fixed(
     let mut local_var_req_builder =
         local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
+    local_var_req_builder = local_var_req_builder.query(&[("is_match", &is_match.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder =
             local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());

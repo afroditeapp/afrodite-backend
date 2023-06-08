@@ -12,15 +12,15 @@
 
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
-pub struct ProfileUpdate {
-    #[serde(rename = "profile_text")]
-    pub profile_text: String,
+pub struct NormalImages {
+    #[serde(rename = "data")]
+    pub data: Vec<crate::models::ContentId>,
 }
 
-impl ProfileUpdate {
-    pub fn new(profile_text: String) -> ProfileUpdate {
-        ProfileUpdate {
-            profile_text,
+impl NormalImages {
+    pub fn new(data: Vec<crate::models::ContentId>) -> NormalImages {
+        NormalImages {
+            data,
         }
     }
 }

@@ -380,7 +380,7 @@ pub async fn post_register(configuration: &configuration::Configuration, ) -> Re
 }
 
 /// Start new session with sign in with Apple or Google. Creates new account if it does not exists.
-pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: crate::models::SignInWithLoginInfo) -> Result<crate::models::ApiKey, Error<PostSignInWithLoginError>> {
+pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: crate::models::SignInWithLoginInfo) -> Result<crate::models::LoginResult, Error<PostSignInWithLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

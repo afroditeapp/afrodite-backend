@@ -38,12 +38,16 @@ Class | Method | HTTP request | Description
 *AccountinternalApi* | [**check_api_key**](docs/AccountinternalApi.md#check_api_key) | **GET** /internal/check_api_key | 
 *AccountinternalApi* | [**internal_get_account_state**](docs/AccountinternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
+*MediaApi* | [**get_all_normal_images**](docs/MediaApi.md#get_all_normal_images) | **GET** /media_api/all_normal_images/{account_id} | Get list of all normal images on the server for one account.
 *MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
+*MediaApi* | [**get_primary_image_info**](docs/MediaApi.md#get_primary_image_info) | **GET** /media_api/primary_image_info/{account_id} | Get current public image for selected profile
+*MediaApi* | [**get_security_image_info**](docs/MediaApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile. Only for admins.
 *MediaApi* | [**patch_moderation_request_list**](docs/MediaApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
 *MediaApi* | [**post_handle_moderation_request**](docs/MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 *MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
+*MediaApi* | [**put_primary_image**](docs/MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image/{account_id} | Set primary image for account. Image content ID can not be empty.
 *MediainternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
 *MediainternalApi* | [**internal_post_update_profile_image_visibility**](docs/MediainternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
@@ -68,8 +72,7 @@ Class | Method | HTTP request | Description
  - [DeleteStatus](docs/DeleteStatus.md)
  - [EventToClient](docs/EventToClient.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
- - [ImageFile](docs/ImageFile.md)
- - [ImageFileName](docs/ImageFileName.md)
+ - [ImageAccessCheck](docs/ImageAccessCheck.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
  - [Moderation](docs/Moderation.md)
@@ -78,12 +81,15 @@ Class | Method | HTTP request | Description
  - [ModerationRequestContent](docs/ModerationRequestContent.md)
  - [ModerationRequestId](docs/ModerationRequestId.md)
  - [ModerationRequestState](docs/ModerationRequestState.md)
+ - [NormalImages](docs/NormalImages.md)
+ - [PrimaryImage](docs/PrimaryImage.md)
  - [Profile](docs/Profile.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
  - [RefreshToken](docs/RefreshToken.md)
+ - [SecurityImage](docs/SecurityImage.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SlotId](docs/SlotId.md)
 

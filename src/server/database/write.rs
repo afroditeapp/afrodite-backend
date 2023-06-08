@@ -168,6 +168,7 @@ impl<'a> WriteCommands<'a> {
     ) -> Result<AccountIdInternal, DatabaseError> {
         let current = CurrentDataWriteCommands::new(&current_data_write);
         let account_commands = current.clone().account();
+        let media_commands = current.clone().media();
         let history = HistoryWriteCommands::new(&history_wirte);
 
         let account = Account::default();
@@ -239,6 +240,10 @@ impl<'a> WriteCommands<'a> {
                 })
                 .await
                 .convert(id)?;
+        }
+
+        if config.components().media {
+            media_commands.init_current_account_media(id).await.convert(id)?;
         }
 
         Ok(id)

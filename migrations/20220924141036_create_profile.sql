@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS Profile(
 -- Tables for media features
 
 CREATE TABLE IF NOT EXISTS CurrentAccountMedia(        -- Currently selected images for account
-    account_row_id            INTEGER NOT NULL,
+    account_row_id            INTEGER PRIMARY KEY,
     security_content_row_id   INTEGER,
     profile_content_row_id    INTEGER,
     grid_crop_size            REAL NOT NULL DEFAULT 1.0, -- image's max square size multipler

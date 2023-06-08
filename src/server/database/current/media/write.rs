@@ -4,7 +4,7 @@ use sqlx::{Sqlite, Transaction};
 
 use crate::{
     api::{
-        media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber},
+        media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber, CurrentAccountMediaInternal},
         model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
     server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
@@ -78,6 +78,25 @@ pub struct CurrentWriteMediaCommands<'a> {
 impl<'a> CurrentWriteMediaCommands<'a> {
     pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
         Self { handle }
+    }
+
+    pub async fn init_current_account_media(
+        &self,
+        id: AccountIdInternal,
+    ) -> WriteResult<(), SqliteDatabaseError, CurrentAccountMediaInternal> {
+        let request = sqlx::query!(
+            r#"
+            INSERT INTO CurrentAccountMedia
+                (account_row_id)
+            VALUES (?)
+            "#,
+            id.account_row_id,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
     }
 
     pub async fn store_content_id_to_slot(

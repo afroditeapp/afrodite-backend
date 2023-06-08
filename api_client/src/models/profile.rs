@@ -14,12 +14,6 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Profile {
-    #[serde(rename = "image1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub image1: Option<Option<Box<crate::models::ContentId>>>,
-    #[serde(rename = "image2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub image2: Option<Option<Box<crate::models::ContentId>>>,
-    #[serde(rename = "image3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub image3: Option<Option<Box<crate::models::ContentId>>>,
     #[serde(rename = "name")]
     pub name: String,
     #[serde(rename = "profile_text")]
@@ -32,9 +26,6 @@ impl Profile {
     /// Prfile for HTTP GET
     pub fn new(name: String, profile_text: String, version: crate::models::ProfileVersion) -> Profile {
         Profile {
-            image1: None,
-            image2: None,
-            image3: None,
             name,
             profile_text,
             version: Box::new(version),
