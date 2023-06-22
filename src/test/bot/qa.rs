@@ -12,6 +12,8 @@ use std::{fmt::Debug, iter::Peekable, sync::atomic::AtomicBool};
 use api_client::models::AccountState;
 use async_trait::async_trait;
 
+use crate::{action_array, test::bot::actions::ActionArray};
+
 use self::{
     account::ACCOUNT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS, profile::PROFILE_TESTS, chat::CHAT_TESTS,
 };
@@ -94,27 +96,28 @@ impl Qa {
     }
 
     pub fn admin(state: BotState) -> Self {
-        let setup = [
-            &Register as &dyn BotAction,
-            &Login,
+        const SETUP: ActionArray = action_array![
+            Register,
+            Login,
             SetAccountSetup::admin(),
-            &SendImageToSlot(0),
-            &SendImageToSlot(1),
-            &MakeModerationRequest { camera: true },
-            &CompleteAccountSetup,
-            &AssertAccountState(AccountState::Normal),
+            SendImageToSlot::slot(0),
+            SendImageToSlot::slot(1),
+            MakeModerationRequest { camera: true },
+            CompleteAccountSetup,
+            AssertAccountState(AccountState::Normal),
         ];
-        let admin_actions = [
-            &SleepMillis(250) as &dyn BotAction,
-            &ModerateMediaModerationRequest as &dyn BotAction,
+        const ADMIN_ACTIONS: ActionArray = action_array![
+            SleepMillis(250),
+            ModerateMediaModerationRequest,
         ];
 
         let iter =
-            setup
+            SETUP
                 .into_iter()
-                .chain(admin_actions.into_iter().cycle().take_while(|_| {
+                .chain(ADMIN_ACTIONS.into_iter().cycle().take_while(|_| {
                     !ADMIN_QUIT_NOTIFICATION.load(std::sync::atomic::Ordering::Relaxed)
-                }));
+                }))
+                .map(|a| *a);
         Self {
             state,
             test_name: "Admin bot",

@@ -6,22 +6,22 @@ use std::{
     time::{Duration, Instant},
 };
 
-use api_client::apis::profile_api::get_profile;
+use api_client::{apis::{profile_api::get_profile, account_api::get_account_state}, models::AccountState};
 use async_trait::async_trait;
 use tokio::time::sleep;
 
 use crate::{
-    test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK},
+    test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK, bot::actions::{ActionArray, account::CompleteAccountSetup, media::MakeModerationRequest}}, action_array,
 };
 
 use super::{
     actions::{
-        account::{Login, Register, SetProfileVisibility},
+        account::{Login, Register, SetProfileVisibility, SetAccountSetup, AssertAccountState},
         profile::{
             ChangeProfileText, GetProfileList, ResetProfileIterator,
             UpdateLocationRandom,
         },
-        BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
+        BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE, media::SendImageToSlot,
     },
     utils::{Counters, Timer},
     BotState, BotStruct, TaskState,
@@ -46,7 +46,7 @@ impl Debug for ClientBot {
 
 impl ClientBot {
     pub fn new(state: BotState) -> Self {
-        let setup = [&Register as &dyn BotAction, &Login];
+        let setup = [&Register as &dyn BotAction, &Login, &DoInitialSetupIfNeeded];
         let benchmark = [
             &ActionsBeforeIteration as &dyn BotAction,
             &GetProfile,
@@ -88,6 +88,37 @@ impl BotAction for GetProfile {
         Ok(())
     }
 }
+
+#[derive(Debug)]
+pub struct DoInitialSetupIfNeeded;
+
+#[async_trait]
+impl BotAction for DoInitialSetupIfNeeded {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
+        let account_state = get_account_state(state.api.account())
+            .await
+            .into_error(TestError::ApiRequest)?;
+
+        if account_state.state == AccountState::InitialSetup {
+            const ACTIONS: ActionArray = action_array!(
+                SetAccountSetup::new(),
+                SendImageToSlot::slot(0),
+                SendImageToSlot::slot(1),
+                MakeModerationRequest { camera: true },
+                CompleteAccountSetup,
+                AssertAccountState(AccountState::Normal),
+            );
+            RunActions(ACTIONS).excecute_impl_task_state(state, task_state).await?;
+        }
+
+        Ok(())
+    }
+}
+
 
 #[derive(Debug)]
 struct ActionsBeforeIteration;

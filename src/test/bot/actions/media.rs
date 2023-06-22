@@ -27,19 +27,29 @@ impl MediaState {
 }
 
 #[derive(Debug)]
-pub struct SendImageToSlot(pub i32);
+pub struct SendImageToSlot { pub slot: i32, pub random: bool }
+
+impl SendImageToSlot {
+    pub const fn slot(slot: i32) -> Self {
+        Self { slot, random: false }
+    }
+}
 
 #[async_trait]
 impl BotAction for SendImageToSlot {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let content_id = put_image_to_moderation_slot_fixed(
             state.api.media(),
-            self.0,
-            ImageProvider::jpeg_image(),
+            self.slot,
+            if self.random {
+                ImageProvider::random_jpeg_image()
+            } else {
+                ImageProvider::jpeg_image()
+            },
         )
         .await
         .into_error(TestError::ApiRequest)?;
-        state.media.slots[self.0 as usize] = Some(content_id);
+        state.media.slots[self.slot as usize] = Some(content_id);
         Ok(())
     }
 }

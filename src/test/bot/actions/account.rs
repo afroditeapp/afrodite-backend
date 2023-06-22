@@ -181,8 +181,8 @@ impl SetAccountSetup {
         Self { email: None }
     }
 
-    pub const fn admin() -> &'static dyn BotAction {
-        &Self {
+    pub const fn admin() -> Self {
+        Self {
             email: Some("admin@example.com"),
         }
     }

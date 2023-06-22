@@ -13,5 +13,5 @@ use crate::test;
 
 pub const MEDIA_TESTS: &[SingleTest] = &[test!(
     "Save image to slot: max 3 slots",
-    [Register, Login, AssertFailure(SendImageToSlot(3)),]
+    [Register, Login, AssertFailure(SendImageToSlot::slot(3)),]
 )];
