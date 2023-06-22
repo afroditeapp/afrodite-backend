@@ -16,7 +16,7 @@ use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
 use crate::utils::IntoReportExt;
 
 use self::{
-    args::TestMode,
+    args::{TestMode},
     file::{
         Components, ConfigFile, ExternalServices, LocationConfig, SignInWithGoogleConfig,
         SocketConfig,

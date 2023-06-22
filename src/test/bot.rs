@@ -1,6 +1,7 @@
 mod actions;
 mod benchmark;
 mod qa;
+mod client_bot;
 mod utils;
 
 use std::{fmt::Debug, sync::Arc, vec};
@@ -22,10 +23,10 @@ use tracing::{error, info, log::warn};
 use self::{
     actions::{media::MediaState, BotAction, DoNothing, PreviousValue},
     benchmark::{Benchmark, BenchmarkState},
-    qa::Qa,
+    qa::Qa, client_bot::ClientBot,
 };
 
-use super::client::{ApiClient, TestError};
+use super::{client::{ApiClient, TestError}, state::{BotPersistentState, StateData}};
 
 use crate::config::args::{Test, TestMode};
 
@@ -100,6 +101,18 @@ impl BotState {
     pub fn print_info(&mut self) -> bool {
         self.is_first_bot() && self.benchmark.print_info_timer.passed()
     }
+
+    pub fn persistent_state(&self) -> Option<BotPersistentState> {
+        if let Some(id) = self.id {
+            Some(BotPersistentState {
+                account_id: id.account_id,
+                task: self.task_id,
+                bot: self.bot_id,
+            })
+        } else {
+            None
+        }
+    }
 }
 
 /// Bot completed
@@ -154,7 +167,7 @@ pub trait BotStruct: Debug + Send + 'static {
 
 pub struct BotManager {
     bots: Vec<Box<dyn BotStruct>>,
-    _bot_running_handle: mpsc::Sender<()>,
+    _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     task_id: u32,
     config: Arc<TestMode>,
 }
@@ -163,60 +176,61 @@ impl BotManager {
     pub fn spawn(
         task_id: u32,
         config: Arc<TestMode>,
-        id: impl Into<Option<AccountIdLight>>,
+        old_state: Option<Arc<StateData>>,
         bot_quit_receiver: watch::Receiver<()>,
-        _bot_running_handle: mpsc::Sender<()>,
+        _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) {
-        let id = id.into();
         let bot = match config.test {
-            Test::BenchmarkGetProfileList | Test::BenchmarkGetProfile => {
-                Self::benchmark(task_id, id, config, _bot_running_handle)
+            Test::BenchmarkGetProfileList | Test::BenchmarkGetProfile | Test::Bot => {
+                Self::benchmark_or_bot(task_id, old_state, config, _bot_running_handle)
             }
-            Test::Qa => Self::qa(task_id, id, config, _bot_running_handle),
+            Test::Qa => Self::qa(task_id, config, _bot_running_handle),
         };
 
         tokio::spawn(bot.run(bot_quit_receiver));
     }
 
-    pub fn benchmark(
+    pub fn benchmark_or_bot(
         task_id: u32,
-        id: Option<AccountIdLight>,
+        old_state: Option<Arc<StateData>>,
         config: Arc<TestMode>,
-        _bot_running_handle: mpsc::Sender<()>,
+        _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
+        for bot_i in 0..config.bot_count {
+            let state = BotState::new(
+                old_state
+                    .as_ref()
+                    .map(|d| d
+                        .find_matching(task_id, bot_i)
+                        .map(|s| AccountIdLight::new(s.account_id)))
+                        .flatten(),
+                config.clone(),
+                task_id,
+                bot_i,
+                ApiClient::new(config.server.api_urls.clone()),
+            );
 
-        match config.test {
-            Test::BenchmarkGetProfile => {
-                for bot_i in 0..config.bot_count {
-                    let state = BotState::new(
-                        id,
-                        config.clone(),
-                        task_id,
-                        bot_i,
-                        ApiClient::new(config.server.api_urls.clone()),
-                    );
+            match config.test {
+                Test::BenchmarkGetProfile => {
                     bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
+
                 }
-            }
-            Test::BenchmarkGetProfileList => {
-                for bot_i in 0..config.bot_count {
-                    let state = BotState::new(
-                        id,
-                        config.clone(),
-                        task_id,
-                        bot_i,
-                        ApiClient::new(config.server.api_urls.clone()),
-                    );
+                Test::BenchmarkGetProfileList => {
                     let benchmark = match bot_i {
                         0 => Benchmark::benchmark_get_profile_list(state),
                         _ => Benchmark::benchmark_get_profile_list_bot(state),
                     };
                     bots.push(Box::new(benchmark))
+
                 }
-            }
-            _ => panic!("Invalid test {:?}", config.test),
-        };
+                Test::Bot => {
+                    bots.push(Box::new(ClientBot::new(state)))
+
+                }
+                _ => panic!("Invalid test {:?}", config.test),
+            };
+        }
 
         Self {
             bots,
@@ -228,9 +242,8 @@ impl BotManager {
 
     pub fn qa(
         task_id: u32,
-        id: Option<AccountIdLight>,
         config: Arc<TestMode>,
-        _bot_running_handle: mpsc::Sender<()>,
+        _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
         if task_id >= 1 {
             panic!("Only task count 1 is supported for QA tests");
@@ -245,7 +258,7 @@ impl BotManager {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
         let new_bot_state = |bot_i| {
             BotState::new(
-                id,
+                None,
                 config.clone(),
                 task_id,
                 bot_i,
@@ -292,6 +305,13 @@ impl BotManager {
                 }
             }
         }
+
+        let data = self.iter_persistent_state();
+        self._bot_running_handle.send(data).await.unwrap();
+    }
+
+    fn iter_persistent_state(&self) -> Vec<BotPersistentState> {
+        self.bots.iter().filter_map(|bot| bot.state().persistent_state()).collect()
     }
 
     async fn run_bot(&mut self) {

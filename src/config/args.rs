@@ -37,19 +37,31 @@ pub fn get_config() -> ArgsConfig {
                         .required(false),
                 )
                 .arg(
-                    arg!(--account <URL> "Base URL for account API")
+                    arg!(--"url-register" <URL> "Base URL for account API for register and login")
+                        .value_parser(value_parser!(Url))
+                        .default_value("http://127.0.0.1:3001")
+                        .required(false),
+                )
+                .arg(
+                    arg!(--"url-account" <URL> "Base URL for account API")
                         .value_parser(value_parser!(Url))
                         .default_value("http://127.0.0.1:3000")
                         .required(false),
                 )
                 .arg(
-                    arg!(--profile <URL> "Base URL for profile API")
+                    arg!(--"url-profile" <URL> "Base URL for profile API")
                         .value_parser(value_parser!(Url))
                         .default_value("http://127.0.0.1:3000")
                         .required(false),
                 )
                 .arg(
-                    arg!(--media <URL> "Base URL for media API")
+                    arg!(--"url-media" <URL> "Base URL for media API")
+                        .value_parser(value_parser!(Url))
+                        .default_value("http://127.0.0.1:3000")
+                        .required(false),
+                )
+                .arg(
+                    arg!(--"url-chat" <URL> "Base URL for chat API")
                         .value_parser(value_parser!(Url))
                         .default_value("http://127.0.0.1:3000")
                         .required(false),
@@ -65,6 +77,8 @@ pub fn get_config() -> ArgsConfig {
                 .arg(arg!(--"microservice-chat" "Start chat API as microservice"))
                 .arg(arg!(--"no-sleep" "Make bots to make requests constantly"))
                 .arg(arg!(--"no-clean" "Do not remove created database files"))
+                .arg(arg!(--"no-servers" "Do not start new server instances"))
+                .arg(arg!(--"save-state" "Save and load state"))
                 .arg(arg!(--"update-profile" "Update profile continuously"))
                 .arg(arg!(--"print-speed" "Print some speed information"))
                 .arg(arg!(--"log-debug" "Enable debug logging for server instances"))
@@ -82,9 +96,11 @@ pub fn get_config() -> ArgsConfig {
     let test_mode = match matches.subcommand() {
         Some(("test", sub_matches)) => {
             let api_urls = PublicApiUrls::new(
-                sub_matches.get_one::<Url>("account").unwrap().clone(),
-                sub_matches.get_one::<Url>("profile").unwrap().clone(),
-                sub_matches.get_one::<Url>("media").unwrap().clone(),
+                sub_matches.get_one::<Url>("url-register").unwrap().clone(),
+                sub_matches.get_one::<Url>("url-account").unwrap().clone(),
+                sub_matches.get_one::<Url>("url-profile").unwrap().clone(),
+                sub_matches.get_one::<Url>("url-media").unwrap().clone(),
+                sub_matches.get_one::<Url>("url-chat").unwrap().clone(),
             );
 
             Some(TestMode {
@@ -93,7 +109,9 @@ pub fn get_config() -> ArgsConfig {
                 forever: sub_matches.is_present("forever"),
                 no_sleep: sub_matches.is_present("no-sleep"),
                 no_clean: sub_matches.is_present("no-clean"),
+                no_servers: sub_matches.is_present("no-servers"),
                 update_profile: sub_matches.is_present("update-profile"),
+                save_state: sub_matches.is_present("save-state"),
                 print_speed: sub_matches.is_present("print-speed"),
                 early_quit: sub_matches.is_present("early-quit"),
                 test: sub_matches
@@ -124,26 +142,6 @@ pub fn get_config() -> ArgsConfig {
     }
 }
 
-#[derive(Debug)]
-pub enum ServerComponent {
-    Login,
-    Core,
-    /// Run server which will serve public media files.
-    Media,
-}
-
-impl TryFrom<&str> for ServerComponent {
-    type Error = ();
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(match value {
-            "login" => Self::Login,
-            "core" => Self::Core,
-            "media" => Self::Media,
-            _ => return Err(()),
-        })
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct TestMode {
     pub bot_count: u32,
@@ -151,6 +149,8 @@ pub struct TestMode {
     pub forever: bool,
     pub no_sleep: bool,
     pub no_clean: bool,
+    pub no_servers: bool,
+    pub save_state: bool,
     pub update_profile: bool,
     pub print_speed: bool,
     pub early_quit: bool,
@@ -173,11 +173,13 @@ pub enum Test {
     Qa,
     BenchmarkGetProfile,
     BenchmarkGetProfileList,
+    Bot,
 }
 
 const TEST_NAME_QA: &str = "qa";
 const TEST_NAME_BENCHMARK_GET_PROFILE: &str = "benchmark-get-profile";
 const TEST_NAME_BENCHMARK_GET_PROFILE_LIST: &str = "benchmark-get-profile-list";
+const TEST_NAME_BOT: &str = "bot";
 
 impl Test {
     pub fn as_str(&self) -> &'static str {
@@ -185,6 +187,7 @@ impl Test {
             Self::Qa => TEST_NAME_QA,
             Self::BenchmarkGetProfile => TEST_NAME_BENCHMARK_GET_PROFILE,
             Self::BenchmarkGetProfileList => TEST_NAME_BENCHMARK_GET_PROFILE_LIST,
+            Self::Bot => TEST_NAME_BOT,
         }
     }
 }
@@ -196,6 +199,7 @@ impl TryFrom<&str> for Test {
             TEST_NAME_QA => Self::Qa,
             TEST_NAME_BENCHMARK_GET_PROFILE => Self::BenchmarkGetProfile,
             TEST_NAME_BENCHMARK_GET_PROFILE_LIST => Self::BenchmarkGetProfileList,
+            TEST_NAME_BOT => Self::Bot,
             _ => return Err(()),
         })
     }
@@ -238,6 +242,7 @@ impl clap::builder::TypedValueParser for TestNameParser {
                 Test::Qa,
                 Test::BenchmarkGetProfile,
                 Test::BenchmarkGetProfileList,
+                Test::Bot,
             ]
             .iter()
             .map(|value| PossibleValue::new(value.as_str())),

@@ -3,20 +3,23 @@
 mod bot;
 pub mod client;
 mod server;
+mod state;
 
-use std::{sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration, path::{Path, PathBuf}};
 
 use api_client::{apis::configuration::Configuration, manual_additions};
 use tokio::{
     select, signal,
-    sync::{mpsc, watch},
+    sync::{mpsc, watch}, io::AsyncWriteExt,
 };
 use tracing::{error, info};
 
 use crate::{
     config::{args::TestMode, Config},
-    test::{bot::BotManager, client::ApiClient, server::ServerManager},
+    test::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState},
 };
+
+use self::state::StateData;
 
 pub struct TestRunner {
     config: Arc<Config>,
@@ -36,11 +39,22 @@ impl TestRunner {
 
         info!("Testing mode");
 
+        let old_state = if self.test_config.save_state {
+            self.load_state_data().await.map(|d| Arc::new(d))
+        } else {
+            None
+        };
+
         ApiClient::new(self.test_config.server.api_urls.clone()).print_to_log();
 
-        let server = ServerManager::new(self.test_config.clone()).await;
+        let server =
+            if !self.test_config.no_servers {
+                Some(ServerManager::new(self.test_config.clone()).await)
+            } else {
+                None
+            };
 
-        let (bot_running_handle, mut wait_all_bots) = mpsc::channel(1);
+        let (bot_running_handle, mut wait_all_bots) = mpsc::channel::<Vec<BotPersistentState>>(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());
 
         let mut task_number = 0;
@@ -101,15 +115,78 @@ impl TestRunner {
         drop(quit_handle); // Singnal quit to bots.
 
         // Wait that all bot_running_handles are dropped.
+        let mut bot_states = vec![];
         loop {
             match wait_all_bots.recv().await {
                 None => break,
-                Some(()) => (),
+                Some(data) => bot_states.extend(data),
             }
         }
 
+        let new_state = StateData {
+            test_name: self.test_config.test.as_str().to_string(),
+            bot_states,
+        };
+
+        if self.test_config.save_state {
+            self.save_state_data(&new_state).await;
+        }
+
         // Quit
-        server.close().await;
+        if let Some(server) = server {
+            server.close().await;
+        }
+    }
+
+    async fn load_state_data(&self) -> Option<StateData> {
+        match tokio::fs::read_to_string(self.state_data_file()).await {
+            Ok(data) => {
+                match serde_json::from_str(&data) {
+                    Ok(data) => Some(data),
+                    Err(e) => {
+                        error!("state data loading error: {:?}", e);
+                        None
+                    }
+                }
+            }
+            Err(e) => {
+                error!("state data loading error: {:?}", e);
+                None
+            }
+        }
+
+    }
+
+    async fn save_state_data(&self, data: &StateData) {
+        let data = match serde_json::to_string_pretty(data) {
+            Ok(d) => d,
+            Err(e) => {
+                error!("state saving error: {:?}", e);
+                return;
+            }
+        };
+
+        let file_handle = tokio::fs::File::create(self.state_data_file()).await;
+
+        match file_handle {
+            Ok(mut handle) => {
+                match handle.write_all(data.as_bytes()).await {
+                    Ok(()) => (),
+                    Err(e) => {
+                        error!("state data saving error: {:?}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                error!("state data saving error: {:?}", e);
+            }
+        }
+
+    }
+
+    fn state_data_file(&self) -> PathBuf {
+        let data_file = format!("test_{}_state_data.json", self.test_config.test.as_str());
+        self.test_config.server.test_database_dir.join(data_file)
     }
 }
 
@@ -117,6 +194,7 @@ async fn wait_that_servers_start(api: ApiClient) {
     check_api(api.account()).await;
     check_api(api.profile()).await;
     check_api(api.media()).await;
+    check_api(api.chat()).await;
 }
 
 async fn check_api(config: &Configuration) {
