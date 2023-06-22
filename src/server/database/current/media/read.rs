@@ -257,9 +257,10 @@ impl<'a> CurrentReadMediaCommands<'a> {
         let state_in_progress = ModerationRequestState::InProgress as i64;
         let data = sqlx::query!(
             r#"
-            SELECT request_row_id, MediaModeration.account_row_id, json_text, account_id as "account_id: uuid::Uuid"
+            SELECT MediaModeration.request_row_id, RequestCreatorAccountId.account_id as "request_creator_account_id: uuid::Uuid", MediaModeration.json_text
             FROM MediaModeration
-            INNER JOIN AccountId on AccountId.account_row_id = MediaModeration.account_row_id
+            INNER JOIN MediaModerationRequest on MediaModerationRequest.request_row_id = MediaModeration.request_row_id
+            INNER JOIN AccountId as RequestCreatorAccountId on RequestCreatorAccountId.account_row_id = MediaModerationRequest.account_row_id
             WHERE MediaModeration.account_row_id = ? AND state_number = ?
             "#,
             account_row_id,
@@ -275,7 +276,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
                 .into_error(SqliteDatabaseError::SerdeDeserialize)?;
 
             let moderation = Moderation {
-                request_creator_id: AccountIdLight::new(r.account_id),
+                request_creator_id: AccountIdLight::new(r.request_creator_account_id),
                 moderator_id: moderator_id.as_light(),
                 request_id: ModerationRequestId {
                     request_row_id: r.request_row_id,
