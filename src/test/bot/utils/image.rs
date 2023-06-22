@@ -20,8 +20,10 @@ impl ImageProvider {
     pub fn random_jpeg_image() -> Vec<u8> {
         let mut buffer: ImageBuffer<Rgb<u8>, _> = image::ImageBuffer::new(512, 512);
 
+        let img_color = rand::random();
+
         for pixel in buffer.pixels_mut() {
-            pixel.0 = rand::random();
+            pixel.0 = img_color;
         }
 
         let mut data = vec![];

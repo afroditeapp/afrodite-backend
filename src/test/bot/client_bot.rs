@@ -106,8 +106,8 @@ impl BotAction for DoInitialSetupIfNeeded {
         if account_state.state == AccountState::InitialSetup {
             const ACTIONS: ActionArray = action_array!(
                 SetAccountSetup::new(),
-                SendImageToSlot::slot(0),
-                SendImageToSlot::slot(1),
+                SendImageToSlot { slot: 0, random: true },
+                SendImageToSlot { slot: 1, random: true },
                 MakeModerationRequest { camera: true },
                 CompleteAccountSetup,
                 AssertAccountState(AccountState::Normal),
