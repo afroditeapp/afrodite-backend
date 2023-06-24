@@ -111,3 +111,9 @@ openssl x509 -req -in server.csr -CA ../root/root.crt -CAkey ../root/root-privat
 ```
 openssl x509 -in server.crt -text -noout
 ```
+
+# Bot mode
+
+```
+RUST_LOG=debug cargo run -- test --tasks 10 --save-state --no-servers --test bot
+```

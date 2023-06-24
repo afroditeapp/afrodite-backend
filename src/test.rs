@@ -89,7 +89,7 @@ impl TestRunner {
                 BotManager::spawn(
                     task_number,
                     self.test_config.clone(),
-                    None,
+                    old_state.clone(),
                     bot_quit_receiver.clone(),
                     bot_running_handle.clone(),
                 );
