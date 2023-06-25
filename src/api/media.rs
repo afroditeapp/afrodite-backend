@@ -3,7 +3,7 @@ pub mod internal;
 
 use axum::extract::{BodyStream, Path, Query};
 
-use axum::{Json, TypedHeader};
+use axum::{Json, TypedHeader, Extension};
 
 use headers::ContentType;
 use hyper::StatusCode;
@@ -15,10 +15,10 @@ use crate::server::database::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, HandleModerationRequest, ModerationList, ModerationRequest, ModerationRequestContent, PrimaryImage, SecurityImage, ImageAccessCheck,
+    ContentId, HandleModerationRequest, ModerationList, ModerationRequest, ModerationRequestContent, PrimaryImage, SecurityImage, ImageAccessCheck, NormalImages, MediaContentType,
 };
 
-use super::model::AccountIdLight;
+use super::model::{AccountIdLight, AccountIdInternal};
 use super::utils::ApiKeyHeader;
 use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase};
 
@@ -78,13 +78,34 @@ pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:ac
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_primary_image_info<S: ReadDatabase>(
+pub async fn get_primary_image_info<S: ReadDatabase + GetUsers + GetApiKeys>(
     Path(account_id): Path<AccountIdLight>,
     Query(access_check): Query<ImageAccessCheck>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<PrimaryImage>, StatusCode> {
+    // TODO: access restrictions
 
-    Err(StatusCode::UNAUTHORIZED)
+    let internal_id = state
+        .users()
+        .get_internal_id(account_id)
+        .await
+        .map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let internal_current_media = state
+        .read_database()
+        .current_account_media(internal_id)
+        .await
+        .map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let info: PrimaryImage = internal_current_media.into();
+    Ok(info.into())
 }
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
@@ -101,12 +122,34 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_security_image_info<S: ReadDatabase>(
+pub async fn get_security_image_info<S: ReadDatabase + GetUsers>(
     Path(account_id): Path<AccountIdLight>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SecurityImage>, StatusCode> {
 
-    Err(StatusCode::UNAUTHORIZED)
+    // TODO: access restrictions
+
+    let internal_id = state
+        .users()
+        .get_internal_id(account_id)
+        .await
+        .map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let internal_current_media = state
+        .read_database()
+        .current_account_media(internal_id)
+        .await
+        .map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let info: SecurityImage = internal_current_media.into();
+    Ok(info.into())
 }
 
 pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_info/:account_id";
@@ -123,21 +166,51 @@ pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_all_normal_images<S: ReadDatabase>(
+pub async fn get_all_normal_images<S: ReadDatabase + GetUsers>(
     Path(account_id): Path<AccountIdLight>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
-) -> Result<Json<SecurityImage>, StatusCode> {
+) -> Result<Json<NormalImages>, StatusCode> {
 
-    Err(StatusCode::UNAUTHORIZED)
+    // TODO: access restrictions
+
+    let internal_id = state
+        .users()
+        .get_internal_id(account_id)
+        .await
+        .map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let internal_current_media = state
+        .read_database()
+        .all_account_media(internal_id)
+        .await
+        .map_err(|e| {
+            error!("{e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    let data = internal_current_media
+        .into_iter()
+        .filter_map(|m| {
+            if m.content_type == MediaContentType::Normal {
+                Some(m.content_id.as_content_id())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    Ok(NormalImages { data }.into())
 }
 
-pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image/:account_id";
+pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image";
 
 /// Set primary image for account. Image content ID can not be empty.
 #[utoipa::path(
     put,
-    path = "/media_api/primary_image/{account_id}",
-    params(AccountIdLight),
+    path = "/media_api/primary_image",
     request_body(content = PrimaryImage),
     responses(
         (status = 200, description = "Primary image update successfull"),
@@ -146,13 +219,26 @@ pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_primary_image<S: ReadDatabase>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn put_primary_image<S: WriteDatabase>(
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Json(new_image): Json<PrimaryImage>,
     state: S,
-) -> Result<Json<SecurityImage>, StatusCode> {
+) -> Result<(), StatusCode> {
+    if new_image.content_id.is_none() {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
-    Err(StatusCode::UNAUTHORIZED)
+    state
+        .write_database()
+        .media()
+        .update_primary_image(api_caller_account_id, new_image)
+        .await
+        .map_err(|e| {
+            error!("{}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(())
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";

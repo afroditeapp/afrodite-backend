@@ -136,21 +136,21 @@ impl ConnectedApp {
                 api::media::PATH_GET_PRIMARY_IMAGE_INFO,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2| api::media::get_primary_image_info(param1, param2, state)
+                    move |param1, param2, param3| api::media::get_primary_image_info(param1, param2, param3, state)
                 }),
             )
             .route(
                 api::media::PATH_GET_SECURITY_IMAGE_INFO,
                 get({
                     let state = self.state.clone();
-                    move |param1| api::media::get_security_image_info(param1, state)
+                    move |param1, param2| api::media::get_security_image_info(param1, param2, state)
                 }),
             )
             .route(
                 api::media::PATH_GET_ALL_NORMAL_IMAGES_INFO,
                 get({
                     let state = self.state.clone();
-                    move |param1| api::media::get_all_normal_images(param1, state)
+                    move |param1, param2| api::media::get_all_normal_images(param1, param2, state)
                 }),
             )
             .route(

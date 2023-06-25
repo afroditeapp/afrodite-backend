@@ -7,7 +7,7 @@ use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 
 use crate::api::media::data::{
     ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
-    ModerationRequestQueueNumber, ModerationRequestState, CurrentAccountMediaInternal,
+    ModerationRequestQueueNumber, ModerationRequestState, CurrentAccountMediaInternal, MediaContentInternal,
 };
 use crate::api::model::{
     AccountIdInternal, AccountIdLight, ContentId, ModerationRequestContent,
@@ -30,7 +30,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_current_account_media(
         &self,
         id: AccountIdInternal,
-    ) -> Result<CurrentAccountMediaInternal, SqliteDatabaseError> {
+    ) -> ReadResult<CurrentAccountMediaInternal, SqliteDatabaseError> {
         let request = sqlx::query!(
             r#"
             SELECT security_content_row_id,
@@ -66,6 +66,45 @@ impl<'a> CurrentReadMediaCommands<'a> {
             grid_crop_x: request.grid_crop_x,
             grid_crop_y: request.grid_crop_y,
         })
+    }
+
+    pub async fn get_account_media(
+        &self,
+        id: AccountIdInternal,
+    ) -> ReadResult<Vec<MediaContentInternal>, SqliteDatabaseError> {
+        let data = sqlx::query!(
+            r#"
+            SELECT content_row_id,
+                content_id as "content_id: uuid::Uuid",
+                moderation_state,
+                content_type,
+                slot_number
+            FROM MediaContent
+            WHERE account_row_id = ?
+            "#,
+            id.account_row_id,
+        )
+        .fetch_all(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        let content = data
+            .into_iter()
+            .filter_map(
+                |r| {
+                    let state = r.moderation_state.try_into().ok()?;
+                    let content_type = r.content_type.try_into().ok()?;
+
+                    Some(MediaContentInternal {
+                        content_id: ContentIdInternal { content_id: r.content_id, content_row_id: r.content_row_id },
+                        state,
+                        content_type,
+                        slot_number: r.slot_number,
+                    })
+                }
+            ).collect();
+
+        Ok(content)
     }
 
     async fn get_content_id_from_row_id(

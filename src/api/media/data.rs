@@ -77,7 +77,7 @@ pub struct ModerationRequest {
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum StateParsingError {
+pub enum EnumParsingError {
     #[error("ParsingFailed, value: {0}")]
     ParsingError(i64),
 }
@@ -101,14 +101,14 @@ impl ModerationRequestState {
 }
 
 impl TryFrom<i64> for ModerationRequestState {
-    type Error = StateParsingError;
+    type Error = EnumParsingError;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         let value = match value {
             0 => Self::Waiting,
             1 => Self::InProgress,
             2 => Self::Accepted,
             3 => Self::Denied,
-            _ => return Err(StateParsingError::ParsingError(value)),
+            _ => return Err(EnumParsingError::ParsingError(value)),
         };
 
         Ok(value)
@@ -129,7 +129,8 @@ pub enum ContentState {
     ModeratedAsDenied = 3,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+/// Admin sets this when moderating the image.
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq)]
 #[repr(i64)]
 pub enum MediaContentType {
     NotSet = 0,
@@ -143,14 +144,28 @@ pub enum MediaContentType {
 // is created. Get content id from Moderation table.
 
 impl TryFrom<i64> for ContentState {
-    type Error = StateParsingError;
+    type Error = EnumParsingError;
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         let value = match value {
             0 => Self::InSlot,
             1 => Self::InModeration,
             2 => Self::ModeratedAsAccepted,
             3 => Self::ModeratedAsDenied,
-            _ => return Err(StateParsingError::ParsingError(value)),
+            _ => return Err(EnumParsingError::ParsingError(value)),
+        };
+
+        Ok(value)
+    }
+}
+
+impl TryFrom<i64> for MediaContentType {
+    type Error = EnumParsingError;
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let value = match value {
+            0 => Self::NotSet,
+            1 => Self::Normal,
+            2 => Self::Security,
+            _ => return Err(EnumParsingError::ParsingError(value)),
         };
 
         Ok(value)
@@ -247,10 +262,11 @@ impl sqlx::Decode<'_, sqlx::Sqlite> for ContentId {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct Content {
-    pub content_id: ContentId,
+#[derive(Debug, Clone)]
+pub struct MediaContentInternal {
+    pub content_id: ContentIdInternal,
     pub state: ContentState,
+    pub content_type: MediaContentType,
     pub slot_number: i64,
 }
 
@@ -300,7 +316,6 @@ pub struct CurrentAccountMediaInternal {
     pub grid_crop_y: f64,
 }
 
-
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct PrimaryImage {
     pub content_id: Option<ContentId>,
@@ -309,10 +324,30 @@ pub struct PrimaryImage {
     pub grid_crop_y: f64,
 }
 
+impl From<CurrentAccountMediaInternal> for PrimaryImage {
+    fn from(value: CurrentAccountMediaInternal) -> Self {
+        Self {
+            content_id: value.profile_content_id.map(|c| c.as_content_id()),
+            grid_crop_size: value.grid_crop_size,
+            grid_crop_x: value.grid_crop_x,
+            grid_crop_y: value.grid_crop_y,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityImage {
     pub content_id: Option<ContentId>,
 }
+
+impl From<CurrentAccountMediaInternal> for SecurityImage {
+    fn from(value: CurrentAccountMediaInternal) -> Self {
+        Self {
+            content_id: value.security_content_id.map(|c| c.as_content_id()),
+        }
+    }
+}
+
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ImageAccessCheck {
@@ -324,5 +359,5 @@ pub struct ImageAccessCheck {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct NormalImages {
-    data: Vec<ContentId>,
+    pub data: Vec<ContentId>,
 }

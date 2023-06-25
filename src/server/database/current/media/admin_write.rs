@@ -1,4 +1,5 @@
-use error_stack::Result;
+use api_client::models::moderation;
+use error_stack::{Result, ResultExt};
 
 use sqlx::{Row, Sqlite, Transaction};
 
@@ -224,7 +225,13 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         .into_error(SqliteDatabaseError::Fetch)?;
 
         let currently_selected_images =
-            self.handle.read().media().get_current_account_media(moderation_request_owner).await?;
+            self.handle
+                .read()
+                .media()
+                .get_current_account_media(moderation_request_owner)
+                .await
+                .convert(moderation_request_owner)
+                .change_context(SqliteDatabaseError::Fetch)?;
 
         let moderation_id = ModerationId {
             request_id: ModerationRequestId {

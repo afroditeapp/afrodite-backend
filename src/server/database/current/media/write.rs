@@ -4,7 +4,7 @@ use sqlx::{Sqlite, Transaction};
 
 use crate::{
     api::{
-        media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber, CurrentAccountMediaInternal},
+        media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber, CurrentAccountMediaInternal, PrimaryImage},
         model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
     server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
@@ -90,6 +90,33 @@ impl<'a> CurrentWriteMediaCommands<'a> {
                 (account_row_id)
             VALUES (?)
             "#,
+            id.account_row_id,
+        )
+        .execute(self.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub async fn update_current_account_media_with_primary_image(
+        &self,
+        id: AccountIdInternal,
+        primary_image: PrimaryImage,
+    ) -> WriteResult<(), SqliteDatabaseError, CurrentAccountMediaInternal> {
+        let request = sqlx::query!(
+            r#"
+            UPDATE CurrentAccountMedia
+            SET profile_content_row_id = ?,
+            grid_crop_size = ?,
+            grid_crop_x = ?,
+            grid_crop_y = ?
+            WHERE account_row_id = ?
+            "#,
+            primary_image.content_id,
+            primary_image.grid_crop_size,
+            primary_image.grid_crop_x,
+            primary_image.grid_crop_y,
             id.account_row_id,
         )
         .execute(self.handle.pool())

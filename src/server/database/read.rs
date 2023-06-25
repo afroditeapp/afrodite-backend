@@ -5,7 +5,7 @@ use tokio_util::io::ReaderStream;
 
 use crate::{
     api::{
-        media::data::ModerationRequest,
+        media::data::{ModerationRequest, PrimaryImage, CurrentAccountMediaInternal, MediaContentType, MediaContentInternal},
         model::{
             AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken,
         },
@@ -196,6 +196,28 @@ impl<'a> ReadCommands<'a> {
             .read_all()
             .await
             .convert((account_id, content_id))
+    }
+
+    pub async fn current_account_media(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<CurrentAccountMediaInternal, DatabaseError> {
+        self.sqlite
+            .media()
+            .get_current_account_media(account_id)
+            .await
+            .convert(account_id)
+    }
+
+    pub async fn all_account_media(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<Vec<MediaContentInternal>, DatabaseError> {
+        self.sqlite
+            .media()
+            .get_account_media(account_id)
+            .await
+            .convert(account_id)
     }
 
     pub async fn moderation_request(

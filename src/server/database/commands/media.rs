@@ -15,7 +15,7 @@ use tokio_stream::StreamExt;
 
 use crate::{
     api::{
-        media::data::{HandleModerationRequest, Moderation},
+        media::data::{HandleModerationRequest, Moderation, PrimaryImage},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, AuthPair, ContentId,
             Location, ModerationRequestContent, ProfileLink,
@@ -54,6 +54,11 @@ pub enum MediaWriteCommand {
         moderator_id: AccountIdInternal,
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
+    },
+    UpdatePrimaryImage {
+        s: ResultSender<()>,
+        account_id: AccountIdInternal,
+        primary_image: PrimaryImage,
     },
 }
 
@@ -99,6 +104,19 @@ impl MediaWriteCommandRunnerHandle<'_> {
             moderator_id,
             moderation_request_owner,
             result,
+        })
+        .await
+    }
+
+    pub async fn update_primary_image(
+        &self,
+        account_id: AccountIdInternal,
+        primary_image: PrimaryImage,
+    ) -> Result<(), DatabaseError> {
+        self.handle.send_event(|s| MediaWriteCommand::UpdatePrimaryImage {
+            s,
+            account_id,
+            primary_image,
         })
         .await
     }
@@ -155,6 +173,15 @@ impl WriteCommandRunner {
             } => self
                 .write()
                 .update_moderation(moderator_id, moderation_request_owner, result)
+                .await
+                .send(s),
+            MediaWriteCommand::UpdatePrimaryImage {
+                s,
+                account_id,
+                primary_image,
+            } => self
+                .write()
+                .update_primary_image(account_id, primary_image)
                 .await
                 .send(s),
         }

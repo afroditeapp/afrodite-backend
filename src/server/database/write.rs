@@ -5,7 +5,7 @@ use error_stack::{Report, Result, ResultExt};
 
 use crate::{
     api::{
-        media::data::{HandleModerationRequest, Moderation},
+        media::data::{HandleModerationRequest, Moderation, PrimaryImage},
         model::{
             Account, AccountIdInternal, AccountIdLight, AccountSetup, AuthPair, ContentId,
             Location, ModerationRequestContent, ProfileLink, SignInWithInfo,
@@ -541,6 +541,19 @@ impl<'a> WriteCommands<'a> {
             .await;
 
         Ok(())
+    }
+
+    pub async fn update_primary_image(
+        self,
+        id: AccountIdInternal,
+        primary_image: PrimaryImage,
+    ) -> Result<(), DatabaseError> {
+        self
+            .current()
+            .media()
+            .update_current_account_media_with_primary_image(id, primary_image)
+            .await
+            .convert(id)
     }
 
     fn current(&self) -> CurrentDataWriteCommands {
