@@ -277,7 +277,8 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             if content.slot_1_is_security_image() &&
                 state == ModerationRequestState::Accepted &&
                 current_images_for_request_owner.security_content_id.is_none() {
-                CurrentWriteMediaAdminCommands::update_current_security_image(transaction, moderation_request_owner, content).await?;
+                CurrentWriteMediaAdminCommands::update_current_security_image(transaction, moderation_request_owner, &content).await?;
+                CurrentWriteMediaAdminCommands::update_current_primary_image_from_slot_2(transaction, moderation_request_owner, content).await?;
             }
 
             let state_number = state as i64;
@@ -326,7 +327,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
     async fn update_current_security_image(
         transaction: &mut Transaction<'_, Sqlite>,
         moderation_request_owner: AccountIdInternal,
-        content: ModerationRequestContent,
+        content: &ModerationRequestContent,
     ) -> Result<(), SqliteDatabaseError> {
         let request_owner_id = moderation_request_owner.row_id();
         let security_img_content_id = content.slot_1().content_id;
@@ -339,6 +340,30 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             "#,
             request_owner_id,
             security_img_content_id,
+        )
+        .execute(transaction)
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    async fn update_current_primary_image_from_slot_2(
+        transaction: &mut Transaction<'_, Sqlite>,
+        moderation_request_owner: AccountIdInternal,
+        content: ModerationRequestContent,
+    ) -> Result<(), SqliteDatabaseError> {
+        let request_owner_id = moderation_request_owner.row_id();
+        let primary_img_content_id = content.slot_2().ok_or(SqliteDatabaseError::ContentSlotEmpty)?.content_id;
+        sqlx::query!(
+            r#"
+            UPDATE CurrentAccountMedia
+            SET profile_content_row_id = mc.content_row_id
+            FROM (SELECT content_id, content_row_id FROM MediaContent) AS mc
+            WHERE account_row_id = ? AND mc.content_id = ?
+            "#,
+            request_owner_id,
+            primary_img_content_id,
         )
         .execute(transaction)
         .await

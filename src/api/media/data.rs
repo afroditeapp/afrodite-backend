@@ -37,6 +37,10 @@ impl ModerationRequestContent {
     pub fn slot_1(&self) -> ContentId {
         self.image1
     }
+
+    pub fn slot_2(&self) -> Option<ContentId> {
+        self.image2
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

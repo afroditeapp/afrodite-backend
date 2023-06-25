@@ -56,6 +56,8 @@ pub enum SqliteDatabaseError {
 
     #[error("Content slot not empty")]
     ContentSlotNotEmpty,
+    #[error("Content slot is empty")]
+    ContentSlotEmpty,
     #[error("ModerationRequestContentIsInvalid")]
     ModerationRequestContentInvalid,
 }
