@@ -197,6 +197,12 @@ impl Account {
         }
     }
 
+    // pub fn complete_first_moderation(&mut self) {
+    //     if self.state == AccountState::WaitingFirstModeration {
+    //         self.state = AccountState::Normal;
+    //     }
+    // }
+
     pub fn add_admin_capablities(&mut self) {
         self.capablities.admin_moderate_images = true;
         // TOOD: Other capablities as well?
@@ -215,6 +221,9 @@ impl Default for Account {
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub enum AccountState {
     InitialSetup,
+    /// Basically normal state, but profile is not really set public
+    /// even if the capability is set.
+    //WaitingFirstModeration, TODO
     Normal,
     Banned,
     PendingDeletion,
