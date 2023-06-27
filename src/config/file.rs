@@ -9,7 +9,7 @@ use error_stack::{Report, Result, ResultExt};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::utils::IntoReportExt;
+use crate::{utils::IntoReportExt, api::model::GoogleAccountId};
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
@@ -25,8 +25,13 @@ use crate::utils::IntoReportExt;
 
 pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
+// Optional configs not in default file for safety:
+// debug = false
+//
+
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
+# Also google account ID is required if sign in with google is enabled.
 admin_email = "admin@example.com"
 
 [location]
@@ -49,6 +54,10 @@ profile = true
 media = true
 chat = true
 
+# [internal_api]
+# Enable login and register route for bots
+# bot_login = false
+
 # [external_services]
 # account_internal = "http://127.0.0.1:4000"
 # media_internal = "http://127.0.0.1:4000"
@@ -57,6 +66,7 @@ chat = true
 # client_id_android = "id"
 # client_id_ios = "id"
 # client_id_server = "id"
+# admin_google_account_id = "TODO"
 
 # [tls]
 # public_api_cert = "server_config/public_api.cert"
@@ -87,6 +97,8 @@ pub struct ConfigFile {
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     /// TLS is required if debug setting is false.
     pub tls: Option<TlsConfig>,
+
+    pub internal_api: Option<InternalApiConfig>,
 }
 
 impl ConfigFile {
@@ -163,11 +175,19 @@ pub struct LocationConfig {
     pub index_cell_square_km: NonZeroU8,
 }
 
+#[derive(Debug, Deserialize, Default, Serialize, Clone)]
+pub struct InternalApiConfig {
+    /// Enable register and login HTTP routes for bots through internal API socket.
+    /// Note that debug option with this makes no authentication logins possible.
+    pub bot_login: bool,
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SignInWithGoogleConfig {
     pub client_id_android: String,
     pub client_id_ios: String,
     pub client_id_server: String,
+    pub admin_google_account_id: GoogleAccountId,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

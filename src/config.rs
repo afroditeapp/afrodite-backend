@@ -19,7 +19,7 @@ use self::{
     args::{TestMode},
     file::{
         Components, ConfigFile, ExternalServices, LocationConfig, SignInWithGoogleConfig,
-        SocketConfig,
+        SocketConfig, InternalApiConfig,
     },
 };
 
@@ -83,7 +83,7 @@ impl Config {
     }
 
     pub fn location(&self) -> &LocationConfig {
-        &self.file.location
+    &self.file.location
     }
 
     /// Server should run in debug mode.
@@ -92,6 +92,8 @@ impl Config {
     /// * Swagger UI is enabled.
     /// * Internal API is available at same port as the public API.
     /// * Disabling HTTPS is possbile.
+    /// * Completing initial setup will check only email when adding admin capabilities.
+    ///   Normally it also requires Google Account ID.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }
@@ -127,6 +129,10 @@ impl Config {
 
     pub fn internal_api_tls_config(&self) -> Option<&Arc<ServerConfig>> {
         self.internal_api_tls_config.as_ref()
+    }
+
+    pub fn internal_api_config(&self) -> InternalApiConfig {
+        self.file.internal_api.clone().unwrap_or_default()
     }
 }
 

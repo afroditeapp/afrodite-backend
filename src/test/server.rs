@@ -6,7 +6,7 @@ use std::{
 use crate::config::{
     args::{Test, TestMode},
     file::{
-        Components, ConfigFile, ExternalServices, LocationConfig, SocketConfig, CONFIG_FILE_NAME,
+        Components, ConfigFile, ExternalServices, LocationConfig, SocketConfig, CONFIG_FILE_NAME, InternalApiConfig,
     },
 };
 
@@ -155,6 +155,7 @@ fn new_config(
         external_services,
         sign_in_with_google: None,
         tls: None,
+        internal_api: Some(InternalApiConfig { bot_login: true }),
     }
 }
 

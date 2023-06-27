@@ -20,7 +20,7 @@ use crate::{
         model::{
             Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
             ProfileInternal,
-        },
+        }, GetConfig,
     },
     config::InternalApiUrls,
     utils::IntoReportExt,
@@ -70,7 +70,7 @@ pub struct InternalApp;
 
 impl InternalApp {
     pub fn create_account_server_router(state: AppState) -> Router {
-        Router::new()
+        let mut router = Router::new()
             .route(
                 api::account::internal::PATH_INTERNAL_CHECK_API_KEY,
                 get({
@@ -84,7 +84,26 @@ impl InternalApp {
                     let state = state.clone();
                     move |param1| api::account::internal::internal_get_account_state(param1, state)
                 }),
+            );
+
+        if state.config().internal_api_config().bot_login {
+            router = router.route(
+                api::account::PATH_REGISTER,
+                post({
+                    let state = state.clone();
+                    move || api::account::post_register(state)
+                }),
             )
+            .route(
+                api::account::PATH_LOGIN,
+                post({
+                    let state = state.clone();
+                    move |body| api::account::post_login(body, state)
+                }),
+            )
+        }
+
+        router
     }
 
     pub fn create_profile_server_router(state: AppState) -> Router {

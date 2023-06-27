@@ -136,20 +136,6 @@ impl App {
     pub fn create_account_server_router(&self) -> Router {
         let public = Router::new()
             .route(
-                api::account::PATH_REGISTER,
-                post({
-                    let state = self.state.clone();
-                    move || api::account::post_register(state)
-                }),
-            )
-            .route(
-                api::account::PATH_LOGIN,
-                post({
-                    let state = self.state.clone();
-                    move |body| api::account::post_login(body, state)
-                }),
-            )
-            .route(
                 api::account::PATH_SIGN_IN_WITH_LOGIN,
                 post({
                     let state = self.state.clone();

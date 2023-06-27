@@ -7,7 +7,7 @@ use crate::{
     api::{
         media::data::{ModerationRequest, PrimaryImage, CurrentAccountMediaInternal, MediaContentType, MediaContentInternal},
         model::{
-            AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken,
+            AccountIdInternal, AccountIdLight, ApiKey, ContentId, RefreshToken, SignInWithInfo,
         },
     },
     utils::{ConvertCommandError, ErrorConversion},
@@ -142,6 +142,13 @@ impl<'a> ReadCommands<'a> {
         id: AccountIdInternal,
     ) -> Result<Option<RefreshToken>, DatabaseError> {
         self.sqlite.account().refresh_token(id).await.convert(id)
+    }
+
+    pub async fn account_sign_in_with_info(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<SignInWithInfo, DatabaseError> {
+        self.sqlite.account().sign_in_with_info(id).await.convert(id)
     }
 
     pub async fn account_ids<T: FnMut(AccountIdInternal)>(

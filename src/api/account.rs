@@ -359,11 +359,29 @@ pub async fn post_complete_setup<
             StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
         })?;
 
+    let sign_in_with_info = state
+        .read_database()
+        .account_sign_in_with_info(id)
+        .await
+        .map_err(|e| {
+            error!("Complete setup error: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })?;
+
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();
 
-        if account_setup.email() == state.config().admin_email() {
-            account.add_admin_capablities();
+        if state.config().debug_mode() {
+            if account_setup.email() == state.config().admin_email() {
+                account.add_admin_capablities();
+            }
+        } else {
+            if let Some(sign_in_with_config) = state.config().sign_in_with_google_config() {
+                if sign_in_with_info.google_account_id == Some(sign_in_with_config.admin_google_account_id.clone()) &&
+                    account_setup.email() == state.config().admin_email() {
+                    account.add_admin_capablities();
+                }
+            }
         }
 
         state

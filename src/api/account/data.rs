@@ -287,6 +287,7 @@ pub struct SignInWithInfo {
     pub google_account_id: Option<GoogleAccountId>,
 }
 
-#[derive(Debug, Clone, sqlx::Type, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, sqlx::Type, PartialEq)]
+#[serde(transparent)]
 #[sqlx(transparent)]
 pub struct GoogleAccountId(pub String);
