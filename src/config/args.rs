@@ -72,6 +72,16 @@ pub fn get_config() -> ArgsConfig {
                         .default_value("tmp_databases")
                         .required(false),
                 )
+                .arg(
+                    arg!(--"man-images" <DIR> "Directory for random man images")
+                        .value_parser(value_parser!(PathBuf))
+                        .required(false),
+                )
+                .arg(
+                    arg!(--"woman-images" <DIR> "Directory for random woman images")
+                        .value_parser(value_parser!(PathBuf))
+                        .required(false),
+                )
                 .arg(arg!(--"microservice-media" "Start media API as microservice"))
                 .arg(arg!(--"microservice-profile" "Start profile API as microservice"))
                 .arg(arg!(--"microservice-chat" "Start chat API as microservice"))
@@ -114,6 +124,12 @@ pub fn get_config() -> ArgsConfig {
                 save_state: sub_matches.is_present("save-state"),
                 print_speed: sub_matches.is_present("print-speed"),
                 early_quit: sub_matches.is_present("early-quit"),
+                man_images: sub_matches
+                    .get_one::<PathBuf>("man-images")
+                    .map(ToOwned::to_owned),
+                woman_images: sub_matches
+                    .get_one::<PathBuf>("woman-images")
+                    .map(ToOwned::to_owned),
                 test: sub_matches
                     .get_one::<Test>("test")
                     .map(ToOwned::to_owned)
@@ -154,6 +170,8 @@ pub struct TestMode {
     pub update_profile: bool,
     pub print_speed: bool,
     pub early_quit: bool,
+    pub man_images: Option<PathBuf>,
+    pub woman_images: Option<PathBuf>,
     pub test: Test,
     pub server: ServerConfig,
 }
