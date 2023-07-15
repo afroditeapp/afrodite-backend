@@ -12,7 +12,7 @@ use hyper::server::{
 };
 use tokio::{
     net::TcpListener,
-    signal,
+    signal::{self, unix::{Signal, SignalKind}},
     sync::{broadcast, mpsc},
     task::JoinHandle,
 };
@@ -50,6 +50,8 @@ impl PihkaServer {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
+        let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
+
         let (database_manager, router_database_handle) = DatabaseManager::new(
             self.config.database_dir().to_path_buf(),
             self.config.clone(),
@@ -75,10 +77,7 @@ impl PihkaServer {
             )
         };
 
-        match signal::ctrl_c().await {
-            Ok(()) => (),
-            Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
-        }
+        Self::wait_quit_signal(&mut terminate_signal).await;
 
         info!("Server quit started");
 
@@ -105,6 +104,18 @@ impl PihkaServer {
         database_manager.close().await;
 
         info!("Server quit done");
+    }
+
+    pub async fn wait_quit_signal(terminate_signal: &mut Signal) {
+        tokio::select! {
+            _ = terminate_signal.recv() => {}
+            result = signal::ctrl_c() => {
+                match result {
+                    Ok(()) => (),
+                    Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
+                }
+            }
+        }
     }
 
     /// Public API. This can have WAN access.
@@ -140,7 +151,7 @@ impl PihkaServer {
             self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification)
                 .await
         } else {
-            self.create_server_task_no_tls(router, addr, "Public API")
+            self.create_server_task_no_tls(router, addr, "Public API", quit_notification)
         }
     }
 
@@ -231,6 +242,7 @@ impl PihkaServer {
         router: Router,
         addr: SocketAddr,
         name_for_log_message: &'static str,
+        mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
         let normal_api_server = {
             axum::Server::bind(&addr)
@@ -239,10 +251,7 @@ impl PihkaServer {
 
         tokio::spawn(async move {
             let shutdown_handle = normal_api_server.with_graceful_shutdown(async {
-                match signal::ctrl_c().await {
-                    Ok(()) => (),
-                    Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
-                }
+                let _ = quit_notification.recv().await;
             });
 
             match shutdown_handle.await {
@@ -275,7 +284,7 @@ impl PihkaServer {
             self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification)
                 .await
         } else {
-            self.create_server_task_no_tls(router, addr, "Internal API")
+            self.create_server_task_no_tls(router, addr, "Internal API", quit_notification)
         }
     }
 
