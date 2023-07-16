@@ -20,7 +20,7 @@ use tokio_rustls::rustls::ServerConfig;
 use tokio_rustls::TlsAcceptor;
 use tower::{MakeService};
 use tower_http::trace::{TraceLayer};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -51,6 +51,10 @@ impl PihkaServer {
         tracing_subscriber::fmt::init();
 
         info!("Backend version: {}-{}", BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE);
+
+        if self.config.debug_mode() {
+            warn!("Debug mode is enabled");
+        }
 
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
