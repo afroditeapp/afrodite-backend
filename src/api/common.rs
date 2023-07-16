@@ -1,4 +1,7 @@
 //! Common routes to all microservices
+//!
+
+pub mod admin;
 
 // TODO: add app version route
 

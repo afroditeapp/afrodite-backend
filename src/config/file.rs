@@ -54,6 +54,9 @@ profile = true
 media = true
 chat = true
 
+# [manager]
+# address = "127.0.0.1:5000"
+
 # [internal_api]
 # Enable login and register route for bots
 # bot_login = false
@@ -93,6 +96,7 @@ pub struct ConfigFile {
     pub database: DatabaseConfig,
     pub socket: SocketConfig,
     pub location: LocationConfig,
+    pub manager: Option<AppManagerConfig>,
     pub external_services: Option<ExternalServices>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     /// TLS is required if debug setting is false.
@@ -150,6 +154,13 @@ pub struct DatabaseConfig {
 pub struct SocketConfig {
     pub public_api: SocketAddr,
     pub internal_api: SocketAddr,
+}
+
+
+/// App manager config
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AppManagerConfig {
+    pub address: SocketAddr,
 }
 
 /// Base URLs for external services

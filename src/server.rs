@@ -26,7 +26,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     api::ApiDoc,
-    config::Config,
+    config::{Config, info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE}},
     server::{
         app::{connection::WebSocketManager, App},
         database::DatabaseManager,
@@ -49,6 +49,8 @@ impl PihkaServer {
 
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
+
+        info!("Backend version: {}-{}", BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE);
 
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 

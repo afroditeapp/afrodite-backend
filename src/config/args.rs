@@ -1,6 +1,6 @@
 use std::{
     convert::{TryFrom, TryInto},
-    path::PathBuf,
+    path::PathBuf, process::exit,
 };
 
 use clap::{arg, command, value_parser, Command, PossibleValue};
@@ -20,6 +20,10 @@ pub fn get_config() -> ArgsConfig {
             arg!(--database <DIR> "Set database directory. Overrides config file value.")
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
+        )
+        .arg(
+            arg!(--"build-info" "Print build info and quit.")
+                .required(false)
         )
         .subcommand(
             Command::new("test")
@@ -102,6 +106,14 @@ pub fn get_config() -> ArgsConfig {
                 .arg(arg!(--forever "Run tests forever")),
         )
         .get_matches();
+
+    if matches.is_present("build-info") {
+        println!(
+            "{}",
+            super::info::build_info()
+        );
+        exit(0)
+    }
 
     let test_mode = match matches.subcommand() {
         Some(("test", sub_matches)) => {

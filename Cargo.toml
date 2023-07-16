@@ -52,6 +52,8 @@ nalgebra = "0.32.2"
 jsonwebtoken = "8.3.0"
 base64 = "0.21.0"
 
+manager_api_client = { path = "./app-manager/manager_api_client" }
+
 # Test mode related dependencies
 
 rand = "0.8.5"
@@ -60,5 +62,8 @@ image = { version = "0.24.6", default-features = false, features = ["jpeg"] }
 tokio-tungstenite = "0.19.0"
 api_client = { path = "./api_client" } # Used also for internal API requests
 
+[build-dependencies]
+vergen = { version = "8.0.0", features = ["cargo", "git", "gitcl", "rustc"] }
+
 [workspace]
-members = ["api_client"]
+members = ["api_client", "app-manager/manager_api_client"]

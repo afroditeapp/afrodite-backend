@@ -154,6 +154,7 @@ fn new_config(
         },
         external_services,
         sign_in_with_google: None,
+        manager: None,
         tls: None,
         internal_api: Some(InternalApiConfig { bot_login: true }),
     }

@@ -117,3 +117,7 @@ openssl x509 -in server.crt -text -noout
 ```
 RUST_LOG=debug cargo run -- test --tasks 10 --save-state --no-servers --test bot
 ```
+
+# Update app-manager submodule to latest
+
+git submodule update --remote --merge

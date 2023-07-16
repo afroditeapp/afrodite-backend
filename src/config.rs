@@ -1,5 +1,6 @@
 pub mod args;
 pub mod file;
+pub mod info;
 
 use std::{
     io::BufReader,
@@ -19,7 +20,7 @@ use self::{
     args::{TestMode},
     file::{
         Components, ConfigFile, ExternalServices, LocationConfig, SignInWithGoogleConfig,
-        SocketConfig, InternalApiConfig,
+        SocketConfig, InternalApiConfig, AppManagerConfig,
     },
 };
 
@@ -112,6 +113,10 @@ impl Config {
 
     pub fn sign_in_with_google_config(&self) -> Option<&SignInWithGoogleConfig> {
         self.file.sign_in_with_google.as_ref()
+    }
+
+    pub fn manager_config(&self) -> Option<&AppManagerConfig> {
+        self.file.manager.as_ref()
     }
 
     /// Launch testing and benchmark mode instead of the server mode.
