@@ -35,6 +35,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        common::get_version,
         common::get_connect_websocket,
         account::post_register,
         account::post_login,
@@ -69,6 +70,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     ),
     components(schemas(
         common::EventToClient,
+        common::data::BackendVersion,
         account::data::AccountIdLight,
         account::data::ApiKey,
         account::data::Account,

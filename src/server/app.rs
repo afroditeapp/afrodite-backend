@@ -130,6 +130,15 @@ impl App {
                 }
             }),
         )
+        .route(
+            api::common::PATH_GET_VERSION,
+            get({
+                let state = self.state.clone();
+                move || {
+                    api::common::get_version(state)
+                }
+            }),
+        )
         // This route checks the access token by itself.
     }
 

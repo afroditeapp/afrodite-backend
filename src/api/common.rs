@@ -2,6 +2,7 @@
 //!
 
 pub mod admin;
+pub mod data;
 
 // TODO: add app version route
 
@@ -14,7 +15,7 @@ use axum::{
         ws::{Message, WebSocket},
         ConnectInfo, WebSocketUpgrade,
     },
-    response::IntoResponse, TypedHeader,
+    response::IntoResponse, TypedHeader, Json,
 };
 
 
@@ -29,8 +30,10 @@ use utoipa::ToSchema;
 
 use crate::{
     server::app::{connection::WebSocketManager, AppState},
-    utils::IntoReportExt,
+    utils::IntoReportExt, config::info::{BUILD_INFO_GIT_DESCRIBE, BUILD_INFO_CARGO_PKG_VERSION},
 };
+
+use self::data::BackendVersion;
 
 use super::{
     model::{AccountIdInternal, ApiKey, AuthPair, RefreshToken},
@@ -41,6 +44,31 @@ use tracing::error;
 use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 use error_stack::{IntoReport, Result, ResultExt};
+
+
+pub const PATH_GET_VERSION: &str = "/common_api/version";
+
+/// Get backend version.
+#[utoipa::path(
+    get,
+    path = "/common_api/version",
+    security(),
+    responses(
+        (status = 200, description = "Version information.", body = BackendVersion),
+    )
+)]
+pub async fn get_version<S>(
+    state: S,
+) -> Json<BackendVersion> {
+    BackendVersion {
+        backend_code_version: BUILD_INFO_GIT_DESCRIBE.to_string(),
+        backend_version: BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+        protocol_version: "1.0.0".to_string(),
+    }.into()
+}
+
+// ------------------------- WebSocket -------------------------
+
 
 pub const PATH_CONNECT: &str = "/common_api/connect";
 
