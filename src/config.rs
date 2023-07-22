@@ -142,10 +142,10 @@ impl Config {
 }
 
 pub fn get_config() -> Result<Config, GetConfigError> {
+    let args_config = args::get_config();
     let current_dir = std::env::current_dir().into_error(GetConfigError::GetWorkingDir)?;
     let mut file_config =
         file::ConfigFile::load(current_dir).change_context(GetConfigError::LoadFileError)?;
-    let args_config = args::get_config();
 
     let database = if let Some(database) = args_config.database_dir {
         database
