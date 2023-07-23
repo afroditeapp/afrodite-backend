@@ -315,9 +315,11 @@ impl<'a> InternalApiManager<'a> {
                 ($account:expr,  $( $name:ident , )* ) => {
                     Capabilities {
                         $( $name: $account.capablities.$name.unwrap_or(false), )*
+                        ..Capabilities::default()
                     }
                 };
             }
+            // TODO: Add missing capabilities
             let capabilities = copy_capablities!(
                 account,
                 admin_modify_capablities,

@@ -68,6 +68,7 @@ pub struct Config {
     // TLS
     public_api_tls_config: Option<Arc<ServerConfig>>,
     internal_api_tls_config: Option<Arc<ServerConfig>>,
+    root_certificate: Option<reqwest::Certificate>,
 }
 
 impl Config {
@@ -84,7 +85,7 @@ impl Config {
     }
 
     pub fn location(&self) -> &LocationConfig {
-    &self.file.location
+        &self.file.location
     }
 
     /// Server should run in debug mode.
@@ -136,6 +137,10 @@ impl Config {
         self.internal_api_tls_config.as_ref()
     }
 
+    pub fn root_certificate(&self) -> Option<&reqwest::Certificate> {
+        self.root_certificate.as_ref()
+    }
+
     pub fn internal_api_config(&self) -> InternalApiConfig {
         self.file.internal_api.clone().unwrap_or_default()
     }
@@ -179,6 +184,12 @@ pub fn get_config() -> Result<Config, GetConfigError> {
             .attach_printable("TLS must be configured when debug mode is false");
     }
 
+    let root_certificate = match file_config.tls.clone() {
+        Some(tls_config) =>
+            Some(load_root_certificate(&tls_config.root_certificate)?),
+        None => None,
+    };
+
     Ok(Config {
         file: file_config,
         database,
@@ -188,6 +199,7 @@ pub fn get_config() -> Result<Config, GetConfigError> {
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,
         internal_api_tls_config,
+        root_certificate,
     })
 }
 
@@ -297,4 +309,24 @@ fn generate_server_config(
         .into_error(GetConfigError::CreateTlsConfig)?;
 
     Ok(config)
+}
+
+fn load_root_certificate(
+    cert_path: &Path,
+) -> Result<reqwest::Certificate, GetConfigError> {
+    let mut cert_reader =
+        BufReader::new(std::fs::File::open(cert_path).into_error(GetConfigError::CreateTlsConfig)?);
+    let all_certs = certs(&mut cert_reader).into_error(GetConfigError::CreateTlsConfig)?;
+    let cert = if let [cert] = &all_certs[..] {
+        reqwest::Certificate::from_der(&cert.clone())
+    } else if all_certs.is_empty() {
+        return Err(GetConfigError::CreateTlsConfig)
+            .into_report()
+            .attach_printable("No cert found");
+    } else {
+        return Err(GetConfigError::CreateTlsConfig)
+            .into_report()
+            .attach_printable("Only one cert supported");
+    }.into_error(GetConfigError::CreateTlsConfig)?;
+    Ok(cert)
 }

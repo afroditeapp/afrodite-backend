@@ -68,6 +68,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "app-manager"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "bytes",
+ "clap",
+ "error-stack",
+ "futures",
+ "headers",
+ "http",
+ "hyper",
+ "manager_api_client",
+ "mime",
+ "reqwest",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-rustls 0.24.0",
+ "tokio-stream",
+ "tokio-util",
+ "toml",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+ "vergen",
+]
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1403,6 +1440,7 @@ name = "pihka-backend"
 version = "0.1.0"
 dependencies = [
  "api_client",
+ "app-manager",
  "async-trait",
  "axum",
  "base64 0.21.0",

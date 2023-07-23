@@ -15,7 +15,7 @@ use utoipa::OpenApi;
 use crate::{
     api::{
         self, ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
-        WriteDatabase,
+        WriteDatabase, GetManagerApi,
     },
     config::Config,
 };
@@ -31,13 +31,16 @@ use super::{
         utils::{AccountIdManager, ApiKeyManager},
         RouterDatabaseReadHandle,
     },
-    internal::{InternalApiClient, InternalApiManager},
+    internal::{InternalApiClient, InternalApiManager}, manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
+
+use error_stack::{Result, ResultExt};
 
 #[derive(Clone)]
 pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
     internal_api: Arc<InternalApiClient>,
+    manager_api: Arc<ManagerApiClient>,
     config: Arc<Config>,
     sign_in_with: Arc<SignInWithManager>,
 }
@@ -85,6 +88,15 @@ impl GetInternalApi for AppState {
     }
 }
 
+impl GetManagerApi for AppState {
+    fn manager_api(&self) -> ManagerApiManager {
+        ManagerApiManager::new(
+            &self.config,
+            &self.manager_api,
+        )
+    }
+}
+
 impl GetConfig for AppState {
     fn config(&self) -> &Config {
         &self.config
@@ -101,18 +113,19 @@ impl App {
         database_handle: RouterDatabaseReadHandle,
         config: Arc<Config>,
         ws_manager: WebSocketManager,
-    ) -> Self {
+    ) -> Result<Self, ManagerClientError> {
         let state = AppState {
             config: config.clone(),
             database: Arc::new(database_handle),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
+            manager_api: ManagerApiClient::new(&config)?.into(),
             sign_in_with: SignInWithManager::new(config).into(),
         };
 
-        Self {
+        Ok(Self {
             state,
             ws_manager: Some(ws_manager),
-        }
+        })
     }
 
     pub fn state(&self) -> AppState {
@@ -120,8 +133,8 @@ impl App {
     }
 
     pub fn create_common_server_router(&mut self) -> Router {
-        Router::new().route(
-            api::common::PATH_CONNECT,
+        let public = Router::new().route(
+            api::common::PATH_CONNECT, // This route checks the access token by itself.
             get({
                 let state = self.state.clone();
                 let ws_manager = self.ws_manager.take().unwrap(); // Only one instance required.
@@ -138,8 +151,9 @@ impl App {
                     api::common::get_version(state)
                 }
             }),
-        )
-        // This route checks the access token by itself.
+        );
+
+        public.merge(ConnectedApp::new(self.state.clone()).private_common_router())
     }
 
     pub fn create_account_server_router(&self) -> Router {
@@ -173,73 +187,3 @@ impl App {
         public.merge(ConnectedApp::new(self.state.clone()).private_chat_server_router())
     }
 }
-
-async fn root(_state: AppState) -> &'static str {
-    "Test123"
-}
-
-async fn openapi(_state: AppState) -> Json<utoipa::openapi::OpenApi> {
-    ApiDoc::openapi().into()
-}
-
-// #[cfg(test)]
-// mod tests {
-//     use std::path::{PathBuf, Path};
-
-//     use axum::{Router, http::{Request, StatusCode, Method, header}, body::{Body}};
-//     use hyper::header::HeaderName;
-//     use serde_json::json;
-//     use tokio::sync::mpsc;
-//     use tower::ServiceExt;
-
-//     use crate::{
-//         server::{database::DatabaseManager, app::{App}},
-//         config::Config,
-//         api::core::user::{RegisterResponse},
-//     };
-
-//     fn router() -> Router {
-//         let config = Config {
-//             database_dir: Path::new("unit-test-data").to_owned(),
-//         };
-//         let (sender, receiver) = mpsc::channel(64);
-//         let (database_handle, quit_sender, database_task_sender) =
-//             DatabaseManager::start_task(config.into(), sender, receiver);
-//         let app = App::new(database_task_sender);
-//         app.create_router()
-//     }
-
-//     #[tokio::test]
-//     async fn root() {
-//         let response = router()
-//             .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
-//             .await
-//             .unwrap();
-
-//         assert_eq!(response.status(), StatusCode::OK);
-//     }
-
-//     #[tokio::test]
-//     async fn register() {
-//         let response = router()
-//             .oneshot(
-//                 Request::builder()
-//                     .method(Method::POST)
-//                     .uri("/register")
-//                     .header(header::CONTENT_TYPE, "application/json")
-//                     .body(Body::from(
-//                         serde_json::to_vec(&json!({
-//                             "name": "test"
-//                         })).unwrap()
-//                     ))
-//                     .unwrap()
-//             )
-//             .await
-//             .unwrap();
-
-//         assert_eq!(response.status(), StatusCode::OK);
-
-//         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-//         let _response: RegisterResponse = serde_json::from_slice(&body).unwrap();
-//     }
-// }

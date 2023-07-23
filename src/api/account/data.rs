@@ -205,6 +205,8 @@ impl Account {
 
     pub fn add_admin_capablities(&mut self) {
         self.capablities.admin_moderate_images = true;
+        self.capablities.admin_server_maintentance_view_info = true;
+        self.capablities.admin_server_maintentance_update_software = true;
         // TOOD: Other capablities as well?
     }
 }
@@ -254,6 +256,8 @@ define_capablities!(
     admin_view_private_info,
     admin_view_profile_history,
     admin_ban_profile,
+    admin_server_maintentance_view_info,
+    admin_server_maintentance_update_software,
     banned_edit_profile,
     /// View public profiles
     view_public_profiles,

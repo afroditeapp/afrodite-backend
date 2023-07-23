@@ -53,6 +53,7 @@ jsonwebtoken = "8.3.0"
 base64 = "0.21.0"
 
 manager_api_client = { path = "./app-manager/manager_api_client" }
+app-manager = { path = "./app-manager/app-manager" }
 
 # Test mode related dependencies
 
@@ -66,4 +67,4 @@ api_client = { path = "./api_client" } # Used also for internal API requests
 vergen = { version = "8.0.0", features = ["cargo", "git", "gitcl", "rustc"] }
 
 [workspace]
-members = ["api_client", "app-manager/manager_api_client"]
+members = ["api_client", "app-manager/app-manager", "app-manager/manager_api_client"]

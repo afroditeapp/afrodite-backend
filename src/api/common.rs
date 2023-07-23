@@ -1,6 +1,7 @@
 //! Common routes to all microservices
 //!
 
+pub mod admin_data;
 pub mod admin;
 pub mod data;
 

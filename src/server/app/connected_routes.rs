@@ -32,6 +32,55 @@ impl ConnectedApp {
         self.state.clone()
     }
 
+    pub fn private_common_router(&self) -> Router {
+        let private = Router::new()
+            .route(
+                api::common::admin::PATH_GET_SYSTEM_INFO,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::common::admin::get_system_info(param1, state)
+                }),
+            )
+            .route(
+                api::common::admin::PATH_GET_SOFTWARE_INFO,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::common::admin::get_software_info(param1, state)
+                }),
+            )
+            .route(
+                api::common::admin::PATH_GET_LATEST_BUILD_INFO,
+                get({
+                    let state = self.state.clone();
+                    move |param1, param2| api::common::admin::get_latest_build_info(param1, param2, state)
+                }),
+            )
+            .route(
+                api::common::admin::PATH_POST_REQUEST_BUILD_SOFTWARE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::common::admin::post_request_build_software(param1, param2, state)
+                }),
+            )
+            .route(
+                api::common::admin::PATH_POST_REQUEST_UPDATE_SOFTWARE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2, param3| api::common::admin::post_request_update_software(param1, param2, param3, state)
+                }),
+            )
+            .route_layer({
+                middleware::from_fn({
+                    let state = self.state.clone();
+                    move |addr, req, next| {
+                        api::utils::authenticate_with_api_key(state.clone(), addr, req, next)
+                    }
+                })
+            });
+
+        Router::new().merge(private)
+    }
+
     pub fn private_account_server_router(&self) -> Router {
         let private = Router::new()
             .route(

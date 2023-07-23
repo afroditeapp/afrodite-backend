@@ -16,7 +16,7 @@ use utoipa::{
 
 
 
-use super::{model::ApiKey, GetApiKeys};
+use super::{model::{ApiKey, AccountIdInternal, Account}, GetApiKeys, ReadDatabase};
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
@@ -90,31 +90,3 @@ impl Modify for SecurityApiTokenDefault {
         }
     }
 }
-
-// pub async fn get_account<S: GetUsers, T>(
-//     state: &S,
-//     id: AccountIdLight,
-//     fun: impl Fn(&Arc<AccountStateInRam>) -> T
-// ) -> Result<T, StatusCode> {
-//     state
-//         .users()
-//         .read()
-//         .await
-//         .get(&id)
-//         .ok_or(StatusCode::UNAUTHORIZED)
-//         .map(fun)
-// }
-
-// pub async fn get_account_from_api_key<S: GetApiKeys, T>(
-//     state: &S,
-//     id: &ApiKey,
-//     fun: impl Fn(&Arc<AccountStateInRam>) -> T
-// ) -> Result<T, StatusCode> {
-//     state
-//         .api_keys()
-//         .read()
-//         .await
-//         .get(&id)
-//         .ok_or(StatusCode::UNAUTHORIZED)
-//         .map(fun)
-// }

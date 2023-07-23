@@ -1,6 +1,7 @@
 pub mod app;
 pub mod database;
 pub mod internal;
+pub mod manager_client;
 
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
@@ -69,7 +70,9 @@ impl PihkaServer {
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
 
-        let mut app = App::new(router_database_handle, self.config.clone(), ws_manager).await;
+        let mut app = App::new(router_database_handle, self.config.clone(), ws_manager)
+            .await
+            .expect("App init failed");
 
         let server_task = self
             .create_public_api_server_task(&mut app, server_quit_watcher.resubscribe())

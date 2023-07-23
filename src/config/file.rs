@@ -55,7 +55,8 @@ media = true
 chat = true
 
 # [manager]
-# address = "127.0.0.1:5000"
+# address = "http://127.0.0.1:5000"
+# api_key = "TODO"
 
 # [internal_api]
 # Enable login and register route for bots
@@ -76,6 +77,7 @@ chat = true
 # public_api_key = "server_config/public_api.key"
 # internal_api_cert = "server_config/internal_api.cert"
 # internal_api_key = "server_config/internal_api.key"
+# root_certificate = "server_config/root_certificate"
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -160,7 +162,8 @@ pub struct SocketConfig {
 /// App manager config
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppManagerConfig {
-    pub address: SocketAddr,
+    pub address: Url,
+    pub api_key: String,
 }
 
 /// Base URLs for external services
@@ -207,4 +210,5 @@ pub struct TlsConfig {
     pub public_api_key: PathBuf,
     pub internal_api_cert: PathBuf,
     pub internal_api_key: PathBuf,
+    pub root_certificate: PathBuf,
 }

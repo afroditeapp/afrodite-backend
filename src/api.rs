@@ -20,7 +20,7 @@ use crate::{
             read::ReadCommands,
             utils::{AccountIdManager, ApiKeyManager},
         },
-        internal::InternalApiManager,
+        internal::InternalApiManager, manager_client::ManagerApiManager,
     },
 };
 
@@ -37,6 +37,11 @@ pub const PATH_PREFIX: &str = "/api/v1/";
     paths(
         common::get_version,
         common::get_connect_websocket,
+        common::admin::get_system_info,
+        common::admin::get_software_info,
+        common::admin::get_latest_build_info,
+        common::admin::post_request_build_software,
+        common::admin::post_request_update_software,
         account::post_register,
         account::post_login,
         account::post_sign_in_with_login,
@@ -102,6 +107,15 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         media::data::SecurityImage,
         media::data::ImageAccessCheck,
         media::data::NormalImages,
+        app_manager::api::model::SystemInfoList,
+        app_manager::api::model::SystemInfo,
+        app_manager::api::model::CommandOutput,
+        app_manager::api::model::BuildInfo,
+        app_manager::api::model::SoftwareInfo,
+        app_manager::api::model::RebootQueryParam,
+        app_manager::api::model::DownloadType,
+        app_manager::api::model::DownloadTypeQueryParam,
+        app_manager::api::model::SoftwareOptions,
     )),
     modifiers(&SecurityApiTokenDefault),
     info(
@@ -138,6 +152,10 @@ pub trait SignInWith {
 
 pub trait GetInternalApi {
     fn internal_api(&self) -> InternalApiManager;
+}
+
+pub trait GetManagerApi {
+    fn manager_api(&self) -> ManagerApiManager;
 }
 
 pub trait GetConfig {
