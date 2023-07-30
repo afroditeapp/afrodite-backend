@@ -216,6 +216,7 @@ impl ContentId {
         format!("{}.raw.jpg", self.content_id.as_hyphenated())
     }
 
+    /// Image file name with extension.
     pub fn jpg_image(&self) -> String {
         format!("{}.jpg", self.content_id.as_hyphenated())
     }

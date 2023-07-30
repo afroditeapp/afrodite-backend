@@ -32,7 +32,7 @@ use crate::{
         app::{connection::WebSocketManager, App},
         database::DatabaseManager,
         internal::InternalApp,
-    },
+    }, litestream::LitestreamManager, media_backup::MediaBackupManager,
 };
 
 use self::app::connection::ServerQuitWatcher;
@@ -59,18 +59,35 @@ impl PihkaServer {
 
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
+        let mut litestream = None;
+        if let Some(litestream_config) = self.config.litestream() {
+            let mut litestream_manager = LitestreamManager::new(self.config.clone(), litestream_config.clone());
+            litestream_manager.start_litestream().await.expect("Litestream start failed");
+            litestream = Some(litestream_manager);
+        }
+
+        let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
+        let (media_backup_quit, media_backup_handle) =
+            MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
+
+
         let (database_manager, router_database_handle) = DatabaseManager::new(
             self.config.database_dir().to_path_buf(),
             self.config.clone(),
+            media_backup_handle,
         )
         .await
         .expect("Database init failed");
 
-        let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
+
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
 
-        let mut app = App::new(router_database_handle, self.config.clone(), ws_manager)
+        let mut app = App::new(
+            router_database_handle,
+            self.config.clone(),
+            ws_manager,
+        )
             .await
             .expect("App init failed");
 
@@ -111,6 +128,14 @@ impl PihkaServer {
 
         drop(app);
         database_manager.close().await;
+        media_backup_quit.wait_quit().await;
+
+        if let Some(litestream) = litestream {
+            match litestream.stop_litestream().await {
+                Ok(()) => (),
+                Err(e) => error!("Litestream stop failed: {}", e),
+            }
+        }
 
         info!("Server quit done");
     }

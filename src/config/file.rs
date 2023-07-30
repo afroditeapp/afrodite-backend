@@ -78,6 +78,17 @@ chat = true
 # internal_api_cert = "server_config/internal_api.cert"
 # internal_api_key = "server_config/internal_api.key"
 # root_certificate = "server_config/root_certificate"
+
+# [media_backup]
+# ssh_address = "user@192.168.64.1"
+# target_location = "/home/user/media_backup"
+# ssh_private_key = "/home/local/.ssh/id_ed25519"
+# rsync_time = "7:00"
+
+# Backup SQLite database files using litestream tool
+# [litestream]
+# binary = "/usr/bin/litestream"
+# config_file = "litestream.yml"
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -105,6 +116,8 @@ pub struct ConfigFile {
     pub tls: Option<TlsConfig>,
 
     pub internal_api: Option<InternalApiConfig>,
+    pub media_backup: Option<MediaBackupConfig>,
+    pub litestream: Option<LitestreamConfig>,
 }
 
 impl ConfigFile {
@@ -211,4 +224,118 @@ pub struct TlsConfig {
     pub internal_api_cert: PathBuf,
     pub internal_api_key: PathBuf,
     pub root_certificate: PathBuf,
+}
+
+/// Backup media files to remote server using SSH
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct MediaBackupConfig {
+    /// For example "user@host"
+    pub ssh_address: SshAddress,
+    /// Target media backup location on remote server.
+    pub target_location: PathBuf,
+    pub ssh_private_key: AbsolutePathNoWhitespace,
+    pub rsync_time: TimeValue,
+}
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(try_from = "String")]
+pub struct SshAddress {
+    pub username: String,
+    pub address: String,
+}
+
+impl TryFrom<String> for SshAddress {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let values = value.trim().split(&['@']).collect::<Vec<&str>>();
+        match values[..] {
+            [username, address] => {
+                Ok(Self {
+                    username: username.to_string(),
+                    address: address.to_string(),
+                })
+            }
+            _ => {
+                Err(format!("Unknown values: {:?}", values))
+            }
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(try_from = "String")]
+pub struct TimeValue {
+    pub hours: u8,
+    pub minutes: u8,
+}
+
+impl TryFrom<String> for TimeValue {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let mut iter = value.trim().split(':');
+        let values: Vec<&str> = iter.collect();
+        match values[..] {
+            [hours, minutes] => {
+                let hours: u8 = hours.parse().map_err(|e: std::num::ParseIntError| e.to_string())?;
+                let minutes: u8 = minutes.parse().map_err(|e: std::num::ParseIntError| e.to_string())?;
+                Ok(TimeValue {hours, minutes})
+            }
+            _ => {
+                Err(format!("Unknown values: {:?}", values))
+            }
+        }
+    }
+}
+
+/// Config for Litestream SQLite backups
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct LitestreamConfig {
+    /// Path to Litestream binary.
+    pub binary: PathBuf,
+    /// Path to Litestream config file.
+    pub config_file: PathBuf,
+}
+
+/// Absolute path with no whitespace.
+/// Also contains only valid UTF-8 characters.
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(try_from = "String")]
+pub struct AbsolutePathNoWhitespace {
+    pub path: PathBuf,
+}
+
+impl TryFrom<String> for AbsolutePathNoWhitespace {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let path = PathBuf::from(value.trim());
+        validate_path(&path)?;
+        Ok(Self { path })
+    }
+}
+
+
+const PATH_CHARACTERS_WHITELIST: &str =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_./";
+
+fn whitelist_chars(input: &str, whitelist: &str) -> String {
+    let invalid_chars = input.chars()
+        .filter(|&c| !whitelist.contains(c))
+        .collect();
+    invalid_chars
+}
+
+fn validate_path(input: &Path) -> std::result::Result<(), String> {
+    if !input.is_absolute() {
+        return Err(format!("Path is not absolute: {}", input.display()));
+    }
+
+    let unaccepted = whitelist_chars(input.as_os_str().to_string_lossy().as_ref(), PATH_CHARACTERS_WHITELIST);
+    if !unaccepted.is_empty() {
+        tracing::error!("Invalid characters {} in path: {}", unaccepted, input.display());
+        return Err(format!("Invalid characters in path: {}", input.display()));
+    }
+
+    Ok(())
 }

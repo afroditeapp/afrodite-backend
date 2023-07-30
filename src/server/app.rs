@@ -17,7 +17,7 @@ use crate::{
         self, ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
         WriteDatabase, GetManagerApi,
     },
-    config::Config,
+    config::Config, media_backup::MediaBackupHandle,
 };
 
 use self::{

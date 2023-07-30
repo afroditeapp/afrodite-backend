@@ -121,3 +121,50 @@ RUST_LOG=debug cargo run -- test --tasks 10 --save-state --no-servers --test bot
 # Update app-manager submodule to latest
 
 git submodule update --remote --merge
+
+
+# Building script for Multipass VM
+
+Script which can be used when when app-manager is installed to multipass VM
+and source files are mounted. Replace SRC_DIR_LOCATION with the location of
+mouted source directory.
+
+```bash
+#!/bin/bash -eux
+
+cd
+mkdir -p backend_src
+rsync -av --delete --progress --exclude="/target" /SRC_DIR_LOCATION/ ~/backend_src
+
+cd ~/backend_src
+cargo build --bin pihka-backend --release
+sudo -u pihka mkdir -p /pihka-secure-storage/pihka/binaries
+sudo -u pihka mkdir -p /pihka-secure-storage/pihka/backend-working-dir
+sudo systemctl stop app-backend
+sudo cp target/release/pihka-backend /pihka-secure-storage/pihka/binaries
+sudo chown pihka:pihka /pihka-secure-storage/pihka/binaries/pihka-backend
+sudo systemctl restart app-backend
+sudo journalctl -u app-backend.service -b -e -f
+```
+
+Edit config file script:
+
+```bash
+#!/bin/bash -eux
+
+sudo -u pihka vim /pihka-secure-storage/pihka/backend-working-dir/server_config.toml
+```
+
+# Litestream
+
+Example config file:
+```yml
+dbs:
+ - path: /pihka-secure-storage/pihka/backend-working-dir/database/current/current.db
+   replicas:
+     - type:    sftp
+       host:    192.168.64.77:22
+       user:    ubuntu
+       path:    /home/ubuntu/litestream/current
+       key-path: /pihka-secure-storage/pihka/.ssh/id_ed25519
+```

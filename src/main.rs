@@ -3,6 +3,8 @@ pub mod config;
 pub mod server;
 pub mod test;
 pub mod utils;
+pub mod media_backup;
+pub mod litestream;
 
 use server::PihkaServer;
 use test::TestRunner;

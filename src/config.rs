@@ -20,7 +20,8 @@ use self::{
     args::{TestMode},
     file::{
         Components, ConfigFile, ExternalServices, LocationConfig, SignInWithGoogleConfig,
-        SocketConfig, InternalApiConfig, AppManagerConfig,
+        SocketConfig, InternalApiConfig, AppManagerConfig, MediaBackupConfig,
+        LitestreamConfig,
     },
 };
 
@@ -143,6 +144,14 @@ impl Config {
 
     pub fn internal_api_config(&self) -> InternalApiConfig {
         self.file.internal_api.clone().unwrap_or_default()
+    }
+
+    pub fn media_backup(&self) -> Option<&MediaBackupConfig> {
+        self.file.media_backup.as_ref()
+    }
+
+    pub fn litestream(&self) -> Option<&LitestreamConfig> {
+        self.file.litestream.as_ref()
     }
 }
 

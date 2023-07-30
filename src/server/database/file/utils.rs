@@ -167,6 +167,10 @@ pub struct ImageFile {
 }
 
 impl ImageFile {
+    pub fn path(&self) -> &PathBuf {
+        self.path.path()
+    }
+
     pub async fn remove_if_exists(self) -> Result<(), FileError> {
         self.path.remove_if_exists().await
     }

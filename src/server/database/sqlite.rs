@@ -1,4 +1,5 @@
 use crate::api::model::AccountIdInternal;
+use crate::config::Config;
 
 use super::history::read::HistoryReadCommands;
 
@@ -125,6 +126,32 @@ impl HistoryWriteHandle {
     }
 }
 
+fn create_sqlite_connect_options(
+    config: &Config,
+    db_path: &Path,
+    create_if_missing: bool,
+) -> SqliteConnectOptions {
+    let options = SqliteConnectOptions::new()
+        .filename(db_path)
+        .create_if_missing(create_if_missing)
+        .foreign_keys(true)
+        .journal_mode(sqlite::SqliteJournalMode::Wal)
+        // Synchronous Normal should be ok in WAL mode
+        .synchronous(sqlite::SqliteSynchronous::Normal);
+
+    let options = if config.litestream().is_some() {
+        options
+            // Litestream docs recommend 5 second timeout
+            .busy_timeout(std::time::Duration::from_secs(5))
+            // Prevent backend from removing WAL files
+            .pragma("wal_autocheckpoint", "0")
+    } else {
+        options
+    };
+
+    options
+}
+
 #[derive(Debug, Clone)]
 pub struct SqliteWriteHandle {
     pool: SqlitePool,
@@ -132,31 +159,22 @@ pub struct SqliteWriteHandle {
 
 impl SqliteWriteHandle {
     pub async fn new(
-        dir: SqliteDatabasePath,
-        db_type: DatabaseType,
+        config: &Config,
+        db_path: PathBuf,
     ) -> Result<(Self, SqliteWriteCloseHandle), SqliteDatabaseError> {
-        let db_path = dir.path().join(db_type.to_file_name());
-
-        let run_initial_setup = !db_path.exists();
-
         let pool = SqlitePoolOptions::new()
             .max_connections(1)
             .connect_with(
-                SqliteConnectOptions::new()
-                    .filename(db_path)
-                    .create_if_missing(true)
-                    .foreign_keys(true)
-                    .journal_mode(sqlite::SqliteJournalMode::Wal),
+                create_sqlite_connect_options(config, &db_path, true),
             )
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
-        if run_initial_setup {
-            sqlx::migrate!()
-                .run(&pool)
-                .await
-                .into_error(SqliteDatabaseError::Migrate)?;
-        }
+        sqlx::migrate!()
+            .run(&pool)
+            .await
+            .into_error(SqliteDatabaseError::Migrate)?;
+
 
         let write_handle = SqliteWriteHandle { pool: pool.clone() };
 
@@ -188,19 +206,13 @@ pub struct SqliteReadHandle {
 
 impl SqliteReadHandle {
     pub async fn new(
-        dir: SqliteDatabasePath,
-        db_type: DatabaseType,
+        config: &Config,
+        db_path: PathBuf,
     ) -> Result<(Self, SqliteReadCloseHandle), SqliteDatabaseError> {
-        let db_path = dir.path().join(db_type.to_file_name());
-
         let pool = SqlitePoolOptions::new()
             .max_connections(16)
             .connect_with(
-                SqliteConnectOptions::new()
-                    .filename(db_path)
-                    .create_if_missing(false)
-                    .foreign_keys(true)
-                    .journal_mode(sqlite::SqliteJournalMode::Wal),
+                create_sqlite_connect_options(&config, &db_path, false),
             )
             .await
             .into_error(SqliteDatabaseError::Connect)?;

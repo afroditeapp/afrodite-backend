@@ -22,7 +22,7 @@ use tracing::info;
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight, SignInWithInfo},
     config::Config,
-    server::database::{commands::WriteCommandRunner, sqlite::print_sqlite_version},
+    server::database::{commands::WriteCommandRunner, sqlite::print_sqlite_version}, media_backup::MediaBackupHandle,
 };
 
 use self::{
@@ -58,6 +58,8 @@ pub enum DatabaseError {
     Cache,
     #[error("File error")]
     File,
+    #[error("Media backup error")]
+    MediaBackup,
 
     #[error("Database command sending failed")]
     CommandSendingFailed,
@@ -138,6 +140,14 @@ impl DatabaseRoot {
     pub fn file_dir(&self) -> &FileDir {
         &self.file_dir
     }
+
+    pub fn current_db_file(&self) -> PathBuf {
+        self.current.clone().path().join(DatabaseType::Current.to_file_name())
+    }
+
+    pub fn history_db_file(&self) -> PathBuf {
+        self.history.clone().path().join(DatabaseType::History.to_file_name())
+    }
 }
 
 /// Handle SQLite databases and write command runner.
@@ -154,13 +164,14 @@ impl DatabaseManager {
     pub async fn new<T: AsRef<Path>>(
         database_dir: T,
         config: Arc<Config>,
+        media_backup: MediaBackupHandle,
     ) -> Result<(Self, RouterDatabaseReadHandle), DatabaseError> {
         info!("Creating DatabaseManager");
 
         let root = DatabaseRoot::new(database_dir)?;
 
         let (sqlite_write, sqlite_write_close) =
-            SqliteWriteHandle::new(root.current(), DatabaseType::Current)
+            SqliteWriteHandle::new(&config, root.current_db_file())
                 .await
                 .change_context(DatabaseError::Init)?;
 
@@ -169,17 +180,17 @@ impl DatabaseManager {
             .change_context(DatabaseError::Init)?;
 
         let (sqlite_read, sqlite_read_close) =
-            SqliteReadHandle::new(root.current(), DatabaseType::Current)
+            SqliteReadHandle::new(&config, root.current_db_file())
                 .await
                 .change_context(DatabaseError::Init)?;
 
         let (history_write, history_write_close) =
-            SqliteWriteHandle::new(root.history(), DatabaseType::History)
+            SqliteWriteHandle::new(&config, root.history_db_file())
                 .await
                 .change_context(DatabaseError::Init)?;
 
         let (history_read, history_read_close) =
-            SqliteReadHandle::new(root.history(), DatabaseType::History)
+            SqliteReadHandle::new(&config, root.history_db_file())
                 .await
                 .change_context(DatabaseError::Init)?;
 
@@ -204,6 +215,7 @@ impl DatabaseManager {
             root: root.into(),
             cache: cache.into(),
             location: index.into(),
+            media_backup,
         };
 
         let sqlite_read = router_write_handle.sqlite_read.clone();
@@ -259,6 +271,7 @@ pub struct RouterDatabaseWriteHandle {
     history_read: SqliteReadHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
+    media_backup: MediaBackupHandle,
 }
 
 impl RouterDatabaseWriteHandle {
@@ -269,6 +282,7 @@ impl RouterDatabaseWriteHandle {
             &self.cache,
             &self.root.file_dir,
             LocationIndexWriterGetter::new(&self.location),
+            &self.media_backup,
         )
     }
 
@@ -333,25 +347,3 @@ impl RouterDatabaseReadHandle {
         &self.write_handle
     }
 }
-
-// #[derive(Debug, Clone)]
-// enum WriteCmdIntegrity {
-//     GitAccountIdFile(AccountId),
-// }
-
-// impl std::fmt::Display for WriteCmdIntegrity {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_fmt(format_args!("Integrity write command: {:?}", self))
-//     }
-// }
-
-// #[derive(Debug, Clone)]
-// enum ReadCmdIntegrity {
-//     AccountId(AccountId),
-// }
-
-// impl std::fmt::Display for ReadCmdIntegrity {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_fmt(format_args!("Read command: {:?}", self))
-//     }
-// }

@@ -13,7 +13,7 @@ use crate::{
     },
     config::Config,
     server::database::DatabaseError,
-    utils::{ConvertCommandError, ErrorConversion},
+    utils::{ConvertCommandError, ErrorConversion}, media_backup::MediaBackupHandle,
 };
 
 use super::{
@@ -139,6 +139,7 @@ pub struct WriteCommands<'a> {
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     location: LocationIndexWriterGetter<'a>,
+    media_backup: &'a MediaBackupHandle,
 }
 
 impl<'a> WriteCommands<'a> {
@@ -148,6 +149,7 @@ impl<'a> WriteCommands<'a> {
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         location: LocationIndexWriterGetter<'a>,
+        media_backup: &'a MediaBackupHandle,
     ) -> Self {
         Self {
             current_write,
@@ -155,6 +157,7 @@ impl<'a> WriteCommands<'a> {
             cache,
             file_dir,
             location,
+            media_backup,
         }
     }
 
@@ -451,10 +454,18 @@ impl<'a> WriteCommands<'a> {
         };
 
         match file_operations().await {
-            Ok(()) => transaction
-                .commit()
-                .await
-                .change_context(DatabaseError::Sqlite),
+            Ok(()) => {
+                transaction
+                    .commit()
+                    .await
+                    .change_context(DatabaseError::Sqlite)?;
+
+                self.media_backup.backup_jpeg_image(id.as_light(), content_id)
+                    .await
+                    .change_context(DatabaseError::MediaBackup)?;
+
+                Ok(())
+            }
             Err(e) => {
                 match transaction
                     .rollback()

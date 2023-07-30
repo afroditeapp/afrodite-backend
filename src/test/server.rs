@@ -157,6 +157,8 @@ fn new_config(
         manager: None,
         tls: None,
         internal_api: Some(InternalApiConfig { bot_login: true }),
+        media_backup: None,
+        litestream: None,
     }
 }
 
