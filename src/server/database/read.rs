@@ -1,5 +1,47 @@
+
+macro_rules! define_read_commands {
+    ($struct_name:ident) => {
+        pub struct $struct_name<'a> {
+            cmds: ReadCommands<'a>
+        }
+
+        impl <'a> $struct_name<'a> {
+            pub fn new(
+                cmds: ReadCommands<'a>
+            ) -> Self {
+                Self {
+                    cmds,
+                }
+            }
+
+            pub fn db(&self) -> &SqliteReadCommands<'_> {
+                &self.cmds.db
+            }
+
+            pub fn cache(&self) -> &DatabaseCache {
+                &self.cmds.cache
+            }
+
+            pub fn files(&self) -> &FileDir {
+                &self.cmds.files
+            }
+        }
+    };
+}
+
+
+pub mod account;
+pub mod account_admin;
+pub mod media;
+pub mod media_admin;
+pub mod profile;
+pub mod profile_admin;
+pub mod chat;
+pub mod chat_admin;
+
 use std::{fmt::Debug, marker::PhantomData};
 
+use serde_json::de::Read;
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
@@ -12,6 +54,8 @@ use crate::{
     },
     utils::{ConvertCommandError, ErrorConversion},
 };
+
+use self::{account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, media::ReadCommandsMedia, media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile, profile_admin::ReadCommandsProfileAdmin, chat::ReadCommandsChat, chat_admin::ReadCommandsChatAdmin};
 
 use super::{
     cache::{CacheError, DatabaseCache, ReadCacheJson},
@@ -114,8 +158,9 @@ impl<Target> From<error_stack::Report<SqliteDatabaseError>>
     }
 }
 
+
 pub struct ReadCommands<'a> {
-    sqlite: SqliteReadCommands<'a>,
+    db: SqliteReadCommands<'a>,
     cache: &'a DatabaseCache,
     files: &'a FileDir,
 }
@@ -123,45 +168,42 @@ pub struct ReadCommands<'a> {
 impl<'a> ReadCommands<'a> {
     pub fn new(sqlite: &'a SqliteReadHandle, cache: &'a DatabaseCache, files: &'a FileDir) -> Self {
         Self {
-            sqlite: SqliteReadCommands::new(sqlite),
+            db: SqliteReadCommands::new(sqlite),
             cache,
             files,
         }
     }
 
-    pub async fn account_access_token(
-        &self,
-        id: AccountIdLight,
-    ) -> Result<Option<ApiKey>, DatabaseError> {
-        let id = self.cache.to_account_id_internal(id).await.convert(id)?;
-        self.sqlite.account().access_token(id).await.convert(id)
+    pub fn account(self) -> ReadCommandsAccount<'a> {
+        ReadCommandsAccount::new(self)
     }
 
-    pub async fn account_refresh_token(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<Option<RefreshToken>, DatabaseError> {
-        self.sqlite.account().refresh_token(id).await.convert(id)
+    pub fn account_admin(self) -> ReadCommandsAccountAdmin<'a> {
+        ReadCommandsAccountAdmin::new(self)
     }
 
-    pub async fn account_sign_in_with_info(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<SignInWithInfo, DatabaseError> {
-        self.sqlite.account().sign_in_with_info(id).await.convert(id)
+    pub fn media(self) -> ReadCommandsMedia<'a> {
+        ReadCommandsMedia::new(self)
     }
 
-    pub async fn account_ids<T: FnMut(AccountIdInternal)>(
-        &self,
-        mut handler: T,
-    ) -> Result<(), DatabaseError> {
-        let account = self.sqlite.account();
-        let mut users = account.account_ids_stream();
-        while let Some(user_id) = users.try_next().await.convert(NoId)? {
-            handler(user_id)
-        }
+    pub fn media_admin(self) -> ReadCommandsMediaAdmin<'a> {
+        ReadCommandsMediaAdmin::new(self)
+    }
 
-        Ok(())
+    pub fn profile(self) -> ReadCommandsProfile<'a> {
+        ReadCommandsProfile::new(self)
+    }
+
+    pub fn profile_admin(self) -> ReadCommandsProfileAdmin<'a> {
+        ReadCommandsProfileAdmin::new(self)
+    }
+
+    pub fn chat(self) -> ReadCommandsChat<'a> {
+        ReadCommandsChat::new(self)
+    }
+
+    pub fn chat_admin(self) -> ReadCommandsChatAdmin<'a> {
+        ReadCommandsChatAdmin::new(self)
     }
 
     pub async fn read_json<T: SqliteSelectJson + Debug + ReadCacheJson + Send + Sync + 'static>(
@@ -175,7 +217,7 @@ impl<'a> ReadCommands<'a> {
                     format!("Cache read {:?} failed, id: {:?}", PhantomData::<T>, id)
                 })
         } else {
-            T::select_json(id, &self.sqlite)
+            T::select_json(id, &self.db)
                 .await
                 .with_info_lazy(|| format!("Read {:?} failed, id: {:?}", PhantomData::<T>, id))
         }
@@ -193,34 +235,11 @@ impl<'a> ReadCommands<'a> {
             .convert((account_id, content_id))
     }
 
-    pub async fn image(
-        &self,
-        account_id: AccountIdLight,
-        content_id: ContentId,
-    ) -> Result<Vec<u8>, DatabaseError> {
-        self.files
-            .image_content(account_id, content_id)
-            .read_all()
-            .await
-            .convert((account_id, content_id))
-    }
-
-    pub async fn current_account_media(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> Result<CurrentAccountMediaInternal, DatabaseError> {
-        self.sqlite
-            .media()
-            .get_current_account_media(account_id)
-            .await
-            .convert(account_id)
-    }
-
     pub async fn all_account_media(
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Vec<MediaContentInternal>, DatabaseError> {
-        self.sqlite
+        self.db
             .media()
             .get_account_media(account_id)
             .await
@@ -231,7 +250,7 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, DatabaseError> {
-        self.sqlite
+        self.db
             .media()
             .current_moderation_request(account_id)
             .await
@@ -250,18 +269,4 @@ impl<'a> ReadCommands<'a> {
             .await
             .convert(account_id)
     }
-
-    // pub async fn moderation_request_from_queue(
-    //     &self,
-    //     _account_id: AccountIdInternal,
-    // ) -> Result<Option<ModerationRequest>, DatabaseError> {
-    //     let _next_queue_number = self
-    //         .sqlite
-    //         .media()
-    //         .get_next_active_moderation_request(0)
-    //         .await
-    //         .convert(_account_id)?;
-
-    //     unimplemented!()
-    // }
 }

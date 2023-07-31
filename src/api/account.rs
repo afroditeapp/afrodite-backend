@@ -361,6 +361,7 @@ pub async fn post_complete_setup<
 
     let sign_in_with_info = state
         .read_database()
+        .account()
         .account_sign_in_with_info(id)
         .await
         .map_err(|e| {

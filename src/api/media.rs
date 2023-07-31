@@ -54,6 +54,7 @@ pub async fn get_image<S: ReadDatabase>(
 
     let data = state
         .read_database()
+        .media()
         .image(account_id, content_id)
         .await
         .map_err(|e| {
@@ -97,6 +98,7 @@ pub async fn get_primary_image_info<S: ReadDatabase + GetUsers + GetApiKeys>(
 
     let internal_current_media = state
         .read_database()
+        .media()
         .current_account_media(internal_id)
         .await
         .map_err(|e| {
@@ -141,6 +143,7 @@ pub async fn get_security_image_info<S: ReadDatabase + GetUsers>(
 
     let internal_current_media = state
         .read_database()
+        .media()
         .current_account_media(internal_id)
         .await
         .map_err(|e| {

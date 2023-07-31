@@ -179,6 +179,7 @@ async fn handle_socket_result(
 
     let current_refresh_token = state
         .read_database()
+        .account()
         .account_refresh_token(id)
         .await
         .change_context(WebSocketError::DatabaseNoRefreshToken)?
