@@ -10,7 +10,7 @@ use hyper::StatusCode;
 
 use tracing::error;
 
-use crate::server::database::file::file::ImageSlot;
+use crate::server::data::file::file::ImageSlot;
 
 use self::super::model::SlotId;
 

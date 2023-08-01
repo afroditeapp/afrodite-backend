@@ -22,7 +22,7 @@ use tracing::info;
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight, SignInWithInfo},
     config::Config,
-    server::database::{commands::WriteCommandRunner, sqlite::print_sqlite_version}, media_backup::MediaBackupHandle,
+    server::data::{commands::WriteCommandRunner, sqlite::print_sqlite_version}, media_backup::MediaBackupHandle,
 };
 
 use self::{

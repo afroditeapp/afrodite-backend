@@ -10,7 +10,7 @@ use crate::{
         Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdateInternal,
     },
     config::Config,
-    server::database::write::NoId,
+    server::data::write::NoId,
     utils::ConvertCommandError,
 };
 

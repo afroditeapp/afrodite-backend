@@ -11,7 +11,7 @@ use crate::{
         },
         model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
+    server::data::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
     utils::ConvertCommandError,
 };
 

@@ -21,7 +21,7 @@ use crate::{
         },
     },
     config::Config,
-    server::database::DatabaseError,
+    server::data::DatabaseError,
     utils::{ConvertCommandError, ErrorConversion}, media_backup::MediaBackupHandle,
 };
 

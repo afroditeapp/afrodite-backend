@@ -2,8 +2,8 @@ use async_trait::async_trait;
 use error_stack::Result;
 
 use crate::api::account::data::AccountSetup;
-use crate::server::database::current::CurrentDataWriteCommands;
-use crate::server::database::sqlite::{SqliteDatabaseError, SqliteUpdateJson};
+use crate::server::data::current::CurrentDataWriteCommands;
+use crate::server::data::sqlite::{SqliteDatabaseError, SqliteUpdateJson};
 
 use crate::api::model::*;
 
@@ -17,7 +17,7 @@ use crate::{
     api::{
         model::{AccountIdInternal},
     },
-    server::database::{sqlite::CurrentDataWriteHandle, write::WriteResult},
+    server::data::{sqlite::CurrentDataWriteHandle, write::WriteResult},
 };
 
 pub struct CurrentWriteAccountCommands<'a> {

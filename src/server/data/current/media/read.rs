@@ -13,9 +13,9 @@ use crate::api::model::{
     AccountIdInternal, AccountIdLight, ContentId, ModerationRequestContent,
     ModerationRequestInternal,
 };
-use crate::server::database::file::file::ImageSlot;
+use crate::server::data::file::file::ImageSlot;
 
-use crate::server::database::read::ReadResult;
+use crate::server::data::read::ReadResult;
 use crate::utils::IntoReportExt;
 
 pub struct CurrentReadMediaCommands<'a> {

@@ -8,7 +8,7 @@ use tokio_util::io::ReaderStream;
 
 use crate::{
     api::model::{AccountIdLight, ContentId},
-    server::database::read::ReadResult,
+    server::data::read::ReadResult,
 };
 
 use super::{super::FileError, file::GetStaticFileName};

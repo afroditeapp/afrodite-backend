@@ -3,12 +3,12 @@ use error_stack::Result;
 use futures::Stream;
 
 use crate::api::account::data::AccountSetup;
-use crate::server::database::current::SqliteReadCommands;
-use crate::server::database::sqlite::{SqliteDatabaseError, SqliteSelectJson};
+use crate::server::data::current::SqliteReadCommands;
+use crate::server::data::sqlite::{SqliteDatabaseError, SqliteSelectJson};
 
 use crate::api::model::*;
 
-use crate::server::database::write::NoId;
+use crate::server::data::write::NoId;
 use crate::utils::IntoReportExt;
 
 
@@ -23,7 +23,7 @@ use crate::api::model::{
 };
 
 
-use crate::server::database::read::ReadResult;
+use crate::server::data::read::ReadResult;
 
 use crate::read_json;
 

@@ -7,7 +7,7 @@ use tokio::{process::{Command, Child}, task::JoinHandle, sync::mpsc, time::sleep
 use tracing::log::{error, info, warn};
 use tracing_subscriber::fmt::format;
 
-use crate::{config::{Config}, server::{app::connection::ServerQuitWatcher, database::{DatabaseRoot, file::utils::IMAGE_DIR_NAME}}, api::{media::data::ContentId, model::AccountIdLight}};
+use crate::{config::{Config}, server::{app::connection::ServerQuitWatcher, data::{DatabaseRoot, file::utils::IMAGE_DIR_NAME}}, api::{media::data::ContentId, model::AccountIdLight}};
 
 use error_stack::{Report, Result, ResultExt};
 

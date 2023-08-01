@@ -5,7 +5,7 @@ use nix::{unistd::Pid, sys::signal::Signal};
 use tokio::{process::{Command, Child}, io::{AsyncBufReadExt, AsyncRead}, task::JoinHandle};
 use tracing::log::{error, info};
 
-use crate::{config::{Config, file::LitestreamConfig}, server::database::DatabaseRoot};
+use crate::{config::{Config, file::LitestreamConfig}, server::data::DatabaseRoot};
 
 use error_stack::{Report, Result, ResultExt};
 

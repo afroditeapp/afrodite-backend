@@ -15,7 +15,7 @@ use crate::{
     config::Config,
     server::{
         app::sign_in_with::SignInWithManager,
-        database::{
+        data::{
             commands::WriteCommandRunnerHandle,
             read::ReadCommands,
             utils::{AccountIdManager, ApiKeyManager},

@@ -1,5 +1,5 @@
 pub mod app;
-pub mod database;
+pub mod data;
 pub mod internal;
 pub mod manager_client;
 
@@ -30,7 +30,7 @@ use crate::{
     config::{Config, info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE}},
     server::{
         app::{connection::WebSocketManager, App},
-        database::DatabaseManager,
+        data::DatabaseManager,
         internal::InternalApp,
     }, litestream::LitestreamManager, media_backup::MediaBackupManager,
 };

@@ -14,7 +14,7 @@ use self::profile::write::CurrentWriteProfileCommands;
 
 use super::sqlite::CurrentDataWriteHandle;
 
-use crate::server::database::sqlite::{SqliteReadHandle};
+use crate::server::data::sqlite::{SqliteReadHandle};
 
 #[macro_export]
 macro_rules! read_json {

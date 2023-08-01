@@ -7,7 +7,7 @@ use crate::{
         media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber, CurrentAccountMediaInternal, PrimaryImage},
         model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
-    server::database::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
+    server::data::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
 };
 
 use super::super::super::sqlite::SqliteDatabaseError;

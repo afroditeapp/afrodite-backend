@@ -27,7 +27,7 @@ use crate::{
         },
     },
     config::Config,
-    server::database::{write::WriteCommands, DatabaseError},
+    server::data::{write::WriteCommands, DatabaseError},
     utils::{ErrorConversion, IntoReportExt},
 };
 
