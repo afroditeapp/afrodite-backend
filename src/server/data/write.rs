@@ -212,6 +212,7 @@ pub struct AccountWriteLock;
 
 /// Globally synchronous write commands.
 pub struct WriteCommands<'a> {
+    config: &'a Config,
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
@@ -222,6 +223,7 @@ pub struct WriteCommands<'a> {
 
 impl<'a> WriteCommands<'a> {
     pub fn new(
+        config: &'a Config,
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
@@ -230,6 +232,7 @@ impl<'a> WriteCommands<'a> {
         media_backup: &'a MediaBackupHandle,
     ) -> Self {
         Self {
+            config,
             current_write,
             history_write,
             cache,
@@ -276,6 +279,21 @@ impl<'a> WriteCommands<'a> {
     }
 
     pub async fn register(
+        &self,
+        id_light: AccountIdLight,
+        sign_in_with_info: SignInWithInfo,
+    ) -> Result<AccountIdInternal, DatabaseError> {
+        Self::register_static(
+            id_light,
+            sign_in_with_info,
+            &self.config,
+            self.current_write.clone(),
+            self.history_write.clone(),
+            self.cache,
+        ).await
+    }
+
+    pub async fn register_static(
         id_light: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
         config: &Config,

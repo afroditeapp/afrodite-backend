@@ -2,17 +2,18 @@ pub mod connected_routes;
 pub mod connection;
 pub mod sign_in_with;
 
-use std::sync::Arc;
+use std::sync::{Arc};
 
 use axum::{
     routing::{get, post},
     Router,
 };
+use tokio::sync::{MutexGuard, Mutex};
 
 use crate::{
     api::{
         self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase,
-        SignInWith, WriteDatabase,
+        SignInWith, WriteDatabase, WriteData,
     },
     config::Config,
 };
@@ -26,7 +27,7 @@ use super::{
         commands::WriteCommandRunnerHandle,
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},
-        RouterDatabaseReadHandle,
+        RouterDatabaseReadHandle, SyncWriteHandle, RouterDatabaseWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
@@ -37,6 +38,7 @@ use error_stack::Result;
 #[derive(Clone)]
 pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
+    write_mutex: Arc<Mutex<SyncWriteHandle>>,
     internal_api: Arc<InternalApiClient>,
     manager_api: Arc<ManagerApiClient>,
     config: Arc<Config>,
@@ -67,6 +69,13 @@ impl WriteDatabase for AppState {
     }
 }
 
+#[async_trait::async_trait]
+impl WriteData for AppState {
+    async fn get_writer(&self) -> MutexGuard<SyncWriteHandle> {
+        self.write_mutex.lock().await
+    }
+}
+
 impl SignInWith for AppState {
     fn sign_in_with_manager(&self) -> &SignInWithManager {
         &self.sign_in_with
@@ -82,6 +91,7 @@ impl GetInternalApi for AppState {
             self.read_database(),
             self.write_database(),
             self.database.account_id_manager(),
+            &self.write_mutex,
         )
     }
 }
@@ -106,12 +116,14 @@ pub struct App {
 impl App {
     pub async fn new(
         database_handle: RouterDatabaseReadHandle,
+        database_write_handle: RouterDatabaseWriteHandle,
         config: Arc<Config>,
         ws_manager: WebSocketManager,
     ) -> Result<Self, ManagerClientError> {
         let state = AppState {
             config: config.clone(),
             database: Arc::new(database_handle),
+            write_mutex: Arc::new(Mutex::new(database_write_handle.into_sync_handle())),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             manager_api: ManagerApiClient::new(&config)?.into(),
             sign_in_with: SignInWithManager::new(config).into(),

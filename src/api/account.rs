@@ -11,7 +11,7 @@ use self::data::{
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 
-use super::{GetConfig, GetInternalApi, SignInWith};
+use super::{GetConfig, GetInternalApi, SignInWith, WriteData};
 
 use tracing::error;
 
@@ -33,7 +33,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_register<S: WriteDatabase + GetConfig>(
+pub async fn post_register<S: WriteData + GetConfig>(
     state: S,
 ) -> Result<Json<AccountIdLight>, StatusCode> {
     register_impl(&state, SignInWithInfo::default())
@@ -41,7 +41,7 @@ pub async fn post_register<S: WriteDatabase + GetConfig>(
         .map(|id| id.into())
 }
 
-pub async fn register_impl<S: WriteDatabase + GetConfig>(
+pub async fn register_impl<S: WriteData + GetConfig>(
     state: &S,
     sign_in_with: SignInWithInfo,
 ) -> Result<AccountIdLight, StatusCode> {
@@ -49,9 +49,13 @@ pub async fn register_impl<S: WriteDatabase + GetConfig>(
     // to avoid database collisions.
     let id = AccountIdLight::new(uuid::Uuid::new_v4());
 
-    let a = state.write_database().account();
-    let register = a.register(id, sign_in_with);
-    match register.await {
+    let result = state
+        .get_writer()
+        .await
+        .register(id, sign_in_with)
+        .await;
+
+    match result {
         Ok(id) => Ok(id.as_light().into()),
         Err(e) => {
             error!("Error: {e:?}");
@@ -73,14 +77,14 @@ pub const PATH_LOGIN: &str = "/account_api/login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_login<S: GetApiKeys + WriteDatabase + GetUsers>(
+pub async fn post_login<S: GetApiKeys + WriteData + GetUsers>(
     Json(id): Json<AccountIdLight>,
     state: S,
 ) -> Result<Json<LoginResult>, StatusCode> {
     login_impl(id, state).await.map(|d| d.into())
 }
 
-async fn login_impl<S: GetApiKeys + WriteDatabase + GetUsers>(
+async fn login_impl<S: GetApiKeys + WriteData + GetUsers>(
     id: AccountIdLight,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
@@ -95,7 +99,9 @@ async fn login_impl<S: GetApiKeys + WriteDatabase + GetUsers>(
     let account = AuthPair { access, refresh };
 
     state
-        .write_database()
+        .get_writer()
+        .await
+        .common()
         .set_new_auth_pair(id, account.clone(), None)
         .await
         .map_err(|e| {
@@ -128,7 +134,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
     ),
 )]
 pub async fn post_sign_in_with_login<
-    S: GetApiKeys + WriteDatabase + GetUsers + SignInWith + GetConfig,
+    S: GetApiKeys + WriteData + GetUsers + SignInWith + GetConfig,
 >(
     Json(tokens): Json<SignInWithLoginInfo>,
     state: S,
@@ -263,7 +269,7 @@ pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
+pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(data): Json<AccountSetup>,
     state: S,
@@ -285,9 +291,9 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteDatabase>(
 
     if account.state() == AccountState::InitialSetup {
         state
-            .write_database()
-            .account()
-            .update_account_setup(id, data)
+            .get_writer()
+            .await
+            .update_data(id, &data)
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
@@ -317,7 +323,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("api_key" = [])),
 )]
 pub async fn post_complete_setup<
-    S: GetApiKeys + ReadDatabase + WriteDatabase + GetInternalApi + GetConfig,
+    S: GetApiKeys + ReadDatabase + WriteData + GetInternalApi + GetConfig,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
@@ -388,9 +394,9 @@ pub async fn post_complete_setup<
         }
 
         state
-            .write_database()
-            .account()
-            .update_account(id, account)
+            .get_writer()
+            .await
+            .update_data(id, &account)
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");

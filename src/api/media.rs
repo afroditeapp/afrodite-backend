@@ -21,7 +21,7 @@ use self::data::{
 
 use super::model::{AccountIdInternal, AccountIdLight};
 use super::utils::ApiKeyHeader;
-use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase};
+use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase, WriteData};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
@@ -221,7 +221,7 @@ pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image";
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_primary_image<S: WriteDatabase>(
+pub async fn put_primary_image<S: WriteData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Json(new_image): Json<PrimaryImage>,
     state: S,
@@ -231,7 +231,8 @@ pub async fn put_primary_image<S: WriteDatabase>(
     }
 
     state
-        .write_database()
+        .get_writer()
+        .await
         .media()
         .update_primary_image(api_caller_account_id, new_image)
         .await
@@ -297,7 +298,7 @@ pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
+pub async fn put_moderation_request<S: WriteData + GetApiKeys>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(moderation_request): Json<ModerationRequestContent>,
     state: S,
@@ -309,7 +310,8 @@ pub async fn put_moderation_request<S: WriteDatabase + GetApiKeys>(
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     state
-        .write_database()
+        .get_writer()
+        .await
         .media()
         .set_moderation_request(account_id, moderation_request)
         .await
@@ -340,7 +342,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
+pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData + WriteDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(slot_number): Path<SlotId>,
     image: BodyStream,
@@ -369,7 +371,8 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteDatabase>(
         })?;
 
     state
-        .write_database()
+        .get_writer()
+        .await
         .media()
         .save_to_slot(account_id, content_id, slot)
         .await
@@ -401,7 +404,7 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/p
     ),
     security(("api_key" = [])),
 )]
-pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
+pub async fn patch_moderation_request_list<S: WriteData + GetApiKeys>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<ModerationList>, StatusCode> {
@@ -414,9 +417,10 @@ pub async fn patch_moderation_request_list<S: WriteDatabase + GetApiKeys>(
     // TODO: Access restrictions
 
     let data = state
-        .write_database()
-        .media()
-        .get_moderation_list_and_create_if_necessary(account_id)
+        .get_writer()
+        .await
+        .media_admin()
+        .moderation_get_list_and_create_new_if_necessary(account_id)
         .await
         .map_err(|e| {
             error!("{}", e);
@@ -449,7 +453,7 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     security(("api_key" = [])),
 )]
 pub async fn post_handle_moderation_request<
-    S: GetInternalApi + WriteDatabase + GetApiKeys + GetUsers,
+    S: GetInternalApi + WriteData + GetApiKeys + GetUsers,
 >(
     Path(moderation_request_owner_account_id): Path<AccountIdLight>,
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
@@ -482,8 +486,9 @@ pub async fn post_handle_moderation_request<
             })?;
 
         state
-            .write_database()
-            .media()
+            .get_writer()
+            .await
+            .media_admin()
             .update_moderation(
                 admin_account_id,
                 moderation_request_owner,

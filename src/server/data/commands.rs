@@ -1,18 +1,13 @@
 //! Database writing commands
 //!
 
-pub mod account;
-pub mod chat;
-pub mod media;
-pub mod profile;
-
 use std::{collections::HashSet, future::Future, net::SocketAddr, sync::Arc};
 
 use axum::extract::BodyStream;
 use error_stack::Result;
 
 use tokio::{
-    sync::{mpsc, oneshot, OwnedSemaphorePermit, RwLock, Semaphore},
+    sync::{mpsc, oneshot, OwnedSemaphorePermit, RwLock, Semaphore, Mutex, MutexGuard},
     task::JoinHandle,
 };
 use tokio_stream::StreamExt;
@@ -24,12 +19,6 @@ use crate::{
     utils::{ErrorConversion, IntoReportExt},
 };
 
-use self::{
-    account::{AccountWriteCommand, AccountWriteCommandRunnerHandle},
-    chat::{ChatWriteCommand, ChatWriteCommandRunnerHandle},
-    media::{MediaWriteCommand, MediaWriteCommandRunnerHandle},
-    profile::{ProfileWriteCommand, ProfileWriteCommandRunnerHandle},
-};
 
 use super::RouterDatabaseWriteHandle;
 
@@ -54,34 +43,6 @@ pub enum WriteCommand {
         s: ResultSender<()>,
         account_id: AccountIdInternal,
     },
-    Account(AccountWriteCommand),
-    Profile(ProfileWriteCommand),
-    Media(MediaWriteCommand),
-    Chat(ChatWriteCommand),
-}
-
-impl From<AccountWriteCommand> for WriteCommand {
-    fn from(value: AccountWriteCommand) -> Self {
-        Self::Account(value)
-    }
-}
-
-impl From<ProfileWriteCommand> for WriteCommand {
-    fn from(value: ProfileWriteCommand) -> Self {
-        Self::Profile(value)
-    }
-}
-
-impl From<MediaWriteCommand> for WriteCommand {
-    fn from(value: MediaWriteCommand) -> Self {
-        Self::Media(value)
-    }
-}
-
-impl From<ChatWriteCommand> for WriteCommand {
-    fn from(value: ChatWriteCommand) -> Self {
-        Self::Chat(value)
-    }
 }
 
 /// Concurrent write commands.
@@ -137,49 +98,6 @@ pub struct WriteCommandRunnerHandle {
 }
 
 impl WriteCommandRunnerHandle {
-    pub fn account(&self) -> AccountWriteCommandRunnerHandle {
-        AccountWriteCommandRunnerHandle { handle: self }
-    }
-
-    pub fn media(&self) -> MediaWriteCommandRunnerHandle {
-        MediaWriteCommandRunnerHandle { handle: self }
-    }
-
-    pub fn profile(&self) -> ProfileWriteCommandRunnerHandle {
-        ProfileWriteCommandRunnerHandle { handle: self }
-    }
-
-    pub fn chat(&self) -> ChatWriteCommandRunnerHandle {
-        ChatWriteCommandRunnerHandle { handle: self }
-    }
-
-    pub async fn set_new_auth_pair(
-        &self,
-        account_id: AccountIdInternal,
-        pair: AuthPair,
-        address: Option<SocketAddr>,
-    ) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::SetNewAuthPair {
-            s,
-            account_id,
-            pair,
-            address,
-        })
-        .await
-    }
-
-    pub async fn logout(&self, account_id: AccountIdInternal) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::Logout { s, account_id })
-            .await
-    }
-
-    pub async fn end_connection_session(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> Result<(), DatabaseError> {
-        self.send_event(|s| WriteCommand::EndConnectionSession { s, account_id })
-            .await
-    }
 
     pub async fn save_to_tmp(
         &self,
@@ -261,7 +179,7 @@ pub struct WriteCommandRunner {
 }
 
 impl WriteCommandRunner {
-    pub fn new_channel() -> (WriteCommandRunnerHandle, WriteCommandReceivers) {
+    pub fn new_channel(write: RouterDatabaseWriteHandle) -> (WriteCommandRunnerHandle, WriteCommandReceivers) {
         let (sender, receiver) = mpsc::channel(1);
         let (sender_for_concurrent, receiver_for_concurrent) = mpsc::channel(1);
 
@@ -339,10 +257,6 @@ impl WriteCommandRunner {
                 .set_new_auth_pair(account_id, pair, address)
                 .await
                 .send(s),
-            WriteCommand::Account(cmd) => self.handle_account_cmd(cmd).await,
-            WriteCommand::Profile(cmd) => self.handle_profile_cmd(cmd).await,
-            WriteCommand::Media(cmd) => self.handle_media_cmd(cmd).await,
-            WriteCommand::Chat(cmd) => self.handle_chat_cmd(cmd).await,
         }
     }
 

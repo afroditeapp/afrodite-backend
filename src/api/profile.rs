@@ -9,7 +9,7 @@ use self::data::{
     Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal,
 };
 
-use super::{model::AccountIdLight, GetInternalApi, GetUsers};
+use super::{model::AccountIdLight, GetInternalApi, GetUsers, WriteData};
 
 use tracing::error;
 
@@ -46,7 +46,7 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     security(("api_key" = [])),
 )]
 pub async fn get_profile<
-    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteDatabase,
+    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(requested_profile): Path<AccountIdLight>,
@@ -106,9 +106,10 @@ pub async fn get_profile<
                 })?;
             let visibility = account.capablities().view_public_profiles;
             state
-                .write_database()
+                .get_writer()
+                .await
                 .profile()
-                .update_profile_visiblity(requested_profile, visibility, true)
+                .profile_update_visibility(requested_profile, visibility, true)
                 .await
                 .map_err(|e| {
                     error!("get_profile: {e:?}");
@@ -158,7 +159,7 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+pub async fn post_profile<S: GetApiKeys + WriteData + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(profile): Json<ProfileUpdate>,
     state: S,
@@ -187,9 +188,9 @@ pub async fn post_profile<S: GetApiKeys + WriteDatabase + ReadDatabase>(
     let new = ProfileUpdateInternal::new(profile);
 
     state
-        .write_database()
-        .profile()
-        .update_profile(account_id, new)
+        .get_writer()
+        .await
+        .update_data(account_id, &new)
         .await
         .map_err(|e| {
             error!("post_profile: write profile, {e:?}");
@@ -213,7 +214,7 @@ pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_location<S: GetApiKeys + WriteDatabase>(
+pub async fn put_location<S: GetApiKeys + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(location): Json<Location>,
     state: S,
@@ -225,9 +226,10 @@ pub async fn put_location<S: GetApiKeys + WriteDatabase>(
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     state
-        .write_database()
+        .get_writer()
+        .await
         .profile()
-        .update_profile_location(account_id, location)
+        .profile_update_location(account_id, location)
         .await
         .map_err(|e| {
             error!("put_location, {e:?}");
@@ -288,7 +290,7 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_reset_profile_paging<S: GetApiKeys + WriteDatabase + ReadDatabase>(
+pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + WriteDatabase + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
@@ -297,6 +299,17 @@ pub async fn post_reset_profile_paging<S: GetApiKeys + WriteDatabase + ReadDatab
         .api_key_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    state
+        .get_writer()
+        .await
+        .profile()
+        .profile_update_location(account_id, Location::default())
+        .await
+        .map_err(|e| {
+            error!("post_reset_profile_paging, {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     state
         .write_database()

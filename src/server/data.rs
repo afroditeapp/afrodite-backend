@@ -11,7 +11,7 @@ pub mod write_concurrent;
 use std::{
     fs,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::Arc, fmt::Debug,
 };
 
 use error_stack::{Result, ResultExt};
@@ -27,9 +27,9 @@ use crate::{
 };
 
 use self::{
-    cache::DatabaseCache,
+    cache::{DatabaseCache, WriteCacheJson},
     commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
-    database::history::read::HistoryReadCommands,
+    database::{history::read::HistoryReadCommands, sqlite::{HistoryUpdateJson, SqliteUpdateJson}},
     database::sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
         SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
@@ -38,7 +38,7 @@ use self::{
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
     utils::{AccountIdManager, ApiKeyManager},
-    write::{WriteCommands},
+    write::{WriteCommands, common::WriteCommandsCommon, account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin, media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin, profile::WriteCommandsProfile, profile_admin::WriteCommandsProfileAdmin, chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin},
     write_concurrent::{WriteCommandsConcurrent},
 };
 use crate::utils::IntoReportExt;
@@ -79,7 +79,9 @@ pub enum DatabaseError {
     CommandRunnerQuit,
 }
 
+
 /// Absolsute path to database root directory.
+#[derive(Clone, Debug)]
 pub struct DatabaseRoot {
     root: PathBuf,
     history: SqliteDatabasePath,
@@ -172,7 +174,7 @@ impl DatabaseManager {
         database_dir: T,
         config: Arc<Config>,
         media_backup: MediaBackupHandle,
-    ) -> Result<(Self, RouterDatabaseReadHandle), DatabaseError> {
+    ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DatabaseError> {
         info!("Creating DatabaseManager");
 
         let root = DatabaseRoot::new(database_dir)?;
@@ -213,6 +215,7 @@ impl DatabaseManager {
         .change_context(DatabaseError::Cache)?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
+            config: config.clone(),
             sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
             sqlite_read,
             history_write: HistoryWriteHandle {
@@ -230,7 +233,7 @@ impl DatabaseManager {
         let root = router_write_handle.root.clone();
         let cache = router_write_handle.cache.clone();
 
-        let (write_handle, receiver) = WriteCommandRunner::new_channel();
+        let (write_handle, receiver) = WriteCommandRunner::new_channel(router_write_handle.clone());
 
         let router_read_handle = RouterDatabaseReadHandle {
             sqlite_read,
@@ -241,7 +244,7 @@ impl DatabaseManager {
         };
 
         let write_command_runner_close =
-            WriteCommandRunner::new(router_write_handle, receiver, config);
+            WriteCommandRunner::new(router_write_handle.clone(), receiver, config);
 
         let database_manager = DatabaseManager {
             sqlite_write_close,
@@ -253,7 +256,7 @@ impl DatabaseManager {
 
         info!("DatabaseManager created");
 
-        Ok((database_manager, router_read_handle))
+        Ok((database_manager, router_read_handle, router_write_handle))
     }
 
     pub async fn close(self) {
@@ -269,8 +272,9 @@ impl DatabaseManager {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RouterDatabaseWriteHandle {
+    config: Arc<Config>,
     root: Arc<DatabaseRoot>,
     sqlite_write: CurrentDataWriteHandle,
     sqlite_read: SqliteReadHandle,
@@ -284,6 +288,7 @@ pub struct RouterDatabaseWriteHandle {
 impl RouterDatabaseWriteHandle {
     pub fn user_write_commands(&self) -> WriteCommands {
         WriteCommands::new(
+            &self.config,
             &self.sqlite_write,
             &self.history_write,
             &self.cache,
@@ -307,19 +312,120 @@ impl RouterDatabaseWriteHandle {
         &self,
         id_light: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
-        config: &Config,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        WriteCommands::register(
-            id_light,
-            sign_in_with_info,
-            config,
-            self.sqlite_write.clone(),
-            self.history_write.clone(),
-            &self.cache,
-        )
-        .await
+        self.user_write_commands().register(id_light, sign_in_with_info).await
+    }
+
+    pub fn into_sync_handle(self) -> SyncWriteHandle {
+        SyncWriteHandle {
+            config: self.config,
+            root: self.root,
+            sqlite_write: self.sqlite_write,
+            sqlite_read: self.sqlite_read,
+            history_write: self.history_write,
+            history_read: self.history_read,
+            cache: self.cache,
+            location: self.location,
+            media_backup: self.media_backup,
+        }
     }
 }
+
+
+/// Handle for writing synchronous write commands.
+#[derive(Clone, Debug)]
+pub struct SyncWriteHandle {
+    config: Arc<Config>,
+    root: Arc<DatabaseRoot>,
+    sqlite_write: CurrentDataWriteHandle,
+    sqlite_read: SqliteReadHandle,
+    history_write: HistoryWriteHandle,
+    history_read: SqliteReadHandle,
+    cache: Arc<DatabaseCache>,
+    location: Arc<LocationIndexManager>,
+    media_backup: MediaBackupHandle,
+}
+
+impl SyncWriteHandle {
+    fn cmds(&self) -> WriteCommands {
+        WriteCommands::new(
+            &self.config,
+            &self.sqlite_write,
+            &self.history_write,
+            &self.cache,
+            &self.root.file_dir,
+            LocationIndexWriterGetter::new(&self.location),
+            &self.media_backup,
+        )
+    }
+
+    pub fn common(&self) -> WriteCommandsCommon {
+        self.cmds().common()
+    }
+
+    pub fn account(&self) -> WriteCommandsAccount {
+        self.cmds().account()
+    }
+
+    pub fn account_admin(&self) -> WriteCommandsAccountAdmin {
+        self.cmds().account_admin()
+    }
+
+    pub fn media(&self) -> WriteCommandsMedia {
+        self.cmds().media()
+    }
+
+    pub fn media_admin(&self) -> WriteCommandsMediaAdmin {
+        self.cmds().media_admin()
+    }
+
+    pub fn profile(&self) -> WriteCommandsProfile {
+        self.cmds().profile()
+    }
+
+    pub fn profile_admin(&self) -> WriteCommandsProfileAdmin {
+        self.cmds().profile_admin()
+    }
+
+    pub fn chat(&self) -> WriteCommandsChat {
+        self.cmds().chat()
+    }
+
+    pub fn chat_admin(&self) -> WriteCommandsChatAdmin {
+        self.cmds().chat_admin()
+    }
+
+    pub async fn register(
+        &self,
+        id_light: AccountIdLight,
+        sign_in_with_info: SignInWithInfo,
+    ) -> Result<AccountIdInternal, DatabaseError> {
+        self.cmds().register(
+            id_light,
+            sign_in_with_info,
+        ).await
+    }
+
+    pub async fn update_data<
+        T: Clone
+            + Debug
+            + Send
+            + SqliteUpdateJson
+            + HistoryUpdateJson
+            + WriteCacheJson
+            + Sync
+            + 'static,
+    >(
+        &mut self,
+        id: AccountIdInternal,
+        data: &T,
+    ) -> Result<(), DatabaseError> {
+        self.cmds().update_data(id, data).await
+    }
+}
+
+
+
 
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,

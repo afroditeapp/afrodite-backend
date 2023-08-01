@@ -10,6 +10,7 @@ use error_stack::{Result, ResultExt};
 
 use hyper::StatusCode;
 
+use tokio::sync::{Mutex, MutexGuard};
 use tracing::{error, info};
 
 use crate::{
@@ -32,7 +33,7 @@ use super::{
     data::{
         commands::WriteCommandRunnerHandle,
         read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager},
+        utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle,
     },
 };
 
@@ -226,6 +227,7 @@ pub struct InternalApiManager<'a> {
     read_database: ReadCommands<'a>,
     write_database: &'a WriteCommandRunnerHandle,
     account_id_manager: AccountIdManager<'a>,
+    write_mutex: &'a Mutex<SyncWriteHandle>,
 }
 
 impl<'a> InternalApiManager<'a> {
@@ -236,6 +238,7 @@ impl<'a> InternalApiManager<'a> {
         read_database: ReadCommands<'a>,
         write_database: &'a WriteCommandRunnerHandle,
         account_id_manager: AccountIdManager<'a>,
+        write_mutex: &'a Mutex<SyncWriteHandle>,
     ) -> Self {
         Self {
             config,
@@ -244,6 +247,7 @@ impl<'a> InternalApiManager<'a> {
             read_database,
             write_database,
             account_id_manager,
+            write_mutex,
         }
     }
 
@@ -374,9 +378,10 @@ impl<'a> InternalApiManager<'a> {
         boolean_setting: BooleanSetting,
     ) -> Result<(), InternalApiError> {
         if self.config.components().profile {
-            self.write_database
+            self.get_write()
+                .await
                 .profile()
-                .update_profile_visiblity(
+                .profile_update_visibility(
                     account_id,
                     boolean_setting.value,
                     false, // False overrides updates
@@ -414,6 +419,10 @@ impl<'a> InternalApiManager<'a> {
             // TODO: request to internal media API
             Ok(())
         }
+    }
+
+    pub async fn get_write(&self) -> MutexGuard<SyncWriteHandle> {
+        self.write_mutex.lock().await
     }
 
     // TODO: Prevent creating a new moderation request when there is camera

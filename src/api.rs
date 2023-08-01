@@ -9,6 +9,7 @@ pub mod profile;
 pub mod model;
 pub mod utils;
 
+use tokio::sync::MutexGuard;
 use utoipa::{Modify, OpenApi};
 
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
         data::{
             commands::WriteCommandRunnerHandle,
             read::ReadCommands,
-            utils::{AccountIdManager, ApiKeyManager},
+            utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle,
         },
         internal::InternalApiManager,
         manager_client::ManagerApiManager,
@@ -141,6 +142,11 @@ pub trait GetUsers {
 
 pub trait WriteDatabase {
     fn write_database(&self) -> &WriteCommandRunnerHandle;
+}
+
+#[async_trait::async_trait]
+pub trait WriteData {
+    async fn get_writer(&self) -> MutexGuard<SyncWriteHandle>;
 }
 
 pub trait ReadDatabase {

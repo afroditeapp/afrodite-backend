@@ -27,7 +27,7 @@ use utoipa::ToSchema;
 use crate::{
     config::info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE},
     server::app::{connection::WebSocketManager, AppState},
-    utils::IntoReportExt,
+    utils::IntoReportExt, api::WriteData,
 };
 
 use self::data::BackendVersion;
@@ -115,7 +115,7 @@ async fn handle_socket(
         r = handle_socket_result(socket, address, id, &state) => {
             match r {
                 Ok(()) => {
-                    match state.write_database().end_connection_session(id).await {
+                    match state.get_writer().await.common().end_connection_session(id, false).await {
                         Ok(()) => (),
                         Err(e) => {
                             error!("WebSocket: {e:?}");
@@ -125,7 +125,7 @@ async fn handle_socket(
                 Err(e) => {
                     error!("WebSocket: {e:?}");
 
-                    match state.write_database().logout(id).await {
+                    match state.get_writer().await.common().logout(id).await {
                         Ok(()) => (),
                         Err(e) => {
                             error!("WebSocket: {e:?}");
@@ -188,7 +188,9 @@ async fn handle_socket_result(
         Message::Binary(refresh_token) => {
             if refresh_token != current_refresh_token {
                 state
-                    .write_database()
+                    .get_writer()
+                    .await
+                    .common()
                     .logout(id)
                     .await
                     .change_context(WebSocketError::DatabaseLogoutFailed)?;
@@ -209,7 +211,9 @@ async fn handle_socket_result(
         .into_error(WebSocketError::Send)?;
 
     state
-        .write_database()
+        .get_writer()
+        .await
+        .common()
         .set_new_auth_pair(
             id,
             AuthPair {

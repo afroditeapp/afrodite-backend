@@ -85,7 +85,7 @@ impl PihkaServer {
         let (media_backup_quit, media_backup_handle) =
             MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
 
-        let (database_manager, router_database_handle) = DatabaseManager::new(
+        let (database_manager, router_database_handle, router_database_write_handle) = DatabaseManager::new(
             self.config.database_dir().to_path_buf(),
             self.config.clone(),
             media_backup_handle,
@@ -96,7 +96,12 @@ impl PihkaServer {
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
 
-        let mut app = App::new(router_database_handle, self.config.clone(), ws_manager)
+        let mut app = App::new(
+                router_database_handle,
+                router_database_write_handle,
+                self.config.clone(),
+                ws_manager
+            )
             .await
             .expect("App init failed");
 

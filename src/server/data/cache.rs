@@ -46,11 +46,13 @@ pub enum CacheError {
     InitFeatureNotEnabled,
 }
 
+#[derive(Debug)]
 pub struct AccountEntry {
     pub account_id_internal: AccountIdInternal,
     pub cache: RwLock<CacheEntry>,
 }
 
+#[derive(Debug)]
 pub struct DatabaseCache {
     /// Accounts which are logged in.
     api_keys: RwLock<HashMap<ApiKey, Arc<AccountEntry>>>,
