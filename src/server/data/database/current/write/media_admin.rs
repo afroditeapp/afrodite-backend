@@ -1,23 +1,10 @@
-use api_client::models::moderation;
-use error_stack::{Result, ResultExt};
-
-use sqlx::{Row, Sqlite, Transaction};
-
-use crate::{
-    api::{
-        media::data::{
-            ContentState, HandleModerationRequest, Moderation, ModerationId, ModerationRequestId,
-            ModerationRequestQueueNumber, ModerationRequestState, CurrentAccountMediaInternal, MediaContentType,
-        },
-        model::{AccountIdInternal, ContentId, ModerationRequestContent},
-    },
-    server::data::{file::file::ImageSlot, database::sqlite::CurrentDataWriteHandle, write::WriteResult},
-    utils::ConvertCommandError,
-};
-
-use crate::server::data::database::sqlite::SqliteDatabaseError;
-
-use crate::utils::IntoReportExt;
+use sqlx::{Sqlite, Transaction};
+use error_stack::ResultExt;
+use crate::api::model::{AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal, HandleModerationRequest, MediaContentType, Moderation, ModerationId, ModerationRequestContent, ModerationRequestId, ModerationRequestQueueNumber, ModerationRequestState};
+use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError};
+use crate::server::data::file::file::ImageSlot;
+use crate::server::data::write::WriteResult;
+use crate::utils::{IntoReportExt, ConvertCommandError};
 
 #[must_use]
 pub struct DatabaseTransaction<'a> {
@@ -30,7 +17,7 @@ impl<'a> DatabaseTransaction<'a> {
         content_uploader: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
-    ) -> Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
+    ) -> error_stack::Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
         let content_uuid = content_id.as_uuid();
         let account_row_id = content_uploader.row_id();
         let state = ContentState::InSlot as i64;
@@ -59,14 +46,14 @@ impl<'a> DatabaseTransaction<'a> {
         Ok(DatabaseTransaction { transaction })
     }
 
-    pub async fn commit(self) -> Result<(), SqliteDatabaseError> {
+    pub async fn commit(self) -> error_stack::Result<(), SqliteDatabaseError> {
         self.transaction
             .commit()
             .await
             .into_error(SqliteDatabaseError::TransactionCommit)
     }
 
-    pub async fn rollback(self) -> Result<(), SqliteDatabaseError> {
+    pub async fn rollback(self) -> error_stack::Result<(), SqliteDatabaseError> {
         self.transaction
             .rollback()
             .await
@@ -88,7 +75,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
     async fn delete_queue_number(
         &self,
         number: ModerationRequestQueueNumber,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         sqlx::query!(
             r#"
             DELETE FROM MediaModerationQueueNumber
@@ -134,7 +121,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
     async fn create_moderation_from_next_request_in_queue(
         &self,
         moderator_id: AccountIdInternal,
-    ) -> Result<Option<Moderation>, SqliteDatabaseError> {
+    ) -> error_stack::Result<Option<Moderation>, SqliteDatabaseError> {
         // TODO: Really support multiple sub queues after account premium mode
         // is implemented.
 
@@ -159,7 +146,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         &self,
         target_id: ModerationRequestId,
         moderator_id: AccountIdInternal,
-    ) -> Result<Moderation, SqliteDatabaseError> {
+    ) -> error_stack::Result<Moderation, SqliteDatabaseError> {
         // TODO: Currently is possible that two moderators moderate the same
         // request. Should that be prevented?
 
@@ -256,7 +243,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             moderation: ModerationId,
             state: ModerationRequestState,
             content: ModerationRequestContent,
-        ) -> Result<(), SqliteDatabaseError> {
+        ) -> error_stack::Result<(), SqliteDatabaseError> {
             let new_content_state = match state {
                 ModerationRequestState::Accepted => ContentState::ModeratedAsAccepted,
                 ModerationRequestState::Denied => ContentState::ModeratedAsDenied,
@@ -328,7 +315,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         transaction: &mut Transaction<'_, Sqlite>,
         moderation_request_owner: AccountIdInternal,
         content: &ModerationRequestContent,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         let request_owner_id = moderation_request_owner.row_id();
         let security_img_content_id = content.slot_1().content_id;
         sqlx::query!(
@@ -352,7 +339,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         transaction: &mut Transaction<'_, Sqlite>,
         moderation_request_owner: AccountIdInternal,
         content: ModerationRequestContent,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         let request_owner_id = moderation_request_owner.row_id();
         let primary_img_content_id = content.slot_2().ok_or(SqliteDatabaseError::ContentSlotEmpty)?.content_id;
         sqlx::query!(
@@ -377,7 +364,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         content_id: ContentId,
         new_state: ContentState,
         is_security: bool,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         let state = new_state as i64;
         let content_type = if is_security {
             MediaContentType::Security as i64

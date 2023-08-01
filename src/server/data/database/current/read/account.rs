@@ -1,31 +1,13 @@
 use async_trait::async_trait;
-use error_stack::Result;
 use futures::Stream;
-
-use crate::api::account::data::AccountSetup;
+use tokio_stream::StreamExt;
+use crate::api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo};
+use crate::read_json;
 use crate::server::data::database::current::SqliteReadCommands;
-use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteSelectJson};
-
-use crate::api::model::*;
-
+use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
+use crate::server::data::read::ReadResult;
 use crate::server::data::write::NoId;
 use crate::utils::IntoReportExt;
-
-
-
-use tokio_stream::StreamExt;
-
-use crate::server::data::database::sqlite::SqliteReadHandle;
-
-
-use crate::api::model::{
-    AccountIdInternal,
-};
-
-
-use crate::server::data::read::ReadResult;
-
-use crate::read_json;
 
 pub struct CurrentReadAccountCommands<'a> {
     handle: &'a SqliteReadHandle,
@@ -150,7 +132,7 @@ impl SqliteSelectJson for Account {
     async fn select_json(
         id: AccountIdInternal,
         read: &SqliteReadCommands,
-    ) -> Result<Self, SqliteDatabaseError> {
+    ) -> error_stack::Result<Self, SqliteDatabaseError> {
         read_json!(
             read,
             id,
@@ -169,7 +151,7 @@ impl SqliteSelectJson for AccountSetup {
     async fn select_json(
         id: AccountIdInternal,
         read: &SqliteReadCommands,
-    ) -> Result<Self, SqliteDatabaseError> {
+    ) -> error_stack::Result<Self, SqliteDatabaseError> {
         read_json!(
             read,
             id,

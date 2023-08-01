@@ -1,17 +1,8 @@
-use error_stack::Result;
-
 use sqlx::{Sqlite, Transaction};
-
-use crate::{
-    api::{
-        media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber, CurrentAccountMediaInternal, PrimaryImage},
-        model::{AccountIdInternal, ContentId, ModerationRequestContent},
-    },
-    server::data::{file::file::ImageSlot, database::sqlite::CurrentDataWriteHandle, write::WriteResult},
-};
-
-use crate::server::data::database::sqlite::SqliteDatabaseError;
-
+use crate::api::model::{AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal, ModerationRequest, ModerationRequestContent, ModerationRequestQueueNumber, PrimaryImage};
+use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError};
+use crate::server::data::file::file::ImageSlot;
+use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
 
 #[must_use]
@@ -25,7 +16,7 @@ impl<'a> DatabaseTransaction<'a> {
         content_uploader: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
-    ) -> Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
+    ) -> error_stack::Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
         let content_uuid = content_id.as_uuid();
         let account_row_id = content_uploader.row_id();
         let state = ContentState::InSlot as i64;
@@ -54,14 +45,14 @@ impl<'a> DatabaseTransaction<'a> {
         Ok(DatabaseTransaction { transaction })
     }
 
-    pub async fn commit(self) -> Result<(), SqliteDatabaseError> {
+    pub async fn commit(self) -> error_stack::Result<(), SqliteDatabaseError> {
         self.transaction
             .commit()
             .await
             .into_error(SqliteDatabaseError::TransactionCommit)
     }
 
-    pub async fn rollback(self) -> Result<(), SqliteDatabaseError> {
+    pub async fn rollback(self) -> error_stack::Result<(), SqliteDatabaseError> {
         self.transaction
             .rollback()
             .await
@@ -131,7 +122,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         content_uploader: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
-    ) -> Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
+    ) -> error_stack::Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
         if self
             .handle
             .read()
@@ -156,7 +147,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         &self,
         request_creator: AccountIdInternal,
         slot: ImageSlot,
-    ) -> Result<Option<DeletedSomething>, SqliteDatabaseError> {
+    ) -> error_stack::Result<Option<DeletedSomething>, SqliteDatabaseError> {
         let account_row_id = request_creator.row_id();
         let in_slot_state = ContentState::InSlot as i64;
         let slot = slot as i64;
@@ -184,7 +175,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
     async fn delete_queue_number_of_account(
         &self,
         request_creator: AccountIdInternal,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         let account_row_id = request_creator.row_id();
         sqlx::query!(
             r#"
@@ -203,7 +194,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
     pub async fn delete_moderation_request(
         &self,
         request_creator: AccountIdInternal,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         // Delete old queue number and request
 
         self.delete_queue_number_of_account(request_creator).await?;
@@ -230,7 +221,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
     async fn create_new_moderation_request_queue_number(
         &self,
         request_creator: AccountIdInternal,
-    ) -> Result<ModerationRequestQueueNumber, SqliteDatabaseError> {
+    ) -> error_stack::Result<ModerationRequestQueueNumber, SqliteDatabaseError> {
         let account_row_id = request_creator.row_id();
         let queue_number = sqlx::query!(
             r#"
@@ -294,7 +285,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         &self,
         request_owner_account_id: AccountIdInternal,
         new_request: ModerationRequestContent,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         // It does not matter if update is done even if moderation would be on
         // going.
 

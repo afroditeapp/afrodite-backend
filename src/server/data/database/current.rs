@@ -1,20 +1,19 @@
-pub mod account;
-pub mod media;
-pub mod profile;
-pub mod chat;
+pub mod read;
+pub mod write;
 
-use self::chat::write::CurrentWriteChatCommands;
-use self::{account::read::CurrentReadAccountCommands, chat::read::CurrentReadChatCommands};
-use self::account::write::CurrentWriteAccountCommands;
-use self::media::admin_write::CurrentWriteMediaAdminCommands;
-use self::media::read::CurrentReadMediaCommands;
-use self::media::write::CurrentWriteMediaCommands;
-use self::profile::read::CurrentReadProfileCommands;
-use self::profile::write::CurrentWriteProfileCommands;
+use read::chat::CurrentReadChatCommands;
+use write::chat::CurrentWriteChatCommands;
+use read::account::CurrentReadAccountCommands;
+use write::account::CurrentWriteAccountCommands;
+use write::media_admin::CurrentWriteMediaAdminCommands;
+use read::media::CurrentReadMediaCommands;
+use write::media::CurrentWriteMediaCommands;
+use read::profile::CurrentReadProfileCommands;
+use write::profile::CurrentWriteProfileCommands;
 
 use crate::server::data::database::sqlite::CurrentDataWriteHandle;
 
-use crate::server::data::database::sqlite::{SqliteReadHandle};
+use crate::server::data::database::sqlite::SqliteReadHandle;
 
 #[macro_export]
 macro_rules! read_json {

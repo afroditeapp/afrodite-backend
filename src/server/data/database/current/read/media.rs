@@ -1,20 +1,7 @@
 use std::collections::HashSet;
-
-use error_stack::Result;
-use tokio_stream::StreamExt;
-
+use crate::api::model::{AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState, CurrentAccountMediaInternal, MediaContentInternal, Moderation, ModerationId, ModerationRequestContent, ModerationRequestId, ModerationRequestInternal, ModerationRequestQueueNumber, ModerationRequestState};
 use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
-
-use crate::api::media::data::{
-    ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,
-    ModerationRequestQueueNumber, ModerationRequestState, CurrentAccountMediaInternal, MediaContentInternal,
-};
-use crate::api::model::{
-    AccountIdInternal, AccountIdLight, ContentId, ModerationRequestContent,
-    ModerationRequestInternal,
-};
 use crate::server::data::file::file::ImageSlot;
-
 use crate::server::data::read::ReadResult;
 use crate::utils::IntoReportExt;
 
@@ -110,7 +97,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     async fn get_content_id_from_row_id(
         &self,
         id: i64,
-    ) -> Result<ContentIdInternal, SqliteDatabaseError> {
+    ) -> error_stack::Result<ContentIdInternal, SqliteDatabaseError> {
         let request = sqlx::query!(
             r#"
             SELECT content_id as "content_id: uuid::Uuid"
@@ -131,7 +118,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
         &self,
         slot_owner: AccountIdInternal,
         slot: ImageSlot,
-    ) -> Result<Option<ContentIdInternal>, SqliteDatabaseError> {
+    ) -> error_stack::Result<Option<ContentIdInternal>, SqliteDatabaseError> {
         let required_state = ContentState::InSlot as i64;
         let required_slot = slot as i64;
         let request = sqlx::query_as!(
@@ -160,7 +147,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
         &self,
         content_owner: AccountIdInternal,
         request_content: &ModerationRequestContent,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         let requested_content_set: HashSet<ContentId> = request_content.content().collect();
 
         let required_state = ContentState::InSlot as i64;
@@ -255,7 +242,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_moderation_request_content(
         &self,
         id: ModerationRequestId,
-    ) -> Result<
+    ) -> error_stack::Result<
         (
             ModerationRequestContent,
             ModerationRequestQueueNumber,
@@ -291,7 +278,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn get_in_progress_moderations(
         &self,
         moderator_id: AccountIdInternal,
-    ) -> Result<Vec<Moderation>, SqliteDatabaseError> {
+    ) -> error_stack::Result<Vec<Moderation>, SqliteDatabaseError> {
         let account_row_id = moderator_id.row_id();
         let state_in_progress = ModerationRequestState::InProgress as i64;
         let data = sqlx::query!(
@@ -358,7 +345,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
     pub async fn moderation(
         &self,
         moderation: ModerationId,
-    ) -> Result<ModerationRequestContent, SqliteDatabaseError> {
+    ) -> error_stack::Result<ModerationRequestContent, SqliteDatabaseError> {
         let account_row_id = moderation.account_id.row_id();
         let content_to_be_moderated = sqlx::query!(
             r#"

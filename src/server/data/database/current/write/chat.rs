@@ -1,16 +1,4 @@
-use async_trait::async_trait;
-use error_stack::Result;
-
-use crate::server::data::database::current::CurrentDataWriteCommands;
-use crate::server::data::index::location::LocationIndexKey;
-use crate::server::data::database::sqlite::{
-    CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
-};
-
-use crate::api::model::*;
-
-use crate::server::data::write::WriteResult;
-use crate::utils::IntoReportExt;
+use crate::server::data::database::sqlite::CurrentDataWriteHandle;
 
 pub struct CurrentWriteChatCommands<'a> {
     handle: &'a CurrentDataWriteHandle,
@@ -42,6 +30,7 @@ impl<'a> CurrentWriteChatCommands<'a> {
     //     Ok(profile)
     // }
 }
+
 
 // #[async_trait]
 // impl SqliteUpdateJson for ProfileUpdateInternal {

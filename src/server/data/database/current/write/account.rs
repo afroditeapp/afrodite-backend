@@ -1,24 +1,10 @@
 use async_trait::async_trait;
-use error_stack::Result;
-
-use crate::api::account::data::AccountSetup;
-use crate::server::data::database::current::CurrentDataWriteCommands;
-use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteUpdateJson};
-
-use crate::api::model::*;
-
-use crate::utils::IntoReportExt;
-
+use crate::api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo};
 use crate::insert_or_update_json;
-
-
-
-use crate::{
-    api::{
-        model::{AccountIdInternal},
-    },
-    server::data::{database::sqlite::CurrentDataWriteHandle, write::WriteResult},
-};
+use crate::server::data::database::current::CurrentDataWriteCommands;
+use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError, SqliteUpdateJson};
+use crate::server::data::write::WriteResult;
+use crate::utils::IntoReportExt;
 
 pub struct CurrentWriteAccountCommands<'a> {
     handle: &'a CurrentDataWriteHandle,
@@ -237,7 +223,7 @@ impl SqliteUpdateJson for Account {
         &self,
         id: AccountIdInternal,
         write: &CurrentDataWriteCommands,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,
             r#"
@@ -257,7 +243,7 @@ impl SqliteUpdateJson for AccountSetup {
         &self,
         id: AccountIdInternal,
         write: &CurrentDataWriteCommands,
-    ) -> Result<(), SqliteDatabaseError> {
+    ) -> error_stack::Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
             write,
             r#"

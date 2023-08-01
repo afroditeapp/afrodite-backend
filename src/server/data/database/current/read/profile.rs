@@ -1,12 +1,8 @@
 use async_trait::async_trait;
-use error_stack::Result;
-
+use crate::api::model::{AccountIdInternal, ProfileInternal};
 use crate::server::data::database::current::SqliteReadCommands;
-use crate::server::data::index::location::LocationIndexKey;
 use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
-
-use crate::api::model::*;
-
+use crate::server::data::index::location::LocationIndexKey;
 use crate::utils::IntoReportExt;
 
 pub struct CurrentReadProfileCommands<'a> {
@@ -24,7 +20,7 @@ impl SqliteSelectJson for ProfileInternal {
     async fn select_json(
         id: AccountIdInternal,
         read: &SqliteReadCommands,
-    ) -> Result<Self, SqliteDatabaseError> {
+    ) -> error_stack::Result<Self, SqliteDatabaseError> {
         let request = sqlx::query_as!(
             ProfileInternal,
             r#"
@@ -50,7 +46,7 @@ impl SqliteSelectJson for LocationIndexKey {
     async fn select_json(
         id: AccountIdInternal,
         read: &SqliteReadCommands,
-    ) -> Result<Self, SqliteDatabaseError> {
+    ) -> error_stack::Result<Self, SqliteDatabaseError> {
         let request = sqlx::query_as!(
             LocationIndexKey,
             r#"

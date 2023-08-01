@@ -1,13 +1,4 @@
-use async_trait::async_trait;
-use error_stack::Result;
-
-use crate::server::data::database::current::SqliteReadCommands;
-use crate::server::data::index::location::LocationIndexKey;
-use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
-
-use crate::api::model::*;
-
-use crate::utils::IntoReportExt;
+use crate::server::data::database::sqlite::SqliteReadHandle;
 
 pub struct CurrentReadChatCommands<'a> {
     handle: &'a SqliteReadHandle,
