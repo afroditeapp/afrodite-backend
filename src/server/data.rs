@@ -1,11 +1,11 @@
 pub mod cache;
 pub mod commands;
+pub mod database;
 pub mod file;
 pub mod index;
 pub mod read;
 pub mod utils;
 pub mod write;
-pub mod database;
 
 use std::{
     fs,
@@ -15,26 +15,27 @@ use std::{
 
 use error_stack::{Result, ResultExt};
 
-use tracing::info;
 use database::current::SqliteReadCommands;
+use tracing::info;
 
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight, SignInWithInfo},
     config::Config,
-    media_backup::MediaBackupHandle, server::data::{commands::WriteCommandRunner, database::sqlite::print_sqlite_version},
+    media_backup::MediaBackupHandle,
+    server::data::{commands::WriteCommandRunner, database::sqlite::print_sqlite_version},
 };
 
 use self::{
     cache::DatabaseCache,
     commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
-    file::{FileError, read::FileReadCommands, utils::FileDir},
     database::history::read::HistoryReadCommands,
-    index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
-    read::ReadCommands,
     database::sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
         SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
     },
+    file::{read::FileReadCommands, utils::FileDir, FileError},
+    index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
+    read::ReadCommands,
     utils::{AccountIdManager, ApiKeyManager},
     write::{WriteCommands, WriteCommandsAccount},
 };
@@ -140,11 +141,17 @@ impl DatabaseRoot {
     }
 
     pub fn current_db_file(&self) -> PathBuf {
-        self.current.clone().path().join(DatabaseType::Current.to_file_name())
+        self.current
+            .clone()
+            .path()
+            .join(DatabaseType::Current.to_file_name())
     }
 
     pub fn history_db_file(&self) -> PathBuf {
-        self.history.clone().path().join(DatabaseType::History.to_file_name())
+        self.history
+            .clone()
+            .path()
+            .join(DatabaseType::History.to_file_name())
     }
 }
 

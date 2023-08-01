@@ -1,6 +1,6 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-use axum::{extract::Path};
+use axum::extract::Path;
 
 use hyper::StatusCode;
 
@@ -9,7 +9,7 @@ use crate::api::{
     GetInternalApi, GetUsers, ReadDatabase,
 };
 
-use tracing::{error};
+use tracing::error;
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";

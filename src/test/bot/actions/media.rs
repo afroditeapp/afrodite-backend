@@ -27,11 +27,17 @@ impl MediaState {
 }
 
 #[derive(Debug)]
-pub struct SendImageToSlot { pub slot: i32, pub random: bool }
+pub struct SendImageToSlot {
+    pub slot: i32,
+    pub random: bool,
+}
 
 impl SendImageToSlot {
     pub const fn slot(slot: i32) -> Self {
-        Self { slot, random: false }
+        Self {
+            slot,
+            random: false,
+        }
     }
 }
 
@@ -43,11 +49,12 @@ impl BotAction for SendImageToSlot {
             self.slot,
             if self.random {
                 if let Some(dir) = &state.config.man_images {
-                    ImageProvider::random_image_from_directory(&dir).unwrap_or_else(|e| {
-                        tracing::error!("{e:?}");
-                        Some(ImageProvider::random_jpeg_image())
-                    })
-                    .unwrap_or(ImageProvider::random_jpeg_image())
+                    ImageProvider::random_image_from_directory(&dir)
+                        .unwrap_or_else(|e| {
+                            tracing::error!("{e:?}");
+                            Some(ImageProvider::random_jpeg_image())
+                        })
+                        .unwrap_or(ImageProvider::random_jpeg_image())
                 } else {
                     ImageProvider::random_jpeg_image()
                 }

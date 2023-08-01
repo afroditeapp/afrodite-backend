@@ -1,7 +1,7 @@
 mod actions;
 mod benchmark;
-mod qa;
 mod client_bot;
+mod qa;
 mod utils;
 
 use std::{fmt::Debug, sync::Arc, vec};
@@ -23,10 +23,14 @@ use tracing::{error, info, log::warn};
 use self::{
     actions::{media::MediaState, BotAction, DoNothing, PreviousValue},
     benchmark::{Benchmark, BenchmarkState},
-    qa::Qa, client_bot::ClientBot,
+    client_bot::ClientBot,
+    qa::Qa,
 };
 
-use super::{client::{ApiClient, TestError}, state::{BotPersistentState, StateData}};
+use super::{
+    client::{ApiClient, TestError},
+    state::{BotPersistentState, StateData},
+};
 
 use crate::config::args::{Test, TestMode};
 
@@ -201,10 +205,11 @@ impl BotManager {
             let state = BotState::new(
                 old_state
                     .as_ref()
-                    .map(|d| d
-                        .find_matching(task_id, bot_i)
-                        .map(|s| AccountIdLight::new(s.account_id)))
-                        .flatten(),
+                    .map(|d| {
+                        d.find_matching(task_id, bot_i)
+                            .map(|s| AccountIdLight::new(s.account_id))
+                    })
+                    .flatten(),
                 config.clone(),
                 task_id,
                 bot_i,
@@ -214,7 +219,6 @@ impl BotManager {
             match config.test {
                 Test::BenchmarkGetProfile => {
                     bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
-
                 }
                 Test::BenchmarkGetProfileList => {
                     let benchmark = match bot_i {
@@ -222,12 +226,8 @@ impl BotManager {
                         _ => Benchmark::benchmark_get_profile_list_bot(state),
                     };
                     bots.push(Box::new(benchmark))
-
                 }
-                Test::Bot => {
-                    bots.push(Box::new(ClientBot::new(state)))
-
-                }
+                Test::Bot => bots.push(Box::new(ClientBot::new(state))),
                 _ => panic!("Invalid test {:?}", config.test),
             };
         }
@@ -311,7 +311,10 @@ impl BotManager {
     }
 
     fn iter_persistent_state(&self) -> Vec<BotPersistentState> {
-        self.bots.iter().filter_map(|bot| bot.state().persistent_state()).collect()
+        self.bots
+            .iter()
+            .filter_map(|bot| bot.state().persistent_state())
+            .collect()
     }
 
     async fn run_bot(&mut self) {

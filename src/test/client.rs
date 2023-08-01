@@ -2,11 +2,11 @@
 
 use std::fmt::Debug;
 
-use api_client::{apis::configuration::Configuration};
+use api_client::apis::configuration::Configuration;
 use error_stack::{IntoReport, Result};
 
 use hyper::StatusCode;
-use reqwest::{Url, Client};
+use reqwest::{Client, Url};
 use tracing::info;
 
 #[derive(thiserror::Error, Debug)]
@@ -69,7 +69,7 @@ impl PublicApiUrls {
         profile_base_url: Url,
         media_base_url: Url,
         chat_base_url: Url,
-        ) -> Self {
+    ) -> Self {
         Self {
             register_base_url,
             account_base_url,
@@ -95,33 +95,16 @@ impl ApiClient {
         let client = reqwest::Client::new();
 
         Self {
-            register: Self::create_configuration(
-                &client,
-                base_urls.register_base_url.as_str()
-            ),
-            account: Self::create_configuration(
-                &client,
-                base_urls.account_base_url.as_str()
-            ),
-            profile: Self::create_configuration(
-                &client,
-                base_urls.profile_base_url.as_str()
-            ),
-            media: Self::create_configuration(
-                &client,
-                base_urls.media_base_url.as_str()
-            ),
-            chat: Self::create_configuration(
-                &client,
-                base_urls.chat_base_url.as_str()
-            ),
+            register: Self::create_configuration(&client, base_urls.register_base_url.as_str()),
+            account: Self::create_configuration(&client, base_urls.account_base_url.as_str()),
+            profile: Self::create_configuration(&client, base_urls.profile_base_url.as_str()),
+            media: Self::create_configuration(&client, base_urls.media_base_url.as_str()),
+            chat: Self::create_configuration(&client, base_urls.chat_base_url.as_str()),
         }
     }
 
     fn create_configuration(client: &Client, base_url: &str) -> Configuration {
-        let path = base_url
-            .trim_end_matches('/')
-            .to_string();
+        let path = base_url.trim_end_matches('/').to_string();
         Configuration {
             base_path: path,
             client: client.clone(),

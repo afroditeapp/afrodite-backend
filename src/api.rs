@@ -20,7 +20,8 @@ use crate::{
             read::ReadCommands,
             utils::{AccountIdManager, ApiKeyManager},
         },
-        internal::InternalApiManager, manager_client::ManagerApiManager,
+        internal::InternalApiManager,
+        manager_client::ManagerApiManager,
     },
 };
 

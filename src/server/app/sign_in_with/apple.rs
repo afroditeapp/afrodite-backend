@@ -1,24 +1,10 @@
-use std::{sync::Arc};
-
-
-
+use std::sync::Arc;
 
 use error_stack::{IntoReport, Result};
 
-
-
-
-
-
-
-
 use tracing::{error, info};
 
-
-use crate::{
-    config::{Config},
-    utils::IntoReportExt,
-};
+use crate::{config::Config, utils::IntoReportExt};
 
 #[derive(thiserror::Error, Debug)]
 pub enum SignInWithAppleError {

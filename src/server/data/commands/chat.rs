@@ -1,25 +1,11 @@
-use super::{WriteCommandRunnerHandle, ResultSender, WriteCommandRunner};
-
-
-
+use super::{ResultSender, WriteCommandRunner, WriteCommandRunnerHandle};
 
 use error_stack::Result;
 
-
-
-
 use crate::{
-    api::{
-        model::{
-            AccountIdInternal, ModerationRequestContent,
-        },
-    },
-    server::data::{DatabaseError},
+    api::model::{AccountIdInternal, ModerationRequestContent},
+    server::data::DatabaseError,
 };
-
-
-
-
 
 /// Synchronized write commands.
 #[derive(Debug)]
@@ -29,7 +15,6 @@ pub enum ChatWriteCommand {
         account_id: AccountIdInternal,
     },
 }
-
 
 #[derive(Debug, Clone)]
 pub struct ChatWriteCommandRunnerHandle<'a> {
@@ -42,11 +27,9 @@ impl ChatWriteCommandRunnerHandle<'_> {
         account_id: AccountIdInternal,
         _request: ModerationRequestContent,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| ChatWriteCommand::Todo {
-            s,
-            account_id,
-        })
-        .await
+        self.handle
+            .send_event(|s| ChatWriteCommand::Todo { s, account_id })
+            .await
     }
 }
 
@@ -56,7 +39,7 @@ impl WriteCommandRunner {
             ChatWriteCommand::Todo {
                 s: _,
                 account_id: _,
-            } => unimplemented!()
+            } => unimplemented!(),
         }
     }
 }

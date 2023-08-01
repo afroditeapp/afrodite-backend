@@ -17,11 +17,10 @@ use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
 use crate::utils::IntoReportExt;
 
 use self::{
-    args::{TestMode},
+    args::TestMode,
     file::{
-        Components, ConfigFile, ExternalServices, LocationConfig, SignInWithGoogleConfig,
-        SocketConfig, InternalApiConfig, AppManagerConfig, MediaBackupConfig,
-        LitestreamConfig,
+        AppManagerConfig, Components, ConfigFile, ExternalServices, InternalApiConfig,
+        LitestreamConfig, LocationConfig, MediaBackupConfig, SignInWithGoogleConfig, SocketConfig,
     },
 };
 
@@ -194,8 +193,7 @@ pub fn get_config() -> Result<Config, GetConfigError> {
     }
 
     let root_certificate = match file_config.tls.clone() {
-        Some(tls_config) =>
-            Some(load_root_certificate(&tls_config.root_certificate)?),
+        Some(tls_config) => Some(load_root_certificate(&tls_config.root_certificate)?),
         None => None,
     };
 
@@ -320,9 +318,7 @@ fn generate_server_config(
     Ok(config)
 }
 
-fn load_root_certificate(
-    cert_path: &Path,
-) -> Result<reqwest::Certificate, GetConfigError> {
+fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetConfigError> {
     let mut cert_reader =
         BufReader::new(std::fs::File::open(cert_path).into_error(GetConfigError::CreateTlsConfig)?);
     let all_certs = certs(&mut cert_reader).into_error(GetConfigError::CreateTlsConfig)?;
@@ -336,6 +332,7 @@ fn load_root_certificate(
         return Err(GetConfigError::CreateTlsConfig)
             .into_report()
             .attach_printable("Only one cert supported");
-    }.into_error(GetConfigError::CreateTlsConfig)?;
+    }
+    .into_error(GetConfigError::CreateTlsConfig)?;
     Ok(cert)
 }

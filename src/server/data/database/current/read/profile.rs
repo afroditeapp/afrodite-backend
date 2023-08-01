@@ -1,9 +1,11 @@
-use async_trait::async_trait;
 use crate::api::model::{AccountIdInternal, ProfileInternal};
 use crate::server::data::database::current::SqliteReadCommands;
-use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
+use crate::server::data::database::sqlite::{
+    SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson,
+};
 use crate::server::data::index::location::LocationIndexKey;
 use crate::utils::IntoReportExt;
+use async_trait::async_trait;
 
 pub struct CurrentReadProfileCommands<'a> {
     handle: &'a SqliteReadHandle,

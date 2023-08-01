@@ -5,12 +5,13 @@ pub mod client;
 mod server;
 mod state;
 
-use std::{sync::Arc, time::Duration, path::{PathBuf}};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use api_client::{apis::configuration::Configuration, manual_additions};
 use tokio::{
+    io::AsyncWriteExt,
     select, signal,
-    sync::{mpsc, watch}, io::AsyncWriteExt,
+    sync::{mpsc, watch},
 };
 use tracing::{error, info};
 
@@ -47,12 +48,11 @@ impl TestRunner {
 
         ApiClient::new(self.test_config.server.api_urls.clone()).print_to_log();
 
-        let server =
-            if !self.test_config.no_servers {
-                Some(ServerManager::new(self.test_config.clone()).await)
-            } else {
-                None
-            };
+        let server = if !self.test_config.no_servers {
+            Some(ServerManager::new(self.test_config.clone()).await)
+        } else {
+            None
+        };
 
         let (bot_running_handle, mut wait_all_bots) = mpsc::channel::<Vec<BotPersistentState>>(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());
@@ -140,21 +140,18 @@ impl TestRunner {
 
     async fn load_state_data(&self) -> Option<StateData> {
         match tokio::fs::read_to_string(self.state_data_file()).await {
-            Ok(data) => {
-                match serde_json::from_str(&data) {
-                    Ok(data) => Some(data),
-                    Err(e) => {
-                        error!("state data loading error: {:?}", e);
-                        None
-                    }
+            Ok(data) => match serde_json::from_str(&data) {
+                Ok(data) => Some(data),
+                Err(e) => {
+                    error!("state data loading error: {:?}", e);
+                    None
                 }
-            }
+            },
             Err(e) => {
                 error!("state data loading error: {:?}", e);
                 None
             }
         }
-
     }
 
     async fn save_state_data(&self, data: &StateData) {
@@ -169,19 +166,16 @@ impl TestRunner {
         let file_handle = tokio::fs::File::create(self.state_data_file()).await;
 
         match file_handle {
-            Ok(mut handle) => {
-                match handle.write_all(data.as_bytes()).await {
-                    Ok(()) => (),
-                    Err(e) => {
-                        error!("state data saving error: {:?}", e);
-                    }
+            Ok(mut handle) => match handle.write_all(data.as_bytes()).await {
+                Ok(()) => (),
+                Err(e) => {
+                    error!("state data saving error: {:?}", e);
                 }
-            }
+            },
             Err(e) => {
                 error!("state data saving error: {:?}", e);
             }
         }
-
     }
 
     fn state_data_file(&self) -> PathBuf {

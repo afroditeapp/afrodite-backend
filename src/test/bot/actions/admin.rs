@@ -32,7 +32,7 @@ impl BotAction for ModerateMediaModerationRequest {
                     state.api.media(),
                     &request.request_creator_id.to_string(),
                     &content_id.to_string(),
-                    false
+                    false,
                 )
                 .await
                 .into_error(TestError::ApiRequest)?;

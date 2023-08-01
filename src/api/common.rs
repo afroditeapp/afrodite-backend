@@ -1,51 +1,44 @@
 //! Common routes to all microservices
 //!
 
-pub mod admin_data;
 pub mod admin;
+pub mod admin_data;
 pub mod data;
 
 // TODO: add app version route
 
-use std::{
-    net::SocketAddr,
-};
+use std::net::SocketAddr;
 
 use axum::{
     extract::{
         ws::{Message, WebSocket},
         ConnectInfo, WebSocketUpgrade,
     },
-    response::IntoResponse, TypedHeader, Json,
+    response::IntoResponse,
+    Json, TypedHeader,
 };
-
 
 use futures::StreamExt;
-use hyper::{
-    StatusCode,
-};
+use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
-
 
 use utoipa::ToSchema;
 
 use crate::{
+    config::info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE},
     server::app::{connection::WebSocketManager, AppState},
-    utils::IntoReportExt, config::info::{BUILD_INFO_GIT_DESCRIBE, BUILD_INFO_CARGO_PKG_VERSION},
+    utils::IntoReportExt,
 };
 
 use self::data::BackendVersion;
 
-use super::{
-    model::{AccountIdInternal, ApiKey, AuthPair, RefreshToken},
-};
+use super::model::{AccountIdInternal, ApiKey, AuthPair, RefreshToken};
 
 use tracing::error;
 
 use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
 
 use error_stack::{IntoReport, Result, ResultExt};
-
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
@@ -58,18 +51,16 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
         (status = 200, description = "Version information.", body = BackendVersion),
     )
 )]
-pub async fn get_version<S>(
-    _state: S,
-) -> Json<BackendVersion> {
+pub async fn get_version<S>(_state: S) -> Json<BackendVersion> {
     BackendVersion {
         backend_code_version: BUILD_INFO_GIT_DESCRIBE.to_string(),
         backend_version: BUILD_INFO_CARGO_PKG_VERSION.to_string(),
         protocol_version: "1.0.0".to_string(),
-    }.into()
+    }
+    .into()
 }
 
 // ------------------------- WebSocket -------------------------
-
 
 pub const PATH_CONNECT: &str = "/common_api/connect";
 

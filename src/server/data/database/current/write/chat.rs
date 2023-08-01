@@ -31,7 +31,6 @@ impl<'a> CurrentWriteChatCommands<'a> {
     // }
 }
 
-
 // #[async_trait]
 // impl SqliteUpdateJson for ProfileUpdateInternal {
 //     async fn update_json(

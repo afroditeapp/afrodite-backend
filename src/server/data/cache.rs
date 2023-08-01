@@ -7,23 +7,24 @@ use tracing::info;
 
 use crate::{
     api::model::{
-        Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal, ProfileUpdateInternal,
+        Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal,
+        ProfileUpdateInternal,
     },
     config::Config,
     server::data::write::NoId,
     utils::ConvertCommandError,
 };
 
-use error_stack::{Result, ResultExt};
 use crate::server::data::database::current::SqliteReadCommands;
+use error_stack::{Result, ResultExt};
 
 use super::{
+    database::sqlite::SqliteSelectJson,
     index::{
         location::{LocationIndexIteratorState, LocationIndexKey},
         LocationIndexIteratorGetter, LocationIndexWriterGetter,
     },
     read::ReadResult,
-    database::sqlite::SqliteSelectJson,
     write::WriteResult,
 };
 

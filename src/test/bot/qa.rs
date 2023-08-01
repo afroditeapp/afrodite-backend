@@ -2,10 +2,10 @@
 //!
 
 pub mod account;
+pub mod chat;
 pub mod common;
 pub mod media;
 pub mod profile;
-pub mod chat;
 
 use std::{fmt::Debug, iter::Peekable, sync::atomic::AtomicBool};
 
@@ -15,7 +15,8 @@ use async_trait::async_trait;
 use crate::{action_array, test::bot::actions::ActionArray};
 
 use self::{
-    account::ACCOUNT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS, profile::PROFILE_TESTS, chat::CHAT_TESTS,
+    account::ACCOUNT_TESTS, chat::CHAT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS,
+    profile::PROFILE_TESTS,
 };
 
 use super::{
@@ -46,8 +47,13 @@ macro_rules! test {
     };
 }
 
-pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] =
-    &[ACCOUNT_TESTS, MEDIA_TESTS, PROFILE_TESTS, COMMON_TESTS, CHAT_TESTS];
+pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[
+    ACCOUNT_TESTS,
+    MEDIA_TESTS,
+    PROFILE_TESTS,
+    COMMON_TESTS,
+    CHAT_TESTS,
+];
 
 pub fn test_count() -> usize {
     ALL_QA_TESTS.iter().map(|tests| tests.len()).sum()
@@ -106,18 +112,15 @@ impl Qa {
             CompleteAccountSetup,
             AssertAccountState(AccountState::Normal),
         ];
-        const ADMIN_ACTIONS: ActionArray = action_array![
-            SleepMillis(250),
-            ModerateMediaModerationRequest,
-        ];
+        const ADMIN_ACTIONS: ActionArray =
+            action_array![SleepMillis(250), ModerateMediaModerationRequest,];
 
-        let iter =
-            SETUP
-                .into_iter()
-                .chain(ADMIN_ACTIONS.into_iter().cycle().take_while(|_| {
-                    !ADMIN_QUIT_NOTIFICATION.load(std::sync::atomic::Ordering::Relaxed)
-                }))
-                .map(|a| *a);
+        let iter = SETUP
+            .into_iter()
+            .chain(ADMIN_ACTIONS.into_iter().cycle().take_while(|_| {
+                !ADMIN_QUIT_NOTIFICATION.load(std::sync::atomic::Ordering::Relaxed)
+            }))
+            .map(|a| *a);
         Self {
             state,
             test_name: "Admin bot",

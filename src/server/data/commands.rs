@@ -2,9 +2,9 @@
 //!
 
 pub mod account;
+pub mod chat;
 pub mod media;
 pub mod profile;
-pub mod chat;
 
 use std::{collections::HashSet, future::Future, net::SocketAddr, sync::Arc};
 
@@ -18,19 +18,20 @@ use tokio::{
 use tokio_stream::StreamExt;
 
 use crate::{
-    api::{
-        model::{
-            AccountIdInternal, AccountIdLight, AuthPair, ContentId, ProfileLink,
-        },
-    },
+    api::model::{AccountIdInternal, AccountIdLight, AuthPair, ContentId, ProfileLink},
     config::Config,
     server::data::{write::WriteCommands, DatabaseError},
     utils::{ErrorConversion, IntoReportExt},
 };
 
-use self::{media::{MediaWriteCommandRunnerHandle, MediaWriteCommand}, profile::{ProfileWriteCommandRunnerHandle, ProfileWriteCommand}, account::{AccountWriteCommand, AccountWriteCommandRunnerHandle}, chat::{ChatWriteCommand, ChatWriteCommandRunnerHandle}};
+use self::{
+    account::{AccountWriteCommand, AccountWriteCommandRunnerHandle},
+    chat::{ChatWriteCommand, ChatWriteCommandRunnerHandle},
+    media::{MediaWriteCommand, MediaWriteCommandRunnerHandle},
+    profile::{ProfileWriteCommand, ProfileWriteCommandRunnerHandle},
+};
 
-use super::{RouterDatabaseWriteHandle};
+use super::RouterDatabaseWriteHandle;
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 
@@ -82,7 +83,6 @@ impl From<ChatWriteCommand> for WriteCommand {
         Self::Chat(value)
     }
 }
-
 
 /// Concurrent write commands.
 #[derive(Debug)]
@@ -137,27 +137,19 @@ pub struct WriteCommandRunnerHandle {
 }
 
 impl WriteCommandRunnerHandle {
-    pub fn account(
-        &self,
-    ) -> AccountWriteCommandRunnerHandle {
+    pub fn account(&self) -> AccountWriteCommandRunnerHandle {
         AccountWriteCommandRunnerHandle { handle: self }
     }
 
-    pub fn media(
-        &self,
-    ) -> MediaWriteCommandRunnerHandle {
+    pub fn media(&self) -> MediaWriteCommandRunnerHandle {
         MediaWriteCommandRunnerHandle { handle: self }
     }
 
-    pub fn profile(
-        &self,
-    ) -> ProfileWriteCommandRunnerHandle {
+    pub fn profile(&self) -> ProfileWriteCommandRunnerHandle {
         ProfileWriteCommandRunnerHandle { handle: self }
     }
 
-    pub fn chat(
-        &self,
-    ) -> ChatWriteCommandRunnerHandle {
+    pub fn chat(&self) -> ChatWriteCommandRunnerHandle {
         ChatWriteCommandRunnerHandle { handle: self }
     }
 

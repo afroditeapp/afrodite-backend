@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::api::{model::AccountIdLight};
+use crate::api::model::AccountIdLight;
 
 /// Profile's database data
 #[derive(Debug, Clone)]

@@ -21,7 +21,8 @@ use super::{super::super::client::TestError, BotAction};
 use crate::{
     api::{common::PATH_CONNECT, utils::API_KEY_HEADER_STR},
     test::bot::{
-        utils::{assert::bot_assert_eq, name::NameProvider}, WsConnection,
+        utils::{assert::bot_assert_eq, name::NameProvider},
+        WsConnection,
     },
     utils::IntoReportExt,
 };

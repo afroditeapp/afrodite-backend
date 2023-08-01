@@ -1,12 +1,9 @@
-use std::{fmt::Debug};
-
+use std::fmt::Debug;
 
 use async_trait::async_trait;
 use error_stack::Result;
 
 use super::{super::super::client::TestError, BotAction};
-
-
 
 use super::BotState;
 

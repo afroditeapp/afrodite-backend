@@ -353,14 +353,12 @@ impl From<CurrentAccountMediaInternal> for SecurityImage {
     }
 }
 
-
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ImageAccessCheck {
     /// If false image access is allowed when profile is set as public.
     /// If true image access is allowed when users are a match.
     pub is_match: bool,
 }
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct NormalImages {

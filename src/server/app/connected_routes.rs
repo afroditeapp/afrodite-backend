@@ -1,19 +1,10 @@
-
-
 use axum::{
     middleware,
-    routing::{get, patch, post, put}, Router,
+    routing::{get, patch, post, put},
+    Router,
 };
 
-
-
-use crate::{
-    api::{
-        self,
-    },
-};
-
-
+use crate::api::{self};
 
 use super::AppState;
 
@@ -52,21 +43,29 @@ impl ConnectedApp {
                 api::common::admin::PATH_GET_LATEST_BUILD_INFO,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2| api::common::admin::get_latest_build_info(param1, param2, state)
+                    move |param1, param2| {
+                        api::common::admin::get_latest_build_info(param1, param2, state)
+                    }
                 }),
             )
             .route(
                 api::common::admin::PATH_POST_REQUEST_BUILD_SOFTWARE,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2| api::common::admin::post_request_build_software(param1, param2, state)
+                    move |param1, param2| {
+                        api::common::admin::post_request_build_software(param1, param2, state)
+                    }
                 }),
             )
             .route(
                 api::common::admin::PATH_POST_REQUEST_UPDATE_SOFTWARE,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2, param3| api::common::admin::post_request_update_software(param1, param2, param3, state)
+                    move |param1, param2, param3| {
+                        api::common::admin::post_request_update_software(
+                            param1, param2, param3, state,
+                        )
+                    }
                 }),
             )
             .route_layer({
@@ -178,14 +177,18 @@ impl ConnectedApp {
                 api::media::PATH_GET_IMAGE,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2, param3| api::media::get_image(param1, param2, param3, state)
+                    move |param1, param2, param3| {
+                        api::media::get_image(param1, param2, param3, state)
+                    }
                 }),
             )
             .route(
                 api::media::PATH_GET_PRIMARY_IMAGE_INFO,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2, param3| api::media::get_primary_image_info(param1, param2, param3, state)
+                    move |param1, param2, param3| {
+                        api::media::get_primary_image_info(param1, param2, param3, state)
+                    }
                 }),
             )
             .route(

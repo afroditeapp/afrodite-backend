@@ -1,10 +1,14 @@
-use async_trait::async_trait;
-use crate::api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo};
+use crate::api::model::{
+    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo,
+};
 use crate::insert_or_update_json;
 use crate::server::data::database::current::CurrentDataWriteCommands;
-use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError, SqliteUpdateJson};
+use crate::server::data::database::sqlite::{
+    CurrentDataWriteHandle, SqliteDatabaseError, SqliteUpdateJson,
+};
 use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
+use async_trait::async_trait;
 
 pub struct CurrentWriteAccountCommands<'a> {
     handle: &'a CurrentDataWriteHandle,

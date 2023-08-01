@@ -4,19 +4,12 @@ use axum::{extract::ConnectInfo, middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
 
-
-
-
-
-
 use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
 };
 
-
-
-use super::{model::{ApiKey}, GetApiKeys};
+use super::{model::ApiKey, GetApiKeys};
 
 pub const API_KEY_HEADER_STR: &str = "x-api-key";
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);

@@ -1,13 +1,17 @@
-use async_trait::async_trait;
-use futures::Stream;
-use tokio_stream::StreamExt;
-use crate::api::model::{Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo};
+use crate::api::model::{
+    Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo,
+};
 use crate::read_json;
 use crate::server::data::database::current::SqliteReadCommands;
-use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson};
+use crate::server::data::database::sqlite::{
+    SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson,
+};
 use crate::server::data::read::ReadResult;
 use crate::server::data::write::NoId;
 use crate::utils::IntoReportExt;
+use async_trait::async_trait;
+use futures::Stream;
+use tokio_stream::StreamExt;
 
 pub struct CurrentReadAccountCommands<'a> {
     handle: &'a SqliteReadHandle,

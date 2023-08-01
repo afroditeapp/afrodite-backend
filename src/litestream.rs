@@ -1,11 +1,18 @@
-use std::{sync::Arc, path::Path, process::Stdio};
+use std::{path::Path, process::Stdio, sync::Arc};
 
 use app_manager::utils::IntoReportExt;
-use nix::{unistd::Pid, sys::signal::Signal};
-use tokio::{process::{Command, Child}, io::{AsyncBufReadExt, AsyncRead}, task::JoinHandle};
+use nix::{sys::signal::Signal, unistd::Pid};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncRead},
+    process::{Child, Command},
+    task::JoinHandle,
+};
 use tracing::log::{error, info};
 
-use crate::{config::{Config, file::LitestreamConfig}, server::data::DatabaseRoot};
+use crate::{
+    config::{file::LitestreamConfig, Config},
+    server::data::DatabaseRoot,
+};
 
 use error_stack::{Result, ResultExt};
 
@@ -32,7 +39,6 @@ pub enum LitestreamError {
     CloseStdoutFailed,
     #[error("Close stderr failed")]
     CloseStderrFailed,
-
 }
 
 struct LitestreamProcess {
@@ -47,7 +53,6 @@ pub struct LitestreamManager {
     litestream_config: LitestreamConfig,
     process: Option<LitestreamProcess>,
 }
-
 
 impl LitestreamManager {
     pub fn new(config: Arc<Config>, litestream_config: LitestreamConfig) -> Self {
@@ -69,25 +74,34 @@ impl LitestreamManager {
             .spawn()
             .into_error(LitestreamError::ProcessStart)?;
 
-        let stdout = process.stdout.take().ok_or(LitestreamError::ProcessStdoutMissing)?;
-        let stderr = process.stderr.take().ok_or(LitestreamError::ProcessStderrMissing)?;
+        let stdout = process
+            .stdout
+            .take()
+            .ok_or(LitestreamError::ProcessStdoutMissing)?;
+        let stderr = process
+            .stderr
+            .take()
+            .ok_or(LitestreamError::ProcessStderrMissing)?;
 
-        fn create_read_lines_task(stream: impl AsyncRead + Unpin + Send + 'static, stream_name: &'static str) -> JoinHandle<()> {
+        fn create_read_lines_task(
+            stream: impl AsyncRead + Unpin + Send + 'static,
+            stream_name: &'static str,
+        ) -> JoinHandle<()> {
             tokio::spawn(async move {
                 let mut line_stream = tokio::io::BufReader::new(stream).lines();
                 loop {
                     match line_stream.next_line().await {
                         Ok(Some(line)) => {
                             info!("Litestream: {}", line);
-                        },
+                        }
                         Ok(None) => {
                             info!("Litestream {stream_name} closed");
                             break;
-                        },
+                        }
                         Err(e) => {
                             error!("Litestream {stream_name} error: {e:?}");
                             break;
-                        },
+                        }
                     }
                 }
             })
@@ -95,7 +109,11 @@ impl LitestreamManager {
 
         let stdout_task = create_read_lines_task(stdout, "stdout");
         let stderr_task = create_read_lines_task(stderr, "stdout");
-        self.process = Some(LitestreamProcess { process, stdout_task, stderr_task });
+        self.process = Some(LitestreamProcess {
+            process,
+            stdout_task,
+            stderr_task,
+        });
 
         self.wait_litestream().await?;
 
@@ -105,28 +123,40 @@ impl LitestreamManager {
     pub async fn stop_litestream(mut self) -> Result<(), LitestreamError> {
         if let Some(mut process) = self.process.take() {
             if let Some(pid) = process.process.id() {
-                let pid = Pid::from_raw(
-                    pid.try_into().into_error(LitestreamError::InvalidPid)?
-                );
+                let pid = Pid::from_raw(pid.try_into().into_error(LitestreamError::InvalidPid)?);
                 // Send CTRL-C
                 nix::sys::signal::kill(pid, Signal::SIGINT)
                     .into_error(LitestreamError::SendSignal)?;
 
                 // No timeout because server is already mostly closed and
                 // systemd has timeout for closing the server.
-                let status = process.process.wait().await.into_error(LitestreamError::ProcessWait)?;
+                let status = process
+                    .process
+                    .wait()
+                    .await
+                    .into_error(LitestreamError::ProcessWait)?;
                 if !status.success() {
                     error!("Litestream process exited with error, status: {:?}", status);
                 }
             } else {
                 error!("Litestream closed too early");
-                let status = process.process.wait().await.into_error(LitestreamError::ProcessWait)?;
+                let status = process
+                    .process
+                    .wait()
+                    .await
+                    .into_error(LitestreamError::ProcessWait)?;
                 if !status.success() {
                     error!("Litestream process exited with error, status: {:?}", status);
                 }
             }
-            process.stderr_task.await.into_error(LitestreamError::CloseStderrFailed)?;
-            process.stdout_task.await.into_error(LitestreamError::CloseStdoutFailed)?;
+            process
+                .stderr_task
+                .await
+                .into_error(LitestreamError::CloseStderrFailed)?;
+            process
+                .stdout_task
+                .await
+                .into_error(LitestreamError::CloseStdoutFailed)?;
         }
 
         Ok(())
@@ -139,14 +169,20 @@ impl LitestreamManager {
         let history_db_path = root.history_db_file();
 
         if current_db_path.exists() {
-            if !self.opened_by_litestream_with_retry(&current_db_path).await? {
+            if !self
+                .opened_by_litestream_with_retry(&current_db_path)
+                .await?
+            {
                 error!("Litestream did not open current database");
                 return Ok(());
             }
         }
 
         if history_db_path.exists() {
-            if !self.opened_by_litestream_with_retry(&history_db_path).await? {
+            if !self
+                .opened_by_litestream_with_retry(&history_db_path)
+                .await?
+            {
                 error!("Litestream did not open history database");
                 return Ok(());
             }
@@ -155,7 +191,10 @@ impl LitestreamManager {
         Ok(())
     }
 
-    pub async fn opened_by_litestream_with_retry(&self, file: &Path) -> Result<bool, LitestreamError> {
+    pub async fn opened_by_litestream_with_retry(
+        &self,
+        file: &Path,
+    ) -> Result<bool, LitestreamError> {
         for _ in 0..5 {
             if self.opened_by_litestream(&file).await? {
                 return Ok(true);
@@ -178,10 +217,9 @@ impl LitestreamManager {
             .await
             .into_error(LitestreamError::ProcessWait)?;
 
-        let stdout_string = String::from_utf8(output.stdout)
-            .into_error(LitestreamError::InvalidOutput)?;
+        let stdout_string =
+            String::from_utf8(output.stdout).into_error(LitestreamError::InvalidOutput)?;
 
         Ok(stdout_string)
     }
-
 }

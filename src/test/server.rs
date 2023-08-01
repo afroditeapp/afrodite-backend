@@ -1,12 +1,12 @@
 use std::{
-    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf,
-    sync::Arc,
+    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, sync::Arc,
 };
 
 use crate::config::{
     args::{Test, TestMode},
     file::{
-        Components, ConfigFile, ExternalServices, LocationConfig, SocketConfig, CONFIG_FILE_NAME, InternalApiConfig,
+        Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig, SocketConfig,
+        CONFIG_FILE_NAME,
     },
 };
 

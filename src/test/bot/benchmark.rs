@@ -10,17 +10,12 @@ use api_client::apis::profile_api::get_profile;
 use async_trait::async_trait;
 use tokio::time::sleep;
 
-use crate::{
-    test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK},
-};
+use crate::test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK};
 
 use super::{
     actions::{
         account::{Login, Register, SetProfileVisibility},
-        profile::{
-            ChangeProfileText, GetProfileList, ResetProfileIterator,
-            UpdateLocationRandom,
-        },
+        profile::{ChangeProfileText, GetProfileList, ResetProfileIterator, UpdateLocationRandom},
         BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
     },
     utils::{Counters, Timer},

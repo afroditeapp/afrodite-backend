@@ -2,13 +2,11 @@ use api_client::models::Location;
 
 use crate::test::bot::actions::{
     account::SetProfileVisibility,
-    profile::{GetProfileList, ResetProfileIterator, UpdateLocation}, AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil,
-    TO_NORMAL_STATE,
+    profile::{GetProfileList, ResetProfileIterator, UpdateLocation},
+    AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil, TO_NORMAL_STATE,
 };
 
-use super::{
-    SingleTest,
-};
+use super::SingleTest;
 
 use crate::test;
 

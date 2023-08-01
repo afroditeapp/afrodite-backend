@@ -1,13 +1,7 @@
-
-
-use crate::test::bot::actions::{
-    common::TestWebSocket, BotAction,
-};
+use crate::test::bot::actions::{common::TestWebSocket, BotAction};
 
 use super::{
-    super::actions::{
-        account::{Login, Register},
-    },
+    super::actions::account::{Login, Register},
     SingleTest,
 };
 

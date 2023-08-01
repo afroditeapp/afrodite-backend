@@ -1,27 +1,11 @@
-use super::{WriteCommandRunnerHandle, ResultSender, WriteCommandRunner, SendBack};
-
-
-
-
-
+use super::{ResultSender, SendBack, WriteCommandRunner, WriteCommandRunnerHandle};
 
 use error_stack::Result;
 
-
-
-
 use crate::{
-    api::{
-        model::{
-            AccountIdInternal,
-            Location,
-            ProfileUpdateInternal,
-        },
-    },
-    server::data::{DatabaseError},
+    api::model::{AccountIdInternal, Location, ProfileUpdateInternal},
+    server::data::DatabaseError,
 };
-
-
 
 /// Synchronized write commands.
 #[derive(Debug)]
@@ -55,12 +39,13 @@ impl ProfileWriteCommandRunnerHandle<'_> {
         account_id: AccountIdInternal,
         profile: ProfileUpdateInternal,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| ProfileWriteCommand::UpdateProfile {
-            s,
-            account_id,
-            profile,
-        })
-        .await
+        self.handle
+            .send_event(|s| ProfileWriteCommand::UpdateProfile {
+                s,
+                account_id,
+                profile,
+            })
+            .await
     }
 
     pub async fn update_profile_visiblity(
@@ -69,13 +54,14 @@ impl ProfileWriteCommandRunnerHandle<'_> {
         public: bool,
         update_only_if_none: bool,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| ProfileWriteCommand::UpdateProfileVisiblity {
-            s,
-            account_id,
-            public,
-            update_only_if_none,
-        })
-        .await
+        self.handle
+            .send_event(|s| ProfileWriteCommand::UpdateProfileVisiblity {
+                s,
+                account_id,
+                public,
+                update_only_if_none,
+            })
+            .await
     }
 
     pub async fn update_profile_location(
@@ -83,15 +69,15 @@ impl ProfileWriteCommandRunnerHandle<'_> {
         account_id: AccountIdInternal,
         location: Location,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| ProfileWriteCommand::UpdateProfileLocation {
-            s,
-            account_id,
-            location,
-        })
-        .await
+        self.handle
+            .send_event(|s| ProfileWriteCommand::UpdateProfileLocation {
+                s,
+                account_id,
+                location,
+            })
+            .await
     }
 }
-
 
 impl WriteCommandRunner {
     pub async fn handle_profile_cmd(&self, cmd: ProfileWriteCommand) {

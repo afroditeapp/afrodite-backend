@@ -1,13 +1,23 @@
-use std::{sync::Arc, time::Duration, process::{ExitStatus, Stdio}};
+use std::{
+    process::{ExitStatus, Stdio},
+    sync::Arc,
+    time::Duration,
+};
 
 use app_manager::utils::IntoReportExt;
 
-use time::{Time, OffsetDateTime, UtcOffset};
-use tokio::{process::{Command}, task::JoinHandle, sync::mpsc, time::sleep, io::AsyncWriteExt};
+use time::{OffsetDateTime, Time, UtcOffset};
+use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
 
-
-use crate::{config::{Config}, server::{app::connection::ServerQuitWatcher, data::{DatabaseRoot, file::utils::IMAGE_DIR_NAME}}, api::{media::data::ContentId, model::AccountIdLight}};
+use crate::{
+    api::{media::data::ContentId, model::AccountIdLight},
+    config::Config,
+    server::{
+        app::connection::ServerQuitWatcher,
+        data::{file::utils::IMAGE_DIR_NAME, DatabaseRoot},
+    },
+};
 
 use error_stack::{Result, ResultExt};
 
@@ -88,7 +98,11 @@ impl MediaBackupHandle {
         account: AccountIdLight,
         content_id: ContentId,
     ) -> Result<(), MediaBackupError> {
-        self.sender.send(MediaBackupMessage::BackupJpegImage {account, content_id})
+        self.sender
+            .send(MediaBackupMessage::BackupJpegImage {
+                account,
+                content_id,
+            })
             .await
             .into_error(MediaBackupError::MediaBackupManagerNotAvailable)?;
 
@@ -107,19 +121,13 @@ impl MediaBackupManager {
         config: Arc<Config>,
         quit_notification: ServerQuitWatcher,
     ) -> (MediaBackupQuitHandle, MediaBackupHandle) {
-        let (sender, receiver) =
-            mpsc::channel(MEDIA_BACKUP_MANAGER_QUEUE_SIZE);
+        let (sender, receiver) = mpsc::channel(MEDIA_BACKUP_MANAGER_QUEUE_SIZE);
 
-        let manager = Self {
-            config,
-            receiver,
-        };
+        let manager = Self { config, receiver };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
-        let handle = MediaBackupHandle {
-            sender,
-        };
+        let handle = MediaBackupHandle { sender };
 
         let quit_handle = MediaBackupQuitHandle {
             task,
@@ -129,11 +137,8 @@ impl MediaBackupManager {
         (quit_handle, handle)
     }
 
-    pub async fn run(
-        mut self,
-        mut quit_notification: ServerQuitWatcher,
-    ) {
-        if self.config.media_backup().is_none()  {
+    pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
+        if self.config.media_backup().is_none() {
             info!("Media backup manager disabled. There is no confguration for it.");
             loop {
                 tokio::select! {
@@ -191,21 +196,23 @@ impl MediaBackupManager {
         }
     }
 
-    pub async fn handle_message(
-        &self,
-        message: MediaBackupMessage,
-    ) {
+    pub async fn handle_message(&self, message: MediaBackupMessage) {
         match message {
-            MediaBackupMessage::BackupJpegImage { account, content_id } => {
-                match self.backup_one_image_file(account, content_id).await {
-                    Ok(()) => {
-                        info!("File backup successful for {} {}", account.as_uuid(), content_id.as_uuid());
-                    },
-                    Err(e) => {
-                        warn!("File backup failed. Error: {:?}", e);
-                    }
+            MediaBackupMessage::BackupJpegImage {
+                account,
+                content_id,
+            } => match self.backup_one_image_file(account, content_id).await {
+                Ok(()) => {
+                    info!(
+                        "File backup successful for {} {}",
+                        account.as_uuid(),
+                        content_id.as_uuid()
+                    );
                 }
-            }
+                Err(e) => {
+                    warn!("File backup failed. Error: {:?}", e);
+                }
+            },
         }
     }
 
@@ -221,9 +228,7 @@ impl MediaBackupManager {
         }
     }
 
-    pub async fn run_rsync(
-        &self,
-    ) -> Result<(), MediaBackupError> {
+    pub async fn run_rsync(&self) -> Result<(), MediaBackupError> {
         let media_config = if let Some(config) = self.config.media_backup() {
             config
         } else {
@@ -252,7 +257,10 @@ impl MediaBackupManager {
             .arg("--delete")
             .arg("--exclude=tmp")
             .arg("-e")
-            .arg(format!("ssh -i {}", &media_config.ssh_private_key.path.to_string_lossy()))
+            .arg(format!(
+                "ssh -i {}",
+                &media_config.ssh_private_key.path.to_string_lossy()
+            ))
             // Source directory. Trailing slash is important.
             .arg(files_dir_string)
             // Target directory.
@@ -277,8 +285,8 @@ impl MediaBackupManager {
         let db_root = DatabaseRoot::new(&self.config.database_dir())
             .change_context(MediaBackupError::DatabaseError)?;
         let image_file = db_root.file_dir().image_content(account, content);
-        let abs_src_file = std::fs::canonicalize(image_file.path())
-            .into_error(MediaBackupError::InvalidPath)?;
+        let abs_src_file =
+            std::fs::canonicalize(image_file.path()).into_error(MediaBackupError::InvalidPath)?;
 
         let media_config = if let Some(config) = self.config.media_backup() {
             config
@@ -286,11 +294,14 @@ impl MediaBackupManager {
             return Err(MediaBackupError::ConfigError.into());
         };
 
-        let ssh_key = media_config.ssh_private_key.path.to_string_lossy().to_string();
+        let ssh_key = media_config
+            .ssh_private_key
+            .path
+            .to_string_lossy()
+            .to_string();
         let ssh_address = format!(
             "{}@{}",
-            &media_config.ssh_address.username,
-            &media_config.ssh_address.address,
+            &media_config.ssh_address.username, &media_config.ssh_address.address,
         );
 
         let account_string = account.to_string();
@@ -330,10 +341,13 @@ impl MediaBackupManager {
             .take()
             .ok_or(MediaBackupError::ProcessStdinMissing)?;
 
-        stdin.write_all(commands.as_bytes())
+        stdin
+            .write_all(commands.as_bytes())
             .await
             .into_error(MediaBackupError::SftpStdinWriteError)?;
-        stdin.shutdown().await
+        stdin
+            .shutdown()
+            .await
             .into_error(MediaBackupError::SftpStdinCloseError)?;
 
         let status = process
@@ -348,7 +362,6 @@ impl MediaBackupManager {
         Ok(())
     }
 
-
     pub async fn sleep_until(config: &Config) -> Result<(), MediaBackupError> {
         let now = Self::get_local_time().await?;
 
@@ -360,19 +373,13 @@ impl MediaBackupManager {
             return Err(MediaBackupError::ConfigError.into());
         };
 
-        let target_date_time = now
-            .replace_time(
-                target_time
-            );
+        let target_date_time = now.replace_time(target_time);
 
         let duration = if target_date_time > now {
             target_date_time - now
         } else {
             let tomorrow = now + Duration::from_secs(24 * 60 * 60);
-            let tomorrow_target_date_time = tomorrow
-                .replace_time(
-                    target_time
-                );
+            let tomorrow_target_date_time = tomorrow.replace_time(target_time);
             tomorrow_target_date_time - now
         };
 
@@ -384,10 +391,8 @@ impl MediaBackupManager {
     pub async fn get_local_time() -> Result<OffsetDateTime, MediaBackupError> {
         let now: OffsetDateTime = OffsetDateTime::now_utc();
         let offset = Self::get_utc_offset_hours().await?;
-        let now = now.to_offset(
-            UtcOffset::from_hms(offset, 0, 0)
-                .into_error(MediaBackupError::TimeError)?
-        );
+        let now = now
+            .to_offset(UtcOffset::from_hms(offset, 0, 0).into_error(MediaBackupError::TimeError)?);
         Ok(now)
     }
 
@@ -403,8 +408,8 @@ impl MediaBackupManager {
             return Err(MediaBackupError::CommandFailed(output.status).into());
         }
 
-        let offset = std::str::from_utf8(&output.stdout)
-            .into_error(MediaBackupError::InvalidOutput)?;
+        let offset =
+            std::str::from_utf8(&output.stdout).into_error(MediaBackupError::InvalidOutput)?;
 
         let multiplier = match offset.chars().nth(0) {
             Some('-') => -1,

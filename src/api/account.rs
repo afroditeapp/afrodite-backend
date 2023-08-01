@@ -378,8 +378,10 @@ pub async fn post_complete_setup<
             }
         } else {
             if let Some(sign_in_with_config) = state.config().sign_in_with_google_config() {
-                if sign_in_with_info.google_account_id == Some(sign_in_with_config.admin_google_account_id.clone()) &&
-                    account_setup.email() == state.config().admin_email() {
+                if sign_in_with_info.google_account_id
+                    == Some(sign_in_with_config.admin_google_account_id.clone())
+                    && account_setup.email() == state.config().admin_email()
+                {
                     account.add_admin_capablities();
                 }
             }

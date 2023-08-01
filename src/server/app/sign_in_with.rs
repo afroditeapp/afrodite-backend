@@ -1,26 +1,11 @@
 pub mod apple;
 pub mod google;
 
-use std::{sync::Arc};
+use std::sync::Arc;
 
+use error_stack::Result;
 
-
-
-use error_stack::{Result};
-
-
-
-
-
-
-
-
-
-
-
-
-
-use crate::{config::Config};
+use crate::config::Config;
 
 use self::{
     apple::{AppleAccountId, SignInWithAppleError, SignInWithAppleManager},

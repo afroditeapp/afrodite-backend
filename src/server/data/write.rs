@@ -1,17 +1,18 @@
 pub mod account;
 pub mod account_admin;
+pub mod chat;
+pub mod chat_admin;
 pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-pub mod chat;
-pub mod chat_admin;
 
 use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
 
 use axum::extract::BodyStream;
 use error_stack::{Report, Result, ResultExt};
 
+use crate::server::data::database::current::CurrentDataWriteCommands;
 use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation, PrimaryImage},
@@ -22,21 +23,19 @@ use crate::{
     },
     config::Config,
     media_backup::MediaBackupHandle,
-    server::data::DatabaseError, utils::{ConvertCommandError, ErrorConversion},
+    server::data::DatabaseError,
+    utils::{ConvertCommandError, ErrorConversion},
 };
-use crate::server::data::database::current::CurrentDataWriteCommands;
 
 use super::{
-    cache::{CachedProfile, CacheError, DatabaseCache, WriteCacheJson},
-    file::{file::ImageSlot, utils::FileDir},
+    cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
     database::history::write::HistoryWriteCommands,
-    index::{
-        LocationIndexIteratorGetter,
-        LocationIndexWriterGetter,
-    },
     database::sqlite::{
-        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError, SqliteUpdateJson,
+        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
+        SqliteUpdateJson,
     },
+    file::{file::ImageSlot, utils::FileDir},
+    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
 };
 
 pub struct NoId;
@@ -255,7 +254,10 @@ impl<'a> WriteCommands<'a> {
         }
 
         if config.components().media {
-            media_commands.init_current_account_media(id).await.convert(id)?;
+            media_commands
+                .init_current_account_media(id)
+                .await
+                .convert(id)?;
         }
 
         Ok(id)
@@ -469,7 +471,8 @@ impl<'a> WriteCommands<'a> {
                     .await
                     .change_context(DatabaseError::Sqlite)?;
 
-                self.media_backup.backup_jpeg_image(id.as_light(), content_id)
+                self.media_backup
+                    .backup_jpeg_image(id.as_light(), content_id)
                     .await
                     .change_context(DatabaseError::MediaBackup)?;
 
@@ -568,8 +571,7 @@ impl<'a> WriteCommands<'a> {
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DatabaseError> {
-        self
-            .current()
+        self.current()
             .media()
             .update_current_account_media_with_primary_image(id, primary_image)
             .await

@@ -1,10 +1,14 @@
-use sqlx::{Sqlite, Transaction};
-use error_stack::ResultExt;
-use crate::api::model::{AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal, HandleModerationRequest, MediaContentType, Moderation, ModerationId, ModerationRequestContent, ModerationRequestId, ModerationRequestQueueNumber, ModerationRequestState};
+use crate::api::model::{
+    AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal,
+    HandleModerationRequest, MediaContentType, Moderation, ModerationId, ModerationRequestContent,
+    ModerationRequestId, ModerationRequestQueueNumber, ModerationRequestState,
+};
 use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError};
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::write::WriteResult;
-use crate::utils::{IntoReportExt, ConvertCommandError};
+use crate::utils::{ConvertCommandError, IntoReportExt};
+use error_stack::ResultExt;
+use sqlx::{Sqlite, Transaction};
 
 #[must_use]
 pub struct DatabaseTransaction<'a> {
@@ -211,14 +215,14 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        let currently_selected_images =
-            self.handle
-                .read()
-                .media()
-                .get_current_account_media(moderation_request_owner)
-                .await
-                .convert(moderation_request_owner)
-                .change_context(SqliteDatabaseError::Fetch)?;
+        let currently_selected_images = self
+            .handle
+            .read()
+            .media()
+            .get_current_account_media(moderation_request_owner)
+            .await
+            .convert(moderation_request_owner)
+            .change_context(SqliteDatabaseError::Fetch)?;
 
         let moderation_id = ModerationId {
             request_id: ModerationRequestId {
@@ -256,16 +260,29 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
                     &mut transaction,
                     c,
                     new_content_state,
-                    content.slot_1_is_security_image() && content.slot_1() == c
+                    content.slot_1_is_security_image() && content.slot_1() == c,
                 )
                 .await?;
             }
 
-            if content.slot_1_is_security_image() &&
-                state == ModerationRequestState::Accepted &&
-                current_images_for_request_owner.security_content_id.is_none() {
-                CurrentWriteMediaAdminCommands::update_current_security_image(transaction, moderation_request_owner, &content).await?;
-                CurrentWriteMediaAdminCommands::update_current_primary_image_from_slot_2(transaction, moderation_request_owner, content).await?;
+            if content.slot_1_is_security_image()
+                && state == ModerationRequestState::Accepted
+                && current_images_for_request_owner
+                    .security_content_id
+                    .is_none()
+            {
+                CurrentWriteMediaAdminCommands::update_current_security_image(
+                    transaction,
+                    moderation_request_owner,
+                    &content,
+                )
+                .await?;
+                CurrentWriteMediaAdminCommands::update_current_primary_image_from_slot_2(
+                    transaction,
+                    moderation_request_owner,
+                    content,
+                )
+                .await?;
             }
 
             let state_number = state as i64;
@@ -292,7 +309,16 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             ModerationRequestState::Denied
         };
 
-        match actions(&mut transaction, moderation_request_owner, currently_selected_images, moderation_id, state, content).await {
+        match actions(
+            &mut transaction,
+            moderation_request_owner,
+            currently_selected_images,
+            moderation_id,
+            state,
+            content,
+        )
+        .await
+        {
             Ok(()) => transaction
                 .commit()
                 .await
@@ -341,7 +367,10 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         content: ModerationRequestContent,
     ) -> error_stack::Result<(), SqliteDatabaseError> {
         let request_owner_id = moderation_request_owner.row_id();
-        let primary_img_content_id = content.slot_2().ok_or(SqliteDatabaseError::ContentSlotEmpty)?.content_id;
+        let primary_img_content_id = content
+            .slot_2()
+            .ok_or(SqliteDatabaseError::ContentSlotEmpty)?
+            .content_id;
         sqlx::query!(
             r#"
             UPDATE CurrentAccountMedia

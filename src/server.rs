@@ -5,7 +5,7 @@ pub mod manager_client;
 
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
-use axum::{Router};
+use axum::Router;
 use futures::future::poll_fn;
 use hyper::server::{
     accept::Accept,
@@ -13,26 +13,34 @@ use hyper::server::{
 };
 use tokio::{
     net::TcpListener,
-    signal::{self, unix::{Signal, SignalKind}},
+    signal::{
+        self,
+        unix::{Signal, SignalKind},
+    },
     sync::{broadcast, mpsc},
     task::JoinHandle,
 };
 use tokio_rustls::rustls::ServerConfig;
 use tokio_rustls::TlsAcceptor;
-use tower::{MakeService};
-use tower_http::trace::{TraceLayer};
+use tower::MakeService;
+use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
     api::ApiDoc,
-    config::{Config, info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE}},
+    config::{
+        info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE},
+        Config,
+    },
+    litestream::LitestreamManager,
+    media_backup::MediaBackupManager,
     server::{
         app::{connection::WebSocketManager, App},
         data::DatabaseManager,
         internal::InternalApp,
-    }, litestream::LitestreamManager, media_backup::MediaBackupManager,
+    },
 };
 
 use self::app::connection::ServerQuitWatcher;
@@ -51,7 +59,10 @@ impl PihkaServer {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
-        info!("Backend version: {}-{}", BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE);
+        info!(
+            "Backend version: {}-{}",
+            BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE
+        );
 
         if self.config.debug_mode() {
             warn!("Debug mode is enabled");
@@ -61,15 +72,18 @@ impl PihkaServer {
 
         let mut litestream = None;
         if let Some(litestream_config) = self.config.litestream() {
-            let mut litestream_manager = LitestreamManager::new(self.config.clone(), litestream_config.clone());
-            litestream_manager.start_litestream().await.expect("Litestream start failed");
+            let mut litestream_manager =
+                LitestreamManager::new(self.config.clone(), litestream_config.clone());
+            litestream_manager
+                .start_litestream()
+                .await
+                .expect("Litestream start failed");
             litestream = Some(litestream_manager);
         }
 
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
         let (media_backup_quit, media_backup_handle) =
             MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
-
 
         let (database_manager, router_database_handle) = DatabaseManager::new(
             self.config.database_dir().to_path_buf(),
@@ -79,15 +93,10 @@ impl PihkaServer {
         .await
         .expect("Database init failed");
 
-
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
 
-        let mut app = App::new(
-            router_database_handle,
-            self.config.clone(),
-            ws_manager,
-        )
+        let mut app = App::new(router_database_handle, self.config.clone(), ws_manager)
             .await
             .expect("App init failed");
 

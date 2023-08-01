@@ -1,10 +1,15 @@
 //! Common routes related to admin features
 
-use app_manager::api::{model::{SystemInfoList, SoftwareInfo, SoftwareOptionsQueryParam, BuildInfo, RebootQueryParam}};
-use axum::{Extension, extract::Query, Json};
+use app_manager::api::model::{
+    BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList,
+};
+use axum::{extract::Query, Extension, Json};
 use http::StatusCode;
 
-use crate::api::{ReadDatabase, GetManagerApi, model::{AccountIdInternal, Account}};
+use crate::api::{
+    model::{Account, AccountIdInternal},
+    GetManagerApi, ReadDatabase,
+};
 
 use tracing::error;
 
@@ -25,7 +30,7 @@ pub async fn get_system_info<S: GetManagerApi + ReadDatabase>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SystemInfoList>, StatusCode> {
-    let account: Account  = state
+    let account: Account = state
         .read_database()
         .read_json(api_caller_account_id)
         .await
@@ -66,7 +71,7 @@ pub async fn get_software_info<S: GetManagerApi + ReadDatabase>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SoftwareInfo>, StatusCode> {
-    let account: Account  = state
+    let account: Account = state
         .read_database()
         .read_json(api_caller_account_id)
         .await
@@ -110,7 +115,7 @@ pub async fn get_latest_build_info<S: GetManagerApi + ReadDatabase>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<BuildInfo>, StatusCode> {
-    let account: Account  = state
+    let account: Account = state
         .read_database()
         .read_json(api_caller_account_id)
         .await
@@ -153,7 +158,7 @@ pub async fn post_request_build_software<S: GetManagerApi + ReadDatabase>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account: Account  = state
+    let account: Account = state
         .read_database()
         .read_json(api_caller_account_id)
         .await
@@ -162,7 +167,10 @@ pub async fn post_request_build_software<S: GetManagerApi + ReadDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    if account.capablities().admin_server_maintentance_update_software {
+    if account
+        .capablities()
+        .admin_server_maintentance_update_software
+    {
         state
             .manager_api()
             .request_build_software_from_build_server(software.software_options)
@@ -196,7 +204,7 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadDatabase>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account: Account  = state
+    let account: Account = state
         .read_database()
         .read_json(api_caller_account_id)
         .await
@@ -205,7 +213,10 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadDatabase>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    if account.capablities().admin_server_maintentance_update_software {
+    if account
+        .capablities()
+        .admin_server_maintentance_update_software
+    {
         state
             .manager_api()
             .request_update_software(software.software_options, reboot.reboot)

@@ -1,7 +1,7 @@
 //! Save and load state
 //!
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StateData {
@@ -11,7 +11,9 @@ pub struct StateData {
 
 impl StateData {
     pub fn find_matching(&self, task: u32, bot: u32) -> Option<&BotPersistentState> {
-        self.bot_states.iter().find(|s| s.task == task && s.bot == bot)
+        self.bot_states
+            .iter()
+            .find(|s| s.task == task && s.bot == bot)
     }
 }
 

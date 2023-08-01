@@ -1,28 +1,16 @@
-use super::{WriteCommandRunnerHandle, ResultSender, WriteCommandRunner, SendBack};
-
-
-
-
-
+use super::{ResultSender, SendBack, WriteCommandRunner, WriteCommandRunnerHandle};
 
 use error_stack::Result;
-
-
-
 
 use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation, PrimaryImage},
-        model::{
-            AccountIdInternal, ContentId, ModerationRequestContent,
-        },
+        model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
-    server::data::{DatabaseError},
+    server::data::DatabaseError,
 };
 
-use super::{super::file::file::ImageSlot};
-
-
+use super::super::file::file::ImageSlot;
 
 /// Synchronized write commands.
 #[derive(Debug)]
@@ -55,7 +43,6 @@ pub enum MediaWriteCommand {
     },
 }
 
-
 #[derive(Debug, Clone)]
 pub struct MediaWriteCommandRunnerHandle<'a> {
     pub handle: &'a WriteCommandRunnerHandle,
@@ -67,23 +54,24 @@ impl MediaWriteCommandRunnerHandle<'_> {
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| MediaWriteCommand::SetModerationRequest {
-            s,
-            account_id,
-            request,
-        })
-        .await
+        self.handle
+            .send_event(|s| MediaWriteCommand::SetModerationRequest {
+                s,
+                account_id,
+                request,
+            })
+            .await
     }
 
     pub async fn get_moderation_list_and_create_if_necessary(
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DatabaseError> {
-        self.handle.send_event(|s| MediaWriteCommand::GetModerationListAndCreateNewIfNecessary {
-            s,
-            account_id,
-        })
-        .await
+        self.handle
+            .send_event(
+                |s| MediaWriteCommand::GetModerationListAndCreateNewIfNecessary { s, account_id },
+            )
+            .await
     }
 
     pub async fn update_moderation(
@@ -92,13 +80,14 @@ impl MediaWriteCommandRunnerHandle<'_> {
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| MediaWriteCommand::UpdateModeration {
-            s,
-            moderator_id,
-            moderation_request_owner,
-            result,
-        })
-        .await
+        self.handle
+            .send_event(|s| MediaWriteCommand::UpdateModeration {
+                s,
+                moderator_id,
+                moderation_request_owner,
+                result,
+            })
+            .await
     }
 
     pub async fn update_primary_image(
@@ -106,12 +95,13 @@ impl MediaWriteCommandRunnerHandle<'_> {
         account_id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| MediaWriteCommand::UpdatePrimaryImage {
-            s,
-            account_id,
-            primary_image,
-        })
-        .await
+        self.handle
+            .send_event(|s| MediaWriteCommand::UpdatePrimaryImage {
+                s,
+                account_id,
+                primary_image,
+            })
+            .await
     }
 
     pub async fn save_to_slot(
@@ -120,16 +110,16 @@ impl MediaWriteCommandRunnerHandle<'_> {
         content_id: ContentId,
         slot: ImageSlot,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| MediaWriteCommand::SaveToSlot {
-            s,
-            account_id,
-            content_id,
-            slot,
-        })
-        .await
+        self.handle
+            .send_event(|s| MediaWriteCommand::SaveToSlot {
+                s,
+                account_id,
+                content_id,
+                slot,
+            })
+            .await
     }
 }
-
 
 impl WriteCommandRunner {
     pub async fn handle_media_cmd(&self, cmd: MediaWriteCommand) {

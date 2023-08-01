@@ -3,7 +3,7 @@ pub mod internal;
 
 use axum::extract::{BodyStream, Path, Query};
 
-use axum::{Json, TypedHeader, Extension};
+use axum::{Extension, Json, TypedHeader};
 
 use headers::ContentType;
 use hyper::StatusCode;
@@ -15,10 +15,11 @@ use crate::server::data::file::file::ImageSlot;
 use self::super::model::SlotId;
 
 use self::data::{
-    ContentId, HandleModerationRequest, ModerationList, ModerationRequest, ModerationRequestContent, PrimaryImage, SecurityImage, ImageAccessCheck, NormalImages, MediaContentType,
+    ContentId, HandleModerationRequest, ImageAccessCheck, MediaContentType, ModerationList,
+    ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SecurityImage,
 };
 
-use super::model::{AccountIdLight, AccountIdInternal};
+use super::model::{AccountIdInternal, AccountIdLight};
 use super::utils::ApiKeyHeader;
 use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase};
 
@@ -129,7 +130,6 @@ pub async fn get_security_image_info<S: ReadDatabase + GetUsers>(
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SecurityImage>, StatusCode> {
-
     // TODO: access restrictions
 
     let internal_id = state
@@ -174,7 +174,6 @@ pub async fn get_all_normal_images<S: ReadDatabase + GetUsers>(
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<NormalImages>, StatusCode> {
-
     // TODO: access restrictions
 
     let internal_id = state

@@ -1,12 +1,9 @@
 use std::{sync::Arc, time::Instant};
 
-
-
-
 use error_stack::{IntoReport, Result};
 
 use headers::{CacheControl, HeaderMapExt};
-use hyper::{Method};
+use hyper::Method;
 
 use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
@@ -15,14 +12,11 @@ use jsonwebtoken::{
 use serde::Deserialize;
 
 use tokio::sync::RwLock;
-use tracing::{error};
+use tracing::error;
 
+use crate::utils::IntoReportExt;
 
-use crate::{
-    utils::IntoReportExt,
-};
-
-use crate::{config::Config};
+use crate::config::Config;
 
 // TODO: Send serverAuthCode to server. Get refresh and access tokens from
 // google with that and save the tokens to database. After server receives app's

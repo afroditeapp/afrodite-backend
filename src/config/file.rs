@@ -1,7 +1,7 @@
 use std::{
     io::Write,
     net::SocketAddr,
-    num::{NonZeroU8},
+    num::NonZeroU8,
     path::{Path, PathBuf},
 };
 
@@ -9,7 +9,7 @@ use error_stack::{Report, Result, ResultExt};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::{utils::IntoReportExt, api::model::GoogleAccountId};
+use crate::{api::model::GoogleAccountId, utils::IntoReportExt};
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
@@ -171,7 +171,6 @@ pub struct SocketConfig {
     pub internal_api: SocketAddr,
 }
 
-
 /// App manager config
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AppManagerConfig {
@@ -237,7 +236,6 @@ pub struct MediaBackupConfig {
     pub rsync_time: TimeValue,
 }
 
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(try_from = "String")]
 pub struct SshAddress {
@@ -250,19 +248,14 @@ impl TryFrom<String> for SshAddress {
     fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
         let values = value.trim().split(&['@']).collect::<Vec<&str>>();
         match values[..] {
-            [username, address] => {
-                Ok(Self {
-                    username: username.to_string(),
-                    address: address.to_string(),
-                })
-            }
-            _ => {
-                Err(format!("Unknown values: {:?}", values))
-            }
+            [username, address] => Ok(Self {
+                username: username.to_string(),
+                address: address.to_string(),
+            }),
+            _ => Err(format!("Unknown values: {:?}", values)),
         }
     }
 }
-
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(try_from = "String")]
@@ -278,13 +271,15 @@ impl TryFrom<String> for TimeValue {
         let values: Vec<&str> = iter.collect();
         match values[..] {
             [hours, minutes] => {
-                let hours: u8 = hours.parse().map_err(|e: std::num::ParseIntError| e.to_string())?;
-                let minutes: u8 = minutes.parse().map_err(|e: std::num::ParseIntError| e.to_string())?;
-                Ok(TimeValue {hours, minutes})
+                let hours: u8 = hours
+                    .parse()
+                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
+                let minutes: u8 = minutes
+                    .parse()
+                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
+                Ok(TimeValue { hours, minutes })
             }
-            _ => {
-                Err(format!("Unknown values: {:?}", values))
-            }
+            _ => Err(format!("Unknown values: {:?}", values)),
         }
     }
 }
@@ -315,14 +310,11 @@ impl TryFrom<String> for AbsolutePathNoWhitespace {
     }
 }
 
-
 const PATH_CHARACTERS_WHITELIST: &str =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_./";
 
 fn whitelist_chars(input: &str, whitelist: &str) -> String {
-    let invalid_chars = input.chars()
-        .filter(|&c| !whitelist.contains(c))
-        .collect();
+    let invalid_chars = input.chars().filter(|&c| !whitelist.contains(c)).collect();
     invalid_chars
 }
 
@@ -331,9 +323,16 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
         return Err(format!("Path is not absolute: {}", input.display()));
     }
 
-    let unaccepted = whitelist_chars(input.as_os_str().to_string_lossy().as_ref(), PATH_CHARACTERS_WHITELIST);
+    let unaccepted = whitelist_chars(
+        input.as_os_str().to_string_lossy().as_ref(),
+        PATH_CHARACTERS_WHITELIST,
+    );
     if !unaccepted.is_empty() {
-        tracing::error!("Invalid characters {} in path: {}", unaccepted, input.display());
+        tracing::error!(
+            "Invalid characters {} in path: {}",
+            unaccepted,
+            input.display()
+        );
         return Err(format!("Invalid characters in path: {}", input.display()));
     }
 

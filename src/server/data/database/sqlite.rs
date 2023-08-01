@@ -8,8 +8,8 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 use tracing::log::info;
 
-use crate::server::data::database::current::{CurrentDataWriteCommands, SqliteReadCommands};
 use super::history::write::HistoryWriteCommands;
+use crate::server::data::database::current::{CurrentDataWriteCommands, SqliteReadCommands};
 
 use error_stack::Result;
 
@@ -164,9 +164,7 @@ impl SqliteWriteHandle {
     ) -> Result<(Self, SqliteWriteCloseHandle), SqliteDatabaseError> {
         let pool = SqlitePoolOptions::new()
             .max_connections(1)
-            .connect_with(
-                create_sqlite_connect_options(config, &db_path, true),
-            )
+            .connect_with(create_sqlite_connect_options(config, &db_path, true))
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
@@ -174,7 +172,6 @@ impl SqliteWriteHandle {
             .run(&pool)
             .await
             .into_error(SqliteDatabaseError::Migrate)?;
-
 
         let write_handle = SqliteWriteHandle { pool: pool.clone() };
 
@@ -211,9 +208,7 @@ impl SqliteReadHandle {
     ) -> Result<(Self, SqliteReadCloseHandle), SqliteDatabaseError> {
         let pool = SqlitePoolOptions::new()
             .max_connections(16)
-            .connect_with(
-                create_sqlite_connect_options(&config, &db_path, false),
-            )
+            .connect_with(create_sqlite_connect_options(&config, &db_path, false))
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 

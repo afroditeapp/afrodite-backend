@@ -1,17 +1,12 @@
-
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
         pub struct $struct_name<'a> {
-            cmds: ReadCommands<'a>
+            cmds: ReadCommands<'a>,
         }
 
-        impl <'a> $struct_name<'a> {
-            pub fn new(
-                cmds: ReadCommands<'a>
-            ) -> Self {
-                Self {
-                    cmds,
-                }
+        impl<'a> $struct_name<'a> {
+            pub fn new(cmds: ReadCommands<'a>) -> Self {
+                Self { cmds }
             }
 
             pub fn db(&self) -> &SqliteReadCommands<'_> {
@@ -29,18 +24,16 @@ macro_rules! define_read_commands {
     };
 }
 
-
 pub mod account;
 pub mod account_admin;
+pub mod chat;
+pub mod chat_admin;
 pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-pub mod chat;
-pub mod chat_admin;
 
 use std::{fmt::Debug, marker::PhantomData};
-
 
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
@@ -48,24 +41,27 @@ use tokio_util::io::ReaderStream;
 use crate::{
     api::{
         media::data::{MediaContentInternal, ModerationRequest},
-        model::{
-            AccountIdInternal, AccountIdLight, ContentId,
-        },
+        model::{AccountIdInternal, AccountIdLight, ContentId},
     },
     utils::{ConvertCommandError, ErrorConversion},
 };
 
-use self::{account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat, chat_admin::ReadCommandsChatAdmin, media::ReadCommandsMedia, media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile, profile_admin::ReadCommandsProfileAdmin};
+use self::{
+    account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
+    chat_admin::ReadCommandsChatAdmin, media::ReadCommandsMedia,
+    media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile,
+    profile_admin::ReadCommandsProfileAdmin,
+};
 
 use super::{
     cache::{CacheError, DatabaseCache, ReadCacheJson},
-    DatabaseError,
-    file::{FileError, utils::FileDir},
     database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson},
+    file::{utils::FileDir, FileError},
+    DatabaseError,
 };
 
-use error_stack::Result;
 use crate::server::data::database::current::SqliteReadCommands;
+use error_stack::Result;
 
 pub type ReadResult<T, Err, WriteContext = T> =
     std::result::Result<T, ReadError<error_stack::Report<Err>, WriteContext>>;
@@ -156,7 +152,6 @@ impl<Target> From<error_stack::Report<SqliteDatabaseError>>
         }
     }
 }
-
 
 pub struct ReadCommands<'a> {
     db: SqliteReadCommands<'a>,

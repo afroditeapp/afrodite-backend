@@ -1,29 +1,17 @@
-
-
-
-
 use tokio_stream::StreamExt;
 
-
 use crate::{
-    api::{
-        model::{
-            AccountIdInternal, AccountIdLight, ApiKey, RefreshToken, SignInWithInfo,
-        },
-    },
-    utils::{ConvertCommandError},
+    api::model::{AccountIdInternal, AccountIdLight, ApiKey, RefreshToken, SignInWithInfo},
+    utils::ConvertCommandError,
 };
 
-use super::{ReadCommands, super::{
-    cache::{DatabaseCache},
-    DatabaseError,
-    file::{utils::FileDir},
-    write::NoId,
-}};
+use super::{
+    super::{cache::DatabaseCache, file::utils::FileDir, write::NoId, DatabaseError},
+    ReadCommands,
+};
 
-use error_stack::Result;
 use crate::server::data::database::current::SqliteReadCommands;
-
+use error_stack::Result;
 
 define_read_commands!(ReadCommandsAccount);
 
@@ -62,5 +50,4 @@ impl ReadCommandsAccount<'_> {
 
         Ok(())
     }
-
 }

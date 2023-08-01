@@ -5,16 +5,14 @@ pub mod sign_in_with;
 use std::sync::Arc;
 
 use axum::{
-    routing::{get, post}, Router,
+    routing::{get, post},
+    Router,
 };
-
-
-
 
 use crate::{
     api::{
-        self, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
-        WriteDatabase, GetManagerApi,
+        self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase,
+        SignInWith, WriteDatabase,
     },
     config::Config,
 };
@@ -30,10 +28,11 @@ use super::{
         utils::{AccountIdManager, ApiKeyManager},
         RouterDatabaseReadHandle,
     },
-    internal::{InternalApiClient, InternalApiManager}, manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
+    internal::{InternalApiClient, InternalApiManager},
+    manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
 
-use error_stack::{Result};
+use error_stack::Result;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -89,10 +88,7 @@ impl GetInternalApi for AppState {
 
 impl GetManagerApi for AppState {
     fn manager_api(&self) -> ManagerApiManager {
-        ManagerApiManager::new(
-            &self.config,
-            &self.manager_api,
-        )
+        ManagerApiManager::new(&self.config, &self.manager_api)
     }
 }
 
@@ -132,38 +128,38 @@ impl App {
     }
 
     pub fn create_common_server_router(&mut self) -> Router {
-        let public = Router::new().route(
-            api::common::PATH_CONNECT, // This route checks the access token by itself.
-            get({
-                let state = self.state.clone();
-                let ws_manager = self.ws_manager.take().unwrap(); // Only one instance required.
-                move |param1, param2, param3| {
-                    api::common::get_connect_websocket(param1, param2, param3, state, ws_manager)
-                }
-            }),
-        )
-        .route(
-            api::common::PATH_GET_VERSION,
-            get({
-                let state = self.state.clone();
-                move || {
-                    api::common::get_version(state)
-                }
-            }),
-        );
+        let public = Router::new()
+            .route(
+                api::common::PATH_CONNECT, // This route checks the access token by itself.
+                get({
+                    let state = self.state.clone();
+                    let ws_manager = self.ws_manager.take().unwrap(); // Only one instance required.
+                    move |param1, param2, param3| {
+                        api::common::get_connect_websocket(
+                            param1, param2, param3, state, ws_manager,
+                        )
+                    }
+                }),
+            )
+            .route(
+                api::common::PATH_GET_VERSION,
+                get({
+                    let state = self.state.clone();
+                    move || api::common::get_version(state)
+                }),
+            );
 
         public.merge(ConnectedApp::new(self.state.clone()).private_common_router())
     }
 
     pub fn create_account_server_router(&self) -> Router {
-        let public = Router::new()
-            .route(
-                api::account::PATH_SIGN_IN_WITH_LOGIN,
-                post({
-                    let state = self.state.clone();
-                    move |body| api::account::post_sign_in_with_login(body, state)
-                }),
-            );
+        let public = Router::new().route(
+            api::account::PATH_SIGN_IN_WITH_LOGIN,
+            post({
+                let state = self.state.clone();
+                move |body| api::account::post_sign_in_with_login(body, state)
+            }),
+        );
 
         public.merge(ConnectedApp::new(self.state.clone()).private_account_server_router())
     }

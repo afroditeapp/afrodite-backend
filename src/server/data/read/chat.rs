@@ -1,23 +1,10 @@
-
-
-
-
-
-
-
-
-
-use super::{ReadCommands, super::{
-    cache::{DatabaseCache},
-    file::{utils::FileDir},
-}};
-
+use super::{
+    super::{cache::DatabaseCache, file::utils::FileDir},
+    ReadCommands,
+};
 
 use crate::server::data::database::current::SqliteReadCommands;
 
-
 define_read_commands!(ReadCommandsChat);
 
-impl ReadCommandsChat<'_> {
-
-}
+impl ReadCommandsChat<'_> {}

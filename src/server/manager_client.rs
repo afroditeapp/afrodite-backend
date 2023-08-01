@@ -1,24 +1,21 @@
-
-
-use app_manager::api::model::{SystemInfoList, CommandOutput, SystemInfo, SoftwareInfo, BuildInfo, SoftwareOptions};
+use app_manager::api::model::{
+    BuildInfo, CommandOutput, SoftwareInfo, SoftwareOptions, SystemInfo, SystemInfoList,
+};
 use manager_api_client::{
-    apis::{configuration::Configuration, manager_api::{post_request_build_software, post_request_software_update}}, manual_additions::get_latest_software_fixed,
+    apis::{
+        configuration::Configuration,
+        manager_api::{post_request_build_software, post_request_software_update},
+    },
+    manual_additions::get_latest_software_fixed,
 };
 
-
-use error_stack::{Result};
-
-
+use error_stack::Result;
 
 use tracing::{error, info};
 
-use crate::{
-    utils::IntoReportExt,
-};
+use crate::utils::IntoReportExt;
 
-use crate::{config::Config};
-
-
+use crate::config::Config;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ManagerClientError {
@@ -44,12 +41,13 @@ pub struct ManagerApiClient {
 
 impl ManagerApiClient {
     pub fn new(config: &Config) -> Result<Self, ManagerClientError> {
-        let mut client = reqwest::ClientBuilder::new()
-            .tls_built_in_root_certs(false);
+        let mut client = reqwest::ClientBuilder::new().tls_built_in_root_certs(false);
         if let Some(cert) = config.root_certificate() {
             client = client.add_root_certificate(cert.clone());
         }
-        let client = client.build().into_error(ManagerClientError::ClientBuildFailed)?;
+        let client = client
+            .build()
+            .into_error(ManagerClientError::ClientBuildFailed)?;
 
         let manager = config.manager_config().map(|c| {
             let api_key = manager_api_client::apis::configuration::ApiKey {
@@ -85,30 +83,28 @@ pub struct ManagerApiManager<'a> {
 }
 
 impl<'a> ManagerApiManager<'a> {
-    pub fn new(
-        config: &'a Config,
-        api_client: &'a ManagerApiClient,
-    ) -> Self {
-        Self {
-            config,
-            api_client,
-        }
+    pub fn new(config: &'a Config, api_client: &'a ManagerApiClient) -> Self {
+        Self { config, api_client }
     }
 
     pub async fn system_info(&self) -> Result<SystemInfoList, ManagerClientError> {
-        let system_info = manager_api_client::apis::manager_api::get_system_info_all(
-            self.api_client.manager()?,
-        ).await.into_error(ManagerClientError::ApiRequest)?;
+        let system_info =
+            manager_api_client::apis::manager_api::get_system_info_all(self.api_client.manager()?)
+                .await
+                .into_error(ManagerClientError::ApiRequest)?;
 
-        let info_vec = system_info.info
+        let info_vec = system_info
+            .info
             .into_iter()
             .map(|info| {
-                let cmd_vec = info.info.into_iter().map(|info|
-                    CommandOutput {
+                let cmd_vec = info
+                    .info
+                    .into_iter()
+                    .map(|info| CommandOutput {
                         name: info.name,
                         output: info.output,
-                    }
-                ).collect::<Vec<CommandOutput>>();
+                    })
+                    .collect::<Vec<CommandOutput>>();
                 SystemInfo {
                     name: info.name,
                     info: cmd_vec,
@@ -120,43 +116,47 @@ impl<'a> ManagerApiManager<'a> {
     }
 
     pub async fn software_info(&self) -> Result<SoftwareInfo, ManagerClientError> {
-        let info = manager_api_client::apis::manager_api::get_software_info(
-            self.api_client.manager()?,
-        ).await.into_error(ManagerClientError::ApiRequest)?;
+        let info =
+            manager_api_client::apis::manager_api::get_software_info(self.api_client.manager()?)
+                .await
+                .into_error(ManagerClientError::ApiRequest)?;
 
-        let info_vec = info.current_software
+        let info_vec = info
+            .current_software
             .into_iter()
-            .map(|info| {
-                BuildInfo {
-                    commit_sha: info.commit_sha,
-                    build_info: info.build_info,
-                    name: info.name,
-                    timestamp: info.timestamp,
-                }
+            .map(|info| BuildInfo {
+                commit_sha: info.commit_sha,
+                build_info: info.build_info,
+                name: info.name,
+                timestamp: info.timestamp,
             })
             .collect::<Vec<BuildInfo>>();
 
-        Ok(SoftwareInfo { current_software: info_vec })
+        Ok(SoftwareInfo {
+            current_software: info_vec,
+        })
     }
 
     pub async fn request_backend_update(&self) -> Result<SoftwareInfo, ManagerClientError> {
-        let info = manager_api_client::apis::manager_api::get_software_info(
-            self.api_client.manager()?,
-        ).await.into_error(ManagerClientError::ApiRequest)?;
+        let info =
+            manager_api_client::apis::manager_api::get_software_info(self.api_client.manager()?)
+                .await
+                .into_error(ManagerClientError::ApiRequest)?;
 
-        let info_vec = info.current_software
+        let info_vec = info
+            .current_software
             .into_iter()
-            .map(|info| {
-                BuildInfo {
-                    commit_sha: info.commit_sha,
-                    build_info: info.build_info,
-                    name: info.name,
-                    timestamp: info.timestamp,
-                }
+            .map(|info| BuildInfo {
+                commit_sha: info.commit_sha,
+                build_info: info.build_info,
+                name: info.name,
+                timestamp: info.timestamp,
             })
             .collect::<Vec<BuildInfo>>();
 
-        Ok(SoftwareInfo { current_software: info_vec })
+        Ok(SoftwareInfo {
+            current_software: info_vec,
+        })
     }
 
     async fn get_latest_build_info_raw(
@@ -172,7 +172,9 @@ impl<'a> ManagerApiManager<'a> {
             self.api_client.manager()?,
             converted_options,
             manager_api_client::models::DownloadType::Info,
-        ).await.into_error(ManagerClientError::ApiRequest)
+        )
+        .await
+        .into_error(ManagerClientError::ApiRequest)
     }
 
     pub async fn get_latest_build_info(
@@ -180,8 +182,8 @@ impl<'a> ManagerApiManager<'a> {
         options: SoftwareOptions,
     ) -> Result<BuildInfo, ManagerClientError> {
         let info_json = self.get_latest_build_info_raw(options).await?;
-        let info: BuildInfo = serde_json::from_slice(&info_json)
-            .into_error(ManagerClientError::InvalidValue)?;
+        let info: BuildInfo =
+            serde_json::from_slice(&info_json).into_error(ManagerClientError::InvalidValue)?;
         Ok(info)
     }
 
@@ -194,10 +196,9 @@ impl<'a> ManagerApiManager<'a> {
             SoftwareOptions::Backend => manager_api_client::models::SoftwareOptions::Backend,
         };
 
-        post_request_build_software(
-            self.api_client.manager()?,
-            converted_options,
-        ).await.into_error(ManagerClientError::ApiRequest)
+        post_request_build_software(self.api_client.manager()?, converted_options)
+            .await
+            .into_error(ManagerClientError::ApiRequest)
     }
 
     pub async fn request_update_software(
@@ -210,10 +211,8 @@ impl<'a> ManagerApiManager<'a> {
             SoftwareOptions::Backend => manager_api_client::models::SoftwareOptions::Backend,
         };
 
-        post_request_software_update(
-            self.api_client.manager()?,
-            converted_options,
-            reboot,
-        ).await.into_error(ManagerClientError::ApiRequest)
+        post_request_software_update(self.api_client.manager()?, converted_options, reboot)
+            .await
+            .into_error(ManagerClientError::ApiRequest)
     }
 }

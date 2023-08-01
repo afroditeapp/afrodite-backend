@@ -6,25 +6,31 @@ use std::{
     time::{Duration, Instant},
 };
 
-use api_client::{apis::{profile_api::get_profile, account_api::get_account_state}, models::AccountState};
+use api_client::{
+    apis::{account_api::get_account_state, profile_api::get_profile},
+    models::AccountState,
+};
 use async_trait::async_trait;
 use tokio::time::sleep;
 
 use crate::{
-    test::{client::TestError, bot::actions::{ActionArray, account::CompleteAccountSetup, media::MakeModerationRequest}}, action_array,
+    action_array,
+    test::{
+        bot::actions::{account::CompleteAccountSetup, media::MakeModerationRequest, ActionArray},
+        client::TestError,
+    },
 };
 
 use super::{
     actions::{
-        account::{Login, Register, SetAccountSetup, AssertAccountState},
-        BotAction, RunActions, media::SendImageToSlot,
+        account::{AssertAccountState, Login, Register, SetAccountSetup},
+        media::SendImageToSlot,
+        BotAction, RunActions,
     },
     BotState, BotStruct, TaskState,
 };
 
 use error_stack::Result;
-
-
 
 use crate::utils::IntoReportExt;
 
@@ -55,7 +61,6 @@ impl ClientBot {
                 .peekable(),
         }
     }
-
 }
 
 #[async_trait]
@@ -101,19 +106,26 @@ impl BotAction for DoInitialSetupIfNeeded {
         if account_state.state == AccountState::InitialSetup {
             const ACTIONS: ActionArray = action_array!(
                 SetAccountSetup::new(),
-                SendImageToSlot { slot: 0, random: true },
-                SendImageToSlot { slot: 1, random: true },
+                SendImageToSlot {
+                    slot: 0,
+                    random: true
+                },
+                SendImageToSlot {
+                    slot: 1,
+                    random: true
+                },
                 MakeModerationRequest { camera: true },
                 CompleteAccountSetup,
                 AssertAccountState(AccountState::Normal),
             );
-            RunActions(ACTIONS).excecute_impl_task_state(state, task_state).await?;
+            RunActions(ACTIONS)
+                .excecute_impl_task_state(state, task_state)
+                .await?;
         }
 
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 struct ActionsBeforeIteration;

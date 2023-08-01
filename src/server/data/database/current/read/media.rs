@@ -1,9 +1,14 @@
-use std::collections::HashSet;
-use crate::api::model::{AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState, CurrentAccountMediaInternal, MediaContentInternal, Moderation, ModerationId, ModerationRequestContent, ModerationRequestId, ModerationRequestInternal, ModerationRequestQueueNumber, ModerationRequestState};
+use crate::api::model::{
+    AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState,
+    CurrentAccountMediaInternal, MediaContentInternal, Moderation, ModerationId,
+    ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
+    ModerationRequestQueueNumber, ModerationRequestState,
+};
 use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::read::ReadResult;
 use crate::utils::IntoReportExt;
+use std::collections::HashSet;
 
 pub struct CurrentReadMediaCommands<'a> {
     handle: &'a SqliteReadHandle,
@@ -77,19 +82,21 @@ impl<'a> CurrentReadMediaCommands<'a> {
 
         let content = data
             .into_iter()
-            .filter_map(
-                |r| {
-                    let state = r.moderation_state.try_into().ok()?;
-                    let content_type = r.content_type.try_into().ok()?;
+            .filter_map(|r| {
+                let state = r.moderation_state.try_into().ok()?;
+                let content_type = r.content_type.try_into().ok()?;
 
-                    Some(MediaContentInternal {
-                        content_id: ContentIdInternal { content_id: r.content_id, content_row_id: r.content_row_id },
-                        state,
-                        content_type,
-                        slot_number: r.slot_number,
-                    })
-                }
-            ).collect();
+                Some(MediaContentInternal {
+                    content_id: ContentIdInternal {
+                        content_id: r.content_id,
+                        content_row_id: r.content_row_id,
+                    },
+                    state,
+                    content_type,
+                    slot_number: r.slot_number,
+                })
+            })
+            .collect();
 
         Ok(content)
     }
@@ -108,7 +115,10 @@ impl<'a> CurrentReadMediaCommands<'a> {
         )
         .fetch_one(self.handle.pool())
         .await
-        .map(|r| ContentIdInternal { content_id: r.content_id, content_row_id: id })
+        .map(|r| ContentIdInternal {
+            content_id: r.content_id,
+            content_row_id: id,
+        })
         .into_error(SqliteDatabaseError::Fetch)?;
 
         Ok(request)

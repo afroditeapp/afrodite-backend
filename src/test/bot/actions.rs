@@ -1,14 +1,14 @@
 pub mod account;
 pub mod admin;
+pub mod chat;
 pub mod common;
 pub mod media;
 pub mod profile;
-pub mod chat;
 
 use std::collections::HashSet;
 use std::{fmt::Debug, time::Duration};
 
-use api_client::models::{AccountState};
+use api_client::models::AccountState;
 use async_trait::async_trait;
 
 use error_stack::{FutureExt, Result, ResultExt};

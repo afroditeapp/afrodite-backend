@@ -1,10 +1,12 @@
-use async_trait::async_trait;
 use crate::api::model::{AccountIdInternal, Profile, ProfileInternal, ProfileUpdateInternal};
 use crate::server::data::database::current::CurrentDataWriteCommands;
-use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson};
+use crate::server::data::database::sqlite::{
+    CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
+};
 use crate::server::data::index::location::LocationIndexKey;
 use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
+use async_trait::async_trait;
 
 pub struct CurrentWriteProfileCommands<'a> {
     handle: &'a CurrentDataWriteHandle,

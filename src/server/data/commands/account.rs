@@ -1,27 +1,11 @@
-use super::{WriteCommandRunnerHandle, ResultSender, WriteCommandRunner, SendBack};
-
-
-
-
-
+use super::{ResultSender, SendBack, WriteCommandRunner, WriteCommandRunnerHandle};
 
 use error_stack::Result;
 
-
-
-
 use crate::{
-    api::{
-        model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo,
-        },
-    },
-    server::data::{DatabaseError},
+    api::model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo},
+    server::data::DatabaseError,
 };
-
-
-
-
 
 /// Synchronized write commands.
 #[derive(Debug)]
@@ -54,12 +38,13 @@ impl AccountWriteCommandRunnerHandle<'_> {
         account_id: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        self.handle.send_event(|s| AccountWriteCommand::Register {
-            s,
-            sign_in_with_info,
-            account_id,
-        })
-        .await
+        self.handle
+            .send_event(|s| AccountWriteCommand::Register {
+                s,
+                sign_in_with_info,
+                account_id,
+            })
+            .await
     }
 
     pub async fn update_account(
@@ -67,12 +52,13 @@ impl AccountWriteCommandRunnerHandle<'_> {
         account_id: AccountIdInternal,
         account: Account,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| AccountWriteCommand::UpdateAccount {
-            s,
-            account_id,
-            account,
-        })
-        .await
+        self.handle
+            .send_event(|s| AccountWriteCommand::UpdateAccount {
+                s,
+                account_id,
+                account,
+            })
+            .await
     }
 
     pub async fn update_account_setup(
@@ -80,16 +66,15 @@ impl AccountWriteCommandRunnerHandle<'_> {
         account_id: AccountIdInternal,
         account_setup: AccountSetup,
     ) -> Result<(), DatabaseError> {
-        self.handle.send_event(|s| AccountWriteCommand::UpdateAccountSetup {
-            s,
-            account_id,
-            account_setup,
-        })
-        .await
+        self.handle
+            .send_event(|s| AccountWriteCommand::UpdateAccountSetup {
+                s,
+                account_id,
+                account_setup,
+            })
+            .await
     }
 }
-
-
 
 impl WriteCommandRunner {
     pub async fn handle_account_cmd(&self, cmd: AccountWriteCommand) {

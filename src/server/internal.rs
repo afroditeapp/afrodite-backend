@@ -1,8 +1,6 @@
 //! Routes for server to server connections
 
-use api_client::{
-    apis::{accountinternal_api, configuration::Configuration, mediainternal_api},
-};
+use api_client::apis::{accountinternal_api, configuration::Configuration, mediainternal_api};
 use axum::{
     routing::{get, post},
     Router,
@@ -20,7 +18,8 @@ use crate::{
         model::{
             Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
             ProfileInternal,
-        }, GetConfig,
+        },
+        GetConfig,
     },
     config::InternalApiUrls,
     utils::IntoReportExt,
@@ -87,20 +86,21 @@ impl InternalApp {
             );
 
         if state.config().internal_api_config().bot_login {
-            router = router.route(
-                api::account::PATH_REGISTER,
-                post({
-                    let state = state.clone();
-                    move || api::account::post_register(state)
-                }),
-            )
-            .route(
-                api::account::PATH_LOGIN,
-                post({
-                    let state = state.clone();
-                    move |body| api::account::post_login(body, state)
-                }),
-            )
+            router = router
+                .route(
+                    api::account::PATH_REGISTER,
+                    post({
+                        let state = state.clone();
+                        move || api::account::post_register(state)
+                    }),
+                )
+                .route(
+                    api::account::PATH_LOGIN,
+                    post({
+                        let state = state.clone();
+                        move |body| api::account::post_login(body, state)
+                    }),
+                )
         }
 
         router
@@ -146,17 +146,17 @@ impl InternalApp {
 
     pub fn create_chat_server_router(_state: AppState) -> Router {
         Router::new()
-            // .route(
-            //     api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
-            //     post({
-            //         let state = state.clone();
-            //         move |parameter1| {
-            //             api::media::internal::internal_get_check_moderation_request_for_account(
-            //                 parameter1, state,
-            //             )
-            //         }
-            //     }),
-            // )
+        // .route(
+        //     api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
+        //     post({
+        //         let state = state.clone();
+        //         move |parameter1| {
+        //             api::media::internal::internal_get_check_moderation_request_for_account(
+        //                 parameter1, state,
+        //             )
+        //         }
+        //     }),
+        // )
     }
 }
 

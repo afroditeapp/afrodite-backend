@@ -1,6 +1,7 @@
 use std::{
     convert::{TryFrom, TryInto},
-    path::PathBuf, process::exit,
+    path::PathBuf,
+    process::exit,
 };
 
 use clap::{arg, command, value_parser, Command, PossibleValue};
@@ -21,10 +22,7 @@ pub fn get_config() -> ArgsConfig {
                 .required(false)
                 .value_parser(value_parser!(PathBuf)),
         )
-        .arg(
-            arg!(--"build-info" "Print build info and quit.")
-                .required(false)
-        )
+        .arg(arg!(--"build-info" "Print build info and quit.").required(false))
         .subcommand(
             Command::new("test")
                 .about("Run tests and benchmarks")
@@ -108,10 +106,7 @@ pub fn get_config() -> ArgsConfig {
         .get_matches();
 
     if matches.is_present("build-info") {
-        println!(
-            "{}",
-            super::info::build_info()
-        );
+        println!("{}", super::info::build_info());
         exit(0)
     }
 
