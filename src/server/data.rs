@@ -37,7 +37,7 @@ use self::{
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
     utils::{AccountIdManager, ApiKeyManager},
-    write::{WriteCommands, WriteCommandsAccount},
+    write::{WriteCommands, WriteCommandsConcurrent},
 };
 use crate::utils::IntoReportExt;
 
@@ -291,8 +291,8 @@ impl RouterDatabaseWriteHandle {
         )
     }
 
-    pub fn user_write_commands_account<'b>(&'b self) -> WriteCommandsAccount<'b> {
-        WriteCommandsAccount::new(
+    pub fn user_write_commands_account<'b>(&'b self) -> WriteCommandsConcurrent<'b> {
+        WriteCommandsConcurrent::new(
             &self.sqlite_write,
             &self.history_write,
             &self.cache,

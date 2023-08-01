@@ -1,3 +1,44 @@
+macro_rules! define_write_commands {
+    ($struct_name:ident) => {
+        pub struct $struct_name<'a> {
+            cmds: super::WriteCommands<'a>,
+        }
+
+        impl<'a> $struct_name<'a> {
+            pub fn new(cmds: super::WriteCommands<'a>) -> Self {
+                Self { cmds }
+            }
+
+            pub fn current_write(
+                &self
+            ) -> &super::super::database::sqlite::CurrentDataWriteHandle {
+                &self.cmds.current_write
+            }
+
+            pub fn history_write(
+                &self
+            ) -> &super::super::database::sqlite::HistoryWriteHandle {
+                &self.cmds.history_write
+            }
+
+            pub fn cache(&self) -> &super::super::cache::DatabaseCache {
+                &self.cmds.cache
+            }
+
+            pub fn file_dir(&self) -> &super::super::FileDir {
+                &self.cmds.file_dir
+            }
+
+            pub fn media_backup(
+                &self
+            ) -> &crate::media_backup::MediaBackupHandle {
+                &self.cmds.media_backup
+            }
+
+        }
+    };
+}
+
 pub mod account;
 pub mod account_admin;
 pub mod chat;
@@ -26,6 +67,15 @@ use crate::{
     server::data::DatabaseError,
     utils::{ConvertCommandError, ErrorConversion},
 };
+
+use self::account::WriteCommandsAccount;
+use self::account_admin::WriteCommandsAccountAdmin;
+use self::chat::WriteCommandsChat;
+use self::chat_admin::WriteCommandsChatAdmin;
+use self::media::WriteCommandsMedia;
+use self::media_admin::WriteCommandsMediaAdmin;
+use self::profile::WriteCommandsProfile;
+use self::profile_admin::WriteCommandsProfileAdmin;
 
 use super::{
     cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
@@ -167,6 +217,38 @@ impl<'a> WriteCommands<'a> {
             location,
             media_backup,
         }
+    }
+
+    pub fn account(self) -> WriteCommandsAccount<'a> {
+        WriteCommandsAccount::new(self)
+    }
+
+    pub fn account_admin(self) -> WriteCommandsAccountAdmin<'a> {
+        WriteCommandsAccountAdmin::new(self)
+    }
+
+    pub fn media(self) -> WriteCommandsMedia<'a> {
+        WriteCommandsMedia::new(self)
+    }
+
+    pub fn media_admin(self) -> WriteCommandsMediaAdmin<'a> {
+        WriteCommandsMediaAdmin::new(self)
+    }
+
+    pub fn profile(self) -> WriteCommandsProfile<'a> {
+        WriteCommandsProfile::new(self)
+    }
+
+    pub fn profile_admin(self) -> WriteCommandsProfileAdmin<'a> {
+        WriteCommandsProfileAdmin::new(self)
+    }
+
+    pub fn chat(self) -> WriteCommandsChat<'a> {
+        WriteCommandsChat::new(self)
+    }
+
+    pub fn chat_admin(self) -> WriteCommandsChatAdmin<'a> {
+        WriteCommandsChatAdmin::new(self)
     }
 
     pub async fn register(
@@ -591,7 +673,7 @@ impl<'a> WriteCommands<'a> {
 /// limitation that one account can execute only one command at a time.
 /// It possible to run this and normal write command concurrently for
 /// one account.
-pub struct WriteCommandsAccount<'a> {
+pub struct WriteCommandsConcurrent<'a> {
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
@@ -599,7 +681,7 @@ pub struct WriteCommandsAccount<'a> {
     location: LocationIndexIteratorGetter<'a>,
 }
 
-impl<'a> WriteCommandsAccount<'a> {
+impl<'a> WriteCommandsConcurrent<'a> {
     pub fn new(
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
