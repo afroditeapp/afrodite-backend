@@ -7,7 +7,7 @@ use crate::{
         model::{Account, AccountIdInternal, AccountIdLight, Profile, ProfileUpdateInternal},
     },
     server::data::{
-        sqlite::{HistoryUpdateJson, HistoryWriteHandle},
+        database::sqlite::{HistoryUpdateJson, HistoryWriteHandle},
         utils::current_unix_time,
         write::HistoryWriteResult,
     },

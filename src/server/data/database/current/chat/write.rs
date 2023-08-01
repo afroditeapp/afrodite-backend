@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use error_stack::Result;
 
-use crate::server::data::current::CurrentDataWriteCommands;
+use crate::server::data::database::current::CurrentDataWriteCommands;
 use crate::server::data::index::location::LocationIndexKey;
-use crate::server::data::sqlite::{
+use crate::server::data::database::sqlite::{
     CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
 };
 

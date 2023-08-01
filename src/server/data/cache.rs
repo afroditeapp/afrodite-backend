@@ -1,7 +1,7 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use async_trait::async_trait;
-use tokio::sync::{RwLock};
+use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing::info;
 
@@ -15,16 +15,16 @@ use crate::{
 };
 
 use error_stack::{Result, ResultExt};
+use crate::server::data::database::current::SqliteReadCommands;
 
 use super::{
-    current::SqliteReadCommands,
     index::{
         location::{LocationIndexIteratorState, LocationIndexKey},
         LocationIndexIteratorGetter, LocationIndexWriterGetter,
     },
     read::ReadResult,
-    sqlite::SqliteSelectJson,
-    write::{WriteResult},
+    database::sqlite::SqliteSelectJson,
+    write::WriteResult,
 };
 
 #[derive(thiserror::Error, Debug)]

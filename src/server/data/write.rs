@@ -21,20 +21,20 @@ use crate::{
         },
     },
     config::Config,
-    server::data::DatabaseError,
-    utils::{ConvertCommandError, ErrorConversion}, media_backup::MediaBackupHandle,
+    media_backup::MediaBackupHandle,
+    server::data::DatabaseError, utils::{ConvertCommandError, ErrorConversion},
 };
+use crate::server::data::database::current::CurrentDataWriteCommands;
 
 use super::{
-    cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
-    current::CurrentDataWriteCommands,
+    cache::{CachedProfile, CacheError, DatabaseCache, WriteCacheJson},
     file::{file::ImageSlot, utils::FileDir},
-    history::write::HistoryWriteCommands,
+    database::history::write::HistoryWriteCommands,
     index::{
         LocationIndexIteratorGetter,
         LocationIndexWriterGetter,
     },
-    sqlite::{
+    database::sqlite::{
         CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError, SqliteUpdateJson,
     },
 };

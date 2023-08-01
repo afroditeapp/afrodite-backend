@@ -1,13 +1,11 @@
 pub mod cache;
 pub mod commands;
-pub mod current;
 pub mod file;
-pub mod history;
 pub mod index;
 pub mod read;
-pub mod sqlite;
 pub mod utils;
 pub mod write;
+pub mod database;
 
 use std::{
     fs,
@@ -18,22 +16,22 @@ use std::{
 use error_stack::{Result, ResultExt};
 
 use tracing::info;
+use database::current::SqliteReadCommands;
 
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight, SignInWithInfo},
     config::Config,
-    server::data::{commands::WriteCommandRunner, sqlite::print_sqlite_version}, media_backup::MediaBackupHandle,
+    media_backup::MediaBackupHandle, server::data::{commands::WriteCommandRunner, database::sqlite::print_sqlite_version},
 };
 
 use self::{
     cache::DatabaseCache,
     commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
-    current::SqliteReadCommands,
-    file::{read::FileReadCommands, utils::FileDir, FileError},
-    history::read::HistoryReadCommands,
+    file::{FileError, read::FileReadCommands, utils::FileDir},
+    database::history::read::HistoryReadCommands,
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
-    sqlite::{
+    database::sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
         SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
     },

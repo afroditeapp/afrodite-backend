@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use error_stack::Result;
 use tokio_stream::StreamExt;
 
-use super::super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
+use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
 
 use crate::api::media::data::{
     ContentIdInternal, ContentState, Moderation, ModerationId, ModerationRequestId,

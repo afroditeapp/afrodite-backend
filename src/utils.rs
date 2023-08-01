@@ -6,7 +6,7 @@ use crate::server::data::{
     cache::CacheError,
     file::FileError,
     read::{HistoryReadError, HistoryReadResult, ReadError, ReadResult},
-    sqlite::SqliteDatabaseError,
+    database::sqlite::SqliteDatabaseError,
     write::{DatabaseId, HistoryWriteError, HistoryWriteResult, WriteError, WriteResult},
     DatabaseError,
 };

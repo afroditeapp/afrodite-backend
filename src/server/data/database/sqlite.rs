@@ -8,7 +8,7 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 use tracing::log::info;
 
-use super::current::{CurrentDataWriteCommands, SqliteReadCommands};
+use crate::server::data::database::current::{CurrentDataWriteCommands, SqliteReadCommands};
 use super::history::write::HistoryWriteCommands;
 
 use error_stack::Result;

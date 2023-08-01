@@ -7,10 +7,10 @@ use crate::{
         media::data::{ContentState, ModerationRequest, ModerationRequestQueueNumber, CurrentAccountMediaInternal, PrimaryImage},
         model::{AccountIdInternal, ContentId, ModerationRequestContent},
     },
-    server::data::{file::file::ImageSlot, sqlite::CurrentDataWriteHandle, write::WriteResult},
+    server::data::{file::file::ImageSlot, database::sqlite::CurrentDataWriteHandle, write::WriteResult},
 };
 
-use super::super::super::sqlite::SqliteDatabaseError;
+use crate::server::data::database::sqlite::SqliteDatabaseError;
 
 use crate::utils::IntoReportExt;
 
