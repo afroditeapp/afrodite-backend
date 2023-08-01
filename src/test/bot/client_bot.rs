@@ -11,25 +11,20 @@ use async_trait::async_trait;
 use tokio::time::sleep;
 
 use crate::{
-    test::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK, bot::actions::{ActionArray, account::CompleteAccountSetup, media::MakeModerationRequest}}, action_array,
+    test::{client::TestError, bot::actions::{ActionArray, account::CompleteAccountSetup, media::MakeModerationRequest}}, action_array,
 };
 
 use super::{
     actions::{
-        account::{Login, Register, SetProfileVisibility, SetAccountSetup, AssertAccountState},
-        profile::{
-            ChangeProfileText, GetProfileList, ResetProfileIterator,
-            UpdateLocationRandom,
-        },
-        BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE, media::SendImageToSlot,
+        account::{Login, Register, SetAccountSetup, AssertAccountState},
+        BotAction, RunActions, media::SendImageToSlot,
     },
-    utils::{Counters, Timer},
     BotState, BotStruct, TaskState,
 };
 
 use error_stack::Result;
 
-use tracing::log::info;
+
 
 use crate::utils::IntoReportExt;
 
@@ -141,7 +136,7 @@ struct ActionsAfterIteration;
 
 #[async_trait]
 impl BotAction for ActionsAfterIteration {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn excecute_impl(&self, _state: &mut BotState) -> Result<(), TestError> {
         Ok(())
     }
 }

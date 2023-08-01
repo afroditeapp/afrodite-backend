@@ -1,15 +1,15 @@
-use std::{sync::Arc, path::PathBuf, time::Duration, process::{ExitStatus, Stdio}};
+use std::{sync::Arc, time::Duration, process::{ExitStatus, Stdio}};
 
 use app_manager::utils::IntoReportExt;
-use nix::{unistd::Pid, sys::signal::Signal};
+
 use time::{Time, OffsetDateTime, UtcOffset};
-use tokio::{process::{Command, Child}, task::JoinHandle, sync::mpsc, time::sleep, io::AsyncWriteExt};
+use tokio::{process::{Command}, task::JoinHandle, sync::mpsc, time::sleep, io::AsyncWriteExt};
 use tracing::log::{error, info, warn};
-use tracing_subscriber::fmt::format;
+
 
 use crate::{config::{Config}, server::{app::connection::ServerQuitWatcher, data::{DatabaseRoot, file::utils::IMAGE_DIR_NAME}}, api::{media::data::ContentId, model::AccountIdLight}};
 
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Result, ResultExt};
 
 pub const MEDIA_BACKUP_MANAGER_QUEUE_SIZE: usize = 64;
 

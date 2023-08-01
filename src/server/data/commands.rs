@@ -19,11 +19,8 @@ use tokio_stream::StreamExt;
 
 use crate::{
     api::{
-        media::data::{HandleModerationRequest, Moderation},
         model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, AuthPair, ContentId,
-            Location, ModerationRequestContent, ProfileLink,
-            ProfileUpdateInternal, SignInWithInfo,
+            AccountIdInternal, AccountIdLight, AuthPair, ContentId, ProfileLink,
         },
     },
     config::Config,
@@ -33,7 +30,7 @@ use crate::{
 
 use self::{media::{MediaWriteCommandRunnerHandle, MediaWriteCommand}, profile::{ProfileWriteCommandRunnerHandle, ProfileWriteCommand}, account::{AccountWriteCommand, AccountWriteCommandRunnerHandle}, chat::{ChatWriteCommand, ChatWriteCommandRunnerHandle}};
 
-use super::{file::file::ImageSlot, RouterDatabaseWriteHandle};
+use super::{RouterDatabaseWriteHandle};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 

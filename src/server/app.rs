@@ -5,19 +5,18 @@ pub mod sign_in_with;
 use std::sync::Arc;
 
 use axum::{
-    routing::{get, post},
-    Json, Router,
+    routing::{get, post}, Router,
 };
 
 
-use utoipa::OpenApi;
+
 
 use crate::{
     api::{
-        self, ApiDoc, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
+        self, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
         WriteDatabase, GetManagerApi,
     },
-    config::Config, media_backup::MediaBackupHandle,
+    config::Config,
 };
 
 use self::{
@@ -34,7 +33,7 @@ use super::{
     internal::{InternalApiClient, InternalApiManager}, manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 
 #[derive(Clone)]
 pub struct AppState {

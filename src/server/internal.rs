@@ -144,7 +144,7 @@ impl InternalApp {
             )
     }
 
-    pub fn create_chat_server_router(state: AppState) -> Router {
+    pub fn create_chat_server_router(_state: AppState) -> Router {
         Router::new()
             // .route(
             //     api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,

@@ -43,7 +43,7 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 pub async fn get_image<S: ReadDatabase>(
     Path(account_id): Path<AccountIdLight>,
     Path(content_id): Path<ContentId>,
-    Query(access_check): Query<ImageAccessCheck>,
+    Query(_access_check): Query<ImageAccessCheck>,
     state: S,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
     // TODO: Add access restrictions.
@@ -81,8 +81,8 @@ pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:ac
 )]
 pub async fn get_primary_image_info<S: ReadDatabase + GetUsers + GetApiKeys>(
     Path(account_id): Path<AccountIdLight>,
-    Query(access_check): Query<ImageAccessCheck>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Query(_access_check): Query<ImageAccessCheck>,
+    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<PrimaryImage>, StatusCode> {
     // TODO: access restrictions
@@ -126,7 +126,7 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
 )]
 pub async fn get_security_image_info<S: ReadDatabase + GetUsers>(
     Path(account_id): Path<AccountIdLight>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SecurityImage>, StatusCode> {
 
@@ -171,7 +171,7 @@ pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_
 )]
 pub async fn get_all_normal_images<S: ReadDatabase + GetUsers>(
     Path(account_id): Path<AccountIdLight>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<NormalImages>, StatusCode> {
 

@@ -1,10 +1,10 @@
 //! Common routes related to admin features
 
-use app_manager::api::{model::{SystemInfoList, SoftwareInfo, SoftwareOptionsQueryParam, BuildInfo, RebootQueryParam}, self};
+use app_manager::api::{model::{SystemInfoList, SoftwareInfo, SoftwareOptionsQueryParam, BuildInfo, RebootQueryParam}};
 use axum::{Extension, extract::Query, Json};
 use http::StatusCode;
 
-use crate::api::{GetApiKeys, WriteDatabase, ReadDatabase, GetManagerApi, model::{AccountIdInternal, Account}};
+use crate::api::{ReadDatabase, GetManagerApi, model::{AccountIdInternal, Account}};
 
 use tracing::error;
 

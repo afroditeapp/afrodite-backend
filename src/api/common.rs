@@ -59,7 +59,7 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
     )
 )]
 pub async fn get_version<S>(
-    state: S,
+    _state: S,
 ) -> Json<BackendVersion> {
     BackendVersion {
         backend_code_version: BUILD_INFO_GIT_DESCRIBE.to_string(),

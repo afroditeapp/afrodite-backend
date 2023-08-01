@@ -5,7 +5,7 @@ pub mod client;
 mod server;
 mod state;
 
-use std::{sync::Arc, time::Duration, path::{Path, PathBuf}};
+use std::{sync::Arc, time::Duration, path::{PathBuf}};
 
 use api_client::{apis::configuration::Configuration, manual_additions};
 use tokio::{

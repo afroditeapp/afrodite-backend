@@ -75,7 +75,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         &self,
         id: AccountIdInternal,
     ) -> WriteResult<(), SqliteDatabaseError, CurrentAccountMediaInternal> {
-        let request = sqlx::query!(
+        let _request = sqlx::query!(
             r#"
             INSERT INTO CurrentAccountMedia
                 (account_row_id)
@@ -95,7 +95,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> WriteResult<(), SqliteDatabaseError, CurrentAccountMediaInternal> {
-        let request = sqlx::query!(
+        let _request = sqlx::query!(
             r#"
             UPDATE CurrentAccountMedia
             SET profile_content_row_id = ?,

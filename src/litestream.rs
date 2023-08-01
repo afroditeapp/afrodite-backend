@@ -7,7 +7,7 @@ use tracing::log::{error, info};
 
 use crate::{config::{Config, file::LitestreamConfig}, server::data::DatabaseRoot};
 
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Result, ResultExt};
 
 #[derive(thiserror::Error, Debug)]
 pub enum LitestreamError {

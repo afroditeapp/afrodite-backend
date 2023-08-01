@@ -4,39 +4,21 @@ use app_manager::api::model::{SystemInfoList, CommandOutput, SystemInfo, Softwar
 use manager_api_client::{
     apis::{configuration::Configuration, manager_api::{post_request_build_software, post_request_software_update}}, manual_additions::get_latest_software_fixed,
 };
-use axum::{
-    routing::{get, post},
-    Router,
-};
 
-use error_stack::{Result, ResultExt};
 
-use hyper::StatusCode;
+use error_stack::{Result};
+
+
 
 use tracing::{error, info};
 
 use crate::{
-    api::{
-        self,
-        model::{
-            Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
-            ProfileInternal,
-        }, GetConfig,
-    },
-    config::InternalApiUrls,
     utils::IntoReportExt,
 };
 
-use crate::{api::model::ApiKey, config::Config};
+use crate::{config::Config};
 
-use super::{
-    app::AppState,
-    data::{
-        commands::WriteCommandRunnerHandle,
-        read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager},
-    },
-};
+
 
 #[derive(thiserror::Error, Debug)]
 pub enum ManagerClientError {
