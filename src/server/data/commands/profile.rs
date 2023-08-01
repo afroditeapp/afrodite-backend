@@ -94,6 +94,7 @@ impl WriteCommandRunner {
                 update_only_if_none,
             } => self
                 .write()
+                .profile()
                 .profile_update_visibility(account_id, public, update_only_if_none)
                 .await
                 .send(s),
@@ -103,6 +104,7 @@ impl WriteCommandRunner {
                 location,
             } => self
                 .write()
+                .profile()
                 .profile_update_location(account_id, location)
                 .await
                 .send(s),

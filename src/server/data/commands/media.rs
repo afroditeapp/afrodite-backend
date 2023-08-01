@@ -130,11 +130,13 @@ impl WriteCommandRunner {
                 request,
             } => self
                 .write()
+                .media()
                 .set_moderation_request(account_id, request)
                 .await
                 .send(s),
             MediaWriteCommand::GetModerationListAndCreateNewIfNecessary { s, account_id } => self
                 .write()
+                .media_admin()
                 .moderation_get_list_and_create_new_if_necessary(account_id)
                 .await
                 .send(s),
@@ -145,6 +147,7 @@ impl WriteCommandRunner {
                 slot,
             } => self
                 .write()
+                .media()
                 .save_to_slot(account_id, content_id, slot)
                 .await
                 .send(s),
@@ -155,6 +158,7 @@ impl WriteCommandRunner {
                 result,
             } => self
                 .write()
+                .media_admin()
                 .update_moderation(moderator_id, moderation_request_owner, result)
                 .await
                 .send(s),
@@ -164,6 +168,7 @@ impl WriteCommandRunner {
                 primary_image,
             } => self
                 .write()
+                .media()
                 .update_primary_image(account_id, primary_image)
                 .await
                 .send(s),

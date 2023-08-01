@@ -6,6 +6,7 @@ pub mod index;
 pub mod read;
 pub mod utils;
 pub mod write;
+pub mod write_concurrent;
 
 use std::{
     fs,
@@ -37,7 +38,8 @@ use self::{
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
     utils::{AccountIdManager, ApiKeyManager},
-    write::{WriteCommands, WriteCommandsConcurrent},
+    write::{WriteCommands},
+    write_concurrent::{WriteCommandsConcurrent},
 };
 use crate::utils::IntoReportExt;
 

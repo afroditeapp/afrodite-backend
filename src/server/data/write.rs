@@ -1,3 +1,5 @@
+//! Synchronous write commands combining cache and database operations.
+
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
         pub struct $struct_name<'a> {
@@ -9,32 +11,48 @@ macro_rules! define_write_commands {
                 Self { cmds }
             }
 
-            pub fn current_write(
+            fn current_write(
                 &self
             ) -> &super::super::database::sqlite::CurrentDataWriteHandle {
                 &self.cmds.current_write
             }
 
-            pub fn history_write(
+            fn history_write(
                 &self
             ) -> &super::super::database::sqlite::HistoryWriteHandle {
                 &self.cmds.history_write
             }
 
-            pub fn cache(&self) -> &super::super::cache::DatabaseCache {
+            fn cache(&self) -> &super::super::cache::DatabaseCache {
                 &self.cmds.cache
             }
 
-            pub fn file_dir(&self) -> &super::super::FileDir {
+            fn file_dir(&self) -> &super::super::FileDir {
                 &self.cmds.file_dir
             }
 
-            pub fn media_backup(
+            fn location(&self) -> &super::super::index::LocationIndexWriterGetter<'a> {
+                &self.cmds.location
+            }
+
+            fn media_backup(
                 &self
             ) -> &crate::media_backup::MediaBackupHandle {
                 &self.cmds.media_backup
             }
 
+
+            fn current(&self) -> super::super::database::current::CurrentDataWriteCommands {
+                super::super::database::current::CurrentDataWriteCommands::new(
+                    self.current_write()
+                )
+            }
+
+            fn history(&self) -> super::super::write::HistoryWriteCommands {
+                super::super::write::HistoryWriteCommands::new(
+                    &self.history_write()
+                )
+            }
         }
     };
 }
@@ -47,6 +65,7 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
+pub mod common;
 
 use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
 
@@ -72,6 +91,7 @@ use self::account::WriteCommandsAccount;
 use self::account_admin::WriteCommandsAccountAdmin;
 use self::chat::WriteCommandsChat;
 use self::chat_admin::WriteCommandsChatAdmin;
+use self::common::WriteCommandsCommon;
 use self::media::WriteCommandsMedia;
 use self::media_admin::WriteCommandsMediaAdmin;
 use self::profile::WriteCommandsProfile;
@@ -219,6 +239,10 @@ impl<'a> WriteCommands<'a> {
         }
     }
 
+    pub fn common(self) -> WriteCommandsCommon<'a> {
+        WriteCommandsCommon::new(self)
+    }
+
     pub fn account(self) -> WriteCommandsAccount<'a> {
         WriteCommandsAccount::new(self)
     }
@@ -345,87 +369,6 @@ impl<'a> WriteCommands<'a> {
         Ok(id)
     }
 
-    pub async fn set_new_auth_pair(
-        &self,
-        id: AccountIdInternal,
-        pair: AuthPair,
-        address: Option<SocketAddr>,
-    ) -> Result<(), DatabaseError> {
-        let current_access_token = self
-            .current_write
-            .read()
-            .account()
-            .access_token(id)
-            .await
-            .convert(id)?;
-
-        self.current()
-            .account()
-            .update_api_key(id, Some(&pair.access))
-            .await
-            .convert(id)?;
-
-        self.current()
-            .account()
-            .update_refresh_token(id, Some(&pair.refresh))
-            .await
-            .convert(id)?;
-
-        self.cache
-            .update_access_token_and_connection(
-                id.as_light(),
-                current_access_token,
-                pair.access,
-                address,
-            )
-            .await
-            .convert(id)
-    }
-
-    /// Remove current connection address, access and refresh tokens.
-    pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
-        self.current()
-            .account()
-            .update_refresh_token(id, None)
-            .await
-            .convert(id)?;
-
-        self.end_connection_session(id, true).await?;
-
-        Ok(())
-    }
-
-    /// Remove current connection address and access token.
-    pub async fn end_connection_session(
-        &self,
-        id: AccountIdInternal,
-        remove_access_token: bool,
-    ) -> Result<(), DatabaseError> {
-        let current_access_token = if remove_access_token {
-            self.current_write
-                .read()
-                .account()
-                .access_token(id)
-                .await
-                .convert(id)?
-        } else {
-            None
-        };
-
-        self.cache
-            .delete_access_token_and_connection(id.as_light(), current_access_token)
-            .await
-            .convert(id)?;
-
-        self.current()
-            .account()
-            .update_api_key(id, None)
-            .await
-            .convert(id)?;
-
-        Ok(())
-    }
-
     pub async fn update_data<
         T: Clone
             + Debug
@@ -456,327 +399,6 @@ impl<'a> WriteCommands<'a> {
             .with_info_lazy(|| {
                 format!("History update {:?} failed, id: {:?}", PhantomData::<T>, id)
             })
-    }
-
-    pub async fn set_moderation_request(
-        &self,
-        account_id: AccountIdInternal,
-        request: ModerationRequestContent,
-    ) -> Result<(), DatabaseError> {
-        self.current()
-            .media()
-            .create_new_moderation_request(account_id, request)
-            .await
-            .convert(account_id)
-    }
-
-    pub async fn moderation_get_list_and_create_new_if_necessary(
-        self,
-        account_id: AccountIdInternal,
-    ) -> Result<Vec<Moderation>, DatabaseError> {
-        self.current()
-            .media_admin()
-            .moderation_get_list_and_create_new_if_necessary(account_id)
-            .await
-            .convert(account_id)
-    }
-
-    pub async fn update_moderation(
-        self,
-        moderator_id: AccountIdInternal,
-        moderation_request_owner: AccountIdInternal,
-        result: HandleModerationRequest,
-    ) -> Result<(), DatabaseError> {
-        self.current()
-            .media_admin()
-            .update_moderation(moderator_id, moderation_request_owner, result)
-            .await
-            .convert(moderator_id)
-    }
-
-    /// Completes previous save_to_tmp.
-    pub async fn save_to_slot(
-        &self,
-        id: AccountIdInternal,
-        content_id: ContentId,
-        slot: ImageSlot,
-    ) -> Result<(), DatabaseError> {
-        // Remove previous slot image.
-        let current_content_in_slot = self
-            .current_write
-            .read()
-            .media()
-            .get_content_id_from_slot(id, slot)
-            .await
-            .change_context(DatabaseError::Sqlite)?;
-        if let Some(current_id) = current_content_in_slot {
-            let path = self
-                .file_dir
-                .image_content(id.as_light(), current_id.as_content_id());
-            path.remove_if_exists()
-                .await
-                .change_context(DatabaseError::File)?;
-            self.current()
-                .media()
-                .delete_image_from_slot(id, slot)
-                .await
-                .change_context(DatabaseError::Sqlite)?;
-        }
-
-        let transaction = self
-            .current()
-            .media()
-            .store_content_id_to_slot(id, content_id, slot)
-            .await
-            .change_context(DatabaseError::Sqlite)?;
-
-        let file_operations = || {
-            async {
-                // Move image from tmp to image dir
-                let raw_img = self
-                    .file_dir
-                    .unprocessed_image_upload(id.as_light(), content_id);
-                let processed_content_path = self.file_dir.image_content(id.as_light(), content_id);
-                raw_img
-                    .move_to(&processed_content_path)
-                    .await
-                    .change_context(DatabaseError::File)?;
-
-                Ok::<(), Report<DatabaseError>>(())
-            }
-        };
-
-        match file_operations().await {
-            Ok(()) => {
-                transaction
-                    .commit()
-                    .await
-                    .change_context(DatabaseError::Sqlite)?;
-
-                self.media_backup
-                    .backup_jpeg_image(id.as_light(), content_id)
-                    .await
-                    .change_context(DatabaseError::MediaBackup)?;
-
-                Ok(())
-            }
-            Err(e) => {
-                match transaction
-                    .rollback()
-                    .await
-                    .change_context(DatabaseError::Sqlite)
-                {
-                    Ok(()) => Err(e),
-                    Err(another_error) => Err(another_error.attach(e)),
-                }
-            }
-        }
-    }
-
-    pub async fn profile_update_visibility(
-        self,
-        id: AccountIdInternal,
-        public: bool,
-        update_only_if_no_value: bool,
-    ) -> Result<(), DatabaseError> {
-        let (visiblity, location, profile_link) = self
-            .cache
-            .write_cache(id.as_light(), |e| {
-                let p = e
-                    .profile
-                    .as_mut()
-                    .ok_or(CacheError::InitFeatureNotEnabled)?;
-
-                // Handle race condition between remote fetch and update.
-                // Update will override the initial fetch.
-                if update_only_if_no_value {
-                    if p.public.is_none() {
-                        p.public = Some(public);
-                    }
-                } else {
-                    p.public = Some(public);
-                }
-
-                Ok((
-                    p.public.unwrap_or_default(),
-                    p.location.current_position,
-                    ProfileLink::new(id.as_light(), &p.data),
-                ))
-            })
-            .await
-            .convert(id)?;
-
-        let index = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
-        if visiblity {
-            index
-                .update_profile_link(id.as_light(), profile_link, location)
-                .await;
-        } else {
-            index.remove_profile_link(id.as_light(), location).await;
-        }
-
-        Ok(())
-    }
-
-    pub async fn profile_update_location(
-        self,
-        id: AccountIdInternal,
-        coordinates: Location,
-    ) -> Result<(), DatabaseError> {
-        let location = self
-            .cache
-            .read_cache(id.as_light(), |e| {
-                e.profile.as_ref().map(|p| p.location.clone())
-            })
-            .await
-            .convert(id)?
-            .ok_or(DatabaseError::FeatureDisabled)?;
-
-        let write_to_index = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
-        let new_location_key = write_to_index.coordinates_to_key(coordinates);
-
-        // TODO: Create new database table for location.
-        // TODO: Also update history?
-        new_location_key
-            .update_json(id, &self.current())
-            .await
-            .change_context(DatabaseError::Sqlite)?;
-        write_to_index
-            .update_profile_location(id.as_light(), location.current_position, new_location_key)
-            .await;
-
-        Ok(())
-    }
-
-    pub async fn update_primary_image(
-        self,
-        id: AccountIdInternal,
-        primary_image: PrimaryImage,
-    ) -> Result<(), DatabaseError> {
-        self.current()
-            .media()
-            .update_current_account_media_with_primary_image(id, primary_image)
-            .await
-            .convert(id)
-    }
-
-    fn current(&self) -> CurrentDataWriteCommands {
-        CurrentDataWriteCommands::new(&self.current_write)
-    }
-
-    fn history(&self) -> HistoryWriteCommands {
-        HistoryWriteCommands::new(&self.history_write)
-    }
-}
-
-/// Commands that can run concurrently with other write commands, but which have
-/// limitation that one account can execute only one command at a time.
-/// It possible to run this and normal write command concurrently for
-/// one account.
-pub struct WriteCommandsConcurrent<'a> {
-    current_write: &'a CurrentDataWriteHandle,
-    history_write: &'a HistoryWriteHandle,
-    cache: &'a DatabaseCache,
-    file_dir: &'a FileDir,
-    location: LocationIndexIteratorGetter<'a>,
-}
-
-impl<'a> WriteCommandsConcurrent<'a> {
-    pub fn new(
-        current_write: &'a CurrentDataWriteHandle,
-        history_write: &'a HistoryWriteHandle,
-        cache: &'a DatabaseCache,
-        file_dir: &'a FileDir,
-        location: LocationIndexIteratorGetter<'a>,
-    ) -> Self {
-        Self {
-            current_write,
-            history_write,
-            cache,
-            file_dir,
-            location,
-        }
-    }
-
-    pub async fn save_to_tmp(
-        &self,
-        id: AccountIdInternal,
-        stream: BodyStream,
-    ) -> Result<ContentId, DatabaseError> {
-        let content_id = ContentId::new_random_id();
-
-        // Clear tmp dir if previous image writing failed and there is no
-        // content ID in the database about it.
-        self.file_dir
-            .tmp_dir(id.as_light())
-            .remove_contents_if_exists()
-            .await
-            .change_context(DatabaseError::File)?;
-
-        let raw_img = self
-            .file_dir
-            .unprocessed_image_upload(id.as_light(), content_id);
-        raw_img
-            .save_stream(stream)
-            .await
-            .change_context(DatabaseError::File)?;
-
-        // TODO: image safety checks and processing
-
-        Ok(content_id)
-    }
-
-    pub async fn next_profiles(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<Vec<ProfileLink>, DatabaseError> {
-        let location = self
-            .cache
-            .read_cache(id.as_light(), |e| {
-                e.profile.as_ref().map(|p| p.location.clone())
-            })
-            .await
-            .convert(id)?
-            .ok_or(DatabaseError::FeatureDisabled)?;
-
-        let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
-        let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await;
-        self.cache
-            .write_cache(id.as_light(), |e| {
-                e.profile
-                    .as_mut()
-                    .map(move |p| p.location.current_iterator = next_state);
-                Ok(())
-            })
-            .await
-            .convert(id)?;
-
-        Ok(profiles.unwrap_or(Vec::new()))
-    }
-
-    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
-        let location = self
-            .cache
-            .read_cache(id.as_light(), |e| {
-                e.profile.as_ref().map(|p| p.location.clone())
-            })
-            .await
-            .convert(id)?
-            .ok_or(DatabaseError::FeatureDisabled)?;
-
-        let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
-        let next_state =
-            iterator.reset_iterator(location.current_iterator, location.current_position);
-        self.cache
-            .write_cache(id.as_light(), |e| {
-                e.profile
-                    .as_mut()
-                    .map(move |p| p.location.current_iterator = next_state);
-                Ok(())
-            })
-            .await
-            .convert(id)?;
-        Ok(())
     }
 
     fn current(&self) -> CurrentDataWriteCommands {

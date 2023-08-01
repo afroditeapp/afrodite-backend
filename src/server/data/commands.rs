@@ -321,9 +321,10 @@ impl WriteCommandRunner {
 
     pub async fn handle_cmd(&self, cmd: WriteCommand) {
         match cmd {
-            WriteCommand::Logout { s, account_id } => self.write().logout(account_id).await.send(s),
+            WriteCommand::Logout { s, account_id } => self.write().common().logout(account_id).await.send(s),
             WriteCommand::EndConnectionSession { s, account_id } => self
                 .write()
+                .common()
                 .end_connection_session(account_id, false)
                 .await
                 .send(s),
@@ -334,6 +335,7 @@ impl WriteCommandRunner {
                 address,
             } => self
                 .write()
+                .account()
                 .set_new_auth_pair(account_id, pair, address)
                 .await
                 .send(s),
