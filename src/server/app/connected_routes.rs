@@ -109,15 +109,28 @@ impl ConnectedApp {
                     let state = self.state.clone();
                     move |p1, p2| api::account::put_setting_profile_visiblity(p1, p2, state)
                 }),
-            )
-            .route_layer({
-                middleware::from_fn({
+            );
+
+        let private = if self.state.config.debug_mode() {
+            private.route(
+                api::profile::PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK,
+                get({
                     let state = self.state.clone();
-                    move |addr, req, next| {
-                        api::utils::authenticate_with_api_key(state.clone(), addr, req, next)
-                    }
-                })
-            });
+                    move |param1, param2| api::profile::get_profile_from_database_debug_mode_benchmark(param1, param2, state)
+                }),
+            )
+        } else {
+            private
+        };
+
+        let private = private.route_layer({
+            middleware::from_fn({
+                let state = self.state.clone();
+                move |addr, req, next| {
+                    api::utils::authenticate_with_api_key(state.clone(), addr, req, next)
+                }
+            })
+        });
 
         Router::new().merge(private)
     }

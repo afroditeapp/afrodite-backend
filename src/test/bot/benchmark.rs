@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use api_client::apis::profile_api::get_profile;
+use api_client::apis::profile_api::{get_profile, get_profile_from_database_debug_mode_benchmark};
 use async_trait::async_trait;
 use tokio::time::sleep;
 
@@ -76,6 +76,24 @@ impl Benchmark {
         }
     }
 
+    pub fn benchmark_get_profile_from_database(state: BotState) -> Self {
+        let setup = [&Register as &dyn BotAction, &Login];
+        let benchmark = [
+            &UpdateProfileBenchmark as &dyn BotAction,
+            &ActionsBeforeIteration,
+            &GetProfileFromDatabase,
+            &ActionsAfterIteration,
+        ];
+        let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+        Self {
+            state,
+            actions: (Box::new(iter)
+                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
+                .peekable(),
+        }
+    }
+
+
     pub fn benchmark_get_profile_list(state: BotState) -> Self {
         let setup = [&RunActions(TO_NORMAL_STATE) as &dyn BotAction];
         let benchmark = [
@@ -130,6 +148,19 @@ pub struct GetProfile;
 impl BotAction for GetProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         get_profile(state.api.profile(), &state.id_string()?)
+            .await
+            .into_error(TestError::ApiRequest)?;
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct GetProfileFromDatabase;
+
+#[async_trait]
+impl BotAction for GetProfileFromDatabase {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        get_profile_from_database_debug_mode_benchmark(state.api.profile(), &state.id_string()?)
             .await
             .into_error(TestError::ApiRequest)?;
         Ok(())

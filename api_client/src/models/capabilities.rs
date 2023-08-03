@@ -21,6 +21,10 @@ pub struct Capabilities {
     pub admin_moderate_profiles: Option<bool>,
     #[serde(rename = "admin_modify_capablities", skip_serializing_if = "Option::is_none")]
     pub admin_modify_capablities: Option<bool>,
+    #[serde(rename = "admin_server_maintentance_update_software", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintentance_update_software: Option<bool>,
+    #[serde(rename = "admin_server_maintentance_view_info", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintentance_view_info: Option<bool>,
     #[serde(rename = "admin_setup_possible", skip_serializing_if = "Option::is_none")]
     pub admin_setup_possible: Option<bool>,
     /// View public and private profiles.
@@ -44,6 +48,8 @@ impl Capabilities {
             admin_moderate_images: None,
             admin_moderate_profiles: None,
             admin_modify_capablities: None,
+            admin_server_maintentance_update_software: None,
+            admin_server_maintentance_view_info: None,
             admin_setup_possible: None,
             admin_view_all_profiles: None,
             admin_view_private_info: None,

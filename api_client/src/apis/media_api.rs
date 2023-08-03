@@ -437,12 +437,12 @@ pub async fn put_moderation_request(configuration: &configuration::Configuration
 }
 
 /// Set primary image for account. Image content ID can not be empty.
-pub async fn put_primary_image(configuration: &configuration::Configuration, account_id: &str, primary_image: crate::models::PrimaryImage) -> Result<(), Error<PutPrimaryImageError>> {
+pub async fn put_primary_image(configuration: &configuration::Configuration, primary_image: crate::models::PrimaryImage) -> Result<(), Error<PutPrimaryImageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/primary_image/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/media_api/primary_image", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

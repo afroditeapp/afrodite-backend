@@ -38,6 +38,12 @@ Class | Method | HTTP request | Description
 *AccountinternalApi* | [**check_api_key**](docs/AccountinternalApi.md#check_api_key) | **GET** /internal/check_api_key | 
 *AccountinternalApi* | [**internal_get_account_state**](docs/AccountinternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
+*CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
+*CommonadminApi* | [**get_latest_build_info**](docs/CommonadminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager
+*CommonadminApi* | [**get_software_info**](docs/CommonadminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
+*CommonadminApi* | [**get_system_info**](docs/CommonadminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
+*CommonadminApi* | [**post_request_build_software**](docs/CommonadminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
+*CommonadminApi* | [**post_request_update_software**](docs/CommonadminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
 *MediaApi* | [**get_all_normal_images**](docs/MediaApi.md#get_all_normal_images) | **GET** /media_api/all_normal_images/{account_id} | Get list of all normal images on the server for one account.
 *MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
@@ -47,10 +53,11 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**post_handle_moderation_request**](docs/MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 *MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
-*MediaApi* | [**put_primary_image**](docs/MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image/{account_id} | Set primary image for account. Image content ID can not be empty.
+*MediaApi* | [**put_primary_image**](docs/MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image | Set primary image for account. Image content ID can not be empty.
 *MediainternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
 *MediainternalApi* | [**internal_post_update_profile_image_visibility**](docs/MediainternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
+*ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{account_id} | Get account's current profile from database. Debug mode must be enabled
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 *ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
@@ -66,10 +73,15 @@ Class | Method | HTTP request | Description
  - [AccountState](docs/AccountState.md)
  - [ApiKey](docs/ApiKey.md)
  - [AuthPair](docs/AuthPair.md)
+ - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)
+ - [BuildInfo](docs/BuildInfo.md)
  - [Capabilities](docs/Capabilities.md)
+ - [CommandOutput](docs/CommandOutput.md)
  - [ContentId](docs/ContentId.md)
  - [DeleteStatus](docs/DeleteStatus.md)
+ - [DownloadType](docs/DownloadType.md)
+ - [DownloadTypeQueryParam](docs/DownloadTypeQueryParam.md)
  - [EventToClient](docs/EventToClient.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [ImageAccessCheck](docs/ImageAccessCheck.md)
@@ -88,10 +100,15 @@ Class | Method | HTTP request | Description
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
+ - [RebootQueryParam](docs/RebootQueryParam.md)
  - [RefreshToken](docs/RefreshToken.md)
  - [SecurityImage](docs/SecurityImage.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SlotId](docs/SlotId.md)
+ - [SoftwareInfo](docs/SoftwareInfo.md)
+ - [SoftwareOptions](docs/SoftwareOptions.md)
+ - [SystemInfo](docs/SystemInfo.md)
+ - [SystemInfoList](docs/SystemInfoList.md)
 
 
 To get access to the crate's generated documentation, use:

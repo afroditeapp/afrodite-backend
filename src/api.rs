@@ -58,6 +58,7 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         account::internal::check_api_key,
         account::internal::internal_get_account_state,
         profile::get_profile,
+        profile::get_profile_from_database_debug_mode_benchmark,
         profile::post_get_next_profile_page,
         profile::post_profile,
         profile::post_reset_profile_paging,

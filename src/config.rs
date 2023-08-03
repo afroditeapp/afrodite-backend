@@ -96,6 +96,7 @@ impl Config {
     /// * Disabling HTTPS is possbile.
     /// * Completing initial setup will check only email when adding admin capabilities.
     ///   Normally it also requires Google Account ID.
+    /// * Routes for only related to benchmarking are available.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }

@@ -9,15 +9,15 @@ macro_rules! define_read_commands {
                 Self { cmds }
             }
 
-            pub fn db(&self) -> &SqliteReadCommands<'_> {
+            fn db(&self) -> &SqliteReadCommands<'_> {
                 &self.cmds.db
             }
 
-            pub fn cache(&self) -> &DatabaseCache {
+            fn cache(&self) -> &DatabaseCache {
                 &self.cmds.cache
             }
 
-            pub fn files(&self) -> &FileDir {
+            fn files(&self) -> &FileDir {
                 &self.cmds.files
             }
         }

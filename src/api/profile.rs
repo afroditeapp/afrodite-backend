@@ -9,7 +9,7 @@ use self::data::{
     Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal,
 };
 
-use super::{model::AccountIdLight, GetInternalApi, GetUsers, WriteData};
+use super::{model::AccountIdLight, GetInternalApi, GetUsers, WriteData, GetConfig};
 
 use tracing::error;
 
@@ -323,4 +323,69 @@ pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + ReadDatabase>
         })?;
 
     Ok(())
+}
+
+// Benchmark routes
+
+pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile/:account_id";
+
+/// Get account's current profile from database. Debug mode must be enabled
+/// that route can be used.
+#[utoipa::path(
+    get,
+    path = "/profile_api/benchmark/profile/{account_id}",
+    params(AccountIdLight),
+    responses(
+        (status = 200, description = "Get current profile.", body = Profile),
+        (status = 401, description = "Unauthorized."),
+        (
+            status = 500,
+            description = "Profile does not exist, is private or other server error.",
+        ),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn get_profile_from_database_debug_mode_benchmark<
+    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData + GetConfig,
+>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Path(requested_profile): Path<AccountIdLight>,
+    state: S,
+) -> Result<Json<Profile>, StatusCode> {
+    if !state.config().debug_mode() {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let requested_profile = state
+        .users()
+        .get_internal_id(requested_profile)
+        .await
+        .map_err(|e| {
+            error!("get_profile: {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    if account_id.as_light() == requested_profile.as_light() {
+        return state
+            .read_database()
+            .profile()
+            .read_profile_directly_from_database(requested_profile)
+            .await
+            .map(|profile| {
+                let profile: Profile = profile.into();
+                profile.into()
+            })
+            .map_err(|e| {
+                error!("get_profile: {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            });
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }

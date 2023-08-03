@@ -197,12 +197,14 @@ pub struct ServerConfig {
 pub enum Test {
     Qa,
     BenchmarkGetProfile,
+    BenchmarkGetProfileFromDatabase,
     BenchmarkGetProfileList,
     Bot,
 }
 
 const TEST_NAME_QA: &str = "qa";
 const TEST_NAME_BENCHMARK_GET_PROFILE: &str = "benchmark-get-profile";
+const TEST_NAME_BENCHMARK_GET_PROFILE_FROM_DATABASE: &str = "benchmark-get-profile-from-database";
 const TEST_NAME_BENCHMARK_GET_PROFILE_LIST: &str = "benchmark-get-profile-list";
 const TEST_NAME_BOT: &str = "bot";
 
@@ -211,6 +213,7 @@ impl Test {
         match self {
             Self::Qa => TEST_NAME_QA,
             Self::BenchmarkGetProfile => TEST_NAME_BENCHMARK_GET_PROFILE,
+            Self::BenchmarkGetProfileFromDatabase => TEST_NAME_BENCHMARK_GET_PROFILE_FROM_DATABASE,
             Self::BenchmarkGetProfileList => TEST_NAME_BENCHMARK_GET_PROFILE_LIST,
             Self::Bot => TEST_NAME_BOT,
         }
@@ -223,6 +226,7 @@ impl TryFrom<&str> for Test {
         Ok(match value {
             TEST_NAME_QA => Self::Qa,
             TEST_NAME_BENCHMARK_GET_PROFILE => Self::BenchmarkGetProfile,
+            TEST_NAME_BENCHMARK_GET_PROFILE_FROM_DATABASE => Self::BenchmarkGetProfileFromDatabase,
             TEST_NAME_BENCHMARK_GET_PROFILE_LIST => Self::BenchmarkGetProfileList,
             TEST_NAME_BOT => Self::Bot,
             _ => return Err(()),
@@ -266,6 +270,7 @@ impl clap::builder::TypedValueParser for TestNameParser {
             [
                 Test::Qa,
                 Test::BenchmarkGetProfile,
+                Test::BenchmarkGetProfileFromDatabase,
                 Test::BenchmarkGetProfileList,
                 Test::Bot,
             ]

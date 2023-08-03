@@ -13,7 +13,7 @@ Method | HTTP request | Description
 [**post_handle_moderation_request**](MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 [**put_image_to_moderation_slot**](MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 [**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
-[**put_primary_image**](MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image/{account_id} | Set primary image for account. Image content ID can not be empty.
+[**put_primary_image**](MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image | Set primary image for account. Image content ID can not be empty.
 
 
 
@@ -288,7 +288,7 @@ Name | Type | Description  | Required | Notes
 
 ## put_primary_image
 
-> put_primary_image(account_id, primary_image)
+> put_primary_image(primary_image)
 Set primary image for account. Image content ID can not be empty.
 
 Set primary image for account. Image content ID can not be empty.
@@ -298,7 +298,6 @@ Set primary image for account. Image content ID can not be empty.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
 **primary_image** | [**PrimaryImage**](PrimaryImage.md) |  | [required] |
 
 ### Return type

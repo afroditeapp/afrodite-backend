@@ -185,7 +185,10 @@ impl BotManager {
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) {
         let bot = match config.test {
-            Test::BenchmarkGetProfileList | Test::BenchmarkGetProfile | Test::Bot => {
+            Test::BenchmarkGetProfileList |
+            Test::BenchmarkGetProfile |
+            Test::BenchmarkGetProfileFromDatabase |
+            Test::Bot => {
                 Self::benchmark_or_bot(task_id, old_state, config, _bot_running_handle)
             }
             Test::Qa => Self::qa(task_id, config, _bot_running_handle),
@@ -220,6 +223,9 @@ impl BotManager {
                 Test::BenchmarkGetProfile => {
                     bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
                 }
+                Test::BenchmarkGetProfileFromDatabase => {
+                    bots.push(Box::new(Benchmark::benchmark_get_profile_from_database(state)))
+                }
                 Test::BenchmarkGetProfileList => {
                     let benchmark = match bot_i {
                         0 => Benchmark::benchmark_get_profile_list(state),
@@ -228,7 +234,7 @@ impl BotManager {
                     bots.push(Box::new(benchmark))
                 }
                 Test::Bot => bots.push(Box::new(ClientBot::new(state))),
-                _ => panic!("Invalid test {:?}", config.test),
+                Test::Qa => panic!("Invalid test {:?}", config.test),
             };
         }
 

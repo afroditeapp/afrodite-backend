@@ -8,6 +8,8 @@ Name | Type | Description | Notes
 **admin_moderate_images** | Option<**bool**> |  | [optional]
 **admin_moderate_profiles** | Option<**bool**> |  | [optional]
 **admin_modify_capablities** | Option<**bool**> |  | [optional]
+**admin_server_maintentance_update_software** | Option<**bool**> |  | [optional]
+**admin_server_maintentance_view_info** | Option<**bool**> |  | [optional]
 **admin_setup_possible** | Option<**bool**> |  | [optional]
 **admin_view_all_profiles** | Option<**bool**> | View public and private profiles. | [optional]
 **admin_view_private_info** | Option<**bool**> |  | [optional]
