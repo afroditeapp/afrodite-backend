@@ -36,7 +36,7 @@ use super::model::{AccountIdInternal, ApiKey, AuthPair, RefreshToken};
 
 use tracing::error;
 
-use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
+use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase};
 
 use error_stack::{IntoReport, Result, ResultExt};
 

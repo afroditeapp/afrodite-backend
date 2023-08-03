@@ -21,7 +21,7 @@ use self::data::{
 
 use super::model::{AccountIdInternal, AccountIdLight};
 use super::utils::ApiKeyHeader;
-use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteDatabase, WriteData};
+use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteData};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
@@ -342,7 +342,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData + WriteDatabase>(
+pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(slot_number): Path<SlotId>,
     image: BodyStream,
@@ -362,7 +362,8 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData + WriteDatab
     };
 
     let content_id = state
-        .write_database()
+        .get_writer_concurrent(account_id.as_light())
+        .await
         .save_to_tmp(account_id, image)
         .await
         .map_err(|e| {

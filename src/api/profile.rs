@@ -13,7 +13,7 @@ use super::{model::AccountIdLight, GetInternalApi, GetUsers, WriteData};
 
 use tracing::error;
 
-use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
+use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase};
 
 // TODO: Add timeout for database commands
 
@@ -252,7 +252,7 @@ pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_get_next_profile_page<S: GetApiKeys + WriteDatabase>(
+pub async fn post_get_next_profile_page<S: GetApiKeys + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<ProfilePage>, StatusCode> {
@@ -263,7 +263,8 @@ pub async fn post_get_next_profile_page<S: GetApiKeys + WriteDatabase>(
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let data = state
-        .write_database()
+        .get_writer_concurrent(account_id.as_light())
+        .await
         .next_profiles(account_id)
         .await
         .map_err(|e| {
@@ -290,7 +291,7 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + WriteDatabase + ReadDatabase>(
+pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + ReadDatabase>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
@@ -312,7 +313,8 @@ pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + WriteDatabase
         })?;
 
     state
-        .write_database()
+        .get_writer_concurrent(account_id.as_light())
+        .await
         .reset_profile_iterator(account_id)
         .await
         .map_err(|e| {

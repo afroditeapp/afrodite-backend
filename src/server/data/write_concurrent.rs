@@ -2,10 +2,13 @@
 //! write commands.
 
 
+use std::collections::HashMap;
+use std::sync::Arc;
 use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
 
 use axum::extract::BodyStream;
 use error_stack::{Report, Result, ResultExt};
+use tokio::sync::{OwnedMutexGuard, RwLock, Mutex};
 
 use crate::server::data::database::current::CurrentDataWriteCommands;
 use crate::{
@@ -22,6 +25,7 @@ use crate::{
     utils::{ConvertCommandError, ErrorConversion},
 };
 
+use super::RouterDatabaseWriteHandle;
 use super::{
     cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
     database::history::write::HistoryWriteCommands,
@@ -33,7 +37,93 @@ use super::{
     index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
 };
 
+const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 
+pub struct AccountHandle;
+
+#[derive(Default, Clone)]
+pub struct AccountWriteLockManager {
+    locks: Arc<RwLock<HashMap<AccountIdLight, Arc<Mutex<AccountHandle>>>>>,
+}
+
+impl AccountWriteLockManager {
+    pub async fn lock_account(&self, a: AccountIdLight) -> OwnedMutexGuard<AccountHandle> {
+        let mutex = {
+            let mut write_lock =
+                self.locks.write().await;
+            if let Some(mutex) = write_lock.get(&a) {
+                mutex.clone()
+            } else {
+                let mutex =
+                    Arc::new(Mutex::new(AccountHandle));
+                write_lock.insert(a, mutex.clone());
+                mutex
+            }
+        };
+        mutex.lock_owned().await
+    }
+}
+
+
+pub struct ConcurrentWriteCommandHandle {
+    write: RouterDatabaseWriteHandle,
+    semaphore: tokio::sync::Semaphore,
+    account_write_locks: AccountWriteLockManager,
+}
+
+impl ConcurrentWriteCommandHandle {
+    pub fn new(write: RouterDatabaseWriteHandle) -> Self {
+        Self {
+            write,
+            semaphore: tokio::sync::Semaphore::new(CONCURRENT_WRITE_COMMAND_LIMIT),
+            account_write_locks: AccountWriteLockManager::default(),
+        }
+    }
+
+    pub async fn accquire(&self, account: AccountIdLight) -> ConcurrentWriteHandle {
+        let lock = self.account_write_locks.lock_account(account).await;
+
+        let permit = self.semaphore
+            .acquire()
+            .await
+            // Code does not call close method of Semaphore, so this should not
+            // panic.
+            .expect("Semaphore was closed. This should not happen.");
+
+        ConcurrentWriteHandle { write: &self.write, _permit: permit, _account_write_lock: lock }
+    }
+}
+
+
+pub struct ConcurrentWriteHandle<'a> {
+    write: &'a RouterDatabaseWriteHandle,
+    _permit: tokio::sync::SemaphorePermit<'a>,
+    _account_write_lock: OwnedMutexGuard<AccountHandle>,
+}
+
+impl ConcurrentWriteHandle<'_> {
+    pub async fn save_to_tmp(
+        &self,
+        id: AccountIdInternal,
+        stream: BodyStream,
+    ) -> Result<ContentId, DatabaseError> {
+        self.write.user_write_commands_account().save_to_tmp(id, stream).await
+    }
+
+    pub async fn next_profiles(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<ProfileLink>, DatabaseError> {
+        self.write.user_write_commands_account().next_profiles(id).await
+    }
+
+    pub async fn reset_profile_iterator(
+        &self,
+        id: AccountIdInternal
+    ) -> Result<(), DatabaseError> {
+        self.write.user_write_commands_account().reset_profile_iterator(id).await
+    }
+}
 
 
 /// Commands that can run concurrently with other write commands, but which have

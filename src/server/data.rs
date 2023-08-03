@@ -1,5 +1,4 @@
 pub mod cache;
-pub mod commands;
 pub mod database;
 pub mod file;
 pub mod index;
@@ -23,12 +22,11 @@ use crate::{
     api::model::{AccountIdInternal, AccountIdLight, SignInWithInfo},
     config::Config,
     media_backup::MediaBackupHandle,
-    server::data::{commands::WriteCommandRunner, database::sqlite::print_sqlite_version},
+    server::data::{database::sqlite::print_sqlite_version},
 };
 
 use self::{
     cache::{DatabaseCache, WriteCacheJson},
-    commands::{WriteCommandRunnerHandle, WriteCommandRunnerQuitHandle},
     database::{history::read::HistoryReadCommands, sqlite::{HistoryUpdateJson, SqliteUpdateJson}},
     database::sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
@@ -165,7 +163,6 @@ pub struct DatabaseManager {
     sqlite_read_close: SqliteReadCloseHandle,
     history_write_close: SqliteWriteCloseHandle,
     history_read_close: SqliteReadCloseHandle,
-    write_command_runner_close: WriteCommandRunnerQuitHandle,
 }
 
 impl DatabaseManager {
@@ -233,25 +230,18 @@ impl DatabaseManager {
         let root = router_write_handle.root.clone();
         let cache = router_write_handle.cache.clone();
 
-        let (write_handle, receiver) = WriteCommandRunner::new_channel(router_write_handle.clone());
-
         let router_read_handle = RouterDatabaseReadHandle {
             sqlite_read,
             history_read,
             root,
             cache,
-            write_handle,
         };
-
-        let write_command_runner_close =
-            WriteCommandRunner::new(router_write_handle.clone(), receiver, config);
 
         let database_manager = DatabaseManager {
             sqlite_write_close,
             sqlite_read_close,
             history_write_close,
             history_read_close,
-            write_command_runner_close,
         };
 
         info!("DatabaseManager created");
@@ -264,11 +254,6 @@ impl DatabaseManager {
         self.sqlite_write_close.close().await;
         self.history_read_close.close().await;
         self.history_write_close.close().await;
-
-        match self.write_command_runner_close.quit().await {
-            Ok(()) => (),
-            Err(e) => tracing::error!("Write command runner quit failed: {}", e),
-        }
     }
 }
 
@@ -432,7 +417,6 @@ pub struct RouterDatabaseReadHandle {
     sqlite_read: SqliteReadHandle,
     history_read: SqliteReadHandle,
     cache: Arc<DatabaseCache>,
-    write_handle: WriteCommandRunnerHandle,
 }
 
 impl RouterDatabaseReadHandle {
@@ -454,9 +438,5 @@ impl RouterDatabaseReadHandle {
 
     pub fn account_id_manager(&self) -> AccountIdManager<'_> {
         AccountIdManager::new(&self.cache, &self.sqlite_read)
-    }
-
-    pub fn write(&self) -> &WriteCommandRunnerHandle {
-        &self.write_handle
     }
 }

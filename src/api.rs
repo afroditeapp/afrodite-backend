@@ -17,9 +17,8 @@ use crate::{
     server::{
         app::sign_in_with::SignInWithManager,
         data::{
-            commands::WriteCommandRunnerHandle,
             read::ReadCommands,
-            utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle,
+            utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle, write_concurrent::ConcurrentWriteHandle,
         },
         internal::InternalApiManager,
         manager_client::ManagerApiManager,
@@ -27,6 +26,8 @@ use crate::{
 };
 
 use utils::SecurityApiTokenDefault;
+
+use self::model::AccountIdLight;
 
 // Paths
 
@@ -140,13 +141,10 @@ pub trait GetUsers {
     fn users(&self) -> AccountIdManager<'_>;
 }
 
-pub trait WriteDatabase {
-    fn write_database(&self) -> &WriteCommandRunnerHandle;
-}
-
 #[async_trait::async_trait]
 pub trait WriteData {
     async fn get_writer(&self) -> MutexGuard<SyncWriteHandle>;
+    async fn get_writer_concurrent(&self, account_id: AccountIdLight) -> ConcurrentWriteHandle;
 }
 
 pub trait ReadDatabase {

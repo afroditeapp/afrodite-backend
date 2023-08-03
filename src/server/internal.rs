@@ -31,7 +31,6 @@ use crate::{api::model::ApiKey, config::Config};
 use super::{
     app::AppState,
     data::{
-        commands::WriteCommandRunnerHandle,
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle,
     },
@@ -225,7 +224,6 @@ pub struct InternalApiManager<'a> {
     api_client: &'a InternalApiClient,
     keys: ApiKeyManager<'a>,
     read_database: ReadCommands<'a>,
-    write_database: &'a WriteCommandRunnerHandle,
     account_id_manager: AccountIdManager<'a>,
     write_mutex: &'a Mutex<SyncWriteHandle>,
 }
@@ -236,7 +234,6 @@ impl<'a> InternalApiManager<'a> {
         api_client: &'a InternalApiClient,
         keys: ApiKeyManager<'a>,
         read_database: ReadCommands<'a>,
-        write_database: &'a WriteCommandRunnerHandle,
         account_id_manager: AccountIdManager<'a>,
         write_mutex: &'a Mutex<SyncWriteHandle>,
     ) -> Self {
@@ -245,7 +242,6 @@ impl<'a> InternalApiManager<'a> {
             api_client,
             keys,
             read_database,
-            write_database,
             account_id_manager,
             write_mutex,
         }
