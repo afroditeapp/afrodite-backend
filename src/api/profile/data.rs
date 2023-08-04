@@ -128,9 +128,19 @@ impl ProfileLink {
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash, diesel::FromSqlRow)]
 pub struct ProfileVersion {
     version_uuid: uuid::Uuid,
+}
+
+impl ProfileVersion {
+    pub fn new(version_uuid: uuid::Uuid) -> Self {
+        Self { version_uuid }
+    }
+
+    pub fn as_uuid(&self) -> uuid::Uuid {
+        self.version_uuid
+    }
 }
 
 impl sqlx::Type<sqlx::Sqlite> for ProfileVersion {

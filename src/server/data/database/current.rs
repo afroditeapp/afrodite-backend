@@ -45,7 +45,7 @@ macro_rules! insert_or_update_json {
 }
 
 pub struct SqliteReadCommands<'a> {
-    handle: &'a SqliteReadHandle,
+    pub handle: &'a SqliteReadHandle,
 }
 
 impl<'a> SqliteReadCommands<'a> {

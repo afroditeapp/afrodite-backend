@@ -40,6 +40,12 @@ utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 
 sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
 
+diesel = { version = "2.1.0", features = ["sqlite"] }
+diesel_migrations = "2.1.0"
+deadpool = { version = "0.9.0" }
+deadpool-diesel = { version = "0.4.1", features = ["sqlite"] }
+
+
 thiserror = "1.0.37"
 error-stack = "0.2.3"
 

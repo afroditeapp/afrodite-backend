@@ -214,7 +214,7 @@ impl DatabaseManager {
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
-            sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
+            sqlite_write: CurrentDataWriteHandle::new(sqlite_write, sqlite_read.clone()),
             sqlite_read,
             history_write: HistoryWriteHandle {
                 handle: history_write,

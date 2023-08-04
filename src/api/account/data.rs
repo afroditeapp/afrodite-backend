@@ -33,7 +33,7 @@ impl From<AccountIdInternal> for uuid::Uuid {
 
 /// AccountId which is internally Uuid object.
 /// Consumes less memory.
-#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams, Copy)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams, Copy, diesel::FromSqlRow)]
 pub struct AccountIdLight {
     pub account_id: uuid::Uuid,
 }

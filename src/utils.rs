@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use error_stack::{Context, IntoReport, Report, Result, ResultExt};
 
 use tokio::sync::oneshot;
@@ -16,6 +18,28 @@ pub type QuitSender = oneshot::Sender<()>;
 
 /// Receiver only used for quit request message receiving.
 pub type QuitReceiver = oneshot::Receiver<()>;
+
+pub trait IntoReportFromString {
+    type Ok;
+    type Err: Display;
+
+    #[track_caller]
+    fn into_error_string<C: Context>(self, context: C) -> Result<Self::Ok, C>;
+}
+
+impl <Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
+    type Ok = Ok;
+    type Err = Err;
+
+    fn into_error_string<C: Context>(self, context: C) -> Result<<Self as IntoReportFromString>::Ok, C> {
+        match self {
+            Ok(ok) => Ok(ok),
+            Err(err) => Err(context)
+                .into_report()
+                .attach_printable(err.to_string())
+        }
+    }
+}
 
 pub trait IntoReportExt: IntoReport {
     #[track_caller]

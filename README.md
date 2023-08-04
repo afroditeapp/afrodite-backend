@@ -168,3 +168,9 @@ dbs:
        path:    /home/ubuntu/litestream/current
        key-path: /pihka-secure-storage/pihka/.ssh/id_ed25519
 ```
+
+# Diesel
+
+Reset current database:
+
+DATABASE_URL="database/current/current.db" diesel database reset
