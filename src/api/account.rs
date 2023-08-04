@@ -50,9 +50,9 @@ pub async fn register_impl<S: WriteData + GetConfig>(
     let id = AccountIdLight::new(uuid::Uuid::new_v4());
 
     let result = state
-        .get_writer()
-        .await
-        .register(id, sign_in_with)
+        .write(move |cmds| async move {
+            cmds.register(id, sign_in_with).await
+        })
         .await;
 
     match result {
@@ -97,12 +97,14 @@ async fn login_impl<S: GetApiKeys + WriteData + GetUsers>(
     })?;
 
     let account = AuthPair { access, refresh };
-
+    let account_clone = account.clone();
     state
-        .get_writer()
-        .await
-        .common()
-        .set_new_auth_pair(id, account.clone(), None)
+        .write(move |cmds| async move {
+            cmds
+                .common()
+                .set_new_auth_pair(id, account_clone, None)
+                .await
+        })
         .await
         .map_err(|e| {
             error!("Login error: {e:?}");
@@ -291,9 +293,10 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteData>(
 
     if account.state() == AccountState::InitialSetup {
         state
-            .get_writer()
-            .await
-            .update_data(id, &data)
+            .write(move |cmds| async move {
+                cmds.update_data(id, &data)
+                    .await
+            })
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
@@ -394,9 +397,10 @@ pub async fn post_complete_setup<
         }
 
         state
-            .get_writer()
-            .await
-            .update_data(id, &account)
+            .write(move |cmds| async move {
+                cmds.update_data(id, &account)
+                    .await
+            })
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");

@@ -1,0 +1,112 @@
+//! Database writing commands
+//!
+
+use std::{collections::HashSet, future::Future, net::SocketAddr, sync::Arc, panic::UnwindSafe};
+
+use api_client::models::Account;
+use axum::extract::BodyStream;
+use error_stack::Result;
+
+use futures::{future::UnwrapOrElse};
+use tokio::{
+    sync::{mpsc, oneshot, OwnedSemaphorePermit, RwLock, Semaphore, Mutex, MutexGuard, OwnedMutexGuard},
+    task::JoinHandle,
+};
+use tokio_stream::StreamExt;
+
+use crate::{
+    api::model::{AccountIdInternal, AccountIdLight, AuthPair, ContentId, ProfileLink},
+    config::Config,
+    server::data::{write::WriteCommands, DatabaseError},
+    utils::{ErrorConversion, IntoReportExt},
+};
+
+use super::{RouterDatabaseWriteHandle, SyncWriteHandle, write_concurrent::{ConcurrentWriteHandle, ConcurrentWriteCommandHandle}};
+
+pub type WriteCmds = OwnedMutexGuard<SyncWriteHandle>;
+
+#[derive(Debug)]
+pub struct WriteCommandRunnerHandle {
+    quit_lock: mpsc::Sender<()>,
+    sync_write_mutex: Arc<Mutex<SyncWriteHandle>>,
+    concurrent_write: ConcurrentWriteCommandHandle,
+}
+
+impl WriteCommandRunnerHandle {
+    pub fn new(write: RouterDatabaseWriteHandle) -> (Self, WriteCmdWatcher) {
+        let (quit_lock, quit_handle) = mpsc::channel::<()>(1);
+
+        let cmd_watcher = WriteCmdWatcher::new(quit_handle);
+
+        let runner_handle = Self {
+            quit_lock,
+            sync_write_mutex: Mutex::new(write.clone().into_sync_handle()).into(),
+            concurrent_write: ConcurrentWriteCommandHandle::new(write.clone()),
+        };
+        (
+            runner_handle,
+            cmd_watcher,
+        )
+    }
+
+    pub async fn write<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send,
+        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
+    >(
+        &self,
+        write_cmd: GetCmd,
+    ) -> Result<CmdResult, DatabaseError> {
+        let quit_lock = self.quit_lock.clone();
+        let lock = self.sync_write_mutex.clone().lock_owned().await;
+        let handle = tokio::spawn(async move {
+            let result = write_cmd(lock).await;
+            drop(quit_lock); // Write completed, so release the quit lock.
+            result
+        });
+
+        handle.await
+            .into_error(DatabaseError::CommandResultReceivingFailed)?
+    }
+
+    pub async fn concurrent_write<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send,
+        GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
+    >(
+        &self,
+        account: AccountIdLight,
+        write_cmd: GetCmd,
+    ) -> Result<CmdResult, DatabaseError> {
+        let quit_lock = self.quit_lock.clone();
+        let lock = self.concurrent_write.accquire(account).await;
+        let handle = tokio::spawn(async move {
+            let result = write_cmd(lock).await;
+            drop(quit_lock); // Write completed, so release the quit lock.
+            result
+        });
+
+        handle.await
+            .into_error(DatabaseError::CommandResultReceivingFailed)?
+    }
+}
+
+
+pub struct WriteCmdWatcher {
+    receiver: mpsc::Receiver<()>,
+}
+
+impl WriteCmdWatcher {
+    pub fn new(receiver: mpsc::Receiver<()>) -> Self {
+        Self { receiver}
+    }
+
+    pub async fn wait_untill_all_writing_ends(mut self) {
+        loop {
+            match self.receiver.recv().await {
+                Some(_) => (),
+                None => break,
+            }
+        }
+    }
+}

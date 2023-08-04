@@ -6,6 +6,7 @@ pub mod read;
 pub mod utils;
 pub mod write;
 pub mod write_concurrent;
+pub mod write_commands;
 
 use std::{
     fs,
@@ -401,7 +402,7 @@ impl SyncWriteHandle {
             + Sync
             + 'static,
     >(
-        &mut self,
+        &self,
         id: AccountIdInternal,
         data: &T,
     ) -> Result<(), DatabaseError> {

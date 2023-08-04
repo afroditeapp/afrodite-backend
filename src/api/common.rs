@@ -115,7 +115,13 @@ async fn handle_socket(
         r = handle_socket_result(socket, address, id, &state) => {
             match r {
                 Ok(()) => {
-                    match state.get_writer().await.common().end_connection_session(id, false).await {
+                    let write = state.write(move |cmds| async move {
+                        cmds.common()
+                            .end_connection_session(id, false)
+                            .await
+                    }).await;
+
+                    match write {
                         Ok(()) => (),
                         Err(e) => {
                             error!("WebSocket: {e:?}");
@@ -124,8 +130,8 @@ async fn handle_socket(
                 },
                 Err(e) => {
                     error!("WebSocket: {e:?}");
-
-                    match state.get_writer().await.common().logout(id).await {
+                    let result = state.write(move |cmds| async move { cmds.common().logout(id).await }).await;
+                    match result {
                         Ok(()) => (),
                         Err(e) => {
                             error!("WebSocket: {e:?}");
@@ -188,10 +194,11 @@ async fn handle_socket_result(
         Message::Binary(refresh_token) => {
             if refresh_token != current_refresh_token {
                 state
-                    .get_writer()
-                    .await
-                    .common()
-                    .logout(id)
+                    .write(move |cmds| async move {
+                        cmds.common()
+                            .logout(id)
+                            .await
+                    })
                     .await
                     .change_context(WebSocketError::DatabaseLogoutFailed)?;
                 return Ok(());
@@ -210,18 +217,20 @@ async fn handle_socket_result(
         .await
         .into_error(WebSocketError::Send)?;
 
+    let new_access_token_cloned = new_access_token.clone();
     state
-        .get_writer()
-        .await
-        .common()
-        .set_new_auth_pair(
-            id,
-            AuthPair {
-                access: new_access_token.clone(),
-                refresh: new_refresh_token,
-            },
-            Some(address),
-        )
+        .write(move |cmds| async move {
+            cmds.common()
+                .set_new_auth_pair(
+                    id,
+                    AuthPair {
+                        access: new_access_token_cloned,
+                        refresh: new_refresh_token,
+                    },
+                    Some(address),
+                )
+                .await
+        })
         .await
         .change_context(WebSocketError::DatabaseSaveTokens)?;
 

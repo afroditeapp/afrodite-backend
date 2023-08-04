@@ -106,10 +106,11 @@ pub async fn get_profile<
                 })?;
             let visibility = account.capablities().view_public_profiles;
             state
-                .get_writer()
-                .await
-                .profile()
-                .profile_update_visibility(requested_profile, visibility, true)
+                .write(move |cmds| async move {
+                    cmds.profile()
+                        .profile_update_visibility(requested_profile, visibility, true)
+                        .await
+                })
                 .await
                 .map_err(|e| {
                     error!("get_profile: {e:?}");
@@ -188,9 +189,9 @@ pub async fn post_profile<S: GetApiKeys + WriteData + ReadDatabase>(
     let new = ProfileUpdateInternal::new(profile);
 
     state
-        .get_writer()
-        .await
-        .update_data(account_id, &new)
+        .write(move |cmds| async move {
+            cmds.update_data(account_id, &new).await
+        })
         .await
         .map_err(|e| {
             error!("post_profile: write profile, {e:?}");
@@ -226,10 +227,9 @@ pub async fn put_location<S: GetApiKeys + WriteData>(
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     state
-        .get_writer()
-        .await
-        .profile()
-        .profile_update_location(account_id, location)
+        .write(move |cmds| async move {
+            cmds.profile().profile_update_location(account_id, location).await
+        })
         .await
         .map_err(|e| {
             error!("put_location, {e:?}");
@@ -263,9 +263,9 @@ pub async fn post_get_next_profile_page<S: GetApiKeys + WriteData>(
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let data = state
-        .get_writer_concurrent(account_id.as_light())
-        .await
-        .next_profiles(account_id)
+        .write_concurrent(account_id.as_light(), move |cmds| async move {
+            cmds.next_profiles(account_id).await
+        })
         .await
         .map_err(|e| {
             error!("put_location, {e:?}");
@@ -302,10 +302,11 @@ pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + ReadDatabase>
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     state
-        .get_writer()
-        .await
-        .profile()
-        .profile_update_location(account_id, Location::default())
+        .write(move |cmds| async move {
+            cmds.profile()
+                .profile_update_location(account_id, Location::default())
+                .await
+        })
         .await
         .map_err(|e| {
             error!("post_reset_profile_paging, {e:?}");
@@ -313,9 +314,9 @@ pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + ReadDatabase>
         })?;
 
     state
-        .get_writer_concurrent(account_id.as_light())
-        .await
-        .reset_profile_iterator(account_id)
+        .write_concurrent(account_id.as_light(), move |cmds| async move {
+            cmds.reset_profile_iterator(account_id).await
+        })
         .await
         .map_err(|e| {
             error!("post_reset_profile_paging, {e:?}");

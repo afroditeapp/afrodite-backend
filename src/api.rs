@@ -9,6 +9,9 @@ pub mod profile;
 pub mod model;
 pub mod utils;
 
+use std::sync::Arc;
+
+use futures::Future;
 use tokio::sync::MutexGuard;
 use utoipa::{Modify, OpenApi};
 
@@ -18,7 +21,7 @@ use crate::{
         app::sign_in_with::SignInWithManager,
         data::{
             read::ReadCommands,
-            utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle, write_concurrent::ConcurrentWriteHandle,
+            utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle, write_concurrent::ConcurrentWriteHandle, DatabaseError, write_commands::{WriteCommandRunnerHandle, WriteCmds},
         },
         internal::InternalApiManager,
         manager_client::ManagerApiManager,
@@ -144,8 +147,17 @@ pub trait GetUsers {
 
 #[async_trait::async_trait]
 pub trait WriteData {
-    async fn get_writer(&self) -> MutexGuard<SyncWriteHandle>;
-    async fn get_writer_concurrent(&self, account_id: AccountIdLight) -> ConcurrentWriteHandle;
+    async fn write<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = error_stack::Result<CmdResult, DatabaseError>> + Send + 'static,
+        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
+    >(&self, cmd: GetCmd) -> error_stack::Result<CmdResult, DatabaseError>;
+
+    async fn write_concurrent<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = error_stack::Result<CmdResult, DatabaseError>> + Send + 'static,
+        GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
+    >(&self, account: AccountIdLight, cmd: GetCmd) -> error_stack::Result<CmdResult, DatabaseError>;
 }
 
 pub trait ReadDatabase {

@@ -231,10 +231,11 @@ pub async fn put_primary_image<S: WriteData>(
     }
 
     state
-        .get_writer()
-        .await
-        .media()
-        .update_primary_image(api_caller_account_id, new_image)
+        .write(move |cmds| async move {
+            cmds.media()
+                .update_primary_image(api_caller_account_id, new_image)
+                .await
+        })
         .await
         .map_err(|e| {
             error!("{}", e);
@@ -310,10 +311,11 @@ pub async fn put_moderation_request<S: WriteData + GetApiKeys>(
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     state
-        .get_writer()
-        .await
-        .media()
-        .set_moderation_request(account_id, moderation_request)
+        .write(move |cmds| async move {
+            cmds.media()
+                .set_moderation_request(account_id, moderation_request)
+                .await
+        })
         .await
         .map_err(|e| {
             error!("{:?}", e);
@@ -362,9 +364,9 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData>(
     };
 
     let content_id = state
-        .get_writer_concurrent(account_id.as_light())
-        .await
-        .save_to_tmp(account_id, image)
+        .write_concurrent(account_id.as_light(), move |cmds| async move {
+            cmds.save_to_tmp(account_id, image).await
+        })
         .await
         .map_err(|e| {
             error!("Error: {e:?}");
@@ -372,10 +374,11 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData>(
         })?;
 
     state
-        .get_writer()
-        .await
-        .media()
-        .save_to_slot(account_id, content_id, slot)
+        .write(move |cmds| async move {
+            cmds.media()
+                .save_to_slot(account_id, content_id, slot)
+                .await
+        })
         .await
         .map_err(|e| {
             error!("Error: {e:?}");
@@ -418,10 +421,11 @@ pub async fn patch_moderation_request_list<S: WriteData + GetApiKeys>(
     // TODO: Access restrictions
 
     let data = state
-        .get_writer()
-        .await
-        .media_admin()
-        .moderation_get_list_and_create_new_if_necessary(account_id)
+        .write(move |cmds| async move {
+            cmds.media_admin()
+                .moderation_get_list_and_create_new_if_necessary(account_id)
+                .await
+        })
         .await
         .map_err(|e| {
             error!("{}", e);
@@ -487,14 +491,15 @@ pub async fn post_handle_moderation_request<
             })?;
 
         state
-            .get_writer()
-            .await
-            .media_admin()
-            .update_moderation(
-                admin_account_id,
-                moderation_request_owner,
-                moderation_decision,
-            )
+            .write(move |cmds| async move {
+                cmds.media_admin()
+                    .update_moderation(
+                        admin_account_id,
+                        moderation_request_owner,
+                        moderation_decision,
+                    )
+                    .await
+            })
             .await
             .map_err(|e| {
                 error!("{e:?}");

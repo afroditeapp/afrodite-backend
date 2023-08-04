@@ -3,6 +3,7 @@
 
 
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
 
@@ -46,6 +47,13 @@ pub struct AccountWriteLockManager {
     locks: Arc<RwLock<HashMap<AccountIdLight, Arc<Mutex<AccountHandle>>>>>,
 }
 
+impl fmt::Debug for AccountWriteLockManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AccountWriteLockManager")
+            .finish()
+    }
+}
+
 impl AccountWriteLockManager {
     pub async fn lock_account(&self, a: AccountIdLight) -> OwnedMutexGuard<AccountHandle> {
         let mutex = {
@@ -65,17 +73,18 @@ impl AccountWriteLockManager {
 }
 
 
+#[derive(Debug)]
 pub struct ConcurrentWriteCommandHandle {
-    write: RouterDatabaseWriteHandle,
-    semaphore: tokio::sync::Semaphore,
+    write: Arc<RouterDatabaseWriteHandle>,
+    semaphore: Arc<tokio::sync::Semaphore>,
     account_write_locks: AccountWriteLockManager,
 }
 
 impl ConcurrentWriteCommandHandle {
     pub fn new(write: RouterDatabaseWriteHandle) -> Self {
         Self {
-            write,
-            semaphore: tokio::sync::Semaphore::new(CONCURRENT_WRITE_COMMAND_LIMIT),
+            write: write.into(),
+            semaphore: tokio::sync::Semaphore::new(CONCURRENT_WRITE_COMMAND_LIMIT).into(),
             account_write_locks: AccountWriteLockManager::default(),
         }
     }
@@ -83,25 +92,31 @@ impl ConcurrentWriteCommandHandle {
     pub async fn accquire(&self, account: AccountIdLight) -> ConcurrentWriteHandle {
         let lock = self.account_write_locks.lock_account(account).await;
 
-        let permit = self.semaphore
-            .acquire()
+        let permit = self.semaphore.clone()
+            .acquire_owned()
             .await
             // Code does not call close method of Semaphore, so this should not
             // panic.
             .expect("Semaphore was closed. This should not happen.");
 
-        ConcurrentWriteHandle { write: &self.write, _permit: permit, _account_write_lock: lock }
+        ConcurrentWriteHandle { write: self.write.clone(), _permit: permit, _account_write_lock: lock }
     }
 }
 
-
-pub struct ConcurrentWriteHandle<'a> {
-    write: &'a RouterDatabaseWriteHandle,
-    _permit: tokio::sync::SemaphorePermit<'a>,
+pub struct ConcurrentWriteHandle {
+    write: Arc<RouterDatabaseWriteHandle>,
+    _permit: tokio::sync::OwnedSemaphorePermit,
     _account_write_lock: OwnedMutexGuard<AccountHandle>,
 }
 
-impl ConcurrentWriteHandle<'_> {
+impl fmt::Debug for ConcurrentWriteHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ConcurrentWriteHandle")
+            .finish()
+    }
+}
+
+impl ConcurrentWriteHandle {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,

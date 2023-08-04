@@ -8,6 +8,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use futures::Future;
 use tokio::sync::{MutexGuard, Mutex};
 
 use crate::{
@@ -26,7 +27,7 @@ use super::{
     data::{
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},
-        RouterDatabaseReadHandle, SyncWriteHandle, RouterDatabaseWriteHandle, write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
+        RouterDatabaseReadHandle, SyncWriteHandle, RouterDatabaseWriteHandle, write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle}, DatabaseError, write_commands::{WriteCommandRunnerHandle, WriteCmds},
     },
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
@@ -39,6 +40,7 @@ pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
     write_mutex: Arc<Mutex<SyncWriteHandle>>,
     write_concurrent: Arc<ConcurrentWriteCommandHandle>,
+    write_queue: Arc<WriteCommandRunnerHandle>,
     internal_api: Arc<InternalApiClient>,
     manager_api: Arc<ManagerApiClient>,
     config: Arc<Config>,
@@ -65,12 +67,20 @@ impl ReadDatabase for AppState {
 
 #[async_trait::async_trait]
 impl WriteData for AppState {
-    async fn get_writer(&self) -> MutexGuard<SyncWriteHandle> {
-        self.write_mutex.lock().await
+    async fn write<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send + 'static,
+        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
+    >(&self, cmd: GetCmd) -> Result<CmdResult, DatabaseError> {
+        self.write_queue.write(cmd).await
     }
 
-    async fn get_writer_concurrent(&self, account_id: AccountIdLight) -> ConcurrentWriteHandle {
-        self.write_concurrent.accquire(account_id).await
+    async fn write_concurrent<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send + 'static,
+        GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
+    >(&self, account: AccountIdLight, cmd: GetCmd) -> Result<CmdResult, DatabaseError> {
+        self.write_queue.concurrent_write(account, cmd).await
     }
 }
 
@@ -114,6 +124,7 @@ impl App {
     pub async fn new(
         database_handle: RouterDatabaseReadHandle,
         database_write_handle: RouterDatabaseWriteHandle,
+        write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
         ws_manager: WebSocketManager,
     ) -> Result<Self, ManagerClientError> {
@@ -122,6 +133,7 @@ impl App {
             database: Arc::new(database_handle),
             write_mutex: Arc::new(Mutex::new(database_write_handle.clone().into_sync_handle())),
             write_concurrent: Arc::new(ConcurrentWriteCommandHandle::new(database_write_handle)),
+            write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             manager_api: ManagerApiClient::new(&config)?.into(),
             sign_in_with: SignInWithManager::new(config).into(),

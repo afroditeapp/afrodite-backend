@@ -3,7 +3,7 @@ pub mod data;
 pub mod internal;
 pub mod manager_client;
 
-use std::{net::SocketAddr, pin::Pin, sync::Arc};
+use std::{net::SocketAddr, pin::Pin, sync::Arc, fmt::Write};
 
 use axum::Router;
 use futures::future::poll_fn;
@@ -38,7 +38,7 @@ use crate::{
     media_backup::MediaBackupManager,
     server::{
         app::{connection::WebSocketManager, App},
-        data::DatabaseManager,
+        data::{DatabaseManager, write_commands::{WriteCommandRunnerHandle}},
         internal::InternalApp,
     },
 };
@@ -96,9 +96,13 @@ impl PihkaServer {
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
 
+        let (write_cmd_runner_handle, write_cmd_waiter) =
+            WriteCommandRunnerHandle::new(router_database_write_handle.clone());
+
         let mut app = App::new(
                 router_database_handle,
                 router_database_write_handle,
+                write_cmd_runner_handle,
                 self.config.clone(),
                 ws_manager
             )
@@ -141,6 +145,7 @@ impl PihkaServer {
         }
 
         drop(app);
+        write_cmd_waiter.wait_untill_all_writing_ends().await;
         database_manager.close().await;
         media_backup_quit.wait_quit().await;
 
