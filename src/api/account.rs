@@ -11,7 +11,7 @@ use self::data::{
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 
-use super::{GetConfig, GetInternalApi, SignInWith, WriteData};
+use super::{GetConfig, GetInternalApi, SignInWith, WriteData, db_write};
 
 use tracing::error;
 
@@ -98,13 +98,11 @@ async fn login_impl<S: GetApiKeys + WriteData + GetUsers>(
 
     let account = AuthPair { access, refresh };
     let account_clone = account.clone();
-    state
-        .write(move |cmds| async move {
-            cmds
-                .common()
-                .set_new_auth_pair(id, account_clone, None)
-                .await
-        })
+
+    db_write!(state, move |cmds|
+        cmds.common()
+            .set_new_auth_pair(id, account_clone, None)
+    )
         .await
         .map_err(|e| {
             error!("Login error: {e:?}");

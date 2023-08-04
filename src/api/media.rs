@@ -21,7 +21,7 @@ use self::data::{
 
 use super::model::{AccountIdInternal, AccountIdLight};
 use super::utils::ApiKeyHeader;
-use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteData};
+use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteData, db_write};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 
@@ -230,19 +230,15 @@ pub async fn put_primary_image<S: WriteData>(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    state
-        .write(move |cmds| async move {
-            cmds.media()
-                .update_primary_image(api_caller_account_id, new_image)
-                .await
-        })
-        .await
-        .map_err(|e| {
-            error!("{}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-
-    Ok(())
+    db_write!(state, move |cmds|
+        cmds.media()
+            .update_primary_image(api_caller_account_id, new_image)
+    )
+    .await
+    .map_err(|e| {
+        error!("{}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";

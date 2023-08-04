@@ -179,3 +179,39 @@ pub trait GetManagerApi {
 pub trait GetConfig {
     fn config(&self) -> &Config;
 }
+
+
+/// Macro for writing data with different code style.
+/// Makes "async move" and "await" keywords unnecessary.
+/// The macro "closure" should work like a real closure.
+///
+/// Example usage:
+///
+/// ```rust
+/// pub async fn axum_route_handler<S: WriteDatabase>(
+///     state: S,
+/// ) -> Result<(), StatusCode> {
+///     let api_caller_account_id = todo!();
+///     let new_image = todo!();
+///     db_write!(state, move |cmds|
+///         cmds.media()
+///             .update_primary_image(api_caller_account_id, new_image)
+///     )
+///     .await
+///     .map_err(|e| {
+///         error!("{}", e);
+///         StatusCode::INTERNAL_SERVER_ERROR
+///     })
+///     Ok(())
+/// }
+/// ```
+macro_rules! db_write {
+    ($state:expr, move |$cmds:ident| $commands:expr) => {
+        $state
+            .write(move |$cmds| async move {
+                ($commands).await
+            })
+    };
+}
+
+pub(crate) use db_write;

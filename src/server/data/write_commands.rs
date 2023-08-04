@@ -23,7 +23,21 @@ use crate::{
 
 use super::{RouterDatabaseWriteHandle, SyncWriteHandle, write_concurrent::{ConcurrentWriteHandle, ConcurrentWriteCommandHandle}};
 
-pub type WriteCmds = OwnedMutexGuard<SyncWriteHandle>;
+pub type WriteCmds = Cmds;
+
+/// Make VSCode rust-analyzer code type annotation shorter.
+/// The annotation is displayed when calling write() method.
+pub struct Cmds {
+    pub write: OwnedMutexGuard<SyncWriteHandle>,
+}
+
+impl std::ops::Deref for Cmds {
+    type Target = OwnedMutexGuard<SyncWriteHandle>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.write
+    }
+}
 
 #[derive(Debug)]
 pub struct WriteCommandRunnerHandle {
@@ -60,7 +74,7 @@ impl WriteCommandRunnerHandle {
         let quit_lock = self.quit_lock.clone();
         let lock = self.sync_write_mutex.clone().lock_owned().await;
         let handle = tokio::spawn(async move {
-            let result = write_cmd(lock).await;
+            let result = write_cmd(Cmds { write: lock }).await;
             drop(quit_lock); // Write completed, so release the quit lock.
             result
         });
