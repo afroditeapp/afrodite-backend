@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use error_stack::Result;
 
-use crate::server::data::database::current::SqliteReadCommands;
+use crate::server::data::SqliteReadCommands;
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight, ApiKey, GoogleAccountId},
     utils::ConvertCommandError,
@@ -10,7 +10,7 @@ use crate::{
 
 use super::{
     cache::{CacheError, DatabaseCache},
-    database::sqlite::SqliteReadHandle,
+    database::sqlite::SqlxReadHandle,
     write::DatabaseId,
     DatabaseError,
 };
@@ -57,7 +57,7 @@ pub struct AccountIdManager<'a> {
 }
 
 impl<'a> AccountIdManager<'a> {
-    pub fn new(cache: &'a DatabaseCache, read_handle: &'a SqliteReadHandle) -> Self {
+    pub fn new(cache: &'a DatabaseCache, read_handle: &'a SqlxReadHandle) -> Self {
         Self {
             cache,
             read_handle: SqliteReadCommands::new(read_handle),

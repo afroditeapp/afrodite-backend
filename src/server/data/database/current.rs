@@ -1,10 +1,6 @@
 pub mod read;
 pub mod write;
 
-use read::account::CurrentReadAccountCommands;
-use read::chat::CurrentReadChatCommands;
-use read::media::CurrentReadMediaCommands;
-use read::profile::CurrentReadProfileCommands;
 use write::account::CurrentWriteAccountCommands;
 use write::chat::CurrentWriteChatCommands;
 use write::media::CurrentWriteMediaCommands;
@@ -13,7 +9,9 @@ use write::profile::CurrentWriteProfileCommands;
 
 use crate::server::data::database::sqlite::CurrentDataWriteHandle;
 
-use crate::server::data::database::sqlite::SqliteReadHandle;
+use crate::server::data::database::sqlite::SqlxReadHandle;
+
+use super::diesel::DieselConnection;
 
 #[macro_export]
 macro_rules! read_json {
@@ -42,32 +40,6 @@ macro_rules! insert_or_update_json {
 
         Ok(())
     }};
-}
-
-pub struct SqliteReadCommands<'a> {
-    pub handle: &'a SqliteReadHandle,
-}
-
-impl<'a> SqliteReadCommands<'a> {
-    pub fn new(handle: &'a SqliteReadHandle) -> Self {
-        Self { handle }
-    }
-
-    pub fn account(&self) -> CurrentReadAccountCommands<'_> {
-        CurrentReadAccountCommands::new(self.handle)
-    }
-
-    pub fn media(&self) -> CurrentReadMediaCommands<'_> {
-        CurrentReadMediaCommands::new(self.handle)
-    }
-
-    pub fn profile(&self) -> CurrentReadProfileCommands<'_> {
-        CurrentReadProfileCommands::new(self.handle)
-    }
-
-    pub fn chat(&self) -> CurrentReadChatCommands<'_> {
-        CurrentReadChatCommands::new(self.handle)
-    }
 }
 
 #[derive(Clone, Debug)]

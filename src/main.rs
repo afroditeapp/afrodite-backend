@@ -5,9 +5,6 @@ pub mod media_backup;
 pub mod server;
 pub mod test;
 pub mod utils;
-pub mod schema;
-pub mod schema_sqlite_types;
-pub mod models;
 
 use server::PihkaServer;
 use test::TestRunner;

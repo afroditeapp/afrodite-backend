@@ -4,20 +4,16 @@ use crate::api::model::{
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
     ModerationRequestQueueNumber, ModerationRequestState,
 };
-use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteReadHandle};
+use crate::server::data::database::sqlite::{SqliteDatabaseError, SqlxReadHandle};
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::read::ReadResult;
 use crate::utils::IntoReportExt;
 use std::collections::HashSet;
 
-pub struct CurrentReadMediaCommands<'a> {
-    handle: &'a SqliteReadHandle,
-}
+define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 
-impl<'a> CurrentReadMediaCommands<'a> {
-    pub fn new(handle: &'a SqliteReadHandle) -> Self {
-        Self { handle }
-    }
+
+impl CurrentReadMedia<'_> {
 
     pub async fn get_current_account_media(
         &self,
@@ -35,7 +31,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             "#,
             id.account_row_id,
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -76,7 +72,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             "#,
             id.account_row_id,
         )
-        .fetch_all(self.handle.pool())
+        .fetch_all(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -113,7 +109,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             "#,
             id,
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .map(|r| ContentIdInternal {
             content_id: r.content_id,
@@ -142,7 +138,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             required_state,
             required_slot,
         )
-        .fetch_optional(self.handle.pool())
+        .fetch_optional(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -170,7 +166,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             content_owner.account_row_id,
             required_state,
         )
-        .fetch_all(self.handle.pool())
+        .fetch_all(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -197,7 +193,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             "#,
             account_row_id,
         )
-        .fetch_optional(self.handle.pool())
+        .fetch_optional(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -214,7 +210,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             "#,
             request.request_row_id,
         )
-        .fetch_all(self.handle.pool())
+        .fetch_all(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -269,7 +265,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             "#,
             id.request_row_id,
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -302,7 +298,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             account_row_id,
             state_in_progress,
         )
-        .fetch_all(self.handle.pool())
+        .fetch_all(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -340,7 +336,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             "#,
             sub_queue,
         )
-        .fetch_optional(self.handle.pool())
+        .fetch_optional(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
@@ -366,7 +362,7 @@ impl<'a> CurrentReadMediaCommands<'a> {
             account_row_id,
             moderation.request_id.request_row_id,
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 

@@ -1,0 +1,263 @@
+use crate::{api::model::AccountIdInternal, server::data::DatabaseError};
+use crate::config::Config;
+
+use super::history::read::HistoryReadCommands;
+
+use async_trait::async_trait;
+use deadpool::managed::{HookErrorCause};
+use deadpool_diesel::sqlite::{Manager, Pool, Hook};
+use diesel::{Connection, RunQueryDsl, ConnectionError, sql_function, OptionalExtension};
+use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
+use sqlx::sqlite::SqliteRow;
+use sqlx::Row;
+use tokio::sync::Mutex;
+use tracing::log::{info, error};
+
+use super::history::write::HistoryWriteCommands;
+use crate::server::data::database::current::{CurrentDataWriteCommands};
+
+use error_stack::Result;
+
+use std::{path::{Path, PathBuf}, sync::Arc, fmt};
+
+use sqlx::{
+    sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
+    SqlitePool,
+};
+
+use crate::utils::{IntoReportExt, IntoReportFromString};
+
+pub type HookError = deadpool::managed::HookError<deadpool_diesel::Error>;
+
+pub type DieselConnection = diesel::SqliteConnection;
+pub type DieselPool = deadpool_diesel::sqlite::Pool;
+
+pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
+mod sqlite_version123 {
+    use diesel::{sql_types::Text, sql_function};
+    sql_function! { fn sqlite_version() -> Text }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DieselDatabaseError {
+    #[error("Connecting to SQLite database failed")]
+    Connect,
+    #[error("Executing SQL query failed")]
+    Execute,
+    #[error("Running diesel database migrations failed")]
+    Migrate,
+
+
+    #[error("Connection get failed from connection pool")]
+    GetConnection,
+    #[error("Interaction with database connection failed")]
+    InteractionError,
+}
+
+pub struct DieselWriteCloseHandle {
+    pool: DieselPool,
+}
+
+impl DieselWriteCloseHandle {
+    /// Call this before closing the server.
+    pub async fn close(self) {
+        self.pool.close()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DieselCurrentWriteHandle {
+    handle: DieselWriteHandle,
+}
+
+impl DieselCurrentWriteHandle {
+    pub fn new(handle: DieselWriteHandle) -> Self {
+        Self {
+            handle,
+        }
+    }
+}
+
+impl fmt::Debug for DieselWriteHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DieselWriteHandle")
+            .finish()
+    }
+}
+
+#[derive(Clone)]
+pub struct DieselWriteHandle {
+    pool: DieselPool,
+}
+
+impl DieselWriteHandle {
+    pub async fn new(
+        config: &Config,
+        db_path: PathBuf,
+        print_sqlite_version: bool,
+    ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
+        let manager = Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1);
+        let pool = Pool::builder(manager)
+            .max_size(1)
+            .post_create(sqlite_setup_hook(&config))
+            .build()
+            .into_error(DieselDatabaseError::Connect)?;
+
+        let conn = pool
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)?;
+        conn.interact(|conn| {
+            conn.run_pending_migrations(DIESEL_MIGRATIONS)
+                .map(|_| ())
+        })
+            .await
+            .into_error_string(DieselDatabaseError::InteractionError)?
+            .into_error_string(DieselDatabaseError::Migrate)?;
+
+        pool
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)?;
+        let sqlite_version: Vec<String> = conn.interact(move |conn| {
+            //sqlite_version::sqlite_version().load(conn);
+            // let result: Vec<String> = diesel::select(sqlite_version123::sqlite_version()).load(conn)?;
+            //let result: Option<String> = diesel::sql_query("SELECT sqlite_version()").get_result(conn).optional()?;
+            // Ok(result)
+            diesel::select(sqlite_version123::sqlite_version()).load(conn)
+        })
+            .await
+            .into_error_string(DieselDatabaseError::Execute)?
+            .into_error_string(DieselDatabaseError::Execute)?;
+
+        if let Some(version) = sqlite_version.first() {
+            info!("Diesel SQLite version: {}", version);
+        }
+
+        let write_handle = DieselWriteHandle {
+            pool: pool.clone(),
+        };
+
+        let close_handle = DieselWriteCloseHandle { pool: pool.clone() };
+
+        Ok((write_handle, close_handle))
+    }
+
+    pub fn pool(&self) -> &DieselPool {
+        &self.pool
+    }
+}
+
+pub struct DieselReadCloseHandle {
+    pool: DieselPool,
+}
+
+impl DieselReadCloseHandle {
+    /// Call this before closing the server.
+    pub async fn close(self) {
+        self.pool.close()
+    }
+}
+
+pub fn diesel_open_sqlite(
+    config: &Config,
+    db_path: PathBuf,
+) -> diesel::SqliteConnection {
+    diesel::SqliteConnection::establish(&db_path.to_string_lossy())
+        .unwrap_or_else(|_| panic!("Error connecting to {}", db_path.to_string_lossy()))
+}
+
+pub fn sqlite_setup_hook(config: &Config) -> Hook {
+    let pragmas = &[
+        "PRAGMA journal_mode=WAL;",
+        "PRAGMA synchronous=NORMAL;",
+        "PRAGMA foreign_keys=ON;",
+    ];
+
+    let litestram_pragmas = if config.litestream().is_some() {
+        &[
+            // Litestream docs recommend 5 second timeout
+            "PRAGMA busy_timeout=5000;",
+            // Prevent backend from removing WAL files
+            "PRAGMA wal_autocheckpoint=0;",
+        ]
+    } else {
+        [].as_slice()
+    };
+
+    Hook::async_fn(move |pool, _| {
+        Box::pin(
+            async move {
+                pool.interact(move |connection| {
+                    for pragma_str in pragmas.iter().chain(litestram_pragmas) {
+                        diesel::sql_query(*pragma_str).execute(connection)?;
+                    }
+
+                    Ok(())
+                })
+                .await
+                .map_err(|e| {
+                    error!("Error: {}", e);
+                    HookError::Abort(HookErrorCause::Message(e.to_string()))
+                })?
+                .map_err(|e: diesel::result::Error| {
+                    error!("Error: {}", e);
+                    HookError::Abort(HookErrorCause::Backend(e.into()))
+                })
+            }
+        )
+    })
+}
+
+#[derive(Clone)]
+pub struct DieselReadHandle {
+    pool: DieselPool,
+}
+
+impl fmt::Debug for DieselReadHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DieselReadHandle")
+            .finish()
+    }
+}
+
+impl DieselReadHandle {
+    pub async fn new(
+        config: &Config,
+        db_path: PathBuf,
+    ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
+        let manager = Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1);
+        let pool = Pool::builder(manager)
+            .max_size(8)
+            .post_create(sqlite_setup_hook(&config))
+            .build()
+            .into_error(DieselDatabaseError::Connect)?;
+
+        let handle = DieselReadHandle {
+            pool: pool.clone(),
+        };
+
+        let close_handle = DieselReadCloseHandle { pool };
+
+        Ok((handle, close_handle))
+    }
+
+    pub fn pool(&self) -> &DieselPool {
+        &self.pool
+    }
+}
+
+pub async fn print_sqlite_version(pool: &SqlitePool) -> Result<(), DieselDatabaseError> {
+    let q = sqlx::query("SELECT sqlite_version()")
+        .map(|x: SqliteRow| {
+            let r: String = x.get(0);
+            r
+        })
+        .fetch_one(pool)
+        .await
+        .into_error(DieselDatabaseError::Execute)?;
+
+    info!("SQLite version: {}", q);
+    Ok(())
+}

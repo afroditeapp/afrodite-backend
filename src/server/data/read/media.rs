@@ -11,7 +11,6 @@ use super::{
     ReadCommands,
 };
 
-use crate::server::data::database::current::SqliteReadCommands;
 use error_stack::Result;
 
 define_read_commands!(ReadCommandsMedia);

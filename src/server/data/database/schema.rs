@@ -1,7 +1,7 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     Account (account_row_id) {
         account_row_id -> Integer,
@@ -10,7 +10,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     AccountId (account_row_id) {
         account_row_id -> Integer,
@@ -19,7 +19,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     AccountSetup (account_row_id) {
         account_row_id -> Integer,
@@ -28,7 +28,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     ApiKey (account_row_id) {
         account_row_id -> Integer,
@@ -37,7 +37,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     CurrentAccountMedia (account_row_id) {
         account_row_id -> Integer,
@@ -50,7 +50,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     HistoryAccount (row_id) {
         row_id -> Integer,
@@ -61,7 +61,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     HistoryAccountSetup (row_id) {
         row_id -> Integer,
@@ -72,7 +72,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     HistoryMediaModerationRequest (row_id) {
         row_id -> Integer,
@@ -85,7 +85,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     HistoryProfile (row_id) {
         row_id -> Integer,
@@ -96,7 +96,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     MediaContent (content_row_id) {
         content_row_id -> Integer,
@@ -109,7 +109,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     MediaModeration (account_row_id, request_row_id) {
         account_row_id -> Integer,
@@ -120,7 +120,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     MediaModerationQueueNumber (queue_number) {
         queue_number -> Integer,
@@ -130,7 +130,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     MediaModerationRequest (request_row_id) {
         request_row_id -> Integer,
@@ -141,7 +141,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     Profile (account_row_id) {
         account_row_id -> Integer,
@@ -154,7 +154,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     RefreshToken (account_row_id) {
         account_row_id -> Integer,
@@ -163,7 +163,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    use crate::schema_sqlite_types::*;
+    use crate::server::data::database::schema_sqlite_types::*;
 
     SignInWithInfo (account_row_id) {
         account_row_id -> Integer,

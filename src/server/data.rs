@@ -16,7 +16,7 @@ use std::{
 
 use error_stack::{Result, ResultExt};
 
-use database::current::SqliteReadCommands;
+use crate::server::data::database::current::read::SqliteReadCommands;
 use tracing::info;
 
 use crate::{
@@ -31,7 +31,7 @@ use self::{
     database::{history::read::HistoryReadCommands, sqlite::{HistoryUpdateJson, SqliteUpdateJson}},
     database::sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
-        SqliteReadCloseHandle, SqliteReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
+        SqlxReadCloseHandle, SqlxReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
     },
     file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
@@ -161,9 +161,9 @@ impl DatabaseRoot {
 /// Handle SQLite databases and write command runner.
 pub struct DatabaseManager {
     sqlite_write_close: SqliteWriteCloseHandle,
-    sqlite_read_close: SqliteReadCloseHandle,
+    sqlite_read_close: SqlxReadCloseHandle,
     history_write_close: SqliteWriteCloseHandle,
-    history_read_close: SqliteReadCloseHandle,
+    history_read_close: SqlxReadCloseHandle,
 }
 
 impl DatabaseManager {
@@ -187,7 +187,7 @@ impl DatabaseManager {
             .change_context(DatabaseError::Init)?;
 
         let (sqlite_read, sqlite_read_close) =
-            SqliteReadHandle::new(&config, root.current_db_file())
+            SqlxReadHandle::new(&config, root.current_db_file())
                 .await
                 .change_context(DatabaseError::Init)?;
 
@@ -197,7 +197,7 @@ impl DatabaseManager {
                 .change_context(DatabaseError::Init)?;
 
         let (history_read, history_read_close) =
-            SqliteReadHandle::new(&config, root.history_db_file())
+            SqlxReadHandle::new(&config, root.history_db_file())
                 .await
                 .change_context(DatabaseError::Init)?;
 
@@ -214,7 +214,7 @@ impl DatabaseManager {
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
-            sqlite_write: CurrentDataWriteHandle::new(sqlite_write, sqlite_read.clone()),
+            sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
             sqlite_read,
             history_write: HistoryWriteHandle {
                 handle: history_write,
@@ -263,9 +263,9 @@ pub struct RouterDatabaseWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
     sqlite_write: CurrentDataWriteHandle,
-    sqlite_read: SqliteReadHandle,
+    sqlite_read: SqlxReadHandle,
     history_write: HistoryWriteHandle,
-    history_read: SqliteReadHandle,
+    history_read: SqlxReadHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
@@ -324,9 +324,9 @@ pub struct SyncWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
     sqlite_write: CurrentDataWriteHandle,
-    sqlite_read: SqliteReadHandle,
+    sqlite_read: SqlxReadHandle,
     history_write: HistoryWriteHandle,
-    history_read: SqliteReadHandle,
+    history_read: SqlxReadHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
@@ -415,8 +415,8 @@ impl SyncWriteHandle {
 
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
-    sqlite_read: SqliteReadHandle,
-    history_read: SqliteReadHandle,
+    sqlite_read: SqlxReadHandle,
+    history_read: SqlxReadHandle,
     cache: Arc<DatabaseCache>,
 }
 

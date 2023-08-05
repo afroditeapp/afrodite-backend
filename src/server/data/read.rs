@@ -9,7 +9,7 @@ macro_rules! define_read_commands {
                 Self { cmds }
             }
 
-            fn db(&self) -> &SqliteReadCommands<'_> {
+            fn db(&self) -> &crate::server::data::database::current::read::SqliteReadCommands<'_> {
                 &self.cmds.db
             }
 
@@ -55,12 +55,11 @@ use self::{
 
 use super::{
     cache::{CacheError, DatabaseCache, ReadCacheJson},
-    database::sqlite::{SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson},
+    database::{sqlite::{SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson}, current::read::SqliteReadCommands},
     file::{utils::FileDir, FileError},
     DatabaseError,
 };
 
-use crate::server::data::database::current::SqliteReadCommands;
 use error_stack::Result;
 
 pub type ReadResult<T, Err, WriteContext = T> =
@@ -160,7 +159,7 @@ pub struct ReadCommands<'a> {
 }
 
 impl<'a> ReadCommands<'a> {
-    pub fn new(sqlite: &'a SqliteReadHandle, cache: &'a DatabaseCache, files: &'a FileDir) -> Self {
+    pub fn new(sqlite: &'a SqlxReadHandle, cache: &'a DatabaseCache, files: &'a FileDir) -> Self {
         Self {
             db: SqliteReadCommands::new(sqlite),
             cache,

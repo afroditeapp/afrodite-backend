@@ -1,4 +1,5 @@
 use base64::Engine;
+use diesel::{sql_types::Binary, deserialize::FromSql, sqlite::Sqlite};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -298,3 +299,12 @@ pub struct SignInWithInfo {
 #[serde(transparent)]
 #[sqlx(transparent)]
 pub struct GoogleAccountId(pub String);
+
+
+impl FromSql<Binary, Sqlite> for AccountIdLight {
+    fn from_sql(bytes: <Sqlite as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+        let bytes = <Vec<u8> as FromSql<Binary, Sqlite>>::from_sql(bytes)?;
+        let uuid = uuid::Uuid::from_slice(&bytes)?;
+        Ok(AccountIdLight::new(uuid))
+    }
+}

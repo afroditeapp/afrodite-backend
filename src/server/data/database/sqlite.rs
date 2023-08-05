@@ -1,6 +1,7 @@
 use crate::{api::model::AccountIdInternal, server::data::DatabaseError};
 use crate::config::Config;
 
+use super::current::read::SqliteReadCommands;
 use super::history::read::HistoryReadCommands;
 
 use async_trait::async_trait;
@@ -14,7 +15,7 @@ use tokio::sync::Mutex;
 use tracing::log::{info, error};
 
 use super::history::write::HistoryWriteCommands;
-use crate::server::data::database::current::{CurrentDataWriteCommands, SqliteReadCommands};
+use crate::server::data::database::current::{CurrentDataWriteCommands};
 
 use error_stack::Result;
 
@@ -26,11 +27,6 @@ use sqlx::{
 };
 
 use crate::utils::{IntoReportExt, IntoReportFromString};
-
-pub type HookError = deadpool::managed::HookError<deadpool_diesel::Error>;
-
-
-pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 pub const HISTORY_FILE_NAME: &str = "history.db";
@@ -108,14 +104,16 @@ impl SqliteWriteCloseHandle {
 #[derive(Debug, Clone)]
 pub struct CurrentDataWriteHandle {
     handle: SqliteWriteHandle,
-    read_handle: SqliteReadHandle,
+    read_handle: SqlxReadHandle,
 }
 
 impl CurrentDataWriteHandle {
-    pub fn new(handle: SqliteWriteHandle, read_handle: SqliteReadHandle) -> Self {
+    pub fn new(handle: SqliteWriteHandle) -> Self {
         Self {
+            read_handle: SqlxReadHandle {
+                pool: handle.pool().clone(),
+            },
             handle,
-            read_handle,        // TODO: use write handle for reading?
         }
     }
 
@@ -175,7 +173,6 @@ impl fmt::Debug for SqliteWriteHandle {
 #[derive(Clone)]
 pub struct SqliteWriteHandle {
     pool: SqlitePool,
-    diesel_pool: deadpool_diesel::Pool<Manager>,
 }
 
 impl SqliteWriteHandle {
@@ -189,34 +186,8 @@ impl SqliteWriteHandle {
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
-        sqlx::migrate!()
-            .run(&pool)
-            .await
-            .into_error(SqliteDatabaseError::Migrate)?;
-
-
-        let manager = Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1);
-        let diesel_pool = Pool::builder(manager)
-            .max_size(1)
-            .post_create(sqlite_setup_hook(&config))
-            .build()
-            .into_error(SqliteDatabaseError::Connect)?;
-
-        let connection = diesel_pool
-            .get()
-            .await
-            .into_error(SqliteDatabaseError::GetConnection)?;
-        connection.interact(|connection| {
-            connection.run_pending_migrations(DIESEL_MIGRATIONS)
-                .map(|_| ())
-        })
-            .await
-            .into_error_string(SqliteDatabaseError::InteractionError)?
-            .into_error_string(SqliteDatabaseError::Migrate)?;
-
         let write_handle = SqliteWriteHandle {
             pool: pool.clone(),
-            diesel_pool,
         };
 
         let close_handle = SqliteWriteCloseHandle { pool };
@@ -229,104 +200,45 @@ impl SqliteWriteHandle {
     }
 }
 
-pub struct SqliteReadCloseHandle {
+pub struct SqlxReadCloseHandle {
     pool: SqlitePool,
 }
 
-impl SqliteReadCloseHandle {
+impl SqlxReadCloseHandle {
     /// Call this before closing the server.
     pub async fn close(self) {
         self.pool.close().await
     }
 }
 
-pub fn diesel_open_sqlite_for_reading(
-    config: &Config,
-    db_path: PathBuf,
-) -> diesel::SqliteConnection {
-    diesel::SqliteConnection::establish(&db_path.to_string_lossy())
-        .unwrap_or_else(|_| panic!("Error connecting to {}", db_path.to_string_lossy()))
-}
-
-pub fn sqlite_setup_hook(config: &Config) -> Hook {
-    let pragmas = &[
-        "PRAGMA journal_mode=WAL;",
-        "PRAGMA synchronous=NORMAL;",
-        "PRAGMA foreign_keys=ON;",
-    ];
-
-    let litestram_pragmas = if config.litestream().is_some() {
-        &[
-            // Litestream docs recommend 5 second timeout
-            "PRAGMA busy_timeout=5000;",
-            // Prevent backend from removing WAL files
-            "PRAGMA wal_autocheckpoint=0;",
-        ]
-    } else {
-        [].as_slice()
-    };
-
-    Hook::async_fn(move |pool, _| {
-        Box::pin(
-            async move {
-                pool.interact(move |connection| {
-                    for pragma_str in pragmas.iter().chain(litestram_pragmas) {
-                        diesel::sql_query(*pragma_str).execute(connection)?;
-                    }
-
-                    Ok(())
-                })
-                .await
-                .map_err(|e| {
-                    error!("Error: {}", e);
-                    HookError::Abort(HookErrorCause::Message(e.to_string()))
-                })?
-                .map_err(|e: diesel::result::Error| {
-                    error!("Error: {}", e);
-                    HookError::Abort(HookErrorCause::Backend(e.into()))
-                })
-            }
-        )
-    })
-}
-
 #[derive(Clone)]
-pub struct SqliteReadHandle {
+pub struct SqlxReadHandle {
     pool: SqlitePool,
-    pub diesel_pool: deadpool_diesel::Pool<Manager>,
 }
 
-impl fmt::Debug for SqliteReadHandle {
+impl fmt::Debug for SqlxReadHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SqliteReadHandle")
             .finish()
     }
 }
 
-impl SqliteReadHandle {
+impl SqlxReadHandle {
     pub async fn new(
         config: &Config,
         db_path: PathBuf,
-    ) -> Result<(Self, SqliteReadCloseHandle), SqliteDatabaseError> {
+    ) -> Result<(Self, SqlxReadCloseHandle), SqliteDatabaseError> {
         let pool = SqlitePoolOptions::new()
             .max_connections(16)
             .connect_with(create_sqlite_connect_options(&config, &db_path, false))
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
-        let manager = Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1);
-        let diesel_pool = Pool::builder(manager)
-            .max_size(8)
-            .post_create(sqlite_setup_hook(&config))
-            .build()
-            .into_error(SqliteDatabaseError::Connect)?;
-
-        let handle = SqliteReadHandle {
+        let handle = SqlxReadHandle {
             pool: pool.clone(),
-            diesel_pool,
         };
 
-        let close_handle = SqliteReadCloseHandle { pool };
+        let close_handle = SqlxReadCloseHandle { pool };
 
         Ok((handle, close_handle))
     }

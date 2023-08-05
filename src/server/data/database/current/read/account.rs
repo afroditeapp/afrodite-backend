@@ -2,9 +2,9 @@ use crate::api::model::{
     Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo,
 };
 use crate::read_json;
-use crate::server::data::database::current::SqliteReadCommands;
+use crate::server::data::database::current::read::SqliteReadCommands;
 use crate::server::data::database::sqlite::{
-    SqliteDatabaseError, SqliteReadHandle, SqliteSelectJson,
+    SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson,
 };
 use crate::server::data::read::ReadResult;
 use crate::server::data::write::NoId;
@@ -13,14 +13,10 @@ use async_trait::async_trait;
 use futures::Stream;
 use tokio_stream::StreamExt;
 
-pub struct CurrentReadAccountCommands<'a> {
-    handle: &'a SqliteReadHandle,
-}
 
-impl<'a> CurrentReadAccountCommands<'a> {
-    pub fn new(handle: &'a SqliteReadHandle) -> Self {
-        Self { handle }
-    }
+define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
+
+impl CurrentReadAccount<'_> {
 
     pub fn account_ids_stream(
         &self,
@@ -32,7 +28,7 @@ impl<'a> CurrentReadAccountCommands<'a> {
             FROM AccountId
             "#,
         )
-        .fetch(self.handle.pool())
+        .fetch(self.pool())
         .map(|result| {
             result
                 .into_error(SqliteDatabaseError::Fetch)
@@ -53,7 +49,7 @@ impl<'a> CurrentReadAccountCommands<'a> {
             "#,
             id
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .map(|result| result.api_key.map(ApiKey::new))
         .into_error(SqliteDatabaseError::Fetch)
@@ -73,7 +69,7 @@ impl<'a> CurrentReadAccountCommands<'a> {
             "#,
             id
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .map(|result| {
             result
@@ -99,7 +95,7 @@ impl<'a> CurrentReadAccountCommands<'a> {
             "#,
             id
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)
         .map_err(|e| e.into())
@@ -118,7 +114,7 @@ impl<'a> CurrentReadAccountCommands<'a> {
             "#,
             google_account_id
         )
-        .fetch_optional(self.handle.pool())
+        .fetch_optional(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)
         .map_err(|e| e.into())

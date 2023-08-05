@@ -2,7 +2,7 @@ use error_stack::Result;
 use time::OffsetDateTime;
 use tokio_stream::{Stream, StreamExt};
 
-use super::super::sqlite::{SqliteDatabaseError, SqliteReadHandle};
+use super::super::sqlite::{SqliteDatabaseError, SqlxReadHandle};
 use super::HistoryData;
 
 use crate::api::model::{AccountIdInternal, AccountState};
@@ -24,11 +24,11 @@ macro_rules! read_history {
 }
 
 pub struct HistoryReadCommands<'a> {
-    handle: &'a SqliteReadHandle,
+    handle: &'a SqlxReadHandle,
 }
 
 impl<'a> HistoryReadCommands<'a> {
-    pub fn new(handle: &'a SqliteReadHandle) -> Self {
+    pub fn new(handle: &'a SqlxReadHandle) -> Self {
         Self { handle }
     }
 

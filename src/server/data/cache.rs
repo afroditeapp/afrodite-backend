@@ -15,11 +15,10 @@ use crate::{
     utils::ConvertCommandError,
 };
 
-use crate::server::data::database::current::SqliteReadCommands;
 use error_stack::{Result, ResultExt};
 
 use super::{
-    database::sqlite::SqliteSelectJson,
+    database::{sqlite::SqliteSelectJson, current::read::SqliteReadCommands},
     index::{
         location::{LocationIndexIteratorState, LocationIndexKey},
         LocationIndexIteratorGetter, LocationIndexWriterGetter,
