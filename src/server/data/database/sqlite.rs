@@ -202,7 +202,8 @@ impl SqliteWriteHandle {
             pool.max_lifetime(None)
                 .idle_timeout(None)
         } else {
-            pool
+            pool.max_lifetime(None)
+                .idle_timeout(None)
         };
 
         let pool = pool
@@ -266,7 +267,17 @@ impl SqlxReadHandle {
         db_path: PathBuf,
     ) -> Result<(Self, SqlxReadCloseHandle), SqliteDatabaseError> {
         let pool = SqlitePoolOptions::new()
-            .max_connections(16)
+            .max_connections(num_cpus::get() as u32);
+
+        let pool = if config.sqlite_in_ram() {
+            pool.max_lifetime(None)
+                .idle_timeout(None)
+        } else {
+            pool.max_lifetime(None)
+                .idle_timeout(None)
+        };
+
+        let pool = pool
             .connect_with(create_sqlite_connect_options(&config, &db_path, false)?)
             .await
             .into_error(SqliteDatabaseError::Connect)?;

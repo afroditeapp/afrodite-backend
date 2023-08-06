@@ -1,5 +1,5 @@
 use crate::{api::model::AccountIdInternal, server::data::DatabaseError};
-use crate::config::Config;
+use crate::config::{Config, info};
 
 use super::history::read::HistoryReadCommands;
 use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME, SqliteDatabaseError};
@@ -158,6 +158,14 @@ impl DieselWriteHandle {
             .into_error_string(DieselDatabaseError::InteractionError)?
             .into_error_string(DieselDatabaseError::Migrate)?;
 
+        // let pool_clone = pool.clone();
+        // tokio::spawn( async move {
+        //     loop {
+        //         sleep(Duration::from_secs(5)).await;
+        //         info!("{:?}", pool_clone.status());
+        //     }
+        // });
+
         let write_handle = DieselWriteHandle {
             pool: pool.clone(),
         };
@@ -201,14 +209,6 @@ impl DieselReadCloseHandle {
     pub async fn close(self) {
         self.pool.close()
     }
-}
-
-pub fn diesel_open_sqlite(
-    config: &Config,
-    db_path: PathBuf,
-) -> diesel::SqliteConnection {
-    diesel::SqliteConnection::establish(&db_path.to_string_lossy())
-        .unwrap_or_else(|_| panic!("Error connecting to {}", db_path.to_string_lossy()))
 }
 
 pub fn sqlite_setup_hook(config: &Config) -> Hook {
@@ -272,10 +272,33 @@ impl DieselReadHandle {
     ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
         let manager = create_manager(config, db_path)?;
         let pool = Pool::builder(manager)
-            .max_size(8)
-            .post_create(sqlite_setup_hook(&config))
+            .max_size(num_cpus::get())
+            .post_create(sqlite_setup_hook(&config));
+
+
+        let pool = if config.sqlite_in_ram() {
+            // Prevent all in RAM database from being dropped
+
+            pool
+                .runtime(deadpool::Runtime::Tokio1)
+                .recycle_timeout(Some(std::time::Duration::MAX))
+        } else {
+            pool
+        };
+
+        let pool = pool
             .build()
             .into_error(DieselDatabaseError::Connect)?;
+
+
+        let pool_clone = pool.clone();
+        tokio::spawn( async move {
+            loop {
+                sleep(Duration::from_secs(5)).await;
+                info!("{:?}", pool_clone.status());
+            }
+        });
+
 
         let handle = DieselReadHandle {
             pool: pool.clone(),
