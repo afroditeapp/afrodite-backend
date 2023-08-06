@@ -1,9 +1,13 @@
+use crate::{
+    api::{
+        media::data::{ContentId, ModerationRequestContent, PrimaryImage},
+        model::AccountIdInternal,
+    },
+    server::data::{file::file::ImageSlot, DatabaseError},
+    utils::ConvertCommandError,
+};
 
-
-use crate::{api::{model::{AccountIdInternal}, media::data::{ModerationRequestContent, ContentId, PrimaryImage}}, server::data::{DatabaseError, file::file::ImageSlot}, utils::ConvertCommandError};
-
-use error_stack::{Result, ResultExt, Report};
-
+use error_stack::{Report, Result, ResultExt};
 
 define_write_commands!(WriteCommandsMedia);
 
@@ -62,7 +66,8 @@ impl WriteCommandsMedia<'_> {
                 let raw_img = self
                     .file_dir()
                     .unprocessed_image_upload(id.as_light(), content_id);
-                let processed_content_path = self.file_dir().image_content(id.as_light(), content_id);
+                let processed_content_path =
+                    self.file_dir().image_content(id.as_light(), content_id);
                 raw_img
                     .move_to(&processed_content_path)
                     .await
@@ -110,5 +115,4 @@ impl WriteCommandsMedia<'_> {
             .await
             .convert(id)
     }
-
 }

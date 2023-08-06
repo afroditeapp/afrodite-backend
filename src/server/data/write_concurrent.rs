@@ -1,35 +1,28 @@
 //! Write commands that can be run concurrently also with synchronous
 //! write commands.
 
-
 use std::collections::HashMap;
 use std::fmt;
+use std::fmt::Debug;
 use std::sync::Arc;
-use std::{fmt::Debug};
 
 use axum::extract::BodyStream;
 use error_stack::{Result, ResultExt};
-use tokio::sync::{OwnedMutexGuard, RwLock, Mutex};
+use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use crate::{
-    api::{
-        model::{
-            AccountIdInternal, AccountIdLight, ContentId, ProfileLink,
-        },
-    },
+    api::model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink},
     server::data::DatabaseError,
-    utils::{ConvertCommandError},
+    utils::ConvertCommandError,
 };
 
 use super::RouterDatabaseWriteHandle;
 use super::{
-    cache::{DatabaseCache},
+    cache::DatabaseCache,
     database::history::write::HistoryWriteCommands,
-    database::sqlite::{
-        CurrentDataWriteHandle, HistoryWriteHandle,
-    },
-    file::{utils::FileDir},
-    index::{LocationIndexIteratorGetter},
+    database::sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
+    file::utils::FileDir,
+    index::LocationIndexIteratorGetter,
 };
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
@@ -43,21 +36,18 @@ pub struct AccountWriteLockManager {
 
 impl fmt::Debug for AccountWriteLockManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AccountWriteLockManager")
-            .finish()
+        f.debug_struct("AccountWriteLockManager").finish()
     }
 }
 
 impl AccountWriteLockManager {
     pub async fn lock_account(&self, a: AccountIdLight) -> OwnedMutexGuard<AccountHandle> {
         let mutex = {
-            let mut write_lock =
-                self.locks.write().await;
+            let mut write_lock = self.locks.write().await;
             if let Some(mutex) = write_lock.get(&a) {
                 mutex.clone()
             } else {
-                let mutex =
-                    Arc::new(Mutex::new(AccountHandle));
+                let mutex = Arc::new(Mutex::new(AccountHandle));
                 write_lock.insert(a, mutex.clone());
                 mutex
             }
@@ -65,7 +55,6 @@ impl AccountWriteLockManager {
         mutex.lock_owned().await
     }
 }
-
 
 #[derive(Debug)]
 pub struct ConcurrentWriteCommandHandle {
@@ -86,14 +75,20 @@ impl ConcurrentWriteCommandHandle {
     pub async fn accquire(&self, account: AccountIdLight) -> ConcurrentWriteHandle {
         let lock = self.account_write_locks.lock_account(account).await;
 
-        let permit = self.semaphore.clone()
+        let permit = self
+            .semaphore
+            .clone()
             .acquire_owned()
             .await
             // Code does not call close method of Semaphore, so this should not
             // panic.
             .expect("Semaphore was closed. This should not happen.");
 
-        ConcurrentWriteHandle { write: self.write.clone(), _permit: permit, _account_write_lock: lock }
+        ConcurrentWriteHandle {
+            write: self.write.clone(),
+            _permit: permit,
+            _account_write_lock: lock,
+        }
     }
 }
 
@@ -105,8 +100,7 @@ pub struct ConcurrentWriteHandle {
 
 impl fmt::Debug for ConcurrentWriteHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ConcurrentWriteHandle")
-            .finish()
+        f.debug_struct("ConcurrentWriteHandle").finish()
     }
 }
 
@@ -116,24 +110,29 @@ impl ConcurrentWriteHandle {
         id: AccountIdInternal,
         stream: BodyStream,
     ) -> Result<ContentId, DatabaseError> {
-        self.write.user_write_commands_account().save_to_tmp(id, stream).await
+        self.write
+            .user_write_commands_account()
+            .save_to_tmp(id, stream)
+            .await
     }
 
     pub async fn next_profiles(
         &self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileLink>, DatabaseError> {
-        self.write.user_write_commands_account().next_profiles(id).await
+        self.write
+            .user_write_commands_account()
+            .next_profiles(id)
+            .await
     }
 
-    pub async fn reset_profile_iterator(
-        &self,
-        id: AccountIdInternal
-    ) -> Result<(), DatabaseError> {
-        self.write.user_write_commands_account().reset_profile_iterator(id).await
+    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
+        self.write
+            .user_write_commands_account()
+            .reset_profile_iterator(id)
+            .await
     }
 }
-
 
 /// Commands that can run concurrently with other write commands, but which have
 /// limitation that one account can execute only one command at a time.
@@ -244,7 +243,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .convert(id)?;
         Ok(())
     }
-
 
     fn history(&self) -> HistoryWriteCommands {
         HistoryWriteCommands::new(&self.history_write)

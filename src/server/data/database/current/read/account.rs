@@ -3,9 +3,7 @@ use crate::api::model::{
 };
 use crate::read_json;
 use crate::server::data::database::current::read::SqliteReadCommands;
-use crate::server::data::database::sqlite::{
-    SqliteDatabaseError, SqliteSelectJson,
-};
+use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteSelectJson};
 use crate::server::data::read::ReadResult;
 use crate::server::data::write::NoId;
 use crate::utils::IntoReportExt;
@@ -13,11 +11,9 @@ use async_trait::async_trait;
 use futures::Stream;
 use tokio_stream::StreamExt;
 
-
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 
 impl CurrentReadAccount<'_> {
-
     pub fn account_ids_stream(
         &self,
     ) -> impl Stream<Item = ReadResult<AccountIdInternal, SqliteDatabaseError, NoId>> + '_ {

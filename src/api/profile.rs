@@ -9,7 +9,7 @@ use self::data::{
     Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal,
 };
 
-use super::{model::AccountIdLight, GetInternalApi, GetUsers, WriteData, GetConfig, db_write};
+use super::{db_write, model::AccountIdLight, GetConfig, GetInternalApi, GetUsers, WriteData};
 
 use tracing::error;
 
@@ -45,9 +45,7 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_profile<
-    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData,
->(
+pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(requested_profile): Path<AccountIdLight>,
     state: S,
@@ -189,9 +187,7 @@ pub async fn post_profile<S: GetApiKeys + WriteData + ReadDatabase>(
     let new = ProfileUpdateInternal::new(profile);
 
     state
-        .write(move |cmds| async move {
-            cmds.update_data(account_id, &new).await
-        })
+        .write(move |cmds| async move { cmds.update_data(account_id, &new).await })
         .await
         .map_err(|e| {
             error!("post_profile: write profile, {e:?}");
@@ -228,7 +224,9 @@ pub async fn put_location<S: GetApiKeys + WriteData>(
 
     state
         .write(move |cmds| async move {
-            cmds.profile().profile_update_location(account_id, location).await
+            cmds.profile()
+                .profile_update_location(account_id, location)
+                .await
         })
         .await
         .map_err(|e| {
@@ -328,7 +326,8 @@ pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + ReadDatabase>
 
 // ------------------- Benchmark routes ----------------------------
 
-pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile/:account_id";
+pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
+    "/profile_api/benchmark/profile/:account_id";
 
 /// Get account's current profile from database. Debug mode must be enabled
 /// that route can be used.
@@ -391,7 +390,6 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
     }
 }
 
-
 pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile";
 
 /// Post account's current profile directly to database. Debug mode must be enabled
@@ -410,7 +408,9 @@ pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmar
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_profile_to_database_debug_mode_benchmark<S: GetApiKeys + WriteData + ReadDatabase>(
+pub async fn post_profile_to_database_debug_mode_benchmark<
+    S: GetApiKeys + WriteData + ReadDatabase,
+>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(profile): Json<ProfileUpdate>,
     state: S,
@@ -439,13 +439,14 @@ pub async fn post_profile_to_database_debug_mode_benchmark<S: GetApiKeys + Write
     let new = ProfileUpdateInternal::new(profile);
 
     db_write!(state, move |cmds| {
-        cmds.profile().benchmark_update_profile_bypassing_cache(account_id, new)
+        cmds.profile()
+            .benchmark_update_profile_bypassing_cache(account_id, new)
     })
-        .await
-        .map_err(|e| {
-            error!("post_profile: write profile, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-        })?;
+    .await
+    .map_err(|e| {
+        error!("post_profile: write profile, {e:?}");
+        StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+    })?;
 
     Ok(())
 }

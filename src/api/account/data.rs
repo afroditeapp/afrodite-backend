@@ -1,5 +1,5 @@
 use base64::Engine;
-use diesel::{sql_types::Binary, deserialize::FromSql, sqlite::Sqlite};
+use diesel::{deserialize::FromSql, sql_types::Binary, sqlite::Sqlite};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -34,7 +34,19 @@ impl From<AccountIdInternal> for uuid::Uuid {
 
 /// AccountId which is internally Uuid object.
 /// Consumes less memory.
-#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, IntoParams, Copy, diesel::FromSqlRow)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    IntoParams,
+    Copy,
+    diesel::FromSqlRow,
+)]
 pub struct AccountIdLight {
     pub account_id: uuid::Uuid,
 }
@@ -300,9 +312,10 @@ pub struct SignInWithInfo {
 #[sqlx(transparent)]
 pub struct GoogleAccountId(pub String);
 
-
 impl FromSql<Binary, Sqlite> for AccountIdLight {
-    fn from_sql(bytes: <Sqlite as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+    fn from_sql(
+        bytes: <Sqlite as diesel::backend::Backend>::RawValue<'_>,
+    ) -> diesel::deserialize::Result<Self> {
         let bytes = <Vec<u8> as FromSql<Binary, Sqlite>>::from_sql(bytes)?;
         let uuid = uuid::Uuid::from_slice(&bytes)?;
         Ok(AccountIdLight::new(uuid))

@@ -2,14 +2,13 @@ use crate::api::model::{
     AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal, ModerationRequest,
     ModerationRequestContent, ModerationRequestQueueNumber, PrimaryImage,
 };
-use crate::server::data::database::sqlite::{SqliteDatabaseError};
+use crate::server::data::database::sqlite::SqliteDatabaseError;
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
 use sqlx::{Sqlite, Transaction};
 
 define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
-
 
 #[must_use]
 pub struct DatabaseTransaction<'a> {

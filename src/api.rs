@@ -9,8 +9,6 @@ pub mod profile;
 pub mod model;
 pub mod utils;
 
-
-
 use futures::Future;
 
 use utoipa::{Modify, OpenApi};
@@ -21,7 +19,10 @@ use crate::{
         app::sign_in_with::SignInWithManager,
         data::{
             read::ReadCommands,
-            utils::{AccountIdManager, ApiKeyManager}, write_concurrent::ConcurrentWriteHandle, DatabaseError, write_commands::{WriteCmds},
+            utils::{AccountIdManager, ApiKeyManager},
+            write_commands::WriteCmds,
+            write_concurrent::ConcurrentWriteHandle,
+            DatabaseError,
         },
         internal::InternalApiManager,
         manager_client::ManagerApiManager,
@@ -152,13 +153,20 @@ pub trait WriteData {
         CmdResult: Send + 'static,
         Cmd: Future<Output = error_stack::Result<CmdResult, DatabaseError>> + Send + 'static,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
-    >(&self, cmd: GetCmd) -> error_stack::Result<CmdResult, DatabaseError>;
+    >(
+        &self,
+        cmd: GetCmd,
+    ) -> error_stack::Result<CmdResult, DatabaseError>;
 
     async fn write_concurrent<
         CmdResult: Send + 'static,
         Cmd: Future<Output = error_stack::Result<CmdResult, DatabaseError>> + Send + 'static,
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
-    >(&self, account: AccountIdLight, cmd: GetCmd) -> error_stack::Result<CmdResult, DatabaseError>;
+    >(
+        &self,
+        account: AccountIdLight,
+        cmd: GetCmd,
+    ) -> error_stack::Result<CmdResult, DatabaseError>;
 }
 
 pub trait ReadDatabase {
@@ -180,7 +188,6 @@ pub trait GetManagerApi {
 pub trait GetConfig {
     fn config(&self) -> &Config;
 }
-
 
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.
@@ -208,10 +215,7 @@ pub trait GetConfig {
 /// ```
 macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {
-        $state
-            .write(move |$cmds| async move {
-                ($commands).await
-            })
+        $state.write(move |$cmds| async move { ($commands).await })
     };
 }
 

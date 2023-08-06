@@ -11,15 +11,11 @@ macro_rules! define_write_commands {
                 Self { cmds }
             }
 
-            fn current_write(
-                &self
-            ) -> &super::super::database::sqlite::CurrentDataWriteHandle {
+            fn current_write(&self) -> &super::super::database::sqlite::CurrentDataWriteHandle {
                 &self.cmds.current_write
             }
 
-            fn history_write(
-                &self
-            ) -> &super::super::database::sqlite::HistoryWriteHandle {
+            fn history_write(&self) -> &super::super::database::sqlite::HistoryWriteHandle {
                 &self.cmds.history_write
             }
 
@@ -35,29 +31,33 @@ macro_rules! define_write_commands {
                 &self.cmds.location
             }
 
-            fn media_backup(
-                &self
-            ) -> &crate::media_backup::MediaBackupHandle {
+            fn media_backup(&self) -> &crate::media_backup::MediaBackupHandle {
                 &self.cmds.media_backup
             }
 
-
             fn current(&self) -> super::super::database::current::write::CurrentWriteCommands {
                 super::super::database::current::write::CurrentWriteCommands::new(
-                    self.current_write()
+                    self.current_write(),
                 )
             }
 
             fn history(&self) -> super::super::write::HistoryWriteCommands {
-                super::super::write::HistoryWriteCommands::new(
-                    &self.history_write()
-                )
+                super::super::write::HistoryWriteCommands::new(&self.history_write())
             }
 
             pub async fn db_write<
-                T: FnOnce(crate::server::data::database::current::write::CurrentSyncWriteCommands<'_>) -> error_stack::Result<R, crate::server::data::database::diesel::DieselDatabaseError> + Send + 'static,
+                T: FnOnce(
+                        crate::server::data::database::current::write::CurrentSyncWriteCommands<'_>,
+                    ) -> error_stack::Result<
+                        R,
+                        crate::server::data::database::diesel::DieselDatabaseError,
+                    > + Send
+                    + 'static,
                 R: Send + 'static,
-            >(&self, cmd: T) -> error_stack::Result<R, crate::server::data::DatabaseError> {
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, crate::server::data::DatabaseError> {
                 self.cmds.db_write(cmd).await
             }
         }
@@ -68,22 +68,19 @@ pub mod account;
 pub mod account_admin;
 pub mod chat;
 pub mod chat_admin;
+pub mod common;
 pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-pub mod common;
 
 use std::{fmt::Debug, marker::PhantomData};
-
 
 use error_stack::{Result, ResultExt};
 
 use crate::{
-    api::{
-        model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, ContentId, SignInWithInfo,
-        },
+    api::model::{
+        Account, AccountIdInternal, AccountIdLight, AccountSetup, ContentId, SignInWithInfo,
     },
     config::Config,
     media_backup::MediaBackupHandle,
@@ -104,12 +101,16 @@ use self::profile_admin::WriteCommandsProfileAdmin;
 use super::{
     cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
     database::history::write::HistoryWriteCommands,
-    database::{sqlite::{
-        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
-        SqliteUpdateJson,
-    }, current::write::{CurrentWriteCommands, CurrentSyncWriteCommands}, diesel::{DieselDatabaseError, DieselCurrentWriteHandle, DieselHistoryWriteHandle}},
-    file::{utils::FileDir},
-    index::{LocationIndexWriterGetter},
+    database::{
+        current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
+        diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
+        sqlite::{
+            CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
+            SqliteUpdateJson,
+        },
+    },
+    file::utils::FileDir,
+    index::LocationIndexWriterGetter,
 };
 
 pub struct NoId;
@@ -300,7 +301,8 @@ impl<'a> WriteCommands<'a> {
             self.current_write.clone(),
             self.history_write.clone(),
             self.cache,
-        ).await
+        )
+        .await
     }
 
     pub async fn register_static(
@@ -319,7 +321,8 @@ impl<'a> WriteCommands<'a> {
 
         // TODO: Use transactions here. One for current and other for history.
 
-        let id = current.account()
+        let id = current
+            .account()
             .store_account_id(id_light)
             .await
             .convert(id_light)?;
@@ -328,8 +331,13 @@ impl<'a> WriteCommands<'a> {
 
         cache.insert_account_if_not_exists(id).await.convert(id)?;
 
-        current.account().store_api_key(id, None).await.convert(id)?;
-        current.account()
+        current
+            .account()
+            .store_api_key(id, None)
+            .await
+            .convert(id)?;
+        current
+            .account()
             .store_refresh_token(id, None)
             .await
             .convert(id)?;
@@ -442,8 +450,13 @@ impl<'a> WriteCommands<'a> {
     pub async fn db_write<
         T: FnOnce(CurrentSyncWriteCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
-    >(&self, cmd: T) -> Result<R, DatabaseError> {
-        let conn = self.diesel_current_write.pool()
+    >(
+        &self,
+        cmd: T,
+    ) -> Result<R, DatabaseError> {
+        let conn = self
+            .diesel_current_write
+            .pool()
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)

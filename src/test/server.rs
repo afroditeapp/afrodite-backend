@@ -7,7 +7,8 @@ use crate::config::{
     file::{
         Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig, SocketConfig,
         CONFIG_FILE_NAME,
-    }, Config,
+    },
+    Config,
 };
 
 use nix::{sys::signal::Signal, unistd::Pid};
@@ -89,7 +90,12 @@ impl ServerManager {
             },
             external_services.clone(),
         );
-        let mut servers = vec![ServerInstance::new(dir.clone(), &all_config, account_config, &config)];
+        let mut servers = vec![ServerInstance::new(
+            dir.clone(),
+            &all_config,
+            account_config,
+            &config,
+        )];
 
         if config.server.microservice_media {
             let server_config = new_config(
@@ -102,7 +108,12 @@ impl ServerManager {
                 },
                 external_services.clone(),
             );
-            servers.push(ServerInstance::new(dir.clone(), &all_config, server_config, &config));
+            servers.push(ServerInstance::new(
+                dir.clone(),
+                &all_config,
+                server_config,
+                &config,
+            ));
         }
 
         if config.server.microservice_profile {
@@ -116,7 +127,12 @@ impl ServerManager {
                 },
                 external_services,
             );
-            servers.push(ServerInstance::new(dir.clone(), &all_config, server_config, &config));
+            servers.push(ServerInstance::new(
+                dir.clone(),
+                &all_config,
+                server_config,
+                &config,
+            ));
         }
 
         Self { servers, config }
@@ -168,7 +184,12 @@ pub struct ServerInstance {
 }
 
 impl ServerInstance {
-    pub fn new(dir: PathBuf, all_config: &Config, server_config: ConfigFile, args_config: &TestMode) -> Self {
+    pub fn new(
+        dir: PathBuf,
+        all_config: &Config,
+        server_config: ConfigFile,
+        args_config: &TestMode,
+    ) -> Self {
         let id = uuid::Uuid::new_v4();
         let dir = dir.join(format!(
             "{}{}_{}",

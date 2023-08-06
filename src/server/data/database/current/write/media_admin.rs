@@ -3,7 +3,7 @@ use crate::api::model::{
     HandleModerationRequest, MediaContentType, Moderation, ModerationId, ModerationRequestContent,
     ModerationRequestId, ModerationRequestQueueNumber, ModerationRequestState,
 };
-use crate::server::data::database::sqlite::{SqliteDatabaseError};
+use crate::server::data::database::sqlite::SqliteDatabaseError;
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::write::WriteResult;
 use crate::utils::{ConvertCommandError, IntoReportExt};
@@ -11,7 +11,6 @@ use error_stack::ResultExt;
 use sqlx::{Sqlite, Transaction};
 
 define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
-
 
 #[must_use]
 pub struct DatabaseTransaction<'a> {
@@ -69,9 +68,7 @@ impl<'a> DatabaseTransaction<'a> {
 
 pub struct DeletedSomething;
 
-
 impl<'a> CurrentWriteMediaAdmin<'a> {
-
     async fn delete_queue_number(
         &self,
         number: ModerationRequestQueueNumber,

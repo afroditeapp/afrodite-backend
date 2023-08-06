@@ -5,18 +5,22 @@ pub mod index;
 pub mod read;
 pub mod utils;
 pub mod write;
-pub mod write_concurrent;
 pub mod write_commands;
+pub mod write_concurrent;
 
 use std::{
+    fmt::Debug,
     fs,
     path::{Path, PathBuf},
-    sync::Arc, fmt::Debug,
+    sync::Arc,
 };
 
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{IntoReport, Result, ResultExt};
 
-use crate::server::data::database::{current::read::SqliteReadCommands, diesel::{DieselWriteHandle, DieselReadHandle, DieselHistoryWriteHandle}};
+use crate::server::data::database::{
+    current::read::SqliteReadCommands,
+    diesel::{DieselHistoryWriteHandle, DieselReadHandle, DieselWriteHandle},
+};
 use tracing::info;
 
 use crate::{
@@ -27,17 +31,31 @@ use crate::{
 
 use self::{
     cache::{DatabaseCache, WriteCacheJson},
-    database::{history::read::HistoryReadCommands, sqlite::{HistoryUpdateJson, SqliteUpdateJson}},
-    database::{sqlite::{
-        CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
-        SqlxReadCloseHandle, SqlxReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
-    }, diesel::{DieselWriteCloseHandle, DieselReadCloseHandle, DieselCurrentWriteHandle, DieselCurrentReadHandle, DieselHistoryReadHandle}},
+    database::{
+        diesel::{
+            DieselCurrentReadHandle, DieselCurrentWriteHandle, DieselHistoryReadHandle,
+            DieselReadCloseHandle, DieselWriteCloseHandle,
+        },
+        sqlite::{
+            CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
+            SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
+        },
+    },
+    database::{
+        history::read::HistoryReadCommands,
+        sqlite::{HistoryUpdateJson, SqliteUpdateJson},
+    },
     file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
     utils::{AccountIdManager, ApiKeyManager},
-    write::{WriteCommands, common::WriteCommandsCommon, account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin, media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin, profile::WriteCommandsProfile, profile_admin::WriteCommandsProfileAdmin, chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin},
-    write_concurrent::{WriteCommandsConcurrent},
+    write::{
+        account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
+        chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
+        media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin,
+        profile::WriteCommandsProfile, profile_admin::WriteCommandsProfileAdmin, WriteCommands,
+    },
+    write_concurrent::WriteCommandsConcurrent,
 };
 use crate::utils::IntoReportExt;
 
@@ -63,7 +81,6 @@ pub enum DatabaseError {
     #[error("Diesel error")]
     Diesel,
 
-
     #[error("Database command sending failed")]
     CommandSendingFailed,
     #[error("Database command result receiving failed")]
@@ -83,7 +100,6 @@ pub enum DatabaseError {
     #[error("Different SQLite versions detected between diesel and sqlx")]
     SqliteVersionMismatch,
 }
-
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
@@ -195,7 +211,8 @@ impl DatabaseManager {
                 .await
                 .change_context(DatabaseError::Init)?;
 
-        let diesel_sqlite = diesel_current_write.sqlite_version()
+        let diesel_sqlite = diesel_current_write
+            .sqlite_version()
             .await
             .change_context(DatabaseError::Sqlite)?;
         info!("Diesel SQLite version: {}", diesel_sqlite);
@@ -222,7 +239,8 @@ impl DatabaseManager {
                 .await
                 .change_context(DatabaseError::Init)?;
 
-        let sqlx_sqlite = sqlite_write.sqlite_version()
+        let sqlx_sqlite = sqlite_write
+            .sqlite_version()
             .await
             .change_context(DatabaseError::Init)?;
         info!("Sqlx SQLite version: {}", sqlx_sqlite);
@@ -231,10 +249,9 @@ impl DatabaseManager {
             return Err(DatabaseError::SqliteVersionMismatch).into_report();
         }
 
-        let (sqlite_read, sqlite_read_close) =
-            SqlxReadHandle::new(&config, root.current_db_file())
-                .await
-                .change_context(DatabaseError::Init)?;
+        let (sqlite_read, sqlite_read_close) = SqlxReadHandle::new(&config, root.current_db_file())
+            .await
+            .change_context(DatabaseError::Init)?;
 
         let (history_write, history_write_close) =
             SqliteWriteHandle::new(&config, root.history_db_file())
@@ -369,7 +386,9 @@ impl RouterDatabaseWriteHandle {
         id_light: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        self.user_write_commands().register(id_light, sign_in_with_info).await
+        self.user_write_commands()
+            .register(id_light, sign_in_with_info)
+            .await
     }
 
     pub fn into_sync_handle(self) -> SyncWriteHandle {
@@ -390,7 +409,6 @@ impl RouterDatabaseWriteHandle {
         }
     }
 }
-
 
 /// Handle for writing synchronous write commands.
 #[derive(Clone, Debug)]
@@ -466,10 +484,7 @@ impl SyncWriteHandle {
         id_light: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        self.cmds().register(
-            id_light,
-            sign_in_with_info,
-        ).await
+        self.cmds().register(id_light, sign_in_with_info).await
     }
 
     pub async fn update_data<
@@ -490,9 +505,6 @@ impl SyncWriteHandle {
     }
 }
 
-
-
-
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
     sqlite_read: SqlxReadHandle,
@@ -504,7 +516,12 @@ pub struct RouterDatabaseReadHandle {
 
 impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(&self.sqlite_read, &self.cache, &self.root.file_dir, &self.diesel_read)
+        ReadCommands::new(
+            &self.sqlite_read,
+            &self.cache,
+            &self.root.file_dir,
+            &self.diesel_read,
+        )
     }
 
     pub fn history(&self) -> HistoryReadCommands<'_> {

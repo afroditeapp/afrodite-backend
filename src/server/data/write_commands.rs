@@ -3,23 +3,16 @@
 
 use std::{future::Future, sync::Arc};
 
-
-
 use error_stack::Result;
 
+use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 
-use tokio::{
-    sync::{mpsc, Mutex, OwnedMutexGuard},
+use crate::{api::model::AccountIdLight, server::data::DatabaseError, utils::IntoReportExt};
+
+use super::{
+    write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
+    RouterDatabaseWriteHandle, SyncWriteHandle,
 };
-
-
-use crate::{
-    api::model::{AccountIdLight},
-    server::data::{DatabaseError},
-    utils::{IntoReportExt},
-};
-
-use super::{RouterDatabaseWriteHandle, SyncWriteHandle, write_concurrent::{ConcurrentWriteHandle, ConcurrentWriteCommandHandle}};
 
 pub type WriteCmds = Cmds;
 
@@ -55,10 +48,7 @@ impl WriteCommandRunnerHandle {
             sync_write_mutex: Mutex::new(write.clone().into_sync_handle()).into(),
             concurrent_write: ConcurrentWriteCommandHandle::new(write.clone()),
         };
-        (
-            runner_handle,
-            cmd_watcher,
-        )
+        (runner_handle, cmd_watcher)
     }
 
     pub async fn write<
@@ -77,7 +67,8 @@ impl WriteCommandRunnerHandle {
             result
         });
 
-        handle.await
+        handle
+            .await
             .into_error(DatabaseError::CommandResultReceivingFailed)?
     }
 
@@ -98,11 +89,11 @@ impl WriteCommandRunnerHandle {
             result
         });
 
-        handle.await
+        handle
+            .await
             .into_error(DatabaseError::CommandResultReceivingFailed)?
     }
 }
-
 
 pub struct WriteCmdWatcher {
     receiver: mpsc::Receiver<()>,
@@ -110,7 +101,7 @@ pub struct WriteCmdWatcher {
 
 impl WriteCmdWatcher {
     pub fn new(receiver: mpsc::Receiver<()>) -> Self {
-        Self { receiver}
+        Self { receiver }
     }
 
     pub async fn wait_untill_all_writing_ends(mut self) {

@@ -25,9 +25,10 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
+    api::WriteData,
     config::info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE},
     server::app::{connection::WebSocketManager, AppState},
-    utils::IntoReportExt, api::WriteData,
+    utils::IntoReportExt,
 };
 
 use self::data::BackendVersion;
@@ -194,11 +195,7 @@ async fn handle_socket_result(
         Message::Binary(refresh_token) => {
             if refresh_token != current_refresh_token {
                 state
-                    .write(move |cmds| async move {
-                        cmds.common()
-                            .logout(id)
-                            .await
-                    })
+                    .write(move |cmds| async move { cmds.common().logout(id).await })
                     .await
                     .change_context(WebSocketError::DatabaseLogoutFailed)?;
                 return Ok(());

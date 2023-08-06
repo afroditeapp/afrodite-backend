@@ -3,8 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use diesel::{prelude::*, deserialize::FromSql, sql_types::Binary, backend::Backend};
-
+use diesel::{backend::Backend, deserialize::FromSql, prelude::*, sql_types::Binary};
 
 use crate::api::model::AccountIdLight;
 use crate::server::data::database::schema;
@@ -22,9 +21,7 @@ pub struct ProfileInternal {
     pub profile_text: String,
 }
 
-
 // #[derive(Queryable, Selectable, Debug)]
-
 
 // pub struct Profile {
 //     account_row_id: i64,
@@ -34,9 +31,6 @@ pub struct ProfileInternal {
 //     pub name: String,
 //     pub profile_text: String,
 // }
-
-
-
 
 /// Prfile for HTTP GET
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -153,7 +147,20 @@ impl ProfileLink {
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Eq,
+    Hash,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Binary)]
 pub struct ProfileVersion {
     version_uuid: uuid::Uuid,
@@ -215,20 +222,27 @@ impl sqlx::Decode<'_, sqlx::Sqlite> for ProfileVersion {
     }
 }
 
-
-impl <DB: Backend> FromSql<Binary, DB> for ProfileVersion
-    where Vec<u8>: FromSql<Binary, DB> {
-    fn from_sql(bytes: <DB as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+impl<DB: Backend> FromSql<Binary, DB> for ProfileVersion
+where
+    Vec<u8>: FromSql<Binary, DB>,
+{
+    fn from_sql(
+        bytes: <DB as diesel::backend::Backend>::RawValue<'_>,
+    ) -> diesel::deserialize::Result<Self> {
         let bytes = Vec::<u8>::from_sql(bytes)?;
         let uuid = uuid::Uuid::from_slice(&bytes)?;
         Ok(ProfileVersion::new(uuid))
     }
 }
 
-impl <DB: Backend> ToSql<Binary, DB> for ProfileVersion
-    where [u8]: ToSql<Binary, DB> {
-
-    fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, DB>) -> diesel::serialize::Result {
+impl<DB: Backend> ToSql<Binary, DB> for ProfileVersion
+where
+    [u8]: ToSql<Binary, DB>,
+{
+    fn to_sql<'b>(
+        &'b self,
+        out: &mut diesel::serialize::Output<'b, '_, DB>,
+    ) -> diesel::serialize::Result {
         self.version_uuid.as_bytes().to_sql(out)
     }
 }

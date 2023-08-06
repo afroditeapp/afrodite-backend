@@ -1,4 +1,4 @@
-use crate::{api::model::AccountIdInternal};
+use crate::api::model::AccountIdInternal;
 use crate::config::Config;
 
 use super::current::read::SqliteReadCommands;
@@ -6,26 +6,26 @@ use super::history::read::HistoryReadCommands;
 
 use async_trait::async_trait;
 
-
-
-
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 
-use tracing::log::{error};
+use tracing::log::error;
 
 use super::history::write::HistoryWriteCommands;
 use error_stack::{IntoReport, Result, ResultExt};
 
-use std::{fmt, path::{Path, PathBuf}};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+};
 
+use crate::server::data::database::current::write::CurrentWriteCommands;
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
 };
-use crate::server::data::database::current::write::CurrentWriteCommands;
 
-use crate::utils::{IntoReportExt};
+use crate::utils::IntoReportExt;
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 pub const HISTORY_FILE_NAME: &str = "history.db";
@@ -145,7 +145,8 @@ fn create_sqlite_connect_options(
         } else if db_path.ends_with(HISTORY_FILE_NAME) {
             "sqlite:file:history?mode=memory&cache=shared"
         } else {
-            return Err(SqliteDatabaseError::CreateInRamOptions).into_report()
+            return Err(SqliteDatabaseError::CreateInRamOptions)
+                .into_report()
                 .attach_printable("Unknown database file name");
         };
 
@@ -179,8 +180,7 @@ fn create_sqlite_connect_options(
 
 impl fmt::Debug for SqliteWriteHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SqliteWriteHandle")
-            .finish()
+        f.debug_struct("SqliteWriteHandle").finish()
     }
 }
 
@@ -194,15 +194,12 @@ impl SqliteWriteHandle {
         config: &Config,
         db_path: PathBuf,
     ) -> Result<(Self, SqliteWriteCloseHandle), SqliteDatabaseError> {
-        let pool = SqlitePoolOptions::new()
-            .max_connections(1);
+        let pool = SqlitePoolOptions::new().max_connections(1);
 
         let pool = if config.sqlite_in_ram() {
-            pool.max_lifetime(None)
-                .idle_timeout(None)
+            pool.max_lifetime(None).idle_timeout(None)
         } else {
-            pool.max_lifetime(None)
-                .idle_timeout(None)
+            pool.max_lifetime(None).idle_timeout(None)
         };
 
         let pool = pool
@@ -210,9 +207,7 @@ impl SqliteWriteHandle {
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
-        let write_handle = SqliteWriteHandle {
-            pool: pool.clone(),
-        };
+        let write_handle = SqliteWriteHandle { pool: pool.clone() };
 
         let close_handle = SqliteWriteCloseHandle { pool };
 
@@ -234,7 +229,6 @@ impl SqliteWriteHandle {
             .into_error(SqliteDatabaseError::Execute)?;
         Ok(version)
     }
-
 }
 
 pub struct SqlxReadCloseHandle {
@@ -255,8 +249,7 @@ pub struct SqlxReadHandle {
 
 impl fmt::Debug for SqlxReadHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SqliteReadHandle")
-            .finish()
+        f.debug_struct("SqliteReadHandle").finish()
     }
 }
 
@@ -265,15 +258,12 @@ impl SqlxReadHandle {
         config: &Config,
         db_path: PathBuf,
     ) -> Result<(Self, SqlxReadCloseHandle), SqliteDatabaseError> {
-        let pool = SqlitePoolOptions::new()
-            .max_connections(num_cpus::get() as u32);
+        let pool = SqlitePoolOptions::new().max_connections(num_cpus::get() as u32);
 
         let pool = if config.sqlite_in_ram() {
-            pool.max_lifetime(None)
-                .idle_timeout(None)
+            pool.max_lifetime(None).idle_timeout(None)
         } else {
-            pool.max_lifetime(None)
-                .idle_timeout(None)
+            pool.max_lifetime(None).idle_timeout(None)
         };
 
         let pool = pool
@@ -281,9 +271,7 @@ impl SqlxReadHandle {
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
-        let handle = SqlxReadHandle {
-            pool: pool.clone(),
-        };
+        let handle = SqlxReadHandle { pool: pool.clone() };
 
         let close_handle = SqlxReadCloseHandle { pool };
 

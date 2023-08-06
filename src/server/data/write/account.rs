@@ -1,8 +1,12 @@
 use std::net::SocketAddr;
 
-use crate::{api::model::{AccountIdInternal, AuthPair}, server::data::DatabaseError, utils::ConvertCommandError};
+use crate::{
+    api::model::{AccountIdInternal, AuthPair},
+    server::data::DatabaseError,
+    utils::ConvertCommandError,
+};
 
-use error_stack::{Result};
+use error_stack::Result;
 
 define_write_commands!(WriteCommandsAccount);
 
@@ -43,6 +47,4 @@ impl WriteCommandsAccount<'_> {
             .await
             .convert(id)
     }
-
-
 }

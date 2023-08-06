@@ -1,7 +1,6 @@
 pub mod read;
 pub mod write;
 
-
 #[macro_export]
 macro_rules! read_json {
     ($pool:expr, $id:expr, $sql:literal, $str_field:ident) => {{

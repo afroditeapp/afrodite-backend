@@ -18,7 +18,7 @@ use crate::{
 use error_stack::{Result, ResultExt};
 
 use super::{
-    database::{sqlite::SqliteSelectJson, current::read::SqliteReadCommands},
+    database::{current::read::SqliteReadCommands, sqlite::SqliteSelectJson},
     index::{
         location::{LocationIndexIteratorState, LocationIndexKey},
         LocationIndexIteratorGetter, LocationIndexWriterGetter,

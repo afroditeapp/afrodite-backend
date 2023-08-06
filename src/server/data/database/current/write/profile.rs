@@ -14,17 +14,11 @@ use diesel::prelude::*;
 
 use super::CurrentWriteCommands;
 
-
-use error_stack::{Result};
-
+use error_stack::Result;
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 
-
-
-
 impl<'a> CurrentWriteProfile<'a> {
-
     pub async fn init_profile(
         &self,
         id: AccountIdInternal,
@@ -51,7 +45,6 @@ impl<'a> CurrentWriteProfile<'a> {
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> WriteResult<ProfileInternal, SqliteDatabaseError, Profile> {
-
         sqlx::query!(
             r#"
             UPDATE Profile
@@ -70,7 +63,7 @@ impl<'a> CurrentWriteProfile<'a> {
     }
 }
 
-impl <'a> CurrentSyncWriteProfile<'a> {
+impl<'a> CurrentSyncWriteProfile<'a> {
     pub fn update_profile(
         &'a mut self,
         id: AccountIdInternal,

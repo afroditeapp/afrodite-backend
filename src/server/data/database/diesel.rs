@@ -1,13 +1,10 @@
-
-use crate::config::{Config};
-
+use crate::config::Config;
 
 use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};
 
-
 use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
-use diesel::{RunQueryDsl};
+use diesel::RunQueryDsl;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 use sqlx::Row;
@@ -15,14 +12,10 @@ use sqlx::Row;
 use tokio::time::sleep;
 use tracing::log::{error, info};
 
-
 use error_stack::{IntoReport, Result, ResultExt};
 
 use std::time::Duration;
-use std::{fmt, path::{PathBuf}};
-
-
-
+use std::{fmt, path::PathBuf};
 
 use crate::utils::{IntoReportExt, IntoReportFromString};
 
@@ -77,9 +70,7 @@ pub struct DieselCurrentWriteHandle {
 
 impl DieselCurrentWriteHandle {
     pub fn new(handle: DieselWriteHandle) -> Self {
-        Self {
-            handle,
-        }
+        Self { handle }
     }
 
     pub fn pool(&self) -> &DieselPool {
@@ -94,9 +85,7 @@ pub struct DieselHistoryWriteHandle {
 
 impl DieselHistoryWriteHandle {
     pub fn new(handle: DieselWriteHandle) -> Self {
-        Self {
-            handle,
-        }
+        Self { handle }
     }
 
     pub fn pool(&mut self) -> &DieselPool {
@@ -106,15 +95,11 @@ impl DieselHistoryWriteHandle {
 
 impl fmt::Debug for DieselWriteHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DieselWriteHandle")
-            .finish()
+        f.debug_struct("DieselWriteHandle").finish()
     }
 }
 
-fn create_manager(
-    config: &Config,
-    db_path: PathBuf,
-) -> Result<Manager, DieselDatabaseError> {
+fn create_manager(config: &Config, db_path: PathBuf) -> Result<Manager, DieselDatabaseError> {
     let manager = if config.sqlite_in_ram() {
         let ram_str = if db_path.ends_with(DATABASE_FILE_NAME) {
             "file:current?mode=memory&cache=shared"
@@ -153,24 +138,19 @@ impl DieselWriteHandle {
         let pool = if config.sqlite_in_ram() {
             // Prevent all in RAM database from being dropped
 
-            pool
-                .runtime(deadpool::Runtime::Tokio1)
+            pool.runtime(deadpool::Runtime::Tokio1)
                 .recycle_timeout(Some(std::time::Duration::MAX))
         } else {
             pool
         };
 
-        let pool = pool.build()
-            .into_error(DieselDatabaseError::Connect)?;
+        let pool = pool.build().into_error(DieselDatabaseError::Connect)?;
 
         let conn = pool
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)?;
-        conn.interact(|conn| {
-            conn.run_pending_migrations(DIESEL_MIGRATIONS)
-                .map(|_| ())
-        })
+        conn.interact(|conn| conn.run_pending_migrations(DIESEL_MIGRATIONS).map(|_| ()))
             .await
             .into_error_string(DieselDatabaseError::InteractionError)?
             .into_error_string(DieselDatabaseError::Migrate)?;
@@ -183,9 +163,7 @@ impl DieselWriteHandle {
         //     }
         // });
 
-        let write_handle = DieselWriteHandle {
-            pool: pool.clone(),
-        };
+        let write_handle = DieselWriteHandle { pool: pool.clone() };
 
         let close_handle = DieselWriteCloseHandle { pool: pool.clone() };
 
@@ -197,14 +175,14 @@ impl DieselWriteHandle {
     }
 
     pub async fn sqlite_version(&self) -> Result<String, DieselDatabaseError> {
-        let conn = self.pool
+        let conn = self
+            .pool
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)?;
 
-        let sqlite_version: Vec<String> = conn.interact(move |conn| {
-            diesel::select(sqlite_version::sqlite_version()).load(conn)
-        })
+        let sqlite_version: Vec<String> = conn
+            .interact(move |conn| diesel::select(sqlite_version::sqlite_version()).load(conn))
             .await
             .into_error_string(DieselDatabaseError::Execute)?
             .into_error_string(DieselDatabaseError::Execute)?;
@@ -247,26 +225,24 @@ pub fn sqlite_setup_hook(config: &Config) -> Hook {
     };
 
     Hook::async_fn(move |pool, _| {
-        Box::pin(
-            async move {
-                pool.interact(move |connection| {
-                    for pragma_str in pragmas.iter().chain(litestram_pragmas) {
-                        diesel::sql_query(*pragma_str).execute(connection)?;
-                    }
+        Box::pin(async move {
+            pool.interact(move |connection| {
+                for pragma_str in pragmas.iter().chain(litestram_pragmas) {
+                    diesel::sql_query(*pragma_str).execute(connection)?;
+                }
 
-                    Ok(())
-                })
-                .await
-                .map_err(|e| {
-                    error!("Error: {}", e);
-                    HookError::Abort(HookErrorCause::Message(e.to_string()))
-                })?
-                .map_err(|e: diesel::result::Error| {
-                    error!("Error: {}", e);
-                    HookError::Abort(HookErrorCause::Backend(e.into()))
-                })
-            }
-        )
+                Ok(())
+            })
+            .await
+            .map_err(|e| {
+                error!("Error: {}", e);
+                HookError::Abort(HookErrorCause::Message(e.to_string()))
+            })?
+            .map_err(|e: diesel::result::Error| {
+                error!("Error: {}", e);
+                HookError::Abort(HookErrorCause::Backend(e.into()))
+            })
+        })
     })
 }
 
@@ -277,8 +253,7 @@ pub struct DieselReadHandle {
 
 impl fmt::Debug for DieselReadHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DieselReadHandle")
-            .finish()
+        f.debug_struct("DieselReadHandle").finish()
     }
 }
 
@@ -292,34 +267,26 @@ impl DieselReadHandle {
             .max_size(num_cpus::get())
             .post_create(sqlite_setup_hook(&config));
 
-
         let pool = if config.sqlite_in_ram() {
             // Prevent all in RAM database from being dropped
 
-            pool
-                .runtime(deadpool::Runtime::Tokio1)
+            pool.runtime(deadpool::Runtime::Tokio1)
                 .recycle_timeout(Some(std::time::Duration::MAX))
         } else {
             pool
         };
 
-        let pool = pool
-            .build()
-            .into_error(DieselDatabaseError::Connect)?;
-
+        let pool = pool.build().into_error(DieselDatabaseError::Connect)?;
 
         let pool_clone = pool.clone();
-        tokio::spawn( async move {
+        tokio::spawn(async move {
             loop {
                 sleep(Duration::from_secs(5)).await;
                 info!("{:?}", pool_clone.status());
             }
         });
 
-
-        let handle = DieselReadHandle {
-            pool: pool.clone(),
-        };
+        let handle = DieselReadHandle { pool: pool.clone() };
 
         let close_handle = DieselReadCloseHandle { pool };
 
@@ -338,16 +305,13 @@ pub struct DieselCurrentReadHandle {
 
 impl DieselCurrentReadHandle {
     pub fn new(handle: DieselReadHandle) -> Self {
-        Self {
-            handle,
-        }
+        Self { handle }
     }
 
     pub fn pool(&self) -> &DieselPool {
         self.handle.pool()
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct DieselHistoryReadHandle {
@@ -356,9 +320,7 @@ pub struct DieselHistoryReadHandle {
 
 impl DieselHistoryReadHandle {
     pub fn new(handle: DieselReadHandle) -> Self {
-        Self {
-            handle,
-        }
+        Self { handle }
     }
 
     pub fn pool(&self) -> &DieselPool {

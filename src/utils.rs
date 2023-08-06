@@ -27,16 +27,17 @@ pub trait IntoReportFromString {
     fn into_error_string<C: Context>(self, context: C) -> Result<Self::Ok, C>;
 }
 
-impl <Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
+impl<Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
     type Ok = Ok;
     type Err = Err;
 
-    fn into_error_string<C: Context>(self, context: C) -> Result<<Self as IntoReportFromString>::Ok, C> {
+    fn into_error_string<C: Context>(
+        self,
+        context: C,
+    ) -> Result<<Self as IntoReportFromString>::Ok, C> {
         match self {
             Ok(ok) => Ok(ok),
-            Err(err) => Err(context)
-                .into_report()
-                .attach_printable(err.to_string())
+            Err(err) => Err(context).into_report().attach_printable(err.to_string()),
         }
     }
 }

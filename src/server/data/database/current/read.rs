@@ -1,6 +1,11 @@
-use crate::server::data::database::{sqlite::{SqlxReadHandle}, diesel::DieselConnection};
+use crate::server::data::database::{diesel::DieselConnection, sqlite::SqlxReadHandle};
 
-use self::{account::{CurrentReadAccount, CurrentSyncReadAccount}, media::{CurrentReadMedia, CurrentSyncReadMedia}, profile::{CurrentReadProfile, CurrentSyncReadProfile}, chat::{CurrentReadChat, CurrentSyncReadChat}};
+use self::{
+    account::{CurrentReadAccount, CurrentSyncReadAccount},
+    chat::{CurrentReadChat, CurrentSyncReadChat},
+    media::{CurrentReadMedia, CurrentSyncReadMedia},
+    profile::{CurrentReadProfile, CurrentSyncReadProfile},
+};
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -9,7 +14,9 @@ macro_rules! define_read_commands {
         }
 
         impl<'a> $struct_name<'a> {
-            pub fn new(cmds: &'a crate::server::data::database::current::read::SqliteReadCommands<'a>) -> Self {
+            pub fn new(
+                cmds: &'a crate::server::data::database::current::read::SqliteReadCommands<'a>,
+            ) -> Self {
                 Self { cmds }
             }
 
@@ -23,18 +30,20 @@ macro_rules! define_read_commands {
         }
 
         impl<'a> $sync_name<'a> {
-            pub fn new(cmds: crate::server::data::database::current::read::CurrentSyncReadCommands<'a>) -> Self {
+            pub fn new(
+                cmds: crate::server::data::database::current::read::CurrentSyncReadCommands<'a>,
+            ) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&'a mut self) -> &'a mut crate::server::data::database::diesel::DieselConnection {
+            pub fn conn(
+                &'a mut self,
+            ) -> &'a mut crate::server::data::database::diesel::DieselConnection {
                 &mut self.cmds.conn
             }
-
         }
     };
 }
-
 
 pub mod account;
 pub mod account_admin;
@@ -45,17 +54,13 @@ pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
 
-
-
 pub struct SqliteReadCommands<'a> {
     pub handle: &'a SqlxReadHandle,
 }
 
 impl<'a> SqliteReadCommands<'a> {
     pub fn new(handle: &'a SqlxReadHandle) -> Self {
-        Self {
-            handle,
-        }
+        Self { handle }
     }
 
     pub fn account(&self) -> CurrentReadAccount<'_> {
@@ -79,16 +84,13 @@ impl<'a> SqliteReadCommands<'a> {
     }
 }
 
-
 pub struct CurrentSyncReadCommands<'a> {
     pub conn: &'a mut DieselConnection,
 }
 
 impl<'a> CurrentSyncReadCommands<'a> {
     pub fn new(conn: &'a mut DieselConnection) -> Self {
-        Self {
-            conn,
-        }
+        Self { conn }
     }
 
     pub fn account(self) -> CurrentSyncReadAccount<'a> {

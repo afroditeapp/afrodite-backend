@@ -22,9 +22,18 @@ macro_rules! define_read_commands {
             }
 
             pub async fn db_read<
-                T: FnOnce(crate::server::data::database::current::read::CurrentSyncReadCommands<'_>) -> error_stack::Result<R, crate::server::data::database::diesel::DieselDatabaseError> + Send + 'static,
+                T: FnOnce(
+                        crate::server::data::database::current::read::CurrentSyncReadCommands<'_>,
+                    ) -> error_stack::Result<
+                        R,
+                        crate::server::data::database::diesel::DieselDatabaseError,
+                    > + Send
+                    + 'static,
                 R: Send + 'static,
-            >(&self, cmd: T) -> error_stack::Result<R, crate::server::data::DatabaseError> {
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, crate::server::data::DatabaseError> {
                 self.cmds.db_read(cmd).await
             }
         }
@@ -62,7 +71,11 @@ use self::{
 
 use super::{
     cache::{CacheError, DatabaseCache, ReadCacheJson},
-    database::{sqlite::{SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson}, current::read::{SqliteReadCommands, CurrentSyncReadCommands}, diesel::{DieselCurrentReadHandle, DieselDatabaseError}},
+    database::{
+        current::read::{CurrentSyncReadCommands, SqliteReadCommands},
+        diesel::{DieselCurrentReadHandle, DieselDatabaseError},
+        sqlite::{SqliteDatabaseError, SqliteSelectJson, SqlxReadHandle},
+    },
     file::{utils::FileDir, FileError},
     DatabaseError,
 };
@@ -280,8 +293,13 @@ impl<'a> ReadCommands<'a> {
     pub async fn db_read<
         T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
-    >(&self, cmd: T) -> Result<R, DatabaseError> {
-        let conn = self.diesel_current_read.pool()
+    >(
+        &self,
+        cmd: T,
+    ) -> Result<R, DatabaseError> {
+        let conn = self
+            .diesel_current_read
+            .pool()
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)

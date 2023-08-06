@@ -1,14 +1,13 @@
 use sqlx::SqlitePool;
 
-
-use crate::server::data::database::{diesel::DieselConnection};
+use crate::server::data::database::diesel::DieselConnection;
 use crate::server::data::database::sqlite::CurrentDataWriteHandle;
 
-use self::account::{CurrentWriteAccount, CurrentSyncWriteAccount};
-use self::chat::{CurrentWriteChat, CurrentSyncWriteChat};
-use self::media::{CurrentWriteMedia, CurrentSyncWriteMedia};
+use self::account::{CurrentSyncWriteAccount, CurrentWriteAccount};
+use self::chat::{CurrentSyncWriteChat, CurrentWriteChat};
+use self::media::{CurrentSyncWriteMedia, CurrentWriteMedia};
 use self::media_admin::CurrentWriteMediaAdmin;
-use self::profile::{CurrentWriteProfile, CurrentSyncWriteProfile};
+use self::profile::{CurrentSyncWriteProfile, CurrentWriteProfile};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -17,11 +16,15 @@ macro_rules! define_write_commands {
         }
 
         impl<'a> $struct_name<'a> {
-            pub fn new(cmds: &'a crate::server::data::database::current::write::CurrentWriteCommands<'a>) -> Self {
+            pub fn new(
+                cmds: &'a crate::server::data::database::current::write::CurrentWriteCommands<'a>,
+            ) -> Self {
                 Self { cmds }
             }
 
-            pub fn read(&self) -> crate::server::data::database::current::read::SqliteReadCommands<'a> {
+            pub fn read(
+                &self,
+            ) -> crate::server::data::database::current::read::SqliteReadCommands<'a> {
                 self.cmds.handle.read()
             }
 
@@ -35,14 +38,17 @@ macro_rules! define_write_commands {
         }
 
         impl<'a> $sync_name<'a> {
-            pub fn new(cmds: crate::server::data::database::current::write::CurrentSyncWriteCommands<'a>) -> Self {
+            pub fn new(
+                cmds: crate::server::data::database::current::write::CurrentSyncWriteCommands<'a>,
+            ) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&'a mut self) -> &'a mut crate::server::data::database::diesel::DieselConnection {
+            pub fn conn(
+                &'a mut self,
+            ) -> &'a mut crate::server::data::database::diesel::DieselConnection {
                 &mut self.cmds.conn
             }
-
         }
     };
 }
@@ -97,9 +103,7 @@ pub struct CurrentSyncWriteCommands<'a> {
 
 impl<'a> CurrentSyncWriteCommands<'a> {
     pub fn new(conn: &'a mut DieselConnection) -> Self {
-        Self {
-            conn,
-        }
+        Self { conn }
     }
 
     pub fn account(self) -> CurrentSyncWriteAccount<'a> {

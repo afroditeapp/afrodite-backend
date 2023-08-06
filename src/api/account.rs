@@ -11,7 +11,7 @@ use self::data::{
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 
-use super::{GetConfig, GetInternalApi, SignInWith, WriteData, db_write};
+use super::{db_write, GetConfig, GetInternalApi, SignInWith, WriteData};
 
 use tracing::error;
 
@@ -50,9 +50,7 @@ pub async fn register_impl<S: WriteData + GetConfig>(
     let id = AccountIdLight::new(uuid::Uuid::new_v4());
 
     let result = state
-        .write(move |cmds| async move {
-            cmds.register(id, sign_in_with).await
-        })
+        .write(move |cmds| async move { cmds.register(id, sign_in_with).await })
         .await;
 
     match result {
@@ -99,15 +97,16 @@ async fn login_impl<S: GetApiKeys + WriteData + GetUsers>(
     let account = AuthPair { access, refresh };
     let account_clone = account.clone();
 
-    db_write!(state, move |cmds|
-        cmds.common()
-            .set_new_auth_pair(id, account_clone, None)
-    )
-        .await
-        .map_err(|e| {
-            error!("Login error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-        })?;
+    db_write!(state, move |cmds| cmds.common().set_new_auth_pair(
+        id,
+        account_clone,
+        None
+    ))
+    .await
+    .map_err(|e| {
+        error!("Login error: {e:?}");
+        StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+    })?;
 
     // TODO: microservice support
 
@@ -291,10 +290,7 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteData>(
 
     if account.state() == AccountState::InitialSetup {
         state
-            .write(move |cmds| async move {
-                cmds.update_data(id, &data)
-                    .await
-            })
+            .write(move |cmds| async move { cmds.update_data(id, &data).await })
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
@@ -395,10 +391,7 @@ pub async fn post_complete_setup<
         }
 
         state
-            .write(move |cmds| async move {
-                cmds.update_data(id, &account)
-                    .await
-            })
+            .write(move |cmds| async move { cmds.update_data(id, &account).await })
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
@@ -428,9 +421,7 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_setting_profile_visiblity<
-    S: GetApiKeys + ReadDatabase + GetInternalApi,
->(
+pub async fn put_setting_profile_visiblity<S: GetApiKeys + ReadDatabase + GetInternalApi>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(new_value): Json<BooleanSetting>,
     state: S,
@@ -483,9 +474,7 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_delete<S: GetApiKeys + ReadDatabase>(
-    _state: S,
-) -> Result<(), StatusCode> {
+pub async fn post_delete<S: GetApiKeys + ReadDatabase>(_state: S) -> Result<(), StatusCode> {
     Ok(())
 }
 

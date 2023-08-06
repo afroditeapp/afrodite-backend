@@ -1,12 +1,12 @@
-
-
-
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
     ReadCommands,
 };
 
-use crate::{server::data::{DatabaseError}, api::model::{AccountIdInternal, ProfileInternal}};
+use crate::{
+    api::model::{AccountIdInternal, ProfileInternal},
+    server::data::DatabaseError,
+};
 
 use error_stack::Result;
 
@@ -21,8 +21,6 @@ impl ReadCommandsProfile<'_> {
         //     .await
         //     .change_context(DatabaseError::Sqlite);
 
-        self.db_read(move |cmds| {
-            cmds.profile().profile(id)
-        }).await
+        self.db_read(move |cmds| cmds.profile().profile(id)).await
     }
 }

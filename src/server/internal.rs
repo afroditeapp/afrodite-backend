@@ -32,7 +32,8 @@ use super::{
     app::AppState,
     data::{
         read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle,
+        utils::{AccountIdManager, ApiKeyManager},
+        SyncWriteHandle,
     },
 };
 

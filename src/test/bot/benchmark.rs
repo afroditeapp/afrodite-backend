@@ -6,7 +6,13 @@ use std::{
     time::{Duration, Instant},
 };
 
-use api_client::{apis::profile_api::{get_profile, get_profile_from_database_debug_mode_benchmark, post_profile_to_database_debug_mode_benchmark}, models::ProfileUpdate};
+use api_client::{
+    apis::profile_api::{
+        get_profile, get_profile_from_database_debug_mode_benchmark,
+        post_profile_to_database_debug_mode_benchmark,
+    },
+    models::ProfileUpdate,
+};
 use async_trait::async_trait;
 use tokio::time::sleep;
 
@@ -93,7 +99,6 @@ impl Benchmark {
         }
     }
 
-
     pub fn benchmark_get_profile_list(state: BotState) -> Self {
         let setup = [&RunActions(TO_NORMAL_STATE) as &dyn BotAction];
         let benchmark = [
@@ -158,7 +163,6 @@ impl Benchmark {
                 .peekable(),
         }
     }
-
 }
 
 #[async_trait]
@@ -233,7 +237,6 @@ impl BotAction for PostProfileToDatabase {
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 pub struct UpdateProfileCmdArgBenchmark;

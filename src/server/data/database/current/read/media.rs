@@ -4,7 +4,7 @@ use crate::api::model::{
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
     ModerationRequestQueueNumber, ModerationRequestState,
 };
-use crate::server::data::database::sqlite::{SqliteDatabaseError};
+use crate::server::data::database::sqlite::SqliteDatabaseError;
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::read::ReadResult;
 use crate::utils::IntoReportExt;
@@ -12,9 +12,7 @@ use std::collections::HashSet;
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 
-
 impl CurrentReadMedia<'_> {
-
     pub async fn get_current_account_media(
         &self,
         id: AccountIdInternal,

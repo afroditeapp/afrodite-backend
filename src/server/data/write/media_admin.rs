@@ -1,14 +1,17 @@
+use crate::{
+    api::{
+        media::data::{HandleModerationRequest, Moderation},
+        model::AccountIdInternal,
+    },
+    server::data::DatabaseError,
+    utils::ConvertCommandError,
+};
 
-
-use crate::{api::{model::{AccountIdInternal}, media::data::{Moderation, HandleModerationRequest}}, server::data::DatabaseError, utils::ConvertCommandError};
-
-use error_stack::{Result};
-
+use error_stack::Result;
 
 define_write_commands!(WriteCommandsMediaAdmin);
 
 impl WriteCommandsMediaAdmin<'_> {
-
     pub async fn moderation_get_list_and_create_new_if_necessary(
         self,
         account_id: AccountIdInternal,

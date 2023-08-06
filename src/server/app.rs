@@ -2,19 +2,19 @@ pub mod connected_routes;
 pub mod connection;
 pub mod sign_in_with;
 
-use std::sync::{Arc};
+use std::sync::Arc;
 
 use axum::{
     routing::{get, post},
     Router,
 };
 use futures::Future;
-use tokio::sync::{Mutex};
+use tokio::sync::Mutex;
 
 use crate::{
     api::{
-        self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase,
-        SignInWith, WriteData, model::AccountIdLight,
+        self, model::AccountIdLight, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi,
+        GetUsers, ReadDatabase, SignInWith, WriteData,
     },
     config::Config,
 };
@@ -27,7 +27,9 @@ use super::{
     data::{
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},
-        RouterDatabaseReadHandle, SyncWriteHandle, RouterDatabaseWriteHandle, write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle}, DatabaseError, write_commands::{WriteCommandRunnerHandle, WriteCmds},
+        write_commands::{WriteCmds, WriteCommandRunnerHandle},
+        write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
+        DatabaseError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle, SyncWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
@@ -71,7 +73,10 @@ impl WriteData for AppState {
         CmdResult: Send + 'static,
         Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send + 'static,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
-    >(&self, cmd: GetCmd) -> Result<CmdResult, DatabaseError> {
+    >(
+        &self,
+        cmd: GetCmd,
+    ) -> Result<CmdResult, DatabaseError> {
         self.write_queue.write(cmd).await
     }
 
@@ -79,7 +84,11 @@ impl WriteData for AppState {
         CmdResult: Send + 'static,
         Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send + 'static,
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
-    >(&self, account: AccountIdLight, cmd: GetCmd) -> Result<CmdResult, DatabaseError> {
+    >(
+        &self,
+        account: AccountIdLight,
+        cmd: GetCmd,
+    ) -> Result<CmdResult, DatabaseError> {
         self.write_queue.concurrent_write(account, cmd).await
     }
 }

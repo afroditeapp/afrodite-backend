@@ -1,30 +1,19 @@
-
-
 use diesel::prelude::*;
 
 use crate::api::model::{AccountIdInternal, ProfileInternal};
 use crate::server::data::database::current::read::SqliteReadCommands;
 use crate::server::data::database::diesel::DieselDatabaseError;
-use crate::server::data::database::sqlite::{
-    SqliteDatabaseError, SqliteSelectJson,
-};
+use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteSelectJson};
 use crate::server::data::index::location::LocationIndexKey;
 
+use crate::server::data::database::schema;
 use crate::utils::IntoReportExt;
 use async_trait::async_trait;
-use crate::server::data::database::schema;
 
-
-
-
-use crate::api::model::{ProfileVersion};
-use error_stack::{Result};
-
+use crate::api::model::ProfileVersion;
+use error_stack::Result;
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
-
-
-
 
 // #[derive(Queryable, Selectable, Debug)]
 // #[diesel(table_name = schema::Profile)]
@@ -38,9 +27,11 @@ define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 //     pub profile_text: String,
 // }
 
-
-impl <'a> CurrentSyncReadProfile<'a> {
-    pub fn profile(&'a mut self, id: AccountIdInternal) -> Result<ProfileInternal, DieselDatabaseError> {
+impl<'a> CurrentSyncReadProfile<'a> {
+    pub fn profile(
+        &'a mut self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileInternal, DieselDatabaseError> {
         use schema::Profile::dsl::*;
 
         Profile
@@ -50,7 +41,10 @@ impl <'a> CurrentSyncReadProfile<'a> {
             .into_error(DieselDatabaseError::Execute)
     }
 
-    pub fn location_index_key(&'a mut self, id: AccountIdInternal) -> Result<LocationIndexKey, DieselDatabaseError> {
+    pub fn location_index_key(
+        &'a mut self,
+        id: AccountIdInternal,
+    ) -> Result<LocationIndexKey, DieselDatabaseError> {
         use schema::Profile::dsl::*;
 
         let (x, y) = Profile
@@ -59,7 +53,10 @@ impl <'a> CurrentSyncReadProfile<'a> {
             .first::<(i64, i64)>(self.conn())
             .into_error(DieselDatabaseError::Execute)?;
 
-        Ok(LocationIndexKey { x: x as u16, y: y as u16 })
+        Ok(LocationIndexKey {
+            x: x as u16,
+            y: y as u16,
+        })
     }
 }
 

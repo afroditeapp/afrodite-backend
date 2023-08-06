@@ -2,15 +2,12 @@ use crate::api::model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo,
 };
 use crate::insert_or_update_json;
-use crate::server::data::database::sqlite::{
-    SqliteDatabaseError, SqliteUpdateJson,
-};
+use crate::server::data::database::sqlite::{SqliteDatabaseError, SqliteUpdateJson};
 use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
 use async_trait::async_trait;
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
-
 
 use super::CurrentWriteCommands;
 

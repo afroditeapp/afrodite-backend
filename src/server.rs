@@ -38,7 +38,7 @@ use crate::{
     media_backup::MediaBackupManager,
     server::{
         app::{connection::WebSocketManager, App},
-        data::{DatabaseManager, write_commands::{WriteCommandRunnerHandle}},
+        data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
         internal::InternalApp,
     },
 };
@@ -85,13 +85,14 @@ impl PihkaServer {
         let (media_backup_quit, media_backup_handle) =
             MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
 
-        let (database_manager, router_database_handle, router_database_write_handle) = DatabaseManager::new(
-            self.config.database_dir().to_path_buf(),
-            self.config.clone(),
-            media_backup_handle,
-        )
-        .await
-        .expect("Database init failed");
+        let (database_manager, router_database_handle, router_database_write_handle) =
+            DatabaseManager::new(
+                self.config.database_dir().to_path_buf(),
+                self.config.clone(),
+                media_backup_handle,
+            )
+            .await
+            .expect("Database init failed");
 
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
@@ -100,14 +101,14 @@ impl PihkaServer {
             WriteCommandRunnerHandle::new(router_database_write_handle.clone());
 
         let mut app = App::new(
-                router_database_handle,
-                router_database_write_handle,
-                write_cmd_runner_handle,
-                self.config.clone(),
-                ws_manager
-            )
-            .await
-            .expect("App init failed");
+            router_database_handle,
+            router_database_write_handle,
+            write_cmd_runner_handle,
+            self.config.clone(),
+            ws_manager,
+        )
+        .await
+        .expect("App init failed");
 
         let server_task = self
             .create_public_api_server_task(&mut app, server_quit_watcher.resubscribe())

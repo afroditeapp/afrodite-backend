@@ -1,11 +1,10 @@
-
-
-use crate::{api::{model::{AccountIdInternal, ProfileLink, Location, ProfileUpdateInternal}}, server::data::{DatabaseError, cache::CacheError, database::sqlite::SqliteUpdateJson}, utils::ConvertCommandError};
-
+use crate::{
+    api::model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal},
+    server::data::{cache::CacheError, database::sqlite::SqliteUpdateJson, DatabaseError},
+    utils::ConvertCommandError,
+};
 
 use error_stack::{Result, ResultExt};
-
-
 
 define_write_commands!(WriteCommandsProfile);
 
@@ -43,7 +42,10 @@ impl WriteCommandsProfile<'_> {
             .await
             .convert(id)?;
 
-        let index = self.location().get().ok_or(DatabaseError::FeatureDisabled)?;
+        let index = self
+            .location()
+            .get()
+            .ok_or(DatabaseError::FeatureDisabled)?;
         if visiblity {
             index
                 .update_profile_link(id.as_light(), profile_link, location)
@@ -54,7 +56,6 @@ impl WriteCommandsProfile<'_> {
 
         Ok(())
     }
-
 
     pub async fn profile_update_location(
         self,
@@ -70,7 +71,10 @@ impl WriteCommandsProfile<'_> {
             .convert(id)?
             .ok_or(DatabaseError::FeatureDisabled)?;
 
-        let write_to_index = self.location().get().ok_or(DatabaseError::FeatureDisabled)?;
+        let write_to_index = self
+            .location()
+            .get()
+            .ok_or(DatabaseError::FeatureDisabled)?;
         let new_location_key = write_to_index.coordinates_to_key(coordinates);
 
         // TODO: Create new database table for location.
@@ -91,10 +95,8 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> Result<(), DatabaseError> {
-        self.db_write(move |cmds| {
-            cmds.profile()
-                .update_profile(id, data)
-        }).await?;
+        self.db_write(move |cmds| cmds.profile().update_profile(id, data))
+            .await?;
 
         //self.cmds.update_data(id, &data).await?;
 

@@ -3,7 +3,6 @@ use super::{
     ReadCommands,
 };
 
-
 define_read_commands!(ReadCommandsChat);
 
 impl ReadCommandsChat<'_> {}
