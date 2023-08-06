@@ -2,7 +2,7 @@ use crate::api::model::{AccountIdInternal, Profile, ProfileInternal, ProfileUpda
 
 use crate::server::data::database::diesel::DieselDatabaseError;
 use crate::server::data::database::sqlite::{
-    CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
+    SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
 };
 use crate::server::data::index::location::LocationIndexKey;
 use crate::server::data::write::WriteResult;
@@ -15,7 +15,7 @@ use diesel::prelude::*;
 use super::CurrentWriteCommands;
 
 
-use error_stack::{Result, ResultExt, Report};
+use error_stack::{Result};
 
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);

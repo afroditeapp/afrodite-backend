@@ -2,7 +2,7 @@ use crate::api::model::{
     AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal, ModerationRequest,
     ModerationRequestContent, ModerationRequestQueueNumber, PrimaryImage,
 };
-use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError};
+use crate::server::data::database::sqlite::{SqliteDatabaseError};
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;

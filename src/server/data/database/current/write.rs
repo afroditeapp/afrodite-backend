@@ -1,7 +1,7 @@
 use sqlx::SqlitePool;
 
-use crate::server::data::database::diesel::{DieselWriteHandle, DieselCurrentWriteHandle};
-use crate::server::data::database::{diesel::DieselConnection, sqlite::SqlxReadHandle};
+
+use crate::server::data::database::{diesel::DieselConnection};
 use crate::server::data::database::sqlite::CurrentDataWriteHandle;
 
 use self::account::{CurrentWriteAccount, CurrentSyncWriteAccount};

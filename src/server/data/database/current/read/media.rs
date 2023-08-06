@@ -4,7 +4,7 @@ use crate::api::model::{
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
     ModerationRequestQueueNumber, ModerationRequestState,
 };
-use crate::server::data::database::sqlite::{SqliteDatabaseError, SqlxReadHandle};
+use crate::server::data::database::sqlite::{SqliteDatabaseError};
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::read::ReadResult;
 use crate::utils::IntoReportExt;

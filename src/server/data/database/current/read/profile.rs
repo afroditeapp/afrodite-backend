@@ -6,19 +6,19 @@ use crate::api::model::{AccountIdInternal, ProfileInternal};
 use crate::server::data::database::current::read::SqliteReadCommands;
 use crate::server::data::database::diesel::DieselDatabaseError;
 use crate::server::data::database::sqlite::{
-    SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson,
+    SqliteDatabaseError, SqliteSelectJson,
 };
 use crate::server::data::index::location::LocationIndexKey;
-use crate::server::data::read::ReadResult;
+
 use crate::utils::IntoReportExt;
 use async_trait::async_trait;
 use crate::server::data::database::schema;
 
 
-use diesel::{prelude::*, sqlite::Sqlite, deserialize::FromSql, sql_types::Binary, backend::Backend};
 
-use crate::api::model::{AccountIdLight, ProfileVersion};
-use error_stack::{Result, ResultExt, Report};
+
+use crate::api::model::{ProfileVersion};
+use error_stack::{Result};
 
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);

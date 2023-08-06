@@ -9,10 +9,10 @@ pub mod profile;
 pub mod model;
 pub mod utils;
 
-use std::sync::Arc;
+
 
 use futures::Future;
-use tokio::sync::MutexGuard;
+
 use utoipa::{Modify, OpenApi};
 
 use crate::{
@@ -21,7 +21,7 @@ use crate::{
         app::sign_in_with::SignInWithManager,
         data::{
             read::ReadCommands,
-            utils::{AccountIdManager, ApiKeyManager}, SyncWriteHandle, write_concurrent::ConcurrentWriteHandle, DatabaseError, write_commands::{WriteCommandRunnerHandle, WriteCmds},
+            utils::{AccountIdManager, ApiKeyManager}, write_concurrent::ConcurrentWriteHandle, DatabaseError, write_commands::{WriteCmds},
         },
         internal::InternalApiManager,
         manager_client::ManagerApiManager,

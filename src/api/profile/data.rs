@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use diesel::{prelude::*, sqlite::Sqlite, deserialize::FromSql, sql_types::Binary, backend::Backend};
+use diesel::{prelude::*, deserialize::FromSql, sql_types::Binary, backend::Backend};
 
 
 use crate::api::model::AccountIdLight;

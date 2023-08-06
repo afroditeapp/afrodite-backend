@@ -3,7 +3,7 @@ use crate::api::model::{
 };
 use crate::insert_or_update_json;
 use crate::server::data::database::sqlite::{
-    CurrentDataWriteHandle, SqliteDatabaseError, SqliteUpdateJson,
+    SqliteDatabaseError, SqliteUpdateJson,
 };
 use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;

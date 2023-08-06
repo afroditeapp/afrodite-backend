@@ -223,7 +223,7 @@ impl BotAction for PostProfileToDatabase {
     async fn excecute_impl_task_state(
         &self,
         state: &mut BotState,
-        task_state: &mut TaskState,
+        _task_state: &mut TaskState,
     ) -> Result<(), TestError> {
         let profile = uuid::Uuid::new_v4(); // Uuid has same string size every time.
         let profile = ProfileUpdate::new(format!("{}", profile));

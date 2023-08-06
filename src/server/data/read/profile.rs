@@ -1,12 +1,12 @@
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
-use error_stack::ResultExt;
+
+
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
     ReadCommands,
 };
 
-use crate::{server::data::{database::{sqlite::SqliteSelectJson, diesel::DieselDatabaseError}, DatabaseError}, api::model::{AccountIdInternal, Profile, ProfileInternal}, utils::{IntoReportExt, IntoReportFromString}};
+use crate::{server::data::{DatabaseError}, api::model::{AccountIdInternal, ProfileInternal}};
 
 use error_stack::Result;
 

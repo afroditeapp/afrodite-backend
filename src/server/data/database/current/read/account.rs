@@ -4,7 +4,7 @@ use crate::api::model::{
 use crate::read_json;
 use crate::server::data::database::current::read::SqliteReadCommands;
 use crate::server::data::database::sqlite::{
-    SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson,
+    SqliteDatabaseError, SqliteSelectJson,
 };
 use crate::server::data::read::ReadResult;
 use crate::server::data::write::NoId;

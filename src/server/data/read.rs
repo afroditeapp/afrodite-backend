@@ -62,7 +62,7 @@ use self::{
 
 use super::{
     cache::{CacheError, DatabaseCache, ReadCacheJson},
-    database::{sqlite::{SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson}, current::read::{SqliteReadCommands, CurrentSyncReadCommands}, diesel::{DieselCurrentReadHandle, DieselConnection, DieselDatabaseError}},
+    database::{sqlite::{SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson}, current::read::{SqliteReadCommands, CurrentSyncReadCommands}, diesel::{DieselCurrentReadHandle, DieselDatabaseError}},
     file::{utils::FileDir, FileError},
     DatabaseError,
 };

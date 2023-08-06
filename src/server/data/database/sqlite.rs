@@ -1,23 +1,23 @@
-use crate::{api::model::AccountIdInternal, server::data::DatabaseError};
+use crate::{api::model::AccountIdInternal};
 use crate::config::Config;
 
 use super::current::read::SqliteReadCommands;
 use super::history::read::HistoryReadCommands;
 
 use async_trait::async_trait;
-use deadpool::managed::HookErrorCause;
-use deadpool_diesel::sqlite::{Hook, Manager, Pool};
-use diesel::{Connection, ConnectionError, RunQueryDsl};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+
+
+
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
-use tokio::sync::Mutex;
-use tracing::log::{error, info};
+
+use tracing::log::{error};
 
 use super::history::write::HistoryWriteCommands;
 use error_stack::{IntoReport, Result, ResultExt};
 
-use std::{fmt, path::{Path, PathBuf}, sync::Arc};
+use std::{fmt, path::{Path, PathBuf}};
 
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
@@ -25,7 +25,7 @@ use sqlx::{
 };
 use crate::server::data::database::current::write::CurrentWriteCommands;
 
-use crate::utils::{IntoReportExt, IntoReportFromString};
+use crate::utils::{IntoReportExt};
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 pub const HISTORY_FILE_NAME: &str = "history.db";

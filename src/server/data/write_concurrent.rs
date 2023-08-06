@@ -5,36 +5,31 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
-use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
+use std::{fmt::Debug};
 
 use axum::extract::BodyStream;
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Result, ResultExt};
 use tokio::sync::{OwnedMutexGuard, RwLock, Mutex};
 
 use crate::{
     api::{
-        media::data::{HandleModerationRequest, Moderation, PrimaryImage},
         model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, AuthPair, ContentId,
-            Location, ModerationRequestContent, ProfileLink, SignInWithInfo,
+            AccountIdInternal, AccountIdLight, ContentId, ProfileLink,
         },
     },
-    config::Config,
-    media_backup::MediaBackupHandle,
     server::data::DatabaseError,
-    utils::{ConvertCommandError, ErrorConversion},
+    utils::{ConvertCommandError},
 };
 
 use super::RouterDatabaseWriteHandle;
 use super::{
-    cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
+    cache::{DatabaseCache},
     database::history::write::HistoryWriteCommands,
     database::sqlite::{
-        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
-        SqliteUpdateJson,
+        CurrentDataWriteHandle, HistoryWriteHandle,
     },
-    file::{file::ImageSlot, utils::FileDir},
-    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
+    file::{utils::FileDir},
+    index::{LocationIndexIteratorGetter},
 };
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;

@@ -3,7 +3,7 @@ use crate::api::model::{
     HandleModerationRequest, MediaContentType, Moderation, ModerationId, ModerationRequestContent,
     ModerationRequestId, ModerationRequestQueueNumber, ModerationRequestState,
 };
-use crate::server::data::database::sqlite::{CurrentDataWriteHandle, SqliteDatabaseError};
+use crate::server::data::database::sqlite::{SqliteDatabaseError};
 use crate::server::data::file::file::ImageSlot;
 use crate::server::data::write::WriteResult;
 use crate::utils::{ConvertCommandError, IntoReportExt};

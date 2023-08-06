@@ -1,6 +1,6 @@
-use std::net::SocketAddr;
 
-use crate::{api::{model::{AccountIdInternal, AuthPair}, media::data::{Moderation, HandleModerationRequest, ModerationRequestContent, ContentId, PrimaryImage}}, server::data::{DatabaseError, file::file::ImageSlot}, utils::ConvertCommandError};
+
+use crate::{api::{model::{AccountIdInternal}, media::data::{ModerationRequestContent, ContentId, PrimaryImage}}, server::data::{DatabaseError, file::file::ImageSlot}, utils::ConvertCommandError};
 
 use error_stack::{Result, ResultExt, Report};
 

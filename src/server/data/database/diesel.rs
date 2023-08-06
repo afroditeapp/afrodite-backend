@@ -1,31 +1,28 @@
-use crate::{api::model::AccountIdInternal, server::data::DatabaseError};
-use crate::config::{Config, info};
 
-use super::history::read::HistoryReadCommands;
-use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME, SqliteDatabaseError};
+use crate::config::{Config};
 
-use async_trait::async_trait;
+
+use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};
+
+
 use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
-use diesel::{Connection, ConnectionError, OptionalExtension, RunQueryDsl, sql_function};
+use diesel::{RunQueryDsl};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use sqlx::sqlite::SqliteRow;
+
 use sqlx::Row;
-use tokio::sync::Mutex;
+
 use tokio::time::sleep;
 use tracing::log::{error, info};
 
-use super::history::write::HistoryWriteCommands;
+
 use error_stack::{IntoReport, Result, ResultExt};
 
 use std::time::Duration;
-use std::{fmt, path::{Path, PathBuf}, sync::Arc};
+use std::{fmt, path::{PathBuf}};
 
-use sqlx::{
-    sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
-    SqlitePool,
-};
-use crate::server::data::database::current::write::CurrentWriteCommands;
+
+
 
 use crate::utils::{IntoReportExt, IntoReportFromString};
 

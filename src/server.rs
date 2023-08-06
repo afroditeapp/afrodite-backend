@@ -3,7 +3,7 @@ pub mod data;
 pub mod internal;
 pub mod manager_client;
 
-use std::{net::SocketAddr, pin::Pin, sync::Arc, fmt::Write};
+use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
 use axum::Router;
 use futures::future::poll_fn;

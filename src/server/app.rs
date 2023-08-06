@@ -9,7 +9,7 @@ use axum::{
     Router,
 };
 use futures::Future;
-use tokio::sync::{MutexGuard, Mutex};
+use tokio::sync::{Mutex};
 
 use crate::{
     api::{

@@ -74,17 +74,15 @@ pub mod profile;
 pub mod profile_admin;
 pub mod common;
 
-use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
+use std::{fmt::Debug, marker::PhantomData};
 
-use axum::extract::BodyStream;
-use error_stack::{Report, Result, ResultExt};
+
+use error_stack::{Result, ResultExt};
 
 use crate::{
     api::{
-        media::data::{HandleModerationRequest, Moderation, PrimaryImage},
         model::{
-            Account, AccountIdInternal, AccountIdLight, AccountSetup, AuthPair, ContentId,
-            Location, ModerationRequestContent, ProfileLink, SignInWithInfo,
+            Account, AccountIdInternal, AccountIdLight, AccountSetup, ContentId, SignInWithInfo,
         },
     },
     config::Config,
@@ -110,8 +108,8 @@ use super::{
         CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
         SqliteUpdateJson,
     }, current::write::{CurrentWriteCommands, CurrentSyncWriteCommands}, diesel::{DieselDatabaseError, DieselCurrentWriteHandle, DieselHistoryWriteHandle}},
-    file::{file::ImageSlot, utils::FileDir},
-    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
+    file::{utils::FileDir},
+    index::{LocationIndexWriterGetter},
 };
 
 pub struct NoId;
