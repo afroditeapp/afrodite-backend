@@ -43,7 +43,7 @@ impl<'a> DatabaseTransaction<'a> {
             state,
             slot,
         )
-        .execute(&mut transaction)
+        .execute(&mut *transaction)
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -296,7 +296,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
                 moderation.account_id.account_row_id,
                 moderation.request_id.request_row_id,
             )
-            .execute(transaction)
+            .execute(&mut **transaction)
             .await
             .into_error(SqliteDatabaseError::Execute)?;
 
@@ -354,7 +354,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             request_owner_id,
             security_img_content_id,
         )
-        .execute(transaction)
+        .execute(&mut **transaction)
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -381,7 +381,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             request_owner_id,
             primary_img_content_id,
         )
-        .execute(transaction)
+        .execute(&mut **transaction)
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -411,7 +411,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             content_type,
             content_id,
         )
-        .execute(transaction)
+        .execute(&mut **transaction)
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 

@@ -340,7 +340,7 @@ impl CurrentReadMedia<'_> {
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
-        let request_row_id = match data.map(|r| r.request_row_id).flatten() {
+        let request_row_id = match data.map(|r| r.request_row_id) {
             None => return Ok(None),
             Some(id) => id,
         };

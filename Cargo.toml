@@ -38,7 +38,7 @@ utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 
 
-sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
+sqlx = { version = "0.7.1", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
 
 diesel = { version = "2.1.0", features = ["sqlite"] }
 diesel_migrations = "2.1.0"

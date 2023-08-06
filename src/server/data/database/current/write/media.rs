@@ -41,7 +41,7 @@ impl<'a> DatabaseTransaction<'a> {
             state,
             slot,
         )
-        .execute(&mut transaction)
+        .execute(&mut *transaction)
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
