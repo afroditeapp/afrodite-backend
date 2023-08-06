@@ -85,8 +85,8 @@ impl DieselCurrentWriteHandle {
         }
     }
 
-    pub fn pool_mut(&mut self) -> &mut DieselPool {
-        &mut self.handle.pool
+    pub fn pool(&self) -> &DieselPool {
+        &self.handle.pool
     }
 }
 
@@ -102,8 +102,8 @@ impl DieselHistoryWriteHandle {
         }
     }
 
-    pub fn pool_mut(&mut self) -> &mut DieselPool {
-        &mut self.handle.pool
+    pub fn pool(&mut self) -> &DieselPool {
+        &self.handle.pool
     }
 }
 

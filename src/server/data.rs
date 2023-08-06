@@ -264,22 +264,24 @@ impl DatabaseManager {
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
-            sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
-            sqlite_read,
+            sqlx_current_write: CurrentDataWriteHandle::new(sqlite_write),
+            sqlx_current_read: sqlite_read,
             diesel_current_read: diesel_current_read.clone(),
             diesel_current_write: diesel_current_write.clone(),
-            history_write: HistoryWriteHandle {
+            diesel_history_read: diesel_history_read.clone(),
+            diesel_history_write: diesel_history_write.clone(),
+            sqlx_history_write: HistoryWriteHandle {
                 handle: history_write,
             },
-            history_read,
+            sqlx_history_read: history_read,
             root: root.into(),
             cache: cache.into(),
             location: index.into(),
             media_backup,
         };
 
-        let sqlite_read = router_write_handle.sqlite_read.clone();
-        let history_read = router_write_handle.history_read.clone();
+        let sqlite_read = router_write_handle.sqlx_current_read.clone();
+        let history_read = router_write_handle.sqlx_history_read.clone();
         let root = router_write_handle.root.clone();
         let cache = router_write_handle.cache.clone();
 
@@ -324,12 +326,14 @@ impl DatabaseManager {
 pub struct RouterDatabaseWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
-    sqlite_write: CurrentDataWriteHandle,
-    sqlite_read: SqlxReadHandle,
+    sqlx_current_write: CurrentDataWriteHandle,
+    sqlx_current_read: SqlxReadHandle,
+    sqlx_history_write: HistoryWriteHandle,
+    sqlx_history_read: SqlxReadHandle,
     diesel_current_write: DieselCurrentWriteHandle,
     diesel_current_read: DieselCurrentReadHandle,
-    history_write: HistoryWriteHandle,
-    history_read: SqlxReadHandle,
+    diesel_history_write: DieselHistoryWriteHandle,
+    diesel_history_read: DieselHistoryReadHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
@@ -339,8 +343,10 @@ impl RouterDatabaseWriteHandle {
     pub fn user_write_commands(&self) -> WriteCommands {
         WriteCommands::new(
             &self.config,
-            &self.sqlite_write,
-            &self.history_write,
+            &self.sqlx_current_write,
+            &self.sqlx_history_write,
+            &self.diesel_current_write,
+            &self.diesel_history_write,
             &self.cache,
             &self.root.file_dir,
             LocationIndexWriterGetter::new(&self.location),
@@ -350,8 +356,8 @@ impl RouterDatabaseWriteHandle {
 
     pub fn user_write_commands_account<'b>(&'b self) -> WriteCommandsConcurrent<'b> {
         WriteCommandsConcurrent::new(
-            &self.sqlite_write,
-            &self.history_write,
+            &self.sqlx_current_write,
+            &self.sqlx_history_write,
             &self.cache,
             &self.root.file_dir,
             LocationIndexIteratorGetter::new(&self.location),
@@ -370,10 +376,14 @@ impl RouterDatabaseWriteHandle {
         SyncWriteHandle {
             config: self.config,
             root: self.root,
-            sqlite_write: self.sqlite_write,
-            sqlite_read: self.sqlite_read,
-            history_write: self.history_write,
-            history_read: self.history_read,
+            sqlx_current_write: self.sqlx_current_write,
+            sqlx_current_read: self.sqlx_current_read,
+            sqlx_history_write: self.sqlx_history_write,
+            sqlx_history_read: self.sqlx_history_read,
+            diesel_current_write: self.diesel_current_write,
+            diesel_current_read: self.diesel_current_read,
+            diesel_history_write: self.diesel_history_write,
+            diesel_history_read: self.diesel_history_read,
             cache: self.cache,
             location: self.location,
             media_backup: self.media_backup,
@@ -387,10 +397,14 @@ impl RouterDatabaseWriteHandle {
 pub struct SyncWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
-    sqlite_write: CurrentDataWriteHandle,
-    sqlite_read: SqlxReadHandle,
-    history_write: HistoryWriteHandle,
-    history_read: SqlxReadHandle,
+    sqlx_current_write: CurrentDataWriteHandle,
+    sqlx_current_read: SqlxReadHandle,
+    sqlx_history_write: HistoryWriteHandle,
+    sqlx_history_read: SqlxReadHandle,
+    diesel_current_write: DieselCurrentWriteHandle,
+    diesel_current_read: DieselCurrentReadHandle,
+    diesel_history_write: DieselHistoryWriteHandle,
+    diesel_history_read: DieselHistoryReadHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
@@ -400,8 +414,10 @@ impl SyncWriteHandle {
     fn cmds(&self) -> WriteCommands {
         WriteCommands::new(
             &self.config,
-            &self.sqlite_write,
-            &self.history_write,
+            &self.sqlx_current_write,
+            &self.sqlx_history_write,
+            &self.diesel_current_write,
+            &self.diesel_history_write,
             &self.cache,
             &self.root.file_dir,
             LocationIndexWriterGetter::new(&self.location),

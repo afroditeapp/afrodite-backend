@@ -53,6 +53,13 @@ macro_rules! define_write_commands {
                     &self.history_write()
                 )
             }
+
+            pub async fn db_write<
+                T: FnOnce(crate::server::data::database::current::write::CurrentSyncWriteCommands<'_>) -> error_stack::Result<R, crate::server::data::database::diesel::DieselDatabaseError> + Send + 'static,
+                R: Send + 'static,
+            >(&self, cmd: T) -> error_stack::Result<R, crate::server::data::DatabaseError> {
+                self.cmds.db_write(cmd).await
+            }
         }
     };
 }
@@ -83,7 +90,7 @@ use crate::{
     config::Config,
     media_backup::MediaBackupHandle,
     server::data::DatabaseError,
-    utils::{ConvertCommandError, ErrorConversion},
+    utils::{ConvertCommandError, ErrorConversion, IntoReportExt, IntoReportFromString},
 };
 
 use self::account::WriteCommandsAccount;
@@ -102,7 +109,7 @@ use super::{
     database::{sqlite::{
         CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
         SqliteUpdateJson,
-    }, current::write::CurrentWriteCommands},
+    }, current::write::{CurrentWriteCommands, CurrentSyncWriteCommands}, diesel::{DieselDatabaseError, DieselCurrentWriteHandle, DieselHistoryWriteHandle}},
     file::{file::ImageSlot, utils::FileDir},
     index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
 };
@@ -214,6 +221,8 @@ pub struct WriteCommands<'a> {
     config: &'a Config,
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
+    diesel_current_write: &'a DieselCurrentWriteHandle,
+    diesel_history_write: &'a DieselHistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     location: LocationIndexWriterGetter<'a>,
@@ -225,6 +234,8 @@ impl<'a> WriteCommands<'a> {
         config: &'a Config,
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
+        diesel_current_write: &'a DieselCurrentWriteHandle,
+        diesel_history_write: &'a DieselHistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         location: LocationIndexWriterGetter<'a>,
@@ -234,6 +245,8 @@ impl<'a> WriteCommands<'a> {
             config,
             current_write,
             history_write,
+            diesel_current_write,
+            diesel_history_write,
             cache,
             file_dir,
             location,
@@ -426,5 +439,22 @@ impl<'a> WriteCommands<'a> {
 
     fn history(&self) -> HistoryWriteCommands {
         HistoryWriteCommands::new(&self.history_write)
+    }
+
+    pub async fn db_write<
+        T: FnOnce(CurrentSyncWriteCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        R: Send + 'static,
+    >(&self, cmd: T) -> Result<R, DatabaseError> {
+        let conn = self.diesel_current_write.pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        conn.interact(move |conn| cmd(CurrentSyncWriteCommands::new(conn)))
+            .await
+            .into_error_string(DieselDatabaseError::Execute)
+            .change_context(DatabaseError::Diesel)?
+            .change_context(DatabaseError::Diesel)
     }
 }

@@ -19,11 +19,11 @@ macro_rules! define_read_commands {
         }
 
         pub struct $sync_name<'a> {
-            cmds: &'a mut crate::server::data::database::current::read::CurrentSyncReadCommands<'a>,
+            cmds: crate::server::data::database::current::read::CurrentSyncReadCommands<'a>,
         }
 
         impl<'a> $sync_name<'a> {
-            pub fn new(cmds: &'a mut crate::server::data::database::current::read::CurrentSyncReadCommands<'a>) -> Self {
+            pub fn new(cmds: crate::server::data::database::current::read::CurrentSyncReadCommands<'a>) -> Self {
                 Self { cmds }
             }
 
@@ -91,19 +91,19 @@ impl<'a> CurrentSyncReadCommands<'a> {
         }
     }
 
-    pub fn account(&'a mut self) -> CurrentSyncReadAccount<'a> {
+    pub fn account(self) -> CurrentSyncReadAccount<'a> {
         CurrentSyncReadAccount::new(self)
     }
 
-    pub fn media(&'a mut self) -> CurrentSyncReadMedia<'a> {
+    pub fn media(self) -> CurrentSyncReadMedia<'a> {
         CurrentSyncReadMedia::new(self)
     }
 
-    pub fn profile(&'a mut self) -> CurrentSyncReadProfile<'a> {
+    pub fn profile(self) -> CurrentSyncReadProfile<'a> {
         CurrentSyncReadProfile::new(self)
     }
 
-    pub fn chat(&'a mut self) -> CurrentSyncReadChat<'a> {
+    pub fn chat(self) -> CurrentSyncReadChat<'a> {
         CurrentSyncReadChat::new(self)
     }
 }

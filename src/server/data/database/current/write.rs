@@ -4,11 +4,11 @@ use crate::server::data::database::diesel::{DieselWriteHandle, DieselCurrentWrit
 use crate::server::data::database::{diesel::DieselConnection, sqlite::SqlxReadHandle};
 use crate::server::data::database::sqlite::CurrentDataWriteHandle;
 
-use self::account::CurrentWriteAccount;
-use self::chat::CurrentWriteChat;
-use self::media::CurrentWriteMedia;
+use self::account::{CurrentWriteAccount, CurrentSyncWriteAccount};
+use self::chat::{CurrentWriteChat, CurrentSyncWriteChat};
+use self::media::{CurrentWriteMedia, CurrentSyncWriteMedia};
 use self::media_admin::CurrentWriteMediaAdmin;
-use self::profile::CurrentWriteProfile;
+use self::profile::{CurrentWriteProfile, CurrentSyncWriteProfile};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -31,16 +31,16 @@ macro_rules! define_write_commands {
         }
 
         pub struct $sync_name<'a> {
-            cmds: &'a mut crate::server::data::database::current::write::CurrentSyncWriteCommands<'a>,
+            cmds: crate::server::data::database::current::write::CurrentSyncWriteCommands<'a>,
         }
 
         impl<'a> $sync_name<'a> {
-            pub fn new(cmds: &'a mut crate::server::data::database::current::write::CurrentSyncWriteCommands<'a>) -> Self {
+            pub fn new(cmds: crate::server::data::database::current::write::CurrentSyncWriteCommands<'a>) -> Self {
                 Self { cmds }
             }
 
             pub fn conn(&'a mut self) -> &'a mut crate::server::data::database::diesel::DieselConnection {
-                unimplemented!()
+                &mut self.cmds.conn
             }
 
         }
@@ -92,31 +92,29 @@ impl<'a> CurrentWriteCommands<'a> {
 }
 
 pub struct CurrentSyncWriteCommands<'a> {
-    handle: &'a DieselCurrentWriteHandle,
+    conn: &'a mut DieselConnection,
 }
 
-// impl<'a> CurrentDataWriteCommands<'a> {
-//     pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
-//         Self { handle }
-//     }
+impl<'a> CurrentSyncWriteCommands<'a> {
+    pub fn new(conn: &'a mut DieselConnection) -> Self {
+        Self {
+            conn,
+        }
+    }
 
-//     pub fn account(self) -> CurrentWriteAccountCommands<'a> {
-//         CurrentWriteAccountCommands::new(self.handle)
-//     }
+    pub fn account(self) -> CurrentSyncWriteAccount<'a> {
+        CurrentSyncWriteAccount::new(self)
+    }
 
-//     pub fn media(self) -> CurrentWriteMediaCommands<'a> {
-//         CurrentWriteMediaCommands::new(self.handle)
-//     }
+    pub fn media(self) -> CurrentSyncWriteMedia<'a> {
+        CurrentSyncWriteMedia::new(self)
+    }
 
-//     pub fn media_admin(self) -> CurrentWriteMediaAdminCommands<'a> {
-//         CurrentWriteMediaAdminCommands::new(self.handle)
-//     }
+    pub fn profile(self) -> CurrentSyncWriteProfile<'a> {
+        CurrentSyncWriteProfile::new(self)
+    }
 
-//     pub fn profile(self) -> CurrentWriteProfileCommands<'a> {
-//         CurrentWriteProfileCommands::new(self.handle)
-//     }
-
-//     pub fn chat(self) -> CurrentWriteChatCommands<'a> {
-//         CurrentWriteChatCommands::new(self.handle)
-//     }
-// }
+    pub fn chat(self) -> CurrentSyncWriteChat<'a> {
+        CurrentSyncWriteChat::new(self)
+    }
+}

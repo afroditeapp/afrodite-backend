@@ -1,5 +1,6 @@
 use crate::api::model::{AccountIdInternal, Profile, ProfileInternal, ProfileUpdateInternal};
 
+use crate::server::data::database::diesel::DieselDatabaseError;
 use crate::server::data::database::sqlite::{
     CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
 };
@@ -7,8 +8,14 @@ use crate::server::data::index::location::LocationIndexKey;
 use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
 use async_trait::async_trait;
+use diesel::{ExpressionMethods, QueryDsl};
+
+use diesel::prelude::*;
 
 use super::CurrentWriteCommands;
+
+
+use error_stack::{Result, ResultExt, Report};
 
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
@@ -60,6 +67,33 @@ impl<'a> CurrentWriteProfile<'a> {
 
         let profile = ProfileInternal::select_json(id, &self.read()).await?;
         Ok(profile)
+    }
+}
+
+impl <'a> CurrentSyncWriteProfile<'a> {
+    pub fn update_profile(
+        &'a mut self,
+        id: AccountIdInternal,
+        data: ProfileUpdateInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::server::data::database::schema::Profile::dsl::*;
+
+        diesel::update(Profile.find(id.account_row_id))
+            .set((
+                version_uuid.eq(data.version),
+                profile_text.eq(data.new_data.profile_text),
+            ))
+            .execute(self.conn())
+            .into_error(DieselDatabaseError::Execute)?;
+        // Profile
+        //     .filter(account_row_id.eq(id.account_row_id))
+        //     .update((
+        //         version_uuid.eq(data.version),
+        //     ))
+        //     .execute(self.conn())
+
+
+        Ok(())
     }
 }
 

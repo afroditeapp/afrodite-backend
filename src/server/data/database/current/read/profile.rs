@@ -4,6 +4,7 @@ use diesel::prelude::*;
 
 use crate::api::model::{AccountIdInternal, ProfileInternal};
 use crate::server::data::database::current::read::SqliteReadCommands;
+use crate::server::data::database::diesel::DieselDatabaseError;
 use crate::server::data::database::sqlite::{
     SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson,
 };
@@ -17,7 +18,7 @@ use crate::server::data::database::schema;
 use diesel::{prelude::*, sqlite::Sqlite, deserialize::FromSql, sql_types::Binary, backend::Backend};
 
 use crate::api::model::{AccountIdLight, ProfileVersion};
-
+use error_stack::{Result, ResultExt, Report};
 
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
@@ -39,22 +40,24 @@ define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 
 
 impl <'a> CurrentSyncReadProfile<'a> {
-    pub fn profile(&'a mut self, id: AccountIdInternal) -> QueryResult<ProfileInternal> {
+    pub fn profile(&'a mut self, id: AccountIdInternal) -> Result<ProfileInternal, DieselDatabaseError> {
         use schema::Profile::dsl::*;
 
         Profile
             .filter(account_row_id.eq(id.account_row_id))
             .select(ProfileInternal::as_select())
             .first(self.conn())
+            .into_error(DieselDatabaseError::Execute)
     }
 
-    pub fn location_index_key(&'a mut self, id: AccountIdInternal) -> QueryResult<LocationIndexKey> {
+    pub fn location_index_key(&'a mut self, id: AccountIdInternal) -> Result<LocationIndexKey, DieselDatabaseError> {
         use schema::Profile::dsl::*;
 
         let (x, y) = Profile
             .filter(account_row_id.eq(id.account_row_id))
             .select((location_key_x, location_key_y))
-            .first::<(i64, i64)>(self.conn())?;
+            .first::<(i64, i64)>(self.conn())
+            .into_error(DieselDatabaseError::Execute)?;
 
         Ok(LocationIndexKey { x: x as u16, y: y as u16 })
     }

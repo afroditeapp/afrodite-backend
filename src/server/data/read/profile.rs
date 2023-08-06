@@ -12,9 +12,6 @@ use error_stack::Result;
 
 define_read_commands!(ReadCommandsProfile);
 
-
-use crate::server::data::database::schema;
-
 impl ReadCommandsProfile<'_> {
     pub async fn read_profile_directly_from_database(
         &self,
@@ -24,53 +21,8 @@ impl ReadCommandsProfile<'_> {
         //     .await
         //     .change_context(DatabaseError::Sqlite);
 
-        self.db_read(move |conn| {
-            use schema::Profile::dsl::*;
-
-            Profile
-                .filter(account_row_id.eq(id.row_id()))
-                .first::<ProfileInternal>(conn)
-                .into_error(DieselDatabaseError::Execute)
+        self.db_read(move |cmds| {
+            cmds.profile().profile(id)
         }).await
-
-
-        // let mut locked_connection = self.db()
-        //     .handle
-        //     .mutex
-        //     .as_ref()
-        //     .unwrap()
-        //     .lock()
-        //     .await;
-
-        // let connection = self.db()
-        //     .handle
-        //     .diesel_pool
-        //     .get()
-        //     .await
-        //     .into_error(DatabaseError::Sqlite)?;
-        // let p = connection.interact(move |connection| {
-        //     use crate::schema::Profile::dsl::*;
-
-        //     let p: std::result::Result<crate::models::Profile, _> = Profile
-        //         .filter(account_row_id.eq(id.row_id()))
-        //         .first(connection);
-        //     p
-        // })
-        //     .await
-        //     .into_error_string(DatabaseError::Sqlite)?
-        //     .into_error_string(DatabaseError::Sqlite)?;
-
-        // let connection: &mut SqliteConnection = &mut locked_connection;
-
-        // use crate::schema::Profile::dsl::*;
-
-        // let p: crate::models::Profile = Profile
-        //     .filter(account_row_id.eq(id.row_id()))
-        //     .first(connection)
-        //     .unwrap();
-
-        // Ok(ProfileInternal { name: p.name, profile_text: p.profile_text,
-        // version_uuid: p.version_uuid })
-
     }
 }
