@@ -9,7 +9,7 @@ use self::data::{
     Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal,
 };
 
-use super::{model::AccountIdLight, GetInternalApi, GetUsers, WriteData, GetConfig};
+use super::{model::AccountIdLight, GetInternalApi, GetUsers, WriteData, GetConfig, db_write};
 
 use tracing::error;
 
@@ -326,7 +326,7 @@ pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + ReadDatabase>
     Ok(())
 }
 
-// Benchmark routes
+// ------------------- Benchmark routes ----------------------------
 
 pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile/:account_id";
 
@@ -389,4 +389,63 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
+}
+
+
+pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile";
+
+/// Post account's current profile directly to database. Debug mode must be enabled
+/// that route can be used.
+#[utoipa::path(
+    post,
+    path = "/profile_api/benchmark/profile",
+    request_body = ProfileUpdate,
+    responses(
+        (status = 200, description = "Update profile"),
+        (status = 401, description = "Unauthorized."),
+        (
+            status = 500,
+            description = "Profile validation in route handler failed or database error."
+        ),
+    ),
+    security(("api_key" = [])),
+)]
+pub async fn post_profile_to_database_debug_mode_benchmark<S: GetApiKeys + WriteData + ReadDatabase>(
+    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Json(profile): Json<ProfileUpdate>,
+    state: S,
+) -> Result<(), StatusCode> {
+    let account_id = state
+        .api_keys()
+        .api_key_exists(api_key.key())
+        .await
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let old_profile: ProfileInternal =
+        state
+            .read_database()
+            .read_json(account_id)
+            .await
+            .map_err(|e| {
+                error!("post_profile: read current profile, {e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+            })?;
+    let old_profile: Profile = old_profile.into();
+
+    if profile == old_profile.into_update() {
+        return Ok(());
+    }
+
+    let new = ProfileUpdateInternal::new(profile);
+
+    db_write!(state, move |cmds| {
+        cmds.profile().benchmark_update_profile_bypassing_cache(account_id, new)
+    })
+        .await
+        .map_err(|e| {
+            error!("post_profile: write profile, {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+        })?;
+
+    Ok(())
 }

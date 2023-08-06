@@ -134,7 +134,7 @@ impl SqliteSelectJson for Account {
         read: &SqliteReadCommands,
     ) -> error_stack::Result<Self, SqliteDatabaseError> {
         read_json!(
-            read,
+            read.pool(),
             id,
             r#"
             SELECT json_text
@@ -153,7 +153,7 @@ impl SqliteSelectJson for AccountSetup {
         read: &SqliteReadCommands,
     ) -> error_stack::Result<Self, SqliteDatabaseError> {
         read_json!(
-            read,
+            read.pool(),
             id,
             r#"
             SELECT json_text

@@ -42,8 +42,8 @@ macro_rules! define_write_commands {
             }
 
 
-            fn current(&self) -> super::super::database::current::CurrentDataWriteCommands {
-                super::super::database::current::CurrentDataWriteCommands::new(
+            fn current(&self) -> super::super::database::current::write::CurrentWriteCommands {
+                super::super::database::current::write::CurrentWriteCommands::new(
                     self.current_write()
                 )
             }
@@ -72,7 +72,6 @@ use std::{fmt::Debug, marker::PhantomData, net::SocketAddr};
 use axum::extract::BodyStream;
 use error_stack::{Report, Result, ResultExt};
 
-use crate::server::data::database::current::CurrentDataWriteCommands;
 use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation, PrimaryImage},
@@ -100,10 +99,10 @@ use self::profile_admin::WriteCommandsProfileAdmin;
 use super::{
     cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
     database::history::write::HistoryWriteCommands,
-    database::sqlite::{
+    database::{sqlite::{
         CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
         SqliteUpdateJson,
-    },
+    }, current::write::CurrentWriteCommands},
     file::{file::ImageSlot, utils::FileDir},
     index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
 };
@@ -301,9 +300,7 @@ impl<'a> WriteCommands<'a> {
         history_wirte: HistoryWriteHandle,
         cache: &DatabaseCache,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        let current = CurrentDataWriteCommands::new(&current_data_write);
-        let account_commands = current.clone().account();
-        let media_commands = current.clone().media();
+        let current = CurrentWriteCommands::new(&current_data_write);
         let history = HistoryWriteCommands::new(&history_wirte);
 
         let account = Account::default();
@@ -311,7 +308,7 @@ impl<'a> WriteCommands<'a> {
 
         // TODO: Use transactions here. One for current and other for history.
 
-        let id = account_commands
+        let id = current.account()
             .store_account_id(id_light)
             .await
             .convert(id_light)?;
@@ -320,14 +317,15 @@ impl<'a> WriteCommands<'a> {
 
         cache.insert_account_if_not_exists(id).await.convert(id)?;
 
-        account_commands.store_api_key(id, None).await.convert(id)?;
-        account_commands
+        current.account().store_api_key(id, None).await.convert(id)?;
+        current.account()
             .store_refresh_token(id, None)
             .await
             .convert(id)?;
 
         if config.components().account {
-            account_commands
+            current
+                .account()
                 .store_account(id, &account)
                 .await
                 .convert(id)?;
@@ -342,7 +340,8 @@ impl<'a> WriteCommands<'a> {
                 .await
                 .convert(id)?;
 
-            account_commands
+            current
+                .account()
                 .store_account_setup(id, &account_setup)
                 .await
                 .convert(id)?;
@@ -352,7 +351,8 @@ impl<'a> WriteCommands<'a> {
                 .await
                 .convert(id)?;
 
-            account_commands
+            current
+                .account()
                 .store_sign_in_with_info(id, &sign_in_with_info)
                 .await
                 .convert(id)?;
@@ -378,7 +378,8 @@ impl<'a> WriteCommands<'a> {
         }
 
         if config.components().media {
-            media_commands
+            current
+                .media()
                 .init_current_account_media(id)
                 .await
                 .convert(id)?;
@@ -419,8 +420,8 @@ impl<'a> WriteCommands<'a> {
             })
     }
 
-    fn current(&self) -> CurrentDataWriteCommands {
-        CurrentDataWriteCommands::new(&self.current_write)
+    fn current(&self) -> CurrentWriteCommands {
+        CurrentWriteCommands::new(&self.current_write)
     }
 
     fn history(&self) -> HistoryWriteCommands {

@@ -5,26 +5,25 @@ use super::current::read::SqliteReadCommands;
 use super::history::read::HistoryReadCommands;
 
 use async_trait::async_trait;
-use deadpool::managed::{HookErrorCause};
-use deadpool_diesel::sqlite::{Manager, Pool, Hook};
-use diesel::{Connection, RunQueryDsl, ConnectionError};
-use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
+use deadpool::managed::HookErrorCause;
+use deadpool_diesel::sqlite::{Hook, Manager, Pool};
+use diesel::{Connection, ConnectionError, RunQueryDsl};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 use tokio::sync::Mutex;
-use tracing::log::{info, error};
+use tracing::log::{error, info};
 
 use super::history::write::HistoryWriteCommands;
-use crate::server::data::database::current::{CurrentDataWriteCommands};
+use error_stack::{IntoReport, Result, ResultExt};
 
-use error_stack::{Result, IntoReport, ResultExt};
-
-use std::{path::{Path, PathBuf}, sync::Arc, fmt};
+use std::{fmt, path::{Path, PathBuf}, sync::Arc};
 
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
 };
+use crate::server::data::database::current::write::CurrentWriteCommands;
 
 use crate::utils::{IntoReportExt, IntoReportFromString};
 
@@ -316,7 +315,7 @@ pub trait SqliteUpdateJson {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &CurrentDataWriteCommands,
+        write: &CurrentWriteCommands,
     ) -> Result<(), SqliteDatabaseError>;
 }
 

@@ -5,28 +5,27 @@ use super::history::read::HistoryReadCommands;
 use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME, SqliteDatabaseError};
 
 use async_trait::async_trait;
-use deadpool::managed::{HookErrorCause};
-use deadpool_diesel::sqlite::{Manager, Pool, Hook};
-use diesel::{Connection, RunQueryDsl, ConnectionError, sql_function, OptionalExtension};
-use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
+use deadpool::managed::HookErrorCause;
+use deadpool_diesel::sqlite::{Hook, Manager, Pool};
+use diesel::{Connection, ConnectionError, OptionalExtension, RunQueryDsl, sql_function};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 use tokio::sync::Mutex;
 use tokio::time::sleep;
-use tracing::log::{info, error};
+use tracing::log::{error, info};
 
 use super::history::write::HistoryWriteCommands;
-use crate::server::data::database::current::{CurrentDataWriteCommands};
-
-use error_stack::{Result, IntoReport, ResultExt};
+use error_stack::{IntoReport, Result, ResultExt};
 
 use std::time::Duration;
-use std::{path::{Path, PathBuf}, sync::Arc, fmt};
+use std::{fmt, path::{Path, PathBuf}, sync::Arc};
 
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
 };
+use crate::server::data::database::current::write::CurrentWriteCommands;
 
 use crate::utils::{IntoReportExt, IntoReportFromString};
 
@@ -84,6 +83,10 @@ impl DieselCurrentWriteHandle {
         Self {
             handle,
         }
+    }
+
+    pub fn pool_mut(&mut self) -> &mut DieselPool {
+        &mut self.handle.pool
     }
 }
 

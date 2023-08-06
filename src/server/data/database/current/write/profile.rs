@@ -1,5 +1,5 @@
 use crate::api::model::{AccountIdInternal, Profile, ProfileInternal, ProfileUpdateInternal};
-use crate::server::data::database::current::CurrentDataWriteCommands;
+
 use crate::server::data::database::sqlite::{
     CurrentDataWriteHandle, SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
 };
@@ -8,14 +8,15 @@ use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
 use async_trait::async_trait;
 
-pub struct CurrentWriteProfileCommands<'a> {
-    handle: &'a CurrentDataWriteHandle,
-}
+use super::CurrentWriteCommands;
 
-impl<'a> CurrentWriteProfileCommands<'a> {
-    pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
-        Self { handle }
-    }
+
+define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
+
+
+
+
+impl<'a> CurrentWriteProfile<'a> {
 
     pub async fn init_profile(
         &self,
@@ -30,11 +31,34 @@ impl<'a> CurrentWriteProfileCommands<'a> {
             id.account_row_id,
             version,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
-        let profile = ProfileInternal::select_json(id, &self.handle.read()).await?;
+        let profile = ProfileInternal::select_json(id, &self.read()).await?;
+        Ok(profile)
+    }
+
+    pub async fn update_profile(
+        &self,
+        id: AccountIdInternal,
+        data: ProfileUpdateInternal,
+    ) -> WriteResult<ProfileInternal, SqliteDatabaseError, Profile> {
+
+        sqlx::query!(
+            r#"
+            UPDATE Profile
+            SET version_uuid = ?
+            WHERE account_row_id = ?
+            "#,
+            data.version,
+            id.account_row_id,
+        )
+        .execute(self.pool())
+        .await
+        .into_error(SqliteDatabaseError::Execute)?;
+
+        let profile = ProfileInternal::select_json(id, &self.read()).await?;
         Ok(profile)
     }
 }
@@ -44,7 +68,7 @@ impl SqliteUpdateJson for ProfileUpdateInternal {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &CurrentDataWriteCommands,
+        write: &CurrentWriteCommands,
     ) -> error_stack::Result<(), SqliteDatabaseError> {
         sqlx::query!(
             r#"
@@ -68,7 +92,7 @@ impl SqliteUpdateJson for LocationIndexKey {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &CurrentDataWriteCommands,
+        write: &CurrentWriteCommands,
     ) -> error_stack::Result<(), SqliteDatabaseError> {
         sqlx::query!(
             r#"

@@ -11,7 +11,6 @@ use axum::extract::BodyStream;
 use error_stack::{Report, Result, ResultExt};
 use tokio::sync::{OwnedMutexGuard, RwLock, Mutex};
 
-use crate::server::data::database::current::CurrentDataWriteCommands;
 use crate::{
     api::{
         media::data::{HandleModerationRequest, Moderation, PrimaryImage},
@@ -251,9 +250,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
         Ok(())
     }
 
-    fn current(&self) -> CurrentDataWriteCommands {
-        CurrentDataWriteCommands::new(&self.current_write)
-    }
 
     fn history(&self) -> HistoryWriteCommands {
         HistoryWriteCommands::new(&self.history_write)

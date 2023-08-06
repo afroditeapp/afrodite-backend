@@ -8,6 +8,9 @@ use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
 use sqlx::{Sqlite, Transaction};
 
+define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
+
+
 #[must_use]
 pub struct DatabaseTransaction<'a> {
     transaction: Transaction<'a, Sqlite>,
@@ -15,7 +18,7 @@ pub struct DatabaseTransaction<'a> {
 
 impl<'a> DatabaseTransaction<'a> {
     pub async fn store_content_id_to_slot(
-        handle: &'a CurrentDataWriteHandle,
+        pool: &'a sqlx::Pool<Sqlite>,
         content_uploader: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
@@ -25,8 +28,7 @@ impl<'a> DatabaseTransaction<'a> {
         let state = ContentState::InSlot as i64;
         let slot = slot as i64;
 
-        let mut transaction = handle
-            .pool()
+        let mut transaction = pool
             .begin()
             .await
             .into_error(SqliteDatabaseError::TransactionBegin)?;
@@ -65,15 +67,7 @@ impl<'a> DatabaseTransaction<'a> {
 
 pub struct DeletedSomething;
 
-pub struct CurrentWriteMediaCommands<'a> {
-    handle: &'a CurrentDataWriteHandle,
-}
-
-impl<'a> CurrentWriteMediaCommands<'a> {
-    pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
-        Self { handle }
-    }
-
+impl<'a> CurrentWriteMedia<'a> {
     pub async fn init_current_account_media(
         &self,
         id: AccountIdInternal,
@@ -86,7 +80,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             "#,
             id.account_row_id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -113,7 +107,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             primary_image.grid_crop_y,
             id.account_row_id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -127,7 +121,6 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         slot: ImageSlot,
     ) -> error_stack::Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
         if self
-            .handle
             .read()
             .media()
             .get_content_id_from_slot(content_uploader, slot)
@@ -138,7 +131,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         }
 
         DatabaseTransaction::store_content_id_to_slot(
-            self.handle,
+            self.pool(),
             content_uploader,
             content_id,
             slot,
@@ -163,7 +156,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             in_slot_state,
             slot,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?
         .rows_affected();
@@ -187,7 +180,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             "#,
             account_row_id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -210,7 +203,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             "#,
             account_row_id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -234,7 +227,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             account_row_id,
             0, // TODO: set to correct queue, for example if premium account
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?
         .last_insert_rowid();
@@ -253,8 +246,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
         request_creator: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> WriteResult<(), SqliteDatabaseError, ModerationRequest> {
-        self.handle
-            .read()
+        self.read()
             .media()
             .content_validate_moderation_request_content(request_creator, &request)
             .await?;
@@ -277,7 +269,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             queue_number.number,
             request_info,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -305,7 +297,7 @@ impl<'a> CurrentWriteMediaCommands<'a> {
             request_info,
             account_row_id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 

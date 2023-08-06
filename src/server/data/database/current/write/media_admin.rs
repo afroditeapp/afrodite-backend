@@ -10,6 +10,9 @@ use crate::utils::{ConvertCommandError, IntoReportExt};
 use error_stack::ResultExt;
 use sqlx::{Sqlite, Transaction};
 
+define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
+
+
 #[must_use]
 pub struct DatabaseTransaction<'a> {
     transaction: Transaction<'a, Sqlite>,
@@ -17,7 +20,7 @@ pub struct DatabaseTransaction<'a> {
 
 impl<'a> DatabaseTransaction<'a> {
     pub async fn store_content_id_to_slot(
-        handle: &'a CurrentDataWriteHandle,
+        pool: &'a sqlx::Pool<Sqlite>,
         content_uploader: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
@@ -27,8 +30,7 @@ impl<'a> DatabaseTransaction<'a> {
         let state = ContentState::InSlot as i64;
         let slot = slot as i64;
 
-        let mut transaction = handle
-            .pool()
+        let mut transaction = pool
             .begin()
             .await
             .into_error(SqliteDatabaseError::TransactionBegin)?;
@@ -67,14 +69,8 @@ impl<'a> DatabaseTransaction<'a> {
 
 pub struct DeletedSomething;
 
-pub struct CurrentWriteMediaAdminCommands<'a> {
-    handle: &'a CurrentDataWriteHandle,
-}
 
-impl<'a> CurrentWriteMediaAdminCommands<'a> {
-    pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
-        Self { handle }
-    }
+impl<'a> CurrentWriteMediaAdmin<'a> {
 
     async fn delete_queue_number(
         &self,
@@ -87,7 +83,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             "#,
             number.number,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -99,7 +95,6 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         moderator_id: AccountIdInternal,
     ) -> WriteResult<Vec<Moderation>, SqliteDatabaseError> {
         let mut moderations = self
-            .handle
             .read()
             .media()
             .get_in_progress_moderations(moderator_id)
@@ -130,7 +125,6 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         // is implemented.
 
         let id = self
-            .handle
             .read()
             .media()
             .get_next_active_moderation_request(0)
@@ -155,7 +149,6 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
         // request. Should that be prevented?
 
         let (content, queue_number, request_creator_id) = self
-            .handle
             .read()
             .media()
             .get_moderation_request_content(target_id)
@@ -175,7 +168,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             state,
             content_string,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -211,12 +204,11 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             "#,
             account_row_id,
         )
-        .fetch_one(self.handle.pool())
+        .fetch_one(self.pool())
         .await
         .into_error(SqliteDatabaseError::Fetch)?;
 
         let currently_selected_images = self
-            .handle
             .read()
             .media()
             .get_current_account_media(moderation_request_owner)
@@ -231,10 +223,9 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             account_id: moderator_id,
         };
 
-        let content = self.handle.read().media().moderation(moderation_id).await?;
+        let content = self.read().media().moderation(moderation_id).await?;
 
         let mut transaction = self
-            .handle
             .pool()
             .begin()
             .await
@@ -256,7 +247,7 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
             };
 
             for c in content.content() {
-                CurrentWriteMediaAdminCommands::update_content_state(
+                CurrentWriteMediaAdmin::update_content_state(
                     &mut transaction,
                     c,
                     new_content_state,
@@ -271,13 +262,13 @@ impl<'a> CurrentWriteMediaAdminCommands<'a> {
                     .security_content_id
                     .is_none()
             {
-                CurrentWriteMediaAdminCommands::update_current_security_image(
+                CurrentWriteMediaAdmin::update_current_security_image(
                     transaction,
                     moderation_request_owner,
                     &content,
                 )
                 .await?;
-                CurrentWriteMediaAdminCommands::update_current_primary_image_from_slot_2(
+                CurrentWriteMediaAdmin::update_current_primary_image_from_slot_2(
                     transaction,
                     moderation_request_owner,
                     content,

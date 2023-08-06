@@ -8,7 +8,6 @@ use error_stack::{Result, ResultExt, Report};
 define_write_commands!(WriteCommandsMedia);
 
 impl WriteCommandsMedia<'_> {
-
     pub async fn set_moderation_request(
         &self,
         account_id: AccountIdInternal,
@@ -50,9 +49,9 @@ impl WriteCommandsMedia<'_> {
                 .change_context(DatabaseError::Sqlite)?;
         }
 
-        let transaction = self
-            .current()
-            .media()
+        let cmds_current = self.current();
+        let cmds_media = cmds_current.media();
+        let transaction = cmds_media
             .store_content_id_to_slot(id, content_id, slot)
             .await
             .change_context(DatabaseError::Sqlite)?;

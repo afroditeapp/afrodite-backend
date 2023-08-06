@@ -73,6 +73,10 @@ impl<'a> SqliteReadCommands<'a> {
     pub fn chat(&self) -> CurrentReadChat<'_> {
         CurrentReadChat::new(self)
     }
+
+    pub fn pool(&self) -> &'a sqlx::SqlitePool {
+        self.handle.pool()
+    }
 }
 
 

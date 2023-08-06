@@ -2,7 +2,6 @@ use crate::api::model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo,
 };
 use crate::insert_or_update_json;
-use crate::server::data::database::current::CurrentDataWriteCommands;
 use crate::server::data::database::sqlite::{
     CurrentDataWriteHandle, SqliteDatabaseError, SqliteUpdateJson,
 };
@@ -10,15 +9,12 @@ use crate::server::data::write::WriteResult;
 use crate::utils::IntoReportExt;
 use async_trait::async_trait;
 
-pub struct CurrentWriteAccountCommands<'a> {
-    handle: &'a CurrentDataWriteHandle,
-}
+define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 
-impl<'a> CurrentWriteAccountCommands<'a> {
-    pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
-        Self { handle }
-    }
 
+use super::CurrentWriteCommands;
+
+impl<'a> CurrentWriteAccount<'a> {
     pub async fn store_account_id(
         &self,
         id: AccountIdLight,
@@ -31,7 +27,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
             "#,
             id
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -56,7 +52,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
             api_key,
             id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -85,7 +81,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
             refresh_token,
             id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -98,7 +94,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
         account: &Account,
     ) -> WriteResult<(), SqliteDatabaseError, Account> {
         insert_or_update_json!(
-            self,
+            self.pool(),
             r#"
             INSERT INTO Account (json_text, account_row_id)
             VALUES (?, ?)
@@ -114,7 +110,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
         account: &AccountSetup,
     ) -> WriteResult<(), SqliteDatabaseError, AccountSetup> {
         insert_or_update_json!(
-            self,
+            self.pool(),
             r#"
             INSERT INTO AccountSetup (json_text, account_row_id)
             VALUES (?, ?)
@@ -138,7 +134,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
             sign_in_with_info.google_account_id,
             id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -161,7 +157,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
             api_key,
             id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -191,7 +187,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
             refresh_token,
             id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -213,7 +209,7 @@ impl<'a> CurrentWriteAccountCommands<'a> {
             sign_in_with.google_account_id,
             id,
         )
-        .execute(self.handle.pool())
+        .execute(self.pool())
         .await
         .into_error(SqliteDatabaseError::Execute)?;
 
@@ -226,10 +222,10 @@ impl SqliteUpdateJson for Account {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &CurrentDataWriteCommands,
+        write: &CurrentWriteCommands,
     ) -> error_stack::Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
-            write,
+            write.pool(),
             r#"
             UPDATE Account
             SET json_text = ?
@@ -246,10 +242,10 @@ impl SqliteUpdateJson for AccountSetup {
     async fn update_json(
         &self,
         id: AccountIdInternal,
-        write: &CurrentDataWriteCommands,
+        write: &CurrentWriteCommands,
     ) -> error_stack::Result<(), SqliteDatabaseError> {
         insert_or_update_json!(
-            write,
+            write.pool(),
             r#"
             UPDATE AccountSetup
             SET json_text = ?

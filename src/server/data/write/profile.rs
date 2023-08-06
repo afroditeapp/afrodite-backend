@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use crate::{api::{model::{AccountIdInternal, AuthPair, ProfileLink, Location}, media::data::{Moderation, HandleModerationRequest, ModerationRequestContent, ContentId, PrimaryImage}}, server::data::{DatabaseError, file::file::ImageSlot, cache::CacheError, database::sqlite::SqliteUpdateJson}, utils::ConvertCommandError};
+use crate::{api::{model::{AccountIdInternal, AuthPair, ProfileLink, Location, ProfileUpdateInternal}, media::data::{Moderation, HandleModerationRequest, ModerationRequestContent, ContentId, PrimaryImage}}, server::data::{DatabaseError, file::file::ImageSlot, cache::CacheError, database::sqlite::SqliteUpdateJson}, utils::ConvertCommandError};
 
 use error_stack::{Result, ResultExt, Report};
 
@@ -81,6 +81,16 @@ impl WriteCommandsProfile<'_> {
         write_to_index
             .update_profile_location(id.as_light(), location.current_position, new_location_key)
             .await;
+
+        Ok(())
+    }
+
+    pub async fn benchmark_update_profile_bypassing_cache(
+        mut self,
+        id: AccountIdInternal,
+        data: ProfileUpdateInternal,
+    ) -> Result<(), DatabaseError> {
+        self.cmds.update_data(id, &data).await?;
 
         Ok(())
     }
