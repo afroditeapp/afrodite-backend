@@ -16,7 +16,7 @@ use std::{
 
 use error_stack::{Result, ResultExt, IntoReport};
 
-use crate::server::data::database::{current::read::SqliteReadCommands, diesel::{DieselWriteHandle, DieselReadHandle}};
+use crate::server::data::database::{current::read::SqliteReadCommands, diesel::{DieselWriteHandle, DieselReadHandle, DieselHistoryWriteHandle}};
 use tracing::info;
 
 use crate::{
@@ -31,7 +31,7 @@ use self::{
     database::{sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
         SqlxReadCloseHandle, SqlxReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
-    }, diesel::{DieselWriteCloseHandle, DieselReadCloseHandle, DieselCurrentWriteHandle, DieselCurrentReadHandle}},
+    }, diesel::{DieselWriteCloseHandle, DieselReadCloseHandle, DieselCurrentWriteHandle, DieselCurrentReadHandle, DieselHistoryReadHandle}},
     file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
@@ -59,6 +59,10 @@ pub enum DatabaseError {
     File,
     #[error("Media backup error")]
     MediaBackup,
+
+    #[error("Diesel error")]
+    Diesel,
+
 
     #[error("Database command sending failed")]
     CommandSendingFailed,
@@ -253,12 +257,17 @@ impl DatabaseManager {
         .await
         .change_context(DatabaseError::Cache)?;
 
+        let diesel_current_read = DieselCurrentReadHandle::new(diesel_current_read);
+        let diesel_current_write = DieselCurrentWriteHandle::new(diesel_current_write);
+        let diesel_history_read = DieselHistoryReadHandle::new(diesel_history_read);
+        let diesel_history_write = DieselHistoryWriteHandle::new(diesel_history_write);
+
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
             sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
             sqlite_read,
-            diesel_current_read: DieselCurrentReadHandle::new(diesel_current_read),
-            diesel_current_write: DieselCurrentWriteHandle::new(diesel_current_write),
+            diesel_current_read: diesel_current_read.clone(),
+            diesel_current_write: diesel_current_write.clone(),
             history_write: HistoryWriteHandle {
                 handle: history_write,
             },
@@ -277,6 +286,8 @@ impl DatabaseManager {
         let router_read_handle = RouterDatabaseReadHandle {
             sqlite_read,
             history_read,
+            diesel_read: diesel_current_read,
+            diesel_history_read,
             root,
             cache,
         };
@@ -469,13 +480,15 @@ impl SyncWriteHandle {
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
     sqlite_read: SqlxReadHandle,
+    diesel_read: DieselCurrentReadHandle,
     history_read: SqlxReadHandle,
+    diesel_history_read: DieselHistoryReadHandle,
     cache: Arc<DatabaseCache>,
 }
 
 impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(&self.sqlite_read, &self.cache, &self.root.file_dir)
+        ReadCommands::new(&self.sqlite_read, &self.cache, &self.root.file_dir, &self.diesel_read)
     }
 
     pub fn history(&self) -> HistoryReadCommands<'_> {

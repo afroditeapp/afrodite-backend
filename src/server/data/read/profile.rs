@@ -6,20 +6,33 @@ use super::{
     ReadCommands,
 };
 
-use crate::{server::data::{database::{sqlite::SqliteSelectJson}, DatabaseError}, api::model::{AccountIdInternal, Profile, ProfileInternal}, utils::{IntoReportExt, IntoReportFromString}};
+use crate::{server::data::{database::{sqlite::SqliteSelectJson, diesel::DieselDatabaseError}, DatabaseError}, api::model::{AccountIdInternal, Profile, ProfileInternal}, utils::{IntoReportExt, IntoReportFromString}};
 
 use error_stack::Result;
 
 define_read_commands!(ReadCommandsProfile);
+
+
+use crate::server::data::database::schema;
 
 impl ReadCommandsProfile<'_> {
     pub async fn read_profile_directly_from_database(
         &self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DatabaseError> {
-        return ProfileInternal::select_json(id, self.db())
-            .await
-            .change_context(DatabaseError::Sqlite);
+        // return ProfileInternal::select_json(id, self.db())
+        //     .await
+        //     .change_context(DatabaseError::Sqlite);
+
+        self.db_read(move |conn| {
+            use schema::Profile::dsl::*;
+
+            Profile
+                .filter(account_row_id.eq(id.row_id()))
+                .first::<ProfileInternal>(conn)
+                .into_error(DieselDatabaseError::Execute)
+        }).await
+
 
         // let mut locked_connection = self.db()
         //     .handle

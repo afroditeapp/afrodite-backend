@@ -90,6 +90,23 @@ impl DieselCurrentWriteHandle {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct DieselHistoryWriteHandle {
+    handle: DieselWriteHandle,
+}
+
+impl DieselHistoryWriteHandle {
+    pub fn new(handle: DieselWriteHandle) -> Self {
+        Self {
+            handle,
+        }
+    }
+
+    pub fn pool_mut(&mut self) -> &mut DieselPool {
+        &mut self.handle.pool
+    }
+}
+
 impl fmt::Debug for DieselWriteHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("DieselWriteHandle")
@@ -327,5 +344,27 @@ impl DieselCurrentReadHandle {
         Self {
             handle,
         }
+    }
+
+    pub fn pool(&self) -> &DieselPool {
+        self.handle.pool()
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct DieselHistoryReadHandle {
+    handle: DieselReadHandle,
+}
+
+impl DieselHistoryReadHandle {
+    pub fn new(handle: DieselReadHandle) -> Self {
+        Self {
+            handle,
+        }
+    }
+
+    pub fn pool(&self) -> &DieselPool {
+        self.handle.pool()
     }
 }

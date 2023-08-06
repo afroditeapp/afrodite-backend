@@ -20,6 +20,13 @@ macro_rules! define_read_commands {
             fn files(&self) -> &FileDir {
                 &self.cmds.files
             }
+
+            pub async fn db_read<
+                T: FnOnce(&mut crate::server::data::database::diesel::DieselConnection) -> error_stack::Result<R, crate::server::data::database::diesel::DieselDatabaseError> + Send + 'static,
+                R: Send + 'static,
+            >(&self, cmd: T) -> error_stack::Result<R, crate::server::data::DatabaseError> {
+                self.cmds.db_read(cmd).await
+            }
         }
     };
 }
@@ -43,7 +50,7 @@ use crate::{
         media::data::{MediaContentInternal, ModerationRequest},
         model::{AccountIdInternal, AccountIdLight, ContentId},
     },
-    utils::{ConvertCommandError, ErrorConversion},
+    utils::{ConvertCommandError, ErrorConversion, IntoReportExt, IntoReportFromString},
 };
 
 use self::{
@@ -55,12 +62,12 @@ use self::{
 
 use super::{
     cache::{CacheError, DatabaseCache, ReadCacheJson},
-    database::{sqlite::{SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson}, current::read::SqliteReadCommands},
+    database::{sqlite::{SqliteDatabaseError, SqlxReadHandle, SqliteSelectJson}, current::read::SqliteReadCommands, diesel::{DieselCurrentReadHandle, DieselConnection, DieselDatabaseError}},
     file::{utils::FileDir, FileError},
     DatabaseError,
 };
 
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 
 pub type ReadResult<T, Err, WriteContext = T> =
     std::result::Result<T, ReadError<error_stack::Report<Err>, WriteContext>>;
@@ -154,14 +161,21 @@ impl<Target> From<error_stack::Report<SqliteDatabaseError>>
 
 pub struct ReadCommands<'a> {
     db: SqliteReadCommands<'a>,
+    diesel_current_read: &'a DieselCurrentReadHandle,
     cache: &'a DatabaseCache,
     files: &'a FileDir,
 }
 
 impl<'a> ReadCommands<'a> {
-    pub fn new(sqlite: &'a SqlxReadHandle, cache: &'a DatabaseCache, files: &'a FileDir) -> Self {
+    pub fn new(
+        sqlite: &'a SqlxReadHandle,
+        cache: &'a DatabaseCache,
+        files: &'a FileDir,
+        diesel_current_read: &'a DieselCurrentReadHandle,
+    ) -> Self {
         Self {
             db: SqliteReadCommands::new(sqlite),
+            diesel_current_read,
             cache,
             files,
         }
@@ -261,5 +275,22 @@ impl<'a> ReadCommands<'a> {
             })
             .await
             .convert(account_id)
+    }
+
+    pub async fn db_read<
+        T: FnOnce(&mut DieselConnection) -> Result<R, DieselDatabaseError> + Send + 'static,
+        R: Send + 'static,
+    >(&self, cmd: T) -> Result<R, DatabaseError> {
+        let conn = self.diesel_current_read.pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        conn.interact(cmd)
+            .await
+            .into_error_string(DieselDatabaseError::Execute)
+            .change_context(DatabaseError::Diesel)?
+            .change_context(DatabaseError::Diesel)
     }
 }
