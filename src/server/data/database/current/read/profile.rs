@@ -100,6 +100,21 @@ impl SqliteSelectJson for LocationIndexKey {
         id: AccountIdInternal,
         read: &SqliteReadCommands,
     ) -> error_stack::Result<Self, SqliteDatabaseError> {
-       unimplemented!()
+        let request = sqlx::query_as!(
+            LocationIndexKey,
+            r#"
+            SELECT
+                location_key_x as "x: _",
+                location_key_y as "y: _"
+            FROM Profile
+            WHERE account_row_id = ?
+            "#,
+            id.account_row_id,
+        )
+        .fetch_one(read.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
+
+        Ok(request)
     }
 }
