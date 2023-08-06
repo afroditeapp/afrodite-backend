@@ -17,7 +17,7 @@ use tracing::log::{info, error};
 use super::history::write::HistoryWriteCommands;
 use crate::server::data::database::current::{CurrentDataWriteCommands};
 
-use error_stack::Result;
+use error_stack::{Result, IntoReport, ResultExt};
 
 use std::{path::{Path, PathBuf}, sync::Arc, fmt};
 
@@ -141,7 +141,16 @@ fn create_sqlite_connect_options(
     create_if_missing: bool,
 ) -> Result<SqliteConnectOptions, SqliteDatabaseError> {
     if config.sqlite_in_ram() {
-        let options = "sqlite:file:memdb?mode=memory&cache=shared"
+        let ram_str = if db_path.ends_with(DATABASE_FILE_NAME) {
+            "sqlite:file:current?mode=memory&cache=shared"
+        } else if db_path.ends_with(HISTORY_FILE_NAME) {
+            "sqlite:file:history?mode=memory&cache=shared"
+        } else {
+            return Err(SqliteDatabaseError::CreateInRamOptions).into_report()
+                .attach_printable("Unknown database file name");
+        };
+
+        let options = ram_str
             .parse::<SqliteConnectOptions>()
             .into_error(SqliteDatabaseError::CreateInRamOptions)?
             .foreign_keys(true);

@@ -2,6 +2,7 @@ use crate::{api::model::AccountIdInternal, server::data::DatabaseError};
 use crate::config::Config;
 
 use super::history::read::HistoryReadCommands;
+use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME, SqliteDatabaseError};
 
 use async_trait::async_trait;
 use deadpool::managed::{HookErrorCause};
@@ -17,7 +18,7 @@ use tracing::log::{info, error};
 use super::history::write::HistoryWriteCommands;
 use crate::server::data::database::current::{CurrentDataWriteCommands};
 
-use error_stack::{Result, IntoReport};
+use error_stack::{Result, IntoReport, ResultExt};
 
 use std::time::Duration;
 use std::{path::{Path, PathBuf}, sync::Arc, fmt};
@@ -57,6 +58,9 @@ pub enum DieselDatabaseError {
 
     #[error("SQLite version query failed")]
     SqliteVersionQuery,
+
+    #[error("Creating in RAM database failed")]
+    CreateInRam,
 }
 
 pub struct DieselWriteCloseHandle {
@@ -93,12 +97,24 @@ impl fmt::Debug for DieselWriteHandle {
 fn create_manager(
     config: &Config,
     db_path: PathBuf,
-) -> Manager {
-    if config.sqlite_in_ram() {
-        Manager::new("file:memdb?mode=memory&cache=shared", deadpool_diesel::Runtime::Tokio1)
+) -> Result<Manager, DieselDatabaseError> {
+    let manager = if config.sqlite_in_ram() {
+        let ram_str = if db_path.ends_with(DATABASE_FILE_NAME) {
+            "file:current?mode=memory&cache=shared"
+        } else if db_path.ends_with(HISTORY_FILE_NAME) {
+            "file:history?mode=memory&cache=shared"
+        } else {
+            return Err(DieselDatabaseError::CreateInRam)
+                .into_report()
+                .attach_printable("Unknown database file name");
+        };
+
+        Manager::new(ram_str, deadpool_diesel::Runtime::Tokio1)
     } else {
         Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1)
-    }
+    };
+
+    Ok(manager)
 }
 
 #[derive(Clone)]
@@ -111,7 +127,7 @@ impl DieselWriteHandle {
         config: &Config,
         db_path: PathBuf,
     ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
-        let manager = create_manager(config, db_path);
+        let manager = create_manager(config, db_path)?;
 
         let pool = Pool::builder(manager)
             .max_size(1)
@@ -254,7 +270,7 @@ impl DieselReadHandle {
         config: &Config,
         db_path: PathBuf,
     ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
-        let manager = create_manager(config, db_path);
+        let manager = create_manager(config, db_path)?;
         let pool = Pool::builder(manager)
             .max_size(8)
             .post_create(sqlite_setup_hook(&config))

@@ -207,7 +207,6 @@ impl ServerInstance {
         }
 
         let mut tokio_command: tokio::process::Command = command.into();
-        info!("{:?}", &tokio_command);
         let server = tokio_command.kill_on_drop(true).spawn().unwrap();
 
         Self { server, dir }
