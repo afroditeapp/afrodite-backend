@@ -11,6 +11,7 @@ use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 use tokio::sync::Mutex;
+use tokio::time::sleep;
 use tracing::log::{info, error};
 
 use super::history::write::HistoryWriteCommands;
@@ -18,6 +19,7 @@ use crate::server::data::database::current::{CurrentDataWriteCommands};
 
 use error_stack::{Result, IntoReport};
 
+use std::time::Duration;
 use std::{path::{Path, PathBuf}, sync::Arc, fmt};
 
 use sqlx::{
@@ -93,7 +95,7 @@ fn create_manager(
     db_path: PathBuf,
 ) -> Manager {
     if config.sqlite_in_ram() {
-        Manager::new("file::memory:?cache=shared", deadpool_diesel::Runtime::Tokio1)
+        Manager::new("file:memdb?mode=memory&cache=shared", deadpool_diesel::Runtime::Tokio1)
     } else {
         Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1)
     }

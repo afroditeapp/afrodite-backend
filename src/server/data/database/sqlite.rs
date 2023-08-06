@@ -141,10 +141,9 @@ fn create_sqlite_connect_options(
     create_if_missing: bool,
 ) -> Result<SqliteConnectOptions, SqliteDatabaseError> {
     if config.sqlite_in_ram() {
-        let options = "sqlite://memdb?mode=memory&cache=shared"
+        let options = "sqlite:file:memdb?mode=memory&cache=shared"
             .parse::<SqliteConnectOptions>()
             .into_error(SqliteDatabaseError::CreateInRamOptions)?
-            .shared_cache(true)
             .foreign_keys(true);
         return Ok(options);
     }
