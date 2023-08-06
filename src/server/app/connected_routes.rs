@@ -119,6 +119,13 @@ impl ConnectedApp {
                     move |param1, param2| api::profile::get_profile_from_database_debug_mode_benchmark(param1, param2, state)
                 }),
             )
+            .route(
+                api::profile::PATH_POST_PROFILE_TO_DATABASE_BENCHMARK,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::profile::post_profile_to_database_debug_mode_benchmark(param1, param2, state)
+                }),
+            )
         } else {
             private
         };

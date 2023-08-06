@@ -60,6 +60,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{account_id} | Get account's current profile from database. Debug mode must be enabled
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
+*ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled
 *ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location
 *ProfileinternalApi* | [**internal_post_update_profile_visibility**](docs/ProfileinternalApi.md#internal_post_update_profile_visibility) | **POST** /internal/profile_api/visiblity/{account_id}/{value} | 

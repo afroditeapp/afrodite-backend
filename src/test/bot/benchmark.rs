@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use api_client::apis::profile_api::{get_profile, get_profile_from_database_debug_mode_benchmark};
+use api_client::{apis::profile_api::{get_profile, get_profile_from_database_debug_mode_benchmark, post_profile_to_database_debug_mode_benchmark}, models::ProfileUpdate};
 use async_trait::async_trait;
 use tokio::time::sleep;
 
@@ -147,7 +147,7 @@ impl Benchmark {
         let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
             &ActionsBeforeIteration as &dyn BotAction,
-            &GetProfileFromDatabase,
+            &PostProfileToDatabase,
             &ActionsAfterIteration,
         ];
         let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
@@ -225,8 +225,11 @@ impl BotAction for PostProfileToDatabase {
         state: &mut BotState,
         task_state: &mut TaskState,
     ) -> Result<(), TestError> {
-        // TODO: change route to benchmark route
-        ChangeProfileText.excecute(state, task_state).await?;
+        let profile = uuid::Uuid::new_v4(); // Uuid has same string size every time.
+        let profile = ProfileUpdate::new(format!("{}", profile));
+        post_profile_to_database_debug_mode_benchmark(state.api.profile(), profile)
+            .await
+            .into_error(TestError::ApiRequest)?;
         Ok(())
     }
 }

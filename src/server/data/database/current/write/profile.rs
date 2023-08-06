@@ -85,13 +85,6 @@ impl <'a> CurrentSyncWriteProfile<'a> {
             ))
             .execute(self.conn())
             .into_error(DieselDatabaseError::Execute)?;
-        // Profile
-        //     .filter(account_row_id.eq(id.account_row_id))
-        //     .update((
-        //         version_uuid.eq(data.version),
-        //     ))
-        //     .execute(self.conn())
-
 
         Ok(())
     }
