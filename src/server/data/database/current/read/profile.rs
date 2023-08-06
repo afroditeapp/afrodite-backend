@@ -66,25 +66,31 @@ impl SqliteSelectJson for ProfileInternal {
         id: AccountIdInternal,
         read: &SqliteReadCommands,
     ) -> error_stack::Result<Self, SqliteDatabaseError> {
-        // let request = sqlx::query_as!(
-        //     ProfileInternal,
-        //     r#"
-        //     SELECT
-        //         version_uuid as "version_uuid: _",
-        //         name,
-        //         profile_text
-        //     FROM Profile
-        //     WHERE account_row_id = ?
-        //     "#,
-        //     id.account_row_id,
-        // )
-        // .fetch_one(read.handle.pool())
-        // .await
-        // .into_error(SqliteDatabaseError::Fetch)?;
+        let request = sqlx::query!(
+            r#"
+            SELECT
+                version_uuid as "version_uuid: uuid::Uuid",
+                name,
+                profile_text,
+                location_key_x,
+                location_key_y
+            FROM Profile
+            WHERE account_row_id = ?
+            "#,
+            id.account_row_id,
+        )
+        .fetch_one(read.handle.pool())
+        .await
+        .into_error(SqliteDatabaseError::Fetch)?;
 
-        // Ok(request)
-
-        unimplemented!()
+        Ok(ProfileInternal {
+            account_row_id: id.account_row_id,
+            version_uuid: ProfileVersion::new(request.version_uuid),
+            location_key_x: 0,
+            location_key_y: 0,
+            name: request.name,
+            profile_text: request.profile_text,
+        })
     }
 }
 
