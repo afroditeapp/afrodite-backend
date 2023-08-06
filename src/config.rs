@@ -50,6 +50,8 @@ pub enum GetConfigError {
     TlsConfigMissing,
     #[error("TLS config creation error")]
     CreateTlsConfig,
+    #[error("SQLite in RAM mode is not allowed when debug mode is off")]
+    SqliteInRamNotAllowed,
 }
 
 #[derive(Debug)]
@@ -61,6 +63,7 @@ pub struct Config {
     external_services: ExternalServices,
     client_api_urls: InternalApiUrls,
     sign_in_with_urls: SignInWithUrls,
+    sqlite_in_ram: bool,
 
     // Other configs
     test_mode: Option<TestMode>,
@@ -88,6 +91,10 @@ impl Config {
         &self.file.location
     }
 
+    pub fn sqlite_in_ram(&self) -> bool {
+        self.sqlite_in_ram
+    }
+
     /// Server should run in debug mode.
     ///
     /// Debug mode changes:
@@ -97,6 +104,7 @@ impl Config {
     /// * Completing initial setup will check only email when adding admin capabilities.
     ///   Normally it also requires Google Account ID.
     /// * Routes for only related to benchmarking are available.
+    /// * SQLite in RAM mode is allowed.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }
@@ -198,11 +206,24 @@ pub fn get_config() -> Result<Config, GetConfigError> {
         None => None,
     };
 
+    let sqlite_in_ram = if args_config.sqlite_in_ram {
+        if file_config.debug.unwrap_or_default() {
+            true
+        } else {
+            return Err(GetConfigError::SqliteInRamNotAllowed)
+                .into_report()
+                .attach_printable("SQLite in RAM mode is not allowed when debug mode is off");
+        }
+    } else {
+        false
+    };
+
     Ok(Config {
         file: file_config,
         database,
         external_services,
         client_api_urls,
+        sqlite_in_ram,
         test_mode: args_config.test_mode,
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,

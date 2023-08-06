@@ -62,7 +62,7 @@ impl Benchmark {
     pub fn benchmark_get_profile(state: BotState) -> Self {
         let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
-            &UpdateProfileBenchmark as &dyn BotAction,
+            &UpdateProfileCmdArgBenchmark as &dyn BotAction,
             &ActionsBeforeIteration,
             &GetProfile,
             &ActionsAfterIteration,
@@ -79,7 +79,7 @@ impl Benchmark {
     pub fn benchmark_get_profile_from_database(state: BotState) -> Self {
         let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
-            &UpdateProfileBenchmark as &dyn BotAction,
+            &UpdateProfileCmdArgBenchmark as &dyn BotAction,
             &ActionsBeforeIteration,
             &GetProfileFromDatabase,
             &ActionsAfterIteration,
@@ -97,7 +97,7 @@ impl Benchmark {
     pub fn benchmark_get_profile_list(state: BotState) -> Self {
         let setup = [&RunActions(TO_NORMAL_STATE) as &dyn BotAction];
         let benchmark = [
-            &UpdateProfileBenchmark as &dyn BotAction,
+            &UpdateProfileCmdArgBenchmark as &dyn BotAction,
             &ActionsBeforeIteration,
             &ResetProfileIterator,
             &RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileList),
@@ -126,6 +126,39 @@ impl Benchmark {
                 .peekable(),
         }
     }
+
+    pub fn benchmark_post_profile(state: BotState) -> Self {
+        let setup = [&Register as &dyn BotAction, &Login];
+        let benchmark = [
+            &ActionsBeforeIteration as &dyn BotAction,
+            &PostProfile,
+            &ActionsAfterIteration,
+        ];
+        let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+        Self {
+            state,
+            actions: (Box::new(iter)
+                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
+                .peekable(),
+        }
+    }
+
+    pub fn benchmark_post_profile_to_database(state: BotState) -> Self {
+        let setup = [&Register as &dyn BotAction, &Login];
+        let benchmark = [
+            &ActionsBeforeIteration as &dyn BotAction,
+            &GetProfileFromDatabase,
+            &ActionsAfterIteration,
+        ];
+        let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+        Self {
+            state,
+            actions: (Box::new(iter)
+                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
+                .peekable(),
+        }
+    }
+
 }
 
 #[async_trait]
@@ -168,10 +201,42 @@ impl BotAction for GetProfileFromDatabase {
 }
 
 #[derive(Debug)]
-pub struct UpdateProfileBenchmark;
+pub struct PostProfile;
 
 #[async_trait]
-impl BotAction for UpdateProfileBenchmark {
+impl BotAction for PostProfile {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
+        ChangeProfileText.excecute(state, task_state).await?;
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct PostProfileToDatabase;
+
+#[async_trait]
+impl BotAction for PostProfileToDatabase {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
+        // TODO: change route to benchmark route
+        ChangeProfileText.excecute(state, task_state).await?;
+        Ok(())
+    }
+}
+
+
+#[derive(Debug)]
+pub struct UpdateProfileCmdArgBenchmark;
+
+#[async_trait]
+impl BotAction for UpdateProfileCmdArgBenchmark {
     async fn excecute_impl_task_state(
         &self,
         state: &mut BotState,

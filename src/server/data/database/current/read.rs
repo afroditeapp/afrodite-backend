@@ -53,7 +53,9 @@ pub struct SqliteReadCommands<'a> {
 
 impl<'a> SqliteReadCommands<'a> {
     pub fn new(handle: &'a SqlxReadHandle) -> Self {
-        unimplemented!()
+        Self {
+            handle,
+        }
     }
 
     pub fn account(&self) -> CurrentReadAccount<'_> {

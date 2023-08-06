@@ -12,6 +12,7 @@ use crate::test::client::PublicApiUrls;
 // Config given as command line arguments
 pub struct ArgsConfig {
     pub database_dir: Option<PathBuf>,
+    pub sqlite_in_ram: bool,
     pub test_mode: Option<TestMode>,
 }
 
@@ -23,6 +24,7 @@ pub fn get_config() -> ArgsConfig {
                 .value_parser(value_parser!(PathBuf)),
         )
         .arg(arg!(--"build-info" "Print build info and quit.").required(false))
+        .arg(arg!(--"sqlite-in-ram" "Use in RAM mode for SQLite."))
         .subcommand(
             Command::new("test")
                 .about("Run tests and benchmarks")
@@ -127,7 +129,7 @@ pub fn get_config() -> ArgsConfig {
                 no_sleep: sub_matches.is_present("no-sleep"),
                 no_clean: sub_matches.is_present("no-clean"),
                 no_servers: sub_matches.is_present("no-servers"),
-                update_profile: sub_matches.is_present("update-profile"),
+                update_profile: sub_matches.is_present("update-profile"), // TODO remove as there is also write benchmark?
                 save_state: sub_matches.is_present("save-state"),
                 print_speed: sub_matches.is_present("print-speed"),
                 early_quit: sub_matches.is_present("early-quit"),
@@ -161,6 +163,7 @@ pub fn get_config() -> ArgsConfig {
         database_dir: matches
             .get_one::<PathBuf>("database")
             .map(ToOwned::to_owned),
+        sqlite_in_ram: matches.is_present("sqlite-in-ram"),
         test_mode,
     }
 }
@@ -199,6 +202,8 @@ pub enum Test {
     BenchmarkGetProfile,
     BenchmarkGetProfileFromDatabase,
     BenchmarkGetProfileList,
+    BenchmarkPostProfile,
+    BenchmarkPostProfileToDatabase,
     Bot,
 }
 
@@ -206,6 +211,8 @@ const TEST_NAME_QA: &str = "qa";
 const TEST_NAME_BENCHMARK_GET_PROFILE: &str = "benchmark-get-profile";
 const TEST_NAME_BENCHMARK_GET_PROFILE_FROM_DATABASE: &str = "benchmark-get-profile-from-database";
 const TEST_NAME_BENCHMARK_GET_PROFILE_LIST: &str = "benchmark-get-profile-list";
+const TEST_NAME_BENCHMARK_POST_PROFILE: &str = "benchmark-post-profile";
+const TEST_NAME_BENCHMARK_POST_PROFILE_TO_DATABASE: &str = "benchmark-post-profile-to-database";
 const TEST_NAME_BOT: &str = "bot";
 
 impl Test {
@@ -215,6 +222,8 @@ impl Test {
             Self::BenchmarkGetProfile => TEST_NAME_BENCHMARK_GET_PROFILE,
             Self::BenchmarkGetProfileFromDatabase => TEST_NAME_BENCHMARK_GET_PROFILE_FROM_DATABASE,
             Self::BenchmarkGetProfileList => TEST_NAME_BENCHMARK_GET_PROFILE_LIST,
+            Self::BenchmarkPostProfile => TEST_NAME_BENCHMARK_POST_PROFILE,
+            Self::BenchmarkPostProfileToDatabase => TEST_NAME_BENCHMARK_POST_PROFILE_TO_DATABASE,
             Self::Bot => TEST_NAME_BOT,
         }
     }
@@ -228,6 +237,8 @@ impl TryFrom<&str> for Test {
             TEST_NAME_BENCHMARK_GET_PROFILE => Self::BenchmarkGetProfile,
             TEST_NAME_BENCHMARK_GET_PROFILE_FROM_DATABASE => Self::BenchmarkGetProfileFromDatabase,
             TEST_NAME_BENCHMARK_GET_PROFILE_LIST => Self::BenchmarkGetProfileList,
+            TEST_NAME_BENCHMARK_POST_PROFILE => Self::BenchmarkPostProfile,
+            TEST_NAME_BENCHMARK_POST_PROFILE_TO_DATABASE => Self::BenchmarkPostProfileToDatabase,
             TEST_NAME_BOT => Self::Bot,
             _ => return Err(()),
         })
@@ -272,6 +283,8 @@ impl clap::builder::TypedValueParser for TestNameParser {
                 Test::BenchmarkGetProfile,
                 Test::BenchmarkGetProfileFromDatabase,
                 Test::BenchmarkGetProfileList,
+                Test::BenchmarkPostProfile,
+                Test::BenchmarkPostProfileToDatabase,
                 Test::Bot,
             ]
             .iter()

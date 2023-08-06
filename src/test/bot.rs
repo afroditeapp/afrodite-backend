@@ -188,6 +188,8 @@ impl BotManager {
             Test::BenchmarkGetProfileList |
             Test::BenchmarkGetProfile |
             Test::BenchmarkGetProfileFromDatabase |
+            Test::BenchmarkPostProfile |
+            Test::BenchmarkPostProfileToDatabase |
             Test::Bot => {
                 Self::benchmark_or_bot(task_id, old_state, config, _bot_running_handle)
             }
@@ -220,12 +222,10 @@ impl BotManager {
             );
 
             match config.test {
-                Test::BenchmarkGetProfile => {
-                    bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
-                }
-                Test::BenchmarkGetProfileFromDatabase => {
-                    bots.push(Box::new(Benchmark::benchmark_get_profile_from_database(state)))
-                }
+                Test::BenchmarkGetProfile =>
+                    bots.push(Box::new(Benchmark::benchmark_get_profile(state))),
+                Test::BenchmarkGetProfileFromDatabase =>
+                    bots.push(Box::new(Benchmark::benchmark_get_profile_from_database(state))),
                 Test::BenchmarkGetProfileList => {
                     let benchmark = match bot_i {
                         0 => Benchmark::benchmark_get_profile_list(state),
@@ -233,6 +233,10 @@ impl BotManager {
                     };
                     bots.push(Box::new(benchmark))
                 }
+                Test::BenchmarkPostProfile =>
+                    bots.push(Box::new(Benchmark::benchmark_post_profile(state))),
+                Test::BenchmarkPostProfileToDatabase =>
+                    bots.push(Box::new(Benchmark::benchmark_post_profile_to_database(state))),
                 Test::Bot => bots.push(Box::new(ClientBot::new(state))),
                 Test::Qa => panic!("Invalid test {:?}", config.test),
             };

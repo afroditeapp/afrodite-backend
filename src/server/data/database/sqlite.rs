@@ -68,10 +68,8 @@ pub enum SqliteDatabaseError {
     #[error("ModerationRequestContentIsInvalid")]
     ModerationRequestContentInvalid,
 
-    #[error("Connection get failed from connection pool")]
-    GetConnection,
-    #[error("Interaction with database connection failed")]
-    InteractionError,
+    #[error("Creating in RAM config for sqlx failed")]
+    CreateInRamOptions,
 }
 
 /// Path to directory which contains Sqlite files.
@@ -141,7 +139,16 @@ fn create_sqlite_connect_options(
     config: &Config,
     db_path: &Path,
     create_if_missing: bool,
-) -> SqliteConnectOptions {
+) -> Result<SqliteConnectOptions, SqliteDatabaseError> {
+    if config.sqlite_in_ram() {
+        let options = "sqlite://memdb?mode=memory&cache=shared"
+            .parse::<SqliteConnectOptions>()
+            .into_error(SqliteDatabaseError::CreateInRamOptions)?
+            .shared_cache(true)
+            .foreign_keys(true);
+        return Ok(options);
+    }
+
     let options = SqliteConnectOptions::new()
         .filename(db_path)
         .create_if_missing(create_if_missing)
@@ -160,7 +167,7 @@ fn create_sqlite_connect_options(
         options
     };
 
-    options
+    Ok(options)
 }
 
 impl fmt::Debug for SqliteWriteHandle {
@@ -181,8 +188,17 @@ impl SqliteWriteHandle {
         db_path: PathBuf,
     ) -> Result<(Self, SqliteWriteCloseHandle), SqliteDatabaseError> {
         let pool = SqlitePoolOptions::new()
-            .max_connections(1)
-            .connect_with(create_sqlite_connect_options(config, &db_path, true))
+            .max_connections(1);
+
+        let pool = if config.sqlite_in_ram() {
+            pool.max_lifetime(None)
+                .idle_timeout(None)
+        } else {
+            pool
+        };
+
+        let pool = pool
+            .connect_with(create_sqlite_connect_options(config, &db_path, true)?)
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
@@ -198,6 +214,19 @@ impl SqliteWriteHandle {
     pub fn pool(&self) -> &SqlitePool {
         &self.pool
     }
+
+    pub async fn sqlite_version(&self) -> Result<String, SqliteDatabaseError> {
+        let version = sqlx::query("SELECT sqlite_version()")
+            .map(|x: SqliteRow| {
+                let r: String = x.get(0);
+                r
+            })
+            .fetch_one(&self.pool)
+            .await
+            .into_error(SqliteDatabaseError::Execute)?;
+        Ok(version)
+    }
+
 }
 
 pub struct SqlxReadCloseHandle {
@@ -230,7 +259,7 @@ impl SqlxReadHandle {
     ) -> Result<(Self, SqlxReadCloseHandle), SqliteDatabaseError> {
         let pool = SqlitePoolOptions::new()
             .max_connections(16)
-            .connect_with(create_sqlite_connect_options(&config, &db_path, false))
+            .connect_with(create_sqlite_connect_options(&config, &db_path, false)?)
             .await
             .into_error(SqliteDatabaseError::Connect)?;
 
@@ -295,18 +324,4 @@ pub trait HistorySelectJson: Sized {
         id: AccountIdInternal,
         read: &HistoryReadCommands,
     ) -> Result<Self, SqliteDatabaseError>;
-}
-
-pub async fn print_sqlite_version(pool: &SqlitePool) -> Result<(), SqliteDatabaseError> {
-    let q = sqlx::query("SELECT sqlite_version()")
-        .map(|x: SqliteRow| {
-            let r: String = x.get(0);
-            r
-        })
-        .fetch_one(pool)
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-    info!("SQLite version: {}", q);
-    Ok(())
 }

@@ -14,25 +14,24 @@ use std::{
     sync::Arc, fmt::Debug,
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::{Result, ResultExt, IntoReport};
 
-use crate::server::data::database::current::read::SqliteReadCommands;
+use crate::server::data::database::{current::read::SqliteReadCommands, diesel::{DieselWriteHandle, DieselReadHandle}};
 use tracing::info;
 
 use crate::{
     api::model::{AccountIdInternal, AccountIdLight, SignInWithInfo},
     config::Config,
     media_backup::MediaBackupHandle,
-    server::data::{database::sqlite::print_sqlite_version},
 };
 
 use self::{
     cache::{DatabaseCache, WriteCacheJson},
     database::{history::read::HistoryReadCommands, sqlite::{HistoryUpdateJson, SqliteUpdateJson}},
-    database::sqlite::{
+    database::{sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
         SqlxReadCloseHandle, SqlxReadHandle, SqliteWriteCloseHandle, SqliteWriteHandle,
-    },
+    }, diesel::{DieselWriteCloseHandle, DieselReadCloseHandle, DieselCurrentWriteHandle, DieselCurrentReadHandle}},
     file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
@@ -76,6 +75,9 @@ pub enum DatabaseError {
 
     #[error("Command runner quit too early")]
     CommandRunnerQuit,
+
+    #[error("Different SQLite versions detected between diesel and sqlx")]
+    SqliteVersionMismatch,
 }
 
 
@@ -164,6 +166,10 @@ pub struct DatabaseManager {
     sqlite_read_close: SqlxReadCloseHandle,
     history_write_close: SqliteWriteCloseHandle,
     history_read_close: SqlxReadCloseHandle,
+    diesel_current_write_close: DieselWriteCloseHandle,
+    diesel_current_read_close: DieselReadCloseHandle,
+    diesel_history_write_close: DieselWriteCloseHandle,
+    diesel_history_read_close: DieselReadCloseHandle,
 }
 
 impl DatabaseManager {
@@ -177,14 +183,49 @@ impl DatabaseManager {
 
         let root = DatabaseRoot::new(database_dir)?;
 
+        // Diesel
+
+        // Run migrations and print SQLite version used by Diesel
+        let (diesel_current_write, diesel_current_write_close) =
+            DieselWriteHandle::new(&config, root.current_db_file())
+                .await
+                .change_context(DatabaseError::Init)?;
+
+        let diesel_sqlite = diesel_current_write.sqlite_version()
+            .await
+            .change_context(DatabaseError::Sqlite)?;
+        info!("Diesel SQLite version: {}", diesel_sqlite);
+
+        let (diesel_current_read, diesel_current_read_close) =
+            DieselReadHandle::new(&config, root.current_db_file())
+                .await
+                .change_context(DatabaseError::Init)?;
+
+        let (diesel_history_write, diesel_history_write_close) =
+            DieselWriteHandle::new(&config, root.history_db_file())
+                .await
+                .change_context(DatabaseError::Init)?;
+
+        let (diesel_history_read, diesel_history_read_close) =
+            DieselReadHandle::new(&config, root.history_db_file())
+                .await
+                .change_context(DatabaseError::Init)?;
+
+        // Sqlx
+
         let (sqlite_write, sqlite_write_close) =
             SqliteWriteHandle::new(&config, root.current_db_file())
                 .await
                 .change_context(DatabaseError::Init)?;
 
-        print_sqlite_version(sqlite_write.pool())
+        let sqlx_sqlite = sqlite_write.sqlite_version()
             .await
             .change_context(DatabaseError::Init)?;
+        info!("Sqlx SQLite version: {}", sqlx_sqlite);
+
+        if diesel_sqlite != sqlx_sqlite {
+            return Err(DatabaseError::SqliteVersionMismatch).into_report();
+        }
 
         let (sqlite_read, sqlite_read_close) =
             SqlxReadHandle::new(&config, root.current_db_file())
@@ -216,6 +257,8 @@ impl DatabaseManager {
             config: config.clone(),
             sqlite_write: CurrentDataWriteHandle::new(sqlite_write),
             sqlite_read,
+            diesel_current_read: DieselCurrentReadHandle::new(diesel_current_read),
+            diesel_current_write: DieselCurrentWriteHandle::new(diesel_current_write),
             history_write: HistoryWriteHandle {
                 handle: history_write,
             },
@@ -243,6 +286,10 @@ impl DatabaseManager {
             sqlite_read_close,
             history_write_close,
             history_read_close,
+            diesel_current_write_close,
+            diesel_current_read_close,
+            diesel_history_read_close,
+            diesel_history_write_close,
         };
 
         info!("DatabaseManager created");
@@ -255,6 +302,10 @@ impl DatabaseManager {
         self.sqlite_write_close.close().await;
         self.history_read_close.close().await;
         self.history_write_close.close().await;
+        self.diesel_current_read_close.close().await;
+        self.diesel_current_write_close.close().await;
+        self.diesel_history_read_close.close().await;
+        self.diesel_history_write_close.close().await;
     }
 }
 
@@ -264,6 +315,8 @@ pub struct RouterDatabaseWriteHandle {
     root: Arc<DatabaseRoot>,
     sqlite_write: CurrentDataWriteHandle,
     sqlite_read: SqlxReadHandle,
+    diesel_current_write: DieselCurrentWriteHandle,
+    diesel_current_read: DieselCurrentReadHandle,
     history_write: HistoryWriteHandle,
     history_read: SqlxReadHandle,
     cache: Arc<DatabaseCache>,

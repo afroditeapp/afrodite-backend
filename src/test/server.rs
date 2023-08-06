@@ -7,7 +7,7 @@ use crate::config::{
     file::{
         Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig, SocketConfig,
         CONFIG_FILE_NAME,
-    },
+    }, Config,
 };
 
 use nix::{sys::signal::Signal, unistd::Pid};
@@ -42,7 +42,7 @@ pub struct ServerManager {
 }
 
 impl ServerManager {
-    pub async fn new(config: Arc<TestMode>) -> Self {
+    pub async fn new(all_config: &Config, config: Arc<TestMode>) -> Self {
         let dir = config.server.test_database_dir.clone();
         if !dir.exists() {
             std::fs::create_dir_all(&dir).unwrap();
@@ -89,7 +89,7 @@ impl ServerManager {
             },
             external_services.clone(),
         );
-        let mut servers = vec![ServerInstance::new(dir.clone(), account_config, &config)];
+        let mut servers = vec![ServerInstance::new(dir.clone(), &all_config, account_config, &config)];
 
         if config.server.microservice_media {
             let server_config = new_config(
@@ -102,7 +102,7 @@ impl ServerManager {
                 },
                 external_services.clone(),
             );
-            servers.push(ServerInstance::new(dir.clone(), server_config, &config));
+            servers.push(ServerInstance::new(dir.clone(), &all_config, server_config, &config));
         }
 
         if config.server.microservice_profile {
@@ -116,7 +116,7 @@ impl ServerManager {
                 },
                 external_services,
             );
-            servers.push(ServerInstance::new(dir.clone(), server_config, &config));
+            servers.push(ServerInstance::new(dir.clone(), &all_config, server_config, &config));
         }
 
         Self { servers, config }
@@ -168,7 +168,7 @@ pub struct ServerInstance {
 }
 
 impl ServerInstance {
-    pub fn new(dir: PathBuf, config: ConfigFile, args_config: &TestMode) -> Self {
+    pub fn new(dir: PathBuf, all_config: &Config, server_config: ConfigFile, args_config: &TestMode) -> Self {
         let id = uuid::Uuid::new_v4();
         let dir = dir.join(format!(
             "{}{}_{}",
@@ -178,7 +178,7 @@ impl ServerInstance {
         ));
         std::fs::create_dir(&dir).unwrap();
 
-        let config = toml::to_string_pretty(&config).unwrap();
+        let config = toml::to_string_pretty(&server_config).unwrap();
         std::fs::write(dir.join(CONFIG_FILE_NAME), config).unwrap();
 
         let start_cmd = env::args().next().unwrap();
@@ -188,7 +188,7 @@ impl ServerInstance {
             panic!("First argument does not point to a file {:?}", &start_cmd);
         }
 
-        info!("start_cmd: {:?}", &start_cmd);
+        info!("Path to server binary: {:?}", &start_cmd);
 
         let log_value = if args_config.server.log_debug {
             "debug"
@@ -202,7 +202,12 @@ impl ServerInstance {
             .env("RUST_LOG", log_value)
             .process_group(0);
 
+        if all_config.sqlite_in_ram() {
+            command.arg("--sqlite-in-ram");
+        }
+
         let mut tokio_command: tokio::process::Command = command.into();
+        info!("{:?}", &tokio_command);
         let server = tokio_command.kill_on_drop(true).spawn().unwrap();
 
         Self { server, dir }

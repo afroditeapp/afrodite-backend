@@ -49,7 +49,7 @@ impl TestRunner {
         ApiClient::new(self.test_config.server.api_urls.clone()).print_to_log();
 
         let server = if !self.test_config.no_servers {
-            Some(ServerManager::new(self.test_config.clone()).await)
+            Some(ServerManager::new(&self.config, self.test_config.clone()).await)
         } else {
             None
         };

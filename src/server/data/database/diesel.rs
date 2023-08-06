@@ -16,7 +16,7 @@ use tracing::log::{info, error};
 use super::history::write::HistoryWriteCommands;
 use crate::server::data::database::current::{CurrentDataWriteCommands};
 
-use error_stack::Result;
+use error_stack::{Result, IntoReport};
 
 use std::{path::{Path, PathBuf}, sync::Arc, fmt};
 
@@ -34,8 +34,8 @@ pub type DieselPool = deadpool_diesel::sqlite::Pool;
 
 pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
-mod sqlite_version123 {
-    use diesel::{sql_types::Text, sql_function};
+mod sqlite_version {
+    use diesel::sql_function;
     sql_function! { fn sqlite_version() -> Text }
 }
 
@@ -48,11 +48,13 @@ pub enum DieselDatabaseError {
     #[error("Running diesel database migrations failed")]
     Migrate,
 
-
     #[error("Connection get failed from connection pool")]
     GetConnection,
     #[error("Interaction with database connection failed")]
     InteractionError,
+
+    #[error("SQLite version query failed")]
+    SqliteVersionQuery,
 }
 
 pub struct DieselWriteCloseHandle {
@@ -86,6 +88,17 @@ impl fmt::Debug for DieselWriteHandle {
     }
 }
 
+fn create_manager(
+    config: &Config,
+    db_path: PathBuf,
+) -> Manager {
+    if config.sqlite_in_ram() {
+        Manager::new("file::memory:?cache=shared", deadpool_diesel::Runtime::Tokio1)
+    } else {
+        Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1)
+    }
+}
+
 #[derive(Clone)]
 pub struct DieselWriteHandle {
     pool: DieselPool,
@@ -95,13 +108,24 @@ impl DieselWriteHandle {
     pub async fn new(
         config: &Config,
         db_path: PathBuf,
-        print_sqlite_version: bool,
     ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
-        let manager = Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1);
+        let manager = create_manager(config, db_path);
+
         let pool = Pool::builder(manager)
             .max_size(1)
-            .post_create(sqlite_setup_hook(&config))
-            .build()
+            .post_create(sqlite_setup_hook(&config));
+
+        let pool = if config.sqlite_in_ram() {
+            // Prevent all in RAM database from being dropped
+
+            pool
+                .runtime(deadpool::Runtime::Tokio1)
+                .recycle_timeout(Some(std::time::Duration::MAX))
+        } else {
+            pool
+        };
+
+        let pool = pool.build()
             .into_error(DieselDatabaseError::Connect)?;
 
         let conn = pool
@@ -116,25 +140,6 @@ impl DieselWriteHandle {
             .into_error_string(DieselDatabaseError::InteractionError)?
             .into_error_string(DieselDatabaseError::Migrate)?;
 
-        pool
-            .get()
-            .await
-            .into_error(DieselDatabaseError::GetConnection)?;
-        let sqlite_version: Vec<String> = conn.interact(move |conn| {
-            //sqlite_version::sqlite_version().load(conn);
-            // let result: Vec<String> = diesel::select(sqlite_version123::sqlite_version()).load(conn)?;
-            //let result: Option<String> = diesel::sql_query("SELECT sqlite_version()").get_result(conn).optional()?;
-            // Ok(result)
-            diesel::select(sqlite_version123::sqlite_version()).load(conn)
-        })
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
-            .into_error_string(DieselDatabaseError::Execute)?;
-
-        if let Some(version) = sqlite_version.first() {
-            info!("Diesel SQLite version: {}", version);
-        }
-
         let write_handle = DieselWriteHandle {
             pool: pool.clone(),
         };
@@ -146,6 +151,26 @@ impl DieselWriteHandle {
 
     pub fn pool(&self) -> &DieselPool {
         &self.pool
+    }
+
+    pub async fn sqlite_version(&self) -> Result<String, DieselDatabaseError> {
+        let conn = self.pool
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)?;
+
+        let sqlite_version: Vec<String> = conn.interact(move |conn| {
+            diesel::select(sqlite_version::sqlite_version()).load(conn)
+        })
+            .await
+            .into_error_string(DieselDatabaseError::Execute)?
+            .into_error_string(DieselDatabaseError::Execute)?;
+
+        sqlite_version
+            .first()
+            .ok_or(DieselDatabaseError::SqliteVersionQuery)
+            .into_report()
+            .cloned()
     }
 }
 
@@ -227,7 +252,7 @@ impl DieselReadHandle {
         config: &Config,
         db_path: PathBuf,
     ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
-        let manager = Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1);
+        let manager = create_manager(config, db_path);
         let pool = Pool::builder(manager)
             .max_size(8)
             .post_create(sqlite_setup_hook(&config))
@@ -248,16 +273,15 @@ impl DieselReadHandle {
     }
 }
 
-pub async fn print_sqlite_version(pool: &SqlitePool) -> Result<(), DieselDatabaseError> {
-    let q = sqlx::query("SELECT sqlite_version()")
-        .map(|x: SqliteRow| {
-            let r: String = x.get(0);
-            r
-        })
-        .fetch_one(pool)
-        .await
-        .into_error(DieselDatabaseError::Execute)?;
+#[derive(Debug, Clone)]
+pub struct DieselCurrentReadHandle {
+    handle: DieselReadHandle,
+}
 
-    info!("SQLite version: {}", q);
-    Ok(())
+impl DieselCurrentReadHandle {
+    pub fn new(handle: DieselReadHandle) -> Self {
+        Self {
+            handle,
+        }
+    }
 }

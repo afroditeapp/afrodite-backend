@@ -19,7 +19,7 @@ pub struct ChangeProfileText;
 #[async_trait]
 impl BotAction for ChangeProfileText {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = rand::random::<u32>();
+        let profile = uuid::Uuid::new_v4(); // Uuid has same string size every time.
         let profile = ProfileUpdate::new(format!("{}", profile));
         post_profile(state.api.profile(), profile)
             .await
