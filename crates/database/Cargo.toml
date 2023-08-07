@@ -1,13 +1,14 @@
 [package]
-name = "pihka-backend"
-version = "0.1.0"
+name = "database"
+version = "0.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "3.2.14", features = ["cargo"] }
-toml = "0.7.2"
+
+
+
 uuid = { version = "1.1.2", features = ["v4", "serde"] }
 
 serde = { version = "1.0", features = ["derive"] }
@@ -22,7 +23,6 @@ axum = { version = "0.6", features = ["headers", "ws"] }
 tower = "0.4.13"
 tower-http = { version = "0.4.0", features = ["trace"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 mime = "0.3"
 headers = "0.3.8"
 reqwest = { version = "0.11", features = ["json"] }
@@ -30,12 +30,10 @@ url = { version = "2.3.1", features = ["serde"] }
 bytes = "1.4.0"
 http = "0.2.9"
 
-# Server TLS
-tokio-rustls = "0.24.0"
-rustls-pemfile = "1.0.2"
 
 utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
+
 
 
 sqlx = { version = "0.7.1", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
@@ -44,6 +42,7 @@ diesel = { version = "2.1.0", features = ["sqlite"] }
 diesel_migrations = "2.1.0"
 deadpool = { version = "0.9.0" }
 deadpool-diesel = { version = "0.4.1", features = ["sqlite"] }
+
 
 num_cpus = "1.16.0"
 
@@ -59,23 +58,8 @@ nalgebra = "0.32.2"
 jsonwebtoken = "8.3.0"
 base64 = "0.21.0"
 
-config = { path = "./crates/config" }
-test = { path = "./crates/test" }
-server = { path = "./crates/server" }
+app-manager = { path = "../app-manager/app-manager" }
 
-[build-dependencies]
-vergen = { version = "8.0.0", features = ["cargo", "git", "gitcl", "rustc"] }
-
-[workspace]
-members = [
-    "crates/api_client",
-    "crates/api_internal",
-    "crates/app-manager/app-manager",
-    "crates/app-manager/manager_api_client",
-    "crates/model",
-    "crates/config",
-    "crates/utils",
-    "crates/test",
-    "crates/database",
-    "crates/server",
-]
+utils = { path = "../utils" }
+config = { path = "../config" }
+model = { path = "../model" }

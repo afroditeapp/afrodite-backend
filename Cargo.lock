@@ -58,6 +58,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "api_internal"
+version = "0.1.0"
+dependencies = [
+ "api_client",
+ "model",
+ "reqwest",
+ "tracing",
+]
+
+[[package]]
 name = "app-manager"
 version = "0.1.0"
 dependencies = [
@@ -316,6 +326,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 
 [[package]]
+name = "config"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "error-stack",
+ "reqwest",
+ "rustls-pemfile",
+ "serde",
+ "thiserror",
+ "tokio-rustls",
+ "toml",
+ "tracing",
+ "url",
+ "utils",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -439,6 +466,49 @@ name = "data-encoding"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2e66c9d817f1720209181c316d28635c050fa304f9c79e47a520882661b7308"
+
+[[package]]
+name = "database"
+version = "0.0.0"
+dependencies = [
+ "app-manager",
+ "async-trait",
+ "axum",
+ "base64 0.21.0",
+ "bytes",
+ "config",
+ "deadpool",
+ "deadpool-diesel",
+ "diesel",
+ "diesel_migrations",
+ "error-stack",
+ "futures",
+ "headers",
+ "http",
+ "hyper",
+ "jsonwebtoken",
+ "mime",
+ "model",
+ "nalgebra",
+ "num_cpus",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tower-http",
+ "tracing",
+ "url",
+ "utils",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
 
 [[package]]
 name = "deadpool"
@@ -1361,6 +1431,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "model"
+version = "0.0.0"
+dependencies = [
+ "app-manager",
+ "async-trait",
+ "axum",
+ "base64 0.21.0",
+ "bytes",
+ "config",
+ "deadpool",
+ "deadpool-diesel",
+ "diesel",
+ "diesel_migrations",
+ "error-stack",
+ "futures",
+ "headers",
+ "http",
+ "hyper",
+ "jsonwebtoken",
+ "mime",
+ "nalgebra",
+ "num_cpus",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tower-http",
+ "tracing",
+ "url",
+ "utils",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
 name = "nalgebra"
 version = "0.32.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1654,13 +1766,12 @@ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
 name = "pihka-backend"
 version = "0.1.0"
 dependencies = [
- "api_client",
- "app-manager",
  "async-trait",
  "axum",
  "base64 0.21.0",
  "bytes",
  "clap",
+ "config",
  "deadpool",
  "deadpool-diesel",
  "diesel",
@@ -1670,25 +1781,22 @@ dependencies = [
  "headers",
  "http",
  "hyper",
- "image",
  "jsonwebtoken",
- "manager_api_client",
  "mime",
  "nalgebra",
- "nix",
  "num_cpus",
- "rand",
  "reqwest",
  "rustls-pemfile",
  "serde",
  "serde_json",
+ "server",
  "sqlx",
+ "test",
  "thiserror",
  "time",
  "tokio",
  "tokio-rustls",
  "tokio-stream",
- "tokio-tungstenite 0.19.0",
  "tokio-util",
  "toml",
  "tower",
@@ -2260,6 +2368,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "server"
+version = "0.0.0"
+dependencies = [
+ "api_internal",
+ "app-manager",
+ "async-trait",
+ "axum",
+ "base64 0.21.0",
+ "bytes",
+ "config",
+ "database",
+ "deadpool",
+ "deadpool-diesel",
+ "diesel",
+ "diesel_migrations",
+ "error-stack",
+ "futures",
+ "headers",
+ "http",
+ "hyper",
+ "jsonwebtoken",
+ "manager_api_client",
+ "mime",
+ "model",
+ "nalgebra",
+ "nix",
+ "num_cpus",
+ "reqwest",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-rustls",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "utils",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2692,6 +2850,56 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be55cf8942feac5c765c2c993422806843c9a9a45d4d5c407ad6dd2ea95eb9b6"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "test"
+version = "0.0.0"
+dependencies = [
+ "api_client",
+ "app-manager",
+ "async-trait",
+ "axum",
+ "base64 0.21.0",
+ "bytes",
+ "config",
+ "deadpool",
+ "deadpool-diesel",
+ "diesel",
+ "diesel_migrations",
+ "error-stack",
+ "futures",
+ "headers",
+ "http",
+ "hyper",
+ "image",
+ "jsonwebtoken",
+ "mime",
+ "nalgebra",
+ "nix",
+ "num_cpus",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "server",
+ "sqlx",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "tokio-tungstenite 0.19.0",
+ "tokio-util",
+ "toml",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "utils",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
 ]
 
 [[package]]
@@ -3131,6 +3339,15 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
+name = "utils"
+version = "0.0.0"
+dependencies = [
+ "error-stack",
+ "thiserror",
+ "time",
+]
 
 [[package]]
 name = "utoipa"
