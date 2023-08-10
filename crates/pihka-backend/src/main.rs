@@ -2,7 +2,7 @@ pub mod build_info;
 
 use build_info::{BUILD_INFO_GIT_DESCRIBE, BUILD_INFO_CARGO_PKG_VERSION};
 use server::PihkaServer;
-use test::TestRunner;
+use test_mode::TestRunner;
 use config::get_config;
 
 

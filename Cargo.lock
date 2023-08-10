@@ -1791,7 +1791,7 @@ dependencies = [
  "serde_json",
  "server",
  "sqlx",
- "test",
+ "test_mode",
  "thiserror",
  "time",
  "tokio",
@@ -2853,7 +2853,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "test"
+name = "test_mode"
 version = "0.0.0"
 dependencies = [
  "api_client",
