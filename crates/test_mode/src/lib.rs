@@ -1,3 +1,6 @@
+#![deny(unsafe_code)]
+#![warn(unused_crate_dependencies)]
+
 //! Run test suite and benchmarks
 
 mod bot;

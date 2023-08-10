@@ -9,7 +9,6 @@ use hyper::StatusCode;
 use tokio::sync::{Mutex, MutexGuard};
 use tracing::{error, info};
 
-use crate::api::GetConfig;
 use config::Config;
 use config::InternalApiUrls;
 use model::{Account, AccountIdInternal, ApiKey, BooleanSetting, Profile, ProfileInternal};

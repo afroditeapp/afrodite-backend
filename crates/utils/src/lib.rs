@@ -1,3 +1,6 @@
+#![deny(unsafe_code)]
+#![warn(unused_crate_dependencies)]
+
 use std::fmt::Display;
 
 use error_stack::{Context, IntoReport, Result, ResultExt};

@@ -1,3 +1,6 @@
+#![deny(unsafe_code)]
+#![warn(unused_crate_dependencies)]
+
 pub mod current;
 pub mod diesel;
 pub mod history;

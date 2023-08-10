@@ -1,3 +1,7 @@
+#![deny(unsafe_code)]
+#![warn(unused_crate_dependencies)]
+
+
 pub mod api;
 pub mod app;
 pub mod data;

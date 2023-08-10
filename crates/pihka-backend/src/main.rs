@@ -1,3 +1,6 @@
+#![deny(unsafe_code)]
+#![warn(unused_crate_dependencies)]
+
 pub mod build_info;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};

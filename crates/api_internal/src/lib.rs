@@ -1,3 +1,7 @@
+#![deny(unsafe_code)]
+#![warn(unused_crate_dependencies)]
+
+
 //! This crate provides a wrapper for the internal API of the server.
 //! Prevents exposing api_client crate model types to server code.
 
