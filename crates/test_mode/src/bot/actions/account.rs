@@ -18,7 +18,7 @@ use url::Url;
 
 use super::{super::super::client::TestError, BotAction};
 
-use server::api::{common::PATH_CONNECT, utils::API_KEY_HEADER_STR};
+use utils::api::{PATH_CONNECT, API_KEY_HEADER_STR};
 
 use crate::bot::{
     utils::{assert::bot_assert_eq, name::NameProvider},
@@ -28,6 +28,7 @@ use crate::bot::{
 use utils::IntoReportExt;
 
 use super::BotState;
+
 
 #[derive(Debug)]
 pub struct Register;

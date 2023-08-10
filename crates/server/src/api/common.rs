@@ -51,7 +51,7 @@ pub async fn get_version<S: BackendVersionProvider>(state: S) -> Json<BackendVer
 
 // ------------------------- WebSocket -------------------------
 
-pub const PATH_CONNECT: &str = "/common_api/connect";
+pub use utils::api::PATH_CONNECT;
 
 /// Connect to server using WebSocket after getting refresh and access tokens.
 /// Connection is required as API access is allowed for connected clients.

@@ -44,4 +44,3 @@ api_client = { path = "../api_client" }
 
 utils = { path = "../utils" }
 config = { path = "../config" }
-server = { path = "../server" }

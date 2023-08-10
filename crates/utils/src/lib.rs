@@ -1,6 +1,8 @@
 #![deny(unsafe_code)]
 #![warn(unused_crate_dependencies)]
 
+pub mod api;
+
 use std::fmt::Display;
 
 use error_stack::{Context, IntoReport, Result, ResultExt};

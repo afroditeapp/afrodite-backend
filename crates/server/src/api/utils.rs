@@ -13,7 +13,7 @@ use model::ApiKey;
 
 use super::GetApiKeys;
 
-pub const API_KEY_HEADER_STR: &str = "x-api-key";
+pub use utils::api::API_KEY_HEADER_STR;
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
 
 pub async fn authenticate_with_api_key<T, S: GetApiKeys>(
