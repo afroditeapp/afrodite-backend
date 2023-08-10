@@ -2,9 +2,9 @@
 # see https://diesel.rs/guides/configuring-diesel-cli
 
 [print_schema]
-file = "src/server/data/database/schema.rs"
+file = "crates/model/src/schema.rs"
 custom_type_derives = ["diesel::query_builder::QueryId"]
-import_types = ["crate::server::data::database::schema_sqlite_types::*"]
+import_types = ["crate::schema_sqlite_types::*"]
 
 [migrations_directory]
 dir = "migrations"
