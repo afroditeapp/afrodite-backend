@@ -1,10 +1,7 @@
 //! Routes for server to server connections
 
 use api_internal::{Configuration, InternalApi};
-use axum::{
-    routing::{get, post},
-    Router,
-};
+
 
 use error_stack::{Result, ResultExt};
 
@@ -14,13 +11,12 @@ use tokio::sync::{Mutex, MutexGuard};
 use tracing::{error, info};
 
 use model::{
-    Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
+    Account, AccountIdInternal, BooleanSetting, Profile,
     ProfileInternal, ApiKey,
 };
 use utils::IntoReportExt;
 use crate::{
     api::{
-        self,
         GetConfig,
     },
 
@@ -29,7 +25,6 @@ use config::InternalApiUrls;
 use config::{Config};
 
 use super::{
-    app::AppState,
     data::{
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},

@@ -5,8 +5,7 @@ use api_client::apis::{accountinternal_api, mediainternal_api::{self}};
 
 
 use model::{
-    Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
-    ProfileInternal, ApiKey, AccountIdLight
+    Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile, ApiKey, AccountIdLight
 };
 
 pub use api_client::apis::Error;
@@ -89,16 +88,16 @@ impl InternalApi {
     }
 
     pub async fn profile_api_set_profile_visiblity(
-        configuration: &Configuration,
-        account_id: AccountIdInternal,
-        boolean_setting: BooleanSetting,
+        _configuration: &Configuration,
+        _account_id: AccountIdInternal,
+        _boolean_setting: BooleanSetting,
     ) -> Result<(), ()> {
         // TODO: Request internal profile api
         Ok(())
     }
 
     pub async fn media_api_profile_visiblity(
-        configuration: &Configuration,
+        _configuration: &Configuration,
         _account_id: AccountIdInternal,
         _boolean_setting: BooleanSetting,
         _current_profile: Profile,

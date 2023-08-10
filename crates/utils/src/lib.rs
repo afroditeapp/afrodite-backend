@@ -2,7 +2,7 @@
 
 use std::fmt::Display;
 
-use error_stack::{Context, IntoReport, Report, Result, ResultExt};
+use error_stack::{Context, IntoReport, Result, ResultExt};
 
 pub trait IntoReportFromString {
     type Ok;

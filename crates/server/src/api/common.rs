@@ -17,12 +17,12 @@ use axum::{
 
 use futures::StreamExt;
 use hyper::StatusCode;
-use serde::{Deserialize, Serialize};
+
 
 use utoipa::ToSchema;
 
 use utils::IntoReportExt;
-use crate::app::{connection::WebSocketManager, AppState};
+use crate::app::{connection::WebSocketManager};
 
 use super::{WriteData, BackendVersionProvider};
 

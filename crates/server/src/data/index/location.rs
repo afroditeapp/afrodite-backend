@@ -27,7 +27,6 @@ use std::{
     num::NonZeroU16,
     ops::Index,
     sync::{
-        atomic::{AtomicBool, AtomicU16, Ordering},
         Arc,
     },
 };

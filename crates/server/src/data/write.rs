@@ -78,7 +78,7 @@ use std::{fmt::Debug, marker::PhantomData};
 
 use error_stack::{Result, ResultExt};
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ContentId, SignInWithInfo,
+    Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo,
 };
 use config::Config;
 use crate::{
@@ -98,17 +98,17 @@ use self::media::WriteCommandsMedia;
 use self::media_admin::WriteCommandsMediaAdmin;
 use self::profile::WriteCommandsProfile;
 use self::profile_admin::WriteCommandsProfileAdmin;
-use database::{history::write::HistoryWriteCommands, WriteError};
+use database::{history::write::HistoryWriteCommands};
 use database::{
     current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
     diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
     sqlite::{
-        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteDatabaseError,
+        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle,
         SqliteUpdateJson,
     },
 };
 use super::{
-    cache::{CacheError, CachedProfile, DatabaseCache, WriteCacheJson},
+    cache::{CachedProfile, DatabaseCache, WriteCacheJson},
     file::utils::FileDir,
     index::LocationIndexWriterGetter,
 };

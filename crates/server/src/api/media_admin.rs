@@ -1,24 +1,23 @@
-use axum::extract::{BodyStream, Path, Query};
+use axum::extract::{Path};
 
 use axum::{Extension, Json, TypedHeader};
 
-use headers::ContentType;
+
 use hyper::StatusCode;
 
 use tracing::error;
 
-use model::ImageSlot;
 
-use model::SlotId;
+
+
 
 use model::{
-    ContentId, HandleModerationRequest, ImageAccessCheck, MediaContentType, ModerationList,
-    ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SecurityImage,
+    HandleModerationRequest, ModerationList, SecurityImage,
 };
 
 use model::{AccountIdInternal, AccountIdLight};
 use super::utils::ApiKeyHeader;
-use super::{db_write, GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteData};
+use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteData};
 
 
 

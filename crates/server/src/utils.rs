@@ -1,11 +1,11 @@
-use std::fmt::Display;
 
-use error_stack::{Context, IntoReport, Report, Result, ResultExt};
+
+use error_stack::{Context, Report, Result, ResultExt};
 
 use tokio::sync::oneshot;
 
 use database::{sqlite::SqliteDatabaseError, ConvertCommandError};
-use utils::{ComponentError, ErrorResultExt, IntoReportExt};
+use utils::{ComponentError, ErrorResultExt};
 
 use crate::data::{
     cache::CacheError,

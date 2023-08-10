@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 use error_stack::{ResultExt, Result};
 use model::{AccountIdLight, AccountIdInternal, ContentId};
 pub use model::schema;
-use sqlite::SqliteDatabaseError;
+
 use utils::ComponentError;
 
 pub struct NoId;

@@ -4,7 +4,7 @@ use sqlx::Encode;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{AccountIdInternal, AccountIdLight};
+use crate::{AccountIdLight};
 
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

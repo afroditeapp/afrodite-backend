@@ -12,13 +12,13 @@ use model::ImageSlot;
 use model::SlotId;
 
 use model::{
-    ContentId, HandleModerationRequest, ImageAccessCheck, MediaContentType, ModerationList,
-    ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SecurityImage,
+    ContentId, ImageAccessCheck, MediaContentType,
+    ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage,
 };
 
 use model::{AccountIdInternal, AccountIdLight};
 use super::utils::ApiKeyHeader;
-use super::{db_write, GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, WriteData};
+use super::{db_write, GetApiKeys, GetUsers, ReadDatabase, WriteData};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 

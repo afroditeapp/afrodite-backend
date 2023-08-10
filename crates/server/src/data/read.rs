@@ -51,13 +51,13 @@ pub mod profile_admin;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use database::ReadError;
+
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
 use model::{AccountIdInternal, AccountIdLight, ContentId, MediaContentInternal, ModerationRequest};
 
-use database::ConvertCommandError;
+
 use utils::{IntoReportExt, IntoReportFromString};
 
 use crate::utils::{ErrorConversion, ConvertCommandErrorExt};
@@ -72,12 +72,12 @@ use self::{
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
     diesel::{DieselCurrentReadHandle, DieselDatabaseError},
-    sqlite::{SqliteDatabaseError, SqliteSelectJson, SqlxReadHandle},
+    sqlite::{SqliteSelectJson, SqlxReadHandle},
 };
 
 use super::{
-    cache::{CacheError, DatabaseCache, ReadCacheJson},
-    file::{utils::FileDir, FileError},
+    cache::{DatabaseCache, ReadCacheJson},
+    file::{utils::FileDir},
     DatabaseError,
 };
 
