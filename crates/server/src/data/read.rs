@@ -24,10 +24,9 @@ macro_rules! define_read_commands {
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<'_>,
-                    ) -> error_stack::Result<
-                        R,
-                        database::diesel::DieselDatabaseError,
-                    > + Send
+                    )
+                        -> error_stack::Result<R, database::diesel::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
@@ -51,16 +50,16 @@ pub mod profile_admin;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-
 use tokio_stream::StreamExt;
 use tokio_util::io::ReaderStream;
 
-use model::{AccountIdInternal, AccountIdLight, ContentId, MediaContentInternal, ModerationRequest};
-
+use model::{
+    AccountIdInternal, AccountIdLight, ContentId, MediaContentInternal, ModerationRequest,
+};
 
 use utils::{IntoReportExt, IntoReportFromString};
 
-use crate::utils::{ErrorConversion, ConvertCommandErrorExt};
+use crate::utils::{ConvertCommandErrorExt, ErrorConversion};
 
 use self::{
     account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
@@ -77,12 +76,11 @@ use database::{
 
 use super::{
     cache::{DatabaseCache, ReadCacheJson},
-    file::{utils::FileDir},
+    file::utils::FileDir,
     DatabaseError,
 };
 
 use error_stack::{Result, ResultExt};
-
 
 // impl<Target> From<error_stack::Report<CacheError>>
 //     for ReadError<error_stack::Report<CacheError>, Target>
@@ -105,7 +103,6 @@ use error_stack::{Result, ResultExt};
 //         }
 //     }
 // }
-
 
 // impl<Target> From<CacheError> for ReadError<error_stack::Report<CacheError>, Target> {
 //     fn from(value: CacheError) -> Self {

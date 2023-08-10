@@ -36,9 +36,7 @@ macro_rules! define_write_commands {
             }
 
             fn current(&self) -> database::current::write::CurrentWriteCommands {
-                database::current::write::CurrentWriteCommands::new(
-                    self.current_write(),
-                )
+                database::current::write::CurrentWriteCommands::new(self.current_write())
             }
 
             fn history(&self) -> super::super::write::HistoryWriteCommands {
@@ -48,10 +46,9 @@ macro_rules! define_write_commands {
             pub async fn db_write<
                 T: FnOnce(
                         database::current::write::CurrentSyncWriteCommands<'_>,
-                    ) -> error_stack::Result<
-                        R,
-                        database::diesel::DieselDatabaseError,
-                    > + Send
+                    )
+                        -> error_stack::Result<R, database::diesel::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
@@ -76,16 +73,14 @@ pub mod profile_admin;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use error_stack::{Result, ResultExt};
-use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo,
-};
-use config::Config;
 use crate::{
-    media_backup::MediaBackupHandle,
     data::DatabaseError,
+    media_backup::MediaBackupHandle,
     utils::{ConvertCommandErrorExt, ErrorConversion},
 };
+use config::Config;
+use error_stack::{Result, ResultExt};
+use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo};
 
 use utils::{IntoReportExt, IntoReportFromString};
 
@@ -98,21 +93,17 @@ use self::media::WriteCommandsMedia;
 use self::media_admin::WriteCommandsMediaAdmin;
 use self::profile::WriteCommandsProfile;
 use self::profile_admin::WriteCommandsProfileAdmin;
-use database::{history::write::HistoryWriteCommands};
-use database::{
-    current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
-    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
-    sqlite::{
-        CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle,
-        SqliteUpdateJson,
-    },
-};
 use super::{
     cache::{CachedProfile, DatabaseCache, WriteCacheJson},
     file::utils::FileDir,
     index::LocationIndexWriterGetter,
 };
-
+use database::history::write::HistoryWriteCommands;
+use database::{
+    current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
+    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
+    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+};
 
 // impl<Target> From<error_stack::Report<CacheError>>
 //     for WriteError<error_stack::Report<CacheError>, Target>

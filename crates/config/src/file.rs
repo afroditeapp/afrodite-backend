@@ -13,7 +13,6 @@ use utils::IntoReportExt;
 
 pub type GoogleAccountId = String;
 
-
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
 // longitude_top_left = 20.5

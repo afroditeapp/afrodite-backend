@@ -1,15 +1,14 @@
+use crate::ReadResult;
 use model::{
     AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState,
-    CurrentAccountMediaInternal, MediaContentInternal, Moderation, ModerationId,
+    CurrentAccountMediaInternal, ImageSlot, MediaContentInternal, Moderation, ModerationId,
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
-    ModerationRequestQueueNumber, ModerationRequestState, ImageSlot,
+    ModerationRequestQueueNumber, ModerationRequestState,
 };
-use crate::ReadResult;
-
 
 use crate::sqlite::SqliteDatabaseError;
-use utils::IntoReportExt;
 use std::collections::HashSet;
+use utils::IntoReportExt;
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 

@@ -1,5 +1,3 @@
-
-
 use std::fmt::Display;
 
 use error_stack::{Context, IntoReport, Result, ResultExt};
@@ -94,11 +92,9 @@ pub trait ErrorResultExt: ResultExt + Sized {
 
 impl<T: ResultExt + Sized> ErrorResultExt for T {}
 
-
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()
 }
-
 
 pub trait ComponentError: Context {
     const COMPONENT_NAME: &'static str;

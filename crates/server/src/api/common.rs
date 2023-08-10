@@ -1,7 +1,6 @@
 //! Common routes to all microservices
 //!
 
-
 // TODO: add app version route
 
 use std::net::SocketAddr;
@@ -18,13 +17,12 @@ use axum::{
 use futures::StreamExt;
 use hyper::StatusCode;
 
-
 use utoipa::ToSchema;
 
+use crate::app::connection::WebSocketManager;
 use utils::IntoReportExt;
-use crate::app::{connection::WebSocketManager};
 
-use super::{WriteData, BackendVersionProvider};
+use super::{BackendVersionProvider, WriteData};
 
 use model::BackendVersion;
 
@@ -75,7 +73,9 @@ pub const PATH_CONNECT: &str = "/common_api/connect";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_connect_websocket<S: WriteData + ReadDatabase + GetApiKeys + Send + Sync + 'static>(
+pub async fn get_connect_websocket<
+    S: WriteData + ReadDatabase + GetApiKeys + Send + Sync + 'static,
+>(
     websocket: WebSocketUpgrade,
     TypedHeader(access_token): TypedHeader<ApiKeyHeader>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,

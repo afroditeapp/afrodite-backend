@@ -18,7 +18,6 @@ use url::Url;
 
 use super::{super::super::client::TestError, BotAction};
 
-
 use server::api::{common::PATH_CONNECT, utils::API_KEY_HEADER_STR};
 
 use crate::bot::{

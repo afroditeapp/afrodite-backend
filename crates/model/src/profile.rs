@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicU16, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 
 use diesel::serialize::ToSql;
 use nalgebra::DMatrix;
@@ -10,7 +10,6 @@ use uuid::Uuid;
 use diesel::{backend::Backend, deserialize::FromSql, prelude::*, sql_types::Binary};
 
 use crate::AccountIdLight;
-
 
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]
@@ -136,7 +135,6 @@ pub struct ProfilePage {
     pub profiles: Vec<ProfileLink>,
 }
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileLink {
     id: AccountIdLight,
@@ -218,9 +216,6 @@ impl<'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
     }
 }
 
-
-
-
 impl sqlx::Decode<'_, sqlx::Sqlite> for ProfileVersion {
     fn decode(
         value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef,
@@ -254,8 +249,6 @@ where
         self.version_uuid.as_bytes().to_sql(out)
     }
 }
-
-
 
 #[derive(Debug, Hash, PartialEq, Clone, Copy, Default, Eq)]
 pub struct LocationIndexKey {

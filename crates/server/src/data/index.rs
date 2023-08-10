@@ -2,8 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::RwLock;
 
-use model::{AccountIdLight, Location, ProfileLink, LocationIndexKey};
 use config::Config;
+use model::{AccountIdLight, Location, LocationIndexKey, ProfileLink};
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 

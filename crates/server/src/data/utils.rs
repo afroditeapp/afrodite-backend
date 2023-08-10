@@ -2,18 +2,16 @@ use std::net::SocketAddr;
 
 use error_stack::Result;
 
+use crate::utils::ConvertCommandErrorExt;
 use database::{current::read::SqliteReadCommands, ConvertCommandError};
 use model::{AccountIdInternal, AccountIdLight, ApiKey, GoogleAccountId};
-use crate::{
-    utils::ConvertCommandErrorExt,
-};
 
-use database::DatabaseId;
-use database::sqlite::SqlxReadHandle;
 use super::{
     cache::{CacheError, DatabaseCache},
     DatabaseError,
 };
+use database::sqlite::SqlxReadHandle;
+use database::DatabaseId;
 
 pub struct ApiKeyManager<'a> {
     cache: &'a DatabaseCache,

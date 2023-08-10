@@ -224,7 +224,9 @@ impl ConnectedApp {
                 api::media_admin::PATH_GET_SECURITY_IMAGE_INFO,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2| api::media_admin::get_security_image_info(param1, param2, state)
+                    move |param1, param2| {
+                        api::media_admin::get_security_image_info(param1, param2, state)
+                    }
                 }),
             )
             .route(
@@ -276,7 +278,9 @@ impl ConnectedApp {
                 post({
                     let state = self.state.clone();
                     move |param1, param2, param3| {
-                        api::media_admin::post_handle_moderation_request(param1, param2, param3, state)
+                        api::media_admin::post_handle_moderation_request(
+                            param1, param2, param3, state,
+                        )
                     }
                 }),
             )

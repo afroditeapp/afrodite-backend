@@ -8,9 +8,7 @@ use crate::api::{GetUsers, ReadDatabase};
 
 use model::{Account, AccountIdLight, ApiKey};
 
-use crate::api::{
-    GetApiKeys,
-};
+use crate::api::GetApiKeys;
 
 use tracing::error;
 

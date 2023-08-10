@@ -1,11 +1,6 @@
+use model::{AccountIdInternal, HandleModerationRequest, Moderation};
 
-use model::{HandleModerationRequest, Moderation, AccountIdInternal};
-
-use crate::{
-
-    data::DatabaseError,
-    utils::ConvertCommandErrorExt,
-};
+use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
 
 use error_stack::Result;
 

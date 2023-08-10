@@ -22,18 +22,11 @@
 //!
 //! Matrix indexes are used like a key for HashMap<(u16,u16), Vec<AccountId>>
 
-use std::{
-    fmt::Debug,
-    num::NonZeroU16,
-    ops::Index,
-    sync::{
-        Arc,
-    },
-};
+use std::{fmt::Debug, num::NonZeroU16, ops::Index, sync::Arc};
 
 use nalgebra::{DMatrix, Dyn, VecStorage};
 
-use model::{LocationIndexKey, CellData};
+use model::{CellData, LocationIndexKey};
 
 /// Origin (0,0) = (y, x) is at top left corner.
 pub struct LocationIndex {

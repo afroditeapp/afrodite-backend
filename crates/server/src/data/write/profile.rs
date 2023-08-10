@@ -1,10 +1,8 @@
-
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use database::sqlite::SqliteUpdateJson;
 
 use crate::{
-
     data::{cache::CacheError, DatabaseError},
     utils::ConvertCommandErrorExt,
 };

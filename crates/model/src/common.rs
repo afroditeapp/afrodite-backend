@@ -11,7 +11,6 @@ pub struct BackendVersion {
     pub protocol_version: String,
 }
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum EventToClient {
     AccountStateChanged,

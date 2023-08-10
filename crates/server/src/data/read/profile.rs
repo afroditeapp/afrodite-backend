@@ -3,11 +3,8 @@ use super::{
     ReadCommands,
 };
 
-
+use crate::data::DatabaseError;
 use model::{AccountIdInternal, ProfileInternal};
-use crate::{
-    data::DatabaseError,
-};
 
 use error_stack::Result;
 

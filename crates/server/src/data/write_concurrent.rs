@@ -6,22 +6,16 @@ use std::fmt;
 use std::fmt::Debug;
 use std::sync::Arc;
 
-use axum::extract::BodyStream;
-use error_stack::{Result, ResultExt};
-use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
-use model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink};
-use crate::data::DatabaseError;
-use crate::{
-    utils::ConvertCommandErrorExt,
-};
-use database::sqlite::{CurrentDataWriteHandle, HistoryWriteHandle};
-use database::history::write::HistoryWriteCommands;
 use super::RouterDatabaseWriteHandle;
-use super::{
-    cache::DatabaseCache,
-    file::utils::FileDir,
-    index::LocationIndexIteratorGetter,
-};
+use super::{cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter};
+use crate::data::DatabaseError;
+use crate::utils::ConvertCommandErrorExt;
+use axum::extract::BodyStream;
+use database::history::write::HistoryWriteCommands;
+use database::sqlite::{CurrentDataWriteHandle, HistoryWriteHandle};
+use error_stack::{Result, ResultExt};
+use model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink};
+use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 

@@ -3,8 +3,6 @@ use diesel::{deserialize::FromSql, sql_types::Binary, sqlite::Sqlite};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-
-
 /// Used with database
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, Copy)]
 pub struct AccountIdInternal {
@@ -33,7 +31,6 @@ impl From<AccountIdInternal> for uuid::Uuid {
         value.account_id
     }
 }
-
 
 /// AccountId which is internally Uuid object.
 /// Consumes less memory.
@@ -74,9 +71,6 @@ impl From<AccountIdLight> for uuid::Uuid {
     }
 }
 
-
-
-
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {
     pub account: AuthPair,
@@ -87,7 +81,6 @@ pub struct LoginResult {
     /// If None media microservice is disabled.
     pub media: Option<AuthPair>,
 }
-
 
 /// This is just a random string.
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
@@ -178,8 +171,6 @@ impl AuthPair {
         Self { refresh, access }
     }
 }
-
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {

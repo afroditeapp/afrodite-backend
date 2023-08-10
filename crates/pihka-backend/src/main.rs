@@ -1,19 +1,18 @@
 pub mod build_info;
 
-use build_info::{BUILD_INFO_GIT_DESCRIBE, BUILD_INFO_CARGO_PKG_VERSION};
+use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
+use config::get_config;
 use server::PihkaServer;
 use test_mode::TestRunner;
-use config::get_config;
-
 
 fn main() {
     // TODO: print commit ID to logs if build directory was clean
-    let config =
-        get_config(
-            build_info::build_info,
-            BUILD_INFO_GIT_DESCRIBE.to_string(),
-            BUILD_INFO_CARGO_PKG_VERSION.to_string(),
-        ).unwrap();
+    let config = get_config(
+        build_info::build_info,
+        BUILD_INFO_GIT_DESCRIBE.to_string(),
+        BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+    )
+    .unwrap();
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
 

@@ -6,10 +6,8 @@ use app_manager::api::model::{
 use axum::{extract::Query, Extension, Json};
 use http::StatusCode;
 
+use crate::api::{GetManagerApi, ReadDatabase};
 use model::{Account, AccountIdInternal};
-use crate::api::{
-    GetManagerApi, ReadDatabase,
-};
 
 use tracing::error;
 

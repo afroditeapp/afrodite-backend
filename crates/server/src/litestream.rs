@@ -9,11 +9,8 @@ use tokio::{
 };
 use tracing::log::{error, info};
 
+use crate::data::DatabaseRoot;
 use config::{file::LitestreamConfig, Config};
-use crate::{
-
-    data::DatabaseRoot,
-};
 
 use error_stack::{Result, ResultExt};
 

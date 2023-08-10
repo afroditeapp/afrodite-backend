@@ -3,7 +3,6 @@ use tokio_stream::StreamExt;
 
 use model::{AccountIdInternal, AccountIdLight, ApiKey, RefreshToken, SignInWithInfo};
 
-
 use crate::utils::ConvertCommandErrorExt;
 
 use super::{

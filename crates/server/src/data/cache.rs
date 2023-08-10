@@ -7,23 +7,20 @@ use tracing::info;
 
 use config::Config;
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, Profile, ProfileInternal,
-    ProfileUpdateInternal, LocationIndexKey
+    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, LocationIndexKey, Profile,
+    ProfileInternal, ProfileUpdateInternal,
 };
 
-use database::{NoId, ConvertCommandError};
+use database::{ConvertCommandError, NoId};
 use utils::ComponentError;
-
-
 
 use error_stack::{Result, ResultExt};
 
-use database::{current::read::SqliteReadCommands, sqlite::SqliteSelectJson, ReadResult, WriteResult};
-use super::{
-    index::{
-        location::{LocationIndexIteratorState,},
-        LocationIndexIteratorGetter, LocationIndexWriterGetter,
-    },
+use super::index::{
+    location::LocationIndexIteratorState, LocationIndexIteratorGetter, LocationIndexWriterGetter,
+};
+use database::{
+    current::read::SqliteReadCommands, sqlite::SqliteSelectJson, ReadResult, WriteResult,
 };
 
 impl ComponentError for CacheError {
@@ -47,7 +44,6 @@ pub enum CacheError {
     #[error("Cache init failed because operation was not enabled")]
     InitFeatureNotEnabled,
 }
-
 
 #[derive(Debug)]
 pub struct AccountEntry {

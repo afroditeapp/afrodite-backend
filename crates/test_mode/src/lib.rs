@@ -17,9 +17,7 @@ use tracing::{error, info};
 
 use crate::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState};
 
-use config::{
-    args::TestMode, Config,
-};
+use config::{args::TestMode, Config};
 
 use self::state::StateData;
 

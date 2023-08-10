@@ -177,10 +177,10 @@ impl Config {
 }
 
 pub fn get_config(
-        build_info_provider: BuildInfoProvider,
-        backend_code_version: String,
-        backend_semver_version: String,
-    ) -> Result<Config, GetConfigError> {
+    build_info_provider: BuildInfoProvider,
+    backend_code_version: String,
+    backend_semver_version: String,
+) -> Result<Config, GetConfigError> {
     let args_config = args::get_config(build_info_provider);
     let current_dir = std::env::current_dir().into_error(GetConfigError::GetWorkingDir)?;
     let mut file_config =

@@ -1,27 +1,25 @@
+pub mod connection;
 pub mod routes_connected;
 pub mod routes_internal;
-pub mod connection;
 pub mod sign_in_with;
 
-use std::sync::Arc;
-use model::{AccountIdLight, BackendVersion};
+use crate::api::{
+    self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase, SignInWith,
+    WriteData,
+};
 use api::BackendVersionProvider;
 use axum::{
     routing::{get, post},
     Router,
 };
-use futures::Future;
-use tokio::sync::Mutex;
 use config::Config;
-use crate::{
-    api::{
-        self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi,
-        GetUsers, ReadDatabase, SignInWith, WriteData,
-    },
-};
+use futures::Future;
+use model::{AccountIdLight, BackendVersion};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use self::{
-    routes_connected::ConnectedApp, connection::WebSocketManager, sign_in_with::SignInWithManager,
+    connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
 };
 
 use super::{
@@ -178,7 +176,7 @@ impl App {
                     let ws_manager = self.ws_manager.take().unwrap(); // Only one instance required.
                     move |param1, param2, param3| {
                         api::common::get_connect_websocket(
-                            param1, param2, param3, ws_manager, state
+                            param1, param2, param3, ws_manager, state,
                         )
                     }
                 }),

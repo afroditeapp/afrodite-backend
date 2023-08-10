@@ -1,47 +1,46 @@
 //! This crate provides a wrapper for the internal API of the server.
 //! Prevents exposing api_client crate model types to server code.
 
-use api_client::apis::{accountinternal_api, mediainternal_api::{self}};
-
-
-use model::{
-    Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile, ApiKey, AccountIdLight
+use api_client::apis::{
+    accountinternal_api,
+    mediainternal_api::{self},
 };
 
-pub use api_client::apis::Error;
-pub use api_client::apis::configuration::Configuration;
+use model::{
+    Account, AccountIdInternal, AccountIdLight, AccountState, ApiKey, BooleanSetting, Capabilities,
+    Profile,
+};
+
 pub use crate::accountinternal_api::{CheckApiKeyError, InternalGetAccountStateError};
-pub use crate::mediainternal_api::{InternalGetCheckModerationRequestForAccountError};
+pub use crate::mediainternal_api::InternalGetCheckModerationRequestForAccountError;
+pub use api_client::apis::configuration::Configuration;
+pub use api_client::apis::Error;
 
 /// Wrapper for server internal API with correct model types.
 pub struct InternalApi;
 
 impl InternalApi {
-
     pub async fn check_api_key(
         configuration: &Configuration,
-        key: ApiKey
+        key: ApiKey,
     ) -> Result<AccountIdLight, Error<CheckApiKeyError>> {
-
-            accountinternal_api::check_api_key(
-                configuration,
-                api_client::models::ApiKey {
-                    api_key: key.into_string(),
-                },
-            )
-            .await
-            .map(|data| AccountIdLight::new(data.account_id))
+        accountinternal_api::check_api_key(
+            configuration,
+            api_client::models::ApiKey {
+                api_key: key.into_string(),
+            },
+        )
+        .await
+        .map(|data| AccountIdLight::new(data.account_id))
     }
 
     pub async fn get_account_state(
         configuration: &Configuration,
         account_id: AccountIdLight,
     ) -> Result<Account, Error<InternalGetAccountStateError>> {
-        let account = accountinternal_api::internal_get_account_state(
-            configuration,
-            &account_id.to_string(),
-        )
-        .await?;
+        let account =
+            accountinternal_api::internal_get_account_state(configuration, &account_id.to_string())
+                .await?;
 
         let state = match account.state {
             api_client::models::AccountState::InitialSetup => AccountState::InitialSetup,
@@ -80,11 +79,11 @@ impl InternalApi {
         configuration: &Configuration,
         account_id: AccountIdLight,
     ) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
-            mediainternal_api::internal_get_check_moderation_request_for_account(
-                configuration,
-                &account_id.to_string(),
-            )
-            .await
+        mediainternal_api::internal_get_check_moderation_request_for_account(
+            configuration,
+            &account_id.to_string(),
+        )
+        .await
     }
 
     pub async fn profile_api_set_profile_visiblity(

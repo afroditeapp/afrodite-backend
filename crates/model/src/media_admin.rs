@@ -1,11 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-
 use utoipa::{IntoParams, ToSchema};
 
-
 use crate::{AccountIdInternal, AccountIdLight, ModerationRequestContent};
-
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationList {

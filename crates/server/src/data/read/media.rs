@@ -1,6 +1,4 @@
-use crate::{
-    utils::ConvertCommandErrorExt,
-};
+use crate::utils::ConvertCommandErrorExt;
 
 use model::{AccountIdInternal, AccountIdLight, ContentId, CurrentAccountMediaInternal};
 

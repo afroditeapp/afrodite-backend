@@ -2,11 +2,7 @@ use std::net::SocketAddr;
 
 use model::{AccountIdInternal, AuthPair};
 
-use crate::{
-
-    data::DatabaseError,
-    utils::ConvertCommandErrorExt,
-};
+use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
 
 use error_stack::Result;
 

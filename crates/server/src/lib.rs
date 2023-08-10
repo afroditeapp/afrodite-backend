@@ -1,11 +1,11 @@
+pub mod api;
 pub mod app;
 pub mod data;
 pub mod internal;
-pub mod manager_client;
-pub mod api;
-pub mod utils;
 pub mod litestream;
+pub mod manager_client;
 pub mod media_backup;
+pub mod utils;
 
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
@@ -34,16 +34,12 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use config::Config;
 
-use crate::{
-    api::ApiDoc,
-    litestream::LitestreamManager,
-    media_backup::MediaBackupManager,
-};
+use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager};
 
 use self::{
+    app::routes_internal::InternalApp,
     app::{connection::WebSocketManager, App},
     data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
-    app::routes_internal::InternalApp,
 };
 
 use self::app::connection::ServerQuitWatcher;
@@ -64,7 +60,8 @@ impl PihkaServer {
 
         info!(
             "Backend version: {}-{}",
-            self.config.backend_semver_version(), self.config.backend_code_version()
+            self.config.backend_semver_version(),
+            self.config.backend_code_version()
         );
 
         if self.config.debug_mode() {

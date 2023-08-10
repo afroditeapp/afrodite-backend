@@ -4,8 +4,7 @@ use sqlx::Encode;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{AccountIdLight};
-
+use crate::AccountIdLight;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotNumber {
@@ -19,8 +18,6 @@ pub enum ImageSlot {
     Image2 = 1,
     Image3 = 2,
 }
-
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequestContent {
@@ -54,8 +51,6 @@ impl ModerationRequestContent {
     }
 }
 
-
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequestInternal {
     moderation_request_id: i64,
@@ -87,15 +82,11 @@ impl ModerationRequestInternal {
     }
 }
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequest {
     pub state: ModerationRequestState,
     pub content: ModerationRequestContent,
 }
-
-
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum EnumParsingError {
@@ -135,8 +126,6 @@ impl TryFrom<i64> for ModerationRequestState {
         Ok(value)
     }
 }
-
-
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[repr(i64)]
@@ -195,13 +184,10 @@ impl TryFrom<i64> for MediaContentType {
     }
 }
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotId {
     pub slot_id: u8,
 }
-
-
 
 /// Content ID for media content for example images
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
@@ -298,8 +284,6 @@ impl ContentIdInternal {
         ContentId::new(self.content_id)
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct CurrentAccountMediaInternal {

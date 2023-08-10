@@ -1,5 +1,5 @@
-use model::AccountIdInternal;
 use config::Config;
+use model::AccountIdInternal;
 
 use crate::current::write::CurrentWriteCommands;
 
@@ -26,7 +26,7 @@ use sqlx::{
     SqlitePool,
 };
 
-use utils::{IntoReportExt, ComponentError};
+use utils::{ComponentError, IntoReportExt};
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 pub const HISTORY_FILE_NAME: &str = "history.db";
@@ -75,7 +75,6 @@ pub enum SqliteDatabaseError {
     #[error("Creating in RAM config for sqlx failed")]
     CreateInRamOptions,
 }
-
 
 /// Path to directory which contains Sqlite files.
 #[derive(Debug, Clone)]

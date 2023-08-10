@@ -7,8 +7,8 @@ pub mod read;
 pub mod utils;
 pub mod write;
 
-use tokio::sync::mpsc;
 use ::utils::ComponentError;
+use tokio::sync::mpsc;
 
 impl ComponentError for FileError {
     const COMPONENT_NAME: &'static str = "File";
@@ -55,7 +55,6 @@ pub enum FileError {
     #[error("Stream reading failed")]
     StreamReadFailed,
 }
-
 
 /// Every running database write operation should keep this handle. When server
 /// quit is started main function waits that all handles are dropped.

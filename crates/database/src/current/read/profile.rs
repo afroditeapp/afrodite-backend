@@ -1,13 +1,12 @@
 use diesel::prelude::*;
 
-use model::{AccountIdInternal, ProfileInternal, ProfileVersion, LocationIndexKey};
 use crate::current::read::SqliteReadCommands;
 use crate::diesel::DieselDatabaseError;
 use crate::sqlite::{SqliteDatabaseError, SqliteSelectJson};
+use model::{AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileVersion};
 
-
-use utils::IntoReportExt;
 use async_trait::async_trait;
+use utils::IntoReportExt;
 
 use error_stack::Result;
 

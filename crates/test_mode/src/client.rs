@@ -53,7 +53,6 @@ pub enum TestError {
     BotIsWaiting,
 }
 
-
 #[derive(Debug)]
 pub struct ApiClient {
     /// Where Account API reqister and login is available

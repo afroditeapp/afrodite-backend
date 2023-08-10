@@ -2,7 +2,6 @@
 
 use api_internal::{Configuration, InternalApi};
 
-
 use error_stack::{Result, ResultExt};
 
 use hyper::StatusCode;
@@ -10,26 +9,16 @@ use hyper::StatusCode;
 use tokio::sync::{Mutex, MutexGuard};
 use tracing::{error, info};
 
-use model::{
-    Account, AccountIdInternal, BooleanSetting, Profile,
-    ProfileInternal, ApiKey,
-};
-use utils::IntoReportExt;
-use crate::{
-    api::{
-        GetConfig,
-    },
-
-};
+use crate::api::GetConfig;
+use config::Config;
 use config::InternalApiUrls;
-use config::{Config};
+use model::{Account, AccountIdInternal, ApiKey, BooleanSetting, Profile, ProfileInternal};
+use utils::IntoReportExt;
 
-use super::{
-    data::{
-        read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager},
-        SyncWriteHandle,
-    },
+use super::data::{
+    read::ReadCommands,
+    utils::{AccountIdManager, ApiKeyManager},
+    SyncWriteHandle,
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
@@ -156,11 +145,7 @@ impl<'a> InternalApiManager<'a> {
         } else if !self.config.components().account {
             // Check ApiKey from external service
 
-            let result = InternalApi::check_api_key(
-                self.api_client.account()?,
-                key,
-            )
-            .await;
+            let result = InternalApi::check_api_key(self.api_client.account()?, key).await;
 
             match result {
                 Ok(_res) => {
@@ -195,12 +180,10 @@ impl<'a> InternalApiManager<'a> {
         } else {
             // TODO: Save account state to cache?
 
-            let account = InternalApi::get_account_state(
-                self.api_client.account()?,
-                account_id.as_light(),
-            )
-            .await
-            .into_error(InternalApiError::ApiRequest)?;
+            let account =
+                InternalApi::get_account_state(self.api_client.account()?, account_id.as_light())
+                    .await
+                    .into_error(InternalApiError::ApiRequest)?;
 
             Ok(account)
         }

@@ -5,9 +5,9 @@ pub mod sqlite;
 
 use std::marker::PhantomData;
 
-use error_stack::{ResultExt, Result};
-use model::{AccountIdLight, AccountIdInternal, ContentId};
+use error_stack::{Result, ResultExt};
 pub use model::schema;
+use model::{AccountIdInternal, AccountIdLight, ContentId};
 
 use utils::ComponentError;
 
@@ -17,7 +17,6 @@ pub type WriteResult<T, Err, WriteContext = T> =
     std::result::Result<T, WriteError<error_stack::Report<Err>, WriteContext>>;
 pub type HistoryWriteResult<T, Err, WriteContext = T> =
     std::result::Result<T, HistoryWriteError<error_stack::Report<Err>, WriteContext>>;
-
 
 #[derive(Debug)]
 pub struct WriteError<Err, Target = ()> {
@@ -36,9 +35,7 @@ impl<Target, E: ComponentError> From<error_stack::Report<E>>
     }
 }
 
-impl<Target, E: ComponentError> From<E>
-    for WriteError<error_stack::Report<E>, Target>
-{
+impl<Target, E: ComponentError> From<E> for WriteError<error_stack::Report<E>, Target> {
     fn from(value: E) -> Self {
         Self {
             t: PhantomData,
@@ -64,9 +61,7 @@ impl<Target, E: ComponentError> From<error_stack::Report<E>>
     }
 }
 
-impl<Target, E: ComponentError> From<E>
-    for HistoryWriteError<error_stack::Report<E>, Target>
-{
+impl<Target, E: ComponentError> From<E> for HistoryWriteError<error_stack::Report<E>, Target> {
     fn from(value: E) -> Self {
         Self {
             t: PhantomData,
@@ -97,9 +92,7 @@ impl<Target, E: ComponentError> From<error_stack::Report<E>>
     }
 }
 
-impl<Target, E: ComponentError> From<E>
-    for ReadError<error_stack::Report<E>, Target>
-{
+impl<Target, E: ComponentError> From<E> for ReadError<error_stack::Report<E>, Target> {
     fn from(value: E) -> Self {
         Self {
             t: PhantomData,
@@ -125,9 +118,7 @@ impl<Target, E: ComponentError> From<error_stack::Report<E>>
     }
 }
 
-impl<Target, E: ComponentError> From<E>
-    for HistoryReadError<error_stack::Report<E>, Target>
-{
+impl<Target, E: ComponentError> From<E> for HistoryReadError<error_stack::Report<E>, Target> {
     fn from(value: E) -> Self {
         Self {
             t: PhantomData,
@@ -135,7 +126,6 @@ impl<Target, E: ComponentError> From<E>
         }
     }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub enum DatabaseId {
@@ -183,12 +173,17 @@ impl<D, CmdContext, E: ComponentError> ConvertCommandError<D> for WriteResult<D,
     fn attach<I: Into<DatabaseId>>(self, id: I) -> Result<D, E> {
         match self {
             Ok(d) => Ok(d),
-            Err(WriteError { e, t }) => Err(e)
-                .attach_printable_lazy(|| format!("{} write command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into())),
+            Err(WriteError { e, t }) => Err(e).attach_printable_lazy(|| {
+                format!(
+                    "{} write command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
+            }),
         }
     }
 }
-
 
 impl<D, CmdContext, E: ComponentError> ConvertCommandError<D>
     for HistoryWriteResult<D, E, CmdContext>
@@ -200,26 +195,35 @@ impl<D, CmdContext, E: ComponentError> ConvertCommandError<D>
         match self {
             Ok(d) => Ok(d),
             Err(HistoryWriteError { e, t }) => Err(e).attach_printable_lazy(|| {
-                format!("{} history write command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into())
+                format!(
+                    "{} history write command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
             }),
         }
     }
 }
 
 impl<D, CmdContext, E: ComponentError> ConvertCommandError<D> for ReadResult<D, E, CmdContext> {
-
     type Err = E;
 
     #[track_caller]
     fn attach<I: Into<DatabaseId>>(self, id: I) -> Result<D, E> {
         match self {
             Ok(d) => Ok(d),
-            Err(ReadError { e, t }) => Err(e)
-                .attach_printable_lazy(|| format!("{} read command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into())),
+            Err(ReadError { e, t }) => Err(e).attach_printable_lazy(|| {
+                format!(
+                    "{} read command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
+            }),
         }
     }
 }
-
 
 impl<D, CmdContext, E: ComponentError> ConvertCommandError<D>
     for HistoryReadResult<D, E, CmdContext>
@@ -231,7 +235,12 @@ impl<D, CmdContext, E: ComponentError> ConvertCommandError<D>
         match self {
             Ok(d) => Ok(d),
             Err(HistoryReadError { e, t }) => Err(e).attach_printable_lazy(|| {
-                format!("{} history read command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into())
+                format!(
+                    "{} history read command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
             }),
         }
     }

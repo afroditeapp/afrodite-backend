@@ -1,10 +1,10 @@
-
 use axum::{extract::Path, Json, TypedHeader};
 
 use hyper::StatusCode;
 
 use model::{
-    Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal, AccountIdLight,
+    AccountIdLight, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
+    ProfileUpdateInternal,
 };
 
 use super::{db_write, GetConfig, GetInternalApi, GetUsers, WriteData};

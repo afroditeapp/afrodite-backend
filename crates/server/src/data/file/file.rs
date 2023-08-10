@@ -21,7 +21,6 @@ pub trait GetStaticFileName {
     fn file_name(&self) -> StaticFileName<'static>;
 }
 
-
 impl GetStaticFileName for ImageSlot {
     fn file_name(&self) -> StaticFileName<'static> {
         StaticFileName(match self {

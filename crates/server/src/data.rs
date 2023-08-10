@@ -18,26 +18,20 @@ use error_stack::{IntoReport, Result, ResultExt};
 
 use database::{
     current::read::SqliteReadCommands,
-    diesel::{DieselHistoryWriteHandle, DieselReadHandle, DieselWriteHandle},
     diesel::{
         DieselCurrentReadHandle, DieselCurrentWriteHandle, DieselHistoryReadHandle,
         DieselReadCloseHandle, DieselWriteCloseHandle,
     },
+    diesel::{DieselHistoryWriteHandle, DieselReadHandle, DieselWriteHandle},
+    history::read::HistoryReadCommands,
     sqlite::{
         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
         SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
     },
-    history::read::HistoryReadCommands,
     sqlite::{HistoryUpdateJson, SqliteUpdateJson},
 };
 use tracing::info;
 
-use model::{
-    AccountIdInternal, AccountIdLight, SignInWithInfo,
-
-};
-use config::Config;
-use crate::media_backup::MediaBackupHandle;
 use self::{
     cache::{DatabaseCache, WriteCacheJson},
     file::{read::FileReadCommands, utils::FileDir, FileError},
@@ -52,14 +46,16 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
+use crate::media_backup::MediaBackupHandle;
 use ::utils::IntoReportExt;
+use config::Config;
+use model::{AccountIdInternal, AccountIdLight, SignInWithInfo};
 
 pub const DB_HISTORY_DIR_NAME: &str = "history";
 pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";
 pub const DB_FILE_DIR_NAME: &str = "files";
 
 pub type DatabeseEntryId = String;
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum DatabaseError {
@@ -96,7 +92,6 @@ pub enum DatabaseError {
     #[error("Different SQLite versions detected between diesel and sqlx")]
     SqliteVersionMismatch,
 }
-
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]

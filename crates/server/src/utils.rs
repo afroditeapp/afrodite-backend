@@ -1,5 +1,3 @@
-
-
 use error_stack::{Context, Report, Result, ResultExt};
 
 use tokio::sync::oneshot;
@@ -7,22 +5,17 @@ use tokio::sync::oneshot;
 use database::{sqlite::SqliteDatabaseError, ConvertCommandError};
 use utils::{ComponentError, ErrorResultExt};
 
-use crate::data::{
-    cache::CacheError,
-
-    file::FileError,
-
-    DatabaseError,
+use crate::data::{cache::CacheError, file::FileError, DatabaseError};
+use database::{
+    DatabaseId, HistoryReadError, HistoryReadResult, HistoryWriteError, HistoryWriteResult,
+    ReadError, ReadResult, WriteError, WriteResult,
 };
-use database::{HistoryReadError, HistoryReadResult, ReadError, ReadResult,
-    DatabaseId, HistoryWriteError, HistoryWriteResult, WriteError, WriteResult};
 
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;
 
 /// Receiver only used for quit request message receiving.
 pub type QuitReceiver = oneshot::Receiver<()>;
-
 
 pub trait ErrorConversion: ResultExt + Sized {
     type Err: Context;
@@ -73,14 +66,21 @@ pub(crate) trait ConvertCommandErrorExt<D>: ConvertCommandError<D> {
 }
 
 impl<D, CmdContext, E: ComponentError> ConvertCommandErrorExt<D> for WriteResult<D, E, CmdContext>
-    where Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D> {
+where
+    Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D>,
+{
     #[track_caller]
     fn convert<I: Into<DatabaseId>>(self, id: I) -> Result<D, DatabaseError> {
         match self {
             Ok(d) => Ok(d),
-            Err(WriteError { e, t }) => {
-                Err(e).with_info_lazy(|| format!("{} write command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into()))
-            }
+            Err(WriteError { e, t }) => Err(e).with_info_lazy(|| {
+                format!(
+                    "{} write command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
+            }),
         }
     }
 }
@@ -110,28 +110,41 @@ impl<D, CmdContext, E: ComponentError> ConvertCommandErrorExt<D> for WriteResult
 
 impl<D, CmdContext, E: ComponentError> ConvertCommandErrorExt<D>
     for HistoryWriteResult<D, E, CmdContext>
-    where Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D> {
-
+where
+    Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D>,
+{
     #[track_caller]
     fn convert<I: Into<DatabaseId>>(self, id: I) -> Result<D, DatabaseError> {
         match self {
             Ok(d) => Ok(d),
-            Err(HistoryWriteError { e, t }) => Err(e)
-                .with_info_lazy(|| format!("{} history write command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into())),
+            Err(HistoryWriteError { e, t }) => Err(e).with_info_lazy(|| {
+                format!(
+                    "{} history write command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
+            }),
         }
     }
 }
 
 impl<D, CmdContext, E: ComponentError> ConvertCommandErrorExt<D> for ReadResult<D, E, CmdContext>
-    where Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D> {
-
+where
+    Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D>,
+{
     #[track_caller]
     fn convert<I: Into<DatabaseId>>(self, id: I) -> Result<D, DatabaseError> {
         match self {
             Ok(d) => Ok(d),
-            Err(ReadError { e, t }) => {
-                Err(e).with_info_lazy(|| format!("{} read command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into()))
-            }
+            Err(ReadError { e, t }) => Err(e).with_info_lazy(|| {
+                format!(
+                    "{} read command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
+            }),
         }
     }
 }
@@ -183,17 +196,23 @@ impl<D, CmdContext, E: ComponentError> ConvertCommandErrorExt<D> for ReadResult<
 //     }
 // }
 
-
 impl<D, CmdContext, E: ComponentError> ConvertCommandErrorExt<D>
     for HistoryReadResult<D, E, CmdContext>
-    where Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D> {
-
+where
+    Result<D, E>: ErrorConversion<Err = DatabaseError> + ResultExt<Ok = D>,
+{
     #[track_caller]
     fn convert<I: Into<DatabaseId>>(self, id: I) -> Result<D, DatabaseError> {
         match self {
             Ok(d) => Ok(d),
-            Err(HistoryReadError { e, t }) => Err(e)
-                .with_info_lazy(|| format!("{} history read command: {:?}, id: {:?}", E::COMPONENT_NAME, t, id.into())),
+            Err(HistoryReadError { e, t }) => Err(e).with_info_lazy(|| {
+                format!(
+                    "{} history read command: {:?}, id: {:?}",
+                    E::COMPONENT_NAME,
+                    t,
+                    id.into()
+                )
+            }),
         }
     }
 }

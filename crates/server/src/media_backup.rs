@@ -10,8 +10,8 @@ use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
 
-use model::*;
 use config::Config;
+use model::*;
 
 use crate::{
     app::connection::ServerQuitWatcher,

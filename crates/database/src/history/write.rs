@@ -1,11 +1,16 @@
 use async_trait::async_trait;
 use error_stack::Result;
 
-use model::{Account, AccountIdInternal, AccountIdLight, Profile, ProfileUpdateInternal, AccountSetup};
+use model::{
+    Account, AccountIdInternal, AccountIdLight, AccountSetup, Profile, ProfileUpdateInternal,
+};
 
 use utils::current_unix_time;
 
-use crate::{sqlite::{HistoryUpdateJson, HistoryWriteHandle}, HistoryWriteResult, ConvertCommandError};
+use crate::{
+    sqlite::{HistoryUpdateJson, HistoryWriteHandle},
+    ConvertCommandError, HistoryWriteResult,
+};
 
 use super::super::sqlite::SqliteDatabaseError;
 

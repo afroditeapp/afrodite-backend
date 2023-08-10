@@ -14,9 +14,7 @@ macro_rules! define_read_commands {
         }
 
         impl<'a> $struct_name<'a> {
-            pub fn new(
-                cmds: &'a crate::current::read::SqliteReadCommands<'a>,
-            ) -> Self {
+            pub fn new(cmds: &'a crate::current::read::SqliteReadCommands<'a>) -> Self {
                 Self { cmds }
             }
 
@@ -30,15 +28,11 @@ macro_rules! define_read_commands {
         }
 
         impl<'a> $sync_name<'a> {
-            pub fn new(
-                cmds: crate::current::read::CurrentSyncReadCommands<'a>,
-            ) -> Self {
+            pub fn new(cmds: crate::current::read::CurrentSyncReadCommands<'a>) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(
-                &'a mut self,
-            ) -> &'a mut crate::diesel::DieselConnection {
+            pub fn conn(&'a mut self) -> &'a mut crate::diesel::DieselConnection {
                 &mut self.cmds.conn
             }
         }

@@ -4,11 +4,8 @@ use axum::extract::Path;
 
 use hyper::StatusCode;
 
-use  model::{AccountIdLight, BooleanSetting};
-use crate::api::{
-
-    GetInternalApi, GetUsers, ReadDatabase,
-};
+use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
+use model::{AccountIdLight, BooleanSetting};
 
 use tracing::error;
 

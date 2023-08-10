@@ -1,16 +1,12 @@
-use model::{AccountIdInternal, Profile, ProfileInternal, ProfileUpdateInternal,
-    LocationIndexKey,
-};
+use model::{AccountIdInternal, LocationIndexKey, Profile, ProfileInternal, ProfileUpdateInternal};
 
 use crate::diesel::DieselDatabaseError;
-use crate::sqlite::{
-    SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson,
-};
+use crate::sqlite::{SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson};
 
 use crate::WriteResult;
-use utils::IntoReportExt;
 use async_trait::async_trait;
 use diesel::{ExpressionMethods, QueryDsl};
+use utils::IntoReportExt;
 
 use diesel::prelude::*;
 
