@@ -1,20 +1,14 @@
+
+CARGO_CRATE_ARGS = 	-p api_internal \
+					-p config \
+					-p database \
+					-p model \
+					-p server \
+					-p test_mode \
+					-p utils \
+					-p pihka-backend
+
 fmt:
-	cargo fmt \
-		-p api_internal \
-		-p config \
-		-p database \
-		-p model \
-		-p server \
-		-p test_mode \
-		-p utils \
-		-p pihka-backend
+	cargo +nightly fmt $(CARGO_CRATE_ARGS)
 fix:
-	cargo fix \
-		-p api_internal \
-		-p config \
-		-p database \
-		-p model \
-		-p server \
-		-p test_mode \
-		-p utils \
-		-p pihka-backend
+	cargo fix ${CARGO_CRATE_ARGS}
