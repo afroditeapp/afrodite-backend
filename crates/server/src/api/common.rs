@@ -7,22 +7,23 @@ use std::net::SocketAddr;
 
 use axum::{
     extract::{
-        ws::{Message, WebSocket},
-        ConnectInfo, WebSocketUpgrade,
+        ConnectInfo,
+        WebSocketUpgrade, ws::{Message, WebSocket},
     },
-    response::IntoResponse,
-    Json, TypedHeader,
+    Json,
+    response::IntoResponse, TypedHeader,
 };
 use error_stack::{IntoReport, Result, ResultExt};
-use futures::StreamExt;
 use hyper::StatusCode;
-use model::{AccountIdInternal, ApiKey, AuthPair, BackendVersion, RefreshToken};
 use tracing::error;
-use utils::IntoReportExt;
-use utoipa::ToSchema;
 
-use super::{utils::ApiKeyHeader, BackendVersionProvider, GetApiKeys, ReadDatabase, WriteData};
+use model::{AccountIdInternal, ApiKey, AuthPair, BackendVersion, RefreshToken};
+pub use utils::api::PATH_CONNECT;
+use utils::IntoReportExt;
+
 use crate::app::connection::WebSocketManager;
+
+use super::{BackendVersionProvider, GetApiKeys, ReadDatabase, utils::ApiKeyHeader, WriteData};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
@@ -40,8 +41,6 @@ pub async fn get_version<S: BackendVersionProvider>(state: S) -> Json<BackendVer
 }
 
 // ------------------------- WebSocket -------------------------
-
-pub use utils::api::PATH_CONNECT;
 
 /// Connect to server using WebSocket after getting refresh and access tokens.
 /// Connection is required as API access is allowed for connected clients.

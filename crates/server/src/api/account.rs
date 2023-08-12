@@ -1,16 +1,15 @@
 use axum::{Json, TypedHeader};
-use futures::FutureExt;
 use hyper::StatusCode;
+use tracing::error;
+
 use model::{
     Account, AccountIdLight, AccountSetup, AccountState, ApiKey, AuthPair, BooleanSetting,
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
-use tokio_stream::StreamExt;
-use tracing::error;
 
 use super::{
-    db_write, utils::ApiKeyHeader, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase,
-    SignInWith, WriteData,
+    db_write, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
+    utils::ApiKeyHeader, WriteData,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.

@@ -2,8 +2,9 @@
 
 use axum::{extract::Path, Json};
 use hyper::StatusCode;
-use model::{AccountIdLight, BooleanSetting, Profile};
 use tracing::error;
+
+use model::{AccountIdLight, BooleanSetting, Profile};
 
 use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
 

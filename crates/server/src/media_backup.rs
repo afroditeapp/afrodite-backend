@@ -4,17 +4,18 @@ use std::{
     time::Duration,
 };
 
-use config::Config;
 use error_stack::{Result, ResultExt};
-use model::*;
 use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
+
+use config::Config;
+use model::*;
 use utils::IntoReportExt;
 
 use crate::{
     app::connection::ServerQuitWatcher,
-    data::{file::utils::IMAGE_DIR_NAME, DatabaseRoot},
+    data::{DatabaseRoot, file::utils::IMAGE_DIR_NAME},
 };
 
 pub const MEDIA_BACKUP_MANAGER_QUEUE_SIZE: usize = 64;
@@ -61,7 +62,8 @@ pub enum MediaBackupError {
 #[derive(Debug)]
 pub struct MediaBackupQuitHandle {
     task: JoinHandle<()>,
-    sender: mpsc::Sender<MediaBackupMessage>,
+    // Make sure that Receiver works until manager quits.
+    _sender: mpsc::Sender<MediaBackupMessage>,
 }
 
 impl MediaBackupQuitHandle {
@@ -127,7 +129,7 @@ impl MediaBackupManager {
 
         let quit_handle = MediaBackupQuitHandle {
             task,
-            sender: handle.sender.clone(),
+            _sender: handle.sender.clone(),
         };
 
         (quit_handle, handle)

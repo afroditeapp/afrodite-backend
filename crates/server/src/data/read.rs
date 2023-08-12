@@ -1,3 +1,33 @@
+use std::{fmt::Debug, marker::PhantomData};
+
+use error_stack::{Result, ResultExt};
+use tokio_util::io::ReaderStream;
+
+use database::{
+    current::read::{CurrentSyncReadCommands, SqliteReadCommands},
+    diesel::{DieselCurrentReadHandle, DieselDatabaseError},
+    sqlite::{SqliteSelectJson, SqlxReadHandle},
+};
+use model::{
+    AccountIdInternal, AccountIdLight, ContentId, MediaContentInternal, ModerationRequest,
+};
+use utils::{IntoReportExt, IntoReportFromString};
+
+use crate::utils::{ConvertCommandErrorExt, ErrorConversion};
+
+use super::{
+    cache::{DatabaseCache, ReadCacheJson},
+    DatabaseError,
+    file::utils::FileDir,
+};
+
+use self::{
+    account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
+    chat_admin::ReadCommandsChatAdmin, media::ReadCommandsMedia,
+    media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile,
+    profile_admin::ReadCommandsProfileAdmin,
+};
+
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
         pub struct $struct_name<'a> {
@@ -9,14 +39,17 @@ macro_rules! define_read_commands {
                 Self { cmds }
             }
 
+            #[allow(dead_code)]
             fn db(&self) -> &database::current::read::SqliteReadCommands<'_> {
                 &self.cmds.db
             }
 
+            #[allow(dead_code)]
             fn cache(&self) -> &DatabaseCache {
                 &self.cmds.cache
             }
 
+            #[allow(dead_code)]
             fn files(&self) -> &FileDir {
                 &self.cmds.files
             }
@@ -47,34 +80,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
-use std::{fmt::Debug, marker::PhantomData};
-
-use database::{
-    current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselCurrentReadHandle, DieselDatabaseError},
-    sqlite::{SqliteSelectJson, SqlxReadHandle},
-};
-use error_stack::{Result, ResultExt};
-use model::{
-    AccountIdInternal, AccountIdLight, ContentId, MediaContentInternal, ModerationRequest,
-};
-use tokio_stream::StreamExt;
-use tokio_util::io::ReaderStream;
-use utils::{IntoReportExt, IntoReportFromString};
-
-use self::{
-    account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
-    chat_admin::ReadCommandsChatAdmin, media::ReadCommandsMedia,
-    media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile,
-    profile_admin::ReadCommandsProfileAdmin,
-};
-use super::{
-    cache::{DatabaseCache, ReadCacheJson},
-    file::utils::FileDir,
-    DatabaseError,
-};
-use crate::utils::{ConvertCommandErrorExt, ErrorConversion};
 
 // impl<Target> From<error_stack::Report<CacheError>>
 //     for ReadError<error_stack::Report<CacheError>, Target>

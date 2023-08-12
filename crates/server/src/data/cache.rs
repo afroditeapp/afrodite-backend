@@ -1,19 +1,20 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use async_trait::async_trait;
+use error_stack::{Result, ResultExt};
+use tokio::sync::RwLock;
+use tokio_stream::StreamExt;
+use tracing::info;
+
 use config::Config;
 use database::{
-    current::read::SqliteReadCommands, sqlite::SqliteSelectJson, ConvertCommandError, NoId,
-    ReadResult, WriteResult,
+    ConvertCommandError, current::read::SqliteReadCommands, NoId, ReadResult,
+    sqlite::SqliteSelectJson, WriteResult,
 };
-use error_stack::{Result, ResultExt};
 use model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, LocationIndexKey, Profile,
     ProfileInternal, ProfileUpdateInternal,
 };
-use tokio::sync::RwLock;
-use tokio_stream::StreamExt;
-use tracing::info;
 use utils::ComponentError;
 
 use super::index::{

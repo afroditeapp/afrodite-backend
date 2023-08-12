@@ -1,5 +1,38 @@
 //! Synchronous write commands combining cache and database operations.
 
+use std::{fmt::Debug, marker::PhantomData};
+
+use error_stack::{Result, ResultExt};
+
+use config::Config;
+use database::{
+    current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
+    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
+    history::write::HistoryWriteCommands,
+    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+};
+use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo};
+use utils::{IntoReportExt, IntoReportFromString};
+
+use crate::{
+    data::DatabaseError,
+    media_backup::MediaBackupHandle,
+    utils::{ConvertCommandErrorExt, ErrorConversion},
+};
+
+use super::{
+    cache::{CachedProfile, DatabaseCache, WriteCacheJson},
+    file::utils::FileDir,
+    index::LocationIndexWriterGetter,
+};
+
+use self::{
+    account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
+    chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
+    media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin, profile::WriteCommandsProfile,
+    profile_admin::WriteCommandsProfileAdmin,
+};
+
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
         pub struct $struct_name<'a> {
@@ -11,34 +44,42 @@ macro_rules! define_write_commands {
                 Self { cmds }
             }
 
+            #[allow(dead_code)]
             fn current_write(&self) -> &database::sqlite::CurrentDataWriteHandle {
                 &self.cmds.current_write
             }
 
+            #[allow(dead_code)]
             fn history_write(&self) -> &database::sqlite::HistoryWriteHandle {
                 &self.cmds.history_write
             }
 
+            #[allow(dead_code)]
             fn cache(&self) -> &super::super::cache::DatabaseCache {
                 &self.cmds.cache
             }
 
+            #[allow(dead_code)]
             fn file_dir(&self) -> &super::super::FileDir {
                 &self.cmds.file_dir
             }
 
+            #[allow(dead_code)]
             fn location(&self) -> &super::super::index::LocationIndexWriterGetter<'a> {
                 &self.cmds.location
             }
 
+            #[allow(dead_code)]
             fn media_backup(&self) -> &crate::media_backup::MediaBackupHandle {
                 &self.cmds.media_backup
             }
 
+            #[allow(dead_code)]
             fn current(&self) -> database::current::write::CurrentWriteCommands {
                 database::current::write::CurrentWriteCommands::new(self.current_write())
             }
 
+            #[allow(dead_code)]
             fn history(&self) -> super::super::write::HistoryWriteCommands {
                 super::super::write::HistoryWriteCommands::new(&self.history_write())
             }
@@ -70,36 +111,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
-use std::{fmt::Debug, marker::PhantomData};
-
-use config::Config;
-use database::{
-    current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
-    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
-    history::write::HistoryWriteCommands,
-    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
-};
-use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo};
-use utils::{IntoReportExt, IntoReportFromString};
-
-use self::{
-    account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
-    chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
-    media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin, profile::WriteCommandsProfile,
-    profile_admin::WriteCommandsProfileAdmin,
-};
-use super::{
-    cache::{CachedProfile, DatabaseCache, WriteCacheJson},
-    file::utils::FileDir,
-    index::LocationIndexWriterGetter,
-};
-use crate::{
-    data::DatabaseError,
-    media_backup::MediaBackupHandle,
-    utils::{ConvertCommandErrorExt, ErrorConversion},
-};
 
 // impl<Target> From<error_stack::Report<CacheError>>
 //     for WriteError<error_stack::Report<CacheError>, Target>

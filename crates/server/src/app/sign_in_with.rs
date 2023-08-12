@@ -1,15 +1,17 @@
-pub mod apple;
-pub mod google;
-
 use std::sync::Arc;
 
-use config::Config;
 use error_stack::Result;
+
+use config::Config;
 
 use self::{
     apple::{AppleAccountId, SignInWithAppleError, SignInWithAppleManager},
     google::{GoogleAccountInfo, SignInWithGoogleError, SignInWithGoogleManager},
 };
+
+pub mod apple;
+pub mod google;
+
 pub struct SignInWithManager {
     google: SignInWithGoogleManager,
     apple: SignInWithAppleManager,

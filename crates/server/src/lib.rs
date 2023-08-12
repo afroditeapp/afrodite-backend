@@ -1,19 +1,9 @@
 #![deny(unsafe_code)]
 #![warn(unused_crate_dependencies)]
 
-pub mod api;
-pub mod app;
-pub mod data;
-pub mod internal;
-pub mod litestream;
-pub mod manager_client;
-pub mod media_backup;
-pub mod utils;
-
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
 use axum::Router;
-use config::Config;
 use futures::future::poll_fn;
 use hyper::server::{
     accept::Accept,
@@ -35,15 +25,27 @@ use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+use config::Config;
+
+use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager};
+
 use self::{
     app::{
+        App,
         connection::{ServerQuitWatcher, WebSocketManager},
         routes_internal::InternalApp,
-        App,
     },
-    data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
+    data::{DatabaseManager, write_commands::WriteCommandRunnerHandle},
 };
-use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager};
+
+pub mod api;
+pub mod app;
+pub mod data;
+pub mod internal;
+pub mod litestream;
+pub mod manager_client;
+pub mod media_backup;
+pub mod utils;
 
 pub struct PihkaServer {
     config: Arc<Config>,

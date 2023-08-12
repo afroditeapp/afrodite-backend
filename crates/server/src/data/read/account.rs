@@ -1,13 +1,15 @@
-use database::NoId;
 use error_stack::Result;
-use model::{AccountIdInternal, AccountIdLight, ApiKey, RefreshToken, SignInWithInfo};
 use tokio_stream::StreamExt;
 
-use super::{
-    super::{cache::DatabaseCache, file::utils::FileDir, DatabaseError},
-    ReadCommands,
-};
+use database::NoId;
+use model::{AccountIdInternal, AccountIdLight, ApiKey, RefreshToken, SignInWithInfo};
+
 use crate::utils::ConvertCommandErrorExt;
+
+use super::{
+    ReadCommands,
+    super::{cache::DatabaseCache, DatabaseError, file::utils::FileDir},
+};
 
 define_read_commands!(ReadCommandsAccount);
 

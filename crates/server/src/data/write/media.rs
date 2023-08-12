@@ -1,4 +1,5 @@
 use error_stack::{Report, Result, ResultExt};
+
 use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
 
 use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};

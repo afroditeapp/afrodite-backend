@@ -1,13 +1,14 @@
 use axum::{extract::Path, Json, TypedHeader};
 use hyper::StatusCode;
+use tracing::error;
+
 use model::{
     AccountIdLight, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
     ProfileUpdateInternal,
 };
-use tracing::error;
 
 use super::{
-    db_write, utils::ApiKeyHeader, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase,
+    db_write, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, utils::ApiKeyHeader,
     WriteData,
 };
 

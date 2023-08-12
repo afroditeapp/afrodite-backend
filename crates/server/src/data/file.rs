@@ -2,13 +2,14 @@
 
 // TODO: Remove all git related code
 
+use tokio::sync::mpsc;
+
+use ::utils::ComponentError;
+
 pub mod file;
 pub mod read;
 pub mod utils;
 pub mod write;
-
-use ::utils::ComponentError;
-use tokio::sync::mpsc;
 
 impl ComponentError for FileError {
     const COMPONENT_NAME: &'static str = "File";

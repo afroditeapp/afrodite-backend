@@ -1,12 +1,13 @@
-use manager_model::{
-    BuildInfo, CommandOutput, SoftwareInfo, SoftwareOptions, SystemInfo, SystemInfoList,
-};
-use config::Config;
 use error_stack::Result;
-use manager_api::{
-    Configuration, ApiKey, ManagerApi,
-};
 use tracing::{error, info};
+
+use config::Config;
+use manager_api::{
+    ApiKey, Configuration, ManagerApi,
+};
+use manager_model::{
+    BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList,
+};
 use utils::IntoReportExt;
 
 #[derive(thiserror::Error, Debug)]
@@ -70,13 +71,12 @@ impl ManagerApiClient {
 }
 
 pub struct ManagerApiManager<'a> {
-    config: &'a Config,
     api_client: &'a ManagerApiClient,
 }
 
 impl<'a> ManagerApiManager<'a> {
-    pub fn new(config: &'a Config, api_client: &'a ManagerApiClient) -> Self {
-        Self { config, api_client }
+    pub fn new(api_client: &'a ManagerApiClient) -> Self {
+        Self { api_client }
     }
 
     pub async fn system_info(&self) -> Result<SystemInfoList, ManagerClientError> {

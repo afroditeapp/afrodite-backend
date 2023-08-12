@@ -1,4 +1,5 @@
 use error_stack::Result;
+
 use model::{AccountIdInternal, HandleModerationRequest, Moderation};
 
 use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};

@@ -1,8 +1,8 @@
 //! Routes for server to server connections
 
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 
 use crate::{

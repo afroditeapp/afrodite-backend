@@ -1,19 +1,16 @@
-pub mod data;
-pub mod internal;
-
 use axum::{extract::Path, Json, TypedHeader};
-
 use hyper::StatusCode;
+use tracing::error;
+
+use super::{GetInternalApi, GetUsers, model::AccountIdLight};
+use super::{GetApiKeys, ReadDatabase, utils::ApiKeyHeader, WriteDatabase};
 
 use self::data::{
     Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal,
 };
 
-use super::{model::AccountIdLight, GetInternalApi, GetUsers};
-
-use tracing::error;
-
-use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase, WriteDatabase};
+pub mod data;
+pub mod internal;
 
 // TODO: Add timeout for database commands
 

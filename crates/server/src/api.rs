@@ -1,24 +1,11 @@
 //! HTTP API types and request handlers for all servers.
 
-// Routes
-pub mod account;
-pub mod account_internal;
-pub mod common;
-pub mod common_admin;
-pub mod media;
-pub mod media_admin;
-pub mod media_internal;
-pub mod profile;
-pub mod profile_internal;
-
-pub mod utils;
+use futures::Future;
+use utoipa::OpenApi;
 
 use config::Config;
-use futures::Future;
 use model::{AccountIdLight, BackendVersion};
-use utoipa::{Modify, OpenApi};
 
-use self::utils::SecurityApiTokenDefault;
 // use crate::{
 //     server::{
 //         app::sign_in_with::SignInWithManager,
@@ -36,15 +23,30 @@ use self::utils::SecurityApiTokenDefault;
 use crate::{
     app::sign_in_with::SignInWithManager,
     data::{
+        DatabaseError,
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},
         write_commands::WriteCmds,
         write_concurrent::ConcurrentWriteHandle,
-        DatabaseError,
     },
     internal::InternalApiManager,
     manager_client::ManagerApiManager,
 };
+
+use self::utils::SecurityApiTokenDefault;
+
+// Routes
+pub mod account;
+pub mod account_internal;
+pub mod common;
+pub mod common_admin;
+pub mod media;
+pub mod media_admin;
+pub mod media_internal;
+pub mod profile;
+pub mod profile_internal;
+
+pub mod utils;
 
 // Paths
 
@@ -239,4 +241,5 @@ macro_rules! db_write {
     };
 }
 
+// Make db_write available in all modules
 pub(crate) use db_write;

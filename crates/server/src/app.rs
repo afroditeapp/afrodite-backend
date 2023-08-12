@@ -1,45 +1,47 @@
-pub mod connection;
-pub mod routes_connected;
-pub mod routes_internal;
-pub mod sign_in_with;
-
 use std::sync::Arc;
 
-use api::BackendVersionProvider;
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
-use config::Config;
 use error_stack::Result;
 use futures::Future;
-use model::{AccountIdLight, BackendVersion};
 use tokio::sync::Mutex;
 
-use self::{
-    connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
-};
-use super::{
-    data::{
-        read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager},
-        write_commands::{WriteCmds, WriteCommandRunnerHandle},
-        write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
-        DatabaseError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle, SyncWriteHandle,
-    },
-    internal::{InternalApiClient, InternalApiManager},
-    manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
-};
+use api::BackendVersionProvider;
+use config::Config;
+use model::{AccountIdLight, BackendVersion};
+
 use crate::api::{
     self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase, SignInWith,
     WriteData,
 };
 
+use super::{
+    data::{
+        DatabaseError,
+        read::ReadCommands,
+        RouterDatabaseReadHandle,
+        RouterDatabaseWriteHandle,
+        SyncWriteHandle, utils::{AccountIdManager, ApiKeyManager}, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteHandle},
+    },
+    internal::{InternalApiClient, InternalApiManager},
+    manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
+};
+
+use self::{
+    connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
+};
+
+pub mod connection;
+pub mod routes_connected;
+pub mod routes_internal;
+pub mod sign_in_with;
+
 #[derive(Clone)]
 pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
     write_mutex: Arc<Mutex<SyncWriteHandle>>,
-    write_concurrent: Arc<ConcurrentWriteCommandHandle>,
     write_queue: Arc<WriteCommandRunnerHandle>,
     internal_api: Arc<InternalApiClient>,
     manager_api: Arc<ManagerApiClient>,
@@ -122,7 +124,7 @@ impl GetInternalApi for AppState {
 
 impl GetManagerApi for AppState {
     fn manager_api(&self) -> ManagerApiManager {
-        ManagerApiManager::new(&self.config, &self.manager_api)
+        ManagerApiManager::new(&self.manager_api)
     }
 }
 
@@ -149,7 +151,6 @@ impl App {
             config: config.clone(),
             database: Arc::new(database_handle),
             write_mutex: Arc::new(Mutex::new(database_write_handle.clone().into_sync_handle())),
-            write_concurrent: Arc::new(ConcurrentWriteCommandHandle::new(database_write_handle)),
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             manager_api: ManagerApiClient::new(&config)?.into(),

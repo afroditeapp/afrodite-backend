@@ -1,18 +1,12 @@
-pub mod cache;
-pub mod file;
-pub mod index;
-pub mod read;
-pub mod utils;
-pub mod write;
-pub mod write_commands;
-pub mod write_concurrent;
-
 use std::{
     fmt::Debug,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
 };
+
+use error_stack::{IntoReport, Result, ResultExt};
+use tracing::info;
 
 use ::utils::IntoReportExt;
 use config::Config;
@@ -30,13 +24,13 @@ use database::{
         SqlxReadCloseHandle, SqlxReadHandle,
     },
 };
-use error_stack::{IntoReport, Result, ResultExt};
 use model::{AccountIdInternal, AccountIdLight, SignInWithInfo};
-use tracing::info;
+
+use crate::media_backup::MediaBackupHandle;
 
 use self::{
     cache::{DatabaseCache, WriteCacheJson},
-    file::{read::FileReadCommands, utils::FileDir, FileError},
+    file::{FileError, read::FileReadCommands, utils::FileDir},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
     utils::{AccountIdManager, ApiKeyManager},
@@ -48,7 +42,15 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
-use crate::media_backup::MediaBackupHandle;
+
+pub mod cache;
+pub mod file;
+pub mod index;
+pub mod read;
+pub mod utils;
+pub mod write;
+pub mod write_commands;
+pub mod write_concurrent;
 
 pub const DB_HISTORY_DIR_NAME: &str = "history";
 pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";

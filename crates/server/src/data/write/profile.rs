@@ -1,5 +1,6 @@
-use database::sqlite::SqliteUpdateJson;
 use error_stack::{Result, ResultExt};
+
+use database::sqlite::SqliteUpdateJson;
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use crate::{
