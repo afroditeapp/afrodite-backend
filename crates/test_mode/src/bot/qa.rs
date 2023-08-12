@@ -110,7 +110,7 @@ impl Qa {
             AssertAccountState(AccountState::Normal),
         ];
         const ADMIN_ACTIONS: ActionArray =
-            action_array![SleepMillis(250), ModerateMediaModerationRequest,];
+            action_array![SleepMillis(1), ModerateMediaModerationRequest,];
 
         let iter = SETUP
             .into_iter()
