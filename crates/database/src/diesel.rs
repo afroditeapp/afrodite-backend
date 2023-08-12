@@ -272,13 +272,13 @@ impl DieselReadHandle {
 
         let pool = pool.build().into_error(DieselDatabaseError::Connect)?;
 
-        let pool_clone = pool.clone();
-        tokio::spawn(async move {
-            loop {
-                sleep(Duration::from_secs(5)).await;
-                info!("{:?}", pool_clone.status());
-            }
-        });
+        // let pool_clone = pool.clone();
+        // tokio::spawn(async move {
+        //     loop {
+        //         sleep(Duration::from_secs(5)).await;
+        //         info!("{:?}", pool_clone.status());
+        //     }
+        // });
 
         let handle = DieselReadHandle { pool: pool.clone() };
 
