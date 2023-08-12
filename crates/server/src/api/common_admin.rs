@@ -1,6 +1,6 @@
 //! Common routes related to admin features
 
-use axum::{Extension, extract::Query, Json};
+use axum::{Extension, extract::Query};
 use http::StatusCode;
 use tracing::error;
 
@@ -9,7 +9,7 @@ use manager_model::{
 };
 use model::{Account, AccountIdInternal};
 
-use crate::api::{GetManagerApi, ReadDatabase};
+use crate::api::{GetManagerApi, ReadDatabase, utils::Json};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 

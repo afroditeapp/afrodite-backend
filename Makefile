@@ -16,6 +16,8 @@ test:
 	RUST_LOG=info cargo run --bin pihka-backend -- --sqlite-in-ram test
 unit-test:
 	DATABASE_URL="sqlite:database/current/current.db" cargo test
+run:
+	RUST_LOG=debug cargo run --bin pihka-backend
 
 update-manager-submodule:
 	git submodule update --remote --merge

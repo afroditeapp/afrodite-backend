@@ -1,4 +1,4 @@
-use axum::{Json, TypedHeader};
+use axum::TypedHeader;
 use hyper::StatusCode;
 use tracing::error;
 
@@ -9,7 +9,7 @@ use model::{
 
 use super::{
     db_write, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
-    utils::ApiKeyHeader, WriteData,
+    utils::{Json, ApiKeyHeader}, WriteData,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -17,6 +17,9 @@ use super::{
 pub const PATH_REGISTER: &str = "/account_api/register";
 
 /// Register new account. Returns new account ID which is UUID.
+///
+/// Available only if server is running in debug mode and
+/// bot_login is enabled from config file.
 #[utoipa::path(
     post,
     path = "/account_api/register",
@@ -58,6 +61,9 @@ pub async fn register_impl<S: WriteData + GetConfig>(
 pub const PATH_LOGIN: &str = "/account_api/login";
 
 /// Get new ApiKey.
+///
+/// Available only if server is running in debug mode and
+/// bot_login is enabled from config file.
 #[utoipa::path(
     post,
     path = "/account_api/login",

@@ -1,8 +1,10 @@
 use std::net::SocketAddr;
 
-use axum::{extract::ConnectInfo, middleware::Next, response::Response};
+use axum::{extract::{ConnectInfo, FromRequest, rejection::{JsonRejection, self}}, middleware::Next, response::{Response, IntoResponse}};
+use config::RUNNING_IN_DEBUG_MODE;
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
+use serde::Serialize;
 use utoipa::{
     Modify,
     openapi::security::{ApiKeyValue, SecurityScheme},
@@ -82,5 +84,55 @@ impl Modify for SecurityApiTokenDefault {
                 )),
             )
         }
+    }
+}
+
+
+// Prevent axum from exposing API details in errors when not running in
+// debug mode.
+
+#[derive(FromRequest)]
+#[from_request(via(axum::Json), rejection(ApiError))]
+pub struct Json<T>(pub T);
+
+impl <T> From<T> for Json<T> {
+    fn from(value: T) -> Self {
+        Self(value)
+    }
+}
+
+impl <T: Serialize> IntoResponse for Json<T> {
+    fn into_response(self) -> Response {
+        axum::Json(self.0).into_response()
+    }
+}
+
+#[derive(Debug)]
+pub struct ApiError {
+    status: StatusCode,
+    message: String,
+}
+
+impl From<JsonRejection> for ApiError {
+    fn from(value: JsonRejection) -> Self {
+        Self { status: value.status(), message: value.to_string() }
+    }
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        let json_error = if RUNNING_IN_DEBUG_MODE.value() {
+            serde_json::json!({
+                "status": self.status.as_u16(),
+                "status_message": self.status.to_string(),
+                "message": self.message,
+            })
+        } else {
+            serde_json::json!({
+                "status": self.status.as_u16(),
+            })
+        };
+
+        (self.status, axum::Json(json_error)).into_response()
     }
 }

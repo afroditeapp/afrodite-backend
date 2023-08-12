@@ -7,7 +7,7 @@ pub mod file;
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, atomic::AtomicBool},
     vec,
 };
 
@@ -25,6 +25,20 @@ use self::{
         LitestreamConfig, LocationConfig, MediaBackupConfig, SignInWithGoogleConfig, SocketConfig,
     },
 };
+
+pub static RUNNING_IN_DEBUG_MODE: GlobalDebugFlag = GlobalDebugFlag {
+    debug: AtomicBool::new(false),
+};
+
+pub struct GlobalDebugFlag {
+    debug: AtomicBool,
+}
+
+impl GlobalDebugFlag {
+    pub fn value(&self) -> bool {
+        self.debug.load(std::sync::atomic::Ordering::Relaxed)
+    }
+}
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
@@ -112,6 +126,8 @@ impl Config {
     ///   Normally it also requires Google Account ID.
     /// * Routes for only related to benchmarking are available.
     /// * SQLite in RAM mode is allowed.
+    /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.
+    /// * Axum JSON extractor shows errors.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }
@@ -237,7 +253,7 @@ pub fn get_config(
         false
     };
 
-    Ok(Config {
+    let config = Config {
         file: file_config,
         database,
         external_services,
@@ -250,7 +266,13 @@ pub fn get_config(
         root_certificate,
         backend_code_version,
         backend_semver_version,
-    })
+    };
+
+    if config.debug_mode() {
+        RUNNING_IN_DEBUG_MODE.debug.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    Ok(config)
 }
 
 #[derive(Debug, Clone)]

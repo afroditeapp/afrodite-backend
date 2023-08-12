@@ -1,12 +1,12 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-use axum::{extract::Path, Json};
+use axum::{extract::Path};
 use hyper::StatusCode;
 use tracing::error;
 
 use model::{AccountIdLight, BooleanSetting, Profile};
 
-use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
+use crate::api::{GetInternalApi, GetUsers, ReadDatabase, utils::Json};
 
 use super::GetConfig;
 

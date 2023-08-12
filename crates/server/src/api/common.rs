@@ -10,7 +10,6 @@ use axum::{
         ConnectInfo,
         WebSocketUpgrade, ws::{Message, WebSocket},
     },
-    Json,
     response::IntoResponse, TypedHeader,
 };
 use error_stack::{IntoReport, Result, ResultExt};
@@ -23,7 +22,7 @@ use utils::IntoReportExt;
 
 use crate::app::connection::WebSocketManager;
 
-use super::{BackendVersionProvider, GetApiKeys, ReadDatabase, utils::ApiKeyHeader, WriteData};
+use super::{BackendVersionProvider, GetApiKeys, ReadDatabase, utils::{ApiKeyHeader, Json}, WriteData};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 

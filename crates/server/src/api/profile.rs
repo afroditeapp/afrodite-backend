@@ -1,4 +1,4 @@
-use axum::{extract::Path, Json, TypedHeader};
+use axum::{extract::Path, TypedHeader};
 use hyper::StatusCode;
 use tracing::error;
 
@@ -8,7 +8,7 @@ use model::{
 };
 
 use super::{
-    db_write, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, utils::ApiKeyHeader,
+    db_write, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, utils::{ApiKeyHeader, Json},
     WriteData,
 };
 
