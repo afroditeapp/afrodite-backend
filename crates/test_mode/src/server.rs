@@ -10,7 +10,6 @@ use config::{
     },
     Config,
 };
-
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use tokio::process::Child;

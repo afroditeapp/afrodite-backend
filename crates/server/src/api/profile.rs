@@ -1,17 +1,15 @@
 use axum::{extract::Path, Json, TypedHeader};
-
 use hyper::StatusCode;
-
 use model::{
     AccountIdLight, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
     ProfileUpdateInternal,
 };
-
-use super::{db_write, GetConfig, GetInternalApi, GetUsers, WriteData};
-
 use tracing::error;
 
-use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase};
+use super::{
+    db_write, utils::ApiKeyHeader, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase,
+    WriteData,
+};
 
 // TODO: Add timeout for database commands
 

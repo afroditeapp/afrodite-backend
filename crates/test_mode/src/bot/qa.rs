@@ -11,14 +11,12 @@ use std::{fmt::Debug, iter::Peekable, sync::atomic::AtomicBool};
 
 use api_client::models::AccountState;
 use async_trait::async_trait;
-
-use crate::{action_array, bot::actions::ActionArray};
+use tracing::log::info;
 
 use self::{
     account::ACCOUNT_TESTS, chat::CHAT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS,
     profile::PROFILE_TESTS,
 };
-
 use super::{
     actions::{
         account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
@@ -28,8 +26,7 @@ use super::{
     },
     BotState, BotStruct,
 };
-
-use tracing::log::info;
+use crate::{action_array, bot::actions::ActionArray};
 
 static ADMIN_QUIT_NOTIFICATION: AtomicBool = AtomicBool::new(false);
 

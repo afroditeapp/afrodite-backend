@@ -1,12 +1,11 @@
-use crate::sqlite::SqliteDatabaseError;
 use model::{
     AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal, ImageSlot,
     ModerationRequest, ModerationRequestContent, ModerationRequestQueueNumber, PrimaryImage,
 };
-
-use crate::WriteResult;
 use sqlx::{Sqlite, Transaction};
 use utils::IntoReportExt;
+
+use crate::{sqlite::SqliteDatabaseError, WriteResult};
 
 define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
 

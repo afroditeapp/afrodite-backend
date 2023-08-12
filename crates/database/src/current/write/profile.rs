@@ -1,18 +1,15 @@
-use model::{AccountIdInternal, LocationIndexKey, Profile, ProfileInternal, ProfileUpdateInternal};
-
-use crate::diesel::DieselDatabaseError;
-use crate::sqlite::{SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson};
-
-use crate::WriteResult;
 use async_trait::async_trait;
-use diesel::{ExpressionMethods, QueryDsl};
+use diesel::{prelude::*, ExpressionMethods, QueryDsl};
+use error_stack::Result;
+use model::{AccountIdInternal, LocationIndexKey, Profile, ProfileInternal, ProfileUpdateInternal};
 use utils::IntoReportExt;
 
-use diesel::prelude::*;
-
 use super::CurrentWriteCommands;
-
-use error_stack::Result;
+use crate::{
+    diesel::DieselDatabaseError,
+    sqlite::{SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson},
+    WriteResult,
+};
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 

@@ -1,13 +1,13 @@
 use error_stack::Result;
+use model::{AccountIdInternal, AccountState};
 use time::OffsetDateTime;
 use tokio_stream::{Stream, StreamExt};
-
-use super::super::sqlite::{SqliteDatabaseError, SqlxReadHandle};
-use super::HistoryData;
-
-use model::{AccountIdInternal, AccountState};
-
 use utils::IntoReportExt;
+
+use super::{
+    super::sqlite::{SqliteDatabaseError, SqlxReadHandle},
+    HistoryData,
+};
 
 macro_rules! read_history {
     ($self:expr, $id:expr, $sql:literal, $str_field:ident) => {{

@@ -14,9 +14,10 @@ use api_client::{
     models::ProfileUpdate,
 };
 use async_trait::async_trait;
+use error_stack::Result;
 use tokio::time::sleep;
-
-use crate::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK};
+use tracing::log::info;
+use utils::IntoReportExt;
 
 use super::{
     actions::{
@@ -27,12 +28,7 @@ use super::{
     utils::{Counters, Timer},
     BotState, BotStruct, TaskState,
 };
-
-use error_stack::Result;
-
-use tracing::log::info;
-
-use utils::IntoReportExt;
+use crate::{client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK};
 
 static COUNTERS: Counters = Counters::new();
 

@@ -1,18 +1,15 @@
 use std::path::{Path, PathBuf};
 
 use axum::extract::BodyStream;
+use database::ReadResult;
 use error_stack::Result;
+use model::{AccountIdLight, ContentId};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
-
-use model::{AccountIdLight, ContentId};
-
-use database::ReadResult;
+use utils::IntoReportExt;
 
 use super::{super::FileError, file::GetStaticFileName};
-
-use utils::IntoReportExt;
 
 pub const TMP_DIR_NAME: &str = "tmp";
 pub const IMAGE_DIR_NAME: &str = "images";

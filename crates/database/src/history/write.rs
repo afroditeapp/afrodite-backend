@@ -1,20 +1,15 @@
 use async_trait::async_trait;
 use error_stack::Result;
-
 use model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, Profile, ProfileUpdateInternal,
 };
+use utils::{current_unix_time, IntoReportExt};
 
-use utils::current_unix_time;
-
+use super::super::sqlite::SqliteDatabaseError;
 use crate::{
     sqlite::{HistoryUpdateJson, HistoryWriteHandle},
     ConvertCommandError, HistoryWriteResult,
 };
-
-use super::super::sqlite::SqliteDatabaseError;
-
-use utils::IntoReportExt;
 
 macro_rules! insert_or_update_json {
     ($self:expr, $sql:literal, $data:expr, $unix_time:expr, $id:expr) => {{

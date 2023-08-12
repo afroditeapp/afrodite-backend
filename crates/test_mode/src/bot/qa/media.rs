@@ -1,5 +1,3 @@
-use crate::bot::actions::BotAction;
-
 use super::{
     super::actions::{
         account::{Login, Register},
@@ -8,8 +6,7 @@ use super::{
     },
     SingleTest,
 };
-
-use crate::test;
+use crate::{bot::actions::BotAction, test};
 
 pub const MEDIA_TESTS: &[SingleTest] = &[test!(
     "Save image to slot: max 3 slots",

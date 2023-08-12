@@ -1,7 +1,5 @@
 use api_client::models::AccountState;
 
-use crate::bot::actions::BotAction;
-
 use super::{
     super::actions::{
         account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
@@ -10,8 +8,7 @@ use super::{
     },
     SingleTest,
 };
-
-use crate::test;
+use crate::{bot::actions::BotAction, test};
 
 pub const ACCOUNT_TESTS: &[SingleTest] = &[
     test!(

@@ -1,13 +1,11 @@
-use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
-
 use database::sqlite::SqliteUpdateJson;
+use error_stack::{Result, ResultExt};
+use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use crate::{
     data::{cache::CacheError, DatabaseError},
     utils::ConvertCommandErrorExt,
 };
-
-use error_stack::{Result, ResultExt};
 
 define_write_commands!(WriteCommandsProfile);
 

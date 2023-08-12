@@ -1,8 +1,7 @@
+use error_stack::Result;
 use model::{AccountIdInternal, HandleModerationRequest, Moderation};
 
 use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
-
-use error_stack::Result;
 
 define_write_commands!(WriteCommandsMediaAdmin);
 

@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use config::Config;
 use error_stack::{IntoReport, Result};
-
 use tracing::{error, info};
 use utils::IntoReportExt;
 

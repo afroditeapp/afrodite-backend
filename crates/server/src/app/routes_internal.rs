@@ -5,9 +5,10 @@ use axum::{
     Router,
 };
 
-use crate::api::{self, GetConfig};
-
-use crate::app::AppState;
+use crate::{
+    api::{self, GetConfig},
+    app::AppState,
+};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.

@@ -14,22 +14,24 @@ use std::{
     sync::Arc,
 };
 
-use error_stack::{IntoReport, Result, ResultExt};
-
+use ::utils::IntoReportExt;
+use config::Config;
 use database::{
     current::read::SqliteReadCommands,
     diesel::{
         DieselCurrentReadHandle, DieselCurrentWriteHandle, DieselHistoryReadHandle,
-        DieselReadCloseHandle, DieselWriteCloseHandle,
+        DieselHistoryWriteHandle, DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle,
+        DieselWriteHandle,
     },
-    diesel::{DieselHistoryWriteHandle, DieselReadHandle, DieselWriteHandle},
     history::read::HistoryReadCommands,
     sqlite::{
-        CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
-        SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
+        CurrentDataWriteHandle, DatabaseType, HistoryUpdateJson, HistoryWriteHandle,
+        SqliteDatabasePath, SqliteUpdateJson, SqliteWriteCloseHandle, SqliteWriteHandle,
+        SqlxReadCloseHandle, SqlxReadHandle,
     },
-    sqlite::{HistoryUpdateJson, SqliteUpdateJson},
 };
+use error_stack::{IntoReport, Result, ResultExt};
+use model::{AccountIdInternal, AccountIdLight, SignInWithInfo};
 use tracing::info;
 
 use self::{
@@ -47,9 +49,6 @@ use self::{
     write_concurrent::WriteCommandsConcurrent,
 };
 use crate::media_backup::MediaBackupHandle;
-use ::utils::IntoReportExt;
-use config::Config;
-use model::{AccountIdInternal, AccountIdLight, SignInWithInfo};
 
 pub const DB_HISTORY_DIR_NAME: &str = "history";
 pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";

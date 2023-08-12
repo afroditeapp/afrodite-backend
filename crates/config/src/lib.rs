@@ -16,7 +16,6 @@ use error_stack::{IntoReport, Result, ResultExt};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
-
 use utils::IntoReportExt;
 
 use self::{

@@ -7,7 +7,6 @@ use api_client::{
     models::{auth_pair, AccountSetup, AccountState, BooleanSetting},
 };
 use async_trait::async_trait;
-
 use base64::Engine;
 use error_stack::{IntoReport, Result};
 use futures::SinkExt;
@@ -15,20 +14,16 @@ use headers::HeaderValue;
 use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{client::IntoClientRequest, Message};
 use url::Url;
+use utils::{
+    api::{API_KEY_HEADER_STR, PATH_CONNECT},
+    IntoReportExt,
+};
 
-use super::{super::super::client::TestError, BotAction};
-
-use utils::api::{PATH_CONNECT, API_KEY_HEADER_STR};
-
+use super::{super::super::client::TestError, BotAction, BotState};
 use crate::bot::{
     utils::{assert::bot_assert_eq, name::NameProvider},
     WsConnection,
 };
-
-use utils::IntoReportExt;
-
-use super::BotState;
-
 
 #[derive(Debug)]
 pub struct Register;

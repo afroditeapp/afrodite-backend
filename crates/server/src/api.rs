@@ -13,14 +13,12 @@ pub mod profile_internal;
 
 pub mod utils;
 
+use config::Config;
 use futures::Future;
-
-use model::BackendVersion;
-
+use model::{AccountIdLight, BackendVersion};
 use utoipa::{Modify, OpenApi};
 
-use config::Config;
-
+use self::utils::SecurityApiTokenDefault;
 // use crate::{
 //     server::{
 //         app::sign_in_with::SignInWithManager,
@@ -35,7 +33,6 @@ use config::Config;
 //         manager_client::ManagerApiManager,
 //     },
 // };
-
 use crate::{
     app::sign_in_with::SignInWithManager,
     data::{
@@ -48,10 +45,6 @@ use crate::{
     internal::InternalApiManager,
     manager_client::ManagerApiManager,
 };
-
-use self::utils::SecurityApiTokenDefault;
-
-use model::AccountIdLight;
 
 // Paths
 

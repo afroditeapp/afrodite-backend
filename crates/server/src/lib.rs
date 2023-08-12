@@ -1,7 +1,6 @@
 #![deny(unsafe_code)]
 #![warn(unused_crate_dependencies)]
 
-
 pub mod api;
 pub mod app;
 pub mod data;
@@ -14,6 +13,7 @@ pub mod utils;
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
 use axum::Router;
+use config::Config;
 use futures::future::poll_fn;
 use hyper::server::{
     accept::Accept,
@@ -28,25 +28,22 @@ use tokio::{
     sync::{broadcast, mpsc},
     task::JoinHandle,
 };
-use tokio_rustls::rustls::ServerConfig;
-use tokio_rustls::TlsAcceptor;
+use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
 use tower::MakeService;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use config::Config;
-
-use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager};
-
 use self::{
-    app::routes_internal::InternalApp,
-    app::{connection::WebSocketManager, App},
+    app::{
+        connection::{ServerQuitWatcher, WebSocketManager},
+        routes_internal::InternalApp,
+        App,
+    },
     data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
 };
-
-use self::app::connection::ServerQuitWatcher;
+use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager};
 
 pub struct PihkaServer {
     config: Arc<Config>,

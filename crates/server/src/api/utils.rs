@@ -3,17 +3,14 @@ use std::net::SocketAddr;
 use axum::{extract::ConnectInfo, middleware::Next, response::Response};
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
-
+use model::ApiKey;
+pub use utils::api::API_KEY_HEADER_STR;
 use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
 };
 
-use model::ApiKey;
-
 use super::GetApiKeys;
-
-pub use utils::api::API_KEY_HEADER_STR;
 pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
 
 pub async fn authenticate_with_api_key<T, S: GetApiKeys>(

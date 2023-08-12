@@ -2,14 +2,10 @@ use std::fmt::Debug;
 
 use api_client::apis::media_api;
 use async_trait::async_trait;
-
 use error_stack::Result;
-
-use super::{super::super::client::TestError, BotAction};
-
 use utils::IntoReportExt;
 
-use super::BotState;
+use super::{super::super::client::TestError, BotAction, BotState};
 
 #[derive(Debug)]
 pub struct ModerateMediaModerationRequest;

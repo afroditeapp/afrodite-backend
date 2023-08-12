@@ -3,9 +3,8 @@ pub mod google;
 
 use std::sync::Arc;
 
-use error_stack::Result;
-
 use config::Config;
+use error_stack::Result;
 
 use self::{
     apple::{AppleAccountId, SignInWithAppleError, SignInWithAppleManager},

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountIdInternal, AccountIdLight, ModerationRequestContent};

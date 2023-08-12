@@ -1,23 +1,17 @@
+use std::{fmt, path::PathBuf, time::Duration};
+
 use config::Config;
-
-use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};
-
 use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
 use diesel::RunQueryDsl;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-
+use error_stack::{IntoReport, Result, ResultExt};
 use sqlx::Row;
-
 use tokio::time::sleep;
 use tracing::log::{error, info};
-
-use error_stack::{IntoReport, Result, ResultExt};
-
-use std::time::Duration;
-use std::{fmt, path::PathBuf};
-
 use utils::{IntoReportExt, IntoReportFromString};
+
+use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};
 
 pub type HookError = deadpool::managed::HookError<deadpool_diesel::Error>;
 

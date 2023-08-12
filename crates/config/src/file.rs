@@ -8,7 +8,6 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use serde::{Deserialize, Serialize};
 use url::Url;
-
 use utils::IntoReportExt;
 
 pub type GoogleAccountId = String;

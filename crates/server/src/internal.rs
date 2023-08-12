@@ -1,17 +1,12 @@
 //! Routes for server to server connections
 
 use api_internal::{Configuration, InternalApi};
-
+use config::{Config, InternalApiUrls};
 use error_stack::{Result, ResultExt};
-
 use hyper::StatusCode;
-
+use model::{Account, AccountIdInternal, ApiKey, BooleanSetting, Profile, ProfileInternal};
 use tokio::sync::{Mutex, MutexGuard};
 use tracing::{error, info};
-
-use config::Config;
-use config::InternalApiUrls;
-use model::{Account, AccountIdInternal, ApiKey, BooleanSetting, Profile, ProfileInternal};
 use utils::IntoReportExt;
 
 use super::data::{

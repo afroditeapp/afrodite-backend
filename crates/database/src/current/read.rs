@@ -1,11 +1,10 @@
-use crate::{diesel::DieselConnection, sqlite::SqlxReadHandle};
-
 use self::{
     account::{CurrentReadAccount, CurrentSyncReadAccount},
     chat::{CurrentReadChat, CurrentSyncReadChat},
     media::{CurrentReadMedia, CurrentSyncReadMedia},
     profile::{CurrentReadProfile, CurrentSyncReadProfile},
 };
+use crate::{diesel::DieselConnection, sqlite::SqlxReadHandle};
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {

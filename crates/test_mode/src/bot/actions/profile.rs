@@ -5,16 +5,12 @@ use api_client::{
     models::{Location, ProfileUpdate},
 };
 use async_trait::async_trait;
-use error_stack::Result;
-
-use crate::bot::utils::location::LocationConfigUtils;
-
-use super::{super::super::client::TestError, BotAction, PreviousValue};
-
 use config::file::LocationConfig;
+use error_stack::Result;
 use utils::IntoReportExt;
 
-use super::BotState;
+use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
+use crate::bot::utils::location::LocationConfigUtils;
 
 #[derive(Debug)]
 pub struct ChangeProfileText;

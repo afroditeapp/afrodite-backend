@@ -1,12 +1,11 @@
+use error_stack::Result;
+use model::{AccountIdInternal, ProfileInternal};
+
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
     ReadCommands,
 };
-
 use crate::data::DatabaseError;
-use model::{AccountIdInternal, ProfileInternal};
-
-use error_stack::Result;
 
 define_read_commands!(ReadCommandsProfile);
 

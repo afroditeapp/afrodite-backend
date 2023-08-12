@@ -11,6 +11,7 @@ mod state;
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use api_client::{apis::configuration::Configuration, manual_additions};
+use config::{args::TestMode, Config};
 use tokio::{
     io::AsyncWriteExt,
     select, signal,
@@ -18,11 +19,8 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use crate::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState};
-
-use config::{args::TestMode, Config};
-
 use self::state::StateData;
+use crate::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState};
 
 pub struct TestRunner {
     config: Arc<Config>,

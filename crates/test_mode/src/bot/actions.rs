@@ -5,20 +5,17 @@ pub mod common;
 pub mod media;
 pub mod profile;
 
-use std::collections::HashSet;
-use std::{fmt::Debug, time::Duration};
+use std::{collections::HashSet, fmt::Debug, time::Duration};
 
 use api_client::models::AccountState;
 use async_trait::async_trait;
-
 use error_stack::{FutureExt, Result, ResultExt};
 
-use self::account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup};
-use self::media::{MakeModerationRequest, SendImageToSlot};
-
-use super::super::client::TestError;
-
-use super::{BotState, TaskState};
+use self::{
+    account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
+    media::{MakeModerationRequest, SendImageToSlot},
+};
+use super::{super::client::TestError, BotState, TaskState};
 
 #[macro_export]
 macro_rules! action_array {

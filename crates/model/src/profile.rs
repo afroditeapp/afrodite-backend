@@ -1,13 +1,12 @@
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 
-use diesel::serialize::ToSql;
+use diesel::{
+    backend::Backend, deserialize::FromSql, prelude::*, serialize::ToSql, sql_types::Binary,
+};
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
-
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
-
-use diesel::{backend::Backend, deserialize::FromSql, prelude::*, sql_types::Binary};
 
 use crate::AccountIdLight;
 

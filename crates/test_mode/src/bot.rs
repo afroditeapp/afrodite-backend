@@ -7,16 +7,14 @@ mod utils;
 use std::{fmt::Debug, sync::Arc, vec};
 
 use api_client::models::AccountIdLight;
-
 use async_trait::async_trait;
+use config::args::{Test, TestMode};
+use error_stack::{Result, ResultExt};
 use tokio::{
     net::TcpStream,
     select,
     sync::{mpsc, watch},
 };
-
-use error_stack::{Result, ResultExt};
-
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tracing::{error, info, log::warn};
 
@@ -26,13 +24,10 @@ use self::{
     client_bot::ClientBot,
     qa::Qa,
 };
-
 use super::{
     client::{ApiClient, TestError},
     state::{BotPersistentState, StateData},
 };
-
-use config::args::{Test, TestMode};
 
 #[derive(Debug, Default)]
 pub struct TaskState {

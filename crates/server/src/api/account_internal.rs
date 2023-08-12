@@ -1,16 +1,11 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::{extract::Path, Json};
-
 use hyper::StatusCode;
-
-use crate::api::{GetUsers, ReadDatabase};
-
 use model::{Account, AccountIdLight, ApiKey};
-
-use crate::api::GetApiKeys;
-
 use tracing::error;
+
+use crate::api::{GetApiKeys, GetUsers, ReadDatabase};
 
 pub const PATH_INTERNAL_CHECK_API_KEY: &str = "/internal/check_api_key";
 

@@ -1,32 +1,24 @@
-use config::Config;
-use model::AccountIdInternal;
-
-use crate::current::write::CurrentWriteCommands;
-
-use super::current::read::SqliteReadCommands;
-use super::history::read::HistoryReadCommands;
-
-use async_trait::async_trait;
-
-use sqlx::sqlite::SqliteRow;
-use sqlx::Row;
-
-use tracing::log::error;
-
-use super::history::write::HistoryWriteCommands;
-use error_stack::{IntoReport, Result, ResultExt};
-
 use std::{
     fmt,
     path::{Path, PathBuf},
 };
 
+use async_trait::async_trait;
+use config::Config;
+use error_stack::{IntoReport, Result, ResultExt};
+use model::AccountIdInternal;
 use sqlx::{
-    sqlite::{self, SqliteConnectOptions, SqlitePoolOptions},
-    SqlitePool,
+    sqlite::{self, SqliteConnectOptions, SqlitePoolOptions, SqliteRow},
+    Row, SqlitePool,
 };
-
+use tracing::log::error;
 use utils::{ComponentError, IntoReportExt};
+
+use super::{
+    current::read::SqliteReadCommands,
+    history::{read::HistoryReadCommands, write::HistoryWriteCommands},
+};
+use crate::current::write::CurrentWriteCommands;
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 pub const HISTORY_FILE_NAME: &str = "history.db";

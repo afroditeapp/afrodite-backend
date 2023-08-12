@@ -5,7 +5,6 @@ use std::fmt::Debug;
 use api_client::apis::configuration::Configuration;
 use config::args::PublicApiUrls;
 use error_stack::{IntoReport, Result};
-
 use hyper::StatusCode;
 use reqwest::{Client, Url};
 use tracing::info;

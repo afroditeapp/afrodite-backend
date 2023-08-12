@@ -1,14 +1,14 @@
 use api_client::models::Location;
 
-use crate::bot::actions::{
-    account::SetProfileVisibility,
-    profile::{GetProfileList, ResetProfileIterator, UpdateLocation},
-    AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil, TO_NORMAL_STATE,
-};
-
 use super::SingleTest;
-
-use crate::test;
+use crate::{
+    bot::actions::{
+        account::SetProfileVisibility,
+        profile::{GetProfileList, ResetProfileIterator, UpdateLocation},
+        AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil, TO_NORMAL_STATE,
+    },
+    test,
+};
 
 const LOCATION_LAT_LON_10: Location = Location {
     latitude: 10.0,

@@ -1,13 +1,13 @@
 use sqlx::SqlitePool;
 
-use crate::diesel::DieselConnection;
-use crate::sqlite::CurrentDataWriteHandle;
-
-use self::account::{CurrentSyncWriteAccount, CurrentWriteAccount};
-use self::chat::{CurrentSyncWriteChat, CurrentWriteChat};
-use self::media::{CurrentSyncWriteMedia, CurrentWriteMedia};
-use self::media_admin::CurrentWriteMediaAdmin;
-use self::profile::{CurrentSyncWriteProfile, CurrentWriteProfile};
+use self::{
+    account::{CurrentSyncWriteAccount, CurrentWriteAccount},
+    chat::{CurrentSyncWriteChat, CurrentWriteChat},
+    media::{CurrentSyncWriteMedia, CurrentWriteMedia},
+    media_admin::CurrentWriteMediaAdmin,
+    profile::{CurrentSyncWriteProfile, CurrentWriteProfile},
+};
+use crate::{diesel::DieselConnection, sqlite::CurrentDataWriteHandle};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {

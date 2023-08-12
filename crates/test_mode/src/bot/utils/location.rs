@@ -1,5 +1,4 @@
 use api_client::models::Location;
-
 use config::file::LocationConfig;
 
 pub trait LocationConfigUtils {

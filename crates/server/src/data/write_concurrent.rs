@@ -1,21 +1,22 @@
 //! Write commands that can be run concurrently also with synchronous
 //! write commands.
 
-use std::collections::HashMap;
-use std::fmt;
-use std::fmt::Debug;
-use std::sync::Arc;
+use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
-use super::RouterDatabaseWriteHandle;
-use super::{cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter};
-use crate::data::DatabaseError;
-use crate::utils::ConvertCommandErrorExt;
 use axum::extract::BodyStream;
-use database::history::write::HistoryWriteCommands;
-use database::sqlite::{CurrentDataWriteHandle, HistoryWriteHandle};
+use database::{
+    history::write::HistoryWriteCommands,
+    sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
+};
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
+
+use super::{
+    cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter,
+    RouterDatabaseWriteHandle,
+};
+use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 

@@ -3,25 +3,22 @@ pub mod routes_connected;
 pub mod routes_internal;
 pub mod sign_in_with;
 
-use crate::api::{
-    self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase, SignInWith,
-    WriteData,
-};
+use std::sync::Arc;
+
 use api::BackendVersionProvider;
 use axum::{
     routing::{get, post},
     Router,
 };
 use config::Config;
+use error_stack::Result;
 use futures::Future;
 use model::{AccountIdLight, BackendVersion};
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use self::{
     connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
 };
-
 use super::{
     data::{
         read::ReadCommands,
@@ -33,8 +30,10 @@ use super::{
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
-
-use error_stack::Result;
+use crate::api::{
+    self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase, SignInWith,
+    WriteData,
+};
 
 #[derive(Clone)]
 pub struct AppState {

@@ -1,22 +1,17 @@
 use std::{sync::Arc, time::Instant};
 
+use config::Config;
 use error_stack::{IntoReport, Result};
-
 use headers::{CacheControl, HeaderMapExt};
 use hyper::Method;
-
 use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
     DecodingKey, Validation,
 };
 use serde::Deserialize;
-
 use tokio::sync::RwLock;
 use tracing::error;
-
 use utils::IntoReportExt;
-
-use config::Config;
 
 // TODO: Send serverAuthCode to server. Get refresh and access tokens from
 // google with that and save the tokens to database. After server receives app's

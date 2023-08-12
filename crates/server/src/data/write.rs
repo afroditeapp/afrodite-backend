@@ -73,36 +73,32 @@ pub mod profile_admin;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use crate::{
-    data::DatabaseError,
-    media_backup::MediaBackupHandle,
-    utils::{ConvertCommandErrorExt, ErrorConversion},
-};
 use config::Config;
+use database::{
+    current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
+    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
+    history::write::HistoryWriteCommands,
+    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+};
 use error_stack::{Result, ResultExt};
 use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo};
-
 use utils::{IntoReportExt, IntoReportFromString};
 
-use self::account::WriteCommandsAccount;
-use self::account_admin::WriteCommandsAccountAdmin;
-use self::chat::WriteCommandsChat;
-use self::chat_admin::WriteCommandsChatAdmin;
-use self::common::WriteCommandsCommon;
-use self::media::WriteCommandsMedia;
-use self::media_admin::WriteCommandsMediaAdmin;
-use self::profile::WriteCommandsProfile;
-use self::profile_admin::WriteCommandsProfileAdmin;
+use self::{
+    account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
+    chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
+    media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin, profile::WriteCommandsProfile,
+    profile_admin::WriteCommandsProfileAdmin,
+};
 use super::{
     cache::{CachedProfile, DatabaseCache, WriteCacheJson},
     file::utils::FileDir,
     index::LocationIndexWriterGetter,
 };
-use database::history::write::HistoryWriteCommands;
-use database::{
-    current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
-    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
-    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+use crate::{
+    data::DatabaseError,
+    media_backup::MediaBackupHandle,
+    utils::{ConvertCommandErrorExt, ErrorConversion},
 };
 
 // impl<Target> From<error_stack::Report<CacheError>>

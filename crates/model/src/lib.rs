@@ -1,7 +1,6 @@
 #![deny(unsafe_code)]
 #![warn(unused_crate_dependencies)]
 
-
 //! Data types for API and database.
 
 pub mod account;

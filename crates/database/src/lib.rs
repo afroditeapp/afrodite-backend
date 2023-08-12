@@ -11,7 +11,6 @@ use std::marker::PhantomData;
 use error_stack::{Result, ResultExt};
 pub use model::schema;
 use model::{AccountIdInternal, AccountIdLight, ContentId};
-
 use utils::ComponentError;
 
 pub struct NoId;

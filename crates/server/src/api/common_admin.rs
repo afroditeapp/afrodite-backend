@@ -5,11 +5,10 @@ use app_manager::api::model::{
 };
 use axum::{extract::Query, Extension, Json};
 use http::StatusCode;
+use model::{Account, AccountIdInternal};
+use tracing::error;
 
 use crate::api::{GetManagerApi, ReadDatabase};
-use model::{Account, AccountIdInternal};
-
-use tracing::error;
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 

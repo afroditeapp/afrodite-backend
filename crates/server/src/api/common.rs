@@ -13,26 +13,16 @@ use axum::{
     response::IntoResponse,
     Json, TypedHeader,
 };
-
+use error_stack::{IntoReport, Result, ResultExt};
 use futures::StreamExt;
 use hyper::StatusCode;
-
+use model::{AccountIdInternal, ApiKey, AuthPair, BackendVersion, RefreshToken};
+use tracing::error;
+use utils::IntoReportExt;
 use utoipa::ToSchema;
 
+use super::{utils::ApiKeyHeader, BackendVersionProvider, GetApiKeys, ReadDatabase, WriteData};
 use crate::app::connection::WebSocketManager;
-use utils::IntoReportExt;
-
-use super::{BackendVersionProvider, WriteData};
-
-use model::BackendVersion;
-
-use model::{AccountIdInternal, ApiKey, AuthPair, RefreshToken};
-
-use tracing::error;
-
-use super::{utils::ApiKeyHeader, GetApiKeys, ReadDatabase};
-
-use error_stack::{IntoReport, Result, ResultExt};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 

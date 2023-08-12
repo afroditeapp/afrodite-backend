@@ -1,6 +1,8 @@
 use std::{path::Path, process::Stdio, sync::Arc};
 
 use app_manager::utils::IntoReportExt;
+use config::{file::LitestreamConfig, Config};
+use error_stack::{Result, ResultExt};
 use nix::{sys::signal::Signal, unistd::Pid};
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -10,9 +12,6 @@ use tokio::{
 use tracing::log::{error, info};
 
 use crate::data::DatabaseRoot;
-use config::{file::LitestreamConfig, Config};
-
-use error_stack::{Result, ResultExt};
 
 #[derive(thiserror::Error, Debug)]
 pub enum LitestreamError {

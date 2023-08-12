@@ -1,10 +1,9 @@
 use std::net::SocketAddr;
 
+use error_stack::Result;
 use model::{AccountIdInternal, AuthPair};
 
 use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
-
-use error_stack::Result;
 
 define_write_commands!(WriteCommandsCommon);
 

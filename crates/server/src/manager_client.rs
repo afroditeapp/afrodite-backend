@@ -1,6 +1,8 @@
 use app_manager::api::model::{
     BuildInfo, CommandOutput, SoftwareInfo, SoftwareOptions, SystemInfo, SystemInfoList,
 };
+use config::Config;
+use error_stack::Result;
 use manager_api_client::{
     apis::{
         configuration::Configuration,
@@ -8,14 +10,8 @@ use manager_api_client::{
     },
     manual_additions::get_latest_software_fixed,
 };
-
-use error_stack::Result;
-
 use tracing::{error, info};
-
 use utils::IntoReportExt;
-
-use config::Config;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ManagerClientError {

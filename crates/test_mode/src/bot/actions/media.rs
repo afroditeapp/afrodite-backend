@@ -6,16 +6,11 @@ use api_client::{
     models::{ContentId, ModerationRequestContent},
 };
 use async_trait::async_trait;
-
 use error_stack::Result;
-
-use crate::bot::utils::image::ImageProvider;
-
-use super::{super::super::client::TestError, BotAction};
-
 use utils::IntoReportExt;
 
-use super::BotState;
+use super::{super::super::client::TestError, BotAction, BotState};
+use crate::bot::utils::image::ImageProvider;
 
 #[derive(Debug, Default)]
 pub struct MediaState {

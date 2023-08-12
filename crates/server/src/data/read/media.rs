@@ -1,13 +1,11 @@
-use crate::utils::ConvertCommandErrorExt;
-
+use error_stack::Result;
 use model::{AccountIdInternal, AccountIdLight, ContentId, CurrentAccountMediaInternal};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DatabaseError},
     ReadCommands,
 };
-
-use error_stack::Result;
+use crate::utils::ConvertCommandErrorExt;
 
 define_read_commands!(ReadCommandsMedia);
 

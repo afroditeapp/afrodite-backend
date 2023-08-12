@@ -11,15 +11,9 @@ use api_client::{
     models::AccountState,
 };
 use async_trait::async_trait;
+use error_stack::Result;
 use tokio::time::sleep;
-
-use crate::{
-    action_array,
-    {
-        bot::actions::{account::CompleteAccountSetup, media::MakeModerationRequest, ActionArray},
-        client::TestError,
-    },
-};
+use utils::IntoReportExt;
 
 use super::{
     actions::{
@@ -29,10 +23,11 @@ use super::{
     },
     BotState, BotStruct, TaskState,
 };
-
-use error_stack::Result;
-
-use utils::IntoReportExt;
+use crate::{
+    action_array,
+    bot::actions::{account::CompleteAccountSetup, media::MakeModerationRequest, ActionArray},
+    client::TestError,
+};
 
 pub struct ClientBot {
     state: BotState,

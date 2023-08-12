@@ -1,7 +1,6 @@
 #![deny(unsafe_code)]
 #![warn(unused_crate_dependencies)]
 
-
 //! This crate provides a wrapper for the internal API of the server.
 //! Prevents exposing api_client crate model types to server code.
 
@@ -9,16 +8,16 @@ use api_client::apis::{
     accountinternal_api,
     mediainternal_api::{self},
 };
-
+pub use api_client::apis::{configuration::Configuration, Error};
 use model::{
     Account, AccountIdInternal, AccountIdLight, AccountState, ApiKey, BooleanSetting, Capabilities,
     Profile,
 };
 
-pub use crate::accountinternal_api::{CheckApiKeyError, InternalGetAccountStateError};
-pub use crate::mediainternal_api::InternalGetCheckModerationRequestForAccountError;
-pub use api_client::apis::configuration::Configuration;
-pub use api_client::apis::Error;
+pub use crate::{
+    accountinternal_api::{CheckApiKeyError, InternalGetAccountStateError},
+    mediainternal_api::InternalGetCheckModerationRequestForAccountError,
+};
 
 /// Wrapper for server internal API with correct model types.
 pub struct InternalApi;
