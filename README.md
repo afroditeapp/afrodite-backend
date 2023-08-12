@@ -23,6 +23,7 @@ Add `debug = true` to config file and restart server.
 ```
 sudo apt install libssl-dev
 cargo install sqlx-cli
+cargo install diesel_cli --no-default-features --features sqlite
 ```
 
 ### MacOS
@@ -34,6 +35,7 @@ brew install openssl@1.1
 
 ```
 cargo install sqlx-cli
+cargo install diesel_cli --no-default-features --features sqlite
 ```
 
 

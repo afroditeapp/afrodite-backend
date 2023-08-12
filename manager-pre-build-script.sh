@@ -6,9 +6,9 @@
 git submodule init
 git submodule update
 
-if ! command -v sqlx &> /dev/null; then
-    echo "sqxl is not installed. Installing..."
-    cargo install sqlx-cli@0.6.3 --no-default-features --features sqlite,sqlite,rustls
+if ! command -v diesel &> /dev/null; then
+    echo "diesel is not installed. Installing..."
+    cargo install diesel_cli@2.1.0 --no-default-features --features sqlite
 fi
 
 DATABASE_FILE=database/current/current.db
@@ -20,6 +20,6 @@ if [ -f "$DATABASE_FILE" ]; then
     rm "$DATABASE_FILE"
 fi
 
-sqlx database setup
+DATABASE_URL="database/current/current.db" diesel database reset
 
 echo "Script completed successfully!"
