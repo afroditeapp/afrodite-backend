@@ -26,3 +26,6 @@ migrations-run:
 	DATABASE_URL="database/current/current.db" diesel migration run
 reset-database:
 	DATABASE_URL="database/current/current.db" diesel database reset
+
+profile-build:
+	RUSTFLAGS=-Zself-profile=target/profile-build cargo +nightly build --bin pihka-backend

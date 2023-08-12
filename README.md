@@ -174,3 +174,15 @@ dbs:
 Reset current database:
 
 DATABASE_URL="database/current/current.db" diesel database reset
+
+# Profiling build
+
+cargo build --bin pihka-backend --timings
+
+https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/self-profile.html
+Command for this is in Makefile.
+
+https://github.com/rust-lang/measureme/blob/master/crox/README.md
+Covert .mm_profdata to .json with
+crox file.mm_profdata
+Then open it in https://ui.perfetto.dev/
