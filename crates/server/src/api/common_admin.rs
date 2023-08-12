@@ -1,6 +1,6 @@
 //! Common routes related to admin features
 
-use app_manager::api::model::{
+use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList,
 };
 use axum::{extract::Query, Extension, Json};

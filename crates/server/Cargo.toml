@@ -44,8 +44,8 @@ jsonwebtoken = "8.3.0"
 
 nix = { version = "0.26.2", default-features = false, features = ["signal"] }
 
-manager_api_client = { path = "../app-manager/manager_api_client" }
-app-manager = { path = "../app-manager/app-manager" }
+manager_api = { path = "../app-manager/crates/manager_api" }
+manager_model = { path = "../app-manager/crates/manager_model" }
 
 utils = { path = "../utils" }
 config = { path = "../config" }

@@ -66,43 +66,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "app-manager"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum",
- "bytes",
- "clap",
- "error-stack",
- "futures",
- "headers",
- "http",
- "hyper",
- "manager_api_client",
- "mime",
- "reqwest",
- "rustls-pemfile",
- "serde",
- "serde_json",
- "thiserror",
- "time",
- "tokio",
- "tokio-rustls",
- "tokio-stream",
- "tokio-util",
- "toml",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "url",
- "utoipa",
- "utoipa-swagger-ui",
- "uuid",
- "vergen",
-]
-
-[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1295,6 +1258,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "manager_api"
+version = "0.0.0"
+dependencies = [
+ "manager_api_client",
+ "manager_model",
+ "serde_json",
+]
+
+[[package]]
 name = "manager_api_client"
 version = "0.1.0"
 dependencies = [
@@ -1304,6 +1276,14 @@ dependencies = [
  "serde_json",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "manager_model"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "utoipa",
 ]
 
 [[package]]
@@ -2287,7 +2267,6 @@ name = "server"
 version = "0.0.0"
 dependencies = [
  "api_internal",
- "app-manager",
  "async-trait",
  "axum",
  "config",
@@ -2298,7 +2277,8 @@ dependencies = [
  "http",
  "hyper",
  "jsonwebtoken",
- "manager_api_client",
+ "manager_api",
+ "manager_model",
  "model",
  "nalgebra",
  "nix",

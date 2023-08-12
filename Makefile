@@ -12,3 +12,6 @@ fmt:
 	cargo +nightly fmt $(CARGO_CRATE_ARGS)
 fix:
 	cargo fix ${CARGO_CRATE_ARGS}
+
+update-manager-submodule:
+	git submodule update --remote --merge

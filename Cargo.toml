@@ -1,8 +1,8 @@
 [workspace]
 members = [
     # From git submodule
-    "crates/app-manager/app-manager",
-    "crates/app-manager/manager_api_client",
+    "crates/app-manager/crates/manager_model",
+    "crates/app-manager/crates/manager_api",
     # Binary crates
     "crates/pihka-backend",
     # Library crates
