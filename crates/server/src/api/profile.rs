@@ -42,7 +42,7 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData>(
+pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData + GetConfig>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(requested_profile): Path<AccountIdLight>,
     state: S,

@@ -6,7 +6,7 @@ use model::{
     AccountIdInternal, AccountIdLight, HandleModerationRequest, ModerationList, SecurityImage,
 };
 
-use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, utils::ApiKeyHeader, WriteData};
+use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, utils::ApiKeyHeader, WriteData, GetConfig};
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
 
@@ -122,7 +122,7 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     security(("api_key" = [])),
 )]
 pub async fn post_handle_moderation_request<
-    S: GetInternalApi + WriteData + GetApiKeys + GetUsers,
+    S: GetInternalApi + WriteData + GetApiKeys + GetUsers + GetConfig + ReadDatabase,
 >(
     Path(moderation_request_owner_account_id): Path<AccountIdLight>,
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,

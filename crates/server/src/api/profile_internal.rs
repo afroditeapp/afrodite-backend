@@ -8,6 +8,8 @@ use model::{AccountIdLight, BooleanSetting};
 
 use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
 
+use super::{GetApiKeys, GetConfig, WriteData};
+
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
 
@@ -22,7 +24,7 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     ),
 )]
 pub async fn internal_post_update_profile_visibility<
-    S: ReadDatabase + GetUsers + GetInternalApi,
+    S: ReadDatabase + GetUsers + GetInternalApi + GetApiKeys + GetConfig + WriteData,
 >(
     Path(account_id): Path<AccountIdLight>,
     Path(value): Path<BooleanSetting>,

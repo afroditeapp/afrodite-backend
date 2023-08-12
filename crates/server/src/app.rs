@@ -41,7 +41,6 @@ pub mod sign_in_with;
 #[derive(Clone)]
 pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
-    write_mutex: Arc<Mutex<SyncWriteHandle>>,
     write_queue: Arc<WriteCommandRunnerHandle>,
     internal_api: Arc<InternalApiClient>,
     manager_api: Arc<ManagerApiClient>,
@@ -110,14 +109,10 @@ impl SignInWith for AppState {
 }
 
 impl GetInternalApi for AppState {
-    fn internal_api(&self) -> InternalApiManager {
+    fn internal_api(&self) -> InternalApiManager<Self> {
         InternalApiManager::new(
-            &self.config,
+            self,
             &self.internal_api,
-            self.api_keys(),
-            self.read_database(),
-            self.database.account_id_manager(),
-            &self.write_mutex,
         )
     }
 }
@@ -150,7 +145,6 @@ impl App {
         let state = AppState {
             config: config.clone(),
             database: Arc::new(database_handle),
-            write_mutex: Arc::new(Mutex::new(database_write_handle.clone().into_sync_handle())),
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             manager_api: ManagerApiClient::new(&config)?.into(),

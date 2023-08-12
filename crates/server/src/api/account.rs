@@ -416,7 +416,7 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_setting_profile_visiblity<S: GetApiKeys + ReadDatabase + GetInternalApi>(
+pub async fn put_setting_profile_visiblity<S: GetApiKeys + ReadDatabase + GetInternalApi + GetConfig + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(new_value): Json<BooleanSetting>,
     state: S,

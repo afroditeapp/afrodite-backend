@@ -196,7 +196,9 @@ pub trait SignInWith {
 }
 
 pub trait GetInternalApi {
-    fn internal_api(&self) -> InternalApiManager;
+    fn internal_api(&self) -> InternalApiManager<Self>
+    where
+        Self: Sized;
 }
 
 pub trait GetManagerApi {

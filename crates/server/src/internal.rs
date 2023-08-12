@@ -10,6 +10,8 @@ use config::{Config, InternalApiUrls};
 use model::{Account, AccountIdInternal, ApiKey, BooleanSetting, Profile, ProfileInternal};
 use utils::IntoReportExt;
 
+use crate::{data::{write_commands::WriteCommandRunnerHandle, write::WriteCommands}, app::AppState, api::{GetApiKeys, GetConfig, ReadDatabase, WriteData, db_write}};
+
 use super::data::{
     read::ReadCommands,
     SyncWriteHandle,
@@ -103,41 +105,37 @@ pub enum AuthResponse {
 
 /// Handle requests to internal API. If the required feature is located
 /// on the current server, then request is not made.
-pub struct InternalApiManager<'a> {
-    config: &'a Config,
+pub struct InternalApiManager<'a, S> {
+    state: &'a S,
     api_client: &'a InternalApiClient,
-    keys: ApiKeyManager<'a>,
-    read_database: ReadCommands<'a>,
-    account_id_manager: AccountIdManager<'a>,
-    write_mutex: &'a Mutex<SyncWriteHandle>,
 }
 
-impl<'a> InternalApiManager<'a> {
+impl<'a, S> InternalApiManager<'a, S> {
     pub fn new(
-        config: &'a Config,
+        state: &'a S,
         api_client: &'a InternalApiClient,
-        keys: ApiKeyManager<'a>,
-        read_database: ReadCommands<'a>,
-        account_id_manager: AccountIdManager<'a>,
-        write_mutex: &'a Mutex<SyncWriteHandle>,
     ) -> Self {
         Self {
-            config,
+            state,
             api_client,
-            keys,
-            read_database,
-            account_id_manager,
-            write_mutex,
         }
     }
+}
 
+impl <S: GetApiKeys> InternalApiManager<'_, S> {
+    fn api_keys(&self) -> ApiKeyManager {
+        self.state.api_keys()
+    }
+}
+
+impl <S: GetConfig + GetApiKeys> InternalApiManager<'_, S> {
     /// Check that API key is valid. Use this only from ApiKey checker handler.
     /// This function will cache the account ID, so it can be found using normal
     /// database calls after this runs.
     pub async fn check_api_key(&self, key: ApiKey) -> Result<AuthResponse, InternalApiError> {
-        if self.keys.api_key_exists(&key).await.is_some() {
+        if self.api_keys().api_key_exists(&key).await.is_some() {
             Ok(AuthResponse::Ok)
-        } else if !self.config.components().account {
+        } else if !self.config().components().account {
             // Check ApiKey from external service
 
             let result = InternalApi::check_api_key(self.api_client.account()?, key).await;
@@ -162,13 +160,21 @@ impl<'a> InternalApiManager<'a> {
             Ok(AuthResponse::Unauthorized)
         }
     }
+}
 
+
+impl <S: GetConfig> InternalApiManager<'_, S> {
+    fn config(&self) -> &Config {
+        self.state.config()
+    }
+}
+impl <S: GetApiKeys + GetConfig + ReadDatabase> InternalApiManager<'_, S> {
     pub async fn get_account_state(
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Account, InternalApiError> {
-        if self.config.components().account {
-            self.read_database
+        if self.config().components().account {
+            self.read_database()
                 .read_json::<Account>(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)
@@ -183,14 +189,22 @@ impl<'a> InternalApiManager<'a> {
             Ok(account)
         }
     }
+}
 
+impl <S: ReadDatabase> InternalApiManager<'_, S> {
+    fn read_database(&self) -> ReadCommands {
+        self.state.read_database()
+    }
+}
+
+impl <S: GetApiKeys + GetConfig + ReadDatabase> InternalApiManager<'_, S> {
     pub async fn media_check_moderation_request_for_account(
         &self,
         account_id: AccountIdInternal,
     ) -> Result<(), InternalApiError> {
-        if self.config.components().media {
+        if self.config().components().media {
             let request = self
-                .read_database
+                .read_database()
                 .moderation_request(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)?
@@ -211,6 +225,10 @@ impl<'a> InternalApiManager<'a> {
         }
     }
 
+}
+
+impl <S: GetApiKeys + GetConfig + ReadDatabase + WriteData> InternalApiManager<'_, S> {
+
     /// Profile visiblity is set first to the profile server and in addition
     /// to changing the visibility the current proifle is returned (used for
     /// changing visibility for media server).
@@ -219,20 +237,21 @@ impl<'a> InternalApiManager<'a> {
         account_id: AccountIdInternal,
         boolean_setting: BooleanSetting,
     ) -> Result<(), InternalApiError> {
-        if self.config.components().profile {
-            self.get_write()
-                .await
-                .profile()
-                .profile_update_visibility(
-                    account_id,
-                    boolean_setting.value,
-                    false, // False overrides updates
-                )
+        if self.config().components().profile {
+            db_write!(self.state, move |data|
+                data
+                    .profile()
+                    .profile_update_visibility(
+                        account_id,
+                        boolean_setting.value,
+                        false, // False overrides updates
+                    )
+            )
                 .await
                 .change_context(InternalApiError::DatabaseError)?;
 
             let profile: ProfileInternal = self
-                .read_database
+                .read_database()
                 .read_json(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)?;
@@ -248,23 +267,22 @@ impl<'a> InternalApiManager<'a> {
         }
     }
 
+}
+
+impl <S: GetConfig> InternalApiManager<'_, S> {
     pub async fn media_api_profile_visiblity(
         &self,
         _account_id: AccountIdInternal,
         _boolean_setting: BooleanSetting,
         _current_profile: Profile,
     ) -> Result<(), InternalApiError> {
-        if self.config.components().media {
+        if self.config().components().media {
             // TODO: Save visibility information to cache?
             Ok(())
         } else {
             // TODO: request to internal media API
             Ok(())
         }
-    }
-
-    pub async fn get_write(&self) -> MutexGuard<SyncWriteHandle> {
-        self.write_mutex.lock().await
     }
 
     // TODO: Prevent creating a new moderation request when there is camera

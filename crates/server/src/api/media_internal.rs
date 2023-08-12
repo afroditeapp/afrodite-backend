@@ -8,6 +8,8 @@ use model::{AccountIdLight, BooleanSetting, Profile};
 
 use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
 
+use super::GetConfig;
+
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
 
@@ -69,7 +71,7 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
     ),
 )]
 pub async fn internal_post_update_profile_image_visibility<
-    S: ReadDatabase + GetUsers + GetInternalApi,
+    S: ReadDatabase + GetUsers + GetInternalApi + GetConfig,
 >(
     Path(account_id): Path<AccountIdLight>,
     Path(value): Path<BooleanSetting>,
