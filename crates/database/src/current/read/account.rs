@@ -1,16 +1,20 @@
+use diesel::prelude::*;
 use async_trait::async_trait;
 use futures::Stream;
 use model::{
-    Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo,
+    Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo, RefreshTokenRaw, AccessTokenRaw, AccountIdDb, AccountIdLight, AccountRaw, SignInWithInfoRaw,
 };
+
 use tokio_stream::StreamExt;
 use utils::IntoReportExt;
+use error_stack::Result;
 
 use crate::{
+    IntoDatabaseError,
     current::read::SqliteReadCommands,
     read_json,
     sqlite::{SqliteDatabaseError, SqliteSelectJson},
-    NoId, ReadResult,
+    NoId, ReadResult, diesel::DieselDatabaseError, ReadError,
 };
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
@@ -18,147 +22,120 @@ define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 impl CurrentReadAccount<'_> {
     pub fn account_ids_stream(
         &self,
-    ) -> impl Stream<Item = ReadResult<AccountIdInternal, SqliteDatabaseError, NoId>> + '_ {
-        sqlx::query_as!(
-            AccountIdInternal,
+    ) -> impl Stream<Item = Result<AccountIdInternal, SqliteDatabaseError>> + '_ {
+        sqlx::query!(
             r#"
-            SELECT account_row_id, account_id as "account_id: _"
-            FROM AccountId
+            SELECT id, uuid as "account_id: uuid::Uuid"
+            FROM account_id
             "#,
         )
         .fetch(self.pool())
         .map(|result| {
             result
-                .into_error(SqliteDatabaseError::Fetch)
-                .map_err(|e| e.into())
-        })
-    }
-
-    pub async fn access_token(
-        &self,
-        id: AccountIdInternal,
-    ) -> ReadResult<Option<ApiKey>, SqliteDatabaseError, ApiKey> {
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            SELECT api_key
-            FROM ApiKey
-            WHERE account_row_id = ?
-            "#,
-            id
-        )
-        .fetch_one(self.pool())
-        .await
-        .map(|result| result.api_key.map(ApiKey::new))
-        .into_error(SqliteDatabaseError::Fetch)
-        .map_err(|e| e.into())
-    }
-
-    pub async fn refresh_token(
-        &self,
-        id: AccountIdInternal,
-    ) -> ReadResult<Option<RefreshToken>, SqliteDatabaseError, RefreshToken> {
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            SELECT refresh_token
-            FROM RefreshToken
-            WHERE account_row_id = ?
-            "#,
-            id
-        )
-        .fetch_one(self.pool())
-        .await
-        .map(|result| {
-            result
-                .refresh_token
-                .as_deref()
-                .map(RefreshToken::from_bytes)
-        })
-        .into_error(SqliteDatabaseError::Fetch)
-        .map_err(|e| e.into())
-    }
-
-    pub async fn sign_in_with_info(
-        &self,
-        id: AccountIdInternal,
-    ) -> ReadResult<SignInWithInfo, SqliteDatabaseError> {
-        let id = id.row_id();
-        sqlx::query_as!(
-            SignInWithInfo,
-            r#"
-            SELECT google_account_id as "google_account_id: _"
-            FROM SignInWithInfo
-            WHERE account_row_id = ?
-            "#,
-            id
-        )
-        .fetch_one(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)
-        .map_err(|e| e.into())
-    }
-
-    pub async fn get_account_with_google_account_id(
-        &self,
-        google_account_id: GoogleAccountId,
-    ) -> ReadResult<Option<AccountIdInternal>, SqliteDatabaseError> {
-        sqlx::query!(
-            r#"
-            SELECT AccountId.account_row_id, AccountId.account_id as "account_id: uuid::Uuid"
-            FROM SignInWithInfo
-            INNER JOIN AccountId on AccountId.account_row_id = SignInWithInfo.account_row_id
-            WHERE google_account_id = ?
-            "#,
-            google_account_id
-        )
-        .fetch_optional(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)
-        .map_err(|e| e.into())
-        .map(|r| {
-            r.map(|r| AccountIdInternal {
-                account_id: r.account_id,
-                account_row_id: r.account_row_id,
-            })
+                .map(|data| {
+                    let id = AccountIdDb::new(data.id);
+                    let account_id = AccountIdLight::new(data.account_id);
+                    AccountIdInternal::new(id, account_id)
+                })
+                .into_db_error(SqliteDatabaseError::Fetch, ())
         })
     }
 }
 
-#[async_trait]
-impl SqliteSelectJson for Account {
-    async fn select_json(
-        id: AccountIdInternal,
-        read: &SqliteReadCommands,
-    ) -> error_stack::Result<Self, SqliteDatabaseError> {
-        read_json!(
-            read.pool(),
-            id,
-            r#"
-            SELECT json_text
-            FROM Account
-            WHERE account_row_id = ?
-            "#,
-            json_text
-        )
-    }
-}
+impl <'a> CurrentSyncReadAccount<'a> {
+    pub fn google_account_id_to_account_id(
+        &'a mut self,
+        google_id: GoogleAccountId,
+    ) -> Result<AccountIdInternal, DieselDatabaseError> {
+        use crate::schema::account_id;
+        use crate::schema::sign_in_with_info;
 
-#[async_trait]
-impl SqliteSelectJson for AccountSetup {
-    async fn select_json(
+        sign_in_with_info::table
+            .inner_join(account_id::table)
+            .filter(sign_in_with_info::google_account_id.eq(google_id.as_str()))
+            .select(AccountIdInternal::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, google_id)
+    }
+
+    pub fn sign_in_with_info(
+        &'a mut self,
         id: AccountIdInternal,
-        read: &SqliteReadCommands,
-    ) -> error_stack::Result<Self, SqliteDatabaseError> {
-        read_json!(
-            read.pool(),
-            id,
-            r#"
-            SELECT json_text
-            FROM AccountSetup
-            WHERE account_row_id = ?
-            "#,
-            json_text
-        )
+    ) -> Result<SignInWithInfo, DieselDatabaseError> {
+        use crate::schema::sign_in_with_info::dsl::*;
+
+        sign_in_with_info
+            .filter(account_id.eq(id.as_db_id()))
+            .select(SignInWithInfoRaw::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)
+            .map(Into::into)
+    }
+
+    pub fn refresh_token(
+        &'a mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<RefreshToken>, DieselDatabaseError> {
+        use crate::schema::refresh_token::dsl::*;
+
+        let raw = refresh_token
+            .filter(account_id.eq(id.as_db_id()))
+            .select(RefreshTokenRaw::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        if let Some(data) = raw.token {
+            Ok(Some(RefreshToken::from_bytes(&data)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn access_token(
+        &'a mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<ApiKey>, DieselDatabaseError> {
+        use crate::schema::access_token::dsl::*;
+
+        let raw = access_token
+            .filter(account_id.eq(id.as_db_id()))
+            .select(AccessTokenRaw::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        if let Some(data) = raw.token {
+            Ok(Some(ApiKey::new(data)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn account(
+        &'a mut self,
+        id: AccountIdInternal,
+    ) -> Result<Account, DieselDatabaseError> {
+        use crate::schema::account::dsl::*;
+
+        let raw = account
+            .filter(account_id.eq(id.as_db_id()))
+            .select(AccountRaw::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        serde_json::from_str(raw.json_text.as_str())
+            .into_db_error(DieselDatabaseError::Execute, id)
+    }
+
+    pub fn account_setup(
+        &'a mut self,
+        id: AccountIdInternal,
+    ) -> Result<AccountSetup, DieselDatabaseError> {
+        use crate::schema::account_setup::dsl::*;
+
+        account_setup
+            .filter(account_id.eq(id.as_db_id()))
+            .select(AccountSetup::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)
     }
 }

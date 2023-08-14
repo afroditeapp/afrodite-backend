@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 
 use database::{
     ConvertCommandError, current::read::SqliteReadCommands, DatabaseId, sqlite::SqlxReadHandle,
@@ -64,16 +64,5 @@ impl<'a> AccountIdManager<'a> {
         id: AccountIdLight,
     ) -> Result<AccountIdInternal, CacheError> {
         self.cache.to_account_id_internal(id).await.attach(id)
-    }
-
-    pub async fn get_account_with_google_account_id(
-        &self,
-        id: GoogleAccountId,
-    ) -> Result<Option<AccountIdInternal>, DatabaseError> {
-        self.read_handle
-            .account()
-            .get_account_with_google_account_id(id)
-            .await
-            .convert(DatabaseId::Empty)
     }
 }

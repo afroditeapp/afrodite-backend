@@ -59,7 +59,8 @@ pub async fn internal_get_account_state<S: ReadDatabase + GetUsers>(
 
     state
         .read_database()
-        .read_json::<Account>(internal_id)
+        .account()
+        .account(internal_id)
         .await
         .map(|account| account.into())
         .map_err(|e| {

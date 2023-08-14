@@ -8,6 +8,7 @@ use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList,
 };
 use model::{Account, AccountIdInternal};
+use utils::api;
 
 use crate::api::{GetManagerApi, ReadDatabase, utils::Json};
 
@@ -28,9 +29,10 @@ pub async fn get_system_info<S: GetManagerApi + ReadDatabase>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SystemInfoList>, StatusCode> {
-    let account: Account = state
+    let account = state
         .read_database()
-        .read_json(api_caller_account_id)
+        .account()
+        .account(api_caller_account_id)
         .await
         .map_err(|e| {
             error!("get_system_info {e:?}");
@@ -69,9 +71,10 @@ pub async fn get_software_info<S: GetManagerApi + ReadDatabase>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SoftwareInfo>, StatusCode> {
-    let account: Account = state
+    let account = state
         .read_database()
-        .read_json(api_caller_account_id)
+        .account()
+        .account(api_caller_account_id)
         .await
         .map_err(|e| {
             error!("{e:?}");
@@ -115,7 +118,8 @@ pub async fn get_latest_build_info<S: GetManagerApi + ReadDatabase>(
 ) -> Result<Json<BuildInfo>, StatusCode> {
     let account: Account = state
         .read_database()
-        .read_json(api_caller_account_id)
+        .account()
+        .account(api_caller_account_id)
         .await
         .map_err(|e| {
             error!("{e:?}");
@@ -158,7 +162,8 @@ pub async fn post_request_build_software<S: GetManagerApi + ReadDatabase>(
 ) -> Result<(), StatusCode> {
     let account: Account = state
         .read_database()
-        .read_json(api_caller_account_id)
+        .account()
+        .account(api_caller_account_id)
         .await
         .map_err(|e| {
             error!("{e:?}");
@@ -204,7 +209,8 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadDatabase>(
 ) -> Result<(), StatusCode> {
     let account: Account = state
         .read_database()
-        .read_json(api_caller_account_id)
+        .account()
+        .account(api_caller_account_id)
         .await
         .map_err(|e| {
             error!("{e:?}");

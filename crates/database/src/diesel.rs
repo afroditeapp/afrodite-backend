@@ -9,7 +9,7 @@ use error_stack::{IntoReport, Result, ResultExt};
 use sqlx::Row;
 use tokio::time::sleep;
 use tracing::log::{error, info};
-use utils::{IntoReportExt, IntoReportFromString};
+use utils::{IntoReportExt, IntoReportFromString, ComponentError};
 
 use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};
 
@@ -23,6 +23,10 @@ pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 mod sqlite_version {
     use diesel::sql_function;
     sql_function! { fn sqlite_version() -> Text }
+}
+
+impl ComponentError for DieselDatabaseError {
+    const COMPONENT_NAME: &'static str = "Diesel";
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -44,6 +48,29 @@ pub enum DieselDatabaseError {
 
     #[error("Creating in RAM database failed")]
     CreateInRam,
+
+    #[error("Deserializing failed")]
+    SerdeDeserialize,
+    #[error("Serializing failed")]
+    SerdeSerialize,
+
+    #[error("Content slot not empty")]
+    ContentSlotNotEmpty,
+    #[error("Content slot empty")]
+    ContentSlotEmpty,
+    #[error("Moderation request content invalid")]
+    ModerationRequestContentInvalid,
+    #[error("Moderation request is missing")]
+    MissingModerationRequest,
+
+    #[error("Data format conversion failed")]
+    DataFormatConversion,
+
+    #[error("Transaction failed")]
+    FromDieselErrorToTransactionError,
+
+    #[error("File operation failed")]
+    File,
 }
 
 pub struct DieselWriteCloseHandle {
@@ -70,6 +97,10 @@ impl DieselCurrentWriteHandle {
     pub fn pool(&self) -> &DieselPool {
         &self.handle.pool
     }
+
+    pub fn to_read_handle(&self) -> DieselCurrentReadHandle {
+        DieselCurrentReadHandle::new(DieselReadHandle { pool: self.pool().clone() })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +113,7 @@ impl DieselHistoryWriteHandle {
         Self { handle }
     }
 
-    pub fn pool(&mut self) -> &DieselPool {
+    pub fn pool(&self) -> &DieselPool {
         &self.handle.pool
     }
 }

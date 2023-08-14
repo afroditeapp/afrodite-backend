@@ -2,47 +2,30 @@ use std::net::SocketAddr;
 
 use error_stack::Result;
 
-use model::{AccountIdInternal, AuthPair};
+use model::{AccountIdInternal, AuthPair, Account, AccountSetup};
 
-use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
+use crate::{data::DatabaseError, utils::{ConvertCommandErrorExt, ErrorConversion}};
 
 define_write_commands!(WriteCommandsAccount);
 
 impl WriteCommandsAccount<'_> {
-    pub async fn set_new_auth_pair(
+    pub async fn account(
         &self,
         id: AccountIdInternal,
-        pair: AuthPair,
-        address: Option<SocketAddr>,
+        account: Account,
     ) -> Result<(), DatabaseError> {
-        let current_access_token = self
-            .current_write()
-            .read()
-            .account()
-            .access_token(id)
-            .await
-            .convert(id)?;
+        let a = account.clone();
+        self.db_write(move |cmds| cmds.into_account().account(id, &a)).await?;
+        self.write_cache(id, |cache| Ok(cache.account.as_mut().map(|data| *data.as_mut() = account))).await?;
+        Ok(())
+    }
 
-        self.current()
-            .account()
-            .update_api_key(id, Some(&pair.access))
-            .await
-            .convert(id)?;
-
-        self.current()
-            .account()
-            .update_refresh_token(id, Some(&pair.refresh))
-            .await
-            .convert(id)?;
-
-        self.cache()
-            .update_access_token_and_connection(
-                id.as_light(),
-                current_access_token,
-                pair.access,
-                address,
-            )
-            .await
-            .convert(id)
+    pub async fn account_setup(
+        &self,
+        id: AccountIdInternal,
+        account_setup: AccountSetup,
+    ) -> Result<(), DatabaseError> {
+        self.db_write(move |cmds| cmds.into_account().account_setup(id, &account_setup)).await?;
+        Ok(())
     }
 }

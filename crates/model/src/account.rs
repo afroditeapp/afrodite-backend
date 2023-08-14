@@ -1,75 +1,12 @@
 use base64::Engine;
-use diesel::{deserialize::FromSql, sql_types::Binary, sqlite::Sqlite};
+use diesel::prelude::*;
+use diesel::{Identifiable, Associations};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-/// Used with database
-#[derive(Debug, Serialize, Deserialize, ToSchema, Clone, Eq, Hash, PartialEq, Copy)]
-pub struct AccountIdInternal {
-    pub account_id: uuid::Uuid,
-    pub account_row_id: i64,
-}
+use crate::{AccountIdInternal, AccountIdDb};
+use crate::{RefreshToken, ApiKey, AccountIdLight, macros::diesel_string_wrapper};
 
-impl AccountIdInternal {
-    pub fn as_uuid(&self) -> uuid::Uuid {
-        self.account_id
-    }
-
-    pub fn row_id(&self) -> i64 {
-        self.account_row_id
-    }
-
-    pub fn as_light(&self) -> AccountIdLight {
-        AccountIdLight {
-            account_id: self.account_id,
-        }
-    }
-}
-
-impl From<AccountIdInternal> for uuid::Uuid {
-    fn from(value: AccountIdInternal) -> Self {
-        value.account_id
-    }
-}
-
-/// AccountId which is internally Uuid object.
-/// Consumes less memory.
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Clone,
-    Eq,
-    Hash,
-    PartialEq,
-    IntoParams,
-    Copy,
-    diesel::FromSqlRow,
-)]
-pub struct AccountIdLight {
-    pub account_id: uuid::Uuid,
-}
-
-impl AccountIdLight {
-    pub fn new(account_id: uuid::Uuid) -> Self {
-        Self { account_id }
-    }
-
-    pub fn as_uuid(&self) -> uuid::Uuid {
-        self.account_id
-    }
-
-    pub fn to_string(&self) -> String {
-        self.account_id.hyphenated().to_string()
-    }
-}
-
-impl From<AccountIdLight> for uuid::Uuid {
-    fn from(value: AccountIdLight) -> Self {
-        value.account_id
-    }
-}
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {
@@ -80,83 +17,6 @@ pub struct LoginResult {
 
     /// If None media microservice is disabled.
     pub media: Option<AuthPair>,
-}
-
-/// This is just a random string.
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-pub struct ApiKey {
-    /// API token which server generates.
-    api_key: String,
-}
-
-impl ApiKey {
-    pub fn generate_new() -> Self {
-        Self {
-            api_key: uuid::Uuid::new_v4().simple().to_string(),
-        }
-    }
-
-    pub fn new(api_key: String) -> Self {
-        Self { api_key }
-    }
-
-    pub fn into_string(self) -> String {
-        self.api_key
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.api_key
-    }
-}
-
-/// This is just a really long random number which is Base64 encoded.
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-pub struct RefreshToken {
-    token: String,
-}
-
-impl RefreshToken {
-    pub fn generate_new_with_bytes() -> (Self, Vec<u8>) {
-        let mut token = Vec::new();
-
-        // TODO: use longer refresh token
-        for _ in 1..=2 {
-            token.extend(uuid::Uuid::new_v4().to_bytes_le())
-        }
-
-        (Self::from_bytes(&token), token)
-    }
-
-    pub fn generate_new() -> Self {
-        let (token, _bytes) = Self::generate_new_with_bytes();
-        token
-    }
-
-    pub fn from_bytes(data: &[u8]) -> Self {
-        Self {
-            token: base64::engine::general_purpose::STANDARD.encode(data),
-        }
-    }
-
-    /// String must be base64 encoded
-    /// TODO: add checks?
-    pub fn from_string(token: String) -> Self {
-        Self { token }
-    }
-
-    /// Base64 string
-    pub fn into_string(self) -> String {
-        self.token
-    }
-
-    /// Base64 string
-    pub fn as_str(&self) -> &str {
-        &self.token
-    }
-
-    pub fn bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
-        base64::engine::general_purpose::STANDARD.decode(&self.token)
-    }
 }
 
 /// AccessToken and RefreshToken
@@ -171,6 +31,15 @@ impl AuthPair {
         Self { refresh, access }
     }
 }
+
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::account)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct AccountRaw {
+    pub json_text: String,
+}
+
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {
@@ -270,7 +139,9 @@ define_capablities!(
     view_public_profiles,
 );
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq, Queryable, Selectable, Insertable, AsChangeset)]
+#[diesel(table_name = crate::schema::account_setup)]
+#[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {
     name: String,
     email: String,
@@ -302,6 +173,23 @@ pub struct SignInWithLoginInfo {
     pub google_token: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Queryable, Selectable, Associations)]
+#[diesel(belongs_to(AccountIdInternal, foreign_key = account_id))]
+#[diesel(table_name = crate::schema::sign_in_with_info)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct SignInWithInfoRaw {
+    pub account_id: AccountIdDb,
+    pub google_account_id: Option<GoogleAccountId>,
+}
+
+impl From<SignInWithInfoRaw> for SignInWithInfo {
+    fn from(raw: SignInWithInfoRaw) -> Self {
+        Self {
+            google_account_id: raw.google_account_id,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct SignInWithInfo {
     pub google_account_id: Option<GoogleAccountId>,
@@ -312,12 +200,14 @@ pub struct SignInWithInfo {
 #[sqlx(transparent)]
 pub struct GoogleAccountId(pub String);
 
-impl FromSql<Binary, Sqlite> for AccountIdLight {
-    fn from_sql(
-        bytes: <Sqlite as diesel::backend::Backend>::RawValue<'_>,
-    ) -> diesel::deserialize::Result<Self> {
-        let bytes = <Vec<u8> as FromSql<Binary, Sqlite>>::from_sql(bytes)?;
-        let uuid = uuid::Uuid::from_slice(&bytes)?;
-        Ok(AccountIdLight::new(uuid))
+impl GoogleAccountId {
+    pub fn new(id: String) -> Self {
+        Self(id)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
+
+diesel_string_wrapper!(GoogleAccountId);

@@ -1,3 +1,4 @@
+use database::{diesel::DieselDatabaseError, current::write::media::CurrentSyncWriteMedia};
 use error_stack::{Report, Result, ResultExt};
 
 use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
@@ -12,11 +13,8 @@ impl WriteCommandsMedia<'_> {
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DatabaseError> {
-        self.current()
-            .media()
-            .create_new_moderation_request(account_id, request)
+        self.db_write(move |cmds| cmds.into_media().create_new_moderation_request(account_id, request))
             .await
-            .convert(account_id)
     }
 
     /// Completes previous save_to_tmp.
@@ -28,12 +26,9 @@ impl WriteCommandsMedia<'_> {
     ) -> Result<(), DatabaseError> {
         // Remove previous slot image.
         let current_content_in_slot = self
-            .current_write()
-            .read()
-            .media()
-            .get_content_id_from_slot(id, slot)
-            .await
-            .change_context(DatabaseError::Sqlite)?;
+            .db_read(move |cmds| cmds.media().get_content_id_from_slot(id, slot))
+            .await?;
+
         if let Some(current_id) = current_content_in_slot {
             let path = self
                 .file_dir()
@@ -41,62 +36,42 @@ impl WriteCommandsMedia<'_> {
             path.remove_if_exists()
                 .await
                 .change_context(DatabaseError::File)?;
-            self.current()
-                .media()
-                .delete_image_from_slot(id, slot)
+            self.db_write(move |cmds| cmds.into_media().delete_image_from_slot(id, slot))
                 .await
                 .change_context(DatabaseError::Sqlite)?;
         }
 
-        let cmds_current = self.current();
-        let cmds_media = cmds_current.media();
-        let transaction = cmds_media
-            .store_content_id_to_slot(id, content_id, slot)
+        // Paths related to moving image from tmp to image dir
+        let raw_img = self
+            .file_dir()
+            .unprocessed_image_upload(id.as_light(), content_id);
+        let processed_content_path =
+            self.file_dir().image_content(id.as_light(), content_id);
+
+        if self.db_read(move |cmds| cmds.media().get_content_id_from_slot(id, slot))
+                .await?
+                .is_some()
+            {
+                return Err(DatabaseError::ContentSlotNotEmpty.into());
+            }
+
+        self.db_transaction(move |conn| {
+            CurrentSyncWriteMedia::insert_content_id_to_slot(conn, id, content_id, slot)?;
+
+            // Move image from tmp to image dir
+            raw_img
+                .move_to_blocking(&processed_content_path)
+                .change_context(DieselDatabaseError::File)?;
+            // If moving fails, diesel rollbacks the transaction.
+
+            Ok(())
+        })
+            .await?;
+
+        self.media_backup()
+            .backup_jpeg_image(id.as_light(), content_id)
             .await
-            .change_context(DatabaseError::Sqlite)?;
-
-        let file_operations = || {
-            async {
-                // Move image from tmp to image dir
-                let raw_img = self
-                    .file_dir()
-                    .unprocessed_image_upload(id.as_light(), content_id);
-                let processed_content_path =
-                    self.file_dir().image_content(id.as_light(), content_id);
-                raw_img
-                    .move_to(&processed_content_path)
-                    .await
-                    .change_context(DatabaseError::File)?;
-
-                Ok::<(), Report<DatabaseError>>(())
-            }
-        };
-
-        match file_operations().await {
-            Ok(()) => {
-                transaction
-                    .commit()
-                    .await
-                    .change_context(DatabaseError::Sqlite)?;
-
-                self.media_backup()
-                    .backup_jpeg_image(id.as_light(), content_id)
-                    .await
-                    .change_context(DatabaseError::MediaBackup)?;
-
-                Ok(())
-            }
-            Err(e) => {
-                match transaction
-                    .rollback()
-                    .await
-                    .change_context(DatabaseError::Sqlite)
-                {
-                    Ok(()) => Err(e),
-                    Err(another_error) => Err(another_error.attach(e)),
-                }
-            }
-        }
+            .change_context(DatabaseError::MediaBackup)
     }
 
     pub async fn update_primary_image(
@@ -104,10 +79,7 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DatabaseError> {
-        self.current()
-            .media()
-            .update_current_account_media_with_primary_image(id, primary_image)
+        self.db_write(move |cmds| cmds.into_media().primary_image(id, primary_image))
             .await
-            .convert(id)
     }
 }

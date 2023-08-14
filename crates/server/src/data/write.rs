@@ -1,15 +1,15 @@
 //! Synchronous write commands combining cache and database operations.
 
-use std::{fmt::Debug, marker::PhantomData};
+use std::{fmt::Debug, marker::PhantomData, sync::Arc};
 
 use error_stack::{Result, ResultExt};
 
 use config::Config;
 use database::{
-    current::write::{CurrentSyncWriteCommands, CurrentWriteCommands},
-    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle},
+    current::{write::{CurrentSyncWriteCommands, CurrentWriteCommands, WriteCmdsMethods, TransactionConnection}, read::CurrentSyncReadCommands},
+    diesel::{DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle, DieselConnection},
     history::write::HistoryWriteCommands,
-    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson}, TransactionError, PoolObject,
 };
 use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo};
 use utils::{IntoReportExt, IntoReportFromString};
@@ -23,7 +23,7 @@ use crate::{
 use super::{
     cache::{CachedProfile, DatabaseCache, WriteCacheJson},
     file::utils::FileDir,
-    index::LocationIndexWriterGetter,
+    index::{LocationIndexWriterGetter, LocationIndexIteratorGetter},
 };
 
 use self::{
@@ -84,6 +84,7 @@ macro_rules! define_write_commands {
                 super::super::write::HistoryWriteCommands::new(&self.history_write())
             }
 
+            #[track_caller]
             pub async fn db_write<
                 T: FnOnce(
                         database::current::write::CurrentSyncWriteCommands<'_>,
@@ -97,6 +98,48 @@ macro_rules! define_write_commands {
                 cmd: T,
             ) -> error_stack::Result<R, crate::data::DatabaseError> {
                 self.cmds.db_write(cmd).await
+            }
+
+            #[track_caller]
+            pub async fn db_transaction<
+                T: FnOnce(
+                        &mut database::diesel::DieselConnection,
+                    )
+                        -> std::result::Result<R, database::TransactionError<database::diesel::DieselDatabaseError>>
+                    + Send
+                    + 'static,
+                R: Send + 'static,
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, crate::data::DatabaseError> {
+                self.cmds.db_transaction(cmd).await
+            }
+
+            #[track_caller]
+            pub async fn db_read<
+                T: FnOnce(
+                        database::current::read::CurrentSyncReadCommands<'_>,
+                    )
+                        -> error_stack::Result<R, database::diesel::DieselDatabaseError>
+                    + Send
+                    + 'static,
+                R: Send + 'static,
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, crate::data::DatabaseError> {
+                self.cmds.db_read(cmd).await
+            }
+
+            #[track_caller]
+            pub async fn write_cache<T, Id: Into<model::AccountIdLight>>(
+                &self,
+                id: Id,
+                cache_operation: impl FnOnce(&mut crate::data::cache::CacheEntry) -> error_stack::Result<T, crate::data::CacheError>,
+            ) -> error_stack::Result<T, crate::data::DatabaseError> {
+                use error_stack::ResultExt;
+                self.cache().write_cache(id, cache_operation).await.change_context(crate::data::DatabaseError::Cache)
             }
         }
     };
@@ -143,26 +186,28 @@ pub struct AccountWriteLock;
 
 /// Globally synchronous write commands.
 pub struct WriteCommands<'a> {
-    config: &'a Config,
+    config: &'a Arc<Config>,
     current_write: &'a CurrentDataWriteHandle,
     history_write: &'a HistoryWriteHandle,
     diesel_current_write: &'a DieselCurrentWriteHandle,
     diesel_history_write: &'a DieselHistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
+    location_iterator: LocationIndexIteratorGetter<'a>,
     location: LocationIndexWriterGetter<'a>,
     media_backup: &'a MediaBackupHandle,
 }
 
 impl<'a> WriteCommands<'a> {
     pub fn new(
-        config: &'a Config,
+        config: &'a Arc<Config>,
         current_write: &'a CurrentDataWriteHandle,
         history_write: &'a HistoryWriteHandle,
         diesel_current_write: &'a DieselCurrentWriteHandle,
         diesel_history_write: &'a DieselHistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
+        location_iterator: LocationIndexIteratorGetter<'a>,
         location: LocationIndexWriterGetter<'a>,
         media_backup: &'a MediaBackupHandle,
     ) -> Self {
@@ -174,6 +219,7 @@ impl<'a> WriteCommands<'a> {
             diesel_history_write,
             cache,
             file_dir,
+            location_iterator,
             location,
             media_backup,
         }
@@ -220,115 +266,83 @@ impl<'a> WriteCommands<'a> {
         id_light: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        Self::register_static(
-            id_light,
-            sign_in_with_info,
-            &self.config,
-            self.current_write.clone(),
-            self.history_write.clone(),
-            self.cache,
-        )
-        .await
-    }
-
-    pub async fn register_static(
-        id_light: AccountIdLight,
-        sign_in_with_info: SignInWithInfo,
-        config: &Config,
-        current_data_write: CurrentDataWriteHandle,
-        history_wirte: HistoryWriteHandle,
-        cache: &DatabaseCache,
-    ) -> Result<AccountIdInternal, DatabaseError> {
-        let current = CurrentWriteCommands::new(&current_data_write);
-        let history = HistoryWriteCommands::new(&history_wirte);
-
         let account = Account::default();
         let account_setup = AccountSetup::default();
 
-        // TODO: Use transactions here. One for current and other for history.
+        let config = self.config.clone();
+        let id = self.db_transaction_with_history_REMOVE(move |conn, history_conn|{
+            // let mut conn1 = CurrentSyncWriteCommands::new(conn);
+            // let conn = &mut conn1;
+            let id = conn
+                .into_account()
+                .insert_account_id(id_light)?;
 
-        let id = current
-            .account()
-            .store_account_id(id_light)
-            .await
-            .convert(id_light)?;
+            // let mut current = CurrentSyncWriteCommands::new(conn);
 
-        history.store_account_id(id).await.convert(id)?;
+            conn
+                .into_account()
+                .insert_access_token(id, None)?;
+            conn
+                .into_account()
+                .insert_refresh_token(id, None)?;
 
-        cache.insert_account_if_not_exists(id).await.convert(id)?;
+            if config.components().account {
+                conn
+                    .into_account()
+                    .insert_account(id, &account)?;
+                conn
+                    .into_account()
+                    .insert_account_setup(id, &account_setup)?;
+                conn
+                    .into_account()
+                    .insert_sign_in_with_info(id, &sign_in_with_info)?;
+            }
 
-        current
-            .account()
-            .store_api_key(id, None)
-            .await
-            .convert(id)?;
-        current
-            .account()
-            .store_refresh_token(id, None)
-            .await
-            .convert(id)?;
+            if config.components().profile {
+                conn.into_profile().insert_profile(id)?;
+            }
 
-        if config.components().account {
-            current
-                .account()
-                .store_account(id, &account)
-                .await
-                .convert(id)?;
+            if config.components().media {
+                conn
+                    .into_media()
+                    .insert_current_account_media(id)?;
+            }
 
-            history.store_account(id, &account).await.convert(id)?;
+            // TODO: write to history
+            /*
+            history.store_account_id(id).await.convert(id)?;
+            if config.components().account {
+                history.store_account(id, &account).await.convert(id)?;
+                history
+                    .store_account_setup(id, &account_setup)
+                    .await
+                    .convert(id)?;
+            }
 
-            cache
-                .write_cache(id.as_light(), |cache| {
-                    cache.account = Some(account.clone().into());
-                    Ok(())
-                })
-                .await
-                .convert(id)?;
+            if config.components().profile {
+                // TOOD: update history code
+                // history
+                //     .store_profile(id, &profile)
+                //     .await
+                //     .with_history_write_cmd_info::<Profile>(id)?;
 
-            current
-                .account()
-                .store_account_setup(id, &account_setup)
-                .await
-                .convert(id)?;
+            }
 
-            history
-                .store_account_setup(id, &account_setup)
-                .await
-                .convert(id)?;
+            if config.components().media {
 
-            current
-                .account()
-                .store_sign_in_with_info(id, &sign_in_with_info)
-                .await
-                .convert(id)?;
-        }
+            }
 
-        if config.components().profile {
-            let profile = current.profile().init_profile(id).await.convert(id)?;
+             */
+            Ok(id.clone())
+        }).await?;
 
-            // TOOD: update history code
-            // history
-            //     .store_profile(id, &profile)
-            //     .await
-            //     .with_history_write_cmd_info::<Profile>(id)?;
-
-            cache
-                .write_cache(id.as_light(), |cache| {
-                    let p: CachedProfile = profile.into();
-                    cache.profile = Some(p.into());
-                    Ok(())
-                })
-                .await
-                .convert(id)?;
-        }
-
-        if config.components().media {
-            current
-                .media()
-                .init_current_account_media(id)
-                .await
-                .convert(id)?;
-        }
+        self.cache.load_account_from_db(
+            id,
+            &self.config,
+            &self.diesel_current_write.to_read_handle(),
+            &self.location_iterator,
+            &self.location,
+        ).await.with_info(id)?;
 
         Ok(id)
     }
@@ -373,6 +387,7 @@ impl<'a> WriteCommands<'a> {
         HistoryWriteCommands::new(&self.history_write)
     }
 
+    #[track_caller]
     pub async fn db_write<
         T: FnOnce(CurrentSyncWriteCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
@@ -389,6 +404,135 @@ impl<'a> WriteCommands<'a> {
             .change_context(DatabaseError::Diesel)?;
 
         conn.interact(move |conn| cmd(CurrentSyncWriteCommands::new(conn)))
+            .await
+            .into_error_string(DieselDatabaseError::Execute)
+            .change_context(DatabaseError::Diesel)?
+            .change_context(DatabaseError::Diesel)
+    }
+
+    #[track_caller]
+    pub async fn db_transaction<
+        T: FnOnce(&mut database::diesel::DieselConnection) -> std::result::Result<R, TransactionError<DieselDatabaseError>> + Send + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> Result<R, DatabaseError> {
+        let conn = self
+            .diesel_current_write
+            .pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        conn.interact(move |conn| {
+                CurrentSyncWriteCommands::new(conn).transaction(cmd)
+            })
+            .await
+            .into_error_string(DieselDatabaseError::Execute)
+            .change_context(DatabaseError::Diesel)?
+            .change_context(DatabaseError::Diesel)
+    }
+
+    #[track_caller]
+    pub async fn db_transaction_with_history_REMOVE<
+        T,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> Result<R, DatabaseError> where
+    T: FnOnce(&mut DieselConnection, PoolObject) -> std::result::Result<R, TransactionError<DieselDatabaseError>> + Send + 'static{
+        let conn = self
+            .diesel_current_write
+            .pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        let conn_history = self
+            .diesel_history_write
+            .pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        conn.interact(move |conn| {
+                CurrentSyncWriteCommands::new(conn)
+                    .transaction(move |conn| {
+                        //let mut transaction_connection = TransactionConnection { conn };
+                        cmd(conn, conn_history)
+                    })
+            })
+            .await
+            .into_error_string(DieselDatabaseError::Execute)
+            .change_context(DatabaseError::Diesel)?
+            .change_context(DatabaseError::Diesel)
+    }
+
+
+    #[track_caller]
+    pub async fn db_transaction_with_history<
+        // 'a1,
+        // 'b1: 'a1,
+        // C: WriteCmdsMethods<'a1, 'b1>,
+        T,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> Result<R, DatabaseError> where
+    T: for<'b1> FnOnce(&mut TransactionConnection<'b1>, PoolObject) -> std::result::Result<R, TransactionError<DieselDatabaseError>> + Send + 'static,
+     {
+        let conn = self
+            .diesel_current_write
+            .pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        let conn_history = self
+            .diesel_history_write
+            .pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        conn.interact(move |conn| {
+                CurrentSyncWriteCommands::new(conn)
+                    .transaction(move |conn| {
+                        let mut transaction_connection = TransactionConnection { conn };
+                        cmd(&mut transaction_connection, conn_history)
+                    })
+            })
+            .await
+            .into_error_string(DieselDatabaseError::Execute)
+            .change_context(DatabaseError::Diesel)?
+            .change_context(DatabaseError::Diesel)
+    }
+
+    #[track_caller]
+    pub async fn db_read<
+        T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> Result<R, DatabaseError> {
+        let conn = self
+            .diesel_current_write
+            .pool()
+            .get()
+            .await
+            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DatabaseError::Diesel)?;
+
+        conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
             .await
             .into_error_string(DieselDatabaseError::Execute)
             .change_context(DatabaseError::Diesel)?

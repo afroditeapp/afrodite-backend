@@ -175,7 +175,8 @@ impl <S: GetApiKeys + GetConfig + ReadDatabase> InternalApiManager<'_, S> {
     ) -> Result<Account, InternalApiError> {
         if self.config().components().account {
             self.read_database()
-                .read_json::<Account>(account_id)
+                .account()
+                .account(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)
         } else {
@@ -252,7 +253,8 @@ impl <S: GetApiKeys + GetConfig + ReadDatabase + WriteData> InternalApiManager<'
 
             let profile: ProfileInternal = self
                 .read_database()
-                .read_json(account_id)
+                .profile()
+                .profile(account_id)
                 .await
                 .change_context(InternalApiError::DatabaseError)?;
 

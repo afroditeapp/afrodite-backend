@@ -2,7 +2,7 @@ use self::{
     account::{CurrentReadAccount, CurrentSyncReadAccount},
     chat::{CurrentReadChat, CurrentSyncReadChat},
     media::{CurrentReadMedia, CurrentSyncReadMedia},
-    profile::{CurrentReadProfile, CurrentSyncReadProfile},
+    profile::{CurrentReadProfile, CurrentSyncReadProfile}, media_admin::CurrentSyncReadMediaAdmin, profile_admin::CurrentSyncReadProfileAdmin, account_admin::CurrentSyncReadAccountAdmin, chat_admin::CurrentSyncReadChatAdmin,
 };
 use crate::{diesel::DieselConnection, sqlite::SqlxReadHandle};
 
@@ -78,7 +78,7 @@ impl<'a> SqliteReadCommands<'a> {
 }
 
 pub struct CurrentSyncReadCommands<'a> {
-    pub conn: &'a mut DieselConnection,
+    conn: &'a mut DieselConnection,
 }
 
 impl<'a> CurrentSyncReadCommands<'a> {
@@ -90,15 +90,31 @@ impl<'a> CurrentSyncReadCommands<'a> {
         CurrentSyncReadAccount::new(self)
     }
 
+    pub fn account_admin(self) -> CurrentSyncReadAccountAdmin<'a> {
+        CurrentSyncReadAccountAdmin::new(self)
+    }
+
     pub fn media(self) -> CurrentSyncReadMedia<'a> {
         CurrentSyncReadMedia::new(self)
+    }
+
+    pub fn media_admin(self) -> CurrentSyncReadMediaAdmin<'a> {
+        CurrentSyncReadMediaAdmin::new(self)
     }
 
     pub fn profile(self) -> CurrentSyncReadProfile<'a> {
         CurrentSyncReadProfile::new(self)
     }
 
+    pub fn profile_admin(self) -> CurrentSyncReadProfileAdmin<'a> {
+        CurrentSyncReadProfileAdmin::new(self)
+    }
+
     pub fn chat(self) -> CurrentSyncReadChat<'a> {
         CurrentSyncReadChat::new(self)
+    }
+
+    pub fn chat_admin(self) -> CurrentSyncReadChatAdmin<'a> {
+        CurrentSyncReadChatAdmin::new(self)
     }
 }

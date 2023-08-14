@@ -197,6 +197,10 @@ impl TmpImageFile {
         self.path.move_to(&new_location.path).await
     }
 
+    pub fn move_to_blocking(self, new_location: &ImageFile) -> Result<(), FileError> {
+        self.path.move_to_blocking(&new_location.path)
+    }
+
     pub async fn remove_if_exists(self) -> Result<(), FileError> {
         self.path.remove_if_exists().await
     }
@@ -217,6 +221,19 @@ impl PathToFile {
             if !parent_dir.exists() {
                 tokio::fs::create_dir_all(parent_dir)
                     .await
+                    .into_error(FileError::IoFileCreate)
+            } else {
+                Ok(())
+            }
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn create_parent_dirs_blocking(&self) -> Result<(), FileError> {
+        if let Some(parent_dir) = self.path.parent() {
+            if !parent_dir.exists() {
+                std::fs::create_dir_all(parent_dir)
                     .into_error(FileError::IoFileCreate)
             } else {
                 Ok(())
@@ -262,6 +279,13 @@ impl PathToFile {
 
         tokio::fs::rename(self.path, new_location.path())
             .await
+            .into_error(FileError::IoFileRename)
+    }
+
+    pub fn move_to_blocking(self, new_location: &Self) -> Result<(), FileError> {
+        new_location.create_parent_dirs_blocking()?;
+
+        std::fs::rename(self.path, new_location.path())
             .into_error(FileError::IoFileRename)
     }
 

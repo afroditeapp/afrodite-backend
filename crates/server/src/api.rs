@@ -101,9 +101,10 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         // Common
         model::common::EventToClient,
         model::common::BackendVersion,
+        model::common::AccountIdLight,
+        model::common::ApiKey,
+        model::common::RefreshToken,
         // Account
-        model::account::AccountIdLight,
-        model::account::ApiKey,
         model::account::Account,
         model::account::AccountState,
         model::account::AccountSetup,
@@ -112,7 +113,6 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         model::account::DeleteStatus,
         model::account::SignInWithLoginInfo,
         model::account::LoginResult,
-        model::account::RefreshToken,
         model::account::AuthPair,
         // Profile
         model::profile::Profile,

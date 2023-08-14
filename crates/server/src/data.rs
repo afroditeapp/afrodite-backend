@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{IntoReport, Result, ResultExt, Report};
 use tracing::info;
 
 use ::utils::IntoReportExt;
@@ -29,7 +29,7 @@ use model::{AccountIdInternal, AccountIdLight, SignInWithInfo};
 use crate::media_backup::MediaBackupHandle;
 
 use self::{
-    cache::{DatabaseCache, WriteCacheJson},
+    cache::{DatabaseCache, WriteCacheJson, CacheError},
     file::{FileError, read::FileReadCommands, utils::FileDir},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
@@ -86,6 +86,10 @@ pub enum DatabaseError {
     Integrity,
     #[error("Feature disabled from config file")]
     FeatureDisabled,
+    #[error("Not found")]
+    NotFound,
+    #[error("Content slot not empty")]
+    ContentSlotNotEmpty,
 
     #[error("Command runner quit too early")]
     CommandRunnerQuit,
@@ -258,19 +262,20 @@ impl DatabaseManager {
 
         let read_commands = SqliteReadCommands::new(&sqlite_read);
         let index = LocationIndexManager::new(config.clone());
+        let diesel_current_read = DieselCurrentReadHandle::new(diesel_current_read);
+        let diesel_current_write = DieselCurrentWriteHandle::new(diesel_current_write);
+        let diesel_history_read = DieselHistoryReadHandle::new(diesel_history_read);
+        let diesel_history_write = DieselHistoryWriteHandle::new(diesel_history_write);
+
         let cache = DatabaseCache::new(
             read_commands,
+            diesel_current_read.clone(),
             LocationIndexIteratorGetter::new(&index),
             LocationIndexWriterGetter::new(&index),
             &config,
         )
         .await
         .change_context(DatabaseError::Cache)?;
-
-        let diesel_current_read = DieselCurrentReadHandle::new(diesel_current_read);
-        let diesel_current_write = DieselCurrentWriteHandle::new(diesel_current_write);
-        let diesel_history_read = DieselHistoryReadHandle::new(diesel_history_read);
-        let diesel_history_write = DieselHistoryWriteHandle::new(diesel_history_write);
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
@@ -359,6 +364,7 @@ impl RouterDatabaseWriteHandle {
             &self.diesel_history_write,
             &self.cache,
             &self.root.file_dir,
+            LocationIndexIteratorGetter::new(&self.location),
             LocationIndexWriterGetter::new(&self.location),
             &self.media_backup,
         )
@@ -431,6 +437,7 @@ impl SyncWriteHandle {
             &self.diesel_history_write,
             &self.cache,
             &self.root.file_dir,
+            LocationIndexIteratorGetter::new(&self.location),
             LocationIndexWriterGetter::new(&self.location),
             &self.media_backup,
         )

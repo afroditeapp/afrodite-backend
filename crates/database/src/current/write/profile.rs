@@ -1,72 +1,41 @@
 use async_trait::async_trait;
-use diesel::{prelude::*, ExpressionMethods, QueryDsl};
+use diesel::{prelude::*, ExpressionMethods, QueryDsl, update, insert_into};
 use error_stack::Result;
-use model::{AccountIdInternal, LocationIndexKey, Profile, ProfileInternal, ProfileUpdateInternal};
+use model::{AccountIdInternal, LocationIndexKey, Profile, ProfileInternal, ProfileUpdateInternal, ProfileVersion};
 use utils::IntoReportExt;
 
 use super::CurrentWriteCommands;
 use crate::{
     diesel::DieselDatabaseError,
     sqlite::{SqliteDatabaseError, SqliteSelectJson, SqliteUpdateJson},
-    WriteResult,
+    WriteResult, IntoDatabaseError,
 };
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 
-impl<'a> CurrentWriteProfile<'a> {
-    pub async fn init_profile(
-        &self,
-        id: AccountIdInternal,
-    ) -> WriteResult<ProfileInternal, SqliteDatabaseError, Profile> {
-        let version = uuid::Uuid::new_v4();
-        sqlx::query!(
-            r#"
-            INSERT INTO Profile (account_row_id, version_uuid)
-            VALUES (?, ?)
-            "#,
-            id.account_row_id,
-            version,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        let profile = ProfileInternal::select_json(id, &self.read()).await?;
-        Ok(profile)
-    }
-
-    pub async fn update_profile(
-        &self,
-        id: AccountIdInternal,
-        data: ProfileUpdateInternal,
-    ) -> WriteResult<ProfileInternal, SqliteDatabaseError, Profile> {
-        sqlx::query!(
-            r#"
-            UPDATE Profile
-            SET version_uuid = ?
-            WHERE account_row_id = ?
-            "#,
-            data.version,
-            id.account_row_id,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        let profile = ProfileInternal::select_json(id, &self.read()).await?;
-        Ok(profile)
-    }
-}
-
 impl<'a> CurrentSyncWriteProfile<'a> {
-    pub fn update_profile(
+    pub fn insert_profile(
+        &'a mut self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileInternal, DieselDatabaseError> {
+        use model::schema::profile::dsl::*;
+
+        let version = ProfileVersion::new_random();
+        insert_into(profile)
+            .values((account_id.eq(id.as_db_id()), version_uuid.eq(version)))
+            .returning(ProfileInternal::as_returning())
+            .get_result(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)
+    }
+
+    pub fn profile(
         &'a mut self,
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use crate::schema::Profile::dsl::*;
+        use crate::schema::profile::dsl::*;
 
-        diesel::update(Profile.find(id.account_row_id))
+        update(profile.find(id.as_db_id()))
             .set((
                 version_uuid.eq(data.version),
                 profile_text.eq(data.new_data.profile_text),
@@ -76,52 +45,21 @@ impl<'a> CurrentSyncWriteProfile<'a> {
 
         Ok(())
     }
-}
 
-#[async_trait]
-impl SqliteUpdateJson for ProfileUpdateInternal {
-    async fn update_json(
-        &self,
+    pub fn profile_location(
+        &'a mut self,
         id: AccountIdInternal,
-        write: &CurrentWriteCommands,
-    ) -> error_stack::Result<(), SqliteDatabaseError> {
-        sqlx::query!(
-            r#"
-            UPDATE Profile
-            SET version_uuid = ?
-            WHERE account_row_id = ?
-            "#,
-            self.version,
-            id.account_row_id,
-        )
-        .execute(write.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+        data: LocationIndexKey,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::profile::dsl::*;
 
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl SqliteUpdateJson for LocationIndexKey {
-    async fn update_json(
-        &self,
-        id: AccountIdInternal,
-        write: &CurrentWriteCommands,
-    ) -> error_stack::Result<(), SqliteDatabaseError> {
-        sqlx::query!(
-            r#"
-            UPDATE Profile
-            SET location_key_x = ?, location_key_y = ?
-            WHERE account_row_id = ?
-            "#,
-            self.x,
-            self.y,
-            id.account_row_id,
-        )
-        .execute(write.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+        update(profile.find(id.as_db_id()))
+            .set((
+                location_key_x.eq(data.x as i64),
+                location_key_y.eq(data.y as i64),
+            ))
+            .execute(self.conn())
+            .into_error(DieselDatabaseError::Execute)?;
 
         Ok(())
     }

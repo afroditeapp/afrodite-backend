@@ -13,7 +13,7 @@ use database::{
 };
 use model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink};
 
-use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
+use crate::{data::DatabaseError, utils::{ConvertCommandErrorExt, ErrorConversion}};
 
 use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter,
@@ -196,7 +196,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 e.profile.as_ref().map(|p| p.location.clone())
             })
             .await
-            .convert(id)?
+            .with_info(id)?
             .ok_or(DatabaseError::FeatureDisabled)?;
 
         let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
@@ -209,7 +209,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 Ok(())
             })
             .await
-            .convert(id)?;
+            .with_info(id)?;
 
         Ok(profiles.unwrap_or(Vec::new()))
     }
@@ -221,7 +221,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 e.profile.as_ref().map(|p| p.location.clone())
             })
             .await
-            .convert(id)?
+            .with_info(id)?
             .ok_or(DatabaseError::FeatureDisabled)?;
 
         let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
@@ -235,7 +235,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 Ok(())
             })
             .await
-            .convert(id)?;
+            .with_info(id)?;
         Ok(())
     }
 

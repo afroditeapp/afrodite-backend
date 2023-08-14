@@ -1,258 +1,216 @@
 use async_trait::async_trait;
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo,
+    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo, AccountIdDb,
 };
 use utils::IntoReportExt;
+use diesel::{prelude::*, insert_into, update};
 
 use crate::{
     insert_or_update_json,
     sqlite::{SqliteDatabaseError, SqliteUpdateJson},
-    WriteResult,
+    WriteResult, diesel::DieselDatabaseError, IntoDatabaseError,
 };
+
+use error_stack::Result;
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 
 use super::CurrentWriteCommands;
 
-impl<'a> CurrentWriteAccount<'a> {
-    pub async fn store_account_id(
-        &self,
-        id: AccountIdLight,
-    ) -> WriteResult<AccountIdInternal, SqliteDatabaseError, AccountIdLight> {
-        let id = id.as_uuid();
-        let insert_result = sqlx::query!(
-            r#"
-            INSERT INTO AccountId (account_id)
-            VALUES (?)
-            "#,
-            id
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+impl<'a> CurrentSyncWriteAccount<'a> {
+    pub fn insert_account_id(
+        self,
+        account_uuid: AccountIdLight,
+    ) -> Result<AccountIdInternal, DieselDatabaseError> {
+        use model::schema::account_id::dsl::*;
+
+        let db_id: AccountIdDb = insert_into(account_id)
+            .values(uuid.eq(account_uuid))
+            .returning(id)
+            .get_result(self.into_conn())
+            .into_db_error(DieselDatabaseError::Execute, account_uuid)?;
 
         Ok(AccountIdInternal {
-            account_id: id,
-            account_row_id: insert_result.last_insert_rowid(),
+            uuid: account_uuid,
+            id: db_id,
         })
     }
 
-    pub async fn store_api_key(
-        &self,
+    pub fn insert_access_token(
+        self,
         id: AccountIdInternal,
-        api_key: Option<ApiKey>,
-    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
-        let api_key = api_key.as_ref().map(|k| k.as_str());
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            INSERT INTO ApiKey (api_key, account_row_id)
-            VALUES (?, ?)
-            "#,
-            api_key,
-            id,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+        token_value: Option<ApiKey>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::access_token::dsl::*;
+
+        let token_value = token_value.as_ref().map(|k| k.as_str());
+
+        insert_into(access_token)
+            .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
+            .execute(self.into_conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
     }
 
-    pub async fn store_refresh_token(
-        &self,
+    pub fn access_token(
+        self,
         id: AccountIdInternal,
-        refresh_token: Option<RefreshToken>,
-    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
-        let refresh_token = if let Some(t) = refresh_token {
+        token_value: Option<ApiKey>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::access_token::dsl::*;
+
+        let token_value = token_value.as_ref().map(|k| k.as_str());
+
+        update(access_token.find(id.as_db_id()))
+            .set(token.eq(token_value))
+            .execute(self.into_conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(())
+    }
+
+    pub fn insert_refresh_token(
+        self,
+        id: AccountIdInternal,
+        token_value: Option<RefreshToken>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::refresh_token::dsl::*;
+
+        let token_value = if let Some(t) = token_value {
             Some(
                 t.bytes()
-                    .into_error(SqliteDatabaseError::DataFormatConversion)?,
+                    .into_error(DieselDatabaseError::DataFormatConversion)?,
             )
         } else {
             None
         };
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            INSERT INTO RefreshToken (refresh_token, account_row_id)
-            VALUES (?, ?)
-            "#,
-            refresh_token,
-            id,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+
+        insert_into(refresh_token)
+            .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
+            .execute(self.into_conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
     }
 
-    pub async fn store_account(
-        &self,
+    pub fn refresh_token(
+        &'a mut self,
         id: AccountIdInternal,
-        account: &Account,
-    ) -> WriteResult<(), SqliteDatabaseError, Account> {
-        insert_or_update_json!(
-            self.pool(),
-            r#"
-            INSERT INTO Account (json_text, account_row_id)
-            VALUES (?, ?)
-            "#,
-            account,
-            id
-        )
-    }
+        token_value: Option<RefreshToken>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::refresh_token::dsl::*;
 
-    pub async fn store_account_setup(
-        &self,
-        id: AccountIdInternal,
-        account: &AccountSetup,
-    ) -> WriteResult<(), SqliteDatabaseError, AccountSetup> {
-        insert_or_update_json!(
-            self.pool(),
-            r#"
-            INSERT INTO AccountSetup (json_text, account_row_id)
-            VALUES (?, ?)
-            "#,
-            account,
-            id
-        )
-    }
-
-    pub async fn store_sign_in_with_info(
-        &self,
-        id: AccountIdInternal,
-        sign_in_with_info: &SignInWithInfo,
-    ) -> WriteResult<(), SqliteDatabaseError, SignInWithInfo> {
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            INSERT INTO SignInWithInfo (google_account_id, account_row_id)
-            VALUES (?, ?)
-            "#,
-            sign_in_with_info.google_account_id,
-            id,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        Ok(())
-    }
-
-    pub async fn update_api_key(
-        &self,
-        id: AccountIdInternal,
-        api_key: Option<&ApiKey>,
-    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
-        let api_key = api_key.as_ref().map(|k| k.as_str());
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            UPDATE ApiKey
-            SET api_key = ?
-            WHERE account_row_id = ?
-            "#,
-            api_key,
-            id,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        Ok(())
-    }
-
-    pub async fn update_refresh_token(
-        &self,
-        id: AccountIdInternal,
-        refresh_token: Option<&RefreshToken>,
-    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
-        let refresh_token = if let Some(t) = refresh_token {
+        let token_value = if let Some(t) = token_value {
             Some(
                 t.bytes()
-                    .into_error(SqliteDatabaseError::DataFormatConversion)?,
+                    .into_error(DieselDatabaseError::DataFormatConversion)?,
             )
         } else {
             None
         };
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            UPDATE RefreshToken
-            SET refresh_token = ?
-            WHERE account_row_id = ?
-            "#,
-            refresh_token,
-            id,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+
+        update(refresh_token.find(id.as_db_id()))
+            .set(token.eq(token_value))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
     }
 
-    pub async fn update_sign_in_with_info(
-        &self,
+    pub fn insert_account(
+        &'a mut self,
         id: AccountIdInternal,
-        sign_in_with: &SignInWithInfo,
-    ) -> WriteResult<(), SqliteDatabaseError, ApiKey> {
-        let id = id.row_id();
-        sqlx::query!(
-            r#"
-            UPDATE SignInWithInfo
-            SET google_account_id = ?
-            WHERE account_row_id = ?
-            "#,
-            sign_in_with.google_account_id,
-            id,
-        )
-        .execute(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
+        account_data: &Account,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        let data = serde_json::to_string(account_data)
+            .into_error(DieselDatabaseError::SerdeSerialize)?;
+
+        insert_into(account)
+            .values((account_id.eq(id.as_db_id()), json_text.eq(data)))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
     }
-}
 
-#[async_trait]
-impl SqliteUpdateJson for Account {
-    async fn update_json(
-        &self,
+    pub fn account(
+        self,
         id: AccountIdInternal,
-        write: &CurrentWriteCommands,
-    ) -> error_stack::Result<(), SqliteDatabaseError> {
-        insert_or_update_json!(
-            write.pool(),
-            r#"
-            UPDATE Account
-            SET json_text = ?
-            WHERE account_row_id = ?
-            "#,
-            self,
-            id
-        )
+        account_data: &Account,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        let data = serde_json::to_string(account_data)
+            .into_error(DieselDatabaseError::SerdeSerialize)?;
+
+        update(account.find(id.as_db_id()))
+            .set(json_text.eq(data))
+            .execute(self.into_conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(())
     }
-}
 
-#[async_trait]
-impl SqliteUpdateJson for AccountSetup {
-    async fn update_json(
-        &self,
+    pub fn insert_account_setup(
+        &'a mut self,
         id: AccountIdInternal,
-        write: &CurrentWriteCommands,
-    ) -> error_stack::Result<(), SqliteDatabaseError> {
-        insert_or_update_json!(
-            write.pool(),
-            r#"
-            UPDATE AccountSetup
-            SET json_text = ?
-            WHERE account_row_id = ?
-            "#,
-            self,
-            id
-        )
+        account_data: &AccountSetup,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_setup::dsl::*;
+
+        insert_into(account_setup)
+            .values((account_id.eq(id.as_db_id()), account_data))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(())
+    }
+
+    pub fn account_setup(
+        &'a mut self,
+        id: AccountIdInternal,
+        account_data: &AccountSetup,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_setup::dsl::*;
+
+        update(account_setup.find(id.as_db_id()))
+            .set(account_data)
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(())
+    }
+
+    pub fn insert_sign_in_with_info(
+        &'a mut self,
+        id: AccountIdInternal,
+        data: &SignInWithInfo,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::sign_in_with_info::dsl::*;
+
+        insert_into(sign_in_with_info)
+            .values((account_id.eq(id.as_db_id()), google_account_id.eq(&data.google_account_id)))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(())
+    }
+
+    pub fn sign_in_with_info(
+        &'a mut self,
+        id: AccountIdInternal,
+        data: &SignInWithInfo,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::sign_in_with_info::dsl::*;
+
+        update(sign_in_with_info.find(id.as_db_id()))
+            .set((account_id.eq(id.as_db_id()), google_account_id.eq(&data.google_account_id)))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(())
     }
 }

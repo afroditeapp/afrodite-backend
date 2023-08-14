@@ -8,18 +8,18 @@ use tracing::info;
 
 use config::Config;
 use database::{
-    ConvertCommandError, current::read::SqliteReadCommands, NoId, ReadResult,
-    sqlite::SqliteSelectJson, WriteResult,
+    ConvertCommandError, current::read::{SqliteReadCommands, CurrentSyncReadCommands}, NoId, ReadResult,
+    sqlite::SqliteSelectJson, WriteResult, diesel::{DieselCurrentReadHandle, DieselDatabaseError},
 };
 use model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, LocationIndexKey, Profile,
     ProfileInternal, ProfileUpdateInternal,
 };
-use utils::ComponentError;
+use utils::{ComponentError, IntoReportExt, IntoReportFromString};
 
-use super::index::{
+use super::{index::{
     location::LocationIndexIteratorState, LocationIndexIteratorGetter, LocationIndexWriterGetter,
-};
+}, DatabaseError};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
@@ -39,8 +39,8 @@ pub enum CacheError {
     #[error("Cache init error")]
     Init,
 
-    #[error("Cache init failed because operation was not enabled")]
-    InitFeatureNotEnabled,
+    #[error("Cache operation failed because of server feature was not enabled")]
+    FeatureNotEnabled,
 }
 
 #[derive(Debug)]
@@ -60,6 +60,7 @@ pub struct DatabaseCache {
 impl DatabaseCache {
     pub async fn new(
         read: SqliteReadCommands<'_>,
+        read_diesel: DieselCurrentReadHandle,
         index_iterator: LocationIndexIteratorGetter<'_>,
         index_writer: LocationIndexWriterGetter<'_>,
         config: &Config,
@@ -74,72 +75,13 @@ impl DatabaseCache {
 
         let account = read.account();
         let mut accounts = account.account_ids_stream();
-
         while let Some(r) = accounts.next().await {
             let id = r.attach(NoId).change_context(CacheError::Init)?;
-            cache.insert_account_if_not_exists(id).await.attach(id)?;
-        }
-
-        let read_account = cache.accounts.read().await;
-        let ids = read_account.values();
-        for lock_and_cache in ids {
-            let api_key = read
-                .account()
-                .access_token(lock_and_cache.account_id_internal)
-                .await
-                .attach(lock_and_cache.account_id_internal)
-                .change_context(CacheError::Init)?;
-
-            if let Some(key) = api_key {
-                let mut write_api_keys = cache.api_keys.write().await;
-                if write_api_keys.contains_key(&key) {
-                    return Err(CacheError::AlreadyExists.into()).change_context(CacheError::Init);
-                } else {
-                    write_api_keys.insert(key, lock_and_cache.clone());
-                }
-            }
-
-            let mut entry = lock_and_cache.cache.write().await;
-
-            if config.components().account {
-                let account = Account::select_json(lock_and_cache.account_id_internal, &read)
-                    .await
-                    .change_context(CacheError::Init)?;
-                entry.account = Some(account.clone().into())
-            }
-
-            if config.components().profile {
-                let profile =
-                    ProfileInternal::select_json(lock_and_cache.account_id_internal, &read)
-                        .await
-                        .change_context(CacheError::Init)?;
-
-                let mut profile_data: CachedProfile = profile.into();
-
-                let location_key =
-                    LocationIndexKey::select_json(lock_and_cache.account_id_internal, &read)
-                        .await
-                        .change_context(CacheError::Init)?;
-                profile_data.location.current_position = location_key;
-                let index_iterator = index_iterator
-                    .get()
-                    .ok_or(CacheError::InitFeatureNotEnabled)?;
-                profile_data.location.current_iterator = index_iterator
-                    .reset_iterator(profile_data.location.current_iterator, location_key);
-
-                // TODO: Add to location index only if visiblity is public
-                let _index_writer = index_writer
-                    .get()
-                    .ok_or(CacheError::InitFeatureNotEnabled)?;
-                //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
-
-                entry.profile = Some(Box::new(profile_data));
-            }
+            // Diesel connection used here so no deadlock
+            cache.load_account_from_db(id, &config, &read_diesel, &index_iterator, &index_writer).await?;
         }
 
         info!("Loading to memory complete");
-
-        drop(read_account);
         Ok(cache)
     }
 
@@ -148,10 +90,74 @@ impl DatabaseCache {
         //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
     }
 
+    pub async fn load_account_from_db(
+        &self,
+        account_id: AccountIdInternal,
+        config: &Config,
+        read_diesel: &DieselCurrentReadHandle,
+        index_iterator: &LocationIndexIteratorGetter<'_>,
+        index_writer: &LocationIndexWriterGetter<'_>,
+    ) -> Result<(), CacheError> {
+        self.insert_account_if_not_exists(account_id)
+            .await
+            .attach_printable(account_id)?;
+
+        let read_lock = self.accounts.read().await;
+        let account_entry = read_lock.get(&account_id.as_light()).ok_or(CacheError::KeyNotExists)?;
+
+        let api_key = db_read(&read_diesel, move |cmds| cmds.account().access_token(account_id))
+            .await?;
+
+        if let Some(key) = api_key {
+            let mut write_api_keys = self.api_keys.write().await;
+            if write_api_keys.contains_key(&key) {
+                return Err(CacheError::AlreadyExists.into()).change_context(CacheError::Init);
+            } else {
+                write_api_keys.insert(key, account_entry.clone());
+            }
+        }
+
+        let mut entry = account_entry.cache.write().await;
+
+        if config.components().account {
+            let account = db_read(&read_diesel, move |cmds| cmds.account().account(account_id))
+                .await?;
+            entry.account = Some(account.clone().into())
+        }
+
+        if config.components().profile {
+            let profile =
+                db_read(&read_diesel, move |cmds| cmds.profile().profile(account_id))
+                    .await?;
+
+            let mut profile_data: CachedProfile = profile.into();
+
+            let location_key =
+                db_read(&read_diesel, move |cmds| cmds.profile().location_index_key(account_id))
+                    .await?;
+            profile_data.location.current_position = location_key;
+            let index_iterator = index_iterator
+                .get()
+                .ok_or(CacheError::FeatureNotEnabled)?;
+            profile_data.location.current_iterator = index_iterator
+                .reset_iterator(profile_data.location.current_iterator, location_key);
+
+            // TODO: Add to location index only if visiblity is public
+            let _index_writer = index_writer
+                .get()
+                .ok_or(CacheError::FeatureNotEnabled)?;
+            //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
+
+            entry.profile = Some(Box::new(profile_data));
+        }
+
+        Ok(())
+    }
+
     pub async fn insert_account_if_not_exists(
         &self,
         id: AccountIdInternal,
-    ) -> WriteResult<(), CacheError, AccountIdInternal> {
+    ) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_light()).is_none() {
             let value = RwLock::new(CacheEntry::new());
@@ -175,7 +181,7 @@ impl DatabaseCache {
         current_access_token: Option<ApiKey>,
         new_access_token: ApiKey,
         address: Option<SocketAddr>,
-    ) -> WriteResult<(), CacheError, ApiKey> {
+    ) -> Result<(), CacheError> {
         let cache_entry = self
             .accounts
             .read()
@@ -204,7 +210,7 @@ impl DatabaseCache {
         &self,
         id: AccountIdLight,
         token: Option<ApiKey>,
-    ) -> WriteResult<(), CacheError, ApiKey> {
+    ) -> Result<(), CacheError> {
         let cache_entry = self
             .accounts
             .read()
@@ -255,7 +261,7 @@ impl DatabaseCache {
     pub async fn to_account_id_internal(
         &self,
         id: AccountIdLight,
-    ) -> ReadResult<AccountIdInternal, CacheError, AccountIdLight> {
+    ) -> Result<AccountIdInternal, CacheError> {
         let guard = self.accounts.read().await;
         let data = guard
             .get(&id)
@@ -264,14 +270,14 @@ impl DatabaseCache {
         Ok(data)
     }
 
-    pub async fn read_cache<T>(
+    pub async fn read_cache<T, Id: Into<AccountIdLight>>(
         &self,
-        id: AccountIdLight,
+        id: Id,
         cache_operation: impl Fn(&CacheEntry) -> T,
-    ) -> ReadResult<T, CacheError> {
+    ) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
         let cache_entry = guard
-            .get(&id)
+            .get(&id.into())
             .ok_or(CacheError::KeyNotExists)?
             .cache
             .read()
@@ -279,14 +285,14 @@ impl DatabaseCache {
         Ok(cache_operation(&cache_entry))
     }
 
-    pub async fn write_cache<T>(
+    pub async fn write_cache<T, Id: Into<AccountIdLight>>(
         &self,
-        id: AccountIdLight,
+        id: Id,
         cache_operation: impl FnOnce(&mut CacheEntry) -> Result<T, CacheError>,
-    ) -> WriteResult<T, CacheError, T> {
+    ) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
         let mut cache_entry = guard
-            .get(&id)
+            .get(&id.into())
             .ok_or(CacheError::KeyNotExists)?
             .cache
             .write()
@@ -314,7 +320,7 @@ impl DatabaseCache {
         &self,
         id: AccountIdLight,
         data: Account,
-    ) -> WriteResult<(), CacheError, Account> {
+    ) -> Result<(), CacheError> {
         let mut write_guard = self.accounts.write().await;
         write_guard
             .get_mut(&id)
@@ -386,69 +392,42 @@ pub trait ReadCacheJson: Sized + Send {
     }
 }
 
-impl ReadCacheJson for AccountSetup {}
+//     async fn read_from_cache(
+//         id: AccountIdLight,
+//         cache: &DatabaseCache,
+//     ) -> Result<Self, CacheError> {
+//         let data_in_cache = cache
+//             .read_cache(id, |entry| {
+//                 entry.profile.as_ref().map(|data| data.data.clone())
+//             })
+//             .await
+//             .attach(id)?;
+//         data_in_cache
+//             .ok_or(CacheError::NotInCache.into())
+//             .map(|p| p)
+//     }
+// }
 
-#[async_trait]
-impl ReadCacheJson for Account {
-    const CACHED_JSON: bool = true;
+// #[async_trait]
+// impl ReadCacheJson for Profile {
+//     const CACHED_JSON: bool = true;
 
-    async fn read_from_cache(
-        id: AccountIdLight,
-        cache: &DatabaseCache,
-    ) -> Result<Self, CacheError> {
-        let data_in_cache = cache
-            .read_cache(id, |entry| {
-                entry
-                    .account
-                    .as_ref()
-                    .map(|account| account.as_ref().clone())
-            })
-            .await
-            .attach(id)?;
-        data_in_cache.ok_or(CacheError::NotInCache.into())
-    }
-}
-
-#[async_trait]
-impl ReadCacheJson for ProfileInternal {
-    const CACHED_JSON: bool = true;
-
-    async fn read_from_cache(
-        id: AccountIdLight,
-        cache: &DatabaseCache,
-    ) -> Result<Self, CacheError> {
-        let data_in_cache = cache
-            .read_cache(id, |entry| {
-                entry.profile.as_ref().map(|data| data.data.clone())
-            })
-            .await
-            .attach(id)?;
-        data_in_cache
-            .ok_or(CacheError::NotInCache.into())
-            .map(|p| p)
-    }
-}
-
-#[async_trait]
-impl ReadCacheJson for Profile {
-    const CACHED_JSON: bool = true;
-
-    async fn read_from_cache(
-        id: AccountIdLight,
-        cache: &DatabaseCache,
-    ) -> Result<Self, CacheError> {
-        let data_in_cache = cache
-            .read_cache(id, |entry| {
-                entry
-                    .profile
-                    .as_ref()
-                    .map(|data| data.as_ref().data.clone().into())
-            })
-            .await
-            .attach(id)?;
-        data_in_cache.ok_or(CacheError::NotInCache.into())
-    }
-}
+//     async fn read_from_cache(
+//         id: AccountIdLight,
+//         cache: &DatabaseCache,
+//     ) -> Result<Self, CacheError> {
+//         let data_in_cache = cache
+//             .read_cache(id, |entry| {
+//                 entry
+//                     .profile
+//                     .as_ref()
+//                     .map(|data| data.as_ref().data.clone().into())
+//             })
+//             .await
+//             .attach(id)?;
+//         data_in_cache.ok_or(CacheError::NotInCache.into())
+//     }
+// }
 
 #[async_trait]
 pub trait WriteCacheJson: Sized + Send {
@@ -461,7 +440,7 @@ pub trait WriteCacheJson: Sized + Send {
     }
 }
 
-impl WriteCacheJson for AccountSetup {}
+// impl WriteCacheJson for AccountSetup {}
 
 #[async_trait]
 impl WriteCacheJson for Account {
@@ -524,4 +503,25 @@ impl WriteCacheJson for ProfileUpdateInternal {
             .map(|_| ())
             .attach(id)
     }
+}
+
+async fn db_read<
+    T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
+    R: Send + 'static,
+    >(
+    read: &DieselCurrentReadHandle,
+    cmd: T,
+) -> Result<R, CacheError> {
+    let conn = read
+        .pool()
+        .get()
+        .await
+        .into_error(DieselDatabaseError::GetConnection)
+        .change_context(CacheError::Init)?;
+
+    conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
+        .await
+        .into_error_string(DieselDatabaseError::Execute)
+        .change_context(CacheError::Init)?
+        .change_context(CacheError::Init)
 }

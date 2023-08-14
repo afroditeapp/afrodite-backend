@@ -42,7 +42,7 @@ impl<'a> HistoryWriteCommands<'a> {
         let id = id.as_uuid();
         sqlx::query!(
             r#"
-            INSERT INTO AccountId (account_row_id, account_id)
+            INSERT INTO account_id (id, uuid)
             VALUES (?, ?)
             "#,
             row_id,
@@ -64,7 +64,7 @@ impl<'a> HistoryWriteCommands<'a> {
         insert_or_update_json!(
             self,
             r#"
-            INSERT INTO HistoryAccount (json_text, unix_time, account_row_id)
+            INSERT INTO history_account (json_text, unix_time, account_id)
             VALUES (?, ?, ?)
             "#,
             account,
@@ -82,7 +82,7 @@ impl<'a> HistoryWriteCommands<'a> {
         insert_or_update_json!(
             self,
             r#"
-            INSERT INTO HistoryAccountSetup (json_text, unix_time, account_row_id)
+            INSERT INTO history_account_setup (json_text, unix_time, account_id)
             VALUES (?, ?, ?)
             "#,
             account,
@@ -100,7 +100,7 @@ impl<'a> HistoryWriteCommands<'a> {
         insert_or_update_json!(
             self,
             r#"
-            INSERT INTO HistoryProfile (json_text, unix_time, account_row_id)
+            INSERT INTO history_profile (json_text, unix_time, account_id)
             VALUES (?, ?, ?)
             "#,
             profile,

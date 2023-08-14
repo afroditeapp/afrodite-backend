@@ -1,9 +1,10 @@
-use serde::{Deserialize, Serialize};
-use sqlx::Encode;
+use serde::{Deserialize, Serialize, __private::de::Content};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::AccountIdLight;
+use diesel::{prelude::*, AsExpression, FromSqlRow, sql_types::{BigInt, Binary}};
+
+use crate::{AccountIdLight, macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, AccountIdDb};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotNumber {
@@ -50,17 +51,36 @@ impl ModerationRequestContent {
     }
 }
 
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::media_moderation_queue_number)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct QueueNumberRaw {
+    pub queue_number: ModerationQueueNumber,
+    pub account_id: AccountIdDb,
+    pub sub_queue: i64,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::media_moderation_request)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ModerationRequestRaw {
+    pub id: ModerationRequestIdDb,
+    pub account_id: AccountIdDb,
+    pub queue_number: i64,
+    pub json_text: String,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequestInternal {
-    moderation_request_id: i64,
-    account_id: AccountIdLight,
-    state: ModerationRequestState,
-    content: ModerationRequestContent,
+    pub moderation_request_id: ModerationRequestIdDb,
+    pub account_id: AccountIdLight,
+    pub state: ModerationRequestState,
+    pub content: ModerationRequestContent,
 }
 
 impl ModerationRequestInternal {
     pub fn new(
-        moderation_request_id: i64,
+        moderation_request_id: ModerationRequestIdDb,
         account_id: AccountIdLight,
         state: ModerationRequestState,
         content: ModerationRequestContent,
@@ -189,10 +209,17 @@ pub struct SlotId {
 }
 
 /// Content ID for media content for example images
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash)]
+#[derive(
+    Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = Binary)]
 pub struct ContentId {
     pub content_id: uuid::Uuid,
 }
+
+diesel_uuid_wrapper!(ContentId);
 
 impl ContentId {
     pub fn new_random_id() -> Self {
@@ -201,12 +228,12 @@ impl ContentId {
         }
     }
 
-    pub fn new(content_id: Uuid) -> Self {
+    pub fn new(content_id: uuid::Uuid) -> Self {
         Self { content_id }
     }
 
-    pub fn as_uuid(&self) -> Uuid {
-        self.content_id
+    pub fn as_uuid(&self) -> &uuid::Uuid {
+        &self.content_id
     }
 
     pub fn raw_jpg_image(&self) -> String {
@@ -264,6 +291,24 @@ impl sqlx::Decode<'_, sqlx::Sqlite> for ContentId {
     }
 }
 
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::media_content)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct MediaContentRaw {
+    pub id: ContentIdDb,
+    pub uuid: ContentId,
+    pub account_id: AccountIdDb,
+    pub moderation_state: i64,
+    pub content_type: i64,
+    pub slot_number: i64,
+}
+
+impl MediaContentRaw {
+    pub fn to_content_id_internal(&self) -> ContentIdInternal {
+        ContentIdInternal { content_id: self.uuid, content_row_id: self.id }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MediaContentInternal {
     pub content_id: ContentIdInternal,
@@ -274,14 +319,26 @@ pub struct MediaContentInternal {
 
 #[derive(Debug, Clone)]
 pub struct ContentIdInternal {
-    pub content_id: uuid::Uuid,
-    pub content_row_id: i64,
+    pub content_id: ContentId,
+    pub content_row_id: ContentIdDb,
 }
 
 impl ContentIdInternal {
     pub fn as_content_id(&self) -> ContentId {
-        ContentId::new(self.content_id)
+        self.content_id
     }
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::current_account_media)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct CurrentAccountMediaRaw {
+    pub account_id: AccountIdDb,
+    pub security_content_id: Option<ContentIdDb>,
+    pub profile_content_id: Option<ContentIdDb>,
+    pub grid_crop_size: f64,
+    pub grid_crop_x: f64,
+    pub grid_crop_y: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -312,6 +369,7 @@ impl From<CurrentAccountMediaInternal> for PrimaryImage {
     }
 }
 
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityImage {
     pub content_id: Option<ContentId>,
@@ -336,3 +394,59 @@ pub struct ImageAccessCheck {
 pub struct NormalImages {
     pub data: Vec<ContentId>,
 }
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
+#[diesel(sql_type = BigInt)]
+#[serde(transparent)]
+#[sqlx(transparent)]
+pub struct ModerationRequestIdDb(pub i64);
+
+impl ModerationRequestIdDb {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.0
+    }
+}
+
+diesel_i64_wrapper!(ModerationRequestIdDb);
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
+#[diesel(sql_type = BigInt)]
+#[serde(transparent)]
+#[sqlx(transparent)]
+pub struct ModerationQueueNumber(pub i64);
+
+impl ModerationQueueNumber {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.0
+    }
+}
+
+diesel_i64_wrapper!(ModerationQueueNumber);
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
+#[diesel(sql_type = BigInt)]
+#[serde(transparent)]
+#[sqlx(transparent)]
+pub struct ContentIdDb(pub i64);
+
+impl ContentIdDb {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.0
+    }
+}
+
+diesel_i64_wrapper!(ContentIdDb);

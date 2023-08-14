@@ -8,31 +8,20 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::AccountIdLight;
+use crate::{AccountIdLight, macros::diesel_uuid_wrapper, Account, AccountIdDb};
 
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::Profile)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+#[diesel(table_name = crate::schema::profile)]
+#[diesel(check_for_backend(crate::Db))]
 pub struct ProfileInternal {
-    pub account_row_id: i64,
+    pub account_id: AccountIdDb,
     pub version_uuid: ProfileVersion,
     pub location_key_x: i64,
     pub location_key_y: i64,
     pub name: String,
     pub profile_text: String,
 }
-
-// #[derive(Queryable, Selectable, Debug)]
-
-// pub struct Profile {
-//     account_row_id: i64,
-//     pub version_uuid: ProfileVersion,
-//     location_key_x: i64,
-//     location_key_y: i64,
-//     pub name: String,
-//     pub profile_text: String,
-// }
 
 /// Prfile for HTTP GET
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -173,8 +162,13 @@ impl ProfileVersion {
         Self { version_uuid }
     }
 
-    pub fn as_uuid(&self) -> uuid::Uuid {
-        self.version_uuid
+    pub fn new_random() -> Self {
+        let version_uuid = uuid::Uuid::new_v4();
+        Self { version_uuid }
+    }
+
+    pub fn as_uuid(&self) -> &uuid::Uuid {
+        &self.version_uuid
     }
 }
 
@@ -224,30 +218,32 @@ impl sqlx::Decode<'_, sqlx::Sqlite> for ProfileVersion {
     }
 }
 
-impl<DB: Backend> FromSql<Binary, DB> for ProfileVersion
-where
-    Vec<u8>: FromSql<Binary, DB>,
-{
-    fn from_sql(
-        bytes: <DB as diesel::backend::Backend>::RawValue<'_>,
-    ) -> diesel::deserialize::Result<Self> {
-        let bytes = Vec::<u8>::from_sql(bytes)?;
-        let uuid = uuid::Uuid::from_slice(&bytes)?;
-        Ok(ProfileVersion::new(uuid))
-    }
-}
+diesel_uuid_wrapper!(ProfileVersion);
 
-impl<DB: Backend> ToSql<Binary, DB> for ProfileVersion
-where
-    [u8]: ToSql<Binary, DB>,
-{
-    fn to_sql<'b>(
-        &'b self,
-        out: &mut diesel::serialize::Output<'b, '_, DB>,
-    ) -> diesel::serialize::Result {
-        self.version_uuid.as_bytes().to_sql(out)
-    }
-}
+// impl<DB: Backend> FromSql<Binary, DB> for ProfileVersion
+// where
+//     Vec<u8>: FromSql<Binary, DB>,
+// {
+//     fn from_sql(
+//         bytes: <DB as diesel::backend::Backend>::RawValue<'_>,
+//     ) -> diesel::deserialize::Result<Self> {
+//         let bytes = Vec::<u8>::from_sql(bytes)?;
+//         let uuid = uuid::Uuid::from_slice(&bytes)?;
+//         Ok(ProfileVersion::new(uuid))
+//     }
+// }
+
+// impl<DB: Backend> ToSql<Binary, DB> for ProfileVersion
+// where
+//     [u8]: ToSql<Binary, DB>,
+// {
+//     fn to_sql<'b>(
+//         &'b self,
+//         out: &mut diesel::serialize::Output<'b, '_, DB>,
+//     ) -> diesel::serialize::Result {
+//         self.as_uuid().as_bytes().to_sql(out)
+//     }
+// }
 
 #[derive(Debug, Hash, PartialEq, Clone, Copy, Default, Eq)]
 pub struct LocationIndexKey {

@@ -4,221 +4,54 @@ use model::{
     AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState,
     CurrentAccountMediaInternal, ImageSlot, MediaContentInternal, Moderation, ModerationId,
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
-    ModerationRequestQueueNumber, ModerationRequestState,
+    ModerationRequestState, ModerationRequestRaw, MediaModerationRaw, CurrentAccountMediaRaw, MediaContentRaw, ModerationQueueNumber,
 };
 use utils::IntoReportExt;
+use error_stack::Result;
 
-use crate::{sqlite::SqliteDatabaseError, ReadResult};
+use diesel::prelude::*;
+
+use crate::{IntoDatabaseError, sqlite::SqliteDatabaseError, ReadResult, diesel::DieselDatabaseError};
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 
-impl CurrentReadMedia<'_> {
-    pub async fn get_current_account_media(
-        &self,
-        id: AccountIdInternal,
-    ) -> ReadResult<CurrentAccountMediaInternal, SqliteDatabaseError> {
-        let request = sqlx::query!(
-            r#"
-            SELECT security_content_row_id,
-                profile_content_row_id,
-                grid_crop_size,
-                grid_crop_x,
-                grid_crop_y
-            FROM CurrentAccountMedia
-            WHERE account_row_id = ?
-            "#,
-            id.account_row_id,
-        )
-        .fetch_one(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
-
-        let security = if let Some(id) = request.security_content_row_id {
-            Some(self.get_content_id_from_row_id(id).await?)
-        } else {
-            None
-        };
-
-        let profile = if let Some(id) = request.profile_content_row_id {
-            Some(self.get_content_id_from_row_id(id).await?)
-        } else {
-            None
-        };
-
-        Ok(CurrentAccountMediaInternal {
-            security_content_id: security,
-            profile_content_id: profile,
-            grid_crop_size: request.grid_crop_size,
-            grid_crop_x: request.grid_crop_x,
-            grid_crop_y: request.grid_crop_y,
-        })
-    }
-
-    pub async fn get_account_media(
-        &self,
-        id: AccountIdInternal,
-    ) -> ReadResult<Vec<MediaContentInternal>, SqliteDatabaseError> {
-        let data = sqlx::query!(
-            r#"
-            SELECT content_row_id,
-                content_id as "content_id: uuid::Uuid",
-                moderation_state,
-                content_type,
-                slot_number
-            FROM MediaContent
-            WHERE account_row_id = ?
-            "#,
-            id.account_row_id,
-        )
-        .fetch_all(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
-
-        let content = data
-            .into_iter()
-            .filter_map(|r| {
-                let state = r.moderation_state.try_into().ok()?;
-                let content_type = r.content_type.try_into().ok()?;
-
-                Some(MediaContentInternal {
-                    content_id: ContentIdInternal {
-                        content_id: r.content_id,
-                        content_row_id: r.content_row_id,
-                    },
-                    state,
-                    content_type,
-                    slot_number: r.slot_number,
-                })
-            })
-            .collect();
-
-        Ok(content)
-    }
-
-    async fn get_content_id_from_row_id(
-        &self,
-        id: i64,
-    ) -> error_stack::Result<ContentIdInternal, SqliteDatabaseError> {
-        let request = sqlx::query!(
-            r#"
-            SELECT content_id as "content_id: uuid::Uuid"
-            FROM MediaContent
-            WHERE account_row_id = ?
-            "#,
-            id,
-        )
-        .fetch_one(self.pool())
-        .await
-        .map(|r| ContentIdInternal {
-            content_id: r.content_id,
-            content_row_id: id,
-        })
-        .into_error(SqliteDatabaseError::Fetch)?;
-
-        Ok(request)
-    }
-
-    pub async fn get_content_id_from_slot(
-        &self,
-        slot_owner: AccountIdInternal,
-        slot: ImageSlot,
-    ) -> error_stack::Result<Option<ContentIdInternal>, SqliteDatabaseError> {
-        let required_state = ContentState::InSlot as i64;
-        let required_slot = slot as i64;
-        let request = sqlx::query_as!(
-            ContentIdInternal,
-            r#"
-            SELECT content_row_id, content_id as "content_id: _"
-            FROM MediaContent
-            WHERE account_row_id = ? AND moderation_state = ? AND slot_number = ?
-            "#,
-            slot_owner.account_row_id,
-            required_state,
-            required_slot,
-        )
-        .fetch_optional(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
-
-        Ok(request)
-    }
-
-    /// Validate moderation request content.
-    ///
-    /// Returns `Err(SqliteDatabaseError::ModerationRequestContentInvalid)` if the
-    /// content is invalid.
-    pub async fn content_validate_moderation_request_content(
-        &self,
-        content_owner: AccountIdInternal,
-        request_content: &ModerationRequestContent,
-    ) -> error_stack::Result<(), SqliteDatabaseError> {
-        let requested_content_set: HashSet<ContentId> = request_content.content().collect();
-
-        let required_state = ContentState::InSlot as i64;
-        let request = sqlx::query!(
-            r#"
-            SELECT content_id as "content_id: ContentId"
-            FROM MediaContent
-            WHERE account_row_id = ? AND moderation_state = ?
-            "#,
-            content_owner.account_row_id,
-            required_state,
-        )
-        .fetch_all(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
-
-        let database_content_set: HashSet<ContentId> =
-            request.into_iter().map(|r| r.content_id).collect();
-
-        if requested_content_set == database_content_set {
-            Ok(())
-        } else {
-            Err(SqliteDatabaseError::ModerationRequestContentInvalid.into())
-        }
-    }
-
-    pub async fn current_moderation_request(
-        &self,
+impl <'a> CurrentSyncReadMedia<'a> {
+    pub fn moderation_request(
+        &'a mut self,
         request_creator: AccountIdInternal,
-    ) -> ReadResult<Option<ModerationRequestInternal>, SqliteDatabaseError> {
-        let account_row_id = request_creator.row_id();
-        let request = sqlx::query!(
-            r#"
-            SELECT request_row_id, json_text
-            FROM MediaModerationRequest
-            WHERE account_row_id = ?
-            "#,
-            account_row_id,
-        )
-        .fetch_optional(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
+    ) -> Result<Option<ModerationRequestInternal>, DieselDatabaseError> {
+        let conn = self.conn();
+        let request: ModerationRequestRaw = {
+            use crate::schema::media_moderation_request::dsl::*;
 
-        let request = match request {
-            None => return Ok(None),
-            Some(r) => r,
+            let request: Option<ModerationRequestRaw> = media_moderation_request
+                .filter(account_id.eq(request_creator.as_db_id()))
+                .select(ModerationRequestRaw::as_select())
+                .first::<ModerationRequestRaw>(conn)
+                .optional()
+                .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+
+            match request {
+                None => return Ok(None),
+                Some(r) => r,
+            }
         };
 
-        let moderation_states = sqlx::query!(
-            r#"
-            SELECT state_number, json_text
-            FROM MediaModeration
-            WHERE request_row_id = ?
-            "#,
-            request.request_row_id,
-        )
-        .fetch_all(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
 
-        let (state, data) = match moderation_states.first() {
+        use crate::schema::media_moderation::dsl::*;
+        let moderations: Vec<MediaModerationRaw> = media_moderation
+            .filter(moderation_request_id.eq(request.id))
+            .select(MediaModerationRaw::as_select())
+            .load(conn)
+            .into_db_error(DieselDatabaseError::Execute, (request_creator, request.id))?;
+
+        let (state, data) = match moderations.first() {
             None => (ModerationRequestState::Waiting, &request.json_text),
             Some(first) => {
-                let accepted = moderation_states
+                let accepted = moderations
                     .iter()
                     .find(|r| r.state_number == ModerationRequestState::Accepted as i64);
-                let denied = moderation_states
+                let denied = moderations
                     .iter()
                     .find(|r| r.state_number == ModerationRequestState::Denied as i64);
 
@@ -233,141 +66,218 @@ impl CurrentReadMedia<'_> {
         };
 
         let data: ModerationRequestContent =
-            serde_json::from_str(data).into_error(SqliteDatabaseError::SerdeDeserialize)?;
+            serde_json::from_str(data)
+                .into_db_error(DieselDatabaseError::SerdeDeserialize, (request_creator, request.id))?;
 
         Ok(Some(ModerationRequestInternal::new(
-            request.request_row_id,
+            request.id,
             request_creator.as_light(),
             state,
             data,
         )))
     }
 
-    pub async fn get_moderation_request_content(
-        &self,
-        id: ModerationRequestId,
-    ) -> error_stack::Result<
+    pub fn current_account_media(
+        &'a mut self,
+        media_owner_id: AccountIdInternal,
+    ) -> Result<CurrentAccountMediaInternal, DieselDatabaseError> {
+        let conn = self.conn();
+        let current_media = {
+            use crate::schema::current_account_media::dsl::*;
+
+            current_account_media
+                .filter(account_id.eq(media_owner_id.as_db_id()))
+                .select(CurrentAccountMediaRaw::as_select())
+                .first(conn)
+                .into_db_error(DieselDatabaseError::Execute, media_owner_id)?
+        };
+
+        let security = if let Some(content_id) = current_media.security_content_id {
+            use crate::schema::media_content::dsl::*;
+
+            let content = media_content
+                .filter(id.eq(content_id))
+                .select(MediaContentRaw::as_select())
+                .first(conn)
+                .into_db_error(DieselDatabaseError::Execute, (media_owner_id, content_id))?;
+
+            Some(content.to_content_id_internal())
+        } else {
+            None
+        };
+
+        let profile = if let Some(content_id) = current_media.profile_content_id {
+            use crate::schema::media_content::dsl::*;
+
+            let content = media_content
+                .filter(id.eq(content_id))
+                .select(MediaContentRaw::as_select())
+                .first(conn)
+                .into_db_error(DieselDatabaseError::Execute, (media_owner_id, content_id))?;
+
+            Some(content.to_content_id_internal())
+        } else {
+            None
+        };
+
+        Ok(CurrentAccountMediaInternal {
+            security_content_id: security,
+            profile_content_id: profile,
+            grid_crop_size: current_media.grid_crop_size,
+            grid_crop_x: current_media.grid_crop_x,
+            grid_crop_y: current_media.grid_crop_y,
+        })
+    }
+
+    pub fn get_account_media(
+        &'a mut self,
+        media_owner_id: AccountIdInternal,
+    ) -> Result<Vec<MediaContentInternal>, DieselDatabaseError> {
+        let data: Vec<MediaContentRaw> = {
+            use crate::schema::media_content::dsl::*;
+
+            media_content
+                .filter(account_id.eq(media_owner_id.as_db_id()))
+                .select(MediaContentRaw::as_select())
+                .load(self.conn())
+                .into_db_error(DieselDatabaseError::Execute, media_owner_id)?
+        };
+
+        let content = data
+            .into_iter()
+            .filter_map(|r| {
+                let state = r.moderation_state.try_into().ok()?;
+                let content_type = r.content_type.try_into().ok()?;
+
+                Some(MediaContentInternal {
+                    content_id: ContentIdInternal {
+                        content_id: r.uuid,
+                        content_row_id: r.id,
+                    },
+                    state,
+                    content_type,
+                    slot_number: r.slot_number,
+                })
+            })
+            .collect();
+
+        Ok(content)
+    }
+
+    pub fn get_content_id_from_slot(
+        &'a mut self,
+        slot_owner: AccountIdInternal,
+        slot: ImageSlot,
+    ) -> Result<Option<ContentIdInternal>, DieselDatabaseError> {
+        let required_state = ContentState::InSlot as i64;
+        let required_slot = slot as i64;
+
+        let data: Option<MediaContentRaw> = {
+            use crate::schema::media_content::dsl::*;
+
+            media_content
+                .filter(account_id.eq(slot_owner.as_db_id()))
+                .filter(moderation_state.eq(required_state))
+                .filter(slot_number.eq(required_slot))
+                .select(MediaContentRaw::as_select())
+                .first(self.conn())
+                .optional()
+                .into_db_error(DieselDatabaseError::Execute, (slot_owner, slot))?
+        };
+
+        Ok(data.map(|data| data.to_content_id_internal()))
+    }
+
+    /// Validate moderation request content.
+    ///
+    /// Returns `Err(DieselDatabaseError::ModerationRequestContentInvalid)` if the
+    /// content is invalid.
+    pub fn content_validate_moderation_request_content(
+        &'a mut self,
+        content_owner: AccountIdInternal,
+        request_content: &ModerationRequestContent,
+    ) -> Result<(), DieselDatabaseError> {
+        let requested_content_set: HashSet<ContentId> = request_content.content().collect();
+
+        let required_state = ContentState::InSlot as i64;
+        let data: Vec<MediaContentRaw> = {
+            use crate::schema::media_content::dsl::*;
+
+            media_content
+                .filter(account_id.eq(content_owner.as_db_id()))
+                .filter(moderation_state.eq(required_state))
+                .select(MediaContentRaw::as_select())
+                .load(self.conn())
+                .into_db_error(DieselDatabaseError::Execute, content_owner)?
+        };
+
+        let database_content_set: HashSet<ContentId> =
+            data.into_iter().map(|r| r.uuid).collect();
+
+        if requested_content_set == database_content_set {
+            Ok(())
+        } else {
+            Err(DieselDatabaseError::ModerationRequestContentInvalid.into())
+        }
+    }
+
+    pub fn get_moderation_request_content(
+        &'a mut self,
+        owner_id: ModerationRequestId,
+    ) -> Result<
         (
             ModerationRequestContent,
-            ModerationRequestQueueNumber,
+            ModerationQueueNumber,
             AccountIdLight,
         ),
-        SqliteDatabaseError,
+        DieselDatabaseError,
     > {
-        let request = sqlx::query!(
-            r#"
-            SELECT json_text, queue_number, account_id as "account_id: uuid::Uuid"
-            FROM MediaModerationRequest
-            INNER JOIN AccountId on AccountId.account_row_id = MediaModerationRequest.account_row_id
-            WHERE request_row_id = ?
-            "#,
-            id.request_row_id,
-        )
-        .fetch_one(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
 
+        let (request, account_id) = {
+            use crate::schema::media_moderation_request::dsl::*;
+            use crate::schema::media_moderation_request;
+            use crate::schema::account_id;
+
+            media_moderation_request::table
+                .inner_join(account_id::table)
+                .filter(id.eq(owner_id.request_row_id))
+                .select((ModerationRequestRaw::as_select(), AccountIdInternal::as_select()))
+                .first(self.conn())
+                .into_db_error(DieselDatabaseError::Execute, owner_id)?
+        };
         let data: ModerationRequestContent = serde_json::from_str(&request.json_text)
-            .into_error(SqliteDatabaseError::SerdeDeserialize)?;
+            .into_error(DieselDatabaseError::SerdeDeserialize)?;
 
         Ok((
             data,
-            ModerationRequestQueueNumber {
-                number: request.queue_number,
-            },
-            AccountIdLight::new(request.account_id),
+            ModerationQueueNumber(request.queue_number),
+            account_id.uuid,
         ))
     }
 
-    pub async fn get_in_progress_moderations(
-        &self,
-        moderator_id: AccountIdInternal,
-    ) -> error_stack::Result<Vec<Moderation>, SqliteDatabaseError> {
-        let account_row_id = moderator_id.row_id();
-        let state_in_progress = ModerationRequestState::InProgress as i64;
-        let data = sqlx::query!(
-            r#"
-            SELECT MediaModeration.request_row_id, RequestCreatorAccountId.account_id as "request_creator_account_id: uuid::Uuid", MediaModeration.json_text
-            FROM MediaModeration
-            INNER JOIN MediaModerationRequest on MediaModerationRequest.request_row_id = MediaModeration.request_row_id
-            INNER JOIN AccountId as RequestCreatorAccountId on RequestCreatorAccountId.account_row_id = MediaModerationRequest.account_row_id
-            WHERE MediaModeration.account_row_id = ? AND state_number = ?
-            "#,
-            account_row_id,
-            state_in_progress,
-        )
-        .fetch_all(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
 
-        let mut new_data = vec![];
-        for r in data.into_iter() {
-            let data: ModerationRequestContent = serde_json::from_str(&r.json_text)
-                .into_error(SqliteDatabaseError::SerdeDeserialize)?;
-
-            let moderation = Moderation {
-                request_creator_id: AccountIdLight::new(r.request_creator_account_id),
-                moderator_id: moderator_id.as_light(),
-                request_id: ModerationRequestId {
-                    request_row_id: r.request_row_id,
-                },
-                content: data,
-            };
-            new_data.push(moderation);
-        }
-
-        Ok(new_data)
-    }
-
-    pub async fn get_next_active_moderation_request(
-        &self,
-        sub_queue: i64,
-    ) -> ReadResult<Option<ModerationRequestId>, SqliteDatabaseError> {
-        let data = sqlx::query!(
-            r#"
-            SELECT request_row_id
-            FROM MediaModerationQueueNumber
-                INNER JOIN MediaModerationRequest ON MediaModerationRequest.queue_number = MediaModerationQueueNumber.queue_number
-            WHERE sub_queue = ?
-            ORDER BY MediaModerationQueueNumber.queue_number ASC
-            LIMIT 1
-            "#,
-            sub_queue,
-        )
-        .fetch_optional(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
-
-        let request_row_id = match data.map(|r| r.request_row_id) {
-            None => return Ok(None),
-            Some(id) => id,
-        };
-
-        Ok(Some(ModerationRequestId { request_row_id }))
-    }
-
-    pub async fn moderation(
-        &self,
-        moderation: ModerationId,
-    ) -> error_stack::Result<ModerationRequestContent, SqliteDatabaseError> {
-        let account_row_id = moderation.account_id.row_id();
-        let content_to_be_moderated = sqlx::query!(
-            r#"
-            SELECT json_text
-            FROM MediaModeration
-            WHERE account_row_id = ? AND request_row_id = ?
-            "#,
-            account_row_id,
-            moderation.request_id.request_row_id,
-        )
-        .fetch_one(self.pool())
-        .await
-        .into_error(SqliteDatabaseError::Fetch)?;
-
-        let data: ModerationRequestContent =
-            serde_json::from_str(&content_to_be_moderated.json_text)
-                .into_error(SqliteDatabaseError::SerdeDeserialize)?;
-
-        Ok(data)
-    }
 }
+
+
+    // async fn get_content_id_from_row_id(
+    //     &self,
+    //     id: i64,
+    // ) -> error_stack::Result<ContentIdInternal, SqliteDatabaseError> {
+    //     let request = sqlx::query!(
+    //         r#"
+    //         SELECT uuid as "content_id: uuid::Uuid"
+    //         FROM media_content
+    //         WHERE account_id = ?
+    //         "#,
+    //         id,
+    //     )
+    //     .fetch_one(self.pool())
+    //     .await
+    //     .map(|r| ContentIdInternal {
+    //         content_id: r.content_id,
+    //         content_row_id: id,
+    //     })
+    //     .into_error(SqliteDatabaseError::Fetch)?;
+
+    //     Ok(request)
+    // }

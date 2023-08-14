@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountIdInternal, AccountIdLight, ModerationRequestContent};
+use diesel::prelude::*;
+
+use crate::{AccountIdInternal, AccountIdLight, ModerationRequestContent, AccountIdDb, ModerationRequestIdDb};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationList {
@@ -20,6 +22,16 @@ pub struct ModerationId {
     pub account_id: AccountIdInternal,
 }
 
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::media_moderation)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct MediaModerationRaw {
+    pub account_id: AccountIdDb,
+    pub moderation_request_id: ModerationRequestIdDb,
+    pub state_number: i64,
+    pub json_text: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Moderation {
     pub request_creator_id: AccountIdLight,
@@ -30,10 +42,5 @@ pub struct Moderation {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationRequestId {
-    pub request_row_id: i64,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct ModerationRequestQueueNumber {
-    pub number: i64,
+    pub request_row_id: ModerationRequestIdDb,
 }

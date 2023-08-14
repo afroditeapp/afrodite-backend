@@ -54,6 +54,7 @@ macro_rules! define_read_commands {
                 &self.cmds.files
             }
 
+            #[track_caller]
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<'_>,
@@ -67,6 +68,19 @@ macro_rules! define_read_commands {
                 cmd: T,
             ) -> error_stack::Result<R, crate::data::DatabaseError> {
                 self.cmds.db_read(cmd).await
+            }
+
+            #[track_caller]
+            pub async fn read_cache<T, Id: Into<model::AccountIdLight>>(
+                &self,
+                id: Id,
+                cache_operation: impl Fn(&crate::data::cache::CacheEntry) -> T,
+            ) -> error_stack::Result<T, crate::data::DatabaseError> {
+                use error_stack::ResultExt;
+                self.cache()
+                    .read_cache(id, cache_operation)
+                    .await
+                    .change_context(crate::data::DatabaseError::Cache)
             }
         }
     };
@@ -208,22 +222,16 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Vec<MediaContentInternal>, DatabaseError> {
-        self.db
-            .media()
-            .get_account_media(account_id)
+        self.db_read(move |cmds| cmds.media().get_account_media(account_id))
             .await
-            .convert(account_id)
     }
 
     pub async fn moderation_request(
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, DatabaseError> {
-        self.db
-            .media()
-            .current_moderation_request(account_id)
+        self.db_read(move |cmds| cmds.media().moderation_request(account_id))
             .await
-            .convert(account_id)
             .map(|r| r.map(|request| request.into_request()))
     }
 
@@ -236,9 +244,10 @@ impl<'a> ReadCommands<'a> {
                 e.profile.as_ref().map(|p| p.public).flatten()
             })
             .await
-            .convert(account_id)
+            .change_context(DatabaseError::Cache)
     }
 
+    #[track_caller]
     pub async fn db_read<
         T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
@@ -254,7 +263,7 @@ impl<'a> ReadCommands<'a> {
             .into_error(DieselDatabaseError::GetConnection)
             .change_context(DatabaseError::Diesel)?;
 
-        conn.interact(move |conn| cmd(CurrentSyncReadCommands { conn }))
+        conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
             .await
             .into_error_string(DieselDatabaseError::Execute)
             .change_context(DatabaseError::Diesel)?

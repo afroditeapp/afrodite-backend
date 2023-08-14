@@ -67,7 +67,8 @@ pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalAp
     if account_id.as_light() == requested_profile.as_light() {
         return state
             .read_database()
-            .read_json::<ProfileInternal>(requested_profile)
+            .profile()
+            .profile(requested_profile)
             .await
             .map(|profile| {
                 let profile: Profile = profile.into();
@@ -119,7 +120,8 @@ pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalAp
     if visiblity {
         state
             .read_database()
-            .read_json::<ProfileInternal>(requested_profile)
+            .profile()
+            .profile(requested_profile)
             .await
             .map(|profile| {
                 let profile: Profile = profile.into();
@@ -169,7 +171,8 @@ pub async fn post_profile<S: GetApiKeys + WriteData + ReadDatabase>(
     let old_profile: ProfileInternal =
         state
             .read_database()
-            .read_json(account_id)
+            .profile()
+            .profile(account_id)
             .await
             .map_err(|e| {
                 error!("post_profile: read current profile, {e:?}");
@@ -183,8 +186,7 @@ pub async fn post_profile<S: GetApiKeys + WriteData + ReadDatabase>(
 
     let new = ProfileUpdateInternal::new(profile);
 
-    state
-        .write(move |cmds| async move { cmds.update_data(account_id, &new).await })
+    db_write!(state, move |cmds| cmds.profile().profile(account_id, new))
         .await
         .map_err(|e| {
             error!("post_profile: write profile, {e:?}");
@@ -421,7 +423,8 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
     let old_profile: ProfileInternal =
         state
             .read_database()
-            .read_json(account_id)
+            .profile()
+            .profile(account_id)
             .await
             .map_err(|e| {
                 error!("post_profile: read current profile, {e:?}");

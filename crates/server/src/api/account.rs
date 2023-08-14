@@ -132,7 +132,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
     ),
 )]
 pub async fn post_sign_in_with_login<
-    S: GetApiKeys + WriteData + GetUsers + SignInWith + GetConfig,
+    S: GetApiKeys + WriteData + ReadDatabase + GetUsers + SignInWith + GetConfig,
 >(
     Json(tokens): Json<SignInWithLoginInfo>,
     state: S,
@@ -148,8 +148,9 @@ pub async fn post_sign_in_with_login<
             })?;
         let google_id = GoogleAccountId(info.id);
         let already_existing_account = state
-            .users()
-            .get_account_with_google_account_id(google_id.clone())
+            .read_database()
+            .account()
+            .google_account_id_to_account_id(google_id.clone())
             .await
             .map_err(|e| {
                 error!("{e:?}");
@@ -241,7 +242,8 @@ pub async fn get_account_state<S: GetApiKeys + ReadDatabase>(
 
     state
         .read_database()
-        .read_json::<Account>(id)
+        .account()
+        .account(id)
         .await
         .map(|account| account.into())
         .map_err(|e| {
@@ -280,7 +282,8 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteData>(
 
     let account = state
         .read_database()
-        .read_json::<Account>(id)
+        .account()
+        .account(id)
         .await
         .map_err(|e| {
             error!("Get profile error: {e:?}");
@@ -288,13 +291,21 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteData>(
         })?;
 
     if account.state() == AccountState::InitialSetup {
-        state
-            .write(move |cmds| async move { cmds.update_data(id, &data).await })
+        db_write!(state, move |cmds| cmds.account().account_setup(id, data))
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
                 StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
             })
+
+
+        // state
+        //     .write(move |cmds| async move { cmds.account().account().update_data(id, &data).await })
+        //     .await
+        //     .map_err(|e| {
+        //         error!("Write database error: {e:?}");
+        //         StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
+        //     })
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -332,7 +343,8 @@ pub async fn post_complete_setup<
 
     let account_setup = state
         .read_database()
-        .read_json::<AccountSetup>(id)
+        .account()
+        .account_setup(id)
         .await
         .map_err(|e| {
             error!("Complete setup error: {e:?}");
@@ -354,7 +366,8 @@ pub async fn post_complete_setup<
 
     let mut account = state
         .read_database()
-        .read_json::<Account>(id)
+        .account()
+        .account(id)
         .await
         .map_err(|e| {
             error!("Complete setup error: {e:?}");
@@ -391,8 +404,7 @@ pub async fn post_complete_setup<
             }
         }
 
-        state
-            .write(move |cmds| async move { cmds.update_data(id, &account).await })
+        db_write!(state, move |cmds| cmds.account().account(id, account))
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
@@ -435,7 +447,8 @@ pub async fn put_setting_profile_visiblity<S: GetApiKeys + ReadDatabase + GetInt
 
     let account = state
         .read_database()
-        .read_json::<Account>(id)
+        .account()
+        .account(id)
         .await
         .map_err(|e| {
             error!("put_setting_profile_visiblity: {e:?}");
