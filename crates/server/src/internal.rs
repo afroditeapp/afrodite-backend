@@ -2,7 +2,7 @@
 
 use error_stack::{Result, ResultExt};
 use hyper::StatusCode;
-use tokio::sync::{Mutex, MutexGuard};
+
 use tracing::{error, info};
 
 use api_internal::{Configuration, InternalApi};
@@ -10,12 +10,11 @@ use config::{Config, InternalApiUrls};
 use model::{Account, AccountIdInternal, ApiKey, BooleanSetting, Profile, ProfileInternal};
 use utils::IntoReportExt;
 
-use crate::{data::{write_commands::WriteCommandRunnerHandle, write::WriteCommands}, app::AppState, api::{GetApiKeys, GetConfig, ReadDatabase, WriteData, db_write}};
+use crate::{api::{GetApiKeys, GetConfig, ReadDatabase, WriteData, db_write}};
 
 use super::data::{
     read::ReadCommands,
-    SyncWriteHandle,
-    utils::{AccountIdManager, ApiKeyManager},
+    utils::{ApiKeyManager},
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted

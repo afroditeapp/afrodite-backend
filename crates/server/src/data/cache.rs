@@ -8,18 +8,17 @@ use tracing::info;
 
 use config::Config;
 use database::{
-    ConvertCommandError, current::read::{SqliteReadCommands, CurrentSyncReadCommands}, NoId, ReadResult,
-    sqlite::SqliteSelectJson, WriteResult, diesel::{DieselCurrentReadHandle, DieselDatabaseError},
+    ConvertCommandError, current::read::{SqliteReadCommands, CurrentSyncReadCommands}, NoId, diesel::{DieselCurrentReadHandle, DieselDatabaseError},
 };
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, LocationIndexKey, Profile,
+    Account, AccountIdInternal, AccountIdLight, ApiKey, LocationIndexKey,
     ProfileInternal, ProfileUpdateInternal,
 };
 use utils::{ComponentError, IntoReportExt, IntoReportFromString};
 
 use super::{index::{
     location::LocationIndexIteratorState, LocationIndexIteratorGetter, LocationIndexWriterGetter,
-}, DatabaseError};
+}};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";

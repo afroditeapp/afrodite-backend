@@ -1,4 +1,4 @@
-use async_trait::async_trait;
+
 use model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo, AccountIdDb,
 };
@@ -6,16 +6,14 @@ use utils::IntoReportExt;
 use diesel::{prelude::*, insert_into, update};
 
 use crate::{
-    insert_or_update_json,
-    sqlite::{SqliteDatabaseError, SqliteUpdateJson},
-    WriteResult, diesel::DieselDatabaseError, IntoDatabaseError,
+    diesel::DieselDatabaseError, IntoDatabaseError,
 };
 
 use error_stack::Result;
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 
-use super::CurrentWriteCommands;
+
 
 impl<'a> CurrentSyncWriteAccount<'a> {
     pub fn insert_account_id(

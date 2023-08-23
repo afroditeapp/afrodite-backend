@@ -1,10 +1,10 @@
 use error_stack::{Result, FutureExt, ResultExt};
 use tokio_stream::StreamExt;
 
-use database::NoId;
+
 use model::{AccountIdInternal, AccountIdLight, ApiKey, RefreshToken, SignInWithInfo, GoogleAccountId, Account, AccountSetup};
 
-use crate::utils::{ConvertCommandErrorExt, ErrorConversion};
+use crate::utils::{ErrorConversion};
 
 use super::{
     ReadCommands,

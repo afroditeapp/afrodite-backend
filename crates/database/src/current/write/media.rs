@@ -1,13 +1,12 @@
 use model::{
-    AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal, ImageSlot,
-    ModerationRequest, ModerationRequestContent, PrimaryImage, QueueNumberRaw, ModerationQueueNumber, ContentIdInternal, ContentIdDb,
+    AccountIdInternal, ContentId, ContentState, ImageSlot, ModerationRequestContent, PrimaryImage, QueueNumberRaw, ModerationQueueNumber, ContentIdDb,
 };
-use sqlx::{Sqlite, Transaction};
+
 use utils::IntoReportExt;
 use diesel::{prelude::*, update, insert_into, delete};
 use error_stack::Result;
 
-use crate::{sqlite::SqliteDatabaseError, WriteResult, diesel::{DieselDatabaseError, DieselConnection}, IntoDatabaseError, TransactionError};
+use crate::{diesel::{DieselDatabaseError, DieselConnection}, IntoDatabaseError, TransactionError};
 
 define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
 
@@ -177,7 +176,7 @@ impl<'a> CurrentSyncWriteMedia<'a> {
             // Delete old queue number and request
             Self::delete_moderation_request(conn, request_creator)?;
 
-            let account_row_id = request_creator.row_id();
+            let _account_row_id = request_creator.row_id();
             let queue_number_new =
                 Self::create_new_moderation_request_queue_number(
                     conn,

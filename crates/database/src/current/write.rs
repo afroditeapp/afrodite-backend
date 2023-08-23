@@ -1,4 +1,4 @@
-use sqlx::{SqlitePool, error::DatabaseError};
+use sqlx::{SqlitePool};
 
 use self::{
     account::{CurrentSyncWriteAccount, CurrentWriteAccount},

@@ -4,7 +4,7 @@ use error_stack::Result;
 
 use model::{AccountIdInternal, AuthPair};
 
-use crate::{data::DatabaseError, utils::{ConvertCommandErrorExt, ErrorConversion}};
+use crate::{data::DatabaseError, utils::{ErrorConversion}};
 
 define_write_commands!(WriteCommandsCommon);
 

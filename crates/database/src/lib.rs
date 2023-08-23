@@ -6,7 +6,7 @@ pub mod diesel;
 pub mod history;
 pub mod sqlite;
 
-use core::fmt;
+
 use std::{marker::PhantomData, fmt::Debug};
 
 use config::RUNNING_IN_DEBUG_MODE;

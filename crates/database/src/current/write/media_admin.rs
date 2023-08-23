@@ -1,15 +1,14 @@
-use error_stack::{ResultExt, Result};
+use error_stack::{Result};
 use model::{
-    AccountIdInternal, ContentId, ContentState, CurrentAccountMediaInternal,
-    HandleModerationRequest, ImageSlot, MediaContentType, Moderation, ModerationId,
-    ModerationRequestContent, ModerationRequestId, ModerationQueueNumber,
+    AccountIdInternal, ContentId, ContentState,
+    HandleModerationRequest, MediaContentType, Moderation, ModerationId, ModerationRequestId, ModerationQueueNumber,
     ModerationRequestState, ContentIdDb, PrimaryImage,
 };
-use sqlx::{Sqlite, Transaction};
+
 use utils::IntoReportExt;
 use diesel::{prelude::*, delete, update};
 
-use crate::{sqlite::SqliteDatabaseError, ConvertCommandError, IntoDatabaseError, WriteResult, diesel::{DieselDatabaseError, DieselConnection}, current::{read::media, write::CurrentSyncWriteCommands}, TransactionError};
+use crate::{IntoDatabaseError, diesel::{DieselDatabaseError, DieselConnection}, current::{write::CurrentSyncWriteCommands}, TransactionError};
 
 use super::media::CurrentSyncWriteMedia;
 
@@ -210,7 +209,7 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
                     )?;
                 }
 
-                let state_number = state as i64;
+                let _state_number = state as i64;
 
                 {
                     use model::schema::media_moderation::dsl::*;

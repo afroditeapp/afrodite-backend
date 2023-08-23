@@ -1,13 +1,11 @@
-use async_trait::async_trait;
+
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileVersion};
+use model::{AccountIdInternal, LocationIndexKey, ProfileInternal};
 use utils::IntoReportExt;
 
 use crate::{
-    current::read::SqliteReadCommands,
     diesel::DieselDatabaseError,
-    sqlite::{SqliteDatabaseError, SqliteSelectJson},
 };
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);

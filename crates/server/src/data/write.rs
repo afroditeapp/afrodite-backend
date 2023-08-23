@@ -17,11 +17,11 @@ use utils::{IntoReportExt, IntoReportFromString};
 use crate::{
     data::DatabaseError,
     media_backup::MediaBackupHandle,
-    utils::{ConvertCommandErrorExt, ErrorConversion},
+    utils::{ErrorConversion},
 };
 
 use super::{
-    cache::{CachedProfile, DatabaseCache, WriteCacheJson},
+    cache::{DatabaseCache, WriteCacheJson},
     file::utils::FileDir,
     index::{LocationIndexWriterGetter, LocationIndexIteratorGetter},
 };
@@ -270,7 +270,7 @@ impl<'a> WriteCommands<'a> {
         let account_setup = AccountSetup::default();
 
         let config = self.config.clone();
-        let id = self.db_transaction_with_history_REMOVE(move |conn, history_conn|{
+        let id = self.db_transaction_with_history_REMOVE(move |conn, _history_conn|{
             // let mut conn1 = CurrentSyncWriteCommands::new(conn);
             // let conn = &mut conn1;
             let id = conn

@@ -13,7 +13,7 @@ use database::{
 };
 use model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink};
 
-use crate::{data::DatabaseError, utils::{ConvertCommandErrorExt, ErrorConversion}};
+use crate::{data::DatabaseError, utils::{ErrorConversion}};
 
 use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter,

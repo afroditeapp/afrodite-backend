@@ -1,17 +1,15 @@
-use std::collections::HashSet;
+
 
 use model::{
-    AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState,
-    CurrentAccountMediaInternal, ImageSlot, MediaContentInternal, Moderation, ModerationId,
-    ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
-    ModerationQueueNumber, ModerationRequestState, ModerationRequestRaw, MediaModerationRaw, CurrentAccountMediaRaw, MediaContentRaw, QueueNumberRaw,
+    AccountIdInternal, Moderation, ModerationId,
+    ModerationRequestContent, ModerationRequestId, ModerationRequestState, ModerationRequestRaw, MediaModerationRaw,
 };
 use utils::IntoReportExt;
 use error_stack::Result;
 
 use diesel::prelude::*;
 
-use crate::{IntoDatabaseError, sqlite::SqliteDatabaseError, ReadResult, diesel::DieselDatabaseError};
+use crate::{IntoDatabaseError, diesel::DieselDatabaseError};
 
 
 
@@ -26,7 +24,7 @@ impl <'a> CurrentSyncReadMediaAdmin<'a> {
         &'a mut self,
         moderator_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
-        let account_row_id = moderator_id.row_id();
+        let _account_row_id = moderator_id.row_id();
         let state_in_progress = ModerationRequestState::InProgress as i64;
         let data: Vec<(MediaModerationRaw, ModerationRequestRaw, AccountIdInternal)> = {
             use crate::schema::media_moderation::dsl::*;

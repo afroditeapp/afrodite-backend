@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize, __private::de::Content};
+use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 

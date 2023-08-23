@@ -1,11 +1,11 @@
 use error_stack::{Result, ResultExt};
 
-use database::sqlite::SqliteUpdateJson;
+
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use crate::{
     data::{cache::CacheError, DatabaseError},
-    utils::{ConvertCommandErrorExt, ErrorConversion},
+    utils::{ErrorConversion},
 };
 
 define_write_commands!(WriteCommandsProfile);

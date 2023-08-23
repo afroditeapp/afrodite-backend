@@ -1,14 +1,14 @@
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 
 use diesel::{
-    backend::Backend, deserialize::FromSql, prelude::*, serialize::ToSql, sql_types::Binary,
+    deserialize::FromSql, prelude::*, serialize::ToSql, sql_types::Binary,
 };
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{AccountIdLight, macros::diesel_uuid_wrapper, Account, AccountIdDb};
+use crate::{AccountIdLight, macros::diesel_uuid_wrapper, AccountIdDb};
 
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]

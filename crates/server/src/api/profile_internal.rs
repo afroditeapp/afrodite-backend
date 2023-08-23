@@ -8,7 +8,7 @@ use model::{AccountIdLight, BooleanSetting};
 
 use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
 
-use super::{GetApiKeys, GetConfig, WriteData, utils::Json};
+use super::{GetApiKeys, GetConfig, WriteData};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";

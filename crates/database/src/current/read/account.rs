@@ -1,20 +1,17 @@
 use diesel::prelude::*;
-use async_trait::async_trait;
+
 use futures::Stream;
 use model::{
     Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo, RefreshTokenRaw, AccessTokenRaw, AccountIdDb, AccountIdLight, AccountRaw, SignInWithInfoRaw,
 };
 
 use tokio_stream::StreamExt;
-use utils::IntoReportExt;
+
 use error_stack::Result;
 
 use crate::{
     IntoDatabaseError,
-    current::read::SqliteReadCommands,
-    read_json,
-    sqlite::{SqliteDatabaseError, SqliteSelectJson},
-    NoId, ReadResult, diesel::DieselDatabaseError, ReadError,
+    sqlite::{SqliteDatabaseError}, diesel::DieselDatabaseError,
 };
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);

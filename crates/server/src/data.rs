@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use error_stack::{IntoReport, Result, ResultExt, Report};
+use error_stack::{IntoReport, Result, ResultExt};
 use tracing::info;
 
 use ::utils::IntoReportExt;

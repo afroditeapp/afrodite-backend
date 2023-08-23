@@ -1,11 +1,11 @@
-use base64::Engine;
+
 use diesel::prelude::*;
-use diesel::{Identifiable, Associations};
+use diesel::{Associations};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountIdInternal, AccountIdDb};
-use crate::{RefreshToken, ApiKey, AccountIdLight, macros::diesel_string_wrapper};
+use crate::{RefreshToken, ApiKey, macros::diesel_string_wrapper};
 
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]

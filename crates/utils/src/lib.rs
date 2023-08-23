@@ -3,7 +3,7 @@
 
 pub mod api;
 
-use std::{fmt::Display, error, io};
+use std::{fmt::Display, io};
 
 use error_stack::{Context, IntoReport, Result, ResultExt};
 
@@ -58,7 +58,7 @@ impl <E: Context, Ok> NextErrWrapped<Ok, E, ErrorWrapper<E>> for std::result::Re
 }
 
 impl <E: Context, Ok> NextErrWrapped<Ok, E, error_stack::Report<E>> for std::result::Result<Ok, E> {
-    fn to_next_err(self, e: E) -> std::result::Result<Ok, error_stack::Report<E>> {
+    fn to_next_err(self, _e: E) -> std::result::Result<Ok, error_stack::Report<E>> {
         self.into_report()
     }
 }

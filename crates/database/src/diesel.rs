@@ -1,4 +1,4 @@
-use std::{fmt, path::PathBuf, time::Duration};
+use std::{fmt, path::PathBuf};
 
 use config::Config;
 use deadpool::managed::HookErrorCause;
@@ -7,8 +7,8 @@ use diesel::RunQueryDsl;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use error_stack::{IntoReport, Result, ResultExt};
 use sqlx::Row;
-use tokio::time::sleep;
-use tracing::log::{error, info};
+
+use tracing::log::{error};
 use utils::{IntoReportExt, IntoReportFromString, ComponentError};
 
 use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};

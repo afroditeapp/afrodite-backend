@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use axum::{extract::{ConnectInfo, FromRequest, rejection::{JsonRejection, self}}, middleware::Next, response::{Response, IntoResponse}};
+use axum::{extract::{ConnectInfo, FromRequest, rejection::{JsonRejection}}, middleware::Next, response::{Response, IntoResponse}};
 use config::RUNNING_IN_DEBUG_MODE;
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};

@@ -1,9 +1,9 @@
 use database::{diesel::DieselDatabaseError, current::write::media::CurrentSyncWriteMedia};
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Result, ResultExt};
 
 use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
 
-use crate::{data::DatabaseError, utils::ConvertCommandErrorExt};
+use crate::{data::DatabaseError};
 
 define_write_commands!(WriteCommandsMedia);
 

@@ -6,7 +6,7 @@ use axum::{
 };
 use error_stack::Result;
 use futures::Future;
-use tokio::sync::Mutex;
+
 
 use api::BackendVersionProvider;
 use config::Config;
@@ -22,8 +22,7 @@ use super::{
         DatabaseError,
         read::ReadCommands,
         RouterDatabaseReadHandle,
-        RouterDatabaseWriteHandle,
-        SyncWriteHandle, utils::{AccountIdManager, ApiKeyManager}, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteHandle},
+        RouterDatabaseWriteHandle, utils::{AccountIdManager, ApiKeyManager}, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteHandle},
     },
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
@@ -137,7 +136,7 @@ pub struct App {
 impl App {
     pub async fn new(
         database_handle: RouterDatabaseReadHandle,
-        database_write_handle: RouterDatabaseWriteHandle,
+        _database_write_handle: RouterDatabaseWriteHandle,
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
         ws_manager: WebSocketManager,

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use model::{
     AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState,
-    CurrentAccountMediaInternal, ImageSlot, MediaContentInternal, Moderation, ModerationId,
+    CurrentAccountMediaInternal, ImageSlot, MediaContentInternal,
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
     ModerationRequestState, ModerationRequestRaw, MediaModerationRaw, CurrentAccountMediaRaw, MediaContentRaw, ModerationQueueNumber,
 };
@@ -11,7 +11,7 @@ use error_stack::Result;
 
 use diesel::prelude::*;
 
-use crate::{IntoDatabaseError, sqlite::SqliteDatabaseError, ReadResult, diesel::DieselDatabaseError};
+use crate::{IntoDatabaseError, diesel::DieselDatabaseError};
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 
