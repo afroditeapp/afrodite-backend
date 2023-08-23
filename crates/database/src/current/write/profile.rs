@@ -1,13 +1,11 @@
-
-use diesel::{prelude::*, ExpressionMethods, QueryDsl, update, insert_into};
+use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
 use error_stack::Result;
-use model::{AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileUpdateInternal, ProfileVersion};
+use model::{
+    AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileUpdateInternal, ProfileVersion,
+};
 use utils::IntoReportExt;
 
-
-use crate::{
-    diesel::DieselDatabaseError, IntoDatabaseError,
-};
+use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 

@@ -1,10 +1,9 @@
 use std::net::SocketAddr;
 
 use error_stack::Result;
-
 use model::{AccountIdInternal, AuthPair};
 
-use crate::{data::DatabaseError, utils::{ErrorConversion}};
+use crate::{data::DatabaseError, utils::ErrorConversion};
 
 define_write_commands!(WriteCommandsCommon);
 
@@ -15,7 +14,8 @@ impl WriteCommandsCommon<'_> {
         pair: AuthPair,
         address: Option<SocketAddr>,
     ) -> Result<(), DatabaseError> {
-        let current_access_token = self.db_read(move |cmds| cmds.account().access_token(id))
+        let current_access_token = self
+            .db_read(move |cmds| cmds.account().access_token(id))
             .await?;
 
         let access = pair.access.clone();
@@ -52,7 +52,8 @@ impl WriteCommandsCommon<'_> {
         remove_access_token: bool,
     ) -> Result<(), DatabaseError> {
         let current_access_token = if remove_access_token {
-            self.db_read(move |cmds| cmds.account().access_token(id)).await?
+            self.db_read(move |cmds| cmds.account().access_token(id))
+                .await?
         } else {
             None
         };

@@ -7,22 +7,24 @@ use std::net::SocketAddr;
 
 use axum::{
     extract::{
-        ConnectInfo,
-        WebSocketUpgrade, ws::{Message, WebSocket},
+        ws::{Message, WebSocket},
+        ConnectInfo, WebSocketUpgrade,
     },
-    response::IntoResponse, TypedHeader,
+    response::IntoResponse,
+    TypedHeader,
 };
 use error_stack::{IntoReport, Result, ResultExt};
 use hyper::StatusCode;
-use tracing::error;
-
 use model::{AccountIdInternal, ApiKey, AuthPair, BackendVersion, RefreshToken};
+use tracing::error;
 pub use utils::api::PATH_CONNECT;
 use utils::IntoReportExt;
 
+use super::{
+    utils::{ApiKeyHeader, Json},
+    BackendVersionProvider, GetApiKeys, ReadDatabase, WriteData,
+};
 use crate::app::connection::WebSocketManager;
-
-use super::{BackendVersionProvider, GetApiKeys, ReadDatabase, utils::{ApiKeyHeader, Json}, WriteData};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 

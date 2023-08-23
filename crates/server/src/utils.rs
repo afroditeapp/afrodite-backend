@@ -1,14 +1,13 @@
-use error_stack::{Context, Report, Result, ResultExt};
-use tokio::sync::oneshot;
-
 use database::{
-    ConvertCommandError, DatabaseId, HistoryReadError, HistoryReadResult,
-    HistoryWriteError, HistoryWriteResult, ReadError, ReadResult, sqlite::SqliteDatabaseError, WriteError,
+    sqlite::SqliteDatabaseError, ConvertCommandError, DatabaseId, HistoryReadError,
+    HistoryReadResult, HistoryWriteError, HistoryWriteResult, ReadError, ReadResult, WriteError,
     WriteResult,
 };
+use error_stack::{Context, Report, Result, ResultExt};
+use tokio::sync::oneshot;
 use utils::{ComponentError, ErrorResultExt};
 
-use crate::data::{cache::CacheError, DatabaseError, file::FileError};
+use crate::data::{cache::CacheError, file::FileError, DatabaseError};
 
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;

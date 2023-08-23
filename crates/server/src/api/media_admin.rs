@@ -1,12 +1,14 @@
-use axum::{Extension, extract::Path, TypedHeader};
+use axum::{extract::Path, Extension, TypedHeader};
 use hyper::StatusCode;
-use tracing::error;
-
 use model::{
     AccountIdInternal, AccountIdLight, HandleModerationRequest, ModerationList, SecurityImage,
 };
+use tracing::error;
 
-use super::{GetApiKeys, GetInternalApi, GetUsers, ReadDatabase, utils::{ApiKeyHeader, Json}, WriteData, GetConfig};
+use super::{
+    utils::{ApiKeyHeader, Json},
+    GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteData,
+};
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
 

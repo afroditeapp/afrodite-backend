@@ -1,25 +1,16 @@
-
-
+use diesel::prelude::*;
+use error_stack::Result;
 use model::{
-    AccountIdInternal, Moderation, ModerationId,
-    ModerationRequestContent, ModerationRequestId, ModerationRequestState, ModerationRequestRaw, MediaModerationRaw,
+    AccountIdInternal, MediaModerationRaw, Moderation, ModerationId, ModerationRequestContent,
+    ModerationRequestId, ModerationRequestRaw, ModerationRequestState,
 };
 use utils::IntoReportExt;
-use error_stack::Result;
 
-use diesel::prelude::*;
-
-use crate::{IntoDatabaseError, diesel::DieselDatabaseError};
-
-
-
+use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
 define_read_commands!(CurrentReadMediaAdmin, CurrentSyncReadMediaAdmin);
 
-
-
-
-impl <'a> CurrentSyncReadMediaAdmin<'a> {
+impl<'a> CurrentSyncReadMediaAdmin<'a> {
     pub fn get_in_progress_moderations(
         &'a mut self,
         moderator_id: AccountIdInternal,
@@ -27,16 +18,19 @@ impl <'a> CurrentSyncReadMediaAdmin<'a> {
         let _account_row_id = moderator_id.row_id();
         let state_in_progress = ModerationRequestState::InProgress as i64;
         let data: Vec<(MediaModerationRaw, ModerationRequestRaw, AccountIdInternal)> = {
-            use crate::schema::media_moderation::dsl::*;
-            use crate::schema::media_moderation;
-            use crate::schema::media_moderation_request;
-            use crate::schema::account_id;
+            use crate::schema::{
+                account_id, media_moderation, media_moderation::dsl::*, media_moderation_request,
+            };
 
             media_moderation::table
                 .inner_join(media_moderation_request::table.inner_join(account_id::table))
                 .filter(account_id.eq(moderator_id.as_db_id()))
                 .filter(state_number.eq(state_in_progress))
-                .select((MediaModerationRaw::as_select(), ModerationRequestRaw::as_select(), AccountIdInternal::as_select()))
+                .select((
+                    MediaModerationRaw::as_select(),
+                    ModerationRequestRaw::as_select(),
+                    AccountIdInternal::as_select(),
+                ))
                 .load(self.conn())
                 .into_db_error(DieselDatabaseError::Execute, moderator_id)?
         };
@@ -65,17 +59,16 @@ impl <'a> CurrentSyncReadMediaAdmin<'a> {
         sub_queue_value: i64,
         moderator_id_for_logging: AccountIdInternal,
     ) -> Result<Option<ModerationRequestId>, DieselDatabaseError> {
-
         let data: Option<ModerationRequestRaw> = {
-            use crate::schema::media_moderation_queue_number::dsl::*;
-            use crate::schema::media_moderation_queue_number;
-            use crate::schema::media_moderation_request;
+            use crate::schema::{
+                media_moderation_queue_number, media_moderation_queue_number::dsl::*,
+                media_moderation_request,
+            };
 
             media_moderation_queue_number::table
                 .inner_join(
-                    media_moderation_request::table.on(
-                        queue_number.eq(media_moderation_request::queue_number)
-                    )
+                    media_moderation_request::table
+                        .on(queue_number.eq(media_moderation_request::queue_number)),
                 )
                 .filter(sub_queue.eq(sub_queue_value))
                 .select(ModerationRequestRaw::as_select())
@@ -108,9 +101,8 @@ impl <'a> CurrentSyncReadMediaAdmin<'a> {
                 .into_db_error(DieselDatabaseError::Execute, moderation)?
         };
 
-        let data: ModerationRequestContent =
-            serde_json::from_str(&request.json_text)
-                .into_error(DieselDatabaseError::SerdeDeserialize)?;
+        let data: ModerationRequestContent = serde_json::from_str(&request.json_text)
+            .into_error(DieselDatabaseError::SerdeDeserialize)?;
 
         Ok(data)
     }

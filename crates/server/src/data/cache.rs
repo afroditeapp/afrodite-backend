@@ -1,24 +1,25 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 
 use async_trait::async_trait;
+use config::Config;
+use database::{
+    current::read::{CurrentSyncReadCommands, SqliteReadCommands},
+    diesel::{DieselCurrentReadHandle, DieselDatabaseError},
+    ConvertCommandError, NoId,
+};
 use error_stack::{Result, ResultExt};
+use model::{
+    Account, AccountIdInternal, AccountIdLight, ApiKey, LocationIndexKey, ProfileInternal,
+    ProfileUpdateInternal,
+};
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing::info;
-
-use config::Config;
-use database::{
-    ConvertCommandError, current::read::{SqliteReadCommands, CurrentSyncReadCommands}, NoId, diesel::{DieselCurrentReadHandle, DieselDatabaseError},
-};
-use model::{
-    Account, AccountIdInternal, AccountIdLight, ApiKey, LocationIndexKey,
-    ProfileInternal, ProfileUpdateInternal,
-};
 use utils::{ComponentError, IntoReportExt, IntoReportFromString};
 
-use super::{index::{
+use super::index::{
     location::LocationIndexIteratorState, LocationIndexIteratorGetter, LocationIndexWriterGetter,
-}};
+};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
@@ -77,7 +78,9 @@ impl DatabaseCache {
         while let Some(r) = accounts.next().await {
             let id = r.attach(NoId).change_context(CacheError::Init)?;
             // Diesel connection used here so no deadlock
-            cache.load_account_from_db(id, &config, &read_diesel, &index_iterator, &index_writer).await?;
+            cache
+                .load_account_from_db(id, &config, &read_diesel, &index_iterator, &index_writer)
+                .await?;
         }
 
         info!("Loading to memory complete");
@@ -102,10 +105,14 @@ impl DatabaseCache {
             .attach_printable(account_id)?;
 
         let read_lock = self.accounts.read().await;
-        let account_entry = read_lock.get(&account_id.as_light()).ok_or(CacheError::KeyNotExists)?;
+        let account_entry = read_lock
+            .get(&account_id.as_light())
+            .ok_or(CacheError::KeyNotExists)?;
 
-        let api_key = db_read(&read_diesel, move |cmds| cmds.account().access_token(account_id))
-            .await?;
+        let api_key = db_read(&read_diesel, move |cmds| {
+            cmds.account().access_token(account_id)
+        })
+        .await?;
 
         if let Some(key) = api_key {
             let mut write_api_keys = self.api_keys.write().await;
@@ -119,32 +126,28 @@ impl DatabaseCache {
         let mut entry = account_entry.cache.write().await;
 
         if config.components().account {
-            let account = db_read(&read_diesel, move |cmds| cmds.account().account(account_id))
-                .await?;
+            let account =
+                db_read(&read_diesel, move |cmds| cmds.account().account(account_id)).await?;
             entry.account = Some(account.clone().into())
         }
 
         if config.components().profile {
             let profile =
-                db_read(&read_diesel, move |cmds| cmds.profile().profile(account_id))
-                    .await?;
+                db_read(&read_diesel, move |cmds| cmds.profile().profile(account_id)).await?;
 
             let mut profile_data: CachedProfile = profile.into();
 
-            let location_key =
-                db_read(&read_diesel, move |cmds| cmds.profile().location_index_key(account_id))
-                    .await?;
+            let location_key = db_read(&read_diesel, move |cmds| {
+                cmds.profile().location_index_key(account_id)
+            })
+            .await?;
             profile_data.location.current_position = location_key;
-            let index_iterator = index_iterator
-                .get()
-                .ok_or(CacheError::FeatureNotEnabled)?;
-            profile_data.location.current_iterator = index_iterator
-                .reset_iterator(profile_data.location.current_iterator, location_key);
+            let index_iterator = index_iterator.get().ok_or(CacheError::FeatureNotEnabled)?;
+            profile_data.location.current_iterator =
+                index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
 
             // TODO: Add to location index only if visiblity is public
-            let _index_writer = index_writer
-                .get()
-                .ok_or(CacheError::FeatureNotEnabled)?;
+            let _index_writer = index_writer.get().ok_or(CacheError::FeatureNotEnabled)?;
             //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
 
             entry.profile = Some(Box::new(profile_data));
@@ -507,7 +510,7 @@ impl WriteCacheJson for ProfileUpdateInternal {
 async fn db_read<
     T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
     R: Send + 'static,
-    >(
+>(
     read: &DieselCurrentReadHandle,
     cmd: T,
 ) -> Result<R, CacheError> {

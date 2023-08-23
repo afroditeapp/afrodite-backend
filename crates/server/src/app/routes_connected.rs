@@ -1,12 +1,11 @@
 use axum::{
     middleware,
-    Router,
     routing::{get, patch, post, put},
+    Router,
 };
 
-use crate::api::{self};
-
 use super::AppState;
+use crate::api::{self};
 
 /// Private routes only accessible when WebSocket is connected.
 /// Debug mode allows also connection without the WebSocket connection.

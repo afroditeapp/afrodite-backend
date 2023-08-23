@@ -1,9 +1,6 @@
-
-
 use std::fmt::Debug;
 
 use super::*;
-
 
 pub struct Allowed;
 pub struct NotAllowed;
@@ -26,7 +23,7 @@ pub struct DbgPrinter<'a> {
     value4: Option<&'a dyn std::fmt::Debug>,
 }
 
-impl <'a> Debug for DbgPrinter<'a> {
+impl<'a> Debug for DbgPrinter<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut dbg_tuple = f.debug_tuple("");
         if let Some(value1) = &self.value1 {
@@ -44,7 +41,6 @@ impl <'a> Debug for DbgPrinter<'a> {
         dbg_tuple.finish()
     }
 }
-
 
 /// Control logging when server debug mode is disabled.
 pub trait IsLoggingAllowed {
@@ -95,7 +91,7 @@ enable_logging!(
     AccountIdLight,
     // Media
     ModerationRequestIdDb,
-    ModerationRequestId,    // TODO: combine with ModerationRequestIdDb
+    ModerationRequestId, // TODO: combine with ModerationRequestIdDb
     ContentIdDb,
     ContentId,
     ImageSlot,
@@ -113,11 +109,10 @@ disable_logging!(
     (),
 );
 
-
-impl <
-    T1: IsLoggingAllowed,
-    T2: IsLoggingAllowed,
-> IsLoggingAllowed for (T1, T2) where Self: Debug {
+impl<T1: IsLoggingAllowed, T2: IsLoggingAllowed> IsLoggingAllowed for (T1, T2)
+where
+    Self: Debug,
+{
     type Value = Allowed;
     // fn debug_print<'a>(&'a self) -> DbgPrinter<'a> {
     //     DbgPrinter {
@@ -137,11 +132,11 @@ impl <
     }
 }
 
-impl <
-    T1: IsLoggingAllowed + Debug,
-    T2: IsLoggingAllowed + Debug,
-    T3: IsLoggingAllowed + Debug,
-> IsLoggingAllowed for (T1, T2, T3) where Self: Debug {
+impl<T1: IsLoggingAllowed + Debug, T2: IsLoggingAllowed + Debug, T3: IsLoggingAllowed + Debug>
+    IsLoggingAllowed for (T1, T2, T3)
+where
+    Self: Debug,
+{
     type Value = Allowed;
     fn fmt_loggable(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("(")?;
@@ -155,12 +150,15 @@ impl <
     }
 }
 
-impl <
-    T1: IsLoggingAllowed + Debug,
-    T2: IsLoggingAllowed + Debug,
-    T3: IsLoggingAllowed + Debug,
-    T4: IsLoggingAllowed + Debug,
-> IsLoggingAllowed for (T1, T2, T3, T4) where Self: Debug {
+impl<
+        T1: IsLoggingAllowed + Debug,
+        T2: IsLoggingAllowed + Debug,
+        T3: IsLoggingAllowed + Debug,
+        T4: IsLoggingAllowed + Debug,
+    > IsLoggingAllowed for (T1, T2, T3, T4)
+where
+    Self: Debug,
+{
     type Value = Allowed;
     fn fmt_loggable(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("(")?;

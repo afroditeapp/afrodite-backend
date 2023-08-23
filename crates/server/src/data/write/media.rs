@@ -1,9 +1,8 @@
-use database::{diesel::DieselDatabaseError, current::write::media::CurrentSyncWriteMedia};
+use database::{current::write::media::CurrentSyncWriteMedia, diesel::DieselDatabaseError};
 use error_stack::{Result, ResultExt};
-
 use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
 
-use crate::{data::DatabaseError};
+use crate::data::DatabaseError;
 
 define_write_commands!(WriteCommandsMedia);
 
@@ -13,8 +12,11 @@ impl WriteCommandsMedia<'_> {
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DatabaseError> {
-        self.db_write(move |cmds| cmds.into_media().create_new_moderation_request(account_id, request))
-            .await
+        self.db_write(move |cmds| {
+            cmds.into_media()
+                .create_new_moderation_request(account_id, request)
+        })
+        .await
     }
 
     /// Completes previous save_to_tmp.
@@ -45,15 +47,15 @@ impl WriteCommandsMedia<'_> {
         let raw_img = self
             .file_dir()
             .unprocessed_image_upload(id.as_light(), content_id);
-        let processed_content_path =
-            self.file_dir().image_content(id.as_light(), content_id);
+        let processed_content_path = self.file_dir().image_content(id.as_light(), content_id);
 
-        if self.db_read(move |cmds| cmds.media().get_content_id_from_slot(id, slot))
-                .await?
-                .is_some()
-            {
-                return Err(DatabaseError::ContentSlotNotEmpty.into());
-            }
+        if self
+            .db_read(move |cmds| cmds.media().get_content_id_from_slot(id, slot))
+            .await?
+            .is_some()
+        {
+            return Err(DatabaseError::ContentSlotNotEmpty.into());
+        }
 
         self.db_transaction(move |conn| {
             CurrentSyncWriteMedia::insert_content_id_to_slot(conn, id, content_id, slot)?;
@@ -66,7 +68,7 @@ impl WriteCommandsMedia<'_> {
 
             Ok(())
         })
-            .await?;
+        .await?;
 
         self.media_backup()
             .backup_jpeg_image(id.as_light(), content_id)

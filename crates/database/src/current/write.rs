@@ -1,13 +1,17 @@
-use sqlx::{SqlitePool};
+use sqlx::SqlitePool;
 
 use self::{
     account::{CurrentSyncWriteAccount, CurrentWriteAccount},
     chat::{CurrentSyncWriteChat, CurrentWriteChat},
     media::{CurrentSyncWriteMedia, CurrentWriteMedia},
-    media_admin::{CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin},
+    media_admin::{CurrentSyncWriteMediaAdmin, CurrentWriteMediaAdmin},
     profile::{CurrentSyncWriteProfile, CurrentWriteProfile},
 };
-use crate::{diesel::{DieselConnection, DieselDatabaseError}, sqlite::CurrentDataWriteHandle, TransactionError};
+use crate::{
+    diesel::{DieselConnection, DieselDatabaseError},
+    sqlite::CurrentDataWriteHandle,
+    TransactionError,
+};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -46,7 +50,9 @@ macro_rules! define_write_commands {
                 self.cmds.conn
             }
 
-            pub fn read(conn: &mut crate::diesel::DieselConnection) -> crate::current::read::CurrentSyncReadCommands<'_> {
+            pub fn read(
+                conn: &mut crate::diesel::DieselConnection,
+            ) -> crate::current::read::CurrentSyncReadCommands<'_> {
                 crate::current::read::CurrentSyncReadCommands::new(conn)
             }
         }
@@ -138,7 +144,6 @@ impl<'a> CurrentSyncWriteCommands<'a> {
         CurrentSyncWriteProfile::new(self.write())
     }
 
-
     pub fn chat(self) -> CurrentSyncWriteChat<'a> {
         CurrentSyncWriteChat::new(self)
     }
@@ -156,9 +161,15 @@ impl<'a> CurrentSyncWriteCommands<'a> {
     }
 
     pub fn transaction<
-        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError<DieselDatabaseError>> + 'static,
+        F: FnOnce(
+                &mut DieselConnection,
+            ) -> std::result::Result<T, TransactionError<DieselDatabaseError>>
+            + 'static,
         T,
-    >(self, transaction_actions: F) -> error_stack::Result<T, DieselDatabaseError> {
+    >(
+        self,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
         Ok(self.conn.transaction(transaction_actions)?)
     }
@@ -241,7 +252,6 @@ pub trait WriteCmdsMethods<'a, 'b: 'a>: Sized {
     }
 }
 
-
 // impl <'a> WriteCmdsMethods<'a> for TransactionConnection<'a> {
 //     fn conn(self) -> &'a mut DieselConnection {
 //         self.conn
@@ -255,7 +265,7 @@ pub trait WriteCmdsMethods<'a, 'b: 'a>: Sized {
 //     // }
 // }
 
-impl <'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for TransactionConnection<'b> {
+impl<'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for TransactionConnection<'b> {
     //type R = TransactionConnection<'b>;
     // fn r(self) -> Self::R {
     //     self
@@ -294,7 +304,7 @@ impl <'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for TransactionConnection<'b> {
 //     // }
 // }
 
-impl <'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for &'b mut DieselConnection {
+impl<'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for &'b mut DieselConnection {
     // type R = &'b mut DieselConnection;
     // fn r(self) -> Self::R {
     //     self
@@ -303,7 +313,6 @@ impl <'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for &'b mut DieselConnection {
         CurrentSyncWriteCommands::new(self)
     }
 }
-
 
 // impl TransactionConnection<'_> {
 //     pub fn new(conn: &mut DieselConnection) -> Self {

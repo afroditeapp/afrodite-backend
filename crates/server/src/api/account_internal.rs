@@ -2,9 +2,8 @@
 
 use axum::extract::Path;
 use hyper::StatusCode;
-use tracing::error;
-
 use model::{Account, AccountIdLight, ApiKey};
+use tracing::error;
 
 use crate::api::{utils::Json, GetApiKeys, GetUsers, ReadDatabase};
 

@@ -1,17 +1,20 @@
 use axum::{
-    Extension,
-    extract::{BodyStream, Path, Query}, TypedHeader,
+    extract::{BodyStream, Path, Query},
+    Extension, TypedHeader,
 };
 use headers::ContentType;
 use hyper::StatusCode;
-use tracing::error;
-
 use model::{
     AccountIdInternal, AccountIdLight, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
     ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SlotId,
 };
+use tracing::error;
 
-use super::{db_write, GetApiKeys, GetUsers, ReadDatabase, utils::{ApiKeyHeader, Json}, WriteData};
+use super::{
+    db_write,
+    utils::{ApiKeyHeader, Json},
+    GetApiKeys, GetUsers, ReadDatabase, WriteData,
+};
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 

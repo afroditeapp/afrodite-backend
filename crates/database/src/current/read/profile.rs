@@ -1,12 +1,9 @@
-
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{AccountIdInternal, LocationIndexKey, ProfileInternal};
 use utils::IntoReportExt;
 
-use crate::{
-    diesel::DieselDatabaseError,
-};
+use crate::diesel::DieselDatabaseError;
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 

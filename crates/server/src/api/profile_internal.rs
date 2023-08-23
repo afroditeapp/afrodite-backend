@@ -2,13 +2,11 @@
 
 use axum::extract::Path;
 use hyper::StatusCode;
+use model::{AccountIdLight, BooleanSetting};
 use tracing::error;
 
-use model::{AccountIdLight, BooleanSetting};
-
-use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
-
 use super::{GetApiKeys, GetConfig, WriteData};
+use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";

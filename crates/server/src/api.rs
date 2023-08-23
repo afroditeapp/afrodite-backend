@@ -1,11 +1,11 @@
 //! HTTP API types and request handlers for all servers.
 
+use config::Config;
 use futures::Future;
+use model::{AccountIdLight, BackendVersion};
 use utoipa::OpenApi;
 
-use config::Config;
-use model::{AccountIdLight, BackendVersion};
-
+use self::utils::SecurityApiTokenDefault;
 // use crate::{
 //     server::{
 //         app::sign_in_with::SignInWithManager,
@@ -23,17 +23,15 @@ use model::{AccountIdLight, BackendVersion};
 use crate::{
     app::sign_in_with::SignInWithManager,
     data::{
-        DatabaseError,
         read::ReadCommands,
         utils::{AccountIdManager, ApiKeyManager},
         write_commands::WriteCmds,
         write_concurrent::ConcurrentWriteHandle,
+        DatabaseError,
     },
     internal::InternalApiManager,
     manager_client::ManagerApiManager,
 };
-
-use self::utils::SecurityApiTokenDefault;
 
 // Routes
 pub mod account;

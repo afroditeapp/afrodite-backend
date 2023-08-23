@@ -1,5 +1,3 @@
-
-
 /// Type must have new() and to_uuid() methods. Also diesel::FromSqlRow and
 /// diesel::AsExpression derives are needed.
 ///
@@ -28,7 +26,8 @@
 /// ```
 macro_rules! diesel_uuid_wrapper {
     ($name:ty) => {
-        impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::Binary, DB> for $name
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::Binary, DB> for $name
         where
             Vec<u8>: diesel::deserialize::FromSql<diesel::sql_types::Binary, DB>,
         {
@@ -41,7 +40,8 @@ macro_rules! diesel_uuid_wrapper {
             }
         }
 
-        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::Binary, DB> for $name
+        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::Binary, DB>
+            for $name
         where
             [u8]: diesel::serialize::ToSql<diesel::sql_types::Binary, DB>,
         {
@@ -58,7 +58,6 @@ macro_rules! diesel_uuid_wrapper {
 }
 
 pub(crate) use diesel_uuid_wrapper;
-
 
 /// Type must have new() and as_str() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
@@ -88,7 +87,8 @@ pub(crate) use diesel_uuid_wrapper;
 /// ```
 macro_rules! diesel_string_wrapper {
     ($name:ty) => {
-        impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::Text, DB> for $name
+        impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::Text, DB>
+            for $name
         where
             String: diesel::deserialize::FromSql<diesel::sql_types::Text, DB>,
         {
@@ -100,7 +100,8 @@ macro_rules! diesel_string_wrapper {
             }
         }
 
-        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::Text, DB> for $name
+        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::Text, DB>
+            for $name
         where
             str: diesel::serialize::ToSql<diesel::sql_types::Text, DB>,
         {
@@ -115,7 +116,6 @@ macro_rules! diesel_string_wrapper {
 }
 
 pub(crate) use diesel_string_wrapper;
-
 
 /// Type must have new() and as_i64() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
@@ -145,7 +145,8 @@ pub(crate) use diesel_string_wrapper;
 /// ```
 macro_rules! diesel_i64_wrapper {
     ($name:ty) => {
-        impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB> for $name
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB> for $name
         where
             i64: diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB>,
         {
@@ -157,7 +158,8 @@ macro_rules! diesel_i64_wrapper {
             }
         }
 
-        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::BigInt, DB> for $name
+        impl<DB: diesel::backend::Backend> diesel::serialize::ToSql<diesel::sql_types::BigInt, DB>
+            for $name
         where
             i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, DB>,
         {

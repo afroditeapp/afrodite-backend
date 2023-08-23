@@ -1,19 +1,14 @@
-
+use diesel::{insert_into, prelude::*, update};
+use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken, SignInWithInfo, AccountIdDb,
+    Account, AccountIdDb, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken,
+    SignInWithInfo,
 };
 use utils::IntoReportExt;
-use diesel::{prelude::*, insert_into, update};
 
-use crate::{
-    diesel::DieselDatabaseError, IntoDatabaseError,
-};
-
-use error_stack::Result;
+use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
-
-
 
 impl<'a> CurrentSyncWriteAccount<'a> {
     pub fn insert_account_id(
@@ -123,8 +118,8 @@ impl<'a> CurrentSyncWriteAccount<'a> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account::dsl::*;
 
-        let data = serde_json::to_string(account_data)
-            .into_error(DieselDatabaseError::SerdeSerialize)?;
+        let data =
+            serde_json::to_string(account_data).into_error(DieselDatabaseError::SerdeSerialize)?;
 
         insert_into(account)
             .values((account_id.eq(id.as_db_id()), json_text.eq(data)))
@@ -141,8 +136,8 @@ impl<'a> CurrentSyncWriteAccount<'a> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account::dsl::*;
 
-        let data = serde_json::to_string(account_data)
-            .into_error(DieselDatabaseError::SerdeSerialize)?;
+        let data =
+            serde_json::to_string(account_data).into_error(DieselDatabaseError::SerdeSerialize)?;
 
         update(account.find(id.as_db_id()))
             .set(json_text.eq(data))
@@ -190,7 +185,10 @@ impl<'a> CurrentSyncWriteAccount<'a> {
         use model::schema::sign_in_with_info::dsl::*;
 
         insert_into(sign_in_with_info)
-            .values((account_id.eq(id.as_db_id()), google_account_id.eq(&data.google_account_id)))
+            .values((
+                account_id.eq(id.as_db_id()),
+                google_account_id.eq(&data.google_account_id),
+            ))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
@@ -205,7 +203,10 @@ impl<'a> CurrentSyncWriteAccount<'a> {
         use model::schema::sign_in_with_info::dsl::*;
 
         update(sign_in_with_info.find(id.as_db_id()))
-            .set((account_id.eq(id.as_db_id()), google_account_id.eq(&data.google_account_id)))
+            .set((
+                account_id.eq(id.as_db_id()),
+                google_account_id.eq(&data.google_account_id),
+            ))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 

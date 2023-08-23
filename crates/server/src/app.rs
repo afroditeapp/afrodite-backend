@@ -1,35 +1,32 @@
 use std::sync::Arc;
 
+use api::BackendVersionProvider;
 use axum::{
-    Router,
     routing::{get, post},
+    Router,
 };
+use config::Config;
 use error_stack::Result;
 use futures::Future;
-
-
-use api::BackendVersionProvider;
-use config::Config;
 use model::{AccountIdLight, BackendVersion};
 
-use crate::api::{
-    self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase, SignInWith,
-    WriteData,
+use self::{
+    connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
 };
-
 use super::{
     data::{
-        DatabaseError,
         read::ReadCommands,
-        RouterDatabaseReadHandle,
-        RouterDatabaseWriteHandle, utils::{AccountIdManager, ApiKeyManager}, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteHandle},
+        utils::{AccountIdManager, ApiKeyManager},
+        write_commands::{WriteCmds, WriteCommandRunnerHandle},
+        write_concurrent::ConcurrentWriteHandle,
+        DatabaseError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
-
-use self::{
-    connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
+use crate::api::{
+    self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase, SignInWith,
+    WriteData,
 };
 
 pub mod connection;
@@ -109,10 +106,7 @@ impl SignInWith for AppState {
 
 impl GetInternalApi for AppState {
     fn internal_api(&self) -> InternalApiManager<Self> {
-        InternalApiManager::new(
-            self,
-            &self.internal_api,
-        )
+        InternalApiManager::new(self, &self.internal_api)
     }
 }
 

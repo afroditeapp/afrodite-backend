@@ -1,13 +1,12 @@
 use std::path::{Path, PathBuf};
 
 use axum::extract::BodyStream;
-use error_stack::Result;
-use tokio::io::AsyncWriteExt;
-use tokio_stream::{StreamExt, wrappers::ReadDirStream};
-use tokio_util::io::ReaderStream;
-
 use database::ReadResult;
+use error_stack::Result;
 use model::{AccountIdLight, ContentId};
+use tokio::io::AsyncWriteExt;
+use tokio_stream::{wrappers::ReadDirStream, StreamExt};
+use tokio_util::io::ReaderStream;
 use utils::IntoReportExt;
 
 use super::super::FileError;
@@ -233,8 +232,7 @@ impl PathToFile {
     pub fn create_parent_dirs_blocking(&self) -> Result<(), FileError> {
         if let Some(parent_dir) = self.path.parent() {
             if !parent_dir.exists() {
-                std::fs::create_dir_all(parent_dir)
-                    .into_error(FileError::IoFileCreate)
+                std::fs::create_dir_all(parent_dir).into_error(FileError::IoFileCreate)
             } else {
                 Ok(())
             }
@@ -285,8 +283,7 @@ impl PathToFile {
     pub fn move_to_blocking(self, new_location: &Self) -> Result<(), FileError> {
         new_location.create_parent_dirs_blocking()?;
 
-        std::fs::rename(self.path, new_location.path())
-            .into_error(FileError::IoFileRename)
+        std::fs::rename(self.path, new_location.path()).into_error(FileError::IoFileRename)
     }
 
     pub async fn remove_if_exists(self) -> Result<(), FileError> {

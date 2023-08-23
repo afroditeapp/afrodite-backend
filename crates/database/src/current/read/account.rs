@@ -1,18 +1,14 @@
 use diesel::prelude::*;
-
+use error_stack::Result;
 use futures::Stream;
 use model::{
-    Account, AccountIdInternal, AccountSetup, ApiKey, GoogleAccountId, RefreshToken, SignInWithInfo, RefreshTokenRaw, AccessTokenRaw, AccountIdDb, AccountIdLight, AccountRaw, SignInWithInfoRaw,
+    AccessTokenRaw, Account, AccountIdDb, AccountIdInternal, AccountIdLight, AccountRaw,
+    AccountSetup, ApiKey, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
+    SignInWithInfoRaw,
 };
-
 use tokio_stream::StreamExt;
 
-use error_stack::Result;
-
-use crate::{
-    IntoDatabaseError,
-    sqlite::{SqliteDatabaseError}, diesel::DieselDatabaseError,
-};
+use crate::{diesel::DieselDatabaseError, sqlite::SqliteDatabaseError, IntoDatabaseError};
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 
@@ -39,13 +35,12 @@ impl CurrentReadAccount<'_> {
     }
 }
 
-impl <'a> CurrentSyncReadAccount<'a> {
+impl<'a> CurrentSyncReadAccount<'a> {
     pub fn google_account_id_to_account_id(
         &'a mut self,
         google_id: GoogleAccountId,
     ) -> Result<AccountIdInternal, DieselDatabaseError> {
-        use crate::schema::account_id;
-        use crate::schema::sign_in_with_info;
+        use crate::schema::{account_id, sign_in_with_info};
 
         sign_in_with_info::table
             .inner_join(account_id::table)
@@ -107,10 +102,7 @@ impl <'a> CurrentSyncReadAccount<'a> {
         }
     }
 
-    pub fn account(
-        &'a mut self,
-        id: AccountIdInternal,
-    ) -> Result<Account, DieselDatabaseError> {
+    pub fn account(&'a mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
         use crate::schema::account::dsl::*;
 
         let raw = account
@@ -119,8 +111,7 @@ impl <'a> CurrentSyncReadAccount<'a> {
             .first(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
-        serde_json::from_str(raw.json_text.as_str())
-            .into_db_error(DieselDatabaseError::Execute, id)
+        serde_json::from_str(raw.json_text.as_str()).into_db_error(DieselDatabaseError::Execute, id)
     }
 
     pub fn account_setup(

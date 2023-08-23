@@ -7,9 +7,8 @@ use diesel::RunQueryDsl;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use error_stack::{IntoReport, Result, ResultExt};
 use sqlx::Row;
-
-use tracing::log::{error};
-use utils::{IntoReportExt, IntoReportFromString, ComponentError};
+use tracing::log::error;
+use utils::{ComponentError, IntoReportExt, IntoReportFromString};
 
 use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};
 
@@ -99,7 +98,9 @@ impl DieselCurrentWriteHandle {
     }
 
     pub fn to_read_handle(&self) -> DieselCurrentReadHandle {
-        DieselCurrentReadHandle::new(DieselReadHandle { pool: self.pool().clone() })
+        DieselCurrentReadHandle::new(DieselReadHandle {
+            pool: self.pool().clone(),
+        })
     }
 }
 

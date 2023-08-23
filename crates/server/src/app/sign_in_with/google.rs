@@ -1,17 +1,16 @@
 use std::{sync::Arc, time::Instant};
 
+use config::Config;
 use error_stack::{IntoReport, Result};
 use headers::{CacheControl, HeaderMapExt};
 use hyper::Method;
 use jsonwebtoken::{
-    DecodingKey,
-    jwk::{Jwk, JwkSet}, Validation,
+    jwk::{Jwk, JwkSet},
+    DecodingKey, Validation,
 };
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use tracing::error;
-
-use config::Config;
 use utils::IntoReportExt;
 
 // TODO: Send serverAuthCode to server. Get refresh and access tokens from

@@ -2,9 +2,8 @@
 
 // TODO: Remove all git related code
 
-use tokio::sync::mpsc;
-
 use ::utils::ComponentError;
+use tokio::sync::mpsc;
 
 pub mod file;
 pub mod read;

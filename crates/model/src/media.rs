@@ -1,10 +1,16 @@
+use diesel::{
+    prelude::*,
+    sql_types::{BigInt, Binary},
+    AsExpression, FromSqlRow,
+};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use diesel::{prelude::*, AsExpression, FromSqlRow, sql_types::{BigInt, Binary}};
-
-use crate::{AccountIdLight, macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, AccountIdDb};
+use crate::{
+    macros::{diesel_i64_wrapper, diesel_uuid_wrapper},
+    AccountIdDb, AccountIdLight,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotNumber {
@@ -210,7 +216,16 @@ pub struct SlotId {
 
 /// Content ID for media content for example images
 #[derive(
-    Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams, PartialEq, Eq, Hash,
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Eq,
+    Hash,
     FromSqlRow,
     AsExpression,
 )]
@@ -305,7 +320,10 @@ pub struct MediaContentRaw {
 
 impl MediaContentRaw {
     pub fn to_content_id_internal(&self) -> ContentIdInternal {
-        ContentIdInternal { content_id: self.uuid, content_row_id: self.id }
+        ContentIdInternal {
+            content_id: self.uuid,
+            content_row_id: self.id,
+        }
     }
 }
 
@@ -369,7 +387,6 @@ impl From<CurrentAccountMediaInternal> for PrimaryImage {
     }
 }
 
-
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityImage {
     pub content_id: Option<ContentId>,
@@ -395,8 +412,19 @@ pub struct NormalImages {
     pub data: Vec<ContentId>,
 }
 
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    sqlx::Type,
+    PartialEq,
+    Eq,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
 #[sqlx(transparent)]
@@ -414,7 +442,19 @@ impl ModerationRequestIdDb {
 
 diesel_i64_wrapper!(ModerationRequestIdDb);
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    sqlx::Type,
+    PartialEq,
+    Eq,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
 #[sqlx(transparent)]
@@ -432,8 +472,19 @@ impl ModerationQueueNumber {
 
 diesel_i64_wrapper!(ModerationQueueNumber);
 
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    sqlx::Type,
+    PartialEq,
+    Eq,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
 #[sqlx(transparent)]

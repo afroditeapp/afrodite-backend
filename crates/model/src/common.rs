@@ -1,9 +1,13 @@
 use base64::Engine;
-use diesel::{prelude::*, FromSqlRow, AsExpression, sql_types::{Binary, BigInt}};
+use diesel::{
+    prelude::*,
+    sql_types::{BigInt, Binary},
+    AsExpression, FromSqlRow,
+};
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema, IntoParams};
+use utoipa::{IntoParams, ToSchema};
 
-use crate::{macros::{diesel_uuid_wrapper, diesel_i64_wrapper}};
+use crate::macros::{diesel_i64_wrapper, diesel_uuid_wrapper};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
@@ -20,10 +24,20 @@ pub enum EventToClient {
     AccountStateChanged,
 }
 
-
 /// Used with database
-#[derive(Debug, Serialize, Deserialize, ToSchema, Clone,
-    Eq, Hash, PartialEq, Copy, Queryable, Identifiable, Selectable,
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    Copy,
+    Queryable,
+    Identifiable,
+    Selectable,
 )]
 #[diesel(table_name = crate::schema::account_id)]
 #[diesel(check_for_backend(crate::Db))]
@@ -212,7 +226,19 @@ impl RefreshToken {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    sqlx::Type,
+    PartialEq,
+    Eq,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
 #[sqlx(transparent)]

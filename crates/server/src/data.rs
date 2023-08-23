@@ -5,9 +5,6 @@ use std::{
     sync::Arc,
 };
 
-use error_stack::{IntoReport, Result, ResultExt};
-use tracing::info;
-
 use ::utils::IntoReportExt;
 use config::Config;
 use database::{
@@ -24,13 +21,13 @@ use database::{
         SqlxReadCloseHandle, SqlxReadHandle,
     },
 };
+use error_stack::{IntoReport, Result, ResultExt};
 use model::{AccountIdInternal, AccountIdLight, SignInWithInfo};
-
-use crate::media_backup::MediaBackupHandle;
+use tracing::info;
 
 use self::{
-    cache::{DatabaseCache, WriteCacheJson, CacheError},
-    file::{FileError, read::FileReadCommands, utils::FileDir},
+    cache::{CacheError, DatabaseCache, WriteCacheJson},
+    file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
     utils::{AccountIdManager, ApiKeyManager},
@@ -42,6 +39,7 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
+use crate::media_backup::MediaBackupHandle;
 
 pub mod cache;
 pub mod file;

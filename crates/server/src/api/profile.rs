@@ -1,15 +1,15 @@
 use axum::{extract::Path, TypedHeader};
 use hyper::StatusCode;
-use tracing::error;
-
 use model::{
     AccountIdLight, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
     ProfileUpdateInternal,
 };
+use tracing::error;
 
 use super::{
-    db_write, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, utils::{ApiKeyHeader, Json},
-    WriteData,
+    db_write,
+    utils::{ApiKeyHeader, Json},
+    GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteData,
 };
 
 // TODO: Add timeout for database commands
@@ -42,7 +42,9 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_profile<S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData + GetConfig>(
+pub async fn get_profile<
+    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData + GetConfig,
+>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(requested_profile): Path<AccountIdLight>,
     state: S,
@@ -168,16 +170,15 @@ pub async fn post_profile<S: GetApiKeys + WriteData + ReadDatabase>(
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let old_profile: ProfileInternal =
-        state
-            .read_database()
-            .profile()
-            .profile(account_id)
-            .await
-            .map_err(|e| {
-                error!("post_profile: read current profile, {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-            })?;
+    let old_profile: ProfileInternal = state
+        .read_database()
+        .profile()
+        .profile(account_id)
+        .await
+        .map_err(|e| {
+            error!("post_profile: read current profile, {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })?;
     let old_profile: Profile = old_profile.into();
 
     if profile == old_profile.into_update() {
@@ -420,16 +421,15 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let old_profile: ProfileInternal =
-        state
-            .read_database()
-            .profile()
-            .profile(account_id)
-            .await
-            .map_err(|e| {
-                error!("post_profile: read current profile, {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-            })?;
+    let old_profile: ProfileInternal = state
+        .read_database()
+        .profile()
+        .profile(account_id)
+        .await
+        .map_err(|e| {
+            error!("post_profile: read current profile, {e:?}");
+            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
+        })?;
     let old_profile: Profile = old_profile.into();
 
     if profile == old_profile.into_update() {

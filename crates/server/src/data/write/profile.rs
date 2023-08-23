@@ -1,11 +1,9 @@
 use error_stack::{Result, ResultExt};
-
-
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use crate::{
     data::{cache::CacheError, DatabaseError},
-    utils::{ErrorConversion},
+    utils::ErrorConversion,
 };
 
 define_write_commands!(WriteCommandsProfile);
@@ -20,10 +18,7 @@ impl WriteCommandsProfile<'_> {
         let (visiblity, location, profile_link) = self
             .cache()
             .write_cache(id.as_light(), |e| {
-                let p = e
-                    .profile
-                    .as_mut()
-                    .ok_or(CacheError::FeatureNotEnabled)?;
+                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
                 // Handle race condition between remote fetch and update.
                 // Update will override the initial fetch.
@@ -99,13 +94,9 @@ impl WriteCommandsProfile<'_> {
         self.db_write(move |cmds| cmds.into_profile().profile(id, profile_data))
             .await?;
 
-        self
-            .cache()
+        self.cache()
             .write_cache(id.as_light(), |e| {
-                let p = e
-                    .profile
-                    .as_mut()
-                    .ok_or(CacheError::FeatureNotEnabled)?;
+                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
                 p.data.profile_text = data.new_data.profile_text;
                 p.data.version_uuid = data.version;

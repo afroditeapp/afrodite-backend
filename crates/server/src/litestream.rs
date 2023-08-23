@@ -1,5 +1,6 @@
 use std::{path::Path, process::Stdio, sync::Arc};
 
+use config::{file::LitestreamConfig, Config};
 use error_stack::{Result, ResultExt};
 use nix::{sys::signal::Signal, unistd::Pid};
 use tokio::{
@@ -8,8 +9,6 @@ use tokio::{
     task::JoinHandle,
 };
 use tracing::log::{error, info};
-
-use config::{Config, file::LitestreamConfig};
 use utils::IntoReportExt;
 
 use crate::data::DatabaseRoot;

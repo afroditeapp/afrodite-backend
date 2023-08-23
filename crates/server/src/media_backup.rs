@@ -4,18 +4,17 @@ use std::{
     time::Duration,
 };
 
+use config::Config;
 use error_stack::{Result, ResultExt};
+use model::*;
 use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
-
-use config::Config;
-use model::*;
 use utils::IntoReportExt;
 
 use crate::{
     app::connection::ServerQuitWatcher,
-    data::{DatabaseRoot, file::utils::IMAGE_DIR_NAME},
+    data::{file::utils::IMAGE_DIR_NAME, DatabaseRoot},
 };
 
 pub const MEDIA_BACKUP_MANAGER_QUEUE_SIZE: usize = 64;

@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
+use config::Config;
 use error_stack::{IntoReport, Result};
 use tracing::{error, info};
-
-use config::Config;
 use utils::IntoReportExt;
 
 #[derive(thiserror::Error, Debug)]

@@ -1,16 +1,18 @@
-use error_stack::{Result};
+use diesel::{delete, prelude::*, update};
+use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentId, ContentState,
-    HandleModerationRequest, MediaContentType, Moderation, ModerationId, ModerationRequestId, ModerationQueueNumber,
-    ModerationRequestState, ContentIdDb, PrimaryImage,
+    AccountIdInternal, ContentId, ContentIdDb, ContentState, HandleModerationRequest,
+    MediaContentType, Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
+    ModerationRequestState, PrimaryImage,
 };
-
 use utils::IntoReportExt;
-use diesel::{prelude::*, delete, update};
-
-use crate::{IntoDatabaseError, diesel::{DieselDatabaseError, DieselConnection}, current::{write::CurrentSyncWriteCommands}, TransactionError};
 
 use super::media::CurrentSyncWriteMedia;
+use crate::{
+    current::write::CurrentSyncWriteCommands,
+    diesel::{DieselConnection, DieselDatabaseError},
+    IntoDatabaseError, TransactionError,
+};
 
 define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
 
@@ -23,10 +25,7 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_moderation_queue_number::dsl::*;
 
-        delete(
-            media_moderation_queue_number
-                .filter(queue_number.eq(number))
-        )
+        delete(media_moderation_queue_number.filter(queue_number.eq(number)))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, number)?;
 
@@ -37,7 +36,8 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
         &'a mut self,
         moderator_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
-        let mut moderations = self.cmds
+        let mut moderations = self
+            .cmds
             .read()
             .media_admin()
             .get_in_progress_moderations(moderator_id)?;
@@ -68,7 +68,8 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
         // TODO: Really support multiple sub queues after account premium mode
         // is implemented.
 
-        let id = self.cmds
+        let id = self
+            .cmds
             .read()
             .media_admin()
             .get_next_active_moderation_request(0, moderator_id)?;
@@ -90,7 +91,8 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
         // TODO: Currently is possible that two moderators moderate the same
         // request. Should that be prevented?
 
-        let (content, queue_number, request_creator_id) = self.cmds
+        let (content, queue_number, request_creator_id) = self
+            .cmds
             .read()
             .media()
             .get_moderation_request_content(target_id)?;
@@ -134,11 +136,12 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
         result: HandleModerationRequest,
     ) -> Result<(), DieselDatabaseError> {
         //let conn = self.conn();
-        let request =
-            self.cmds.read()
-                .media()
-                .moderation_request(moderation_request_owner)?
-                .ok_or(DieselDatabaseError::MissingModerationRequest)?;
+        let request = self
+            .cmds
+            .read()
+            .media()
+            .moderation_request(moderation_request_owner)?
+            .ok_or(DieselDatabaseError::MissingModerationRequest)?;
 
         let currently_selected_images =
             //Self::read(conn)
@@ -172,59 +175,56 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
             ModerationRequestState::Waiting => ContentState::InSlot,
         };
 
-        self.conn()
-            .transaction(|mut conn| {
-                for c in content.content() {
-                    CurrentSyncWriteMediaAdmin::update_content_state(
-                        &mut conn,
-                        c,
-                        new_content_state,
-                        content.slot_1_is_security_image() && content.slot_1() == c,
-                    )?;
-                }
+        self.conn().transaction(|mut conn| {
+            for c in content.content() {
+                CurrentSyncWriteMediaAdmin::update_content_state(
+                    &mut conn,
+                    c,
+                    new_content_state,
+                    content.slot_1_is_security_image() && content.slot_1() == c,
+                )?;
+            }
 
-                if content.slot_1_is_security_image()
-                    && state == ModerationRequestState::Accepted
-                    && currently_selected_images
-                        .security_content_id
-                        .is_none()
-                {
-                    CurrentSyncWriteMediaAdmin::update_current_security_image(
-                        &mut conn,
-                        moderation_request_owner,
-                        content.slot_1(),
-                    )?;
+            if content.slot_1_is_security_image()
+                && state == ModerationRequestState::Accepted
+                && currently_selected_images.security_content_id.is_none()
+            {
+                CurrentSyncWriteMediaAdmin::update_current_security_image(
+                    &mut conn,
+                    moderation_request_owner,
+                    content.slot_1(),
+                )?;
 
-                    let primary_image = PrimaryImage {
-                        content_id: content.slot_2(),
-                        grid_crop_size: 0.0,
-                        grid_crop_x: 0.0,
-                        grid_crop_y: 0.0,
-                    };
+                let primary_image = PrimaryImage {
+                    content_id: content.slot_2(),
+                    grid_crop_size: 0.0,
+                    grid_crop_x: 0.0,
+                    grid_crop_y: 0.0,
+                };
 
-                    CurrentSyncWriteMedia::update_current_account_media_with_primary_image(
-                        &mut conn,
-                        moderation_request_owner,
-                        primary_image,
-                    )?;
-                }
+                CurrentSyncWriteMedia::update_current_account_media_with_primary_image(
+                    &mut conn,
+                    moderation_request_owner,
+                    primary_image,
+                )?;
+            }
 
-                let _state_number = state as i64;
+            let _state_number = state as i64;
 
-                {
-                    use model::schema::media_moderation::dsl::*;
-                    update(media_moderation)
-                        .filter(account_id.eq(moderation_id.account_id.as_db_id()))
-                        .filter(moderation_request_id.eq(moderation_id.request_id.request_row_id))
-                        .set(state_number.eq(state as i64))
-                        .execute(conn)
-                        .into_transaction_error(DieselDatabaseError::Execute, ())?;
-                }
+            {
+                use model::schema::media_moderation::dsl::*;
+                update(media_moderation)
+                    .filter(account_id.eq(moderation_id.account_id.as_db_id()))
+                    .filter(moderation_request_id.eq(moderation_id.request_id.request_row_id))
+                    .set(state_number.eq(state as i64))
+                    .execute(conn)
+                    .into_transaction_error(DieselDatabaseError::Execute, ())?;
+            }
 
-                Ok::<_, TransactionError<_>>(())
-            })?;
+            Ok::<_, TransactionError<_>>(())
+        })?;
 
-            Ok(())
+        Ok(())
     }
 
     fn update_current_security_image(
@@ -232,21 +232,24 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
         moderation_request_owner: AccountIdInternal,
         image: ContentId,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::current_account_media::dsl::*;
-        use model::schema::media_content;
+        use model::schema::{current_account_media::dsl::*, media_content};
 
-        let content_id =
-            media_content::table.filter(media_content::uuid.eq(image))
-                .select(media_content::id)
-                .first::<ContentIdDb>(conn)
-                .into_db_error(DieselDatabaseError::Execute, (moderation_request_owner, image))?;
+        let content_id = media_content::table
+            .filter(media_content::uuid.eq(image))
+            .select(media_content::id)
+            .first::<ContentIdDb>(conn)
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (moderation_request_owner, image),
+            )?;
 
         update(current_account_media.find(moderation_request_owner.as_db_id()))
-            .set((
-                security_content_id.eq(content_id),
-            ))
+            .set((security_content_id.eq(content_id),))
             .execute(conn)
-            .into_db_error(DieselDatabaseError::Execute, (moderation_request_owner, image))?;
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (moderation_request_owner, image),
+            )?;
 
         Ok(())
     }
@@ -263,8 +266,6 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
     //         .slot_2()
     //         .ok_or(DieselDatabaseError::ContentSlotEmpty)?
     //         .content_id;
-
-
 
     //     update(media_content.filter(uuid.eq(content_id)))
     //         .set((
@@ -317,7 +318,6 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
         Ok(())
     }
 }
-
 
 // #[must_use]
 // pub struct DatabaseTransaction<'a> {

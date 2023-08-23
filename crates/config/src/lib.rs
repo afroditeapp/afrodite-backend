@@ -7,7 +7,7 @@ pub mod file;
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
-    sync::{Arc, atomic::AtomicBool},
+    sync::{atomic::AtomicBool, Arc},
     vec,
 };
 
@@ -269,7 +269,9 @@ pub fn get_config(
     };
 
     if config.debug_mode() {
-        RUNNING_IN_DEBUG_MODE.debug.store(true, std::sync::atomic::Ordering::Relaxed);
+        RUNNING_IN_DEBUG_MODE
+            .debug
+            .store(true, std::sync::atomic::Ordering::Relaxed);
     }
 
     Ok(config)

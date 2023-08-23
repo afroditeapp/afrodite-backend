@@ -1,12 +1,8 @@
-
-use diesel::prelude::*;
-use diesel::{Associations};
+use diesel::{prelude::*, Associations};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountIdInternal, AccountIdDb};
-use crate::{RefreshToken, ApiKey, macros::diesel_string_wrapper};
-
+use crate::{macros::diesel_string_wrapper, AccountIdDb, AccountIdInternal, ApiKey, RefreshToken};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {
@@ -32,14 +28,12 @@ impl AuthPair {
     }
 }
 
-
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::account)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountRaw {
     pub json_text: String,
 }
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {
@@ -139,7 +133,20 @@ define_capablities!(
     view_public_profiles,
 );
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq, Queryable, Selectable, Insertable, AsChangeset)]
+#[derive(
+    Debug,
+    Clone,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    Default,
+    PartialEq,
+    Eq,
+    Queryable,
+    Selectable,
+    Insertable,
+    AsChangeset,
+)]
 #[diesel(table_name = crate::schema::account_setup)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {

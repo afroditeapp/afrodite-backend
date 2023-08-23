@@ -1,15 +1,15 @@
 use axum::TypedHeader;
 use hyper::StatusCode;
-use tracing::error;
-
 use model::{
     Account, AccountIdLight, AccountSetup, AccountState, ApiKey, AuthPair, BooleanSetting,
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
+use tracing::error;
 
 use super::{
-    db_write, GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith,
-    utils::{Json, ApiKeyHeader}, WriteData,
+    db_write,
+    utils::{ApiKeyHeader, Json},
+    GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith, WriteData,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -298,7 +298,6 @@ pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteData>(
                 StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
             })
 
-
         // state
         //     .write(move |cmds| async move { cmds.account().account().update_data(id, &data).await })
         //     .await
@@ -434,7 +433,9 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_setting_profile_visiblity<S: GetApiKeys + ReadDatabase + GetInternalApi + GetConfig + WriteData>(
+pub async fn put_setting_profile_visiblity<
+    S: GetApiKeys + ReadDatabase + GetInternalApi + GetConfig + WriteData,
+>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(new_value): Json<BooleanSetting>,
     state: S,

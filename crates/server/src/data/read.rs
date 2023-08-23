@@ -1,25 +1,16 @@
 use std::{fmt::Debug, marker::PhantomData};
 
-use error_stack::{Result, ResultExt};
-use tokio_util::io::ReaderStream;
-
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
     diesel::{DieselCurrentReadHandle, DieselDatabaseError},
     sqlite::{SqliteSelectJson, SqlxReadHandle},
 };
+use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, AccountIdLight, ContentId, MediaContentInternal, ModerationRequest,
 };
+use tokio_util::io::ReaderStream;
 use utils::{IntoReportExt, IntoReportFromString};
-
-use crate::utils::{ConvertCommandErrorExt, ErrorConversion};
-
-use super::{
-    cache::{DatabaseCache, ReadCacheJson},
-    DatabaseError,
-    file::utils::FileDir,
-};
 
 use self::{
     account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
@@ -27,6 +18,12 @@ use self::{
     media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile,
     profile_admin::ReadCommandsProfileAdmin,
 };
+use super::{
+    cache::{DatabaseCache, ReadCacheJson},
+    file::utils::FileDir,
+    DatabaseError,
+};
+use crate::utils::{ConvertCommandErrorExt, ErrorConversion};
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {

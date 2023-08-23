@@ -24,9 +24,8 @@
 
 use std::{fmt::Debug, num::NonZeroU16, sync::Arc};
 
-use nalgebra::{DMatrix, Dyn, VecStorage};
-
 use model::{CellData, LocationIndexKey};
+use nalgebra::{DMatrix, Dyn, VecStorage};
 
 /// Origin (0,0) = (y, x) is at top left corner.
 pub struct LocationIndex {

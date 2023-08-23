@@ -4,21 +4,19 @@
 use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
 use axum::extract::BodyStream;
-use error_stack::{Result, ResultExt};
-use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
-
 use database::{
     history::write::HistoryWriteCommands,
     sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
 };
+use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink};
-
-use crate::{data::DatabaseError, utils::{ErrorConversion}};
+use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter,
     RouterDatabaseWriteHandle,
 };
+use crate::{data::DatabaseError, utils::ErrorConversion};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 

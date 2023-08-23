@@ -30,7 +30,6 @@ impl<Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
     }
 }
 
-
 fn test() -> Result<(), io::Error> {
     let x: io::Error = io::ErrorKind::NotFound.into();
     Err(x).to_next_err(io::ErrorKind::AddrInUse.into())
@@ -43,21 +42,21 @@ fn test2() -> std::result::Result<(), ErrorWrapper<io::Error>> {
 
 pub struct ErrorWrapper<T: Context>(pub error_stack::Report<T>);
 
-
 // impl <T: Context> From<error_stack::Report<T>> for ErrorWrapper<T> {
 //     fn from(value: error_stack::Report<T>) -> Self {
 //         Self(value)
 //     }
 // }
 
-
-impl <E: Context, Ok> NextErrWrapped<Ok, E, ErrorWrapper<E>> for std::result::Result<Ok, E> {
+impl<E: Context, Ok> NextErrWrapped<Ok, E, ErrorWrapper<E>> for std::result::Result<Ok, E> {
     fn to_next_err(self, e: E) -> std::result::Result<Ok, ErrorWrapper<E>> {
-        self.into_report().change_context(e).map_err(|e| ErrorWrapper(e))
+        self.into_report()
+            .change_context(e)
+            .map_err(|e| ErrorWrapper(e))
     }
 }
 
-impl <E: Context, Ok> NextErrWrapped<Ok, E, error_stack::Report<E>> for std::result::Result<Ok, E> {
+impl<E: Context, Ok> NextErrWrapped<Ok, E, error_stack::Report<E>> for std::result::Result<Ok, E> {
     fn to_next_err(self, _e: E) -> std::result::Result<Ok, error_stack::Report<E>> {
         self.into_report()
     }
@@ -96,10 +95,9 @@ impl <E: Context, Ok> NextErrWrapped<Ok, E, error_stack::Report<E>> for std::res
 pub trait ErrPrev {
     type PrevErr;
     type Err: Context;
-
 }
 
-impl <C: Context> ErrPrev for ErrorWrapper<C> {
+impl<C: Context> ErrPrev for ErrorWrapper<C> {
     type PrevErr = error_stack::Report<C>;
     type Err = C;
 }
@@ -111,11 +109,9 @@ impl <C: Context> ErrPrev for ErrorWrapper<C> {
 
 // impl<Ok, Err: From<>> ErrContainer<Err> for Result<Ok, Err> {}
 
-
 pub trait NextErrWrapped<Ok, Err: Context, Out>: IntoReport {
     fn to_next_err(self, e: Err) -> std::result::Result<Ok, Out>;
 }
-
 
 pub trait IntoReportExt: IntoReport {
     #[track_caller]
@@ -158,14 +154,14 @@ pub trait IntoReportExt: IntoReport {
     // }
 
     #[track_caller]
-    fn into_wrapped_error<
-        C: Context,
-        E: From<error_stack::Report<C>>
-    >(self, context: C) -> std::result::Result<<Self as IntoReport>::Ok, E> {
-        let r: std::result::Result<<Self as IntoReport>::Ok, error_stack::Report<C>> = self.into_report().change_context(context);
+    fn into_wrapped_error<C: Context, E: From<error_stack::Report<C>>>(
+        self,
+        context: C,
+    ) -> std::result::Result<<Self as IntoReport>::Ok, E> {
+        let r: std::result::Result<<Self as IntoReport>::Ok, error_stack::Report<C>> =
+            self.into_report().change_context(context);
         r.map_err(|e| e.into())
     }
-
 
     #[track_caller]
     fn into_error_with_info<

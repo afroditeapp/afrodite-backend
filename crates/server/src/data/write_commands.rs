@@ -4,17 +4,15 @@
 use std::{future::Future, sync::Arc};
 
 use error_stack::Result;
-use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
-
 use model::AccountIdLight;
+use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 use utils::IntoReportExt;
 
-use crate::data::DatabaseError;
-
 use super::{
-    RouterDatabaseWriteHandle,
-    SyncWriteHandle, write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
+    write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
+    RouterDatabaseWriteHandle, SyncWriteHandle,
 };
+use crate::data::DatabaseError;
 
 pub type WriteCmds = Cmds;
 

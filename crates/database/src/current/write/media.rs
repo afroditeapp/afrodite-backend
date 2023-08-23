@@ -1,19 +1,21 @@
-use model::{
-    AccountIdInternal, ContentId, ContentState, ImageSlot, ModerationRequestContent, PrimaryImage, QueueNumberRaw, ModerationQueueNumber, ContentIdDb,
-};
-
-use utils::IntoReportExt;
-use diesel::{prelude::*, update, insert_into, delete};
+use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
+use model::{
+    AccountIdInternal, ContentId, ContentIdDb, ContentState, ImageSlot, ModerationQueueNumber,
+    ModerationRequestContent, PrimaryImage, QueueNumberRaw,
+};
+use utils::IntoReportExt;
 
-use crate::{diesel::{DieselDatabaseError, DieselConnection}, IntoDatabaseError, TransactionError};
+use crate::{
+    diesel::{DieselConnection, DieselDatabaseError},
+    IntoDatabaseError, TransactionError,
+};
 
 define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
 
 pub struct DeletedSomething;
 
 impl<'a> CurrentSyncWriteMedia<'a> {
-
     pub fn insert_current_account_media(
         &'a mut self,
         id: AccountIdInternal,
@@ -41,14 +43,15 @@ impl<'a> CurrentSyncWriteMedia<'a> {
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::current_account_media::dsl::*;
-        use model::schema::media_content;
+        use model::schema::{current_account_media::dsl::*, media_content};
 
         let content_id = if let Some(content_uuid) = primary_image.content_id {
-            media_content::table.filter(media_content::uuid.eq(content_uuid))
+            media_content::table
+                .filter(media_content::uuid.eq(content_uuid))
                 .select(media_content::id)
                 .first::<ContentIdDb>(conn)
-                .into_db_error(DieselDatabaseError::Execute, primary_image)?.into()
+                .into_db_error(DieselDatabaseError::Execute, primary_image)?
+                .into()
         } else {
             None
         };
@@ -80,10 +83,12 @@ impl<'a> CurrentSyncWriteMedia<'a> {
                 uuid.eq(content_id),
                 moderation_state.eq(ContentState::InSlot as i64),
                 slot_number.eq(slot as i64),
-
             ))
             .execute(transaction_conn)
-            .into_db_error(DieselDatabaseError::Execute, (content_uploader, content_id, slot))?;
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (content_uploader, content_id, slot),
+            )?;
 
         Ok(())
     }
@@ -99,10 +104,10 @@ impl<'a> CurrentSyncWriteMedia<'a> {
             media_content
                 .filter(account_id.eq(request_creator.as_db_id()))
                 .filter(moderation_state.eq(ContentState::InSlot as i64))
-                .filter(slot_number.eq(slot as i64))
+                .filter(slot_number.eq(slot as i64)),
         )
-            .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (request_creator, slot))?;
+        .execute(self.conn())
+        .into_db_error(DieselDatabaseError::Execute, (request_creator, slot))?;
 
         if deleted_count > 0 {
             Ok(Some(DeletedSomething))
@@ -118,19 +123,13 @@ impl<'a> CurrentSyncWriteMedia<'a> {
         // Delete old queue number and request
         {
             use model::schema::media_moderation_queue_number::dsl::*;
-            delete(
-                media_moderation_queue_number
-                    .filter(account_id.eq(request_creator.row_id()))
-            )
+            delete(media_moderation_queue_number.filter(account_id.eq(request_creator.row_id())))
                 .execute(transaction_conn)
                 .into_db_error(DieselDatabaseError::Execute, request_creator)?;
         }
         {
             use model::schema::media_moderation_request::dsl::*;
-            delete(
-                media_moderation_request
-                    .filter(account_id.eq(request_creator.row_id()))
-            )
+            delete(media_moderation_request.filter(account_id.eq(request_creator.row_id())))
                 .execute(transaction_conn)
                 .into_db_error(DieselDatabaseError::Execute, request_creator)?;
         }
@@ -147,9 +146,8 @@ impl<'a> CurrentSyncWriteMedia<'a> {
         use model::schema::media_moderation_queue_number::dsl::*;
 
         insert_into(media_moderation_queue_number)
-            .values((
-                account_id.eq(request_creator.as_db_id()),
-                sub_queue.eq(0))  // TODO: set to correct queue, for example if premium account
+            .values(
+                (account_id.eq(request_creator.as_db_id()), sub_queue.eq(0)), // TODO: set to correct queue, for example if premium account
             )
             .returning(QueueNumberRaw::as_returning())
             .get_result(transaction_conn)
@@ -168,7 +166,8 @@ impl<'a> CurrentSyncWriteMedia<'a> {
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::media_moderation_request::dsl::*;
 
-        self.cmds.read()
+        self.cmds
+            .read()
             .media()
             .content_validate_moderation_request_content(request_creator, &request)?;
 
@@ -178,17 +177,14 @@ impl<'a> CurrentSyncWriteMedia<'a> {
 
             let _account_row_id = request_creator.row_id();
             let queue_number_new =
-                Self::create_new_moderation_request_queue_number(
-                    conn,
-                    request_creator
-                )?;
+                Self::create_new_moderation_request_queue_number(conn, request_creator)?;
             let request_info =
                 serde_json::to_string(&request).into_error(DieselDatabaseError::SerdeSerialize)?;
             insert_into(media_moderation_request)
                 .values((
                     account_id.eq(request_creator.as_db_id()),
                     queue_number.eq(queue_number_new),
-                    json_text.eq(request_info)
+                    json_text.eq(request_info),
                 ))
                 .execute(conn)
                 .into_transaction_error(DieselDatabaseError::Execute, (request_creator, request))?;

@@ -1,17 +1,20 @@
 use std::net::SocketAddr;
 
-use axum::{extract::{ConnectInfo, FromRequest, rejection::{JsonRejection}}, middleware::Next, response::{Response, IntoResponse}};
+use axum::{
+    extract::{rejection::JsonRejection, ConnectInfo, FromRequest},
+    middleware::Next,
+    response::{IntoResponse, Response},
+};
 use config::RUNNING_IN_DEBUG_MODE;
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
-use serde::Serialize;
-use utoipa::{
-    Modify,
-    openapi::security::{ApiKeyValue, SecurityScheme},
-};
-
 use model::ApiKey;
+use serde::Serialize;
 pub use utils::api::API_KEY_HEADER_STR;
+use utoipa::{
+    openapi::security::{ApiKeyValue, SecurityScheme},
+    Modify,
+};
 
 use super::GetApiKeys;
 
@@ -87,7 +90,6 @@ impl Modify for SecurityApiTokenDefault {
     }
 }
 
-
 // Prevent axum from exposing API details in errors when not running in
 // debug mode.
 
@@ -95,13 +97,13 @@ impl Modify for SecurityApiTokenDefault {
 #[from_request(via(axum::Json), rejection(ApiError))]
 pub struct Json<T>(pub T);
 
-impl <T> From<T> for Json<T> {
+impl<T> From<T> for Json<T> {
     fn from(value: T) -> Self {
         Self(value)
     }
 }
 
-impl <T: Serialize> IntoResponse for Json<T> {
+impl<T: Serialize> IntoResponse for Json<T> {
     fn into_response(self) -> Response {
         axum::Json(self.0).into_response()
     }
@@ -115,7 +117,10 @@ pub struct ApiError {
 
 impl From<JsonRejection> for ApiError {
     fn from(value: JsonRejection) -> Self {
-        Self { status: value.status(), message: value.to_string() }
+        Self {
+            status: value.status(),
+            message: value.to_string(),
+        }
     }
 }
 

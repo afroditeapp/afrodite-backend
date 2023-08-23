@@ -1,9 +1,10 @@
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use diesel::prelude::*;
-
-use crate::{AccountIdInternal, AccountIdLight, ModerationRequestContent, AccountIdDb, ModerationRequestIdDb};
+use crate::{
+    AccountIdDb, AccountIdInternal, AccountIdLight, ModerationRequestContent, ModerationRequestIdDb,
+};
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationList {
