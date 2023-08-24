@@ -3,28 +3,85 @@ use error_stack::Result;
 use model::{
     Account, AccountIdInternal, AccountIdLight, AccountSetup, Profile, ProfileUpdateInternal,
 };
+use sqlx::SqlitePool;
 use utils::{current_unix_time, IntoReportExt};
 
 use super::super::sqlite::SqliteDatabaseError;
 use crate::{
-    sqlite::{HistoryUpdateJson, HistoryWriteHandle},
-    ConvertCommandError, HistoryWriteResult,
+    sqlite::{HistoryWriteHandle}, diesel::HistoryConnectionProvider
 };
 
-macro_rules! insert_or_update_json {
-    ($self:expr, $sql:literal, $data:expr, $unix_time:expr, $id:expr) => {{
-        let id = $id.row_id();
-        let unix_time = $unix_time;
-        let data = serde_json::to_string($data).into_error(SqliteDatabaseError::SerdeSerialize)?;
-        sqlx::query!($sql, data, unix_time, id,)
-            .execute($self.handle.pool())
-            .await
-            .into_error(SqliteDatabaseError::Execute)?;
+// use sqlx::SqlitePool;
 
-        Ok(())
-    }};
+use self::{
+    account::{HistorySyncWriteAccount, HistoryWriteAccount},
+    chat::{HistorySyncWriteChat, HistoryWriteChat},
+    media::{HistorySyncWriteMedia, HistoryWriteMedia},
+    media_admin::{HistorySyncWriteMediaAdmin, HistoryWriteMediaAdmin},
+    profile::{HistorySyncWriteProfile, HistoryWriteProfile},
+};
+use crate::{
+    diesel::{DieselConnection, DieselDatabaseError},
+    TransactionError,
+};
+
+macro_rules! define_write_commands {
+    ($struct_name:ident, $sync_name:ident) => {
+        pub struct $struct_name<'a> {
+            cmds: &'a crate::history::write::HistoryWriteCommands<'a>,
+        }
+
+        impl<'a> $struct_name<'a> {
+            pub fn new(cmds: &'a crate::history::write::HistoryWriteCommands<'a>) -> Self {
+                Self { cmds }
+            }
+
+            // pub fn read(&self) -> crate::history::read::HistoryReadCommands<'a> {
+            //     self.cmds.handle.read()
+            // }
+
+            pub fn pool(&self) -> &'a sqlx::SqlitePool {
+                self.cmds.handle.pool()
+            }
+        }
+
+        pub struct $sync_name<C: crate::diesel::HistoryConnectionProvider> {
+            cmds: C,
+        }
+
+        impl<C: crate::diesel::HistoryConnectionProvider> $sync_name<C> {
+            pub fn new(cmds: C) -> Self {
+                Self { cmds }
+            }
+
+            pub fn conn(&mut self) -> &mut crate::diesel::DieselConnection {
+                self.cmds.conn()
+            }
+
+            // pub fn into_conn(self) -> &'a mut crate::diesel::DieselConnection {
+            //     self.cmds.conn
+            // }
+
+            pub fn read(
+                conn: &mut crate::diesel::DieselConnection,
+            ) -> crate::history::read::HistorySyncReadCommands<'_> {
+                crate::history::read::HistorySyncReadCommands::new(conn)
+            }
+        }
+    };
 }
 
+pub mod account;
+pub mod account_admin;
+pub mod chat;
+pub mod chat_admin;
+pub mod media;
+pub mod media_admin;
+pub mod profile;
+pub mod profile_admin;
+
+
+#[derive(Clone, Debug)]
 pub struct HistoryWriteCommands<'a> {
     handle: &'a HistoryWriteHandle,
 }
@@ -34,112 +91,101 @@ impl<'a> HistoryWriteCommands<'a> {
         Self { handle }
     }
 
-    pub async fn store_account_id(
-        &self,
-        id: AccountIdInternal,
-    ) -> HistoryWriteResult<(), SqliteDatabaseError, AccountIdLight> {
-        let row_id = id.row_id();
-        let id = id.as_uuid();
-        sqlx::query!(
-            r#"
-            INSERT INTO account_id (id, uuid)
-            VALUES (?, ?)
-            "#,
-            row_id,
-            id
-        )
-        .execute(self.handle.pool())
-        .await
-        .into_error(SqliteDatabaseError::Execute)?;
-
-        Ok(())
+    pub fn account(&'a self) -> HistoryWriteAccount<'a> {
+        HistoryWriteAccount::new(self)
     }
 
-    pub async fn store_account(
-        &self,
-        id: AccountIdInternal,
-        account: &Account,
-    ) -> HistoryWriteResult<(), SqliteDatabaseError, Account> {
-        let unix_time = current_unix_time();
-        insert_or_update_json!(
-            self,
-            r#"
-            INSERT INTO history_account (json_text, unix_time, account_id)
-            VALUES (?, ?, ?)
-            "#,
-            account,
-            unix_time,
-            id
-        )
+    pub fn media(&'a self) -> HistoryWriteMedia<'a> {
+        HistoryWriteMedia::new(self)
     }
 
-    pub async fn store_account_setup(
-        &self,
-        id: AccountIdInternal,
-        account: &AccountSetup,
-    ) -> HistoryWriteResult<(), SqliteDatabaseError, AccountSetup> {
-        let unix_time = current_unix_time();
-        insert_or_update_json!(
-            self,
-            r#"
-            INSERT INTO history_account_setup (json_text, unix_time, account_id)
-            VALUES (?, ?, ?)
-            "#,
-            account,
-            unix_time,
-            id
-        )
+    pub fn media_admin(&'a self) -> HistoryWriteMediaAdmin<'a> {
+        HistoryWriteMediaAdmin::new(self)
     }
 
-    pub async fn store_profile(
-        &self,
-        id: AccountIdInternal,
-        profile: &Profile,
-    ) -> HistoryWriteResult<(), SqliteDatabaseError, Profile> {
-        let unix_time = current_unix_time();
-        insert_or_update_json!(
-            self,
-            r#"
-            INSERT INTO history_profile (json_text, unix_time, account_id)
-            VALUES (?, ?, ?)
-            "#,
-            profile,
-            unix_time,
-            id
-        )
+    pub fn profile(&'a self) -> HistoryWriteProfile<'a> {
+        HistoryWriteProfile::new(self)
+    }
+
+    pub fn chat(&'a self) -> HistoryWriteChat<'a> {
+        HistoryWriteChat::new(self)
+    }
+
+    pub fn pool(&'a self) -> &SqlitePool {
+        self.handle.pool()
     }
 }
 
-#[async_trait]
-impl HistoryUpdateJson for Account {
-    async fn history_update_json(
-        &self,
-        id: AccountIdInternal,
-        write: &HistoryWriteCommands,
-    ) -> Result<(), SqliteDatabaseError> {
-        write.store_account(id, self).await.attach(id)
+pub struct HistorySyncWriteCommands<C: HistoryConnectionProvider> {
+    conn: C,
+}
+
+impl<C: HistoryConnectionProvider> HistorySyncWriteCommands<C> {
+    pub fn new(conn: C) -> Self {
+        Self { conn }
+    }
+
+    pub fn into_account(self) -> HistorySyncWriteAccount<C> {
+        HistorySyncWriteAccount::new(self.conn)
+    }
+
+    pub fn into_media(self) -> HistorySyncWriteMedia<C> {
+        HistorySyncWriteMedia::new(self.conn)
+    }
+
+    pub fn into_media_admin(self) -> HistorySyncWriteMediaAdmin<C> {
+        HistorySyncWriteMediaAdmin::new(self.conn)
+    }
+
+    pub fn into_profile(self) -> HistorySyncWriteProfile<C> {
+        HistorySyncWriteProfile::new(self.conn)
+    }
+
+    pub fn into_chat(self) -> HistorySyncWriteChat<C> {
+        HistorySyncWriteChat::new(self.conn)
+    }
+
+    pub fn read(&mut self) -> crate::history::read::HistorySyncReadCommands<'_> {
+        self.conn.read()
+    }
+
+    pub fn write(&mut self) -> &mut C {
+        &mut self.conn
+    }
+
+    pub fn conn(&mut self) -> &mut DieselConnection {
+        self.conn.conn()
     }
 }
 
-#[async_trait]
-impl HistoryUpdateJson for AccountSetup {
-    async fn history_update_json(
-        &self,
-        id: AccountIdInternal,
-        write: &HistoryWriteCommands,
-    ) -> Result<(), SqliteDatabaseError> {
-        write.store_account_setup(id, self).await.attach(id)
+impl HistorySyncWriteCommands<&mut DieselConnection> {
+    pub fn account(&mut self) -> HistorySyncWriteAccount<&mut DieselConnection> {
+        HistorySyncWriteAccount::new(self.write())
     }
-}
 
-#[async_trait]
-impl HistoryUpdateJson for ProfileUpdateInternal {
-    async fn history_update_json(
-        &self,
-        _id: AccountIdInternal,
-        _write: &HistoryWriteCommands,
-    ) -> Result<(), SqliteDatabaseError> {
-        // TODO: history for profile
-        Ok(())
+    pub fn media(&mut self) -> HistorySyncWriteMedia<&mut DieselConnection> {
+        HistorySyncWriteMedia::new(self.write())
+    }
+
+    pub fn media_admin(&mut self) -> HistorySyncWriteMediaAdmin<&mut DieselConnection> {
+        HistorySyncWriteMediaAdmin::new(self.write())
+    }
+
+    pub fn profile(&mut self) -> HistorySyncWriteProfile<&mut DieselConnection> {
+        HistorySyncWriteProfile::new(self.write())
+    }
+
+    pub fn transaction<
+        F: FnOnce(
+                &mut DieselConnection,
+            ) -> std::result::Result<T, TransactionError<DieselDatabaseError>>
+            + 'static,
+        T,
+    >(
+        self,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
+        use diesel::prelude::*;
+        Ok(self.conn.transaction(transaction_actions)?)
     }
 }

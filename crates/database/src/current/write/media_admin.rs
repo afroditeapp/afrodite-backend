@@ -7,9 +7,9 @@ use model::{
 };
 use utils::IntoReportExt;
 
-use super::media::CurrentSyncWriteMedia;
+use super::{media::CurrentSyncWriteMedia, ConnectionProvider};
 use crate::{
-    current::write::CurrentSyncWriteCommands,
+    current::write::{CurrentSyncWriteCommands, WriteCmdsMethods},
     diesel::{DieselConnection, DieselDatabaseError},
     IntoDatabaseError, TransactionError,
 };
@@ -18,7 +18,7 @@ define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
 
 pub struct DeletedSomething;
 
-impl<'a> CurrentSyncWriteMediaAdmin<'a> {
+impl<'a, C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     fn delete_queue_number(
         &'a mut self,
         number: ModerationQueueNumber,
@@ -47,9 +47,9 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
             return Ok(moderations);
         }
 
-        let conn = self.conn();
         for _ in moderations.len()..MAX_COUNT {
-            match CurrentSyncWriteCommands::new(conn)
+            match self
+                .conn()
                 .media_admin()
                 .create_moderation_from_next_request_in_queue(moderator_id)?
             {
@@ -108,7 +108,7 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
                     state_number.eq(ModerationRequestState::InProgress as i64),
                     json_text.eq(content_string.clone()),
                 ))
-                .execute(self.cmds.conn)
+                .execute(self.cmds.conn())
                 .into_db_error(DieselDatabaseError::Execute, (target_id, moderator_id))?;
         }
 
@@ -177,7 +177,7 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
 
         self.conn().transaction(|mut conn| {
             for c in content.content() {
-                CurrentSyncWriteMediaAdmin::update_content_state(
+                CurrentSyncWriteMediaAdmin::<C>::update_content_state(
                     &mut conn,
                     c,
                     new_content_state,
@@ -189,7 +189,7 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
                 && state == ModerationRequestState::Accepted
                 && currently_selected_images.security_content_id.is_none()
             {
-                CurrentSyncWriteMediaAdmin::update_current_security_image(
+                CurrentSyncWriteMediaAdmin::<C>::update_current_security_image(
                     &mut conn,
                     moderation_request_owner,
                     content.slot_1(),
@@ -202,7 +202,7 @@ impl<'a> CurrentSyncWriteMediaAdmin<'a> {
                     grid_crop_y: 0.0,
                 };
 
-                CurrentSyncWriteMedia::update_current_account_media_with_primary_image(
+                CurrentSyncWriteMedia::<C>::update_current_account_media_with_primary_image(
                     &mut conn,
                     moderation_request_owner,
                     primary_image,

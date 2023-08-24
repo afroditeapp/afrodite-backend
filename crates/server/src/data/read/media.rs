@@ -1,11 +1,12 @@
 use error_stack::Result;
 use model::{AccountIdInternal, AccountIdLight, ContentId, CurrentAccountMediaInternal};
 
+use crate::data::IntoDataError;
+
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DatabaseError},
     ReadCommands,
 };
-use crate::utils::ConvertCommandErrorExt;
 
 define_read_commands!(ReadCommandsMedia);
 
@@ -19,7 +20,7 @@ impl ReadCommandsMedia<'_> {
             .image_content(account_id, content_id)
             .read_all()
             .await
-            .convert((account_id, content_id))
+            .into_data_error((account_id, content_id))
     }
 
     pub async fn current_account_media(

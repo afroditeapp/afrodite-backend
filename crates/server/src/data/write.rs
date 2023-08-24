@@ -1,6 +1,6 @@
 //! Synchronous write commands combining cache and database operations.
 
-use std::{fmt::Debug, marker::PhantomData, sync::Arc};
+use std::{fmt::Debug, marker::PhantomData, sync::Arc, ops::{Deref, DerefMut}};
 
 use config::Config;
 use database::{
@@ -13,12 +13,12 @@ use database::{
     diesel::{
         DieselConnection, DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle,
     },
-    history::write::HistoryWriteCommands,
-    sqlite::{CurrentDataWriteHandle, HistoryUpdateJson, HistoryWriteHandle, SqliteUpdateJson},
+    history::write::{HistoryWriteCommands, HistorySyncWriteCommands},
+    sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
     PoolObject, TransactionError,
 };
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo};
+use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo, Profile};
 use utils::{IntoReportExt, IntoReportFromString};
 
 use self::{
@@ -28,7 +28,7 @@ use self::{
     profile_admin::WriteCommandsProfileAdmin,
 };
 use super::{
-    cache::{DatabaseCache, WriteCacheJson},
+    cache::{DatabaseCache},
     file::utils::FileDir,
     index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
 };
@@ -88,7 +88,7 @@ macro_rules! define_write_commands {
             #[track_caller]
             pub async fn db_write<
                 T: FnOnce(
-                        database::current::write::CurrentSyncWriteCommands<'_>,
+                        database::current::write::CurrentSyncWriteCommands<&mut database::diesel::DieselConnection>,
                     )
                         -> error_stack::Result<R, database::diesel::DieselDatabaseError>
                     + Send
@@ -161,32 +161,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
-// impl<Target> From<error_stack::Report<CacheError>>
-//     for WriteError<error_stack::Report<CacheError>, Target>
-// {
-//     fn from(value: error_stack::Report<CacheError>) -> Self {
-//         Self {
-//             t: PhantomData,
-//             e: value,
-//         }
-//     }
-// }
-
-// impl<Target> From<CacheError> for WriteError<error_stack::Report<CacheError>, Target> {
-//     fn from(value: CacheError) -> Self {
-//         Self {
-//             t: PhantomData,
-//             e: value.into(),
-//         }
-//     }
-// }
-
-// TODO: If one commands does multiple writes to database, move writes to happen
-// in a transaction.
-
-// TODO: When server starts, check that latest history data matches with current
-// data.
 
 /// One Account can do only one write command at a time.
 pub struct AccountWriteLock;
@@ -273,63 +247,16 @@ impl<'a> WriteCommands<'a> {
         id_light: AccountIdLight,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
-        let account = Account::default();
-        let account_setup = AccountSetup::default();
-
         let config = self.config.clone();
-        let id = self
-            .db_transaction_with_history_REMOVE(move |conn, _history_conn| {
-                // let mut conn1 = CurrentSyncWriteCommands::new(conn);
-                // let conn = &mut conn1;
-                let id = conn.into_account().insert_account_id(id_light)?;
-
-                // let mut current = CurrentSyncWriteCommands::new(conn);
-
-                conn.into_account().insert_access_token(id, None)?;
-                conn.into_account().insert_refresh_token(id, None)?;
-
-                if config.components().account {
-                    conn.into_account().insert_account(id, &account)?;
-                    conn.into_account()
-                        .insert_account_setup(id, &account_setup)?;
-                    conn.into_account()
-                        .insert_sign_in_with_info(id, &sign_in_with_info)?;
-                }
-
-                if config.components().profile {
-                    conn.into_profile().insert_profile(id)?;
-                }
-
-                if config.components().media {
-                    conn.into_media().insert_current_account_media(id)?;
-                }
-
-                // TODO: write to history
-                /*
-                history.store_account_id(id).await.convert(id)?;
-                if config.components().account {
-                    history.store_account(id, &account).await.convert(id)?;
-                    history
-                        .store_account_setup(id, &account_setup)
-                        .await
-                        .convert(id)?;
-                }
-
-                if config.components().profile {
-                    // TOOD: update history code
-                    // history
-                    //     .store_profile(id, &profile)
-                    //     .await
-                    //     .with_history_write_cmd_info::<Profile>(id)?;
-
-                }
-
-                if config.components().media {
-
-                }
-
-                 */
-                Ok(id.clone())
+        let id: AccountIdInternal = self
+            .db_transaction_with_history(move |transaction, history_conn| {
+                Self::register_db_action(
+                    config,
+                    id_light,
+                    sign_in_with_info,
+                    transaction,
+                    history_conn,
+                )
             })
             .await?;
 
@@ -347,49 +274,71 @@ impl<'a> WriteCommands<'a> {
         Ok(id)
     }
 
-    pub async fn update_data<
-        T: Clone
-            + Debug
-            + Send
-            + SqliteUpdateJson
-            + HistoryUpdateJson
-            + WriteCacheJson
-            + Sync
-            + 'static,
-    >(
-        &mut self,
-        id: AccountIdInternal,
-        data: &T,
-    ) -> Result<(), DatabaseError> {
-        data.update_json(id, &self.current())
-            .await
-            .with_info_lazy(|| format!("Update {:?} failed, id: {:?}", PhantomData::<T>, id))?;
+    pub fn register_db_action(
+        config: Arc<Config>,
+        id_light: AccountIdLight,
+        sign_in_with_info: SignInWithInfo,
+        transaction: TransactionConnection<'_>,
+        history_conn: PoolObject,
+    ) -> std::result::Result<AccountIdInternal, TransactionError<DieselDatabaseError>> {
+        let account = Account::default();
+        let account_setup = AccountSetup::default();
 
-        // Empty implementation if not really cacheable.
-        data.write_to_cache(id.as_light(), &self.cache)
-            .await
-            .with_info_lazy(|| {
-                format!("Cache update {:?} failed, id: {:?}", PhantomData::<T>, id)
-            })?;
+        let mut current = transaction.into_cmds();
 
-        data.history_update_json(id, &self.history())
-            .await
-            .with_info_lazy(|| {
-                format!("History update {:?} failed, id: {:?}", PhantomData::<T>, id)
-            })
-    }
+        // No transaction for history as it does not matter if some default
+        // data will be left there if there is some error.
+        let mut history_conn = history_conn
+            .lock()
+            .into_error_string(DieselDatabaseError::LockConnectionFailed)?;
+        let mut history =
+            HistorySyncWriteCommands::new(history_conn.deref_mut());
 
-    fn current(&self) -> CurrentWriteCommands {
-        CurrentWriteCommands::new(&self.current_write)
-    }
+        // Common
+        let id = current.account().insert_account_id(id_light)?;
+        current.account().insert_access_token(id, None)?;
+        current.account().insert_refresh_token(id, None)?;
 
-    fn history(&self) -> HistoryWriteCommands {
-        HistoryWriteCommands::new(&self.history_write)
+        // Common history
+        history
+            .account()
+            .insert_account_id(id)?;
+
+        if config.components().account {
+            current.account().insert_account(id, &account)?;
+            current.account()
+                .insert_account_setup(id, &account_setup)?;
+            current.account()
+                .insert_sign_in_with_info(id, &sign_in_with_info)?;
+
+            // Account history
+            history
+                .account()
+                .insert_account(id, &account)?;
+            history
+                .account()
+                .insert_account_setup(id, &account_setup)?;
+        }
+
+        if config.components().profile {
+            let profile = current.profile().insert_profile(id)?;
+
+            // Profile history
+            history
+                .profile()
+                .insert_profile(id, &profile.into())?;
+        }
+
+        if config.components().media {
+            current.media().insert_current_account_media(id)?;
+        }
+
+        Ok(id.clone())
     }
 
     #[track_caller]
     pub async fn db_write<
-        T: FnOnce(CurrentSyncWriteCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(CurrentSyncWriteCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
     >(
         &self,
@@ -438,51 +387,7 @@ impl<'a> WriteCommands<'a> {
     }
 
     #[track_caller]
-    pub async fn db_transaction_with_history_REMOVE<T, R: Send + 'static>(
-        &self,
-        cmd: T,
-    ) -> Result<R, DatabaseError>
-    where
-        T: FnOnce(
-                &mut DieselConnection,
-                PoolObject,
-            ) -> std::result::Result<R, TransactionError<DieselDatabaseError>>
-            + Send
-            + 'static,
-    {
-        let conn = self
-            .diesel_current_write
-            .pool()
-            .get()
-            .await
-            .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
-
-        let conn_history = self
-            .diesel_history_write
-            .pool()
-            .get()
-            .await
-            .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
-
-        conn.interact(move |conn| {
-            CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-                //let mut transaction_connection = TransactionConnection { conn };
-                cmd(conn, conn_history)
-            })
-        })
-        .await
-        .into_error_string(DieselDatabaseError::Execute)
-        .change_context(DatabaseError::Diesel)?
-        .change_context(DatabaseError::Diesel)
-    }
-
-    #[track_caller]
     pub async fn db_transaction_with_history<
-        // 'a1,
-        // 'b1: 'a1,
-        // C: WriteCmdsMethods<'a1, 'b1>,
         T,
         R: Send + 'static,
     >(
@@ -490,8 +395,8 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> Result<R, DatabaseError>
     where
-        T: for<'b1> FnOnce(
-                &mut TransactionConnection<'b1>,
+        T: FnOnce(
+                TransactionConnection<'_>,
                 PoolObject,
             )
                 -> std::result::Result<R, TransactionError<DieselDatabaseError>>
@@ -516,8 +421,8 @@ impl<'a> WriteCommands<'a> {
 
         conn.interact(move |conn| {
             CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-                let mut transaction_connection = TransactionConnection { conn };
-                cmd(&mut transaction_connection, conn_history)
+                let transaction_connection = TransactionConnection::new(conn);
+                cmd(transaction_connection, conn_history)
             })
         })
         .await

@@ -68,6 +68,9 @@ pub enum DieselDatabaseError {
     #[error("Transaction failed")]
     FromDieselErrorToTransactionError,
 
+    #[error("Connection pool locking error")]
+    LockConnectionFailed,
+
     #[error("File operation failed")]
     File,
 }
@@ -351,5 +354,35 @@ impl DieselHistoryReadHandle {
 
     pub fn pool(&self) -> &DieselPool {
         self.handle.pool()
+    }
+}
+
+pub trait ConnectionProvider {
+    fn conn(&mut self) -> &mut DieselConnection;
+    fn read(
+        &mut self,
+    ) -> crate::current::read::CurrentSyncReadCommands<'_> {
+        crate::current::read::CurrentSyncReadCommands::new(self.conn())
+    }
+}
+
+impl ConnectionProvider for &mut DieselConnection {
+    fn conn(&mut self) -> &mut DieselConnection {
+        self
+    }
+}
+
+pub trait HistoryConnectionProvider {
+    fn conn(&mut self) -> &mut DieselConnection;
+    fn read(
+        &mut self,
+    ) -> crate::history::read::HistorySyncReadCommands<'_> {
+        crate::history::read::HistorySyncReadCommands::new(self.conn())
+    }
+}
+
+impl HistoryConnectionProvider for &mut DieselConnection {
+    fn conn(&mut self) -> &mut DieselConnection {
+        self
     }
 }

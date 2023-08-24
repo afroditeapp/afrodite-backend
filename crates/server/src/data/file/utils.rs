@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 
 use axum::extract::BodyStream;
-use database::ReadResult;
 use error_stack::Result;
 use model::{AccountIdLight, ContentId};
 use tokio::io::AsyncWriteExt;
@@ -173,11 +172,11 @@ impl ImageFile {
 
     pub async fn read_stream(
         &self,
-    ) -> ReadResult<ReaderStream<tokio::fs::File>, FileError, ImageFile> {
+    ) -> Result<ReaderStream<tokio::fs::File>, FileError> {
         self.path.read_stream().await.map_err(|e| e.into())
     }
 
-    pub async fn read_all(&self) -> ReadResult<Vec<u8>, FileError, ImageFile> {
+    pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
         self.path.read_all().await.map_err(|e| e.into())
     }
 }

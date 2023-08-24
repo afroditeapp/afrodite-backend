@@ -3,7 +3,7 @@ use std::{fmt::Debug, marker::PhantomData};
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
     diesel::{DieselCurrentReadHandle, DieselDatabaseError},
-    sqlite::{SqliteSelectJson, SqlxReadHandle},
+    sqlite::{SqlxReadHandle},
 };
 use error_stack::{Result, ResultExt};
 use model::{
@@ -19,11 +19,11 @@ use self::{
     profile_admin::ReadCommandsProfileAdmin,
 };
 use super::{
-    cache::{DatabaseCache, ReadCacheJson},
+    cache::{DatabaseCache},
     file::utils::FileDir,
-    DatabaseError,
+    DatabaseError, IntoDataError,
 };
-use crate::utils::{ConvertCommandErrorExt, ErrorConversion};
+use crate::utils::{ErrorConversion};
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
@@ -92,46 +92,6 @@ pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
 
-// impl<Target> From<error_stack::Report<CacheError>>
-//     for ReadError<error_stack::Report<CacheError>, Target>
-// {
-//     fn from(value: error_stack::Report<CacheError>) -> Self {
-//         Self {
-//             t: PhantomData,
-//             e: value,
-//         }
-//     }
-// }
-
-// impl<Target> From<error_stack::Report<FileError>>
-//     for ReadError<error_stack::Report<FileError>, Target>
-// {
-//     fn from(value: error_stack::Report<FileError>) -> Self {
-//         Self {
-//             t: PhantomData,
-//             e: value,
-//         }
-//     }
-// }
-
-// impl<Target> From<CacheError> for ReadError<error_stack::Report<CacheError>, Target> {
-//     fn from(value: CacheError) -> Self {
-//         Self {
-//             t: PhantomData,
-//             e: value.into(),
-//         }
-//     }
-// }
-
-// impl<Target> From<FileError> for ReadError<error_stack::Report<FileError>, Target> {
-//     fn from(value: FileError) -> Self {
-//         Self {
-//             t: PhantomData,
-//             e: value.into(),
-//         }
-//     }
-// }
-
 pub struct ReadCommands<'a> {
     db: SqliteReadCommands<'a>,
     diesel_current_read: &'a DieselCurrentReadHandle,
@@ -186,23 +146,6 @@ impl<'a> ReadCommands<'a> {
         ReadCommandsChatAdmin::new(self)
     }
 
-    pub async fn read_json<T: SqliteSelectJson + Debug + ReadCacheJson + Send + Sync + 'static>(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<T, DatabaseError> {
-        if T::CACHED_JSON {
-            T::read_from_cache(id.as_light(), self.cache)
-                .await
-                .with_info_lazy(|| {
-                    format!("Cache read {:?} failed, id: {:?}", PhantomData::<T>, id)
-                })
-        } else {
-            T::select_json(id, &self.db)
-                .await
-                .with_info_lazy(|| format!("Read {:?} failed, id: {:?}", PhantomData::<T>, id))
-        }
-    }
-
     pub async fn image_stream(
         &self,
         account_id: AccountIdLight,
@@ -212,7 +155,7 @@ impl<'a> ReadCommands<'a> {
             .image_content(account_id, content_id)
             .read_stream()
             .await
-            .convert((account_id, content_id))
+            .into_data_error((account_id, content_id))
     }
 
     pub async fn all_account_media(

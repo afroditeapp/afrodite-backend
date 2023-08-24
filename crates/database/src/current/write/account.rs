@@ -8,11 +8,13 @@ use utils::IntoReportExt;
 
 use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
+use super::ConnectionProvider;
+
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 
-impl<'a> CurrentSyncWriteAccount<'a> {
+impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     pub fn insert_account_id(
-        self,
+        mut self,
         account_uuid: AccountIdLight,
     ) -> Result<AccountIdInternal, DieselDatabaseError> {
         use model::schema::account_id::dsl::*;
@@ -20,7 +22,7 @@ impl<'a> CurrentSyncWriteAccount<'a> {
         let db_id: AccountIdDb = insert_into(account_id)
             .values(uuid.eq(account_uuid))
             .returning(id)
-            .get_result(self.into_conn())
+            .get_result(self.conn())
             .into_db_error(DieselDatabaseError::Execute, account_uuid)?;
 
         Ok(AccountIdInternal {
@@ -30,7 +32,7 @@ impl<'a> CurrentSyncWriteAccount<'a> {
     }
 
     pub fn insert_access_token(
-        self,
+        mut self,
         id: AccountIdInternal,
         token_value: Option<ApiKey>,
     ) -> Result<(), DieselDatabaseError> {
@@ -40,14 +42,14 @@ impl<'a> CurrentSyncWriteAccount<'a> {
 
         insert_into(access_token)
             .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
-            .execute(self.into_conn())
+            .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
     }
 
     pub fn access_token(
-        self,
+        mut self,
         id: AccountIdInternal,
         token_value: Option<ApiKey>,
     ) -> Result<(), DieselDatabaseError> {
@@ -57,14 +59,14 @@ impl<'a> CurrentSyncWriteAccount<'a> {
 
         update(access_token.find(id.as_db_id()))
             .set(token.eq(token_value))
-            .execute(self.into_conn())
+            .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
     }
 
     pub fn insert_refresh_token(
-        self,
+        mut self,
         id: AccountIdInternal,
         token_value: Option<RefreshToken>,
     ) -> Result<(), DieselDatabaseError> {
@@ -81,7 +83,7 @@ impl<'a> CurrentSyncWriteAccount<'a> {
 
         insert_into(refresh_token)
             .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
-            .execute(self.into_conn())
+            .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
@@ -130,7 +132,7 @@ impl<'a> CurrentSyncWriteAccount<'a> {
     }
 
     pub fn account(
-        self,
+        mut self,
         id: AccountIdInternal,
         account_data: &Account,
     ) -> Result<(), DieselDatabaseError> {
@@ -141,7 +143,7 @@ impl<'a> CurrentSyncWriteAccount<'a> {
 
         update(account.find(id.as_db_id()))
             .set(json_text.eq(data))
-            .execute(self.into_conn())
+            .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())

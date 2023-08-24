@@ -8,7 +8,7 @@ use self::{
     profile::{CurrentSyncWriteProfile, CurrentWriteProfile},
 };
 use crate::{
-    diesel::{DieselConnection, DieselDatabaseError},
+    diesel::{DieselConnection, DieselDatabaseError, ConnectionProvider},
     sqlite::CurrentDataWriteHandle,
     TransactionError,
 };
@@ -33,22 +33,22 @@ macro_rules! define_write_commands {
             }
         }
 
-        pub struct $sync_name<'a> {
-            cmds: crate::current::write::CurrentSyncWriteCommands<'a>,
+        pub struct $sync_name<C: crate::diesel::ConnectionProvider> {
+            cmds: C,
         }
 
-        impl<'a> $sync_name<'a> {
-            pub fn new(cmds: crate::current::write::CurrentSyncWriteCommands<'a>) -> Self {
+        impl<C: crate::diesel::ConnectionProvider> $sync_name<C> {
+            pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&'a mut self) -> &'a mut crate::diesel::DieselConnection {
-                &mut self.cmds.conn
+            pub fn conn(&mut self) -> &mut crate::diesel::DieselConnection {
+                self.cmds.conn()
             }
 
-            pub fn into_conn(self) -> &'a mut crate::diesel::DieselConnection {
-                self.cmds.conn
-            }
+            // pub fn into_conn(self) -> &'a mut crate::diesel::DieselConnection {
+            //     self.cmds.conn
+            // }
 
             pub fn read(
                 conn: &mut crate::diesel::DieselConnection,
@@ -103,61 +103,63 @@ impl<'a> CurrentWriteCommands<'a> {
     }
 }
 
-pub struct CurrentSyncWriteCommands<'a> {
-    conn: &'a mut DieselConnection,
+pub struct CurrentSyncWriteCommands<C: ConnectionProvider> {
+    conn: C,
 }
 
-impl<'a> CurrentSyncWriteCommands<'a> {
-    pub fn new(conn: &'a mut DieselConnection) -> Self {
+impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
+    pub fn new(conn: C) -> Self {
         Self { conn }
     }
 
-    pub fn into_account(self) -> CurrentSyncWriteAccount<'a> {
-        CurrentSyncWriteAccount::new(self)
+    pub fn into_account(self) -> CurrentSyncWriteAccount<C> {
+        CurrentSyncWriteAccount::new(self.conn)
     }
 
-    pub fn into_media(self) -> CurrentSyncWriteMedia<'a> {
-        CurrentSyncWriteMedia::new(self)
+    pub fn into_media(self) -> CurrentSyncWriteMedia<C> {
+        CurrentSyncWriteMedia::new(self.conn)
     }
 
-    pub fn into_media_admin(self) -> CurrentSyncWriteMediaAdmin<'a> {
-        CurrentSyncWriteMediaAdmin::new(self)
+    pub fn into_media_admin(self) -> CurrentSyncWriteMediaAdmin<C> {
+        CurrentSyncWriteMediaAdmin::new(self.conn)
     }
 
-    pub fn into_profile(self) -> CurrentSyncWriteProfile<'a> {
-        CurrentSyncWriteProfile::new(self)
+    pub fn into_profile(self) -> CurrentSyncWriteProfile<C> {
+        CurrentSyncWriteProfile::new(self.conn)
     }
 
-    pub fn account(&'a mut self) -> CurrentSyncWriteAccount<'a> {
-        CurrentSyncWriteAccount::new(self.write())
-    }
-
-    pub fn media(&'a mut self) -> CurrentSyncWriteMedia<'a> {
-        CurrentSyncWriteMedia::new(self.write())
-    }
-
-    pub fn media_admin(&'a mut self) -> CurrentSyncWriteMediaAdmin<'a> {
-        CurrentSyncWriteMediaAdmin::new(self.write())
-    }
-
-    pub fn profile(&'a mut self) -> CurrentSyncWriteProfile<'a> {
-        CurrentSyncWriteProfile::new(self.write())
-    }
-
-    pub fn chat(self) -> CurrentSyncWriteChat<'a> {
-        CurrentSyncWriteChat::new(self)
+    pub fn into_chat(self) -> CurrentSyncWriteChat<C> {
+        CurrentSyncWriteChat::new(self.conn)
     }
 
     pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<'_> {
-        crate::current::read::CurrentSyncReadCommands::new(self.conn)
+        self.conn.read()
     }
 
-    pub fn write(&'a mut self) -> crate::current::write::CurrentSyncWriteCommands<'a> {
-        Self::new(self.conn)
+    pub fn write(&mut self) -> &mut C {
+        &mut self.conn
     }
 
-    pub fn conn(&'a mut self) -> &'a mut DieselConnection {
-        self.conn
+    pub fn conn(&mut self) -> &mut DieselConnection {
+        self.conn.conn()
+    }
+}
+
+impl CurrentSyncWriteCommands<&mut DieselConnection> {
+    pub fn account(&mut self) -> CurrentSyncWriteAccount<&mut DieselConnection> {
+        CurrentSyncWriteAccount::new(self.write())
+    }
+
+    pub fn media(&mut self) -> CurrentSyncWriteMedia<&mut DieselConnection> {
+        CurrentSyncWriteMedia::new(self.write())
+    }
+
+    pub fn media_admin(&mut self) -> CurrentSyncWriteMediaAdmin<&mut DieselConnection> {
+        CurrentSyncWriteMediaAdmin::new(self.write())
+    }
+
+    pub fn profile(&mut self) -> CurrentSyncWriteProfile<&mut DieselConnection> {
+        CurrentSyncWriteProfile::new(self.write())
     }
 
     pub fn transaction<
@@ -176,170 +178,63 @@ impl<'a> CurrentSyncWriteCommands<'a> {
 }
 
 pub struct TransactionConnection<'a> {
-    pub conn: &'a mut DieselConnection,
+    conn: &'a mut DieselConnection,
 }
 
-// pub trait WriteCmdsMethods<'a: 'b, 'b>: Sized {
-//     fn conn(self) -> &'b mut DieselConnection;
-//     fn conn_ref_mut(&'a mut self) -> &'b mut DieselConnection;
+impl <'a> TransactionConnection<'a> {
+    pub fn new(conn: &'a mut DieselConnection) -> Self {
+        Self { conn }
+    }
 
-//     // fn write_ref(&'a self) -> crate::current::write::CurrentSyncWriteCommands<'a>;
+    pub fn into_conn(self) -> &'a mut DieselConnection {
+        self.conn
+    }
 
-//     fn write(self) -> crate::current::write::CurrentSyncWriteCommands<'b> {
-//         CurrentSyncWriteCommands::new(self.conn())
-//     }
+    pub fn into_cmds(self) -> CurrentSyncWriteCommands<&'a mut DieselConnection> {
+        CurrentSyncWriteCommands::new(self.conn)
+    }
+}
 
-//     fn write_ref_mut(&'a mut self) -> crate::current::write::CurrentSyncWriteCommands<'b> {
-//         CurrentSyncWriteCommands::new(self.conn_ref_mut())
-//     }
+pub trait WriteCmdsMethods<C: ConnectionProvider>: Sized {
+    fn write(self) -> C;
 
-//     fn into_account(self) -> CurrentSyncWriteAccount<'b> {
-//         CurrentSyncWriteAccount::new(self.write())
-//     }
-
-//     fn into_media(self) -> CurrentSyncWriteMedia<'b> {
-//         CurrentSyncWriteMedia::new(self.write())
-//     }
-
-//     fn into_media_admin(self) -> CurrentSyncWriteMediaAdmin<'b> {
-//         CurrentSyncWriteMediaAdmin::new(self.write())
-//     }
-
-//     fn into_profile(self) -> CurrentSyncWriteProfile<'b> {
-//         CurrentSyncWriteProfile::new(self.write())
-//     }
-
-//     fn account(&'a mut self) -> CurrentSyncWriteAccount<'b> {
-//         CurrentSyncWriteAccount::new(self.write_ref_mut())
-//     }
-
-//     fn media(&'a mut self) -> CurrentSyncWriteMedia<'b> {
-//         CurrentSyncWriteMedia::new(self.write_ref_mut())
-//     }
-
-//     fn media_admin(&'a mut self) -> CurrentSyncWriteMediaAdmin<'b> {
-//         CurrentSyncWriteMediaAdmin::new(self.write_ref_mut())
-//     }
-
-//     fn profile(&'a mut self) -> CurrentSyncWriteProfile<'b> {
-//         CurrentSyncWriteProfile::new(self.write_ref_mut())
-//     }
-// }
-
-pub trait WriteCmdsMethods<'a, 'b: 'a>: Sized {
-    // fn conn(self) -> &'b mut DieselConnection;
-
-    // type R: WriteCmdsMethods<'a, 'b>;
-
-    // fn r(self) -> Self::R;
-    // fn r1(conn: &'b mut DieselConnection) -> Self::R;
-    fn write(self) -> crate::current::write::CurrentSyncWriteCommands<'b>;
-
-    fn into_account(self) -> CurrentSyncWriteAccount<'b> {
+    fn account(self) -> CurrentSyncWriteAccount<C> {
         CurrentSyncWriteAccount::new(self.write())
     }
 
-    fn into_media(self) -> CurrentSyncWriteMedia<'b> {
+    fn media(self) -> CurrentSyncWriteMedia<C> {
         CurrentSyncWriteMedia::new(self.write())
     }
 
-    fn into_media_admin(self) -> CurrentSyncWriteMediaAdmin<'b> {
+    fn media_admin(self) -> CurrentSyncWriteMediaAdmin<C> {
         CurrentSyncWriteMediaAdmin::new(self.write())
     }
 
-    fn into_profile(self) -> CurrentSyncWriteProfile<'b> {
+    fn profile(self) -> CurrentSyncWriteProfile<C> {
         CurrentSyncWriteProfile::new(self.write())
     }
 }
 
-// impl <'a> WriteCmdsMethods<'a> for TransactionConnection<'a> {
-//     fn conn(self) -> &'a mut DieselConnection {
-//         self.conn
-//     }
-//     fn conn_ref_mut(&'a mut self) -> &'a mut DieselConnection {
-//         &mut self.conn
-//     }
-
-//     // fn write_ref(&'a self) -> crate::current::write::CurrentSyncWriteCommands<'a> {
-//     //     CurrentSyncWriteCommands { conn: self.conn }
-//     // }
-// }
-
-impl<'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for TransactionConnection<'b> {
-    //type R = TransactionConnection<'b>;
-    // fn r(self) -> Self::R {
-    //     self
-    // }
-    // fn r1(conn: &'b mut DieselConnection) -> Self::R {
-    //     TransactionConnection { conn }
-    // }
-    fn write(self) -> crate::current::write::CurrentSyncWriteCommands<'b> {
-        CurrentSyncWriteCommands::new(self.conn)
-    }
-
-    // fn write_ref(&'a self) -> crate::current::write::CurrentSyncWriteCommands<'a> {
-    //     CurrentSyncWriteCommands { conn: self.conn }
-    // }
-}
-
-// impl <'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for &'a mut CurrentSyncWriteCommands<'b> {
-//     fn conn(self) -> &'b mut DieselConnection {
-//         self.conn
-//     }
-//     // fn write_ref(&'a self) -> crate::current::write::CurrentSyncWriteCommands<'a> {
-//     //     CurrentSyncWriteCommands { conn: self.conn }
-//     // }
-// }
-
-// impl <'a> WriteCmdsMethods<'a> for &'a mut DieselConnection {
-//     fn conn(self) -> &'a mut DieselConnection {
-//         self
-//     }
-//     fn conn_ref_mut(&'a mut self) -> &'a mut DieselConnection {
-//         self
-//     }
-
-//     // fn write_ref(&'a self) -> crate::current::write::CurrentSyncWriteCommands<'a> {
-//     //     CurrentSyncWriteCommands { conn: self }
-//     // }
-// }
-
-impl<'a, 'b: 'a> WriteCmdsMethods<'a, 'b> for &'b mut DieselConnection {
-    // type R = &'b mut DieselConnection;
-    // fn r(self) -> Self::R {
-    //     self
-    // }
-    fn write(self) -> crate::current::write::CurrentSyncWriteCommands<'b> {
-        CurrentSyncWriteCommands::new(self)
+impl <'a> WriteCmdsMethods<&'a mut DieselConnection> for &'a mut DieselConnection {
+    fn write(self) -> &'a mut DieselConnection {
+        self
     }
 }
 
-// impl TransactionConnection<'_> {
-//     pub fn new(conn: &mut DieselConnection) -> Self {
-//         Self { conn }
-//     }
+impl <'a> WriteCmdsMethods<&'a mut DieselConnection> for TransactionConnection<'a> {
+    fn write(self) -> &'a mut DieselConnection {
+        self.conn
+    }
+}
 
-//     pub fn conn(&mut self) -> &mut DieselConnection {
-//         self.conn
-//     }
+impl <'a: 'b, 'b> WriteCmdsMethods<&'a mut TransactionConnection<'b>> for &'a mut TransactionConnection<'b> {
+    fn write(self) -> &'a mut TransactionConnection<'b> {
+        self
+    }
+}
 
-//     pub fn account(&mut self) -> CurrentSyncWriteAccount<'a> {
-//         CurrentSyncWriteAccount::new(self)
-//     }
-
-//     pub fn media(self) -> CurrentSyncWriteMedia<'a> {
-//         CurrentSyncWriteMedia::new(self)
-//     }
-
-//     pub fn media_admin(self) -> CurrentSyncWriteMediaAdmin<'a> {
-//         CurrentSyncWriteMediaAdmin::new(self)
-//     }
-
-//     pub fn profile(self) -> CurrentSyncWriteProfile<'a> {
-//         CurrentSyncWriteProfile::new(self)
-//     }
-
-//     pub fn chat(self) -> CurrentSyncWriteChat<'a> {
-//         CurrentSyncWriteChat::new(self)
-//     }
-// }
+impl ConnectionProvider for &mut TransactionConnection<'_> {
+    fn conn(&mut self) -> &mut DieselConnection {
+        self.conn
+    }
+}

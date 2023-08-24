@@ -11,11 +11,13 @@ use crate::{
     IntoDatabaseError, TransactionError,
 };
 
+use super::ConnectionProvider;
+
 define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
 
 pub struct DeletedSomething;
 
-impl<'a> CurrentSyncWriteMedia<'a> {
+impl<'a, C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     pub fn insert_current_account_media(
         &'a mut self,
         id: AccountIdInternal,
@@ -70,7 +72,7 @@ impl<'a> CurrentSyncWriteMedia<'a> {
     }
 
     pub fn insert_content_id_to_slot(
-        transaction_conn: &mut DieselConnection,
+        mut transaction_conn: C,
         content_uploader: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
@@ -84,7 +86,7 @@ impl<'a> CurrentSyncWriteMedia<'a> {
                 moderation_state.eq(ContentState::InSlot as i64),
                 slot_number.eq(slot as i64),
             ))
-            .execute(transaction_conn)
+            .execute(transaction_conn.conn())
             .into_db_error(
                 DieselDatabaseError::Execute,
                 (content_uploader, content_id, slot),

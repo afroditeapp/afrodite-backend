@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle, ConvertCommandError};
+use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, AccountIdLight, ApiKey};
 

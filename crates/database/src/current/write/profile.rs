@@ -7,9 +7,11 @@ use utils::IntoReportExt;
 
 use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
+use super::ConnectionProvider;
+
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 
-impl<'a> CurrentSyncWriteProfile<'a> {
+impl<'a, C: ConnectionProvider> CurrentSyncWriteProfile<C> {
     pub fn insert_profile(
         &'a mut self,
         id: AccountIdInternal,

@@ -6,7 +6,7 @@ use std::{
 };
 
 use ::utils::IntoReportExt;
-use config::Config;
+use config::{Config, RUNNING_IN_DEBUG_MODE};
 use database::{
     current::read::SqliteReadCommands,
     diesel::{
@@ -16,17 +16,17 @@ use database::{
     },
     history::read::HistoryReadCommands,
     sqlite::{
-        CurrentDataWriteHandle, DatabaseType, HistoryUpdateJson, HistoryWriteHandle,
-        SqliteDatabasePath, SqliteUpdateJson, SqliteWriteCloseHandle, SqliteWriteHandle,
+        CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle,
+        SqliteDatabasePath, SqliteWriteCloseHandle, SqliteWriteHandle,
         SqlxReadCloseHandle, SqlxReadHandle,
-    },
+    }, ErrorContext,
 };
-use error_stack::{IntoReport, Result, ResultExt};
-use model::{AccountIdInternal, AccountIdLight, SignInWithInfo};
+use error_stack::{IntoReport, Result, ResultExt, Context};
+use model::{AccountIdInternal, AccountIdLight, SignInWithInfo, IsLoggingAllowed};
 use tracing::info;
 
 use self::{
-    cache::{CacheError, DatabaseCache, WriteCacheJson},
+    cache::{CacheError, DatabaseCache},
     file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
@@ -94,6 +94,42 @@ pub enum DatabaseError {
 
     #[error("Different SQLite versions detected between diesel and sqlx")]
     SqliteVersionMismatch,
+}
+
+pub trait IntoDataError<Ok, Err: Context>: Sized {
+    fn into_data_error_without_context(self) -> Result<Ok, Err>;
+
+    #[track_caller]
+    fn into_data_error<T: Debug + IsLoggingAllowed>(
+        self,
+        request_context: T,
+    ) -> Result<Ok, Err> {
+        self.into_data_error_without_context()
+            .attach_printable_lazy(move || {
+                let context = ErrorContext::<T, Ok>::new(
+                    request_context,
+                    RUNNING_IN_DEBUG_MODE.value(),
+                );
+
+                format!("{:#?}", context)
+            })
+    }
+}
+
+impl<Ok> IntoDataError<Ok, DatabaseError>
+    for Result<Ok, crate::data::file::FileError>
+{
+    fn into_data_error_without_context(self) -> Result<Ok, DatabaseError> {
+        self.change_context(DatabaseError::File)
+    }
+}
+
+impl<Ok> IntoDataError<Ok, DatabaseError>
+    for Result<Ok, crate::data::cache::CacheError>
+{
+    fn into_data_error_without_context(self) -> Result<Ok, DatabaseError> {
+        self.change_context(DatabaseError::Cache)
+    }
 }
 
 /// Absolsute path to database root directory.
@@ -483,23 +519,6 @@ impl SyncWriteHandle {
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
         self.cmds().register(id_light, sign_in_with_info).await
-    }
-
-    pub async fn update_data<
-        T: Clone
-            + Debug
-            + Send
-            + SqliteUpdateJson
-            + HistoryUpdateJson
-            + WriteCacheJson
-            + Sync
-            + 'static,
-    >(
-        &self,
-        id: AccountIdInternal,
-        data: &T,
-    ) -> Result<(), DatabaseError> {
-        self.cmds().update_data(id, data).await
     }
 }
 

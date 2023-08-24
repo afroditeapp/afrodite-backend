@@ -1,16 +1,15 @@
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, fmt::Debug};
 
 use async_trait::async_trait;
-use config::Config;
+use config::{Config, RUNNING_IN_DEBUG_MODE};
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselCurrentReadHandle, DieselDatabaseError},
-    ConvertCommandError, NoId,
+    diesel::{DieselCurrentReadHandle, DieselDatabaseError}, ErrorContext,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::{Result, ResultExt, Context, IntoReport};
 use model::{
     Account, AccountIdInternal, AccountIdLight, ApiKey, LocationIndexKey, ProfileInternal,
-    ProfileUpdateInternal,
+    ProfileUpdateInternal, IsLoggingAllowed,
 };
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
@@ -76,7 +75,7 @@ impl DatabaseCache {
         let account = read.account();
         let mut accounts = account.account_ids_stream();
         while let Some(r) = accounts.next().await {
-            let id = r.attach(NoId).change_context(CacheError::Init)?;
+            let id = r.change_context(CacheError::Init)?;
             // Diesel connection used here so no deadlock
             cache
                 .load_account_from_db(id, &config, &read_diesel, &index_iterator, &index_writer)
@@ -379,131 +378,6 @@ impl CacheEntry {
             account: None,
             current_connection: None,
         }
-    }
-}
-
-#[async_trait]
-pub trait ReadCacheJson: Sized + Send {
-    const CACHED_JSON: bool = false;
-
-    async fn read_from_cache(
-        _id: AccountIdLight,
-        _cache: &DatabaseCache,
-    ) -> Result<Self, CacheError> {
-        Err(CacheError::NotInCache.into())
-    }
-}
-
-//     async fn read_from_cache(
-//         id: AccountIdLight,
-//         cache: &DatabaseCache,
-//     ) -> Result<Self, CacheError> {
-//         let data_in_cache = cache
-//             .read_cache(id, |entry| {
-//                 entry.profile.as_ref().map(|data| data.data.clone())
-//             })
-//             .await
-//             .attach(id)?;
-//         data_in_cache
-//             .ok_or(CacheError::NotInCache.into())
-//             .map(|p| p)
-//     }
-// }
-
-// #[async_trait]
-// impl ReadCacheJson for Profile {
-//     const CACHED_JSON: bool = true;
-
-//     async fn read_from_cache(
-//         id: AccountIdLight,
-//         cache: &DatabaseCache,
-//     ) -> Result<Self, CacheError> {
-//         let data_in_cache = cache
-//             .read_cache(id, |entry| {
-//                 entry
-//                     .profile
-//                     .as_ref()
-//                     .map(|data| data.as_ref().data.clone().into())
-//             })
-//             .await
-//             .attach(id)?;
-//         data_in_cache.ok_or(CacheError::NotInCache.into())
-//     }
-// }
-
-#[async_trait]
-pub trait WriteCacheJson: Sized + Send {
-    async fn write_to_cache(
-        &self,
-        _id: AccountIdLight,
-        _cache: &DatabaseCache,
-    ) -> Result<(), CacheError> {
-        Ok(())
-    }
-}
-
-// impl WriteCacheJson for AccountSetup {}
-
-#[async_trait]
-impl WriteCacheJson for Account {
-    async fn write_to_cache(
-        &self,
-        id: AccountIdLight,
-        cache: &DatabaseCache,
-    ) -> Result<(), CacheError> {
-        cache
-            .write_cache(id, |entry| {
-                entry
-                    .account
-                    .as_mut()
-                    .map(|data| *data.as_mut() = self.clone());
-                Ok(())
-            })
-            .await
-            .map(|_| ())
-            .attach(id)
-    }
-}
-
-#[async_trait]
-impl WriteCacheJson for ProfileInternal {
-    async fn write_to_cache(
-        &self,
-        id: AccountIdLight,
-        cache: &DatabaseCache,
-    ) -> Result<(), CacheError> {
-        cache
-            .write_cache(id, |entry| {
-                entry
-                    .profile
-                    .as_mut()
-                    .map(|data| data.as_mut().data = self.clone());
-                Ok(())
-            })
-            .await
-            .map(|_| ())
-            .attach(id)
-    }
-}
-
-#[async_trait]
-impl WriteCacheJson for ProfileUpdateInternal {
-    async fn write_to_cache(
-        &self,
-        id: AccountIdLight,
-        cache: &DatabaseCache,
-    ) -> Result<(), CacheError> {
-        cache
-            .write_cache(id, |entry| {
-                entry.profile.as_mut().map(|d| &mut d.data).map(|data| {
-                    data.profile_text = self.new_data.profile_text.clone();
-                    data.version_uuid = self.version;
-                });
-                Ok(())
-            })
-            .await
-            .map(|_| ())
-            .attach(id)
     }
 }
 
