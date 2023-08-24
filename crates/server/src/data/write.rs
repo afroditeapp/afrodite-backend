@@ -7,7 +7,7 @@ use database::{
     current::{
         read::CurrentSyncReadCommands,
         write::{
-            CurrentSyncWriteCommands, CurrentWriteCommands, TransactionConnection, WriteCmdsMethods,
+            CurrentSyncWriteCommands, CurrentWriteCommands, TransactionConnection,
         },
     },
     diesel::{

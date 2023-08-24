@@ -9,7 +9,7 @@ use utils::IntoReportExt;
 
 use super::{media::CurrentSyncWriteMedia, ConnectionProvider};
 use crate::{
-    current::write::{CurrentSyncWriteCommands, WriteCmdsMethods},
+    current::write::{CurrentSyncWriteCommands},
     diesel::{DieselConnection, DieselDatabaseError},
     IntoDatabaseError, TransactionError,
 };
@@ -47,9 +47,9 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             return Ok(moderations);
         }
 
+        let mut cmds = self.cmds();
         for _ in moderations.len()..MAX_COUNT {
-            match self
-                .conn()
+            match cmds
                 .media_admin()
                 .create_moderation_from_next_request_in_queue(moderator_id)?
             {

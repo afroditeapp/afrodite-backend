@@ -29,3 +29,17 @@ reset-database:
 
 profile-build:
 	RUSTFLAGS=-Zself-profile=target/profile-build cargo +nightly build --bin pihka-backend
+
+code-stats:
+	@/bin/echo -n "Lines:"
+	@find \
+	crates/api_internal \
+	crates/config \
+	crates/database \
+	crates/model \
+	crates/pihka-backend \
+	crates/server \
+	crates/test_mode \
+	crates/utils \
+	-name '*.rs' | xargs wc -l | tail -n 1
+	@echo "\nCommits:   `git rev-list --count HEAD` total"
