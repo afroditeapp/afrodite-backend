@@ -21,7 +21,7 @@ pub use utils::api::PATH_CONNECT;
 use utils::IntoReportExt;
 
 use super::{
-    utils::{ApiKeyHeader, Json},
+    utils::{AccessTokenHeader, Json},
     BackendVersionProvider, GetAccessTokens, ReadData, WriteData,
 };
 use crate::app::connection::WebSocketManager;
@@ -61,13 +61,13 @@ pub async fn get_version<S: BackendVersionProvider>(state: S) -> Json<BackendVer
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error. TODO: can be removed?"),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_connect_websocket<
     S: WriteData + ReadData + GetAccessTokens + Send + Sync + 'static,
 >(
     websocket: WebSocketUpgrade,
-    TypedHeader(access_token): TypedHeader<ApiKeyHeader>,
+    TypedHeader(access_token): TypedHeader<AccessTokenHeader>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     ws_manager: WebSocketManager,
     state: S,
@@ -76,7 +76,7 @@ pub async fn get_connect_websocket<
     // authentication must be done manually.
 
     let id = state
-        .api_keys()
+        .access_tokens()
         .access_token_exists(access_token.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;

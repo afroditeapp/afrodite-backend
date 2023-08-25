@@ -1,15 +1,15 @@
-use axum::TypedHeader;
+use axum::{TypedHeader, Extension};
 use hyper::StatusCode;
 use model::{
     Account, AccountId, AccountSetup, AccountState, AccessToken, AuthPair, BooleanSetting,
-    DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
+    DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo, AccountIdInternal,
 };
 use tracing::error;
 
 use super::{
     db_write,
-    utils::{ApiKeyHeader, Json},
-    GetAccessTokens, GetConfig, GetInternalApi, GetUsers, ReadData, SignInWith, WriteData,
+    utils::{AccessTokenHeader, Json},
+    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, SignInWith, WriteData,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -74,21 +74,21 @@ pub const PATH_LOGIN: &str = "/account_api/login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_login<S: GetAccessTokens + WriteData + GetUsers>(
+pub async fn post_login<S: GetAccessTokens + WriteData + GetAccounts>(
     Json(id): Json<AccountId>,
     state: S,
 ) -> Result<Json<LoginResult>, StatusCode> {
     login_impl(id, state).await.map(|d| d.into())
 }
 
-async fn login_impl<S: GetAccessTokens + WriteData + GetUsers>(
+async fn login_impl<S: GetAccessTokens + WriteData + GetAccounts>(
     id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
 
-    let id = state.users().get_internal_id(id).await.map_err(|e| {
+    let id = state.accounts().get_internal_id(id).await.map_err(|e| {
         error!("Login error: {e:?}");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
@@ -132,7 +132,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
     ),
 )]
 pub async fn post_sign_in_with_login<
-    S: GetAccessTokens + WriteData + ReadData + GetUsers + SignInWith + GetConfig,
+    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig,
 >(
     Json(tokens): Json<SignInWithLoginInfo>,
     state: S,
@@ -204,22 +204,16 @@ pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_account_state<S: GetAccessTokens + ReadData>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
-    let id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     state
         .read()
         .account()
-        .account(id)
+        .account(api_caller_account_id)
         .await
         .map(|account| account.into())
         .map_err(|e| {
@@ -243,23 +237,17 @@ pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
             status = 500,
             description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Json(data): Json<AccountSetup>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let account = state
         .read()
         .account()
-        .account(id)
+        .account(api_caller_account_id)
         .await
         .map_err(|e| {
             error!("Get profile error: {e:?}");
@@ -267,20 +255,12 @@ pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
         })?;
 
     if account.state() == AccountState::InitialSetup {
-        db_write!(state, move |cmds| cmds.account().account_setup(id, data))
+        db_write!(state, move |cmds| cmds.account().account_setup(api_caller_account_id, data))
             .await
             .map_err(|e| {
                 error!("Write database error: {e:?}");
                 StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
             })
-
-        // state
-        //     .write(move |cmds| async move { cmds.account().account().update_data(id, &data).await })
-        //     .await
-        //     .map_err(|e| {
-        //         error!("Write database error: {e:?}");
-        //         StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-        //     })
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -302,20 +282,14 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_complete_setup<
     S: GetAccessTokens + ReadData + WriteData + GetInternalApi + GetConfig,
 >(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let account_setup = state
         .read()
         .account()
@@ -407,21 +381,15 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn put_setting_profile_visiblity<
     S: GetAccessTokens + ReadData + GetInternalApi + GetConfig + WriteData,
 >(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(id): Extension<AccountIdInternal>,
     Json(new_value): Json<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let account = state
         .read()
         .account()
@@ -463,7 +431,7 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_delete<S: GetAccessTokens + ReadData>(_state: S) -> Result<(), StatusCode> {
     Ok(())
@@ -482,7 +450,7 @@ pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_deletion_status<S: GetAccessTokens + ReadData>(
     _state: S,
@@ -503,7 +471,7 @@ pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
     _state: S,

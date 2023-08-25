@@ -23,7 +23,7 @@ impl InternalApp {
                 api::account_internal::PATH_INTERNAL_CHECK_ACCESS_TOKEN,
                 get({
                     let state = state.clone();
-                    move |body| api::account_internal::check_api_key(body, state)
+                    move |body| api::account_internal::check_access_token(body, state)
                 }),
             )
             .route(

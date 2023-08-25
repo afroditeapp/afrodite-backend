@@ -23,7 +23,7 @@ pub use crate::{
 pub struct InternalApi;
 
 impl InternalApi {
-    pub async fn check_api_key(
+    pub async fn check_access_token(
         configuration: &Configuration,
         key: AccessToken,
     ) -> Result<AccountId, Error<CheckApiKeyError>> {

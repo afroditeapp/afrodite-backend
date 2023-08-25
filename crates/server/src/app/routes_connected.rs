@@ -71,7 +71,7 @@ impl ConnectedApp {
                 middleware::from_fn({
                     let state = self.state.clone();
                     move |addr, req, next| {
-                        api::utils::authenticate_with_api_key(state.clone(), addr, req, next)
+                        api::utils::authenticate_with_access_token(state.clone(), addr, req, next)
                     }
                 })
             });
@@ -142,7 +142,7 @@ impl ConnectedApp {
             middleware::from_fn({
                 let state = self.state.clone();
                 move |addr, req, next| {
-                    api::utils::authenticate_with_api_key(state.clone(), addr, req, next)
+                    api::utils::authenticate_with_access_token(state.clone(), addr, req, next)
                 }
             })
         });
@@ -191,7 +191,7 @@ impl ConnectedApp {
                 middleware::from_fn({
                     let state = self.state.clone();
                     move |addr, req, next| {
-                        api::utils::authenticate_with_api_key(state.clone(), addr, req, next)
+                        api::utils::authenticate_with_access_token(state.clone(), addr, req, next)
                     }
                 })
             });
@@ -287,7 +287,7 @@ impl ConnectedApp {
                 middleware::from_fn({
                     let state = self.state.clone();
                     move |addr, req, next| {
-                        api::utils::authenticate_with_api_key(state.clone(), addr, req, next)
+                        api::utils::authenticate_with_access_token(state.clone(), addr, req, next)
                     }
                 })
             });

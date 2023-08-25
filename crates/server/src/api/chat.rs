@@ -1,16 +1,16 @@
+use axum::Extension;
 use axum::{extract::Path, TypedHeader};
 use hyper::StatusCode;
+use model::AccountIdInternal;
 use tracing::error;
 
-use super::{GetInternalApi, GetUsers, model::AccountId};
-use super::{GetApiKeys, ReadDatabase, utils::{ApiKeyHeader, Json}, WriteDatabase};
+use super::{GetAccessTokens, GetAccounts};
+use super::{GetInternalApi};
+use super::{ReadData, utils::{Json}, WriteData};
 
-use self::data::{
-    Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal,
+use model::{
+    Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal, AccountId
 };
-
-pub mod data;
-pub mod internal;
 
 // TODO: Add timeout for database commands
 
@@ -29,12 +29,12 @@ pub const PATH_TODO: &str = "/chat_api/TODO/:account_id";
             description = "Profile does not exist, is private or other server error.",
         ),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_todo<
-    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteDatabase,
+    S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData,
 >(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(id): Extension<AccountIdInternal>,
     Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {

@@ -18,9 +18,9 @@ use utoipa::{
 
 use super::GetAccessTokens;
 
-pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);
+pub static ACCESS_TOKEN_HEADER: header::HeaderName = header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);
 
-pub async fn authenticate_with_api_key<T, S: GetAccessTokens>(
+pub async fn authenticate_with_access_token<T, S: GetAccessTokens>(
     state: S,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     mut req: Request<T>,
@@ -34,7 +34,7 @@ pub async fn authenticate_with_api_key<T, S: GetAccessTokens>(
     let key = AccessToken::new(key_str.to_string());
 
     if let Some(id) = state
-        .api_keys()
+        .access_tokens()
         .access_token_and_connection_exists(&key, addr)
         .await
     {
@@ -45,17 +45,17 @@ pub async fn authenticate_with_api_key<T, S: GetAccessTokens>(
     }
 }
 
-pub struct ApiKeyHeader(AccessToken);
+pub struct AccessTokenHeader(AccessToken);
 
-impl ApiKeyHeader {
+impl AccessTokenHeader {
     pub fn key(&self) -> &AccessToken {
         &self.0
     }
 }
 
-impl Header for ApiKeyHeader {
+impl Header for AccessTokenHeader {
     fn name() -> &'static headers::HeaderName {
-        &API_KEY_HEADER
+        &ACCESS_TOKEN_HEADER
     }
 
     fn decode<'i, I>(values: &mut I) -> Result<Self, headers::Error>
@@ -65,7 +65,7 @@ impl Header for ApiKeyHeader {
     {
         let value = values.next().ok_or_else(headers::Error::invalid)?;
         let value = value.to_str().map_err(|_| headers::Error::invalid())?;
-        Ok(ApiKeyHeader(AccessToken::new(value.to_string())))
+        Ok(AccessTokenHeader(AccessToken::new(value.to_string())))
     }
 
     fn encode<E: Extend<headers::HeaderValue>>(&self, values: &mut E) {
@@ -75,13 +75,13 @@ impl Header for ApiKeyHeader {
 }
 
 /// Utoipa API doc security config
-pub struct SecurityApiTokenDefault;
+pub struct SecurityApiAccessTokenDefault;
 
-impl Modify for SecurityApiTokenDefault {
+impl Modify for SecurityApiAccessTokenDefault {
     fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
         if let Some(components) = openapi.components.as_mut() {
             components.add_security_scheme(
-                "api_key",
+                "access_token",
                 SecurityScheme::ApiKey(utoipa::openapi::security::ApiKey::Header(
                     ApiKeyValue::new(ACCESS_TOKEN_HEADER_STR),
                 )),

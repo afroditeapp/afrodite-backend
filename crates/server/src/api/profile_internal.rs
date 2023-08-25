@@ -6,7 +6,7 @@ use model::{AccountId, BooleanSetting};
 use tracing::error;
 
 use super::{GetAccessTokens, GetConfig, WriteData};
-use crate::api::{GetInternalApi, GetUsers, ReadData};
+use crate::api::{GetInternalApi, GetAccounts, ReadData};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
@@ -22,14 +22,14 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     ),
 )]
 pub async fn internal_post_update_profile_visibility<
-    S: ReadData + GetUsers + GetInternalApi + GetAccessTokens + GetConfig + WriteData,
+    S: ReadData + GetAccounts + GetInternalApi + GetAccessTokens + GetConfig + WriteData,
 >(
     Path(account_id): Path<AccountId>,
     Path(value): Path<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
-        .users()
+        .accounts()
         .get_internal_id(account_id)
         .await
         .map_err(|e| {

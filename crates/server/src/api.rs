@@ -5,7 +5,7 @@ use futures::Future;
 use model::{AccountId, BackendVersion};
 use utoipa::OpenApi;
 
-use self::utils::SecurityApiTokenDefault;
+use self::utils::SecurityApiAccessTokenDefault;
 use crate::{
     app::sign_in_with::SignInWithManager,
     data::{
@@ -29,6 +29,7 @@ pub mod media_admin;
 pub mod media_internal;
 pub mod profile;
 pub mod profile_internal;
+pub mod chat;
 
 pub mod utils;
 
@@ -54,7 +55,7 @@ pub mod utils;
         account::get_account_state,
         account::get_deletion_status,
         account::delete_cancel_deletion,
-        account_internal::check_api_key,
+        account_internal::check_access_token,
         account_internal::internal_get_account_state,
         profile::get_profile,
         profile::get_profile_from_database_debug_mode_benchmark,
@@ -124,7 +125,7 @@ pub mod utils;
         manager_model::DownloadTypeQueryParam,
         manager_model::SoftwareOptions,
     )),
-    modifiers(&SecurityApiTokenDefault),
+    modifiers(&SecurityApiAccessTokenDefault),
     info(
         title = "pihka-backend",
         description = "Pihka backend API",
@@ -137,12 +138,12 @@ pub struct ApiDoc;
 
 pub trait GetAccessTokens {
     /// Users which are logged in.
-    fn api_keys(&self) -> AccessTokenManager<'_>;
+    fn access_tokens(&self) -> AccessTokenManager<'_>;
 }
 
-pub trait GetUsers {
-    /// All users registered in the service.
-    fn users(&self) -> AccountIdManager<'_>;
+pub trait GetAccounts {
+    /// All accounts registered in the service.
+    fn accounts(&self) -> AccountIdManager<'_>;
 }
 
 #[async_trait::async_trait]

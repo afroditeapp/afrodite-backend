@@ -50,8 +50,8 @@ pub struct AccountEntry {
 
 #[derive(Debug)]
 pub struct DatabaseCache {
-    /// Accounts which are logged in.
-    api_keys: RwLock<HashMap<AccessToken, Arc<AccountEntry>>>,
+    /// Accounts which are logged in (have valid access token).
+    access_tokens: RwLock<HashMap<AccessToken, Arc<AccountEntry>>>,
     /// All accounts registered in the service.
     accounts: RwLock<HashMap<AccountId, Arc<AccountEntry>>>,
 }
@@ -65,7 +65,7 @@ impl DatabaseCache {
         config: &Config,
     ) -> Result<Self, CacheError> {
         let cache = Self {
-            api_keys: RwLock::new(HashMap::new()),
+            access_tokens: RwLock::new(HashMap::new()),
             accounts: RwLock::new(HashMap::new()),
         };
 
@@ -108,17 +108,17 @@ impl DatabaseCache {
             .get(&account_id.as_light())
             .ok_or(CacheError::KeyNotExists)?;
 
-        let api_key = db_read(&read_diesel, move |mut cmds| {
+        let access_token = db_read(&read_diesel, move |mut cmds| {
             cmds.account().access_token(account_id)
         })
         .await?;
 
-        if let Some(key) = api_key {
-            let mut write_api_keys = self.api_keys.write().await;
-            if write_api_keys.contains_key(&key) {
+        if let Some(key) = access_token {
+            let mut access_tokens = self.access_tokens.write().await;
+            if access_tokens.contains_key(&key) {
                 return Err(CacheError::AlreadyExists.into()).change_context(CacheError::Init);
             } else {
-                write_api_keys.insert(key, account_entry.clone());
+                access_tokens.insert(key, account_entry.clone());
             }
         }
 
@@ -191,7 +191,7 @@ impl DatabaseCache {
             .ok_or(CacheError::KeyNotExists)?
             .clone();
 
-        let mut tokens = self.api_keys.write().await;
+        let mut tokens = self.access_tokens.write().await;
 
         if let Some(current) = current_access_token {
             tokens.remove(&current);
@@ -223,7 +223,7 @@ impl DatabaseCache {
         cache_entry.cache.write().await.current_connection = None;
 
         if let Some(token) = token {
-            let mut tokens = self.api_keys.write().await;
+            let mut tokens = self.access_tokens.write().await;
             let _account = tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
         }
 
@@ -231,7 +231,7 @@ impl DatabaseCache {
     }
 
     pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
-        let tokens = self.api_keys.read().await;
+        let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(token) {
             Some(entry.account_id_internal)
         } else {
@@ -246,7 +246,7 @@ impl DatabaseCache {
         access_token: &AccessToken,
         connection: SocketAddr,
     ) -> Option<AccountIdInternal> {
-        let tokens = self.api_keys.read().await;
+        let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
             if r.current_connection.map(|a| a.ip()) == Some(connection.ip()) {

@@ -110,8 +110,8 @@ impl<'a, S> InternalApiManager<'a, S> {
 }
 
 impl<S: GetAccessTokens> InternalApiManager<'_, S> {
-    fn api_keys(&self) -> AccessTokenManager {
-        self.state.api_keys()
+    fn access_tokens(&self) -> AccessTokenManager {
+        self.state.access_tokens()
     }
 }
 
@@ -119,13 +119,13 @@ impl<S: GetConfig + GetAccessTokens> InternalApiManager<'_, S> {
     /// Check that API key is valid. Use this only from AccessToken checker handler.
     /// This function will cache the account ID, so it can be found using normal
     /// database calls after this runs.
-    pub async fn check_api_key(&self, key: AccessToken) -> Result<AuthResponse, InternalApiError> {
-        if self.api_keys().access_token_exists(&key).await.is_some() {
+    pub async fn check_access_token(&self, key: AccessToken) -> Result<AuthResponse, InternalApiError> {
+        if self.access_tokens().access_token_exists(&key).await.is_some() {
             Ok(AuthResponse::Ok)
         } else if !self.config().components().account {
             // Check AccessToken from external service
 
-            let result = InternalApi::check_api_key(self.api_client.account()?, key).await;
+            let result = InternalApi::check_access_token(self.api_client.account()?, key).await;
 
             match result {
                 Ok(_res) => {

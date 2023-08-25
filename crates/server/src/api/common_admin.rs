@@ -21,7 +21,7 @@ pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_system_info<S: GetManagerApi + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
@@ -63,7 +63,7 @@ pub const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_software_info<S: GetManagerApi + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
@@ -107,7 +107,7 @@ pub const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info"
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_latest_build_info<S: GetManagerApi + ReadData>(
     Query(software): Query<SoftwareOptionsQueryParam>,
@@ -151,7 +151,7 @@ pub const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_so
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_request_build_software<S: GetManagerApi + ReadData>(
     Query(software): Query<SoftwareOptionsQueryParam>,
@@ -197,7 +197,7 @@ pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
     Query(software): Query<SoftwareOptionsQueryParam>,

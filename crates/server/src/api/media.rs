@@ -12,8 +12,8 @@ use tracing::error;
 
 use super::{
     db_write,
-    utils::{ApiKeyHeader, Json},
-    GetAccessTokens, GetUsers, ReadData, WriteData,
+    utils::{AccessTokenHeader, Json},
+    GetAccessTokens, GetAccounts, ReadData, WriteData,
 };
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
@@ -32,7 +32,7 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_image<S: ReadData>(
     Path(account_id): Path<AccountId>,
@@ -71,9 +71,9 @@ pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:ac
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
-pub async fn get_primary_image_info<S: ReadData + GetUsers + GetAccessTokens>(
+pub async fn get_primary_image_info<S: ReadData + GetAccounts + GetAccessTokens>(
     Path(account_id): Path<AccountId>,
     Query(_access_check): Query<ImageAccessCheck>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
@@ -82,7 +82,7 @@ pub async fn get_primary_image_info<S: ReadData + GetUsers + GetAccessTokens>(
     // TODO: access restrictions
 
     let internal_id = state
-        .users()
+        .accounts()
         .get_internal_id(account_id)
         .await
         .map_err(|e| {
@@ -116,9 +116,9 @@ pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
-pub async fn get_all_normal_images<S: ReadData + GetUsers>(
+pub async fn get_all_normal_images<S: ReadData + GetAccounts>(
     Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
@@ -126,7 +126,7 @@ pub async fn get_all_normal_images<S: ReadData + GetUsers>(
     // TODO: access restrictions
 
     let internal_id = state
-        .users()
+        .accounts()
         .get_internal_id(account_id)
         .await
         .map_err(|e| {
@@ -168,7 +168,7 @@ pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image";
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn put_primary_image<S: WriteData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
@@ -202,18 +202,12 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ModerationRequest>, StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let request = state
         .read()
         .moderation_request(account_id)
@@ -241,19 +235,13 @@ pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error or request content was invalid."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn put_moderation_request<S: WriteData + GetAccessTokens>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Json(moderation_request): Json<ModerationRequestContent>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     state
         .write(move |cmds| async move {
             cmds.media()
@@ -286,20 +274,14 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
         (status = 406, description = "Unknown slot ID."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Path(slot_number): Path<SlotId>,
     image: BodyStream,
     state: S,
 ) -> Result<Json<ContentId>, StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let slot = match slot_number.slot_id {
         0 => ImageSlot::Image1,
         1 => ImageSlot::Image2,

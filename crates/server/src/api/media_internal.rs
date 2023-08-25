@@ -6,7 +6,7 @@ use model::{AccountId, BooleanSetting, Profile};
 use tracing::error;
 
 use super::GetConfig;
-use crate::api::{utils::Json, GetInternalApi, GetUsers, ReadData};
+use crate::api::{utils::Json, GetInternalApi, GetAccounts, ReadData};
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
@@ -24,12 +24,12 @@ pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn internal_get_check_moderation_request_for_account<S: ReadData + GetUsers>(
+pub async fn internal_get_check_moderation_request_for_account<S: ReadData + GetAccounts>(
     Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
-        .users()
+        .accounts()
         .get_internal_id(account_id)
         .await
         .map_err(|e| {
@@ -69,7 +69,7 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
     ),
 )]
 pub async fn internal_post_update_profile_image_visibility<
-    S: ReadData + GetUsers + GetInternalApi + GetConfig,
+    S: ReadData + GetAccounts + GetInternalApi + GetConfig,
 >(
     Path(account_id): Path<AccountId>,
     Path(value): Path<BooleanSetting>,
@@ -77,7 +77,7 @@ pub async fn internal_post_update_profile_image_visibility<
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
-        .users()
+        .accounts()
         .get_internal_id(account_id)
         .await
         .map_err(|e| {

@@ -38,7 +38,7 @@ impl ManagerApiClient {
             .into_error(ManagerClientError::ClientBuildFailed)?;
 
         let manager = config.manager_config().map(|c| {
-            let api_key = AccessToken {
+            let token = AccessToken {
                 prefix: None,
                 key: c.api_key.to_string(),
             };
@@ -50,7 +50,7 @@ impl ManagerApiClient {
             Configuration {
                 base_path: url,
                 client: client.clone(),
-                api_key: Some(api_key),
+                api_key: Some(token),
                 ..Configuration::default()
             }
         });

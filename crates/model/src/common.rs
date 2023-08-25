@@ -144,26 +144,26 @@ pub struct AccessTokenRaw {
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct AccessToken {
     /// API token which server generates.
-    api_key: String,
+    access_token: String,
 }
 
 impl AccessToken {
     pub fn generate_new() -> Self {
         Self {
-            api_key: uuid::Uuid::new_v4().simple().to_string(),
+            access_token: uuid::Uuid::new_v4().simple().to_string(),
         }
     }
 
-    pub fn new(api_key: String) -> Self {
-        Self { api_key }
+    pub fn new(access_token: String) -> Self {
+        Self { access_token }
     }
 
     pub fn into_string(self) -> String {
-        self.api_key
+        self.access_token
     }
 
     pub fn as_str(&self) -> &str {
-        &self.api_key
+        &self.access_token
     }
 }
 

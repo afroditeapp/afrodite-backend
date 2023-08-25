@@ -25,7 +25,7 @@ use super::{
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
 use crate::api::{
-    self, GetAccessTokens, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadData, SignInWith,
+    self, GetAccessTokens, GetConfig, GetInternalApi, GetManagerApi, GetAccounts, ReadData, SignInWith,
     WriteData,
 };
 
@@ -55,13 +55,13 @@ impl BackendVersionProvider for AppState {
 }
 
 impl GetAccessTokens for AppState {
-    fn api_keys(&self) -> AccessTokenManager<'_> {
-        self.database.api_key_manager()
+    fn access_tokens(&self) -> AccessTokenManager<'_> {
+        self.database.access_token_manager()
     }
 }
 
-impl GetUsers for AppState {
-    fn users(&self) -> AccountIdManager<'_> {
+impl GetAccounts for AppState {
+    fn accounts(&self) -> AccountIdManager<'_> {
         self.database.account_id_manager()
     }
 }

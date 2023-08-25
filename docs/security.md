@@ -13,7 +13,7 @@ Client does the normal login procedure and gets API key. Also start session
 token is recieved with the API key.
 
 When client wants to use HTTP API it needs to use persistent connection to it.
-Every connection needs to be started with `/common_api/validate_api_key` and
+Every connection needs to be started with `/common_api/validate_access_token` and
 that requires the API key. If that succeedes
 `/common_api/validate_session_token` request is done. If that fails, logout will
 be done, which in practise removes the current API key and session token. If the

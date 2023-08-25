@@ -6,8 +6,8 @@ use model::{
 use tracing::error;
 
 use super::{
-    utils::{ApiKeyHeader, Json},
-    GetAccessTokens, GetConfig, GetInternalApi, GetUsers, ReadData, WriteData,
+    utils::{AccessTokenHeader, Json},
+    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData,
 };
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
@@ -22,9 +22,9 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
-pub async fn get_security_image_info<S: ReadData + GetUsers>(
+pub async fn get_security_image_info<S: ReadData + GetAccounts>(
     Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
@@ -32,7 +32,7 @@ pub async fn get_security_image_info<S: ReadData + GetUsers>(
     // TODO: access restrictions
 
     let internal_id = state
-        .users()
+        .accounts()
         .get_internal_id(account_id)
         .await
         .map_err(|e| {
@@ -72,17 +72,12 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/p
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ModerationList>, StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     // TODO: Access restrictions
 
@@ -121,22 +116,16 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_handle_moderation_request<
-    S: GetInternalApi + WriteData + GetAccessTokens + GetUsers + GetConfig + ReadData,
+    S: GetInternalApi + WriteData + GetAccessTokens + GetAccounts + GetConfig + ReadData,
 >(
     Path(moderation_request_owner_account_id): Path<AccountId>,
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(admin_account_id): Extension<AccountIdInternal>,
     Json(moderation_decision): Json<HandleModerationRequest>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let admin_account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let account = state
         .internal_api()
         .get_account_state(admin_account_id)
@@ -148,7 +137,7 @@ pub async fn post_handle_moderation_request<
 
     if account.capablities().admin_moderate_images {
         let moderation_request_owner = state
-            .users()
+            .accounts()
             .get_internal_id(moderation_request_owner_account_id)
             .await
             .map_err(|e| {

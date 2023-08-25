@@ -1,15 +1,15 @@
-use axum::{extract::Path, TypedHeader};
+use axum::{extract::Path, TypedHeader, Extension};
 use hyper::StatusCode;
 use model::{
     AccountId, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
-    ProfileUpdateInternal,
+    ProfileUpdateInternal, AccountIdInternal,
 };
 use tracing::error;
 
 use super::{
     db_write,
-    utils::{ApiKeyHeader, Json},
-    GetAccessTokens, GetConfig, GetInternalApi, GetUsers, ReadData, WriteData,
+    utils::{AccessTokenHeader, Json},
+    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData,
 };
 
 // TODO: Add timeout for database commands
@@ -40,25 +40,19 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
             description = "Profile does not exist, is private or other server error.",
         ),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_profile<
-    S: ReadData + GetUsers + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
+    S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
 >(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: check capablities
 
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let requested_profile = state
-        .users()
+        .accounts()
         .get_internal_id(requested_profile)
         .await
         .map_err(|e| {
@@ -157,19 +151,13 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
             description = "Profile validation in route handler failed or database error."
         ),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let old_profile: ProfileInternal = state
         .read()
         .profile()
@@ -209,19 +197,13 @@ pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn put_location<S: GetAccessTokens + WriteData>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Json(location): Json<Location>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     state
         .write(move |cmds| async move {
             cmds.profile()
@@ -248,18 +230,12 @@ pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ProfilePage>, StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let data = state
         .write_concurrent(account_id.as_light(), move |cmds| async move {
             cmds.next_profiles(account_id).await
@@ -287,18 +263,12 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData>(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     state
         .write(move |cmds| async move {
             cmds.profile()
@@ -343,12 +313,12 @@ pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
             description = "Profile does not exist, is private or other server error.",
         ),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn get_profile_from_database_debug_mode_benchmark<
-    S: ReadData + GetUsers + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
+    S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
 >(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
@@ -356,14 +326,8 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let requested_profile = state
-        .users()
+        .accounts()
         .get_internal_id(requested_profile)
         .await
         .map_err(|e| {
@@ -406,21 +370,15 @@ pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmar
             description = "Profile validation in route handler failed or database error."
         ),
     ),
-    security(("api_key" = [])),
+    security(("access_token" = [])),
 )]
 pub async fn post_profile_to_database_debug_mode_benchmark<
     S: GetAccessTokens + WriteData + ReadData,
 >(
-    TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .api_keys()
-        .access_token_exists(api_key.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
     let old_profile: ProfileInternal = state
         .read()
         .profile()

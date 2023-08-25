@@ -549,7 +549,7 @@ impl RouterDatabaseReadHandle {
         FileReadCommands::new(&self.root.file_dir)
     }
 
-    pub fn api_key_manager(&self) -> AccessTokenManager<'_> {
+    pub fn access_token_manager(&self) -> AccessTokenManager<'_> {
         AccessTokenManager::new(&self.cache)
     }
 

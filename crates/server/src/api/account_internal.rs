@@ -5,7 +5,7 @@ use hyper::StatusCode;
 use model::{Account, AccountId, AccessToken};
 use tracing::error;
 
-use crate::api::{utils::Json, GetAccessTokens, GetUsers, ReadData};
+use crate::api::{utils::Json, GetAccessTokens, GetAccounts, ReadData};
 
 pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
 
@@ -19,13 +19,13 @@ pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token
     ),
     security(),
 )]
-pub async fn check_api_key<S: GetAccessTokens>(
-    Json(api_key): Json<AccessToken>,
+pub async fn check_access_token<S: GetAccessTokens>(
+    Json(token): Json<AccessToken>,
     state: S,
 ) -> Result<Json<AccountId>, StatusCode> {
     state
-        .api_keys()
-        .access_token_exists(&api_key)
+        .access_tokens()
+        .access_token_exists(&token)
         .await
         .ok_or(StatusCode::NOT_FOUND)
         .map(|id| id.as_light().into())
@@ -43,12 +43,12 @@ pub const PATH_INTERNAL_GET_ACCOUNT_STATE: &str = "/internal/get_account_state/:
     ),
     security(),
 )]
-pub async fn internal_get_account_state<S: ReadData + GetUsers>(
+pub async fn internal_get_account_state<S: ReadData + GetAccounts>(
     Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
     let internal_id = state
-        .users()
+        .accounts()
         .get_internal_id(account_id)
         .await
         .map_err(|e| {
