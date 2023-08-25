@@ -1,14 +1,14 @@
-# \CommonadminApi
+# \CommonAdminApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_latest_build_info**](CommonadminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager
-[**get_software_info**](CommonadminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
-[**get_system_info**](CommonadminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
-[**post_request_build_software**](CommonadminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
-[**post_request_update_software**](CommonadminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
+[**get_latest_build_info**](CommonAdminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager
+[**get_software_info**](CommonAdminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
+[**get_system_info**](CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
+[**post_request_build_software**](CommonAdminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
+[**post_request_update_software**](CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
 
 
 
@@ -32,7 +32,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -59,7 +59,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -86,7 +86,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -116,7 +116,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -147,7 +147,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 

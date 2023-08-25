@@ -6,7 +6,7 @@ mod utils;
 
 use std::{fmt::Debug, sync::Arc, vec};
 
-use api_client::models::AccountIdLight;
+use api_client::models::AccountId;
 use async_trait::async_trait;
 use config::args::{Test, TestMode};
 use error_stack::{Result, ResultExt};
@@ -45,7 +45,7 @@ pub struct BotConnections {
 
 #[derive(Debug)]
 pub struct BotState {
-    pub id: Option<AccountIdLight>,
+    pub id: Option<AccountId>,
     pub config: Arc<TestMode>,
     pub task_id: u32,
     pub bot_id: u32,
@@ -61,7 +61,7 @@ pub struct BotState {
 
 impl BotState {
     pub fn new(
-        id: Option<AccountIdLight>,
+        id: Option<AccountId>,
         config: Arc<TestMode>,
         task_id: u32,
         bot_id: u32,
@@ -83,7 +83,7 @@ impl BotState {
         }
     }
 
-    pub fn id(&self) -> Result<AccountIdLight, TestError> {
+    pub fn id(&self) -> Result<AccountId, TestError> {
         self.id.ok_or(TestError::AccountIdMissing.into())
     }
 
@@ -205,7 +205,7 @@ impl BotManager {
                     .as_ref()
                     .map(|d| {
                         d.find_matching(task_id, bot_i)
-                            .map(|s| AccountIdLight::new(s.account_id))
+                            .map(|s| AccountId::new(s.account_id))
                     })
                     .flatten(),
                 config.clone(),

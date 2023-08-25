@@ -31,31 +31,31 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/setup | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 *AccountApi* | [**post_delete**](docs/AccountApi.md#post_delete) | **PUT** /account_api/delete | Delete account.
-*AccountApi* | [**post_login**](docs/AccountApi.md#post_login) | **POST** /account_api/login | Get new ApiKey.
+*AccountApi* | [**post_login**](docs/AccountApi.md#post_login) | **POST** /account_api/login | Get new AccessToken.
 *AccountApi* | [**post_register**](docs/AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update profile visiblity value.
-*AccountinternalApi* | [**check_api_key**](docs/AccountinternalApi.md#check_api_key) | **GET** /internal/check_api_key | 
-*AccountinternalApi* | [**internal_get_account_state**](docs/AccountinternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
+*AccountInternalApi* | [**check_access_token**](docs/AccountInternalApi.md#check_access_token) | **GET** /internal/check_access_token | 
+*AccountInternalApi* | [**internal_get_account_state**](docs/AccountInternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
-*CommonadminApi* | [**get_latest_build_info**](docs/CommonadminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager
-*CommonadminApi* | [**get_software_info**](docs/CommonadminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
-*CommonadminApi* | [**get_system_info**](docs/CommonadminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
-*CommonadminApi* | [**post_request_build_software**](docs/CommonadminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
-*CommonadminApi* | [**post_request_update_software**](docs/CommonadminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
+*CommonAdminApi* | [**get_latest_build_info**](docs/CommonAdminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager
+*CommonAdminApi* | [**get_software_info**](docs/CommonAdminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
+*CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
+*CommonAdminApi* | [**post_request_build_software**](docs/CommonAdminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
+*CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
 *MediaApi* | [**get_all_normal_images**](docs/MediaApi.md#get_all_normal_images) | **GET** /media_api/all_normal_images/{account_id} | Get list of all normal images on the server for one account.
 *MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 *MediaApi* | [**get_primary_image_info**](docs/MediaApi.md#get_primary_image_info) | **GET** /media_api/primary_image_info/{account_id} | Get current public image for selected profile
-*MediaApi* | [**get_security_image_info**](docs/MediaApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile. Only for admins.
-*MediaApi* | [**patch_moderation_request_list**](docs/MediaApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
-*MediaApi* | [**post_handle_moderation_request**](docs/MediaApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 *MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
 *MediaApi* | [**put_primary_image**](docs/MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image | Set primary image for account. Image content ID can not be empty.
-*MediainternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediainternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
-*MediainternalApi* | [**internal_post_update_profile_image_visibility**](docs/MediainternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
+*MediaAdminApi* | [**get_security_image_info**](docs/MediaAdminApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile. Only for admins.
+*MediaAdminApi* | [**patch_moderation_request_list**](docs/MediaAdminApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
+*MediaAdminApi* | [**post_handle_moderation_request**](docs/MediaAdminApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
+*MediaInternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
+*MediaInternalApi* | [**internal_post_update_profile_image_visibility**](docs/MediaInternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{account_id} | Get account's current profile from database. Debug mode must be enabled
 *ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
@@ -63,16 +63,16 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled
 *ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location
-*ProfileinternalApi* | [**internal_post_update_profile_visibility**](docs/ProfileinternalApi.md#internal_post_update_profile_visibility) | **POST** /internal/profile_api/visiblity/{account_id}/{value} | 
+*ProfileInternalApi* | [**internal_post_update_profile_visibility**](docs/ProfileInternalApi.md#internal_post_update_profile_visibility) | **POST** /internal/profile_api/visiblity/{account_id}/{value} | 
 
 
 ## Documentation For Models
 
+ - [AccessToken](docs/AccessToken.md)
  - [Account](docs/Account.md)
- - [AccountIdLight](docs/AccountIdLight.md)
+ - [AccountId](docs/AccountId.md)
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountState](docs/AccountState.md)
- - [ApiKey](docs/ApiKey.md)
  - [AuthPair](docs/AuthPair.md)
  - [BackendVersion](docs/BackendVersion.md)
  - [BooleanSetting](docs/BooleanSetting.md)

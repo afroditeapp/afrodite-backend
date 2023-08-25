@@ -123,7 +123,7 @@ pub async fn delete_cancel_deletion(configuration: &configuration::Configuration
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -159,7 +159,7 @@ pub async fn get_account_state(configuration: &configuration::Configuration, ) -
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -195,7 +195,7 @@ pub async fn get_deletion_status(configuration: &configuration::Configuration, )
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -231,7 +231,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, ac
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
     local_var_req_builder = local_var_req_builder.json(&account_setup);
 
@@ -268,7 +268,7 @@ pub async fn post_complete_setup(configuration: &configuration::Configuration, )
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -304,7 +304,7 @@ pub async fn post_delete(configuration: &configuration::Configuration, ) -> Resu
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -322,8 +322,8 @@ pub async fn post_delete(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
-/// Get new ApiKey.
-pub async fn post_login(configuration: &configuration::Configuration, account_id_light: crate::models::AccountIdLight) -> Result<crate::models::LoginResult, Error<PostLoginError>> {
+/// Get new AccessToken.  Available only if server is running in debug mode and bot_login is enabled from config file.
+pub async fn post_login(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<crate::models::LoginResult, Error<PostLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -334,7 +334,7 @@ pub async fn post_login(configuration: &configuration::Configuration, account_id
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&account_id_light);
+    local_var_req_builder = local_var_req_builder.json(&account_id);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -351,8 +351,8 @@ pub async fn post_login(configuration: &configuration::Configuration, account_id
     }
 }
 
-/// Register new account. Returns new account ID which is UUID.
-pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountIdLight, Error<PostRegisterError>> {
+/// Register new account. Returns new account ID which is UUID.  Available only if server is running in debug mode and bot_login is enabled from config file.
+pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountId, Error<PostRegisterError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -426,7 +426,7 @@ pub async fn put_setting_profile_visiblity(configuration: &configuration::Config
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
     local_var_req_builder = local_var_req_builder.json(&boolean_setting);
 

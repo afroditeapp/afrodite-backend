@@ -1,13 +1,13 @@
+pub mod access_token;
+pub use self::access_token::AccessToken;
 pub mod account;
 pub use self::account::Account;
-pub mod account_id_light;
-pub use self::account_id_light::AccountIdLight;
+pub mod account_id;
+pub use self::account_id::AccountId;
 pub mod account_setup;
 pub use self::account_setup::AccountSetup;
 pub mod account_state;
 pub use self::account_state::AccountState;
-pub mod api_key;
-pub use self::api_key::ApiKey;
 pub mod auth_pair;
 pub use self::auth_pair::AuthPair;
 pub mod backend_version;

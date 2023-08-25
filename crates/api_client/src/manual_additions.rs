@@ -4,12 +4,12 @@ use crate::{
         media_api::{GetImageError, PutImageToModerationSlotError},
         Error, ResponseContent,
     },
-    models::{AccountIdLight, ContentId, Location},
+    models::{AccountId, ContentId, Location},
 };
 
-impl Copy for AccountIdLight {}
+impl Copy for AccountId {}
 
-impl AccountIdLight {
+impl AccountId {
     pub fn to_string(&self) -> String {
         self.account_id.hyphenated().to_string()
     }
@@ -58,7 +58,7 @@ pub async fn get_image_fixed(
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
 
     let local_var_req = local_var_req_builder.build()?;
@@ -107,7 +107,7 @@ pub async fn put_image_to_moderation_slot_fixed(
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
     local_var_req_builder = local_var_req_builder.body(body);
 
@@ -150,7 +150,7 @@ pub async fn api_available(configuration: &configuration::Configuration) -> Resu
             Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
             None => local_var_key,
         };
-        local_var_req_builder = local_var_req_builder.header("x-api-key", local_var_value);
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
 
     let local_var_req = local_var_req_builder.build().map_err(|_| ())?;

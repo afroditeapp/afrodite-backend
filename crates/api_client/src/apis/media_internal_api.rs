@@ -15,43 +15,37 @@ use crate::apis::ResponseContent;
 use super::{Error, configuration};
 
 
-/// struct for typed errors of method [`get_connect_websocket`]
+/// struct for typed errors of method [`internal_get_check_moderation_request_for_account`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetConnectWebsocketError {
-    Status401(),
+pub enum InternalGetCheckModerationRequestForAccountError {
+    Status404(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_version`]
+/// struct for typed errors of method [`internal_post_update_profile_image_visibility`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetVersionError {
+pub enum InternalPostUpdateProfileImageVisibilityError {
+    Status404(),
+    Status500(),
     UnknownValue(serde_json::Value),
 }
 
 
-/// Connect to server using WebSocket after getting refresh and access tokens. Connection is required as API access is allowed for connected clients.  Send the current refersh token as Binary. The server will send the next refresh token (Binary) and after that the new access token (Text). After that API can be used.  The access token is valid until this WebSocket is closed. Server might send events as Text which is JSON. 
-pub async fn get_connect_websocket(configuration: &configuration::Configuration, ) -> Result<(), Error<GetConnectWebsocketError>> {
+/// Check that current moderation request for account exists. Requires also that request contains camera image. 
+pub async fn internal_get_check_moderation_request_for_account(configuration: &configuration::Configuration, account_id: &str) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/connect", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/internal/media_api/moderation/request/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -62,24 +56,24 @@ pub async fn get_connect_websocket(configuration: &configuration::Configuration,
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<GetConnectWebsocketError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<InternalGetCheckModerationRequestForAccountError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-/// Get backend version.
-pub async fn get_version(configuration: &configuration::Configuration, ) -> Result<crate::models::BackendVersion, Error<GetVersionError>> {
+pub async fn internal_post_update_profile_image_visibility(configuration: &configuration::Configuration, account_id: &str, value: bool, profile: crate::models::Profile) -> Result<(), Error<InternalPostUpdateProfileImageVisibilityError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/version", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+    let local_var_uri_str = format!("{}/internal/media_api/visiblity/{account_id}/{value}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), value=value);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
+    local_var_req_builder = local_var_req_builder.json(&profile);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -88,9 +82,9 @@ pub async fn get_version(configuration: &configuration::Configuration, ) -> Resu
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        Ok(())
     } else {
-        let local_var_entity: Option<GetVersionError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<InternalPostUpdateProfileImageVisibilityError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

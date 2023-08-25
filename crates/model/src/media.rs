@@ -422,6 +422,7 @@ pub struct NormalImages {
     PartialEq,
     Eq,
     Hash,
+    ToSchema,
     FromSqlRow,
     AsExpression,
 )]

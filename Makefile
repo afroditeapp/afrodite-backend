@@ -21,6 +21,12 @@ run:
 
 update-manager-submodule:
 	git submodule update --remote --merge
+update-api-bindings:
+	openapi-generator-cli generate \
+	-i http://localhost:3000/api-doc/pihka_api.json \
+	-g rust \
+	-o crates/api_client \
+	--package-name api_client
 
 migrations-run:
 	DATABASE_URL="database/current/current.db" diesel migration run

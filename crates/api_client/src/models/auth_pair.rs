@@ -15,14 +15,14 @@
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct AuthPair {
     #[serde(rename = "access")]
-    pub access: Box<crate::models::ApiKey>,
+    pub access: Box<crate::models::AccessToken>,
     #[serde(rename = "refresh")]
     pub refresh: Box<crate::models::RefreshToken>,
 }
 
 impl AuthPair {
     /// AccessToken and RefreshToken
-    pub fn new(access: crate::models::ApiKey, refresh: crate::models::RefreshToken) -> AuthPair {
+    pub fn new(access: crate::models::AccessToken, refresh: crate::models::RefreshToken) -> AuthPair {
         AuthPair {
             access: Box::new(access),
             refresh: Box::new(refresh),

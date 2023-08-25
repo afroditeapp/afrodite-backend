@@ -58,7 +58,7 @@ impl BotAction for Login {
 
         state
             .api
-            .set_access_token(login_result.account.access.api_key.clone());
+            .set_access_token(login_result.account.access.access_token.clone());
 
         let url = state
             .config
@@ -116,7 +116,7 @@ async fn connect_websocket(
     let mut r = url.into_client_request().into_error(TestError::WebSocket)?;
     r.headers_mut().insert(
         ACCESS_TOKEN_HEADER_STR,
-        HeaderValue::from_str(&auth.access.api_key).into_error(TestError::WebSocket)?,
+        HeaderValue::from_str(&auth.access.access_token).into_error(TestError::WebSocket)?,
     );
     let (mut stream, _) = tokio_tungstenite::connect_async(r)
         .await

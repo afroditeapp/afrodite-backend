@@ -1,11 +1,10 @@
-# ProfileLink
+# AccessToken
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**id** | [**crate::models::AccountId**](AccountId.md) |  | 
-**version** | [**crate::models::ProfileVersion**](ProfileVersion.md) |  | 
+**access_token** | **String** | API token which server generates. | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

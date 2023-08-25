@@ -1,17 +1,17 @@
-# \AccountinternalApi
+# \AccountInternalApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**check_api_key**](AccountinternalApi.md#check_api_key) | **GET** /internal/check_api_key | 
-[**internal_get_account_state**](AccountinternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
+[**check_access_token**](AccountInternalApi.md#check_access_token) | **GET** /internal/check_access_token | 
+[**internal_get_account_state**](AccountInternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
 
 
 
-## check_api_key
+## check_access_token
 
-> crate::models::AccountIdLight check_api_key(api_key)
+> crate::models::AccountId check_access_token(access_token)
 
 
 ### Parameters
@@ -19,11 +19,11 @@ Method | HTTP request | Description
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**api_key** | [**ApiKey**](ApiKey.md) |  | [required] |
+**access_token** | [**AccessToken**](AccessToken.md) |  | [required] |
 
 ### Return type
 
-[**crate::models::AccountIdLight**](AccountIdLight.md)
+[**crate::models::AccountId**](AccountId.md)
 
 ### Authorization
 

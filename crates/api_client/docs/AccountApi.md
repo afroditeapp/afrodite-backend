@@ -10,7 +10,7 @@ Method | HTTP request | Description
 [**post_account_setup**](AccountApi.md#post_account_setup) | **POST** /account_api/setup | Setup non-changeable user information during `initial setup` state.
 [**post_complete_setup**](AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 [**post_delete**](AccountApi.md#post_delete) | **PUT** /account_api/delete | Delete account.
-[**post_login**](AccountApi.md#post_login) | **POST** /account_api/login | Get new ApiKey.
+[**post_login**](AccountApi.md#post_login) | **POST** /account_api/login | Get new AccessToken.
 [**post_register**](AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
 [**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update profile visiblity value.
@@ -34,7 +34,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -61,7 +61,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -88,7 +88,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -118,7 +118,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -145,7 +145,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -172,7 +172,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -184,17 +184,17 @@ This endpoint does not need any parameter.
 
 ## post_login
 
-> crate::models::LoginResult post_login(account_id_light)
-Get new ApiKey.
+> crate::models::LoginResult post_login(account_id)
+Get new AccessToken.
 
-Get new ApiKey.
+Get new AccessToken.  Available only if server is running in debug mode and bot_login is enabled from config file.
 
 ### Parameters
 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id_light** | [**AccountIdLight**](AccountIdLight.md) |  | [required] |
+**account_id** | [**AccountId**](AccountId.md) |  | [required] |
 
 ### Return type
 
@@ -214,10 +214,10 @@ No authorization required
 
 ## post_register
 
-> crate::models::AccountIdLight post_register()
+> crate::models::AccountId post_register()
 Register new account. Returns new account ID which is UUID.
 
-Register new account. Returns new account ID which is UUID.
+Register new account. Returns new account ID which is UUID.  Available only if server is running in debug mode and bot_login is enabled from config file.
 
 ### Parameters
 
@@ -225,7 +225,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::AccountIdLight**](AccountIdLight.md)
+[**crate::models::AccountId**](AccountId.md)
 
 ### Authorization
 
@@ -289,7 +289,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 

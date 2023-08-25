@@ -1,11 +1,11 @@
-# \MediainternalApi
+# \MediaInternalApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**internal_get_check_moderation_request_for_account**](MediainternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
-[**internal_post_update_profile_image_visibility**](MediainternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
+[**internal_get_check_moderation_request_for_account**](MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
+[**internal_post_update_profile_image_visibility**](MediaInternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
 
 
 

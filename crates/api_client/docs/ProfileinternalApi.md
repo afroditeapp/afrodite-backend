@@ -1,10 +1,10 @@
-# \ProfileinternalApi
+# \ProfileInternalApi
 
 All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**internal_post_update_profile_visibility**](ProfileinternalApi.md#internal_post_update_profile_visibility) | **POST** /internal/profile_api/visiblity/{account_id}/{value} | 
+[**internal_post_update_profile_visibility**](ProfileInternalApi.md#internal_post_update_profile_visibility) | **POST** /internal/profile_api/visiblity/{account_id}/{value} | 
 
 
 

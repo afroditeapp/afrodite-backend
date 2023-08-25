@@ -103,6 +103,7 @@ pub mod utils;
         model::profile::ProfileUpdate,
         model::profile::Location,
         model::media::ModerationRequest,
+        model::media::ModerationRequestIdDb,
         model::media::ModerationRequestContent,
         model::media::ModerationRequestState,
         model::media_admin::ModerationRequestId,

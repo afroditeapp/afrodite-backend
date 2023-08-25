@@ -34,7 +34,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -64,7 +64,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -91,7 +91,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -121,7 +121,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -151,7 +151,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -178,7 +178,7 @@ This endpoint does not need any parameter.
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 
@@ -208,7 +208,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-[api_key](../README.md#api_key)
+[access_token](../README.md#access_token)
 
 ### HTTP request headers
 

@@ -5,8 +5,8 @@
 //! Prevents exposing api_client crate model types to server code.
 
 use api_client::apis::{
-    accountinternal_api,
-    mediainternal_api::{self},
+    account_internal_api,
+    media_internal_api::{self},
 };
 pub use api_client::apis::{configuration::Configuration, Error};
 use model::{
@@ -15,8 +15,8 @@ use model::{
 };
 
 pub use crate::{
-    accountinternal_api::{CheckApiKeyError, InternalGetAccountStateError},
-    mediainternal_api::InternalGetCheckModerationRequestForAccountError,
+    account_internal_api::{CheckAccessTokenError, InternalGetAccountStateError},
+    media_internal_api::InternalGetCheckModerationRequestForAccountError,
 };
 
 /// Wrapper for server internal API with correct model types.
@@ -25,12 +25,12 @@ pub struct InternalApi;
 impl InternalApi {
     pub async fn check_access_token(
         configuration: &Configuration,
-        key: AccessToken,
-    ) -> Result<AccountId, Error<CheckApiKeyError>> {
-        accountinternal_api::check_api_key(
+        token: AccessToken,
+    ) -> Result<AccountId, Error<CheckAccessTokenError>> {
+        account_internal_api::check_access_token(
             configuration,
-            api_client::models::ApiKey {
-                api_key: key.into_string(),
+            api_client::models::AccessToken {
+                access_token: token.into_string(),
             },
         )
         .await
@@ -42,7 +42,7 @@ impl InternalApi {
         account_id: AccountId,
     ) -> Result<Account, Error<InternalGetAccountStateError>> {
         let account =
-            accountinternal_api::internal_get_account_state(configuration, &account_id.to_string())
+            account_internal_api::internal_get_account_state(configuration, &account_id.to_string())
                 .await?;
 
         let state = match account.state {
@@ -82,7 +82,7 @@ impl InternalApi {
         configuration: &Configuration,
         account_id: AccountId,
     ) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
-        mediainternal_api::internal_get_check_moderation_request_for_account(
+        media_internal_api::internal_get_check_moderation_request_for_account(
             configuration,
             &account_id.to_string(),
         )
