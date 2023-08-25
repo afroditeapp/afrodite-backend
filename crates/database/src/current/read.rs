@@ -8,7 +8,7 @@ use self::{
     profile::{CurrentReadProfile, CurrentSyncReadProfile},
     profile_admin::CurrentSyncReadProfileAdmin,
 };
-use crate::{diesel::DieselConnection, sqlite::SqlxReadHandle};
+use crate::{diesel::{DieselConnection, ConnectionProvider}, sqlite::SqlxReadHandle};
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -26,17 +26,17 @@ macro_rules! define_read_commands {
             }
         }
 
-        pub struct $sync_name<'a> {
-            cmds: crate::current::read::CurrentSyncReadCommands<'a>,
+        pub struct $sync_name<C: crate::diesel::ConnectionProvider> {
+            cmds: C,
         }
 
-        impl<'a> $sync_name<'a> {
-            pub fn new(cmds: crate::current::read::CurrentSyncReadCommands<'a>) -> Self {
+        impl<C: crate::diesel::ConnectionProvider> $sync_name<C> {
+            pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&'a mut self) -> &'a mut crate::diesel::DieselConnection {
-                &mut self.cmds.conn
+            pub fn conn(&mut self) -> &mut crate::diesel::DieselConnection {
+                self.cmds.conn()
             }
         }
     };
@@ -81,44 +81,82 @@ impl<'a> SqliteReadCommands<'a> {
     }
 }
 
-pub struct CurrentSyncReadCommands<'a> {
-    conn: &'a mut DieselConnection,
+pub struct CurrentSyncReadCommands<C: ConnectionProvider> {
+    conn: C,
 }
 
-impl<'a> CurrentSyncReadCommands<'a> {
-    pub fn new(conn: &'a mut DieselConnection) -> Self {
+impl<C: ConnectionProvider> CurrentSyncReadCommands<C> {
+    pub fn new(conn: C) -> Self {
         Self { conn }
     }
 
-    pub fn account(self) -> CurrentSyncReadAccount<'a> {
-        CurrentSyncReadAccount::new(self)
+    pub fn into_account(self) -> CurrentSyncReadAccount<C> {
+        CurrentSyncReadAccount::new(self.conn)
     }
 
-    pub fn account_admin(self) -> CurrentSyncReadAccountAdmin<'a> {
-        CurrentSyncReadAccountAdmin::new(self)
+    pub fn into_account_admin(self) -> CurrentSyncReadAccountAdmin<C> {
+        CurrentSyncReadAccountAdmin::new(self.conn)
     }
 
-    pub fn media(self) -> CurrentSyncReadMedia<'a> {
-        CurrentSyncReadMedia::new(self)
+    pub fn into_media(self) -> CurrentSyncReadMedia<C> {
+        CurrentSyncReadMedia::new(self.conn)
     }
 
-    pub fn media_admin(self) -> CurrentSyncReadMediaAdmin<'a> {
-        CurrentSyncReadMediaAdmin::new(self)
+    pub fn into_media_admin(self) -> CurrentSyncReadMediaAdmin<C> {
+        CurrentSyncReadMediaAdmin::new(self.conn)
     }
 
-    pub fn profile(self) -> CurrentSyncReadProfile<'a> {
-        CurrentSyncReadProfile::new(self)
+    pub fn into_profile(self) -> CurrentSyncReadProfile<C> {
+        CurrentSyncReadProfile::new(self.conn)
     }
 
-    pub fn profile_admin(self) -> CurrentSyncReadProfileAdmin<'a> {
-        CurrentSyncReadProfileAdmin::new(self)
+    pub fn into_profile_admin(self) -> CurrentSyncReadProfileAdmin<C> {
+        CurrentSyncReadProfileAdmin::new(self.conn)
     }
 
-    pub fn chat(self) -> CurrentSyncReadChat<'a> {
-        CurrentSyncReadChat::new(self)
+    pub fn into_chat(self) -> CurrentSyncReadChat<C> {
+        CurrentSyncReadChat::new(self.conn)
     }
 
-    pub fn chat_admin(self) -> CurrentSyncReadChatAdmin<'a> {
-        CurrentSyncReadChatAdmin::new(self)
+    pub fn into_chat_admin(self) -> CurrentSyncReadChatAdmin<C> {
+        CurrentSyncReadChatAdmin::new(self.conn)
+    }
+
+    pub fn conn(&mut self) -> &mut C {
+        &mut self.conn
+    }
+}
+
+impl CurrentSyncReadCommands<&mut DieselConnection> {
+    pub fn account(&mut self) -> CurrentSyncReadAccount<&mut DieselConnection> {
+        CurrentSyncReadAccount::new(self.conn())
+    }
+
+    pub fn account_admin(&mut self) -> CurrentSyncReadAccountAdmin<&mut DieselConnection> {
+        CurrentSyncReadAccountAdmin::new(self.conn())
+    }
+
+    pub fn profile(&mut self) -> CurrentSyncReadProfile<&mut DieselConnection> {
+        CurrentSyncReadProfile::new(self.conn())
+    }
+
+    pub fn profile_admin(&mut self) -> CurrentSyncReadProfileAdmin<&mut DieselConnection> {
+        CurrentSyncReadProfileAdmin::new(self.conn())
+    }
+
+    pub fn media(&mut self) -> CurrentSyncReadMedia<&mut DieselConnection> {
+        CurrentSyncReadMedia::new(self.conn())
+    }
+
+    pub fn media_admin(&mut self) -> CurrentSyncReadMediaAdmin<&mut DieselConnection> {
+        CurrentSyncReadMediaAdmin::new(self.conn())
+    }
+
+    pub fn chat(&mut self) -> CurrentSyncReadChat<&mut DieselConnection> {
+        CurrentSyncReadChat::new(self.conn())
+    }
+
+    pub fn chat_admin(&mut self) -> CurrentSyncReadChatAdmin<&mut DieselConnection> {
+        CurrentSyncReadChatAdmin::new(self.conn())
     }
 }

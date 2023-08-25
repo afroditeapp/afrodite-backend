@@ -10,9 +10,9 @@ use crate::{diesel::{DieselDatabaseError, HistoryConnectionProvider}, IntoDataba
 
 define_write_commands!(HistoryWriteAccount, HistorySyncWriteAccount);
 
-impl<'a, C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
+impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
     pub fn insert_account_id(
-        &'a mut self,
+        &mut self,
         account_id_internal: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_id::dsl::*;
@@ -28,7 +28,7 @@ impl<'a, C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
     }
 
     pub fn insert_account(
-        &'a mut self,
+        &mut self,
         account_id_internal: AccountIdInternal,
         account: &Account,
     ) -> Result<(), DieselDatabaseError> {
@@ -50,7 +50,7 @@ impl<'a, C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
     }
 
     pub fn insert_account_setup(
-        &'a mut self,
+        &mut self,
         account_id_internal: AccountIdInternal,
         account: &AccountSetup,
     ) -> Result<(), DieselDatabaseError> {
@@ -72,7 +72,7 @@ impl<'a, C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
     }
 
     // pub fn refresh_token(
-    //     &'a mut self,
+    //     &mut self,
     //     id: AccountIdInternal,
     //     token_value: Option<RefreshToken>,
     // ) -> Result<(), DieselDatabaseError> {

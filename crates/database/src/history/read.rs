@@ -20,7 +20,7 @@ use self::{
     profile_admin::HistorySyncReadProfileAdmin,
 };
 
-use crate::{diesel::DieselConnection, sqlite::SqlxReadHandle};
+use crate::{diesel::{DieselConnection, ConnectionProvider}, sqlite::SqlxReadHandle};
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -38,17 +38,17 @@ macro_rules! define_read_commands {
             }
         }
 
-        pub struct $sync_name<'a> {
-            cmds: crate::history::read::HistorySyncReadCommands<'a>,
+        pub struct $sync_name<C: crate::diesel::ConnectionProvider> {
+            cmds: C,
         }
 
-        impl<'a> $sync_name<'a> {
-            pub fn new(cmds: crate::history::read::HistorySyncReadCommands<'a>) -> Self {
+        impl<C: crate::diesel::ConnectionProvider> $sync_name<C> {
+            pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&'a mut self) -> &'a mut crate::diesel::DieselConnection {
-                &mut self.cmds.conn
+            pub fn conn(&mut self) -> &mut crate::diesel::DieselConnection {
+                self.cmds.conn()
             }
         }
     };
@@ -74,44 +74,44 @@ impl<'a> HistoryReadCommands<'a> {
     }
 }
 
-pub struct HistorySyncReadCommands<'a> {
-    conn: &'a mut DieselConnection,
+pub struct HistorySyncReadCommands<C: ConnectionProvider> {
+    conn: C,
 }
 
-impl<'a> HistorySyncReadCommands<'a> {
-    pub fn new(conn: &'a mut DieselConnection) -> Self {
+impl<C: ConnectionProvider> HistorySyncReadCommands<C> {
+    pub fn new(conn: C) -> Self {
         Self { conn }
     }
 
-    pub fn account(self) -> HistorySyncReadAccount<'a> {
-        HistorySyncReadAccount::new(self)
+    pub fn into_account(self) -> HistorySyncReadAccount<C> {
+        HistorySyncReadAccount::new(self.conn)
     }
 
-    pub fn account_admin(self) -> HistorySyncReadAccountAdmin<'a> {
-        HistorySyncReadAccountAdmin::new(self)
+    pub fn into_account_admin(self) -> HistorySyncReadAccountAdmin<C> {
+        HistorySyncReadAccountAdmin::new(self.conn)
     }
 
-    pub fn media(self) -> HistorySyncReadMedia<'a> {
-        HistorySyncReadMedia::new(self)
+    pub fn into_media(self) -> HistorySyncReadMedia<C> {
+        HistorySyncReadMedia::new(self.conn)
     }
 
-    pub fn media_admin(self) -> HistorySyncReadMediaAdmin<'a> {
-        HistorySyncReadMediaAdmin::new(self)
+    pub fn into_media_admin(self) -> HistorySyncReadMediaAdmin<C> {
+        HistorySyncReadMediaAdmin::new(self.conn)
     }
 
-    pub fn profile(self) -> HistorySyncReadProfile<'a> {
-        HistorySyncReadProfile::new(self)
+    pub fn into_profile(self) -> HistorySyncReadProfile<C> {
+        HistorySyncReadProfile::new(self.conn)
     }
 
-    pub fn profile_admin(self) -> HistorySyncReadProfileAdmin<'a> {
-        HistorySyncReadProfileAdmin::new(self)
+    pub fn into_profile_admin(self) -> HistorySyncReadProfileAdmin<C> {
+        HistorySyncReadProfileAdmin::new(self.conn)
     }
 
-    pub fn chat(self) -> HistorySyncReadChat<'a> {
-        HistorySyncReadChat::new(self)
+    pub fn into_chat(self) -> HistorySyncReadChat<C> {
+        HistorySyncReadChat::new(self.conn)
     }
 
-    pub fn chat_admin(self) -> HistorySyncReadChatAdmin<'a> {
-        HistorySyncReadChatAdmin::new(self)
+    pub fn into_chat_admin(self) -> HistorySyncReadChatAdmin<C> {
+        HistorySyncReadChatAdmin::new(self.conn)
     }
 }

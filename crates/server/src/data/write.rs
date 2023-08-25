@@ -121,7 +121,7 @@ macro_rules! define_write_commands {
             #[track_caller]
             pub async fn db_read<
                 T: FnOnce(
-                        database::current::read::CurrentSyncReadCommands<'_>,
+                        database::current::read::CurrentSyncReadCommands<&mut database::diesel::DieselConnection>,
                     )
                         -> error_stack::Result<R, database::diesel::DieselDatabaseError>
                     + Send
@@ -433,7 +433,7 @@ impl<'a> WriteCommands<'a> {
 
     #[track_caller]
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
     >(
         &self,

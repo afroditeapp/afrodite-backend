@@ -17,9 +17,9 @@ define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
 
 pub struct DeletedSomething;
 
-impl<'a, C: ConnectionProvider> CurrentSyncWriteMedia<C> {
+impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     pub fn insert_current_account_media(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
@@ -33,7 +33,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     }
 
     pub fn primary_image(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DieselDatabaseError> {
@@ -96,7 +96,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     }
 
     pub fn delete_image_from_slot(
-        &'a mut self,
+        &mut self,
         request_creator: AccountIdInternal,
         slot: ImageSlot,
     ) -> Result<Option<DeletedSomething>, DieselDatabaseError> {
@@ -162,7 +162,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     /// Moderation request content must content ids which point to your own
     /// image slots. Otherwise this returns an error.
     pub fn create_new_moderation_request(
-        &'a mut self,
+        &mut self,
         request_creator: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DieselDatabaseError> {
@@ -198,7 +198,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     }
 
     pub fn update_moderation_request(
-        &'a mut self,
+        &mut self,
         request_owner_account_id: AccountIdInternal,
         new_request: ModerationRequestContent,
     ) -> Result<(), DieselDatabaseError> {

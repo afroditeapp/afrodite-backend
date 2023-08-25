@@ -11,9 +11,9 @@ use super::ConnectionProvider;
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 
-impl<'a, C: ConnectionProvider> CurrentSyncWriteProfile<C> {
+impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
     pub fn insert_profile(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DieselDatabaseError> {
         use model::schema::profile::dsl::*;
@@ -27,7 +27,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteProfile<C> {
     }
 
     pub fn profile(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -45,7 +45,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteProfile<C> {
     }
 
     pub fn profile_location(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         data: LocationIndexKey,
     ) -> Result<(), DieselDatabaseError> {

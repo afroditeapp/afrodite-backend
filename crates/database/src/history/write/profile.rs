@@ -9,10 +9,10 @@ use crate::{diesel::{DieselDatabaseError, HistoryConnectionProvider}, IntoDataba
 
 define_write_commands!(HistoryWriteProfile, HistorySyncWriteProfile);
 
-impl<'a, C: HistoryConnectionProvider> HistorySyncWriteProfile<C> {
+impl<C: HistoryConnectionProvider> HistorySyncWriteProfile<C> {
 
     pub fn insert_profile(
-        &'a mut self,
+        &mut self,
         account_id_internal: AccountIdInternal,
         profile: &Profile,
     ) -> Result<(), DieselDatabaseError> {

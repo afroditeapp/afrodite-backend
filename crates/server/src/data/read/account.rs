@@ -23,7 +23,7 @@ impl ReadCommandsAccount<'_> {
             .to_account_id_internal(id)
             .await
             .with_info(id)?;
-        self.db_read(move |cmds| cmds.account().access_token(id))
+        self.db_read(move |mut cmds| cmds.account().access_token(id))
             .await
     }
 
@@ -31,7 +31,7 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<Option<RefreshToken>, DatabaseError> {
-        self.db_read(move |cmds| cmds.account().refresh_token(id))
+        self.db_read(move |mut cmds| cmds.account().refresh_token(id))
             .await
     }
 
@@ -39,7 +39,7 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<SignInWithInfo, DatabaseError> {
-        self.db_read(move |cmds| cmds.account().sign_in_with_info(id))
+        self.db_read(move |mut cmds| cmds.account().sign_in_with_info(id))
             .await
     }
 
@@ -53,7 +53,7 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<AccountSetup, DatabaseError> {
-        self.db_read(move |cmds| cmds.account().account_setup(id))
+        self.db_read(move |mut cmds| cmds.account().account_setup(id))
             .await
     }
 
@@ -78,7 +78,7 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: GoogleAccountId,
     ) -> Result<Option<AccountIdInternal>, DatabaseError> {
-        self.db_read(move |cmds| cmds.account().google_account_id_to_account_id(id))
+        self.db_read(move |mut cmds| cmds.account().google_account_id_to_account_id(id))
             .await
             .map(Some)
     }

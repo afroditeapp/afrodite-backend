@@ -8,7 +8,7 @@ use model::{
 };
 use tokio_stream::StreamExt;
 
-use crate::{diesel::DieselDatabaseError, sqlite::SqliteDatabaseError, IntoDatabaseError};
+use crate::{diesel::{DieselDatabaseError, ConnectionProvider}, sqlite::SqliteDatabaseError, IntoDatabaseError};
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 
@@ -35,9 +35,9 @@ impl CurrentReadAccount<'_> {
     }
 }
 
-impl<'a> CurrentSyncReadAccount<'a> {
+impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
     pub fn google_account_id_to_account_id(
-        &'a mut self,
+        &mut self,
         google_id: GoogleAccountId,
     ) -> Result<AccountIdInternal, DieselDatabaseError> {
         use crate::schema::{account_id, sign_in_with_info};
@@ -51,7 +51,7 @@ impl<'a> CurrentSyncReadAccount<'a> {
     }
 
     pub fn sign_in_with_info(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<SignInWithInfo, DieselDatabaseError> {
         use crate::schema::sign_in_with_info::dsl::*;
@@ -65,7 +65,7 @@ impl<'a> CurrentSyncReadAccount<'a> {
     }
 
     pub fn refresh_token(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<Option<RefreshToken>, DieselDatabaseError> {
         use crate::schema::refresh_token::dsl::*;
@@ -84,7 +84,7 @@ impl<'a> CurrentSyncReadAccount<'a> {
     }
 
     pub fn access_token(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<Option<ApiKey>, DieselDatabaseError> {
         use crate::schema::access_token::dsl::*;
@@ -102,7 +102,7 @@ impl<'a> CurrentSyncReadAccount<'a> {
         }
     }
 
-    pub fn account(&'a mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
+    pub fn account(&mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
         use crate::schema::account::dsl::*;
 
         let raw = account
@@ -115,7 +115,7 @@ impl<'a> CurrentSyncReadAccount<'a> {
     }
 
     pub fn account_setup(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<AccountSetup, DieselDatabaseError> {
         use crate::schema::account_setup::dsl::*;

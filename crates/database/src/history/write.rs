@@ -64,7 +64,7 @@ macro_rules! define_write_commands {
 
             pub fn read(
                 conn: &mut crate::diesel::DieselConnection,
-            ) -> crate::history::read::HistorySyncReadCommands<'_> {
+            ) -> crate::history::read::HistorySyncReadCommands<&mut crate::diesel::DieselConnection> {
                 crate::history::read::HistorySyncReadCommands::new(conn)
             }
         }
@@ -145,7 +145,7 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteCommands<C> {
         HistorySyncWriteChat::new(self.conn)
     }
 
-    pub fn read(&mut self) -> crate::history::read::HistorySyncReadCommands<'_> {
+    pub fn read(&mut self) -> crate::history::read::HistorySyncReadCommands<&mut DieselConnection> {
         self.conn.read()
     }
 

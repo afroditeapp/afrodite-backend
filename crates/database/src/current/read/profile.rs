@@ -3,13 +3,13 @@ use error_stack::Result;
 use model::{AccountIdInternal, LocationIndexKey, ProfileInternal};
 use utils::IntoReportExt;
 
-use crate::diesel::DieselDatabaseError;
+use crate::diesel::{DieselDatabaseError, ConnectionProvider};
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 
-impl<'a> CurrentSyncReadProfile<'a> {
+impl<C: ConnectionProvider> CurrentSyncReadProfile<C> {
     pub fn profile(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DieselDatabaseError> {
         use crate::schema::profile::dsl::*;
@@ -22,7 +22,7 @@ impl<'a> CurrentSyncReadProfile<'a> {
     }
 
     pub fn location_index_key(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
     ) -> Result<LocationIndexKey, DieselDatabaseError> {
         use crate::schema::profile::dsl::*;

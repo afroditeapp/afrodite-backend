@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use config::{Config, RUNNING_IN_DEBUG_MODE};
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselCurrentReadHandle, DieselDatabaseError}, ErrorContext,
+    diesel::{DieselCurrentReadHandle, DieselDatabaseError, DieselConnection}, ErrorContext,
 };
 use error_stack::{Result, ResultExt, Context, IntoReport};
 use model::{
@@ -108,7 +108,7 @@ impl DatabaseCache {
             .get(&account_id.as_light())
             .ok_or(CacheError::KeyNotExists)?;
 
-        let api_key = db_read(&read_diesel, move |cmds| {
+        let api_key = db_read(&read_diesel, move |mut cmds| {
             cmds.account().access_token(account_id)
         })
         .await?;
@@ -126,17 +126,17 @@ impl DatabaseCache {
 
         if config.components().account {
             let account =
-                db_read(&read_diesel, move |cmds| cmds.account().account(account_id)).await?;
+                db_read(&read_diesel, move |mut cmds| cmds.account().account(account_id)).await?;
             entry.account = Some(account.clone().into())
         }
 
         if config.components().profile {
             let profile =
-                db_read(&read_diesel, move |cmds| cmds.profile().profile(account_id)).await?;
+                db_read(&read_diesel, move |mut cmds| cmds.profile().profile(account_id)).await?;
 
             let mut profile_data: CachedProfile = profile.into();
 
-            let location_key = db_read(&read_diesel, move |cmds| {
+            let location_key = db_read(&read_diesel, move |mut cmds| {
                 cmds.profile().location_index_key(account_id)
             })
             .await?;
@@ -382,7 +382,7 @@ impl CacheEntry {
 }
 
 async fn db_read<
-    T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
+    T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
     R: Send + 'static,
 >(
     read: &DieselCurrentReadHandle,

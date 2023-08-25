@@ -12,8 +12,8 @@ impl WriteCommandsMedia<'_> {
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DatabaseError> {
-        self.db_write(move |cmds| {
-            cmds.into_media()
+        self.db_write(move |mut cmds| {
+            cmds.media()
                 .create_new_moderation_request(account_id, request)
         })
         .await
@@ -28,7 +28,7 @@ impl WriteCommandsMedia<'_> {
     ) -> Result<(), DatabaseError> {
         // Remove previous slot image.
         let current_content_in_slot = self
-            .db_read(move |cmds| cmds.media().get_content_id_from_slot(id, slot))
+            .db_read(move |mut cmds| cmds.media().get_content_id_from_slot(id, slot))
             .await?;
 
         if let Some(current_id) = current_content_in_slot {
@@ -38,7 +38,7 @@ impl WriteCommandsMedia<'_> {
             path.remove_if_exists()
                 .await
                 .change_context(DatabaseError::File)?;
-            self.db_write(move |cmds| cmds.into_media().delete_image_from_slot(id, slot))
+            self.db_write(move |mut cmds| cmds.media().delete_image_from_slot(id, slot))
                 .await
                 .change_context(DatabaseError::Sqlite)?;
         }
@@ -50,7 +50,7 @@ impl WriteCommandsMedia<'_> {
         let processed_content_path = self.file_dir().image_content(id.as_light(), content_id);
 
         if self
-            .db_read(move |cmds| cmds.media().get_content_id_from_slot(id, slot))
+            .db_read(move |mut cmds| cmds.media().get_content_id_from_slot(id, slot))
             .await?
             .is_some()
         {
@@ -81,7 +81,7 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DatabaseError> {
-        self.db_write(move |cmds| cmds.into_media().primary_image(id, primary_image))
+        self.db_write(move |mut cmds| cmds.media().primary_image(id, primary_image))
             .await
     }
 }

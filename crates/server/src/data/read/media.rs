@@ -27,7 +27,7 @@ impl ReadCommandsMedia<'_> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<CurrentAccountMediaInternal, DatabaseError> {
-        self.db_read(move |cmds| cmds.media().current_account_media(account_id))
+        self.db_read(move |mut cmds| cmds.media().current_account_media(account_id))
             .await
     }
 }

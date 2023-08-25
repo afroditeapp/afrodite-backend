@@ -2,7 +2,7 @@ use std::{fmt::Debug, marker::PhantomData};
 
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselCurrentReadHandle, DieselDatabaseError},
+    diesel::{DieselCurrentReadHandle, DieselDatabaseError, DieselConnection},
     sqlite::{SqlxReadHandle},
 };
 use error_stack::{Result, ResultExt};
@@ -54,7 +54,7 @@ macro_rules! define_read_commands {
             #[track_caller]
             pub async fn db_read<
                 T: FnOnce(
-                        database::current::read::CurrentSyncReadCommands<'_>,
+                        database::current::read::CurrentSyncReadCommands<&mut database::diesel::DieselConnection>,
                     )
                         -> error_stack::Result<R, database::diesel::DieselDatabaseError>
                     + Send
@@ -162,7 +162,7 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Vec<MediaContentInternal>, DatabaseError> {
-        self.db_read(move |cmds| cmds.media().get_account_media(account_id))
+        self.db_read(move |mut cmds| cmds.media().get_account_media(account_id))
             .await
     }
 
@@ -170,7 +170,7 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, DatabaseError> {
-        self.db_read(move |cmds| cmds.media().moderation_request(account_id))
+        self.db_read(move |mut cmds| cmds.media().moderation_request(account_id))
             .await
             .map(|r| r.map(|request| request.into_request()))
     }
@@ -189,7 +189,7 @@ impl<'a> ReadCommands<'a> {
 
     #[track_caller]
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<'_>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
         R: Send + 'static,
     >(
         &self,

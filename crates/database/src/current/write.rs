@@ -56,7 +56,7 @@ macro_rules! define_write_commands {
 
             pub fn read(
                 conn: &mut crate::diesel::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<'_> {
+            ) -> crate::current::read::CurrentSyncReadCommands<&mut crate::diesel::DieselConnection> {
                 crate::current::read::CurrentSyncReadCommands::new(conn)
             }
         }
@@ -136,7 +136,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
         CurrentSyncWriteChat::new(self.conn)
     }
 
-    pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<'_> {
+    pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut crate::diesel::DieselConnection> {
         self.conn.read()
     }
 

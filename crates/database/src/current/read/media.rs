@@ -10,13 +10,13 @@ use model::{
 };
 use utils::IntoReportExt;
 
-use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
+use crate::{diesel::{DieselDatabaseError, ConnectionProvider}, IntoDatabaseError};
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 
-impl<'a> CurrentSyncReadMedia<'a> {
+impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
     pub fn moderation_request(
-        &'a mut self,
+        &mut self,
         request_creator: AccountIdInternal,
     ) -> Result<Option<ModerationRequestInternal>, DieselDatabaseError> {
         let conn = self.conn();
@@ -77,7 +77,7 @@ impl<'a> CurrentSyncReadMedia<'a> {
     }
 
     pub fn current_account_media(
-        &'a mut self,
+        &mut self,
         media_owner_id: AccountIdInternal,
     ) -> Result<CurrentAccountMediaInternal, DieselDatabaseError> {
         let conn = self.conn();
@@ -129,7 +129,7 @@ impl<'a> CurrentSyncReadMedia<'a> {
     }
 
     pub fn get_account_media(
-        &'a mut self,
+        &mut self,
         media_owner_id: AccountIdInternal,
     ) -> Result<Vec<MediaContentInternal>, DieselDatabaseError> {
         let data: Vec<MediaContentRaw> = {
@@ -164,7 +164,7 @@ impl<'a> CurrentSyncReadMedia<'a> {
     }
 
     pub fn get_content_id_from_slot(
-        &'a mut self,
+        &mut self,
         slot_owner: AccountIdInternal,
         slot: ImageSlot,
     ) -> Result<Option<ContentIdInternal>, DieselDatabaseError> {
@@ -192,7 +192,7 @@ impl<'a> CurrentSyncReadMedia<'a> {
     /// Returns `Err(DieselDatabaseError::ModerationRequestContentInvalid)` if the
     /// content is invalid.
     pub fn content_validate_moderation_request_content(
-        &'a mut self,
+        &mut self,
         content_owner: AccountIdInternal,
         request_content: &ModerationRequestContent,
     ) -> Result<(), DieselDatabaseError> {
@@ -220,7 +220,7 @@ impl<'a> CurrentSyncReadMedia<'a> {
     }
 
     pub fn get_moderation_request_content(
-        &'a mut self,
+        &mut self,
         owner_id: ModerationRequestId,
     ) -> Result<
         (

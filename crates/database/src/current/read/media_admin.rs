@@ -6,13 +6,13 @@ use model::{
 };
 use utils::IntoReportExt;
 
-use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
+use crate::{diesel::{DieselDatabaseError, ConnectionProvider}, IntoDatabaseError};
 
 define_read_commands!(CurrentReadMediaAdmin, CurrentSyncReadMediaAdmin);
 
-impl<'a> CurrentSyncReadMediaAdmin<'a> {
+impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
     pub fn get_in_progress_moderations(
-        &'a mut self,
+        &mut self,
         moderator_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
         let _account_row_id = moderator_id.row_id();
@@ -55,7 +55,7 @@ impl<'a> CurrentSyncReadMediaAdmin<'a> {
     }
 
     pub fn get_next_active_moderation_request(
-        &'a mut self,
+        &mut self,
         sub_queue_value: i64,
         moderator_id_for_logging: AccountIdInternal,
     ) -> Result<Option<ModerationRequestId>, DieselDatabaseError> {
@@ -87,7 +87,7 @@ impl<'a> CurrentSyncReadMediaAdmin<'a> {
     }
 
     pub fn moderation(
-        &'a mut self,
+        &mut self,
         moderation: ModerationId,
     ) -> Result<ModerationRequestContent, DieselDatabaseError> {
         let request: MediaModerationRaw = {

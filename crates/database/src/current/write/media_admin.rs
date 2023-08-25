@@ -18,9 +18,9 @@ define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
 
 pub struct DeletedSomething;
 
-impl<'a, C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
+impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     fn delete_queue_number(
-        &'a mut self,
+        &mut self,
         number: ModerationQueueNumber,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_moderation_queue_number::dsl::*;
@@ -33,7 +33,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     }
 
     pub fn moderation_get_list_and_create_new_if_necessary(
-        &'a mut self,
+        &mut self,
         moderator_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
         let mut moderations = self
@@ -62,7 +62,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     }
 
     fn create_moderation_from_next_request_in_queue(
-        &'a mut self,
+        &mut self,
         moderator_id: AccountIdInternal,
     ) -> Result<Option<Moderation>, DieselDatabaseError> {
         // TODO: Really support multiple sub queues after account premium mode
@@ -84,7 +84,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     }
 
     fn create_moderation(
-        &'a mut self,
+        &mut self,
         target_id: ModerationRequestId,
         moderator_id: AccountIdInternal,
     ) -> Result<Moderation, DieselDatabaseError> {
@@ -130,7 +130,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     ///
     /// Also updates content state.
     pub fn update_moderation(
-        &'a mut self,
+        &mut self,
         moderator_id: AccountIdInternal,
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,

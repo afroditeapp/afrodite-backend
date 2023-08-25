@@ -12,7 +12,7 @@ use super::ConnectionProvider;
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 
-impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
+impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     pub fn insert_account_id(
         mut self,
         account_uuid: AccountIdLight,
@@ -90,7 +90,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     }
 
     pub fn refresh_token(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         token_value: Option<RefreshToken>,
     ) -> Result<(), DieselDatabaseError> {
@@ -114,7 +114,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     }
 
     pub fn insert_account(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         account_data: &Account,
     ) -> Result<(), DieselDatabaseError> {
@@ -150,7 +150,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     }
 
     pub fn insert_account_setup(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         account_data: &AccountSetup,
     ) -> Result<(), DieselDatabaseError> {
@@ -165,7 +165,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     }
 
     pub fn account_setup(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         account_data: &AccountSetup,
     ) -> Result<(), DieselDatabaseError> {
@@ -180,7 +180,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     }
 
     pub fn insert_sign_in_with_info(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         data: &SignInWithInfo,
     ) -> Result<(), DieselDatabaseError> {
@@ -198,7 +198,7 @@ impl<'a, C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     }
 
     pub fn sign_in_with_info(
-        &'a mut self,
+        &mut self,
         id: AccountIdInternal,
         data: &SignInWithInfo,
     ) -> Result<(), DieselDatabaseError> {

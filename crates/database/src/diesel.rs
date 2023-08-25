@@ -361,7 +361,7 @@ pub trait ConnectionProvider {
     fn conn(&mut self) -> &mut DieselConnection;
     fn read(
         &mut self,
-    ) -> crate::current::read::CurrentSyncReadCommands<'_> {
+    ) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
         crate::current::read::CurrentSyncReadCommands::new(self.conn())
     }
 }
@@ -376,7 +376,7 @@ pub trait HistoryConnectionProvider {
     fn conn(&mut self) -> &mut DieselConnection;
     fn read(
         &mut self,
-    ) -> crate::history::read::HistorySyncReadCommands<'_> {
+    ) -> crate::history::read::HistorySyncReadCommands<&mut DieselConnection> {
         crate::history::read::HistorySyncReadCommands::new(self.conn())
     }
 }
