@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     macros::{diesel_i64_wrapper, diesel_uuid_wrapper},
-    AccountIdDb, AccountIdLight,
+    AccountIdDb, AccountId,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -79,7 +79,7 @@ pub struct ModerationRequestRaw {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequestInternal {
     pub moderation_request_id: ModerationRequestIdDb,
-    pub account_id: AccountIdLight,
+    pub account_id: AccountId,
     pub state: ModerationRequestState,
     pub content: ModerationRequestContent,
 }
@@ -87,7 +87,7 @@ pub struct ModerationRequestInternal {
 impl ModerationRequestInternal {
     pub fn new(
         moderation_request_id: ModerationRequestIdDb,
-        account_id: AccountIdLight,
+        account_id: AccountId,
         state: ModerationRequestState,
         content: ModerationRequestContent,
     ) -> Self {

@@ -20,7 +20,7 @@ impl InternalApp {
     pub fn create_account_server_router(state: AppState) -> Router {
         let mut router = Router::new()
             .route(
-                api::account_internal::PATH_INTERNAL_CHECK_API_KEY,
+                api::account_internal::PATH_INTERNAL_CHECK_ACCESS_TOKEN,
                 get({
                     let state = state.clone();
                     move |body| api::account_internal::check_api_key(body, state)

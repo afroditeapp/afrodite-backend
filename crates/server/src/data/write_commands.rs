@@ -4,7 +4,7 @@
 use std::{future::Future, sync::Arc};
 
 use error_stack::Result;
-use model::AccountIdLight;
+use model::AccountId;
 use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 use utils::IntoReportExt;
 
@@ -78,7 +78,7 @@ impl WriteCommandRunnerHandle {
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
     >(
         &self,
-        account: AccountIdLight,
+        account: AccountId,
         write_cmd: GetCmd,
     ) -> Result<CmdResult, DatabaseError> {
         let quit_lock = self.quit_lock.clone();

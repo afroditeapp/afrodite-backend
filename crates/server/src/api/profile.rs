@@ -1,7 +1,7 @@
 use axum::{extract::Path, TypedHeader};
 use hyper::StatusCode;
 use model::{
-    AccountIdLight, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
+    AccountId, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
     ProfileUpdateInternal,
 };
 use tracing::error;
@@ -9,7 +9,7 @@ use tracing::error;
 use super::{
     db_write,
     utils::{ApiKeyHeader, Json},
-    GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteData,
+    GetAccessTokens, GetConfig, GetInternalApi, GetUsers, ReadData, WriteData,
 };
 
 // TODO: Add timeout for database commands
@@ -31,7 +31,7 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 #[utoipa::path(
     get,
     path = "/profile_api/profile/{account_id}",
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "Get current profile.", body = Profile),
         (status = 401, description = "Unauthorized."),
@@ -43,17 +43,17 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
     security(("api_key" = [])),
 )]
 pub async fn get_profile<
-    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData + GetConfig,
+    S: ReadData + GetUsers + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Path(requested_profile): Path<AccountIdLight>,
+    Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: check capablities
 
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -68,7 +68,7 @@ pub async fn get_profile<
 
     if account_id.as_light() == requested_profile.as_light() {
         return state
-            .read_database()
+            .read()
             .profile()
             .profile(requested_profile)
             .await
@@ -83,7 +83,7 @@ pub async fn get_profile<
     }
 
     let visibility = state
-        .read_database()
+        .read()
         .profile_visibility(requested_profile)
         .await
         .map_err(|e| {
@@ -121,7 +121,7 @@ pub async fn get_profile<
 
     if visiblity {
         state
-            .read_database()
+            .read()
             .profile()
             .profile(requested_profile)
             .await
@@ -159,19 +159,19 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_profile<S: GetApiKeys + WriteData + ReadDatabase>(
+pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let old_profile: ProfileInternal = state
-        .read_database()
+        .read()
         .profile()
         .profile(account_id)
         .await
@@ -211,14 +211,14 @@ pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_location<S: GetApiKeys + WriteData>(
+pub async fn put_location<S: GetAccessTokens + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(location): Json<Location>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -250,13 +250,13 @@ pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_get_next_profile_page<S: GetApiKeys + WriteData>(
+pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -289,13 +289,13 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_reset_profile_paging<S: GetApiKeys + WriteData + ReadDatabase>(
+pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -334,7 +334,7 @@ pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
 #[utoipa::path(
     get,
     path = "/profile_api/benchmark/profile/{account_id}",
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "Get current profile.", body = Profile),
         (status = 401, description = "Unauthorized."),
@@ -346,10 +346,10 @@ pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
     security(("api_key" = [])),
 )]
 pub async fn get_profile_from_database_debug_mode_benchmark<
-    S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteData + GetConfig,
+    S: ReadData + GetUsers + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Path(requested_profile): Path<AccountIdLight>,
+    Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     if !state.config().debug_mode() {
@@ -358,7 +358,7 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
 
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -373,7 +373,7 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
 
     if account_id.as_light() == requested_profile.as_light() {
         return state
-            .read_database()
+            .read()
             .profile()
             .read_profile_directly_from_database(requested_profile)
             .await
@@ -409,7 +409,7 @@ pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmar
     security(("api_key" = [])),
 )]
 pub async fn post_profile_to_database_debug_mode_benchmark<
-    S: GetApiKeys + WriteData + ReadDatabase,
+    S: GetAccessTokens + WriteData + ReadData,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(profile): Json<ProfileUpdate>,
@@ -417,12 +417,12 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 ) -> Result<(), StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let old_profile: ProfileInternal = state
-        .read_database()
+        .read()
         .profile()
         .profile(account_id)
         .await

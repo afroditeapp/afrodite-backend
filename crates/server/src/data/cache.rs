@@ -8,7 +8,7 @@ use database::{
 };
 use error_stack::{Result, ResultExt, Context, IntoReport};
 use model::{
-    Account, AccountIdInternal, AccountIdLight, ApiKey, LocationIndexKey, ProfileInternal,
+    Account, AccountIdInternal, AccountId, AccessToken, LocationIndexKey, ProfileInternal,
     ProfileUpdateInternal, IsLoggingAllowed,
 };
 use tokio::sync::RwLock;
@@ -51,9 +51,9 @@ pub struct AccountEntry {
 #[derive(Debug)]
 pub struct DatabaseCache {
     /// Accounts which are logged in.
-    api_keys: RwLock<HashMap<ApiKey, Arc<AccountEntry>>>,
+    api_keys: RwLock<HashMap<AccessToken, Arc<AccountEntry>>>,
     /// All accounts registered in the service.
-    accounts: RwLock<HashMap<AccountIdLight, Arc<AccountEntry>>>,
+    accounts: RwLock<HashMap<AccountId, Arc<AccountEntry>>>,
 }
 
 impl DatabaseCache {
@@ -178,9 +178,9 @@ impl DatabaseCache {
 
     pub async fn update_access_token_and_connection(
         &self,
-        id: AccountIdLight,
-        current_access_token: Option<ApiKey>,
-        new_access_token: ApiKey,
+        id: AccountId,
+        current_access_token: Option<AccessToken>,
+        new_access_token: AccessToken,
         address: Option<SocketAddr>,
     ) -> Result<(), CacheError> {
         let cache_entry = self
@@ -209,8 +209,8 @@ impl DatabaseCache {
 
     pub async fn delete_access_token_and_connection(
         &self,
-        id: AccountIdLight,
-        token: Option<ApiKey>,
+        id: AccountId,
+        token: Option<AccessToken>,
     ) -> Result<(), CacheError> {
         let cache_entry = self
             .accounts
@@ -230,7 +230,7 @@ impl DatabaseCache {
         Ok(())
     }
 
-    pub async fn access_token_exists(&self, token: &ApiKey) -> Option<AccountIdInternal> {
+    pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
         let tokens = self.api_keys.read().await;
         if let Some(entry) = tokens.get(token) {
             Some(entry.account_id_internal)
@@ -243,7 +243,7 @@ impl DatabaseCache {
     /// using the cached SocketAddr, so check the IP only.
     pub async fn access_token_and_connection_exists(
         &self,
-        access_token: &ApiKey,
+        access_token: &AccessToken,
         connection: SocketAddr,
     ) -> Option<AccountIdInternal> {
         let tokens = self.api_keys.read().await;
@@ -261,7 +261,7 @@ impl DatabaseCache {
 
     pub async fn to_account_id_internal(
         &self,
-        id: AccountIdLight,
+        id: AccountId,
     ) -> Result<AccountIdInternal, CacheError> {
         let guard = self.accounts.read().await;
         let data = guard
@@ -271,7 +271,7 @@ impl DatabaseCache {
         Ok(data)
     }
 
-    pub async fn read_cache<T, Id: Into<AccountIdLight>>(
+    pub async fn read_cache<T, Id: Into<AccountId>>(
         &self,
         id: Id,
         cache_operation: impl Fn(&CacheEntry) -> T,
@@ -286,7 +286,7 @@ impl DatabaseCache {
         Ok(cache_operation(&cache_entry))
     }
 
-    pub async fn write_cache<T, Id: Into<AccountIdLight>>(
+    pub async fn write_cache<T, Id: Into<AccountId>>(
         &self,
         id: Id,
         cache_operation: impl FnOnce(&mut CacheEntry) -> Result<T, CacheError>,
@@ -301,7 +301,7 @@ impl DatabaseCache {
         Ok(cache_operation(&mut cache_entry)?)
     }
 
-    pub async fn account(&self, id: AccountIdLight) -> Result<Account, CacheError> {
+    pub async fn account(&self, id: AccountId) -> Result<Account, CacheError> {
         let guard = self.accounts.read().await;
         let data = guard
             .get(&id)
@@ -319,7 +319,7 @@ impl DatabaseCache {
 
     pub async fn update_account(
         &self,
-        id: AccountIdLight,
+        id: AccountId,
         data: Account,
     ) -> Result<(), CacheError> {
         let mut write_guard = self.accounts.write().await;

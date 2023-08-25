@@ -1,5 +1,5 @@
 use error_stack::Result;
-use model::{AccountIdInternal, AccountIdLight, ContentId, CurrentAccountMediaInternal};
+use model::{AccountIdInternal, AccountId, ContentId, CurrentAccountMediaInternal};
 
 use crate::data::IntoDataError;
 
@@ -13,7 +13,7 @@ define_read_commands!(ReadCommandsMedia);
 impl ReadCommandsMedia<'_> {
     pub async fn image(
         &self,
-        account_id: AccountIdLight,
+        account_id: AccountId,
         content_id: ContentId,
     ) -> Result<Vec<u8>, DatabaseError> {
         self.files()

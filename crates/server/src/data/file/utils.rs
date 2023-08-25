@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use axum::extract::BodyStream;
 use error_stack::Result;
-use model::{AccountIdLight, ContentId};
+use model::{AccountId, ContentId};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
@@ -27,23 +27,23 @@ impl FileDir {
         }
     }
 
-    pub fn unprocessed_image_upload(&self, id: AccountIdLight, content: ContentId) -> TmpImageFile {
+    pub fn unprocessed_image_upload(&self, id: AccountId, content: ContentId) -> TmpImageFile {
         self.account_dir(id)
             .tmp_dir()
             .unprocessed_image_upload(content)
     }
 
-    pub fn image_content(&self, id: AccountIdLight, content_id: ContentId) -> ImageFile {
+    pub fn image_content(&self, id: AccountId, content_id: ContentId) -> ImageFile {
         self.account_dir(id).image_dir().image_content(content_id)
     }
 
-    pub fn account_dir(&self, id: AccountIdLight) -> AccountDir {
+    pub fn account_dir(&self, id: AccountId) -> AccountDir {
         let mut dir = self.dir.clone();
         dir.push(id.to_string());
         AccountDir { dir }
     }
 
-    pub fn tmp_dir(&self, id: AccountIdLight) -> TmpDir {
+    pub fn tmp_dir(&self, id: AccountId) -> TmpDir {
         self.account_dir(id).tmp_dir()
     }
 

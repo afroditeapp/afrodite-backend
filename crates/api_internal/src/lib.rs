@@ -10,7 +10,7 @@ use api_client::apis::{
 };
 pub use api_client::apis::{configuration::Configuration, Error};
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountState, ApiKey, BooleanSetting, Capabilities,
+    Account, AccountIdInternal, AccountId, AccountState, AccessToken, BooleanSetting, Capabilities,
     Profile,
 };
 
@@ -25,8 +25,8 @@ pub struct InternalApi;
 impl InternalApi {
     pub async fn check_api_key(
         configuration: &Configuration,
-        key: ApiKey,
-    ) -> Result<AccountIdLight, Error<CheckApiKeyError>> {
+        key: AccessToken,
+    ) -> Result<AccountId, Error<CheckApiKeyError>> {
         accountinternal_api::check_api_key(
             configuration,
             api_client::models::ApiKey {
@@ -34,12 +34,12 @@ impl InternalApi {
             },
         )
         .await
-        .map(|data| AccountIdLight::new(data.account_id))
+        .map(|data| AccountId::new(data.account_id))
     }
 
     pub async fn get_account_state(
         configuration: &Configuration,
-        account_id: AccountIdLight,
+        account_id: AccountId,
     ) -> Result<Account, Error<InternalGetAccountStateError>> {
         let account =
             accountinternal_api::internal_get_account_state(configuration, &account_id.to_string())
@@ -80,7 +80,7 @@ impl InternalApi {
 
     pub async fn media_check_moderation_request_for_account(
         configuration: &Configuration,
-        account_id: AccountIdLight,
+        account_id: AccountId,
     ) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
         mediainternal_api::internal_get_check_moderation_request_for_account(
             configuration,

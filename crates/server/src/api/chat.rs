@@ -2,7 +2,7 @@ use axum::{extract::Path, TypedHeader};
 use hyper::StatusCode;
 use tracing::error;
 
-use super::{GetInternalApi, GetUsers, model::AccountIdLight};
+use super::{GetInternalApi, GetUsers, model::AccountId};
 use super::{GetApiKeys, ReadDatabase, utils::{ApiKeyHeader, Json}, WriteDatabase};
 
 use self::data::{
@@ -20,7 +20,7 @@ pub const PATH_TODO: &str = "/chat_api/TODO/:account_id";
 #[utoipa::path(
     get,
     path = "/chat_api/TODO/{account_id}",
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "TODO", body = Profile),
         (status = 401, description = "Unauthorized."),
@@ -35,7 +35,7 @@ pub async fn get_todo<
     S: ReadDatabase + GetUsers + GetApiKeys + GetInternalApi + WriteDatabase,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
-    Path(requested_profile): Path<AccountIdLight>,
+    Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
 

@@ -2,29 +2,15 @@
 
 use config::Config;
 use futures::Future;
-use model::{AccountIdLight, BackendVersion};
+use model::{AccountId, BackendVersion};
 use utoipa::OpenApi;
 
 use self::utils::SecurityApiTokenDefault;
-// use crate::{
-//     server::{
-//         app::sign_in_with::SignInWithManager,
-//         data::{
-//             read::ReadCommands,
-//             utils::{AccountIdManager, ApiKeyManager},
-//             write_commands::WriteCmds,
-//             write_concurrent::ConcurrentWriteHandle,
-//             DatabaseError,
-//         },
-//         internal::InternalApiManager,
-//         manager_client::ManagerApiManager,
-//     },
-// };
 use crate::{
     app::sign_in_with::SignInWithManager,
     data::{
         read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager},
+        utils::{AccountIdManager, AccessTokenManager},
         write_commands::WriteCmds,
         write_concurrent::ConcurrentWriteHandle,
         DatabaseError,
@@ -45,10 +31,6 @@ pub mod profile;
 pub mod profile_internal;
 
 pub mod utils;
-
-// Paths
-
-pub const PATH_PREFIX: &str = "/api/v1/";
 
 // API docs
 
@@ -99,8 +81,8 @@ pub const PATH_PREFIX: &str = "/api/v1/";
         // Common
         model::common::EventToClient,
         model::common::BackendVersion,
-        model::common::AccountIdLight,
-        model::common::ApiKey,
+        model::common::AccountId,
+        model::common::AccessToken,
         model::common::RefreshToken,
         // Account
         model::account::Account,
@@ -153,9 +135,9 @@ pub struct ApiDoc;
 
 // App state getters
 
-pub trait GetApiKeys {
+pub trait GetAccessTokens {
     /// Users which are logged in.
-    fn api_keys(&self) -> ApiKeyManager<'_>;
+    fn api_keys(&self) -> AccessTokenManager<'_>;
 }
 
 pub trait GetUsers {
@@ -180,13 +162,13 @@ pub trait WriteData {
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
     >(
         &self,
-        account: AccountIdLight,
+        account: AccountId,
         cmd: GetCmd,
     ) -> error_stack::Result<CmdResult, DatabaseError>;
 }
 
-pub trait ReadDatabase {
-    fn read_database(&self) -> ReadCommands<'_>;
+pub trait ReadData {
+    fn read(&self) -> ReadCommands<'_>;
 }
 
 pub trait SignInWith {

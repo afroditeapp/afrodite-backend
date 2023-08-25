@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, Profile, ProfileUpdateInternal,
+    Account, AccountIdInternal, AccountId, AccountSetup, Profile, ProfileUpdateInternal,
 };
 use sqlx::SqlitePool;
 use utils::{current_unix_time, IntoReportExt};

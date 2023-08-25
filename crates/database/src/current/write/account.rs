@@ -1,7 +1,7 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdDb, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, RefreshToken,
+    Account, AccountIdDb, AccountIdInternal, AccountId, AccountSetup, AccessToken, RefreshToken,
     SignInWithInfo,
 };
 use utils::IntoReportExt;
@@ -15,7 +15,7 @@ define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     pub fn insert_account_id(
         mut self,
-        account_uuid: AccountIdLight,
+        account_uuid: AccountId,
     ) -> Result<AccountIdInternal, DieselDatabaseError> {
         use model::schema::account_id::dsl::*;
 
@@ -34,7 +34,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     pub fn insert_access_token(
         mut self,
         id: AccountIdInternal,
-        token_value: Option<ApiKey>,
+        token_value: Option<AccessToken>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::access_token::dsl::*;
 
@@ -51,7 +51,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     pub fn access_token(
         mut self,
         id: AccountIdInternal,
-        token_value: Option<ApiKey>,
+        token_value: Option<AccessToken>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::access_token::dsl::*;
 

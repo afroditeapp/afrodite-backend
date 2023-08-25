@@ -79,7 +79,7 @@ impl MediaBackupQuitHandle {
 #[derive(Debug)]
 pub enum MediaBackupMessage {
     BackupJpegImage {
-        account: AccountIdLight,
+        account: AccountId,
         content_id: ContentId,
     },
 }
@@ -92,7 +92,7 @@ pub struct MediaBackupHandle {
 impl MediaBackupHandle {
     pub async fn backup_jpeg_image(
         &self,
-        account: AccountIdLight,
+        account: AccountId,
         content_id: ContentId,
     ) -> Result<(), MediaBackupError> {
         self.sender
@@ -276,7 +276,7 @@ impl MediaBackupManager {
 
     pub async fn backup_one_image_file(
         &self,
-        account: AccountIdLight,
+        account: AccountId,
         content: ContentId,
     ) -> Result<(), MediaBackupError> {
         let db_root = DatabaseRoot::new(&self.config.database_dir())

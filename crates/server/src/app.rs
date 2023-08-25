@@ -8,7 +8,7 @@ use axum::{
 use config::Config;
 use error_stack::Result;
 use futures::Future;
-use model::{AccountIdLight, BackendVersion};
+use model::{AccountId, BackendVersion};
 
 use self::{
     connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
@@ -16,7 +16,7 @@ use self::{
 use super::{
     data::{
         read::ReadCommands,
-        utils::{AccountIdManager, ApiKeyManager},
+        utils::{AccountIdManager, AccessTokenManager},
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
         write_concurrent::ConcurrentWriteHandle,
         DatabaseError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
@@ -25,7 +25,7 @@ use super::{
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
 use crate::api::{
-    self, GetApiKeys, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadDatabase, SignInWith,
+    self, GetAccessTokens, GetConfig, GetInternalApi, GetManagerApi, GetUsers, ReadData, SignInWith,
     WriteData,
 };
 
@@ -54,8 +54,8 @@ impl BackendVersionProvider for AppState {
     }
 }
 
-impl GetApiKeys for AppState {
-    fn api_keys(&self) -> ApiKeyManager<'_> {
+impl GetAccessTokens for AppState {
+    fn api_keys(&self) -> AccessTokenManager<'_> {
         self.database.api_key_manager()
     }
 }
@@ -66,8 +66,8 @@ impl GetUsers for AppState {
     }
 }
 
-impl ReadDatabase for AppState {
-    fn read_database(&self) -> ReadCommands<'_> {
+impl ReadData for AppState {
+    fn read(&self) -> ReadCommands<'_> {
         self.database.read()
     }
 }
@@ -91,7 +91,7 @@ impl WriteData for AppState {
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
     >(
         &self,
-        account: AccountIdLight,
+        account: AccountId,
         cmd: GetCmd,
     ) -> Result<CmdResult, DatabaseError> {
         self.write_queue.concurrent_write(account, cmd).await

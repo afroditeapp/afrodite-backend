@@ -1,7 +1,7 @@
 use axum::TypedHeader;
 use hyper::StatusCode;
 use model::{
-    Account, AccountIdLight, AccountSetup, AccountState, ApiKey, AuthPair, BooleanSetting,
+    Account, AccountId, AccountSetup, AccountState, AccessToken, AuthPair, BooleanSetting,
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 use tracing::error;
@@ -9,7 +9,7 @@ use tracing::error;
 use super::{
     db_write,
     utils::{ApiKeyHeader, Json},
-    GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, SignInWith, WriteData,
+    GetAccessTokens, GetConfig, GetInternalApi, GetUsers, ReadData, SignInWith, WriteData,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -25,13 +25,13 @@ pub const PATH_REGISTER: &str = "/account_api/register";
     path = "/account_api/register",
     security(),
     responses(
-        (status = 200, description = "New profile created.", body = AccountIdLight),
+        (status = 200, description = "New profile created.", body = AccountId),
         (status = 500, description = "Internal server error."),
     )
 )]
 pub async fn post_register<S: WriteData + GetConfig>(
     state: S,
-) -> Result<Json<AccountIdLight>, StatusCode> {
+) -> Result<Json<AccountId>, StatusCode> {
     register_impl(&state, SignInWithInfo::default())
         .await
         .map(|id| id.into())
@@ -40,10 +40,10 @@ pub async fn post_register<S: WriteData + GetConfig>(
 pub async fn register_impl<S: WriteData + GetConfig>(
     state: &S,
     sign_in_with: SignInWithInfo,
-) -> Result<AccountIdLight, StatusCode> {
+) -> Result<AccountId, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
     // to avoid database collisions.
-    let id = AccountIdLight::new(uuid::Uuid::new_v4());
+    let id = AccountId::new(uuid::Uuid::new_v4());
 
     let result = state
         .write(move |cmds| async move { cmds.register(id, sign_in_with).await })
@@ -60,7 +60,7 @@ pub async fn register_impl<S: WriteData + GetConfig>(
 
 pub const PATH_LOGIN: &str = "/account_api/login";
 
-/// Get new ApiKey.
+/// Get new AccessToken.
 ///
 /// Available only if server is running in debug mode and
 /// bot_login is enabled from config file.
@@ -68,24 +68,24 @@ pub const PATH_LOGIN: &str = "/account_api/login";
     post,
     path = "/account_api/login",
     security(),
-    request_body = AccountIdLight,
+    request_body = AccountId,
     responses(
         (status = 200, description = "Login successful.", body = LoginResult),
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_login<S: GetApiKeys + WriteData + GetUsers>(
-    Json(id): Json<AccountIdLight>,
+pub async fn post_login<S: GetAccessTokens + WriteData + GetUsers>(
+    Json(id): Json<AccountId>,
     state: S,
 ) -> Result<Json<LoginResult>, StatusCode> {
     login_impl(id, state).await.map(|d| d.into())
 }
 
-async fn login_impl<S: GetApiKeys + WriteData + GetUsers>(
-    id: AccountIdLight,
+async fn login_impl<S: GetAccessTokens + WriteData + GetUsers>(
+    id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
-    let access = ApiKey::generate_new();
+    let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
 
     let id = state.users().get_internal_id(id).await.map_err(|e| {
@@ -132,7 +132,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
     ),
 )]
 pub async fn post_sign_in_with_login<
-    S: GetApiKeys + WriteData + ReadDatabase + GetUsers + SignInWith + GetConfig,
+    S: GetAccessTokens + WriteData + ReadData + GetUsers + SignInWith + GetConfig,
 >(
     Json(tokens): Json<SignInWithLoginInfo>,
     state: S,
@@ -148,7 +148,7 @@ pub async fn post_sign_in_with_login<
             })?;
         let google_id = GoogleAccountId(info.id);
         let already_existing_account = state
-            .read_database()
+            .read()
             .account()
             .google_account_id_to_account_id(google_id.clone())
             .await
@@ -182,7 +182,7 @@ pub async fn post_sign_in_with_login<
             })?;
 
         // if validate_sign_in_with_apple_token(apple).await.unwrap() {
-        //     let key = ApiKey::generate_new();
+        //     let key = AccessToken::generate_new();
         //     Ok(key.into())
         // } else {
         //     Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -192,30 +192,6 @@ pub async fn post_sign_in_with_login<
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
 }
-
-// pub const PATH_REFRESH_API_KEY: &str = "/account/refresh_api_key";
-
-// /// Get app refresh token which is used for getting new API keys.
-// #[utoipa::path(
-//     post,
-//     path = "/account/refresh_api_key",
-//     request_body = AuthPair,
-//     responses(
-//         (status = 200, description = "Login successful.", body = ApiKey),
-//         (status = 401, description = "Invalid API key."),
-//         (status = 500, description = "Internal server error."),
-//     ),
-//     security(("api_key" = [])),
-// )]
-// pub async fn post_refresh_api_key<S: GetApiKeys + WriteDatabase + GetUsers>(
-//     Json(id): Json<AccountIdLight>,
-//     state: S,
-// ) -> Result<Json<ApiKey>, StatusCode> {
-//     let key = ApiKey::generate_new();
-//     let account_state = get_account(&state, id, |account| account.clone()).await?;
-
-//     todo!()
-// }
 
 pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
 
@@ -230,18 +206,18 @@ pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_account_state<S: GetApiKeys + ReadDatabase>(
+pub async fn get_account_state<S: GetAccessTokens + ReadData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
     let id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     state
-        .read_database()
+        .read()
         .account()
         .account(id)
         .await
@@ -269,19 +245,19 @@ pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_account_setup<S: GetApiKeys + ReadDatabase + WriteData>(
+pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(data): Json<AccountSetup>,
     state: S,
 ) -> Result<(), StatusCode> {
     let id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let account = state
-        .read_database()
+        .read()
         .account()
         .account(id)
         .await
@@ -329,19 +305,19 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("api_key" = [])),
 )]
 pub async fn post_complete_setup<
-    S: GetApiKeys + ReadDatabase + WriteData + GetInternalApi + GetConfig,
+    S: GetAccessTokens + ReadData + WriteData + GetInternalApi + GetConfig,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<(), StatusCode> {
     let id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let account_setup = state
-        .read_database()
+        .read()
         .account()
         .account_setup(id)
         .await
@@ -364,7 +340,7 @@ pub async fn post_complete_setup<
         })?;
 
     let mut account = state
-        .read_database()
+        .read()
         .account()
         .account(id)
         .await
@@ -374,7 +350,7 @@ pub async fn post_complete_setup<
         })?;
 
     let sign_in_with_info = state
-        .read_database()
+        .read()
         .account()
         .account_sign_in_with_info(id)
         .await
@@ -434,7 +410,7 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     security(("api_key" = [])),
 )]
 pub async fn put_setting_profile_visiblity<
-    S: GetApiKeys + ReadDatabase + GetInternalApi + GetConfig + WriteData,
+    S: GetAccessTokens + ReadData + GetInternalApi + GetConfig + WriteData,
 >(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(new_value): Json<BooleanSetting>,
@@ -442,12 +418,12 @@ pub async fn put_setting_profile_visiblity<
 ) -> Result<(), StatusCode> {
     let id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let account = state
-        .read_database()
+        .read()
         .account()
         .account(id)
         .await
@@ -489,7 +465,7 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_delete<S: GetApiKeys + ReadDatabase>(_state: S) -> Result<(), StatusCode> {
+pub async fn post_delete<S: GetAccessTokens + ReadData>(_state: S) -> Result<(), StatusCode> {
     Ok(())
 }
 
@@ -508,7 +484,7 @@ pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_deletion_status<S: GetApiKeys + ReadDatabase>(
+pub async fn get_deletion_status<S: GetAccessTokens + ReadData>(
     _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
     Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -529,7 +505,7 @@ pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
     ),
     security(("api_key" = [])),
 )]
-pub async fn delete_cancel_deletion<S: GetApiKeys + ReadDatabase>(
+pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
     _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
     Err(StatusCode::INTERNAL_SERVER_ERROR)

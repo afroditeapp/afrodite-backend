@@ -4,12 +4,12 @@ use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
 use error_stack::{Result, ResultExt};
 use hyper::StatusCode;
-use model::{Account, AccountIdInternal, ApiKey, BooleanSetting, Profile, ProfileInternal};
+use model::{Account, AccountIdInternal, AccessToken, BooleanSetting, Profile, ProfileInternal};
 use tracing::{error, info};
 use utils::IntoReportExt;
 
-use super::data::{read::ReadCommands, utils::ApiKeyManager};
-use crate::api::{db_write, GetApiKeys, GetConfig, ReadDatabase, WriteData};
+use super::data::{read::ReadCommands, utils::AccessTokenManager};
+use crate::api::{db_write, GetAccessTokens, GetConfig, ReadData, WriteData};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -109,21 +109,21 @@ impl<'a, S> InternalApiManager<'a, S> {
     }
 }
 
-impl<S: GetApiKeys> InternalApiManager<'_, S> {
-    fn api_keys(&self) -> ApiKeyManager {
+impl<S: GetAccessTokens> InternalApiManager<'_, S> {
+    fn api_keys(&self) -> AccessTokenManager {
         self.state.api_keys()
     }
 }
 
-impl<S: GetConfig + GetApiKeys> InternalApiManager<'_, S> {
-    /// Check that API key is valid. Use this only from ApiKey checker handler.
+impl<S: GetConfig + GetAccessTokens> InternalApiManager<'_, S> {
+    /// Check that API key is valid. Use this only from AccessToken checker handler.
     /// This function will cache the account ID, so it can be found using normal
     /// database calls after this runs.
-    pub async fn check_api_key(&self, key: ApiKey) -> Result<AuthResponse, InternalApiError> {
-        if self.api_keys().api_key_exists(&key).await.is_some() {
+    pub async fn check_api_key(&self, key: AccessToken) -> Result<AuthResponse, InternalApiError> {
+        if self.api_keys().access_token_exists(&key).await.is_some() {
             Ok(AuthResponse::Ok)
         } else if !self.config().components().account {
-            // Check ApiKey from external service
+            // Check AccessToken from external service
 
             let result = InternalApi::check_api_key(self.api_client.account()?, key).await;
 
@@ -154,7 +154,7 @@ impl<S: GetConfig> InternalApiManager<'_, S> {
         self.state.config()
     }
 }
-impl<S: GetApiKeys + GetConfig + ReadDatabase> InternalApiManager<'_, S> {
+impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
     pub async fn get_account_state(
         &self,
         account_id: AccountIdInternal,
@@ -178,13 +178,13 @@ impl<S: GetApiKeys + GetConfig + ReadDatabase> InternalApiManager<'_, S> {
     }
 }
 
-impl<S: ReadDatabase> InternalApiManager<'_, S> {
+impl<S: ReadData> InternalApiManager<'_, S> {
     fn read_database(&self) -> ReadCommands {
-        self.state.read_database()
+        self.state.read()
     }
 }
 
-impl<S: GetApiKeys + GetConfig + ReadDatabase> InternalApiManager<'_, S> {
+impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
     pub async fn media_check_moderation_request_for_account(
         &self,
         account_id: AccountIdInternal,
@@ -213,7 +213,7 @@ impl<S: GetApiKeys + GetConfig + ReadDatabase> InternalApiManager<'_, S> {
     }
 }
 
-impl<S: GetApiKeys + GetConfig + ReadDatabase + WriteData> InternalApiManager<'_, S> {
+impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'_, S> {
     /// Profile visiblity is set first to the profile server and in addition
     /// to changing the visibility the current proifle is returned (used for
     /// changing visibility for media server).

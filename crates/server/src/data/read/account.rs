@@ -1,6 +1,6 @@
 use error_stack::{FutureExt, Result, ResultExt};
 use model::{
-    Account, AccountIdInternal, AccountIdLight, AccountSetup, ApiKey, GoogleAccountId,
+    Account, AccountIdInternal, AccountId, AccountSetup, AccessToken, GoogleAccountId,
     RefreshToken, SignInWithInfo,
 };
 use tokio_stream::StreamExt;
@@ -16,8 +16,8 @@ define_read_commands!(ReadCommandsAccount);
 impl ReadCommandsAccount<'_> {
     pub async fn account_access_token(
         &self,
-        id: AccountIdLight,
-    ) -> Result<Option<ApiKey>, DatabaseError> {
+        id: AccountId,
+    ) -> Result<Option<AccessToken>, DatabaseError> {
         let id = self
             .cache()
             .to_account_id_internal(id)

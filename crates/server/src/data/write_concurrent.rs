@@ -9,7 +9,7 @@ use database::{
     sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
 };
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AccountIdLight, ContentId, ProfileLink};
+use model::{AccountIdInternal, AccountId, ContentId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -24,7 +24,7 @@ pub struct AccountHandle;
 
 #[derive(Default, Clone)]
 pub struct AccountWriteLockManager {
-    locks: Arc<RwLock<HashMap<AccountIdLight, Arc<Mutex<AccountHandle>>>>>,
+    locks: Arc<RwLock<HashMap<AccountId, Arc<Mutex<AccountHandle>>>>>,
 }
 
 impl fmt::Debug for AccountWriteLockManager {
@@ -34,7 +34,7 @@ impl fmt::Debug for AccountWriteLockManager {
 }
 
 impl AccountWriteLockManager {
-    pub async fn lock_account(&self, a: AccountIdLight) -> OwnedMutexGuard<AccountHandle> {
+    pub async fn lock_account(&self, a: AccountId) -> OwnedMutexGuard<AccountHandle> {
         let mutex = {
             let mut write_lock = self.locks.write().await;
             if let Some(mutex) = write_lock.get(&a) {
@@ -65,7 +65,7 @@ impl ConcurrentWriteCommandHandle {
         }
     }
 
-    pub async fn accquire(&self, account: AccountIdLight) -> ConcurrentWriteHandle {
+    pub async fn accquire(&self, account: AccountId) -> ConcurrentWriteHandle {
         let lock = self.account_write_locks.lock_account(account).await;
 
         let permit = self

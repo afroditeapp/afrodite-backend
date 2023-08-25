@@ -5,7 +5,7 @@ use axum::{
 use headers::ContentType;
 use hyper::StatusCode;
 use model::{
-    AccountIdInternal, AccountIdLight, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
+    AccountIdInternal, AccountId, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
     ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SlotId,
 };
 use tracing::error;
@@ -13,7 +13,7 @@ use tracing::error;
 use super::{
     db_write,
     utils::{ApiKeyHeader, Json},
-    GetApiKeys, GetUsers, ReadDatabase, WriteData,
+    GetAccessTokens, GetUsers, ReadData, WriteData,
 };
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
@@ -26,7 +26,7 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
 #[utoipa::path(
     get,
     path = "/media_api/image/{account_id}/{content_id}",
-    params(AccountIdLight, ContentId, ImageAccessCheck),
+    params(AccountId, ContentId, ImageAccessCheck),
     responses(
         (status = 200, description = "Get image file.", body = Vec<u8>, content_type = "image/jpeg"),
         (status = 401, description = "Unauthorized."),
@@ -34,8 +34,8 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_image<S: ReadDatabase>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn get_image<S: ReadData>(
+    Path(account_id): Path<AccountId>,
     Path(content_id): Path<ContentId>,
     Query(_access_check): Query<ImageAccessCheck>,
     state: S,
@@ -47,7 +47,7 @@ pub async fn get_image<S: ReadDatabase>(
     // set content lenght? Or use ServeFile service from tower middleware.
 
     let data = state
-        .read_database()
+        .read()
         .media()
         .image(account_id, content_id)
         .await
@@ -65,7 +65,7 @@ pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:ac
 #[utoipa::path(
     get,
     path = "/media_api/primary_image_info/{account_id}",
-    params(AccountIdLight, ImageAccessCheck),
+    params(AccountId, ImageAccessCheck),
     responses(
         (status = 200, description = "Get primary image info.", body = PrimaryImage),
         (status = 401, description = "Unauthorized."),
@@ -73,8 +73,8 @@ pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:ac
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_primary_image_info<S: ReadDatabase + GetUsers + GetApiKeys>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn get_primary_image_info<S: ReadData + GetUsers + GetAccessTokens>(
+    Path(account_id): Path<AccountId>,
     Query(_access_check): Query<ImageAccessCheck>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
@@ -91,7 +91,7 @@ pub async fn get_primary_image_info<S: ReadDatabase + GetUsers + GetApiKeys>(
         })?;
 
     let internal_current_media = state
-        .read_database()
+        .read()
         .media()
         .current_account_media(internal_id)
         .await
@@ -110,7 +110,7 @@ pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_
 #[utoipa::path(
     get,
     path = "/media_api/all_normal_images/{account_id}",
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "Get list of available primary images.", body = NormalImages),
         (status = 401, description = "Unauthorized."),
@@ -118,8 +118,8 @@ pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_all_normal_images<S: ReadDatabase + GetUsers>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn get_all_normal_images<S: ReadData + GetUsers>(
+    Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<NormalImages>, StatusCode> {
@@ -135,7 +135,7 @@ pub async fn get_all_normal_images<S: ReadDatabase + GetUsers>(
         })?;
 
     let internal_current_media = state
-        .read_database()
+        .read()
         .all_account_media(internal_id)
         .await
         .map_err(|e| {
@@ -204,18 +204,18 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
+pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<ModerationRequest>, StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let request = state
-        .read_database()
+        .read()
         .moderation_request(account_id)
         .await
         .map_err(|e| {
@@ -243,14 +243,14 @@ pub async fn get_moderation_request<S: ReadDatabase + GetApiKeys>(
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_moderation_request<S: WriteData + GetApiKeys>(
+pub async fn put_moderation_request<S: WriteData + GetAccessTokens>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(moderation_request): Json<ModerationRequestContent>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -288,7 +288,7 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     ),
     security(("api_key" = [])),
 )]
-pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData>(
+pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Path(slot_number): Path<SlotId>,
     image: BodyStream,
@@ -296,7 +296,7 @@ pub async fn put_image_to_moderation_slot<S: GetApiKeys + WriteData>(
 ) -> Result<Json<ContentId>, StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 

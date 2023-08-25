@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountIdInternal, AccountIdLight, ContentId, ContentIdInternal, ContentState,
+    AccountIdInternal, AccountId, ContentId, ContentIdInternal, ContentState,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, ImageSlot, MediaContentInternal,
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
     ModerationRequestId, ModerationRequestInternal, ModerationRequestRaw, ModerationRequestState,
@@ -226,7 +226,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         (
             ModerationRequestContent,
             ModerationQueueNumber,
-            AccountIdLight,
+            AccountId,
         ),
         DieselDatabaseError,
     > {

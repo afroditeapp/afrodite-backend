@@ -2,7 +2,7 @@ use diesel::{prelude::*, Associations};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{macros::diesel_string_wrapper, AccountIdDb, AccountIdInternal, ApiKey, RefreshToken};
+use crate::{macros::diesel_string_wrapper, AccountIdDb, AccountIdInternal, AccessToken, RefreshToken};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {
@@ -19,11 +19,11 @@ pub struct LoginResult {
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct AuthPair {
     pub refresh: RefreshToken,
-    pub access: ApiKey,
+    pub access: AccessToken,
 }
 
 impl AuthPair {
-    pub fn new(refresh: RefreshToken, access: ApiKey) -> Self {
+    pub fn new(refresh: RefreshToken, access: AccessToken) -> Self {
         Self { refresh, access }
     }
 }

@@ -2,8 +2,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use futures::Stream;
 use model::{
-    AccessTokenRaw, Account, AccountIdDb, AccountIdInternal, AccountIdLight, AccountRaw,
-    AccountSetup, ApiKey, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
+    AccessTokenRaw, Account, AccountIdDb, AccountIdInternal, AccountId, AccountRaw,
+    AccountSetup, AccessToken, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
     SignInWithInfoRaw,
 };
 use tokio_stream::StreamExt;
@@ -27,7 +27,7 @@ impl CurrentReadAccount<'_> {
             result
                 .map(|data| {
                     let id = AccountIdDb::new(data.id);
-                    let account_id = AccountIdLight::new(data.account_id);
+                    let account_id = AccountId::new(data.account_id);
                     AccountIdInternal::new(id, account_id)
                 })
                 .into_db_error(SqliteDatabaseError::Fetch, ())
@@ -86,7 +86,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
     pub fn access_token(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<Option<ApiKey>, DieselDatabaseError> {
+    ) -> Result<Option<AccessToken>, DieselDatabaseError> {
         use crate::schema::access_token::dsl::*;
 
         let raw = access_token
@@ -96,7 +96,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
         if let Some(data) = raw.token {
-            Ok(Some(ApiKey::new(data)))
+            Ok(Some(AccessToken::new(data)))
         } else {
             Ok(None)
         }

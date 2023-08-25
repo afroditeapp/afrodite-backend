@@ -8,19 +8,19 @@ use axum::{
 use config::RUNNING_IN_DEBUG_MODE;
 use headers::{Header, HeaderValue};
 use hyper::{header, Request, StatusCode};
-use model::ApiKey;
+use model::AccessToken;
 use serde::Serialize;
-pub use utils::api::API_KEY_HEADER_STR;
+pub use utils::api::ACCESS_TOKEN_HEADER_STR;
 use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
 };
 
-use super::GetApiKeys;
+use super::GetAccessTokens;
 
-pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(API_KEY_HEADER_STR);
+pub static API_KEY_HEADER: header::HeaderName = header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);
 
-pub async fn authenticate_with_api_key<T, S: GetApiKeys>(
+pub async fn authenticate_with_api_key<T, S: GetAccessTokens>(
     state: S,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     mut req: Request<T>,
@@ -28,14 +28,14 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys>(
 ) -> Result<Response, StatusCode> {
     let header = req
         .headers()
-        .get(API_KEY_HEADER_STR)
+        .get(ACCESS_TOKEN_HEADER_STR)
         .ok_or(StatusCode::BAD_REQUEST)?;
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
-    let key = ApiKey::new(key_str.to_string());
+    let key = AccessToken::new(key_str.to_string());
 
     if let Some(id) = state
         .api_keys()
-        .api_key_and_connection_exists(&key, addr)
+        .access_token_and_connection_exists(&key, addr)
         .await
     {
         req.extensions_mut().insert(id);
@@ -45,10 +45,10 @@ pub async fn authenticate_with_api_key<T, S: GetApiKeys>(
     }
 }
 
-pub struct ApiKeyHeader(ApiKey);
+pub struct ApiKeyHeader(AccessToken);
 
 impl ApiKeyHeader {
-    pub fn key(&self) -> &ApiKey {
+    pub fn key(&self) -> &AccessToken {
         &self.0
     }
 }
@@ -65,7 +65,7 @@ impl Header for ApiKeyHeader {
     {
         let value = values.next().ok_or_else(headers::Error::invalid)?;
         let value = value.to_str().map_err(|_| headers::Error::invalid())?;
-        Ok(ApiKeyHeader(ApiKey::new(value.to_string())))
+        Ok(ApiKeyHeader(AccessToken::new(value.to_string())))
     }
 
     fn encode<E: Extend<headers::HeaderValue>>(&self, values: &mut E) {
@@ -83,7 +83,7 @@ impl Modify for SecurityApiTokenDefault {
             components.add_security_scheme(
                 "api_key",
                 SecurityScheme::ApiKey(utoipa::openapi::security::ApiKey::Header(
-                    ApiKeyValue::new(API_KEY_HEADER_STR),
+                    ApiKeyValue::new(ACCESS_TOKEN_HEADER_STR),
                 )),
             )
         }

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{macros::diesel_uuid_wrapper, AccountIdDb, AccountIdLight};
+use crate::{macros::diesel_uuid_wrapper, AccountIdDb, AccountId};
 
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]
@@ -123,12 +123,12 @@ pub struct ProfilePage {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileLink {
-    id: AccountIdLight,
+    id: AccountId,
     version: ProfileVersion,
 }
 
 impl ProfileLink {
-    pub fn new(id: AccountIdLight, profile: &ProfileInternal) -> Self {
+    pub fn new(id: AccountId, profile: &ProfileInternal) -> Self {
         Self {
             id,
             version: profile.version_uuid,

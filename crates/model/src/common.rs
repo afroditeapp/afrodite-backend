@@ -43,11 +43,11 @@ pub enum EventToClient {
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountIdInternal {
     pub id: AccountIdDb,
-    pub uuid: AccountIdLight,
+    pub uuid: AccountId,
 }
 
 impl AccountIdInternal {
-    pub fn new(id: AccountIdDb, uuid: AccountIdLight) -> Self {
+    pub fn new(id: AccountIdDb, uuid: AccountId) -> Self {
         Self { id, uuid }
     }
 
@@ -63,7 +63,7 @@ impl AccountIdInternal {
         self.id.0
     }
 
-    pub fn as_light(&self) -> AccountIdLight {
+    pub fn as_light(&self) -> AccountId {
         self.uuid
     }
 }
@@ -74,7 +74,7 @@ impl From<AccountIdInternal> for uuid::Uuid {
     }
 }
 
-impl From<AccountIdInternal> for AccountIdLight {
+impl From<AccountIdInternal> for AccountId {
     fn from(value: AccountIdInternal) -> Self {
         value.as_light()
     }
@@ -86,8 +86,6 @@ impl std::fmt::Display for AccountIdInternal {
     }
 }
 
-/// AccountId which is internally Uuid object.
-/// Consumes less memory.
 #[derive(
     Debug,
     Serialize,
@@ -103,11 +101,11 @@ impl std::fmt::Display for AccountIdInternal {
     AsExpression,
 )]
 #[diesel(sql_type = Binary)]
-pub struct AccountIdLight {
+pub struct AccountId {
     pub account_id: uuid::Uuid,
 }
 
-impl AccountIdLight {
+impl AccountId {
     pub fn new(account_id: uuid::Uuid) -> Self {
         Self { account_id }
     }
@@ -121,15 +119,15 @@ impl AccountIdLight {
     }
 }
 
-impl From<AccountIdLight> for uuid::Uuid {
-    fn from(value: AccountIdLight) -> Self {
+impl From<AccountId> for uuid::Uuid {
+    fn from(value: AccountId) -> Self {
         value.account_id
     }
 }
 
-diesel_uuid_wrapper!(AccountIdLight);
+diesel_uuid_wrapper!(AccountId);
 
-impl std::fmt::Display for AccountIdLight {
+impl std::fmt::Display for AccountId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -144,12 +142,12 @@ pub struct AccessTokenRaw {
 
 /// This is just a random string.
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-pub struct ApiKey {
+pub struct AccessToken {
     /// API token which server generates.
     api_key: String,
 }
 
-impl ApiKey {
+impl AccessToken {
     pub fn generate_new() -> Self {
         Self {
             api_key: uuid::Uuid::new_v4().simple().to_string(),

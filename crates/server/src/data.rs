@@ -22,7 +22,7 @@ use database::{
     }, ErrorContext,
 };
 use error_stack::{IntoReport, Result, ResultExt, Context};
-use model::{AccountIdInternal, AccountIdLight, SignInWithInfo, IsLoggingAllowed};
+use model::{AccountIdInternal, AccountId, SignInWithInfo, IsLoggingAllowed};
 use tracing::info;
 
 use self::{
@@ -30,7 +30,7 @@ use self::{
     file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
-    utils::{AccountIdManager, ApiKeyManager},
+    utils::{AccountIdManager, AccessTokenManager},
     write::{
         account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
         chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
@@ -416,7 +416,7 @@ impl RouterDatabaseWriteHandle {
 
     pub async fn register(
         &self,
-        id_light: AccountIdLight,
+        id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
         self.user_write_commands()
@@ -515,7 +515,7 @@ impl SyncWriteHandle {
 
     pub async fn register(
         &self,
-        id_light: AccountIdLight,
+        id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
         self.cmds().register(id_light, sign_in_with_info).await
@@ -549,8 +549,8 @@ impl RouterDatabaseReadHandle {
         FileReadCommands::new(&self.root.file_dir)
     }
 
-    pub fn api_key_manager(&self) -> ApiKeyManager<'_> {
-        ApiKeyManager::new(&self.cache)
+    pub fn api_key_manager(&self) -> AccessTokenManager<'_> {
+        AccessTokenManager::new(&self.cache)
     }
 
     pub fn account_id_manager(&self) -> AccountIdManager<'_> {

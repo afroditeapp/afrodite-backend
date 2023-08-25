@@ -15,7 +15,7 @@ use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{client::IntoClientRequest, Message};
 use url::Url;
 use utils::{
-    api::{API_KEY_HEADER_STR, PATH_CONNECT},
+    api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT},
     IntoReportExt,
 };
 
@@ -115,7 +115,7 @@ async fn connect_websocket(
 
     let mut r = url.into_client_request().into_error(TestError::WebSocket)?;
     r.headers_mut().insert(
-        API_KEY_HEADER_STR,
+        ACCESS_TOKEN_HEADER_STR,
         HeaderValue::from_str(&auth.access.api_key).into_error(TestError::WebSocket)?,
     );
     let (mut stream, _) = tokio_tungstenite::connect_async(r)

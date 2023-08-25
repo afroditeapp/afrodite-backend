@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use config::Config;
-use model::{AccountIdLight, Location, LocationIndexKey, ProfileLink};
+use model::{AccountId, Location, LocationIndexKey, ProfileLink};
 use tokio::sync::RwLock;
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
@@ -145,7 +145,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
 
     pub async fn update_profile_location(
         &self,
-        account_id: AccountIdLight,
+        account_id: AccountId,
         previous_key: LocationIndexKey,
         new_key: LocationIndexKey,
     ) {
@@ -189,7 +189,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
 
     pub async fn update_profile_link(
         &self,
-        account_id: AccountIdLight,
+        account_id: AccountId,
         profile_link: ProfileLink,
         key: LocationIndexKey,
     ) {
@@ -215,7 +215,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         }
     }
 
-    pub async fn remove_profile_link(&self, account_id: AccountIdLight, key: LocationIndexKey) {
+    pub async fn remove_profile_link(&self, account_id: AccountId, key: LocationIndexKey) {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
@@ -237,11 +237,11 @@ impl<'a> LocationIndexWriteHandle<'a> {
 
 #[derive(Debug, Clone)]
 pub struct ProfilesAtLocation {
-    profiles: HashMap<AccountIdLight, ProfileLink>,
+    profiles: HashMap<AccountId, ProfileLink>,
 }
 
 impl ProfilesAtLocation {
-    pub fn new(account_id: AccountIdLight, profile: ProfileLink) -> Self {
+    pub fn new(account_id: AccountId, profile: ProfileLink) -> Self {
         let mut profiles = HashMap::new();
         profiles.insert(account_id, profile);
         Self { profiles }

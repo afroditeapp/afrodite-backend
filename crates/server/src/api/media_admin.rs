@@ -1,13 +1,13 @@
 use axum::{extract::Path, Extension, TypedHeader};
 use hyper::StatusCode;
 use model::{
-    AccountIdInternal, AccountIdLight, HandleModerationRequest, ModerationList, SecurityImage,
+    AccountIdInternal, AccountId, HandleModerationRequest, ModerationList, SecurityImage,
 };
 use tracing::error;
 
 use super::{
     utils::{ApiKeyHeader, Json},
-    GetApiKeys, GetConfig, GetInternalApi, GetUsers, ReadDatabase, WriteData,
+    GetAccessTokens, GetConfig, GetInternalApi, GetUsers, ReadData, WriteData,
 };
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
@@ -16,7 +16,7 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
 #[utoipa::path(
     get,
     path = "/media_api/security_image_info/{account_id}",
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "Get security image info.", body = SecurityImage),
         (status = 401, description = "Unauthorized."),
@@ -24,8 +24,8 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_security_image_info<S: ReadDatabase + GetUsers>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn get_security_image_info<S: ReadData + GetUsers>(
+    Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SecurityImage>, StatusCode> {
@@ -41,7 +41,7 @@ pub async fn get_security_image_info<S: ReadDatabase + GetUsers>(
         })?;
 
     let internal_current_media = state
-        .read_database()
+        .read()
         .media()
         .current_account_media(internal_id)
         .await
@@ -74,13 +74,13 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/p
     ),
     security(("api_key" = [])),
 )]
-pub async fn patch_moderation_request_list<S: WriteData + GetApiKeys>(
+pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     state: S,
 ) -> Result<Json<ModerationList>, StatusCode> {
     let account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -115,7 +115,7 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     post,
     path = "/media_api/admin/moderation/handle_request/{account_id}",
     request_body(content = HandleModerationRequest),
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "Handling moderation request was successfull."),
         (status = 401, description = "Unauthorized."),
@@ -124,16 +124,16 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     security(("api_key" = [])),
 )]
 pub async fn post_handle_moderation_request<
-    S: GetInternalApi + WriteData + GetApiKeys + GetUsers + GetConfig + ReadDatabase,
+    S: GetInternalApi + WriteData + GetAccessTokens + GetUsers + GetConfig + ReadData,
 >(
-    Path(moderation_request_owner_account_id): Path<AccountIdLight>,
+    Path(moderation_request_owner_account_id): Path<AccountId>,
     TypedHeader(api_key): TypedHeader<ApiKeyHeader>,
     Json(moderation_decision): Json<HandleModerationRequest>,
     state: S,
 ) -> Result<(), StatusCode> {
     let admin_account_id = state
         .api_keys()
-        .api_key_exists(api_key.key())
+        .access_token_exists(api_key.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 

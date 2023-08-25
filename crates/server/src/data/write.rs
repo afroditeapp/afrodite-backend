@@ -18,7 +18,7 @@ use database::{
     PoolObject, TransactionError,
 };
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountIdLight, AccountSetup, SignInWithInfo, Profile};
+use model::{Account, AccountIdInternal, AccountId, AccountSetup, SignInWithInfo, Profile};
 use utils::{IntoReportExt, IntoReportFromString};
 
 use self::{
@@ -135,7 +135,7 @@ macro_rules! define_write_commands {
             }
 
             #[track_caller]
-            pub async fn write_cache<T, Id: Into<model::AccountIdLight>>(
+            pub async fn write_cache<T, Id: Into<model::AccountId>>(
                 &self,
                 id: Id,
                 cache_operation: impl FnOnce(
@@ -244,7 +244,7 @@ impl<'a> WriteCommands<'a> {
 
     pub async fn register(
         &self,
-        id_light: AccountIdLight,
+        id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DatabaseError> {
         let config = self.config.clone();
@@ -276,7 +276,7 @@ impl<'a> WriteCommands<'a> {
 
     pub fn register_db_action(
         config: Arc<Config>,
-        id_light: AccountIdLight,
+        id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
         transaction: TransactionConnection<'_>,
         history_conn: PoolObject,

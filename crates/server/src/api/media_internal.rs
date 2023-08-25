@@ -2,11 +2,11 @@
 
 use axum::extract::Path;
 use hyper::StatusCode;
-use model::{AccountIdLight, BooleanSetting, Profile};
+use model::{AccountId, BooleanSetting, Profile};
 use tracing::error;
 
 use super::GetConfig;
-use crate::api::{utils::Json, GetInternalApi, GetUsers, ReadDatabase};
+use crate::api::{utils::Json, GetInternalApi, GetUsers, ReadData};
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
@@ -17,15 +17,15 @@ pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
 #[utoipa::path(
     get,
     path = "/internal/media_api/moderation/request/{account_id}",
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "Get moderation request was successfull."),
         (status = 404, description = "No account or moderation request found."),
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn internal_get_check_moderation_request_for_account<S: ReadDatabase + GetUsers>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn internal_get_check_moderation_request_for_account<S: ReadData + GetUsers>(
+    Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account_id = state
@@ -38,7 +38,7 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadDatabase +
         })?;
 
     let request = state
-        .read_database()
+        .read()
         .moderation_request(account_id)
         .await
         .map_err(|e| {
@@ -60,7 +60,7 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
 #[utoipa::path(
     post,
     path = "/internal/media_api/visiblity/{account_id}/{value}",
-    params(AccountIdLight, BooleanSetting),
+    params(AccountId, BooleanSetting),
     request_body(content = Profile),
     responses(
         (status = 200, description = "Visibility update successfull"),
@@ -69,9 +69,9 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
     ),
 )]
 pub async fn internal_post_update_profile_image_visibility<
-    S: ReadDatabase + GetUsers + GetInternalApi + GetConfig,
+    S: ReadData + GetUsers + GetInternalApi + GetConfig,
 >(
-    Path(account_id): Path<AccountIdLight>,
+    Path(account_id): Path<AccountId>,
     Path(value): Path<BooleanSetting>,
     Json(profile): Json<Profile>,
     state: S,

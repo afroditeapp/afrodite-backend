@@ -7,7 +7,7 @@ use database::{
 };
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, AccountIdLight, ContentId, MediaContentInternal, ModerationRequest,
+    AccountIdInternal, AccountId, ContentId, MediaContentInternal, ModerationRequest,
 };
 use tokio_util::io::ReaderStream;
 use utils::{IntoReportExt, IntoReportFromString};
@@ -68,7 +68,7 @@ macro_rules! define_read_commands {
             }
 
             #[track_caller]
-            pub async fn read_cache<T, Id: Into<model::AccountIdLight>>(
+            pub async fn read_cache<T, Id: Into<model::AccountId>>(
                 &self,
                 id: Id,
                 cache_operation: impl Fn(&crate::data::cache::CacheEntry) -> T,
@@ -148,7 +148,7 @@ impl<'a> ReadCommands<'a> {
 
     pub async fn image_stream(
         &self,
-        account_id: AccountIdLight,
+        account_id: AccountId,
         content_id: ContentId,
     ) -> Result<ReaderStream<tokio::fs::File>, DatabaseError> {
         self.files

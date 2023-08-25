@@ -2,11 +2,11 @@
 
 use axum::extract::Path;
 use hyper::StatusCode;
-use model::{AccountIdLight, BooleanSetting};
+use model::{AccountId, BooleanSetting};
 use tracing::error;
 
-use super::{GetApiKeys, GetConfig, WriteData};
-use crate::api::{GetInternalApi, GetUsers, ReadDatabase};
+use super::{GetAccessTokens, GetConfig, WriteData};
+use crate::api::{GetInternalApi, GetUsers, ReadData};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
@@ -14,7 +14,7 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
 #[utoipa::path(
     post,
     path = "/internal/profile_api/visiblity/{account_id}/{value}",
-    params(AccountIdLight, BooleanSetting),
+    params(AccountId, BooleanSetting),
     responses(
         (status = 200, description = "Visibility update successfull"),
         (status = 404, description = "No account found."),
@@ -22,9 +22,9 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     ),
 )]
 pub async fn internal_post_update_profile_visibility<
-    S: ReadDatabase + GetUsers + GetInternalApi + GetApiKeys + GetConfig + WriteData,
+    S: ReadData + GetUsers + GetInternalApi + GetAccessTokens + GetConfig + WriteData,
 >(
-    Path(account_id): Path<AccountIdLight>,
+    Path(account_id): Path<AccountId>,
     Path(value): Path<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {

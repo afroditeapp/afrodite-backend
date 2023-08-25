@@ -8,7 +8,7 @@ use manager_model::{
 use model::{Account, AccountIdInternal};
 use tracing::error;
 
-use crate::api::{utils::Json, GetManagerApi, ReadDatabase};
+use crate::api::{utils::Json, GetManagerApi, ReadData};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -23,12 +23,12 @@ pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_system_info<S: GetManagerApi + ReadDatabase>(
+pub async fn get_system_info<S: GetManagerApi + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SystemInfoList>, StatusCode> {
     let account = state
-        .read_database()
+        .read()
         .account()
         .account(api_caller_account_id)
         .await
@@ -65,12 +65,12 @@ pub const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_software_info<S: GetManagerApi + ReadDatabase>(
+pub async fn get_software_info<S: GetManagerApi + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SoftwareInfo>, StatusCode> {
     let account = state
-        .read_database()
+        .read()
         .account()
         .account(api_caller_account_id)
         .await
@@ -109,13 +109,13 @@ pub const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info"
     ),
     security(("api_key" = [])),
 )]
-pub async fn get_latest_build_info<S: GetManagerApi + ReadDatabase>(
+pub async fn get_latest_build_info<S: GetManagerApi + ReadData>(
     Query(software): Query<SoftwareOptionsQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<BuildInfo>, StatusCode> {
     let account: Account = state
-        .read_database()
+        .read()
         .account()
         .account(api_caller_account_id)
         .await
@@ -153,13 +153,13 @@ pub const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_so
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_request_build_software<S: GetManagerApi + ReadDatabase>(
+pub async fn post_request_build_software<S: GetManagerApi + ReadData>(
     Query(software): Query<SoftwareOptionsQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account: Account = state
-        .read_database()
+        .read()
         .account()
         .account(api_caller_account_id)
         .await
@@ -199,14 +199,14 @@ pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_
     ),
     security(("api_key" = [])),
 )]
-pub async fn post_request_update_software<S: GetManagerApi + ReadDatabase>(
+pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
     Query(software): Query<SoftwareOptionsQueryParam>,
     Query(reboot): Query<RebootQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
     let account: Account = state
-        .read_database()
+        .read()
         .account()
         .account(api_caller_account_id)
         .await

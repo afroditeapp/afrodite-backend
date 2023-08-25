@@ -15,14 +15,14 @@ use axum::{
 };
 use error_stack::{IntoReport, Result, ResultExt};
 use hyper::StatusCode;
-use model::{AccountIdInternal, ApiKey, AuthPair, BackendVersion, RefreshToken};
+use model::{AccountIdInternal, AccessToken, AuthPair, BackendVersion, RefreshToken};
 use tracing::error;
 pub use utils::api::PATH_CONNECT;
 use utils::IntoReportExt;
 
 use super::{
     utils::{ApiKeyHeader, Json},
-    BackendVersionProvider, GetApiKeys, ReadDatabase, WriteData,
+    BackendVersionProvider, GetAccessTokens, ReadData, WriteData,
 };
 use crate::app::connection::WebSocketManager;
 
@@ -64,7 +64,7 @@ pub async fn get_version<S: BackendVersionProvider>(state: S) -> Json<BackendVer
     security(("api_key" = [])),
 )]
 pub async fn get_connect_websocket<
-    S: WriteData + ReadDatabase + GetApiKeys + Send + Sync + 'static,
+    S: WriteData + ReadData + GetAccessTokens + Send + Sync + 'static,
 >(
     websocket: WebSocketUpgrade,
     TypedHeader(access_token): TypedHeader<ApiKeyHeader>,
@@ -77,14 +77,14 @@ pub async fn get_connect_websocket<
 
     let id = state
         .api_keys()
-        .api_key_exists(access_token.key())
+        .access_token_exists(access_token.key())
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
     Ok(websocket.on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager)))
 }
 
-async fn handle_socket<S: WriteData + ReadDatabase>(
+async fn handle_socket<S: WriteData + ReadData>(
     socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
@@ -146,7 +146,7 @@ pub enum WebSocketError {
     DatabaseSaveTokens,
 }
 
-async fn handle_socket_result<S: WriteData + ReadDatabase>(
+async fn handle_socket_result<S: WriteData + ReadData>(
     mut socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
@@ -156,7 +156,7 @@ async fn handle_socket_result<S: WriteData + ReadDatabase>(
     // server should shutdown after main future?
 
     let current_refresh_token = state
-        .read_database()
+        .read()
         .account()
         .account_refresh_token(id)
         .await
@@ -187,7 +187,7 @@ async fn handle_socket_result<S: WriteData + ReadDatabase>(
     // Refresh token matched
 
     let (new_refresh_token, new_refresh_token_bytes) = RefreshToken::generate_new_with_bytes();
-    let new_access_token = ApiKey::generate_new();
+    let new_access_token = AccessToken::generate_new();
 
     socket
         .send(Message::Binary(new_refresh_token_bytes))

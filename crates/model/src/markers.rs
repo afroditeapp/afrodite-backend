@@ -88,7 +88,7 @@ macro_rules! enable_logging {
 enable_logging!(
     // Account
     AccountIdInternal,
-    AccountIdLight,
+    AccountId,
     // Media
     ModerationRequestIdDb,
     ModerationRequestId, // TODO: combine with ModerationRequestIdDb

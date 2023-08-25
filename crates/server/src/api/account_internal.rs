@@ -2,30 +2,30 @@
 
 use axum::extract::Path;
 use hyper::StatusCode;
-use model::{Account, AccountIdLight, ApiKey};
+use model::{Account, AccountId, AccessToken};
 use tracing::error;
 
-use crate::api::{utils::Json, GetApiKeys, GetUsers, ReadDatabase};
+use crate::api::{utils::Json, GetAccessTokens, GetUsers, ReadData};
 
-pub const PATH_INTERNAL_CHECK_API_KEY: &str = "/internal/check_api_key";
+pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
 
 #[utoipa::path(
     get,
-    path = "/internal/check_api_key",
-    request_body(content = ApiKey),
+    path = "/internal/check_access_token",
+    request_body(content = AccessToken),
     responses(
-        (status = 200, description = "Check API key", body = AccountIdLight),
+        (status = 200, description = "Check API key", body = AccountId),
         (status = 404, description = "API key was invalid"),
     ),
     security(),
 )]
-pub async fn check_api_key<S: GetApiKeys>(
-    Json(api_key): Json<ApiKey>,
+pub async fn check_api_key<S: GetAccessTokens>(
+    Json(api_key): Json<AccessToken>,
     state: S,
-) -> Result<Json<AccountIdLight>, StatusCode> {
+) -> Result<Json<AccountId>, StatusCode> {
     state
         .api_keys()
-        .api_key_exists(&api_key)
+        .access_token_exists(&api_key)
         .await
         .ok_or(StatusCode::NOT_FOUND)
         .map(|id| id.as_light().into())
@@ -36,15 +36,15 @@ pub const PATH_INTERNAL_GET_ACCOUNT_STATE: &str = "/internal/get_account_state/:
 #[utoipa::path(
     get,
     path = "/internal/get_account_state/{account_id}",
-    params(AccountIdLight),
+    params(AccountId),
     responses(
         (status = 200, description = "Get current account state", body = Account),
         (status = 500, description = "Internal server error or account ID was invalid"),
     ),
     security(),
 )]
-pub async fn internal_get_account_state<S: ReadDatabase + GetUsers>(
-    Path(account_id): Path<AccountIdLight>,
+pub async fn internal_get_account_state<S: ReadData + GetUsers>(
+    Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
     let internal_id = state
@@ -57,7 +57,7 @@ pub async fn internal_get_account_state<S: ReadDatabase + GetUsers>(
         })?;
 
     state
-        .read_database()
+        .read()
         .account()
         .account(internal_id)
         .await

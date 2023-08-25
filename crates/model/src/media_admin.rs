@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    AccountIdDb, AccountIdInternal, AccountIdLight, ModerationRequestContent, ModerationRequestIdDb,
+    AccountIdDb, AccountIdInternal, AccountId, ModerationRequestContent, ModerationRequestIdDb,
 };
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
@@ -35,9 +35,9 @@ pub struct MediaModerationRaw {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Moderation {
-    pub request_creator_id: AccountIdLight,
+    pub request_creator_id: AccountId,
     pub request_id: ModerationRequestId,
-    pub moderator_id: AccountIdLight,
+    pub moderator_id: AccountId,
     pub content: ModerationRequestContent,
 }
 

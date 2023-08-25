@@ -2,40 +2,32 @@ use std::net::SocketAddr;
 
 use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle};
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AccountIdLight, ApiKey};
+use model::{AccountIdInternal, AccountId, AccessToken};
 
 use super::cache::{CacheError, DatabaseCache};
 
-pub struct ApiKeyManager<'a> {
+pub struct AccessTokenManager<'a> {
     cache: &'a DatabaseCache,
 }
 
-impl<'a> ApiKeyManager<'a> {
+impl<'a> AccessTokenManager<'a> {
     pub fn new(cache: &'a DatabaseCache) -> Self {
         Self { cache }
     }
 
-    pub async fn api_key_exists(&self, api_key: &ApiKey) -> Option<AccountIdInternal> {
-        self.cache.access_token_exists(api_key).await
+    pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
+        self.cache.access_token_exists(token).await
     }
 
-    pub async fn api_key_and_connection_exists(
+    pub async fn access_token_and_connection_exists(
         &self,
-        api_key: &ApiKey,
+        token: &AccessToken,
         connection: SocketAddr,
     ) -> Option<AccountIdInternal> {
         self.cache
-            .access_token_and_connection_exists(api_key, connection)
+            .access_token_and_connection_exists(token, connection)
             .await
     }
-
-    // pub async fn update_api_key(&self, id: AccountIdLight, api_key: ApiKey) -> Result<(), CacheError> {
-    //     self.cache.update_api_key(id, api_key).await
-    // }
-
-    // pub async fn delete_api_key(&self, api_key: ApiKey) -> Result<(), CacheError> {
-    //     self.cache.delete_api_key(api_key).await
-    // }
 }
 
 pub struct AccountIdManager<'a> {
@@ -53,7 +45,7 @@ impl<'a> AccountIdManager<'a> {
 
     pub async fn get_internal_id(
         &self,
-        id: AccountIdLight,
+        id: AccountId,
     ) -> Result<AccountIdInternal, CacheError> {
         self.cache.to_account_id_internal(id).await.attach(id)
     }
