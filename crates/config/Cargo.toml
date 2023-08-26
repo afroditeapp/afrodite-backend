@@ -20,6 +20,6 @@ tokio-rustls = "0.24.0"
 rustls-pemfile = "1.0.2"
 
 thiserror = "1.0.37"
-error-stack = "0.2.3"
+error-stack = "0.4"
 
 utils = { path = "../utils" }

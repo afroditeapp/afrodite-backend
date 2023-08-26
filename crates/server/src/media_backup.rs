@@ -5,12 +5,13 @@ use std::{
 };
 
 use config::Config;
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{ResultExt, Result};
 use model::*;
 use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
-use utils::IntoReportExt;
+use utils::ContextExt;
+
 
 use crate::{
     app::connection::ServerQuitWatcher,
@@ -101,7 +102,7 @@ impl MediaBackupHandle {
                 content_id,
             })
             .await
-            .into_error(MediaBackupError::MediaBackupManagerNotAvailable)?;
+            .change_context(MediaBackupError::MediaBackupManagerNotAvailable)?;
 
         Ok(())
     }
@@ -229,7 +230,7 @@ impl MediaBackupManager {
         let media_config = if let Some(config) = self.config.media_backup() {
             config
         } else {
-            return Err(MediaBackupError::ConfigError).into_report();
+            return Err(MediaBackupError::ConfigError.report());
         };
 
         let db_root = DatabaseRoot::new(&self.config.database_dir())
@@ -265,10 +266,10 @@ impl MediaBackupManager {
             .kill_on_drop(true)
             .status()
             .await
-            .into_error(MediaBackupError::ProcessStart)?;
+            .change_context(MediaBackupError::ProcessStart)?;
 
         if !status.success() {
-            return Err(MediaBackupError::CommandFailed(status)).into_report();
+            return Err(MediaBackupError::CommandFailed(status).report());
         }
 
         Ok(())
@@ -283,12 +284,12 @@ impl MediaBackupManager {
             .change_context(MediaBackupError::DataError)?;
         let image_file = db_root.file_dir().image_content(account, content);
         let abs_src_file =
-            std::fs::canonicalize(image_file.path()).into_error(MediaBackupError::InvalidPath)?;
+            std::fs::canonicalize(image_file.path()).change_context(MediaBackupError::InvalidPath)?;
 
         let media_config = if let Some(config) = self.config.media_backup() {
             config
         } else {
-            return Err(MediaBackupError::ConfigError).into_report();
+            return Err(MediaBackupError::ConfigError.report());
         };
 
         let ssh_key = media_config
@@ -331,7 +332,7 @@ impl MediaBackupManager {
             .stdin(Stdio::piped())
             .kill_on_drop(true)
             .spawn()
-            .into_error(MediaBackupError::ProcessStart)?;
+            .change_context(MediaBackupError::ProcessStart)?;
 
         let mut stdin = process
             .stdin
@@ -341,19 +342,19 @@ impl MediaBackupManager {
         stdin
             .write_all(commands.as_bytes())
             .await
-            .into_error(MediaBackupError::SftpStdinWriteError)?;
+            .change_context(MediaBackupError::SftpStdinWriteError)?;
         stdin
             .shutdown()
             .await
-            .into_error(MediaBackupError::SftpStdinCloseError)?;
+            .change_context(MediaBackupError::SftpStdinCloseError)?;
 
         let status = process
             .wait()
             .await
-            .into_error(MediaBackupError::ProcessWait)?;
+            .change_context(MediaBackupError::ProcessWait)?;
 
         if !status.success() {
-            return Err(MediaBackupError::CommandFailed(status)).into_report();
+            return Err(MediaBackupError::CommandFailed(status).report());
         }
 
         Ok(())
@@ -364,10 +365,10 @@ impl MediaBackupManager {
 
         let target_time = if let Some(config) = config.media_backup() {
             Time::from_hms(config.rsync_time.hours, config.rsync_time.minutes, 0)
-                .into_error(MediaBackupError::TimeError)?
+                .change_context(MediaBackupError::TimeError)?
         } else {
             futures::future::pending::<()>().await;
-            return Err(MediaBackupError::ConfigError).into_report();
+            return Err(MediaBackupError::ConfigError.report());
         };
 
         let target_date_time = now.replace_time(target_time);
@@ -389,7 +390,7 @@ impl MediaBackupManager {
         let now: OffsetDateTime = OffsetDateTime::now_utc();
         let offset = Self::get_utc_offset_hours().await?;
         let now = now
-            .to_offset(UtcOffset::from_hms(offset, 0, 0).into_error(MediaBackupError::TimeError)?);
+            .to_offset(UtcOffset::from_hms(offset, 0, 0).change_context(MediaBackupError::TimeError)?);
         Ok(now)
     }
 
@@ -398,15 +399,15 @@ impl MediaBackupManager {
             .arg("+%z")
             .output()
             .await
-            .into_error(MediaBackupError::ProcessWait)?;
+            .change_context(MediaBackupError::ProcessWait)?;
 
         if !output.status.success() {
             tracing::error!("date command failed");
-            return Err(MediaBackupError::CommandFailed(output.status)).into_report();
+            return Err(MediaBackupError::CommandFailed(output.status).report());
         }
 
         let offset =
-            std::str::from_utf8(&output.stdout).into_error(MediaBackupError::InvalidOutput)?;
+            std::str::from_utf8(&output.stdout).change_context(MediaBackupError::InvalidOutput)?;
 
         let multiplier = match offset.chars().nth(0) {
             Some('-') => -1,
@@ -420,7 +421,7 @@ impl MediaBackupManager {
             .collect::<String>()
             .trim_start_matches('0')
             .parse::<i8>()
-            .into_error(MediaBackupError::InvalidOutput)?;
+            .change_context(MediaBackupError::InvalidOutput)?;
 
         Ok(hours * multiplier)
     }

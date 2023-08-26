@@ -1,10 +1,10 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{
     AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
     SignInWithInfo,
 };
-use utils::IntoReportExt;
+
 
 use super::ConnectionProvider;
 use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
@@ -74,7 +74,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
         let token_value = if let Some(t) = token_value {
             Some(
                 t.bytes()
-                    .into_error(DieselDatabaseError::DataFormatConversion)?,
+                    .change_context(DieselDatabaseError::DataFormatConversion)?,
             )
         } else {
             None
@@ -98,7 +98,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
         let token_value = if let Some(t) = token_value {
             Some(
                 t.bytes()
-                    .into_error(DieselDatabaseError::DataFormatConversion)?,
+                    .change_context(DieselDatabaseError::DataFormatConversion)?,
             )
         } else {
             None
@@ -120,7 +120,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
         use model::schema::account::dsl::*;
 
         let data =
-            serde_json::to_string(account_data).into_error(DieselDatabaseError::SerdeSerialize)?;
+            serde_json::to_string(account_data).change_context(DieselDatabaseError::SerdeSerialize)?;
 
         insert_into(account)
             .values((account_id.eq(id.as_db_id()), json_text.eq(data)))
@@ -138,7 +138,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
         use model::schema::account::dsl::*;
 
         let data =
-            serde_json::to_string(account_data).into_error(DieselDatabaseError::SerdeSerialize)?;
+            serde_json::to_string(account_data).change_context(DieselDatabaseError::SerdeSerialize)?;
 
         update(account.find(id.as_db_id()))
             .set(json_text.eq(data))

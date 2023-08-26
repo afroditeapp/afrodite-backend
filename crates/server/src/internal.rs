@@ -2,11 +2,11 @@
 
 use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{ResultExt, Result};
 use hyper::StatusCode;
 use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal};
 use tracing::{error, info};
-use utils::IntoReportExt;
+use utils::{ ContextExt};
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
 use crate::{
@@ -84,15 +84,13 @@ impl InternalApiClient {
     pub fn account(&self) -> Result<&Configuration, InternalApiError> {
         self.account
             .as_ref()
-            .ok_or(InternalApiError::AccountApiUrlNotConfigured)
-            .into_report()
+            .ok_or(InternalApiError::AccountApiUrlNotConfigured.report())
     }
 
     pub fn media(&self) -> Result<&Configuration, InternalApiError> {
         self.media
             .as_ref()
-            .ok_or(InternalApiError::MediaApiUrlNotConfigured)
-            .into_report()
+            .ok_or(InternalApiError::MediaApiUrlNotConfigured.report())
     }
 }
 
@@ -154,7 +152,7 @@ impl<S: GetConfig + GetAccessTokens> InternalApiManager<'_, S> {
                     // once for a while.
                     Ok(AuthResponse::Unauthorized)
                 }
-                Err(e) => Err(e).into_error(InternalApiError::ApiRequest),
+                Err(e) => Err(e).change_context(InternalApiError::ApiRequest),
             }
         } else {
             Ok(AuthResponse::Unauthorized)
@@ -184,7 +182,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
             let account =
                 InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
                     .await
-                    .into_error(InternalApiError::ApiRequest)?;
+                    .change_context(InternalApiError::ApiRequest)?;
 
             Ok(account)
         }
@@ -222,7 +220,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
                 account_id.as_id(),
             )
             .await
-            .into_error(InternalApiError::MissingValue)
+            .change_context(InternalApiError::MissingValue)
         }
     }
 }

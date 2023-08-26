@@ -33,7 +33,7 @@ utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 tokio-rustls = "0.24.0"
 
 thiserror = "1.0.37"
-error-stack = "0.2.3"
+error-stack = "0.4"
 
 async-trait = "0.1.66"
 

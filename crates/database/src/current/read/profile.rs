@@ -1,7 +1,7 @@
 use diesel::prelude::*;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, LocationIndexKey, ProfileInternal};
-use utils::IntoReportExt;
+
 
 use crate::diesel::{ConnectionProvider, DieselDatabaseError};
 
@@ -18,7 +18,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfile<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(ProfileInternal::as_select())
             .first(self.conn())
-            .into_error(DieselDatabaseError::Execute)
+            .change_context(DieselDatabaseError::Execute)
     }
 
     pub fn location_index_key(
@@ -31,7 +31,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfile<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select((location_key_x, location_key_y))
             .first::<(i64, i64)>(self.conn())
-            .into_error(DieselDatabaseError::Execute)?;
+            .change_context(DieselDatabaseError::Execute)?;
 
         Ok(LocationIndexKey {
             x: x as u16,

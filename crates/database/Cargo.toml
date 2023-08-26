@@ -27,7 +27,7 @@ deadpool-diesel = { version = "0.4.1", features = ["sqlite"] }
 num_cpus = "1.16.0"
 
 thiserror = "1.0.37"
-error-stack = "0.2.3"
+error-stack = "0.4"
 
 async-trait = "0.1.66"
 

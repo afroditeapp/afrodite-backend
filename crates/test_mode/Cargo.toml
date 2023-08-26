@@ -25,7 +25,7 @@ reqwest = { version = "0.11", features = ["json"] }
 url = { version = "2.3.1", features = ["serde"] }
 
 thiserror = "1.0.37"
-error-stack = "0.2.3"
+error-stack = "0.4"
 
 async-trait = "0.1.66"
 

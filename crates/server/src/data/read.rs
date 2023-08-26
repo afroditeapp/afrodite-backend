@@ -6,7 +6,7 @@ use database::{
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, ContentId, MediaContentInternal, ModerationRequest};
 use tokio_util::io::ReaderStream;
-use utils::{IntoReportExt, IntoReportFromString};
+use utils::{ IntoReportFromString};
 
 use self::{
     account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
@@ -195,7 +195,7 @@ impl<'a> ReadCommands<'a> {
             .pool()
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))

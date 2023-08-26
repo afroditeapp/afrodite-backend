@@ -1,11 +1,11 @@
 use diesel::{delete, prelude::*, update};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, HandleModerationRequest,
     MediaContentType, Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
     ModerationRequestState, PrimaryImage,
 };
-use utils::IntoReportExt;
+
 
 use super::{media::CurrentSyncWriteMedia, ConnectionProvider};
 use crate::{
@@ -96,7 +96,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             .media()
             .get_moderation_request_content(target_id)?;
         let content_string =
-            serde_json::to_string(&content).into_error(DieselDatabaseError::SerdeSerialize)?;
+            serde_json::to_string(&content).change_context(DieselDatabaseError::SerdeSerialize)?;
 
         {
             use model::schema::media_moderation::dsl::*;
@@ -286,7 +286,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     //     )
     //     .execute(&mut **transaction)
     //     .await
-    //     .into_error(SqliteDatabaseError::Execute)?;
+    //     .change_context(SqliteDatabaseError::Execute)?;
 
     //     Ok(())
     // }
@@ -338,7 +338,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
 //         let mut transaction = pool
 //             .begin()
 //             .await
-//             .into_error(SqliteDatabaseError::TransactionBegin)?;
+//             .change_context(SqliteDatabaseError::TransactionBegin)?;
 
 //         sqlx::query!(
 //             r#"
@@ -352,7 +352,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
 //         )
 //         .execute(&mut *transaction)
 //         .await
-//         .into_error(SqliteDatabaseError::Execute)?;
+//         .change_context(SqliteDatabaseError::Execute)?;
 
 //         Ok(DatabaseTransaction { transaction })
 //     }
@@ -361,13 +361,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
 //         self.transaction
 //             .commit()
 //             .await
-//             .into_error(SqliteDatabaseError::TransactionCommit)
+//             .change_context(SqliteDatabaseError::TransactionCommit)
 //     }
 
 //     pub async fn rollback(self) -> error_stack::Result<(), SqliteDatabaseError> {
 //         self.transaction
 //             .rollback()
 //             .await
-//             .into_error(SqliteDatabaseError::TransactionRollback)
+//             .change_context(SqliteDatabaseError::TransactionRollback)
 //     }
 // }

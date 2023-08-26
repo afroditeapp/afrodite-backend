@@ -3,10 +3,10 @@
 
 use std::{future::Future, sync::Arc};
 
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::AccountId;
 use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
-use utils::IntoReportExt;
+
 
 use super::{
     write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
@@ -69,7 +69,7 @@ impl WriteCommandRunnerHandle {
 
         handle
             .await
-            .into_error(DataError::CommandResultReceivingFailed)?
+            .change_context(DataError::CommandResultReceivingFailed)?
     }
 
     pub async fn concurrent_write<
@@ -91,7 +91,7 @@ impl WriteCommandRunnerHandle {
 
         handle
             .await
-            .into_error(DataError::CommandResultReceivingFailed)?
+            .change_context(DataError::CommandResultReceivingFailed)?
     }
 }
 

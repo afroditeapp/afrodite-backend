@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use config::Config;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 
 use self::{
     apple::{AppleAccountId, SignInWithAppleError, SignInWithAppleManager},

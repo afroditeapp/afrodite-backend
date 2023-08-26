@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{AccessToken, AccountId, AccountIdInternal};
 
 use super::{cache::DatabaseCache, DataError, IntoDataError};

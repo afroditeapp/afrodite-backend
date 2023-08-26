@@ -4,7 +4,7 @@ use std::fmt::Debug;
 
 use api_client::apis::configuration::Configuration;
 use config::args::PublicApiUrls;
-use error_stack::{IntoReport, Result};
+use error_stack::{ResultExt, Result};
 use hyper::StatusCode;
 use reqwest::{Client, Url};
 use tracing::info;
@@ -142,7 +142,6 @@ impl ApiClient {
 
 pub fn get_api_url(url: &Option<Url>) -> Result<Url, TestError> {
     url.as_ref()
-        .ok_or(TestError::ApiUrlNotConfigured)
+        .ok_or(TestError::ApiUrlNotConfigured.report())
         .map(Clone::clone)
-        .into_report()
 }

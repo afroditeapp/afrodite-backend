@@ -8,7 +8,6 @@ use std::{
 use error_stack::{Report, Result, ResultExt};
 use serde::{Deserialize, Serialize};
 use url::Url;
-use utils::IntoReportExt;
 
 pub type GoogleAccountId = String;
 
@@ -125,9 +124,9 @@ impl ConfigFile {
     pub fn save_default(dir: impl AsRef<Path>) -> Result<(), ConfigFileError> {
         let file_path =
             Self::default_config_file_path(dir).change_context(ConfigFileError::SaveDefault)?;
-        let mut file = std::fs::File::create(file_path).into_error(ConfigFileError::SaveDefault)?;
+        let mut file = std::fs::File::create(file_path).change_context(ConfigFileError::SaveDefault)?;
         file.write_all(DEFAULT_CONFIG_FILE_TEXT.as_bytes())
-            .into_error(ConfigFileError::SaveDefault)?;
+            .change_context(ConfigFileError::SaveDefault)?;
         Ok(())
     }
 
@@ -139,8 +138,8 @@ impl ConfigFile {
         }
 
         let config_string =
-            std::fs::read_to_string(file_path).into_error(ConfigFileError::LoadConfig)?;
-        toml::from_str(&config_string).into_error(ConfigFileError::LoadConfig)
+            std::fs::read_to_string(file_path).change_context(ConfigFileError::LoadConfig)?;
+        toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 
     pub fn default_config_file_path(dir: impl AsRef<Path>) -> Result<PathBuf, ConfigFileError> {

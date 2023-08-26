@@ -14,10 +14,10 @@ use api_client::{
     models::ProfileUpdate,
 };
 use async_trait::async_trait;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use tokio::time::sleep;
 use tracing::log::info;
-use utils::IntoReportExt;
+
 
 use super::{
     actions::{
@@ -182,7 +182,7 @@ impl BotAction for GetProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         get_profile(state.api.profile(), &state.id_string()?)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -195,7 +195,7 @@ impl BotAction for GetProfileFromDatabase {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         get_profile_from_database_debug_mode_benchmark(state.api.profile(), &state.id_string()?)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -229,7 +229,7 @@ impl BotAction for PostProfileToDatabase {
         let profile = ProfileUpdate::new(format!("{}", profile));
         post_profile_to_database_debug_mode_benchmark(state.api.profile(), profile)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }

@@ -2,8 +2,8 @@ use std::fmt::Debug;
 
 use api_client::apis::media_admin_api;
 use async_trait::async_trait;
-use error_stack::Result;
-use utils::IntoReportExt;
+use error_stack::{Result, ResultExt};
+
 
 use super::{super::super::client::TestError, BotAction, BotState};
 
@@ -15,7 +15,7 @@ impl BotAction for ModerateMediaModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let list = media_admin_api::patch_moderation_request_list(state.api.media())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
 
         for request in list.list {
             let images = [
@@ -31,7 +31,7 @@ impl BotAction for ModerateMediaModerationRequest {
                     false,
                 )
                 .await
-                .into_error(TestError::ApiRequest)?;
+                .change_context(TestError::ApiRequest)?;
             }
             media_admin_api::post_handle_moderation_request(
                 state.api.media(),
@@ -39,7 +39,7 @@ impl BotAction for ModerateMediaModerationRequest {
                 api_client::models::HandleModerationRequest { accept: true },
             )
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         }
 
         Ok(())

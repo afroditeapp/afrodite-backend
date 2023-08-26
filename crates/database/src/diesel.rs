@@ -5,10 +5,10 @@ use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
 use diesel::RunQueryDsl;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{ResultExt, Result};
 use sqlx::Row;
 use tracing::log::error;
-use utils::{ComponentError, IntoReportExt, IntoReportFromString};
+use utils::{ComponentError,  IntoReportFromString, ContextExt};
 
 use super::sqlite::{DATABASE_FILE_NAME, HISTORY_FILE_NAME};
 
@@ -136,7 +136,6 @@ fn create_manager(config: &Config, db_path: PathBuf) -> Result<Manager, DieselDa
             "file:history?mode=memory&cache=shared"
         } else {
             return Err(DieselDatabaseError::CreateInRam)
-                .into_report()
                 .attach_printable("Unknown database file name");
         };
 
@@ -173,12 +172,12 @@ impl DieselWriteHandle {
             pool
         };
 
-        let pool = pool.build().into_error(DieselDatabaseError::Connect)?;
+        let pool = pool.build().change_context(DieselDatabaseError::Connect)?;
 
         let conn = pool
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
         conn.interact(|conn| conn.run_pending_migrations(DIESEL_MIGRATIONS).map(|_| ()))
             .await
             .into_error_string(DieselDatabaseError::InteractionError)?
@@ -208,7 +207,7 @@ impl DieselWriteHandle {
             .pool
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
 
         let sqlite_version: Vec<String> = conn
             .interact(move |conn| diesel::select(sqlite_version::sqlite_version()).load(conn))
@@ -218,8 +217,7 @@ impl DieselWriteHandle {
 
         sqlite_version
             .first()
-            .ok_or(DieselDatabaseError::SqliteVersionQuery)
-            .into_report()
+            .ok_or(DieselDatabaseError::SqliteVersionQuery.report())
             .cloned()
     }
 }
@@ -305,7 +303,7 @@ impl DieselReadHandle {
             pool
         };
 
-        let pool = pool.build().into_error(DieselDatabaseError::Connect)?;
+        let pool = pool.build().change_context(DieselDatabaseError::Connect)?;
 
         // let pool_clone = pool.clone();
         // tokio::spawn(async move {

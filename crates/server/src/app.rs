@@ -6,7 +6,7 @@ use axum::{
     Router,
 };
 use config::Config;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{AccountId, BackendVersion};
 

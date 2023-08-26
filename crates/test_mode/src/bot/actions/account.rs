@@ -8,7 +8,7 @@ use api_client::{
 };
 use async_trait::async_trait;
 use base64::Engine;
-use error_stack::{IntoReport, Result};
+use error_stack::{ResultExt, Result};
 use futures::SinkExt;
 use headers::HeaderValue;
 use tokio_stream::StreamExt;
@@ -16,7 +16,7 @@ use tokio_tungstenite::tungstenite::{client::IntoClientRequest, Message};
 use url::Url;
 use utils::{
     api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT},
-    IntoReportExt,
+
 };
 
 use super::{super::super::client::TestError, BotAction, BotState};
@@ -37,7 +37,7 @@ impl BotAction for Register {
 
         let id = post_register(state.api.account())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         state.id = Some(id);
         Ok(())
     }
@@ -54,7 +54,7 @@ impl BotAction for Login {
         }
         let login_result = post_login(state.api.account(), state.id()?)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
 
         state
             .api
@@ -66,7 +66,7 @@ impl BotAction for Login {
             .api_urls
             .account_base_url
             .join(PATH_CONNECT)
-            .into_error(TestError::WebSocket)?;
+            .change_context(TestError::WebSocket)?;
         state.connections.account = connect_websocket(*login_result.account, url, state)
             .await?
             .into();
@@ -78,7 +78,7 @@ impl BotAction for Login {
                 .api_urls
                 .media_base_url
                 .join(PATH_CONNECT)
-                .into_error(TestError::WebSocket)?;
+                .change_context(TestError::WebSocket)?;
             state.connections.media = connect_websocket(*media, url, state).await?.into();
         }
 
@@ -89,7 +89,7 @@ impl BotAction for Login {
                 .api_urls
                 .profile_base_url
                 .join(PATH_CONNECT)
-                .into_error(TestError::WebSocket)?;
+                .change_context(TestError::WebSocket)?;
             state.connections.media = connect_websocket(*profile, url, state).await?.into();
         }
 
@@ -104,52 +104,48 @@ async fn connect_websocket(
 ) -> Result<WsConnection, TestError> {
     if url.scheme() == "https" {
         url.set_scheme("wss")
-            .map_err(|_| TestError::WebSocket)
-            .into_report()?;
+            .map_err(|_| TestError::WebSocket.report())?;
     }
     if url.scheme() == "http" {
         url.set_scheme("ws")
-            .map_err(|_| TestError::WebSocket)
-            .into_report()?;
+            .map_err(|_| TestError::WebSocket.report())?;
     }
 
-    let mut r = url.into_client_request().into_error(TestError::WebSocket)?;
+    let mut r = url.into_client_request().change_context(TestError::WebSocket)?;
     r.headers_mut().insert(
         ACCESS_TOKEN_HEADER_STR,
-        HeaderValue::from_str(&auth.access.access_token).into_error(TestError::WebSocket)?,
+        HeaderValue::from_str(&auth.access.access_token).change_context(TestError::WebSocket)?,
     );
     let (mut stream, _) = tokio_tungstenite::connect_async(r)
         .await
-        .into_error(TestError::WebSocket)?;
+        .change_context(TestError::WebSocket)?;
 
     let binary_token = base64::engine::general_purpose::STANDARD
         .decode(auth.refresh.token)
-        .into_error(TestError::WebSocket)?;
+        .change_context(TestError::WebSocket)?;
     stream
         .send(Message::Binary(binary_token))
         .await
-        .into_error(TestError::WebSocket)?;
+        .change_context(TestError::WebSocket)?;
 
     let refresh_token = stream
         .next()
         .await
-        .ok_or(TestError::WebSocket)
-        .into_report()?
-        .into_error(TestError::WebSocket)?;
+        .ok_or(TestError::WebSocket.report())?
+        .change_context(TestError::WebSocket)?;
     match refresh_token {
         Message::Binary(refresh_token) => state.refresh_token = Some(refresh_token),
-        _ => return Err(TestError::WebSocketWrongValue).into_report(),
+        _ => return Err(TestError::WebSocketWrongValue.report()),
     }
 
     let access_token = stream
         .next()
         .await
-        .ok_or(TestError::WebSocket)
-        .into_report()?
-        .into_error(TestError::WebSocket)?;
+        .ok_or(TestError::WebSocket.report())?
+        .change_context(TestError::WebSocket)?;
     match access_token {
         Message::Text(access_token) => state.api.set_access_token(access_token),
-        _ => return Err(TestError::WebSocketWrongValue).into_report(),
+        _ => return Err(TestError::WebSocketWrongValue.report()),
     }
     Ok(stream)
 }
@@ -162,7 +158,7 @@ impl BotAction for AssertAccountState {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let state = get_account_state(state.api.account())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
 
         bot_assert_eq(state.state, self.0)
     }
@@ -198,7 +194,7 @@ impl BotAction for SetAccountSetup {
         };
         post_account_setup(state.api.account(), setup)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
 
         Ok(())
     }
@@ -212,7 +208,7 @@ impl BotAction for CompleteAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         post_complete_setup(state.api.account())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
 
         Ok(())
     }
@@ -229,7 +225,7 @@ impl BotAction for SetProfileVisibility {
             BooleanSetting::new(self.0),
         )
         .await
-        .into_error(TestError::ApiRequest)?;
+        .change_context(TestError::ApiRequest)?;
 
         Ok(())
     }

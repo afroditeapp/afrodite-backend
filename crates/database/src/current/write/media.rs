@@ -1,10 +1,10 @@
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, ImageSlot, ModerationQueueNumber,
     ModerationRequestContent, PrimaryImage, QueueNumberRaw,
 };
-use utils::IntoReportExt;
+
 
 use super::ConnectionProvider;
 use crate::{
@@ -180,7 +180,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
             let queue_number_new =
                 Self::create_new_moderation_request_queue_number(conn, request_creator)?;
             let request_info =
-                serde_json::to_string(&request).into_error(DieselDatabaseError::SerdeSerialize)?;
+                serde_json::to_string(&request).change_context(DieselDatabaseError::SerdeSerialize)?;
             insert_into(media_moderation_request)
                 .values((
                     account_id.eq(request_creator.as_db_id()),
@@ -207,12 +207,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         // going.
 
         let request_info =
-            serde_json::to_string(&new_request).into_error(DieselDatabaseError::SerdeSerialize)?;
+            serde_json::to_string(&new_request).change_context(DieselDatabaseError::SerdeSerialize)?;
 
         update(media_moderation_request.find(request_owner_account_id.as_db_id()))
             .set(json_text.eq(request_info))
             .execute(self.conn())
-            .into_error(DieselDatabaseError::Execute)?;
+            .change_context(DieselDatabaseError::Execute)?;
 
         Ok(())
     }

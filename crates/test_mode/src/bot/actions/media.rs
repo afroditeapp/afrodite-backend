@@ -6,8 +6,8 @@ use api_client::{
     models::{ContentId, ModerationRequestContent},
 };
 use async_trait::async_trait;
-use error_stack::Result;
-use utils::IntoReportExt;
+use error_stack::{Result, ResultExt};
+
 
 use super::{super::super::client::TestError, BotAction, BotState};
 use crate::bot::utils::image::ImageProvider;
@@ -60,7 +60,7 @@ impl BotAction for SendImageToSlot {
             },
         )
         .await
-        .into_error(TestError::ApiRequest)?;
+        .change_context(TestError::ApiRequest)?;
         state.media.slots[self.slot as usize] = Some(content_id);
         Ok(())
     }
@@ -85,7 +85,7 @@ impl BotAction for MakeModerationRequest {
 
         put_moderation_request(state.api.media(), new)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }

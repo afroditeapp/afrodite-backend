@@ -1,4 +1,4 @@
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ProfileInternal};
 
 use super::{

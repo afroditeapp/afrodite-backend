@@ -4,13 +4,13 @@ use std::{
 };
 
 use config::Config;
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{ResultExt, Result};
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions, SqliteRow},
     Row, SqlitePool,
 };
 use tracing::log::error;
-use utils::{ComponentError, IntoReportExt};
+use utils::{ComponentError, };
 
 use super::current::read::SqliteReadCommands;
 
@@ -137,13 +137,12 @@ fn create_sqlite_connect_options(
             "sqlite:file:history?mode=memory&cache=shared"
         } else {
             return Err(SqliteDatabaseError::CreateInRamOptions)
-                .into_report()
                 .attach_printable("Unknown database file name");
         };
 
         let options = ram_str
             .parse::<SqliteConnectOptions>()
-            .into_error(SqliteDatabaseError::CreateInRamOptions)?
+            .change_context(SqliteDatabaseError::CreateInRamOptions)?
             .foreign_keys(true);
         return Ok(options);
     }
@@ -196,7 +195,7 @@ impl SqliteWriteHandle {
         let pool = pool
             .connect_with(create_sqlite_connect_options(config, &db_path, true)?)
             .await
-            .into_error(SqliteDatabaseError::Connect)?;
+            .change_context(SqliteDatabaseError::Connect)?;
 
         let write_handle = SqliteWriteHandle { pool: pool.clone() };
 
@@ -217,7 +216,7 @@ impl SqliteWriteHandle {
             })
             .fetch_one(&self.pool)
             .await
-            .into_error(SqliteDatabaseError::Execute)?;
+            .change_context(SqliteDatabaseError::Execute)?;
         Ok(version)
     }
 }
@@ -260,7 +259,7 @@ impl SqlxReadHandle {
         let pool = pool
             .connect_with(create_sqlite_connect_options(&config, &db_path, false)?)
             .await
-            .into_error(SqliteDatabaseError::Connect)?;
+            .change_context(SqliteDatabaseError::Connect)?;
 
         let handle = SqlxReadHandle { pool: pool.clone() };
 

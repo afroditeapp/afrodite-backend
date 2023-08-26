@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
 
 use axum::extract::BodyStream;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{AccountId, ContentId};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
-use utils::IntoReportExt;
+
 
 use super::super::FileError;
 
@@ -105,13 +105,13 @@ impl TmpDir {
         {
             let iter = tokio::fs::read_dir(&self.dir)
                 .await
-                .into_error(FileError::IoDirIter)?;
+                .change_context(FileError::IoDirIter)?;
             let mut s = ReadDirStream::new(iter);
             while let Some(entry) = s.next().await {
-                let entry = entry.into_error(FileError::IoDirIter)?;
+                let entry = entry.change_context(FileError::IoDirIter)?;
                 tokio::fs::remove_file(entry.path())
                     .await
-                    .into_error(FileError::IoFileRemove)?;
+                    .change_context(FileError::IoFileRemove)?;
             }
             Ok(())
         } else {
@@ -217,7 +217,7 @@ impl PathToFile {
             if !parent_dir.exists() {
                 tokio::fs::create_dir_all(parent_dir)
                     .await
-                    .into_error(FileError::IoFileCreate)
+                    .change_context(FileError::IoFileCreate)
             } else {
                 Ok(())
             }
@@ -229,7 +229,7 @@ impl PathToFile {
     pub fn create_parent_dirs_blocking(&self) -> Result<(), FileError> {
         if let Some(parent_dir) = self.path.parent() {
             if !parent_dir.exists() {
-                std::fs::create_dir_all(parent_dir).into_error(FileError::IoFileCreate)
+                std::fs::create_dir_all(parent_dir).change_context(FileError::IoFileCreate)
             } else {
                 Ok(())
             }
@@ -243,30 +243,30 @@ impl PathToFile {
 
         let mut file = tokio::fs::File::create(&self.path)
             .await
-            .into_error(FileError::IoFileCreate)?;
+            .change_context(FileError::IoFileCreate)?;
 
         while let Some(result) = stream.next().await {
-            let mut data = result.into_error(FileError::StreamReadFailed)?;
+            let mut data = result.change_context(FileError::StreamReadFailed)?;
             file.write_all_buf(&mut data)
                 .await
-                .into_error(FileError::IoFileWrite)?;
+                .change_context(FileError::IoFileWrite)?;
         }
-        file.flush().await.into_error(FileError::IoFileFlush)?;
-        file.sync_all().await.into_error(FileError::IoFileSync)?;
+        file.flush().await.change_context(FileError::IoFileFlush)?;
+        file.sync_all().await.change_context(FileError::IoFileSync)?;
         Ok(())
     }
 
     pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
         let file = tokio::fs::File::open(&self.path)
             .await
-            .into_error(FileError::IoFileOpen)?;
+            .change_context(FileError::IoFileOpen)?;
         Ok(ReaderStream::new(file))
     }
 
     pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
         tokio::fs::read(&self.path)
             .await
-            .into_error(FileError::IoFileOpen)
+            .change_context(FileError::IoFileOpen)
     }
 
     pub async fn move_to(self, new_location: &Self) -> Result<(), FileError> {
@@ -274,13 +274,13 @@ impl PathToFile {
 
         tokio::fs::rename(self.path, new_location.path())
             .await
-            .into_error(FileError::IoFileRename)
+            .change_context(FileError::IoFileRename)
     }
 
     pub fn move_to_blocking(self, new_location: &Self) -> Result<(), FileError> {
         new_location.create_parent_dirs_blocking()?;
 
-        std::fs::rename(self.path, new_location.path()).into_error(FileError::IoFileRename)
+        std::fs::rename(self.path, new_location.path()).change_context(FileError::IoFileRename)
     }
 
     pub async fn remove_if_exists(self) -> Result<(), FileError> {
@@ -290,7 +290,7 @@ impl PathToFile {
 
         tokio::fs::remove_file(&self.path)
             .await
-            .into_error(FileError::IoFileRemove)
+            .change_context(FileError::IoFileRemove)
     }
 
     pub fn exists(&self) -> bool {

@@ -1,4 +1,4 @@
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{Account, AccountIdInternal, AccountSetup};
 
 use crate::data::DataError;

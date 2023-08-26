@@ -1,7 +1,7 @@
 use diesel::{insert_into, prelude::*};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{Account, AccountIdInternal, AccountSetup};
-use utils::{current_unix_time, IntoReportExt};
+use utils::{current_unix_time, };
 
 use crate::{
     diesel::{DieselDatabaseError, HistoryConnectionProvider},
@@ -35,7 +35,7 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
         use model::schema::history_account::dsl::*;
 
         let text =
-            serde_json::to_string(account).into_error(DieselDatabaseError::SerdeSerialize)?;
+            serde_json::to_string(account).change_context(DieselDatabaseError::SerdeSerialize)?;
         let time = current_unix_time();
 
         insert_into(history_account)
@@ -60,7 +60,7 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
         use model::schema::history_account_setup::dsl::*;
 
         let text =
-            serde_json::to_string(account).into_error(DieselDatabaseError::SerdeSerialize)?;
+            serde_json::to_string(account).change_context(DieselDatabaseError::SerdeSerialize)?;
         let time = current_unix_time();
 
         insert_into(history_account_setup)
@@ -87,7 +87,7 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
     //     let token_value = if let Some(t) = token_value {
     //         Some(
     //             t.bytes()
-    //                 .into_error(DieselDatabaseError::DataFormatConversion)?,
+    //                 .change_context(DieselDatabaseError::DataFormatConversion)?,
     //         )
     //     } else {
     //         None

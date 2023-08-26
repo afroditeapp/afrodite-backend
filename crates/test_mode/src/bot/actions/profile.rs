@@ -6,8 +6,8 @@ use api_client::{
 };
 use async_trait::async_trait;
 use config::file::LocationConfig;
-use error_stack::Result;
-use utils::IntoReportExt;
+use error_stack::{Result, ResultExt};
+
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::utils::location::LocationConfigUtils;
@@ -22,7 +22,7 @@ impl BotAction for ChangeProfileText {
         let profile = ProfileUpdate::new(format!("{}", profile));
         post_profile(state.api.profile(), profile)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -35,7 +35,7 @@ impl BotAction for UpdateLocation {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         profile_api::put_location(state.api.profile(), self.0)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -48,7 +48,7 @@ impl BotAction for UpdateLocationRandom {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         profile_api::put_location(state.api.profile(), self.0.generate_random_location())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -61,7 +61,7 @@ impl BotAction for ResetProfileIterator {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         profile_api::post_reset_profile_paging(state.api.profile())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -74,7 +74,7 @@ impl BotAction for GetProfileList {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let data = profile_api::post_get_next_profile_page(state.api.profile())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         let value =
             HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.id.to_string()));
         state.previous_value = PreviousValue::Profiles(value);

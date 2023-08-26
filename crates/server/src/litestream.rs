@@ -9,7 +9,7 @@ use tokio::{
     task::JoinHandle,
 };
 use tracing::log::{error, info};
-use utils::IntoReportExt;
+
 
 use crate::data::DatabaseRoot;
 
@@ -69,7 +69,7 @@ impl LitestreamManager {
             .stderr(Stdio::piped())
             .kill_on_drop(true)
             .spawn()
-            .into_error(LitestreamError::ProcessStart)?;
+            .change_context(LitestreamError::ProcessStart)?;
 
         let stdout = process
             .stdout
@@ -120,10 +120,10 @@ impl LitestreamManager {
     pub async fn stop_litestream(mut self) -> Result<(), LitestreamError> {
         if let Some(mut process) = self.process.take() {
             if let Some(pid) = process.process.id() {
-                let pid = Pid::from_raw(pid.try_into().into_error(LitestreamError::InvalidPid)?);
+                let pid = Pid::from_raw(TryInto::<i32>::try_into(pid).change_context(LitestreamError::InvalidPid)?);
                 // Send CTRL-C
                 nix::sys::signal::kill(pid, Signal::SIGINT)
-                    .into_error(LitestreamError::SendSignal)?;
+                    .change_context(LitestreamError::SendSignal)?;
 
                 // No timeout because server is already mostly closed and
                 // systemd has timeout for closing the server.
@@ -131,7 +131,7 @@ impl LitestreamManager {
                     .process
                     .wait()
                     .await
-                    .into_error(LitestreamError::ProcessWait)?;
+                    .change_context(LitestreamError::ProcessWait)?;
                 if !status.success() {
                     error!("Litestream process exited with error, status: {:?}", status);
                 }
@@ -141,7 +141,7 @@ impl LitestreamManager {
                     .process
                     .wait()
                     .await
-                    .into_error(LitestreamError::ProcessWait)?;
+                    .change_context(LitestreamError::ProcessWait)?;
                 if !status.success() {
                     error!("Litestream process exited with error, status: {:?}", status);
                 }
@@ -149,11 +149,11 @@ impl LitestreamManager {
             process
                 .stderr_task
                 .await
-                .into_error(LitestreamError::CloseStderrFailed)?;
+                .change_context(LitestreamError::CloseStderrFailed)?;
             process
                 .stdout_task
                 .await
-                .into_error(LitestreamError::CloseStdoutFailed)?;
+                .change_context(LitestreamError::CloseStdoutFailed)?;
         }
 
         Ok(())
@@ -212,10 +212,10 @@ impl LitestreamManager {
             .arg(file)
             .output()
             .await
-            .into_error(LitestreamError::ProcessWait)?;
+            .change_context(LitestreamError::ProcessWait)?;
 
         let stdout_string =
-            String::from_utf8(output.stdout).into_error(LitestreamError::InvalidOutput)?;
+            String::from_utf8(output.stdout).change_context(LitestreamError::InvalidOutput)?;
 
         Ok(stdout_string)
     }

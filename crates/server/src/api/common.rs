@@ -11,11 +11,12 @@ use axum::{
     response::IntoResponse,
     TypedHeader,
 };
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{ResultExt, Result};
 use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken};
 use tracing::error;
+use utils::ContextExt;
 pub use utils::api::PATH_CONNECT;
-use utils::IntoReportExt;
+
 
 use super::{
     utils::{AccessTokenHeader, Json, StatusCode},
@@ -158,14 +159,14 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .change_context(WebSocketError::DatabaseNoRefreshToken)?
         .ok_or(WebSocketError::DatabaseNoRefreshToken)?
         .bytes()
-        .into_error(WebSocketError::InvalidRefreshTokenInDatabase)?;
+        .change_context(WebSocketError::InvalidRefreshTokenInDatabase)?;
 
     // Refresh token check.
     match socket
         .recv()
         .await
         .ok_or(WebSocketError::Receive)?
-        .into_error(WebSocketError::Receive)?
+        .change_context(WebSocketError::Receive)?
     {
         Message::Binary(refresh_token) => {
             if refresh_token != current_refresh_token {
@@ -176,7 +177,7 @@ async fn handle_socket_result<S: WriteData + ReadData>(
                 return Ok(());
             }
         }
-        _ => return Err(WebSocketError::ReceiveMissingRefreshToken).into_report(),
+        _ => return Err(WebSocketError::ReceiveMissingRefreshToken.report()),
     };
 
     // Refresh token matched
@@ -187,7 +188,7 @@ async fn handle_socket_result<S: WriteData + ReadData>(
     socket
         .send(Message::Binary(new_refresh_token_bytes))
         .await
-        .into_error(WebSocketError::Send)?;
+        .change_context(WebSocketError::Send)?;
 
     let new_access_token_cloned = new_access_token.clone();
     state
@@ -209,7 +210,7 @@ async fn handle_socket_result<S: WriteData + ReadData>(
     socket
         .send(Message::Text(new_access_token.into_string()))
         .await
-        .into_error(WebSocketError::Send)?;
+        .change_context(WebSocketError::Send)?;
 
     loop {
         tokio::select! {

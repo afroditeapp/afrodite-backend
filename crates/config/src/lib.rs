@@ -14,11 +14,11 @@ use std::{
 };
 
 use args::BuildInfoProvider;
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{ResultExt, Result, report};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
-use utils::IntoReportExt;
+use utils::{ContextExt};
 
 use self::{
     args::TestMode,
@@ -202,7 +202,7 @@ pub fn get_config(
     backend_semver_version: String,
 ) -> Result<Config, GetConfigError> {
     let args_config = args::get_config(build_info_provider);
-    let current_dir = std::env::current_dir().into_error(GetConfigError::GetWorkingDir)?;
+    let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let mut file_config =
         file::ConfigFile::load(current_dir).change_context(GetConfigError::LoadFileError)?;
 
@@ -234,7 +234,6 @@ pub fn get_config(
 
     if public_api_tls_config.is_none() && !file_config.debug.unwrap_or_default() {
         return Err(GetConfigError::TlsConfigMissing)
-            .into_report()
             .attach_printable("TLS must be configured when debug mode is false");
     }
 
@@ -248,7 +247,6 @@ pub fn get_config(
             true
         } else {
             return Err(GetConfigError::SqliteInRamNotAllowed)
-                .into_report()
                 .attach_printable("SQLite in RAM mode is not allowed when debug mode is off");
         }
     } else {
@@ -302,8 +300,7 @@ pub fn create_client_api_urls(
         let url = external_services
             .account_internal
             .as_ref()
-            .ok_or(GetConfigError::ExternalServiceAccountInternalMissing)
-            .into_report()?;
+            .ok_or(GetConfigError::ExternalServiceAccountInternalMissing.report())?;
         Some(url.clone())
     } else {
         None
@@ -313,8 +310,7 @@ pub fn create_client_api_urls(
         let url = external_services
             .media_internal
             .as_ref()
-            .ok_or(GetConfigError::ExternalServiceMediaInternalMissing)
-            .into_report()?;
+            .ok_or(GetConfigError::ExternalServiceMediaInternalMissing.report())?;
         Some(url.clone())
     } else {
         None
@@ -338,7 +334,7 @@ impl SignInWithUrls {
     pub fn new() -> Result<Self, GetConfigError> {
         Ok(Self {
             google_public_keys: Url::parse(GOOGLE_PUBLIC_KEY_URL)
-                .into_error(GetConfigError::ConstUrlParsingFailed)?,
+                .change_context(GetConfigError::ConstUrlParsingFailed)?,
         })
     }
 }
@@ -348,33 +344,29 @@ fn generate_server_config(
     cert_path: &Path,
 ) -> Result<ServerConfig, GetConfigError> {
     let mut key_reader =
-        BufReader::new(std::fs::File::open(key_path).into_error(GetConfigError::CreateTlsConfig)?);
-    let all_keys = rsa_private_keys(&mut key_reader).into_error(GetConfigError::CreateTlsConfig)?;
+        BufReader::new(std::fs::File::open(key_path).change_context(GetConfigError::CreateTlsConfig)?);
+    let all_keys = rsa_private_keys(&mut key_reader).change_context(GetConfigError::CreateTlsConfig)?;
 
     let key = if let [key] = &all_keys[..] {
         PrivateKey(key.clone())
     } else if all_keys.is_empty() {
         return Err(GetConfigError::CreateTlsConfig)
-            .into_report()
             .attach_printable("No key found");
     } else {
         return Err(GetConfigError::CreateTlsConfig)
-            .into_report()
             .attach_printable("Only one key supported");
     };
 
     let mut cert_reader =
-        BufReader::new(std::fs::File::open(cert_path).into_error(GetConfigError::CreateTlsConfig)?);
-    let all_certs = certs(&mut cert_reader).into_error(GetConfigError::CreateTlsConfig)?;
+        BufReader::new(std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?);
+    let all_certs = certs(&mut cert_reader).change_context(GetConfigError::CreateTlsConfig)?;
     let cert = if let [cert] = &all_certs[..] {
         Certificate(cert.clone())
     } else if all_certs.is_empty() {
         return Err(GetConfigError::CreateTlsConfig)
-            .into_report()
             .attach_printable("No cert found");
     } else {
         return Err(GetConfigError::CreateTlsConfig)
-            .into_report()
             .attach_printable("Only one cert supported");
     };
 
@@ -382,26 +374,24 @@ fn generate_server_config(
         .with_safe_defaults()
         .with_no_client_auth() // TODO: configure at some point
         .with_single_cert(vec![cert], key)
-        .into_error(GetConfigError::CreateTlsConfig)?;
+        .change_context(GetConfigError::CreateTlsConfig)?;
 
     Ok(config)
 }
 
 fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetConfigError> {
     let mut cert_reader =
-        BufReader::new(std::fs::File::open(cert_path).into_error(GetConfigError::CreateTlsConfig)?);
-    let all_certs = certs(&mut cert_reader).into_error(GetConfigError::CreateTlsConfig)?;
+        BufReader::new(std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?);
+    let all_certs = certs(&mut cert_reader).change_context(GetConfigError::CreateTlsConfig)?;
     let cert = if let [cert] = &all_certs[..] {
         reqwest::Certificate::from_der(&cert.clone())
     } else if all_certs.is_empty() {
         return Err(GetConfigError::CreateTlsConfig)
-            .into_report()
             .attach_printable("No cert found");
     } else {
         return Err(GetConfigError::CreateTlsConfig)
-            .into_report()
             .attach_printable("Only one cert supported");
     }
-    .into_error(GetConfigError::CreateTlsConfig)?;
+    .change_context(GetConfigError::CreateTlsConfig)?;
     Ok(cert)
 }

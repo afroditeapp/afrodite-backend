@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use futures::Stream;
 use model::{
     AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountRaw,

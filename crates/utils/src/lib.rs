@@ -7,7 +7,7 @@ pub mod api;
 
 use std::fmt::Display;
 
-use error_stack::{Context, IntoReport, Result, ResultExt};
+use error_stack::{Context, ResultExt, Result, Report};
 
 pub trait IntoReportFromString {
     type Ok;
@@ -27,19 +27,19 @@ impl<Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
     ) -> Result<<Self as IntoReportFromString>::Ok, C> {
         match self {
             Ok(ok) => Ok(ok),
-            Err(err) => Err(context).into_report().attach_printable(err.to_string()),
+            Err(err) => Err(context.report()).attach_printable(err.to_string()),
         }
     }
 }
 
-pub trait IntoReportExt: IntoReport {
+pub trait ContextExt: Context + Sized {
     #[track_caller]
-    fn into_error<C: Context>(self, context: C) -> Result<<Self as IntoReport>::Ok, C> {
-        self.into_report().change_context(context)
+    fn report(self) -> Report<Self> {
+        error_stack::report!(self)
     }
 }
 
-impl<T: IntoReport> IntoReportExt for T {}
+impl<E: Context + Sized> ContextExt for E {}
 
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()

@@ -1,9 +1,9 @@
 use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileUpdateInternal, ProfileVersion,
 };
-use utils::IntoReportExt;
+
 
 use super::ConnectionProvider;
 use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
@@ -38,7 +38,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
                 profile_text.eq(data.new_data.profile_text),
             ))
             .execute(self.conn())
-            .into_error(DieselDatabaseError::Execute)?;
+            .change_context(DieselDatabaseError::Execute)?;
 
         Ok(())
     }
@@ -56,7 +56,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
                 location_key_y.eq(data.y as i64),
             ))
             .execute(self.conn())
-            .into_error(DieselDatabaseError::Execute)?;
+            .change_context(DieselDatabaseError::Execute)?;
 
         Ok(())
     }

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use config::Config;
-use error_stack::{IntoReport, Result};
+use error_stack::{ResultExt, Result};
 use tracing::{error, info};
-use utils::IntoReportExt;
+use utils::{ ContextExt};
 
 #[derive(thiserror::Error, Debug)]
 pub enum SignInWithAppleError {
@@ -30,9 +30,9 @@ impl SignInWithAppleManager {
         token: String,
     ) -> Result<AppleAccountId, SignInWithAppleError> {
         let not_validated_header = jsonwebtoken::decode_header(&token)
-            .into_error(SignInWithAppleError::InvalidTokenHeader)?;
+            .change_context(SignInWithAppleError::InvalidTokenHeader)?;
         info!("{:?}", &not_validated_header);
 
-        Err(SignInWithAppleError::InvalidToken).into_report()
+        Err(SignInWithAppleError::InvalidToken.report())
     }
 }

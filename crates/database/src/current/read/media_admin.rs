@@ -1,10 +1,10 @@
 use diesel::prelude::*;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, MediaModerationRaw, Moderation, ModerationId, ModerationRequestContent,
     ModerationRequestId, ModerationRequestRaw, ModerationRequestState,
 };
-use utils::IntoReportExt;
+
 
 use crate::{
     diesel::{ConnectionProvider, DieselDatabaseError},
@@ -41,7 +41,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
         let mut new_data = vec![];
         for (moderation, moderation_request, account) in data.into_iter() {
             let data: ModerationRequestContent = serde_json::from_str(&moderation.json_text)
-                .into_error(DieselDatabaseError::SerdeDeserialize)?;
+                .change_context(DieselDatabaseError::SerdeDeserialize)?;
 
             let moderation = Moderation {
                 request_creator_id: account.as_id(),
@@ -105,7 +105,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
         };
 
         let data: ModerationRequestContent = serde_json::from_str(&request.json_text)
-            .into_error(DieselDatabaseError::SerdeDeserialize)?;
+            .change_context(DieselDatabaseError::SerdeDeserialize)?;
 
         Ok(data)
     }

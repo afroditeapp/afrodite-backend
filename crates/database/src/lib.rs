@@ -11,7 +11,7 @@ pub mod sqlite;
 use std::{fmt::Debug, marker::PhantomData};
 
 use config::RUNNING_IN_DEBUG_MODE;
-use error_stack::{Context, IntoReport, Result, ResultExt};
+use error_stack::{Context, ResultExt, Result};
 pub use model::schema;
 use model::IsLoggingAllowed;
 
@@ -68,15 +68,14 @@ impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> std::fmt::Debug for ErrorContext
     }
 }
 
-pub trait IntoDatabaseError<Err: Context>: IntoReport {
+pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
     #[track_caller]
     fn into_db_error<T: Debug + IsLoggingAllowed>(
         self,
         e: Err,
         request_context: T,
     ) -> Result<Self::Ok, Err> {
-        self.into_report()
-            .change_context(e)
+        self.change_context(e)
             .attach_printable_lazy(move || {
                 let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
@@ -98,8 +97,8 @@ pub trait IntoDatabaseError<Err: Context>: IntoReport {
     fn with_info<T: Debug + IsLoggingAllowed>(
         self,
         request_context: T,
-    ) -> Result<Self::Ok, Self::Err> {
-        self.into_report().attach_printable_lazy(move || {
+    ) -> Result<Self::Ok, <Self as ResultExt>::Context> {
+        self.attach_printable_lazy(move || {
             let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
             format!("{:#?}", context)

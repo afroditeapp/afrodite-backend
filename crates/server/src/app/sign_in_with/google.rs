@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Instant};
 
 use config::Config;
-use error_stack::{IntoReport, Result};
+use error_stack::{ResultExt, Result};
 use headers::{CacheControl, HeaderMapExt};
 use hyper::Method;
 use jsonwebtoken::{
@@ -11,7 +11,8 @@ use jsonwebtoken::{
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use tracing::error;
-use utils::IntoReportExt;
+use utils::ContextExt;
+
 
 // TODO: Send serverAuthCode to server. Get refresh and access tokens from
 // google with that and save the tokens to database. After server receives app's
@@ -116,7 +117,7 @@ impl SignInWithGoogleManager {
             .ok_or(SignInWithGoogleError::NotEnabled)?;
 
         let not_validated_header = jsonwebtoken::decode_header(&token)
-            .into_error(SignInWithGoogleError::InvalidTokenHeader)?;
+            .change_context(SignInWithGoogleError::InvalidTokenHeader)?;
         let wanted_kid = not_validated_header
             .kid
             .ok_or(SignInWithGoogleError::MissingJwtKid)?;
@@ -124,7 +125,7 @@ impl SignInWithGoogleManager {
         let google_public_key = self.get_google_public_key(&wanted_kid).await?;
 
         let key = DecodingKey::from_jwk(&google_public_key)
-            .into_error(SignInWithGoogleError::DecodingKeyGenerationFailed)?;
+            .change_context(SignInWithGoogleError::DecodingKeyGenerationFailed)?;
 
         let mut v = Validation::new(
             google_public_key
@@ -137,7 +138,7 @@ impl SignInWithGoogleManager {
         v.set_audience(&[&google_config.client_id_server]);
 
         let data = jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &v)
-            .into_error(SignInWithGoogleError::InvalidToken)?;
+            .change_context(SignInWithGoogleError::InvalidToken)?;
 
         let azp_invalid = [
             google_config.client_id_android.as_str(),
@@ -148,7 +149,7 @@ impl SignInWithGoogleManager {
         .is_none();
 
         if azp_invalid || !data.claims.email_verified {
-            return Err(SignInWithGoogleError::InvalidToken).into_report();
+            return Err(SignInWithGoogleError::InvalidToken.report());
         }
 
         Ok(GoogleAccountInfo {
@@ -205,12 +206,12 @@ impl SignInWithGoogleManager {
             .client
             .execute(download_request)
             .await
-            .into_error(SignInWithGoogleError::PublicKeyDownloadFailed)?;
+            .change_context(SignInWithGoogleError::PublicKeyDownloadFailed)?;
 
         let possible_header = r
             .headers()
             .typed_try_get::<CacheControl>()
-            .into_error(SignInWithGoogleError::ParsingCacheControlHeader)?;
+            .change_context(SignInWithGoogleError::ParsingCacheControlHeader)?;
         let cache_header =
             possible_header.ok_or(SignInWithGoogleError::MissingCacheControlHeader)?;
         let max_age = cache_header
@@ -223,7 +224,7 @@ impl SignInWithGoogleManager {
         let jwk_set: JwkSet = r
             .json()
             .await
-            .into_error(SignInWithGoogleError::JwkSetParsingFailed)?;
+            .change_context(SignInWithGoogleError::JwkSetParsingFailed)?;
         let mut key_store = self.google_public_keys.write().await;
         *key_store = Some(GooglePublicKeys {
             keys: jwk_set.clone(),

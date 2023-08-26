@@ -11,9 +11,9 @@ use api_client::{
     models::AccountState,
 };
 use async_trait::async_trait;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use tokio::time::sleep;
-use utils::IntoReportExt;
+
 
 use super::{
     actions::{
@@ -79,7 +79,7 @@ impl BotAction for GetProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         get_profile(state.api.profile(), &state.id_string()?)
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -96,7 +96,7 @@ impl BotAction for DoInitialSetupIfNeeded {
     ) -> Result<(), TestError> {
         let account_state = get_account_state(state.api.account())
             .await
-            .into_error(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?;
 
         if account_state.state == AccountState::InitialSetup {
             const ACTIONS: ActionArray = action_array!(

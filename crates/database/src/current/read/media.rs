@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
 use diesel::prelude::*;
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{
     AccountId, AccountIdInternal, ContentId, ContentIdInternal, ContentState,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, ImageSlot, MediaContentInternal,
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
     ModerationRequestId, ModerationRequestInternal, ModerationRequestRaw, ModerationRequestState,
 };
-use utils::IntoReportExt;
+
 
 use crate::{
     diesel::{ConnectionProvider, DieselDatabaseError},
@@ -244,7 +244,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
                 .into_db_error(DieselDatabaseError::Execute, owner_id)?
         };
         let data: ModerationRequestContent = serde_json::from_str(&request.json_text)
-            .into_error(DieselDatabaseError::SerdeDeserialize)?;
+            .change_context(DieselDatabaseError::SerdeDeserialize)?;
 
         Ok((
             data,
@@ -272,7 +272,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
 //         content_id: r.content_id,
 //         content_row_id: id,
 //     })
-//     .into_error(SqliteDatabaseError::Fetch)?;
+//     .change_context(SqliteDatabaseError::Fetch)?;
 
 //     Ok(request)
 // }

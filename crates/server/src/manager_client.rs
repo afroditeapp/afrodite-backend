@@ -1,9 +1,10 @@
 use config::Config;
-use error_stack::{IntoReport, Result};
+use error_stack::{ResultExt, Result};
 use manager_api::{ApiKey, Configuration, ManagerApi};
 use manager_model::{BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList};
 use tracing::{error, info};
-use utils::IntoReportExt;
+use utils::ContextExt;
+
 
 #[derive(thiserror::Error, Debug)]
 pub enum ManagerClientError {
@@ -35,7 +36,7 @@ impl ManagerApiClient {
         }
         let client = client
             .build()
-            .into_error(ManagerClientError::ClientBuildFailed)?;
+            .change_context(ManagerClientError::ClientBuildFailed)?;
 
         let manager = config.manager_config().map(|c| {
             let token = ApiKey {
@@ -61,8 +62,7 @@ impl ManagerApiClient {
     pub fn manager(&self) -> Result<&Configuration, ManagerClientError> {
         self.manager
             .as_ref()
-            .ok_or(ManagerClientError::ApiUrlNotConfigured)
-            .into_report()
+            .ok_or(ManagerClientError::ApiUrlNotConfigured.report())
     }
 }
 
@@ -78,13 +78,13 @@ impl<'a> ManagerApiManager<'a> {
     pub async fn system_info(&self) -> Result<SystemInfoList, ManagerClientError> {
         ManagerApi::system_info_all(self.api_client.manager()?)
             .await
-            .into_error(ManagerClientError::ApiRequest)
+            .change_context(ManagerClientError::ApiRequest)
     }
 
     pub async fn software_info(&self) -> Result<SoftwareInfo, ManagerClientError> {
         ManagerApi::software_info(self.api_client.manager()?)
             .await
-            .into_error(ManagerClientError::ApiRequest)
+            .change_context(ManagerClientError::ApiRequest)
     }
 
     pub async fn get_latest_build_info(
@@ -93,7 +93,7 @@ impl<'a> ManagerApiManager<'a> {
     ) -> Result<BuildInfo, ManagerClientError> {
         ManagerApi::get_latest_build_info(self.api_client.manager()?, options)
             .await
-            .into_error(ManagerClientError::ApiRequest)
+            .change_context(ManagerClientError::ApiRequest)
     }
 
     pub async fn request_build_software_from_build_server(
@@ -102,7 +102,7 @@ impl<'a> ManagerApiManager<'a> {
     ) -> Result<(), ManagerClientError> {
         ManagerApi::request_build_software_from_build_server(self.api_client.manager()?, options)
             .await
-            .into_error(ManagerClientError::ApiRequest)
+            .change_context(ManagerClientError::ApiRequest)
     }
 
     pub async fn request_update_software(
@@ -112,6 +112,6 @@ impl<'a> ManagerApiManager<'a> {
     ) -> Result<(), ManagerClientError> {
         ManagerApi::request_update_software(self.api_client.manager()?, options, reboot)
             .await
-            .into_error(ManagerClientError::ApiRequest)
+            .change_context(ManagerClientError::ApiRequest)
     }
 }

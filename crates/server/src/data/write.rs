@@ -17,7 +17,7 @@ use database::{
 };
 use error_stack::{Result, ResultExt};
 use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo};
-use utils::{IntoReportExt, IntoReportFromString};
+use utils::{ IntoReportFromString};
 
 use self::{
     account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
@@ -347,7 +347,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| cmd(CurrentSyncWriteCommands::new(conn)))
@@ -374,7 +374,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| CurrentSyncWriteCommands::new(conn).transaction(cmd))
@@ -402,7 +402,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
         let conn_history = self
@@ -410,7 +410,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| {
@@ -440,7 +440,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .into_error(DieselDatabaseError::GetConnection)
+            .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))

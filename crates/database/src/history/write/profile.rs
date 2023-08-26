@@ -1,7 +1,7 @@
 use diesel::{insert_into, prelude::*, ExpressionMethods};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Profile};
-use utils::{current_unix_time, IntoReportExt};
+use utils::{current_unix_time, };
 
 use crate::{
     diesel::{DieselDatabaseError, HistoryConnectionProvider},
@@ -19,7 +19,7 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteProfile<C> {
         use model::schema::history_profile::dsl::*;
 
         let text =
-            serde_json::to_string(profile).into_error(DieselDatabaseError::SerdeSerialize)?;
+            serde_json::to_string(profile).change_context(DieselDatabaseError::SerdeSerialize)?;
         let time = current_unix_time();
 
         insert_into(history_profile)

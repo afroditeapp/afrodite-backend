@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use ::utils::IntoReportExt;
+use ::utils::ContextExt;
 use config::Config;
 use database::{
     current::read::SqliteReadCommands,
@@ -21,7 +21,7 @@ use database::{
     },
     ErrorContext,
 };
-use error_stack::{Context, IntoReport, Result, ResultExt};
+use error_stack::{Context, ResultExt, Result};
 use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use tracing::info;
 
@@ -137,7 +137,7 @@ impl<Ok> WithInfo<Ok, InternalApiError> for Result<Ok, InternalApiError> {
 impl<Ok> WithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
     #[track_caller]
     fn into_error_without_context(self) -> Result<Ok, InternalApiError> {
-        self.into_report()
+        self.map_err(|e| e.report())
     }
 }
 
@@ -182,24 +182,24 @@ impl DatabaseRoot {
     pub fn new<T: AsRef<Path>>(path: T) -> Result<Self, DataError> {
         let root = path.as_ref().to_path_buf();
         if !root.exists() {
-            fs::create_dir(&root).into_error(DataError::Init)?;
+            fs::create_dir(&root).change_context(DataError::Init)?;
         }
 
         let history = root.join(DB_HISTORY_DIR_NAME);
         if !history.exists() {
-            fs::create_dir(&history).into_error(DataError::Init)?;
+            fs::create_dir(&history).change_context(DataError::Init)?;
         }
         let history = SqliteDatabasePath::new(history);
 
         let current = root.join(DB_CURRENT_DATA_DIR_NAME);
         if !current.exists() {
-            fs::create_dir(&current).into_error(DataError::Init)?;
+            fs::create_dir(&current).change_context(DataError::Init)?;
         }
         let current = SqliteDatabasePath::new(current);
 
         let file_dir = root.join(DB_FILE_DIR_NAME);
         if !file_dir.exists() {
-            fs::create_dir(&file_dir).into_error(DataError::Init)?;
+            fs::create_dir(&file_dir).change_context(DataError::Init)?;
         }
         let file_dir = FileDir::new(file_dir);
 
@@ -314,7 +314,7 @@ impl DatabaseManager {
         info!("Sqlx SQLite version: {}", sqlx_sqlite);
 
         if diesel_sqlite != sqlx_sqlite {
-            return Err(DataError::SqliteVersionMismatch).into_report();
+            return Err(DataError::SqliteVersionMismatch.report());
         }
 
         let (sqlite_read, sqlite_read_close) = SqlxReadHandle::new(&config, root.current_db_file())

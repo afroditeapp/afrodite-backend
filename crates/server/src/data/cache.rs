@@ -5,14 +5,14 @@ use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
     diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
 };
-use error_stack::{IntoReport, Result, ResultExt};
+use error_stack::{ResultExt, Result};
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal,
 };
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing::info;
-use utils::{ComponentError, IntoReportExt, IntoReportFromString};
+use utils::{ComponentError,  IntoReportFromString};
 
 use super::{
     index::{
@@ -131,7 +131,7 @@ impl DatabaseCache {
         if let Some(key) = access_token {
             let mut access_tokens = self.access_tokens.write().await;
             if access_tokens.contains_key(&key) {
-                return Err(CacheError::AlreadyExists).into_report();
+                return Err(CacheError::AlreadyExists.report());
             } else {
                 access_tokens.insert(key, account_entry.clone());
             }
@@ -409,7 +409,7 @@ async fn db_read<
         .pool()
         .get()
         .await
-        .into_error(DieselDatabaseError::GetConnection)
+        .change_context(DieselDatabaseError::GetConnection)
         .change_context(CacheError::Init)?;
 
     conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
