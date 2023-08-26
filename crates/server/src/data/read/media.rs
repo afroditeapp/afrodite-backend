@@ -1,12 +1,11 @@
 use error_stack::Result;
-use model::{AccountIdInternal, AccountId, ContentId, CurrentAccountMediaInternal};
-
-use crate::data::IntoDataError;
+use model::{AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
+use crate::data::IntoDataError;
 
 define_read_commands!(ReadCommandsMedia);
 

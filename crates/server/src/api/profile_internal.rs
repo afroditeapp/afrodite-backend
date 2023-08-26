@@ -4,7 +4,7 @@ use axum::extract::Path;
 use model::{AccountId, BooleanSetting};
 
 use super::{GetAccessTokens, GetConfig, WriteData};
-use crate::api::{GetInternalApi, GetAccounts, ReadData, utils::{StatusCode}};
+use crate::api::{utils::StatusCode, GetAccounts, GetInternalApi, ReadData};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
@@ -26,10 +26,7 @@ pub async fn internal_post_update_profile_visibility<
     Path(value): Path<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let account_id = state.accounts().get_internal_id(account_id).await?;
 
     state
         .internal_api()

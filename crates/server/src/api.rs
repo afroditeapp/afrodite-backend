@@ -10,7 +10,7 @@ use crate::{
     app::sign_in_with::SignInWithManager,
     data::{
         read::ReadCommands,
-        utils::{AccountIdManager, AccessTokenManager},
+        utils::{AccessTokenManager, AccountIdManager},
         write_commands::WriteCmds,
         write_concurrent::ConcurrentWriteHandle,
         DataError,
@@ -22,6 +22,7 @@ use crate::{
 // Routes
 pub mod account;
 pub mod account_internal;
+pub mod chat;
 pub mod common;
 pub mod common_admin;
 pub mod media;
@@ -29,7 +30,6 @@ pub mod media_admin;
 pub mod media_internal;
 pub mod profile;
 pub mod profile_internal;
-pub mod chat;
 
 pub mod utils;
 
@@ -218,12 +218,13 @@ pub trait BackendVersionProvider {
 macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {
         async {
-            let r: error_stack::Result<_, crate::data::DataError> =
-                $state.write(move |$cmds| async move { ($commands).await }).await;
-            let r: std::result::Result<_, crate::api::utils::StatusCode> =
-                r.map_err(|e| e.into());
+            let r: error_stack::Result<_, crate::data::DataError> = $state
+                .write(move |$cmds| async move { ($commands).await })
+                .await;
+            let r: std::result::Result<_, crate::api::utils::StatusCode> = r.map_err(|e| e.into());
             r
-        }.await
+        }
+        .await
     };
 }
 

@@ -1,10 +1,12 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::extract::Path;
-use model::{Account, AccountId, AccessToken};
+use model::{AccessToken, Account, AccountId};
 
-
-use crate::api::{utils::{Json, StatusCode}, GetAccessTokens, GetAccounts, ReadData};
+use crate::api::{
+    utils::{Json, StatusCode},
+    GetAccessTokens, GetAccounts, ReadData,
+};
 
 pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
 
@@ -46,16 +48,9 @@ pub async fn internal_get_account_state<S: ReadData + GetAccounts>(
     Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
-    let internal_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let internal_id = state.accounts().get_internal_id(account_id).await?;
 
-    let account = state
-        .read()
-        .account()
-        .account(internal_id)
-        .await?;
+    let account = state.read().account().account(internal_id).await?;
 
     Ok(account.into())
 }

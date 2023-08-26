@@ -1,5 +1,5 @@
 use config::Config;
-use error_stack::{Result, IntoReport};
+use error_stack::{IntoReport, Result};
 use manager_api::{ApiKey, Configuration, ManagerApi};
 use manager_model::{BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList};
 use tracing::{error, info};

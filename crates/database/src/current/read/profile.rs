@@ -3,7 +3,7 @@ use error_stack::Result;
 use model::{AccountIdInternal, LocationIndexKey, ProfileInternal};
 use utils::IntoReportExt;
 
-use crate::diesel::{DieselDatabaseError, ConnectionProvider};
+use crate::diesel::{ConnectionProvider, DieselDatabaseError};
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 

@@ -5,7 +5,7 @@ use std::{
 };
 
 use config::Config;
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{IntoReport, Result, ResultExt};
 use model::*;
 use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};

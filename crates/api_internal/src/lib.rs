@@ -12,7 +12,7 @@ use api_client::apis::{
 };
 pub use api_client::apis::{configuration::Configuration, Error};
 use model::{
-    Account, AccountIdInternal, AccountId, AccountState, AccessToken, BooleanSetting, Capabilities,
+    AccessToken, Account, AccountId, AccountIdInternal, AccountState, BooleanSetting, Capabilities,
     Profile,
 };
 
@@ -43,9 +43,11 @@ impl InternalApi {
         configuration: &Configuration,
         account_id: AccountId,
     ) -> Result<Account, Error<InternalGetAccountStateError>> {
-        let account =
-            account_internal_api::internal_get_account_state(configuration, &account_id.to_string())
-                .await?;
+        let account = account_internal_api::internal_get_account_state(
+            configuration,
+            &account_id.to_string(),
+        )
+        .await?;
 
         let state = match account.state {
             api_client::models::AccountState::InitialSetup => AccountState::InitialSetup,

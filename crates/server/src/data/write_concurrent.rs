@@ -9,14 +9,14 @@ use database::{
     sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
 };
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AccountId, ContentId, ProfileLink};
+use model::{AccountId, AccountIdInternal, ContentId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
-    cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter,
-    RouterDatabaseWriteHandle, IntoDataError,
+    cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter, IntoDataError,
+    RouterDatabaseWriteHandle,
 };
-use crate::{data::DataError};
+use crate::data::DataError;
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 

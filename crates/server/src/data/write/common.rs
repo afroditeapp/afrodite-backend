@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use error_stack::Result;
 use model::{AccountIdInternal, AuthPair};
 
-use crate::{data::{DataError, IntoDataError}};
+use crate::data::{DataError, IntoDataError};
 
 define_write_commands!(WriteCommandsCommon);
 

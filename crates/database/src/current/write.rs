@@ -8,7 +8,7 @@ use self::{
     profile::{CurrentSyncWriteProfile, CurrentWriteProfile},
 };
 use crate::{
-    diesel::{DieselConnection, DieselDatabaseError, ConnectionProvider},
+    diesel::{ConnectionProvider, DieselConnection, DieselDatabaseError},
     sqlite::CurrentDataWriteHandle,
     TransactionError,
 };
@@ -136,7 +136,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
         CurrentSyncWriteChat::new(self.conn)
     }
 
-    pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut crate::diesel::DieselConnection> {
+    pub fn read(
+        &mut self,
+    ) -> crate::current::read::CurrentSyncReadCommands<&mut crate::diesel::DieselConnection> {
         self.conn.read()
     }
 
@@ -185,7 +187,7 @@ pub struct TransactionConnection<'a> {
     conn: &'a mut DieselConnection,
 }
 
-impl <'a> TransactionConnection<'a> {
+impl<'a> TransactionConnection<'a> {
     pub fn new(conn: &'a mut DieselConnection) -> Self {
         Self { conn }
     }

@@ -3,10 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-
 use config::Config;
 use error_stack::{IntoReport, Result, ResultExt};
-
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions, SqliteRow},
     Row, SqlitePool,
@@ -14,10 +12,7 @@ use sqlx::{
 use tracing::log::error;
 use utils::{ComponentError, IntoReportExt};
 
-use super::{
-    current::read::SqliteReadCommands,
-};
-
+use super::current::read::SqliteReadCommands;
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 pub const HISTORY_FILE_NAME: &str = "history.db";

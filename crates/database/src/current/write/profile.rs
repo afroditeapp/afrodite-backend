@@ -5,9 +5,8 @@ use model::{
 };
 use utils::IntoReportExt;
 
-use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
-
 use super::ConnectionProvider;
+use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 

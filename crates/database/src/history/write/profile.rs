@@ -1,16 +1,16 @@
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
-use model::{
-    AccountIdInternal, Profile,
-};
-use utils::{IntoReportExt, current_unix_time};
+use model::{AccountIdInternal, Profile};
+use utils::{current_unix_time, IntoReportExt};
 
-use crate::{diesel::{DieselDatabaseError, HistoryConnectionProvider}, IntoDatabaseError};
+use crate::{
+    diesel::{DieselDatabaseError, HistoryConnectionProvider},
+    IntoDatabaseError,
+};
 
 define_write_commands!(HistoryWriteProfile, HistorySyncWriteProfile);
 
 impl<C: HistoryConnectionProvider> HistorySyncWriteProfile<C> {
-
     pub fn insert_profile(
         &mut self,
         account_id_internal: AccountIdInternal,
@@ -18,8 +18,8 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteProfile<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::history_profile::dsl::*;
 
-        let text = serde_json::to_string(profile)
-            .into_error(DieselDatabaseError::SerdeSerialize)?;
+        let text =
+            serde_json::to_string(profile).into_error(DieselDatabaseError::SerdeSerialize)?;
         let time = current_unix_time();
 
         insert_into(history_profile)
@@ -29,7 +29,10 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteProfile<C> {
                 json_text.eq(text),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (account_id_internal, account_id_internal))?;
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (account_id_internal, account_id_internal),
+            )?;
         Ok(())
     }
 }

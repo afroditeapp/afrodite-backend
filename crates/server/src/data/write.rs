@@ -1,24 +1,22 @@
 //! Synchronous write commands combining cache and database operations.
 
-use std::{sync::Arc, ops::{DerefMut}};
+use std::{ops::DerefMut, sync::Arc};
 
 use config::Config;
 use database::{
     current::{
         read::CurrentSyncReadCommands,
-        write::{
-            CurrentSyncWriteCommands, TransactionConnection,
-        },
+        write::{CurrentSyncWriteCommands, TransactionConnection},
     },
     diesel::{
         DieselConnection, DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle,
     },
-    history::write::{HistoryWriteCommands, HistorySyncWriteCommands},
+    history::write::{HistorySyncWriteCommands, HistoryWriteCommands},
     sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
     PoolObject, TransactionError,
 };
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountId, AccountSetup, SignInWithInfo};
+use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo};
 use utils::{IntoReportExt, IntoReportFromString};
 
 use self::{
@@ -28,9 +26,10 @@ use self::{
     profile_admin::WriteCommandsProfileAdmin,
 };
 use super::{
-    cache::{DatabaseCache},
+    cache::DatabaseCache,
     file::utils::FileDir,
-    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter}, IntoDataError,
+    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
+    IntoDataError,
 };
 use crate::{data::DataError, media_backup::MediaBackupHandle};
 
@@ -88,7 +87,9 @@ macro_rules! define_write_commands {
             #[track_caller]
             pub async fn db_write<
                 T: FnOnce(
-                        database::current::write::CurrentSyncWriteCommands<&mut database::diesel::DieselConnection>,
+                        database::current::write::CurrentSyncWriteCommands<
+                            &mut database::diesel::DieselConnection,
+                        >,
                     )
                         -> error_stack::Result<R, database::diesel::DieselDatabaseError>
                     + Send
@@ -121,7 +122,9 @@ macro_rules! define_write_commands {
             #[track_caller]
             pub async fn db_read<
                 T: FnOnce(
-                        database::current::read::CurrentSyncReadCommands<&mut database::diesel::DieselConnection>,
+                        database::current::read::CurrentSyncReadCommands<
+                            &mut database::diesel::DieselConnection,
+                        >,
                     )
                         -> error_stack::Result<R, database::diesel::DieselDatabaseError>
                     + Send
@@ -291,8 +294,7 @@ impl<'a> WriteCommands<'a> {
         let mut history_conn = history_conn
             .lock()
             .into_error_string(DieselDatabaseError::LockConnectionFailed)?;
-        let mut history =
-            HistorySyncWriteCommands::new(history_conn.deref_mut());
+        let mut history = HistorySyncWriteCommands::new(history_conn.deref_mut());
 
         // Common
         let id = current.account().insert_account_id(id_light)?;
@@ -300,33 +302,25 @@ impl<'a> WriteCommands<'a> {
         current.account().insert_refresh_token(id, None)?;
 
         // Common history
-        history
-            .account()
-            .insert_account_id(id)?;
+        history.account().insert_account_id(id)?;
 
         if config.components().account {
             current.account().insert_account(id, &account)?;
-            current.account()
-                .insert_account_setup(id, &account_setup)?;
-            current.account()
+            current.account().insert_account_setup(id, &account_setup)?;
+            current
+                .account()
                 .insert_sign_in_with_info(id, &sign_in_with_info)?;
 
             // Account history
-            history
-                .account()
-                .insert_account(id, &account)?;
-            history
-                .account()
-                .insert_account_setup(id, &account_setup)?;
+            history.account().insert_account(id, &account)?;
+            history.account().insert_account_setup(id, &account_setup)?;
         }
 
         if config.components().profile {
             let profile = current.profile().insert_profile(id)?;
 
             // Profile history
-            history
-                .profile()
-                .insert_profile(id, &profile.into())?;
+            history.profile().insert_profile(id, &profile.into())?;
         }
 
         if config.components().media {
@@ -338,7 +332,11 @@ impl<'a> WriteCommands<'a> {
 
     #[track_caller]
     pub async fn db_write<
-        T: FnOnce(CurrentSyncWriteCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(
+                CurrentSyncWriteCommands<&mut DieselConnection>,
+            ) -> Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
         R: Send + 'static,
     >(
         &self,
@@ -387,10 +385,7 @@ impl<'a> WriteCommands<'a> {
     }
 
     #[track_caller]
-    pub async fn db_transaction_with_history<
-        T,
-        R: Send + 'static,
-    >(
+    pub async fn db_transaction_with_history<T, R: Send + 'static>(
         &self,
         cmd: T,
     ) -> Result<R, DataError>
@@ -398,8 +393,7 @@ impl<'a> WriteCommands<'a> {
         T: FnOnce(
                 TransactionConnection<'_>,
                 PoolObject,
-            )
-                -> std::result::Result<R, TransactionError<DieselDatabaseError>>
+            ) -> std::result::Result<R, TransactionError<DieselDatabaseError>>
             + Send
             + 'static,
     {
@@ -433,7 +427,9 @@ impl<'a> WriteCommands<'a> {
 
     #[track_caller]
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
         R: Send + 'static,
     >(
         &self,

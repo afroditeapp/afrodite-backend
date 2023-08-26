@@ -1,14 +1,10 @@
-
-
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselCurrentReadHandle, DieselDatabaseError, DieselConnection},
-    sqlite::{SqlxReadHandle},
+    diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
+    sqlite::SqlxReadHandle,
 };
 use error_stack::{Result, ResultExt};
-use model::{
-    AccountIdInternal, AccountId, ContentId, MediaContentInternal, ModerationRequest,
-};
+use model::{AccountId, AccountIdInternal, ContentId, MediaContentInternal, ModerationRequest};
 use tokio_util::io::ReaderStream;
 use utils::{IntoReportExt, IntoReportFromString};
 
@@ -18,11 +14,7 @@ use self::{
     media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile,
     profile_admin::ReadCommandsProfileAdmin,
 };
-use super::{
-    cache::{DatabaseCache},
-    file::utils::FileDir,
-    DataError, IntoDataError,
-};
+use super::{cache::DatabaseCache, file::utils::FileDir, DataError, IntoDataError};
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
@@ -53,7 +45,9 @@ macro_rules! define_read_commands {
             #[track_caller]
             pub async fn db_read<
                 T: FnOnce(
-                        database::current::read::CurrentSyncReadCommands<&mut database::diesel::DieselConnection>,
+                        database::current::read::CurrentSyncReadCommands<
+                            &mut database::diesel::DieselConnection,
+                        >,
                     )
                         -> error_stack::Result<R, database::diesel::DieselDatabaseError>
                     + Send
@@ -188,7 +182,9 @@ impl<'a> ReadCommands<'a> {
 
     #[track_caller]
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
         R: Send + 'static,
     >(
         &self,

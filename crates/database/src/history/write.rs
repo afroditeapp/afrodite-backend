@@ -1,16 +1,6 @@
-
-
-
 use sqlx::SqlitePool;
 
-
-
-use crate::{
-    sqlite::{HistoryWriteHandle}, diesel::HistoryConnectionProvider
-};
-
 // use sqlx::SqlitePool;
-
 use self::{
     account::{HistorySyncWriteAccount, HistoryWriteAccount},
     chat::{HistorySyncWriteChat, HistoryWriteChat},
@@ -19,7 +9,8 @@ use self::{
     profile::{HistorySyncWriteProfile, HistoryWriteProfile},
 };
 use crate::{
-    diesel::{DieselConnection, DieselDatabaseError},
+    diesel::{DieselConnection, DieselDatabaseError, HistoryConnectionProvider},
+    sqlite::HistoryWriteHandle,
     TransactionError,
 };
 
@@ -62,7 +53,8 @@ macro_rules! define_write_commands {
 
             pub fn read(
                 conn: &mut crate::diesel::DieselConnection,
-            ) -> crate::history::read::HistorySyncReadCommands<&mut crate::diesel::DieselConnection> {
+            ) -> crate::history::read::HistorySyncReadCommands<&mut crate::diesel::DieselConnection>
+            {
                 crate::history::read::HistorySyncReadCommands::new(conn)
             }
         }
@@ -77,7 +69,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
 
 #[derive(Clone, Debug)]
 pub struct HistoryWriteCommands<'a> {

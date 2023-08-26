@@ -2,7 +2,9 @@ use diesel::{prelude::*, Associations};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{macros::diesel_string_wrapper, AccountIdDb, AccountIdInternal, AccessToken, RefreshToken};
+use crate::{
+    macros::diesel_string_wrapper, AccessToken, AccountIdDb, AccountIdInternal, RefreshToken,
+};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {

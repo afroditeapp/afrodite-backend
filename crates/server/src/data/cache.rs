@@ -1,23 +1,26 @@
-use std::{collections::HashMap, net::SocketAddr, sync::Arc, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
-
-use config::{Config};
+use config::Config;
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselCurrentReadHandle, DieselDatabaseError, DieselConnection},
+    diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
 };
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{IntoReport, Result, ResultExt};
 use model::{
-    Account, AccountIdInternal, AccountId, AccessToken, LocationIndexKey, ProfileInternal,
+    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal,
 };
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing::info;
 use utils::{ComponentError, IntoReportExt, IntoReportFromString};
 
-use super::{index::{
-    location::LocationIndexIteratorState, LocationIndexIteratorGetter, LocationIndexWriterGetter,
-}, WithInfo};
+use super::{
+    index::{
+        location::LocationIndexIteratorState, LocationIndexIteratorGetter,
+        LocationIndexWriterGetter,
+    },
+    WithInfo,
+};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
@@ -137,14 +140,18 @@ impl DatabaseCache {
         let mut entry = account_entry.cache.write().await;
 
         if config.components().account {
-            let account =
-                db_read(&read_diesel, move |mut cmds| cmds.account().account(account_id)).await?;
+            let account = db_read(&read_diesel, move |mut cmds| {
+                cmds.account().account(account_id)
+            })
+            .await?;
             entry.account = Some(account.clone().into())
         }
 
         if config.components().profile {
-            let profile =
-                db_read(&read_diesel, move |mut cmds| cmds.profile().profile(account_id)).await?;
+            let profile = db_read(&read_diesel, move |mut cmds| {
+                cmds.profile().profile(account_id)
+            })
+            .await?;
 
             let mut profile_data: CachedProfile = profile.into();
 
@@ -329,11 +336,7 @@ impl DatabaseCache {
         Ok(data)
     }
 
-    pub async fn update_account(
-        &self,
-        id: AccountId,
-        data: Account,
-    ) -> Result<(), CacheError> {
+    pub async fn update_account(&self, id: AccountId, data: Account) -> Result<(), CacheError> {
         let mut write_guard = self.accounts.write().await;
         write_guard
             .get_mut(&id)
@@ -394,7 +397,9 @@ impl CacheEntry {
 }
 
 async fn db_read<
-    T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError> + Send + 'static,
+    T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError>
+        + Send
+        + 'static,
     R: Send + 'static,
 >(
     read: &DieselCurrentReadHandle,

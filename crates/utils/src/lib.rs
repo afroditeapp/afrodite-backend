@@ -5,7 +5,7 @@
 
 pub mod api;
 
-use std::{fmt::Display};
+use std::fmt::Display;
 
 use error_stack::{Context, IntoReport, Result, ResultExt};
 

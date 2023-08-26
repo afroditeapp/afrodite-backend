@@ -1,4 +1,4 @@
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use api::BackendVersionProvider;
 use axum::{
@@ -16,7 +16,7 @@ use self::{
 use super::{
     data::{
         read::ReadCommands,
-        utils::{AccountIdManager, AccessTokenManager},
+        utils::{AccessTokenManager, AccountIdManager},
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
         write_concurrent::ConcurrentWriteHandle,
         DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
@@ -25,8 +25,8 @@ use super::{
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
 use crate::api::{
-    self, GetAccessTokens, GetConfig, GetInternalApi, GetManagerApi, GetAccounts, ReadData, SignInWith,
-    WriteData,
+    self, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, GetManagerApi, ReadData,
+    SignInWith, WriteData,
 };
 
 pub mod connection;

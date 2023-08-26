@@ -170,9 +170,7 @@ impl ImageFile {
         self.path.remove_if_exists().await
     }
 
-    pub async fn read_stream(
-        &self,
-    ) -> Result<ReaderStream<tokio::fs::File>, FileError> {
+    pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
         self.path.read_stream().await.map_err(|e| e.into())
     }
 

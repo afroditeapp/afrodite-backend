@@ -1,14 +1,13 @@
 use axum::{extract::Path, Extension};
 use model::{
-    AccountId, Location, Profile, ProfilePage, ProfileUpdate,
-    ProfileUpdateInternal, AccountIdInternal,
+    AccountId, AccountIdInternal, Location, Profile, ProfilePage, ProfileUpdate,
+    ProfileUpdateInternal,
 };
-
 
 use super::{
     db_write,
     utils::{Json, StatusCode},
-    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData,
+    GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData,
 };
 
 // TODO: Add timeout for database commands
@@ -50,10 +49,7 @@ pub async fn get_profile<
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: check capablities
 
-    let requested_profile = state
-        .accounts()
-        .get_internal_id(requested_profile)
-        .await?;
+    let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     if account_id.as_id() == requested_profile.as_id() {
         return state
@@ -65,10 +61,7 @@ pub async fn get_profile<
             .map(|p| Into::<Profile>::into(p).into());
     }
 
-    let visibility = state
-        .read()
-        .profile_visibility(requested_profile)
-        .await?;
+    let visibility = state.read().profile_visibility(requested_profile).await?;
 
     let visiblity = match visibility {
         Some(v) => v,
@@ -126,12 +119,7 @@ pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let old_profile: Profile = state
-        .read()
-        .profile()
-        .profile(account_id)
-        .await?
-        .into();
+    let old_profile: Profile = state.read().profile().profile(account_id).await?.into();
 
     if profile == old_profile.into_update() {
         return Ok(());
@@ -161,10 +149,9 @@ pub async fn put_location<S: GetAccessTokens + WriteData>(
     Json(location): Json<Location>,
     state: S,
 ) -> Result<(), StatusCode> {
-    db_write!(state, move |cmds|
-        cmds.profile()
-            .profile_update_location(account_id, location)
-    )
+    db_write!(state, move |cmds| cmds
+        .profile()
+        .profile_update_location(account_id, location))
 }
 
 pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
@@ -213,10 +200,9 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    db_write!(state, move |cmds|
-        cmds.profile()
-            .profile_update_location(account_id, Location::default())
-    )?;
+    db_write!(state, move |cmds| cmds
+        .profile()
+        .profile_update_location(account_id, Location::default()))?;
 
     state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
@@ -259,10 +245,7 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let requested_profile = state
-        .accounts()
-        .get_internal_id(requested_profile)
-        .await?;
+    let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     if account_id.as_id() == requested_profile.as_id() {
         let profile: Profile = state
@@ -302,12 +285,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let old_profile: Profile = state
-        .read()
-        .profile()
-        .profile(account_id)
-        .await?
-        .into();
+    let old_profile: Profile = state.read().profile().profile(account_id).await?.into();
 
     if profile == old_profile.into_update() {
         return Ok(());

@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     macros::{diesel_i64_wrapper, diesel_uuid_wrapper},
-    AccountIdDb, AccountId,
+    AccountId, AccountIdDb,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

@@ -1,14 +1,13 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdDb, AccountIdInternal, AccountId, AccountSetup, AccessToken, RefreshToken,
+    AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
     SignInWithInfo,
 };
 use utils::IntoReportExt;
 
-use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
-
 use super::ConnectionProvider;
+use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 

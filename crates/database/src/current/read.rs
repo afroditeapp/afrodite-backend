@@ -8,7 +8,10 @@ use self::{
     profile::{CurrentReadProfile, CurrentSyncReadProfile},
     profile_admin::CurrentSyncReadProfileAdmin,
 };
-use crate::{diesel::{DieselConnection, ConnectionProvider}, sqlite::SqlxReadHandle};
+use crate::{
+    diesel::{ConnectionProvider, DieselConnection},
+    sqlite::SqlxReadHandle,
+};
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {

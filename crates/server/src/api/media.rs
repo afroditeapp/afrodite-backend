@@ -4,7 +4,7 @@ use axum::{
 };
 use headers::ContentType;
 use model::{
-    AccountIdInternal, AccountId, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
+    AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
     ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SlotId,
 };
 use tracing::error;
@@ -133,14 +133,15 @@ pub async fn get_all_normal_images<S: ReadData + GetAccounts>(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    let internal_current_media = state
-        .read()
-        .all_account_media(internal_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    let internal_current_media =
+        state
+            .read()
+            .all_account_media(internal_id)
+            .await
+            .map_err(|e| {
+                error!("{e:?}");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     let data = internal_current_media
         .into_iter()
         .filter_map(|m| {
@@ -180,8 +181,7 @@ pub async fn put_primary_image<S: WriteData>(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_primary_image(api_caller_account_id, new_image)
-    )
+        .update_primary_image(api_caller_account_id, new_image))
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";

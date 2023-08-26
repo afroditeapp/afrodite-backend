@@ -1,16 +1,15 @@
 use error_stack::{FutureExt, Result, ResultExt};
 use model::{
-    Account, AccountIdInternal, AccountId, AccountSetup, AccessToken, GoogleAccountId,
+    AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, GoogleAccountId,
     RefreshToken, SignInWithInfo,
 };
 use tokio_stream::StreamExt;
-
-use crate::data::IntoDataError;
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
+use crate::data::IntoDataError;
 
 define_read_commands!(ReadCommandsAccount);
 
@@ -50,10 +49,7 @@ impl ReadCommandsAccount<'_> {
             .ok_or(DataError::Cache.report())
     }
 
-    pub async fn account_setup(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<AccountSetup, DataError> {
+    pub async fn account_setup(&self, id: AccountIdInternal) -> Result<AccountSetup, DataError> {
         self.db_read(move |mut cmds| cmds.account().account_setup(id))
             .await
     }
@@ -64,11 +60,7 @@ impl ReadCommandsAccount<'_> {
     ) -> Result<(), DataError> {
         let account = self.db().account();
         let mut users = account.account_ids_stream();
-        while let Some(user_id) = users
-            .try_next()
-            .await
-            .change_context(DataError::Sqlite)?
-        {
+        while let Some(user_id) = users.try_next().await.change_context(DataError::Sqlite)? {
             handler(user_id)
         }
 

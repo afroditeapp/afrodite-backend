@@ -13,8 +13,7 @@ use std::{fmt::Debug, marker::PhantomData};
 use config::RUNNING_IN_DEBUG_MODE;
 use error_stack::{Context, IntoReport, Result, ResultExt};
 pub use model::schema;
-use model::{IsLoggingAllowed};
-
+use model::IsLoggingAllowed;
 
 use crate::diesel::DieselDatabaseError;
 
@@ -70,7 +69,6 @@ impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> std::fmt::Debug for ErrorContext
 }
 
 pub trait IntoDatabaseError<Err: Context>: IntoReport {
-
     #[track_caller]
     fn into_db_error<T: Debug + IsLoggingAllowed>(
         self,
@@ -80,9 +78,7 @@ pub trait IntoDatabaseError<Err: Context>: IntoReport {
         self.into_report()
             .change_context(e)
             .attach_printable_lazy(move || {
-                let context = ErrorContext::<T, Self::Ok>::new(
-                    request_context,
-                );
+                let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
                 format!("{:#?}", context)
             })
@@ -103,28 +99,33 @@ pub trait IntoDatabaseError<Err: Context>: IntoReport {
         self,
         request_context: T,
     ) -> Result<Self::Ok, Self::Err> {
-        self.into_report()
-            .attach_printable_lazy(move || {
-                let context = ErrorContext::<T, Self::Ok>::new(
-                    request_context,
-                );
+        self.into_report().attach_printable_lazy(move || {
+            let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
-                format!("{:#?}", context)
-            })
+            format!("{:#?}", context)
+        })
     }
 }
 
 impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
-    for std::result::Result<Ok, ::diesel::result::Error> {}
+    for std::result::Result<Ok, ::diesel::result::Error>
+{
+}
 
 impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
-    for std::result::Result<Ok, ::serde_json::error::Error> {}
+    for std::result::Result<Ok, ::serde_json::error::Error>
+{
+}
 
 impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
-    for std::result::Result<Ok, crate::diesel::DieselDatabaseError> {}
+    for std::result::Result<Ok, crate::diesel::DieselDatabaseError>
+{
+}
 
 impl<Ok> IntoDatabaseError<crate::sqlite::SqliteDatabaseError>
-    for std::result::Result<Ok, ::sqlx::Error> {}
+    for std::result::Result<Ok, ::sqlx::Error>
+{
+}
 
 // Workaround because it is not possible to implement From<diesel::result::Error>
 // to error_stack::Report from here.

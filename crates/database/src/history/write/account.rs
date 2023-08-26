@@ -1,11 +1,12 @@
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model::{
-    Account, AccountIdInternal, AccountSetup,
-};
-use utils::{IntoReportExt, current_unix_time};
+use model::{Account, AccountIdInternal, AccountSetup};
+use utils::{current_unix_time, IntoReportExt};
 
-use crate::{diesel::{DieselDatabaseError, HistoryConnectionProvider}, IntoDatabaseError};
+use crate::{
+    diesel::{DieselDatabaseError, HistoryConnectionProvider},
+    IntoDatabaseError,
+};
 
 define_write_commands!(HistoryWriteAccount, HistorySyncWriteAccount);
 
@@ -33,8 +34,8 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::history_account::dsl::*;
 
-        let text = serde_json::to_string(account)
-            .into_error(DieselDatabaseError::SerdeSerialize)?;
+        let text =
+            serde_json::to_string(account).into_error(DieselDatabaseError::SerdeSerialize)?;
         let time = current_unix_time();
 
         insert_into(history_account)
@@ -44,7 +45,10 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
                 json_text.eq(text),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (account_id_internal, account_id_internal))?;
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (account_id_internal, account_id_internal),
+            )?;
         Ok(())
     }
 
@@ -55,8 +59,8 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::history_account_setup::dsl::*;
 
-        let text = serde_json::to_string(account)
-            .into_error(DieselDatabaseError::SerdeSerialize)?;
+        let text =
+            serde_json::to_string(account).into_error(DieselDatabaseError::SerdeSerialize)?;
         let time = current_unix_time();
 
         insert_into(history_account_setup)
@@ -66,7 +70,10 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteAccount<C> {
                 json_text.eq(text),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (account_id_internal, account_id_internal))?;
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (account_id_internal, account_id_internal),
+            )?;
         Ok(())
     }
 

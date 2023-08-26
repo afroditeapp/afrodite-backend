@@ -6,12 +6,11 @@ use model::{
 };
 use utils::IntoReportExt;
 
+use super::ConnectionProvider;
 use crate::{
     diesel::{DieselConnection, DieselDatabaseError},
     IntoDatabaseError, TransactionError,
 };
-
-use super::ConnectionProvider;
 
 define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
 

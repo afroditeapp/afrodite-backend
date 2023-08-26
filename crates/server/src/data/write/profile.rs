@@ -1,9 +1,7 @@
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
-use crate::{
-    data::{cache::CacheError, DataError, IntoDataError},
-};
+use crate::data::{cache::CacheError, DataError, IntoDataError};
 
 define_write_commands!(WriteCommandsProfile);
 
@@ -38,10 +36,7 @@ impl WriteCommandsProfile<'_> {
             .await
             .into_data_error(id)?;
 
-        let index = self
-            .location()
-            .get()
-            .ok_or(DataError::FeatureDisabled)?;
+        let index = self.location().get().ok_or(DataError::FeatureDisabled)?;
         if visiblity {
             index
                 .update_profile_link(id.as_id(), profile_link, location)
@@ -67,10 +62,7 @@ impl WriteCommandsProfile<'_> {
             .into_data_error(id)?
             .ok_or(DataError::FeatureDisabled)?;
 
-        let write_to_index = self
-            .location()
-            .get()
-            .ok_or(DataError::FeatureDisabled)?;
+        let write_to_index = self.location().get().ok_or(DataError::FeatureDisabled)?;
         let new_location_key = write_to_index.coordinates_to_key(coordinates);
 
         // TODO: Create new database table for location.

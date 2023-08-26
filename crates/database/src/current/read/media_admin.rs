@@ -6,7 +6,10 @@ use model::{
 };
 use utils::IntoReportExt;
 
-use crate::{diesel::{DieselDatabaseError, ConnectionProvider}, IntoDatabaseError};
+use crate::{
+    diesel::{ConnectionProvider, DieselDatabaseError},
+    IntoDatabaseError,
+};
 
 define_read_commands!(CurrentReadMediaAdmin, CurrentSyncReadMediaAdmin);
 

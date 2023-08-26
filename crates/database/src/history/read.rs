@@ -1,23 +1,10 @@
-
-
-
-
-
-
-
-
 use self::{
-    account::{HistorySyncReadAccount},
-    account_admin::HistorySyncReadAccountAdmin,
-    chat::{HistorySyncReadChat},
-    chat_admin::HistorySyncReadChatAdmin,
-    media::{HistorySyncReadMedia},
-    media_admin::HistorySyncReadMediaAdmin,
-    profile::{HistorySyncReadProfile},
+    account::HistorySyncReadAccount, account_admin::HistorySyncReadAccountAdmin,
+    chat::HistorySyncReadChat, chat_admin::HistorySyncReadChatAdmin, media::HistorySyncReadMedia,
+    media_admin::HistorySyncReadMediaAdmin, profile::HistorySyncReadProfile,
     profile_admin::HistorySyncReadProfileAdmin,
 };
-
-use crate::{diesel::{ConnectionProvider}, sqlite::SqlxReadHandle};
+use crate::{diesel::ConnectionProvider, sqlite::SqlxReadHandle};
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -59,7 +46,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
 
 pub struct HistoryReadCommands<'a> {
     handle: &'a SqlxReadHandle,

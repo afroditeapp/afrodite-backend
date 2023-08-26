@@ -2,13 +2,17 @@ use diesel::prelude::*;
 use error_stack::Result;
 use futures::Stream;
 use model::{
-    AccessTokenRaw, Account, AccountIdDb, AccountIdInternal, AccountId, AccountRaw,
-    AccountSetup, AccessToken, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
+    AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountRaw,
+    AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
     SignInWithInfoRaw,
 };
 use tokio_stream::StreamExt;
 
-use crate::{diesel::{DieselDatabaseError, ConnectionProvider}, sqlite::SqliteDatabaseError, IntoDatabaseError};
+use crate::{
+    diesel::{ConnectionProvider, DieselDatabaseError},
+    sqlite::SqliteDatabaseError,
+    IntoDatabaseError,
+};
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 

@@ -1,12 +1,10 @@
 use axum::{extract::Path, Extension};
-use model::{
-    AccountIdInternal, AccountId, HandleModerationRequest, ModerationList, SecurityImage,
-};
-
+use model::{AccountId, AccountIdInternal, HandleModerationRequest, ModerationList, SecurityImage};
 
 use super::{
+    db_write,
     utils::{Json, StatusCode},
-    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData, db_write,
+    GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData,
 };
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
@@ -69,7 +67,6 @@ pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ModerationList>, StatusCode> {
-
     // TODO: Access restrictions
 
     let data = db_write!(state, move |cmds| {
@@ -122,12 +119,11 @@ pub async fn post_handle_moderation_request<
             .await?;
 
         db_write!(state, move |cmds| {
-            cmds.media_admin()
-                .update_moderation(
-                    admin_account_id,
-                    moderation_request_owner,
-                    moderation_decision,
-                )
+            cmds.media_admin().update_moderation(
+                admin_account_id,
+                moderation_request_owner,
+                moderation_decision,
+            )
         })
     } else {
         Err(StatusCode::UNAUTHORIZED)

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{macros::diesel_uuid_wrapper, AccountIdDb, AccountId};
+use crate::{macros::diesel_uuid_wrapper, AccountId, AccountIdDb};
 
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]

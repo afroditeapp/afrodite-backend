@@ -6,8 +6,10 @@ use manager_model::{
 };
 use model::{Account, AccountIdInternal};
 
-
-use crate::api::{utils::{Json, StatusCode}, GetManagerApi, ReadData};
+use crate::api::{
+    utils::{Json, StatusCode},
+    GetManagerApi, ReadData,
+};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -33,10 +35,7 @@ pub async fn get_system_info<S: GetManagerApi + ReadData>(
         .await?;
 
     if account.capablities().admin_server_maintentance_view_info {
-        let info = state
-            .manager_api()
-            .system_info()
-            .await?;
+        let info = state.manager_api().system_info().await?;
         Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
@@ -67,10 +66,7 @@ pub async fn get_software_info<S: GetManagerApi + ReadData>(
         .await?;
 
     if account.capablities().admin_server_maintentance_view_info {
-        let info = state
-            .manager_api()
-            .software_info()
-            .await?;
+        let info = state.manager_api().software_info().await?;
         Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)

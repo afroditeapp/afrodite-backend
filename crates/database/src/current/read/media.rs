@@ -1,16 +1,19 @@
 use std::collections::HashSet;
 
 use diesel::prelude::*;
-use error_stack::{Result};
+use error_stack::Result;
 use model::{
-    AccountIdInternal, AccountId, ContentId, ContentIdInternal, ContentState,
+    AccountId, AccountIdInternal, ContentId, ContentIdInternal, ContentState,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, ImageSlot, MediaContentInternal,
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
     ModerationRequestId, ModerationRequestInternal, ModerationRequestRaw, ModerationRequestState,
 };
 use utils::IntoReportExt;
 
-use crate::{diesel::{DieselDatabaseError, ConnectionProvider}, IntoDatabaseError};
+use crate::{
+    diesel::{ConnectionProvider, DieselDatabaseError},
+    IntoDatabaseError,
+};
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 
@@ -223,14 +226,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
     pub fn get_moderation_request_content(
         &mut self,
         owner_id: ModerationRequestId,
-    ) -> Result<
-        (
-            ModerationRequestContent,
-            ModerationQueueNumber,
-            AccountId,
-        ),
-        DieselDatabaseError,
-    > {
+    ) -> Result<(ModerationRequestContent, ModerationQueueNumber, AccountId), DieselDatabaseError>
+    {
         let (request, account_id) = {
             use crate::schema::{
                 account_id, media_moderation_request, media_moderation_request::dsl::*,

@@ -22,6 +22,7 @@ impl ReadCommandsProfile<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DataError> {
-        self.db_read(move |mut cmds| cmds.profile().profile(id)).await
+        self.db_read(move |mut cmds| cmds.profile().profile(id))
+            .await
     }
 }

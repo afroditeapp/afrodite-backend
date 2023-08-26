@@ -1,4 +1,4 @@
-use std::{net::SocketAddr};
+use std::net::SocketAddr;
 
 use axum::{
     extract::{rejection::JsonRejection, ConnectInfo, FromRequest},
@@ -16,11 +16,16 @@ use utoipa::{
     Modify,
 };
 
-use crate::{data::{DataError, cache::CacheError}, app::sign_in_with::{google::SignInWithGoogleError, apple::SignInWithAppleError}, internal::InternalApiError, manager_client::ManagerClientError};
-
 use super::GetAccessTokens;
+use crate::{
+    app::sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
+    data::{cache::CacheError, DataError},
+    internal::InternalApiError,
+    manager_client::ManagerClientError,
+};
 
-pub static ACCESS_TOKEN_HEADER: header::HeaderName = header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);
+pub static ACCESS_TOKEN_HEADER: header::HeaderName =
+    header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);
 
 pub async fn authenticate_with_access_token<T, S: GetAccessTokens>(
     state: S,
@@ -144,7 +149,6 @@ impl IntoResponse for ApiError {
     }
 }
 
-
 #[allow(non_camel_case_types)]
 pub enum StatusCode {
     /// 400
@@ -240,7 +244,10 @@ impl From<error_stack::Report<InternalApiError>> for StatusCode {
 impl From<error_stack::Report<ManagerClientError>> for StatusCode {
     #[track_caller]
     fn from(value: error_stack::Report<ManagerClientError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::ManagerClientError));
+        tracing::error!(
+            "{:?}",
+            value.change_context(RequestError::ManagerClientError)
+        );
         StatusCode::INTERNAL_SERVER_ERROR
     }
 }

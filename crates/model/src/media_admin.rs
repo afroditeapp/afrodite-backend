@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    AccountIdDb, AccountIdInternal, AccountId, ModerationRequestContent, ModerationRequestIdDb,
+    AccountId, AccountIdDb, AccountIdInternal, ModerationRequestContent, ModerationRequestIdDb,
 };
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]

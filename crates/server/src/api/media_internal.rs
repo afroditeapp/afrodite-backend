@@ -3,9 +3,11 @@
 use axum::extract::Path;
 use model::{AccountId, BooleanSetting, Profile};
 
-
 use super::GetConfig;
-use crate::api::{utils::{Json, StatusCode}, GetInternalApi, GetAccounts, ReadData};
+use crate::api::{
+    utils::{Json, StatusCode},
+    GetAccounts, GetInternalApi, ReadData,
+};
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
@@ -27,10 +29,7 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
     Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let account_id = state.accounts().get_internal_id(account_id).await?;
 
     let request = state
         .read()
@@ -67,10 +66,7 @@ pub async fn internal_post_update_profile_image_visibility<
     Json(profile): Json<Profile>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let account_id = state.accounts().get_internal_id(account_id).await?;
 
     state
         .internal_api()

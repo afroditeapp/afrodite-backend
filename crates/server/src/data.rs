@@ -6,7 +6,7 @@ use std::{
 };
 
 use ::utils::IntoReportExt;
-use config::{Config};
+use config::Config;
 use database::{
     current::read::SqliteReadCommands,
     diesel::{
@@ -16,13 +16,13 @@ use database::{
     },
     history::read::HistoryReadCommands,
     sqlite::{
-        CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle,
-        SqliteDatabasePath, SqliteWriteCloseHandle, SqliteWriteHandle,
-        SqlxReadCloseHandle, SqlxReadHandle,
-    }, ErrorContext,
+        CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
+        SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
+    },
+    ErrorContext,
 };
-use error_stack::{IntoReport, Result, ResultExt, Context};
-use model::{AccountIdInternal, AccountId, SignInWithInfo, IsLoggingAllowed};
+use error_stack::{Context, IntoReport, Result, ResultExt};
+use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use tracing::info;
 
 use self::{
@@ -30,7 +30,7 @@ use self::{
     file::{read::FileReadCommands, utils::FileDir, FileError},
     index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
     read::ReadCommands,
-    utils::{AccountIdManager, AccessTokenManager},
+    utils::{AccessTokenManager, AccountIdManager},
     write::{
         account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
         chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
@@ -39,7 +39,7 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
-use crate::{media_backup::MediaBackupHandle, internal::InternalApiError};
+use crate::{internal::InternalApiError, media_backup::MediaBackupHandle};
 
 pub mod cache;
 pub mod file;
@@ -106,40 +106,35 @@ pub trait WithInfo<Ok, Err: Context>: Sized {
     fn into_error_without_context(self) -> Result<Ok, Err>;
 
     #[track_caller]
-    fn with_info<T: Debug + IsLoggingAllowed>(
-        self,
-        request_context: T,
-    ) -> Result<Ok, Err> {
+    fn with_info<T: Debug + IsLoggingAllowed>(self, request_context: T) -> Result<Ok, Err> {
         self.into_error_without_context()
             .attach_printable_lazy(move || {
-                let context = ErrorContext::<T, Ok>::new(
-                    request_context,
-                );
+                let context = ErrorContext::<T, Ok>::new(request_context);
 
                 format!("{:#?}", context)
             })
     }
 }
 
-impl <Ok> WithInfo<Ok, DataError> for Result<Ok, DataError> {
+impl<Ok> WithInfo<Ok, DataError> for Result<Ok, DataError> {
     #[track_caller]
     fn into_error_without_context(self) -> Result<Ok, DataError> {
         self
     }
 }
-impl <Ok> WithInfo<Ok, CacheError> for Result<Ok, CacheError> {
+impl<Ok> WithInfo<Ok, CacheError> for Result<Ok, CacheError> {
     #[track_caller]
     fn into_error_without_context(self) -> Result<Ok, CacheError> {
         self
     }
 }
-impl <Ok> WithInfo<Ok, InternalApiError> for Result<Ok, InternalApiError> {
+impl<Ok> WithInfo<Ok, InternalApiError> for Result<Ok, InternalApiError> {
     #[track_caller]
     fn into_error_without_context(self) -> Result<Ok, InternalApiError> {
         self
     }
 }
-impl <Ok> WithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
+impl<Ok> WithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
     #[track_caller]
     fn into_error_without_context(self) -> Result<Ok, InternalApiError> {
         self.into_report()
@@ -150,33 +145,24 @@ pub trait IntoDataError<Ok, Err: Context>: Sized {
     fn into_data_error_without_context(self) -> Result<Ok, Err>;
 
     #[track_caller]
-    fn into_data_error<T: Debug + IsLoggingAllowed>(
-        self,
-        request_context: T,
-    ) -> Result<Ok, Err> {
+    fn into_data_error<T: Debug + IsLoggingAllowed>(self, request_context: T) -> Result<Ok, Err> {
         self.into_data_error_without_context()
             .attach_printable_lazy(move || {
-                let context = ErrorContext::<T, Ok>::new(
-                    request_context,
-                );
+                let context = ErrorContext::<T, Ok>::new(request_context);
 
                 format!("{:#?}", context)
             })
     }
 }
 
-impl<Ok> IntoDataError<Ok, DataError>
-    for Result<Ok, crate::data::file::FileError>
-{
+impl<Ok> IntoDataError<Ok, DataError> for Result<Ok, crate::data::file::FileError> {
     #[track_caller]
     fn into_data_error_without_context(self) -> Result<Ok, DataError> {
         self.change_context(DataError::File)
     }
 }
 
-impl<Ok> IntoDataError<Ok, DataError>
-    for Result<Ok, crate::data::cache::CacheError>
-{
+impl<Ok> IntoDataError<Ok, DataError> for Result<Ok, crate::data::cache::CacheError> {
     #[track_caller]
     fn into_data_error_without_context(self) -> Result<Ok, DataError> {
         self.change_context(DataError::Cache)

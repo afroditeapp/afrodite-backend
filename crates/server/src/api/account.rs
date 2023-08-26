@@ -1,14 +1,15 @@
-use axum::{Extension};
+use axum::Extension;
 use model::{
-    Account, AccountId, AccountSetup, AccountState, AccessToken, AuthPair, BooleanSetting,
-    DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo, AccountIdInternal,
+    AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, AccountState, AuthPair,
+    BooleanSetting, DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
+    SignInWithLoginInfo,
 };
-use tracing::{error};
+use tracing::error;
 
 use super::{
     db_write,
     utils::{Json, StatusCode},
-    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, SignInWith, WriteData,
+    GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, SignInWith, WriteData,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -225,7 +226,9 @@ pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
         .await?;
 
     if account.state() == AccountState::InitialSetup {
-        db_write!(state, move |cmds| cmds.account().account_setup(api_caller_account_id, data))
+        db_write!(state, move |cmds| cmds
+            .account()
+            .account_setup(api_caller_account_id, data))
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -255,11 +258,7 @@ pub async fn post_complete_setup<
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account_setup = state
-        .read()
-        .account()
-        .account_setup(id)
-        .await?;
+    let account_setup = state.read().account().account_setup(id).await?;
 
     if account_setup.is_empty() {
         return Err(StatusCode::NOT_ACCEPTABLE);
@@ -270,17 +269,9 @@ pub async fn post_complete_setup<
         .media_check_moderation_request_for_account(id)
         .await?;
 
-    let mut account = state
-        .read()
-        .account()
-        .account(id)
-        .await?;
+    let mut account = state.read().account().account(id).await?;
 
-    let sign_in_with_info = state
-        .read()
-        .account()
-        .account_sign_in_with_info(id)
-        .await?;
+    let sign_in_with_info = state.read().account().account_sign_in_with_info(id).await?;
 
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();
@@ -334,11 +325,7 @@ pub async fn put_setting_profile_visiblity<
     Json(new_value): Json<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account = state
-        .read()
-        .account()
-        .account(id)
-        .await?;
+    let account = state.read().account().account(id).await?;
 
     if account.state() != AccountState::Normal {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

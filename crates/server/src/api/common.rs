@@ -12,7 +12,7 @@ use axum::{
     TypedHeader,
 };
 use error_stack::{IntoReport, Result, ResultExt};
-use model::{AccountIdInternal, AccessToken, AuthPair, BackendVersion, RefreshToken};
+use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken};
 use tracing::error;
 pub use utils::api::PATH_CONNECT;
 use utils::IntoReportExt;
@@ -21,7 +21,7 @@ use super::{
     utils::{AccessTokenHeader, Json, StatusCode},
     BackendVersionProvider, GetAccessTokens, ReadData, WriteData,
 };
-use crate::{app::connection::WebSocketManager};
+use crate::app::connection::WebSocketManager;
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 

@@ -2,14 +2,17 @@
 
 use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
-use error_stack::{Result, ResultExt, IntoReport};
+use error_stack::{IntoReport, Result, ResultExt};
 use hyper::StatusCode;
-use model::{Account, AccountIdInternal, AccessToken, BooleanSetting, Profile, ProfileInternal};
+use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal};
 use tracing::{error, info};
 use utils::IntoReportExt;
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
-use crate::{api::{GetAccessTokens, GetConfig, ReadData, WriteData}, data::WithInfo};
+use crate::{
+    api::{GetAccessTokens, GetConfig, ReadData, WriteData},
+    data::WithInfo,
+};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -121,8 +124,16 @@ impl<S: GetConfig + GetAccessTokens> InternalApiManager<'_, S> {
     /// Check that API key is valid. Use this only from AccessToken checker handler.
     /// This function will cache the account ID, so it can be found using normal
     /// database calls after this runs.
-    pub async fn check_access_token(&self, key: AccessToken) -> Result<AuthResponse, InternalApiError> {
-        if self.access_tokens().access_token_exists(&key).await.is_some() {
+    pub async fn check_access_token(
+        &self,
+        key: AccessToken,
+    ) -> Result<AuthResponse, InternalApiError> {
+        if self
+            .access_tokens()
+            .access_token_exists(&key)
+            .await
+            .is_some()
+        {
             Ok(AuthResponse::Ok)
         } else if !self.config().components().account {
             // Check AccessToken from external service
@@ -203,8 +214,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
             if request.content.slot_1_is_security_image() {
                 Ok(())
             } else {
-                Err(InternalApiError::MissingValue)
-                    .with_info(account_id)
+                Err(InternalApiError::MissingValue).with_info(account_id)
             }
         } else {
             InternalApi::media_check_moderation_request_for_account(
@@ -227,18 +237,18 @@ impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'
         boolean_setting: BooleanSetting,
     ) -> Result<(), InternalApiError> {
         if self.config().components().profile {
-            self.state.write(move |data| async move {
-                data
-                    .profile()
-                    .profile_update_visibility(
-                        account_id,
-                        boolean_setting.value,
-                        false, // False overrides updates
-                    )
-                    .await
-            })
-            .await
-            .change_context(InternalApiError::DataError)?;
+            self.state
+                .write(move |data| async move {
+                    data.profile()
+                        .profile_update_visibility(
+                            account_id,
+                            boolean_setting.value,
+                            false, // False overrides updates
+                        )
+                        .await
+                })
+                .await
+                .change_context(InternalApiError::DataError)?;
 
             let profile: ProfileInternal = self
                 .read_database()

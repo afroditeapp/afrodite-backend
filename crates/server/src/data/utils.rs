@@ -1,10 +1,10 @@
 use std::net::SocketAddr;
 
 use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle};
-use error_stack::{Result};
-use model::{AccountIdInternal, AccountId, AccessToken};
+use error_stack::Result;
+use model::{AccessToken, AccountId, AccountIdInternal};
 
-use super::{cache::{DatabaseCache}, DataError, IntoDataError};
+use super::{cache::DatabaseCache, DataError, IntoDataError};
 
 pub struct AccessTokenManager<'a> {
     cache: &'a DatabaseCache,
@@ -43,10 +43,10 @@ impl<'a> AccountIdManager<'a> {
         }
     }
 
-    pub async fn get_internal_id(
-        &self,
-        id: AccountId,
-    ) -> Result<AccountIdInternal, DataError> {
-        self.cache.to_account_id_internal(id).await.into_data_error(id)
+    pub async fn get_internal_id(&self, id: AccountId) -> Result<AccountIdInternal, DataError> {
+        self.cache
+            .to_account_id_internal(id)
+            .await
+            .into_data_error(id)
     }
 }
