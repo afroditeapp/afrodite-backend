@@ -2,14 +2,14 @@
 
 use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
-use error_stack::{Result, ResultExt};
+use error_stack::{Result, ResultExt, IntoReport};
 use hyper::StatusCode;
 use model::{Account, AccountIdInternal, AccessToken, BooleanSetting, Profile, ProfileInternal};
 use tracing::{error, info};
 use utils::IntoReportExt;
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
-use crate::api::{db_write, GetAccessTokens, GetConfig, ReadData, WriteData};
+use crate::{api::{db_write, GetAccessTokens, GetConfig, ReadData, WriteData}, data::WithInfo};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -81,13 +81,15 @@ impl InternalApiClient {
     pub fn account(&self) -> Result<&Configuration, InternalApiError> {
         self.account
             .as_ref()
-            .ok_or(InternalApiError::AccountApiUrlNotConfigured.into())
+            .ok_or(InternalApiError::AccountApiUrlNotConfigured)
+            .into_report()
     }
 
     pub fn media(&self) -> Result<&Configuration, InternalApiError> {
         self.media
             .as_ref()
-            .ok_or(InternalApiError::MediaApiUrlNotConfigured.into())
+            .ok_or(InternalApiError::MediaApiUrlNotConfigured)
+            .into_report()
     }
 }
 
@@ -195,12 +197,14 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
                 .moderation_request(account_id)
                 .await
                 .change_context(InternalApiError::DataError)?
-                .ok_or(InternalApiError::MissingValue)?;
+                .ok_or(InternalApiError::MissingValue)
+                .with_info(account_id)?;
 
             if request.content.slot_1_is_security_image() {
                 Ok(())
             } else {
-                Err(InternalApiError::MissingValue.into())
+                Err(InternalApiError::MissingValue)
+                    .with_info(account_id)
             }
         } else {
             InternalApi::media_check_moderation_request_for_account(

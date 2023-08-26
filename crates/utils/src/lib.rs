@@ -37,77 +37,9 @@ pub trait IntoReportExt: IntoReport {
     fn into_error<C: Context>(self, context: C) -> Result<<Self as IntoReport>::Ok, C> {
         self.into_report().change_context(context)
     }
-
-    #[track_caller]
-    fn into_wrapped_error<C: Context, E: From<error_stack::Report<C>>>(
-        self,
-        context: C,
-    ) -> std::result::Result<<Self as IntoReport>::Ok, E> {
-        let r: std::result::Result<<Self as IntoReport>::Ok, error_stack::Report<C>> =
-            self.into_report().change_context(context);
-        r.map_err(|e| e.into())
-    }
-
-    #[track_caller]
-    fn into_error_with_info<
-        C: Context,
-        I: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static,
-    >(
-        self,
-        context: C,
-        info: I,
-    ) -> Result<<Self as IntoReport>::Ok, C> {
-        self.into_report()
-            .change_context(context)
-            .attach_printable(info)
-    }
-
-    #[track_caller]
-    fn into_error_with_info_lazy<
-        C: Context,
-        F: FnOnce() -> I,
-        I: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static,
-    >(
-        self,
-        context: C,
-        info: F,
-    ) -> Result<<Self as IntoReport>::Ok, C> {
-        self.into_report()
-            .change_context(context)
-            .attach_printable_lazy(info)
-    }
 }
 
 impl<T: IntoReport> IntoReportExt for T {}
-
-pub trait ErrorResultExt: ResultExt + Sized {
-    #[track_caller]
-    fn change_context_with_info<
-        C: Context,
-        I: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static,
-    >(
-        self,
-        context: C,
-        info: I,
-    ) -> Result<<Self as ResultExt>::Ok, C> {
-        self.change_context(context).attach_printable(info)
-    }
-
-    #[track_caller]
-    fn change_context_with_info_lazy<
-        C: Context,
-        F: FnOnce() -> I,
-        I: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static,
-    >(
-        self,
-        context: C,
-        info: F,
-    ) -> Result<<Self as ResultExt>::Ok, C> {
-        self.change_context(context).attach_printable_lazy(info)
-    }
-}
-
-impl<T: ResultExt + Sized> ErrorResultExt for T {}
 
 pub fn current_unix_time() -> i64 {
     time::OffsetDateTime::now_utc().unix_timestamp()

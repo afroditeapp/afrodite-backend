@@ -115,7 +115,7 @@ impl TmpDir {
             }
             Ok(())
         } else {
-            Err(FileError::InvalidDirectory.into())
+            Err(FileError::InvalidDirectory.report())
         }
     }
 

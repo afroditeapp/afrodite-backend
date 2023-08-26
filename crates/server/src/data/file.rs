@@ -56,6 +56,13 @@ pub enum FileError {
     StreamReadFailed,
 }
 
+impl FileError {
+    #[track_caller]
+    pub fn report(self) -> error_stack::Report<Self> {
+        error_stack::report!(self)
+    }
+}
+
 /// Every running database write operation should keep this handle. When server
 /// quit is started main function waits that all handles are dropped.
 #[derive(Debug, Clone)]

@@ -54,7 +54,7 @@ impl WriteCommandsMedia<'_> {
             .await?
             .is_some()
         {
-            return Err(DataError::ContentSlotNotEmpty.into());
+            return Err(DataError::ContentSlotNotEmpty.report());
         }
 
         self.db_transaction(move |conn| {

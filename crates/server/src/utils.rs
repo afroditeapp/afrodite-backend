@@ -1,7 +1,7 @@
 use database::sqlite::SqliteDatabaseError;
 use error_stack::{Context, Report, Result, ResultExt};
 use tokio::sync::oneshot;
-use utils::{ComponentError, ErrorResultExt};
+use utils::{ComponentError};
 
 use crate::data::{cache::CacheError, file::FileError, DataError};
 

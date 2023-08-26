@@ -5,7 +5,7 @@ use std::{
 };
 
 use config::Config;
-use error_stack::{Result, ResultExt};
+use error_stack::{Result, ResultExt, IntoReport};
 use model::*;
 use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
@@ -229,7 +229,7 @@ impl MediaBackupManager {
         let media_config = if let Some(config) = self.config.media_backup() {
             config
         } else {
-            return Err(MediaBackupError::ConfigError.into());
+            return Err(MediaBackupError::ConfigError).into_report();
         };
 
         let db_root = DatabaseRoot::new(&self.config.database_dir())
@@ -268,7 +268,7 @@ impl MediaBackupManager {
             .into_error(MediaBackupError::ProcessStart)?;
 
         if !status.success() {
-            return Err(MediaBackupError::CommandFailed(status).into());
+            return Err(MediaBackupError::CommandFailed(status)).into_report();
         }
 
         Ok(())
@@ -288,7 +288,7 @@ impl MediaBackupManager {
         let media_config = if let Some(config) = self.config.media_backup() {
             config
         } else {
-            return Err(MediaBackupError::ConfigError.into());
+            return Err(MediaBackupError::ConfigError).into_report();
         };
 
         let ssh_key = media_config
@@ -353,7 +353,7 @@ impl MediaBackupManager {
             .into_error(MediaBackupError::ProcessWait)?;
 
         if !status.success() {
-            return Err(MediaBackupError::CommandFailed(status).into());
+            return Err(MediaBackupError::CommandFailed(status)).into_report();
         }
 
         Ok(())
@@ -367,7 +367,7 @@ impl MediaBackupManager {
                 .into_error(MediaBackupError::TimeError)?
         } else {
             futures::future::pending::<()>().await;
-            return Err(MediaBackupError::ConfigError.into());
+            return Err(MediaBackupError::ConfigError).into_report();
         };
 
         let target_date_time = now.replace_time(target_time);
@@ -402,7 +402,7 @@ impl MediaBackupManager {
 
         if !output.status.success() {
             tracing::error!("date command failed");
-            return Err(MediaBackupError::CommandFailed(output.status).into());
+            return Err(MediaBackupError::CommandFailed(output.status)).into_report();
         }
 
         let offset =

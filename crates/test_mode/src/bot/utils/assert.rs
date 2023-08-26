@@ -8,6 +8,6 @@ pub fn bot_assert_eq<T: Debug + PartialEq>(value: T, expected: T) -> Result<(), 
     if value == expected {
         Ok(())
     } else {
-        Err(TestError::AssertError(format!("value: {:?}, expected: {:?}", value, expected)).into())
+        Err(TestError::AssertError(format!("value: {:?}, expected: {:?}", value, expected)).report())
     }
 }

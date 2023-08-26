@@ -84,12 +84,12 @@ impl BotState {
     }
 
     pub fn id(&self) -> Result<AccountId, TestError> {
-        self.id.ok_or(TestError::AccountIdMissing.into())
+        self.id.ok_or(TestError::AccountIdMissing.report())
     }
 
     pub fn id_string(&self) -> Result<String, TestError> {
         self.id
-            .ok_or(TestError::AccountIdMissing.into())
+            .ok_or(TestError::AccountIdMissing.report())
             .map(|id| id.to_string())
     }
 

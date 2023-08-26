@@ -99,7 +99,7 @@ impl<T: BotAction> BotAction for AssertFailure<T> {
                 TestError::ApiRequest => Ok(()),
                 _ => Err(e),
             },
-            Ok(()) => Err(TestError::AssertError("API request did not fail".to_string()).into()),
+            Ok(()) => Err(TestError::AssertError("API request did not fail".to_string()).report()),
         }
     }
 }
@@ -129,7 +129,7 @@ impl BotAction for SleepUntil {
         if self.0(task_state) {
             Ok(())
         } else {
-            Err(TestError::BotIsWaiting.into())
+            Err(TestError::BotIsWaiting.report())
         }
     }
 }

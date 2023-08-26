@@ -1,5 +1,5 @@
 use config::Config;
-use error_stack::Result;
+use error_stack::{Result, IntoReport};
 use manager_api::{ApiKey, Configuration, ManagerApi};
 use manager_model::{BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList};
 use tracing::{error, info};
@@ -61,7 +61,8 @@ impl ManagerApiClient {
     pub fn manager(&self) -> Result<&Configuration, ManagerClientError> {
         self.manager
             .as_ref()
-            .ok_or(ManagerClientError::ApiUrlNotConfigured.into())
+            .ok_or(ManagerClientError::ApiUrlNotConfigured)
+            .into_report()
     }
 }
 

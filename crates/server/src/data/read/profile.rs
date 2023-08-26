@@ -15,7 +15,7 @@ impl ReadCommandsProfile<'_> {
             cache.profile.as_ref().map(|data| data.data.clone())
         })
         .await?
-        .ok_or(DataError::NotFound.into())
+        .ok_or(DataError::NotFound.report())
     }
 
     pub async fn read_profile_directly_from_database(

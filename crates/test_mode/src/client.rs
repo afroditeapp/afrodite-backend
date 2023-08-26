@@ -52,6 +52,13 @@ pub enum TestError {
     BotIsWaiting,
 }
 
+impl TestError {
+    #[track_caller]
+    pub fn report(self) -> error_stack::Report<Self> {
+        error_stack::report!(self)
+    }
+}
+
 #[derive(Debug)]
 pub struct ApiClient {
     /// Where Account API reqister and login is available

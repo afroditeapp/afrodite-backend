@@ -6,7 +6,7 @@ use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
     diesel::{DieselCurrentReadHandle, DieselDatabaseError, DieselConnection}, ErrorContext,
 };
-use error_stack::{Result, ResultExt, Context, IntoReport};
+use error_stack::{Result, ResultExt, Context, IntoReport, bail};
 use model::{
     Account, AccountIdInternal, AccountId, AccessToken, LocationIndexKey, ProfileInternal,
     ProfileUpdateInternal, IsLoggingAllowed,
@@ -40,6 +40,18 @@ pub enum CacheError {
 
     #[error("Cache operation failed because of server feature was not enabled")]
     FeatureNotEnabled,
+}
+
+impl CacheError {
+    #[track_caller]
+    pub fn report(self) -> error_stack::Report<Self> {
+        error_stack::report!(self)
+    }
+
+    #[track_caller]
+    pub fn error<Ok>(self) -> error_stack::Result<Ok, Self> {
+        Err(error_stack::report!(self))
+    }
 }
 
 #[derive(Debug)]
@@ -79,7 +91,8 @@ impl DatabaseCache {
             // Diesel connection used here so no deadlock
             cache
                 .load_account_from_db(id, &config, &read_diesel, &index_iterator, &index_writer)
-                .await?;
+                .await
+                .change_context(CacheError::Init)?;
         }
 
         info!("Loading to memory complete");
@@ -106,7 +119,7 @@ impl DatabaseCache {
         let read_lock = self.accounts.read().await;
         let account_entry = read_lock
             .get(&account_id.as_id())
-            .ok_or(CacheError::KeyNotExists)?;
+            .ok_or(CacheError::KeyNotExists.report())?;
 
         let access_token = db_read(&read_diesel, move |mut cmds| {
             cmds.account().access_token(account_id)
@@ -116,7 +129,7 @@ impl DatabaseCache {
         if let Some(key) = access_token {
             let mut access_tokens = self.access_tokens.write().await;
             if access_tokens.contains_key(&key) {
-                return Err(CacheError::AlreadyExists.into()).change_context(CacheError::Init);
+                return Err(CacheError::AlreadyExists).into_report();
             } else {
                 access_tokens.insert(key, account_entry.clone());
             }
@@ -172,7 +185,7 @@ impl DatabaseCache {
             );
             Ok(())
         } else {
-            Err(CacheError::AlreadyExists.into())
+            Err(CacheError::AlreadyExists.report())
         }
     }
 
@@ -203,7 +216,7 @@ impl DatabaseCache {
             tokens.insert(new_access_token, cache_entry);
             Ok(())
         } else {
-            Err(CacheError::AlreadyExists.into())
+            Err(CacheError::AlreadyExists.report())
         }
     }
 

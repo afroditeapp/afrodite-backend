@@ -39,7 +39,7 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
-use crate::media_backup::MediaBackupHandle;
+use crate::{media_backup::MediaBackupHandle, internal::InternalApiError};
 
 pub mod cache;
 pub mod file;
@@ -96,13 +96,21 @@ pub enum DataError {
     SqliteVersionMismatch,
 }
 
-pub trait WithInfo<Ok, Err: Context>: Sized + Into<Result<Ok, Err>> {
+impl DataError {
+    #[track_caller]
+    pub fn report(self) -> error_stack::Report<Self> {
+        error_stack::report!(self)
+    }
+}
+pub trait WithInfo<Ok, Err: Context>: Sized {
+    fn into_error_without_context(self) -> Result<Ok, Err>;
+
     #[track_caller]
     fn with_info<T: Debug + IsLoggingAllowed>(
         self,
         request_context: T,
     ) -> Result<Ok, Err> {
-        self.into()
+        self.into_error_without_context()
             .attach_printable_lazy(move || {
                 let context = ErrorContext::<T, Ok>::new(
                     request_context,
@@ -113,11 +121,30 @@ pub trait WithInfo<Ok, Err: Context>: Sized + Into<Result<Ok, Err>> {
     }
 }
 
-impl <Ok> WithInfo<Ok, DataError>
-    for Result<Ok, DataError> {}
-
-impl <Ok> WithInfo<Ok, CacheError>
-    for Result<Ok, CacheError> {}
+impl <Ok> WithInfo<Ok, DataError> for Result<Ok, DataError> {
+    #[track_caller]
+    fn into_error_without_context(self) -> Result<Ok, DataError> {
+        self
+    }
+}
+impl <Ok> WithInfo<Ok, CacheError> for Result<Ok, CacheError> {
+    #[track_caller]
+    fn into_error_without_context(self) -> Result<Ok, CacheError> {
+        self
+    }
+}
+impl <Ok> WithInfo<Ok, InternalApiError> for Result<Ok, InternalApiError> {
+    #[track_caller]
+    fn into_error_without_context(self) -> Result<Ok, InternalApiError> {
+        self
+    }
+}
+impl <Ok> WithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
+    #[track_caller]
+    fn into_error_without_context(self) -> Result<Ok, InternalApiError> {
+        self.into_report()
+    }
+}
 
 pub trait IntoDataError<Ok, Err: Context>: Sized {
     fn into_data_error_without_context(self) -> Result<Ok, Err>;

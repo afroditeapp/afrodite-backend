@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use diesel::prelude::*;
-use error_stack::Result;
+use error_stack::{Result, IntoReport};
 use model::{
     AccountIdInternal, AccountId, ContentId, ContentIdInternal, ContentState,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, ImageSlot, MediaContentInternal,
@@ -215,7 +215,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         if requested_content_set == database_content_set {
             Ok(())
         } else {
-            Err(DieselDatabaseError::ModerationRequestContentInvalid.into())
+            Err(DieselDatabaseError::ModerationRequestContentInvalid)
+                .with_info((content_owner, request_content))
         }
     }
 

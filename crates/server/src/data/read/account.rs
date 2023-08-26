@@ -47,7 +47,7 @@ impl ReadCommandsAccount<'_> {
     pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
         self.read_cache(id, |cache| cache.account.as_deref().map(Clone::clone))
             .await?
-            .ok_or(DataError::Cache.into())
+            .ok_or(DataError::Cache.report())
     }
 
     pub async fn account_setup(
