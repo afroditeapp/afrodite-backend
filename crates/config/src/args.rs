@@ -4,7 +4,7 @@ use std::{
     process::exit,
 };
 
-use clap::{arg, command, value_parser, Command, PossibleValue};
+use clap::{arg, command, value_parser, Command, builder::PossibleValue};
 use reqwest::Url;
 
 #[derive(Debug, Clone)]
@@ -135,7 +135,7 @@ pub fn get_config(build_info_provider: BuildInfoProvider) -> ArgsConfig {
         )
         .get_matches();
 
-    if matches.is_present("build-info") {
+    if matches.get_flag("build-info") {
         println!("{}", build_info_provider());
         exit(0)
     }
@@ -153,14 +153,14 @@ pub fn get_config(build_info_provider: BuildInfoProvider) -> ArgsConfig {
             Some(TestMode {
                 bot_count: *sub_matches.get_one::<u32>("bots").unwrap(),
                 task_count: *sub_matches.get_one::<u32>("tasks").unwrap(),
-                forever: sub_matches.is_present("forever"),
-                no_sleep: sub_matches.is_present("no-sleep"),
-                no_clean: sub_matches.is_present("no-clean"),
-                no_servers: sub_matches.is_present("no-servers"),
-                update_profile: sub_matches.is_present("update-profile"), // TODO remove as there is also write benchmark?
-                save_state: sub_matches.is_present("save-state"),
-                print_speed: sub_matches.is_present("print-speed"),
-                early_quit: sub_matches.is_present("early-quit"),
+                forever: sub_matches.get_flag("forever"),
+                no_sleep: sub_matches.get_flag("no-sleep"),
+                no_clean: sub_matches.get_flag("no-clean"),
+                no_servers: sub_matches.get_flag("no-servers"),
+                update_profile: sub_matches.get_flag("update-profile"), // TODO remove as there is also write benchmark?
+                save_state: sub_matches.get_flag("save-state"),
+                print_speed: sub_matches.get_flag("print-speed"),
+                early_quit: sub_matches.get_flag("early-quit"),
                 man_images: sub_matches
                     .get_one::<PathBuf>("man-images")
                     .map(ToOwned::to_owned),
@@ -177,10 +177,10 @@ pub fn get_config(build_info_provider: BuildInfoProvider) -> ArgsConfig {
                         .get_one::<PathBuf>("test-database")
                         .map(ToOwned::to_owned)
                         .unwrap(),
-                    microservice_media: sub_matches.is_present("microservice-media"),
-                    microservice_profile: sub_matches.is_present("microservice-profile"),
-                    microservice_chat: sub_matches.is_present("microservice-chat"),
-                    log_debug: sub_matches.is_present("log-debug"),
+                    microservice_media: sub_matches.get_flag("microservice-media"),
+                    microservice_profile: sub_matches.get_flag("microservice-profile"),
+                    microservice_chat: sub_matches.get_flag("microservice-chat"),
+                    log_debug: sub_matches.get_flag("log-debug"),
                 },
             })
         }
@@ -191,7 +191,7 @@ pub fn get_config(build_info_provider: BuildInfoProvider) -> ArgsConfig {
         database_dir: matches
             .get_one::<PathBuf>("database")
             .map(ToOwned::to_owned),
-        sqlite_in_ram: matches.is_present("sqlite-in-ram"),
+        sqlite_in_ram: matches.get_flag("sqlite-in-ram"),
         test_mode,
     }
 }
@@ -295,16 +295,16 @@ impl clap::builder::TypedValueParser for TestNameParser {
         value
             .to_str()
             .ok_or(clap::Error::raw(
-                clap::ErrorKind::InvalidUtf8,
+                clap::error::ErrorKind::InvalidUtf8,
                 "Text was not UTF-8.",
             ))?
             .try_into()
-            .map_err(|_| clap::Error::raw(clap::ErrorKind::InvalidValue, "Unknown test"))
+            .map_err(|_| clap::Error::raw(clap::error::ErrorKind::InvalidValue, "Unknown test"))
     }
 
     fn possible_values(
         &self,
-    ) -> Option<Box<dyn Iterator<Item = clap::PossibleValue<'static>> + '_>> {
+    ) -> Option<Box<dyn Iterator<Item = clap::builder::PossibleValue> + '_>> {
         Some(Box::new(
             [
                 Test::Qa,
