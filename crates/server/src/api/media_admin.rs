@@ -1,11 +1,11 @@
-use axum::{extract::Path, Extension, TypedHeader};
+use axum::{extract::Path, Extension};
 use model::{
     AccountIdInternal, AccountId, HandleModerationRequest, ModerationList, SecurityImage,
 };
-use tracing::error;
+
 
 use super::{
-    utils::{AccessTokenHeader, Json, StatusCode},
+    utils::{Json, StatusCode},
     GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData, db_write,
 };
 

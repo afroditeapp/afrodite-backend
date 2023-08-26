@@ -1,9 +1,9 @@
-use database::sqlite::SqliteDatabaseError;
-use error_stack::{Context, Report, Result, ResultExt};
-use tokio::sync::oneshot;
-use utils::{ComponentError};
 
-use crate::data::{cache::CacheError, file::FileError, DataError};
+use error_stack::{Context, Report, Result};
+use tokio::sync::oneshot;
+
+
+use crate::data::{DataError};
 
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;

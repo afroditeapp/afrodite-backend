@@ -1,4 +1,4 @@
-use axum::{TypedHeader, Extension};
+use axum::{Extension};
 use model::{
     Account, AccountId, AccountSetup, AccountState, AccessToken, AuthPair, BooleanSetting,
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo, AccountIdInternal,
@@ -7,7 +7,7 @@ use tracing::{error};
 
 use super::{
     db_write,
-    utils::{AccessTokenHeader, Json, StatusCode},
+    utils::{Json, StatusCode},
     GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, SignInWith, WriteData,
 };
 

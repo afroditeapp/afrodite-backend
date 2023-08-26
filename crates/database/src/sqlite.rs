@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use async_trait::async_trait;
+
 use config::Config;
 use error_stack::{IntoReport, Result, ResultExt};
-use model::AccountIdInternal;
+
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions, SqliteRow},
     Row, SqlitePool,
@@ -16,9 +16,8 @@ use utils::{ComponentError, IntoReportExt};
 
 use super::{
     current::read::SqliteReadCommands,
-    history::{read::HistoryReadCommands, write::HistoryWriteCommands},
 };
-use crate::current::write::CurrentWriteCommands;
+
 
 pub const DATABASE_FILE_NAME: &str = "current.db";
 pub const HISTORY_FILE_NAME: &str = "history.db";

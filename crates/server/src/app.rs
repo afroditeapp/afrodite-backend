@@ -1,4 +1,4 @@
-use std::{sync::Arc, fmt::Debug};
+use std::{sync::Arc};
 
 use api::BackendVersionProvider;
 use axum::{

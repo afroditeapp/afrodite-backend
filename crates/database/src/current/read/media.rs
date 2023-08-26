@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use diesel::prelude::*;
-use error_stack::{Result, IntoReport};
+use error_stack::{Result};
 use model::{
     AccountIdInternal, AccountId, ContentId, ContentIdInternal, ContentState,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, ImageSlot, MediaContentInternal,

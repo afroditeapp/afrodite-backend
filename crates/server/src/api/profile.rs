@@ -1,13 +1,13 @@
-use axum::{extract::Path, TypedHeader, Extension};
+use axum::{extract::Path, Extension};
 use model::{
-    AccountId, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
+    AccountId, Location, Profile, ProfilePage, ProfileUpdate,
     ProfileUpdateInternal, AccountIdInternal,
 };
-use tracing::error;
+
 
 use super::{
     db_write,
-    utils::{AccessTokenHeader, Json, StatusCode},
+    utils::{Json, StatusCode},
     GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData,
 };
 

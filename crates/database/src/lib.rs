@@ -13,8 +13,8 @@ use std::{fmt::Debug, marker::PhantomData};
 use config::RUNNING_IN_DEBUG_MODE;
 use error_stack::{Context, IntoReport, Result, ResultExt};
 pub use model::schema;
-use model::{AccountIdInternal, AccountId, ContentId, IsLoggingAllowed};
-use utils::ComponentError;
+use model::{IsLoggingAllowed};
+
 
 use crate::diesel::DieselDatabaseError;
 

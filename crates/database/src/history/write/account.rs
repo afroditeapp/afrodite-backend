@@ -1,8 +1,7 @@
-use diesel::{insert_into, prelude::*, update};
+use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{
-    Account, AccountIdDb, AccountIdInternal, AccountId, AccountSetup, AccessToken, RefreshToken,
-    SignInWithInfo,
+    Account, AccountIdInternal, AccountSetup,
 };
 use utils::{IntoReportExt, current_unix_time};
 

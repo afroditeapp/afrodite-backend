@@ -9,7 +9,6 @@ use utils::IntoReportExt;
 
 use super::{media::CurrentSyncWriteMedia, ConnectionProvider};
 use crate::{
-    current::write::{CurrentSyncWriteCommands},
     diesel::{DieselConnection, DieselDatabaseError},
     IntoDatabaseError, TransactionError,
 };

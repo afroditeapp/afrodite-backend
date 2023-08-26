@@ -1,15 +1,15 @@
 use axum::Extension;
-use axum::{extract::Path, TypedHeader};
+use axum::{extract::Path};
 use hyper::StatusCode;
 use model::AccountIdInternal;
-use tracing::error;
+
 
 use super::{GetAccessTokens, GetAccounts};
 use super::{GetInternalApi};
 use super::{ReadData, utils::{Json}, WriteData};
 
 use model::{
-    Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate, ProfileUpdateInternal, AccountId
+    Profile, AccountId
 };
 
 // TODO: Add timeout for database commands
@@ -34,9 +34,9 @@ pub const PATH_TODO: &str = "/chat_api/TODO/:account_id";
 pub async fn get_todo<
     S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData,
 >(
-    Extension(id): Extension<AccountIdInternal>,
-    Path(requested_profile): Path<AccountId>,
-    state: S,
+    Extension(_id): Extension<AccountIdInternal>,
+    Path(_requested_profile): Path<AccountId>,
+    _state: S,
 ) -> Result<Json<Profile>, StatusCode> {
 
     Err(StatusCode::INTERNAL_SERVER_ERROR)

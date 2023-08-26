@@ -21,7 +21,7 @@ use super::{
     utils::{AccessTokenHeader, Json, StatusCode},
     BackendVersionProvider, GetAccessTokens, ReadData, WriteData,
 };
-use crate::{app::connection::WebSocketManager, api::db_write};
+use crate::{app::connection::WebSocketManager};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 

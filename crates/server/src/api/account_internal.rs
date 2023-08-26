@@ -2,7 +2,7 @@
 
 use axum::extract::Path;
 use model::{Account, AccountId, AccessToken};
-use tracing::error;
+
 
 use crate::api::{utils::{Json, StatusCode}, GetAccessTokens, GetAccounts, ReadData};
 

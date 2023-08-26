@@ -11,7 +11,7 @@ use tracing::error;
 
 use super::{
     db_write,
-    utils::{AccessTokenHeader, Json, StatusCode},
+    utils::{Json, StatusCode},
     GetAccessTokens, GetAccounts, ReadData, WriteData,
 };
 

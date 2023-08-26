@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use api_client::apis::{media_api, media_admin_api};
+use api_client::apis::{media_admin_api};
 use async_trait::async_trait;
 use error_stack::Result;
 use utils::IntoReportExt;

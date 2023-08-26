@@ -1,7 +1,7 @@
-use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
+use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileUpdateInternal, ProfileVersion, Profile,
+    AccountIdInternal, Profile,
 };
 use utils::{IntoReportExt, current_unix_time};
 

@@ -6,7 +6,7 @@ use std::{
 };
 
 use ::utils::IntoReportExt;
-use config::{Config, RUNNING_IN_DEBUG_MODE};
+use config::{Config};
 use database::{
     current::read::SqliteReadCommands,
     diesel::{

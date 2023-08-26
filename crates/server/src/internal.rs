@@ -9,7 +9,7 @@ use tracing::{error, info};
 use utils::IntoReportExt;
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
-use crate::{api::{db_write, GetAccessTokens, GetConfig, ReadData, WriteData}, data::WithInfo};
+use crate::{api::{GetAccessTokens, GetConfig, ReadData, WriteData}, data::WithInfo};
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.

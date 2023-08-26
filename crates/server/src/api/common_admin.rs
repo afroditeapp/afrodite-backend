@@ -5,7 +5,7 @@ use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList,
 };
 use model::{Account, AccountIdInternal};
-use tracing::error;
+
 
 use crate::api::{utils::{Json, StatusCode}, GetManagerApi, ReadData};
 

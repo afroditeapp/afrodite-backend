@@ -1,15 +1,14 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, fmt::Debug};
 
-use async_trait::async_trait;
-use config::{Config, RUNNING_IN_DEBUG_MODE};
+
+use config::{Config};
 use database::{
     current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselCurrentReadHandle, DieselDatabaseError, DieselConnection}, ErrorContext,
+    diesel::{DieselCurrentReadHandle, DieselDatabaseError, DieselConnection},
 };
-use error_stack::{Result, ResultExt, Context, IntoReport, bail};
+use error_stack::{Result, ResultExt, IntoReport};
 use model::{
     Account, AccountIdInternal, AccountId, AccessToken, LocationIndexKey, ProfileInternal,
-    ProfileUpdateInternal, IsLoggingAllowed,
 };
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
@@ -18,7 +17,7 @@ use utils::{ComponentError, IntoReportExt, IntoReportFromString};
 
 use super::{index::{
     location::LocationIndexIteratorState, LocationIndexIteratorGetter, LocationIndexWriterGetter,
-}, IntoDataError, WithInfo};
+}, WithInfo};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";

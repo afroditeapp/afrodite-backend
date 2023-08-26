@@ -2,7 +2,7 @@
 
 use axum::extract::Path;
 use model::{AccountId, BooleanSetting, Profile};
-use tracing::error;
+
 
 use super::GetConfig;
 use crate::api::{utils::{Json, StatusCode}, GetInternalApi, GetAccounts, ReadData};

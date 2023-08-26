@@ -1,10 +1,10 @@
 use std::net::SocketAddr;
 
 use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle};
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 use model::{AccountIdInternal, AccountId, AccessToken};
 
-use super::{cache::{CacheError, DatabaseCache}, DataError, IntoDataError};
+use super::{cache::{DatabaseCache}, DataError, IntoDataError};
 
 pub struct AccessTokenManager<'a> {
     cache: &'a DatabaseCache,

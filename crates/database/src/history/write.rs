@@ -1,12 +1,10 @@
-use async_trait::async_trait;
-use error_stack::Result;
-use model::{
-    Account, AccountIdInternal, AccountId, AccountSetup, Profile, ProfileUpdateInternal,
-};
-use sqlx::SqlitePool;
-use utils::{current_unix_time, IntoReportExt};
 
-use super::super::sqlite::SqliteDatabaseError;
+
+
+use sqlx::SqlitePool;
+
+
+
 use crate::{
     sqlite::{HistoryWriteHandle}, diesel::HistoryConnectionProvider
 };

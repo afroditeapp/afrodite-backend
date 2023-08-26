@@ -1,13 +1,13 @@
 //! Synchronous write commands combining cache and database operations.
 
-use std::{fmt::Debug, marker::PhantomData, sync::Arc, ops::{Deref, DerefMut}};
+use std::{sync::Arc, ops::{DerefMut}};
 
 use config::Config;
 use database::{
     current::{
         read::CurrentSyncReadCommands,
         write::{
-            CurrentSyncWriteCommands, CurrentWriteCommands, TransactionConnection,
+            CurrentSyncWriteCommands, TransactionConnection,
         },
     },
     diesel::{
@@ -18,7 +18,7 @@ use database::{
     PoolObject, TransactionError,
 };
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountId, AccountSetup, SignInWithInfo, Profile};
+use model::{Account, AccountIdInternal, AccountId, AccountSetup, SignInWithInfo};
 use utils::{IntoReportExt, IntoReportFromString};
 
 use self::{
