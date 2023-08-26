@@ -1,10 +1,12 @@
 #!/bin/bash -eux
 
-# Pre-build script for the app-manager service.
+# Pre-build script for building the backend with app-manager service.
 # Deletes the current database and creates a new one.
 
 git submodule init
 git submodule update
+
+# Note: Make sure that libsqlite3-dev is installed before running this script.
 
 if ! command -v diesel &> /dev/null; then
     echo "diesel is not installed. Installing..."
