@@ -16,9 +16,9 @@ use tokio_stream::StreamExt;
 use tracing::info;
 use utils::{ComponentError, IntoReportExt, IntoReportFromString};
 
-use super::index::{
+use super::{index::{
     location::LocationIndexIteratorState, LocationIndexIteratorGetter, LocationIndexWriterGetter,
-};
+}, IntoDataError, WithInfo};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
@@ -101,11 +101,11 @@ impl DatabaseCache {
     ) -> Result<(), CacheError> {
         self.insert_account_if_not_exists(account_id)
             .await
-            .attach_printable(account_id)?;
+            .with_info(account_id)?;
 
         let read_lock = self.accounts.read().await;
         let account_entry = read_lock
-            .get(&account_id.as_light())
+            .get(&account_id.as_id())
             .ok_or(CacheError::KeyNotExists)?;
 
         let access_token = db_read(&read_diesel, move |mut cmds| {
@@ -160,10 +160,10 @@ impl DatabaseCache {
         id: AccountIdInternal,
     ) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
-        if data.get(&id.as_light()).is_none() {
+        if data.get(&id.as_id()).is_none() {
             let value = RwLock::new(CacheEntry::new());
             data.insert(
-                id.as_light(),
+                id.as_id(),
                 AccountEntry {
                     cache: value,
                     account_id_internal: id,

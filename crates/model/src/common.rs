@@ -63,7 +63,7 @@ impl AccountIdInternal {
         self.id.0
     }
 
-    pub fn as_light(&self) -> AccountId {
+    pub fn as_id(&self) -> AccountId {
         self.uuid
     }
 }
@@ -76,7 +76,7 @@ impl From<AccountIdInternal> for uuid::Uuid {
 
 impl From<AccountIdInternal> for AccountId {
     fn from(value: AccountIdInternal) -> Self {
-        value.as_light()
+        value.as_id()
     }
 }
 

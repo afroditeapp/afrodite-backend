@@ -1,12 +1,11 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::extract::Path;
-use hyper::StatusCode;
 use model::{AccountId, BooleanSetting, Profile};
 use tracing::error;
 
 use super::GetConfig;
-use crate::api::{utils::Json, GetInternalApi, GetAccounts, ReadData};
+use crate::api::{utils::{Json, StatusCode}, GetInternalApi, GetAccounts, ReadData};
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
@@ -31,20 +30,12 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
     let account_id = state
         .accounts()
         .get_internal_id(account_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("{}", e);
-            StatusCode::NOT_FOUND
-        })?;
+        .await?;
 
     let request = state
         .read()
         .moderation_request(account_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("{}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?
+        .await?
         .ok_or(StatusCode::NOT_FOUND)?;
 
     if request.content.slot_1_is_security_image() {
@@ -79,18 +70,11 @@ pub async fn internal_post_update_profile_image_visibility<
     let account_id = state
         .accounts()
         .get_internal_id(account_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("{}", e);
-            StatusCode::NOT_FOUND
-        })?;
+        .await?;
 
     state
         .internal_api()
         .media_api_profile_visiblity(account_id, value, profile)
-        .await
-        .map_err(|e| {
-            error!("{:?}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })
+        .await?;
+    Ok(())
 }

@@ -20,7 +20,7 @@ hyper = { version = "0.14", features = ["full"] }
 axum = { version = "0.6", features = ["headers", "ws", "macros"] }
 tower = "0.4.13"
 tower-http = { version = "0.4.0", features = ["trace"] }
-tracing = "0.1"
+tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 headers = "0.3.8"
 reqwest = { version = "0.11", features = ["json"] }

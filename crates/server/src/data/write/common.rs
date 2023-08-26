@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use error_stack::Result;
 use model::{AccountIdInternal, AuthPair};
 
-use crate::{data::DatabaseError, utils::ErrorConversion};
+use crate::{data::{DataError, IntoDataError}};
 
 define_write_commands!(WriteCommandsCommon);
 
@@ -13,7 +13,7 @@ impl WriteCommandsCommon<'_> {
         id: AccountIdInternal,
         pair: AuthPair,
         address: Option<SocketAddr>,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         let current_access_token = self
             .db_read(move |mut cmds| cmds.account().access_token(id))
             .await?;
@@ -26,17 +26,17 @@ impl WriteCommandsCommon<'_> {
 
         self.cache()
             .update_access_token_and_connection(
-                id.as_light(),
+                id.as_id(),
                 current_access_token,
                 pair.access,
                 address,
             )
             .await
-            .with_info(id)
+            .into_data_error(id)
     }
 
     /// Remove current connection address, access and refresh tokens.
-    pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
+    pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DataError> {
         self.db_write(move |mut cmds| cmds.account().refresh_token(id, None))
             .await?;
 
@@ -50,7 +50,7 @@ impl WriteCommandsCommon<'_> {
         &self,
         id: AccountIdInternal,
         remove_access_token: bool,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         let current_access_token = if remove_access_token {
             self.db_read(move |mut cmds| cmds.account().access_token(id))
                 .await?
@@ -59,9 +59,9 @@ impl WriteCommandsCommon<'_> {
         };
 
         self.cache()
-            .delete_access_token_and_connection(id.as_light(), current_access_token)
+            .delete_access_token_and_connection(id.as_id(), current_access_token)
             .await
-            .with_info(id)?;
+            .into_data_error(id)?;
 
         self.db_write(move |mut cmds| cmds.account().access_token(id, None))
             .await?;

@@ -70,7 +70,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
 
         Ok(Some(ModerationRequestInternal::new(
             request.id,
-            request_creator.as_light(),
+            request_creator.as_id(),
             state,
             data,
         )))

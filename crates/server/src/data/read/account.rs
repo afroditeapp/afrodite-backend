@@ -5,11 +5,12 @@ use model::{
 };
 use tokio_stream::StreamExt;
 
+use crate::data::IntoDataError;
+
 use super::{
-    super::{cache::DatabaseCache, file::utils::FileDir, DatabaseError},
+    super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
-use crate::utils::ErrorConversion;
 
 define_read_commands!(ReadCommandsAccount);
 
@@ -17,12 +18,12 @@ impl ReadCommandsAccount<'_> {
     pub async fn account_access_token(
         &self,
         id: AccountId,
-    ) -> Result<Option<AccessToken>, DatabaseError> {
+    ) -> Result<Option<AccessToken>, DataError> {
         let id = self
             .cache()
             .to_account_id_internal(id)
             .await
-            .with_info(id)?;
+            .into_data_error(id)?;
         self.db_read(move |mut cmds| cmds.account().access_token(id))
             .await
     }
@@ -30,7 +31,7 @@ impl ReadCommandsAccount<'_> {
     pub async fn account_refresh_token(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<RefreshToken>, DatabaseError> {
+    ) -> Result<Option<RefreshToken>, DataError> {
         self.db_read(move |mut cmds| cmds.account().refresh_token(id))
             .await
     }
@@ -38,21 +39,21 @@ impl ReadCommandsAccount<'_> {
     pub async fn account_sign_in_with_info(
         &self,
         id: AccountIdInternal,
-    ) -> Result<SignInWithInfo, DatabaseError> {
+    ) -> Result<SignInWithInfo, DataError> {
         self.db_read(move |mut cmds| cmds.account().sign_in_with_info(id))
             .await
     }
 
-    pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DatabaseError> {
+    pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
         self.read_cache(id, |cache| cache.account.as_deref().map(Clone::clone))
             .await?
-            .ok_or(DatabaseError::Cache.into())
+            .ok_or(DataError::Cache.into())
     }
 
     pub async fn account_setup(
         &self,
         id: AccountIdInternal,
-    ) -> Result<AccountSetup, DatabaseError> {
+    ) -> Result<AccountSetup, DataError> {
         self.db_read(move |mut cmds| cmds.account().account_setup(id))
             .await
     }
@@ -60,13 +61,13 @@ impl ReadCommandsAccount<'_> {
     pub async fn account_ids<T: FnMut(AccountIdInternal)>(
         &self,
         mut handler: T,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         let account = self.db().account();
         let mut users = account.account_ids_stream();
         while let Some(user_id) = users
             .try_next()
             .await
-            .change_context(DatabaseError::Sqlite)?
+            .change_context(DataError::Sqlite)?
         {
             handler(user_id)
         }
@@ -77,7 +78,7 @@ impl ReadCommandsAccount<'_> {
     pub async fn google_account_id_to_account_id(
         &self,
         id: GoogleAccountId,
-    ) -> Result<Option<AccountIdInternal>, DatabaseError> {
+    ) -> Result<Option<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.account().google_account_id_to_account_id(id))
             .await
             .map(Some)

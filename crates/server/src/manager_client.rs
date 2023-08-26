@@ -1,6 +1,6 @@
 use config::Config;
 use error_stack::Result;
-use manager_api::{AccessToken, Configuration, ManagerApi};
+use manager_api::{ApiKey, Configuration, ManagerApi};
 use manager_model::{BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList};
 use tracing::{error, info};
 use utils::IntoReportExt;
@@ -38,7 +38,7 @@ impl ManagerApiClient {
             .into_error(ManagerClientError::ClientBuildFailed)?;
 
         let manager = config.manager_config().map(|c| {
-            let token = AccessToken {
+            let token = ApiKey {
                 prefix: None,
                 key: c.api_key.to_string(),
             };

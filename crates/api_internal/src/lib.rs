@@ -1,4 +1,6 @@
 #![deny(unsafe_code)]
+#![deny(unused_must_use)]
+#![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
 //! This crate provides a wrapper for the internal API of the server.

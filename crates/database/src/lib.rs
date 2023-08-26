@@ -1,4 +1,6 @@
 #![deny(unsafe_code)]
+#![deny(unused_must_use)]
+#![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
 pub mod current;
@@ -28,9 +30,9 @@ pub struct ErrorContext<T, Ok> {
 }
 
 impl<T, Ok> ErrorContext<T, Ok> {
-    pub fn new(e: T, force_debug_print: bool) -> Self {
+    pub fn new(e: T) -> Self {
         Self {
-            force_debug_print,
+            force_debug_print: RUNNING_IN_DEBUG_MODE.value(),
             context_value: e,
             context_type: PhantomData,
             ok_type: PhantomData,
@@ -79,7 +81,6 @@ pub trait IntoDatabaseError<Err: Context>: IntoReport {
             .attach_printable_lazy(move || {
                 let context = ErrorContext::<T, Self::Ok>::new(
                     request_context,
-                    RUNNING_IN_DEBUG_MODE.value(),
                 );
 
                 format!("{:#?}", context)

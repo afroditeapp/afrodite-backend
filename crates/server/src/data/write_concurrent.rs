@@ -14,9 +14,9 @@ use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter,
-    RouterDatabaseWriteHandle,
+    RouterDatabaseWriteHandle, IntoDataError,
 };
-use crate::{data::DatabaseError, utils::ErrorConversion};
+use crate::{data::DataError};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 
@@ -102,7 +102,7 @@ impl ConcurrentWriteHandle {
         &self,
         id: AccountIdInternal,
         stream: BodyStream,
-    ) -> Result<ContentId, DatabaseError> {
+    ) -> Result<ContentId, DataError> {
         self.write
             .user_write_commands_account()
             .save_to_tmp(id, stream)
@@ -112,14 +112,14 @@ impl ConcurrentWriteHandle {
     pub async fn next_profiles(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Vec<ProfileLink>, DatabaseError> {
+    ) -> Result<Vec<ProfileLink>, DataError> {
         self.write
             .user_write_commands_account()
             .next_profiles(id)
             .await
     }
 
-    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
+    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
         self.write
             .user_write_commands_account()
             .reset_profile_iterator(id)
@@ -160,24 +160,24 @@ impl<'a> WriteCommandsConcurrent<'a> {
         &self,
         id: AccountIdInternal,
         stream: BodyStream,
-    ) -> Result<ContentId, DatabaseError> {
+    ) -> Result<ContentId, DataError> {
         let content_id = ContentId::new_random_id();
 
         // Clear tmp dir if previous image writing failed and there is no
         // content ID in the database about it.
         self.file_dir
-            .tmp_dir(id.as_light())
+            .tmp_dir(id.as_id())
             .remove_contents_if_exists()
             .await
-            .change_context(DatabaseError::File)?;
+            .change_context(DataError::File)?;
 
         let raw_img = self
             .file_dir
-            .unprocessed_image_upload(id.as_light(), content_id);
+            .unprocessed_image_upload(id.as_id(), content_id);
         raw_img
             .save_stream(stream)
             .await
-            .change_context(DatabaseError::File)?;
+            .change_context(DataError::File)?;
 
         // TODO: image safety checks and processing
 
@@ -187,53 +187,53 @@ impl<'a> WriteCommandsConcurrent<'a> {
     pub async fn next_profiles(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Vec<ProfileLink>, DatabaseError> {
+    ) -> Result<Vec<ProfileLink>, DataError> {
         let location = self
             .cache
-            .read_cache(id.as_light(), |e| {
+            .read_cache(id.as_id(), |e| {
                 e.profile.as_ref().map(|p| p.location.clone())
             })
             .await
-            .with_info(id)?
-            .ok_or(DatabaseError::FeatureDisabled)?;
+            .into_data_error(id)?
+            .ok_or(DataError::FeatureDisabled)?;
 
-        let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
+        let iterator = self.location.get().ok_or(DataError::FeatureDisabled)?;
         let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await;
         self.cache
-            .write_cache(id.as_light(), |e| {
+            .write_cache(id.as_id(), |e| {
                 e.profile
                     .as_mut()
                     .map(move |p| p.location.current_iterator = next_state);
                 Ok(())
             })
             .await
-            .with_info(id)?;
+            .into_data_error(id)?;
 
         Ok(profiles.unwrap_or(Vec::new()))
     }
 
-    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DatabaseError> {
+    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
         let location = self
             .cache
-            .read_cache(id.as_light(), |e| {
+            .read_cache(id.as_id(), |e| {
                 e.profile.as_ref().map(|p| p.location.clone())
             })
             .await
-            .with_info(id)?
-            .ok_or(DatabaseError::FeatureDisabled)?;
+            .into_data_error(id)?
+            .ok_or(DataError::FeatureDisabled)?;
 
-        let iterator = self.location.get().ok_or(DatabaseError::FeatureDisabled)?;
+        let iterator = self.location.get().ok_or(DataError::FeatureDisabled)?;
         let next_state =
             iterator.reset_iterator(location.current_iterator, location.current_position);
         self.cache
-            .write_cache(id.as_light(), |e| {
+            .write_cache(id.as_id(), |e| {
                 e.profile
                     .as_mut()
                     .map(move |p| p.location.current_iterator = next_state);
                 Ok(())
             })
             .await
-            .with_info(id)?;
+            .into_data_error(id)?;
         Ok(())
     }
 

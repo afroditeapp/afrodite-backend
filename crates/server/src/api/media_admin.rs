@@ -1,13 +1,12 @@
 use axum::{extract::Path, Extension, TypedHeader};
-use hyper::StatusCode;
 use model::{
     AccountIdInternal, AccountId, HandleModerationRequest, ModerationList, SecurityImage,
 };
 use tracing::error;
 
 use super::{
-    utils::{AccessTokenHeader, Json},
-    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData,
+    utils::{AccessTokenHeader, Json, StatusCode},
+    GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData, db_write,
 };
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
@@ -25,7 +24,7 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
     security(("access_token" = [])),
 )]
 pub async fn get_security_image_info<S: ReadData + GetAccounts>(
-    Path(account_id): Path<AccountId>,
+    Path(requested_account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SecurityImage>, StatusCode> {
@@ -33,22 +32,14 @@ pub async fn get_security_image_info<S: ReadData + GetAccounts>(
 
     let internal_id = state
         .accounts()
-        .get_internal_id(account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .get_internal_id(requested_account_id)
+        .await?;
 
     let internal_current_media = state
         .read()
         .media()
         .current_account_media(internal_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     let info: SecurityImage = internal_current_media.into();
     Ok(info.into())
@@ -81,17 +72,10 @@ pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
 
     // TODO: Access restrictions
 
-    let data = state
-        .write(move |cmds| async move {
-            cmds.media_admin()
-                .moderation_get_list_and_create_new_if_necessary(account_id)
-                .await
-        })
-        .await
-        .map_err(|e| {
-            error!("{}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    let data = db_write!(state, move |cmds| {
+        cmds.media_admin()
+            .moderation_get_list_and_create_new_if_necessary(account_id)
+    })?;
 
     Ok(ModerationList { list: data }.into())
 }
@@ -129,37 +113,22 @@ pub async fn post_handle_moderation_request<
     let account = state
         .internal_api()
         .get_account_state(admin_account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     if account.capablities().admin_moderate_images {
         let moderation_request_owner = state
             .accounts()
             .get_internal_id(moderation_request_owner_account_id)
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+            .await?;
 
-        state
-            .write(move |cmds| async move {
-                cmds.media_admin()
-                    .update_moderation(
-                        admin_account_id,
-                        moderation_request_owner,
-                        moderation_decision,
-                    )
-                    .await
-            })
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })
+        db_write!(state, move |cmds| {
+            cmds.media_admin()
+                .update_moderation(
+                    admin_account_id,
+                    moderation_request_owner,
+                    moderation_decision,
+                )
+        })
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }

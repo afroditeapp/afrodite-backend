@@ -119,7 +119,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             request_id: ModerationRequestId {
                 request_row_id: target_id.request_row_id,
             },
-            moderator_id: moderator_id.as_light(),
+            moderator_id: moderator_id.as_id(),
             content,
         };
 

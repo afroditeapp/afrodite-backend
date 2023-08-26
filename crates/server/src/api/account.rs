@@ -1,14 +1,13 @@
 use axum::{TypedHeader, Extension};
-use hyper::StatusCode;
 use model::{
     Account, AccountId, AccountSetup, AccountState, AccessToken, AuthPair, BooleanSetting,
     DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo, AccountIdInternal,
 };
-use tracing::error;
+use tracing::{error};
 
 use super::{
     db_write,
-    utils::{AccessTokenHeader, Json},
+    utils::{AccessTokenHeader, Json, StatusCode},
     GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, SignInWith, WriteData,
 };
 
@@ -50,7 +49,7 @@ pub async fn register_impl<S: WriteData + GetConfig>(
         .await;
 
     match result {
-        Ok(id) => Ok(id.as_light().into()),
+        Ok(id) => Ok(id.as_id().into()),
         Err(e) => {
             error!("Error: {e:?}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -85,14 +84,10 @@ async fn login_impl<S: GetAccessTokens + WriteData + GetAccounts>(
     id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
+    let id = state.accounts().get_internal_id(id).await?;
+
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
-
-    let id = state.accounts().get_internal_id(id).await.map_err(|e| {
-        error!("Login error: {e:?}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
-
     let account = AuthPair { access, refresh };
     let account_clone = account.clone();
 
@@ -100,12 +95,7 @@ async fn login_impl<S: GetAccessTokens + WriteData + GetAccounts>(
         id,
         account_clone,
         None
-    ))
-    .await
-    .map_err(|e| {
-        error!("Login error: {e:?}");
-        StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-    })?;
+    ))?;
 
     // TODO: microservice support
 
@@ -141,24 +131,16 @@ pub async fn post_sign_in_with_login<
         let info = state
             .sign_in_with_manager()
             .validate_google_token(google)
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+            .await?;
         let google_id = GoogleAccountId(info.id);
         let already_existing_account = state
             .read()
             .account()
             .google_account_id_to_account_id(google_id.clone())
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+            .await?;
 
         if let Some(already_existing_account) = already_existing_account {
-            login_impl(already_existing_account.as_light(), state)
+            login_impl(already_existing_account.as_id(), state)
                 .await
                 .map(|d| d.into())
         } else {
@@ -175,11 +157,7 @@ pub async fn post_sign_in_with_login<
         let _info = state
             .sign_in_with_manager()
             .validate_apple_token(apple)
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+            .await?;
 
         // if validate_sign_in_with_apple_token(apple).await.unwrap() {
         //     let key = AccessToken::generate_new();
@@ -210,16 +188,12 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
-    state
+    let account = state
         .read()
         .account()
         .account(api_caller_account_id)
-        .await
-        .map(|account| account.into())
-        .map_err(|e| {
-            error!("Get profile error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })
+        .await?;
+    Ok(account.into())
 }
 
 pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
@@ -248,19 +222,10 @@ pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
         .read()
         .account()
         .account(api_caller_account_id)
-        .await
-        .map_err(|e| {
-            error!("Get profile error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })?;
+        .await?;
 
     if account.state() == AccountState::InitialSetup {
         db_write!(state, move |cmds| cmds.account().account_setup(api_caller_account_id, data))
-            .await
-            .map_err(|e| {
-                error!("Write database error: {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-            })
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -294,11 +259,7 @@ pub async fn post_complete_setup<
         .read()
         .account()
         .account_setup(id)
-        .await
-        .map_err(|e| {
-            error!("Complete setup error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })?;
+        .await?;
 
     if account_setup.is_empty() {
         return Err(StatusCode::NOT_ACCEPTABLE);
@@ -307,31 +268,19 @@ pub async fn post_complete_setup<
     state
         .internal_api()
         .media_check_moderation_request_for_account(id)
-        .await
-        .map_err(|e| {
-            error!("Complete setup error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     let mut account = state
         .read()
         .account()
         .account(id)
-        .await
-        .map_err(|e| {
-            error!("Complete setup error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })?;
+        .await?;
 
     let sign_in_with_info = state
         .read()
         .account()
         .account_sign_in_with_info(id)
-        .await
-        .map_err(|e| {
-            error!("Complete setup error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })?;
+        .await?;
 
     if account.state() == AccountState::InitialSetup {
         account.complete_setup();
@@ -354,11 +303,6 @@ pub async fn post_complete_setup<
         }
 
         db_write!(state, move |cmds| cmds.account().account(id, account))
-            .await
-            .map_err(|e| {
-                error!("Write database error: {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-            })
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -394,11 +338,7 @@ pub async fn put_setting_profile_visiblity<
         .read()
         .account()
         .account(id)
-        .await
-        .map_err(|e| {
-            error!("put_setting_profile_visiblity: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     if account.state() != AccountState::Normal {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -407,11 +347,7 @@ pub async fn put_setting_profile_visiblity<
     state
         .internal_api()
         .profile_api_set_profile_visiblity(id, new_value)
-        .await
-        .map_err(|e| {
-            error!("put_setting_profile_visiblity: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     Ok(())
 }

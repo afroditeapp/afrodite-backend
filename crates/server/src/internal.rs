@@ -20,7 +20,7 @@ pub enum InternalApiError {
     ApiRequest,
 
     #[error("Database call failed")]
-    DatabaseError,
+    DataError,
 
     #[error("Account API URL not configured")]
     AccountApiUrlNotConfigured,
@@ -164,12 +164,12 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
                 .account()
                 .account(account_id)
                 .await
-                .change_context(InternalApiError::DatabaseError)
+                .change_context(InternalApiError::DataError)
         } else {
             // TODO: Save account state to cache?
 
             let account =
-                InternalApi::get_account_state(self.api_client.account()?, account_id.as_light())
+                InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
                     .await
                     .into_error(InternalApiError::ApiRequest)?;
 
@@ -194,7 +194,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
                 .read_database()
                 .moderation_request(account_id)
                 .await
-                .change_context(InternalApiError::DatabaseError)?
+                .change_context(InternalApiError::DataError)?
                 .ok_or(InternalApiError::MissingValue)?;
 
             if request.content.slot_1_is_security_image() {
@@ -205,7 +205,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
         } else {
             InternalApi::media_check_moderation_request_for_account(
                 self.api_client.media()?,
-                account_id.as_light(),
+                account_id.as_id(),
             )
             .await
             .into_error(InternalApiError::MissingValue)
@@ -223,22 +223,25 @@ impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'
         boolean_setting: BooleanSetting,
     ) -> Result<(), InternalApiError> {
         if self.config().components().profile {
-            db_write!(self.state, move |data| data
-                .profile()
-                .profile_update_visibility(
-                    account_id,
-                    boolean_setting.value,
-                    false, // False overrides updates
-                ))
+            self.state.write(move |data| async move {
+                data
+                    .profile()
+                    .profile_update_visibility(
+                        account_id,
+                        boolean_setting.value,
+                        false, // False overrides updates
+                    )
+                    .await
+            })
             .await
-            .change_context(InternalApiError::DatabaseError)?;
+            .change_context(InternalApiError::DataError)?;
 
             let profile: ProfileInternal = self
                 .read_database()
                 .profile()
                 .profile(account_id)
                 .await
-                .change_context(InternalApiError::DatabaseError)?;
+                .change_context(InternalApiError::DataError)?;
 
             self.media_api_profile_visiblity(account_id, boolean_setting, profile.into())
                 .await

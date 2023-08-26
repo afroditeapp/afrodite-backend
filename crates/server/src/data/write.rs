@@ -30,9 +30,9 @@ use self::{
 use super::{
     cache::{DatabaseCache},
     file::utils::FileDir,
-    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
+    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter}, IntoDataError,
 };
-use crate::{data::DatabaseError, media_backup::MediaBackupHandle, utils::ErrorConversion};
+use crate::{data::DataError, media_backup::MediaBackupHandle};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -97,7 +97,7 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DatabaseError> {
+            ) -> error_stack::Result<R, crate::data::DataError> {
                 self.cmds.db_write(cmd).await
             }
 
@@ -114,7 +114,7 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DatabaseError> {
+            ) -> error_stack::Result<R, crate::data::DataError> {
                 self.cmds.db_transaction(cmd).await
             }
 
@@ -130,7 +130,7 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DatabaseError> {
+            ) -> error_stack::Result<R, crate::data::DataError> {
                 self.cmds.db_read(cmd).await
             }
 
@@ -141,12 +141,12 @@ macro_rules! define_write_commands {
                 cache_operation: impl FnOnce(
                     &mut crate::data::cache::CacheEntry,
                 ) -> error_stack::Result<T, crate::data::CacheError>,
-            ) -> error_stack::Result<T, crate::data::DatabaseError> {
+            ) -> error_stack::Result<T, crate::data::DataError> {
                 use error_stack::ResultExt;
                 self.cache()
                     .write_cache(id, cache_operation)
                     .await
-                    .change_context(crate::data::DatabaseError::Cache)
+                    .change_context(crate::data::DataError::Cache)
             }
         }
     };
@@ -246,7 +246,7 @@ impl<'a> WriteCommands<'a> {
         &self,
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
-    ) -> Result<AccountIdInternal, DatabaseError> {
+    ) -> Result<AccountIdInternal, DataError> {
         let config = self.config.clone();
         let id: AccountIdInternal = self
             .db_transaction_with_history(move |transaction, history_conn| {
@@ -269,7 +269,7 @@ impl<'a> WriteCommands<'a> {
                 &self.location,
             )
             .await
-            .with_info(id)?;
+            .into_data_error(id)?;
 
         Ok(id)
     }
@@ -343,20 +343,20 @@ impl<'a> WriteCommands<'a> {
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DatabaseError> {
+    ) -> Result<R, DataError> {
         let conn = self
             .diesel_current_write
             .pool()
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
+            .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| cmd(CurrentSyncWriteCommands::new(conn)))
             .await
             .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DatabaseError::Diesel)?
-            .change_context(DatabaseError::Diesel)
+            .change_context(DataError::Diesel)?
+            .change_context(DataError::Diesel)
     }
 
     #[track_caller]
@@ -370,20 +370,20 @@ impl<'a> WriteCommands<'a> {
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DatabaseError> {
+    ) -> Result<R, DataError> {
         let conn = self
             .diesel_current_write
             .pool()
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
+            .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| CurrentSyncWriteCommands::new(conn).transaction(cmd))
             .await
             .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DatabaseError::Diesel)?
-            .change_context(DatabaseError::Diesel)
+            .change_context(DataError::Diesel)?
+            .change_context(DataError::Diesel)
     }
 
     #[track_caller]
@@ -393,7 +393,7 @@ impl<'a> WriteCommands<'a> {
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DatabaseError>
+    ) -> Result<R, DataError>
     where
         T: FnOnce(
                 TransactionConnection<'_>,
@@ -409,7 +409,7 @@ impl<'a> WriteCommands<'a> {
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
+            .change_context(DataError::Diesel)?;
 
         let conn_history = self
             .diesel_history_write
@@ -417,7 +417,7 @@ impl<'a> WriteCommands<'a> {
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
+            .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| {
             CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
@@ -427,8 +427,8 @@ impl<'a> WriteCommands<'a> {
         })
         .await
         .into_error_string(DieselDatabaseError::Execute)
-        .change_context(DatabaseError::Diesel)?
-        .change_context(DatabaseError::Diesel)
+        .change_context(DataError::Diesel)?
+        .change_context(DataError::Diesel)
     }
 
     #[track_caller]
@@ -438,19 +438,19 @@ impl<'a> WriteCommands<'a> {
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DatabaseError> {
+    ) -> Result<R, DataError> {
         let conn = self
             .diesel_current_write
             .pool()
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
+            .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
             .await
             .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DatabaseError::Diesel)?
-            .change_context(DatabaseError::Diesel)
+            .change_context(DataError::Diesel)?
+            .change_context(DataError::Diesel)
     }
 }

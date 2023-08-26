@@ -1,8 +1,6 @@
 //! Common routes to all microservices
 //!
 
-// TODO: add app version route
-
 use std::net::SocketAddr;
 
 use axum::{
@@ -14,17 +12,16 @@ use axum::{
     TypedHeader,
 };
 use error_stack::{IntoReport, Result, ResultExt};
-use hyper::StatusCode;
 use model::{AccountIdInternal, AccessToken, AuthPair, BackendVersion, RefreshToken};
 use tracing::error;
 pub use utils::api::PATH_CONNECT;
 use utils::IntoReportExt;
 
 use super::{
-    utils::{AccessTokenHeader, Json},
+    utils::{AccessTokenHeader, Json, StatusCode},
     BackendVersionProvider, GetAccessTokens, ReadData, WriteData,
 };
-use crate::app::connection::WebSocketManager;
+use crate::{app::connection::WebSocketManager, api::db_write};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
@@ -96,27 +93,25 @@ async fn handle_socket<S: WriteData + ReadData>(
         r = handle_socket_result(socket, address, id, &state) => {
             match r {
                 Ok(()) => {
-                    let write = state.write(move |cmds| async move {
+                    let result = state.write(move |cmds| async move {
                         cmds.common()
                             .end_connection_session(id, false)
                             .await
                     }).await;
 
-                    match write {
-                        Ok(()) => (),
-                        Err(e) => {
-                            error!("WebSocket: {e:?}");
-                        }
+                    if let Err(e) = result {
+                        error!("end_connection_session, {e:?}")
                     }
                 },
                 Err(e) => {
-                    error!("WebSocket: {e:?}");
-                    let result = state.write(move |cmds| async move { cmds.common().logout(id).await }).await;
-                    match result {
-                        Ok(()) => (),
-                        Err(e) => {
-                            error!("WebSocket: {e:?}");
-                        }
+                    error!("handle_socket_result: {e:?}");
+
+                    let result = state.write(move |cmds| async move {
+                        cmds.common().logout(id).await
+                    }).await;
+
+                    if let Err(e) = result {
+                        error!("logout, {e:?}")
                     }
                 }
             }

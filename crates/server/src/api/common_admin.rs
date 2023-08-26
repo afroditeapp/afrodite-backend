@@ -1,14 +1,13 @@
 //! Common routes related to admin features
 
 use axum::{extract::Query, Extension};
-use http::StatusCode;
 use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList,
 };
 use model::{Account, AccountIdInternal};
 use tracing::error;
 
-use crate::api::{utils::Json, GetManagerApi, ReadData};
+use crate::api::{utils::{Json, StatusCode}, GetManagerApi, ReadData};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -31,22 +30,14 @@ pub async fn get_system_info<S: GetManagerApi + ReadData>(
         .read()
         .account()
         .account(api_caller_account_id)
-        .await
-        .map_err(|e| {
-            error!("get_system_info {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     if account.capablities().admin_server_maintentance_view_info {
-        state
+        let info = state
             .manager_api()
             .system_info()
-            .await
-            .map_err(|e| {
-                error!("get_system_info {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })
-            .map(|data| data.into())
+            .await?;
+        Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -73,22 +64,14 @@ pub async fn get_software_info<S: GetManagerApi + ReadData>(
         .read()
         .account()
         .account(api_caller_account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     if account.capablities().admin_server_maintentance_view_info {
-        state
+        let info = state
             .manager_api()
             .software_info()
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })
-            .map(|data| data.into())
+            .await?;
+        Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -118,22 +101,14 @@ pub async fn get_latest_build_info<S: GetManagerApi + ReadData>(
         .read()
         .account()
         .account(api_caller_account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     if account.capablities().admin_server_maintentance_view_info {
-        state
+        let info = state
             .manager_api()
             .get_latest_build_info(software.software_options)
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })
-            .map(|data| data.into())
+            .await?;
+        Ok(info.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -162,11 +137,7 @@ pub async fn post_request_build_software<S: GetManagerApi + ReadData>(
         .read()
         .account()
         .account(api_caller_account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     if account
         .capablities()
@@ -175,11 +146,8 @@ pub async fn post_request_build_software<S: GetManagerApi + ReadData>(
         state
             .manager_api()
             .request_build_software_from_build_server(software.software_options)
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })
+            .await?;
+        Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -205,15 +173,11 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account: Account = state
+    let account = state
         .read()
         .account()
         .account(api_caller_account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     if account
         .capablities()
@@ -222,11 +186,8 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
         state
             .manager_api()
             .request_update_software(software.software_options, reboot.reboot)
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })
+            .await?;
+        Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }

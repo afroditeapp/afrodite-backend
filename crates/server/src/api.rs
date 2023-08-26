@@ -13,7 +13,7 @@ use crate::{
         utils::{AccountIdManager, AccessTokenManager},
         write_commands::WriteCmds,
         write_concurrent::ConcurrentWriteHandle,
-        DatabaseError,
+        DataError,
     },
     internal::InternalApiManager,
     manager_client::ManagerApiManager,
@@ -151,22 +151,22 @@ pub trait GetAccounts {
 pub trait WriteData {
     async fn write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = error_stack::Result<CmdResult, DatabaseError>> + Send + 'static,
+        Cmd: Future<Output = error_stack::Result<CmdResult, DataError>> + Send + 'static,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
     >(
         &self,
         cmd: GetCmd,
-    ) -> error_stack::Result<CmdResult, DatabaseError>;
+    ) -> error_stack::Result<CmdResult, DataError>;
 
     async fn write_concurrent<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = error_stack::Result<CmdResult, DatabaseError>> + Send + 'static,
+        Cmd: Future<Output = error_stack::Result<CmdResult, DataError>> + Send + 'static,
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
     >(
         &self,
         account: AccountId,
         cmd: GetCmd,
-    ) -> error_stack::Result<CmdResult, DatabaseError>;
+    ) -> error_stack::Result<CmdResult, DataError>;
 }
 
 pub trait ReadData {
@@ -199,6 +199,8 @@ pub trait BackendVersionProvider {
 /// Makes "async move" and "await" keywords unnecessary.
 /// The macro "closure" should work like a real closure.
 ///
+/// Converts crate::data::DataError to crate::api::utils::StatusCode.
+///
 /// Example usage:
 ///
 /// ```rust
@@ -211,17 +213,17 @@ pub trait BackendVersionProvider {
 ///         cmds.media()
 ///             .update_primary_image(api_caller_account_id, new_image)
 ///     )
-///     .await
-///     .map_err(|e| {
-///         error!("{}", e);
-///         StatusCode::INTERNAL_SERVER_ERROR
-///     })
-///     Ok(())
 /// }
 /// ```
 macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {
-        $state.write(move |$cmds| async move { ($commands).await })
+        async {
+            let r: error_stack::Result<_, crate::data::DataError> =
+                $state.write(move |$cmds| async move { ($commands).await }).await;
+            let r: std::result::Result<_, crate::api::utils::StatusCode> =
+                r.map_err(|e| e.into());
+            r
+        }.await
     };
 }
 

@@ -1,12 +1,10 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::extract::Path;
-use hyper::StatusCode;
 use model::{AccountId, BooleanSetting};
-use tracing::error;
 
 use super::{GetAccessTokens, GetConfig, WriteData};
-use crate::api::{GetInternalApi, GetAccounts, ReadData};
+use crate::api::{GetInternalApi, GetAccounts, ReadData, utils::{Json, StatusCode}};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
@@ -31,18 +29,12 @@ pub async fn internal_post_update_profile_visibility<
     let account_id = state
         .accounts()
         .get_internal_id(account_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("{}", e);
-            StatusCode::NOT_FOUND
-        })?;
+        .await?;
 
     state
         .internal_api()
         .profile_api_set_profile_visiblity(account_id, value)
-        .await
-        .map_err(|e| {
-            error!("{:?}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })
+        .await?;
+
+    Ok(())
 }

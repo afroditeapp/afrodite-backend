@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr};
 
 use axum::{
     extract::{rejection::JsonRejection, ConnectInfo, FromRequest},
@@ -7,7 +7,7 @@ use axum::{
 };
 use config::RUNNING_IN_DEBUG_MODE;
 use headers::{Header, HeaderValue};
-use hyper::{header, Request, StatusCode};
+use hyper::{header, Request};
 use model::AccessToken;
 use serde::Serialize;
 pub use utils::api::ACCESS_TOKEN_HEADER_STR;
@@ -15,6 +15,8 @@ use utoipa::{
     openapi::security::{ApiKeyValue, SecurityScheme},
     Modify,
 };
+
+use crate::{data::{DataError, cache::CacheError}, app::sign_in_with::{google::SignInWithGoogleError, apple::SignInWithAppleError}, internal::InternalApiError, manager_client::ManagerClientError};
 
 use super::GetAccessTokens;
 
@@ -111,7 +113,7 @@ impl<T: Serialize> IntoResponse for Json<T> {
 
 #[derive(Debug)]
 pub struct ApiError {
-    status: StatusCode,
+    status: hyper::StatusCode,
     message: String,
 }
 
@@ -141,3 +143,114 @@ impl IntoResponse for ApiError {
         (self.status, axum::Json(json_error)).into_response()
     }
 }
+
+
+#[allow(non_camel_case_types)]
+pub enum StatusCode {
+    /// 400
+    BAD_REQUEST,
+    /// 401
+    UNAUTHORIZED,
+    /// 500
+    INTERNAL_SERVER_ERROR,
+    /// 406
+    NOT_ACCEPTABLE,
+    /// 404
+    NOT_FOUND,
+    /// 304
+    NOT_MODIFIED,
+}
+
+impl From<StatusCode> for hyper::StatusCode {
+    fn from(value: StatusCode) -> Self {
+        match value {
+            StatusCode::BAD_REQUEST => hyper::StatusCode::BAD_REQUEST,
+            StatusCode::UNAUTHORIZED => hyper::StatusCode::UNAUTHORIZED,
+            StatusCode::INTERNAL_SERVER_ERROR => hyper::StatusCode::INTERNAL_SERVER_ERROR,
+            StatusCode::NOT_ACCEPTABLE => hyper::StatusCode::NOT_ACCEPTABLE,
+            StatusCode::NOT_FOUND => hyper::StatusCode::NOT_FOUND,
+            StatusCode::NOT_MODIFIED => hyper::StatusCode::NOT_MODIFIED,
+        }
+    }
+}
+
+impl IntoResponse for StatusCode {
+    fn into_response(self) -> Response {
+        let status: hyper::StatusCode = self.into();
+        status.into_response()
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+enum RequestError {
+    #[error("Data reading or writing failed")]
+    Data,
+    #[error("Cache reading or writing failed")]
+    Cache,
+    #[error("Sign in with Google error")]
+    SignInWithGoogle,
+    #[error("Sign in with Apple error")]
+    SignInWithApple,
+    #[error("Internal API error")]
+    InternalApiError,
+    #[error("Manager client error")]
+    ManagerClientError,
+}
+
+impl From<error_stack::Report<DataError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<DataError>) -> Self {
+        tracing::error!("{:?}", value.change_context(RequestError::Data));
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+impl From<error_stack::Report<CacheError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<CacheError>) -> Self {
+        tracing::error!("{:?}", value.change_context(RequestError::Cache));
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+impl From<error_stack::Report<SignInWithGoogleError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<SignInWithGoogleError>) -> Self {
+        tracing::error!("{:?}", value.change_context(RequestError::SignInWithGoogle));
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+impl From<error_stack::Report<SignInWithAppleError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<SignInWithAppleError>) -> Self {
+        tracing::error!("{:?}", value.change_context(RequestError::SignInWithApple));
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+impl From<error_stack::Report<InternalApiError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<InternalApiError>) -> Self {
+        tracing::error!("{:?}", value.change_context(RequestError::InternalApiError));
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+impl From<error_stack::Report<ManagerClientError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<ManagerClientError>) -> Self {
+        tracing::error!("{:?}", value.change_context(RequestError::ManagerClientError));
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+// pub trait IntoStatusCodeError<Ok, Err: Into<StatusCode>>: Sized {
+//     fn into_status_error(self) -> std::result::Result<Ok, StatusCode>;
+// }
+
+// impl <Ok, Err: Into<StatusCode>> IntoStatusCodeError<Ok, Err> for std::result::Result<Ok, Err> {
+//     fn into_status_error(self) -> std::result::Result<Ok, StatusCode> {
+//         self.map_err(|err| err.into())
+//     }
+// }

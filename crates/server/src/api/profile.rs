@@ -1,5 +1,4 @@
 use axum::{extract::Path, TypedHeader, Extension};
-use hyper::StatusCode;
 use model::{
     AccountId, Location, Profile, ProfileInternal, ProfilePage, ProfileUpdate,
     ProfileUpdateInternal, AccountIdInternal,
@@ -8,7 +7,7 @@ use tracing::error;
 
 use super::{
     db_write,
-    utils::{AccessTokenHeader, Json},
+    utils::{AccessTokenHeader, Json, StatusCode},
     GetAccessTokens, GetConfig, GetInternalApi, GetAccounts, ReadData, WriteData,
 };
 
@@ -54,36 +53,22 @@ pub async fn get_profile<
     let requested_profile = state
         .accounts()
         .get_internal_id(requested_profile)
-        .await
-        .map_err(|e| {
-            error!("get_profile: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
-    if account_id.as_light() == requested_profile.as_light() {
+    if account_id.as_id() == requested_profile.as_id() {
         return state
             .read()
             .profile()
             .profile(requested_profile)
             .await
-            .map(|profile| {
-                let profile: Profile = profile.into();
-                profile.into()
-            })
-            .map_err(|e| {
-                error!("get_profile: {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            });
+            .map_err(Into::into)
+            .map(|p| Into::<Profile>::into(p).into());
     }
 
     let visibility = state
         .read()
         .profile_visibility(requested_profile)
-        .await
-        .map_err(|e| {
-            error!("get_profile: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     let visiblity = match visibility {
         Some(v) => v,
@@ -91,23 +76,12 @@ pub async fn get_profile<
             let account = state
                 .internal_api()
                 .get_account_state(requested_profile)
-                .await
-                .map_err(|e| {
-                    error!("get_profile: {e:?}");
-                    StatusCode::INTERNAL_SERVER_ERROR
-                })?;
+                .await?;
             let visibility = account.capablities().view_public_profiles;
-            state
-                .write(move |cmds| async move {
-                    cmds.profile()
-                        .profile_update_visibility(requested_profile, visibility, true)
-                        .await
-                })
-                .await
-                .map_err(|e| {
-                    error!("get_profile: {e:?}");
-                    StatusCode::INTERNAL_SERVER_ERROR
-                })?;
+            db_write!(state, move |cmds| {
+                cmds.profile()
+                    .profile_update_visibility(requested_profile, visibility, true)
+            })?;
 
             visibility
         }
@@ -119,14 +93,8 @@ pub async fn get_profile<
             .profile()
             .profile(requested_profile)
             .await
-            .map(|profile| {
-                let profile: Profile = profile.into();
-                profile.into()
-            })
-            .map_err(|e| {
-                error!("get_profile: {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })
+            .map_err(Into::into)
+            .map(|p| Into::<Profile>::into(p).into())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
@@ -158,16 +126,12 @@ pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let old_profile: ProfileInternal = state
+    let old_profile: Profile = state
         .read()
         .profile()
         .profile(account_id)
-        .await
-        .map_err(|e| {
-            error!("post_profile: read current profile, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })?;
-    let old_profile: Profile = old_profile.into();
+        .await?
+        .into();
 
     if profile == old_profile.into_update() {
         return Ok(());
@@ -176,13 +140,6 @@ pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
     let new = ProfileUpdateInternal::new(profile);
 
     db_write!(state, move |cmds| cmds.profile().profile(account_id, new))
-        .await
-        .map_err(|e| {
-            error!("post_profile: write profile, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-        })?;
-
-    Ok(())
 }
 
 pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
@@ -204,19 +161,10 @@ pub async fn put_location<S: GetAccessTokens + WriteData>(
     Json(location): Json<Location>,
     state: S,
 ) -> Result<(), StatusCode> {
-    state
-        .write(move |cmds| async move {
-            cmds.profile()
-                .profile_update_location(account_id, location)
-                .await
-        })
-        .await
-        .map_err(|e| {
-            error!("put_location, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-
-    Ok(())
+    db_write!(state, move |cmds|
+        cmds.profile()
+            .profile_update_location(account_id, location)
+    )
 }
 
 pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
@@ -237,14 +185,10 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
     state: S,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     let data = state
-        .write_concurrent(account_id.as_light(), move |cmds| async move {
+        .write_concurrent(account_id.as_id(), move |cmds| async move {
             cmds.next_profiles(account_id).await
         })
-        .await
-        .map_err(|e| {
-            error!("put_location, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     Ok(ProfilePage { profiles: data }.into())
 }
@@ -269,27 +213,16 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    state
-        .write(move |cmds| async move {
-            cmds.profile()
-                .profile_update_location(account_id, Location::default())
-                .await
-        })
-        .await
-        .map_err(|e| {
-            error!("post_reset_profile_paging, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    db_write!(state, move |cmds|
+        cmds.profile()
+            .profile_update_location(account_id, Location::default())
+    )?;
 
     state
-        .write_concurrent(account_id.as_light(), move |cmds| async move {
+        .write_concurrent(account_id.as_id(), move |cmds| async move {
             cmds.reset_profile_iterator(account_id).await
         })
-        .await
-        .map_err(|e| {
-            error!("post_reset_profile_paging, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     Ok(())
 }
@@ -329,26 +262,16 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
     let requested_profile = state
         .accounts()
         .get_internal_id(requested_profile)
-        .await
-        .map_err(|e| {
-            error!("get_profile: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
-    if account_id.as_light() == requested_profile.as_light() {
-        return state
+    if account_id.as_id() == requested_profile.as_id() {
+        let profile: Profile = state
             .read()
             .profile()
             .read_profile_directly_from_database(requested_profile)
-            .await
-            .map(|profile| {
-                let profile: Profile = profile.into();
-                profile.into()
-            })
-            .map_err(|e| {
-                error!("get_profile: {e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            });
+            .await?
+            .into();
+        Ok(profile.into())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
@@ -379,16 +302,12 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let old_profile: ProfileInternal = state
+    let old_profile: Profile = state
         .read()
         .profile()
         .profile(account_id)
-        .await
-        .map_err(|e| {
-            error!("post_profile: read current profile, {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR // Database reading failed.
-        })?;
-    let old_profile: Profile = old_profile.into();
+        .await?
+        .into();
 
     if profile == old_profile.into_update() {
         return Ok(());
@@ -400,11 +319,4 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
         cmds.profile()
             .benchmark_update_profile_bypassing_cache(account_id, new)
     })
-    .await
-    .map_err(|e| {
-        error!("post_profile: write profile, {e:?}");
-        StatusCode::INTERNAL_SERVER_ERROR // Database writing failed.
-    })?;
-
-    Ok(())
 }

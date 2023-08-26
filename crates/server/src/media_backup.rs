@@ -41,8 +41,8 @@ pub enum MediaBackupError {
     #[error("Config error")]
     ConfigError,
 
-    #[error("Database error")]
-    DatabaseError,
+    #[error("Data error")]
+    DataError,
 
     #[error("Invalid output")]
     InvalidOutput,
@@ -233,7 +233,7 @@ impl MediaBackupManager {
         };
 
         let db_root = DatabaseRoot::new(&self.config.database_dir())
-            .change_context(MediaBackupError::DatabaseError)?;
+            .change_context(MediaBackupError::DataError)?;
         let files_dir = db_root.file_dir();
         let mut files_dir_string = files_dir.path().to_string_lossy().to_string();
         if !files_dir_string.ends_with("/") {
@@ -280,7 +280,7 @@ impl MediaBackupManager {
         content: ContentId,
     ) -> Result<(), MediaBackupError> {
         let db_root = DatabaseRoot::new(&self.config.database_dir())
-            .change_context(MediaBackupError::DatabaseError)?;
+            .change_context(MediaBackupError::DataError)?;
         let image_file = db_root.file_dir().image_content(account, content);
         let abs_src_file =
             std::fs::canonicalize(image_file.path()).into_error(MediaBackupError::InvalidPath)?;

@@ -57,7 +57,7 @@ pub const DB_FILE_DIR_NAME: &str = "files";
 pub type DatabeseEntryId = String;
 
 #[derive(thiserror::Error, Debug)]
-pub enum DatabaseError {
+pub enum DataError {
     #[error("Git error")]
     Git,
     #[error("SQLite error")]
@@ -96,6 +96,29 @@ pub enum DatabaseError {
     SqliteVersionMismatch,
 }
 
+pub trait WithInfo<Ok, Err: Context>: Sized + Into<Result<Ok, Err>> {
+    #[track_caller]
+    fn with_info<T: Debug + IsLoggingAllowed>(
+        self,
+        request_context: T,
+    ) -> Result<Ok, Err> {
+        self.into()
+            .attach_printable_lazy(move || {
+                let context = ErrorContext::<T, Ok>::new(
+                    request_context,
+                );
+
+                format!("{:#?}", context)
+            })
+    }
+}
+
+impl <Ok> WithInfo<Ok, DataError>
+    for Result<Ok, DataError> {}
+
+impl <Ok> WithInfo<Ok, CacheError>
+    for Result<Ok, CacheError> {}
+
 pub trait IntoDataError<Ok, Err: Context>: Sized {
     fn into_data_error_without_context(self) -> Result<Ok, Err>;
 
@@ -108,7 +131,6 @@ pub trait IntoDataError<Ok, Err: Context>: Sized {
             .attach_printable_lazy(move || {
                 let context = ErrorContext::<T, Ok>::new(
                     request_context,
-                    RUNNING_IN_DEBUG_MODE.value(),
                 );
 
                 format!("{:#?}", context)
@@ -116,19 +138,21 @@ pub trait IntoDataError<Ok, Err: Context>: Sized {
     }
 }
 
-impl<Ok> IntoDataError<Ok, DatabaseError>
+impl<Ok> IntoDataError<Ok, DataError>
     for Result<Ok, crate::data::file::FileError>
 {
-    fn into_data_error_without_context(self) -> Result<Ok, DatabaseError> {
-        self.change_context(DatabaseError::File)
+    #[track_caller]
+    fn into_data_error_without_context(self) -> Result<Ok, DataError> {
+        self.change_context(DataError::File)
     }
 }
 
-impl<Ok> IntoDataError<Ok, DatabaseError>
+impl<Ok> IntoDataError<Ok, DataError>
     for Result<Ok, crate::data::cache::CacheError>
 {
-    fn into_data_error_without_context(self) -> Result<Ok, DatabaseError> {
-        self.change_context(DatabaseError::Cache)
+    #[track_caller]
+    fn into_data_error_without_context(self) -> Result<Ok, DataError> {
+        self.change_context(DataError::Cache)
     }
 }
 
@@ -142,27 +166,27 @@ pub struct DatabaseRoot {
 }
 
 impl DatabaseRoot {
-    pub fn new<T: AsRef<Path>>(path: T) -> Result<Self, DatabaseError> {
+    pub fn new<T: AsRef<Path>>(path: T) -> Result<Self, DataError> {
         let root = path.as_ref().to_path_buf();
         if !root.exists() {
-            fs::create_dir(&root).into_error(DatabaseError::Init)?;
+            fs::create_dir(&root).into_error(DataError::Init)?;
         }
 
         let history = root.join(DB_HISTORY_DIR_NAME);
         if !history.exists() {
-            fs::create_dir(&history).into_error(DatabaseError::Init)?;
+            fs::create_dir(&history).into_error(DataError::Init)?;
         }
         let history = SqliteDatabasePath::new(history);
 
         let current = root.join(DB_CURRENT_DATA_DIR_NAME);
         if !current.exists() {
-            fs::create_dir(&current).into_error(DatabaseError::Init)?;
+            fs::create_dir(&current).into_error(DataError::Init)?;
         }
         let current = SqliteDatabasePath::new(current);
 
         let file_dir = root.join(DB_FILE_DIR_NAME);
         if !file_dir.exists() {
-            fs::create_dir(&file_dir).into_error(DatabaseError::Init)?;
+            fs::create_dir(&file_dir).into_error(DataError::Init)?;
         }
         let file_dir = FileDir::new(file_dir);
 
@@ -229,7 +253,7 @@ impl DatabaseManager {
         database_dir: T,
         config: Arc<Config>,
         media_backup: MediaBackupHandle,
-    ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DatabaseError> {
+    ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DataError> {
         info!("Creating DatabaseManager");
 
         let root = DatabaseRoot::new(database_dir)?;
@@ -240,59 +264,59 @@ impl DatabaseManager {
         let (diesel_current_write, diesel_current_write_close) =
             DieselWriteHandle::new(&config, root.current_db_file())
                 .await
-                .change_context(DatabaseError::Init)?;
+                .change_context(DataError::Init)?;
 
         let diesel_sqlite = diesel_current_write
             .sqlite_version()
             .await
-            .change_context(DatabaseError::Sqlite)?;
+            .change_context(DataError::Sqlite)?;
         info!("Diesel SQLite version: {}", diesel_sqlite);
 
         let (diesel_current_read, diesel_current_read_close) =
             DieselReadHandle::new(&config, root.current_db_file())
                 .await
-                .change_context(DatabaseError::Init)?;
+                .change_context(DataError::Init)?;
 
         let (diesel_history_write, diesel_history_write_close) =
             DieselWriteHandle::new(&config, root.history_db_file())
                 .await
-                .change_context(DatabaseError::Init)?;
+                .change_context(DataError::Init)?;
 
         let (diesel_history_read, diesel_history_read_close) =
             DieselReadHandle::new(&config, root.history_db_file())
                 .await
-                .change_context(DatabaseError::Init)?;
+                .change_context(DataError::Init)?;
 
         // Sqlx
 
         let (sqlite_write, sqlite_write_close) =
             SqliteWriteHandle::new(&config, root.current_db_file())
                 .await
-                .change_context(DatabaseError::Init)?;
+                .change_context(DataError::Init)?;
 
         let sqlx_sqlite = sqlite_write
             .sqlite_version()
             .await
-            .change_context(DatabaseError::Init)?;
+            .change_context(DataError::Init)?;
         info!("Sqlx SQLite version: {}", sqlx_sqlite);
 
         if diesel_sqlite != sqlx_sqlite {
-            return Err(DatabaseError::SqliteVersionMismatch).into_report();
+            return Err(DataError::SqliteVersionMismatch).into_report();
         }
 
         let (sqlite_read, sqlite_read_close) = SqlxReadHandle::new(&config, root.current_db_file())
             .await
-            .change_context(DatabaseError::Init)?;
+            .change_context(DataError::Init)?;
 
         let (history_write, history_write_close) =
             SqliteWriteHandle::new(&config, root.history_db_file())
                 .await
-                .change_context(DatabaseError::Init)?;
+                .change_context(DataError::Init)?;
 
         let (history_read, history_read_close) =
             SqlxReadHandle::new(&config, root.history_db_file())
                 .await
-                .change_context(DatabaseError::Init)?;
+                .change_context(DataError::Init)?;
 
         let read_commands = SqliteReadCommands::new(&sqlite_read);
         let index = LocationIndexManager::new(config.clone());
@@ -309,7 +333,7 @@ impl DatabaseManager {
             &config,
         )
         .await
-        .change_context(DatabaseError::Cache)?;
+        .change_context(DataError::Cache)?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
@@ -418,7 +442,7 @@ impl RouterDatabaseWriteHandle {
         &self,
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
-    ) -> Result<AccountIdInternal, DatabaseError> {
+    ) -> Result<AccountIdInternal, DataError> {
         self.user_write_commands()
             .register(id_light, sign_in_with_info)
             .await
@@ -517,7 +541,7 @@ impl SyncWriteHandle {
         &self,
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
-    ) -> Result<AccountIdInternal, DatabaseError> {
+    ) -> Result<AccountIdInternal, DataError> {
         self.cmds().register(id_light, sign_in_with_info).await
     }
 }

@@ -2,7 +2,7 @@ use database::{current::write::media::CurrentSyncWriteMedia, diesel::DieselDatab
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
 
-use crate::data::DatabaseError;
+use crate::data::DataError;
 
 define_write_commands!(WriteCommandsMedia);
 
@@ -11,7 +11,7 @@ impl WriteCommandsMedia<'_> {
         &self,
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         self.db_write(move |mut cmds| {
             cmds.media()
                 .create_new_moderation_request(account_id, request)
@@ -25,7 +25,7 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         content_id: ContentId,
         slot: ImageSlot,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         // Remove previous slot image.
         let current_content_in_slot = self
             .db_read(move |mut cmds| cmds.media().get_content_id_from_slot(id, slot))
@@ -34,27 +34,27 @@ impl WriteCommandsMedia<'_> {
         if let Some(current_id) = current_content_in_slot {
             let path = self
                 .file_dir()
-                .image_content(id.as_light(), current_id.as_content_id());
+                .image_content(id.as_id(), current_id.as_content_id());
             path.remove_if_exists()
                 .await
-                .change_context(DatabaseError::File)?;
+                .change_context(DataError::File)?;
             self.db_write(move |mut cmds| cmds.media().delete_image_from_slot(id, slot))
                 .await
-                .change_context(DatabaseError::Sqlite)?;
+                .change_context(DataError::Sqlite)?;
         }
 
         // Paths related to moving image from tmp to image dir
         let raw_img = self
             .file_dir()
-            .unprocessed_image_upload(id.as_light(), content_id);
-        let processed_content_path = self.file_dir().image_content(id.as_light(), content_id);
+            .unprocessed_image_upload(id.as_id(), content_id);
+        let processed_content_path = self.file_dir().image_content(id.as_id(), content_id);
 
         if self
             .db_read(move |mut cmds| cmds.media().get_content_id_from_slot(id, slot))
             .await?
             .is_some()
         {
-            return Err(DatabaseError::ContentSlotNotEmpty.into());
+            return Err(DataError::ContentSlotNotEmpty.into());
         }
 
         self.db_transaction(move |conn| {
@@ -71,16 +71,16 @@ impl WriteCommandsMedia<'_> {
         .await?;
 
         self.media_backup()
-            .backup_jpeg_image(id.as_light(), content_id)
+            .backup_jpeg_image(id.as_id(), content_id)
             .await
-            .change_context(DatabaseError::MediaBackup)
+            .change_context(DataError::MediaBackup)
     }
 
     pub async fn update_primary_image(
         self,
         id: AccountIdInternal,
         primary_image: PrimaryImage,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         self.db_write(move |mut cmds| cmds.media().primary_image(id, primary_image))
             .await
     }

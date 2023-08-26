@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, fmt::Debug};
 
 use api::BackendVersionProvider;
 use axum::{
@@ -19,7 +19,7 @@ use super::{
         utils::{AccountIdManager, AccessTokenManager},
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
         write_concurrent::ConcurrentWriteHandle,
-        DatabaseError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
+        DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
@@ -76,24 +76,24 @@ impl ReadData for AppState {
 impl WriteData for AppState {
     async fn write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send + 'static,
+        Cmd: Future<Output = Result<CmdResult, DataError>> + Send + 'static,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
     >(
         &self,
         cmd: GetCmd,
-    ) -> Result<CmdResult, DatabaseError> {
+    ) -> Result<CmdResult, DataError> {
         self.write_queue.write(cmd).await
     }
 
     async fn write_concurrent<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send + 'static,
+        Cmd: Future<Output = Result<CmdResult, DataError>> + Send + 'static,
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
     >(
         &self,
         account: AccountId,
         cmd: GetCmd,
-    ) -> Result<CmdResult, DatabaseError> {
+    ) -> Result<CmdResult, DataError> {
         self.write_queue.concurrent_write(account, cmd).await
     }
 }

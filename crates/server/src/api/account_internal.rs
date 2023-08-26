@@ -1,11 +1,10 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::extract::Path;
-use hyper::StatusCode;
 use model::{Account, AccountId, AccessToken};
 use tracing::error;
 
-use crate::api::{utils::Json, GetAccessTokens, GetAccounts, ReadData};
+use crate::api::{utils::{Json, StatusCode}, GetAccessTokens, GetAccounts, ReadData};
 
 pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
 
@@ -28,7 +27,7 @@ pub async fn check_access_token<S: GetAccessTokens>(
         .access_token_exists(&token)
         .await
         .ok_or(StatusCode::NOT_FOUND)
-        .map(|id| id.as_light().into())
+        .map(|id| id.as_id().into())
 }
 
 pub const PATH_INTERNAL_GET_ACCOUNT_STATE: &str = "/internal/get_account_state/:account_id";
@@ -50,20 +49,13 @@ pub async fn internal_get_account_state<S: ReadData + GetAccounts>(
     let internal_id = state
         .accounts()
         .get_internal_id(account_id)
-        .await
-        .map_err(|e| {
-            error!("Internal get account state error: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
-    state
+    let account = state
         .read()
         .account()
         .account(internal_id)
-        .await
-        .map(|account| account.into())
-        .map_err(|e| {
-            error!("Internal get account state error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })
+        .await?;
+
+    Ok(account.into())
 }

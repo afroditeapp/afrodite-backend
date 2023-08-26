@@ -4,7 +4,7 @@ use model::{AccountIdInternal, AccountId, ContentId, CurrentAccountMediaInternal
 use crate::data::IntoDataError;
 
 use super::{
-    super::{cache::DatabaseCache, file::utils::FileDir, DatabaseError},
+    super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
 
@@ -15,7 +15,7 @@ impl ReadCommandsMedia<'_> {
         &self,
         account_id: AccountId,
         content_id: ContentId,
-    ) -> Result<Vec<u8>, DatabaseError> {
+    ) -> Result<Vec<u8>, DataError> {
         self.files()
             .image_content(account_id, content_id)
             .read_all()
@@ -26,7 +26,7 @@ impl ReadCommandsMedia<'_> {
     pub async fn current_account_media(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<CurrentAccountMediaInternal, DatabaseError> {
+    ) -> Result<CurrentAccountMediaInternal, DataError> {
         self.db_read(move |mut cmds| cmds.media().current_account_media(account_id))
             .await
     }

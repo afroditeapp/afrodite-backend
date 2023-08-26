@@ -21,9 +21,8 @@ use self::{
 use super::{
     cache::{DatabaseCache},
     file::utils::FileDir,
-    DatabaseError, IntoDataError,
+    DataError, IntoDataError,
 };
-use crate::utils::{ErrorConversion};
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
@@ -63,7 +62,7 @@ macro_rules! define_read_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DatabaseError> {
+            ) -> error_stack::Result<R, crate::data::DataError> {
                 self.cmds.db_read(cmd).await
             }
 
@@ -72,12 +71,12 @@ macro_rules! define_read_commands {
                 &self,
                 id: Id,
                 cache_operation: impl Fn(&crate::data::cache::CacheEntry) -> T,
-            ) -> error_stack::Result<T, crate::data::DatabaseError> {
+            ) -> error_stack::Result<T, crate::data::DataError> {
                 use error_stack::ResultExt;
                 self.cache()
                     .read_cache(id, cache_operation)
                     .await
-                    .change_context(crate::data::DatabaseError::Cache)
+                    .change_context(crate::data::DataError::Cache)
             }
         }
     };
@@ -150,7 +149,7 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountId,
         content_id: ContentId,
-    ) -> Result<ReaderStream<tokio::fs::File>, DatabaseError> {
+    ) -> Result<ReaderStream<tokio::fs::File>, DataError> {
         self.files
             .image_content(account_id, content_id)
             .read_stream()
@@ -161,7 +160,7 @@ impl<'a> ReadCommands<'a> {
     pub async fn all_account_media(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<Vec<MediaContentInternal>, DatabaseError> {
+    ) -> Result<Vec<MediaContentInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.media().get_account_media(account_id))
             .await
     }
@@ -169,7 +168,7 @@ impl<'a> ReadCommands<'a> {
     pub async fn moderation_request(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<Option<ModerationRequest>, DatabaseError> {
+    ) -> Result<Option<ModerationRequest>, DataError> {
         self.db_read(move |mut cmds| cmds.media().moderation_request(account_id))
             .await
             .map(|r| r.map(|request| request.into_request()))
@@ -178,13 +177,13 @@ impl<'a> ReadCommands<'a> {
     pub async fn profile_visibility(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<Option<bool>, DatabaseError> {
+    ) -> Result<Option<bool>, DataError> {
         self.cache
-            .read_cache(account_id.as_light(), |e| {
+            .read_cache(account_id.as_id(), |e| {
                 e.profile.as_ref().map(|p| p.public).flatten()
             })
             .await
-            .change_context(DatabaseError::Cache)
+            .change_context(DataError::Cache)
     }
 
     #[track_caller]
@@ -194,19 +193,19 @@ impl<'a> ReadCommands<'a> {
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DatabaseError> {
+    ) -> Result<R, DataError> {
         let conn = self
             .diesel_current_read
             .pool()
             .get()
             .await
             .into_error(DieselDatabaseError::GetConnection)
-            .change_context(DatabaseError::Diesel)?;
+            .change_context(DataError::Diesel)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
             .await
             .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DatabaseError::Diesel)?
-            .change_context(DatabaseError::Diesel)
+            .change_context(DataError::Diesel)?
+            .change_context(DataError::Diesel)
     }
 }

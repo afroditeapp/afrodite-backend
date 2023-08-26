@@ -1,7 +1,7 @@
 use error_stack::Result;
 use model::{Account, AccountIdInternal, AccountSetup};
 
-use crate::data::DatabaseError;
+use crate::data::DataError;
 
 define_write_commands!(WriteCommandsAccount);
 
@@ -10,7 +10,7 @@ impl WriteCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
         account: Account,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         let a = account.clone();
         self.db_write(move |cmds| cmds.into_account().account(id, &a))
             .await?;
@@ -25,7 +25,7 @@ impl WriteCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
         account_setup: AccountSetup,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         self.db_write(move |cmds| cmds.into_account().account_setup(id, &account_setup))
             .await?;
         Ok(())

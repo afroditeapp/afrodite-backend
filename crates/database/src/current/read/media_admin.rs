@@ -41,8 +41,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
                 .into_error(DieselDatabaseError::SerdeDeserialize)?;
 
             let moderation = Moderation {
-                request_creator_id: account.as_light(),
-                moderator_id: moderator_id.as_light(),
+                request_creator_id: account.as_id(),
+                moderator_id: moderator_id.as_id(),
                 request_id: ModerationRequestId {
                     request_row_id: moderation_request.id,
                 },

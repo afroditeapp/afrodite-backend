@@ -3,7 +3,6 @@ use axum::{
     Extension, TypedHeader,
 };
 use headers::ContentType;
-use hyper::StatusCode;
 use model::{
     AccountIdInternal, AccountId, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
     ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SlotId,
@@ -12,7 +11,7 @@ use tracing::error;
 
 use super::{
     db_write,
-    utils::{AccessTokenHeader, Json},
+    utils::{AccessTokenHeader, Json, StatusCode},
     GetAccessTokens, GetAccounts, ReadData, WriteData,
 };
 
@@ -181,12 +180,8 @@ pub async fn put_primary_image<S: WriteData>(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_primary_image(api_caller_account_id, new_image))
-    .await
-    .map_err(|e| {
-        error!("{}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })
+        .update_primary_image(api_caller_account_id, new_image)
+    )
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
@@ -211,11 +206,7 @@ pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
     let request = state
         .read()
         .moderation_request(account_id)
-        .await
-        .map_err(|e| {
-            error!("{}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?
+        .await?
         .ok_or(StatusCode::NOT_MODIFIED)?;
 
     Ok(request.into())
@@ -242,17 +233,10 @@ pub async fn put_moderation_request<S: WriteData + GetAccessTokens>(
     Json(moderation_request): Json<ModerationRequestContent>,
     state: S,
 ) -> Result<(), StatusCode> {
-    state
-        .write(move |cmds| async move {
-            cmds.media()
-                .set_moderation_request(account_id, moderation_request)
-                .await
-        })
-        .await
-        .map_err(|e| {
-            error!("{:?}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })
+    db_write!(state, move |cmds| {
+        cmds.media()
+            .set_moderation_request(account_id, moderation_request)
+    })
 }
 
 pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/slot/:slot_id";
@@ -290,7 +274,7 @@ pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
     };
 
     let content_id = state
-        .write_concurrent(account_id.as_light(), move |cmds| async move {
+        .write_concurrent(account_id.as_id(), move |cmds| async move {
             cmds.save_to_tmp(account_id, image).await
         })
         .await

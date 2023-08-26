@@ -2,8 +2,7 @@ use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use crate::{
-    data::{cache::CacheError, DatabaseError},
-    utils::ErrorConversion,
+    data::{cache::CacheError, DataError, IntoDataError},
 };
 
 define_write_commands!(WriteCommandsProfile);
@@ -14,10 +13,10 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         public: bool,
         update_only_if_no_value: bool,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         let (visiblity, location, profile_link) = self
             .cache()
-            .write_cache(id.as_light(), |e| {
+            .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
                 // Handle race condition between remote fetch and update.
@@ -33,22 +32,22 @@ impl WriteCommandsProfile<'_> {
                 Ok((
                     p.public.unwrap_or_default(),
                     p.location.current_position,
-                    ProfileLink::new(id.as_light(), &p.data),
+                    ProfileLink::new(id.as_id(), &p.data),
                 ))
             })
             .await
-            .with_info(id)?;
+            .into_data_error(id)?;
 
         let index = self
             .location()
             .get()
-            .ok_or(DatabaseError::FeatureDisabled)?;
+            .ok_or(DataError::FeatureDisabled)?;
         if visiblity {
             index
-                .update_profile_link(id.as_light(), profile_link, location)
+                .update_profile_link(id.as_id(), profile_link, location)
                 .await;
         } else {
-            index.remove_profile_link(id.as_light(), location).await;
+            index.remove_profile_link(id.as_id(), location).await;
         }
 
         Ok(())
@@ -58,20 +57,20 @@ impl WriteCommandsProfile<'_> {
         self,
         id: AccountIdInternal,
         coordinates: Location,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         let location = self
             .cache()
-            .read_cache(id.as_light(), |e| {
+            .read_cache(id.as_id(), |e| {
                 e.profile.as_ref().map(|p| p.location.clone())
             })
             .await
-            .with_info(id)?
-            .ok_or(DatabaseError::FeatureDisabled)?;
+            .into_data_error(id)?
+            .ok_or(DataError::FeatureDisabled)?;
 
         let write_to_index = self
             .location()
             .get()
-            .ok_or(DatabaseError::FeatureDisabled)?;
+            .ok_or(DataError::FeatureDisabled)?;
         let new_location_key = write_to_index.coordinates_to_key(coordinates);
 
         // TODO: Create new database table for location.
@@ -79,7 +78,7 @@ impl WriteCommandsProfile<'_> {
         self.db_write(move |cmds| cmds.into_profile().profile_location(id, new_location_key))
             .await?;
         write_to_index
-            .update_profile_location(id.as_light(), location.current_position, new_location_key)
+            .update_profile_location(id.as_id(), location.current_position, new_location_key)
             .await;
 
         Ok(())
@@ -89,13 +88,13 @@ impl WriteCommandsProfile<'_> {
         self,
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         let profile_data = data.clone();
         self.db_write(move |cmds| cmds.into_profile().profile(id, profile_data))
             .await?;
 
         self.cache()
-            .write_cache(id.as_light(), |e| {
+            .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
                 p.data.profile_text = data.new_data.profile_text;
@@ -103,7 +102,7 @@ impl WriteCommandsProfile<'_> {
                 Ok(())
             })
             .await
-            .with_info(id)?;
+            .into_data_error(id)?;
 
         Ok(())
     }
@@ -112,7 +111,7 @@ impl WriteCommandsProfile<'_> {
         self,
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
-    ) -> Result<(), DatabaseError> {
+    ) -> Result<(), DataError> {
         self.db_write(move |cmds| cmds.into_profile().profile(id, data))
             .await?;
 

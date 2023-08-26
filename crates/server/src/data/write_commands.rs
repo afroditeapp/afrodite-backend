@@ -12,7 +12,7 @@ use super::{
     write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
     RouterDatabaseWriteHandle, SyncWriteHandle,
 };
-use crate::data::DatabaseError;
+use crate::data::DataError;
 
 pub type WriteCmds = Cmds;
 
@@ -53,12 +53,12 @@ impl WriteCommandRunnerHandle {
 
     pub async fn write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send,
+        Cmd: Future<Output = Result<CmdResult, DataError>> + Send,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
     >(
         &self,
         write_cmd: GetCmd,
-    ) -> Result<CmdResult, DatabaseError> {
+    ) -> Result<CmdResult, DataError> {
         let quit_lock = self.quit_lock.clone();
         let lock = self.sync_write_mutex.clone().lock_owned().await;
         let handle = tokio::spawn(async move {
@@ -69,18 +69,18 @@ impl WriteCommandRunnerHandle {
 
         handle
             .await
-            .into_error(DatabaseError::CommandResultReceivingFailed)?
+            .into_error(DataError::CommandResultReceivingFailed)?
     }
 
     pub async fn concurrent_write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DatabaseError>> + Send,
+        Cmd: Future<Output = Result<CmdResult, DataError>> + Send,
         GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
     >(
         &self,
         account: AccountId,
         write_cmd: GetCmd,
-    ) -> Result<CmdResult, DatabaseError> {
+    ) -> Result<CmdResult, DataError> {
         let quit_lock = self.quit_lock.clone();
         let lock = self.concurrent_write.accquire(account).await;
         let handle = tokio::spawn(async move {
@@ -91,7 +91,7 @@ impl WriteCommandRunnerHandle {
 
         handle
             .await
-            .into_error(DatabaseError::CommandResultReceivingFailed)?
+            .into_error(DataError::CommandResultReceivingFailed)?
     }
 }
 
