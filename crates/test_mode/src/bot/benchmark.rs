@@ -64,8 +64,7 @@ impl Benchmark {
     pub fn benchmark_get_profile(state: BotState) -> Self {
         let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
-            &UpdateProfileCmdArgBenchmark as &dyn BotAction,
-            &ActionsBeforeIteration,
+            &ActionsBeforeIteration as &dyn BotAction,
             &GetProfile,
             &ActionsAfterIteration,
         ];
@@ -81,8 +80,7 @@ impl Benchmark {
     pub fn benchmark_get_profile_from_database(state: BotState) -> Self {
         let setup = [&Register as &dyn BotAction, &Login];
         let benchmark = [
-            &UpdateProfileCmdArgBenchmark as &dyn BotAction,
-            &ActionsBeforeIteration,
+            &ActionsBeforeIteration as &dyn BotAction,
             &GetProfileFromDatabase,
             &ActionsAfterIteration,
         ];
@@ -98,8 +96,7 @@ impl Benchmark {
     pub fn benchmark_get_profile_list(state: BotState) -> Self {
         let setup = [&RunActions(TO_NORMAL_STATE) as &dyn BotAction];
         let benchmark = [
-            &UpdateProfileCmdArgBenchmark as &dyn BotAction,
-            &ActionsBeforeIteration,
+            &ActionsBeforeIteration as &dyn BotAction,
             &ResetProfileIterator,
             &RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileList),
             &ActionsAfterIteration,
@@ -235,35 +232,12 @@ impl BotAction for PostProfileToDatabase {
 }
 
 #[derive(Debug)]
-pub struct UpdateProfileCmdArgBenchmark;
-
-#[async_trait]
-impl BotAction for UpdateProfileCmdArgBenchmark {
-    async fn excecute_impl_task_state(
-        &self,
-        state: &mut BotState,
-        task_state: &mut TaskState,
-    ) -> Result<(), TestError> {
-        let time = Instant::now();
-
-        if state.config.update_profile && state.benchmark.update_profile_timer.passed() {
-            ChangeProfileText.excecute(state, task_state).await?;
-
-            if state.is_first_bot() {
-                info!("post_profile: {:?}", time.elapsed());
-            }
-        }
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
 struct ActionsBeforeIteration;
 
 #[async_trait]
 impl BotAction for ActionsBeforeIteration {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        if !state.config.no_sleep {
+        if !state.config.no_sleep() {
             sleep(Duration::from_millis(1000)).await;
         }
 

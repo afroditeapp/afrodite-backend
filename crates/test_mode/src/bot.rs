@@ -8,7 +8,7 @@ use std::{fmt::Debug, sync::Arc, vec};
 
 use api_client::models::AccountId;
 use async_trait::async_trait;
-use config::args::{Test, TestMode};
+use config::args::{TestMode, TestModeSubMode, BotConfig, SelectedBenchmark};
 use error_stack::{Result, ResultExt};
 use tokio::{
     net::TcpStream,
@@ -128,7 +128,7 @@ pub trait BotStruct: Debug + Send + 'static {
         task_state: &mut TaskState,
     ) -> Result<Option<Completed>, TestError> {
         let mut result = self.run_action_impl(task_state).await;
-        if let Test::Qa = self.state().config.test {
+        if self.state().config.qa_mode().is_some() {
             result = result.attach_printable_lazy(|| format!("{:?}", self.state().action_history))
         }
         result.attach_printable_lazy(|| format!("{:?}", self))
@@ -150,7 +150,7 @@ pub trait BotStruct: Debug + Send + 'static {
                 };
 
                 state.previous_action = action;
-                if let Test::Qa = state.config.test {
+                if state.config.qa_mode().is_some() {
                     state.action_history.push(action)
                 }
                 self.next_action();
@@ -179,14 +179,10 @@ impl BotManager {
         bot_quit_receiver: watch::Receiver<()>,
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) {
-        let bot = match config.test {
-            Test::BenchmarkGetProfileList
-            | Test::BenchmarkGetProfile
-            | Test::BenchmarkGetProfileFromDatabase
-            | Test::BenchmarkPostProfile
-            | Test::BenchmarkPostProfileToDatabase
-            | Test::Bot => Self::benchmark_or_bot(task_id, old_state, config, _bot_running_handle),
-            Test::Qa => Self::qa(task_id, config, _bot_running_handle),
+        let bot = match config.mode {
+            TestModeSubMode::Benchmark(_)
+            | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(task_id, old_state, config, _bot_running_handle),
+            TestModeSubMode::Qa(_) => Self::qa(task_id, config, _bot_running_handle),
         };
 
         tokio::spawn(bot.run(bot_quit_receiver));
@@ -199,7 +195,7 @@ impl BotManager {
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
-        for bot_i in 0..config.bots {
+        for bot_i in 0..config.bots() {
             let state = BotState::new(
                 old_state
                     .as_ref()
@@ -214,28 +210,32 @@ impl BotManager {
                 ApiClient::new(config.server.api_urls.clone()),
             );
 
-            match config.test {
-                Test::BenchmarkGetProfile => {
-                    bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
+            match (config.selected_benchmark(), config.bot_mode()) {
+                (Some(benchmark), _) => {
+                    match benchmark {
+                        SelectedBenchmark::GetProfile => {
+                            bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
+                        }
+                        SelectedBenchmark::GetProfileFromDatabase => bots.push(Box::new(
+                            Benchmark::benchmark_get_profile_from_database(state),
+                        )),
+                        SelectedBenchmark::GetProfileList => {
+                            let benchmark = match bot_i {
+                                0 => Benchmark::benchmark_get_profile_list(state),
+                                _ => Benchmark::benchmark_get_profile_list_bot(state),
+                            };
+                            bots.push(Box::new(benchmark))
+                        }
+                        SelectedBenchmark::PostProfile => {
+                            bots.push(Box::new(Benchmark::benchmark_post_profile(state)))
+                        }
+                        SelectedBenchmark::PostProfileToDatabase => bots.push(Box::new(
+                            Benchmark::benchmark_post_profile_to_database(state),
+                        )),
+                    }
                 }
-                Test::BenchmarkGetProfileFromDatabase => bots.push(Box::new(
-                    Benchmark::benchmark_get_profile_from_database(state),
-                )),
-                Test::BenchmarkGetProfileList => {
-                    let benchmark = match bot_i {
-                        0 => Benchmark::benchmark_get_profile_list(state),
-                        _ => Benchmark::benchmark_get_profile_list_bot(state),
-                    };
-                    bots.push(Box::new(benchmark))
-                }
-                Test::BenchmarkPostProfile => {
-                    bots.push(Box::new(Benchmark::benchmark_post_profile(state)))
-                }
-                Test::BenchmarkPostProfileToDatabase => bots.push(Box::new(
-                    Benchmark::benchmark_post_profile_to_database(state),
-                )),
-                Test::Bot => bots.push(Box::new(ClientBot::new(state))),
-                Test::Qa => panic!("Invalid test {:?}", config.test),
+                (_, Some(_)) => bots.push(Box::new(ClientBot::new(state))),
+                test_config => panic!("Invalid test config {:?}", test_config),
             };
         }
 
@@ -258,7 +258,7 @@ impl BotManager {
 
         let required_bots = qa::test_count() + 1;
 
-        if (config.bots as usize) < required_bots {
+        if (config.bots() as usize) < required_bots {
             warn!("Increasing bot count to {}", required_bots);
         }
 

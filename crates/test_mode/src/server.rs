@@ -3,7 +3,7 @@ use std::{
 };
 
 use config::{
-    args::{Test, TestMode},
+    args::{TestMode, SelectedBenchmark},
     file::{
         Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig, SocketConfig,
         CONFIG_FILE_NAME,
@@ -162,7 +162,7 @@ fn new_config(
             public_api: public_api.into(),
             internal_api: internal_api.into(),
         },
-        location: if config.test == Test::BenchmarkGetProfileList {
+        location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             DEFAULT_LOCATION_CONFIG_BENCHMARK
         } else {
             DEFAULT_LOCATION_CONFIG

@@ -42,7 +42,7 @@ impl TestRunner {
 
         info!("Testing mode");
 
-        let old_state = if self.test_config.save_state {
+        let old_state = if self.test_config.save_state() {
             self.load_state_data().await.map(|d| Arc::new(d))
         } else {
             None
@@ -84,10 +84,10 @@ impl TestRunner {
 
             info!(
                 "Task count: {}, Bot count per task: {}",
-                self.test_config.tasks, self.test_config.bots,
+                self.test_config.tasks(), self.test_config.bots(),
             );
 
-            while task_number < self.test_config.tasks {
+            while task_number < self.test_config.tasks() {
                 BotManager::spawn(
                     task_number,
                     self.test_config.clone(),
@@ -126,11 +126,11 @@ impl TestRunner {
         }
 
         let new_state = StateData {
-            test_name: self.test_config.test.to_string(),
+            test_name: self.test_config.test_name(),
             bot_states,
         };
 
-        if self.test_config.save_state {
+        if self.test_config.save_state() {
             self.save_state_data(&new_state).await;
         }
 
@@ -181,7 +181,7 @@ impl TestRunner {
     }
 
     fn state_data_file(&self) -> PathBuf {
-        let data_file = format!("test_{}_state_data.json", self.test_config.test.to_string());
+        let data_file = format!("test_{}_state_data.json", self.test_config.test_name());
         self.test_config.server.test_database.join(data_file)
     }
 }

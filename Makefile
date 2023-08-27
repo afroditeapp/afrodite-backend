@@ -13,7 +13,7 @@ fmt:
 fix:
 	cargo fix ${CARGO_CRATE_ARGS}
 test:
-	RUST_LOG=info cargo run --bin pihka-backend -- --sqlite-in-ram test
+	RUST_LOG=info cargo run --bin pihka-backend -- --sqlite-in-ram test qa
 unit-test:
 	DATABASE_URL="sqlite:database/current/current.db" cargo test
 run:

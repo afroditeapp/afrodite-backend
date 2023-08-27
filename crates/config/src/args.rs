@@ -29,7 +29,7 @@ pub struct ArgsConfig {
 
 #[derive(Parser, Debug, Clone)]
 pub enum AppMode {
-    /// Run tests and benchmarks
+    /// Run test, benchmark or bot mode
     Test(TestMode),
 }
 
@@ -58,14 +58,6 @@ pub struct PublicApiUrls {
 
 #[derive(Args, Debug, Clone)]
 pub struct TestMode {
-    /// Bot count per task
-    #[arg(short, long, default_value = "1", value_name = "COUNT")]
-    pub bots: u32,
-
-    /// Task count
-    #[arg(short, long, default_value = "1", value_name = "COUNT")]
-    pub tasks: u32,
-
     #[command(flatten)]
     pub server: ServerConfig,
 
@@ -79,10 +71,6 @@ pub struct TestMode {
 
     // Boolean flags
 
-    /// Make bots to make requests constantly
-    #[arg(long)]
-    pub no_sleep: bool,
-
     /// Do not remove created database files
     #[arg(long)]
     pub no_clean: bool,
@@ -91,30 +79,86 @@ pub struct TestMode {
     #[arg(long)]
     pub no_servers: bool,
 
-    /// Save and load state
-    #[arg(long)]
-    pub save_state: bool,
-
-    /// Update profile continuously
-    /// TODO remove as there is also write benchmark?
-    #[arg(long)]
-    pub update_profile: bool,
-
-    /// Print some speed information
-    #[arg(long)]
-    pub print_speed: bool,
-
     /// First error quits
     #[arg(long)]
     pub early_quit: bool,
 
-    /// Run tests forever
-    #[arg(long)]
-    pub forever: bool,
+    #[command(subcommand)]
+    pub mode: TestModeSubMode,
+}
 
-    /// Select custom test
-    #[arg(long, default_value = "qa", value_name = "NAME", value_enum)]
-    pub test: Test,
+impl TestMode {
+    pub fn bots(&self) -> u32 {
+        match &self.mode {
+            TestModeSubMode::Bot(c) => c.bots,
+            TestModeSubMode::Benchmark(c) => c.bots,
+            _ => 1,
+        }
+    }
+
+    pub fn tasks(&self) -> u32 {
+        match &self.mode {
+            TestModeSubMode::Benchmark(c) => c.tasks,
+            _ => 1,
+        }
+    }
+
+    pub fn save_state(&self) -> bool {
+        match &self.mode {
+            TestModeSubMode::Bot(c) => c.save_state,
+            TestModeSubMode::Benchmark(c) => c.save_state,
+            _ => false,
+        }
+    }
+
+    pub fn no_sleep(&self) -> bool {
+        match &self.mode {
+            TestModeSubMode::Bot(c) => c.no_sleep,
+            TestModeSubMode::Benchmark(c) => !c.sleep,
+            _ => false,
+        }
+    }
+
+    pub fn qa_mode(&self) -> Option<&QaTestConfig> {
+        match &self.mode {
+            TestModeSubMode::Qa(c) => Some(c),
+            _ => None,
+        }
+    }
+
+    pub fn bot_mode(&self) -> Option<&BotConfig> {
+        match &self.mode {
+            TestModeSubMode::Bot(c) => Some(c),
+            _ => None,
+        }
+    }
+
+    pub fn selected_benchmark(&self) -> Option<&SelectedBenchmark> {
+        match &self.mode {
+            TestModeSubMode::Benchmark(c) => Some(&c.benchmark),
+            _ => None,
+        }
+    }
+
+    /// Test name which does not have whitespace
+    pub fn test_name(&self) -> String {
+        match &self.mode {
+            TestModeSubMode::Bot(_) => format!("bot"),
+            TestModeSubMode::Qa(_) => format!("qa"),
+            TestModeSubMode::Benchmark(c) =>
+                format!("benchmark_{:?}", c.benchmark),
+        }
+    }
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum TestModeSubMode {
+    /// Run benchmark
+    Benchmark(BenchmarkConfig),
+    /// Run QA test suite
+    Qa(QaTestConfig),
+    /// Run bot mode
+    Bot(BotConfig),
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -143,18 +187,57 @@ pub struct ServerConfig {
     pub log_debug: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, ValueEnum)]
-pub enum Test {
-    Qa,
-    BenchmarkGetProfile,
-    BenchmarkGetProfileFromDatabase,
-    BenchmarkGetProfileList,
-    BenchmarkPostProfile,
-    BenchmarkPostProfileToDatabase,
-    Bot,
+#[derive(Args, Debug, Clone)]
+pub struct BenchmarkConfig {
+    /// Bot count per task
+    #[arg(short, long, default_value = "1", value_name = "COUNT")]
+    pub bots: u32,
+
+    /// Task count
+    #[arg(short, long, default_value = "1", value_name = "COUNT")]
+    pub tasks: u32,
+
+    /// Enable bot sleep time
+    #[arg(long)]
+    pub sleep: bool,
+
+    /// Select benchmark
+    #[arg(long, default_value = "get-profile", value_name = "NAME", value_enum)]
+    pub benchmark: SelectedBenchmark,
+
+    /// Save and load state
+    #[arg(long)]
+    pub save_state: bool,
 }
 
-impl Test {
+#[derive(Args, Debug, Clone)]
+pub struct QaTestConfig;
+
+#[derive(Args, Debug, Clone)]
+pub struct BotConfig {
+    /// Bot count per task
+    #[arg(short, long, default_value = "1", value_name = "COUNT")]
+    pub bots: u32,
+
+    /// Make bots to make requests constantly
+    #[arg(long)]
+    pub no_sleep: bool,
+
+    /// Save and load state
+    #[arg(long)]
+    pub save_state: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, ValueEnum)]
+pub enum SelectedBenchmark {
+    GetProfile,
+    GetProfileFromDatabase,
+    GetProfileList,
+    PostProfile,
+    PostProfileToDatabase,
+}
+
+impl SelectedBenchmark {
     pub fn to_string(&self) -> String {
         format!("{:?}", self)
     }
