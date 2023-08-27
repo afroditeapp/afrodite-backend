@@ -89,16 +89,30 @@ chat = true
 # [litestream]
 # binary = "/usr/bin/litestream"
 # config_file = "litestream.yml"
+
+# Enable automatic bots when server starts.
+# Forces internal API setting bot_login to true.
+# Editing of this field with edit module is only allowed when
+# this exists in the config file.
+# [bots]
+# users = 5
+# admins = 1
 "#;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigFileError {
+    #[error("Save config file failed")]
+    Save,
     #[error("Save default")]
     SaveDefault,
     #[error("Not a directory")]
     NotDirectory,
     #[error("Load config file")]
     LoadConfig,
+    #[error("Editing config file failed")]
+    EditConfig,
+    #[error("Saving edited config file failed")]
+    SaveEditedConfig,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -114,6 +128,7 @@ pub struct ConfigFile {
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     /// TLS is required if debug setting is false.
     pub tls: Option<TlsConfig>,
+    pub bots: Option<BotConfig>,
 
     pub internal_api: Option<InternalApiConfig>,
     pub media_backup: Option<MediaBackupConfig>,
@@ -121,24 +136,36 @@ pub struct ConfigFile {
 }
 
 impl ConfigFile {
-    pub fn save_default(dir: impl AsRef<Path>) -> Result<(), ConfigFileError> {
+    pub fn save_string_as_config(
+        dir: impl AsRef<Path>,
+        config: &str,
+    ) -> Result<(), ConfigFileError> {
         let file_path =
             Self::default_config_file_path(dir).change_context(ConfigFileError::SaveDefault)?;
-        let mut file = std::fs::File::create(file_path).change_context(ConfigFileError::SaveDefault)?;
-        file.write_all(DEFAULT_CONFIG_FILE_TEXT.as_bytes())
-            .change_context(ConfigFileError::SaveDefault)?;
+        let mut file =
+            std::fs::File::create(file_path).change_context(ConfigFileError::SaveDefault)?;
+        file.write_all(config.as_bytes())
+            .change_context(ConfigFileError::Save)?;
         Ok(())
     }
 
-    pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
+    pub fn save_default(dir: impl AsRef<Path>) -> Result<(), ConfigFileError> {
+        Self::save_string_as_config(dir, DEFAULT_CONFIG_FILE_TEXT)
+            .change_context(ConfigFileError::SaveDefault)
+    }
+
+    pub fn load_as_string(dir: impl AsRef<Path>) -> Result<String, ConfigFileError> {
         let file_path =
             Self::default_config_file_path(&dir).change_context(ConfigFileError::LoadConfig)?;
         if !file_path.exists() {
             Self::save_default(dir).change_context(ConfigFileError::LoadConfig)?;
         }
 
-        let config_string =
-            std::fs::read_to_string(file_path).change_context(ConfigFileError::LoadConfig)?;
+        std::fs::read_to_string(file_path).change_context(ConfigFileError::LoadConfig)
+    }
+
+    pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
+        let config_string = Self::load_as_string(dir)?;
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 
@@ -293,6 +320,18 @@ pub struct LitestreamConfig {
     pub config_file: PathBuf,
 }
 
+/// Enable automatic bots when server starts.
+/// Forces internal API setting bot_login to true.
+/// Editing of this field with edit module is only allowed when
+/// this exists in the config file.
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct BotConfig {
+    /// User bot count
+    pub users: u32,
+    /// Admin bot count
+    pub admins: u32,
+}
+
 /// Absolute path with no whitespace.
 /// Also contains only valid UTF-8 characters.
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -328,12 +367,11 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
         PATH_CHARACTERS_WHITELIST,
     );
     if !unaccepted.is_empty() {
-        tracing::error!(
+        return Err(format!(
             "Invalid characters {} in path: {}",
             unaccepted,
             input.display()
-        );
-        return Err(format!("Invalid characters in path: {}", input.display()));
+        ));
     }
 
     Ok(())

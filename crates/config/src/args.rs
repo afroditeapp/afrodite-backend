@@ -6,7 +6,7 @@ use std::{
     process::exit,
 };
 
-use clap::{arg, command, value_parser, Command, builder::PossibleValue, Parser, ValueEnum, Args};
+use clap::{arg, builder::PossibleValue, command, value_parser, Args, Command, Parser, ValueEnum};
 use reqwest::Url;
 
 #[derive(Args, Debug, Clone)]
@@ -70,7 +70,6 @@ pub struct TestMode {
     pub images_woman: Option<PathBuf>,
 
     // Boolean flags
-
     /// Do not remove created database files
     #[arg(long)]
     pub no_clean: bool,
@@ -90,7 +89,7 @@ pub struct TestMode {
 impl TestMode {
     pub fn bots(&self) -> u32 {
         match &self.mode {
-            TestModeSubMode::Bot(c) => c.bots,
+            TestModeSubMode::Bot(c) => c.users + c.admins,
             TestModeSubMode::Benchmark(c) => c.bots,
             _ => 1,
         }
@@ -145,8 +144,7 @@ impl TestMode {
         match &self.mode {
             TestModeSubMode::Bot(_) => format!("bot"),
             TestModeSubMode::Qa(_) => format!("qa"),
-            TestModeSubMode::Benchmark(c) =>
-                format!("benchmark_{:?}", c.benchmark),
+            TestModeSubMode::Benchmark(c) => format!("benchmark_{:?}", c.benchmark),
         }
     }
 }
@@ -215,9 +213,13 @@ pub struct QaTestConfig;
 
 #[derive(Args, Debug, Clone)]
 pub struct BotConfig {
-    /// Bot count per task
+    /// User bot count per task
     #[arg(short, long, default_value = "1", value_name = "COUNT")]
-    pub bots: u32,
+    pub users: u32,
+
+    /// Admin bot count per task
+    #[arg(short, long, default_value = "0", value_name = "COUNT")]
+    pub admins: u32,
 
     /// Make bots to make requests constantly
     #[arg(long)]

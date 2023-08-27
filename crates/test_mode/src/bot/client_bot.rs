@@ -14,7 +14,6 @@ use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
 use tokio::time::sleep;
 
-
 use super::{
     actions::{
         account::{AssertAccountState, Login, Register, SetAccountSetup},
@@ -25,7 +24,10 @@ use super::{
 };
 use crate::{
     action_array,
-    bot::actions::{account::CompleteAccountSetup, media::MakeModerationRequest, ActionArray},
+    bot::actions::{
+        account::CompleteAccountSetup, admin::ModerateMediaModerationRequest,
+        media::MakeModerationRequest, ActionArray,
+    },
     client::TestError,
 };
 
@@ -42,18 +44,49 @@ impl Debug for ClientBot {
 
 impl ClientBot {
     pub fn new(state: BotState) -> Self {
-        let setup = [&Register as &dyn BotAction, &Login, &DoInitialSetupIfNeeded];
-        let benchmark = [
-            &ActionsBeforeIteration as &dyn BotAction,
-            &GetProfile,
-            &ActionsAfterIteration,
-        ];
-        let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+        let admin_bot = state
+            .config
+            .bot_mode()
+            .map(|bot_config| state.bot_id < bot_config.admins)
+            .unwrap_or(false);
+
+        let iter = if admin_bot {
+            // Admin bot
+
+            let setup = [
+                &Register as &dyn BotAction,
+                &Login,
+                &DoInitialSetupIfNeeded { admin: true },
+            ];
+            let benchmark = [
+                &ActionsBeforeIteration as &dyn BotAction,
+                &ModerateMediaModerationRequest,
+                &ActionsAfterIteration,
+            ];
+            let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+
+            Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
+        } else {
+            // User bot
+
+            let setup = [
+                &Register as &dyn BotAction,
+                &Login,
+                &DoInitialSetupIfNeeded { admin: false },
+            ];
+            let benchmark = [
+                &ActionsBeforeIteration as &dyn BotAction,
+                &GetProfile,
+                &ActionsAfterIteration,
+            ];
+            let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+
+            Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
+        };
+
         Self {
             state,
-            actions: (Box::new(iter)
-                as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>)
-                .peekable(),
+            actions: iter.peekable(),
         }
     }
 }
@@ -85,7 +118,9 @@ impl BotAction for GetProfile {
 }
 
 #[derive(Debug)]
-pub struct DoInitialSetupIfNeeded;
+pub struct DoInitialSetupIfNeeded {
+    admin: bool,
+}
 
 #[async_trait]
 impl BotAction for DoInitialSetupIfNeeded {
@@ -99,8 +134,15 @@ impl BotAction for DoInitialSetupIfNeeded {
             .change_context(TestError::ApiRequest)?;
 
         if account_state.state == AccountState::InitialSetup {
+            if self.admin {
+                SetAccountSetup::admin()
+            } else {
+                SetAccountSetup::new()
+            }
+            .excecute_impl_task_state(state, task_state)
+            .await?;
+
             const ACTIONS: ActionArray = action_array!(
-                SetAccountSetup::new(),
                 SendImageToSlot {
                     slot: 0,
                     random: true

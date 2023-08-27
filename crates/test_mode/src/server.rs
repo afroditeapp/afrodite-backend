@@ -3,7 +3,7 @@ use std::{
 };
 
 use config::{
-    args::{TestMode, SelectedBenchmark},
+    args::{SelectedBenchmark, TestMode},
     file::{
         Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig, SocketConfig,
         CONFIG_FILE_NAME,
@@ -171,6 +171,7 @@ fn new_config(
         sign_in_with_google: None,
         manager: None,
         tls: None,
+        bots: None,
         internal_api: Some(InternalApiConfig { bot_login: true }),
         media_backup: None,
         litestream: None,

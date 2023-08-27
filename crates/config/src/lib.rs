@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod args;
+pub mod edit;
 pub mod file;
 
 use std::{
@@ -14,11 +15,11 @@ use std::{
 };
 
 use args::{AppMode, ArgsConfig};
-use error_stack::{ResultExt, Result, report};
+use error_stack::{report, Result, ResultExt};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
-use utils::{ContextExt};
+use utils::ContextExt;
 
 use self::{
     args::TestMode,
@@ -176,7 +177,11 @@ impl Config {
     }
 
     pub fn internal_api_config(&self) -> InternalApiConfig {
-        self.file.internal_api.clone().unwrap_or_default()
+        let mut internal_api = self.file.internal_api.clone().unwrap_or_default();
+        if self.file.bots.is_some() {
+            internal_api.bot_login = true;
+        }
+        internal_api
     }
 
     pub fn media_backup(&self) -> Option<&MediaBackupConfig> {
@@ -202,7 +207,7 @@ pub fn get_config(
     backend_semver_version: String,
 ) -> Result<Config, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let mut file_config =
+    let file_config =
         file::ConfigFile::load(current_dir).change_context(GetConfigError::LoadFileError)?;
 
     let database = if let Some(database) = args_config.database_dir {
@@ -211,7 +216,11 @@ pub fn get_config(
         file_config.database.dir.clone()
     };
 
-    let external_services = file_config.external_services.take().unwrap_or_default();
+    let external_services = file_config
+        .external_services
+        .clone()
+        .take()
+        .unwrap_or_default();
 
     let client_api_urls = create_client_api_urls(&file_config.components, &external_services)?;
 
@@ -348,31 +357,30 @@ fn generate_server_config(
     key_path: &Path,
     cert_path: &Path,
 ) -> Result<ServerConfig, GetConfigError> {
-    let mut key_reader =
-        BufReader::new(std::fs::File::open(key_path).change_context(GetConfigError::CreateTlsConfig)?);
-    let all_keys = rsa_private_keys(&mut key_reader).change_context(GetConfigError::CreateTlsConfig)?;
+    let mut key_reader = BufReader::new(
+        std::fs::File::open(key_path).change_context(GetConfigError::CreateTlsConfig)?,
+    );
+    let all_keys =
+        rsa_private_keys(&mut key_reader).change_context(GetConfigError::CreateTlsConfig)?;
 
     let key = if let [key] = &all_keys[..] {
         PrivateKey(key.clone())
     } else if all_keys.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig)
-            .attach_printable("No key found");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("No key found");
     } else {
-        return Err(GetConfigError::CreateTlsConfig)
-            .attach_printable("Only one key supported");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one key supported");
     };
 
-    let mut cert_reader =
-        BufReader::new(std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?);
+    let mut cert_reader = BufReader::new(
+        std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?,
+    );
     let all_certs = certs(&mut cert_reader).change_context(GetConfigError::CreateTlsConfig)?;
     let cert = if let [cert] = &all_certs[..] {
         Certificate(cert.clone())
     } else if all_certs.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig)
-            .attach_printable("No cert found");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
     } else {
-        return Err(GetConfigError::CreateTlsConfig)
-            .attach_printable("Only one cert supported");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
     };
 
     let config = ServerConfig::builder()
@@ -385,17 +393,16 @@ fn generate_server_config(
 }
 
 fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetConfigError> {
-    let mut cert_reader =
-        BufReader::new(std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?);
+    let mut cert_reader = BufReader::new(
+        std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?,
+    );
     let all_certs = certs(&mut cert_reader).change_context(GetConfigError::CreateTlsConfig)?;
     let cert = if let [cert] = &all_certs[..] {
         reqwest::Certificate::from_der(&cert.clone())
     } else if all_certs.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig)
-            .attach_printable("No cert found");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
     } else {
-        return Err(GetConfigError::CreateTlsConfig)
-            .attach_printable("Only one cert supported");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
     }
     .change_context(GetConfigError::CreateTlsConfig)?;
     Ok(cert)
