@@ -45,7 +45,7 @@ impl BotAction for SendImageToSlot {
             state.api.media(),
             self.slot,
             if self.random {
-                if let Some(dir) = &state.config.man_images {
+                if let Some(dir) = &state.config.images_man {
                     ImageProvider::random_image_from_directory(&dir)
                         .unwrap_or_else(|e| {
                             tracing::error!("{e:?}");

@@ -64,7 +64,7 @@ impl BotAction for Login {
             .config
             .server
             .api_urls
-            .account_base_url
+            .url_account
             .join(PATH_CONNECT)
             .change_context(TestError::WebSocket)?;
         state.connections.account = connect_websocket(*login_result.account, url, state)
@@ -76,7 +76,7 @@ impl BotAction for Login {
                 .config
                 .server
                 .api_urls
-                .media_base_url
+                .url_media
                 .join(PATH_CONNECT)
                 .change_context(TestError::WebSocket)?;
             state.connections.media = connect_websocket(*media, url, state).await?.into();
@@ -87,7 +87,7 @@ impl BotAction for Login {
                 .config
                 .server
                 .api_urls
-                .profile_base_url
+                .url_profile
                 .join(PATH_CONNECT)
                 .change_context(TestError::WebSocket)?;
             state.connections.media = connect_websocket(*profile, url, state).await?.into();

@@ -199,7 +199,7 @@ impl BotManager {
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
-        for bot_i in 0..config.bot_count {
+        for bot_i in 0..config.bots {
             let state = BotState::new(
                 old_state
                     .as_ref()
@@ -258,7 +258,7 @@ impl BotManager {
 
         let required_bots = qa::test_count() + 1;
 
-        if (config.bot_count as usize) < required_bots {
+        if (config.bots as usize) < required_bots {
             warn!("Increasing bot count to {}", required_bots);
         }
 

@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod build_info;
+pub mod args;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::get_config;
@@ -13,7 +14,7 @@ use test_mode::TestRunner;
 fn main() {
     // TODO: print commit ID to logs if build directory was clean
     let config = get_config(
-        build_info::build_info,
+        args::get_config(),
         BUILD_INFO_GIT_DESCRIBE.to_string(),
         BUILD_INFO_CARGO_PKG_VERSION.to_string(),
     )

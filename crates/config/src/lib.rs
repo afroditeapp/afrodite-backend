@@ -13,7 +13,7 @@ use std::{
     vec,
 };
 
-use args::BuildInfoProvider;
+use args::{AppMode, ArgsConfig};
 use error_stack::{ResultExt, Result, report};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
@@ -197,11 +197,10 @@ impl Config {
 }
 
 pub fn get_config(
-    build_info_provider: BuildInfoProvider,
+    args_config: ArgsConfig,
     backend_code_version: String,
     backend_semver_version: String,
 ) -> Result<Config, GetConfigError> {
-    let args_config = args::get_config(build_info_provider);
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let mut file_config =
         file::ConfigFile::load(current_dir).change_context(GetConfigError::LoadFileError)?;
@@ -253,13 +252,19 @@ pub fn get_config(
         false
     };
 
+    let test_mode = if let Some(AppMode::Test(mode)) = &args_config.test_mode {
+        Some(mode.clone())
+    } else {
+        None
+    };
+
     let config = Config {
         file: file_config,
         database,
         external_services,
         client_api_urls,
         sqlite_in_ram,
-        test_mode: args_config.test_mode,
+        test_mode,
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,
         internal_api_tls_config,

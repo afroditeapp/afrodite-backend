@@ -74,11 +74,11 @@ impl ApiClient {
         let client = reqwest::Client::new();
 
         Self {
-            register: Self::create_configuration(&client, base_urls.register_base_url.as_str()),
-            account: Self::create_configuration(&client, base_urls.account_base_url.as_str()),
-            profile: Self::create_configuration(&client, base_urls.profile_base_url.as_str()),
-            media: Self::create_configuration(&client, base_urls.media_base_url.as_str()),
-            chat: Self::create_configuration(&client, base_urls.chat_base_url.as_str()),
+            register: Self::create_configuration(&client, base_urls.url_register.as_str()),
+            account: Self::create_configuration(&client, base_urls.url_account.as_str()),
+            profile: Self::create_configuration(&client, base_urls.url_profile.as_str()),
+            media: Self::create_configuration(&client, base_urls.url_media.as_str()),
+            chat: Self::create_configuration(&client, base_urls.url_chat.as_str()),
         }
     }
 

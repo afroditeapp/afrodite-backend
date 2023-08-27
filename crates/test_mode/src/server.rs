@@ -43,7 +43,7 @@ pub struct ServerManager {
 
 impl ServerManager {
     pub async fn new(all_config: &Config, config: Arc<TestMode>) -> Self {
-        let dir = config.server.test_database_dir.clone();
+        let dir = config.server.test_database.clone();
         if !dir.exists() {
             std::fs::create_dir_all(&dir).unwrap();
         }
@@ -56,13 +56,13 @@ impl ServerManager {
                 panic!("{} address was not 127.0.0.1. value: {}", name, host);
             }
         };
-        check_host(&config.server.api_urls.account_base_url, "account server");
-        check_host(&config.server.api_urls.profile_base_url, "profile server");
-        check_host(&config.server.api_urls.media_base_url, "media server");
+        check_host(&config.server.api_urls.url_account, "account server");
+        check_host(&config.server.api_urls.url_profile, "profile server");
+        check_host(&config.server.api_urls.url_media, "media server");
 
-        let account_port = config.server.api_urls.account_base_url.port().unwrap();
-        let media_port = config.server.api_urls.media_base_url.port().unwrap();
-        let profile_port = config.server.api_urls.profile_base_url.port().unwrap();
+        let account_port = config.server.api_urls.url_account.port().unwrap();
+        let media_port = config.server.api_urls.url_media.port().unwrap();
+        let profile_port = config.server.api_urls.url_profile.port().unwrap();
 
         let external_services = Some(ExternalServices {
             account_internal: format!("http://127.0.0.1:{}", account_port + 1)
