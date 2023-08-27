@@ -4,7 +4,7 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod args;
-pub mod edit;
+pub mod file_dynamic;
 pub mod file;
 
 use std::{
@@ -16,6 +16,7 @@ use std::{
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{report, Result, ResultExt};
+use file_dynamic::ConfigFileDynamic;
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
@@ -71,11 +72,14 @@ pub enum GetConfigError {
     CreateTlsConfig,
     #[error("SQLite in RAM mode is not allowed when debug mode is off")]
     SqliteInRamNotAllowed,
+    #[error("Invalid configuration")]
+    InvalidConfiguration,
 }
 
 #[derive(Debug)]
 pub struct Config {
     file: ConfigFile,
+    file_dynamic: ConfigFileDynamic,
 
     // Server related configs
     database: PathBuf,
@@ -177,11 +181,7 @@ impl Config {
     }
 
     pub fn internal_api_config(&self) -> InternalApiConfig {
-        let mut internal_api = self.file.internal_api.clone().unwrap_or_default();
-        if self.file.bots.is_some() {
-            internal_api.bot_login = true;
-        }
-        internal_api
+        self.file.internal_api.clone().unwrap_or_default()
     }
 
     pub fn media_backup(&self) -> Option<&MediaBackupConfig> {
@@ -208,7 +208,7 @@ pub fn get_config(
 ) -> Result<Config, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let file_config =
-        file::ConfigFile::load(current_dir).change_context(GetConfigError::LoadFileError)?;
+        file::ConfigFile::load(&current_dir).change_context(GetConfigError::LoadFileError)?;
 
     let database = if let Some(database) = args_config.database_dir {
         database
@@ -267,8 +267,17 @@ pub fn get_config(
         None
     };
 
+    let file_dynamic =
+        ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
+
+    if file_dynamic.bots.is_some() && !file_config.internal_api.as_ref().map(|c| c.bot_login).unwrap_or_default() {
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach_printable("When bots are enabled, internal API bot login must be also enabled");
+    }
+
     let config = Config {
         file: file_config,
+        file_dynamic,
         database,
         external_services,
         client_api_urls,
