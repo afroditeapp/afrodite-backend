@@ -105,7 +105,7 @@ impl LitestreamManager {
         }
 
         let stdout_task = create_read_lines_task(stdout, "stdout");
-        let stderr_task = create_read_lines_task(stderr, "stdout");
+        let stderr_task = create_read_lines_task(stderr, "stderr");
         self.process = Some(LitestreamProcess {
             process,
             stdout_task,
@@ -159,7 +159,7 @@ impl LitestreamManager {
         Ok(())
     }
 
-    pub async fn wait_litestream(&self) -> Result<(), LitestreamError> {
+    async fn wait_litestream(&self) -> Result<(), LitestreamError> {
         let root = DatabaseRoot::new(self.config.database_dir())
             .change_context(LitestreamError::DatabaseDirError)?;
         let current_db_path = root.current_db_file();
@@ -188,7 +188,7 @@ impl LitestreamManager {
         Ok(())
     }
 
-    pub async fn opened_by_litestream_with_retry(
+    async fn opened_by_litestream_with_retry(
         &self,
         file: &Path,
     ) -> Result<bool, LitestreamError> {
@@ -202,12 +202,12 @@ impl LitestreamManager {
         Ok(false)
     }
 
-    pub async fn opened_by_litestream(&self, file: &Path) -> Result<bool, LitestreamError> {
+    async fn opened_by_litestream(&self, file: &Path) -> Result<bool, LitestreamError> {
         // It seems that lsof displays only nine characters from command by default.
         Ok(self.lsof_output(file).await?.contains("litestrea"))
     }
 
-    pub async fn lsof_output(&self, file: &Path) -> Result<String, LitestreamError> {
+    async fn lsof_output(&self, file: &Path) -> Result<String, LitestreamError> {
         let output = Command::new("lsof")
             .arg(file)
             .output()

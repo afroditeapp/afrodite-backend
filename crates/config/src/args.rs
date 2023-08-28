@@ -70,7 +70,7 @@ pub struct TestMode {
     pub images_woman: Option<PathBuf>,
 
     // Boolean flags
-    /// Do not remove created database files
+    /// Do not remove server instance database files
     #[arg(long)]
     pub no_clean: bool,
 

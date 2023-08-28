@@ -36,10 +36,11 @@ use self::{
     },
     data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
 };
-use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager};
+use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager, bot::BotClient};
 
 pub mod api;
 pub mod app;
+pub mod bot;
 pub mod data;
 pub mod internal;
 pub mod litestream;
@@ -116,18 +117,35 @@ impl PihkaServer {
         let server_task = self
             .create_public_api_server_task(&mut app, server_quit_watcher.resubscribe())
             .await;
-        let internal_server_task = if self.config.debug_mode() {
-            None
+        let internal_server_task = self
+            .create_internal_api_server_task(&app, server_quit_watcher.resubscribe())
+            .await;
+
+        let bot_client = if let Some(bot_config) = self.config.bot_config() {
+            let result = BotClient::start_bots(&self.config, bot_config)
+                .await;
+
+            match result {
+                Ok(bot_manager) => Some(bot_manager),
+                Err(e) => {
+                    error!("Bot client start failed: {:?}", e);
+                    None
+                }
+            }
         } else {
-            Some(
-                self.create_internal_api_server_task(&app, server_quit_watcher.resubscribe())
-                    .await,
-            )
+            None
         };
 
         Self::wait_quit_signal(&mut terminate_signal).await;
 
         info!("Server quit started");
+
+        if let Some(bot_client) = bot_client {
+            match bot_client.stop_bots().await {
+                Ok(()) => (),
+                Err(e) => error!("Bot client stop failed: {:?}", e),
+            }
+        }
 
         drop(server_quit_handle);
 
@@ -135,11 +153,9 @@ impl PihkaServer {
         server_task
             .await
             .expect("Public API server task panic detected");
-        if let Some(handle) = internal_server_task {
-            handle
-                .await
-                .expect("Internal API server task panic detected");
-        }
+        internal_server_task
+            .await
+            .expect("Internal API server task panic detected");
 
         loop {
             match ws_quit_ready.recv().await {
@@ -156,7 +172,7 @@ impl PihkaServer {
         if let Some(litestream) = litestream {
             match litestream.stop_litestream().await {
                 Ok(()) => (),
-                Err(e) => error!("Litestream stop failed: {}", e),
+                Err(e) => error!("Litestream stop failed: {:?}", e),
             }
         }
 

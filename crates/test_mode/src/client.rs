@@ -96,7 +96,7 @@ impl ApiClient {
         info!("Account API base url: {}", self.account.base_path);
         info!("Profile API base url: {}", self.profile.base_path);
         info!("Media API base url: {}", self.media.base_path);
-        info!("Chat API base url: {}", self.register.base_path);
+        info!("Chat API base url: {}", self.chat.base_path);
     }
 
     pub fn register(&self) -> &Configuration {
@@ -127,12 +127,14 @@ impl ApiClient {
         self.account.api_key = Some(token.clone());
         self.profile.api_key = Some(token.clone());
         self.media.api_key = Some(token.clone());
+        self.chat.api_key = Some(token.clone());
     }
 
     pub fn is_access_token_available(&self) -> bool {
         self.account.api_key.is_some()
             && self.profile.api_key.is_some()
-            && self.profile.api_key.is_some()
+            && self.media.api_key.is_some()
+            && self.chat.api_key.is_some()
     }
 
     pub fn api_key(&self) -> Option<String> {

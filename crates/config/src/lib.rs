@@ -16,7 +16,7 @@ use std::{
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{report, Result, ResultExt};
-use file_dynamic::ConfigFileDynamic;
+use file_dynamic::{ConfigFileDynamic, BotConfig};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
@@ -127,7 +127,7 @@ impl Config {
     ///
     /// Debug mode changes:
     /// * Swagger UI is enabled.
-    /// * Internal API is available at same port as the public API.
+    /// * Internal API is available also at same port as the public API.
     /// * Disabling HTTPS is possbile.
     /// * Completing initial setup will check only email when adding admin capabilities.
     ///   Normally it also requires Google Account ID.
@@ -190,6 +190,10 @@ impl Config {
 
     pub fn litestream(&self) -> Option<&LitestreamConfig> {
         self.file.litestream.as_ref()
+    }
+
+    pub fn bot_config(&self) -> Option<&BotConfig> {
+        self.file_dynamic.bots.as_ref()
     }
 
     pub fn backend_code_version(&self) -> &str {

@@ -10,7 +10,7 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 
 # Default rule
 run:
-	RUST_LOG=debug cargo run --bin pihka-backend
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin pihka-backend
 
 fmt:
 	cargo +nightly fmt $(CARGO_CRATE_ARGS)
