@@ -1364,6 +1364,7 @@ dependencies = [
 name = "manager_model"
 version = "0.0.0"
 dependencies = [
+ "clap",
  "serde",
  "utoipa",
 ]

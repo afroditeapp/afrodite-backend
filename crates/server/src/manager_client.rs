@@ -1,7 +1,7 @@
 use config::Config;
 use error_stack::{ResultExt, Result};
 use manager_api::{ApiKey, Configuration, ManagerApi};
-use manager_model::{BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList};
+use manager_model::{BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList, ResetDataQueryParam};
 use tracing::{error, info};
 use utils::ContextExt;
 
@@ -110,7 +110,7 @@ impl<'a> ManagerApiManager<'a> {
         options: SoftwareOptions,
         reboot: bool,
     ) -> Result<(), ManagerClientError> {
-        ManagerApi::request_update_software(self.api_client.manager()?, options, reboot)
+        ManagerApi::request_update_software(self.api_client.manager()?, options, reboot, ResetDataQueryParam { reset_data: false})
             .await
             .change_context(ManagerClientError::ApiRequest)
     }
