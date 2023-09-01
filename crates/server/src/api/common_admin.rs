@@ -2,7 +2,7 @@
 
 use axum::{extract::Query, Extension};
 use manager_model::{
-    BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList,
+    BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList, ResetDataQueryParam,
 };
 use model::{Account, AccountIdInternal};
 
@@ -152,10 +152,22 @@ pub async fn post_request_build_software<S: GetManagerApi + ReadData>(
 pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_software";
 
 /// Request updating new software from manager instance.
+///
+/// Reboot query parameter will force reboot of the server after update.
+/// If it is off, the server will be rebooted when the usual reboot check
+/// is done.
+///
+/// Reset data query parameter will reset data like defined in current
+/// app-manager version. If this is true then specific capability is needed
+/// for completing this request.
+///
+/// # Capablities
+/// Requires admin_server_maintentance_update_software. Also requires
+/// admin_server_maintentance_reset_data if reset_data is true.
 #[utoipa::path(
     post,
     path = "/common_api/request_update_software",
-    params(SoftwareOptionsQueryParam, RebootQueryParam),
+    params(SoftwareOptionsQueryParam, RebootQueryParam, ResetDataQueryParam),
     responses(
         (status = 200, description = "Request was successfull."),
         (status = 401, description = "Unauthorized."),
@@ -166,6 +178,7 @@ pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_
 pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
     Query(software): Query<SoftwareOptionsQueryParam>,
     Query(reboot): Query<RebootQueryParam>,
+    Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
@@ -175,13 +188,64 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
         .account(api_caller_account_id)
         .await?;
 
+    if reset_data.reset_data && !account.capablities().admin_server_maintentance_reset_data {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
     if account
         .capablities()
         .admin_server_maintentance_update_software
     {
         state
             .manager_api()
-            .request_update_software(software.software_options, reboot.reboot)
+            .request_update_software(software.software_options, reboot.reboot, reset_data)
+            .await?;
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str = "/common_api/request_restart_or_reset_backend";
+
+/// Request restarting or reseting backend through app-manager instance.
+///
+/// # Capabilities
+/// Requires admin_server_maintentance_restart_backend. Also requires
+/// admin_server_maintentance_reset_data if reset_data is true.
+#[utoipa::path(
+    post,
+    path = "/common_api/request_restart_or_reset_backend",
+    params(ResetDataQueryParam),
+    responses(
+        (status = 200, description = "Request was successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_request_restart_or_reset_backend<S: GetManagerApi + ReadData>(
+    Query(reset_data): Query<ResetDataQueryParam>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    state: S,
+) -> Result<(), StatusCode> {
+    let account = state
+        .read()
+        .account()
+        .account(api_caller_account_id)
+        .await?;
+
+    if reset_data.reset_data && !account.capablities().admin_server_maintentance_reset_data {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    if account
+        .capablities()
+        .admin_server_maintentance_update_software
+    {
+        state
+            .manager_api()
+            .request_restart_or_reset_backend(reset_data)
             .await?;
         Ok(())
     } else {

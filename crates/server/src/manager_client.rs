@@ -109,8 +109,18 @@ impl<'a> ManagerApiManager<'a> {
         &self,
         options: SoftwareOptions,
         reboot: bool,
+        reset_data: ResetDataQueryParam,
     ) -> Result<(), ManagerClientError> {
-        ManagerApi::request_update_software(self.api_client.manager()?, options, reboot, ResetDataQueryParam { reset_data: false})
+        ManagerApi::request_update_software(self.api_client.manager()?, options, reboot, reset_data)
+            .await
+            .change_context(ManagerClientError::ApiRequest)
+    }
+
+    pub async fn request_restart_or_reset_backend(
+        &self,
+        reset_data: ResetDataQueryParam,
+    ) -> Result<(), ManagerClientError> {
+        ManagerApi::restart_backend(self.api_client.manager()?, reset_data)
             .await
             .change_context(ManagerClientError::ApiRequest)
     }

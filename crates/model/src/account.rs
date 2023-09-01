@@ -79,6 +79,8 @@ impl Account {
         self.capablities.admin_moderate_images = true;
         self.capablities.admin_server_maintentance_view_info = true;
         self.capablities.admin_server_maintentance_update_software = true;
+        self.capablities.admin_server_maintentance_reset_data = true;
+        self.capablities.admin_server_maintentance_reboot_backend = true;
         // TOOD: Other capablities as well?
     }
 }
@@ -130,6 +132,8 @@ define_capablities!(
     admin_ban_profile,
     admin_server_maintentance_view_info,
     admin_server_maintentance_update_software,
+    admin_server_maintentance_reset_data,
+    admin_server_maintentance_reboot_backend,
     banned_edit_profile,
     /// View public profiles
     view_public_profiles,
