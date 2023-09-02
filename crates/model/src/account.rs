@@ -78,6 +78,8 @@ impl Account {
     pub fn add_admin_capablities(&mut self) {
         self.capablities.admin_moderate_images = true;
         self.capablities.admin_server_maintentance_view_info = true;
+        self.capablities.admin_server_maintentance_view_backend_settings = true;
+        self.capablities.admin_server_maintentance_save_backend_settings = true;
         self.capablities.admin_server_maintentance_update_software = true;
         self.capablities.admin_server_maintentance_reset_data = true;
         self.capablities.admin_server_maintentance_reboot_backend = true;
@@ -133,11 +135,11 @@ define_capablities!(
     /// View server infrastructure related info like logs and
     /// software versions.
     admin_server_maintentance_view_info,
-    admin_server_maintentance_view_backend_settings,
+    admin_server_maintentance_view_backend_settings, // TODO: change to config
     admin_server_maintentance_update_software,
     admin_server_maintentance_reset_data,
     admin_server_maintentance_reboot_backend,
-    admin_server_maintentance_save_backend_settings,
+    admin_server_maintentance_save_backend_settings, // TODO: change to config
     banned_edit_profile,
     /// View public profiles
     view_public_profiles,
