@@ -3,10 +3,11 @@
 use std::path::Path;
 
 use error_stack::{Result, ResultExt};
+use model::{BotConfig, BackendConfig};
 use serde::{Deserialize, Serialize};
 use toml_edit::{Document, Item, Value};
 
-use crate::file::{ConfigFile, ConfigFileError, ConfigFileUtils};
+use crate::{file::{ConfigFile, ConfigFileError, ConfigFileUtils}};
 
 pub const CONFIG_FILE_DYNAMIC_NAME: &str = "server_config_dynamic.toml";
 
@@ -27,7 +28,8 @@ pub const DEFAULT_CONFIG_FILE_DYNAMIC_TEXT: &str = r#"
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFileDynamic {
-    pub bots: Option<BotConfig>,
+    #[serde(flatten)]
+    pub backend_config: BackendConfig,
 }
 
 impl ConfigFileDynamic {
@@ -40,10 +42,16 @@ impl ConfigFileDynamic {
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 
-    pub fn edit_bot_config(
-        dir: impl AsRef<Path>,
+    pub fn load_from_current_dir() -> Result<ConfigFileDynamic, ConfigFileError> {
+        let current_dir = std::env::current_dir().change_context(ConfigFileError::LoadConfig)?;
+        Self::load(current_dir)
+    }
+
+    pub fn edit_bot_config_from_current_dir(
         bot_config: BotConfig,
     ) -> Result<(), ConfigFileError> {
+        let dir = std::env::current_dir().change_context(ConfigFileError::LoadConfig)?;
+
         let config = ConfigFileUtils::load_string(
             &dir,
             CONFIG_FILE_DYNAMIC_NAME,
@@ -90,18 +98,6 @@ fn edit_document_bot_config(
     }
 }
 
-/// Enable automatic bots when server starts.
-/// Forces internal API setting bot_login to true.
-/// Editing of this field with edit module is only allowed when
-/// this exists in the config file.
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct BotConfig {
-    /// User bot count
-    pub users: u32,
-    /// Admin bot count
-    pub admins: u32,
-}
-
 #[cfg(test)]
 mod tests {
     use std::{str::FromStr, string};
@@ -120,7 +116,7 @@ mod tests {
         "#;
         let mut document = toml_edit::Document::from_str(toml_with_no_bots_section).unwrap();
 
-        let new_config = BotConfig {
+        let new_config = model::BotConfig {
             users: 1,
             admins: 1,
         };

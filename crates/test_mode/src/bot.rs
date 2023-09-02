@@ -8,7 +8,7 @@ use std::{fmt::Debug, sync::Arc, vec};
 
 use api_client::models::AccountId;
 use async_trait::async_trait;
-use config::args::{TestMode, TestModeSubMode, BotConfig, SelectedBenchmark};
+use config::args::{TestMode, TestModeSubMode, BotModeConfig, SelectedBenchmark};
 use error_stack::{Result, ResultExt};
 use tokio::{
     net::TcpStream,

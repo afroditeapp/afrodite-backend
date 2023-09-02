@@ -404,6 +404,7 @@ version = "0.0.0"
 dependencies = [
  "clap",
  "error-stack",
+ "model",
  "reqwest",
  "rustls-pemfile",
  "serde",

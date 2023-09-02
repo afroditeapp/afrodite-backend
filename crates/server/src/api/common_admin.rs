@@ -1,15 +1,20 @@
 //! Common routes related to admin features
 
 use axum::{extract::Query, Extension};
+use config::file_dynamic::ConfigFileDynamic;
 use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList, ResetDataQueryParam,
 };
-use model::{Account, AccountIdInternal};
+use model::{Account, AccountIdInternal, BackendConfig};
 
 use crate::api::{
     utils::{Json, StatusCode},
     GetManagerApi, ReadData,
 };
+
+use tracing::info;
+
+use super::{WriteDynamicConfig, GetConfig, ReadDynamicConfig};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -196,6 +201,13 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
         .capablities()
         .admin_server_maintentance_update_software
     {
+        info!(
+            "Requesting update software, account: {}, software: {:?}, reboot: {}, reset_data: {},",
+            api_caller_account_id.as_uuid(),
+            software.software_options,
+            reboot.reboot,
+            reset_data.reset_data,
+        );
         state
             .manager_api()
             .request_update_software(software.software_options, reboot.reboot, reset_data)
@@ -243,10 +255,101 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi + ReadData>(
         .capablities()
         .admin_server_maintentance_update_software
     {
+        info!(
+            "Requesting reset or restart backend, account: {}, reset_data: {}",
+            api_caller_account_id.as_uuid(),
+            reset_data.reset_data,
+        );
         state
             .manager_api()
             .request_restart_or_reset_backend(reset_data)
             .await?;
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
+
+/// Get dynamic backend config.
+///
+/// # Capabilities
+/// Requires admin_server_maintentance_view_backend_settings.
+#[utoipa::path(
+    post,
+    path = "/common_api/backend_config",
+    params(),
+    responses(
+        (status = 200, description = "Get was successfull.", body = BackendConfig),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_backend_config<S: ReadData + ReadDynamicConfig>(
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    state: S,
+) -> Result<Json<BackendConfig>, StatusCode> {
+    let account = state
+        .read()
+        .account()
+        .account(api_caller_account_id)
+        .await?;
+
+    if account
+        .capablities()
+        .admin_server_maintentance_view_backend_settings
+    {
+        let config = state.read_config().await?;
+        Ok(config.into())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
+
+/// Save dynamic backend config.
+///
+/// # Capabilities
+/// Requires admin_server_maintentance_save_backend_settings.
+#[utoipa::path(
+    post,
+    path = "/common_api/backend_config",
+    params(),
+    request_body(content = BackendConfig),
+    responses(
+        (status = 200, description = "Save was successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Json(backend_config): Json<BackendConfig>,
+    state: S,
+) -> Result<(), StatusCode> {
+    let account = state
+        .read()
+        .account()
+        .account(api_caller_account_id)
+        .await?;
+
+    if account
+        .capablities()
+        .admin_server_maintentance_save_backend_settings
+    {
+        info!(
+            "Saving dynamic backend config, account: {}, settings: {:#?}",
+            api_caller_account_id.as_uuid(),
+            backend_config
+        );
+        state
+            .write_config(backend_config)
+            .await?;
+
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)

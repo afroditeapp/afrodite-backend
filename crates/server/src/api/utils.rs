@@ -5,7 +5,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use config::RUNNING_IN_DEBUG_MODE;
+use config::{RUNNING_IN_DEBUG_MODE, file::ConfigFileError};
 use headers::{Header, HeaderValue};
 use hyper::{header, Request};
 use model::AccessToken;
@@ -27,6 +27,11 @@ use crate::{
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =
     header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);
 
+/// Middleware for authenticating requests with access tokens.
+///
+/// Adds `AccountIdInternal` extension to request, so that adding
+/// "Extension(api_caller_account_id): Extension<AccountIdInternal>"
+/// to handlers is possible.
 pub async fn authenticate_with_access_token<T, S: GetAccessTokens>(
     state: S,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -199,6 +204,8 @@ enum RequestError {
     InternalApiError,
     #[error("Manager client error")]
     ManagerClientError,
+    #[error("Config file error")]
+    ConfigFileError,
 }
 
 impl From<error_stack::Report<DataError>> for StatusCode {
@@ -247,6 +254,17 @@ impl From<error_stack::Report<ManagerClientError>> for StatusCode {
         tracing::error!(
             "{:?}",
             value.change_context(RequestError::ManagerClientError)
+        );
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+impl From<error_stack::Report<ConfigFileError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<ConfigFileError>) -> Self {
+        tracing::error!(
+            "{:?}",
+            value.change_context(RequestError::ConfigFileError)
         );
         StatusCode::INTERNAL_SERVER_ERROR
     }

@@ -106,7 +106,7 @@ pub enum AccountState {
 }
 
 macro_rules! define_capablities {
-    ($( $(#[doc = $text:literal ])? $name:ident , )* ) => {
+    ($( $( #[doc = $text:literal] )* $name:ident , )* ) => {
 
         #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
         pub struct Capabilities {
@@ -130,10 +130,14 @@ define_capablities!(
     admin_view_private_info,
     admin_view_profile_history,
     admin_ban_profile,
+    /// View server infrastructure related info like logs and
+    /// software versions.
     admin_server_maintentance_view_info,
+    admin_server_maintentance_view_backend_settings,
     admin_server_maintentance_update_software,
     admin_server_maintentance_reset_data,
     admin_server_maintentance_reboot_backend,
+    admin_server_maintentance_save_backend_settings,
     banned_edit_profile,
     /// View public profiles
     view_public_profiles,

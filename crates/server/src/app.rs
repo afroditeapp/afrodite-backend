@@ -5,10 +5,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use config::Config;
+use config::{Config, file::ConfigFileError, file_dynamic::ConfigFileDynamic, GetConfigError};
 use error_stack::{Result, ResultExt};
 use futures::Future;
-use model::{AccountId, BackendVersion};
+use model::{AccountId, BackendVersion, BackendConfig};
 
 use self::{
     connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
@@ -26,7 +26,7 @@ use super::{
 };
 use crate::api::{
     self, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, GetManagerApi, ReadData,
-    SignInWith, WriteData,
+    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig,
 };
 
 pub mod connection;
@@ -95,6 +95,42 @@ impl WriteData for AppState {
         cmd: GetCmd,
     ) -> Result<CmdResult, DataError> {
         self.write_queue.concurrent_write(account, cmd).await
+    }
+}
+
+#[async_trait::async_trait]
+impl WriteDynamicConfig for AppState {
+    async fn write_config(
+        &self,
+        config: BackendConfig,
+    ) -> error_stack::Result<(), ConfigFileError> {
+        tokio::task::spawn_blocking(move || {
+            if let Some(bots) = config.bots {
+                ConfigFileDynamic::edit_bot_config_from_current_dir(bots)?
+            }
+
+            Result::<(), ConfigFileError>::Ok(())
+        })
+        .await
+        .change_context(ConfigFileError::LoadConfig)??;
+
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl ReadDynamicConfig for AppState {
+    async fn read_config(
+        &self,
+    ) -> error_stack::Result<BackendConfig, ConfigFileError> {
+
+        let config = tokio::task::spawn_blocking(move || {
+            ConfigFileDynamic::load_from_current_dir()
+        })
+        .await
+        .change_context(ConfigFileError::LoadConfig)??;
+
+        Ok(config.backend_config)
     }
 }
 

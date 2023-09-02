@@ -2,8 +2,9 @@
 
 use std::{env, os::unix::process::CommandExt, process::Stdio};
 
-use config::{file_dynamic::BotConfig, Config};
+use config::{Config};
 use error_stack::ResultExt;
+use model::BotConfig;
 use nix::{unistd::Pid, sys::signal::Signal};
 use tokio::{process::Child, task::JoinHandle, io::{AsyncRead, AsyncBufReadExt}};
 use utils::ContextExt;

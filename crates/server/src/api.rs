@@ -1,8 +1,8 @@
 //! HTTP API types and request handlers for all servers.
 
-use config::Config;
+use config::{Config, file::ConfigFileError};
 use futures::Future;
-use model::{AccountId, BackendVersion};
+use model::{AccountId, BackendVersion, BackendConfig};
 use utoipa::OpenApi;
 
 use self::utils::SecurityApiAccessTokenDefault;
@@ -38,14 +38,19 @@ pub mod utils;
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        // Common
         common::get_version,
         common::get_connect_websocket,
+        // Common admin
         common_admin::get_system_info,
         common_admin::get_software_info,
         common_admin::get_latest_build_info,
+        common_admin::get_backend_config,
         common_admin::post_request_build_software,
         common_admin::post_request_update_software,
         common_admin::post_request_restart_or_reset_backend,
+        common_admin::post_backend_config,
+        // Account
         account::post_register,
         account::post_login,
         account::post_sign_in_with_login,
@@ -56,8 +61,10 @@ pub mod utils;
         account::get_account_state,
         account::get_deletion_status,
         account::delete_cancel_deletion,
+        // Account internal
         account_internal::check_access_token,
         account_internal::internal_get_account_state,
+        // Profile
         profile::get_profile,
         profile::get_profile_from_database_debug_mode_benchmark,
         profile::post_get_next_profile_page,
@@ -65,7 +72,9 @@ pub mod utils;
         profile::post_profile_to_database_debug_mode_benchmark,
         profile::post_reset_profile_paging,
         profile::put_location,
+        // Profile internal
         profile_internal::internal_post_update_profile_visibility,
+        // Media
         media::get_primary_image_info,
         media::get_all_normal_images,
         media::get_image,
@@ -73,9 +82,11 @@ pub mod utils;
         media::put_moderation_request,
         media::put_image_to_moderation_slot,
         media::put_primary_image,
+        // Media admin
         media_admin::patch_moderation_request_list,
         media_admin::post_handle_moderation_request,
         media_admin::get_security_image_info,
+        // Media internal
         media_internal::internal_get_check_moderation_request_for_account,
         media_internal::internal_post_update_profile_image_visibility,
     ),
@@ -86,6 +97,9 @@ pub mod utils;
         model::common::AccountId,
         model::common::AccessToken,
         model::common::RefreshToken,
+        // Common admin
+        model::common_admin::BackendConfig,
+        model::common_admin::BotConfig,
         // Account
         model::account::Account,
         model::account::AccountState,
@@ -103,20 +117,22 @@ pub mod utils;
         model::profile::ProfileVersion,
         model::profile::ProfileUpdate,
         model::profile::Location,
+        // Media
         model::media::ModerationRequest,
         model::media::ModerationRequestIdDb,
         model::media::ModerationRequestContent,
         model::media::ModerationRequestState,
-        model::media_admin::ModerationRequestId,
-        model::media_admin::ModerationList,
-        model::media_admin::Moderation,
-        model::media_admin::HandleModerationRequest,
         model::media::SlotId,
         model::media::ContentId,
         model::media::PrimaryImage,
         model::media::SecurityImage,
         model::media::ImageAccessCheck,
         model::media::NormalImages,
+        // Media admin
+        model::media_admin::ModerationRequestId,
+        model::media_admin::ModerationList,
+        model::media_admin::Moderation,
+        model::media_admin::HandleModerationRequest,
         // Manager
         manager_model::SystemInfoList,
         manager_model::SystemInfo,
@@ -192,6 +208,22 @@ pub trait GetManagerApi {
 
 pub trait GetConfig {
     fn config(&self) -> &Config;
+}
+
+
+#[async_trait::async_trait]
+pub trait WriteDynamicConfig {
+    async fn write_config(
+        &self,
+        config: BackendConfig,
+    ) -> error_stack::Result<(), ConfigFileError>;
+}
+
+#[async_trait::async_trait]
+pub trait ReadDynamicConfig {
+    async fn read_config(
+        &self,
+    ) -> error_stack::Result<BackendConfig, ConfigFileError>;
 }
 
 pub trait BackendVersionProvider {

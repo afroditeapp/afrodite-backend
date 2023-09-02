@@ -108,6 +108,13 @@ pub enum ConfigFileError {
     SaveEditedConfig,
 }
 
+impl ConfigFileError {
+    #[track_caller]
+    pub fn report(self) -> error_stack::Report<Self> {
+        error_stack::report!(self)
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
     pub debug: Option<bool>,

@@ -78,6 +78,28 @@ impl ConnectedApp {
                     }
                 }),
             )
+            .route(
+                api::common_admin::PATH_GET_BACKEND_CONFIG,
+                get({
+                    let state = self.state.clone();
+                    move |param1| {
+                        api::common_admin::get_backend_config(
+                            param1, state,
+                        )
+                    }
+                }),
+            )
+            .route(
+                api::common_admin::PATH_POST_BACKEND_CONFIG,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| {
+                        api::common_admin::post_backend_config(
+                            param1, param2, state,
+                        )
+                    }
+                }),
+            )
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();

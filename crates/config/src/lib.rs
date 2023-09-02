@@ -16,7 +16,8 @@ use std::{
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{report, Result, ResultExt};
-use file_dynamic::{ConfigFileDynamic, BotConfig};
+use file_dynamic::{ConfigFileDynamic};
+use model::BotConfig;
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
@@ -193,7 +194,7 @@ impl Config {
     }
 
     pub fn bot_config(&self) -> Option<&BotConfig> {
-        self.file_dynamic.bots.as_ref()
+        self.file_dynamic.backend_config.bots.as_ref()
     }
 
     pub fn backend_code_version(&self) -> &str {
@@ -274,7 +275,7 @@ pub fn get_config(
     let file_dynamic =
         ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
 
-    if file_dynamic.bots.is_some() && !file_config.internal_api.as_ref().map(|c| c.bot_login).unwrap_or_default() {
+    if file_dynamic.backend_config.bots.is_some() && !file_config.internal_api.as_ref().map(|c| c.bot_login).unwrap_or_default() {
         return Err(GetConfigError::InvalidConfiguration)
             .attach_printable("When bots are enabled, internal API bot login must be also enabled");
     }

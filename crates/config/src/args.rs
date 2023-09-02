@@ -125,7 +125,7 @@ impl TestMode {
         }
     }
 
-    pub fn bot_mode(&self) -> Option<&BotConfig> {
+    pub fn bot_mode(&self) -> Option<&BotModeConfig> {
         match &self.mode {
             TestModeSubMode::Bot(c) => Some(c),
             _ => None,
@@ -156,7 +156,7 @@ pub enum TestModeSubMode {
     /// Run QA test suite
     Qa(QaTestConfig),
     /// Run bot mode
-    Bot(BotConfig),
+    Bot(BotModeConfig),
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -212,7 +212,7 @@ pub struct BenchmarkConfig {
 pub struct QaTestConfig;
 
 #[derive(Args, Debug, Clone)]
-pub struct BotConfig {
+pub struct BotModeConfig {
     /// User bot count per task
     #[arg(short, long, default_value = "1", value_name = "COUNT")]
     pub users: u32,
