@@ -277,7 +277,7 @@ pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
 /// # Capabilities
 /// Requires admin_server_maintentance_view_backend_settings.
 #[utoipa::path(
-    post,
+    get,
     path = "/common_api/backend_config",
     params(),
     responses(
