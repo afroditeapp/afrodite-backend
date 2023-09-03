@@ -65,7 +65,8 @@ impl ConfigFileDynamic {
         edit_document_bot_config(&mut config_document, bot_config)?;
 
         let new_config = config_document.to_string();
-        ConfigFileUtils::save_string(dir, &new_config)
+        let file_path = dir.join(CONFIG_FILE_DYNAMIC_NAME);
+        ConfigFileUtils::save_string(file_path, &new_config)
             .change_context(ConfigFileError::SaveEditedConfig)
     }
 }
