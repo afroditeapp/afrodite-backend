@@ -1481,6 +1481,7 @@ dependencies = [
  "diesel",
  "nalgebra",
  "serde",
+ "serde_json",
  "sqlx",
  "thiserror",
  "utoipa",

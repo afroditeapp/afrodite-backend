@@ -115,6 +115,7 @@ macro_rules! define_capablities {
             $(
                 $(#[doc = $text])?
                 #[serde(default, skip_serializing_if = "std::ops::Not::not")] // Skips false
+                #[schema(default = false)]
                 pub $name: bool,
             )*
         }
