@@ -66,8 +66,9 @@ impl ConfigFileDynamic {
 
         let new_config = config_document.to_string();
         let file_path = dir.join(CONFIG_FILE_DYNAMIC_NAME);
-        ConfigFileUtils::save_string(file_path, &new_config)
+        ConfigFileUtils::save_string(&file_path, &new_config)
             .change_context(ConfigFileError::SaveEditedConfig)
+            .attach_printable(file_path.display().to_string())
     }
 }
 
