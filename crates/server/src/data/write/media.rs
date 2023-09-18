@@ -44,9 +44,9 @@ impl WriteCommandsMedia<'_> {
         }
 
         // Paths related to moving image from tmp to image dir
-        let raw_img = self
+        let tmp_img = self
             .file_dir()
-            .unprocessed_image_upload(id.as_id(), content_id);
+            .processed_image_upload(id.as_id(), content_id);
         let processed_content_path = self.file_dir().image_content(id.as_id(), content_id);
 
         if self
@@ -61,7 +61,7 @@ impl WriteCommandsMedia<'_> {
             CurrentSyncWriteMedia::insert_content_id_to_slot(conn, id, content_id, slot)?;
 
             // Move image from tmp to image dir
-            raw_img
+            tmp_img
                 .move_to_blocking(&processed_content_path)
                 .change_context(DieselDatabaseError::File)?;
             // If moving fails, diesel rollbacks the transaction.

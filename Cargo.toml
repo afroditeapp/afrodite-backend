@@ -1,4 +1,5 @@
 [workspace]
+workspace.resolver = "2"
 members = [
     # From git submodule
     "crates/app-manager/crates/manager_model",
@@ -14,4 +15,5 @@ members = [
     "crates/test_mode",
     "crates/database",
     "crates/server",
+    "crates/image_process"
 ]

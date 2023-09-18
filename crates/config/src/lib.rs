@@ -90,7 +90,7 @@ pub struct Config {
     sqlite_in_ram: bool,
 
     // Other configs
-    test_mode: Option<TestMode>,
+    mode: Option<AppMode>,
 
     // TLS
     public_api_tls_config: Option<Arc<ServerConfig>>,
@@ -160,9 +160,11 @@ impl Config {
         self.file.manager.as_ref()
     }
 
-    /// Launch testing and benchmark mode instead of the server mode.
-    pub fn test_mode(&self) -> Option<TestMode> {
-        self.test_mode.clone()
+    /// Server binary was launched in a special mode instead of the server mode.
+    ///
+    /// If None then the mode is the server mode.
+    pub fn current_mode(&self) -> Option<AppMode> {
+        self.mode.clone()
     }
 
     pub fn admin_email(&self) -> &str {
@@ -266,12 +268,6 @@ pub fn get_config(
         false
     };
 
-    let test_mode = if let Some(AppMode::Test(mode)) = &args_config.test_mode {
-        Some(mode.clone())
-    } else {
-        None
-    };
-
     let file_dynamic =
         ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
 
@@ -287,7 +283,7 @@ pub fn get_config(
         external_services,
         client_api_urls,
         sqlite_in_ram,
-        test_mode,
+        mode: args_config.mode.clone(),
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,
         internal_api_tls_config,

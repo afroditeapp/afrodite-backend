@@ -13,6 +13,7 @@ tokio = { version = "1", features = ["full"] }
 config = { path = "../config" }
 test_mode = { path = "../test_mode" }
 server = { path = "../server" }
+image_process = { path = "../image_process" }
 
 [build-dependencies]
 vergen = { version = "8.0.0", features = ["cargo", "git", "gitcl", "rustc"] }

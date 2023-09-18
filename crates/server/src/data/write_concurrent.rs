@@ -8,7 +8,7 @@ use database::{
     history::write::HistoryWriteCommands,
     sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
 };
-use error_stack::{Result, ResultExt};
+use error_stack::{Result, ResultExt, FutureExt};
 use model::{AccountId, AccountIdInternal, ContentId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
@@ -16,7 +16,7 @@ use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter, IntoDataError,
     RouterDatabaseWriteHandle,
 };
-use crate::data::DataError;
+use crate::{data::DataError, image::ImageProcess};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 
@@ -171,15 +171,21 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .await
             .change_context(DataError::File)?;
 
-        let raw_img = self
+        let tmp_raw_img = self
             .file_dir
             .unprocessed_image_upload(id.as_id(), content_id);
-        raw_img
+        tmp_raw_img
             .save_stream(stream)
             .await
             .change_context(DataError::File)?;
 
-        // TODO: image safety checks and processing
+        let tmp_img = self
+            .file_dir
+            .processed_image_upload(id.as_id(), content_id);
+
+        ImageProcess::start_image_process(tmp_raw_img.as_path(), tmp_img.as_path())
+            .await
+            .change_context(DataError::ImageProcess)?;
 
         Ok(content_id)
     }

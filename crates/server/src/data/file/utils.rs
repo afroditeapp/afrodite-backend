@@ -33,8 +33,16 @@ impl FileDir {
             .unprocessed_image_upload(content)
     }
 
+    pub fn processed_image_upload(&self, id: AccountId, content: ContentId) -> TmpImageFile {
+        self.account_dir(id)
+            .tmp_dir()
+            .processed_image_upload(content)
+    }
+
     pub fn image_content(&self, id: AccountId, content_id: ContentId) -> ImageFile {
-        self.account_dir(id).image_dir().image_content(content_id)
+        self.account_dir(id)
+            .image_dir()
+            .image_content(content_id)
     }
 
     pub fn account_dir(&self, id: AccountId) -> AccountDir {
@@ -125,6 +133,13 @@ impl TmpDir {
             path: PathToFile { path: self.dir },
         }
     }
+
+    pub fn processed_image_upload(mut self, id: ContentId) -> TmpImageFile {
+        self.dir.push(id.jpg_image());
+        TmpImageFile {
+            path: PathToFile { path: self.dir },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -163,7 +178,7 @@ pub struct ImageFile {
 
 impl ImageFile {
     pub fn path(&self) -> &PathBuf {
-        self.path.path()
+        self.path.as_path()
     }
 
     pub async fn remove_if_exists(self) -> Result<(), FileError> {
@@ -200,6 +215,10 @@ impl TmpImageFile {
     pub async fn remove_if_exists(self) -> Result<(), FileError> {
         self.path.remove_if_exists().await
     }
+
+    pub fn as_path(&self) -> &Path {
+        self.path.as_path()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -208,7 +227,7 @@ struct PathToFile {
 }
 
 impl PathToFile {
-    pub fn path(&self) -> &PathBuf {
+    pub fn as_path(&self) -> &PathBuf {
         &self.path
     }
 
@@ -272,7 +291,7 @@ impl PathToFile {
     pub async fn move_to(self, new_location: &Self) -> Result<(), FileError> {
         new_location.create_parent_dirs().await?;
 
-        tokio::fs::rename(self.path, new_location.path())
+        tokio::fs::rename(self.path, new_location.as_path())
             .await
             .change_context(FileError::IoFileRename)
     }
@@ -280,7 +299,7 @@ impl PathToFile {
     pub fn move_to_blocking(self, new_location: &Self) -> Result<(), FileError> {
         new_location.create_parent_dirs_blocking()?;
 
-        std::fs::rename(self.path, new_location.path()).change_context(FileError::IoFileRename)
+        std::fs::rename(self.path, new_location.as_path()).change_context(FileError::IoFileRename)
     }
 
     pub async fn remove_if_exists(self) -> Result<(), FileError> {

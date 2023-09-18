@@ -1,0 +1,17 @@
+[package]
+name = "image_process"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+image = { version = "0.24.6", default-features = false, features = ["jpeg"] }
+mozjpeg = "0.10.1"
+
+
+thiserror = "1.0.37"
+error-stack = "0.4"
+
+
+utils = { path = "../utils" }

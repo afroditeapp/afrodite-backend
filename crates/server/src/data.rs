@@ -68,6 +68,8 @@ pub enum DataError {
     File,
     #[error("Media backup error")]
     MediaBackup,
+    #[error("Image process error")]
+    ImageProcess,
 
     #[error("Diesel error")]
     Diesel,
