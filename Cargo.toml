@@ -17,3 +17,7 @@ members = [
     "crates/server",
     "crates/image_process"
 ]
+
+# Make image processing faster for debug builds
+[profile.dev.package.image]
+opt-level = 3

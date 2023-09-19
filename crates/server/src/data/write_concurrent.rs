@@ -16,7 +16,7 @@ use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter, IntoDataError,
     RouterDatabaseWriteHandle,
 };
-use crate::{data::DataError, image::ImageProcess};
+use crate::{data::DataError, image::ImageProcess, utils::AppendErrorTo};
 
 const CONCURRENT_WRITE_COMMAND_LIMIT: usize = 10;
 
@@ -182,10 +182,14 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let tmp_img = self
             .file_dir
             .processed_image_upload(id.as_id(), content_id);
-
         ImageProcess::start_image_process(tmp_raw_img.as_path(), tmp_img.as_path())
             .await
             .change_context(DataError::ImageProcess)?;
+
+        tmp_raw_img
+            .remove_if_exists()
+            .await
+            .change_context(DataError::File)?;
 
         Ok(content_id)
     }

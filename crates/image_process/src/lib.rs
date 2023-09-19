@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 use error_stack::{Result, ResultExt, report};
-use image::EncodableLayout;
+use image::{EncodableLayout, DynamicImage};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ImageProcessError {
@@ -16,6 +16,9 @@ pub enum ImageProcessError {
 
     #[error("File writing failed")]
     FileWriting,
+
+    #[error("Exif reading failed")]
+    ExifReadingFailed,
 }
 
 pub struct Settings {
@@ -29,8 +32,15 @@ pub struct Settings {
 }
 
 pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
+    let rotation = match read_exif_rotation_info(&settings.input) {
+        Ok(rotation) => rotation,
+        Err(_) => 0,
+    };
+
     let img = image::open(settings.input)
         .change_context(ImageProcessError::InputReadingFailed)?;
+
+    let img = resize_and_rotate_image(img, rotation);
 
     let result = std::panic::catch_unwind(|| -> Result<Vec<u8>, ImageProcessError> {
         let mut compress = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_RGB);
@@ -53,7 +63,7 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
         let mut compress = compress.start_compress(Vec::new())
             .change_context(ImageProcessError::EncodingError)?;
 
-        let data = img.to_rgb8();
+        let data = img.into_rgb8();
         compress.write_scanlines(data.as_bytes())
             .change_context(ImageProcessError::EncodingError)?;
 
@@ -78,4 +88,56 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
 
 
     Ok(())
+}
+
+/// Read exif rotation info from jpeg image.
+/// Returns error if reading failed or the rotation info does not exists.
+fn read_exif_rotation_info(image: &Path) -> Result<u32, ImageProcessError> {
+    let file = std::fs::File::open(image)
+        .change_context(ImageProcessError::ExifReadingFailed)?;
+    let mut buf_reader = std::io::BufReader::new(file);
+    let reader = exif::Reader::new();
+    let exif = reader.read_from_container(&mut buf_reader)
+        .change_context(ImageProcessError::ExifReadingFailed)?;
+
+    let field = exif.get_field(exif::Tag::Orientation, exif::In::PRIMARY)
+        .ok_or(report!(ImageProcessError::ExifReadingFailed))?;
+    let value = field.value.get_uint(0)
+        .ok_or(report!(ImageProcessError::ExifReadingFailed))?;
+
+    Ok(value)
+}
+
+fn resize_image_if_needed(img: DynamicImage) -> DynamicImage {
+    const WIDTH: u32 = 1920;
+    const HEIGHT: u32 = 1080;
+
+    // Check both using width because it is larger value
+    if img.width() > WIDTH || img.height() > WIDTH {
+        // Resize, so that suggested new resolution matches the image
+        // orientation. This makes resized image the largest possible which can
+        // fit in Full HD area with the same aspect ratio.
+        if img.width() > img.height() {
+            img.resize(WIDTH, HEIGHT, image::imageops::FilterType::Lanczos3)
+        } else {
+            img.resize(HEIGHT, WIDTH, image::imageops::FilterType::Lanczos3)
+        }
+    } else {
+        img
+    }
+}
+
+fn resize_and_rotate_image(img: DynamicImage, exif_rotation: u32) -> DynamicImage {
+    let img = resize_image_if_needed(img);
+    match exif_rotation {
+        1 => img,
+        2 => img.fliph(),
+        3 => img.rotate180(),
+        4 => img.flipv(),
+        5 => img.rotate90().fliph(),
+        6 => img.rotate90(),
+        7 => img.rotate270().fliph(),
+        8 => img.rotate270(),
+        _ => img,
+    }
 }

@@ -47,9 +47,22 @@ impl ImageProcess {
 
         let input = std::fs::canonicalize(&input)
             .change_context(ImageProcessError::LaunchCommand)?;
-        let output = std::fs::canonicalize(&output)
-            .change_context(ImageProcessError::LaunchCommand)?;
-
+        let output = if output.exists() {
+            std::fs::canonicalize(&output)
+                .change_context(ImageProcessError::LaunchCommand)?
+        } else {
+            let output_file_name = output
+                .file_name()
+                .ok_or(ImageProcessError::LaunchCommand.report())?;
+            if let Some(parent) = output.parent() {
+                let path = std::fs::canonicalize(&parent)
+                    .change_context(ImageProcessError::LaunchCommand)?;
+                path.join(output_file_name)
+            } else {
+                return Err(ImageProcessError::LaunchCommand.report())
+                    .attach_printable(format!("Output path {:?} has no parent", output));
+            }
+        };
 
         let mut command = std::process::Command::new(start_cmd);
         command

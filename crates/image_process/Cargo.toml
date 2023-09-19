@@ -8,10 +8,9 @@ edition = "2021"
 [dependencies]
 image = { version = "0.24.6", default-features = false, features = ["jpeg"] }
 mozjpeg = "0.10.1"
-
+kamadak-exif = "0.5.5"
 
 thiserror = "1.0.37"
 error-stack = "0.4"
-
 
 utils = { path = "../utils" }
