@@ -174,6 +174,7 @@ fn new_config(
         internal_api: Some(InternalApiConfig { bot_login: true }),
         media_backup: None,
         litestream: None,
+        queue_limits: None,
     }
 }
 

@@ -42,6 +42,7 @@ nalgebra = "0.32.2"
 
 jsonwebtoken = "8.3.0"
 
+num_cpus = "1.16.0"
 nix = { version = "0.26.2", default-features = false, features = ["signal"] }
 
 manager_api = { path = "../app-manager/crates/manager_api" }

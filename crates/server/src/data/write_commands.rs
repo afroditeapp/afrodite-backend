@@ -3,13 +3,14 @@
 
 use std::{future::Future, sync::Arc};
 
+use config::Config;
 use error_stack::{Result, ResultExt};
 use model::AccountId;
 use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 
 
 use super::{
-    write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteHandle},
+    write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteImageHandle, ConcurrentWriteProfileHandle, ConcurrentWriteSelectorHandle, ConcurrentWriteAction},
     RouterDatabaseWriteHandle, SyncWriteHandle,
 };
 use crate::data::DataError;
@@ -38,7 +39,7 @@ pub struct WriteCommandRunnerHandle {
 }
 
 impl WriteCommandRunnerHandle {
-    pub fn new(write: RouterDatabaseWriteHandle) -> (Self, WriteCmdWatcher) {
+    pub fn new(write: RouterDatabaseWriteHandle, config: &Config) -> (Self, WriteCmdWatcher) {
         let (quit_lock, quit_handle) = mpsc::channel::<()>(1);
 
         let cmd_watcher = WriteCmdWatcher::new(quit_handle);
@@ -46,7 +47,7 @@ impl WriteCommandRunnerHandle {
         let runner_handle = Self {
             quit_lock,
             sync_write_mutex: Mutex::new(write.clone().into_sync_handle()).into(),
-            concurrent_write: ConcurrentWriteCommandHandle::new(write.clone()),
+            concurrent_write: ConcurrentWriteCommandHandle::new(write.clone(), config),
         };
         (runner_handle, cmd_watcher)
     }
@@ -74,8 +75,8 @@ impl WriteCommandRunnerHandle {
 
     pub async fn concurrent_write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DataError>> + Send,
-        GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
+        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send,
+        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
     >(
         &self,
         account: AccountId,
@@ -83,15 +84,24 @@ impl WriteCommandRunnerHandle {
     ) -> Result<CmdResult, DataError> {
         let quit_lock = self.quit_lock.clone();
         let lock = self.concurrent_write.accquire(account).await;
+        let action = write_cmd(lock).await;
+
         let handle = tokio::spawn(async move {
-            let result = write_cmd(lock).await;
+            let action_future = match action {
+                ConcurrentWriteAction::Image { handle, action } =>
+                    action(handle),
+                ConcurrentWriteAction::Profile { handle, action } =>
+                    action(handle),
+            };
+
+            let result = Box::into_pin(action_future).await;
             drop(quit_lock); // Write completed, so release the quit lock.
             result
         });
 
         handle
             .await
-            .change_context(DataError::CommandResultReceivingFailed)?
+            .change_context(DataError::CommandResultReceivingFailed)
     }
 }
 

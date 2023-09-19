@@ -366,6 +366,9 @@ impl DatabaseManager {
             cache: cache.into(),
             location: index.into(),
             media_backup,
+            image_processing_queue: Arc::new(tokio::sync::Semaphore::new(
+                num_cpus::get(),
+            )),
         };
 
         let sqlite_read = router_write_handle.sqlx_current_read.clone();
@@ -425,6 +428,7 @@ pub struct RouterDatabaseWriteHandle {
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
+    image_processing_queue: Arc<tokio::sync::Semaphore>,
 }
 
 impl RouterDatabaseWriteHandle {
@@ -450,6 +454,7 @@ impl RouterDatabaseWriteHandle {
             &self.cache,
             &self.root.file_dir,
             LocationIndexIteratorGetter::new(&self.location),
+            &self.image_processing_queue,
         )
     }
 

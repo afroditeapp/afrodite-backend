@@ -12,7 +12,7 @@ use crate::{
         read::ReadCommands,
         utils::{AccessTokenManager, AccountIdManager},
         write_commands::WriteCmds,
-        write_concurrent::ConcurrentWriteHandle,
+        write_concurrent::{ConcurrentWriteImageHandle, ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
         DataError,
     },
     internal::InternalApiManager,
@@ -179,8 +179,8 @@ pub trait WriteData {
 
     async fn write_concurrent<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = error_stack::Result<CmdResult, DataError>> + Send + 'static,
-        GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
+        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
+        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
     >(
         &self,
         account: AccountId,

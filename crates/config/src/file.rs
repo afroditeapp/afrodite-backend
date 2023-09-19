@@ -79,6 +79,9 @@ chat = true
 # internal_api_key = "server_config/internal_api.key"
 # root_certificate = "server_config/root_certificate"
 
+# [queue_limits]
+# image_upload = 10
+
 # [media_backup]
 # ssh_address = "user@192.168.64.1"
 # target_location = "/home/user/media_backup"
@@ -130,6 +133,7 @@ pub struct ConfigFile {
     pub tls: Option<TlsConfig>,
 
     pub internal_api: Option<InternalApiConfig>,
+    pub queue_limits: Option<QueueLimitsConfig>,
     pub media_backup: Option<MediaBackupConfig>,
     pub litestream: Option<LitestreamConfig>,
 }
@@ -321,6 +325,20 @@ pub struct LitestreamConfig {
     pub binary: PathBuf,
     /// Path to Litestream config file.
     pub config_file: PathBuf,
+}
+
+/// Server queue limits
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct QueueLimitsConfig {
+    pub image_upload: usize,
+}
+
+impl Default for QueueLimitsConfig {
+    fn default() -> Self {
+        Self {
+            image_upload: 10,
+        }
+    }
 }
 
 /// Absolute path with no whitespace.

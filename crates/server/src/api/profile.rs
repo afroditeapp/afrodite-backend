@@ -1,8 +1,10 @@
 use axum::{extract::Path, Extension};
 use model::{
     AccountId, AccountIdInternal, Location, Profile, ProfilePage, ProfileUpdate,
-    ProfileUpdateInternal,
+    ProfileUpdateInternal, ProfileLink,
 };
+
+use crate::data::{write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction}, DataError};
 
 use super::{
     db_write,
@@ -173,9 +175,14 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
 ) -> Result<Json<ProfilePage>, StatusCode> {
     let data = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            cmds.next_profiles(account_id).await
+            let out: ConcurrentWriteAction<error_stack::Result<Vec<ProfileLink>, DataError>> = cmds.accquire_profile(
+                move |cmds: ConcurrentWriteProfileHandle| Box::new(async move {
+                    cmds.next_profiles(account_id).await
+                })
+            ).await;
+            out
         })
-        .await?;
+        .await??;
 
     Ok(ProfilePage { profiles: data }.into())
 }
@@ -206,9 +213,14 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
 
     state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            cmds.reset_profile_iterator(account_id).await
+            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds.accquire_profile(
+                move |cmds: ConcurrentWriteProfileHandle| Box::new(async move {
+                    cmds.reset_profile_iterator(account_id).await
+                })
+            ).await;
+            out
         })
-        .await?;
+        .await??;
 
     Ok(())
 }

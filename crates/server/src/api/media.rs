@@ -9,6 +9,8 @@ use model::{
 };
 use tracing::error;
 
+use crate::data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImageHandle}, DataError};
+
 use super::{
     db_write,
     utils::{Json, StatusCode},
@@ -275,13 +277,14 @@ pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
 
     let content_id = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            cmds.save_to_tmp(account_id, image).await
+            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds.accquire_image(
+                move |cmds: ConcurrentWriteImageHandle| Box::new(async move {
+                    cmds.save_to_tmp(account_id, image).await
+                })
+            ).await;
+            out
         })
-        .await
-        .map_err(|e| {
-            error!("Error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await??;
 
     state
         .write(move |cmds| async move {
@@ -289,11 +292,7 @@ pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
                 .save_to_slot(account_id, content_id, slot)
                 .await
         })
-        .await
-        .map_err(|e| {
-            error!("Error: {e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     Ok(content_id.into())
 }

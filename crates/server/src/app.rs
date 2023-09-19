@@ -18,16 +18,16 @@ use super::{
         read::ReadCommands,
         utils::{AccessTokenManager, AccountIdManager},
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
-        write_concurrent::ConcurrentWriteHandle,
+        write_concurrent::ConcurrentWriteImageHandle,
         DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
     manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
 };
-use crate::api::{
+use crate::{api::{
     self, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, GetManagerApi, ReadData,
     SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig,
-};
+}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}};
 
 pub mod connection;
 pub mod routes_connected;
@@ -87,8 +87,8 @@ impl WriteData for AppState {
 
     async fn write_concurrent<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DataError>> + Send + 'static,
-        GetCmd: FnOnce(ConcurrentWriteHandle) -> Cmd + Send + 'static,
+        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
+        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
     >(
         &self,
         account: AccountId,

@@ -16,6 +16,7 @@ use std::{
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{report, Result, ResultExt};
+use file::QueueLimitsConfig;
 use file_dynamic::{ConfigFileDynamic};
 use model::BotConfig;
 use reqwest::Url;
@@ -205,6 +206,10 @@ impl Config {
 
     pub fn backend_semver_version(&self) -> &str {
         &self.backend_semver_version
+    }
+
+    pub fn queue_limits(&self) -> QueueLimitsConfig {
+        self.file.queue_limits.clone().unwrap_or_default()
     }
 }
 

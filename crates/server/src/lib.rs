@@ -103,7 +103,7 @@ impl PihkaServer {
             WebSocketManager::new(server_quit_watcher.resubscribe());
 
         let (write_cmd_runner_handle, write_cmd_waiter) =
-            WriteCommandRunnerHandle::new(router_database_write_handle.clone());
+            WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config);
 
         let mut app = App::new(
             router_database_handle,
