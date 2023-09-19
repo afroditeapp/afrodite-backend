@@ -310,7 +310,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .ok_or(DataError::FeatureDisabled)?;
 
         let iterator = self.location.get().ok_or(DataError::FeatureDisabled)?;
-        let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await;
+        let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await?;
         self.cache
             .write_cache(id.as_id(), |e| {
                 e.profile

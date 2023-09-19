@@ -66,6 +66,8 @@ pub enum DataError {
     Cache,
     #[error("File error")]
     File,
+    #[error("Profile index error")]
+    ProfileIndex,
     #[error("Media backup error")]
     MediaBackup,
     #[error("Image process error")]

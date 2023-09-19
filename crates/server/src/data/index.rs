@@ -1,10 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 
 use config::Config;
+use error_stack::ResultExt;
 use model::{AccountId, Location, LocationIndexKey, ProfileLink};
 use tokio::sync::RwLock;
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
+
+use super::DataError;
 
 pub mod location;
 
@@ -94,9 +97,17 @@ impl<'a> LocationIndexIteratorHandle<'a> {
     pub async fn next_profiles(
         &self,
         previous_iterator_state: LocationIndexIteratorState,
-    ) -> (LocationIndexIteratorState, Option<Vec<ProfileLink>>) {
-        let mut iterator = previous_iterator_state.to_iterator(self.index.clone());
-        match iterator.next() {
+    ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), DataError> {
+        let index = self.index.clone();
+        let (iterator, key) =
+            tokio::task::spawn_blocking(move || {
+                let mut iterator = previous_iterator_state.to_iterator(index);
+                let key = iterator.next();
+                (iterator, key)
+            })
+                .await
+                .change_context(DataError::ProfileIndex)?;
+        let data = match key {
             None => (iterator.into(), None),
             Some(key) => match self.profiles.read().await.get(&key) {
                 None => (iterator.into(), None),
@@ -105,7 +116,8 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                     Some(profiles.profiles.values().map(|p| p.clone()).collect()),
                 ),
             },
-        }
+        };
+        Ok(data)
     }
 
     pub fn reset_iterator(
