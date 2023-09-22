@@ -299,6 +299,15 @@ impl ConnectedApp {
                 }),
             )
             .route(
+                api::media::PATH_GET_MAP_TILE,
+                get({
+                    let state = self.state.clone();
+                    move |param1, param2, param3| {
+                        api::media::get_map_tile(param1, param2, param3, state)
+                    }
+                }),
+            )
+            .route(
                 api::media_admin::PATH_ADMIN_MODERATION_PAGE_NEXT,
                 patch({
                     let state = self.state.clone();

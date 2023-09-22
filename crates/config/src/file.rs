@@ -58,6 +58,9 @@ chat = true
 # address = "http://127.0.0.1:5000"
 # api_key = "TODO"
 
+# [tile_map]
+# tile_dir = "/map_tiles"
+
 # [internal_api]
 # Enable login and register route for bots
 # bot_login = false
@@ -126,6 +129,7 @@ pub struct ConfigFile {
     pub database: DatabaseConfig,
     pub socket: SocketConfig,
     pub location: LocationConfig,
+    pub tile_map: Option<TileMapConfig>,
     pub manager: Option<AppManagerConfig>,
     pub external_services: Option<ExternalServices>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
@@ -217,6 +221,13 @@ pub struct AppManagerConfig {
 pub struct ExternalServices {
     pub account_internal: Option<Url>,
     pub media_internal: Option<Url>,
+}
+
+#[derive(Debug, Deserialize, Default, Serialize, Clone)]
+pub struct TileMapConfig {
+    /// Directory for map tiles.
+    /// Tiles must be stored in z/x/y.png format.
+    pub tile_dir: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -12,6 +12,27 @@ use crate::{
     AccountId, AccountIdDb,
 };
 
+
+/// Y coordinate of slippy map tile.
+///
+/// This might include also .png file extension.
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct MapTileY {
+    pub y: String,
+}
+
+/// X coordinate of slippy map tile.
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct MapTileX {
+    pub x: u32,
+}
+
+/// Z coordinate (or zoom number) of slippy map tile.
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct MapTileZ {
+    pub z: u32,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotNumber {
     pub slot_number: u8,

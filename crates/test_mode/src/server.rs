@@ -175,6 +175,7 @@ fn new_config(
         media_backup: None,
         litestream: None,
         queue_limits: None,
+        tile_map: None,
     }
 }
 

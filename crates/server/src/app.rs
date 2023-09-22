@@ -26,8 +26,8 @@ use super::{
 };
 use crate::{api::{
     self, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, GetManagerApi, ReadData,
-    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig,
-}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}};
+    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig, GetTileMap,
+}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, map::TileMapManager};
 
 pub mod connection;
 pub mod routes_connected;
@@ -42,6 +42,7 @@ pub struct AppState {
     manager_api: Arc<ManagerApiClient>,
     config: Arc<Config>,
     sign_in_with: Arc<SignInWithManager>,
+    tile_map: Arc<TileMapManager>,
 }
 
 impl BackendVersionProvider for AppState {
@@ -158,6 +159,12 @@ impl GetConfig for AppState {
     }
 }
 
+impl GetTileMap for AppState {
+    fn tile_map(&self) -> &TileMapManager {
+        &self.tile_map
+    }
+}
+
 pub struct App {
     state: AppState,
     ws_manager: Option<WebSocketManager>,
@@ -177,6 +184,7 @@ impl App {
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             manager_api: ManagerApiClient::new(&config)?.into(),
+            tile_map: TileMapManager::new(&config).into(),
             sign_in_with: SignInWithManager::new(config).into(),
         };
 

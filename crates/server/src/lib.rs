@@ -13,6 +13,7 @@ pub mod manager_client;
 pub mod media_backup;
 pub mod utils;
 pub mod image;
+pub mod map;
 
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 

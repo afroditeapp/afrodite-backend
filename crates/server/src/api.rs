@@ -12,11 +12,11 @@ use crate::{
         read::ReadCommands,
         utils::{AccessTokenManager, AccountIdManager},
         write_commands::WriteCmds,
-        write_concurrent::{ConcurrentWriteImageHandle, ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
         DataError,
     },
     internal::InternalApiManager,
-    manager_client::ManagerApiManager,
+    manager_client::ManagerApiManager, map::TileMapManager,
 };
 
 // Routes
@@ -79,6 +79,7 @@ pub mod utils;
         media::get_all_normal_images,
         media::get_image,
         media::get_moderation_request,
+        media::get_map_tile,
         media::put_moderation_request,
         media::put_image_to_moderation_slot,
         media::put_primary_image,
@@ -128,6 +129,9 @@ pub mod utils;
         model::media::SecurityImage,
         model::media::ImageAccessCheck,
         model::media::NormalImages,
+        model::media::MapTileZ,
+        model::media::MapTileX,
+        model::media::MapTileY,
         // Media admin
         model::media_admin::ModerationRequestId,
         model::media_admin::ModerationList,
@@ -210,6 +214,9 @@ pub trait GetConfig {
     fn config(&self) -> &Config;
 }
 
+pub trait GetTileMap {
+    fn tile_map(&self) -> &TileMapManager;
+}
 
 #[async_trait::async_trait]
 pub trait WriteDynamicConfig {

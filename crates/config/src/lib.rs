@@ -16,7 +16,7 @@ use std::{
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{report, Result, ResultExt};
-use file::QueueLimitsConfig;
+use file::{QueueLimitsConfig, TileMapConfig};
 use file_dynamic::{ConfigFileDynamic};
 use model::BotConfig;
 use reqwest::Url;
@@ -210,6 +210,10 @@ impl Config {
 
     pub fn queue_limits(&self) -> QueueLimitsConfig {
         self.file.queue_limits.clone().unwrap_or_default()
+    }
+
+    pub fn tile_map(&self) -> Option<&TileMapConfig> {
+        self.file.tile_map.as_ref()
     }
 }
 
