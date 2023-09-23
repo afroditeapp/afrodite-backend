@@ -90,6 +90,7 @@ impl TestRunner {
             while task_number < self.test_config.tasks() {
                 BotManager::spawn(
                     task_number,
+                    self.config.clone(),
                     self.test_config.clone(),
                     old_state.clone(),
                     bot_quit_receiver.clone(),

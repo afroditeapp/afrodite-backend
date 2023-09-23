@@ -16,9 +16,9 @@ use tokio::time::sleep;
 
 use super::{
     actions::{
-        account::{AssertAccountState, Login, Register, SetAccountSetup},
+        account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility},
         media::SendImageToSlot,
-        BotAction, RunActions,
+        BotAction, RunActions, profile::{UpdateLocation, UpdateLocationRandom}, RunActionsIf,
     },
     BotState, BotStruct, TaskState,
 };
@@ -58,12 +58,12 @@ impl ClientBot {
                 &Login,
                 &DoInitialSetupIfNeeded { admin: true },
             ];
-            let benchmark = [
+            let action_loop = [
                 &ActionsBeforeIteration as &dyn BotAction,
                 &ModerateMediaModerationRequest,
                 &ActionsAfterIteration,
             ];
-            let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+            let iter = setup.into_iter().chain(action_loop.into_iter().cycle());
 
             Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
         } else {
@@ -73,13 +73,28 @@ impl ClientBot {
                 &Register as &dyn BotAction,
                 &Login,
                 &DoInitialSetupIfNeeded { admin: false },
+                &UpdateLocationRandom(None),
+                &SetProfileVisibility(true),
             ];
-            let benchmark = [
+            let action_loop = [
                 &ActionsBeforeIteration as &dyn BotAction,
                 &GetProfile,
+                &RunActionsIf(
+                    action_array!(UpdateLocationRandom(None)),
+                    || rand::random::<f32>() < 0.2,
+                ),
+                // TODO: Toggle the profile visiblity in the future?
+                &RunActionsIf(
+                    action_array!(SetProfileVisibility(true)),
+                    || rand::random::<f32>() < 0.5,
+                ),
+                &RunActionsIf(
+                    action_array!(SetProfileVisibility(false)),
+                    || rand::random::<f32>() < 0.1,
+                ),
                 &ActionsAfterIteration,
             ];
-            let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+            let iter = setup.into_iter().chain(action_loop.into_iter().cycle());
 
             Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
         };

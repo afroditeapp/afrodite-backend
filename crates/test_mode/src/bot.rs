@@ -8,7 +8,7 @@ use std::{fmt::Debug, sync::Arc, vec};
 
 use api_client::models::AccountId;
 use async_trait::async_trait;
-use config::args::{TestMode, TestModeSubMode, BotModeConfig, SelectedBenchmark};
+use config::{args::{TestMode, TestModeSubMode, BotModeConfig, SelectedBenchmark}, Config};
 use error_stack::{Result, ResultExt};
 use tokio::{
     net::TcpStream,
@@ -46,6 +46,7 @@ pub struct BotConnections {
 #[derive(Debug)]
 pub struct BotState {
     pub id: Option<AccountId>,
+    pub server_config: Arc<Config>,
     pub config: Arc<TestMode>,
     pub task_id: u32,
     pub bot_id: u32,
@@ -62,6 +63,7 @@ pub struct BotState {
 impl BotState {
     pub fn new(
         id: Option<AccountId>,
+        server_config: Arc<Config>,
         config: Arc<TestMode>,
         task_id: u32,
         bot_id: u32,
@@ -69,6 +71,7 @@ impl BotState {
     ) -> Self {
         Self {
             id,
+            server_config,
             config,
             task_id,
             bot_id,
@@ -174,6 +177,7 @@ pub struct BotManager {
 impl BotManager {
     pub fn spawn(
         task_id: u32,
+        server_config: Arc<Config>,
         config: Arc<TestMode>,
         old_state: Option<Arc<StateData>>,
         bot_quit_receiver: watch::Receiver<()>,
@@ -181,8 +185,8 @@ impl BotManager {
     ) {
         let bot = match config.mode {
             TestModeSubMode::Benchmark(_)
-            | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(task_id, old_state, config, _bot_running_handle),
-            TestModeSubMode::Qa(_) => Self::qa(task_id, config, _bot_running_handle),
+            | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(task_id, old_state, server_config, config, _bot_running_handle),
+            TestModeSubMode::Qa(_) => Self::qa(task_id, server_config, config, _bot_running_handle),
         };
 
         tokio::spawn(bot.run(bot_quit_receiver));
@@ -191,6 +195,7 @@ impl BotManager {
     pub fn benchmark_or_bot(
         task_id: u32,
         old_state: Option<Arc<StateData>>,
+        server_config: Arc<Config>,
         config: Arc<TestMode>,
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
@@ -204,6 +209,7 @@ impl BotManager {
                             .map(|s| AccountId::new(s.account_id))
                     })
                     .flatten(),
+                    server_config.clone(),
                 config.clone(),
                 task_id,
                 bot_i,
@@ -249,6 +255,7 @@ impl BotManager {
 
     pub fn qa(
         task_id: u32,
+        server_config: Arc<Config>,
         config: Arc<TestMode>,
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
@@ -266,6 +273,7 @@ impl BotManager {
         let new_bot_state = |bot_i| {
             BotState::new(
                 None,
+                server_config.clone(),
                 config.clone(),
                 task_id,
                 bot_i,

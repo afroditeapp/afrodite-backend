@@ -113,7 +113,7 @@ impl Benchmark {
     pub fn benchmark_get_profile_list_bot(state: BotState) -> Self {
         let benchmark = [
             &RunActions(TO_NORMAL_STATE) as &dyn BotAction,
-            &UpdateLocationRandom(DEFAULT_LOCATION_CONFIG_BENCHMARK),
+            &UpdateLocationRandom(Some(DEFAULT_LOCATION_CONFIG_BENCHMARK)),
             &SetProfileVisibility(true),
         ];
         let iter = benchmark.into_iter();

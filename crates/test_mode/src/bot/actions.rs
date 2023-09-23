@@ -19,7 +19,7 @@ use super::{super::client::TestError, BotState, TaskState};
 
 #[macro_export]
 macro_rules! action_array {
-    [ $( $actions:expr, )* ] => {
+    [ $( $actions:expr ),* $(,)? ] => {
         &[   $( &($actions) as &dyn BotAction, )*    ]
     };
 }
@@ -288,6 +288,25 @@ impl BotAction for RunActions {
             a.excecute(state, task_state).await?;
         }
 
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct RunActionsIf(pub ActionArray, pub fn() -> bool);
+
+#[async_trait]
+impl BotAction for RunActionsIf {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
+        if self.1() {
+            for a in self.0.iter() {
+                a.excecute(state, task_state).await?;
+            }
+        }
         Ok(())
     }
 }

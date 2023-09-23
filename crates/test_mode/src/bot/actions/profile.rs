@@ -40,13 +40,20 @@ impl BotAction for UpdateLocation {
     }
 }
 
+/// Updates location with random values.
+/// If None is passed, then area for random location is
+/// from Config.
 #[derive(Debug)]
-pub struct UpdateLocationRandom(pub LocationConfig);
+pub struct UpdateLocationRandom(pub Option<LocationConfig>);
 
 #[async_trait]
 impl BotAction for UpdateLocationRandom {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        profile_api::put_location(state.api.profile(), self.0.generate_random_location())
+        let config = self.0
+            .clone()
+            .unwrap_or(state.server_config.location().clone());
+
+        profile_api::put_location(state.api.profile(), config.generate_random_location())
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
