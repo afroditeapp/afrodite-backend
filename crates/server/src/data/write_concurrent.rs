@@ -15,8 +15,8 @@ use model::{AccountId, AccountIdInternal, ContentId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
-    cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorGetter, IntoDataError,
-    RouterDatabaseWriteHandle,
+    cache::DatabaseCache, file::utils::FileDir, IntoDataError,
+    RouterDatabaseWriteHandle, index::LocationIndexIteratorHandle,
 };
 use crate::{data::DataError, image::ImageProcess};
 
@@ -224,7 +224,7 @@ pub struct WriteCommandsConcurrent<'a> {
     history_write: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
-    location: LocationIndexIteratorGetter<'a>,
+    location: LocationIndexIteratorHandle<'a>,
     image_processing_queue: &'a Arc<tokio::sync::Semaphore>,
 }
 
@@ -234,7 +234,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         history_write: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
-        location: LocationIndexIteratorGetter<'a>,
+        location: LocationIndexIteratorHandle<'a>,
         image_processing_queue: &'a Arc<tokio::sync::Semaphore>,
     ) -> Self {
         Self {
@@ -309,8 +309,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .into_data_error(id)?
             .ok_or(DataError::FeatureDisabled)?;
 
-        let iterator = self.location.get().ok_or(DataError::FeatureDisabled)?;
-        let (next_state, profiles) = iterator.next_profiles(location.current_iterator).await?;
+        let (next_state, profiles) = self.location.next_profiles(location.current_iterator).await?;
         self.cache
             .write_cache(id.as_id(), |e| {
                 e.profile
@@ -334,9 +333,8 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .into_data_error(id)?
             .ok_or(DataError::FeatureDisabled)?;
 
-        let iterator = self.location.get().ok_or(DataError::FeatureDisabled)?;
         let next_state =
-            iterator.reset_iterator(location.current_iterator, location.current_position);
+            self.location.reset_iterator(location.current_iterator, location.current_position);
         self.cache
             .write_cache(id.as_id(), |e| {
                 e.profile

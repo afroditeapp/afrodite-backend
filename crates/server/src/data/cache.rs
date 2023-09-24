@@ -7,17 +7,19 @@ use database::{
 };
 use error_stack::{ResultExt, Result};
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal,
+    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, schema::profile_location,
 };
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing::info;
 use utils::{ComponentError,  IntoReportFromString};
 
+use crate::data::index::LocationIndexWriteHandle;
+
 use super::{
     index::{
-        location::LocationIndexIteratorState, LocationIndexIteratorGetter,
-        LocationIndexWriterGetter,
+        location::LocationIndexIteratorState,
+        LocationIndexIteratorHandle, LocationIndexManager,
     },
     WithInfo,
 };
@@ -74,8 +76,7 @@ impl DatabaseCache {
     pub async fn new(
         read: SqliteReadCommands<'_>,
         read_diesel: DieselCurrentReadHandle,
-        index_iterator: LocationIndexIteratorGetter<'_>,
-        index_writer: LocationIndexWriterGetter<'_>,
+        location_index: &LocationIndexManager,
         config: &Config,
     ) -> Result<Self, CacheError> {
         let cache = Self {
@@ -92,7 +93,13 @@ impl DatabaseCache {
             let id = r.change_context(CacheError::Init)?;
             // Diesel connection used here so no deadlock
             cache
-                .load_account_from_db(id, &config, &read_diesel, &index_iterator, &index_writer)
+                .load_account_from_db(
+                    id,
+                    &config,
+                    &read_diesel,
+                    LocationIndexIteratorHandle::new(location_index),
+                    LocationIndexWriteHandle::new(location_index),
+                )
                 .await
                 .change_context(CacheError::Init)?;
         }
@@ -111,8 +118,8 @@ impl DatabaseCache {
         account_id: AccountIdInternal,
         config: &Config,
         read_diesel: &DieselCurrentReadHandle,
-        index_iterator: &LocationIndexIteratorGetter<'_>,
-        index_writer: &LocationIndexWriterGetter<'_>,
+        index_iterator: LocationIndexIteratorHandle<'_>,
+        index_writer: LocationIndexWriteHandle<'_>,
     ) -> Result<(), CacheError> {
         self.insert_account_if_not_exists(account_id)
             .await
@@ -152,20 +159,23 @@ impl DatabaseCache {
                 cmds.profile().profile(account_id)
             })
             .await?;
+            let profile_location = db_read(&read_diesel, move |mut cmds| {
+                cmds.profile().profile_location(account_id)
+            })
+            .await?;
 
             let mut profile_data: CachedProfile = profile.into();
 
-            let location_key = db_read(&read_diesel, move |mut cmds| {
-                cmds.profile().location_index_key(account_id)
-            })
-            .await?;
+            let location_key = index_writer.coordinates_to_key(&profile_location);
             profile_data.location.current_position = location_key;
-            let index_iterator = index_iterator.get().ok_or(CacheError::FeatureNotEnabled)?;
             profile_data.location.current_iterator =
                 index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
 
             // TODO: Add to location index only if visiblity is public
-            let _index_writer = index_writer.get().ok_or(CacheError::FeatureNotEnabled)?;
+            //       Was the visiblity basically stored only on account server?
+            //       If so, perhaps the best and clearest option would be creating
+            //       new media and profile server specific tables for storing
+            //       cached account server state.
             //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
 
             entry.profile = Some(Box::new(profile_data));

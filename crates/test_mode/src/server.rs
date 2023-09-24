@@ -22,10 +22,7 @@ pub const DEFAULT_LOCATION_CONFIG: LocationConfig = LocationConfig {
     longitude_top_left: 19.5,
     latitude_bottom_right: 59.8,
     longitude_bottom_right: 31.58,
-    index_cell_square_km: match NonZeroU8::new(100) {
-        Some(value) => value,
-        None => panic!(),
-    },
+    index_cell_square_km: NonZeroU8::MAX,
 };
 
 pub const DEFAULT_LOCATION_CONFIG_BENCHMARK: LocationConfig = LocationConfig {
@@ -166,7 +163,7 @@ fn new_config(
             DEFAULT_LOCATION_CONFIG_BENCHMARK
         } else {
             DEFAULT_LOCATION_CONFIG
-        },
+        }.into(),
         external_services,
         sign_in_with_google: None,
         manager: None,

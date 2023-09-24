@@ -67,10 +67,18 @@ CREATE TABLE IF NOT EXISTS account_setup(
 CREATE TABLE IF NOT EXISTS profile(
     account_id      INTEGER PRIMARY KEY NOT NULL,
     version_uuid    BLOB                NOT NULL,
-    location_key_x  INTEGER             NOT NULL    DEFAULT 0,
-    location_key_y  INTEGER             NOT NULL    DEFAULT 0,
     name            TEXT                NOT NULL    DEFAULT '',
     profile_text    TEXT                NOT NULL    DEFAULT '',
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS profile_location(
+    account_id      INTEGER PRIMARY KEY NOT NULL,
+    latitude        DOUBLE              NOT NULL    DEFAULT 0.0,
+    longitude       DOUBLE              NOT NULL    DEFAULT 0.0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

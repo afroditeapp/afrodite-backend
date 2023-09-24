@@ -28,7 +28,7 @@ use tracing::info;
 use self::{
     cache::{CacheError, DatabaseCache},
     file::{read::FileReadCommands, utils::FileDir, FileError},
-    index::{LocationIndexIteratorGetter, LocationIndexManager, LocationIndexWriterGetter},
+    index::{LocationIndexManager, LocationIndexIteratorHandle},
     read::ReadCommands,
     utils::{AccessTokenManager, AccountIdManager},
     write::{
@@ -345,8 +345,7 @@ impl DatabaseManager {
         let cache = DatabaseCache::new(
             read_commands,
             diesel_current_read.clone(),
-            LocationIndexIteratorGetter::new(&index),
-            LocationIndexWriterGetter::new(&index),
+            &index,
             &config,
         )
         .await
@@ -443,8 +442,7 @@ impl RouterDatabaseWriteHandle {
             &self.diesel_history_write,
             &self.cache,
             &self.root.file_dir,
-            LocationIndexIteratorGetter::new(&self.location),
-            LocationIndexWriterGetter::new(&self.location),
+            &self.location,
             &self.media_backup,
         )
     }
@@ -455,7 +453,7 @@ impl RouterDatabaseWriteHandle {
             &self.sqlx_history_write,
             &self.cache,
             &self.root.file_dir,
-            LocationIndexIteratorGetter::new(&self.location),
+            LocationIndexIteratorHandle::new(&self.location),
             &self.image_processing_queue,
         )
     }
@@ -517,8 +515,7 @@ impl SyncWriteHandle {
             &self.diesel_history_write,
             &self.cache,
             &self.root.file_dir,
-            LocationIndexIteratorGetter::new(&self.location),
-            LocationIndexWriterGetter::new(&self.location),
+            &self.location,
             &self.media_backup,
         )
     }

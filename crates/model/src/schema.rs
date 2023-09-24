@@ -147,10 +147,18 @@ diesel::table! {
     profile (account_id) {
         account_id -> Integer,
         version_uuid -> Binary,
-        location_key_x -> Integer,
-        location_key_y -> Integer,
         name -> Text,
         profile_text -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    profile_location (account_id) {
+        account_id -> Integer,
+        latitude -> Double,
+        longitude -> Double,
     }
 }
 
@@ -186,6 +194,7 @@ diesel::joinable!(media_moderation -> media_moderation_request (moderation_reque
 diesel::joinable!(media_moderation_queue_number -> account_id (account_id));
 diesel::joinable!(media_moderation_request -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
+diesel::joinable!(profile_location -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
 
@@ -204,6 +213,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     media_moderation_queue_number,
     media_moderation_request,
     profile,
+    profile_location,
     refresh_token,
     sign_in_with_info,
 );

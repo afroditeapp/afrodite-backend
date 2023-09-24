@@ -28,7 +28,7 @@ use self::{
 use super::{
     cache::DatabaseCache,
     file::utils::FileDir,
-    index::{LocationIndexIteratorGetter, LocationIndexWriterGetter},
+    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
     IntoDataError,
 };
 use crate::{data::DataError, media_backup::MediaBackupHandle};
@@ -65,8 +65,8 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
-            fn location(&self) -> &super::super::index::LocationIndexWriterGetter<'a> {
-                &self.cmds.location
+            fn location(&self) -> super::super::index::LocationIndexWriteHandle<'a> {
+                super::super::index::LocationIndexWriteHandle::new(&self.cmds.location_index)
             }
 
             #[allow(dead_code)]
@@ -177,8 +177,7 @@ pub struct WriteCommands<'a> {
     diesel_history_write: &'a DieselHistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
-    location_iterator: LocationIndexIteratorGetter<'a>,
-    location: LocationIndexWriterGetter<'a>,
+    location_index: &'a LocationIndexManager,
     media_backup: &'a MediaBackupHandle,
 }
 
@@ -191,8 +190,7 @@ impl<'a> WriteCommands<'a> {
         diesel_history_write: &'a DieselHistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
-        location_iterator: LocationIndexIteratorGetter<'a>,
-        location: LocationIndexWriterGetter<'a>,
+        location_index: &'a LocationIndexManager,
         media_backup: &'a MediaBackupHandle,
     ) -> Self {
         Self {
@@ -203,8 +201,7 @@ impl<'a> WriteCommands<'a> {
             diesel_history_write,
             cache,
             file_dir,
-            location_iterator,
-            location,
+            location_index,
             media_backup,
         }
     }
@@ -268,8 +265,8 @@ impl<'a> WriteCommands<'a> {
                 id,
                 &self.config,
                 &self.diesel_current_write.to_read_handle(),
-                &self.location_iterator,
-                &self.location,
+                LocationIndexIteratorHandle::new(&self.location_index),
+                LocationIndexWriteHandle::new(&self.location_index),
             )
             .await
             .into_data_error(id)?;
@@ -318,6 +315,7 @@ impl<'a> WriteCommands<'a> {
 
         if config.components().profile {
             let profile = current.profile().insert_profile(id)?;
+            current.profile().insert_profile_location(id)?;
 
             // Profile history
             history.profile().insert_profile(id, &profile.into())?;

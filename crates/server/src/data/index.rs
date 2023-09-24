@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, num::NonZeroU16};
 
 use config::Config;
 use error_stack::ResultExt;
@@ -14,7 +14,7 @@ pub mod location;
 #[derive(Debug)]
 pub struct LocationIndexManager {
     config: Arc<Config>,
-    index: Option<Arc<LocationIndex>>,
+    index: Arc<LocationIndex>,
     profiles: RwLock<HashMap<LocationIndexKey, ProfilesAtLocation>>,
     coordinates: CoordinateManager,
 }
@@ -22,17 +22,19 @@ pub struct LocationIndexManager {
 impl LocationIndexManager {
     pub fn new(config: Arc<Config>) -> Self {
         let coordinates = CoordinateManager::new(config.clone());
-        let index = if config.components().profile {
-            Some(
-                LocationIndex::new(
-                    coordinates.width().try_into().unwrap(),
-                    coordinates.height().try_into().unwrap(),
-                )
-                .into(),
-            )
-        } else {
-            None
-        };
+        // Create index also if profile features are disabled.
+        // This way accidential index access will not crash the server.
+        // The default index should not consume memory that much.
+        let (width, height) = (
+            coordinates.width().try_into().unwrap(),
+            coordinates.height().try_into().unwrap(),
+        );
+
+        let index = LocationIndex::new(
+            width,
+            height,
+        )
+        .into();
 
         Self {
             config,
@@ -47,34 +49,6 @@ impl LocationIndexManager {
     }
 }
 
-pub struct LocationIndexIteratorGetter<'a> {
-    manager: &'a LocationIndexManager,
-}
-
-impl<'a> LocationIndexIteratorGetter<'a> {
-    pub fn new(manager: &'a LocationIndexManager) -> Self {
-        Self { manager }
-    }
-
-    pub fn get(&self) -> Option<LocationIndexIteratorHandle> {
-        LocationIndexIteratorHandle::new(self.manager)
-    }
-}
-
-pub struct LocationIndexWriterGetter<'a> {
-    manager: &'a LocationIndexManager,
-}
-
-impl<'a> LocationIndexWriterGetter<'a> {
-    pub fn new(manager: &'a LocationIndexManager) -> Self {
-        Self { manager }
-    }
-
-    pub fn get(&self) -> Option<LocationIndexWriteHandle> {
-        LocationIndexWriteHandle::new(self.manager)
-    }
-}
-
 #[derive(Debug)]
 pub struct LocationIndexIteratorHandle<'a> {
     index: &'a Arc<LocationIndex>,
@@ -83,11 +57,9 @@ pub struct LocationIndexIteratorHandle<'a> {
 }
 
 impl<'a> LocationIndexIteratorHandle<'a> {
-    pub fn new(manager: &'a LocationIndexManager) -> Option<Self> {
-        let index = manager.index.as_ref()?;
-
+    pub fn new(manager: &'a LocationIndexManager) -> Self {
         Self {
-            index,
+            index: &manager.index,
             profiles: &manager.profiles,
             coordinates: &manager.coordinates,
         }
@@ -139,18 +111,16 @@ pub struct LocationIndexWriteHandle<'a> {
 }
 
 impl<'a> LocationIndexWriteHandle<'a> {
-    pub fn new(manager: &'a LocationIndexManager) -> Option<Self> {
-        let index = manager.index.as_ref()?;
-
+    pub fn new(manager: &'a LocationIndexManager) -> Self {
         Self {
-            index,
+            index: &manager.index,
             profiles: &manager.profiles,
             coordinates: &manager.coordinates,
         }
         .into()
     }
 
-    pub fn coordinates_to_key(&self, location: Location) -> LocationIndexKey {
+    pub fn coordinates_to_key(&self, location: &Location) -> LocationIndexKey {
         self.coordinates
             .to_index_key(location.latitude, location.longitude)
     }
@@ -289,6 +259,9 @@ impl CoordinateManager {
         }
     }
 
+    // TODO: If one_cell_height_degrees or one_cell_width_degrees is too big
+    //       height or width will be 0. And that crashes the index creation.
+
     fn height(&self) -> u16 {
         let height_degrees =
             self.config.location().latitude_top_left - self.config.location().latitude_bottom_right;
@@ -318,7 +291,7 @@ impl CoordinateManager {
         let one_cell_width_degrees = self.longitude_one_km_in_degrees
             * self.config.location().index_cell_square_km.get() as f64;
         let x = (width_degrees / one_cell_width_degrees) as u16;
-        x.clamp(0, self.width())
+        x.clamp(0, self.width() - 1)
     }
 
     fn calculate_index_y_key(&self, latitude: f64) -> u16 {
@@ -327,7 +300,7 @@ impl CoordinateManager {
         let one_cell_height_degrees =
             LATITUDE_ONE_KM_IN_DEGREES * self.config.location().index_cell_square_km.get() as f64;
         let y = (height_degrees / one_cell_height_degrees) as u16;
-        y.clamp(0, self.height())
+        y.clamp(0, self.height() - 1)
     }
 
     fn longitude_min(&self) -> f64 {

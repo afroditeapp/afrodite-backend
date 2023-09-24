@@ -15,8 +15,6 @@ use crate::{macros::diesel_uuid_wrapper, AccountId, AccountIdDb};
 pub struct ProfileInternal {
     pub account_id: AccountIdDb,
     pub version_uuid: ProfileVersion,
-    pub location_key_x: i64,
-    pub location_key_y: i64,
     pub name: String,
     pub profile_text: String,
 }
@@ -110,7 +108,9 @@ impl ProfileUpdateInternal {
 //     }
 // }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::profile_location)]
+#[diesel(check_for_backend(crate::Db))]
 pub struct Location {
     pub latitude: f64,
     pub longitude: f64,

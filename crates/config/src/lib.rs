@@ -117,8 +117,8 @@ impl Config {
         &self.file.socket
     }
 
-    pub fn location(&self) -> &LocationConfig {
-        &self.file.location
+    pub fn location(&self) -> LocationConfig {
+        self.file.location.clone().unwrap_or_default()
     }
 
     pub fn sqlite_in_ram(&self) -> bool {

@@ -1,7 +1,7 @@
 use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileUpdateInternal, ProfileVersion,
+    AccountIdInternal, ProfileInternal, ProfileUpdateInternal, ProfileVersion, Location,
 };
 
 
@@ -21,6 +21,19 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
         insert_into(profile)
             .values((account_id.eq(id.as_db_id()), version_uuid.eq(version)))
             .returning(ProfileInternal::as_returning())
+            .get_result(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)
+    }
+
+    pub fn insert_profile_location(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Location, DieselDatabaseError> {
+        use model::schema::profile_location::dsl::*;
+
+        insert_into(profile_location)
+            .values(account_id.eq(id.as_db_id()))
+            .returning(Location::as_returning())
             .get_result(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)
     }
@@ -46,14 +59,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
     pub fn profile_location(
         &mut self,
         id: AccountIdInternal,
-        data: LocationIndexKey,
+        data: Location,
     ) -> Result<(), DieselDatabaseError> {
-        use crate::schema::profile::dsl::*;
+        use crate::schema::profile_location::dsl::*;
 
-        update(profile.find(id.as_db_id()))
+        update(profile_location.find(id.as_db_id()))
             .set((
-                location_key_x.eq(data.x as i64),
-                location_key_y.eq(data.y as i64),
+                latitude.eq(data.latitude),
+                longitude.eq(data.longitude),
             ))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;

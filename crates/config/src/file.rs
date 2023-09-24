@@ -34,13 +34,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # Also google account ID is required if sign in with google is enabled.
 admin_email = "admin@example.com"
 
-[location]
-latitude_top_left = 70.1
-longitude_top_left = 19.5
-latitude_bottom_right = 59.8
-longitude_bottom_right = 31.58
-index_cell_square_km = 1
-
 [socket]
 public_api = "127.0.0.1:3000"
 internal_api = "127.0.0.1:3001"
@@ -53,6 +46,13 @@ account = true
 profile = true
 media = true
 chat = true
+
+# [location]
+# latitude_top_left = 70.1
+# longitude_top_left = 19.5
+# latitude_bottom_right = 59.8
+# longitude_bottom_right = 31.58
+# index_cell_square_km = 255       # 1-255 and area width and height must be larger than 255 km
 
 # [manager]
 # address = "http://127.0.0.1:5000"
@@ -128,7 +128,7 @@ pub struct ConfigFile {
     pub components: Components,
     pub database: DatabaseConfig,
     pub socket: SocketConfig,
-    pub location: LocationConfig,
+    pub location: Option<LocationConfig>,
     pub tile_map: Option<TileMapConfig>,
     pub bots: Option<StaticBotConfig>,
     pub manager: Option<AppManagerConfig>,
@@ -251,6 +251,24 @@ pub struct LocationConfig {
     pub longitude_bottom_right: f64,
     /// Index cell map size.
     pub index_cell_square_km: NonZeroU8,
+}
+
+impl Default for LocationConfig {
+    fn default() -> Self {
+        Self {
+            // Just use Finland as default as that is tested to work.
+            // TODO: Add validation to the values? And more location unit tests?
+            //       Most likely too small area will crash the server depending
+            //       on the index_cell_square_km value.
+            latitude_top_left: 70.1,
+            longitude_top_left: 19.5,
+            latitude_bottom_right: 59.8,
+            longitude_bottom_right: 31.58,
+            // Make matrix cells 255 square kilometers, so the matrix will not
+            // consume that much of memory.
+            index_cell_square_km: NonZeroU8::MAX,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]

@@ -36,13 +36,12 @@ impl WriteCommandsProfile<'_> {
             .await
             .into_data_error(id)?;
 
-        let index = self.location().get().ok_or(DataError::FeatureDisabled)?;
         if visiblity {
-            index
+            self.location()
                 .update_profile_link(id.as_id(), profile_link, location)
                 .await;
         } else {
-            index.remove_profile_link(id.as_id(), location).await;
+            self.location().remove_profile_link(id.as_id(), location).await;
         }
 
         Ok(())
@@ -62,14 +61,12 @@ impl WriteCommandsProfile<'_> {
             .into_data_error(id)?
             .ok_or(DataError::FeatureDisabled)?;
 
-        let write_to_index = self.location().get().ok_or(DataError::FeatureDisabled)?;
-        let new_location_key = write_to_index.coordinates_to_key(coordinates);
-
-        // TODO: Create new database table for location.
-        // TODO: Also update history?
-        self.db_write(move |cmds| cmds.into_profile().profile_location(id, new_location_key))
+        let new_location_key = self.location().coordinates_to_key(&coordinates);
+        self.db_write(move |cmds|
+            cmds.into_profile().profile_location(id, coordinates)
+        )
             .await?;
-        write_to_index
+        self.location()
             .update_profile_location(id.as_id(), location.current_position, new_location_key)
             .await;
 
