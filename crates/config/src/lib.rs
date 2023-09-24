@@ -16,7 +16,7 @@ use std::{
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{report, Result, ResultExt};
-use file::{QueueLimitsConfig, TileMapConfig};
+use file::{QueueLimitsConfig, TileMapConfig, StaticBotConfig};
 use file_dynamic::{ConfigFileDynamic};
 use model::BotConfig;
 use reqwest::Url;
@@ -198,6 +198,10 @@ impl Config {
 
     pub fn bot_config(&self) -> Option<&BotConfig> {
         self.file_dynamic.backend_config.bots.as_ref()
+    }
+
+    pub fn static_bot_config(&self) -> Option<&StaticBotConfig> {
+        self.file.bots.as_ref()
     }
 
     pub fn backend_code_version(&self) -> &str {

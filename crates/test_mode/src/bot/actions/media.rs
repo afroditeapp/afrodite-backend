@@ -27,6 +27,9 @@ impl MediaState {
 pub struct SendImageToSlot {
     pub slot: i32,
     pub random: bool,
+    pub copy_to_slot: Option<i32>,
+    /// Add mark to the image
+    pub mark_copied_image: bool,
 }
 
 impl SendImageToSlot {
@@ -34,6 +37,8 @@ impl SendImageToSlot {
         Self {
             slot,
             random: false,
+            copy_to_slot: None,
+            mark_copied_image: false,
         }
     }
 }
@@ -41,27 +46,53 @@ impl SendImageToSlot {
 #[async_trait]
 impl BotAction for SendImageToSlot {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let img_data = if self.random {
+            if let Some(dir) = &state.config.images_man {
+                ImageProvider::random_image_from_directory(&dir)
+                    .unwrap_or_else(|e| {
+                        // Image loading failed
+                        tracing::error!("{e:?}");
+                        Some(ImageProvider::random_jpeg_image())
+                    })
+                    // No images available
+                    .unwrap_or(ImageProvider::random_jpeg_image())
+            } else {
+                ImageProvider::random_jpeg_image()
+            }
+        } else {
+            ImageProvider::jpeg_image()
+        };
+
         let content_id = put_image_to_moderation_slot_fixed(
             state.api.media(),
             self.slot,
-            if self.random {
-                if let Some(dir) = &state.config.images_man {
-                    ImageProvider::random_image_from_directory(&dir)
-                        .unwrap_or_else(|e| {
-                            tracing::error!("{e:?}");
-                            Some(ImageProvider::random_jpeg_image())
-                        })
-                        .unwrap_or(ImageProvider::random_jpeg_image())
-                } else {
-                    ImageProvider::random_jpeg_image()
-                }
-            } else {
-                ImageProvider::jpeg_image()
-            },
+            img_data.clone(),
         )
         .await
         .change_context(TestError::ApiRequest)?;
         state.media.slots[self.slot as usize] = Some(content_id);
+
+        let img_data = if self.mark_copied_image {
+            ImageProvider::mark_jpeg_image(&img_data)
+                .unwrap_or_else(|e| {
+                    tracing::error!("{e:?}");
+                    img_data
+                })
+        } else {
+            img_data
+        };
+
+        if let Some(slot) = self.copy_to_slot {
+            let content_id = put_image_to_moderation_slot_fixed(
+                state.api.media(),
+                slot,
+                img_data,
+            )
+            .await
+            .change_context(TestError::ApiRequest)?;
+            state.media.slots[slot as usize] = Some(content_id);
+        }
+
         Ok(())
     }
 }

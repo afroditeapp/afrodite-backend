@@ -176,6 +176,7 @@ fn new_config(
         litestream: None,
         queue_limits: None,
         tile_map: None,
+        bots: None,
     }
 }
 

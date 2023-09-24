@@ -81,15 +81,34 @@ impl BotClient {
             .arg("--url-media")
             .arg(Self::public_api_url(config))
             .arg("--url-chat")
-            .arg(Self::public_api_url(config))
-            // Bot mode config
-            .arg("bot")
+            .arg(Self::public_api_url(config));
+
+        if let Some(dir) = &config.static_bot_config().and_then(|c| c.man_image_dir.as_ref()) {
+            let dir = std::fs::canonicalize(dir)
+                .change_context(BotClientError::LaunchCommand)?;
+            command
+                .arg("--images-man")
+                .arg(dir);
+        }
+
+        if let Some(dir) = &config.static_bot_config().and_then(|c| c.woman_image_dir.as_ref()) {
+            let dir = std::fs::canonicalize(dir)
+                .change_context(BotClientError::LaunchCommand)?;
+            command
+                .arg("--images-woman")
+                .arg(dir);
+        }
+
+        // Bot mode config
+        command.arg("bot")
             .arg("--save-state")
             .arg("--users")
             .arg(bot_config.users.to_string())
             .arg("--admins")
-            .arg(bot_config.admins.to_string())
-            .env("RUST_LOG", "info")
+            .arg(bot_config.admins.to_string());
+
+        // Setup logging and prevent signal propagation
+        command.env("RUST_LOG", "info")
             .process_group(0);
 
         let mut tokio_command: tokio::process::Command = command.into();

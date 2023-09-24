@@ -159,12 +159,10 @@ impl BotAction for DoInitialSetupIfNeeded {
 
             const ACTIONS: ActionArray = action_array!(
                 SendImageToSlot {
-                    slot: 0,
-                    random: true
-                },
-                SendImageToSlot {
                     slot: 1,
-                    random: true
+                    random: true,
+                    copy_to_slot: Some(0),
+                    mark_copied_image: true,
                 },
                 MakeModerationRequest { camera: true },
                 CompleteAccountSetup,

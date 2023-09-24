@@ -130,6 +130,7 @@ pub struct ConfigFile {
     pub socket: SocketConfig,
     pub location: LocationConfig,
     pub tile_map: Option<TileMapConfig>,
+    pub bots: Option<StaticBotConfig>,
     pub manager: Option<AppManagerConfig>,
     pub external_services: Option<ExternalServices>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
@@ -201,6 +202,12 @@ pub struct Components {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DatabaseConfig {
     pub dir: PathBuf,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct StaticBotConfig {
+    pub man_image_dir: Option<PathBuf>,
+    pub woman_image_dir: Option<PathBuf>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

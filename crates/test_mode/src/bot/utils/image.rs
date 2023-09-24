@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use image::{codecs::jpeg::JpegEncoder, ImageBuffer, Rgb};
+use image::{codecs::jpeg::{JpegEncoder, JpegDecoder}, ImageBuffer, Rgb};
 use rand::seq::SliceRandom;
 
 pub struct ImageProvider {}
@@ -52,5 +52,35 @@ impl ImageProvider {
         } else {
             Ok(None)
         }
+    }
+
+    pub fn mark_jpeg_image(jpeg_img: &[u8]) -> Result<Vec<u8>, std::io::Error> {
+        image::load_from_memory_with_format(&jpeg_img, image::ImageFormat::Jpeg)
+            .and_then(|img| {
+                let mut img = img.into_rgb8();
+                let mark_height = ((img.height() as f64) * 0.1) as usize;
+
+                img.rows_mut().take(mark_height).for_each(|row| {
+                    row.for_each(|pixel| {
+                        pixel[0] = 0;
+                        pixel[1] = 145;
+                        pixel[2] = 255;
+                    })
+                });
+
+                img.rows_mut().rev().take(mark_height).for_each(|row| {
+                    row.for_each(|pixel| {
+                        pixel[0] = 0;
+                        pixel[1] = 145;
+                        pixel[2] = 255;
+                    })
+                });
+
+                let mut data = vec![];
+                let mut encoder = JpegEncoder::new(&mut data);
+                encoder.encode_image(&img)
+                    .map(|_| data)
+            })
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
     }
 }
