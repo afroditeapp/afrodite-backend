@@ -193,6 +193,13 @@ impl ConnectedApp {
                 }),
             )
             .route(
+                api::profile::PATH_GET_LOCATION,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::profile::get_location(param1, state)
+                }),
+            )
+            .route(
                 api::profile::PATH_POST_PROFILE,
                 post({
                     let state = self.state.clone();

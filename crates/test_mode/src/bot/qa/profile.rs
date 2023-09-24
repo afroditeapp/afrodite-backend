@@ -40,3 +40,5 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
         ]
     ),
 ];
+
+// TODO: Add test for get location route

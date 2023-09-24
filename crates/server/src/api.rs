@@ -67,6 +67,7 @@ pub mod utils;
         // Profile
         profile::get_profile,
         profile::get_profile_from_database_debug_mode_benchmark,
+        profile::get_location,
         profile::post_get_next_profile_page,
         profile::post_profile,
         profile::post_profile_to_database_debug_mode_benchmark,

@@ -1,5 +1,5 @@
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ProfileInternal};
+use model::{AccountIdInternal, ProfileInternal, Location};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
@@ -16,6 +16,11 @@ impl ReadCommandsProfile<'_> {
         })
         .await?
         .ok_or(DataError::NotFound.report())
+    }
+
+    pub async fn profile_location(&self, id: AccountIdInternal) -> Result<Location, DataError> {
+        self.db_read(move |mut cmds| cmds.profile().profile_location(id))
+            .await
     }
 
     pub async fn read_profile_directly_from_database(

@@ -132,9 +132,33 @@ pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
     db_write!(state, move |cmds| cmds.profile().profile(account_id, new))
 }
 
+pub const PATH_GET_LOCATION: &str = "/profile_api/location";
+
+/// Get location for account which makes this request.
+#[utoipa::path(
+    get,
+    path = "/profile_api/location",
+    responses(
+        (status = 200, description = "Get successfull.", body = Location),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_location<S: GetAccessTokens + ReadData>(
+    Extension(account_id): Extension<AccountIdInternal>,
+    state: S,
+) -> Result<Json<Location>, StatusCode> {
+    let location = state
+        .read()
+        .profile()
+        .profile_location(account_id).await?;
+    Ok(location.into())
+}
+
 pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
 
-/// Update location
+/// Update location for account which makes this request.
 #[utoipa::path(
     put,
     path = "/profile_api/location",
