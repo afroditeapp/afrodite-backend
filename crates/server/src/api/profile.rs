@@ -231,10 +231,6 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
-    db_write!(state, move |cmds| cmds
-        .profile()
-        .profile_update_location(account_id, Location::default()))?;
-
     state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds.accquire_profile(
