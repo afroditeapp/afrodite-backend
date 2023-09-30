@@ -10,8 +10,10 @@ docs/AccountInternalApi.md
 docs/AccountSetup.md
 docs/AccountState.md
 docs/AuthPair.md
+docs/BackendConfig.md
 docs/BackendVersion.md
 docs/BooleanSetting.md
+docs/BotConfig.md
 docs/BuildInfo.md
 docs/Capabilities.md
 docs/CommandOutput.md
@@ -26,6 +28,9 @@ docs/HandleModerationRequest.md
 docs/ImageAccessCheck.md
 docs/Location.md
 docs/LoginResult.md
+docs/MapTileX.md
+docs/MapTileY.md
+docs/MapTileZ.md
 docs/MediaAdminApi.md
 docs/MediaApi.md
 docs/MediaInternalApi.md
@@ -46,6 +51,7 @@ docs/ProfileUpdate.md
 docs/ProfileVersion.md
 docs/RebootQueryParam.md
 docs/RefreshToken.md
+docs/ResetDataQueryParam.md
 docs/SecurityImage.md
 docs/SignInWithLoginInfo.md
 docs/SlotId.md
@@ -71,8 +77,10 @@ src/models/account_id.rs
 src/models/account_setup.rs
 src/models/account_state.rs
 src/models/auth_pair.rs
+src/models/backend_config.rs
 src/models/backend_version.rs
 src/models/boolean_setting.rs
+src/models/bot_config.rs
 src/models/build_info.rs
 src/models/capabilities.rs
 src/models/command_output.rs
@@ -85,6 +93,9 @@ src/models/handle_moderation_request.rs
 src/models/image_access_check.rs
 src/models/location.rs
 src/models/login_result.rs
+src/models/map_tile_x.rs
+src/models/map_tile_y.rs
+src/models/map_tile_z.rs
 src/models/mod.rs
 src/models/moderation.rs
 src/models/moderation_list.rs
@@ -101,6 +112,7 @@ src/models/profile_update.rs
 src/models/profile_version.rs
 src/models/reboot_query_param.rs
 src/models/refresh_token.rs
+src/models/reset_data_query_param.rs
 src/models/security_image.rs
 src/models/sign_in_with_login_info.rs
 src/models/slot_id.rs

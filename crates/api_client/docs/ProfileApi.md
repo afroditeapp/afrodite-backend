@@ -4,14 +4,42 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**get_location**](ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
 [**get_profile**](ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
 [**get_profile_from_database_debug_mode_benchmark**](ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{account_id} | Get account's current profile from database. Debug mode must be enabled
 [**post_get_next_profile_page**](ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
 [**post_profile**](ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 [**post_profile_to_database_debug_mode_benchmark**](ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled
 [**post_reset_profile_paging**](ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
-[**put_location**](ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location
+[**put_location**](ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location for account which makes this request.
 
+
+
+## get_location
+
+> crate::models::Location get_location()
+Get location for account which makes this request.
+
+Get location for account which makes this request.
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**crate::models::Location**](Location.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
 ## get_profile
@@ -191,9 +219,9 @@ This endpoint does not need any parameter.
 ## put_location
 
 > put_location(location)
-Update location
+Update location for account which makes this request.
 
-Update location
+Update location for account which makes this request.
 
 ### Parameters
 
