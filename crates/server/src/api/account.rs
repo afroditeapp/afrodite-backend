@@ -274,6 +274,14 @@ pub async fn post_complete_setup<
     let sign_in_with_info = state.read().account().account_sign_in_with_info(id).await?;
 
     if account.state() == AccountState::InitialSetup {
+        // Handle profile related initial setup
+        state
+            .internal_api()
+            .profile_initial_setup(id, account_setup.name().to_string())
+            .await?;
+
+        // Handle account related initial setup
+
         account.complete_setup();
 
         if state.config().debug_mode() {

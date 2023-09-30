@@ -56,6 +56,23 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
         Ok(())
     }
 
+    pub fn profile_name(
+        &mut self,
+        id: AccountIdInternal,
+        data: String,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::profile::dsl::*;
+
+        update(profile.find(id.as_db_id()))
+            .set((
+                name.eq(data),
+            ))
+            .execute(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
     pub fn profile_location(
         &mut self,
         id: AccountIdInternal,

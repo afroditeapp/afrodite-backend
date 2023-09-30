@@ -96,6 +96,27 @@ impl WriteCommandsProfile<'_> {
         Ok(())
     }
 
+    pub async fn profile_name(
+        self,
+        id: AccountIdInternal,
+        data: String,
+    ) -> Result<(), DataError> {
+        let profile_data = data.clone();
+        self.db_write(move |cmds| cmds.into_profile().profile_name(id, profile_data))
+            .await?;
+
+        self.cache()
+            .write_cache(id.as_id(), |e| {
+                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+                p.data.name = data;
+                Ok(())
+            })
+            .await
+            .into_data_error(id)?;
+
+        Ok(())
+    }
+
     pub async fn benchmark_update_profile_bypassing_cache(
         self,
         id: AccountIdInternal,

@@ -22,7 +22,7 @@ use tracing::log::info;
 use super::{
     actions::{
         account::{Login, Register, SetProfileVisibility},
-        profile::{ChangeProfileText, GetProfileList, ResetProfileIterator, UpdateLocationRandom},
+        profile::{ChangeProfileText, GetProfileList, ResetProfileIterator, UpdateLocationRandom, ProfileText},
         BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
     },
     utils::{Counters, Timer},
@@ -177,7 +177,7 @@ pub struct GetProfile;
 #[async_trait]
 impl BotAction for GetProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile(state.api.profile(), &state.id_string()?)
+        get_profile(state.api.profile(), &state.account_id_string()?)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
@@ -190,7 +190,7 @@ pub struct GetProfileFromDatabase;
 #[async_trait]
 impl BotAction for GetProfileFromDatabase {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile_from_database_debug_mode_benchmark(state.api.profile(), &state.id_string()?)
+        get_profile_from_database_debug_mode_benchmark(state.api.profile(), &state.account_id_string()?)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
@@ -207,7 +207,7 @@ impl BotAction for PostProfile {
         state: &mut BotState,
         task_state: &mut TaskState,
     ) -> Result<(), TestError> {
-        ChangeProfileText.excecute(state, task_state).await?;
+        ChangeProfileText { mode: ProfileText::Random }.excecute(state, task_state).await?;
         Ok(())
     }
 }

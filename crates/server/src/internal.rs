@@ -10,7 +10,7 @@ use utils::{ ContextExt};
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
 use crate::{
-    api::{GetAccessTokens, GetConfig, ReadData, WriteData},
+    api::{GetAccessTokens, GetConfig, ReadData, WriteData, db_write},
     data::WithInfo,
 };
 
@@ -221,6 +221,29 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
             )
             .await
             .change_context(InternalApiError::MissingValue)
+        }
+    }
+}
+
+impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'_, S> {
+    pub async fn profile_initial_setup( // TODO
+        &self,
+        account_id: AccountIdInternal,
+        profile_name: String,
+    ) -> Result<(), InternalApiError> {
+        if self.config().components().profile {
+            self.state
+                .write(move |cmds| async move {
+                    cmds.profile()
+                        .profile_name(account_id, profile_name)
+                        .await
+                })
+                .await
+                .change_context(InternalApiError::DataError)
+        } else {
+            // TODO: Add method to internal profile API which will do the
+            // initial setup (setting the name field) for user profile.
+            Ok(())
         }
     }
 }

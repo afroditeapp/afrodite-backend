@@ -7,7 +7,7 @@ pub mod profile;
 
 use std::{collections::HashSet, fmt::Debug, time::Duration};
 
-use api_client::models::AccountState;
+use api_client::models::{AccountState, Location, Profile};
 use async_trait::async_trait;
 use error_stack::{FutureExt, Result, ResultExt};
 
@@ -30,6 +30,8 @@ pub type ActionArray = &'static [&'static dyn BotAction];
 pub enum PreviousValue {
     Empty,
     Profiles(HashSet<String>),
+    Profile(Profile),
+    Location(Location),
 }
 
 impl PreviousValue {
@@ -38,6 +40,22 @@ impl PreviousValue {
             p.len()
         } else {
             0
+        }
+    }
+
+    pub fn profile(&self) -> Profile {
+        if let PreviousValue::Profile(p) = self {
+            p.clone()
+        } else {
+            Profile::default()
+        }
+    }
+
+    pub fn location(&self) -> Location {
+        if let PreviousValue::Location(location) = self {
+            location.clone()
+        } else {
+            Location::default()
         }
     }
 }
@@ -226,6 +244,49 @@ impl<T: PartialEq + Send + Sync + 'static + Debug> BotAction for AssertEqualsFn<
             Err(TestError::AssertError(format!(
                 "action: {:?}, was: {:?}, expected: {:?}",
                 self.2, value, self.1
+            ))
+            .into())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+pub struct AssertEqualsTestFn<T: PartialEq>(
+    pub fn(PreviousValue, &BotState) -> T,
+    pub fn() -> T,
+    pub &'static dyn BotAction,
+);
+
+impl<T: PartialEq> Debug for AssertEqualsTestFn<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("AssertEqualsTestFn for action {:?}", self.2))
+    }
+}
+
+#[async_trait]
+impl<T: PartialEq + Send + Sync + 'static + Debug> BotAction for AssertEqualsTestFn<T> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
+        if !self.2.previous_value_supported() {
+            return Err(TestError::AssertError(format!(
+                "Previous value not supported for action {:?}",
+                self.2
+            ))
+            .into());
+        }
+
+        self.2.excecute(state, task_state).await?;
+
+        let value = self.0(state.previous_value.clone(), state);
+        let expected = self.1();
+        if value != expected {
+            Err(TestError::AssertError(format!(
+                "action: {:?}, was: {:?}, expected: {:?}",
+                self.2, value, expected,
             ))
             .into())
         } else {

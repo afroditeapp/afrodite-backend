@@ -18,7 +18,7 @@ use super::{
     actions::{
         account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility},
         media::SendImageToSlot,
-        BotAction, RunActions, profile::{UpdateLocation, UpdateLocationRandom}, RunActionsIf,
+        BotAction, RunActions, profile::{UpdateLocation, UpdateLocationRandom, GetProfile}, RunActionsIf,
     },
     BotState, BotStruct, TaskState,
 };
@@ -116,19 +116,6 @@ impl BotStruct for ClientBot {
     }
     fn state(&self) -> &BotState {
         &self.state
-    }
-}
-
-#[derive(Debug)]
-pub struct GetProfile;
-
-#[async_trait]
-impl BotAction for GetProfile {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile(state.api.profile(), &state.id_string()?)
-            .await
-            .change_context(TestError::ApiRequest)?;
-        Ok(())
     }
 }
 

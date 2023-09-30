@@ -52,7 +52,7 @@ impl BotAction for Login {
         if state.api.is_access_token_available() {
             return Ok(());
         }
-        let login_result = post_login(state.api.account(), state.id()?)
+        let login_result = post_login(state.api.account(), state.account_id()?)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -167,16 +167,18 @@ impl BotAction for AssertAccountState {
 #[derive(Debug)]
 pub struct SetAccountSetup {
     pub email: Option<&'static str>,
+    pub name: Option<&'static str>,
 }
 
 impl SetAccountSetup {
     pub const fn new() -> Self {
-        Self { email: None }
+        Self { email: None, name: None }
     }
 
     pub const fn admin() -> Self {
         Self {
             email: Some("admin@example.com"),
+            name: None,
         }
     }
 }
@@ -184,7 +186,9 @@ impl SetAccountSetup {
 #[async_trait]
 impl BotAction for SetAccountSetup {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let name = NameProvider::men_first_name().to_string();
+        let name = self.name
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| NameProvider::men_first_name().to_string());
         let setup = AccountSetup {
             email: self
                 .email

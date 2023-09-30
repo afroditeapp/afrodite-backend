@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
-    apis::profile_api::{self, post_profile},
+    apis::profile_api::{self, post_profile, get_profile},
     models::{Location, ProfileUpdate},
 };
 use async_trait::async_trait;
@@ -13,17 +13,49 @@ use super::{super::super::client::TestError, BotAction, BotState, PreviousValue}
 use crate::bot::utils::location::LocationConfigUtils;
 
 #[derive(Debug)]
-pub struct ChangeProfileText;
+pub enum ProfileText {
+    Static(&'static str),
+    Random,
+}
+
+#[derive(Debug)]
+pub struct ChangeProfileText {
+    pub mode: ProfileText,
+}
 
 #[async_trait]
 impl BotAction for ChangeProfileText {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = uuid::Uuid::new_v4(); // Uuid has same string size every time.
+        let profile = match self.mode {
+            ProfileText::Static(text) => text.to_string(),
+            ProfileText::Random => {
+                uuid::Uuid::new_v4().to_string() // Uuid has same string size every time.
+            }
+        };
         let profile = ProfileUpdate::new(format!("{}", profile));
         post_profile(state.api.profile(), profile)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
+    }
+}
+
+
+#[derive(Debug)]
+pub struct GetProfile;
+
+#[async_trait]
+impl BotAction for GetProfile {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let profile = get_profile(state.api.profile(), &state.account_id_string()?)
+            .await
+            .change_context(TestError::ApiRequest)?;
+        state.previous_value = PreviousValue::Profile(profile);
+        Ok(())
+    }
+
+    fn previous_value_supported(&self) -> bool {
+        true
     }
 }
 
@@ -37,6 +69,21 @@ impl BotAction for UpdateLocation {
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct GetLocation();
+
+#[async_trait]
+impl BotAction for GetLocation {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        // TODO: Update bindings and use get_location
+        Ok(())
+    }
+
+    fn previous_value_supported(&self) -> bool {
+        true
     }
 }
 
