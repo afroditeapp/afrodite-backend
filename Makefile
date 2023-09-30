@@ -12,6 +12,9 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 run:
 	RUST_LOG=$${RUST_LOG:-info} cargo run --bin pihka-backend
 
+run-release:
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin pihka-backend --release
+
 fmt:
 	cargo +nightly fmt $(CARGO_CRATE_ARGS)
 fix:
