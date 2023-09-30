@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
-    apis::profile_api::{self, post_profile, get_profile},
+    apis::profile_api::{self, post_profile, get_profile, get_location},
     models::{Location, ProfileUpdate},
 };
 use async_trait::async_trait;
@@ -73,12 +73,15 @@ impl BotAction for UpdateLocation {
 }
 
 #[derive(Debug)]
-pub struct GetLocation();
+pub struct GetLocation;
 
 #[async_trait]
 impl BotAction for GetLocation {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        // TODO: Update bindings and use get_location
+        let location = get_location(state.api.profile())
+            .await
+            .change_context(TestError::ApiRequest)?;
+        state.previous_value = PreviousValue::Location(location);
         Ok(())
     }
 

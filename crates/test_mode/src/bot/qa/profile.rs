@@ -4,7 +4,7 @@ use super::SingleTest;
 use crate::{
     bot::{actions::{
         account::SetProfileVisibility,
-        profile::{GetProfileList, ResetProfileIterator, UpdateLocation, GetProfile, ProfileText, ChangeProfileText},
+        profile::{GetProfileList, ResetProfileIterator, UpdateLocation, GetProfile, ProfileText, ChangeProfileText, GetLocation},
         AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil, TO_NORMAL_STATE, AssertEqualsTestFn,
     }, utils::name::NameProvider},
     test,
@@ -25,10 +25,11 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
             UpdateLocation(LOCATION_LAT_LON_10),
             SetProfileVisibility(true),
             ModifyTaskState(|s| s.bot_count_update_location_to_lat_lon_10 += 1),
-            // TODO: Add AssertEqualsFn(
-            //    |v, _| v.location(),
-            //    LOCATION_LAT_LON_10
-            //    &GetLocation),
+            AssertEqualsFn(
+               |v, _| v.location(),
+               LOCATION_LAT_LON_10,
+               &GetLocation
+            ),
         ]
     ),
     test!(
@@ -66,5 +67,3 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
         ]
     ),
 ];
-
-// TODO: Add test for get location route
