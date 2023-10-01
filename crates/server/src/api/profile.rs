@@ -49,6 +49,8 @@ pub async fn get_profile<
     Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
+    // TODO: Change return type to GetProfileResult, because
+    //       current style spams errors to logs.
     // TODO: check capablities
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
