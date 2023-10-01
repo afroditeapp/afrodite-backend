@@ -3,7 +3,7 @@ use api_client::models::{Location, Profile, ProfileVersion};
 use super::SingleTest;
 use crate::{
     bot::{actions::{
-        account::SetProfileVisibility,
+        account::{SetProfileVisibility, GetAccount},
         profile::{GetProfileList, ResetProfileIterator, UpdateLocation, GetProfile, ProfileText, ChangeProfileText, GetLocation},
         AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil, TO_NORMAL_STATE, AssertEqualsTestFn,
     }, utils::name::NameProvider},
@@ -19,11 +19,16 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
     // The next two tests are linked to together.
     // The account in the first test is used in the second test also.
     test!(
-        "Update and get location works",
+        "Update location, get location and check view_public_profiles capability",
         [
             RunActions(TO_NORMAL_STATE),
             UpdateLocation(LOCATION_LAT_LON_10),
             SetProfileVisibility(true),
+            AssertEqualsFn(
+                |v, _| v.account().capablities.view_public_profiles.unwrap_or_default(),
+                true,
+                &GetAccount
+             ),
             ModifyTaskState(|s| s.bot_count_update_location_to_lat_lon_10 += 1),
             AssertEqualsFn(
                |v, _| v.location(),

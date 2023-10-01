@@ -7,7 +7,7 @@ pub mod profile;
 
 use std::{collections::HashSet, fmt::Debug, time::Duration};
 
-use api_client::models::{AccountState, Location, Profile};
+use api_client::models::{AccountState, Location, Profile, Account};
 use async_trait::async_trait;
 use error_stack::{FutureExt, Result, ResultExt};
 
@@ -29,6 +29,7 @@ pub type ActionArray = &'static [&'static dyn BotAction];
 #[derive(Debug, PartialEq, Clone)]
 pub enum PreviousValue {
     Empty,
+    Account(Account),
     Profiles(HashSet<String>),
     Profile(Profile),
     Location(Location),
@@ -40,6 +41,14 @@ impl PreviousValue {
             p.len()
         } else {
             0
+        }
+    }
+
+    pub fn account(&self) -> Account {
+        if let PreviousValue::Account(a) = self {
+            a.clone()
+        } else {
+            Account::default()
         }
     }
 

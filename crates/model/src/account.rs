@@ -63,6 +63,10 @@ impl Account {
         &self.capablities
     }
 
+    pub fn capablities_mut(&mut self) -> &mut Capabilities {
+        &mut self.capablities
+    }
+
     pub fn complete_setup(&mut self) {
         if self.state == AccountState::InitialSetup {
             self.state = AccountState::Normal;
@@ -181,7 +185,7 @@ impl AccountSetup {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
 pub struct BooleanSetting {
     pub value: bool,
 }

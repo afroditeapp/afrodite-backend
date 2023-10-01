@@ -344,6 +344,18 @@ pub async fn put_setting_profile_visiblity<
         .profile_api_set_profile_visiblity(id, new_value)
         .await?;
 
+    db_write!(
+        state,
+        move |cmds| cmds
+            .account()
+            .modify_capablities(
+                id,
+                |capabilities| capabilities.view_public_profiles = new_value.value
+            )
+    )?;
+
+    // TODO: Media server visiblity changes
+
     Ok(())
 }
 

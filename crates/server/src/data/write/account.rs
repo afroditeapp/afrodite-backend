@@ -1,5 +1,5 @@
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountSetup};
+use model::{Account, AccountIdInternal, AccountSetup, Capabilities};
 
 use crate::data::DataError;
 
@@ -25,5 +25,11 @@ impl WriteCommandsAccount<'_> {
         self.db_write(move |cmds| cmds.into_account().account_setup(id, &account_setup))
             .await?;
         Ok(())
+    }
+
+    pub async fn modify_capablities(&self, id: AccountIdInternal, action: impl FnOnce(&mut Capabilities)) -> Result<(), DataError> {
+        let mut account = self.db_read(move |mut cmds| cmds.account().account(id)).await?;
+        action(account.capablities_mut());
+        self.account(id, account).await
     }
 }

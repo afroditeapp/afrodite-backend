@@ -19,7 +19,7 @@ use utils::{
 
 };
 
-use super::{super::super::client::TestError, BotAction, BotState};
+use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::{
     utils::{assert::bot_assert_eq, name::NameProvider},
     WsConnection,
@@ -232,5 +232,23 @@ impl BotAction for SetProfileVisibility {
         .change_context(TestError::ApiRequest)?;
 
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct GetAccount;
+
+#[async_trait]
+impl BotAction for GetAccount {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let account = get_account_state(state.api.profile())
+            .await
+            .change_context(TestError::ApiRequest)?;
+        state.previous_value = PreviousValue::Account(account);
+        Ok(())
+    }
+
+    fn previous_value_supported(&self) -> bool {
+        true
     }
 }
