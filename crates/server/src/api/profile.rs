@@ -102,6 +102,7 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// Writes the profile to the database only if it is changed.
 ///
 /// TODO: string lenght validation, limit saving new profiles
+/// TODO: return the new proifle. Edit: is this really needed?
 #[utoipa::path(
     post,
     path = "/profile_api/profile",

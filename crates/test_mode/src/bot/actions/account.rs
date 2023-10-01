@@ -165,12 +165,12 @@ impl BotAction for AssertAccountState {
 }
 
 #[derive(Debug)]
-pub struct SetAccountSetup {
-    pub email: Option<&'static str>,
-    pub name: Option<&'static str>,
+pub struct SetAccountSetup<'a> {
+    pub email: Option<&'a str>,
+    pub name: Option<&'a str>,
 }
 
-impl SetAccountSetup {
+impl SetAccountSetup<'static> {
     pub const fn new() -> Self {
         Self { email: None, name: None }
     }
@@ -184,7 +184,7 @@ impl SetAccountSetup {
 }
 
 #[async_trait]
-impl BotAction for SetAccountSetup {
+impl <'a> BotAction for SetAccountSetup<'a> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let name = self.name
             .map(|s| s.to_string())

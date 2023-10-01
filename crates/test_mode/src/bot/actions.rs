@@ -65,7 +65,7 @@ impl PreviousValue {
 /// If action saves something to previous value attribute, then implement
 /// previous_value_supported.
 #[async_trait]
-pub trait BotAction: Debug + Send + Sync + 'static {
+pub trait BotAction: Debug + Send + Sync {
     async fn excecute(
         &self,
         state: &mut BotState,

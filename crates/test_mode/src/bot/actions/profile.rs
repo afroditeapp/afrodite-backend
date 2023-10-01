@@ -93,6 +93,8 @@ impl BotAction for GetLocation {
 /// Updates location with random values.
 /// If None is passed, then area for random location is
 /// from Config.
+///
+/// Updates PreviousValue to a new location.
 #[derive(Debug)]
 pub struct UpdateLocationRandom(pub Option<LocationConfig>);
 
@@ -102,11 +104,16 @@ impl BotAction for UpdateLocationRandom {
         let config = self.0
             .clone()
             .unwrap_or(state.server_config.location().clone());
-
-        profile_api::put_location(state.api.profile(), config.generate_random_location())
+        let location = config.generate_random_location();
+        profile_api::put_location(state.api.profile(), location.clone())
             .await
             .change_context(TestError::ApiRequest)?;
+        state.previous_value = PreviousValue::Location(location);
         Ok(())
+    }
+
+    fn previous_value_supported(&self) -> bool {
+        true
     }
 }
 

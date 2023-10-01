@@ -7,8 +7,8 @@ use std::{
 };
 
 use api_client::{
-    apis::{account_api::get_account_state, profile_api::get_profile},
-    models::AccountState,
+    apis::{account_api::get_account_state, profile_api::{get_profile, post_profile}},
+    models::{AccountState, ProfileUpdate},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -18,7 +18,7 @@ use super::{
     actions::{
         account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility},
         media::SendImageToSlot,
-        BotAction, RunActions, profile::{UpdateLocation, UpdateLocationRandom, GetProfile}, RunActionsIf,
+        BotAction, RunActions, profile::{UpdateLocation, UpdateLocationRandom, GetProfile, ChangeProfileText}, RunActionsIf,
     },
     BotState, BotStruct, TaskState,
 };
@@ -74,13 +74,17 @@ impl ClientBot {
                 &Login,
                 &DoInitialSetupIfNeeded { admin: false },
                 &UpdateLocationRandom(None),
+                &ChangeBotProfileText,
                 &SetProfileVisibility(true),
             ];
             let action_loop = [
                 &ActionsBeforeIteration as &dyn BotAction,
                 &GetProfile,
                 &RunActionsIf(
-                    action_array!(UpdateLocationRandom(None)),
+                    action_array!(
+                        UpdateLocationRandom(None),
+                        ChangeBotProfileText,
+                    ),
                     || rand::random::<f32>() < 0.2,
                 ),
                 // TODO: Toggle the profile visiblity in the future?
@@ -136,10 +140,15 @@ impl BotAction for DoInitialSetupIfNeeded {
             .change_context(TestError::ApiRequest)?;
 
         if account_state.state == AccountState::InitialSetup {
+            let name = format!("Bot {}", state.bot_id);
+            let email = format!("bot{}@example.com", state.bot_id);
             if self.admin {
                 SetAccountSetup::admin()
             } else {
-                SetAccountSetup::new()
+                SetAccountSetup {
+                    name: Some(&name),
+                    email: Some(&email),
+                }
             }
             .excecute_impl_task_state(state, task_state)
             .await?;
@@ -160,6 +169,22 @@ impl BotAction for DoInitialSetupIfNeeded {
                 .await?;
         }
 
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct ChangeBotProfileText;
+
+#[async_trait]
+impl BotAction for ChangeBotProfileText {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let profile = ProfileUpdate::new(
+            format!("Hello! My location is\n{:#?}", state.previous_value.location())
+        );
+        post_profile(state.api.profile(), profile)
+            .await
+            .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
