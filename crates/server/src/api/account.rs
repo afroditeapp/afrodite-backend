@@ -354,8 +354,6 @@ pub async fn put_setting_profile_visiblity<
             )
     )?;
 
-    // TODO: Media server visiblity changes
-
     Ok(())
 }
 

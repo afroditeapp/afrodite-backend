@@ -70,6 +70,11 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
+            fn location_iterator(&self) -> super::super::index::LocationIndexIteratorHandle<'a> {
+                super::super::index::LocationIndexIteratorHandle::new(&self.cmds.location_index)
+            }
+
+            #[allow(dead_code)]
             fn media_backup(&self) -> &crate::media_backup::MediaBackupHandle {
                 &self.cmds.media_backup
             }

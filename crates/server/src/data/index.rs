@@ -130,7 +130,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         account_id: AccountId,
         previous_key: LocationIndexKey,
         new_key: LocationIndexKey,
-    ) {
+    ) -> error_stack::Result<(), DataError> {
         let mut profiles = self.profiles.write().await;
         let data = match profiles.get_mut(&previous_key) {
             Some(p) => {
@@ -152,21 +152,40 @@ impl<'a> LocationIndexWriteHandle<'a> {
                             .insert(account_id, profile);
                         if update_index {
                             drop(profiles);
-                            updater.flag_cell_to_have_profiles(new_key)
+                            tokio::task::spawn_blocking(move || {
+                                updater.flag_cell_to_have_profiles(new_key)
+                            })
+                                .await
+                                .change_context(DataError::ProfileIndex)?;
                         }
                     }
                     None => {
                         profiles.insert(new_key, ProfilesAtLocation::new(account_id, profile));
                         drop(profiles);
-                        updater.flag_cell_to_have_profiles(new_key)
+                        tokio::task::spawn_blocking(move || {
+                            updater.flag_cell_to_have_profiles(new_key)
+                        })
+                            .await
+                            .change_context(DataError::ProfileIndex)?;
                     }
                 }
+            } else {
+                // Drop before calling remove_profile_flag_from_cell, so
+                // reading will not be blocked that much.
+                drop(profiles);
             }
 
             if new_size == 0 {
-                updater.remove_profile_flag_from_cell(previous_key);
+                let mut updater = IndexUpdater::new(self.index.clone());
+                tokio::task::spawn_blocking(move || {
+                    updater.remove_profile_flag_from_cell(previous_key);
+                })
+                    .await
+                    .change_context(DataError::ProfileIndex)?;
             }
         }
+
+        Ok(())
     }
 
     pub async fn update_profile_link(
@@ -174,7 +193,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         account_id: AccountId,
         profile_link: ProfileLink,
         key: LocationIndexKey,
-    ) {
+    ) -> error_stack::Result<(), DataError> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
@@ -185,19 +204,28 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 if update_index {
                     drop(profiles);
                     let mut updater = IndexUpdater::new(self.index.clone());
-                    updater.flag_cell_to_have_profiles(key)
+                    tokio::task::spawn_blocking(move || {
+                        updater.flag_cell_to_have_profiles(key)
+                    })
+                        .await
+                        .change_context(DataError::ProfileIndex)?;
                 }
             }
             None => {
                 profiles.insert(key, ProfilesAtLocation::new(account_id, profile_link));
                 drop(profiles);
                 let mut updater = IndexUpdater::new(self.index.clone());
-                updater.flag_cell_to_have_profiles(key)
+                tokio::task::spawn_blocking(move || {
+                    updater.flag_cell_to_have_profiles(key)
+                })
+                    .await
+                    .change_context(DataError::ProfileIndex)?;
             }
         }
+        Ok(())
     }
 
-    pub async fn remove_profile_link(&self, account_id: AccountId, key: LocationIndexKey) {
+    pub async fn remove_profile_link(&self, account_id: AccountId, key: LocationIndexKey) -> error_stack::Result<(), DataError> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
@@ -209,11 +237,16 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 {
                     drop(profiles);
                     let mut updater = IndexUpdater::new(self.index.clone());
-                    updater.remove_profile_flag_from_cell(key)
+                    tokio::task::spawn_blocking(move || {
+                        updater.remove_profile_flag_from_cell(key)
+                    })
+                        .await
+                        .change_context(DataError::ProfileIndex)?;
                 }
             }
             None => (),
         }
+        Ok(())
     }
 }
 

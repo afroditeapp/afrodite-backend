@@ -1,7 +1,7 @@
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
-use crate::data::{cache::CacheError, DataError, IntoDataError};
+use crate::data::{cache::CacheError, DataError, IntoDataError, index::location::LocationIndexIteratorState};
 
 define_write_commands!(WriteCommandsProfile);
 
@@ -39,9 +39,9 @@ impl WriteCommandsProfile<'_> {
         if visiblity {
             self.location()
                 .update_profile_link(id.as_id(), profile_link, location)
-                .await;
+                .await?;
         } else {
-            self.location().remove_profile_link(id.as_id(), location).await;
+            self.location().remove_profile_link(id.as_id(), location).await?;
         }
 
         Ok(())
@@ -66,9 +66,18 @@ impl WriteCommandsProfile<'_> {
             cmds.into_profile().profile_location(id, coordinates)
         )
             .await?;
+
         self.location()
             .update_profile_location(id.as_id(), location.current_position, new_location_key)
-            .await;
+            .await?;
+
+        let new_iterator_state = self.location_iterator().reset_iterator(LocationIndexIteratorState::new(), new_location_key);
+        self.write_cache(id, |entry| {
+            let p = entry.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+            p.location.current_position = new_location_key;
+            p.location.current_iterator = new_iterator_state;
+            Ok(())
+        }).await?;
 
         Ok(())
     }

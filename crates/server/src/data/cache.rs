@@ -7,7 +7,7 @@ use database::{
 };
 use error_stack::{ResultExt, Result};
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, schema::profile_location,
+    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, schema::profile_location, ProfileLink,
 };
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
@@ -176,7 +176,26 @@ impl DatabaseCache {
             //       If so, perhaps the best and clearest option would be creating
             //       new media and profile server specific tables for storing
             //       cached account server state.
-            //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
+            //       Update: simple solution for now, when also account server
+            //       mode is enabled then use the visibility value from account.
+            if config.components().account {
+                let account = db_read(&read_diesel, move |mut cmds| {
+                    cmds.account().account(account_id)
+                })
+                .await?;
+                if account.capablities().view_public_profiles {
+                    index_writer.update_profile_link(
+                        account_id.uuid,
+                        ProfileLink::new(
+                            account_id.uuid,
+                            &profile_data.data
+                        ),
+                        location_key
+                    )
+                    .await
+                    .change_context(CacheError::Init)?;
+                }
+            }
 
             entry.profile = Some(Box::new(profile_data));
         }
