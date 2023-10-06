@@ -292,6 +292,9 @@ impl CoordinateManager {
         }
     }
 
+    // TODO: Setting profile location bottom left corner of the index area border
+    //       will hide the profile. It is index (0,0)
+
     // TODO: If one_cell_height_degrees or one_cell_width_degrees is too big
     //       height or width will be 0. And that crashes the index creation.
 
@@ -320,7 +323,7 @@ impl CoordinateManager {
 
     fn calculate_index_x_key(&self, longitude: f64) -> u16 {
         let longitude = longitude.clamp(self.longitude_min(), self.longitude_max());
-        let width_degrees = self.longitude_max() - longitude;
+        let width_degrees = longitude - self.longitude_min();
         let one_cell_width_degrees = self.longitude_one_km_in_degrees
             * self.config.location().index_cell_square_km.get() as f64;
         let x = (width_degrees / one_cell_width_degrees) as u16;
@@ -328,8 +331,8 @@ impl CoordinateManager {
     }
 
     fn calculate_index_y_key(&self, latitude: f64) -> u16 {
-        let latitude = latitude.clamp(self.latitude_min(), self.latitude_min());
-        let height_degrees = self.latitude_max() - latitude;
+        let latitude = latitude.clamp(self.latitude_min(), self.latitude_max());
+        let height_degrees = latitude - self.latitude_min();
         let one_cell_height_degrees =
             LATITUDE_ONE_KM_IN_DEGREES * self.config.location().index_cell_square_km.get() as f64;
         let y = (height_degrees / one_cell_height_degrees) as u16;
@@ -345,10 +348,10 @@ impl CoordinateManager {
     }
 
     fn latitude_min(&self) -> f64 {
-        self.config.location().latitude_top_left
+        self.config.location().latitude_bottom_right
     }
 
     fn latitude_max(&self) -> f64 {
-        self.config.location().latitude_bottom_right
+        self.config.location().latitude_top_left
     }
 }
