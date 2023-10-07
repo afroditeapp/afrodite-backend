@@ -85,6 +85,24 @@ CREATE TABLE IF NOT EXISTS profile_location(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS favorite_profile(
+    -- Account which marked the profile as a favorite.
+    account_id          INTEGER               NOT NULL,
+    -- Account which profile is marked as a favorite.
+    favorite_account_id INTEGER               NOT NULL,
+    -- Unix timestamp when favorite was added.
+    unix_time           INTEGER               NOT NULL,
+    PRIMARY KEY (account_id, favorite_account_id),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (favorite_account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component media ----------
 
 -- Currently selected images for account

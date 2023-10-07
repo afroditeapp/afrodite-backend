@@ -1,6 +1,6 @@
 use axum::{
     middleware,
-    routing::{get, patch, post, put},
+    routing::{get, patch, post, put, delete},
     Router,
 };
 
@@ -200,6 +200,13 @@ impl ConnectedApp {
                 }),
             )
             .route(
+                api::profile::PATH_GET_FAVORITE_PROFILES,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::profile::get_favorite_profiles(param1, state)
+                }),
+            )
+            .route(
                 api::profile::PATH_POST_PROFILE,
                 post({
                     let state = self.state.clone();
@@ -225,6 +232,20 @@ impl ConnectedApp {
                 post({
                     let state = self.state.clone();
                     move |p1| api::profile::post_reset_profile_paging(p1, state)
+                }),
+            )
+            .route(
+                api::profile::PATH_POST_FAVORITE_PROFILE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::profile::post_favorite_profile(param1, param2, state)
+                }),
+            )
+            .route(
+                api::profile::PATH_DELETE_FAVORITE_PROFILE,
+                delete({
+                    let state = self.state.clone();
+                    move |param1, param2| api::profile::delete_favorite_profile(param1, param2, state)
                 }),
             )
             .route_layer({

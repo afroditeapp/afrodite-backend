@@ -68,11 +68,14 @@ pub mod utils;
         profile::get_profile,
         profile::get_profile_from_database_debug_mode_benchmark,
         profile::get_location,
+        profile::get_favorite_profiles,
         profile::post_get_next_profile_page,
         profile::post_profile,
         profile::post_profile_to_database_debug_mode_benchmark,
         profile::post_reset_profile_paging,
+        profile::post_favorite_profile,
         profile::put_location,
+        profile::delete_favorite_profile,
         // Profile internal
         profile_internal::internal_post_update_profile_visibility,
         // Media
@@ -119,6 +122,7 @@ pub mod utils;
         model::profile::ProfileVersion,
         model::profile::ProfileUpdate,
         model::profile::Location,
+        model::profile::FavoriteProfilesPage,
         // Media
         model::media::ModerationRequest,
         model::media::ModerationRequestIdDb,

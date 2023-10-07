@@ -1,8 +1,9 @@
-use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
+use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl, delete};
 use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ProfileInternal, ProfileUpdateInternal, ProfileVersion, Location,
 };
+use utils::current_unix_time;
 
 
 use super::ConnectionProvider;
@@ -87,6 +88,43 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
             ))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub fn insert_favorite_profile(
+        &mut self,
+        id: AccountIdInternal,
+        favorite: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::favorite_profile::dsl::*;
+
+        let time = current_unix_time();
+
+        insert_into(favorite_profile)
+            .values((
+                account_id.eq(id.as_db_id()),
+                favorite_account_id.eq(favorite.as_db_id()),
+                unix_time.eq(time)
+            ))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(())
+    }
+
+    pub fn remove_favorite_profile(
+        &mut self,
+        id: AccountIdInternal,
+        favorite: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::favorite_profile::dsl::*;
+
+        delete(favorite_profile)
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(favorite_account_id.eq(favorite.as_db_id()))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
 
         Ok(())
     }

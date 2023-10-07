@@ -30,4 +30,9 @@ impl ReadCommandsProfile<'_> {
         self.db_read(move |mut cmds| cmds.profile().profile(id))
             .await
     }
+
+    pub async fn favorite_profiles(&self, id: AccountIdInternal) -> Result<Vec<AccountIdInternal>, DataError> {
+        self.db_read(move |mut cmds| cmds.profile().favorites(id))
+            .await
+    }
 }

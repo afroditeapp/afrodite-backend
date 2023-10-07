@@ -126,6 +126,24 @@ impl WriteCommandsProfile<'_> {
         Ok(())
     }
 
+    pub async fn insert_favorite_profile(
+        self,
+        id: AccountIdInternal,
+        favorite: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.db_write(move |cmds| cmds.into_profile().insert_favorite_profile(id, favorite))
+            .await
+    }
+
+    pub async fn remove_favorite_profile(
+        self,
+        id: AccountIdInternal,
+        favorite: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.db_write(move |cmds| cmds.into_profile().remove_favorite_profile(id, favorite))
+            .await
+    }
+
     pub async fn benchmark_update_profile_bypassing_cache(
         self,
         id: AccountIdInternal,

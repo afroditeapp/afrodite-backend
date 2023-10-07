@@ -117,6 +117,11 @@ pub struct Location {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct FavoriteProfilesPage {
+    pub profiles: Vec<AccountId>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ProfilePage {
     pub profiles: Vec<ProfileLink>,
 }
