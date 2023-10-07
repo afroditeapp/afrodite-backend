@@ -1,9 +1,10 @@
-use std::{collections::HashMap, sync::Arc, num::NonZeroU16};
+use std::{collections::HashMap, sync::Arc, num::{NonZeroU16, NonZeroU8}, mem::size_of};
 
 use config::Config;
 use error_stack::ResultExt;
-use model::{AccountId, Location, LocationIndexKey, ProfileLink};
+use model::{AccountId, Location, LocationIndexKey, ProfileLink, CellData};
 use tokio::sync::RwLock;
+use tracing::info;
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 
@@ -36,6 +37,16 @@ impl LocationIndexManager {
         )
         .into();
 
+        let byte_count = width.get() as usize * height.get() as usize * size_of::<CellData>();
+        info!(
+            "Location index size: {}x{}, bytes: {}, zoom: {}, tile side length: {:.2} km",
+            width,
+            height,
+            format_size_in_bytes(byte_count),
+            coordinates.zoom_level(),
+            coordinates.tile_side_length_km()
+        );
+
         Self {
             config,
             index,
@@ -47,6 +58,23 @@ impl LocationIndexManager {
     pub fn coordinates(&self) -> &CoordinateManager {
         &self.coordinates
     }
+}
+
+fn format_size_in_bytes(size: usize) -> String {
+    let mut size = size as f64;
+    let mut unit = 0;
+    while size > 1024.0 && unit < 3 {
+        size /= 1024.0;
+        unit += 1;
+    }
+    let unit = match unit {
+        0 => "B",
+        1 => "KiB",
+        2 => "MiB",
+        3 => "GiB",
+        _ => "error",
+    };
+    format!("{:.2} {}", size, unit)
 }
 
 #[derive(Debug)]
@@ -125,12 +153,19 @@ impl<'a> LocationIndexWriteHandle<'a> {
             .to_index_key(location.latitude, location.longitude)
     }
 
+    /// Move ProfileLink to another index location
     pub async fn update_profile_location(
         &self,
         account_id: AccountId,
         previous_key: LocationIndexKey,
         new_key: LocationIndexKey,
     ) -> error_stack::Result<(), DataError> {
+        if previous_key == new_key {
+            // No update needed. If return would not be here then
+            // if new_size == 0 check would make profile disappear.
+            return Ok(());
+        }
+
         let mut profiles = self.profiles.write().await;
         let data = match profiles.get_mut(&previous_key) {
             Some(p) => {
@@ -278,40 +313,99 @@ pub fn calculate_longitude_one_km_in_degrees() -> f64 {
 /// Hanko + (Nuorgam - Hanko)
 const LATITUDE_FOR_LONGITUDE_CORRECTION: f64 = 59.8 + 70.1 - 59.8;
 
+/// OpenStreetMap zoom levels and map tile side length in kilometers.
+/// Data is from GitHub Codepilot.
+const ZOOM_LEVEL_AND_TILE_LENGHT: &[(u8, f64)] = &[
+    (9, 305.0),
+    (10, 153.0),
+    (11, 76.5),
+    (12, 38.2),
+    (13, 19.1),
+    (14, 9.55),
+    (15, 4.77),
+    (16, 2.39),
+    (17, 1.19),
+];
+
+fn find_nearest_zoom_level(square_km: NonZeroU8) -> (u8, f64) {
+    let square_km = square_km.get() as f64;
+    let (mut nearest_zoom_level, mut nearest_distance) = ZOOM_LEVEL_AND_TILE_LENGHT[0];
+    let mut nearest_tile_lenght = nearest_distance;
+    for (zoom_level, tile_length) in ZOOM_LEVEL_AND_TILE_LENGHT {
+        let distance = (square_km - tile_length).abs();
+        if distance < nearest_distance {
+            nearest_distance = distance;
+            nearest_zoom_level = *zoom_level;
+            nearest_tile_lenght = *tile_length;
+        }
+    }
+    (nearest_zoom_level, nearest_tile_lenght)
+}
+
+// https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Lon./lat._to_tile_numbers
+// n = 2 ^ zoom
+// xtile = n * ((lon_deg + 180) / 360)
+// ytile = n * (1 - (log(tan(lat_rad) + sec(lat_rad)) / π)) / 2
+
+fn calculate_tile_x(longitude_deg: f64, zoom_level: u8) -> u32 {
+    let n = 2.0_f64.powi(zoom_level as i32);
+    let x = n * ((longitude_deg + 180.0) / 360.0);
+    x as u32
+}
+
+fn calculate_tile_y(latitude_deg: f64, zoom_level: u8) -> u32 {
+    let n = 2.0_f64.powi(zoom_level as i32);
+    let latitude_rad = latitude_deg.to_radians();
+    let y = n * (1.0 - (latitude_rad.tan() + (1.0 / latitude_rad.cos())).ln() / std::f64::consts::PI)
+        / 2.0;
+    y as u32
+}
+
 #[derive(Debug)]
 pub struct CoordinateManager {
     pub config: Arc<Config>,
     pub longitude_one_km_in_degrees: f64,
+    pub zoom_level: u8,
+    pub tile_side_length_km: f64,
 }
 
 impl CoordinateManager {
     fn new(config: Arc<Config>) -> Self {
+        let (zoom_level, tile_side_length_km) = find_nearest_zoom_level(config.location().index_cell_square_km);
         Self {
+            zoom_level,
+            tile_side_length_km,
             config,
             longitude_one_km_in_degrees: calculate_longitude_one_km_in_degrees(),
         }
     }
 
-    // TODO: Setting profile location bottom left corner of the index area border
-    //       will hide the profile. It is index (0,0)
+    fn zoom_level(&self) -> u8 {
+        self.zoom_level
+    }
 
-    // TODO: If one_cell_height_degrees or one_cell_width_degrees is too big
-    //       height or width will be 0. And that crashes the index creation.
+    fn tile_side_length_km(&self) -> f64 {
+        self.tile_side_length_km
+    }
+
+    // Max y tile number of the index area.
+    fn y_max_tile(&self) -> u32 {
+        calculate_tile_y(self.config.location().latitude_bottom_right, self.zoom_level)
+    }
+
+    // Max x tile number of the index area.
+    fn x_max_tile(&self) -> u32 {
+        calculate_tile_x(self.config.location().longitude_bottom_right, self.zoom_level)
+    }
 
     fn height(&self) -> u16 {
-        let height_degrees =
-            self.config.location().latitude_top_left - self.config.location().latitude_bottom_right;
-        let one_cell_height_degrees =
-            LATITUDE_ONE_KM_IN_DEGREES * self.config.location().index_cell_square_km.get() as f64;
-        (height_degrees / one_cell_height_degrees) as u16
+        let y_start = calculate_tile_y(self.config.location().latitude_top_left, self.zoom_level);
+        u32::max(1, self.y_max_tile() - y_start) as u16
     }
 
     fn width(&self) -> u16 {
-        let width_degrees = self.config.location().longitude_bottom_right
-            - self.config.location().longitude_top_left;
-        let one_cell_width_degrees = self.longitude_one_km_in_degrees
-            * self.config.location().index_cell_square_km.get() as f64;
-        (width_degrees / one_cell_width_degrees) as u16
+        let x_start = calculate_tile_x(self.config.location().longitude_top_left, self.zoom_level);
+        u32::max(1, self.x_max_tile() - x_start) as u16
     }
 
     pub fn to_index_key(&self, latitude: f64, longitude: f64) -> LocationIndexKey {
@@ -323,20 +417,24 @@ impl CoordinateManager {
 
     fn calculate_index_x_key(&self, longitude: f64) -> u16 {
         let longitude = longitude.clamp(self.longitude_min(), self.longitude_max());
-        let width_degrees = longitude - self.longitude_min();
-        let one_cell_width_degrees = self.longitude_one_km_in_degrees
-            * self.config.location().index_cell_square_km.get() as f64;
-        let x = (width_degrees / one_cell_width_degrees) as u16;
-        x.clamp(0, self.width() - 1)
+
+        let x_tile = calculate_tile_x(longitude, self.zoom_level);
+        let x = (self.x_max_tile() - x_tile) as u16;
+
+        // Start from 1 because (0,0) will not appear in profile list for
+        // some reason.
+        x.clamp(1, self.width() - 1)
     }
 
     fn calculate_index_y_key(&self, latitude: f64) -> u16 {
         let latitude = latitude.clamp(self.latitude_min(), self.latitude_max());
-        let height_degrees = latitude - self.latitude_min();
-        let one_cell_height_degrees =
-            LATITUDE_ONE_KM_IN_DEGREES * self.config.location().index_cell_square_km.get() as f64;
-        let y = (height_degrees / one_cell_height_degrees) as u16;
-        y.clamp(0, self.height() - 1)
+
+        let y_tile = calculate_tile_y(latitude, self.zoom_level);
+        let y = (self.y_max_tile() - y_tile) as u16;
+
+        // Start from 1 because (0,0) will not appear in profile list for
+        // some reason.
+        y.clamp(1, self.height() - 1)
     }
 
     fn longitude_min(&self) -> f64 {
@@ -355,3 +453,40 @@ impl CoordinateManager {
         self.config.location().latitude_top_left
     }
 }
+
+
+// TODO: Is there bug that if profile is put on same tile twice
+// it disappears? Update: this should now be fixed
+//
+// Config:
+// [location]
+// latitude_top_left = 70.1
+// longitude_top_left = 19.5
+// latitude_bottom_right = 59.8
+// longitude_bottom_right = 31.58
+// index_cell_square_km = 100
+//
+// Logs:
+// [crates/server/src/data/write/profile.rs:65] &coordinates = Location {
+//     latitude: 62.05558022857322,
+//     longitude: 25.613378651701765,
+// }
+// [crates/server/src/data/write/profile.rs:65] new_location_key = LocationIndexKey {
+//     y: 27,
+//     x: 34,
+// }
+// [crates/server/src/data/write/profile.rs:65] &coordinates = Location {
+//     latitude: 62.05028302388773,
+//     longitude: 25.489045893817828,
+// }
+// [crates/server/src/data/write/profile.rs:65] new_location_key = LocationIndexKey {
+//     y: 27,
+//     x: 34,
+// }
+//
+// And the profile disappeared.
+//
+// Seems to happen also with other locations.
+//
+// Preventing this by checking if profile is already in the correct location in
+// the index

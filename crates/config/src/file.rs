@@ -249,7 +249,8 @@ pub struct LocationConfig {
     /// Minimum "x-axis" angle for top left corner of the location index.
     /// Index can in reality end further away.
     pub longitude_bottom_right: f64,
-    /// Index cell map size.
+    /// Index cell map size target value. Might be smaller or larger depending
+    /// the supported tile sizes.
     pub index_cell_square_km: NonZeroU8,
 }
 
@@ -258,8 +259,6 @@ impl Default for LocationConfig {
         Self {
             // Just use Finland as default as that is tested to work.
             // TODO: Add validation to the values? And more location unit tests?
-            //       Most likely too small area will crash the server depending
-            //       on the index_cell_square_km value.
             latitude_top_left: 70.1,
             longitude_top_left: 19.5,
             latitude_bottom_right: 59.8,
