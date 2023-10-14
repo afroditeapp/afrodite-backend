@@ -30,6 +30,30 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    account_interaction (id) {
+        id -> Integer,
+        state_number -> Integer,
+        account_id_sender -> Nullable<Integer>,
+        account_id_receiver -> Nullable<Integer>,
+        message_counter -> Integer,
+        sender_latest_viewed_message -> Nullable<Integer>,
+        receiver_latest_viewed_message -> Nullable<Integer>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    account_interaction_index (account_id_first, account_id_second) {
+        account_id_first -> Integer,
+        account_id_second -> Integer,
+        interaction_id -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     account_setup (account_id) {
         account_id -> Integer,
         name -> Text,
@@ -154,6 +178,19 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    pending_messages (id) {
+        id -> Integer,
+        account_id_sender -> Integer,
+        account_id_receiver -> Integer,
+        unix_time -> Integer,
+        message_number -> Integer,
+        message_text -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     profile (account_id) {
         account_id -> Integer,
         version_uuid -> Binary,
@@ -192,6 +229,7 @@ diesel::table! {
 
 diesel::joinable!(access_token -> account_id (account_id));
 diesel::joinable!(account -> account_id (account_id));
+diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
 diesel::joinable!(history_account -> account_id (account_id));
@@ -212,6 +250,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     access_token,
     account,
     account_id,
+    account_interaction,
+    account_interaction_index,
     account_setup,
     current_account_media,
     favorite_profile,
@@ -223,6 +263,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     media_moderation,
     media_moderation_queue_number,
     media_moderation_request,
+    pending_messages,
     profile,
     profile_location,
     refresh_token,

@@ -206,6 +206,85 @@ CREATE TABLE IF NOT EXISTS media_moderation(
             ON UPDATE CASCADE
 );
 
+---------- Tables for server component chat ----------
+
+-- Lookup table for finding interaction ID for a pair of accounts.
+-- One account pair has two rows in this table, so accessing
+-- with (a1, a2) and (a2, a1) is possible.
+CREATE TABLE IF NOT EXISTS account_interaction_index(
+    account_id_first               INTEGER NOT NULL,
+    account_id_second              INTEGER NOT NULL,
+    interaction_id                 INTEGER NOT NULL,
+    PRIMARY KEY (account_id_first, account_id_second),
+    FOREIGN KEY (account_id_first)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_second)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (interaction_id)
+        REFERENCES account_interaction (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Current relationship between accounts
+CREATE TABLE IF NOT EXISTS account_interaction(
+    id                  INTEGER PRIMARY KEY NOT NULL,
+    -- 0 = no interaction
+    -- 1 = like
+    -- 2 = match
+    -- 3 = block
+    state_number                    INTEGER NOT NULL,
+    -- The account which started the interaction (e.g. sent a like).
+    -- Can be null for example if a like is removed afterwards.
+    account_id_sender               INTEGER,
+    -- The target of the interaction (e.g. received a like).
+    -- Can be null for example if a like is removed afterwards.
+    account_id_receiver             INTEGER,
+    -- Incrementing counter for getting order number for conversation messages.
+    message_counter                 INTEGER NOT NULL DEFAULT 0,
+    -- Sender's latest viewed message number in the conversation.
+    -- Can be null for example if account is blocked.
+    sender_latest_viewed_message    INTEGER,
+    -- Receivers's latest viewed message number in the conversation.
+    -- Can be null for example if account is blocked.
+    receiver_latest_viewed_message    INTEGER,
+    FOREIGN KEY (account_id_sender)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_receiver)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Messages received from clients which are pending for sending.
+CREATE TABLE IF NOT EXISTS pending_messages(
+    id                  INTEGER PRIMARY KEY NOT NULL,
+    -- The account which sent the message.
+    account_id_sender               INTEGER NOT NULL,
+    -- The account which will receive the message.
+    account_id_receiver             INTEGER NOT NULL,
+    -- Receiving time of the message.
+    unix_time                       INTEGER NOT NULL,
+    -- Order number for the message in the conversation.
+    message_number                  INTEGER NOT NULL,
+    -- Message text.
+    message_text                    TEXT    NOT NULL,
+    FOREIGN KEY (account_id_sender)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_receiver)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- History tables for server component account ----------
 
 CREATE TABLE IF NOT EXISTS history_account(
