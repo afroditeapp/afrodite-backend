@@ -98,6 +98,7 @@ pub mod utils;
     components(schemas(
         // Common
         model::common::EventToClient,
+        model::common::EventType,
         model::common::BackendVersion,
         model::common::AccountId,
         model::common::AccessToken,

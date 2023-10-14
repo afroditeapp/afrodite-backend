@@ -19,8 +19,31 @@ pub struct BackendVersion {
     pub protocol_version: String,
 }
 
+/// Identifier for event.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub enum EventToClient {
+pub enum EventType {
+    /// New account state for client.
+    /// Data: account_state
+    AccountStateChanged,
+    /// New capabilities for client.
+    /// Data: capabilities
+    AccountCapabilitiesChanged,
+}
+
+/// Event to client which is sent through websocket.
+///
+/// This is not an enum to make generated API bindings more easier to
+/// use.
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct EventToClient {
+    event: EventType,
+    /// Data for event AccountStateChanged
+    account_state: Option<AccountState>,
+    /// Data for event AccountCapabilitiesChanged
+    capabilities: Option<Capabilities>,
+}
+
+pub enum EventToClientInternal {
     /// New account state for client
     AccountStateChanged {
         state: AccountState,
@@ -28,6 +51,29 @@ pub enum EventToClient {
     /// New capabilities for client
     AccountCapabilitiesChanged {
         capabilities: Capabilities,
+    },
+}
+
+impl From<EventToClientInternal> for EventToClient {
+    fn from(internal: EventToClientInternal) -> Self {
+        let mut value = Self {
+            event: EventType::AccountStateChanged,
+            account_state: None,
+            capabilities: None,
+        };
+
+        match internal {
+            EventToClientInternal::AccountStateChanged { state } => {
+                value.event = EventType::AccountStateChanged;
+                value.account_state = Some(state);
+            }
+            EventToClientInternal::AccountCapabilitiesChanged { capabilities } => {
+                value.event = EventType::AccountCapabilitiesChanged;
+                value.capabilities = Some(capabilities);
+            }
+        }
+
+        value
     }
 }
 

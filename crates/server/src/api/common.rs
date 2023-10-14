@@ -12,7 +12,7 @@ use axum::{
     TypedHeader,
 };
 use error_stack::{ResultExt, Result};
-use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, EventToClient};
+use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, EventToClient, EventToClientInternal};
 use tracing::error;
 use utils::ContextExt;
 pub use utils::api::PATH_CONNECT;
@@ -271,16 +271,18 @@ async fn send_account_state<S: WriteData + ReadData>(
         .await
         .change_context(WebSocketError::DatabaseAccountStateQuery)?;
 
+    let event: EventToClient = EventToClientInternal::AccountStateChanged { state: current_account.state() }.into();
     let event = serde_json::to_string(
-        &EventToClient::AccountStateChanged { state: current_account.state() }
+        &event
     )
         .change_context(WebSocketError::Serialize)?;
     socket.send(Message::Text(event))
         .await
         .change_context(WebSocketError::Send)?;
 
+    let event: EventToClient = EventToClientInternal::AccountCapabilitiesChanged { capabilities: current_account.into_capablities() }.into();
     let event = serde_json::to_string(
-        &EventToClient::AccountCapabilitiesChanged { capabilities: current_account.into_capablities() }
+        &event
     )
         .change_context(WebSocketError::Serialize)?;
     socket.send(Message::Text(event))

@@ -2,7 +2,7 @@ use axum::Extension;
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, AccountState, AuthPair,
     BooleanSetting, DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
-    SignInWithLoginInfo, EventToClient,
+    SignInWithLoginInfo, EventToClient, EventToClientInternal,
 };
 use tracing::error;
 
@@ -310,14 +310,14 @@ pub async fn post_complete_setup<
             .event_manager()
             .send_connected_event(
                 id.uuid,
-                EventToClient::AccountStateChanged { state: account.state() },
+                EventToClientInternal::AccountStateChanged { state: account.state() },
             ).await?;
 
         state
             .event_manager()
             .send_connected_event(
                 id.uuid,
-                EventToClient::AccountCapabilitiesChanged { capabilities: account.into_capablities() },
+                EventToClientInternal::AccountCapabilitiesChanged { capabilities: account.into_capablities() },
             ).await?;
 
         Ok(())
@@ -379,7 +379,7 @@ pub async fn put_setting_profile_visiblity<
         .event_manager()
         .send_connected_event(
             id.uuid,
-            EventToClient::AccountCapabilitiesChanged { capabilities: new_capabilities },
+            EventToClientInternal::AccountCapabilitiesChanged { capabilities: new_capabilities },
         ).await?;
 
     Ok(())

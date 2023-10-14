@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use error_stack::{ResultExt, Result};
-use model::{EventToClient, AccountId, AccountIdInternal};
+use model::{EventToClient, AccountId, AccountIdInternal, EventToClientInternal};
 use tokio::sync::mpsc;
 
 use crate::data::RouterDatabaseReadHandle;
@@ -67,12 +67,12 @@ impl EventManager {
         }
     }
     /// Send only if the client is connected.
-    pub async fn send_connected_event(&self, account: AccountId, event: EventToClient) -> Result<(), EventError> {
+    pub async fn send_connected_event(&self, account: AccountId, event: EventToClientInternal) -> Result<(), EventError> {
         self.database.read().common().access_event_mode(
             account,
             move |mode| {
                 if let EventMode::Connected(sender) = mode {
-                    let _ = sender.send(event);
+                    let _ = sender.send(event.into());
                 }
         })
             .await
