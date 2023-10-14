@@ -27,9 +27,10 @@ impl WriteCommandsAccount<'_> {
         Ok(())
     }
 
-    pub async fn modify_capablities(&self, id: AccountIdInternal, action: impl FnOnce(&mut Capabilities)) -> Result<(), DataError> {
+    pub async fn modify_capablities(&self, id: AccountIdInternal, action: impl FnOnce(&mut Capabilities)) -> Result<Capabilities, DataError> {
         let mut account = self.db_read(move |mut cmds| cmds.account().account(id)).await?;
         action(account.capablities_mut());
-        self.account(id, account).await
+        self.account(id, account.clone()).await?;
+        Ok(account.into_capablities())
     }
 }

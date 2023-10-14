@@ -14,6 +14,7 @@ pub mod media_backup;
 pub mod utils;
 pub mod image;
 pub mod map;
+pub mod event;
 
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 

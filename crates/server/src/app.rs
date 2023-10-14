@@ -26,8 +26,8 @@ use super::{
 };
 use crate::{api::{
     self, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, GetManagerApi, ReadData,
-    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig, GetTileMap,
-}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, map::TileMapManager};
+    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig, GetTileMap, EventManagerProvider,
+}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, map::TileMapManager, event::EventManager};
 
 pub mod connection;
 pub mod routes_connected;
@@ -43,6 +43,7 @@ pub struct AppState {
     config: Arc<Config>,
     sign_in_with: Arc<SignInWithManager>,
     tile_map: Arc<TileMapManager>,
+    events: Arc<EventManager>,
 }
 
 impl BackendVersionProvider for AppState {
@@ -165,6 +166,12 @@ impl GetTileMap for AppState {
     }
 }
 
+impl EventManagerProvider for AppState {
+    fn event_manager(&self) -> &EventManager {
+        &self.events
+    }
+}
+
 pub struct App {
     state: AppState,
     ws_manager: Option<WebSocketManager>,
@@ -178,14 +185,16 @@ impl App {
         config: Arc<Config>,
         ws_manager: WebSocketManager,
     ) -> Result<Self, ManagerClientError> {
+        let database = Arc::new(database_handle);
         let state = AppState {
             config: config.clone(),
-            database: Arc::new(database_handle),
+            database: database.clone(),
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             manager_api: ManagerApiClient::new(&config)?.into(),
             tile_map: TileMapManager::new(&config).into(),
             sign_in_with: SignInWithManager::new(config).into(),
+            events: EventManager::new(database).into(),
         };
 
         Ok(Self {

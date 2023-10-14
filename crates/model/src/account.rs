@@ -63,6 +63,10 @@ impl Account {
         &self.capablities
     }
 
+    pub fn into_capablities(self) -> Capabilities {
+        self.capablities
+    }
+
     pub fn capablities_mut(&mut self) -> &mut Capabilities {
         &mut self.capablities
     }

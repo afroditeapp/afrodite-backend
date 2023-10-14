@@ -21,7 +21,7 @@ use crate::{
     app::sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
     data::{cache::CacheError, DataError},
     internal::InternalApiError,
-    manager_client::ManagerClientError,
+    manager_client::ManagerClientError, event::EventError,
 };
 
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =
@@ -206,6 +206,8 @@ enum RequestError {
     ManagerClientError,
     #[error("Config file error")]
     ConfigFileError,
+    #[error("Event error")]
+    EventError,
 }
 
 impl From<error_stack::Report<DataError>> for StatusCode {
@@ -265,6 +267,17 @@ impl From<error_stack::Report<ConfigFileError>> for StatusCode {
         tracing::error!(
             "{:?}",
             value.change_context(RequestError::ConfigFileError)
+        );
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+}
+
+impl From<error_stack::Report<EventError>> for StatusCode {
+    #[track_caller]
+    fn from(value: error_stack::Report<EventError>) -> Self {
+        tracing::error!(
+            "{:?}",
+            value.change_context(RequestError::EventError)
         );
         StatusCode::INTERNAL_SERVER_ERROR
     }

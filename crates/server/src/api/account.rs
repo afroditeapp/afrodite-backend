@@ -2,14 +2,16 @@ use axum::Extension;
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, AccountState, AuthPair,
     BooleanSetting, DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
-    SignInWithLoginInfo,
+    SignInWithLoginInfo, EventToClient,
 };
 use tracing::error;
+
+use crate::event;
 
 use super::{
     db_write,
     utils::{Json, StatusCode},
-    GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, SignInWith, WriteData,
+    GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, SignInWith, WriteData, EventManagerProvider,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -253,7 +255,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("access_token" = [])),
 )]
 pub async fn post_complete_setup<
-    S: GetAccessTokens + ReadData + WriteData + GetInternalApi + GetConfig,
+    S: GetAccessTokens + ReadData + WriteData + GetInternalApi + GetConfig + EventManagerProvider,
 >(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
@@ -301,7 +303,24 @@ pub async fn post_complete_setup<
             }
         }
 
-        db_write!(state, move |cmds| cmds.account().account(id, account))
+        let new_account = account.clone();
+        db_write!(state, move |cmds| cmds.account().account(id, new_account))?;
+
+        state
+            .event_manager()
+            .send_connected_event(
+                id.uuid,
+                EventToClient::AccountStateChanged { state: account.state() },
+            ).await?;
+
+        state
+            .event_manager()
+            .send_connected_event(
+                id.uuid,
+                EventToClient::AccountCapabilitiesChanged { capabilities: account.into_capablities() },
+            ).await?;
+
+        Ok(())
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -327,7 +346,7 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     security(("access_token" = [])),
 )]
 pub async fn put_setting_profile_visiblity<
-    S: GetAccessTokens + ReadData + GetInternalApi + GetConfig + WriteData,
+    S: GetAccessTokens + ReadData + GetInternalApi + GetConfig + WriteData + EventManagerProvider,
 >(
     Extension(id): Extension<AccountIdInternal>,
     Json(new_value): Json<BooleanSetting>,
@@ -344,15 +363,24 @@ pub async fn put_setting_profile_visiblity<
         .profile_api_set_profile_visiblity(id, new_value)
         .await?;
 
-    db_write!(
+    let new_capabilities = db_write!(
         state,
-        move |cmds| cmds
+        move |cmds| {
+            cmds
             .account()
             .modify_capablities(
                 id,
                 |capabilities| capabilities.view_public_profiles = new_value.value
             )
+        }
     )?;
+
+    state
+        .event_manager()
+        .send_connected_event(
+            id.uuid,
+            EventToClient::AccountCapabilitiesChanged { capabilities: new_capabilities },
+        ).await?;
 
     Ok(())
 }

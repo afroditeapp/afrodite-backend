@@ -14,7 +14,7 @@ use tokio_stream::StreamExt;
 use tracing::info;
 use utils::{ComponentError,  IntoReportFromString};
 
-use crate::data::index::LocationIndexWriteHandle;
+use crate::{data::index::LocationIndexWriteHandle, event::EventMode};
 
 use super::{
     index::{
@@ -269,6 +269,7 @@ impl DatabaseCache {
             .clone();
 
         cache_entry.cache.write().await.current_connection = None;
+        cache_entry.cache.write().await.current_event_connection = EventMode::None;
 
         if let Some(token) = token {
             let mut tokens = self.access_tokens.write().await;
@@ -322,7 +323,7 @@ impl DatabaseCache {
     pub async fn read_cache<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl Fn(&CacheEntry) -> T,
+        cache_operation: impl FnOnce(&CacheEntry) -> T,
     ) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
         let cache_entry = guard
@@ -413,6 +414,7 @@ pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
     pub account: Option<Box<Account>>,
     pub current_connection: Option<SocketAddr>,
+    pub current_event_connection: EventMode,
 }
 
 impl CacheEntry {
@@ -421,6 +423,7 @@ impl CacheEntry {
             profile: None,
             account: None,
             current_connection: None,
+            current_event_connection: EventMode::None,
         }
     }
 }

@@ -12,7 +12,7 @@ use self::{
     account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
     chat_admin::ReadCommandsChatAdmin, media::ReadCommandsMedia,
     media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile,
-    profile_admin::ReadCommandsProfileAdmin,
+    profile_admin::ReadCommandsProfileAdmin, common::ReadCommandsCommon,
 };
 use super::{cache::DatabaseCache, file::utils::FileDir, DataError, IntoDataError};
 
@@ -80,6 +80,7 @@ pub mod account;
 pub mod account_admin;
 pub mod chat;
 pub mod chat_admin;
+pub mod common;
 pub mod media;
 pub mod media_admin;
 pub mod profile;
@@ -137,6 +138,10 @@ impl<'a> ReadCommands<'a> {
 
     pub fn chat_admin(self) -> ReadCommandsChatAdmin<'a> {
         ReadCommandsChatAdmin::new(self)
+    }
+
+    pub fn common(self) -> ReadCommandsCommon<'a> {
+        ReadCommandsCommon::new(self)
     }
 
     pub async fn image_stream(

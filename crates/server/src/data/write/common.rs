@@ -1,9 +1,9 @@
 use std::net::SocketAddr;
 
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AuthPair};
+use model::{AccountIdInternal, AuthPair, AccountId};
 
-use crate::data::{DataError, IntoDataError};
+use crate::{data::{DataError, IntoDataError}, event::{EventReceiver, event_channel, EventMode}};
 
 define_write_commands!(WriteCommandsCommon);
 
@@ -43,6 +43,20 @@ impl WriteCommandsCommon<'_> {
         self.end_connection_session(id, true).await?;
 
         Ok(())
+    }
+
+    /// Init event channel for connection session.
+    pub async fn init_connection_session_events(
+        &self,
+        id: AccountId,
+    ) -> Result<EventReceiver, DataError> {
+        let (sender, receiver) = event_channel();
+        self.write_cache(id, move |entry| {
+            entry.current_event_connection = EventMode::Connected(sender);
+            Ok(())
+        }).await?;
+
+        Ok(receiver)
     }
 
     /// Remove current connection address and access token.

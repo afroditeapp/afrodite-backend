@@ -12,7 +12,7 @@ use axum::{
     TypedHeader,
 };
 use error_stack::{ResultExt, Result};
-use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken};
+use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, EventToClient};
 use tracing::error;
 use utils::ContextExt;
 pub use utils::api::PATH_CONNECT;
@@ -128,8 +128,10 @@ pub enum WebSocketError {
     Receive,
     #[error("Received something else than refresh token")]
     ReceiveMissingRefreshToken,
-    #[error("Send error")]
+    #[error("Websocket data sending error")]
     Send,
+    #[error("Data serialization error")]
+    Serialize,
 
     // Database errors
     #[error("Database: No refresh token")]
@@ -140,6 +142,12 @@ pub enum WebSocketError {
     DatabaseLogoutFailed,
     #[error("Database: saving new tokens failed")]
     DatabaseSaveTokens,
+    #[error("Database: Account state query failed")]
+    DatabaseAccountStateQuery,
+
+    // Event errors
+    #[error("Event channel creation failed")]
+    EventChannelCreationFailed,
 }
 
 async fn handle_socket_result<S: WriteData + ReadData>(
@@ -212,6 +220,19 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .await
         .change_context(WebSocketError::Send)?;
 
+    let mut event_receiver = state
+        .write(move |cmds| async move {
+            cmds.common()
+                .init_connection_session_events(
+                    id.uuid,
+                )
+                .await
+        })
+        .await
+        .change_context(WebSocketError::DatabaseSaveTokens)?;
+
+    send_account_state(&mut socket, id, state).await?;
+
     loop {
         tokio::select! {
             result = socket.recv() => {
@@ -220,9 +241,51 @@ async fn handle_socket_result<S: WriteData + ReadData>(
                     Some(Ok(_)) => continue,
                 }
             }
-            // TODO: event sending at some point?
+            event = event_receiver.recv() => {
+                match event {
+                    Some(event) => {
+                        let event = serde_json::to_string(&event)
+                            .change_context(WebSocketError::Serialize)?;
+                        socket.send(Message::Text(event))
+                            .await
+                            .change_context(WebSocketError::Send)?;
+                    },
+                    None => (),
+                }
+            }
         }
     }
+
+    Ok(())
+}
+
+async fn send_account_state<S: WriteData + ReadData>(
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    state: &S,
+) -> Result<(), WebSocketError> {
+    let current_account = state
+        .read()
+        .account()
+        .account(id)
+        .await
+        .change_context(WebSocketError::DatabaseAccountStateQuery)?;
+
+    let event = serde_json::to_string(
+        &EventToClient::AccountStateChanged { state: current_account.state() }
+    )
+        .change_context(WebSocketError::Serialize)?;
+    socket.send(Message::Text(event))
+        .await
+        .change_context(WebSocketError::Send)?;
+
+    let event = serde_json::to_string(
+        &EventToClient::AccountCapabilitiesChanged { capabilities: current_account.into_capablities() }
+    )
+        .change_context(WebSocketError::Serialize)?;
+    socket.send(Message::Text(event))
+        .await
+        .change_context(WebSocketError::Send)?;
 
     Ok(())
 }

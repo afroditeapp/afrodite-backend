@@ -16,7 +16,7 @@ use crate::{
         DataError,
     },
     internal::InternalApiManager,
-    manager_client::ManagerApiManager, map::TileMapManager,
+    manager_client::ManagerApiManager, map::TileMapManager, event::EventManager,
 };
 
 // Routes
@@ -240,6 +240,10 @@ pub trait ReadDynamicConfig {
 
 pub trait BackendVersionProvider {
     fn backend_version(&self) -> BackendVersion;
+}
+
+pub trait EventManagerProvider {
+    fn event_manager(&self) -> &EventManager;
 }
 
 /// Macro for writing data with different code style.
