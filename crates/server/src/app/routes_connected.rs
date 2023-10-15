@@ -8,7 +8,6 @@ use super::AppState;
 use crate::api::{self};
 
 /// Private routes only accessible when WebSocket is connected.
-/// Debug mode allows also connection without the WebSocket connection.
 pub struct ConnectedApp {
     state: AppState,
 }
