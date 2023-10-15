@@ -63,6 +63,7 @@ enable_logging!(
     // Account
     AccountIdInternal,
     AccountId,
+    Option<AccountIdDb>,
     // Media
     ModerationRequestIdDb,
     ModerationRequestId, // TODO: combine with ModerationRequestIdDb
@@ -80,6 +81,7 @@ disable_logging!(
     ModerationRequestContent,
     PrimaryImage,
     ContentState,
+    i64,
     (),
 );
 

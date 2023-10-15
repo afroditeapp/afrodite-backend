@@ -94,6 +94,21 @@ pub mod utils;
         // Media internal
         media_internal::internal_get_check_moderation_request_for_account,
         media_internal::internal_post_update_profile_image_visibility,
+        // Chat
+        chat::get_sent_likes,
+        chat::get_received_likes,
+        chat::get_matches,
+        chat::get_sent_blocks,
+        chat::get_received_blocks,
+        chat::get_pending_messages,
+        chat::get_message_number_of_latest_viewed_message,
+        chat::post_send_like,
+        chat::post_send_message,
+        chat::post_block_profile,
+        chat::post_unblock_profile,
+        chat::delete_like,
+        chat::delete_pending_messages,
+        chat::post_message_number_of_latest_viewed_message,
     ),
     components(schemas(
         // Common
@@ -143,6 +158,18 @@ pub mod utils;
         model::media_admin::ModerationList,
         model::media_admin::Moderation,
         model::media_admin::HandleModerationRequest,
+        // Chat
+        model::chat::SentLikesPage,
+        model::chat::ReceivedLikesPage,
+        model::chat::MatchesPage,
+        model::chat::SentBlocksPage,
+        model::chat::ReceivedBlocksPage,
+        model::chat::PendingMessagesPage,
+        model::chat::PendingMessage,
+        model::chat::PendingMessageId,
+        model::chat::PendingMessageDeleteList,
+        model::chat::MessageNumber,
+        model::chat::SendMessageToAccount,
         // Manager
         manager_model::SystemInfoList,
         manager_model::SystemInfo,

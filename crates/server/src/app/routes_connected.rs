@@ -367,14 +367,112 @@ impl ConnectedApp {
 
     pub fn private_chat_server_router(&self) -> Router {
         let private = Router::new()
-            // .route(
-            //     api::media::PATH_GET_IMAGE,
-            //     get({
-            //         let state = self.state.clone();
-            //         move |param1, param2, param3| api::media::get_image(param1, param2, param3, state)
-            //     }),
-            // )
-          ;
+            .route(
+                api::chat::PATH_POST_SEND_LIKE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::post_send_like(param1, param2, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_GET_SENT_LIKES,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::chat::get_sent_likes(param1, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_GET_RECEIVED_LIKES,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::chat::get_received_likes(param1, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_DELETE_LIKE,
+                delete({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::delete_like(param1, param2, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_GET_MATCHES,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::chat::get_matches(param1, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_POST_BLOCK_PROFILE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::post_block_profile(param1, param2, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_POST_UNBLOCK_PROFILE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::post_unblock_profile(param1, param2, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_GET_SENT_BLOCKS,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::chat::get_sent_blocks(param1, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_GET_RECEIVED_BLOCKS,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::chat::get_received_blocks(param1, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_GET_PENDING_MESSAGES,
+                get({
+                    let state = self.state.clone();
+                    move |param1| api::chat::get_pending_messages(param1, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_DELETE_PENDING_MESSAGES,
+                delete({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::delete_pending_messages(param1, param2, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
+                get({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::get_message_number_of_latest_viewed_message(param1, param2, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::post_message_number_of_latest_viewed_message(param1, param2, state)
+                }),
+            )
+            .route(
+                api::chat::PATH_POST_SEND_MESSAGE,
+                post({
+                    let state = self.state.clone();
+                    move |param1, param2| api::chat::post_send_message(param1, param2, state)
+                }),
+            )
+            .route_layer({
+                middleware::from_fn({
+                    let state = self.state.clone();
+                    move |addr, req, next| {
+                        api::utils::authenticate_with_access_token(state.clone(), addr, req, next)
+                    }
+                })
+            });
 
         Router::new().merge(private)
     }
