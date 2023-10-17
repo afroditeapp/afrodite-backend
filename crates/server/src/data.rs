@@ -92,6 +92,8 @@ pub enum DataError {
     NotFound,
     #[error("Content slot not empty")]
     ContentSlotNotEmpty,
+    #[error("Tried to do something that is not allowed")]
+    NotAllowed,
 
     #[error("Command runner quit too early")]
     CommandRunnerQuit,

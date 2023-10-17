@@ -1,9 +1,7 @@
 use axum::{extract::Path, Extension};
-use hyper::StatusCode;
 use model::{AccountId, AccountIdInternal, Profile, SentLikesPage, ReceivedLikesPage, MatchesPage, SentBlocksPage, ReceivedBlocksPage, PendingMessagesPage, MessageNumber, UpdateMessageViewStatus, PendingMessageDeleteList, SendMessageToAccount};
 
-use super::{utils::Json, GetAccessTokens, GetAccounts, GetInternalApi, ReadData, WriteData};
-
+use super::{utils::{Json, StatusCode}, GetAccessTokens, GetAccounts, GetInternalApi, ReadData, WriteData, db_write};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -25,6 +23,12 @@ pub async fn post_send_like<S: ReadData + GetAccounts + GetAccessTokens + WriteD
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     // TODO: Check is profile public and is age ok.
+
+    let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
+
+    db_write!(state, move |cmds| {
+        cmds.chat().like_profile(id, requested_profile)
+    })?;
 
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }

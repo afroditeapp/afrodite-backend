@@ -112,6 +112,10 @@ impl AccountIdInternal {
         &self.id
     }
 
+    pub fn into_db_id(self) -> AccountIdDb {
+        self.id
+    }
+
     pub fn row_id(&self) -> i64 {
         self.id.0
     }
