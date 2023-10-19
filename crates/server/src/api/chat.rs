@@ -21,7 +21,7 @@ pub async fn post_send_like<S: ReadData + GetAccounts + GetAccessTokens + WriteD
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
     state: S,
-) -> Result<Json<Profile>, StatusCode> {
+) -> Result<(), StatusCode> {
     // TODO: Check is profile public and is age ok.
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
@@ -30,7 +30,7 @@ pub async fn post_send_like<S: ReadData + GetAccounts + GetAccessTokens + WriteD
         cmds.chat().like_profile(id, requested_profile)
     })?;
 
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    Ok(())
 }
 
 
@@ -57,10 +57,9 @@ pub async fn get_sent_likes<S: ReadData + GetAccounts + GetAccessTokens + GetInt
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SentLikesPage>, StatusCode> {
-    // TODO: Remove hidden and blocked profiles from the list
-    // TODO: Remove matches from the list
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    // TODO: Remove non public profiles?
+    let page = state.read().chat().all_sent_likes(id).await?;
+    Ok(page.into())
 }
 
 pub const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
@@ -84,12 +83,8 @@ pub async fn get_received_likes<S: ReadData + GetAccounts + GetAccessTokens + Ge
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ReceivedLikesPage>, StatusCode> {
-    // TODO: Remove blocked profiles from the list
-    // TODO: Remove matches from the list
-
-
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let page = state.read().chat().all_received_likes(id).await?;
+    Ok(page.into())
 }
 
 pub const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
@@ -136,8 +131,8 @@ pub async fn get_matches<S: ReadData + GetAccounts + GetAccessTokens + GetIntern
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<MatchesPage>, StatusCode> {
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let page = state.read().chat().all_matches(id).await?;
+    Ok(page.into())
 }
 
 pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
@@ -159,7 +154,6 @@ pub async fn post_block_profile<S: ReadData + GetAccounts + GetAccessTokens + Ge
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
-
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
 
@@ -204,8 +198,8 @@ pub async fn get_sent_blocks<S: ReadData + GetAccounts + GetAccessTokens + GetIn
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SentBlocksPage>, StatusCode> {
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let page = state.read().chat().all_sent_blocks(id).await?;
+    Ok(page.into())
 }
 
 // TODO: Add some block query info, so that server can send sync received blocks
@@ -228,8 +222,8 @@ pub async fn get_received_blocks<S: ReadData + GetAccounts + GetAccessTokens + G
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ReceivedBlocksPage>, StatusCode> {
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let page = state.read().chat().all_received_blocks(id).await?;
+    Ok(page.into())
 }
 
 

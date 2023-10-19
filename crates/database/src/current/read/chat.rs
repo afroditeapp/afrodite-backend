@@ -4,7 +4,7 @@ use futures::Stream;
 use model::{
     AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountRaw,
     AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
-    SignInWithInfoRaw, schema::access_token::account_id, AccountInteractionInternal,
+    SignInWithInfoRaw, schema::access_token::account_id, AccountInteractionInternal, AccountInteractionState,
 };
 use tokio_stream::StreamExt;
 
@@ -46,17 +46,45 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
         Ok(Some(value))
     }
 
-    // pub fn sign_in_with_info(
-    //     &mut self,
-    //     id: AccountIdInternal,
-    // ) -> Result<SignInWithInfo, DieselDatabaseError> {
-    //     use crate::schema::sign_in_with_info::dsl::*;
+    /// Return for example all accounts which id_sender account has liked
+    pub fn all_sender_account_interactions(
+        &mut self,
+        id_sender: AccountIdInternal,
+        with_state: AccountInteractionState,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::account_interaction::dsl::*;
+        use crate::schema::account_id;
 
-    //     sign_in_with_info
-    //         .filter(account_id.eq(id.as_db_id()))
-    //         .select(SignInWithInfoRaw::as_select())
-    //         .first(self.conn())
-    //         .into_db_error(DieselDatabaseError::Execute, id)
-    //         .map(Into::into)
-    // }
+        let value: Vec<AccountId> = account_interaction
+            .inner_join(account_id::table.on(account_id_receiver.assume_not_null().eq(account_id::id)))
+            .filter(account_id_receiver.is_not_null())
+            .filter(account_id_sender.eq(id_sender.as_db_id()))
+            .filter(state_number.eq(with_state as i64))
+            .select(account_id::uuid)
+            .load(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, ())?;
+
+        Ok(value)
+    }
+
+    /// Return for example all accounts which have liked the id_receiver account
+    pub fn all_receiver_account_interactions(
+        &mut self,
+        id_receiver: AccountIdInternal,
+        with_state: AccountInteractionState,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::account_interaction::dsl::*;
+        use crate::schema::account_id;
+
+        let value: Vec<AccountId> = account_interaction
+            .inner_join(account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)))
+            .filter(account_id_sender.is_not_null())
+            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+            .filter(state_number.eq(with_state as i64))
+            .select(account_id::uuid)
+            .load(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, ())?;
+
+        Ok(value)
+    }
 }

@@ -94,13 +94,19 @@ impl AccountInteractionInternal {
         }
     }
 
-    pub fn try_into_block(self) -> Result<Self, AccountInteractionStateError> {
+    pub fn try_into_block(
+        self,
+        id_block_sender: AccountIdInternal,
+        id_block_receiver: AccountIdInternal,
+    ) -> Result<Self, AccountInteractionStateError> {
         let state = AccountInteractionState::try_from(self.state_number)?;
         match state {
             AccountInteractionState::Empty |
             AccountInteractionState::Like |
             AccountInteractionState::Match => Ok(Self {
                 state_number: AccountInteractionState::Block as i64,
+                account_id_sender: Some(id_block_sender.into_db_id()),
+                account_id_receiver: Some(id_block_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
                 ..self
@@ -115,6 +121,8 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Block => Ok(Self {
                 state_number: target as i64,
+                account_id_sender: None,
+                account_id_receiver: None,
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
                 ..self
