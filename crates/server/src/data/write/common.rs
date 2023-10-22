@@ -82,4 +82,13 @@ impl WriteCommandsCommon<'_> {
 
         Ok(())
     }
+
+    // pub async fn write_capabilities(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    //     self.db_write(move |mut cmds| cmds.account().refresh_token(id, None))
+    //         .await?;
+
+    //     self.end_connection_session(id, true).await?;
+
+    //     Ok(())
+    // }
 }

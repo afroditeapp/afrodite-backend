@@ -28,6 +28,46 @@ CREATE TABLE IF NOT EXISTS refresh_token(
             ON UPDATE CASCADE
 );
 
+-- Account capabilities are shared between server components.
+-- If the data is located in this table it should be set through account
+-- server as it propagates the changes to other components.
+CREATE TABLE IF NOT EXISTS account_capabilities(
+    account_id    INTEGER PRIMARY KEY NOT NULL,
+    admin_modify_capabilities                    BOOLEAN NOT NULL DEFAULT 0,
+    admin_moderate_profiles                      BOOLEAN NOT NULL DEFAULT 0,
+    admin_moderate_images                        BOOLEAN NOT NULL DEFAULT 0,
+    admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
+    admin_view_private_info                      BOOLEAN NOT NULL DEFAULT 0,
+    admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_view_info           BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_view_backend_config BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_update_software     BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_reset_data          BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_reboot_backend      BOOLEAN NOT NULL DEFAULT 0,
+    admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT 0,
+    user_view_public_profiles                    BOOLEAN NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Shared state between server components.
+-- If the data is located in this table it should be set through account
+-- server as it propagates the changes to other components.
+CREATE TABLE IF NOT EXISTS shared_state(
+    account_id              INTEGER PRIMARY KEY NOT NULL,
+    -- initial setup = 0
+    -- normal = 1
+    -- banned = 2
+    -- pending deletion = 3
+    account_state_number    INTEGER             NOT NULL DEFAULT 0,
+    is_profile_public       BOOLEAN             NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
 
 ---------- Tables for server component account ----------
 
@@ -43,8 +83,8 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
 
 -- Account information which can change
 CREATE TABLE IF NOT EXISTS account(
-    account_id INTEGER PRIMARY KEY NOT NULL,
-    json_text  TEXT                NOT NULL  DEFAULT '',
+    account_id   INTEGER PRIMARY KEY NOT NULL,
+    email        TEXT                NOT NULL  DEFAULT '',
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -55,7 +95,7 @@ CREATE TABLE IF NOT EXISTS account(
 CREATE TABLE IF NOT EXISTS account_setup(
     account_id  INTEGER PRIMARY KEY NOT NULL,
     name        TEXT                NOT NULL  DEFAULT '',
-    email       TEXT                NOT NULL  DEFAULT '',
+    birthdate   TEXT                NOT NULL  DEFAULT '',
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

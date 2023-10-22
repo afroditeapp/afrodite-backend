@@ -5,7 +5,7 @@ use self::{
     chat::{CurrentSyncWriteChat, CurrentWriteChat},
     media::{CurrentSyncWriteMedia, CurrentWriteMedia},
     media_admin::{CurrentSyncWriteMediaAdmin, CurrentWriteMediaAdmin},
-    profile::{CurrentSyncWriteProfile, CurrentWriteProfile},
+    profile::{CurrentSyncWriteProfile, CurrentWriteProfile}, common::CurrentSyncWriteCommon,
 };
 use crate::{
     diesel::{ConnectionProvider, DieselConnection, DieselDatabaseError},
@@ -65,6 +65,7 @@ macro_rules! define_write_commands {
 
 pub mod account;
 pub mod account_admin;
+pub mod common;
 pub mod chat;
 pub mod chat_admin;
 pub mod media;
@@ -154,6 +155,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
 impl CurrentSyncWriteCommands<&mut DieselConnection> {
     pub fn account(&mut self) -> CurrentSyncWriteAccount<&mut DieselConnection> {
         CurrentSyncWriteAccount::new(self.write())
+    }
+
+    pub fn common(&mut self) -> CurrentSyncWriteCommon<&mut DieselConnection> {
+        CurrentSyncWriteCommon::new(self.write())
+    }
+
+    pub fn chat(&mut self) -> CurrentSyncWriteChat<&mut DieselConnection> {
+        CurrentSyncWriteChat::new(self.write())
     }
 
     pub fn media(&mut self) -> CurrentSyncWriteMedia<&mut DieselConnection> {

@@ -121,6 +121,11 @@ impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
 {
 }
 
+impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
+    for std::result::Result<Ok, model::account::AccountStateError>
+{
+}
+
 impl<Ok> IntoDatabaseError<crate::sqlite::SqliteDatabaseError>
     for std::result::Result<Ok, ::sqlx::Error>
 {

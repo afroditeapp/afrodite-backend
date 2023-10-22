@@ -2,9 +2,9 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use futures::Stream;
 use model::{
-    AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountRaw,
+    AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountInternal,
     AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
-    SignInWithInfoRaw,
+    SignInWithInfoRaw, AccountState, Capabilities, AccountData,
 };
 use tokio_stream::StreamExt;
 
@@ -107,15 +107,20 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
     }
 
     pub fn account(&mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
-        use crate::schema::account::dsl::*;
+        use crate::schema::account_capabilities;
 
-        let raw = account
-            .filter(account_id.eq(id.as_db_id()))
-            .select(AccountRaw::as_select())
+        let shared_state = self.conn().read().common().shared_state(id)?;
+
+        let state = TryInto::<AccountState>::try_into(shared_state.account_state_number)
+            .into_db_error(DieselDatabaseError::DataFormatConversion, id)?;
+
+        let capabilities: Capabilities = account_capabilities::table
+            .filter(account_capabilities::account_id.eq(id.as_db_id()))
+            .select(Capabilities::as_select())
             .first(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
-        serde_json::from_str(raw.json_text.as_str()).into_db_error(DieselDatabaseError::Execute, id)
+        Ok(Account::new_from(state, capabilities))
     }
 
     pub fn account_setup(
@@ -129,5 +134,22 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
             .select(AccountSetup::as_select())
             .first(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)
+    }
+
+    pub fn account_data(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<AccountData, DieselDatabaseError> {
+        use crate::schema::account::dsl::*;
+
+        let account_internal = account
+            .filter(account_id.eq(id.as_db_id()))
+            .select(AccountInternal::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        Ok(AccountData {
+            email: account_internal.email,
+        })
     }
 }

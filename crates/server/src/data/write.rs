@@ -16,7 +16,7 @@ use database::{
     PoolObject, TransactionError,
 };
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo};
+use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo, SharedState, AccountInternal};
 use utils::{ IntoReportFromString};
 
 use self::{
@@ -302,12 +302,14 @@ impl<'a> WriteCommands<'a> {
         let id = current.account().insert_account_id(id_light)?;
         current.account().insert_access_token(id, None)?;
         current.account().insert_refresh_token(id, None)?;
+        current.common().insert_default_account_capabilities(id)?;
+        current.common().insert_shared_state(id, SharedState::default())?;
 
         // Common history
         history.account().insert_account_id(id)?;
 
         if config.components().account {
-            current.account().insert_account(id, &account)?;
+            current.account().insert_account(id, AccountInternal::default())?;
             current.account().insert_account_setup(id, &account_setup)?;
             current
                 .account()

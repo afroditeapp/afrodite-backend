@@ -74,7 +74,7 @@ pub async fn get_profile<
                 .internal_api()
                 .get_account_state(requested_profile)
                 .await?;
-            let visibility = account.capablities().view_public_profiles;
+            let visibility = account.capablities().user_view_public_profiles;
             db_write!(state, move |cmds| {
                 cmds.profile()
                     .profile_update_visibility(requested_profile, visibility, true)

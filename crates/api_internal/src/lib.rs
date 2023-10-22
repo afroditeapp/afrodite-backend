@@ -56,6 +56,8 @@ impl InternalApi {
             api_client::models::AccountState::PendingDeletion => AccountState::PendingDeletion,
         };
 
+        // TODO: serialize to string and then to deserialize to model type?
+
         macro_rules! copy_capablities {
             ($account:expr,  $( $name:ident , )* ) => {
                 Capabilities {
@@ -67,16 +69,13 @@ impl InternalApi {
         // TODO: Add missing capabilities
         let capabilities = copy_capablities!(
             account,
-            admin_modify_capablities,
-            admin_setup_possible,
+            // admin_modify_capabilities, TODO: update once api bindings update
             admin_moderate_profiles,
             admin_moderate_images,
             admin_view_all_profiles,
             admin_view_private_info,
             admin_view_profile_history,
-            admin_ban_profile,
-            banned_edit_profile,
-            view_public_profiles,
+            // user_view_public_profiles, TODO: update after API bindings are updated
         );
 
         Ok(Account::new_from(state, capabilities))

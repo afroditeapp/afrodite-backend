@@ -6,7 +6,7 @@ use self::{
     media::{CurrentReadMedia, CurrentSyncReadMedia},
     media_admin::CurrentSyncReadMediaAdmin,
     profile::{CurrentReadProfile, CurrentSyncReadProfile},
-    profile_admin::CurrentSyncReadProfileAdmin,
+    profile_admin::CurrentSyncReadProfileAdmin, common::CurrentSyncReadCommon,
 };
 use crate::{
     diesel::{ConnectionProvider, DieselConnection},
@@ -47,6 +47,7 @@ macro_rules! define_read_commands {
 
 pub mod account;
 pub mod account_admin;
+pub mod common;
 pub mod chat;
 pub mod chat_admin;
 pub mod media;
@@ -161,5 +162,9 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
 
     pub fn chat_admin(&mut self) -> CurrentSyncReadChatAdmin<&mut DieselConnection> {
         CurrentSyncReadChatAdmin::new(self.conn())
+    }
+
+    pub fn common(&mut self) -> CurrentSyncReadCommon<&mut DieselConnection> {
+        CurrentSyncReadCommon::new(self.conn())
     }
 }

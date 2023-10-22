@@ -170,6 +170,7 @@ pub mod utils;
         model::chat::PendingMessageDeleteList,
         model::chat::MessageNumber,
         model::chat::SendMessageToAccount,
+        model::chat::UpdateMessageViewStatus,
         // Manager
         manager_model::SystemInfoList,
         manager_model::SystemInfo,

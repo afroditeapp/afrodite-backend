@@ -30,11 +30,16 @@ impl AuthPair {
     }
 }
 
-#[derive(Debug, Clone, Queryable, Selectable)]
+#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::account)]
 #[diesel(check_for_backend(crate::Db))]
-pub struct AccountRaw {
-    pub json_text: String,
+pub struct AccountInternal {
+    pub email: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct AccountData {
+    pub email: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -71,26 +76,24 @@ impl Account {
         &mut self.capablities
     }
 
+    pub fn state_mut(&mut self) -> &mut AccountState {
+        &mut self.state
+    }
+
     pub fn complete_setup(&mut self) {
         if self.state == AccountState::InitialSetup {
             self.state = AccountState::Normal;
         }
     }
 
-    // pub fn complete_first_moderation(&mut self) {
-    //     if self.state == AccountState::WaitingFirstModeration {
-    //         self.state = AccountState::Normal;
-    //     }
-    // }
-
     pub fn add_admin_capablities(&mut self) {
         self.capablities.admin_moderate_images = true;
-        self.capablities.admin_server_maintentance_view_info = true;
-        self.capablities.admin_server_maintentance_view_backend_settings = true;
-        self.capablities.admin_server_maintentance_save_backend_settings = true;
-        self.capablities.admin_server_maintentance_update_software = true;
-        self.capablities.admin_server_maintentance_reset_data = true;
-        self.capablities.admin_server_maintentance_reboot_backend = true;
+        self.capablities.admin_server_maintenance_view_info = true;
+        self.capablities.admin_server_maintenance_view_backend_config = true;
+        self.capablities.admin_server_maintenance_save_backend_config = true;
+        self.capablities.admin_server_maintenance_update_software = true;
+        self.capablities.admin_server_maintenance_reset_data = true;
+        self.capablities.admin_server_maintenance_reboot_backend = true;
         // TOOD: Other capablities as well?
     }
 }
@@ -104,21 +107,55 @@ impl Default for Account {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum AccountStateError {
+    WrongStateNumber(i64),
+}
+impl AccountStateError {
+    pub fn wrong_state_number(number: i64) -> Self {
+        Self::WrongStateNumber(number)
+    }
+}
+impl std::fmt::Display for AccountStateError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AccountStateError::WrongStateNumber(number) => {
+                write!(f, "Wrong state number: {}", number)
+            }
+        }
+    }
+}
+impl std::error::Error for AccountStateError {}
+
+
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub enum AccountState {
-    InitialSetup,
-    /// Basically normal state, but profile is not really set public
-    /// even if the capability is set.
-    //WaitingFirstModeration, TODO
-    Normal,
-    Banned,
-    PendingDeletion,
+    InitialSetup = 0,
+    Normal = 1,
+    Banned = 2,
+    PendingDeletion = 3,
+}
+
+impl TryFrom<i64> for AccountState {
+    type Error = AccountStateError;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::InitialSetup),
+            1 => Ok(Self::Normal),
+            2 => Ok(Self::Banned),
+            3 => Ok(Self::PendingDeletion),
+            _ => Err(AccountStateError::WrongStateNumber(value)),
+        }
+    }
 }
 
 macro_rules! define_capablities {
     ($( $( #[doc = $text:literal] )* $name:ident , )* ) => {
 
-        #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
+        #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq, Queryable, Selectable, Insertable, AsChangeset)]
+        #[diesel(table_name = crate::schema::account_capabilities)]
+        #[diesel(check_for_backend(crate::Db))]
         pub struct Capabilities {
             $(
                 $(#[doc = $text])?
@@ -132,26 +169,24 @@ macro_rules! define_capablities {
 }
 
 define_capablities!(
-    admin_modify_capablities,
-    admin_setup_possible,
+    admin_modify_capabilities,
     admin_moderate_profiles,
     admin_moderate_images,
     /// View public and private profiles.
     admin_view_all_profiles,
     admin_view_private_info,
     admin_view_profile_history,
-    admin_ban_profile,
     /// View server infrastructure related info like logs and
     /// software versions.
-    admin_server_maintentance_view_info,
-    admin_server_maintentance_view_backend_settings, // TODO: change to config
-    admin_server_maintentance_update_software,
-    admin_server_maintentance_reset_data,
-    admin_server_maintentance_reboot_backend,
-    admin_server_maintentance_save_backend_settings, // TODO: change to config
-    banned_edit_profile,
-    /// View public profiles
-    view_public_profiles,
+    admin_server_maintenance_view_info,
+    admin_server_maintenance_view_backend_config,
+    admin_server_maintenance_update_software,
+    admin_server_maintenance_reset_data,
+    admin_server_maintenance_reboot_backend,
+    admin_server_maintenance_save_backend_config,
+    /// View public profiles. Automatically enabled once initial
+    /// image moderation is complete.
+    user_view_public_profiles,
 );
 
 #[derive(
@@ -172,16 +207,12 @@ define_capablities!(
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {
     name: String,
-    email: String,
+    birthdate: String,
 }
 
 impl AccountSetup {
     pub fn is_empty(&self) -> bool {
         self.name.is_empty()
-    }
-
-    pub fn email(&self) -> &str {
-        &self.email
     }
 
     pub fn name(&self) -> &str {

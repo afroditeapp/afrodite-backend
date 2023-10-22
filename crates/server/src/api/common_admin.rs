@@ -39,7 +39,7 @@ pub async fn get_system_info<S: GetManagerApi + ReadData>(
         .account(api_caller_account_id)
         .await?;
 
-    if account.capablities().admin_server_maintentance_view_info {
+    if account.capablities().admin_server_maintenance_view_info {
         let info = state.manager_api().system_info().await?;
         Ok(info.into())
     } else {
@@ -70,7 +70,7 @@ pub async fn get_software_info<S: GetManagerApi + ReadData>(
         .account(api_caller_account_id)
         .await?;
 
-    if account.capablities().admin_server_maintentance_view_info {
+    if account.capablities().admin_server_maintenance_view_info {
         let info = state.manager_api().software_info().await?;
         Ok(info.into())
     } else {
@@ -104,7 +104,7 @@ pub async fn get_latest_build_info<S: GetManagerApi + ReadData>(
         .account(api_caller_account_id)
         .await?;
 
-    if account.capablities().admin_server_maintentance_view_info {
+    if account.capablities().admin_server_maintenance_view_info {
         let info = state
             .manager_api()
             .get_latest_build_info(software.software_options)
@@ -142,7 +142,7 @@ pub async fn post_request_build_software<S: GetManagerApi + ReadData>(
 
     if account
         .capablities()
-        .admin_server_maintentance_update_software
+        .admin_server_maintenance_update_software
     {
         state
             .manager_api()
@@ -167,8 +167,8 @@ pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_
 /// for completing this request.
 ///
 /// # Capablities
-/// Requires admin_server_maintentance_update_software. Also requires
-/// admin_server_maintentance_reset_data if reset_data is true.
+/// Requires admin_server_maintenance_update_software. Also requires
+/// admin_server_maintenance_reset_data if reset_data is true.
 #[utoipa::path(
     post,
     path = "/common_api/request_update_software",
@@ -193,13 +193,13 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
         .account(api_caller_account_id)
         .await?;
 
-    if reset_data.reset_data && !account.capablities().admin_server_maintentance_reset_data {
+    if reset_data.reset_data && !account.capablities().admin_server_maintenance_reset_data {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
     if account
         .capablities()
-        .admin_server_maintentance_update_software
+        .admin_server_maintenance_update_software
     {
         info!(
             "Requesting update software, account: {}, software: {:?}, reboot: {}, reset_data: {},",
@@ -223,8 +223,8 @@ pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str = "/common_api/reques
 /// Request restarting or reseting backend through app-manager instance.
 ///
 /// # Capabilities
-/// Requires admin_server_maintentance_restart_backend. Also requires
-/// admin_server_maintentance_reset_data if reset_data is true.
+/// Requires admin_server_maintenance_restart_backend. Also requires
+/// admin_server_maintenance_reset_data if reset_data is true.
 #[utoipa::path(
     post,
     path = "/common_api/request_restart_or_reset_backend",
@@ -247,13 +247,13 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi + ReadData>(
         .account(api_caller_account_id)
         .await?;
 
-    if reset_data.reset_data && !account.capablities().admin_server_maintentance_reset_data {
+    if reset_data.reset_data && !account.capablities().admin_server_maintenance_reset_data {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
     if account
         .capablities()
-        .admin_server_maintentance_update_software
+        .admin_server_maintenance_update_software
     {
         info!(
             "Requesting reset or restart backend, account: {}, reset_data: {}",
@@ -275,7 +275,7 @@ pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
 /// Get dynamic backend config.
 ///
 /// # Capabilities
-/// Requires admin_server_maintentance_view_backend_settings.
+/// Requires admin_server_maintenance_view_backend_settings.
 #[utoipa::path(
     get,
     path = "/common_api/backend_config",
@@ -299,7 +299,7 @@ pub async fn get_backend_config<S: ReadData + ReadDynamicConfig>(
 
     if account
         .capablities()
-        .admin_server_maintentance_view_backend_settings
+        .admin_server_maintenance_view_backend_config
     {
         let config = state.read_config().await?;
         Ok(config.into())
@@ -313,7 +313,7 @@ pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
 /// Save dynamic backend config.
 ///
 /// # Capabilities
-/// Requires admin_server_maintentance_save_backend_settings.
+/// Requires admin_server_maintenance_save_backend_settings.
 #[utoipa::path(
     post,
     path = "/common_api/backend_config",
@@ -339,7 +339,7 @@ pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
 
     if account
         .capablities()
-        .admin_server_maintentance_save_backend_settings
+        .admin_server_maintenance_save_backend_config
     {
         info!(
             "Saving dynamic backend config, account: {}, settings: {:#?}",

@@ -14,7 +14,28 @@ diesel::table! {
 
     account (account_id) {
         account_id -> Integer,
-        json_text -> Text,
+        email -> Text,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    account_capabilities (account_id) {
+        account_id -> Integer,
+        admin_modify_capabilities -> Bool,
+        admin_moderate_profiles -> Bool,
+        admin_moderate_images -> Bool,
+        admin_view_all_profiles -> Bool,
+        admin_view_private_info -> Bool,
+        admin_view_profile_history -> Bool,
+        admin_server_maintenance_view_info -> Bool,
+        admin_server_maintenance_view_backend_config -> Bool,
+        admin_server_maintenance_update_software -> Bool,
+        admin_server_maintenance_reset_data -> Bool,
+        admin_server_maintenance_reboot_backend -> Bool,
+        admin_server_maintenance_save_backend_config -> Bool,
+        user_view_public_profiles -> Bool,
     }
 }
 
@@ -57,7 +78,7 @@ diesel::table! {
     account_setup (account_id) {
         account_id -> Integer,
         name -> Text,
-        email -> Text,
+        birthdate -> Text,
     }
 }
 
@@ -221,6 +242,16 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    shared_state (account_id) {
+        account_id -> Integer,
+        account_state_number -> Integer,
+        is_profile_public -> Bool,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     sign_in_with_info (account_id) {
         account_id -> Integer,
         google_account_id -> Nullable<Text>,
@@ -229,6 +260,7 @@ diesel::table! {
 
 diesel::joinable!(access_token -> account_id (account_id));
 diesel::joinable!(account -> account_id (account_id));
+diesel::joinable!(account_capabilities -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
@@ -244,11 +276,13 @@ diesel::joinable!(media_moderation_request -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_location -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
+diesel::joinable!(shared_state -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     access_token,
     account,
+    account_capabilities,
     account_id,
     account_interaction,
     account_interaction_index,
@@ -267,5 +301,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile,
     profile_location,
     refresh_token,
+    shared_state,
     sign_in_with_info,
 );

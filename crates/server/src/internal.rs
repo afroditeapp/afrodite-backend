@@ -4,8 +4,8 @@ use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
 use error_stack::{ResultExt, Result};
 use hyper::StatusCode;
-use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal};
-use tracing::{error, info};
+use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal, AccountState, Capabilities};
+use tracing::{error, info, warn};
 use utils::{ ContextExt};
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
@@ -40,6 +40,9 @@ pub enum InternalApiError {
 
     #[error("Invalid value")]
     InvalidValue,
+
+    #[error("Required server component is not enabled")]
+    MissingComponent,
 }
 
 // TOOD: PrintWarningsTriggersAtomics?
@@ -186,6 +189,69 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
 
             Ok(account)
         }
+    }
+}
+
+impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'_, S> {
+    /// Only account server can modify the state. Does nothing if the server
+    /// does not have account component enabled.
+    ///
+    /// Returns the modified capabilities.
+    pub async fn modify_and_sync_account_state(
+        &self,
+        account_id: AccountIdInternal,
+        state: Option<AccountState>,
+        capabilities_action: impl FnOnce(&mut Capabilities),
+    ) -> Result<Capabilities, InternalApiError> {
+        if !self.config().components().account {
+            warn!("Account component not enabled, cannot modify account state");
+            // TODO: Would it be better to return error here?
+            return Err(InternalApiError::MissingComponent.report());
+        }
+
+        let mut current = self.read_database()
+            .account()
+            .account(account_id)
+            .await
+            .change_context(InternalApiError::DataError)?
+            .into_capablities();
+
+        capabilities_action(&mut current);
+
+        let modified_capabilitie_copy = current.clone();
+        self.state
+            .write(move |cmds| async move {
+                cmds.account()
+                    .update_account_state_and_capabilities(account_id, state, Some(modified_capabilitie_copy))
+                    .await
+            })
+            .await
+            .change_context(InternalApiError::DataError)?;
+
+        // TODO add sync account state command to common internal api
+
+        if !self.config().components().profile {
+            // let account =
+            // InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
+            //     .await
+            //     .change_context(InternalApiError::ApiRequest)?;
+        }
+
+        if !self.config().components().media {
+            // let account =
+            // InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
+            //     .await
+            //     .change_context(InternalApiError::ApiRequest)?;
+        }
+
+        if !self.config().components().chat {
+            // let account =
+            // InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
+            //     .await
+            //     .change_context(InternalApiError::ApiRequest)?;
+        }
+
+        Ok(current)
     }
 }
 

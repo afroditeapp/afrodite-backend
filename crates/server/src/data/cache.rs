@@ -146,12 +146,16 @@ impl DatabaseCache {
 
         let mut entry = account_entry.cache.write().await;
 
+        // Common
+        // Account is common state
+        let account = db_read(&read_diesel, move |mut cmds| {
+            cmds.account().account(account_id)
+        })
+        .await?;
+        entry.account = Some(account.clone().into());
+
         if config.components().account {
-            let account = db_read(&read_diesel, move |mut cmds| {
-                cmds.account().account(account_id)
-            })
-            .await?;
-            entry.account = Some(account.clone().into())
+            // empty
         }
 
         if config.components().profile {
@@ -183,7 +187,7 @@ impl DatabaseCache {
                     cmds.account().account(account_id)
                 })
                 .await?;
-                if account.capablities().view_public_profiles {
+                if account.capablities().user_view_public_profiles {
                     index_writer.update_profile_link(
                         account_id.uuid,
                         ProfileLink::new(

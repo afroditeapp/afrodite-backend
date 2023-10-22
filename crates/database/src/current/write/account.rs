@@ -2,7 +2,7 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
     AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
-    SignInWithInfo,
+    SignInWithInfo, AccountInternal, AccountState,
 };
 
 
@@ -115,15 +115,15 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     pub fn insert_account(
         &mut self,
         id: AccountIdInternal,
-        account_data: &Account,
+        account_data: AccountInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account::dsl::*;
 
-        let data =
-            serde_json::to_string(account_data).change_context(DieselDatabaseError::SerdeSerialize)?;
-
         insert_into(account)
-            .values((account_id.eq(id.as_db_id()), json_text.eq(data)))
+            .values((
+                account_id.eq(id.as_db_id()),
+                email.eq(account_data.email)
+            ))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
@@ -133,15 +133,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
     pub fn account(
         mut self,
         id: AccountIdInternal,
-        account_data: &Account,
+        account_data: &AccountInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account::dsl::*;
 
-        let data =
-            serde_json::to_string(account_data).change_context(DieselDatabaseError::SerdeSerialize)?;
-
         update(account.find(id.as_db_id()))
-            .set(json_text.eq(data))
+            .set(account_data)
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 

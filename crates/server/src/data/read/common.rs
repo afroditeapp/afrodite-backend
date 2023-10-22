@@ -27,4 +27,17 @@ impl ReadCommandsCommon<'_> {
             .await
             .into_data_error(id)
     }
+
+    // pub async fn <T>(
+    //     &self,
+    //     id: AccountId,
+    // ) -> Result<SharedState, DataError> {
+    //     self
+    //         .cache()
+    //         .read_cache(id, move |entry| {
+    //             action(&entry.current_event_connection)
+    //         })
+    //         .await
+    //         .into_data_error(id)
+    // }
 }

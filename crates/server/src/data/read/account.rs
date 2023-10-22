@@ -1,7 +1,7 @@
 use error_stack::{FutureExt, Result, ResultExt};
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, GoogleAccountId,
-    RefreshToken, SignInWithInfo,
+    RefreshToken, SignInWithInfo, AccountData,
 };
 use tokio_stream::StreamExt;
 
@@ -47,6 +47,11 @@ impl ReadCommandsAccount<'_> {
         self.read_cache(id, |cache| cache.account.as_deref().map(Clone::clone))
             .await?
             .ok_or(DataError::Cache.report())
+    }
+
+    pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
+        self.db_read(move |mut cmds| cmds.account().account_data(id))
+            .await
     }
 
     pub async fn account_setup(&self, id: AccountIdInternal) -> Result<AccountSetup, DataError> {

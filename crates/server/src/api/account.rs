@@ -272,6 +272,7 @@ pub async fn post_complete_setup<
         .await?;
 
     let mut account = state.read().account().account(id).await?;
+    let account_data = state.read().account().account_data(id).await?;
 
     let sign_in_with_info = state.read().account().account_sign_in_with_info(id).await?;
 
@@ -287,7 +288,7 @@ pub async fn post_complete_setup<
         account.complete_setup();
 
         if state.config().debug_mode() {
-            if account_setup.email() == state.config().admin_email() {
+            if account_data.email == state.config().admin_email() {
                 account.add_admin_capablities();
             }
         } else {
@@ -296,15 +297,20 @@ pub async fn post_complete_setup<
                     == Some(model::GoogleAccountId(
                         sign_in_with_config.admin_google_account_id.clone(),
                     ))
-                    && account_setup.email() == state.config().admin_email()
+                    && account_data.email == state.config().admin_email()
                 {
                     account.add_admin_capablities();
                 }
             }
         }
 
-        let new_account = account.clone();
-        db_write!(state, move |cmds| cmds.account().account(id, new_account))?;
+        let new_account_copy = account.clone();
+        state.internal_api()
+            .modify_and_sync_account_state(
+                id,
+                Some(new_account_copy.state()),
+                |capabilities| *capabilities = new_account_copy.into_capablities()
+            ).await?;
 
         state
             .event_manager()
@@ -358,22 +364,12 @@ pub async fn put_setting_profile_visiblity<
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    state
+    let new_capabilities = state
         .internal_api()
-        .profile_api_set_profile_visiblity(id, new_value)
+        .modify_and_sync_account_state(id, None, |capabilities| {
+            capabilities.user_view_public_profiles = new_value.value
+        })
         .await?;
-
-    let new_capabilities = db_write!(
-        state,
-        move |cmds| {
-            cmds
-            .account()
-            .modify_capablities(
-                id,
-                |capabilities| capabilities.view_public_profiles = new_value.value
-            )
-        }
-    )?;
 
     state
         .event_manager()
@@ -381,6 +377,12 @@ pub async fn put_setting_profile_visiblity<
             id.uuid,
             EventToClientInternal::AccountCapabilitiesChanged { capabilities: new_capabilities },
         ).await?;
+
+    // TODO could this be removed, because there is already the sync call above?
+    state
+        .internal_api()
+        .profile_api_set_profile_visiblity(id, new_value)
+        .await?;
 
     Ok(())
 }
