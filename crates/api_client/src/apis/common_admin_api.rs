@@ -88,7 +88,7 @@ pub enum PostRequestUpdateSoftwareError {
 }
 
 
-/// Get dynamic backend config.  # Capabilities Requires admin_server_maintentance_view_backend_settings.
+/// Get dynamic backend config.  # Capabilities Requires admin_server_maintenance_view_backend_settings.
 pub async fn get_backend_config(configuration: &configuration::Configuration, ) -> Result<crate::models::BackendConfig, Error<GetBackendConfigError>> {
     let local_var_configuration = configuration;
 
@@ -233,7 +233,7 @@ pub async fn get_system_info(configuration: &configuration::Configuration, ) -> 
     }
 }
 
-/// Save dynamic backend config.  # Capabilities Requires admin_server_maintentance_save_backend_settings.
+/// Save dynamic backend config.  # Capabilities Requires admin_server_maintenance_save_backend_settings.
 pub async fn post_backend_config(configuration: &configuration::Configuration, backend_config: crate::models::BackendConfig) -> Result<(), Error<PostBackendConfigError>> {
     let local_var_configuration = configuration;
 
@@ -307,7 +307,7 @@ pub async fn post_request_build_software(configuration: &configuration::Configur
     }
 }
 
-/// Request restarting or reseting backend through app-manager instance.  # Capabilities Requires admin_server_maintentance_restart_backend. Also requires admin_server_maintentance_reset_data if reset_data is true.
+/// Request restarting or reseting backend through app-manager instance.  # Capabilities Requires admin_server_maintenance_restart_backend. Also requires admin_server_maintenance_reset_data if reset_data is true.
 pub async fn post_request_restart_or_reset_backend(configuration: &configuration::Configuration, reset_data: bool) -> Result<(), Error<PostRequestRestartOrResetBackendError>> {
     let local_var_configuration = configuration;
 
@@ -344,7 +344,7 @@ pub async fn post_request_restart_or_reset_backend(configuration: &configuration
     }
 }
 
-/// Request updating new software from manager instance.  Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintentance_update_software. Also requires admin_server_maintentance_reset_data if reset_data is true.
+/// Request updating new software from manager instance.  Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintenance_update_software. Also requires admin_server_maintenance_reset_data if reset_data is true.
 pub async fn post_request_update_software(configuration: &configuration::Configuration, software_options: SoftwareOptions, reboot: bool, reset_data: bool) -> Result<(), Error<PostRequestUpdateSoftwareError>> {
     let local_var_configuration = configuration;
 

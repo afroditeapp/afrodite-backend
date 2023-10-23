@@ -2,7 +2,7 @@ use axum::Extension;
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, AccountState, AuthPair,
     BooleanSetting, DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
-    SignInWithLoginInfo, EventToClient, EventToClientInternal,
+    SignInWithLoginInfo, EventToClient, EventToClientInternal, AccountData,
 };
 use tracing::error;
 
@@ -199,12 +199,37 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
     Ok(account.into())
 }
 
-pub const PATH_ACCOUNT_SETUP: &str = "/account_api/setup";
+pub const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
+
+/// Get non-changeable user information to account.
+#[utoipa::path(
+    get,
+    path = "/account_api/account_setup",
+    responses(
+        (status = 200, description = "Request successfull.", body = AccountSetup),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_account_setup<S: GetAccessTokens + ReadData + WriteData>(
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    state: S,
+) -> Result<Json<AccountSetup>, StatusCode> {
+    let data = state
+        .read()
+        .account()
+        .account_setup(api_caller_account_id)
+        .await?;
+    Ok(data.into())
+}
+
+pub const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
 /// Setup non-changeable user information during `initial setup` state.
 #[utoipa::path(
     post,
-    path = "/account_api/setup",
+    path = "/account_api/account_setup",
     request_body(content = AccountSetup),
     responses(
         (status = 200, description = "Request successfull."),
@@ -234,6 +259,60 @@ pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
+}
+
+pub const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
+
+/// Get changeable user information to account.
+#[utoipa::path(
+    get,
+    path = "/account_api/account_data",
+    responses(
+        (status = 200, description = "Request successfull.", body = AccountData),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_account_data<S: GetAccessTokens + ReadData + WriteData>(
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    state: S,
+) -> Result<Json<AccountData>, StatusCode> {
+    let data = state
+        .read()
+        .account()
+        .account_data(api_caller_account_id)
+        .await?;
+    Ok(data.into())
+}
+
+pub const PATH_POST_ACCOUNT_DATA: &str = "/account_api/account_data";
+
+/// Set changeable user information to account.
+#[utoipa::path(
+    post,
+    path = "/account_api/account_data",
+    request_body(content = AccountData),
+    responses(
+        (status = 200, description = "Request successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_account_data<S: GetAccessTokens + ReadData + WriteData>(
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Json(data): Json<AccountData>,
+    state: S,
+) -> Result<(), StatusCode> {
+    // TODO: API limits to prevent DoS attacks
+
+    // TODO: Manual email setting should be removed probably and just
+    // use the email from sign in with Google or Apple.
+
+    db_write!(state, move |cmds| cmds
+        .account()
+        .account_data(api_caller_account_id, data))
 }
 
 pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";

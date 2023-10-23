@@ -121,10 +121,31 @@ impl ConnectedApp {
                 }),
             )
             .route(
-                api::account::PATH_ACCOUNT_SETUP,
+                api::account::PATH_GET_ACCOUNT_SETUP,
+                get({
+                    let state = self.state.clone();
+                    move |body| api::account::get_account_setup(body, state)
+                }),
+            )
+            .route(
+                api::account::PATH_GET_ACCOUNT_DATA,
+                get({
+                    let state = self.state.clone();
+                    move |body| api::account::get_account_data(body, state)
+                }),
+            )
+            .route(
+                api::account::PATH_POST_ACCOUNT_SETUP,
                 post({
                     let state = self.state.clone();
                     move |arg1, arg2| api::account::post_account_setup(arg1, arg2, state)
+                }),
+            )
+            .route(
+                api::account::PATH_POST_ACCOUNT_DATA,
+                post({
+                    let state = self.state.clone();
+                    move |arg1, arg2| api::account::post_account_data(arg1, arg2, state)
                 }),
             )
             .route(

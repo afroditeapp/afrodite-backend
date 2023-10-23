@@ -1,6 +1,6 @@
 use database::current::write::{account::CurrentSyncWriteAccount, CurrentSyncWriteCommands};
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountSetup, Capabilities, AccountState};
+use model::{Account, AccountIdInternal, AccountSetup, Capabilities, AccountState, AccountData, AccountInternal};
 
 use crate::data::DataError;
 
@@ -52,6 +52,20 @@ impl WriteCommandsAccount<'_> {
         account_setup: AccountSetup,
     ) -> Result<(), DataError> {
         self.db_write(move |cmds| cmds.into_account().account_setup(id, &account_setup))
+            .await?;
+        Ok(())
+    }
+
+    pub async fn account_data(
+        &self,
+        id: AccountIdInternal,
+        account_data: AccountData,
+    ) -> Result<(), DataError> {
+        let internal = AccountInternal {
+            email: account_data.email,
+        };
+
+        self.db_write(move |cmds| cmds.into_account().account(id, &internal))
             .await?;
         Ok(())
     }

@@ -13,29 +13,25 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Capabilities {
-    #[serde(rename = "admin_ban_profile", skip_serializing_if = "Option::is_none")]
-    pub admin_ban_profile: Option<bool>,
     #[serde(rename = "admin_moderate_images", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_images: Option<bool>,
     #[serde(rename = "admin_moderate_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_profiles: Option<bool>,
-    #[serde(rename = "admin_modify_capablities", skip_serializing_if = "Option::is_none")]
-    pub admin_modify_capablities: Option<bool>,
-    #[serde(rename = "admin_server_maintentance_reboot_backend", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintentance_reboot_backend: Option<bool>,
-    #[serde(rename = "admin_server_maintentance_reset_data", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintentance_reset_data: Option<bool>,
-    #[serde(rename = "admin_server_maintentance_save_backend_settings", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintentance_save_backend_settings: Option<bool>,
-    #[serde(rename = "admin_server_maintentance_update_software", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintentance_update_software: Option<bool>,
-    #[serde(rename = "admin_server_maintentance_view_backend_settings", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintentance_view_backend_settings: Option<bool>,
+    #[serde(rename = "admin_modify_capabilities", skip_serializing_if = "Option::is_none")]
+    pub admin_modify_capabilities: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_reboot_backend", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_reboot_backend: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_reset_data", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_reset_data: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_save_backend_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_save_backend_config: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_update_software", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_update_software: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_view_backend_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_view_backend_config: Option<bool>,
     /// View server infrastructure related info like logs and software versions.
-    #[serde(rename = "admin_server_maintentance_view_info", skip_serializing_if = "Option::is_none")]
-    pub admin_server_maintentance_view_info: Option<bool>,
-    #[serde(rename = "admin_setup_possible", skip_serializing_if = "Option::is_none")]
-    pub admin_setup_possible: Option<bool>,
+    #[serde(rename = "admin_server_maintenance_view_info", skip_serializing_if = "Option::is_none")]
+    pub admin_server_maintenance_view_info: Option<bool>,
     /// View public and private profiles.
     #[serde(rename = "admin_view_all_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_view_all_profiles: Option<bool>,
@@ -43,32 +39,27 @@ pub struct Capabilities {
     pub admin_view_private_info: Option<bool>,
     #[serde(rename = "admin_view_profile_history", skip_serializing_if = "Option::is_none")]
     pub admin_view_profile_history: Option<bool>,
-    #[serde(rename = "banned_edit_profile", skip_serializing_if = "Option::is_none")]
-    pub banned_edit_profile: Option<bool>,
-    /// View public profiles
-    #[serde(rename = "view_public_profiles", skip_serializing_if = "Option::is_none")]
-    pub view_public_profiles: Option<bool>,
+    /// View public profiles. Automatically enabled once initial image moderation is complete.
+    #[serde(rename = "user_view_public_profiles", skip_serializing_if = "Option::is_none")]
+    pub user_view_public_profiles: Option<bool>,
 }
 
 impl Capabilities {
     pub fn new() -> Capabilities {
         Capabilities {
-            admin_ban_profile: None,
             admin_moderate_images: None,
             admin_moderate_profiles: None,
-            admin_modify_capablities: None,
-            admin_server_maintentance_reboot_backend: None,
-            admin_server_maintentance_reset_data: None,
-            admin_server_maintentance_save_backend_settings: None,
-            admin_server_maintentance_update_software: None,
-            admin_server_maintentance_view_backend_settings: None,
-            admin_server_maintentance_view_info: None,
-            admin_setup_possible: None,
+            admin_modify_capabilities: None,
+            admin_server_maintenance_reboot_backend: None,
+            admin_server_maintenance_reset_data: None,
+            admin_server_maintenance_save_backend_config: None,
+            admin_server_maintenance_update_software: None,
+            admin_server_maintenance_view_backend_config: None,
+            admin_server_maintenance_view_info: None,
             admin_view_all_profiles: None,
             admin_view_private_info: None,
             admin_view_profile_history: None,
-            banned_edit_profile: None,
-            view_public_profiles: None,
+            user_view_public_profiles: None,
         }
     }
 }

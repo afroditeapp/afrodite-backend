@@ -13,16 +13,16 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct AccountSetup {
-    #[serde(rename = "email")]
-    pub email: String,
+    #[serde(rename = "birthdate")]
+    pub birthdate: String,
     #[serde(rename = "name")]
     pub name: String,
 }
 
 impl AccountSetup {
-    pub fn new(email: String, name: String) -> AccountSetup {
+    pub fn new(birthdate: String, name: String) -> AccountSetup {
         AccountSetup {
-            email,
+            birthdate,
             name,
         }
     }

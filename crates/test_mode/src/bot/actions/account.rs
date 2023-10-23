@@ -4,7 +4,7 @@ use api_client::{
     apis::account_api::{
         self, get_account_state, post_account_setup, post_complete_setup, post_login, post_register,
     },
-    models::{auth_pair, AccountSetup, AccountState, BooleanSetting},
+    models::{auth_pair, AccountSetup, AccountState, BooleanSetting, AccountData},
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -190,13 +190,21 @@ impl <'a> BotAction for SetAccountSetup<'a> {
             .map(|s| s.to_string())
             .unwrap_or_else(|| NameProvider::men_first_name().to_string());
         let setup = AccountSetup {
-            email: self
-                .email
-                .map(|email| email.to_string())
-                .unwrap_or(format!("{}@example.com", &name)),
-            name,
+            name: name.clone(),
+            birthdate: "".to_string(),
         };
         post_account_setup(state.api.account(), setup)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        let email = self
+            .email
+            .map(|email| email.to_string())
+            .unwrap_or(format!("{}@example.com", &name));
+
+        let account_data = AccountData { email };
+
+        account_api::post_account_data(state.api.account(), account_data)
             .await
             .change_context(TestError::ApiRequest)?;
 

@@ -4,15 +4,75 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**delete_favorite_profile**](ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
+[**get_favorite_profiles**](ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
 [**get_location**](ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
 [**get_profile**](ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
 [**get_profile_from_database_debug_mode_benchmark**](ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{account_id} | Get account's current profile from database. Debug mode must be enabled
+[**post_favorite_profile**](ProfileApi.md#post_favorite_profile) | **POST** /profile_api/favorite_profile | Add new favorite profile
 [**post_get_next_profile_page**](ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
 [**post_profile**](ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 [**post_profile_to_database_debug_mode_benchmark**](ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled
 [**post_reset_profile_paging**](ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 [**put_location**](ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location for account which makes this request.
 
+
+
+## delete_favorite_profile
+
+> delete_favorite_profile(account_id)
+Delete favorite profile
+
+Delete favorite profile
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | [**AccountId**](AccountId.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_favorite_profiles
+
+> crate::models::FavoriteProfilesPage get_favorite_profiles()
+Get list of all favorite profiles.
+
+Get list of all favorite profiles.
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**crate::models::FavoriteProfilesPage**](FavoriteProfilesPage.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
 ## get_location
@@ -102,6 +162,36 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## post_favorite_profile
+
+> post_favorite_profile(account_id)
+Add new favorite profile
+
+Add new favorite profile
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | [**AccountId**](AccountId.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_get_next_profile_page
 
 > crate::models::ProfilePage post_get_next_profile_page()
@@ -134,7 +224,7 @@ This endpoint does not need any parameter.
 > post_profile(profile_update)
 Update profile information.
 
-Update profile information.  Writes the profile to the database only if it is changed.  TODO: string lenght validation, limit saving new profiles
+Update profile information.  Writes the profile to the database only if it is changed.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 
 ### Parameters
 

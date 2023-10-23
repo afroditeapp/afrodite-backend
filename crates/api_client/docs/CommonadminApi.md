@@ -20,7 +20,7 @@ Method | HTTP request | Description
 > crate::models::BackendConfig get_backend_config()
 Get dynamic backend config.
 
-Get dynamic backend config.  # Capabilities Requires admin_server_maintentance_view_backend_settings.
+Get dynamic backend config.  # Capabilities Requires admin_server_maintenance_view_backend_settings.
 
 ### Parameters
 
@@ -131,7 +131,7 @@ This endpoint does not need any parameter.
 > post_backend_config(backend_config)
 Save dynamic backend config.
 
-Save dynamic backend config.  # Capabilities Requires admin_server_maintentance_save_backend_settings.
+Save dynamic backend config.  # Capabilities Requires admin_server_maintenance_save_backend_settings.
 
 ### Parameters
 
@@ -191,7 +191,7 @@ Name | Type | Description  | Required | Notes
 > post_request_restart_or_reset_backend(reset_data)
 Request restarting or reseting backend through app-manager instance.
 
-Request restarting or reseting backend through app-manager instance.  # Capabilities Requires admin_server_maintentance_restart_backend. Also requires admin_server_maintentance_reset_data if reset_data is true.
+Request restarting or reseting backend through app-manager instance.  # Capabilities Requires admin_server_maintenance_restart_backend. Also requires admin_server_maintenance_reset_data if reset_data is true.
 
 ### Parameters
 
@@ -221,7 +221,7 @@ Name | Type | Description  | Required | Notes
 > post_request_update_software(software_options, reboot, reset_data)
 Request updating new software from manager instance.
 
-Request updating new software from manager instance.  Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintentance_update_software. Also requires admin_server_maintentance_reset_data if reset_data is true.
+Request updating new software from manager instance.  Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintenance_update_software. Also requires admin_server_maintenance_reset_data if reset_data is true.
 
 ### Parameters
 
