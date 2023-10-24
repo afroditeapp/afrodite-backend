@@ -45,19 +45,19 @@ pub struct AccountData {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {
     state: AccountState,
-    capablities: Capabilities,
+    capabilities: Capabilities,
 }
 
 impl Account {
     pub fn new() -> Self {
         Self {
             state: AccountState::InitialSetup,
-            capablities: Default::default(),
+            capabilities: Default::default(),
         }
     }
 
     pub fn new_from(state: AccountState, capablities: Capabilities) -> Self {
-        Self { state, capablities }
+        Self { state, capabilities: capablities }
     }
 
     pub fn state(&self) -> AccountState {
@@ -65,15 +65,15 @@ impl Account {
     }
 
     pub fn capablities(&self) -> &Capabilities {
-        &self.capablities
+        &self.capabilities
     }
 
     pub fn into_capablities(self) -> Capabilities {
-        self.capablities
+        self.capabilities
     }
 
     pub fn capablities_mut(&mut self) -> &mut Capabilities {
-        &mut self.capablities
+        &mut self.capabilities
     }
 
     pub fn state_mut(&mut self) -> &mut AccountState {
@@ -87,13 +87,13 @@ impl Account {
     }
 
     pub fn add_admin_capablities(&mut self) {
-        self.capablities.admin_moderate_images = true;
-        self.capablities.admin_server_maintenance_view_info = true;
-        self.capablities.admin_server_maintenance_view_backend_config = true;
-        self.capablities.admin_server_maintenance_save_backend_config = true;
-        self.capablities.admin_server_maintenance_update_software = true;
-        self.capablities.admin_server_maintenance_reset_data = true;
-        self.capablities.admin_server_maintenance_reboot_backend = true;
+        self.capabilities.admin_moderate_images = true;
+        self.capabilities.admin_server_maintenance_view_info = true;
+        self.capabilities.admin_server_maintenance_view_backend_config = true;
+        self.capabilities.admin_server_maintenance_save_backend_config = true;
+        self.capabilities.admin_server_maintenance_update_software = true;
+        self.capabilities.admin_server_maintenance_reset_data = true;
+        self.capabilities.admin_server_maintenance_reboot_backend = true;
         // TOOD: Other capablities as well?
     }
 }
@@ -102,7 +102,7 @@ impl Default for Account {
     fn default() -> Self {
         Self {
             state: AccountState::InitialSetup,
-            capablities: Capabilities::default(),
+            capabilities: Capabilities::default(),
         }
     }
 }
@@ -147,6 +147,12 @@ impl TryFrom<i64> for AccountState {
             3 => Ok(Self::PendingDeletion),
             _ => Err(AccountStateError::WrongStateNumber(value)),
         }
+    }
+}
+
+impl Default for AccountState {
+    fn default() -> Self {
+        Self::InitialSetup
     }
 }
 

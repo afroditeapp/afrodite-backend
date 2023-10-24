@@ -56,27 +56,10 @@ impl InternalApi {
             api_client::models::AccountState::PendingDeletion => AccountState::PendingDeletion,
         };
 
-        // TODO: serialize to string and then to deserialize to model type?
-
-        macro_rules! copy_capablities {
-            ($account:expr,  $( $name:ident , )* ) => {
-                Capabilities {
-                    $( $name: $account.capablities.$name.unwrap_or(false), )*
-                    ..Capabilities::default()
-                }
-            };
-        }
-        // TODO: Add missing capabilities
-        let capabilities = copy_capablities!(
-            account,
-            // admin_modify_capabilities, TODO: update once api bindings update
-            admin_moderate_profiles,
-            admin_moderate_images,
-            admin_view_all_profiles,
-            admin_view_private_info,
-            admin_view_profile_history,
-            // user_view_public_profiles, TODO: update after API bindings are updated
-        );
+        let capabilities_string = serde_json::to_string(&account.capabilities)
+            .map_err(|e| Error::Serde(e))?;
+        let capabilities: Capabilities = serde_json::from_str(&capabilities_string)
+            .map_err(|e| Error::Serde(e))?;
 
         Ok(Account::new_from(state, capabilities))
     }

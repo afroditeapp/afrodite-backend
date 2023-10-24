@@ -315,9 +315,15 @@ diesel_i64_wrapper!(AccountIdDb);
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
-pub struct SharedState {
+pub struct SharedStateInternal {
     pub is_profile_public: bool,
     pub account_state_number: i64,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct SharedState {
+    pub is_profile_public: bool,
+    pub account_state: AccountState,
 }
 
 // #[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]

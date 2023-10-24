@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AuthPair, AccountId};
+use model::{AccountIdInternal, AuthPair, AccountId, SharedState};
 
 use crate::{data::{DataError, IntoDataError}, event::{EventReceiver, event_channel, EventMode}};
 
@@ -83,12 +83,9 @@ impl WriteCommandsCommon<'_> {
         Ok(())
     }
 
-    // pub async fn write_capabilities(&self, id: AccountIdInternal) -> Result<(), DataError> {
-    //     self.db_write(move |mut cmds| cmds.account().refresh_token(id, None))
-    //         .await?;
-
-    //     self.end_connection_session(id, true).await?;
-
-    //     Ok(())
-    // }
+    pub async fn shared_state(&self, id: AccountIdInternal, state: SharedState) -> Result<(), DataError> {
+        self.db_write(move |mut cmds| cmds.common().shared_state(id, state))
+            .await?;
+        Ok(())
+    }
 }

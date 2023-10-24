@@ -111,16 +111,13 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
 
         let shared_state = self.conn().read().common().shared_state(id)?;
 
-        let state = TryInto::<AccountState>::try_into(shared_state.account_state_number)
-            .into_db_error(DieselDatabaseError::DataFormatConversion, id)?;
-
         let capabilities: Capabilities = account_capabilities::table
             .filter(account_capabilities::account_id.eq(id.as_db_id()))
             .select(Capabilities::as_select())
             .first(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
-        Ok(Account::new_from(state, capabilities))
+        Ok(Account::new_from(shared_state.account_state, capabilities))
     }
 
     pub fn account_setup(

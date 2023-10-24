@@ -2,7 +2,7 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
     AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
-    SignInWithInfo, SharedState, Capabilities, AccountState,
+    SignInWithInfo, SharedStateInternal, Capabilities, AccountState, SharedState,
 };
 
 
@@ -15,7 +15,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommon<C> {
     pub fn insert_shared_state(
         &mut self,
         id: AccountIdInternal,
-        data: SharedState,
+        data: SharedStateInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::shared_state::dsl::*;
 
@@ -39,7 +39,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommon<C> {
 
         update(shared_state.find(id.as_db_id()))
             .set((
-                account_id.eq(id.as_db_id()),
+                account_state_number.eq(data.account_state as i64),
                 is_profile_public.eq(&data.is_profile_public),
             ))
             .execute(self.conn())

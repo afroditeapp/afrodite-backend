@@ -1,6 +1,6 @@
 use database::current::write::{account::CurrentSyncWriteAccount, CurrentSyncWriteCommands};
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountSetup, Capabilities, AccountState, AccountData, AccountInternal};
+use model::{Account, AccountIdInternal, AccountSetup, Capabilities, AccountState, AccountData, AccountInternal, SharedState};
 
 use crate::data::DataError;
 
@@ -11,16 +11,16 @@ impl WriteCommandsAccount<'_> {
     pub async fn update_account_state_and_capabilities(
         &self,
         id: AccountIdInternal,
-        account: Option<AccountState>,
+        shared_state: Option<SharedState>,
         capabilities: Option<Capabilities>,
     ) -> Result<(), DataError> {
-        let state_copy = account.clone();
+        let state_copy = shared_state.clone();
         let capabilities_copy = capabilities.clone();
         self.db_transaction(move |cmds| {
             let mut cmds = CurrentSyncWriteCommands::new(cmds);
 
-            if let Some(account) = state_copy {
-                cmds.common().account_state(id, account)?;
+            if let Some(state) = state_copy {
+                cmds.common().shared_state(id, state)?;
             }
             if let Some(capabilities) = capabilities_copy {
                 cmds.common().account_capabilities(id, capabilities)?;
@@ -29,17 +29,12 @@ impl WriteCommandsAccount<'_> {
         }).await?;
 
         self.write_cache(id, |cache| {
-            cache
-                .account
-                .as_mut()
-                .map(|data| {
-                    if let Some(state) = account {
-                        *data.as_mut().state_mut() = state;
-                    }
-                    if let Some(capabilities) = capabilities {
-                        *data.as_mut().capablities_mut() = capabilities;
-                    }
-                });
+            if let Some(state) = shared_state {
+                cache.shared_state = state;
+            }
+            if let Some(capabilities) = capabilities {
+                cache.capabilities = capabilities;
+            }
             Ok(())
         }).await?;
 

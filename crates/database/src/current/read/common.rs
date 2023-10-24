@@ -4,7 +4,7 @@ use futures::Stream;
 use model::{
     AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountInternal,
     AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
-    SignInWithInfoRaw, SharedState, Capabilities,
+    SignInWithInfoRaw, SharedStateInternal, Capabilities, SharedState, AccountState,
 };
 use tokio_stream::StreamExt;
 
@@ -24,11 +24,21 @@ impl<C: ConnectionProvider> CurrentSyncReadCommon<C> {
     ) -> Result<SharedState, DieselDatabaseError> {
         use crate::schema::shared_state::dsl::*;
 
-        shared_state
+        let data: SharedStateInternal = shared_state
             .filter(account_id.eq(id.as_db_id()))
-            .select(SharedState::as_select())
+            .select(SharedStateInternal::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)
+            .into_db_error(DieselDatabaseError::Execute, id)?;
+
+        let state: AccountState = TryInto::<AccountState>::try_into(
+            data.account_state_number
+        )
+            .change_context(DieselDatabaseError::DataFormatConversion)?;
+
+        Ok(SharedState {
+            account_state: state,
+            is_profile_public: data.is_profile_public,
+        })
     }
 
     pub fn account_capabilities(

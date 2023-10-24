@@ -25,7 +25,7 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
             UpdateLocation(LOCATION_LAT_LON_10),
             SetProfileVisibility(true),
             AssertEqualsFn(
-                |v, _| v.account().capablities.user_view_public_profiles.unwrap_or_default(),
+                |v, _| v.account().capabilities.user_view_public_profiles.unwrap_or_default(),
                 true,
                 &GetAccount
              ),

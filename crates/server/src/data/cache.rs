@@ -7,7 +7,7 @@ use database::{
 };
 use error_stack::{ResultExt, Result};
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, schema::profile_location, ProfileLink,
+    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, schema::profile_location, ProfileLink, Capabilities, AccountState, SharedState,
 };
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
@@ -147,12 +147,16 @@ impl DatabaseCache {
         let mut entry = account_entry.cache.write().await;
 
         // Common
-        // Account is common state
-        let account = db_read(&read_diesel, move |mut cmds| {
-            cmds.account().account(account_id)
+        let capabilities = db_read(&read_diesel, move |mut cmds| {
+            cmds.common().account_capabilities(account_id)
         })
         .await?;
-        entry.account = Some(account.clone().into());
+        entry.capabilities = capabilities;
+        let state = db_read(&read_diesel, move |mut cmds| {
+            cmds.common().shared_state(account_id)
+        })
+        .await?;
+        entry.shared_state = state;
 
         if config.components().account {
             // empty
@@ -354,36 +358,36 @@ impl DatabaseCache {
         Ok(cache_operation(&mut cache_entry)?)
     }
 
-    pub async fn account(&self, id: AccountId) -> Result<Account, CacheError> {
-        let guard = self.accounts.read().await;
-        let data = guard
-            .get(&id)
-            .ok_or(CacheError::KeyNotExists)?
-            .cache
-            .read()
-            .await
-            .account
-            .as_ref()
-            .map(|data| data.as_ref().clone())
-            .ok_or(CacheError::NotInCache)?;
+    // pub async fn account(&self, id: AccountId) -> Result<Account, CacheError> {
+    //     let guard = self.accounts.read().await;
+    //     let data = guard
+    //         .get(&id)
+    //         .ok_or(CacheError::KeyNotExists)?
+    //         .cache
+    //         .read()
+    //         .await
+    //         .account
+    //         .as_ref()
+    //         .map(|data| data.as_ref().clone())
+    //         .ok_or(CacheError::NotInCache)?;
 
-        Ok(data)
-    }
+    //     Ok(data)
+    // }
 
-    pub async fn update_account(&self, id: AccountId, data: Account) -> Result<(), CacheError> {
-        let mut write_guard = self.accounts.write().await;
-        write_guard
-            .get_mut(&id)
-            .ok_or(CacheError::KeyNotExists)?
-            .cache
-            .write()
-            .await
-            .account
-            .as_mut()
-            .ok_or(CacheError::NotInCache)
-            .map(|current_data| *current_data.as_mut() = data)?;
-        Ok(())
-    }
+    // pub async fn update_account(&self, id: AccountId, data: Account) -> Result<(), CacheError> {
+    //     let mut write_guard = self.accounts.write().await;
+    //     write_guard
+    //         .get_mut(&id)
+    //         .ok_or(CacheError::KeyNotExists)?
+    //         .cache
+    //         .write()
+    //         .await
+    //         .account
+    //         .as_mut()
+    //         .ok_or(CacheError::NotInCache)
+    //         .map(|current_data| *current_data.as_mut() = data)?;
+    //     Ok(())
+    // }
 }
 
 #[derive(Debug)]
@@ -416,7 +420,8 @@ pub struct LocationData {
 #[derive(Debug)]
 pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
-    pub account: Option<Box<Account>>,
+    pub capabilities: Capabilities,
+    pub shared_state: SharedState,
     pub current_connection: Option<SocketAddr>,
     pub current_event_connection: EventMode,
 }
@@ -425,7 +430,8 @@ impl CacheEntry {
     pub fn new() -> Self {
         Self {
             profile: None,
-            account: None,
+            capabilities: Capabilities::default(),
+            shared_state: SharedState::default(),
             current_connection: None,
             current_event_connection: EventMode::None,
         }

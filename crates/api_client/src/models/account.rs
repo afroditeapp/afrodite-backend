@@ -13,16 +13,16 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Account {
-    #[serde(rename = "capablities")]
-    pub capablities: Box<crate::models::Capabilities>,
+    #[serde(rename = "capabilities")]
+    pub capabilities: Box<crate::models::Capabilities>,
     #[serde(rename = "state")]
     pub state: crate::models::AccountState,
 }
 
 impl Account {
-    pub fn new(capablities: crate::models::Capabilities, state: crate::models::AccountState) -> Account {
+    pub fn new(capabilities: crate::models::Capabilities, state: crate::models::AccountState) -> Account {
         Account {
-            capablities: Box::new(capablities),
+            capabilities: Box::new(capabilities),
             state,
         }
     }

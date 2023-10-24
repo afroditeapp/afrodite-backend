@@ -44,9 +44,14 @@ impl ReadCommandsAccount<'_> {
     }
 
     pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
-        self.read_cache(id, |cache| cache.account.as_deref().map(Clone::clone))
-            .await?
-            .ok_or(DataError::Cache.report())
+        let account = self.read_cache(id, |cache|
+            Account::new_from(
+                cache.shared_state.account_state,
+                 cache.capabilities.clone()
+            )
+        )
+            .await?;
+        Ok(account)
     }
 
     pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {

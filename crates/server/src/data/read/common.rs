@@ -1,7 +1,7 @@
 use error_stack::{FutureExt, Result, ResultExt};
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, GoogleAccountId,
-    RefreshToken, SignInWithInfo, EventToClient,
+    RefreshToken, SignInWithInfo, EventToClient, SharedStateInternal, SharedState,
 };
 use tokio_stream::StreamExt;
 
@@ -26,6 +26,11 @@ impl ReadCommandsCommon<'_> {
             })
             .await
             .into_data_error(id)
+    }
+
+    pub async fn shared_state(&self, id: AccountIdInternal) -> Result<SharedState, DataError> {
+        self.db_read(move |mut cmds| cmds.common().shared_state(id))
+            .await
     }
 
     // pub async fn <T>(

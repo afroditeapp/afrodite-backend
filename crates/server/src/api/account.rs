@@ -387,8 +387,10 @@ pub async fn post_complete_setup<
         state.internal_api()
             .modify_and_sync_account_state(
                 id,
-                Some(new_account_copy.state()),
-                |capabilities| *capabilities = new_account_copy.into_capablities()
+                |d| {
+                    *d.state = new_account_copy.state();
+                    *d.capabilities = new_account_copy.into_capablities();
+                }
             ).await?;
 
         state
@@ -445,8 +447,9 @@ pub async fn put_setting_profile_visiblity<
 
     let new_capabilities = state
         .internal_api()
-        .modify_and_sync_account_state(id, None, |capabilities| {
-            capabilities.user_view_public_profiles = new_value.value
+        .modify_and_sync_account_state(id, |d| {
+            d.capabilities.user_view_public_profiles = new_value.value;
+            *d.is_profile_public = new_value.value;
         })
         .await?;
 

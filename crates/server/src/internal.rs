@@ -4,7 +4,7 @@ use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
 use error_stack::{ResultExt, Result};
 use hyper::StatusCode;
-use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal, AccountState, Capabilities};
+use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal, AccountState, Capabilities, SharedStateInternal};
 use tracing::{error, info, warn};
 use utils::{ ContextExt};
 
@@ -192,6 +192,12 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
     }
 }
 
+pub struct Data<'a> {
+    pub capabilities: &'a mut Capabilities,
+    pub state: &'a mut AccountState,
+    pub is_profile_public: &'a mut bool,
+}
+
 impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'_, S> {
     /// Only account server can modify the state. Does nothing if the server
     /// does not have account component enabled.
@@ -200,8 +206,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'
     pub async fn modify_and_sync_account_state(
         &self,
         account_id: AccountIdInternal,
-        state: Option<AccountState>,
-        capabilities_action: impl FnOnce(&mut Capabilities),
+        action: impl FnOnce(Data),
     ) -> Result<Capabilities, InternalApiError> {
         if !self.config().components().account {
             warn!("Account component not enabled, cannot modify account state");
@@ -216,13 +221,28 @@ impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'
             .change_context(InternalApiError::DataError)?
             .into_capablities();
 
-        capabilities_action(&mut current);
+        let mut shared_state = self.read_database()
+            .common()
+            .shared_state(account_id)
+            .await
+            .change_context(InternalApiError::DataError)?;
 
-        let modified_capabilitie_copy = current.clone();
+        action(Data {
+            capabilities: &mut current,
+            state: &mut shared_state.account_state,
+            is_profile_public: &mut shared_state.is_profile_public,
+        });
+
+        let modified_capabilities_copy = current.clone();
+        let modified_shared_state_copy = shared_state.clone();
         self.state
             .write(move |cmds| async move {
                 cmds.account()
-                    .update_account_state_and_capabilities(account_id, state, Some(modified_capabilitie_copy))
+                    .update_account_state_and_capabilities(
+                        account_id,
+                        Some(modified_shared_state_copy),
+                        Some(modified_capabilities_copy),
+                    )
                     .await
             })
             .await

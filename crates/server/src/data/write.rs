@@ -16,7 +16,7 @@ use database::{
     PoolObject, TransactionError,
 };
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo, SharedState, AccountInternal};
+use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo, SharedStateInternal, AccountInternal};
 use utils::{ IntoReportFromString};
 
 use self::{
@@ -303,7 +303,7 @@ impl<'a> WriteCommands<'a> {
         current.account().insert_access_token(id, None)?;
         current.account().insert_refresh_token(id, None)?;
         current.common().insert_default_account_capabilities(id)?;
-        current.common().insert_shared_state(id, SharedState::default())?;
+        current.common().insert_shared_state(id, SharedStateInternal::default())?;
 
         // Common history
         history.account().insert_account_id(id)?;
