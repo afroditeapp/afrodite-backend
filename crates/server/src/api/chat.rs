@@ -107,9 +107,13 @@ pub async fn delete_like<S: ReadData + GetAccounts + GetAccessTokens + GetIntern
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
-    // TODO: Prevent deleting if the profile is a match
+    let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    db_write!(state, move |cmds| {
+        cmds.chat().like_profile(id, requested_profile)
+    })?;
+
+    Ok(())
 }
 
 
@@ -153,7 +157,13 @@ pub async fn post_block_profile<S: ReadData + GetAccounts + GetAccessTokens + Ge
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
+
+    db_write!(state, move |cmds| {
+        cmds.chat().block_profile(id, requested_profile)
+    })?;
+
+    Ok(())
 }
 
 pub const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
@@ -175,9 +185,13 @@ pub async fn post_unblock_profile<S: ReadData + GetAccounts + GetAccessTokens + 
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
-    // TODO: Delete only if profile is blocked
+    let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    db_write!(state, move |cmds| {
+        cmds.chat().delete_like_or_block(id, requested_profile)
+    })?;
+
+    Ok(())
 }
 
 pub const PATH_GET_SENT_BLOCKS: &str = "/chat_api/sent_blocks";
