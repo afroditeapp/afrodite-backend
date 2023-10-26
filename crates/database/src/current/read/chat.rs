@@ -51,18 +51,31 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
         &mut self,
         id_sender: AccountIdInternal,
         with_state: AccountInteractionState,
+        only_public_profiles: bool,
     ) -> Result<Vec<AccountId>, DieselDatabaseError> {
         use crate::schema::account_interaction::dsl::*;
         use crate::schema::account_id;
+        use crate::schema::shared_state;
 
-        let value: Vec<AccountId> = account_interaction
+        let partial_command = account_interaction
             .inner_join(account_id::table.on(account_id_receiver.assume_not_null().eq(account_id::id)))
+            .inner_join(shared_state::table.on(account_id_receiver.assume_not_null().eq(shared_state::account_id)))
             .filter(account_id_receiver.is_not_null())
             .filter(account_id_sender.eq(id_sender.as_db_id()))
-            .filter(state_number.eq(with_state as i64))
-            .select(account_id::uuid)
-            .load(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, ())?;
+            .filter(state_number.eq(with_state as i64));
+
+        let value: Vec<AccountId> = if only_public_profiles {
+            partial_command
+                .filter(shared_state::is_profile_public.eq(true))
+                .select(account_id::uuid)
+                .load(self.conn())
+                .into_db_error(DieselDatabaseError::Execute, ())?
+        } else {
+            partial_command
+                .select(account_id::uuid)
+                .load(self.conn())
+                .into_db_error(DieselDatabaseError::Execute, ())?
+        };
 
         Ok(value)
     }

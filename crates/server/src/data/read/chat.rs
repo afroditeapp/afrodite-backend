@@ -20,6 +20,7 @@ impl ReadCommandsChat<'_> {
                 .all_sender_account_interactions(
                     id,
                     AccountInteractionState::Like,
+                    true,
                 )
         })
         .await
@@ -50,6 +51,7 @@ impl ReadCommandsChat<'_> {
                 .all_sender_account_interactions(
                     id,
                     AccountInteractionState::Block,
+                    false,
                 )
         })
         .await
@@ -82,6 +84,7 @@ impl ReadCommandsChat<'_> {
                 .all_sender_account_interactions(
                     id,
                     AccountInteractionState::Match,
+                    false,
                 )
         })
         .await?;

@@ -40,7 +40,7 @@ pub const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
 ///
 /// Profile will not be returned if:
 ///
-/// - Profile is hidden
+/// - Profile is hidden (not public)
 /// - Profile is blocked
 /// - Profile is a match
 #[utoipa::path(
@@ -57,7 +57,6 @@ pub async fn get_sent_likes<S: ReadData + GetAccounts + GetAccessTokens + GetInt
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SentLikesPage>, StatusCode> {
-    // TODO: Remove non public profiles?
     let page = state.read().chat().all_sent_likes(id).await?;
     Ok(page.into())
 }
