@@ -239,7 +239,6 @@ pub async fn get_received_blocks<S: ReadData + GetAccounts + GetAccessTokens + G
     Ok(page.into())
 }
 
-
 pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
 /// Get list of pending messages
@@ -253,12 +252,12 @@ pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_pending_messages<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn get_pending_messages<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<PendingMessagesPage>, StatusCode> {
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let page = state.read().chat().all_pending_messages(id).await?;
+    Ok(page.into())
 }
 
 pub const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";

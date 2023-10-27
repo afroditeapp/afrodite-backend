@@ -1,10 +1,11 @@
 
-use diesel::{prelude::*, Associations};
+use diesel::{prelude::*, Associations, deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
+use sqlx::prelude::*;
 
 use crate::{
-    macros::diesel_string_wrapper, AccessToken, AccountIdDb, AccountIdInternal, RefreshToken, AccountId,
+    macros::{diesel_string_wrapper, diesel_i64_wrapper}, AccessToken, AccountIdDb, AccountIdInternal, RefreshToken, AccountId,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -188,7 +189,7 @@ pub struct PendingMessageInternal {
     pub account_id_sender: AccountIdDb,
     pub account_id_receiver: AccountIdDb,
     pub unix_time: i64,
-    pub message_number: i64,
+    pub message_number: MessageNumber,
     pub message_text: String,
 }
 
@@ -243,10 +244,23 @@ pub struct PendingMessageDeleteList {
 }
 
 /// Message order number in a conversation.
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
+#[diesel(sql_type = BigInt)]
 pub struct MessageNumber {
     pub message_number: i64,
 }
+
+impl MessageNumber {
+    pub fn new(id: i64) -> Self {
+        Self { message_number: id }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.message_number
+    }
+}
+
+diesel_i64_wrapper!(MessageNumber);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct UpdateMessageViewStatus {

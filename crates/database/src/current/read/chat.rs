@@ -4,7 +4,7 @@ use futures::Stream;
 use model::{
     AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountInternal,
     AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
-    SignInWithInfoRaw, schema::access_token::account_id, AccountInteractionInternal, AccountInteractionState,
+    SignInWithInfoRaw, schema::access_token::account_id, AccountInteractionInternal, AccountInteractionState, PendingMessage, PendingMessageInternal, PendingMessageId,
 };
 use tokio_stream::StreamExt;
 
@@ -99,5 +99,36 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
             .into_db_error(DieselDatabaseError::Execute, ())?;
 
         Ok(value)
+    }
+
+    pub fn all_pending_messages(
+        &mut self,
+        id_message_receiver: AccountIdInternal,
+    ) -> Result<Vec<PendingMessage>, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
+        use crate::schema::account_id;
+
+        let value: Vec<(AccountId, PendingMessageInternal)> = pending_messages
+            .inner_join(account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)))
+            .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+            .select((
+                account_id::uuid,
+                PendingMessageInternal::as_select()
+            ))
+            .load(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, ())?;
+
+        let messages = value.into_iter().map(|(sender_uuid, msg)| {
+            PendingMessage {
+                id: PendingMessageId {
+                    account_id_sender: sender_uuid,
+                    message_number: msg.message_number,
+                },
+                unix_time: msg.unix_time,
+                message: msg.message_text,
+            }
+        }).collect();
+
+        Ok(messages)
     }
 }

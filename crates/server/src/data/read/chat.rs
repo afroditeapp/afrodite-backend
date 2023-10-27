@@ -1,4 +1,5 @@
-use model::{AccountInteractionState, AccountId, AccountIdInternal, SentLikesPage, ReceivedLikesPage, SentBlocksPage, ReceivedBlocksPage, MatchesPage};
+use futures::future::Pending;
+use model::{AccountInteractionState, AccountId, AccountIdInternal, SentLikesPage, ReceivedLikesPage, SentBlocksPage, ReceivedBlocksPage, MatchesPage, PendingMessagesPage};
 use error_stack::{Result, ResultExt};
 use crate::data::DataError;
 
@@ -103,5 +104,16 @@ impl ReadCommandsChat<'_> {
         Ok(MatchesPage {
             profiles: sent,
         })
+    }
+
+    pub async fn all_pending_messages(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<PendingMessagesPage, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.chat().all_pending_messages(id)
+        })
+        .await
+        .map(|messages| PendingMessagesPage { messages })
     }
 }
