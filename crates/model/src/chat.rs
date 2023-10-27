@@ -50,8 +50,8 @@ pub struct AccountInteractionInternal {
     /// It does not reset even if interaction state goes from
     /// blocked to empty.
     pub message_counter: i64,
-    pub sender_latest_viewed_message: Option<i64>,
-    pub receiver_latest_viewed_message: Option<i64>,
+    pub sender_latest_viewed_message: Option<MessageNumber>,
+    pub receiver_latest_viewed_message: Option<MessageNumber>,
 }
 
 impl AccountInteractionInternal {
@@ -84,8 +84,8 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Like => Ok(Self {
                 state_number: target as i64,
-                sender_latest_viewed_message: Some(0),
-                receiver_latest_viewed_message: Some(0),
+                sender_latest_viewed_message: Some(MessageNumber::default()),
+                receiver_latest_viewed_message: Some(MessageNumber::default()),
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),

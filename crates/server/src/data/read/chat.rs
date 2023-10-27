@@ -1,5 +1,5 @@
 use futures::future::Pending;
-use model::{AccountInteractionState, AccountId, AccountIdInternal, SentLikesPage, ReceivedLikesPage, SentBlocksPage, ReceivedBlocksPage, MatchesPage, PendingMessagesPage};
+use model::{AccountInteractionState, AccountId, AccountIdInternal, SentLikesPage, ReceivedLikesPage, SentBlocksPage, ReceivedBlocksPage, MatchesPage, PendingMessagesPage, MessageNumber};
 use error_stack::{Result, ResultExt};
 use crate::data::DataError;
 
@@ -115,5 +115,29 @@ impl ReadCommandsChat<'_> {
         })
         .await
         .map(|messages| PendingMessagesPage { messages })
+    }
+
+    /// Get message number of message that receiver has viewed the latest
+    pub async fn message_number_of_latest_viewed_message(
+        &self,
+        id_message_sender: AccountIdInternal,
+        id_message_receiver: AccountIdInternal,
+    ) -> Result<MessageNumber, DataError> {
+        let number = self.db_read(move |mut cmds| {
+            cmds.chat().account_interaction(id_message_sender, id_message_receiver)
+        })
+        .await?
+        .map(|interaction| {
+            // Who is sender and receiver in the interaction data depends
+            // on who did the first like
+            if interaction.account_id_sender == Some(id_message_sender.into_db_id()) {
+                interaction.receiver_latest_viewed_message
+            } else {
+                interaction.sender_latest_viewed_message
+            }
+        })
+        .flatten()
+        .unwrap_or_default();
+        Ok(number)
     }
 }

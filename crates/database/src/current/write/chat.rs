@@ -1,8 +1,8 @@
-use diesel::{insert_into, prelude::*, update};
+use diesel::{insert_into, prelude::*, update, delete};
 use error_stack::{Result, ResultExt};
 use model::{
     AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
-    SignInWithInfo, AccountInteractionInternal, schema::account_interaction_index,
+    SignInWithInfo, AccountInteractionInternal, schema::{account_interaction_index, account_interaction::account_id_sender}, PendingMessageId,
 };
 
 use crate::{diesel::{ConnectionProvider, DieselDatabaseError}, IntoDatabaseError, current::read::SqliteReadCommands, TransactionError};
@@ -83,5 +83,29 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         })?;
 
         Ok(value)
+    }
+
+    pub fn delete_pending_message_list(
+        &mut self,
+        message_receiver: AccountIdInternal,
+        messages: Vec<PendingMessageId>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_messages::dsl::*;
+
+        self.conn().transaction(|mut conn| {
+            for message in messages {
+                delete(
+                    pending_messages.filter(
+                        message_number.eq(message.message_number)
+                            .and(account_id_receiver.eq(message_receiver.as_db_id()))
+                        )
+                )
+                    .execute(conn.conn())
+                    .into_db_error(DieselDatabaseError::Execute, message_receiver)?;
+            }
+            Ok::<_, TransactionError<_>>(())
+        })?;
+
+        Ok(())
     }
 }

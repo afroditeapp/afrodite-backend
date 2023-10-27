@@ -274,13 +274,15 @@ pub const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_pending_messages<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn delete_pending_messages<S: WriteData>(
     Extension(id): Extension<AccountIdInternal>,
     Json(list): Json<PendingMessageDeleteList>,
     state: S,
 ) -> Result<(), StatusCode> {
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    db_write!(state, move |cmds| {
+        cmds.chat().delete_pending_message_list(id, list.messages_ids)
+    })?;
+    Ok(())
 }
 
 pub const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
@@ -303,8 +305,9 @@ pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccoun
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<Json<MessageNumber>, StatusCode> {
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
+    let number = state.read().chat().message_number_of_latest_viewed_message(id, requested_profile).await?;
+    Ok(number.into())
 }
 
 pub const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
@@ -324,11 +327,14 @@ pub const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
 )]
 pub async fn post_message_number_of_latest_viewed_message<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
     Extension(id): Extension<AccountIdInternal>,
-    Json(requested_profile): Json<UpdateMessageViewStatus>,
+    Json(update_info): Json<UpdateMessageViewStatus>,
     state: S,
 ) -> Result<(), StatusCode> {
-
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    let message_sender = state.accounts().get_internal_id(update_info.account_id_sender).await?;
+    db_write!(state, move |cmds| {
+        cmds.chat().update_message_number_of_latest_viewed_message(id, message_sender, update_info.message_number)
+    })?;
+    Ok(())
 }
 
 pub const PATH_POST_SEND_MESSAGE: &str =

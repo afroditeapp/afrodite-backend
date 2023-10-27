@@ -1,6 +1,6 @@
 use database::current::write::chat::CurrentSyncWriteChat;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal, AccountInteractionInternal};
+use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal, AccountInteractionInternal, PendingMessageId, MessageNumber};
 
 use crate::data::{cache::CacheError, DataError, IntoDataError, index::location::LocationIndexIteratorState};
 
@@ -76,6 +76,57 @@ impl WriteCommandsChat<'_> {
             cmds.into_chat().update_account_interaction(updated)
         )
             .await?;
+
+        Ok(())
+    }
+
+    /// Delete these pending messages which the receiver has received
+    pub async fn delete_pending_message_list(
+        &mut self,
+        message_receiver: AccountIdInternal,
+        messages: Vec<PendingMessageId>,
+    ) -> Result<(), DataError> {
+        self.db_write(move |cmds|
+            cmds.into_chat().delete_pending_message_list(message_receiver, messages)
+        )
+            .await
+    }
+
+    /// Update message number which my account has viewed from the sender
+    pub async fn update_message_number_of_latest_viewed_message(
+        &self,
+        id_my_account: AccountIdInternal,
+        id_message_sender: AccountIdInternal,
+        new_message_number: MessageNumber,
+    ) -> Result<(), DataError> {
+        let mut interaction = self.db_read(move |mut cmds| {
+            cmds.chat().account_interaction(id_my_account, id_message_sender)
+        })
+        .await?
+        .ok_or(DataError::NotFound.report())?;
+
+        // Who is sender and receiver in the interaction data depends
+        // on who did the first like
+        let modify_number = if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
+            interaction
+                .sender_latest_viewed_message
+                .as_mut()
+        } else {
+            interaction
+                .receiver_latest_viewed_message
+                .as_mut()
+        };
+
+        if let Some(number) = modify_number {
+            *number = new_message_number;
+        } else {
+            return Err(DataError::NotAllowed.report());
+        }
+
+        self.db_write(move |cmds| {
+            cmds.into_chat().update_account_interaction(interaction)
+        })
+        .await?;
 
         Ok(())
     }
