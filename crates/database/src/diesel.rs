@@ -62,6 +62,9 @@ pub enum DieselDatabaseError {
     #[error("Moderation request is missing")]
     MissingModerationRequest,
 
+    #[error("Operation is not allowed")]
+    NotAllowed,
+
     #[error("Data format conversion failed")]
     DataFormatConversion,
 

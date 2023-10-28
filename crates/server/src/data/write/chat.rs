@@ -130,4 +130,17 @@ impl WriteCommandsChat<'_> {
 
         Ok(())
     }
+
+    /// Insert a new pending message if sender and receiver are a match
+    pub async fn insert_pending_message_if_match(
+        &mut self,
+        sender: AccountIdInternal,
+        receiver: AccountIdInternal,
+        message: String,
+    ) -> Result<(), DataError> {
+        self.db_write(move |cmds|
+            cmds.into_chat().insert_pending_message_if_match(sender, receiver, message)
+        )
+            .await
+    }
 }

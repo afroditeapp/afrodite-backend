@@ -354,9 +354,12 @@ pub const PATH_POST_SEND_MESSAGE: &str =
 )]
 pub async fn post_send_message<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
     Extension(id): Extension<AccountIdInternal>,
-    Json(requested_profile): Json<SendMessageToAccount>,
+    Json(message_info): Json<SendMessageToAccount>,
     state: S,
 ) -> Result<(), StatusCode> {
-
+    let message_reciever = state.accounts().get_internal_id(message_info.receiver).await?;
+    db_write!(state, move |cmds| {
+        cmds.chat().insert_pending_message_if_match(id, message_reciever, message_info.message)
+    })?;
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
