@@ -244,7 +244,7 @@ pub struct PendingMessageDeleteList {
 }
 
 /// Message order number in a conversation.
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]
 pub struct MessageNumber {
     pub message_number: i64,
@@ -262,7 +262,7 @@ impl MessageNumber {
 
 diesel_i64_wrapper!(MessageNumber);
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct UpdateMessageViewStatus {
     /// Sender of the messages.
     pub account_id_sender: AccountId,

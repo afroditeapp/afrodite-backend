@@ -2,12 +2,15 @@ use database::current::write::chat::CurrentSyncWriteChat;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal, AccountInteractionInternal, PendingMessageId, MessageNumber};
 
-use crate::data::{cache::CacheError, DataError, IntoDataError, index::location::LocationIndexIteratorState};
+use crate::{data::{cache::CacheError, DataError, IntoDataError, index::location::LocationIndexIteratorState}, internal::Data};
 
 
 define_write_commands!(WriteCommandsChat);
 
 impl WriteCommandsChat<'_> {
+    /// Like a profile.
+    ///
+    /// Returns Ok only if the state change happened.
     pub async fn like_profile(
         &mut self,
         id_like_sender: AccountIdInternal,
@@ -18,7 +21,7 @@ impl WriteCommandsChat<'_> {
         )
             .await?;
         if interaction.is_like() {
-            return Ok(());
+            return Err(DataError::AlreadyDone.report());
         }
         let updated = interaction
             .try_into_like(id_like_sender, id_like_receiver)
@@ -31,6 +34,9 @@ impl WriteCommandsChat<'_> {
         Ok(())
     }
 
+    /// Delete a like or block.
+    ///
+    /// Returns Ok only if the state change happened.
     pub async fn delete_like_or_block(
         &mut self,
         id_sender: AccountIdInternal,
@@ -41,7 +47,7 @@ impl WriteCommandsChat<'_> {
         )
             .await?;
         if interaction.is_empty() {
-            return Ok(());
+            return Err(DataError::AlreadyDone.report());
         }
         if interaction.account_id_sender != Some(id_sender.into_db_id()) {
             return Err(DataError::NotAllowed.report());
@@ -57,6 +63,9 @@ impl WriteCommandsChat<'_> {
         Ok(())
     }
 
+    /// Block a profile.
+    ///
+    /// Returns Ok only if the state change happened.
     pub async fn block_profile(
         &mut self,
         id_block_sender: AccountIdInternal,
@@ -67,7 +76,7 @@ impl WriteCommandsChat<'_> {
         )
             .await?;
         if interaction.is_blocked() {
-            return Ok(());
+            return Err(DataError::AlreadyDone.report());
         }
         let updated = interaction
             .try_into_block(id_block_sender, id_block_receiver)
@@ -104,6 +113,11 @@ impl WriteCommandsChat<'_> {
         })
         .await?
         .ok_or(DataError::NotFound.report())?;
+
+        // Prevent marking future messages as viewed
+        if new_message_number.message_number > interaction.message_counter {
+            return Err(DataError::NotAllowed.report());
+        }
 
         // Who is sender and receiver in the interaction data depends
         // on who did the first like

@@ -94,6 +94,8 @@ pub enum DataError {
     ContentSlotNotEmpty,
     #[error("Tried to do something that is not allowed")]
     NotAllowed,
+    #[error("Action is already done")]
+    AlreadyDone,
 
     #[error("Command runner quit too early")]
     CommandRunnerQuit,

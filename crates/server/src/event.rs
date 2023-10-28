@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use error_stack::{ResultExt, Result};
-use model::{EventToClient, AccountId, AccountIdInternal, EventToClientInternal};
+use model::{EventToClient, AccountId, AccountIdInternal, EventToClientInternal, NotificationEvent};
 use tokio::sync::mpsc;
 
 use crate::data::RouterDatabaseReadHandle;
@@ -67,10 +67,27 @@ impl EventManager {
         }
     }
     /// Send only if the client is connected.
-    pub async fn send_connected_event(&self, account: AccountId, event: EventToClientInternal) -> Result<(), EventError> {
+    pub async fn send_connected_event(&self, account: impl Into<AccountId>, event: EventToClientInternal) -> Result<(), EventError> {
         self.database.read().common().access_event_mode(
-            account,
+            account.into(),
             move |mode| {
+                if let EventMode::Connected(sender) = mode {
+                    let _ = sender.send(event.into());
+                }
+        })
+            .await
+            .change_context(EventError::EventModeAccessFailed)
+    }
+
+    /// Send event to connected client or if not connected
+    /// send using push notification.
+    pub async fn send_notification(&self, account: impl Into<AccountId>, event: NotificationEvent) -> Result<(), EventError> {
+        // TODO: Push notification support
+
+        self.database.read().common().access_event_mode(
+            account.into(),
+            move |mode| {
+                let event: EventToClientInternal = event.into();
                 if let EventMode::Connected(sender) = mode {
                     let _ = sender.send(event.into());
                 }

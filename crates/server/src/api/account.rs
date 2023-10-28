@@ -487,6 +487,7 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
     security(("access_token" = [])),
 )]
 pub async fn post_delete<S: GetAccessTokens + ReadData>(_state: S) -> Result<(), StatusCode> {
+    // TODO
     Ok(())
 }
 
@@ -508,6 +509,7 @@ pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
 pub async fn get_deletion_status<S: GetAccessTokens + ReadData>(
     _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
+    // TODO
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
 
@@ -529,5 +531,6 @@ pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
 pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
     _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
+    // TODO
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }

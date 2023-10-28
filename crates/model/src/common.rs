@@ -7,7 +7,7 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, AccountState, Capabilities};
+use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, AccountState, Capabilities, MessageNumber};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
@@ -28,6 +28,20 @@ pub enum EventType {
     /// New capabilities for client.
     /// Data: capabilities
     AccountCapabilitiesChanged,
+    NewMessageReceived,
+    LikesChanged,
+    ReceivedBlocksChanged,
+    /// New latest viewed message number changed
+    /// Data: latest_viewed_message_changed
+    LatestViewedMessageChanged,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct LatestViewedMessageChanged {
+    /// Account id of message viewer
+    pub account_id_viewer: AccountId,
+    /// New value for latest vieqed message
+    pub new_latest_viewed_message: MessageNumber,
 }
 
 /// Event to client which is sent through websocket.
@@ -41,6 +55,8 @@ pub struct EventToClient {
     account_state: Option<AccountState>,
     /// Data for event AccountCapabilitiesChanged
     capabilities: Option<Capabilities>,
+    /// Data for event LatestViewedMessageChanged
+    latest_viewed_message_changed: Option<LatestViewedMessageChanged>,
 }
 
 pub enum EventToClientInternal {
@@ -52,6 +68,10 @@ pub enum EventToClientInternal {
     AccountCapabilitiesChanged {
         capabilities: Capabilities,
     },
+    NewMessageReceived,
+    LikesChanged,
+    ReceivedBlocksChanged,
+    LatestViewedMessageChanged(LatestViewedMessageChanged),
 }
 
 impl From<EventToClientInternal> for EventToClient {
@@ -60,6 +80,7 @@ impl From<EventToClientInternal> for EventToClient {
             event: EventType::AccountStateChanged,
             account_state: None,
             capabilities: None,
+            latest_viewed_message_changed: None,
         };
 
         match internal {
@@ -71,9 +92,42 @@ impl From<EventToClientInternal> for EventToClient {
                 value.event = EventType::AccountCapabilitiesChanged;
                 value.capabilities = Some(capabilities);
             }
+            EventToClientInternal::NewMessageReceived => {
+                value.event = EventType::NewMessageReceived;
+            }
+            EventToClientInternal::LikesChanged => {
+                value.event = EventType::LikesChanged;
+            }
+            EventToClientInternal::ReceivedBlocksChanged => {
+                value.event = EventType::ReceivedBlocksChanged;
+            }
+            EventToClientInternal::LatestViewedMessageChanged(latest_viewed_message_changed) => {
+                value.event = EventType::LatestViewedMessageChanged;
+                value.latest_viewed_message_changed = Some(latest_viewed_message_changed);
+            }
         }
 
         value
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum NotificationEvent {
+    NewMessageReceived,
+    LikesChanged,
+    ReceivedBlocksChanged,
+}
+
+impl From<NotificationEvent> for EventToClientInternal {
+    fn from(event: NotificationEvent) -> Self {
+        match event {
+            NotificationEvent::NewMessageReceived =>
+                EventToClientInternal::NewMessageReceived,
+            NotificationEvent::LikesChanged =>
+                EventToClientInternal::LikesChanged,
+            NotificationEvent::ReceivedBlocksChanged =>
+                EventToClientInternal::ReceivedBlocksChanged,
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use axum::{extract::Path, Extension};
-use model::{AccountId, AccountIdInternal, Profile, SentLikesPage, ReceivedLikesPage, MatchesPage, SentBlocksPage, ReceivedBlocksPage, PendingMessagesPage, MessageNumber, UpdateMessageViewStatus, PendingMessageDeleteList, SendMessageToAccount};
+use model::{AccountId, AccountIdInternal, Profile, SentLikesPage, ReceivedLikesPage, MatchesPage, SentBlocksPage, ReceivedBlocksPage, PendingMessagesPage, MessageNumber, UpdateMessageViewStatus, PendingMessageDeleteList, SendMessageToAccount, NotificationEvent, LatestViewedMessageChanged, EventToClientInternal};
 
-use super::{utils::{Json, StatusCode}, GetAccessTokens, GetAccounts, GetInternalApi, ReadData, WriteData, db_write};
+use super::{utils::{Json, StatusCode}, GetAccessTokens, GetAccounts, GetInternalApi, ReadData, WriteData, db_write, EventManagerProvider};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -17,7 +17,7 @@ pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_send_like<S: ReadData + GetAccounts + GetAccessTokens + WriteData>(
+pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
     state: S,
@@ -29,6 +29,13 @@ pub async fn post_send_like<S: ReadData + GetAccounts + GetAccessTokens + WriteD
     db_write!(state, move |cmds| {
         cmds.chat().like_profile(id, requested_profile)
     })?;
+
+    state
+        .event_manager()
+        .send_notification(
+            requested_profile,
+            model::NotificationEvent::LikesChanged,
+        ).await?;
 
     Ok(())
 }
@@ -53,7 +60,7 @@ pub const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_sent_likes<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn get_sent_likes<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SentLikesPage>, StatusCode> {
@@ -78,7 +85,7 @@ pub const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_received_likes<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn get_received_likes<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ReceivedLikesPage>, StatusCode> {
@@ -102,7 +109,7 @@ pub const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_like<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn delete_like<S: GetAccounts + WriteData + EventManagerProvider>(
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
     state: S,
@@ -110,8 +117,15 @@ pub async fn delete_like<S: ReadData + GetAccounts + GetAccessTokens + GetIntern
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write!(state, move |cmds| {
-        cmds.chat().like_profile(id, requested_profile)
+        cmds.chat().delete_like_or_block(id, requested_profile)
     })?;
+
+    state
+        .event_manager()
+        .send_notification(
+            requested_profile,
+            model::NotificationEvent::LikesChanged,
+        ).await?;
 
     Ok(())
 }
@@ -130,7 +144,7 @@ pub const PATH_GET_MATCHES: &str = "/chat_api/matches";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_matches<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn get_matches<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<MatchesPage>, StatusCode> {
@@ -152,7 +166,7 @@ pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_block_profile<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn post_block_profile<S: GetAccounts + WriteData + EventManagerProvider>(
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
     state: S,
@@ -162,6 +176,13 @@ pub async fn post_block_profile<S: ReadData + GetAccounts + GetAccessTokens + Ge
     db_write!(state, move |cmds| {
         cmds.chat().block_profile(id, requested_profile)
     })?;
+
+    state
+        .event_manager()
+        .send_notification(
+            requested_profile,
+            model::NotificationEvent::ReceivedBlocksChanged,
+        ).await?;
 
     Ok(())
 }
@@ -180,7 +201,7 @@ pub const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_unblock_profile<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn post_unblock_profile<S: GetAccounts + WriteData + EventManagerProvider>(
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
     state: S,
@@ -190,6 +211,13 @@ pub async fn post_unblock_profile<S: ReadData + GetAccounts + GetAccessTokens + 
     db_write!(state, move |cmds| {
         cmds.chat().delete_like_or_block(id, requested_profile)
     })?;
+
+    state
+        .event_manager()
+        .send_notification(
+            requested_profile,
+            model::NotificationEvent::ReceivedBlocksChanged,
+        ).await?;
 
     Ok(())
 }
@@ -207,7 +235,7 @@ pub const PATH_GET_SENT_BLOCKS: &str = "/chat_api/sent_blocks";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_sent_blocks<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn get_sent_blocks<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SentBlocksPage>, StatusCode> {
@@ -231,7 +259,7 @@ pub const PATH_GET_RECEIVED_BLOCKS: &str = "/chat_api/received_blocks";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_received_blocks<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn get_received_blocks<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ReceivedBlocksPage>, StatusCode> {
@@ -300,7 +328,7 @@ pub const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccounts>(
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
     state: S,
@@ -325,7 +353,7 @@ pub const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_message_number_of_latest_viewed_message<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + WriteData + EventManagerProvider>(
     Extension(id): Extension<AccountIdInternal>,
     Json(update_info): Json<UpdateMessageViewStatus>,
     state: S,
@@ -334,13 +362,23 @@ pub async fn post_message_number_of_latest_viewed_message<S: ReadData + GetAccou
     db_write!(state, move |cmds| {
         cmds.chat().update_message_number_of_latest_viewed_message(id, message_sender, update_info.message_number)
     })?;
+
+    state
+        .event_manager()
+        .send_connected_event(
+            message_sender,
+            EventToClientInternal::LatestViewedMessageChanged(LatestViewedMessageChanged {
+                account_id_viewer: id.into(),
+                new_latest_viewed_message: update_info.message_number,
+            })
+        ).await?;
     Ok(())
 }
 
 pub const PATH_POST_SEND_MESSAGE: &str =
     "/chat_api/send_message";
 
-/// Send message
+/// Send message to a match
 #[utoipa::path(
     post,
     path = "/chat_api/send_message",
@@ -352,7 +390,7 @@ pub const PATH_POST_SEND_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_send_message<S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData>(
+pub async fn post_send_message<S: GetAccounts + WriteData + EventManagerProvider>(
     Extension(id): Extension<AccountIdInternal>,
     Json(message_info): Json<SendMessageToAccount>,
     state: S,
@@ -361,5 +399,9 @@ pub async fn post_send_message<S: ReadData + GetAccounts + GetAccessTokens + Get
     db_write!(state, move |cmds| {
         cmds.chat().insert_pending_message_if_match(id, message_reciever, message_info.message)
     })?;
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    state
+        .event_manager()
+        .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
+        .await?;
+    Ok(())
 }

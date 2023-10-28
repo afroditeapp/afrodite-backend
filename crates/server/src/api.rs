@@ -121,6 +121,7 @@ pub mod utils;
         model::common::AccountId,
         model::common::AccessToken,
         model::common::RefreshToken,
+        model::common::LatestViewedMessageChanged,
         // Common admin
         model::common_admin::BackendConfig,
         model::common_admin::BotConfig,
