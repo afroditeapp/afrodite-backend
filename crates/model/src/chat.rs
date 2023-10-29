@@ -120,7 +120,8 @@ impl AccountInteractionInternal {
         let target = AccountInteractionState::Empty;
         let state = AccountInteractionState::try_from(self.state_number)?;
         match state {
-            AccountInteractionState::Block => Ok(Self {
+            AccountInteractionState::Block |
+            AccountInteractionState::Like => Ok(Self {
                 state_number: target as i64,
                 account_id_sender: None,
                 account_id_receiver: None,
@@ -129,7 +130,6 @@ impl AccountInteractionInternal {
                 ..self
             }),
             AccountInteractionState::Empty => Ok(self),
-            AccountInteractionState::Like |
             AccountInteractionState::Match =>
                 Err(AccountInteractionStateError::transition(state, target)),
         }
@@ -159,6 +159,7 @@ impl AccountInteractionInternal {
 /// Empty -> Like -> Block
 /// Empty -> Block
 /// Block -> Empty
+/// Like -> Empty
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionState {
     Empty = 0,
