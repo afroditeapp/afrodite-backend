@@ -8,10 +8,10 @@ use crate::{data::{cache::CacheError, DataError, IntoDataError, index::location:
 define_write_commands!(WriteCommandsChat);
 
 impl WriteCommandsChat<'_> {
-    /// Like a profile.
+    /// Like or match a profile.
     ///
     /// Returns Ok only if the state change happened.
-    pub async fn like_profile(
+    pub async fn like_or_match_profile(
         &mut self,
         id_like_sender: AccountIdInternal,
         id_like_receiver: AccountIdInternal,
@@ -20,12 +20,25 @@ impl WriteCommandsChat<'_> {
             cmds.into_chat().get_or_create_account_interaction(id_like_sender, id_like_receiver)
         )
             .await?;
-        if interaction.is_like() {
+
+        let updated = if interaction.is_like() &&
+            interaction.account_id_sender == Some(id_like_sender.into_db_id()) &&
+            interaction.account_id_receiver == Some(id_like_receiver.into_db_id()) {
             return Err(DataError::AlreadyDone.report());
-        }
-        let updated = interaction
-            .try_into_like(id_like_sender, id_like_receiver)
-            .change_context(DataError::NotAllowed)?;
+        } else if interaction.is_like() &&
+            interaction.account_id_sender == Some(id_like_receiver.into_db_id()) ||
+            interaction.account_id_receiver == Some(id_like_sender.into_db_id()) {
+            interaction
+                .try_into_match()
+                .change_context(DataError::NotAllowed)?
+        } else if interaction.is_match() {
+            return Err(DataError::AlreadyDone.report());
+        } else {
+            interaction
+                .try_into_like(id_like_sender, id_like_receiver)
+                .change_context(DataError::NotAllowed)?
+        };
+
         self.db_write(move |cmds|
             cmds.into_chat().update_account_interaction(updated)
         )

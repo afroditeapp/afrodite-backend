@@ -5,7 +5,8 @@ use super::{utils::{Json, StatusCode}, GetAccessTokens, GetAccounts, GetInternal
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
-/// Send a like to some account.
+/// Send a like to some account. If both will like each other, then
+/// the accounts will be a match.
 #[utoipa::path(
     post,
     path = "/chat_api/send_like",
@@ -27,7 +28,7 @@ pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write!(state, move |cmds| {
-        cmds.chat().like_profile(id, requested_profile)
+        cmds.chat().like_or_match_profile(id, requested_profile)
     })?;
 
     state
