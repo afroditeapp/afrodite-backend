@@ -26,6 +26,11 @@ use std::{fmt::Debug, num::NonZeroU16, sync::Arc};
 
 use model::{CellData, LocationIndexKey};
 use nalgebra::{DMatrix, Dyn, VecStorage};
+use tracing::warn;
+
+// Finland's area is 338 462 square kilometer, so this is most likely
+// good enough value as the iterator does not go all squares one by one.
+const INDEX_ITERATOR_COUNT_LIMIT: u32 = 350_000;
 
 /// Origin (0,0) = (y, x) is at top left corner.
 pub struct LocationIndex {
@@ -99,7 +104,7 @@ impl VisitedMaxCorners {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct LocationIndexIteratorState {
     init_position_y: isize,
     init_position_x: isize,
@@ -150,7 +155,13 @@ impl LocationIndexIteratorState {
 }
 
 impl From<LocationIndexIterator> for LocationIndexIteratorState {
-    fn from(value: LocationIndexIterator) -> Self {
+    fn from(mut value: LocationIndexIterator) -> Self {
+        (&mut value).into()
+    }
+}
+
+impl From<&mut LocationIndexIterator> for LocationIndexIteratorState {
+    fn from(value: &mut LocationIndexIterator) -> Self {
         Self {
             init_position_y: value.init_position_y,
             init_position_x: value.init_position_x,
@@ -222,6 +233,12 @@ impl LocationIndexIterator {
             return None;
         }
 
+        // TODO: Add stop iterator when max count reached before production.
+        let mut count_iterations = 0;
+        let mut state_history_next_write_index = 0;
+        let mut state_history: [(u32, LocationIndexIteratorState); 8] =
+            [(0, LocationIndexIteratorState::new()); 8];
+
         loop {
             let data_position = if self.current_cell_has_profiles() {
                 Some((self.y as u16, self.x as u16))
@@ -239,6 +256,23 @@ impl LocationIndexIterator {
 
             if data_position.is_some() {
                 return data_position;
+            }
+
+            state_history[state_history_next_write_index] = (count_iterations, self.into());
+            state_history_next_write_index += 1;
+            if state_history_next_write_index >= state_history.len() {
+                state_history_next_write_index = 0;
+            }
+
+            if count_iterations >= INDEX_ITERATOR_COUNT_LIMIT {
+                warn!(
+                    "Location index iterator max count {} reached. This is a bug. State history: {:#?}",
+                    count_iterations,
+                    state_history
+                );
+                count_iterations = 0;
+            } else {
+                count_iterations += 1;
             }
         }
     }
