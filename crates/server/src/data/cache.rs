@@ -302,12 +302,12 @@ impl DatabaseCache {
         &self,
         access_token: &AccessToken,
         connection: SocketAddr,
-    ) -> Option<AccountIdInternal> {
+    ) -> Option<(AccountIdInternal, Capabilities)> {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
             if r.current_connection.map(|a| a.ip()) == Some(connection.ip()) {
-                Some(entry.account_id_internal)
+                Some((entry.account_id_internal, r.capabilities.clone()))
             } else {
                 None
             }

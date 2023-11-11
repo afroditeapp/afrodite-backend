@@ -9,7 +9,7 @@ use model::{
 };
 use tracing::error;
 
-use crate::data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImageHandle}, DataError};
+use crate::{data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImageHandle}, DataError}, perf::MEDIA};
 
 use super::{
     db_write,
@@ -41,6 +41,8 @@ pub async fn get_image<S: ReadData>(
     Query(_access_check): Query<ImageAccessCheck>,
     state: S,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
+    MEDIA.get_image.incr();
+
     // TODO: Add access restrictions.
 
     // TODO: Change to use stream when error handling is improved in future axum
@@ -80,6 +82,8 @@ pub async fn get_primary_image_info<S: ReadData + GetAccounts + GetAccessTokens>
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<PrimaryImage>, StatusCode> {
+    MEDIA.get_primary_image_info.incr();
+
     // TODO: access restrictions
 
     let internal_id = state
@@ -124,6 +128,8 @@ pub async fn get_all_normal_images<S: ReadData + GetAccounts>(
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<NormalImages>, StatusCode> {
+    MEDIA.get_all_normal_images.incr();
+
     // TODO: access restrictions
 
     let internal_id = state
@@ -177,6 +183,8 @@ pub async fn put_primary_image<S: WriteData>(
     Json(new_image): Json<PrimaryImage>,
     state: S,
 ) -> Result<(), StatusCode> {
+    MEDIA.put_primary_image.incr();
+
     if new_image.content_id.is_none() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
@@ -205,6 +213,8 @@ pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ModerationRequest>, StatusCode> {
+    MEDIA.get_moderation_request.incr();
+
     let request = state
         .read()
         .moderation_request(account_id)
@@ -235,6 +245,8 @@ pub async fn put_moderation_request<S: WriteData + GetAccessTokens>(
     Json(moderation_request): Json<ModerationRequestContent>,
     state: S,
 ) -> Result<(), StatusCode> {
+    MEDIA.put_moderation_request.incr();
+
     db_write!(state, move |cmds| {
         cmds.media()
             .set_moderation_request(account_id, moderation_request)
@@ -268,6 +280,8 @@ pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
     image: BodyStream,
     state: S,
 ) -> Result<Json<ContentId>, StatusCode> {
+    MEDIA.put_image_to_moderation_slot.incr();
+
     let slot = match slot_number.slot_id {
         0 => ImageSlot::Image1,
         1 => ImageSlot::Image2,
@@ -320,6 +334,8 @@ pub async fn get_map_tile<S: GetTileMap>(
     Path(y): Path<MapTileY>,
     state: S,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
+    MEDIA.get_map_tile.incr();
+
     let y_string = y.y.trim_end_matches(".png");
     let y = y_string.parse::<u32>().map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 

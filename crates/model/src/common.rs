@@ -397,3 +397,25 @@ pub struct SharedState {
 // }
 
 // diesel_i64_wrapper!(DbId);
+
+
+// TODO: Add UnixTime to unix time fields
+
+/// Unix timestamp (seconds from the epoch)
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
+#[diesel(sql_type = BigInt)]
+pub struct UnixTime {
+    pub unix_time: i64,
+}
+
+impl UnixTime {
+    pub fn new(value: i64) -> Self {
+        Self { unix_time: value }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.unix_time
+    }
+}
+
+diesel_i64_wrapper!(UnixTime);

@@ -99,6 +99,17 @@ impl ConnectedApp {
                     }
                 }),
             )
+            .route(
+                api::common_admin::PATH_GET_PERF_DATA,
+                get({
+                    let state = self.state.clone();
+                    move |param1, param2, param3| {
+                        api::common_admin::get_perf_data(
+                            param1, param2, param3, state,
+                        )
+                    }
+                }),
+            )
             .route_layer({
                 middleware::from_fn({
                     let state = self.state.clone();

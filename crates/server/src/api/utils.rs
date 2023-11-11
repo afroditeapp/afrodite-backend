@@ -8,7 +8,7 @@ use axum::{
 use config::{RUNNING_IN_DEBUG_MODE, file::ConfigFileError};
 use headers::{Header, HeaderValue};
 use hyper::{header, Request};
-use model::AccessToken;
+use model::{AccessToken, AccountIdInternal};
 use serde::Serialize;
 pub use utils::api::ACCESS_TOKEN_HEADER_STR;
 use utoipa::{
@@ -16,7 +16,7 @@ use utoipa::{
     Modify,
 };
 
-use super::GetAccessTokens;
+use super::{GetAccessTokens, GetAccounts, ReadData};
 use crate::{
     app::sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
     data::{cache::CacheError, DataError},
@@ -32,7 +32,11 @@ pub static ACCESS_TOKEN_HEADER: header::HeaderName =
 /// Adds `AccountIdInternal` extension to request, so that adding
 /// "Extension(api_caller_account_id): Extension<AccountIdInternal>"
 /// to handlers is possible.
-pub async fn authenticate_with_access_token<T, S: GetAccessTokens>(
+///
+/// Adds `Capabilities` extension to request, so that adding
+/// "Extension(api_caller_capabilities): Extension<Capabilities>"
+/// to handlers is possible.
+pub async fn authenticate_with_access_token<T, S: GetAccessTokens + ReadData>(
     state: S,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     mut req: Request<T>,
@@ -45,12 +49,13 @@ pub async fn authenticate_with_access_token<T, S: GetAccessTokens>(
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = AccessToken::new(key_str.to_string());
 
-    if let Some(id) = state
+    if let Some((id, capabilities)) = state
         .access_tokens()
         .access_token_and_connection_exists(&key, addr)
         .await
     {
         req.extensions_mut().insert(id);
+        req.extensions_mut().insert(capabilities);
         Ok(next.run(req).await)
     } else {
         Err(StatusCode::UNAUTHORIZED)

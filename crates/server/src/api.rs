@@ -46,6 +46,7 @@ pub mod utils;
         common_admin::get_software_info,
         common_admin::get_latest_build_info,
         common_admin::get_backend_config,
+        common_admin::get_perf_data,
         common_admin::post_request_build_software,
         common_admin::post_request_update_software,
         common_admin::post_request_restart_or_reset_backend,
@@ -122,9 +123,15 @@ pub mod utils;
         model::common::AccessToken,
         model::common::RefreshToken,
         model::common::LatestViewedMessageChanged,
+        model::common::UnixTime,
         // Common admin
         model::common_admin::BackendConfig,
         model::common_admin::BotConfig,
+        model::common_admin::TimeGranularity,
+        model::common_admin::PerfHistoryQuery,
+        model::common_admin::PerfValueArea,
+        model::common_admin::PerfHistoryValue,
+        model::common_admin::PerfHistoryQueryResult,
         // Account
         model::account::Account,
         model::account::AccountState,

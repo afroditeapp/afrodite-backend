@@ -5,7 +5,7 @@ use config::file_dynamic::ConfigFileDynamic;
 use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList, ResetDataQueryParam,
 };
-use model::{Account, AccountIdInternal, BackendConfig};
+use model::{Account, AccountIdInternal, BackendConfig, PerfHistoryQuery, PerfHistoryQueryResult, Capabilities};
 
 use crate::api::{
     utils::{Json, StatusCode},
@@ -351,6 +351,37 @@ pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
             .await?;
 
         Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
+
+/// Get performance data
+///
+/// # Capabilities
+/// Requires admin_server_maintenance_view_info.
+#[utoipa::path(
+    get,
+    path = "/common_api/perf_data",
+    request_body(content = PerfHistoryQuery),
+    responses(
+        (status = 200, description = "Get was successfull.", body = PerfHistoryQueryResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_perf_data<S: ReadData>(
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Json(query): Json<PerfHistoryQuery>,
+    state: S,
+) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
+    if api_caller_capabilities.admin_server_maintenance_view_info {
+        // TODO
+        Err(StatusCode::UNAUTHORIZED)
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }

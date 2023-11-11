@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle};
 use error_stack::{Result, ResultExt};
-use model::{AccessToken, AccountId, AccountIdInternal};
+use model::{AccessToken, AccountId, AccountIdInternal, Capabilities};
 
 use super::{cache::DatabaseCache, DataError, IntoDataError};
 
@@ -19,11 +19,13 @@ impl<'a> AccessTokenManager<'a> {
         self.cache.access_token_exists(token).await
     }
 
+    /// Check that token and current connection IP and port matches
+    /// with WebSocket connection.
     pub async fn access_token_and_connection_exists(
         &self,
         token: &AccessToken,
         connection: SocketAddr,
-    ) -> Option<AccountIdInternal> {
+    ) -> Option<(AccountIdInternal, Capabilities)> {
         self.cache
             .access_token_and_connection_exists(token, connection)
             .await

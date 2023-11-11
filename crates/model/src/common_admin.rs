@@ -8,7 +8,7 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::macros::{diesel_i64_wrapper, diesel_uuid_wrapper};
+use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, UnixTime};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendConfig {
@@ -24,4 +24,38 @@ pub struct BotConfig {
     pub users: u32,
     /// Admin bot count
     pub admins: u32,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
+pub enum TimeGranularity {
+    Minutes,
+    Hours,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
+pub struct PerfHistoryQuery {
+    pub start_time: UnixTime,
+    pub end_time: UnixTime,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
+pub struct PerfValueArea {
+    /// Time for first data point in values.
+    pub start_time: UnixTime,
+    /// Time for last data point in values.
+    pub end_time: UnixTime,
+    /// Time granularity for values in between start and end time.
+    pub time_granularity: TimeGranularity,
+    pub values: Vec<u32>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
+pub struct PerfHistoryValue {
+    pub counter_name: String,
+    pub values: Vec<PerfValueArea>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
+pub struct PerfHistoryQueryResult {
+    pub counters: Vec<PerfHistoryValue>,
 }

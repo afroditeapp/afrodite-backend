@@ -15,6 +15,7 @@ pub mod utils;
 pub mod image;
 pub mod map;
 pub mod event;
+pub mod perf;
 
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
