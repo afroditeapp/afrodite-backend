@@ -50,7 +50,7 @@ use self::{
     },
     data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
 };
-use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager, bot::BotClient};
+use crate::{api::ApiDoc, litestream::LitestreamManager, media_backup::MediaBackupManager, bot::BotClient, perf::{PerfCounterManager, PerfCounterManagerData}};
 
 pub struct PihkaServer {
     config: Arc<Config>,
@@ -93,6 +93,14 @@ impl PihkaServer {
         let (media_backup_quit, media_backup_handle) =
             MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
 
+        let perf_data = Arc::new(PerfCounterManagerData::new());
+        let perf_manager_quit_handle =
+            PerfCounterManager::new(
+                perf_data.clone(),
+                self.config.clone(),
+                server_quit_watcher.resubscribe()
+            );
+
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.database_dir().to_path_buf(),
@@ -113,6 +121,7 @@ impl PihkaServer {
             router_database_write_handle,
             write_cmd_runner_handle,
             self.config.clone(),
+            perf_data,
             ws_manager,
         )
         .await
@@ -169,6 +178,7 @@ impl PihkaServer {
         }
 
         drop(app);
+        perf_manager_quit_handle.wait_quit().await;
         write_cmd_waiter.wait_untill_all_writing_ends().await;
         database_manager.close().await;
         media_backup_quit.wait_quit().await;

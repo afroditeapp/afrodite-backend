@@ -42,9 +42,7 @@ pub struct PerfHistoryQuery {
 pub struct PerfValueArea {
     /// Time for first data point in values.
     pub start_time: UnixTime,
-    /// Time for last data point in values.
-    pub end_time: UnixTime,
-    /// Time granularity for values in between start and end time.
+    /// Time granularity for values in between start time and time points.
     pub time_granularity: TimeGranularity,
     pub values: Vec<u32>,
 }

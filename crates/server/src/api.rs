@@ -16,7 +16,7 @@ use crate::{
         DataError,
     },
     internal::InternalApiManager,
-    manager_client::ManagerApiManager, map::TileMapManager, event::EventManager,
+    manager_client::ManagerApiManager, map::TileMapManager, event::EventManager, perf::PerfCounterManagerData,
 };
 
 // Routes
@@ -286,6 +286,12 @@ pub trait BackendVersionProvider {
 pub trait EventManagerProvider {
     fn event_manager(&self) -> &EventManager;
 }
+
+
+pub trait PerfCounterDataProvider {
+    fn perf_counter_data(&self) -> &PerfCounterManagerData;
+}
+
 
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.

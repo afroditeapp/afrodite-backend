@@ -26,8 +26,8 @@ use super::{
 };
 use crate::{api::{
     self, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, GetManagerApi, ReadData,
-    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig, GetTileMap, EventManagerProvider,
-}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, map::TileMapManager, event::EventManager};
+    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig, GetTileMap, EventManagerProvider, PerfCounterDataProvider,
+}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, map::TileMapManager, event::EventManager, perf::PerfCounterManagerData};
 
 pub mod connection;
 pub mod routes_connected;
@@ -44,6 +44,7 @@ pub struct AppState {
     sign_in_with: Arc<SignInWithManager>,
     tile_map: Arc<TileMapManager>,
     events: Arc<EventManager>,
+    perf_data: Arc<PerfCounterManagerData>,
 }
 
 impl BackendVersionProvider for AppState {
@@ -172,6 +173,13 @@ impl EventManagerProvider for AppState {
     }
 }
 
+
+impl PerfCounterDataProvider for AppState {
+    fn perf_counter_data(&self) -> &PerfCounterManagerData {
+        &self.perf_data
+    }
+}
+
 pub struct App {
     state: AppState,
     ws_manager: Option<WebSocketManager>,
@@ -183,6 +191,7 @@ impl App {
         _database_write_handle: RouterDatabaseWriteHandle,
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
+        perf_data: Arc<PerfCounterManagerData>,
         ws_manager: WebSocketManager,
     ) -> Result<Self, ManagerClientError> {
         let database = Arc::new(database_handle);
@@ -195,6 +204,7 @@ impl App {
             tile_map: TileMapManager::new(&config).into(),
             sign_in_with: SignInWithManager::new(config).into(),
             events: EventManager::new(database).into(),
+            perf_data,
         };
 
         Ok(Self {

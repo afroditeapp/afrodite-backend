@@ -5,6 +5,7 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
+use utils::current_unix_time;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, AccountState, Capabilities, MessageNumber};
@@ -415,6 +416,10 @@ impl UnixTime {
 
     pub fn as_i64(&self) -> &i64 {
         &self.unix_time
+    }
+
+    pub fn current_time() -> Self {
+        Self { unix_time: current_unix_time() }
     }
 }
 

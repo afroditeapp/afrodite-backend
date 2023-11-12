@@ -18,3 +18,5 @@ nalgebra = "0.32.2"
 base64 = "0.21.0"
 
 thiserror = "1.0.37"
+
+utils = { path = "../utils"}

@@ -1572,6 +1572,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror",
+ "utils",
  "utoipa",
  "uuid",
 ]

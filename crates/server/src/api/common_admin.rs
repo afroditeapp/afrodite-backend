@@ -14,7 +14,7 @@ use crate::api::{
 
 use tracing::info;
 
-use super::{WriteDynamicConfig, GetConfig, ReadDynamicConfig};
+use super::{WriteDynamicConfig, GetConfig, ReadDynamicConfig, PerfCounterDataProvider};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -373,15 +373,15 @@ pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_perf_data<S: ReadData>(
+pub async fn get_perf_data<S: PerfCounterDataProvider>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
     Json(query): Json<PerfHistoryQuery>,
     state: S,
 ) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
     if api_caller_capabilities.admin_server_maintenance_view_info {
-        // TODO
-        Err(StatusCode::UNAUTHORIZED)
+        let data = state.perf_counter_data().get_history().await;
+        Ok(data.into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
