@@ -3,10 +3,10 @@
 use axum::extract::Path;
 use model::{AccessToken, Account, AccountId};
 
-use crate::api::{
+use crate::{api::{
     utils::{Json, StatusCode},
     GetAccessTokens, GetAccounts, ReadData,
-};
+}, perf::ACCOUNT_INTERNAL};
 
 pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
 
@@ -24,6 +24,7 @@ pub async fn check_access_token<S: GetAccessTokens>(
     Json(token): Json<AccessToken>,
     state: S,
 ) -> Result<Json<AccountId>, StatusCode> {
+    ACCOUNT_INTERNAL.check_access_token.incr();
     state
         .access_tokens()
         .access_token_exists(&token)
@@ -48,6 +49,7 @@ pub async fn internal_get_account_state<S: ReadData + GetAccounts>(
     Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
+    ACCOUNT_INTERNAL.internal_get_account_state.incr();
     let internal_id = state.accounts().get_internal_id(account_id).await?;
 
     let account = state.read().account().account(internal_id).await?;

@@ -81,6 +81,35 @@ macro_rules! create_counters {
 }
 
 create_counters!(
+    AccountInternalCounters,
+    ACCOUNT_INTERNAL,
+    ACCOUNT_INTERNAL_COUNTERS_LIST,
+    check_access_token,
+    internal_get_account_state,
+);
+
+create_counters!(
+    AccountCounters,
+    ACCOUNT,
+    ACCOUNT_COUNTERS_LIST,
+    post_register,
+    post_login,
+    post_sign_in_with_login,
+    get_account_state,
+    get_account_setup,
+    post_account_setup,
+    get_account_data,
+    post_account_data,
+    post_complete_setup,
+    put_setting_profile_visiblity,
+    post_delete,
+    get_deletion_status,
+    delete_cancel_deletion,
+);
+
+// TODO: Add missing counters here
+
+create_counters!(
     MediaCounters,
     MEDIA,
     MEDIA_COUNTERS_LIST,
@@ -95,7 +124,9 @@ create_counters!(
 );
 
 static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
-    &CounterCategory::new("MEDIA", MEDIA_COUNTERS_LIST),
+    &CounterCategory::new("account_internal", ACCOUNT_INTERNAL_COUNTERS_LIST),
+    &CounterCategory::new("account", ACCOUNT_COUNTERS_LIST),
+    &CounterCategory::new("media", MEDIA_COUNTERS_LIST),
 ];
 
 struct CounterCategory {

@@ -6,7 +6,7 @@ use model::{
 };
 use tracing::error;
 
-use crate::event;
+use crate::{event, perf::ACCOUNT};
 
 use super::{
     db_write,
@@ -34,6 +34,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
 pub async fn post_register<S: WriteData + GetConfig>(
     state: S,
 ) -> Result<Json<AccountId>, StatusCode> {
+    ACCOUNT.post_register.incr();
     register_impl(&state, SignInWithInfo::default())
         .await
         .map(|id| id.into())
@@ -80,6 +81,7 @@ pub async fn post_login<S: GetAccessTokens + WriteData + GetAccounts>(
     Json(id): Json<AccountId>,
     state: S,
 ) -> Result<Json<LoginResult>, StatusCode> {
+    ACCOUNT.post_login.incr();
     login_impl(id, state).await.map(|d| d.into())
 }
 
@@ -130,6 +132,7 @@ pub async fn post_sign_in_with_login<
     Json(tokens): Json<SignInWithLoginInfo>,
     state: S,
 ) -> Result<Json<LoginResult>, StatusCode> {
+    ACCOUNT.post_sign_in_with_login.incr();
     if let Some(google) = tokens.google_token {
         let info = state
             .sign_in_with_manager()
@@ -191,6 +194,7 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<Account>, StatusCode> {
+    ACCOUNT.get_account_state.incr();
     let account = state
         .read()
         .account()
@@ -216,6 +220,7 @@ pub async fn get_account_setup<S: GetAccessTokens + ReadData + WriteData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<AccountSetup>, StatusCode> {
+    ACCOUNT.get_account_setup.incr();
     let data = state
         .read()
         .account()
@@ -246,6 +251,7 @@ pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
     Json(data): Json<AccountSetup>,
     state: S,
 ) -> Result<(), StatusCode> {
+    ACCOUNT.post_account_setup.incr();
     let account = state
         .read()
         .account()
@@ -278,6 +284,7 @@ pub async fn get_account_data<S: GetAccessTokens + ReadData + WriteData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<AccountData>, StatusCode> {
+    ACCOUNT.get_account_data.incr();
     let data = state
         .read()
         .account()
@@ -305,6 +312,7 @@ pub async fn post_account_data<S: GetAccessTokens + ReadData + WriteData>(
     Json(data): Json<AccountData>,
     state: S,
 ) -> Result<(), StatusCode> {
+    ACCOUNT.post_account_data.incr();
     // TODO: API limits to prevent DoS attacks
 
     // TODO: Manual email setting should be removed probably and just
@@ -339,6 +347,7 @@ pub async fn post_complete_setup<
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
+    ACCOUNT.post_complete_setup.incr();
     let account_setup = state.read().account().account_setup(id).await?;
 
     if account_setup.is_empty() {
@@ -439,6 +448,7 @@ pub async fn put_setting_profile_visiblity<
     Json(new_value): Json<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {
+    ACCOUNT.put_setting_profile_visiblity.incr();
     let account = state.read().account().account(id).await?;
 
     if account.state() != AccountState::Normal {
@@ -487,6 +497,7 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
     security(("access_token" = [])),
 )]
 pub async fn post_delete<S: GetAccessTokens + ReadData>(_state: S) -> Result<(), StatusCode> {
+    ACCOUNT.post_delete.incr();
     // TODO
     Ok(())
 }
@@ -509,6 +520,7 @@ pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
 pub async fn get_deletion_status<S: GetAccessTokens + ReadData>(
     _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
+    ACCOUNT.get_deletion_status.incr();
     // TODO
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
@@ -531,6 +543,7 @@ pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
 pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
     _state: S,
 ) -> Result<DeleteStatus, StatusCode> {
+    ACCOUNT.delete_cancel_deletion.incr();
     // TODO
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
