@@ -26,7 +26,7 @@ impl WriteCommandsChat<'_> {
             interaction.account_id_receiver == Some(id_like_receiver.into_db_id()) {
             return Err(DataError::AlreadyDone.report());
         } else if interaction.is_like() &&
-            interaction.account_id_sender == Some(id_like_receiver.into_db_id()) ||
+            interaction.account_id_sender == Some(id_like_receiver.into_db_id()) &&
             interaction.account_id_receiver == Some(id_like_sender.into_db_id()) {
             interaction
                 .try_into_match()
