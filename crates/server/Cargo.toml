@@ -26,6 +26,9 @@ headers = "0.3.8"
 reqwest = { version = "0.11", features = ["json"] }
 http = "0.2.9"
 
+# For tokio-console debugging
+console-subscriber = "0.2.0"
+
 utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 

@@ -1,0 +1,6 @@
+# This is for tokio-console
+
+# TODO: Should this be disabled for release builds?
+
+[build]
+rustflags = ["--cfg", "tokio_unstable"]

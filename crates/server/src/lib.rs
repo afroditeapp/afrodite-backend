@@ -38,7 +38,8 @@ use tokio::{
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
 use tower::MakeService;
 use tower_http::trace::TraceLayer;
-use tracing::{error, info, warn};
+use tracing::{error, info, warn, level_filters::LevelFilter};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer, EnvFilter};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -64,7 +65,18 @@ impl PihkaServer {
     }
 
     pub async fn run(self) {
-        tracing_subscriber::fmt::init();
+        if cfg!(debug_assertions) {
+            let layer = console_subscriber::spawn();
+            tracing_subscriber::registry()
+                .with(layer)
+                .with(
+                    tracing_subscriber::fmt::layer()
+                        .with_filter(EnvFilter::from_default_env())
+                )
+                .init();
+        } else {
+            tracing_subscriber::fmt::init();
+        }
 
         info!(
             "Backend version: {}-{}",

@@ -188,3 +188,15 @@ https://github.com/rust-lang/measureme/blob/master/crox/README.md
 Covert .mm_profdata to .json with
 crox file.mm_profdata
 Then open it in https://ui.perfetto.dev/
+
+# Debugging with tokio-console
+
+Only on debug builds.
+
+The .cargo/config.toml has the required build flag.
+
+```
+cargo install --locked tokio-console
+make
+tokio-console
+```
