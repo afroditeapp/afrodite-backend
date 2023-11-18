@@ -15,7 +15,7 @@ impl WriteCommandsChat<'_> {
         &mut self,
         id_like_sender: AccountIdInternal,
         id_like_receiver: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<AccountInteractionInternal, DataError> {
         let interaction = self.db_write(move |cmds|
             cmds.into_chat().get_or_create_account_interaction(id_like_sender, id_like_receiver)
         )
@@ -39,12 +39,13 @@ impl WriteCommandsChat<'_> {
                 .change_context(DataError::NotAllowed)?
         };
 
+        let updated_clone = updated.clone();
         self.db_write(move |cmds|
             cmds.into_chat().update_account_interaction(updated)
         )
             .await?;
 
-        Ok(())
+        Ok(updated_clone)
     }
 
     /// Delete a like or block.

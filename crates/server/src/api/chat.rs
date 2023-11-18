@@ -27,7 +27,7 @@ pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
-    db_write!(state, move |cmds| {
+    let new_state = db_write!(state, move |cmds| {
         cmds.chat().like_or_match_profile(id, requested_profile)
     })?;
 
@@ -37,6 +37,17 @@ pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
             requested_profile,
             model::NotificationEvent::LikesChanged,
         ).await?;
+
+    if new_state.is_match() {
+        // State is now match so the account was removed from
+        // received likes of the API caller.
+        state
+            .event_manager()
+            .send_notification(
+                id,
+                model::NotificationEvent::LikesChanged,
+            ).await?;
+    }
 
     Ok(())
 }
