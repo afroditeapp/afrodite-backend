@@ -15,7 +15,12 @@ members = [
     "crates/test_mode",
     "crates/database",
     "crates/server",
-    "crates/image_process"
+    "crates/image_process",
+    "crates/simple_backend",
+    "crates/simple_backend_config",
+    "crates/simple_backend_utils",
+    "crates/simple_backend_database",
+    "crates/simple_backend_model",
 ]
 
 # Make image processing faster for debug builds

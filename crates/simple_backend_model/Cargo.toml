@@ -1,0 +1,22 @@
+[package]
+name = "simple_backend_model"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.1.2", features = ["v4", "serde"] }
+utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
+sqlx = { version = "0.7.1", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
+diesel = { version = "2.1.0", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+
+nalgebra = "0.32.2"
+base64 = "0.21.0"
+
+thiserror = "1.0.37"
+
+simple_backend_utils = { path = "../simple_backend_utils"}

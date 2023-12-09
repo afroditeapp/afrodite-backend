@@ -16,6 +16,8 @@ use super::{
 
 pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 
+// TODO: Add possibility to get profile if it is private and match wants it.
+
 /// Get account's current profile.
 ///
 /// Profile can include version UUID which can be used for caching.

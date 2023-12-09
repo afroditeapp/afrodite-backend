@@ -2766,6 +2766,111 @@ dependencies = [
 ]
 
 [[package]]
+name = "simple_backend"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "console-subscriber",
+ "error-stack",
+ "futures",
+ "headers",
+ "http",
+ "hyper",
+ "jsonwebtoken",
+ "manager_api",
+ "manager_model",
+ "nalgebra",
+ "nix",
+ "num_cpus",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "simple_backend_config",
+ "simple_backend_database",
+ "simple_backend_model",
+ "simple_backend_utils",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-rustls",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+]
+
+[[package]]
+name = "simple_backend_config"
+version = "0.0.0"
+dependencies = [
+ "clap",
+ "error-stack",
+ "reqwest",
+ "rustls-pemfile",
+ "serde",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio-rustls",
+ "toml",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "simple_backend_database"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "deadpool",
+ "deadpool-diesel",
+ "diesel",
+ "diesel_migrations",
+ "error-stack",
+ "futures",
+ "num_cpus",
+ "serde_json",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "sqlx",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "simple_backend_model"
+version = "0.0.0"
+dependencies = [
+ "base64 0.21.2",
+ "diesel",
+ "nalgebra",
+ "serde",
+ "serde_json",
+ "simple_backend_utils",
+ "sqlx",
+ "thiserror",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "simple_backend_utils"
+version = "0.0.0"
+dependencies = [
+ "error-stack",
+ "time",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
