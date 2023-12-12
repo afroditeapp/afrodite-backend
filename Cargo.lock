@@ -437,17 +437,13 @@ dependencies = [
  "error-stack",
  "model",
  "reqwest",
- "rustls-pemfile",
  "serde",
  "simple_backend_config",
  "simple_backend_utils",
  "thiserror",
- "tokio-rustls",
  "toml",
  "toml_edit",
- "tracing",
  "url",
- "utils",
 ]
 
 [[package]]
@@ -650,27 +646,18 @@ checksum = "c2e66c9d817f1720209181c316d28635c050fa304f9c79e47a520882661b7308"
 name = "database"
 version = "0.0.0"
 dependencies = [
- "async-trait",
- "config",
- "deadpool",
- "deadpool-diesel",
  "diesel",
  "diesel_migrations",
  "error-stack",
  "futures",
  "model",
- "num_cpus",
  "serde_json",
  "simple_backend_config",
  "simple_backend_database",
  "simple_backend_utils",
  "sqlx",
- "thiserror",
  "time",
- "tokio",
  "tokio-stream",
- "tracing",
- "utils",
  "uuid",
 ]
 
@@ -2655,15 +2642,11 @@ dependencies = [
  "async-trait",
  "axum",
  "config",
- "console-subscriber",
  "database",
  "error-stack",
  "futures",
  "headers",
- "http",
  "hyper",
- "jsonwebtoken",
- "manager_api",
  "manager_model",
  "model",
  "nalgebra",
@@ -2678,15 +2661,10 @@ dependencies = [
  "simple_backend_model",
  "simple_backend_utils",
  "thiserror",
- "time",
  "tokio",
- "tokio-rustls",
  "tokio-stream",
  "tokio-util",
- "tower",
- "tower-http",
  "tracing",
- "tracing-subscriber",
  "utils",
  "utoipa",
  "utoipa-swagger-ui",
@@ -3742,10 +3720,6 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 [[package]]
 name = "utils"
 version = "0.0.0"
-dependencies = [
- "error-stack",
- "time",
-]
 
 [[package]]
 name = "utoipa"

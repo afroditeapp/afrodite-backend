@@ -12,20 +12,13 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "0.7.2"
 toml_edit = "0.19.14"
 
-tracing = "0.1"
 reqwest = { version = "0.11" }
 url = { version = "2.3.1", features = ["serde"] }
-
-# Server TLS
-tokio-rustls = "0.24.0"
-rustls-pemfile = "1.0.2"
 
 thiserror = "1.0.37"
 error-stack = "0.4"
 
-utils = { path = "../utils" }
 model = { path = "../model" }
-
 
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_utils = { path = "../simple_backend_utils" }
