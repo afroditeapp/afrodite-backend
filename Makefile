@@ -6,6 +6,11 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p server \
 					-p test_mode \
 					-p utils \
+					-p simple_backend \
+					-p simple_backend_utils \
+					-p simple_backend_model \
+					-p simple_backend_config \
+					-p simple_backend_database \
 					-p pihka-backend
 
 # Default rule
