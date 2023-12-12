@@ -7,7 +7,7 @@ use std::{
 };
 
 use api_client::{
-    apis::{account_api::get_account_state, profile_api::{get_profile, post_profile}},
+    apis::{account_api::get_account_state, profile_api::{post_profile}},
     models::{AccountState, ProfileUpdate},
 };
 use async_trait::async_trait;
@@ -18,7 +18,7 @@ use super::{
     actions::{
         account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility},
         media::SendImageToSlot,
-        BotAction, RunActions, profile::{UpdateLocation, UpdateLocationRandom, GetProfile, ChangeProfileText}, RunActionsIf,
+        BotAction, RunActions, profile::{UpdateLocationRandom, GetProfile}, RunActionsIf,
     },
     BotState, BotStruct, TaskState,
 };

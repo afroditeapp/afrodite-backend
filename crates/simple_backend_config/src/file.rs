@@ -1,7 +1,6 @@
 use std::{
     io::Write,
     net::SocketAddr,
-    num::NonZeroU8,
     path::{Path, PathBuf}, collections::HashMap,
 };
 

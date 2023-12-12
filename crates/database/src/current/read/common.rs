@@ -1,10 +1,8 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use futures::Stream;
+
 use model::{
-    AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountInternal,
-    AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
-    SignInWithInfoRaw, SharedStateInternal, Capabilities, SharedState, AccountState,
+    AccountIdInternal, SharedStateInternal, Capabilities, SharedState, AccountState,
 };
 use tokio_stream::StreamExt;
 

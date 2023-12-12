@@ -1,4 +1,4 @@
-use simple_backend_database::{sqlx_db::SqlxReadHandle, diesel_db::{ConnectionProvider, DieselConnection}, DbReadHandle};
+use simple_backend_database::{sqlx_db::SqlxReadHandle, diesel_db::{ConnectionProvider, DieselConnection}};
 
 use crate::CurrentReadHandle;
 

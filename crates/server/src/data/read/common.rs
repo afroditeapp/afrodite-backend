@@ -1,15 +1,14 @@
 use error_stack::{FutureExt, Result, ResultExt};
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, GoogleAccountId,
-    RefreshToken, SignInWithInfo, EventToClient, SharedStateInternal, SharedState,
+    AccountId, AccountIdInternal, SharedState,
 };
-use tokio_stream::StreamExt;
+
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
-use crate::{data::IntoDataError, event::{EventSender, EventMode}};
+use crate::{data::IntoDataError, event::{EventMode}};
 
 define_read_commands!(ReadCommandsCommon);
 

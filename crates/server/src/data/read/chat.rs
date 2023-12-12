@@ -1,5 +1,5 @@
-use futures::future::Pending;
-use model::{AccountInteractionState, AccountId, AccountIdInternal, SentLikesPage, ReceivedLikesPage, SentBlocksPage, ReceivedBlocksPage, MatchesPage, PendingMessagesPage, MessageNumber};
+
+use model::{AccountInteractionState, AccountIdInternal, SentLikesPage, ReceivedLikesPage, SentBlocksPage, ReceivedBlocksPage, MatchesPage, PendingMessagesPage, MessageNumber};
 use error_stack::{Result, ResultExt};
 use crate::data::DataError;
 

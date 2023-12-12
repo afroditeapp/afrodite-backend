@@ -10,7 +10,7 @@ use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 
 
 use super::{
-    write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteImageHandle, ConcurrentWriteProfileHandle, ConcurrentWriteSelectorHandle, ConcurrentWriteAction},
+    write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle, ConcurrentWriteAction},
     RouterDatabaseWriteHandle, SyncWriteHandle,
 };
 use crate::data::DataError;

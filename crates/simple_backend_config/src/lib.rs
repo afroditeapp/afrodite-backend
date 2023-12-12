@@ -13,7 +13,7 @@ use std::{
     vec,
 };
 
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt};
 use file::{TileMapConfig, DatabaseInfo};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};

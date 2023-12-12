@@ -9,7 +9,7 @@ use axum::{
 use config::file::ConfigFileError;
 use headers::{Header, HeaderValue};
 use hyper::{header, Request};
-use model::{AccessToken, AccountIdInternal};
+use model::{AccessToken};
 use serde::Serialize;
 use simple_backend::{sign_in_with::{google::SignInWithGoogleError, apple::SignInWithAppleError}, manager_client::ManagerClientError};
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;

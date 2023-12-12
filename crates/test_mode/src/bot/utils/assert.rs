@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 
 use super::super::super::client::TestError;
 

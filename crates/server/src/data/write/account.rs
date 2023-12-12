@@ -1,6 +1,6 @@
-use database::current::write::{account::CurrentSyncWriteAccount, CurrentSyncWriteCommands};
+use database::current::write::{CurrentSyncWriteCommands};
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountSetup, Capabilities, AccountState, AccountData, AccountInternal, SharedState};
+use model::{AccountIdInternal, AccountSetup, Capabilities, AccountData, AccountInternal, SharedState};
 
 use crate::data::DataError;
 

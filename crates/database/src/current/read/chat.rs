@@ -1,15 +1,13 @@
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
-use futures::Stream;
+use error_stack::{Result};
+
 use model::{
-    AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountInternal,
-    AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
-    SignInWithInfoRaw, schema::access_token::account_id, AccountInteractionInternal, AccountInteractionState, PendingMessage, PendingMessageInternal, PendingMessageId,
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PendingMessage, PendingMessageInternal, PendingMessageId,
 };
 use tokio_stream::StreamExt;
 
 use crate::{
-    IntoDatabaseError, current::write::account,
+    IntoDatabaseError,
 };
 
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};

@@ -2,8 +2,8 @@ use std::{fmt, path::PathBuf};
 
 use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
-use diesel::{RunQueryDsl, SqliteConnection};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel::{RunQueryDsl};
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use error_stack::{ResultExt, Result};
 use simple_backend_config::{SimpleBackendConfig, file::SqliteDatabase};
 use tracing::log::error;

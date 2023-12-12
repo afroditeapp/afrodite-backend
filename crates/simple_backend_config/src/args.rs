@@ -1,13 +1,11 @@
 //! Config given as command line arguments
 
 use std::{
-    convert::{TryFrom, TryInto},
     path::PathBuf,
-    process::exit,
 };
 
-use clap::{arg, builder::PossibleValue, command, value_parser, Args, Command, Parser, ValueEnum};
-use reqwest::Url;
+use clap::{arg, Args};
+
 
 #[derive(Args, Debug, Clone)]
 pub struct ServerModeArgs {

@@ -1,10 +1,10 @@
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 use futures::Stream;
 use model::{
     AccessToken, AccessTokenRaw, Account, AccountId, AccountIdDb, AccountIdInternal, AccountInternal,
     AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
-    SignInWithInfoRaw, AccountState, Capabilities, AccountData,
+    SignInWithInfoRaw, Capabilities, AccountData,
 };
 use simple_backend_database::{sqlx_db::SqliteDatabaseError, diesel_db::{ConnectionProvider, DieselDatabaseError}};
 use tokio_stream::StreamExt;

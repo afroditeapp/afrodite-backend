@@ -1,11 +1,11 @@
 
-use diesel::{prelude::*, Associations, deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use diesel::{prelude::*, deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
-use sqlx::prelude::*;
+use utoipa::{ToSchema};
+
 
 use crate::{
-    macros::{diesel_string_wrapper, diesel_i64_wrapper}, AccessToken, AccountIdDb, AccountIdInternal, RefreshToken, AccountId,
+    macros::{diesel_i64_wrapper}, AccountIdDb, AccountIdInternal, AccountId,
 };
 
 #[derive(Debug, Clone, Copy)]

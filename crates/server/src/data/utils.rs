@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
-use database::{current::read::CurrentReadCommands};
-use error_stack::{Result, ResultExt};
+
+use error_stack::{Result};
 use model::{AccessToken, AccountId, AccountIdInternal, Capabilities};
 
 use super::{cache::DatabaseCache, DataError, IntoDataError};

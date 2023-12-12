@@ -2,13 +2,13 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use config::Config;
 use database::{
-    current::read::{CurrentSyncReadCommands, CurrentReadCommands}, CurrentReadHandle,
+    current::read::{CurrentSyncReadCommands}, CurrentReadHandle,
 };
 use error_stack::{ResultExt, Result};
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, schema::profile_location, ProfileLink, Capabilities, AccountState, SharedState,
+    AccessToken, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileLink, Capabilities, SharedState,
 };
-use simple_backend_database::{DbReadHandle, diesel_db::{DieselConnection, DieselDatabaseError}};
+use simple_backend_database::{diesel_db::{DieselConnection, DieselDatabaseError}};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;

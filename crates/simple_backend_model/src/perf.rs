@@ -1,15 +1,13 @@
 
-use base64::Engine;
+
 use diesel::{
     prelude::*,
-    sql_types::{BigInt, Binary},
-    AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::current_unix_time;
-use utoipa::{IntoParams, ToSchema};
 
-use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, UnixTime};
+use utoipa::{ToSchema};
+
+use crate::{UnixTime};
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub enum TimeGranularity {

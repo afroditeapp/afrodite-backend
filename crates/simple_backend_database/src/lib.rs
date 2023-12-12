@@ -7,19 +7,19 @@ pub mod diesel_db;
 pub mod sqlx_db;
 pub mod data;
 
-use std::{fmt::Debug, marker::PhantomData};
+use std::{fmt::Debug};
 
 use diesel_db::{DieselReadHandle, DieselReadCloseHandle, DieselWriteHandle, DieselWriteCloseHandle};
 // use ::diesel::migration::MigrationSource;
 // use diesel::{DieselReadHandle, DieselWriteHandle, DieselReadCloseHandle, DieselWriteCloseHandle};
 use diesel_migrations::EmbeddedMigrations;
-use simple_backend_config::{RUNNING_IN_DEBUG_MODE, SimpleBackendConfig};
-use error_stack::{Context, ResultExt, Result};
-use simple_backend_utils::{markers::IsLoggingAllowed, ContextExt};
-use sqlx_db::{SqliteDatabaseError, SqlxReadHandle, SqlxReadCloseHandle, SqlxWriteCloseHandle, SqlxWriteHandle};
-use sqlx::migrate::Migration;
+use simple_backend_config::{SimpleBackendConfig};
+use error_stack::{ResultExt, Result};
+use simple_backend_utils::{ContextExt};
+use sqlx_db::{SqlxReadHandle, SqlxReadCloseHandle, SqlxWriteCloseHandle, SqlxWriteHandle};
 
-use crate::diesel_db::DieselDatabaseError;
+
+
 
 pub type PoolObject = deadpool_diesel::sqlite::Connection;
 

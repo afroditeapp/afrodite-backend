@@ -1,5 +1,5 @@
 use database::{
-    current::read::{CurrentSyncReadCommands, CurrentReadCommands}, CurrentReadHandle,
+    current::read::{CurrentSyncReadCommands}, CurrentReadHandle,
     // diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
     // sqlite::SqlxReadHandle,
 };

@@ -2,12 +2,12 @@ use axum::Extension;
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, AccountState, AuthPair,
     BooleanSetting, DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
-    SignInWithLoginInfo, EventToClient, EventToClientInternal, AccountData,
+    SignInWithLoginInfo, EventToClientInternal, AccountData,
 };
 use simple_backend::app::SignInWith;
 use tracing::error;
 
-use crate::{event, perf::ACCOUNT};
+use crate::{perf::ACCOUNT};
 
 use super::{
     db_write,

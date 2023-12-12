@@ -1,4 +1,4 @@
-use simple_backend_database::{sqlx_db::{SqlxReadHandle, SqlxWriteHandle}, diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError}};
+use simple_backend_database::{sqlx_db::{SqlxWriteHandle}, diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError}};
 use sqlx::SqlitePool;
 
 use self::{

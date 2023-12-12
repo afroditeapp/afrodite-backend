@@ -1,7 +1,7 @@
 //! Common routes related to admin features
 
 use axum::{extract::Query, Extension};
-use config::file_dynamic::ConfigFileDynamic;
+
 use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList, ResetDataQueryParam,
 };
@@ -16,7 +16,7 @@ use crate::api::{
 
 use tracing::info;
 
-use crate::app::{WriteDynamicConfig, GetConfig, ReadDynamicConfig, ReadData};
+use crate::app::{WriteDynamicConfig, ReadDynamicConfig, ReadData};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -376,9 +376,9 @@ pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
     security(("access_token" = [])),
 )]
 pub async fn get_perf_data<S: PerfCounterDataProvider>(
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    Json(query): Json<PerfHistoryQuery>,
+    Json(_query): Json<PerfHistoryQuery>,
     state: S,
 ) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
     if api_caller_capabilities.admin_server_maintenance_view_info {

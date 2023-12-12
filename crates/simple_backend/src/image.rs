@@ -1,11 +1,11 @@
 //! Image process
 
-use std::{env, os::unix::process::CommandExt, process::Stdio, path::Path, str::from_utf8};
+use std::{env, os::unix::process::CommandExt, path::Path, str::from_utf8};
 
 use error_stack::ResultExt;
-use nix::{unistd::Pid, sys::signal::Signal};
+
 use simple_backend_utils::ContextExt;
-use tokio::{process::Child, task::JoinHandle, io::{AsyncRead, AsyncBufReadExt}};
+
 
 use tracing::error;
 

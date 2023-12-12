@@ -1,12 +1,10 @@
 //! Config given as command line arguments
 
 use std::{
-    convert::{TryFrom, TryInto},
     path::PathBuf,
-    process::exit,
 };
 
-use clap::{arg, builder::PossibleValue, command, value_parser, Args, Command, Parser, ValueEnum};
+use clap::{arg, command, Args, Parser, ValueEnum};
 use reqwest::Url;
 use simple_backend_config::args::{ServerModeArgs, ImageProcessModeArgs};
 

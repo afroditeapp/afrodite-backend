@@ -1,15 +1,14 @@
 use diesel::{insert_into, prelude::*, update, delete};
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 use model::{
-    AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
-    SignInWithInfo, AccountInteractionInternal, schema::{account_interaction_index, account_interaction::account_id_sender}, PendingMessageId, SendMessageToAccount, AccountInteractionState,
+    AccountIdInternal, AccountInteractionInternal, PendingMessageId, AccountInteractionState,
 };
 use simple_backend_utils::current_unix_time;
 
-use crate::{IntoDatabaseError, current::read::{CurrentReadCommands, CurrentSyncReadCommands}, TransactionError};
+use crate::{IntoDatabaseError, current::read::{CurrentSyncReadCommands}, TransactionError};
 
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-use super::CurrentSyncWriteCommands;
+
 
 
 define_write_commands!(CurrentWriteChat, CurrentSyncWriteChat);

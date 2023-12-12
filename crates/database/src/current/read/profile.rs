@@ -1,6 +1,6 @@
-use diesel::{prelude::*, alias};
+use diesel::{prelude::*};
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, LocationIndexKey, ProfileInternal, Location, schema::profile_location, AccountIdDb};
+use model::{AccountIdInternal, ProfileInternal, Location};
 
 
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};

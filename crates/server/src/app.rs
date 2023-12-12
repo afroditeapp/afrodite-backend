@@ -4,7 +4,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use config::{Config, file::ConfigFileError, file_dynamic::ConfigFileDynamic, GetConfigError};
+use config::{Config, file::ConfigFileError, file_dynamic::ConfigFileDynamic};
 use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{AccountId, BackendVersion, BackendConfig};
@@ -17,15 +17,14 @@ use super::{
         read::ReadCommands,
         utils::{AccessTokenManager, AccountIdManager},
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
-        write_concurrent::ConcurrentWriteImageHandle,
         DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
 
 };
-use crate::{data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, event::EventManager, api};
+use crate::{data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, event::EventManager, api};
 
-use simple_backend::{manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError}, map::TileMapManager, app::{SimpleBackendAppState, GetSimpleBackendConfig}, web_socket::WebSocketManager};
+use simple_backend::{app::{SimpleBackendAppState, GetSimpleBackendConfig}, web_socket::WebSocketManager};
 
 pub mod routes_connected;
 pub mod routes_internal;

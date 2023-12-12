@@ -315,7 +315,7 @@ impl PerfCounterManager {
         quit_handle
     }
 
-    pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
+    pub async fn run(self, mut quit_notification: ServerQuitWatcher) {
         let mut timer = tokio::time::interval(Duration::from_secs(60));
 
         loop {

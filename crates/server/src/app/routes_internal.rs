@@ -11,7 +11,7 @@ use crate::{
     app::AppState,
 };
 
-use super::App;
+
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.

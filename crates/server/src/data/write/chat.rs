@@ -1,8 +1,8 @@
-use database::current::write::chat::CurrentSyncWriteChat;
-use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal, AccountInteractionInternal, PendingMessageId, MessageNumber};
 
-use crate::{data::{cache::CacheError, DataError, IntoDataError, index::location::LocationIndexIteratorState}, internal::Data};
+use error_stack::{Result, ResultExt};
+use model::{AccountIdInternal, AccountInteractionInternal, PendingMessageId, MessageNumber};
+
+use crate::{data::{DataError}};
 
 
 define_write_commands!(WriteCommandsChat);

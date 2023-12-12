@@ -115,7 +115,7 @@ macro_rules! diesel_string_wrapper {
     };
 }
 
-pub(crate) use diesel_string_wrapper;
+
 
 /// Type must have new() and as_i64() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.

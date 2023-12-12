@@ -8,25 +8,21 @@ pub mod file_dynamic;
 pub mod file;
 
 use std::{
-    io::BufReader,
-    path::{Path, PathBuf},
-    sync::{atomic::AtomicBool, Arc},
-    vec,
+    sync::{Arc},
 };
 
 use args::{AppMode, ArgsConfig};
-use error_stack::{report, Result, ResultExt};
+use error_stack::{Result, ResultExt};
 use file::{QueueLimitsConfig, StaticBotConfig};
 use file_dynamic::{ConfigFileDynamic};
 use model::BotConfig;
 use reqwest::Url;
-use rustls_pemfile::{certs, rsa_private_keys};
+
 use simple_backend_config::SimpleBackendConfig;
-use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
+
 use simple_backend_utils::ContextExt;
 
 use self::{
-    args::TestMode,
     file::{
         Components, ConfigFile, ExternalServices, InternalApiConfig,
         LocationConfig,

@@ -6,16 +6,10 @@ use std::{
 };
 
 use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_database::{DbReadCloseHandle, DbWriteCloseHandle, DbWriteHandle, DatabaseHandleCreator, diesel_db::DieselWriteHandle};
+use simple_backend_database::{DbReadCloseHandle, DbWriteCloseHandle, DatabaseHandleCreator};
 use simple_backend_utils::ContextExt;
 use config::Config;
 use database::{
-    current::{read::CurrentReadCommands, self},
-    // diesel::{
-    //     DieselCurrentReadHandle, DieselCurrentWriteHandle, DieselHistoryReadHandle,
-    //     DieselHistoryWriteHandle, DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle,
-    //     DieselWriteHandle,
-    // },
     history::read::HistoryReadCommands,
     // sqlite::{
     //     CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,

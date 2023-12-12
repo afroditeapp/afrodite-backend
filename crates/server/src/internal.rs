@@ -4,14 +4,13 @@ use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
 use error_stack::{ResultExt, Result};
 use hyper::StatusCode;
-use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal, AccountState, Capabilities, SharedStateInternal};
+use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal, AccountState, Capabilities};
 use tracing::{error, info, warn};
 use simple_backend_utils::{ ContextExt};
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
 use crate::{
     app::{GetAccessTokens, GetConfig, ReadData, WriteData},
-    api::{db_write},
     data::WithInfo,
 };
 

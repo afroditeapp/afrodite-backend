@@ -1,16 +1,14 @@
 use std::{
-    fmt::Debug,
     fs,
-    path::{Path, PathBuf},
-    sync::Arc,
+    path::{PathBuf},
 };
 
-use error_stack::{Context, ResultExt, Result};
+use error_stack::{ResultExt, Result};
 // use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
-use simple_backend_config::{SimpleBackendConfig, file::{DatabaseInfo, SqliteDatabase}};
-use tracing::info;
+use simple_backend_config::{SimpleBackendConfig, file::{SqliteDatabase}};
 
-use crate::{sqlx_db::SqliteDatabaseError, DataError};
+
+use crate::{DataError};
 
 pub const FILE_DIR_NAME: &str = "files";
 pub const SQLITE_DIR_NAME: &str = "sqlite";

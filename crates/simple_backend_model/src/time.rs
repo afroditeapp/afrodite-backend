@@ -1,15 +1,14 @@
 
-use base64::Engine;
+
 use diesel::{
-    prelude::*,
-    sql_types::{BigInt, Binary},
+    sql_types::{BigInt},
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
-use utoipa::{IntoParams, ToSchema};
+use utoipa::{ToSchema};
 
-use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}};
+use crate::{macros::{diesel_i64_wrapper}};
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]

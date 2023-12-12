@@ -1,8 +1,8 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
-    SignInWithInfo, AccountInternal, AccountState,
+    AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
+    SignInWithInfo, AccountInternal,
 };
 
 

@@ -3,12 +3,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use diesel::sqlite::Sqlite;
-use simple_backend_config::{SimpleBackendConfig, file::{DatabaseInfo, SqliteDatabase}};
+
+use simple_backend_config::{SimpleBackendConfig, file::{SqliteDatabase}};
 use error_stack::{ResultExt, Result};
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions, SqliteRow},
-    Row, SqlitePool, database,
+    Row, SqlitePool,
 };
 use tracing::log::error;
 use simple_backend_utils::ComponentError;

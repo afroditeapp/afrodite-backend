@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use image::{codecs::jpeg::{JpegEncoder, JpegDecoder}, ImageBuffer, Rgb};
+use image::{codecs::jpeg::{JpegEncoder}, ImageBuffer, Rgb};
 use rand::seq::SliceRandom;
 
 pub struct ImageProvider {}

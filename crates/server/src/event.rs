@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use error_stack::{ResultExt, Result};
-use model::{EventToClient, AccountId, AccountIdInternal, EventToClientInternal, NotificationEvent};
+use model::{EventToClient, AccountId, EventToClientInternal, NotificationEvent};
 use tokio::sync::mpsc;
 
 use crate::data::RouterDatabaseReadHandle;

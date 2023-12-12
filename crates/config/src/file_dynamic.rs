@@ -103,7 +103,7 @@ fn edit_document_bot_config(
 
 #[cfg(test)]
 mod tests {
-    use std::{str::FromStr, string};
+    use std::{str::FromStr};
 
     use super::*;
 

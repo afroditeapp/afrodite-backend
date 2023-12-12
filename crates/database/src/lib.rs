@@ -8,14 +8,14 @@ pub mod history;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use current::{write::{CurrentWriteCommands, CurrentSyncWriteCommands}, read::CurrentReadCommands};
+use current::{write::{CurrentWriteCommands}, read::CurrentReadCommands};
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use history::{read::HistoryReadCommands, write::HistoryWriteCommands};
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use error_stack::{Context, ResultExt, Result};
 pub use model::schema;
-use model::{IsLoggingAllowed, Db};
-use simple_backend_database::{diesel_db::{DieselDatabaseError, DieselConnection}, DbWriteHandle, DbReadHandle};
+use model::{IsLoggingAllowed};
+use simple_backend_database::{diesel_db::{DieselDatabaseError}, DbWriteHandle, DbReadHandle};
 
 pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, num::{NonZeroU16, NonZeroU8}, mem::size_of};
+use std::{collections::HashMap, sync::Arc, num::{NonZeroU8}, mem::size_of};
 
 use config::Config;
 use error_stack::ResultExt;

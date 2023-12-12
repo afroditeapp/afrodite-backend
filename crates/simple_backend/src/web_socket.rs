@@ -1,4 +1,4 @@
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::{mpsc};
 
 use crate::ServerQuitWatcher;
 

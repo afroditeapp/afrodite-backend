@@ -40,9 +40,9 @@ use tokio::{
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
 use tower::MakeService;
 use tower_http::trace::TraceLayer;
-use tracing::{error, info, warn, level_filters::LevelFilter};
+use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer, EnvFilter};
-use utoipa::OpenApi;
+
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::{
@@ -72,13 +72,13 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     /// Create router for public API
     fn public_api_router(
         &self,
-        web_socket_manager: WebSocketManager,
-        state: &SimpleBackendAppState<Self::AppState>,
+        _web_socket_manager: WebSocketManager,
+        _state: &SimpleBackendAppState<Self::AppState>,
     ) -> Router { Router::new() }
     /// Create router for internal API
     fn internal_api_router(
         &self,
-        state: &SimpleBackendAppState<Self::AppState>,
+        _state: &SimpleBackendAppState<Self::AppState>,
     ) -> Router { Router::new() }
 
     /// Swagger UI which added to enabled in public and internal API router
