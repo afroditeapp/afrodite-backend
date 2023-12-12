@@ -5,16 +5,18 @@ use config::file_dynamic::ConfigFileDynamic;
 use manager_model::{
     BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList, ResetDataQueryParam,
 };
-use model::{Account, AccountIdInternal, BackendConfig, PerfHistoryQuery, PerfHistoryQueryResult, Capabilities};
+use model::{Account, AccountIdInternal, BackendConfig, Capabilities};
+use simple_backend::app::{GetManagerApi, PerfCounterDataProvider};
+use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
 
 use crate::api::{
     utils::{Json, StatusCode},
-    GetManagerApi, ReadData,
+
 };
 
 use tracing::info;
 
-use super::{WriteDynamicConfig, GetConfig, ReadDynamicConfig, PerfCounterDataProvider};
+use crate::app::{WriteDynamicConfig, GetConfig, ReadDynamicConfig, ReadData};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 

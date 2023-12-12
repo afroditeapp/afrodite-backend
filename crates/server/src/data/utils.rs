@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use database::{current::read::SqliteReadCommands, sqlite::SqlxReadHandle};
+use database::{current::read::CurrentReadCommands};
 use error_stack::{Result, ResultExt};
 use model::{AccessToken, AccountId, AccountIdInternal, Capabilities};
 
@@ -34,14 +34,12 @@ impl<'a> AccessTokenManager<'a> {
 
 pub struct AccountIdManager<'a> {
     cache: &'a DatabaseCache,
-    read_handle: SqliteReadCommands<'a>,
 }
 
 impl<'a> AccountIdManager<'a> {
-    pub fn new(cache: &'a DatabaseCache, read_handle: &'a SqlxReadHandle) -> Self {
+    pub fn new(cache: &'a DatabaseCache) -> Self {
         Self {
             cache,
-            read_handle: SqliteReadCommands::new(read_handle),
         }
     }
 

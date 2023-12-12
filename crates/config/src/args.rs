@@ -8,6 +8,7 @@ use std::{
 
 use clap::{arg, builder::PossibleValue, command, value_parser, Args, Command, Parser, ValueEnum};
 use reqwest::Url;
+use simple_backend_config::args::{ServerModeArgs, ImageProcessModeArgs};
 
 #[derive(Args, Debug, Clone)]
 pub struct ArgsConfig {
@@ -15,16 +16,12 @@ pub struct ArgsConfig {
     #[arg(short, long)]
     pub build_info: bool,
 
-    /// Set database directory. Overrides config file value.
-    #[arg(short, long, value_name = "DIR")]
-    pub database_dir: Option<PathBuf>,
-
-    /// Use in RAM mode for SQLite.
-    #[arg(short, long)]
-    pub sqlite_in_ram: bool,
+    #[command(flatten)]
+    pub server: ServerModeArgs,
 
     #[command(subcommand)]
     pub mode: Option<AppMode>,
+
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -32,21 +29,7 @@ pub enum AppMode {
     /// Run test, benchmark or bot mode
     Test(TestMode),
     /// Process received image
-    ImageProcess(ImageProcessMode),
-}
-
-#[derive(Args, Debug, Clone)]
-pub struct ImageProcessMode {
-    #[arg(long, value_name = "FILE")]
-    pub input: PathBuf,
-
-    #[arg(long, value_name = "FILE")]
-    pub output: PathBuf,
-
-    /// Jpeg quality value. Value is clamped between 1-100.
-    /// Mozjpeg library recommends 60-80 values
-    #[arg(long, value_name = "NUMBER", default_value = "60")]
-    pub quality: u8,
+    ImageProcess(ImageProcessModeArgs),
 }
 
 #[derive(Parser, Debug, Clone)]

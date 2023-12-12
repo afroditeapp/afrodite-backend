@@ -7,7 +7,6 @@ use utoipa::OpenApi;
 
 use self::utils::SecurityApiAccessTokenDefault;
 use crate::{
-    app::sign_in_with::SignInWithManager,
     data::{
         read::ReadCommands,
         utils::{AccessTokenManager, AccountIdManager},
@@ -16,7 +15,7 @@ use crate::{
         DataError,
     },
     internal::InternalApiManager,
-    manager_client::ManagerApiManager, map::TileMapManager, event::EventManager, perf::PerfCounterManagerData,
+    event::EventManager,
 };
 
 // Routes
@@ -127,11 +126,11 @@ pub mod utils;
         // Common admin
         model::common_admin::BackendConfig,
         model::common_admin::BotConfig,
-        model::common_admin::TimeGranularity,
-        model::common_admin::PerfHistoryQuery,
-        model::common_admin::PerfValueArea,
-        model::common_admin::PerfHistoryValue,
-        model::common_admin::PerfHistoryQueryResult,
+        simple_backend_model::perf::TimeGranularity,
+        simple_backend_model::perf::PerfHistoryQuery,
+        simple_backend_model::perf::PerfValueArea,
+        simple_backend_model::perf::PerfHistoryValue,
+        simple_backend_model::perf::PerfHistoryQueryResult,
         // Account
         model::account::Account,
         model::account::AccountState,
@@ -203,94 +202,6 @@ pub mod utils;
     )
 )]
 pub struct ApiDoc;
-
-// App state getters
-
-pub trait GetAccessTokens {
-    /// Users which are logged in.
-    fn access_tokens(&self) -> AccessTokenManager<'_>;
-}
-
-pub trait GetAccounts {
-    /// All accounts registered in the service.
-    fn accounts(&self) -> AccountIdManager<'_>;
-}
-
-#[async_trait::async_trait]
-pub trait WriteData {
-    async fn write<
-        CmdResult: Send + 'static,
-        Cmd: Future<Output = error_stack::Result<CmdResult, DataError>> + Send + 'static,
-        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
-    >(
-        &self,
-        cmd: GetCmd,
-    ) -> error_stack::Result<CmdResult, DataError>;
-
-    async fn write_concurrent<
-        CmdResult: Send + 'static,
-        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
-        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
-    >(
-        &self,
-        account: AccountId,
-        cmd: GetCmd,
-    ) -> error_stack::Result<CmdResult, DataError>;
-}
-
-pub trait ReadData {
-    fn read(&self) -> ReadCommands<'_>;
-}
-
-pub trait SignInWith {
-    fn sign_in_with_manager(&self) -> &SignInWithManager;
-}
-
-pub trait GetInternalApi {
-    fn internal_api(&self) -> InternalApiManager<Self>
-    where
-        Self: Sized;
-}
-
-pub trait GetManagerApi {
-    fn manager_api(&self) -> ManagerApiManager;
-}
-
-pub trait GetConfig {
-    fn config(&self) -> &Config;
-}
-
-pub trait GetTileMap {
-    fn tile_map(&self) -> &TileMapManager;
-}
-
-#[async_trait::async_trait]
-pub trait WriteDynamicConfig {
-    async fn write_config(
-        &self,
-        config: BackendConfig,
-    ) -> error_stack::Result<(), ConfigFileError>;
-}
-
-#[async_trait::async_trait]
-pub trait ReadDynamicConfig {
-    async fn read_config(
-        &self,
-    ) -> error_stack::Result<BackendConfig, ConfigFileError>;
-}
-
-pub trait BackendVersionProvider {
-    fn backend_version(&self) -> BackendVersion;
-}
-
-pub trait EventManagerProvider {
-    fn event_manager(&self) -> &EventManager;
-}
-
-
-pub trait PerfCounterDataProvider {
-    fn perf_counter_data(&self) -> &PerfCounterManagerData;
-}
 
 
 /// Macro for writing data with different code style.

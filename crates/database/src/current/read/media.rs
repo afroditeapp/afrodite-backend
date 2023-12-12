@@ -11,9 +11,9 @@ use model::{
 
 
 use crate::{
-    diesel::{ConnectionProvider, DieselDatabaseError},
     IntoDatabaseError,
 };
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 

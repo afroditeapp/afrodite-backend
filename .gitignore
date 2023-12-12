@@ -1,10 +1,12 @@
 /target
 /database
+/data
 /database-media
 /tmp_databases
 
 server_config.toml
 server_config_dynamic.toml
+simple_backend_config.toml
 
 .vscode
 .idea

@@ -7,6 +7,7 @@ use model::{
     AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
     ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SlotId, MapTileX, MapTileY, MapTileZ,
 };
+use simple_backend::app::GetTileMap;
 use tracing::error;
 
 use crate::{data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImageHandle}, DataError}, perf::MEDIA};
@@ -14,7 +15,7 @@ use crate::{data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImag
 use super::{
     db_write,
     utils::{Json, StatusCode},
-    GetAccessTokens, GetAccounts, ReadData, WriteData, GetTileMap,
+    super::app::{GetAccessTokens, GetAccounts, ReadData, WriteData},
 };
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";

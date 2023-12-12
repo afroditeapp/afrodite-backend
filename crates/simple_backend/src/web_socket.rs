@@ -1,12 +1,9 @@
 use tokio::sync::{broadcast, mpsc};
 
+use crate::ServerQuitWatcher;
+
 pub type WsQuitReady = mpsc::Receiver<()>;
 
-/// Drop this when quit starts
-pub type ServerQuitHandle = broadcast::Sender<()>;
-
-/// Use resubscribe() for cloning.
-pub type ServerQuitWatcher = broadcast::Receiver<()>;
 
 /// Handle to WebSocket connections. Server main loop should use this
 /// when closing the server.

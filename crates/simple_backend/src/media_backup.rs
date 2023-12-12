@@ -12,11 +12,7 @@ use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
 
-
-
-use crate::{
-    web_socket::ServerQuitWatcher,
-};
+use crate::ServerQuitWatcher;
 
 pub const MEDIA_BACKUP_MANAGER_QUEUE_SIZE: usize = 64;
 
@@ -91,6 +87,7 @@ pub struct MediaBackupHandle {
 }
 
 impl MediaBackupHandle {
+    /// The path must be relative to files dir
     pub async fn backup_jpeg_image(
         &self,
         image: PathBuf,

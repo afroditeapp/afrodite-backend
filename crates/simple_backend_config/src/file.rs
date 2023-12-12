@@ -29,12 +29,10 @@ internal_api = "127.0.0.1:3001"
 [data]
 dir = "data"
 
-[data.sqlite]
-index = 0
+[[data.sqlite]]
 name = "current"
 
-[data.sqlite]
-index = 1
+[[data.sqlite]]
 name = "history"
 
 # [manager]
@@ -80,21 +78,10 @@ pub enum ConfigFileError {
     NotDirectory,
     #[error("Load config file")]
     LoadConfig,
-    #[error("Editing config file failed")]
-    EditConfig,
-    #[error("Saving edited config file failed")]
-    SaveEditedConfig,
 }
 
-impl ConfigFileError {
-    #[track_caller]
-    pub fn report(self) -> error_stack::Report<Self> {
-        error_stack::report!(self)
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ConfigFile {
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SimpleBackendConfigFile {
     pub debug: Option<bool>,
     pub data: DataConfig,
     pub socket: SocketConfig,
@@ -108,8 +95,8 @@ pub struct ConfigFile {
     pub litestream: Option<LitestreamConfig>,
 }
 
-impl ConfigFile {
-    pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
+impl SimpleBackendConfigFile {
+    pub fn load(dir: impl AsRef<Path>) -> Result<SimpleBackendConfigFile, ConfigFileError> {
         let config_string = ConfigFileUtils::load_string(
             dir,
             CONFIG_FILE_NAME,
@@ -156,7 +143,7 @@ impl ConfigFileUtils {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DataConfig {
     /// Data directory for SQLite databases and other files.
     pub dir: PathBuf,
@@ -165,48 +152,33 @@ pub struct DataConfig {
 
 impl DataConfig {
     pub fn get_databases(&self) -> Result<Vec<DatabaseInfo>, GetConfigError> {
-        let mut databases = HashMap::<usize, DatabaseInfo>::new();
+        let mut databases = HashMap::<String, DatabaseInfo>::new();
         for db in &self.sqlite {
-            let old = databases.insert(db.index, Into::<DatabaseInfo>::into(db.clone()));
+            let old = databases.insert(db.name.clone(), Into::<DatabaseInfo>::into(db.clone()));
             if old.is_some() {
                 return Err(GetConfigError::InvalidConfiguration.report())
-                    .attach_printable(format!("Duplicate database index: {}", db.index));
+                    .attach_printable(format!("Duplicate database name: {}", db.name));
             }
         }
 
-        let mut databases = databases.values().cloned().collect::<Vec<DatabaseInfo>>();
-        databases.sort_by_key(|v| v.index());
-        if let Some(last) = databases.last() {
-            if last.index() != databases.len() - 1 {
-                return Err(GetConfigError::InvalidConfiguration.report())
-                    .attach_printable(format!("Max database index value is too large {}. Expected: {}", last.index(), databases.len() - 1));
-            }
-        }
+        let databases = databases.values().cloned().collect::<Vec<DatabaseInfo>>();
         Ok(databases)
     }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SqliteDatabase {
-    pub index: usize,
     pub name: String,
 }
 
 #[derive(Debug, Clone)]
 pub enum DatabaseInfo {
     Sqlite {
-        index: usize,
         name: String,
     },
 }
 
 impl DatabaseInfo {
-    pub fn index(&self) -> usize {
-        match self {
-            Self::Sqlite { index, .. } => *index,
-        }
-    }
-
     pub fn file_name(&self) -> String {
         match self {
             Self::Sqlite { name, .. } => name.clone(),
@@ -215,7 +187,6 @@ impl DatabaseInfo {
 
     pub fn to_sqlite_database(&self) -> SqliteDatabase {
         SqliteDatabase {
-            index: self.index(),
             name: self.file_name(),
         }
     }
@@ -224,20 +195,19 @@ impl DatabaseInfo {
 impl From<SqliteDatabase> for DatabaseInfo {
     fn from(value: SqliteDatabase) -> Self {
         Self::Sqlite {
-            index: value.index,
             name: value.name,
         }
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SocketConfig {
     pub public_api: SocketAddr,
     pub internal_api: SocketAddr,
 }
 
 /// App manager config
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppManagerConfig {
     pub address: Url,
     pub api_key: String,

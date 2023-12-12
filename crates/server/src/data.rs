@@ -5,21 +5,23 @@ use std::{
     sync::Arc,
 };
 
-use ::utils::ContextExt;
+use simple_backend::media_backup::MediaBackupHandle;
+use simple_backend_database::{DbReadCloseHandle, DbWriteCloseHandle, DbWriteHandle, DatabaseHandleCreator, diesel_db::DieselWriteHandle};
+use simple_backend_utils::ContextExt;
 use config::Config;
 use database::{
-    current::read::SqliteReadCommands,
-    diesel::{
-        DieselCurrentReadHandle, DieselCurrentWriteHandle, DieselHistoryReadHandle,
-        DieselHistoryWriteHandle, DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle,
-        DieselWriteHandle,
-    },
+    current::{read::CurrentReadCommands, self},
+    // diesel::{
+    //     DieselCurrentReadHandle, DieselCurrentWriteHandle, DieselHistoryReadHandle,
+    //     DieselHistoryWriteHandle, DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle,
+    //     DieselWriteHandle,
+    // },
     history::read::HistoryReadCommands,
-    sqlite::{
-        CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
-        SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
-    },
-    ErrorContext,
+    // sqlite::{
+    //     CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
+    //     SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
+    // },
+    ErrorContext, CurrentReadHandle, CurrentWriteHandle, HistoryWriteHandle, HistoryReadHandle,
 };
 use error_stack::{Context, ResultExt, Result};
 use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
@@ -39,7 +41,7 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
-use crate::{internal::InternalApiError, media_backup::MediaBackupHandle};
+use crate::{internal::InternalApiError};
 
 pub mod cache;
 pub mod file;
@@ -181,8 +183,6 @@ impl<Ok> IntoDataError<Ok, DataError> for Result<Ok, crate::data::cache::CacheEr
 #[derive(Clone, Debug)]
 pub struct DatabaseRoot {
     root: PathBuf,
-    history: SqliteDatabasePath,
-    current: SqliteDatabasePath,
     file_dir: FileDir,
 }
 
@@ -193,17 +193,17 @@ impl DatabaseRoot {
             fs::create_dir(&root).change_context(DataError::Init)?;
         }
 
-        let history = root.join(DB_HISTORY_DIR_NAME);
-        if !history.exists() {
-            fs::create_dir(&history).change_context(DataError::Init)?;
-        }
-        let history = SqliteDatabasePath::new(history);
+        // let history = root.join(DB_HISTORY_DIR_NAME);
+        // if !history.exists() {
+        //     fs::create_dir(&history).change_context(DataError::Init)?;
+        // }
+        // let history = SqliteDatabasePath::new(history);
 
-        let current = root.join(DB_CURRENT_DATA_DIR_NAME);
-        if !current.exists() {
-            fs::create_dir(&current).change_context(DataError::Init)?;
-        }
-        let current = SqliteDatabasePath::new(current);
+        // let current = root.join(DB_CURRENT_DATA_DIR_NAME);
+        // if !current.exists() {
+        //     fs::create_dir(&current).change_context(DataError::Init)?;
+        // }
+        // let current = SqliteDatabasePath::new(current);
 
         let file_dir = root.join(DB_FILE_DIR_NAME);
         if !file_dir.exists() {
@@ -213,59 +213,55 @@ impl DatabaseRoot {
 
         Ok(Self {
             root,
-            history,
-            current,
+            // history,
+            // current,
             file_dir,
         })
     }
 
-    /// History Sqlite database path
-    pub fn history(&self) -> SqliteDatabasePath {
-        self.history.clone()
-    }
+    // /// History Sqlite database path
+    // pub fn history(&self) -> SqliteDatabasePath {
+    //     self.history.clone()
+    // }
 
-    pub fn history_ref(&self) -> &SqliteDatabasePath {
-        &self.history
-    }
+    // pub fn history_ref(&self) -> &SqliteDatabasePath {
+    //     &self.history
+    // }
 
-    /// Sqlite database path
-    pub fn current(&self) -> SqliteDatabasePath {
-        self.current.clone()
-    }
+    // /// Sqlite database path
+    // pub fn current(&self) -> SqliteDatabasePath {
+    //     self.current.clone()
+    // }
 
-    pub fn current_ref(&self) -> &SqliteDatabasePath {
-        &self.current
-    }
+    // pub fn current_ref(&self) -> &SqliteDatabasePath {
+    //     &self.current
+    // }
 
     pub fn file_dir(&self) -> &FileDir {
         &self.file_dir
     }
 
-    pub fn current_db_file(&self) -> PathBuf {
-        self.current
-            .clone()
-            .path()
-            .join(DatabaseType::Current.to_file_name())
-    }
+    // pub fn current_db_file(&self) -> PathBuf {
+    //     self.current
+    //         .clone()
+    //         .path()
+    //         .join(DatabaseType::Current.to_file_name())
+    // }
 
-    pub fn history_db_file(&self) -> PathBuf {
-        self.history
-            .clone()
-            .path()
-            .join(DatabaseType::History.to_file_name())
-    }
+    // pub fn history_db_file(&self) -> PathBuf {
+    //     self.history
+    //         .clone()
+    //         .path()
+    //         .join(DatabaseType::History.to_file_name())
+    // }
 }
 
 /// Handle SQLite databases and write command runner.
 pub struct DatabaseManager {
-    sqlite_write_close: SqliteWriteCloseHandle,
-    sqlite_read_close: SqlxReadCloseHandle,
-    history_write_close: SqliteWriteCloseHandle,
-    history_read_close: SqlxReadCloseHandle,
-    diesel_current_write_close: DieselWriteCloseHandle,
-    diesel_current_read_close: DieselReadCloseHandle,
-    diesel_history_write_close: DieselWriteCloseHandle,
-    diesel_history_read_close: DieselReadCloseHandle,
+    current_read_close: DbReadCloseHandle,
+    current_write_close: DbWriteCloseHandle,
+    history_read_close: DbReadCloseHandle,
+    history_write_close: DbWriteCloseHandle,
 }
 
 impl DatabaseManager {
@@ -279,43 +275,25 @@ impl DatabaseManager {
 
         let root = DatabaseRoot::new(database_dir)?;
 
-        // Diesel
+        // Write handles
 
-        // Run migrations and print SQLite version used by Diesel
-        let (diesel_current_write, diesel_current_write_close) =
-            DieselWriteHandle::new(&config, root.current_db_file())
-                .await
-                .change_context(DataError::Init)?;
+        let (current_write, current_write_close) = DatabaseHandleCreator::create_write_handle_from_config(
+            config.simple_backend(),
+            "current",
+            database::DIESEL_MIGRATIONS,
+        )
+            .await
+            .change_context(DataError::Init)?;
 
-        let diesel_sqlite = diesel_current_write
+        let diesel_sqlite = current_write
+            .diesel()
             .sqlite_version()
             .await
             .change_context(DataError::Sqlite)?;
         info!("Diesel SQLite version: {}", diesel_sqlite);
 
-        let (diesel_current_read, diesel_current_read_close) =
-            DieselReadHandle::new(&config, root.current_db_file())
-                .await
-                .change_context(DataError::Init)?;
-
-        let (diesel_history_write, diesel_history_write_close) =
-            DieselWriteHandle::new(&config, root.history_db_file())
-                .await
-                .change_context(DataError::Init)?;
-
-        let (diesel_history_read, diesel_history_read_close) =
-            DieselReadHandle::new(&config, root.history_db_file())
-                .await
-                .change_context(DataError::Init)?;
-
-        // Sqlx
-
-        let (sqlite_write, sqlite_write_close) =
-            SqliteWriteHandle::new(&config, root.current_db_file())
-                .await
-                .change_context(DataError::Init)?;
-
-        let sqlx_sqlite = sqlite_write
+        let sqlx_sqlite = current_write
+            .sqlx()
             .sqlite_version()
             .await
             .change_context(DataError::Init)?;
@@ -325,30 +303,41 @@ impl DatabaseManager {
             return Err(DataError::SqliteVersionMismatch.report());
         }
 
-        let (sqlite_read, sqlite_read_close) = SqlxReadHandle::new(&config, root.current_db_file())
+        let (history_write, history_write_close) = DatabaseHandleCreator::create_write_handle_from_config(
+            config.simple_backend(),
+            "history",
+            database::DIESEL_MIGRATIONS,
+        )
             .await
             .change_context(DataError::Init)?;
 
-        let (history_write, history_write_close) =
-            SqliteWriteHandle::new(&config, root.history_db_file())
-                .await
-                .change_context(DataError::Init)?;
+        // Read handles
 
-        let (history_read, history_read_close) =
-            SqlxReadHandle::new(&config, root.history_db_file())
-                .await
-                .change_context(DataError::Init)?;
+        let (current_read, current_read_close) = DatabaseHandleCreator::create_read_handle_from_config(
+            config.simple_backend(),
+            "current",
+        )
+            .await
+            .change_context(DataError::Init)?;
 
-        let read_commands = SqliteReadCommands::new(&sqlite_read);
+        let (history_read, history_read_close) = DatabaseHandleCreator::create_read_handle_from_config(
+            config.simple_backend(),
+            "history",
+        )
+            .await
+            .change_context(DataError::Init)?;
+
+        // Sqlx
+
+        // let read_commands = CurrentReadCommands::new(current_read.sqlx());
         let index = LocationIndexManager::new(config.clone());
-        let diesel_current_read = DieselCurrentReadHandle::new(diesel_current_read);
-        let diesel_current_write = DieselCurrentWriteHandle::new(diesel_current_write);
-        let diesel_history_read = DieselHistoryReadHandle::new(diesel_history_read);
-        let diesel_history_write = DieselHistoryWriteHandle::new(diesel_history_write);
+        let current_read_handle = CurrentReadHandle(current_read);
+        let current_write_handle = CurrentWriteHandle(current_write);
+        let history_read_handle = HistoryReadHandle(history_read);
+        let history_write_handle = HistoryWriteHandle(history_write);
 
         let cache = DatabaseCache::new(
-            read_commands,
-            diesel_current_read.clone(),
+            &current_read_handle,
             &index,
             &config,
         )
@@ -357,16 +346,10 @@ impl DatabaseManager {
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
-            sqlx_current_write: CurrentDataWriteHandle::new(sqlite_write),
-            sqlx_current_read: sqlite_read,
-            diesel_current_read: diesel_current_read.clone(),
-            diesel_current_write: diesel_current_write.clone(),
-            diesel_history_read: diesel_history_read.clone(),
-            diesel_history_write: diesel_history_write.clone(),
-            sqlx_history_write: HistoryWriteHandle {
-                handle: history_write,
-            },
-            sqlx_history_read: history_read,
+            current_read_handle: current_read_handle.clone(),
+            current_write_handle: current_write_handle.clone(),
+            history_read_handle: history_read_handle.clone(),
+            history_write_handle: history_write_handle.clone(),
             root: root.into(),
             cache: cache.into(),
             location: index.into(),
@@ -376,29 +359,20 @@ impl DatabaseManager {
             )),
         };
 
-        let sqlite_read = router_write_handle.sqlx_current_read.clone();
-        let history_read = router_write_handle.sqlx_history_read.clone();
         let root = router_write_handle.root.clone();
         let cache = router_write_handle.cache.clone();
-
         let router_read_handle = RouterDatabaseReadHandle {
-            sqlite_read,
-            history_read,
-            diesel_read: diesel_current_read,
-            diesel_history_read,
+            current_read_handle: current_read_handle.clone(),
+            history_read_handle: history_read_handle.clone(),
             root,
             cache,
         };
 
         let database_manager = DatabaseManager {
-            sqlite_write_close,
-            sqlite_read_close,
+            current_write_close,
+            current_read_close,
             history_write_close,
             history_read_close,
-            diesel_current_write_close,
-            diesel_current_read_close,
-            diesel_history_read_close,
-            diesel_history_write_close,
         };
 
         info!("DatabaseManager created");
@@ -407,14 +381,10 @@ impl DatabaseManager {
     }
 
     pub async fn close(self) {
-        self.sqlite_read_close.close().await;
-        self.sqlite_write_close.close().await;
+        self.current_read_close.close().await;
+        self.current_write_close.close().await;
         self.history_read_close.close().await;
         self.history_write_close.close().await;
-        self.diesel_current_read_close.close().await;
-        self.diesel_current_write_close.close().await;
-        self.diesel_history_read_close.close().await;
-        self.diesel_history_write_close.close().await;
     }
 }
 
@@ -422,14 +392,10 @@ impl DatabaseManager {
 pub struct RouterDatabaseWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
-    sqlx_current_write: CurrentDataWriteHandle,
-    sqlx_current_read: SqlxReadHandle,
-    sqlx_history_write: HistoryWriteHandle,
-    sqlx_history_read: SqlxReadHandle,
-    diesel_current_write: DieselCurrentWriteHandle,
-    diesel_current_read: DieselCurrentReadHandle,
-    diesel_history_write: DieselHistoryWriteHandle,
-    diesel_history_read: DieselHistoryReadHandle,
+    current_read_handle: CurrentReadHandle,
+    current_write_handle: CurrentWriteHandle,
+    history_read_handle: HistoryReadHandle,
+    history_write_handle: HistoryWriteHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
@@ -440,10 +406,8 @@ impl RouterDatabaseWriteHandle {
     pub fn user_write_commands(&self) -> WriteCommands {
         WriteCommands::new(
             &self.config,
-            &self.sqlx_current_write,
-            &self.sqlx_history_write,
-            &self.diesel_current_write,
-            &self.diesel_history_write,
+            &self.current_write_handle,
+            &self.history_write_handle,
             &self.cache,
             &self.root.file_dir,
             &self.location,
@@ -453,8 +417,8 @@ impl RouterDatabaseWriteHandle {
 
     pub fn user_write_commands_account<'b>(&'b self) -> WriteCommandsConcurrent<'b> {
         WriteCommandsConcurrent::new(
-            &self.sqlx_current_write,
-            &self.sqlx_history_write,
+            &self.current_write_handle,
+            &self.history_write_handle,
             &self.cache,
             &self.root.file_dir,
             LocationIndexIteratorHandle::new(&self.location),
@@ -476,14 +440,8 @@ impl RouterDatabaseWriteHandle {
         SyncWriteHandle {
             config: self.config,
             root: self.root,
-            sqlx_current_write: self.sqlx_current_write,
-            sqlx_current_read: self.sqlx_current_read,
-            sqlx_history_write: self.sqlx_history_write,
-            sqlx_history_read: self.sqlx_history_read,
-            diesel_current_write: self.diesel_current_write,
-            diesel_current_read: self.diesel_current_read,
-            diesel_history_write: self.diesel_history_write,
-            diesel_history_read: self.diesel_history_read,
+            current_write_handle: self.current_write_handle,
+            history_write_handle: self.history_write_handle,
             cache: self.cache,
             location: self.location,
             media_backup: self.media_backup,
@@ -496,14 +454,8 @@ impl RouterDatabaseWriteHandle {
 pub struct SyncWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
-    sqlx_current_write: CurrentDataWriteHandle,
-    sqlx_current_read: SqlxReadHandle,
-    sqlx_history_write: HistoryWriteHandle,
-    sqlx_history_read: SqlxReadHandle,
-    diesel_current_write: DieselCurrentWriteHandle,
-    diesel_current_read: DieselCurrentReadHandle,
-    diesel_history_write: DieselHistoryWriteHandle,
-    diesel_history_read: DieselHistoryReadHandle,
+    current_write_handle: CurrentWriteHandle,
+    history_write_handle: HistoryWriteHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
@@ -513,10 +465,8 @@ impl SyncWriteHandle {
     fn cmds(&self) -> WriteCommands {
         WriteCommands::new(
             &self.config,
-            &self.sqlx_current_write,
-            &self.sqlx_history_write,
-            &self.diesel_current_write,
-            &self.diesel_history_write,
+            &self.current_write_handle,
+            &self.history_write_handle,
             &self.cache,
             &self.root.file_dir,
             &self.location,
@@ -571,25 +521,22 @@ impl SyncWriteHandle {
 
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
-    sqlite_read: SqlxReadHandle,
-    diesel_read: DieselCurrentReadHandle,
-    history_read: SqlxReadHandle,
-    diesel_history_read: DieselHistoryReadHandle,
+    current_read_handle: CurrentReadHandle,
+    history_read_handle: HistoryReadHandle,
     cache: Arc<DatabaseCache>,
 }
 
 impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
         ReadCommands::new(
-            &self.sqlite_read,
+            &self.current_read_handle,
             &self.cache,
-            &self.root.file_dir,
-            &self.diesel_read,
+            &self.root.file_dir
         )
     }
 
     pub fn history(&self) -> HistoryReadCommands<'_> {
-        HistoryReadCommands::new(&self.history_read)
+        HistoryReadCommands::new(&self.history_read_handle)
     }
 
     pub fn read_files(&self) -> FileReadCommands<'_> {
@@ -601,6 +548,6 @@ impl RouterDatabaseReadHandle {
     }
 
     pub fn account_id_manager(&self) -> AccountIdManager<'_> {
-        AccountIdManager::new(&self.cache, &self.sqlite_read)
+        AccountIdManager::new(&self.cache)
     }
 }

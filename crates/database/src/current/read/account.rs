@@ -6,11 +6,10 @@ use model::{
     AccountSetup, GoogleAccountId, RefreshToken, RefreshTokenRaw, SignInWithInfo,
     SignInWithInfoRaw, AccountState, Capabilities, AccountData,
 };
+use simple_backend_database::{sqlx_db::SqliteDatabaseError, diesel_db::{ConnectionProvider, DieselDatabaseError}};
 use tokio_stream::StreamExt;
 
 use crate::{
-    diesel::{ConnectionProvider, DieselDatabaseError},
-    sqlite::SqliteDatabaseError,
     IntoDatabaseError,
 };
 
@@ -109,7 +108,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
     pub fn account(&mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
         use crate::schema::account_capabilities;
 
-        let shared_state = self.conn().read().common().shared_state(id)?;
+        let shared_state = self.cmds().common().shared_state(id)?;
 
         let capabilities: Capabilities = account_capabilities::table
             .filter(account_capabilities::account_id.eq(id.as_db_id()))

@@ -36,3 +36,7 @@ time = "0.3.20"
 utils = { path = "../utils" }
 config = { path = "../config" }
 model = { path = "../model" }
+
+simple_backend_config = { path = "../simple_backend_config" }
+simple_backend_utils = { path = "../simple_backend_utils" }
+simple_backend_database = { path = "../simple_backend_database" }

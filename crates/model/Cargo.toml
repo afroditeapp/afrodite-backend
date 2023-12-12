@@ -19,4 +19,5 @@ base64 = "0.21.0"
 
 thiserror = "1.0.37"
 
-utils = { path = "../utils"}
+simple_backend_utils = { path = "../simple_backend_utils"}
+simple_backend_model = { path = "../simple_backend_model"}

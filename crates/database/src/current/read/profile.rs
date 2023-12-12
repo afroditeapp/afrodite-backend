@@ -3,7 +3,8 @@ use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, LocationIndexKey, ProfileInternal, Location, schema::profile_location, AccountIdDb};
 
 
-use crate::diesel::{ConnectionProvider, DieselDatabaseError};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 

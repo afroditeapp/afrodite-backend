@@ -5,11 +5,11 @@ use model::{
     MediaContentType, Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
     ModerationRequestState, PrimaryImage,
 };
+use simple_backend_database::diesel_db::{DieselDatabaseError, DieselConnection};
 
 
 use super::{media::CurrentSyncWriteMedia, ConnectionProvider};
 use crate::{
-    diesel::{DieselConnection, DieselDatabaseError},
     IntoDatabaseError, TransactionError,
 };
 
@@ -36,7 +36,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         moderator_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
         let mut moderations = self
-            .cmds
             .read()
             .media_admin()
             .get_in_progress_moderations(moderator_id)?;
@@ -68,7 +67,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         // is implemented.
 
         let id = self
-            .cmds
             .read()
             .media_admin()
             .get_next_active_moderation_request(0, moderator_id)?;
@@ -91,7 +89,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         // request. Should that be prevented?
 
         let (content, queue_number, request_creator_id) = self
-            .cmds
             .read()
             .media()
             .get_moderation_request_content(target_id)?;
@@ -136,15 +133,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     ) -> Result<(), DieselDatabaseError> {
         //let conn = self.conn();
         let request = self
-            .cmds
             .read()
             .media()
             .moderation_request(moderation_request_owner)?
             .ok_or(DieselDatabaseError::MissingModerationRequest)?;
 
         let currently_selected_images =
-            //Self::read(conn)
-            self.cmds.read()
+            self.read()
                 .media()
                 .current_account_media(moderation_request_owner)?;
 
@@ -156,8 +151,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         };
 
         let content =
-            //Self::read(conn)
-            self.cmds.read()
+            self.read()
                 .media_admin()
                 .moderation(moderation_id)?;
 

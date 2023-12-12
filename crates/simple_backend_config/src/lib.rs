@@ -19,12 +19,11 @@ use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
 
-use self::{
+use self::
     file::{
-        AppManagerConfig, ConfigFile,
+        AppManagerConfig, SimpleBackendConfigFile,
         LitestreamConfig, MediaBackupConfig, SignInWithGoogleConfig, SocketConfig,
-    },
-};
+    };
 
 /// Config file debug mode status.
 ///
@@ -43,7 +42,7 @@ impl GlobalDebugFlag {
     }
 }
 
-pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
+pub use self::file::ConfigFileError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetConfigError {
@@ -67,11 +66,13 @@ pub enum GetConfigError {
     InvalidConfiguration,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SimpleBackendConfig {
-    file: ConfigFile,
+    file: SimpleBackendConfigFile,
 
+    /// Backend version with git commit ID and other info.
     backend_code_version: String,
+    /// Semver version of the backend.
     backend_semver_version: String,
 
     // Server related configs
@@ -110,12 +111,8 @@ impl SimpleBackendConfig {
     /// * Swagger UI is enabled.
     /// * Internal API is available also at same port as the public API.
     /// * Disabling HTTPS is possbile.
-    /// * Completing initial setup will check only email when adding admin capabilities.
-    ///   Normally it also requires Google Account ID.
-    /// * Routes for only related to benchmarking are available.
     /// * SQLite in RAM mode is allowed.
     /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.
-    /// * Axum JSON extractor shows errors.
     pub fn debug_mode(&self) -> bool {
         self.file.debug.unwrap_or(false)
     }
@@ -173,7 +170,7 @@ pub fn get_config(
 ) -> Result<SimpleBackendConfig, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let file_config =
-        file::ConfigFile::load(&current_dir).change_context(GetConfigError::LoadFileError)?;
+        file::SimpleBackendConfigFile::load(&current_dir).change_context(GetConfigError::LoadFileError)?;
 
     let data_dir = if let Some(dir) = args_config.data_dir {
         dir

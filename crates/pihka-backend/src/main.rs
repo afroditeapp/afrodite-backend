@@ -9,8 +9,9 @@ pub mod args;
 use std::process::exit;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
-use config::{get_config, args::{AppMode, ImageProcessMode}};
+use config::{get_config, args::{AppMode}};
 use server::PihkaServer;
+use simple_backend_config::args::ImageProcessModeArgs;
 use test_mode::TestRunner;
 
 fn main() {
@@ -44,7 +45,7 @@ fn main() {
 }
 
 
-fn handle_image_process_mode(settings: ImageProcessMode) {
+fn handle_image_process_mode(settings: ImageProcessModeArgs) {
     let settings = image_process::Settings {
         input: settings.input,
         output: settings.output,

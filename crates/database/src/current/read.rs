@@ -1,3 +1,7 @@
+use simple_backend_database::{sqlx_db::SqlxReadHandle, diesel_db::{ConnectionProvider, DieselConnection}, DbReadHandle};
+
+use crate::CurrentReadHandle;
+
 use self::{
     account::{CurrentReadAccount, CurrentSyncReadAccount},
     account_admin::CurrentSyncReadAccountAdmin,
@@ -8,19 +12,15 @@ use self::{
     profile::{CurrentReadProfile, CurrentSyncReadProfile},
     profile_admin::CurrentSyncReadProfileAdmin, common::CurrentSyncReadCommon,
 };
-use crate::{
-    diesel::{ConnectionProvider, DieselConnection},
-    sqlite::SqlxReadHandle,
-};
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
         pub struct $struct_name<'a> {
-            cmds: &'a crate::current::read::SqliteReadCommands<'a>,
+            cmds: &'a crate::current::read::CurrentReadCommands<'a>,
         }
 
         impl<'a> $struct_name<'a> {
-            pub fn new(cmds: &'a crate::current::read::SqliteReadCommands<'a>) -> Self {
+            pub fn new(cmds: &'a crate::current::read::CurrentReadCommands<'a>) -> Self {
                 Self { cmds }
             }
 
@@ -29,16 +29,21 @@ macro_rules! define_read_commands {
             }
         }
 
-        pub struct $sync_name<C: crate::diesel::ConnectionProvider> {
+        pub struct $sync_name<C: simple_backend_database::diesel_db::ConnectionProvider> {
             cmds: C,
         }
 
-        impl<C: crate::diesel::ConnectionProvider> $sync_name<C> {
+        impl<C: simple_backend_database::diesel_db::ConnectionProvider> $sync_name<C> {
             pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&mut self) -> &mut crate::diesel::DieselConnection {
+
+            fn cmds(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
+                crate::current::read::CurrentSyncReadCommands::new(self.conn())
+            }
+
+            pub fn conn(&mut self) -> &mut simple_backend_database::diesel_db::DieselConnection {
                 self.cmds.conn()
             }
         }
@@ -55,13 +60,13 @@ pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
 
-pub struct SqliteReadCommands<'a> {
+pub struct CurrentReadCommands<'a> {
     pub handle: &'a SqlxReadHandle,
 }
 
-impl<'a> SqliteReadCommands<'a> {
-    pub fn new(handle: &'a SqlxReadHandle) -> Self {
-        Self { handle }
+impl<'a> CurrentReadCommands<'a> {
+    pub fn new(handle: &'a CurrentReadHandle) -> Self {
+        Self { handle: handle.0.sqlx() }
     }
 
     pub fn account(&self) -> CurrentReadAccount<'_> {
@@ -166,5 +171,12 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
 
     pub fn common(&mut self) -> CurrentSyncReadCommon<&mut DieselConnection> {
         CurrentSyncReadCommon::new(self.conn())
+    }
+}
+
+
+trait ReadFromConn: ConnectionProvider {
+    fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
+        crate::current::read::CurrentSyncReadCommands::new(self.conn())
     }
 }

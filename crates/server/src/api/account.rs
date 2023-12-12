@@ -4,6 +4,7 @@ use model::{
     BooleanSetting, DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
     SignInWithLoginInfo, EventToClient, EventToClientInternal, AccountData,
 };
+use simple_backend::app::SignInWith;
 use tracing::error;
 
 use crate::{event, perf::ACCOUNT};
@@ -11,8 +12,9 @@ use crate::{event, perf::ACCOUNT};
 use super::{
     db_write,
     utils::{Json, StatusCode},
-    GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, SignInWith, WriteData, EventManagerProvider,
 };
+
+use crate::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData, EventManagerProvider};
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -380,7 +382,7 @@ pub async fn post_complete_setup<
                 account.add_admin_capablities();
             }
         } else {
-            if let Some(sign_in_with_config) = state.config().sign_in_with_google_config() {
+            if let Some(sign_in_with_config) = state.config().simple_backend().sign_in_with_google_config() {
                 if sign_in_with_info.google_account_id
                     == Some(model::GoogleAccountId(
                         sign_in_with_config.admin_google_account_id.clone(),

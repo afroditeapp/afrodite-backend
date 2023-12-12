@@ -1,3 +1,4 @@
+use simple_backend_database::{sqlx_db::{SqlxReadHandle, SqlxWriteHandle}, diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError}};
 use sqlx::SqlitePool;
 
 use self::{
@@ -8,9 +9,7 @@ use self::{
     profile::{CurrentSyncWriteProfile, CurrentWriteProfile}, common::CurrentSyncWriteCommon,
 };
 use crate::{
-    diesel::{ConnectionProvider, DieselConnection, DieselDatabaseError},
-    sqlite::CurrentDataWriteHandle,
-    TransactionError,
+    TransactionError, CurrentWriteHandle,
 };
 
 macro_rules! define_write_commands {
@@ -24,25 +23,21 @@ macro_rules! define_write_commands {
                 Self { cmds }
             }
 
-            pub fn read(&self) -> crate::current::read::SqliteReadCommands<'a> {
-                self.cmds.handle.read()
-            }
-
             pub fn pool(&self) -> &'a sqlx::SqlitePool {
                 self.cmds.handle.pool()
             }
         }
 
-        pub struct $sync_name<C: crate::diesel::ConnectionProvider> {
+        pub struct $sync_name<C: simple_backend_database::diesel_db::ConnectionProvider> {
             cmds: C,
         }
 
-        impl<C: crate::diesel::ConnectionProvider> $sync_name<C> {
+        impl<C: simple_backend_database::diesel_db::ConnectionProvider> $sync_name<C> {
             pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&mut self) -> &mut crate::diesel::DieselConnection {
+            pub fn conn(&mut self) -> &mut simple_backend_database::diesel_db::DieselConnection {
                 self.cmds.conn()
             }
 
@@ -50,14 +45,20 @@ macro_rules! define_write_commands {
             //     self.cmds.conn
             // }
 
-            pub fn cmds(&mut self) -> crate::current::write::CurrentSyncWriteCommands<&mut crate::diesel::DieselConnection> {
+            pub fn cmds(&mut self) -> crate::current::write::CurrentSyncWriteCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
                 crate::current::write::CurrentSyncWriteCommands::new(self.conn())
             }
 
-            pub fn read(
-                conn: &mut crate::diesel::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<&mut crate::diesel::DieselConnection> {
+            pub fn read_conn(
+                conn: &mut simple_backend_database::diesel_db::DieselConnection,
+            ) -> crate::current::read::CurrentSyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
                 crate::current::read::CurrentSyncReadCommands::new(conn)
+            }
+
+            pub fn read(
+                &mut self,
+            ) -> crate::current::read::CurrentSyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
+                crate::current::read::CurrentSyncReadCommands::new(self.conn())
             }
         }
     };
@@ -75,12 +76,12 @@ pub mod profile_admin;
 
 #[derive(Clone, Debug)]
 pub struct CurrentWriteCommands<'a> {
-    handle: &'a CurrentDataWriteHandle,
+    handle: &'a SqlxWriteHandle,
 }
 
 impl<'a> CurrentWriteCommands<'a> {
-    pub fn new(handle: &'a CurrentDataWriteHandle) -> Self {
-        Self { handle }
+    pub fn new(handle: &'a CurrentWriteHandle) -> Self {
+        Self { handle: handle.0.sqlx() }
     }
 
     pub fn account(&'a self) -> CurrentWriteAccount<'a> {
@@ -139,8 +140,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
 
     pub fn read(
         &mut self,
-    ) -> crate::current::read::CurrentSyncReadCommands<&mut crate::diesel::DieselConnection> {
-        self.conn.read()
+    ) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
+        crate::current::read::CurrentSyncReadCommands::new(self.conn.conn())
     }
 
     pub fn write(&mut self) -> &mut C {

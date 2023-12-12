@@ -3,8 +3,8 @@
 use axum::extract::Path;
 use model::{AccountId, BooleanSetting};
 
-use super::{GetAccessTokens, GetConfig, WriteData};
-use crate::api::{utils::StatusCode, GetAccounts, GetInternalApi, ReadData};
+use super::super::app::{GetAccessTokens, GetConfig, WriteData, GetAccounts, GetInternalApi, ReadData};
+use crate::api::{utils::StatusCode};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";

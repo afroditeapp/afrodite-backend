@@ -2,17 +2,17 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use config::Config;
 use database::{
-    current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
+    current::read::{CurrentSyncReadCommands, CurrentReadCommands}, CurrentReadHandle,
 };
 use error_stack::{ResultExt, Result};
 use model::{
     AccessToken, Account, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, schema::profile_location, ProfileLink, Capabilities, AccountState, SharedState,
 };
+use simple_backend_database::{DbReadHandle, diesel_db::{DieselConnection, DieselDatabaseError}};
+use simple_backend_utils::{ComponentError, IntoReportFromString};
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing::info;
-use utils::{ComponentError,  IntoReportFromString};
 
 use crate::{data::index::LocationIndexWriteHandle, event::EventMode};
 
@@ -74,11 +74,12 @@ pub struct DatabaseCache {
 
 impl DatabaseCache {
     pub async fn new(
-        read: SqliteReadCommands<'_>,
-        read_diesel: DieselCurrentReadHandle,
+        current_db: &CurrentReadHandle,
         location_index: &LocationIndexManager,
         config: &Config,
     ) -> Result<Self, CacheError> {
+        let read = current_db.sqlx_cmds();
+
         let cache = Self {
             access_tokens: RwLock::new(HashMap::new()),
             accounts: RwLock::new(HashMap::new()),
@@ -96,7 +97,7 @@ impl DatabaseCache {
                 .load_account_from_db(
                     id,
                     &config,
-                    &read_diesel,
+                    &current_db,
                     LocationIndexIteratorHandle::new(location_index),
                     LocationIndexWriteHandle::new(location_index),
                 )
@@ -117,7 +118,7 @@ impl DatabaseCache {
         &self,
         account_id: AccountIdInternal,
         config: &Config,
-        read_diesel: &DieselCurrentReadHandle,
+        current_db: &CurrentReadHandle,
         index_iterator: LocationIndexIteratorHandle<'_>,
         index_writer: LocationIndexWriteHandle<'_>,
     ) -> Result<(), CacheError> {
@@ -130,7 +131,7 @@ impl DatabaseCache {
             .get(&account_id.as_id())
             .ok_or(CacheError::KeyNotExists.report())?;
 
-        let access_token = db_read(&read_diesel, move |mut cmds| {
+        let access_token = db_read(current_db, move |mut cmds| {
             cmds.account().access_token(account_id)
         })
         .await?;
@@ -147,12 +148,12 @@ impl DatabaseCache {
         let mut entry = account_entry.cache.write().await;
 
         // Common
-        let capabilities = db_read(&read_diesel, move |mut cmds| {
+        let capabilities = db_read(current_db, move |mut cmds| {
             cmds.common().account_capabilities(account_id)
         })
         .await?;
         entry.capabilities = capabilities;
-        let state = db_read(&read_diesel, move |mut cmds| {
+        let state = db_read(current_db, move |mut cmds| {
             cmds.common().shared_state(account_id)
         })
         .await?;
@@ -163,11 +164,11 @@ impl DatabaseCache {
         }
 
         if config.components().profile {
-            let profile = db_read(&read_diesel, move |mut cmds| {
+            let profile = db_read(current_db, move |mut cmds| {
                 cmds.profile().profile(account_id)
             })
             .await?;
-            let profile_location = db_read(&read_diesel, move |mut cmds| {
+            let profile_location = db_read(current_db, move |mut cmds| {
                 cmds.profile().profile_location(account_id)
             })
             .await?;
@@ -187,7 +188,7 @@ impl DatabaseCache {
             //       Update: simple solution for now, when also account server
             //       mode is enabled then use the visibility value from account.
             if config.components().account {
-                let account = db_read(&read_diesel, move |mut cmds| {
+                let account = db_read(current_db, move |mut cmds| {
                     cmds.account().account(account_id)
                 })
                 .await?;
@@ -444,10 +445,12 @@ async fn db_read<
         + 'static,
     R: Send + 'static,
 >(
-    read: &DieselCurrentReadHandle,
+    read: &CurrentReadHandle,
     cmd: T,
 ) -> Result<R, CacheError> {
     let conn = read
+        .0
+        .diesel()
         .pool()
         .get()
         .await

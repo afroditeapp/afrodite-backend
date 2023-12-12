@@ -15,5 +15,7 @@ test_mode = { path = "../test_mode" }
 server = { path = "../server" }
 image_process = { path = "../image_process" }
 
+simple_backend_config = { path = "../simple_backend_config" }
+
 [build-dependencies]
 vergen = { version = "8.0.0", features = ["cargo", "git", "gitcl", "rustc"] }

@@ -8,16 +8,15 @@ use database::{
         read::CurrentSyncReadCommands,
         write::{CurrentSyncWriteCommands, TransactionConnection},
     },
-    diesel::{
-        DieselConnection, DieselCurrentWriteHandle, DieselDatabaseError, DieselHistoryWriteHandle,
-    },
     history::write::{HistorySyncWriteCommands, HistoryWriteCommands},
-    sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
-    PoolObject, TransactionError,
+    TransactionError, CurrentWriteHandle, HistoryWriteHandle,
 };
 use error_stack::{Result, ResultExt};
 use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo, SharedStateInternal, AccountInternal};
-use utils::{ IntoReportFromString};
+use simple_backend::media_backup::MediaBackupHandle;
+use simple_backend_database::{diesel_db::{DieselConnection, DieselDatabaseError}, PoolObject};
+use simple_backend_utils::IntoReportFromString;
+
 
 use self::{
     account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
@@ -31,7 +30,7 @@ use super::{
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
     IntoDataError,
 };
-use crate::{data::DataError, media_backup::MediaBackupHandle};
+use crate::{data::DataError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -45,13 +44,13 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
-            fn current_write(&self) -> &database::sqlite::CurrentDataWriteHandle {
-                &self.cmds.current_write
+            fn current_write(&self) -> &database::CurrentWriteHandle {
+                &self.cmds.current_write_handle
             }
 
             #[allow(dead_code)]
-            fn history_write(&self) -> &database::sqlite::HistoryWriteHandle {
-                &self.cmds.history_write
+            fn history_write(&self) -> &database::HistoryWriteHandle {
+                &self.cmds.history_write_handle
             }
 
             #[allow(dead_code)]
@@ -75,7 +74,7 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
-            fn media_backup(&self) -> &crate::media_backup::MediaBackupHandle {
+            fn media_backup(&self) -> &simple_backend::media_backup::MediaBackupHandle {
                 &self.cmds.media_backup
             }
 
@@ -93,10 +92,10 @@ macro_rules! define_write_commands {
             pub async fn db_write<
                 T: FnOnce(
                         database::current::write::CurrentSyncWriteCommands<
-                            &mut database::diesel::DieselConnection,
+                            &mut simple_backend_database::diesel_db::DieselConnection,
                         >,
                     )
-                        -> error_stack::Result<R, database::diesel::DieselDatabaseError>
+                        -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
                     + Send
                     + 'static,
                 R: Send + 'static,
@@ -110,10 +109,10 @@ macro_rules! define_write_commands {
             #[track_caller]
             pub async fn db_transaction<
                 T: FnOnce(
-                        &mut database::diesel::DieselConnection,
+                        &mut simple_backend_database::diesel_db::DieselConnection,
                     ) -> std::result::Result<
                         R,
-                        database::TransactionError<database::diesel::DieselDatabaseError>,
+                        database::TransactionError<simple_backend_database::diesel_db::DieselDatabaseError>,
                     > + Send
                     + 'static,
                 R: Send + 'static,
@@ -128,10 +127,10 @@ macro_rules! define_write_commands {
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<
-                            &mut database::diesel::DieselConnection,
+                            &mut simple_backend_database::diesel_db::DieselConnection,
                         >,
                     )
-                        -> error_stack::Result<R, database::diesel::DieselDatabaseError>
+                        -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
                     + Send
                     + 'static,
                 R: Send + 'static,
@@ -176,10 +175,8 @@ pub struct AccountWriteLock;
 /// Globally synchronous write commands.
 pub struct WriteCommands<'a> {
     config: &'a Arc<Config>,
-    current_write: &'a CurrentDataWriteHandle,
-    history_write: &'a HistoryWriteHandle,
-    diesel_current_write: &'a DieselCurrentWriteHandle,
-    diesel_history_write: &'a DieselHistoryWriteHandle,
+    current_write_handle: &'a CurrentWriteHandle,
+    history_write_handle: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     location_index: &'a LocationIndexManager,
@@ -189,10 +186,8 @@ pub struct WriteCommands<'a> {
 impl<'a> WriteCommands<'a> {
     pub fn new(
         config: &'a Arc<Config>,
-        current_write: &'a CurrentDataWriteHandle,
-        history_write: &'a HistoryWriteHandle,
-        diesel_current_write: &'a DieselCurrentWriteHandle,
-        diesel_history_write: &'a DieselHistoryWriteHandle,
+        current_write_handle: &'a CurrentWriteHandle,
+        history_write_handle: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         location_index: &'a LocationIndexManager,
@@ -200,10 +195,8 @@ impl<'a> WriteCommands<'a> {
     ) -> Self {
         Self {
             config,
-            current_write,
-            history_write,
-            diesel_current_write,
-            diesel_history_write,
+            current_write_handle,
+            history_write_handle,
             cache,
             file_dir,
             location_index,
@@ -269,7 +262,7 @@ impl<'a> WriteCommands<'a> {
             .load_account_from_db(
                 id,
                 &self.config,
-                &self.diesel_current_write.to_read_handle(),
+                &self.current_write_handle.to_read_handle(),
                 LocationIndexIteratorHandle::new(&self.location_index),
                 LocationIndexWriteHandle::new(&self.location_index),
             )
@@ -348,7 +341,9 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> Result<R, DataError> {
         let conn = self
-            .diesel_current_write
+            .current_write_handle
+            .0
+            .diesel()
             .pool()
             .get()
             .await
@@ -365,7 +360,7 @@ impl<'a> WriteCommands<'a> {
     #[track_caller]
     pub async fn db_transaction<
         T: FnOnce(
-                &mut database::diesel::DieselConnection,
+                &mut simple_backend_database::diesel_db::DieselConnection,
             ) -> std::result::Result<R, TransactionError<DieselDatabaseError>>
             + Send
             + 'static,
@@ -375,7 +370,9 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> Result<R, DataError> {
         let conn = self
-            .diesel_current_write
+            .current_write_handle
+            .0
+            .diesel()
             .pool()
             .get()
             .await
@@ -403,7 +400,9 @@ impl<'a> WriteCommands<'a> {
             + 'static,
     {
         let conn = self
-            .diesel_current_write
+            .current_write_handle
+            .0
+            .diesel()
             .pool()
             .get()
             .await
@@ -411,7 +410,9 @@ impl<'a> WriteCommands<'a> {
             .change_context(DataError::Diesel)?;
 
         let conn_history = self
-            .diesel_history_write
+            .history_write_handle
+            .0
+            .diesel()
             .pool()
             .get()
             .await
@@ -441,7 +442,9 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> Result<R, DataError> {
         let conn = self
-            .diesel_current_write
+            .current_write_handle
+            .0
+            .diesel()
             .pool()
             .get()
             .await

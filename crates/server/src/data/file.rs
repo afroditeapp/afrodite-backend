@@ -2,7 +2,7 @@
 
 // TODO: Remove all git related code
 
-use ::utils::ComponentError;
+use simple_backend_utils::ComponentError;
 use tokio::sync::mpsc;
 
 pub mod file;

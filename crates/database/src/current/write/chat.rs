@@ -4,10 +4,11 @@ use model::{
     AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
     SignInWithInfo, AccountInteractionInternal, schema::{account_interaction_index, account_interaction::account_id_sender}, PendingMessageId, SendMessageToAccount, AccountInteractionState,
 };
-use utils::current_unix_time;
+use simple_backend_utils::current_unix_time;
 
-use crate::{diesel::{ConnectionProvider, DieselDatabaseError}, IntoDatabaseError, current::read::SqliteReadCommands, TransactionError};
+use crate::{IntoDatabaseError, current::read::{CurrentReadCommands, CurrentSyncReadCommands}, TransactionError};
 
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use super::CurrentSyncWriteCommands;
 
 
@@ -73,7 +74,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         account2: AccountIdInternal,
     ) -> Result<AccountInteractionInternal, DieselDatabaseError> {
         let value = self.conn().transaction(|mut conn| {
-            let interaction = conn.read().chat().account_interaction(account1, account2)?;
+            let interaction = CurrentSyncReadCommands::new(conn.conn()).chat().account_interaction(account1, account2)?;
             match interaction {
                 Some(interaction) => Ok(interaction),
                 None => {

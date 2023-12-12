@@ -1,16 +1,16 @@
 use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Profile};
-use utils::{current_unix_time, };
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+use simple_backend_utils::{current_unix_time, };
 
 use crate::{
-    diesel::{DieselDatabaseError, HistoryConnectionProvider},
     IntoDatabaseError,
 };
 
 define_write_commands!(HistoryWriteProfile, HistorySyncWriteProfile);
 
-impl<C: HistoryConnectionProvider> HistorySyncWriteProfile<C> {
+impl<C: ConnectionProvider> HistorySyncWriteProfile<C> {
     pub fn insert_profile(
         &mut self,
         account_id_internal: AccountIdInternal,

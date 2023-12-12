@@ -5,12 +5,12 @@ use std::path::Path;
 use error_stack::{Result, ResultExt};
 use model::{BotConfig, BackendConfig};
 use serde::{Deserialize, Serialize};
-use toml_edit::{Document, Item, Value};
+use simple_backend_config::file::ConfigFileUtils;
+use toml_edit::{Document, Item};
 
-use crate::{file::{ConfigFile, ConfigFileError, ConfigFileUtils}};
+use crate::file::ConfigFileError;
 
 pub const CONFIG_FILE_DYNAMIC_NAME: &str = "server_config_dynamic.toml";
-
 
 pub const DEFAULT_CONFIG_FILE_DYNAMIC_TEXT: &str = r#"
 
@@ -38,7 +38,8 @@ impl ConfigFileDynamic {
             dir,
             CONFIG_FILE_DYNAMIC_NAME,
             DEFAULT_CONFIG_FILE_DYNAMIC_TEXT,
-        )?;
+        )
+            .change_context(ConfigFileError::SimpleBackendError)?;
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 
@@ -56,7 +57,7 @@ impl ConfigFileDynamic {
             &dir,
             CONFIG_FILE_DYNAMIC_NAME,
             DEFAULT_CONFIG_FILE_DYNAMIC_TEXT,
-        )?;
+        ).change_context(ConfigFileError::SimpleBackendError)?;
 
         let mut config_document = config
             .parse::<Document>()

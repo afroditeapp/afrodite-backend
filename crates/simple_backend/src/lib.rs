@@ -88,7 +88,10 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     /// Callback for doing something before server start
     ///
     /// For example databases can be opened here.
-    async fn on_before_server_start(&mut self, media_backup_handle: MediaBackupHandle) {}
+    async fn on_before_server_start(
+        &mut self,
+        media_backup_handle: MediaBackupHandle
+    ) -> Self::AppState;
 
     /// Callback for doing something after server has been started
     async fn on_after_server_start(&mut self) {}
@@ -99,10 +102,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     /// Callback for doing something after server has quit
     ///
     /// For example databases can be closed here.
-    async fn on_after_server_quit(&mut self) {}
-
-    /// Get business logic related app state (available in route handlers)
-    fn state(&self) -> Self::AppState;
+    async fn on_after_server_quit(self) {}
 }
 
 pub struct SimpleBackend<T: BusinessLogic> {
@@ -111,10 +111,10 @@ pub struct SimpleBackend<T: BusinessLogic> {
 }
 
 impl <T: BusinessLogic> SimpleBackend<T> {
-    pub fn new(logic: T, config: SimpleBackendConfig) -> Self {
+    pub fn new(logic: T, config: Arc<SimpleBackendConfig>) -> Self {
         Self {
             logic,
-            config: config.into(),
+            config,
         }
     }
 
@@ -157,7 +157,6 @@ impl <T: BusinessLogic> SimpleBackend<T> {
 
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
 
-
         let (media_backup_quit, media_backup_handle) =
             MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
 
@@ -169,7 +168,7 @@ impl <T: BusinessLogic> SimpleBackend<T> {
                 server_quit_watcher.resubscribe()
             );
 
-        self.logic.on_before_server_start(media_backup_handle).await;
+        let logic_app_state = self.logic.on_before_server_start(media_backup_handle).await;
         // let (database_manager, router_database_handle, router_database_write_handle) =
         //     DatabaseManager::new(
         //         self.config.data_dir().to_path_buf(),
@@ -185,14 +184,10 @@ impl <T: BusinessLogic> SimpleBackend<T> {
         // let (write_cmd_runner_handle, write_cmd_waiter) =
         //     WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config);
 
-        let mut app = App::new(
-            // router_database_handle,
-            // router_database_write_handle,
-            // write_cmd_runner_handle,
+        let app = App::new(
             self.config.clone(),
             perf_data,
-            self.logic.state(),
-
+            logic_app_state,
         )
         .await
         .expect("App init failed");
@@ -232,8 +227,6 @@ impl <T: BusinessLogic> SimpleBackend<T> {
 
         drop(app);
         perf_manager_quit_handle.wait_quit().await;
-        // write_cmd_waiter.wait_untill_all_writing_ends().await;
-        // database_manager.close().await;
         media_backup_quit.wait_quit().await;
         self.logic.on_after_server_quit().await;
 

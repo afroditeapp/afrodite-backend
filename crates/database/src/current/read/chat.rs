@@ -9,10 +9,10 @@ use model::{
 use tokio_stream::StreamExt;
 
 use crate::{
-    diesel::{ConnectionProvider, DieselDatabaseError},
-    sqlite::SqliteDatabaseError,
     IntoDatabaseError, current::write::account,
 };
+
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 define_read_commands!(CurrentReadChat, CurrentSyncReadChat);
 

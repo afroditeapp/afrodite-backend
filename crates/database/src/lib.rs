@@ -4,20 +4,65 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod current;
-pub mod diesel;
 pub mod history;
-pub mod sqlite;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use config::RUNNING_IN_DEBUG_MODE;
+use current::{write::{CurrentWriteCommands, CurrentSyncWriteCommands}, read::CurrentReadCommands};
+use diesel_migrations::{EmbeddedMigrations, embed_migrations};
+use history::{read::HistoryReadCommands, write::HistoryWriteCommands};
+use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use error_stack::{Context, ResultExt, Result};
 pub use model::schema;
-use model::IsLoggingAllowed;
+use model::{IsLoggingAllowed, Db};
+use simple_backend_database::{diesel_db::{DieselDatabaseError, DieselConnection}, DbWriteHandle, DbReadHandle};
 
-use crate::diesel::DieselDatabaseError;
+pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
-pub type PoolObject = deadpool_diesel::sqlite::Connection;
+
+/// Write handle for current database.
+#[derive(Clone, Debug)]
+pub struct CurrentWriteHandle(pub DbWriteHandle);
+
+impl CurrentWriteHandle {
+    pub fn sqlx_cmds(&self) -> CurrentWriteCommands {
+        CurrentWriteCommands::new(self)
+    }
+
+    pub fn to_read_handle(&self) -> CurrentReadHandle {
+        CurrentReadHandle(self.0.to_read_handle())
+    }
+}
+
+/// Read handle for current database.
+#[derive(Debug, Clone)]
+pub struct CurrentReadHandle(pub DbReadHandle);
+
+impl CurrentReadHandle {
+    pub fn sqlx_cmds(&self) -> CurrentReadCommands {
+        CurrentReadCommands::new(self)
+    }
+}
+
+/// Write handle for current database.
+#[derive(Clone, Debug)]
+pub struct HistoryWriteHandle(pub DbWriteHandle);
+
+impl HistoryWriteHandle {
+    pub fn sqlx_cmds(&self) -> HistoryWriteCommands {
+        HistoryWriteCommands::new(self)
+    }
+}
+
+/// Read handle for current database.
+#[derive(Clone, Debug)]
+pub struct HistoryReadHandle(pub DbReadHandle);
+
+impl HistoryReadHandle {
+    pub fn sqlx_cmds(&self) -> HistoryReadCommands {
+        HistoryReadCommands::new(self)
+    }
+}
 
 pub struct ErrorContext<T, Ok> {
     pub force_debug_print: bool,
@@ -106,27 +151,27 @@ pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
     }
 }
 
-impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
+impl<Ok> IntoDatabaseError<DieselDatabaseError>
     for std::result::Result<Ok, ::diesel::result::Error>
 {
 }
 
-impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
+impl<Ok> IntoDatabaseError<DieselDatabaseError>
     for std::result::Result<Ok, ::serde_json::error::Error>
 {
 }
 
-impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
-    for std::result::Result<Ok, crate::diesel::DieselDatabaseError>
+impl<Ok> IntoDatabaseError<DieselDatabaseError>
+    for std::result::Result<Ok, DieselDatabaseError>
 {
 }
 
-impl<Ok> IntoDatabaseError<crate::diesel::DieselDatabaseError>
+impl<Ok> IntoDatabaseError<DieselDatabaseError>
     for std::result::Result<Ok, model::account::AccountStateError>
 {
 }
 
-impl<Ok> IntoDatabaseError<crate::sqlite::SqliteDatabaseError>
+impl<Ok> IntoDatabaseError<simple_backend_database::sqlx_db::SqliteDatabaseError>
     for std::result::Result<Ok, ::sqlx::Error>
 {
 }

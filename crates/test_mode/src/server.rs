@@ -5,13 +5,14 @@ use std::{
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig, SocketConfig,
+        Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig,
         CONFIG_FILE_NAME,
     },
     Config,
 };
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
+use simple_backend_config::file::{SimpleBackendConfigFile, DataConfig, SocketConfig, SqliteDatabase};
 use tokio::process::Child;
 use tracing::info;
 
@@ -147,34 +148,47 @@ fn new_config(
     internal_api: SocketAddrV4,
     components: Components,
     external_services: Option<ExternalServices>,
-) -> ConfigFile {
-    ConfigFile {
-        debug: Some(true),
+) -> (ConfigFile, SimpleBackendConfigFile) {
+    let config = ConfigFile {
         admin_email: "admin@example.com".to_string(),
         components,
-        database: config::file::DatabaseConfig {
-            dir: "database_dir".into(),
-        },
-        socket: SocketConfig {
-            public_api: public_api.into(),
-            internal_api: internal_api.into(),
-        },
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             DEFAULT_LOCATION_CONFIG_BENCHMARK
         } else {
             DEFAULT_LOCATION_CONFIG
         }.into(),
         external_services,
+        internal_api: Some(InternalApiConfig { bot_login: true }),
+        queue_limits: None,
+        bots: None,
+    };
+
+    let simple_backend_config = SimpleBackendConfigFile {
+        debug: Some(true),
+        data: DataConfig {
+            dir: "database_dir".into(),
+            sqlite: vec![
+                SqliteDatabase {
+                    name: "current".into(),
+                },
+                SqliteDatabase {
+                    name: "history".into(),
+                },
+            ],
+        },
+        socket: SocketConfig {
+            public_api: public_api.into(),
+            internal_api: internal_api.into(),
+        },
         sign_in_with_google: None,
         manager: None,
         tls: None,
-        internal_api: Some(InternalApiConfig { bot_login: true }),
         media_backup: None,
         litestream: None,
-        queue_limits: None,
         tile_map: None,
-        bots: None,
-    }
+    };
+
+    (config, simple_backend_config)
 }
 
 pub struct ServerInstance {
@@ -186,7 +200,7 @@ impl ServerInstance {
     pub fn new(
         dir: PathBuf,
         all_config: &Config,
-        server_config: ConfigFile,
+        (server_config, simple_backend_config): (ConfigFile, SimpleBackendConfigFile),
         args_config: &TestMode,
     ) -> Self {
         let id = uuid::Uuid::new_v4();
@@ -200,6 +214,9 @@ impl ServerInstance {
 
         let config = toml::to_string_pretty(&server_config).unwrap();
         std::fs::write(dir.join(CONFIG_FILE_NAME), config).unwrap();
+
+        let config = toml::to_string_pretty(&simple_backend_config).unwrap();
+        std::fs::write(dir.join(simple_backend_config::file::CONFIG_FILE_NAME), config).unwrap();
 
         let start_cmd = env::args().next().unwrap();
         let start_cmd = std::fs::canonicalize(&start_cmd).unwrap();
@@ -222,7 +239,7 @@ impl ServerInstance {
             .env("RUST_LOG", log_value)
             .process_group(0);
 
-        if all_config.sqlite_in_ram() {
+        if all_config.simple_backend().sqlite_in_ram() {
             command.arg("--sqlite-in-ram");
         }
 

@@ -8,11 +8,9 @@ use self::{
     media_admin::{HistorySyncWriteMediaAdmin, HistoryWriteMediaAdmin},
     profile::{HistorySyncWriteProfile, HistoryWriteProfile},
 };
-use crate::{
-    diesel::{DieselConnection, DieselDatabaseError, HistoryConnectionProvider},
-    sqlite::HistoryWriteHandle,
-    TransactionError,
-};
+use crate::{TransactionError, HistoryWriteHandle};
+
+use simple_backend_database::{diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError}, sqlx_db::{SqlxWriteHandle}};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -34,16 +32,16 @@ macro_rules! define_write_commands {
             }
         }
 
-        pub struct $sync_name<C: crate::diesel::HistoryConnectionProvider> {
+        pub struct $sync_name<C: simple_backend_database::diesel_db::ConnectionProvider> {
             cmds: C,
         }
 
-        impl<C: crate::diesel::HistoryConnectionProvider> $sync_name<C> {
+        impl<C: simple_backend_database::diesel_db::ConnectionProvider> $sync_name<C> {
             pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&mut self) -> &mut crate::diesel::DieselConnection {
+            pub fn conn(&mut self) -> &mut simple_backend_database::diesel_db::DieselConnection {
                 self.cmds.conn()
             }
 
@@ -52,8 +50,8 @@ macro_rules! define_write_commands {
             // }
 
             pub fn read(
-                conn: &mut crate::diesel::DieselConnection,
-            ) -> crate::history::read::HistorySyncReadCommands<&mut crate::diesel::DieselConnection>
+                conn: &mut simple_backend_database::diesel_db::DieselConnection,
+            ) -> crate::history::read::HistorySyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection>
             {
                 crate::history::read::HistorySyncReadCommands::new(conn)
             }
@@ -72,12 +70,12 @@ pub mod profile_admin;
 
 #[derive(Clone, Debug)]
 pub struct HistoryWriteCommands<'a> {
-    handle: &'a HistoryWriteHandle,
+    handle: &'a SqlxWriteHandle,
 }
 
 impl<'a> HistoryWriteCommands<'a> {
     pub fn new(handle: &'a HistoryWriteHandle) -> Self {
-        Self { handle }
+        Self { handle: handle.0.sqlx() }
     }
 
     pub fn account(&'a self) -> HistoryWriteAccount<'a> {
@@ -105,11 +103,11 @@ impl<'a> HistoryWriteCommands<'a> {
     }
 }
 
-pub struct HistorySyncWriteCommands<C: HistoryConnectionProvider> {
+pub struct HistorySyncWriteCommands<C: ConnectionProvider> {
     conn: C,
 }
 
-impl<C: HistoryConnectionProvider> HistorySyncWriteCommands<C> {
+impl<C: ConnectionProvider> HistorySyncWriteCommands<C> {
     pub fn new(conn: C) -> Self {
         Self { conn }
     }
@@ -134,9 +132,9 @@ impl<C: HistoryConnectionProvider> HistorySyncWriteCommands<C> {
         HistorySyncWriteChat::new(self.conn)
     }
 
-    pub fn read(&mut self) -> crate::history::read::HistorySyncReadCommands<&mut DieselConnection> {
-        self.conn.read()
-    }
+    // pub fn read(&mut self) -> crate::history::read::HistorySyncReadCommands<&mut DieselConnection> {
+    //     self.conn.read()
+    // }
 
     pub fn write(&mut self) -> &mut C {
         &mut self.conn

@@ -3,11 +3,13 @@ use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ProfileInternal, ProfileUpdateInternal, ProfileVersion, Location,
 };
-use utils::current_unix_time;
+use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::current_unix_time;
 
+
+use crate::IntoDatabaseError;
 
 use super::ConnectionProvider;
-use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 

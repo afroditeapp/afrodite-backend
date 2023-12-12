@@ -4,7 +4,7 @@ use model::{AccountId, AccountIdInternal, HandleModerationRequest, ModerationLis
 use super::{
     db_write,
     utils::{Json, StatusCode},
-    GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData,
+    super::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
 };
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";

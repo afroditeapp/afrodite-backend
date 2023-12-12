@@ -3,21 +3,22 @@ use axum::{
     routing::{get, patch, post, put, delete},
     Router,
 };
+use simple_backend::app::SimpleBackendAppState;
 
 use super::AppState;
 use crate::api::{self};
 
 /// Private routes only accessible when WebSocket is connected.
 pub struct ConnectedApp {
-    state: AppState,
+    state: SimpleBackendAppState<AppState>,
 }
 
 impl ConnectedApp {
-    pub fn new(state: AppState) -> Self {
+    pub fn new(state: SimpleBackendAppState<AppState>) -> Self {
         Self { state }
     }
 
-    pub fn state(&self) -> AppState {
+    pub fn state(&self) -> SimpleBackendAppState<AppState> {
         self.state.clone()
     }
 
@@ -174,7 +175,7 @@ impl ConnectedApp {
                 }),
             );
 
-        let private = if self.state.config.debug_mode() {
+        let private = if self.state.business_logic_state().config.debug_mode() {
             private
                 .route(
                     api::profile::PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK,

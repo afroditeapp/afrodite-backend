@@ -4,10 +4,11 @@ use model::{
     AccessToken, Account, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
     SignInWithInfo, SharedStateInternal, Capabilities, AccountState, SharedState,
 };
+use simple_backend_database::diesel_db::DieselDatabaseError;
 
 
 use super::ConnectionProvider;
-use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
+use crate::{IntoDatabaseError};
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteCommon);
 

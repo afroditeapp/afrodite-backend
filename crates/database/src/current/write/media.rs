@@ -4,11 +4,11 @@ use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, ImageSlot, ModerationQueueNumber,
     ModerationRequestContent, PrimaryImage, QueueNumberRaw,
 };
+use simple_backend_database::diesel_db::{DieselDatabaseError, DieselConnection};
 
 
 use super::ConnectionProvider;
 use crate::{
-    diesel::{DieselConnection, DieselDatabaseError},
     IntoDatabaseError, TransactionError,
 };
 
@@ -167,8 +167,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::media_moderation_request::dsl::*;
 
-        self.cmds
-            .read()
+        self.read()
             .media()
             .content_validate_moderation_request_content(request_creator, &request)?;
 

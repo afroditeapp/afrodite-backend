@@ -44,3 +44,4 @@ api_client = { path = "../api_client" }
 
 utils = { path = "../utils" }
 config = { path = "../config" }
+simple_backend_config = { path = "../simple_backend_config" }

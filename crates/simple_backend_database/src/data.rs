@@ -5,43 +5,12 @@ use std::{
     sync::Arc,
 };
 
-// use database::{
-//     current::read::SqliteReadCommands,
-//     diesel::{
-//         DieselCurrentReadHandle, DieselCurrentWriteHandle, DieselHistoryReadHandle,
-//         DieselHistoryWriteHandle, DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle,
-//         DieselWriteHandle,
-//     },
-//     history::read::HistoryReadCommands,
-//     sqlite::{
-//         CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
-//         SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
-//     },
-//     ErrorContext,
-// };
 use error_stack::{Context, ResultExt, Result};
 // use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use simple_backend_config::{SimpleBackendConfig, file::{DatabaseInfo, SqliteDatabase}};
 use tracing::info;
 
 use crate::{sqlx_db::SqliteDatabaseError, DataError};
-
-// use self::{
-//     cache::{CacheError, DatabaseCache},
-//     file::{read::FileReadCommands, utils::FileDir, FileError},
-//     index::{LocationIndexManager, LocationIndexIteratorHandle},
-//     read::ReadCommands,
-//     utils::{AccessTokenManager, AccountIdManager},
-//     write::{
-//         account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
-//         chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
-//         media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin,
-//         profile::WriteCommandsProfile, profile_admin::WriteCommandsProfileAdmin, WriteCommands,
-//     },
-//     write_concurrent::WriteCommandsConcurrent,
-// };
-// use crate::{internal::InternalApiError, media_backup::MediaBackupHandle, GetConfigError, sqlite::SqliteDatabaseError};
-
 
 pub const FILE_DIR_NAME: &str = "files";
 pub const SQLITE_DIR_NAME: &str = "sqlite";

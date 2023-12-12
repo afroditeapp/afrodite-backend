@@ -6,19 +6,19 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::extract::BodyStream;
 use config::Config;
 use database::{
-    history::write::HistoryWriteCommands,
-    sqlite::{CurrentDataWriteHandle, HistoryWriteHandle},
+    history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle,
 };
 use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentId, ProfileLink};
+use simple_backend::image::ImageProcess;
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
     cache::DatabaseCache, file::utils::FileDir, IntoDataError,
     RouterDatabaseWriteHandle, index::LocationIndexIteratorHandle,
 };
-use crate::{data::DataError, image::ImageProcess};
+use crate::{data::DataError};
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + Sync + 'static>;
 
@@ -220,8 +220,8 @@ impl ConcurrentWriteProfileHandle {
 /// It possible to run this and normal write command concurrently for
 /// one account.
 pub struct WriteCommandsConcurrent<'a> {
-    current_write: &'a CurrentDataWriteHandle,
-    history_write: &'a HistoryWriteHandle,
+    current_write_handle: &'a CurrentWriteHandle,
+    history_write_handle: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     location: LocationIndexIteratorHandle<'a>,
@@ -230,16 +230,16 @@ pub struct WriteCommandsConcurrent<'a> {
 
 impl<'a> WriteCommandsConcurrent<'a> {
     pub fn new(
-        current_write: &'a CurrentDataWriteHandle,
-        history_write: &'a HistoryWriteHandle,
+        current_write_handle: &'a CurrentWriteHandle,
+        history_write_handle: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         location: LocationIndexIteratorHandle<'a>,
         image_processing_queue: &'a Arc<tokio::sync::Semaphore>,
     ) -> Self {
         Self {
-            current_write,
-            history_write,
+            current_write_handle,
+            history_write_handle,
             cache,
             file_dir,
             location,
@@ -348,6 +348,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
     }
 
     fn history(&self) -> HistoryWriteCommands {
-        HistoryWriteCommands::new(&self.history_write)
+        self.history_write_handle.sqlx_cmds()
     }
 }

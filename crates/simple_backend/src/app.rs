@@ -34,15 +34,18 @@ use crate::{map::TileMapManager, perf::PerfCounterManagerData};
 pub struct SimpleBackendAppState<
     T: Clone,
 > {
-    // database: Arc<RouterDatabaseReadHandle>,
-    // write_queue: Arc<WriteCommandRunnerHandle>,
     manager_api: Arc<ManagerApiClient>,
     config: Arc<SimpleBackendConfig>,
     sign_in_with: Arc<SignInWithManager>,
     tile_map: Arc<TileMapManager>,
-    // events: Arc<EventManager>,
     perf_data: Arc<PerfCounterManagerData>,
     business_logic_data: Arc<T>,
+}
+
+impl <T: Clone> SimpleBackendAppState<T> {
+    pub fn business_logic_state(&self) -> &T {
+        &self.business_logic_data
+    }
 }
 
 pub trait SignInWith {
@@ -53,8 +56,8 @@ pub trait GetManagerApi {
     fn manager_api(&self) -> ManagerApiManager;
 }
 
-pub trait GetConfig {
-    fn config(&self) -> &SimpleBackendConfig;
+pub trait GetSimpleBackendConfig {
+    fn simple_backend_config(&self) -> &SimpleBackendConfig;
 }
 
 pub trait GetTileMap {
@@ -77,8 +80,8 @@ impl <T: Clone> GetManagerApi for SimpleBackendAppState<T> {
     }
 }
 
-impl <T: Clone> GetConfig for SimpleBackendAppState<T> {
-    fn config(&self) -> &SimpleBackendConfig {
+impl <T: Clone> GetSimpleBackendConfig for SimpleBackendAppState<T> {
+    fn simple_backend_config(&self) -> &SimpleBackendConfig {
         &self.config
     }
 }
@@ -101,23 +104,15 @@ pub struct App<T: Clone> {
 
 impl <T: Clone> App<T> {
     pub async fn new(
-        // database_handle: RouterDatabaseReadHandle,
-        // _database_write_handle: RouterDatabaseWriteHandle,
-        // write_queue: WriteCommandRunnerHandle,
         config: Arc<SimpleBackendConfig>,
         perf_data: Arc<PerfCounterManagerData>,
         business_logic_state: T,
     ) -> Result<Self, ManagerClientError> {
-
         let state = SimpleBackendAppState {
             config: config.clone(),
-            // database: database.clone(),
-            // write_queue: Arc::new(write_queue),
-            // internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             manager_api: ManagerApiClient::new(&config)?.into(),
             tile_map: TileMapManager::new(&config).into(),
             sign_in_with: SignInWithManager::new(config).into(),
-            // events: EventManager::new(database).into(),
             perf_data,
             business_logic_data: Arc::new(business_logic_state),
         };
@@ -129,6 +124,10 @@ impl <T: Clone> App<T> {
 
     pub fn state(&self) -> SimpleBackendAppState<T> {
         self.state.clone()
+    }
+
+    pub fn into_state(self) -> SimpleBackendAppState<T> {
+        self.state
     }
 
     // pub fn create_common_server_router(&mut self) -> Router {

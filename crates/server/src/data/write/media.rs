@@ -1,6 +1,7 @@
-use database::{current::write::media::CurrentSyncWriteMedia, diesel::DieselDatabaseError};
+use database::{current::write::media::CurrentSyncWriteMedia};
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
+use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::data::DataError;
 
@@ -70,10 +71,13 @@ impl WriteCommandsMedia<'_> {
         })
         .await?;
 
-        self.media_backup()
-            .backup_jpeg_image(id.as_id(), content_id)
-            .await
-            .change_context(DataError::MediaBackup)
+        // TODO: Update media backup code
+        // self.media_backup()
+        //     .backup_jpeg_image(id.as_id(), content_id)
+        //     .await
+        //     .change_context(DataError::MediaBackup)
+
+        Ok(())
     }
 
     pub async fn update_primary_image(

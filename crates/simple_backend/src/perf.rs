@@ -10,7 +10,7 @@ use simple_backend_config::SimpleBackendConfig;
 use tokio::{task::JoinHandle, sync::RwLock};
 use tracing::{error, warn};
 
-use crate::web_socket::ServerQuitWatcher;
+use crate::ServerQuitWatcher;
 
 pub struct PerfCounter {
     name: &'static str,
@@ -109,7 +109,7 @@ pub struct CounterCategory {
 }
 
 impl CounterCategory {
-    const fn new(name: &'static str, counter_list: &'static [&'static PerfCounter]) -> Self {
+    pub const fn new(name: &'static str, counter_list: &'static [&'static PerfCounter]) -> Self {
         Self {
             name, counter_list
         }

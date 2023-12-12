@@ -2,7 +2,7 @@ use std::{fmt, path::PathBuf};
 
 use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
-use diesel::RunQueryDsl;
+use diesel::{RunQueryDsl, SqliteConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use error_stack::{ResultExt, Result};
 use simple_backend_config::{SimpleBackendConfig, file::SqliteDatabase};
@@ -81,42 +81,6 @@ impl DieselWriteCloseHandle {
     /// Call this before closing the server.
     pub async fn close(self) {
         self.pool.close()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DieselCurrentWriteHandle {
-    handle: DieselWriteHandle,
-}
-
-impl DieselCurrentWriteHandle {
-    pub fn new(handle: DieselWriteHandle) -> Self {
-        Self { handle }
-    }
-
-    pub fn pool(&self) -> &DieselPool {
-        &self.handle.pool
-    }
-
-    pub fn to_read_handle(&self) -> DieselCurrentReadHandle {
-        DieselCurrentReadHandle::new(DieselReadHandle {
-            pool: self.pool().clone(),
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DieselHistoryWriteHandle {
-    handle: DieselWriteHandle,
-}
-
-impl DieselHistoryWriteHandle {
-    pub fn new(handle: DieselWriteHandle) -> Self {
-        Self { handle }
-    }
-
-    pub fn pool(&self) -> &DieselPool {
-        &self.handle.pool
     }
 }
 
@@ -224,6 +188,12 @@ impl DieselWriteHandle {
             .ok_or(DieselDatabaseError::SqliteVersionQuery.report())
             .cloned()
     }
+
+    pub fn to_read_handle(&self) -> DieselReadHandle {
+        DieselReadHandle {
+            pool: self.pool.clone(),
+        }
+    }
 }
 
 pub struct DieselReadCloseHandle {
@@ -327,36 +297,6 @@ impl DieselReadHandle {
 
     pub fn pool(&self) -> &DieselPool {
         &self.pool
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DieselCurrentReadHandle {
-    handle: DieselReadHandle,
-}
-
-impl DieselCurrentReadHandle {
-    pub fn new(handle: DieselReadHandle) -> Self {
-        Self { handle }
-    }
-
-    pub fn pool(&self) -> &DieselPool {
-        self.handle.pool()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DieselHistoryReadHandle {
-    handle: DieselReadHandle,
-}
-
-impl DieselHistoryReadHandle {
-    pub fn new(handle: DieselReadHandle) -> Self {
-        Self { handle }
-    }
-
-    pub fn pool(&self) -> &DieselPool {
-        self.handle.pool()
     }
 }
 

@@ -13,8 +13,6 @@ use sqlx::{
 use tracing::log::error;
 use simple_backend_utils::ComponentError;
 
-use super::read::SqliteReadCommands;
-
 pub const DATABASE_FILE_EXTENSION: &str = ".db";
 
 impl ComponentError for SqliteDatabaseError {
@@ -211,6 +209,12 @@ impl SqlxWriteHandle {
             .await
             .change_context(SqliteDatabaseError::Execute)?;
         Ok(version)
+    }
+
+    pub fn to_read_handle(&self) -> SqlxReadHandle {
+        SqlxReadHandle {
+            pool: self.pool.clone(),
+        }
     }
 }
 

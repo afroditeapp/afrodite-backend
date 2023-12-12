@@ -6,8 +6,9 @@ use model::{
 };
 
 
-use super::ConnectionProvider;
-use crate::{diesel::DieselDatabaseError, IntoDatabaseError};
+use simple_backend_database::{diesel_db::{ConnectionProvider, DieselDatabaseError}};
+
+use crate::IntoDatabaseError;
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 

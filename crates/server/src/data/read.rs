@@ -1,12 +1,13 @@
 use database::{
-    current::read::{CurrentSyncReadCommands, SqliteReadCommands},
-    diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
-    sqlite::SqlxReadHandle,
+    current::read::{CurrentSyncReadCommands, CurrentReadCommands}, CurrentReadHandle,
+    // diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
+    // sqlite::SqlxReadHandle,
 };
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, ContentId, MediaContentInternal, ModerationRequest};
+use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use tokio_util::io::ReaderStream;
-use utils::{ IntoReportFromString};
+use simple_backend_utils::{ IntoReportFromString};
 
 use self::{
     account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
@@ -28,8 +29,8 @@ macro_rules! define_read_commands {
             }
 
             #[allow(dead_code)]
-            fn db(&self) -> &database::current::read::SqliteReadCommands<'_> {
-                &self.cmds.db
+            fn db(&self) -> database::current::read::CurrentReadCommands<'_> {
+                self.cmds.db.sqlx_cmds()
             }
 
             #[allow(dead_code)]
@@ -46,10 +47,10 @@ macro_rules! define_read_commands {
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<
-                            &mut database::diesel::DieselConnection,
+                            &mut simple_backend_database::diesel_db::DieselConnection,
                         >,
                     )
-                        -> error_stack::Result<R, database::diesel::DieselDatabaseError>
+                        -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
                     + Send
                     + 'static,
                 R: Send + 'static,
@@ -87,22 +88,19 @@ pub mod profile;
 pub mod profile_admin;
 
 pub struct ReadCommands<'a> {
-    db: SqliteReadCommands<'a>,
-    diesel_current_read: &'a DieselCurrentReadHandle,
+    db: &'a CurrentReadHandle,
     cache: &'a DatabaseCache,
     files: &'a FileDir,
 }
 
 impl<'a> ReadCommands<'a> {
     pub fn new(
-        sqlite: &'a SqlxReadHandle,
+        current_read_handle: &'a CurrentReadHandle,
         cache: &'a DatabaseCache,
         files: &'a FileDir,
-        diesel_current_read: &'a DieselCurrentReadHandle,
     ) -> Self {
         Self {
-            db: SqliteReadCommands::new(sqlite),
-            diesel_current_read,
+            db: current_read_handle,
             cache,
             files,
         }
@@ -196,7 +194,9 @@ impl<'a> ReadCommands<'a> {
         cmd: T,
     ) -> Result<R, DataError> {
         let conn = self
-            .diesel_current_read
+            .db
+            .0
+            .diesel()
             .pool()
             .get()
             .await

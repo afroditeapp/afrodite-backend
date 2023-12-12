@@ -5,8 +5,9 @@ use model::{AccessToken, Account, AccountId};
 
 use crate::{api::{
     utils::{Json, StatusCode},
-    GetAccessTokens, GetAccounts, ReadData,
 }, perf::ACCOUNT_INTERNAL};
+
+use crate::app::{GetAccessTokens, GetAccounts, ReadData};
 
 pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
 

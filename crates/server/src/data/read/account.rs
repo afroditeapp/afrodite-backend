@@ -68,7 +68,8 @@ impl ReadCommandsAccount<'_> {
         &self,
         mut handler: T,
     ) -> Result<(), DataError> {
-        let account = self.db().account();
+        let db = self.db();
+        let account = db.account();
         let mut users = account.account_ids_stream();
         while let Some(user_id) = users.try_next().await.change_context(DataError::Sqlite)? {
             handler(user_id)

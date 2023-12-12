@@ -4,11 +4,14 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use simple_backend::app::SimpleBackendAppState;
 
 use crate::{
-    api::{self, GetConfig},
+    api::{self},
     app::AppState,
 };
+
+use super::App;
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
@@ -17,7 +20,7 @@ use crate::{
 pub struct InternalApp;
 
 impl InternalApp {
-    pub fn create_account_server_router(state: AppState) -> Router {
+    pub fn create_account_server_router(state: SimpleBackendAppState<AppState>) -> Router {
         let mut router = Router::new()
             .route(
                 api::account_internal::PATH_INTERNAL_CHECK_ACCESS_TOKEN,
@@ -34,7 +37,7 @@ impl InternalApp {
                 }),
             );
 
-        if state.config().internal_api_config().bot_login {
+        if state.business_logic_state().config.internal_api_config().bot_login {
             router = router
                 .route(
                     api::account::PATH_REGISTER,
@@ -55,7 +58,7 @@ impl InternalApp {
         router
     }
 
-    pub fn create_profile_server_router(state: AppState) -> Router {
+    pub fn create_profile_server_router(state: SimpleBackendAppState<AppState>) -> Router {
         Router::new().route(
             api::profile_internal::PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY,
             post({
@@ -67,7 +70,7 @@ impl InternalApp {
         )
     }
 
-    pub fn create_media_server_router(state: AppState) -> Router {
+    pub fn create_media_server_router(state: SimpleBackendAppState<AppState>) -> Router {
         Router::new()
             .route(
                 api::media_internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
@@ -93,7 +96,7 @@ impl InternalApp {
             )
     }
 
-    pub fn create_chat_server_router(_state: AppState) -> Router {
+    pub fn create_chat_server_router(_state: SimpleBackendAppState<AppState>) -> Router {
         Router::new()
         // .route(
         //     api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,

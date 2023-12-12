@@ -5,7 +5,7 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use utils::current_unix_time;
+use simple_backend_utils::current_unix_time;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, AccountState, Capabilities, MessageNumber};

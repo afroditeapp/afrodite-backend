@@ -13,16 +13,15 @@ use axum::{
 };
 use error_stack::{ResultExt, Result};
 use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, EventToClient, EventToClientInternal};
+use simple_backend::web_socket::WebSocketManager;
 use tracing::error;
-use utils::ContextExt;
+use simple_backend_utils::ContextExt;
 pub use utils::api::PATH_CONNECT;
-
 
 use super::{
     utils::{AccessTokenHeader, Json, StatusCode},
-    BackendVersionProvider, GetAccessTokens, ReadData, WriteData,
+    super::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
 };
-use crate::app::connection::WebSocketManager;
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 

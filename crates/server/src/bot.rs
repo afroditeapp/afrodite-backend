@@ -7,7 +7,7 @@ use error_stack::ResultExt;
 use model::BotConfig;
 use nix::{unistd::Pid, sys::signal::Signal};
 use tokio::{process::Child, task::JoinHandle, io::{AsyncRead, AsyncBufReadExt}};
-use utils::ContextExt;
+use simple_backend_utils::ContextExt;
 
 use tracing::{info, error};
 
@@ -61,7 +61,7 @@ impl BotClient {
                 .attach_printable(format!("First argument does not point to a file {:?}", start_cmd));
         }
 
-        let bot_data_dir = config.database_dir().join(BOT_DATA_DIR_NAME);
+        let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
 
         // TODO: Bot client HTTPS support
 
@@ -198,12 +198,12 @@ impl BotClient {
     }
 
     fn internal_api_url(config: &Config) -> String {
-        let port = config.socket().internal_api.port();
+        let port = config.simple_backend().socket().internal_api.port();
         format!("http://localhost:{}", port)
     }
 
     fn public_api_url(config: &Config) -> String {
-        let port = config.socket().public_api.port();
+        let port = config.simple_backend().socket().public_api.port();
         format!("http://localhost:{}", port)
     }
 }

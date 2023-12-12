@@ -6,7 +6,7 @@ use model::{AccountId, ContentId};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
-use utils::ContextExt;
+use simple_backend_utils::ContextExt;
 
 
 use super::super::FileError;

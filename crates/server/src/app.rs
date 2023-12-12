@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use api::BackendVersionProvider;
 use axum::{
     routing::{get, post},
     Router,
@@ -11,7 +10,7 @@ use futures::Future;
 use model::{AccountId, BackendVersion, BackendConfig};
 
 use self::{
-    connection::WebSocketManager, routes_connected::ConnectedApp, sign_in_with::SignInWithManager,
+    routes_connected::ConnectedApp,
 };
 use super::{
     data::{
@@ -22,61 +21,70 @@ use super::{
         DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
-    manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError},
-};
-use crate::{api::{
-    self, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, GetManagerApi, ReadData,
-    SignInWith, WriteData, WriteDynamicConfig, ReadDynamicConfig, GetTileMap, EventManagerProvider, PerfCounterDataProvider,
-}, data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, map::TileMapManager, event::EventManager, perf::PerfCounterManagerData};
 
-pub mod connection;
+};
+use crate::{data::write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, event::EventManager, api};
+
+use simple_backend::{manager_client::{ManagerApiClient, ManagerApiManager, ManagerClientError}, map::TileMapManager, app::{SimpleBackendAppState, GetSimpleBackendConfig}, web_socket::WebSocketManager};
+
 pub mod routes_connected;
 pub mod routes_internal;
-pub mod sign_in_with;
 
 #[derive(Clone)]
 pub struct AppState {
     database: Arc<RouterDatabaseReadHandle>,
     write_queue: Arc<WriteCommandRunnerHandle>,
     internal_api: Arc<InternalApiClient>,
-    manager_api: Arc<ManagerApiClient>,
     config: Arc<Config>,
-    sign_in_with: Arc<SignInWithManager>,
-    tile_map: Arc<TileMapManager>,
     events: Arc<EventManager>,
-    perf_data: Arc<PerfCounterManagerData>,
 }
 
-impl BackendVersionProvider for AppState {
-    fn backend_version(&self) -> BackendVersion {
-        BackendVersion {
-            backend_code_version: self.config.backend_code_version().to_string(),
-            backend_version: self.config.backend_semver_version().to_string(),
-            protocol_version: "1.0.0".to_string(),
-        }
-    }
+pub trait GetAccessTokens {
+    /// Users which are logged in.
+    fn access_tokens(&self) -> AccessTokenManager<'_>;
 }
 
-impl GetAccessTokens for AppState {
+impl GetAccessTokens for SimpleBackendAppState<AppState> {
     fn access_tokens(&self) -> AccessTokenManager<'_> {
-        self.database.access_token_manager()
+        self.business_logic_state().database.access_token_manager()
     }
 }
 
-impl GetAccounts for AppState {
+pub trait GetAccounts {
+    /// All accounts registered in the service.
+    fn accounts(&self) -> AccountIdManager<'_>;
+}
+
+impl GetAccounts for SimpleBackendAppState<AppState> {
     fn accounts(&self) -> AccountIdManager<'_> {
-        self.database.account_id_manager()
-    }
-}
-
-impl ReadData for AppState {
-    fn read(&self) -> ReadCommands<'_> {
-        self.database.read()
+        self.business_logic_state().database.account_id_manager()
     }
 }
 
 #[async_trait::async_trait]
-impl WriteData for AppState {
+pub trait WriteData {
+    async fn write<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = error_stack::Result<CmdResult, DataError>> + Send + 'static,
+        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
+    >(
+        &self,
+        cmd: GetCmd,
+    ) -> error_stack::Result<CmdResult, DataError>;
+
+    async fn write_concurrent<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
+        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
+    >(
+        &self,
+        account: AccountId,
+        cmd: GetCmd,
+    ) -> error_stack::Result<CmdResult, DataError>;
+}
+
+#[async_trait::async_trait]
+impl WriteData for SimpleBackendAppState<AppState> {
     async fn write<
         CmdResult: Send + 'static,
         Cmd: Future<Output = Result<CmdResult, DataError>> + Send + 'static,
@@ -85,7 +93,7 @@ impl WriteData for AppState {
         &self,
         cmd: GetCmd,
     ) -> Result<CmdResult, DataError> {
-        self.write_queue.write(cmd).await
+        self.business_logic_state().write_queue.write(cmd).await
     }
 
     async fn write_concurrent<
@@ -97,12 +105,54 @@ impl WriteData for AppState {
         account: AccountId,
         cmd: GetCmd,
     ) -> Result<CmdResult, DataError> {
-        self.write_queue.concurrent_write(account, cmd).await
+        self.business_logic_state().write_queue.concurrent_write(account, cmd).await
+    }
+}
+
+pub trait ReadData {
+    fn read(&self) -> ReadCommands<'_>;
+}
+
+impl ReadData for SimpleBackendAppState<AppState> {
+    fn read(&self) -> ReadCommands<'_> {
+        self.business_logic_state().database.read()
+    }
+}
+
+pub trait GetInternalApi {
+    fn internal_api(&self) -> InternalApiManager<Self>
+    where
+        Self: Sized;
+}
+
+impl GetInternalApi for SimpleBackendAppState<AppState> {
+    fn internal_api(&self) -> InternalApiManager<Self> {
+        InternalApiManager::new(self, &self.business_logic_state().internal_api)
+    }
+}
+
+pub trait GetConfig {
+    fn config(&self) -> &Config;
+}
+
+
+impl GetConfig for SimpleBackendAppState<AppState> {
+    fn config(&self) -> &Config {
+        &self.business_logic_state().config
     }
 }
 
 #[async_trait::async_trait]
-impl WriteDynamicConfig for AppState {
+pub trait WriteDynamicConfig {
+    async fn write_config(
+        &self,
+        config: BackendConfig,
+    ) -> error_stack::Result<(), ConfigFileError>;
+}
+
+
+#[async_trait::async_trait]
+impl WriteDynamicConfig for SimpleBackendAppState<AppState> {
     async fn write_config(
         &self,
         config: BackendConfig,
@@ -121,8 +171,16 @@ impl WriteDynamicConfig for AppState {
     }
 }
 
+
 #[async_trait::async_trait]
-impl ReadDynamicConfig for AppState {
+pub trait ReadDynamicConfig {
+    async fn read_config(
+        &self,
+    ) -> error_stack::Result<BackendConfig, ConfigFileError>;
+}
+
+#[async_trait::async_trait]
+impl ReadDynamicConfig for SimpleBackendAppState<AppState> {
     async fn read_config(
         &self,
     ) -> error_stack::Result<BackendConfig, ConfigFileError> {
@@ -137,83 +195,59 @@ impl ReadDynamicConfig for AppState {
     }
 }
 
-impl SignInWith for AppState {
-    fn sign_in_with_manager(&self) -> &SignInWithManager {
-        &self.sign_in_with
+pub trait BackendVersionProvider {
+    fn backend_version(&self) -> BackendVersion;
+}
+
+impl BackendVersionProvider for SimpleBackendAppState<AppState> {
+    fn backend_version(&self) -> BackendVersion {
+        BackendVersion {
+            backend_code_version: self.simple_backend_config().backend_code_version().to_string(),
+            backend_version: self.simple_backend_config().backend_semver_version().to_string(),
+            protocol_version: "1.0.0".to_string(),
+        }
     }
 }
 
-impl GetInternalApi for AppState {
-    fn internal_api(&self) -> InternalApiManager<Self> {
-        InternalApiManager::new(self, &self.internal_api)
-    }
+pub trait EventManagerProvider {
+    fn event_manager(&self) -> &EventManager;
 }
 
-impl GetManagerApi for AppState {
-    fn manager_api(&self) -> ManagerApiManager {
-        ManagerApiManager::new(&self.manager_api)
-    }
-}
-
-impl GetConfig for AppState {
-    fn config(&self) -> &Config {
-        &self.config
-    }
-}
-
-impl GetTileMap for AppState {
-    fn tile_map(&self) -> &TileMapManager {
-        &self.tile_map
-    }
-}
-
-impl EventManagerProvider for AppState {
+impl EventManagerProvider for SimpleBackendAppState<AppState> {
     fn event_manager(&self) -> &EventManager {
-        &self.events
-    }
-}
-
-
-impl PerfCounterDataProvider for AppState {
-    fn perf_counter_data(&self) -> &PerfCounterManagerData {
-        &self.perf_data
+        &self.business_logic_state().events
     }
 }
 
 pub struct App {
-    state: AppState,
-    ws_manager: Option<WebSocketManager>,
+    state: SimpleBackendAppState<AppState>,
+    web_socket_manager: Option<WebSocketManager>,
 }
 
 impl App {
-    pub async fn new(
+    pub async fn create_app_state(
         database_handle: RouterDatabaseReadHandle,
         _database_write_handle: RouterDatabaseWriteHandle,
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
-        perf_data: Arc<PerfCounterManagerData>,
-        ws_manager: WebSocketManager,
-    ) -> Result<Self, ManagerClientError> {
+    ) -> AppState {
         let database = Arc::new(database_handle);
         let state = AppState {
             config: config.clone(),
             database: database.clone(),
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
-            manager_api: ManagerApiClient::new(&config)?.into(),
-            tile_map: TileMapManager::new(&config).into(),
-            sign_in_with: SignInWithManager::new(config).into(),
             events: EventManager::new(database).into(),
-            perf_data,
         };
 
-        Ok(Self {
-            state,
-            ws_manager: Some(ws_manager),
-        })
+        state
     }
 
-    pub fn state(&self) -> AppState {
+    pub fn new(state: SimpleBackendAppState<AppState>, web_socket_manager: WebSocketManager) -> Self {
+        Self { state, web_socket_manager: web_socket_manager.into() }
+    }
+
+    pub fn state(&self) -> SimpleBackendAppState<AppState> {
         self.state.clone()
     }
 
@@ -223,7 +257,7 @@ impl App {
                 api::common::PATH_CONNECT, // This route checks the access token by itself.
                 get({
                     let state = self.state.clone();
-                    let ws_manager = self.ws_manager.take().unwrap(); // Only one instance required.
+                    let ws_manager = self.web_socket_manager.take().expect("This should be called only once");
                     move |param1, param2, param3| {
                         api::common::get_connect_websocket(
                             param1, param2, param3, ws_manager, state,

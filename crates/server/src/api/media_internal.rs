@@ -3,10 +3,9 @@
 use axum::extract::Path;
 use model::{AccountId, BooleanSetting, Profile};
 
-use super::GetConfig;
-use crate::api::{
-    utils::{Json, StatusCode},
-    GetAccounts, GetInternalApi, ReadData,
+use crate::{
+    api::utils::{Json, StatusCode},
+    app::{GetAccounts, GetInternalApi, ReadData, GetConfig},
 };
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
