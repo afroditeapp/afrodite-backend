@@ -108,7 +108,9 @@ impl ProfileUpdateInternal {
 //     }
 // }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable)]
+#[derive(
+    Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable,
+)]
 #[diesel(table_name = crate::schema::profile_location)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct Location {

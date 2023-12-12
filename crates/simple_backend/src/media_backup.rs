@@ -1,10 +1,11 @@
 use std::{
+    path::{Component, PathBuf},
     process::{ExitStatus, Stdio},
     sync::Arc,
-    time::Duration, path::{PathBuf, Component},
+    time::Duration,
 };
 
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_database::data::create_dirs_and_get_files_dir_path;
 use simple_backend_utils::ContextExt;
@@ -88,10 +89,7 @@ pub struct MediaBackupHandle {
 
 impl MediaBackupHandle {
     /// The path must be relative to files dir
-    pub async fn backup_jpeg_image(
-        &self,
-        image: PathBuf,
-    ) -> Result<(), MediaBackupError> {
+    pub async fn backup_jpeg_image(&self, image: PathBuf) -> Result<(), MediaBackupError> {
         self.sender
             .send(MediaBackupMessage::BackupJpegImage {
                 image_in_files_dir: image,
@@ -191,18 +189,19 @@ impl MediaBackupManager {
 
     pub async fn handle_message(&self, message: MediaBackupMessage) {
         match message {
-            MediaBackupMessage::BackupJpegImage {
-                image_in_files_dir,
-            } => match self.backup_one_image_file(image_in_files_dir.clone()).await {
-                Ok(()) => {
-                    info!(
-                        "File backup successful {}", image_in_files_dir.to_string_lossy()
-                    );
+            MediaBackupMessage::BackupJpegImage { image_in_files_dir } => {
+                match self.backup_one_image_file(image_in_files_dir.clone()).await {
+                    Ok(()) => {
+                        info!(
+                            "File backup successful {}",
+                            image_in_files_dir.to_string_lossy()
+                        );
+                    }
+                    Err(e) => {
+                        warn!("File backup failed. Error: {:?}", e);
+                    }
                 }
-                Err(e) => {
-                    warn!("File backup failed. Error: {:?}", e);
-                }
-            },
+            }
         }
     }
 
@@ -270,10 +269,7 @@ impl MediaBackupManager {
         Ok(files_dir)
     }
 
-    pub async fn backup_one_image_file(
-        &self,
-        image: PathBuf
-    ) -> Result<(), MediaBackupError> {
+    pub async fn backup_one_image_file(&self, image: PathBuf) -> Result<(), MediaBackupError> {
         let image_file = self.file_dir()?.join(image.clone());
         let abs_src_file =
             std::fs::canonicalize(image_file).change_context(MediaBackupError::InvalidPath)?;
@@ -387,8 +383,9 @@ impl MediaBackupManager {
     pub async fn get_local_time() -> Result<OffsetDateTime, MediaBackupError> {
         let now: OffsetDateTime = OffsetDateTime::now_utc();
         let offset = Self::get_utc_offset_hours().await?;
-        let now = now
-            .to_offset(UtcOffset::from_hms(offset, 0, 0).change_context(MediaBackupError::TimeError)?);
+        let now = now.to_offset(
+            UtcOffset::from_hms(offset, 0, 0).change_context(MediaBackupError::TimeError)?,
+        );
         Ok(now)
     }
 
@@ -424,7 +421,6 @@ impl MediaBackupManager {
         Ok(hours * multiplier)
     }
 }
-
 
 pub struct SftpCommands {
     commands: String,

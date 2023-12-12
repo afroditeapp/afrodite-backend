@@ -1,14 +1,10 @@
-use std::{
-    fs,
-    path::{PathBuf},
-};
+use std::{fs, path::PathBuf};
 
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 // use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
-use simple_backend_config::{SimpleBackendConfig, file::{SqliteDatabase}};
+use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
 
-
-use crate::{DataError};
+use crate::DataError;
 
 pub const FILE_DIR_NAME: &str = "files";
 pub const SQLITE_DIR_NAME: &str = "sqlite";

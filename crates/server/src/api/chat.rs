@@ -1,9 +1,16 @@
-use axum::{Extension};
-use model::{AccountId, AccountIdInternal, SentLikesPage, ReceivedLikesPage, MatchesPage, SentBlocksPage, ReceivedBlocksPage, PendingMessagesPage, MessageNumber, UpdateMessageViewStatus, PendingMessageDeleteList, SendMessageToAccount, NotificationEvent, LatestViewedMessageChanged, EventToClientInternal};
+use axum::Extension;
+use model::{
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MatchesPage,
+    MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage,
+    ReceivedBlocksPage, ReceivedLikesPage, SendMessageToAccount, SentBlocksPage, SentLikesPage,
+    UpdateMessageViewStatus,
+};
 
-use super::{utils::{Json, StatusCode}, db_write};
-
-use crate::app::{GetAccounts, ReadData, WriteData, EventManagerProvider};
+use super::{
+    db_write,
+    utils::{Json, StatusCode},
+};
+use crate::app::{EventManagerProvider, GetAccounts, ReadData, WriteData};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -35,25 +42,20 @@ pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
 
     state
         .event_manager()
-        .send_notification(
-            requested_profile,
-            model::NotificationEvent::LikesChanged,
-        ).await?;
+        .send_notification(requested_profile, model::NotificationEvent::LikesChanged)
+        .await?;
 
     if new_state.is_match() {
         // State is now match so the account was removed from
         // received likes of the API caller.
         state
             .event_manager()
-            .send_notification(
-                id,
-                model::NotificationEvent::LikesChanged,
-            ).await?;
+            .send_notification(id, model::NotificationEvent::LikesChanged)
+            .await?;
     }
 
     Ok(())
 }
-
 
 pub const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
 
@@ -136,14 +138,11 @@ pub async fn delete_like<S: GetAccounts + WriteData + EventManagerProvider>(
 
     state
         .event_manager()
-        .send_notification(
-            requested_profile,
-            model::NotificationEvent::LikesChanged,
-        ).await?;
+        .send_notification(requested_profile, model::NotificationEvent::LikesChanged)
+        .await?;
 
     Ok(())
 }
-
 
 pub const PATH_GET_MATCHES: &str = "/chat_api/matches";
 
@@ -196,7 +195,8 @@ pub async fn post_block_profile<S: GetAccounts + WriteData + EventManagerProvide
         .send_notification(
             requested_profile,
             model::NotificationEvent::ReceivedBlocksChanged,
-        ).await?;
+        )
+        .await?;
 
     Ok(())
 }
@@ -231,7 +231,8 @@ pub async fn post_unblock_profile<S: GetAccounts + WriteData + EventManagerProvi
         .send_notification(
             requested_profile,
             model::NotificationEvent::ReceivedBlocksChanged,
-        ).await?;
+        )
+        .await?;
 
     Ok(())
 }
@@ -322,7 +323,8 @@ pub async fn delete_pending_messages<S: WriteData>(
     state: S,
 ) -> Result<(), StatusCode> {
     db_write!(state, move |cmds| {
-        cmds.chat().delete_pending_message_list(id, list.messages_ids)
+        cmds.chat()
+            .delete_pending_message_list(id, list.messages_ids)
     })?;
     Ok(())
 }
@@ -348,7 +350,11 @@ pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccoun
     state: S,
 ) -> Result<Json<MessageNumber>, StatusCode> {
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
-    let number = state.read().chat().message_number_of_latest_viewed_message(id, requested_profile).await?;
+    let number = state
+        .read()
+        .chat()
+        .message_number_of_latest_viewed_message(id, requested_profile)
+        .await?;
     Ok(number.into())
 }
 
@@ -367,14 +373,23 @@ pub const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + WriteData + EventManagerProvider>(
+pub async fn post_message_number_of_latest_viewed_message<
+    S: GetAccounts + WriteData + EventManagerProvider,
+>(
     Extension(id): Extension<AccountIdInternal>,
     Json(update_info): Json<UpdateMessageViewStatus>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let message_sender = state.accounts().get_internal_id(update_info.account_id_sender).await?;
+    let message_sender = state
+        .accounts()
+        .get_internal_id(update_info.account_id_sender)
+        .await?;
     db_write!(state, move |cmds| {
-        cmds.chat().update_message_number_of_latest_viewed_message(id, message_sender, update_info.message_number)
+        cmds.chat().update_message_number_of_latest_viewed_message(
+            id,
+            message_sender,
+            update_info.message_number,
+        )
     })?;
 
     state
@@ -384,13 +399,13 @@ pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + Write
             EventToClientInternal::LatestViewedMessageChanged(LatestViewedMessageChanged {
                 account_id_viewer: id.into(),
                 new_latest_viewed_message: update_info.message_number,
-            })
-        ).await?;
+            }),
+        )
+        .await?;
     Ok(())
 }
 
-pub const PATH_POST_SEND_MESSAGE: &str =
-    "/chat_api/send_message";
+pub const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 
 /// Send message to a match
 #[utoipa::path(
@@ -409,9 +424,13 @@ pub async fn post_send_message<S: GetAccounts + WriteData + EventManagerProvider
     Json(message_info): Json<SendMessageToAccount>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let message_reciever = state.accounts().get_internal_id(message_info.receiver).await?;
+    let message_reciever = state
+        .accounts()
+        .get_internal_id(message_info.receiver)
+        .await?;
     db_write!(state, move |cmds| {
-        cmds.chat().insert_pending_message_if_match(id, message_reciever, message_info.message)
+        cmds.chat()
+            .insert_pending_message_if_match(id, message_reciever, message_info.message)
     })?;
     state
         .event_manager()

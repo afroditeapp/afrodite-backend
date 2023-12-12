@@ -11,8 +11,6 @@ use crate::{
     app::AppState,
 };
 
-
-
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
 
@@ -37,7 +35,12 @@ impl InternalApp {
                 }),
             );
 
-        if state.business_logic_state().config.internal_api_config().bot_login {
+        if state
+            .business_logic_state()
+            .config
+            .internal_api_config()
+            .bot_login
+        {
             router = router
                 .route(
                     api::account::PATH_REGISTER,

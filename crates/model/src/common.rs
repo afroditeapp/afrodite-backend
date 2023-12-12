@@ -8,7 +8,10 @@ use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{macros::{diesel_i64_wrapper, diesel_uuid_wrapper}, AccountState, Capabilities, MessageNumber};
+use crate::{
+    macros::{diesel_i64_wrapper, diesel_uuid_wrapper},
+    AccountState, Capabilities, MessageNumber,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
@@ -122,12 +125,11 @@ pub enum NotificationEvent {
 impl From<NotificationEvent> for EventToClientInternal {
     fn from(event: NotificationEvent) -> Self {
         match event {
-            NotificationEvent::NewMessageReceived =>
-                EventToClientInternal::NewMessageReceived,
-            NotificationEvent::LikesChanged =>
-                EventToClientInternal::LikesChanged,
-            NotificationEvent::ReceivedBlocksChanged =>
-                EventToClientInternal::ReceivedBlocksChanged,
+            NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
+            NotificationEvent::LikesChanged => EventToClientInternal::LikesChanged,
+            NotificationEvent::ReceivedBlocksChanged => {
+                EventToClientInternal::ReceivedBlocksChanged
+            }
         }
     }
 }
@@ -366,7 +368,6 @@ impl AccountIdDb {
 
 diesel_i64_wrapper!(AccountIdDb);
 
-
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
@@ -399,11 +400,22 @@ pub struct SharedState {
 
 // diesel_i64_wrapper!(DbId);
 
-
 // TODO: Add UnixTime to unix time fields
 
 /// Unix timestamp (seconds from the epoch)
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Default,
+    sqlx::Type,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 pub struct UnixTime {
     pub unix_time: i64,
@@ -419,7 +431,9 @@ impl UnixTime {
     }
 
     pub fn current_time() -> Self {
-        Self { unix_time: current_unix_time() }
+        Self {
+            unix_time: current_unix_time(),
+        }
     }
 }
 

@@ -5,13 +5,15 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-
 use config::file::ConfigFileError;
 use headers::{Header, HeaderValue};
 use hyper::{header, Request};
-use model::{AccessToken};
+use model::AccessToken;
 use serde::Serialize;
-use simple_backend::{sign_in_with::{google::SignInWithGoogleError, apple::SignInWithAppleError}, manager_client::ManagerClientError};
+use simple_backend::{
+    manager_client::ManagerClientError,
+    sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
+};
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 pub use utils::api::ACCESS_TOKEN_HEADER_STR;
 use utoipa::{
@@ -19,11 +21,11 @@ use utoipa::{
     Modify,
 };
 
-
 use crate::{
+    app::{GetAccessTokens, ReadData},
     data::{cache::CacheError, DataError},
+    event::EventError,
     internal::InternalApiError,
-    event::EventError, app::{GetAccessTokens, ReadData},
 };
 
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =
@@ -271,10 +273,7 @@ impl From<error_stack::Report<ManagerClientError>> for StatusCode {
 impl From<error_stack::Report<ConfigFileError>> for StatusCode {
     #[track_caller]
     fn from(value: error_stack::Report<ConfigFileError>) -> Self {
-        tracing::error!(
-            "{:?}",
-            value.change_context(RequestError::ConfigFileError)
-        );
+        tracing::error!("{:?}", value.change_context(RequestError::ConfigFileError));
         StatusCode::INTERNAL_SERVER_ERROR
     }
 }
@@ -282,10 +281,7 @@ impl From<error_stack::Report<ConfigFileError>> for StatusCode {
 impl From<error_stack::Report<EventError>> for StatusCode {
     #[track_caller]
     fn from(value: error_stack::Report<EventError>) -> Self {
-        tracing::error!(
-            "{:?}",
-            value.change_context(RequestError::EventError)
-        );
+        tracing::error!("{:?}", value.change_context(RequestError::EventError));
         StatusCode::INTERNAL_SERVER_ERROR
     }
 }

@@ -5,26 +5,30 @@ use std::{
     sync::Arc,
 };
 
-use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_database::{DbReadCloseHandle, DbWriteCloseHandle, DatabaseHandleCreator};
-use simple_backend_utils::ContextExt;
 use config::Config;
 use database::{
     history::read::HistoryReadCommands,
+    CurrentReadHandle,
+    CurrentWriteHandle,
     // sqlite::{
     //     CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
     //     SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
     // },
-    ErrorContext, CurrentReadHandle, CurrentWriteHandle, HistoryWriteHandle, HistoryReadHandle,
+    ErrorContext,
+    HistoryReadHandle,
+    HistoryWriteHandle,
 };
-use error_stack::{Context, ResultExt, Result};
+use error_stack::{Context, Result, ResultExt};
 use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
+use simple_backend::media_backup::MediaBackupHandle;
+use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
+use simple_backend_utils::ContextExt;
 use tracing::info;
 
 use self::{
     cache::{CacheError, DatabaseCache},
     file::{read::FileReadCommands, utils::FileDir, FileError},
-    index::{LocationIndexManager, LocationIndexIteratorHandle},
+    index::{LocationIndexIteratorHandle, LocationIndexManager},
     read::ReadCommands,
     utils::{AccessTokenManager, AccountIdManager},
     write::{
@@ -35,7 +39,7 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
-use crate::{internal::InternalApiError};
+use crate::internal::InternalApiError;
 
 pub mod cache;
 pub mod file;
@@ -271,11 +275,12 @@ impl DatabaseManager {
 
         // Write handles
 
-        let (current_write, current_write_close) = DatabaseHandleCreator::create_write_handle_from_config(
-            config.simple_backend(),
-            "current",
-            database::DIESEL_MIGRATIONS,
-        )
+        let (current_write, current_write_close) =
+            DatabaseHandleCreator::create_write_handle_from_config(
+                config.simple_backend(),
+                "current",
+                database::DIESEL_MIGRATIONS,
+            )
             .await
             .change_context(DataError::Init)?;
 
@@ -297,27 +302,30 @@ impl DatabaseManager {
             return Err(DataError::SqliteVersionMismatch.report());
         }
 
-        let (history_write, history_write_close) = DatabaseHandleCreator::create_write_handle_from_config(
-            config.simple_backend(),
-            "history",
-            database::DIESEL_MIGRATIONS,
-        )
+        let (history_write, history_write_close) =
+            DatabaseHandleCreator::create_write_handle_from_config(
+                config.simple_backend(),
+                "history",
+                database::DIESEL_MIGRATIONS,
+            )
             .await
             .change_context(DataError::Init)?;
 
         // Read handles
 
-        let (current_read, current_read_close) = DatabaseHandleCreator::create_read_handle_from_config(
-            config.simple_backend(),
-            "current",
-        )
+        let (current_read, current_read_close) =
+            DatabaseHandleCreator::create_read_handle_from_config(
+                config.simple_backend(),
+                "current",
+            )
             .await
             .change_context(DataError::Init)?;
 
-        let (history_read, history_read_close) = DatabaseHandleCreator::create_read_handle_from_config(
-            config.simple_backend(),
-            "history",
-        )
+        let (history_read, history_read_close) =
+            DatabaseHandleCreator::create_read_handle_from_config(
+                config.simple_backend(),
+                "history",
+            )
             .await
             .change_context(DataError::Init)?;
 
@@ -330,13 +338,9 @@ impl DatabaseManager {
         let history_read_handle = HistoryReadHandle(history_read);
         let history_write_handle = HistoryWriteHandle(history_write);
 
-        let cache = DatabaseCache::new(
-            &current_read_handle,
-            &index,
-            &config,
-        )
-        .await
-        .change_context(DataError::Cache)?;
+        let cache = DatabaseCache::new(&current_read_handle, &index, &config)
+            .await
+            .change_context(DataError::Cache)?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
@@ -348,9 +352,7 @@ impl DatabaseManager {
             cache: cache.into(),
             location: index.into(),
             media_backup,
-            image_processing_queue: Arc::new(tokio::sync::Semaphore::new(
-                num_cpus::get(),
-            )),
+            image_processing_queue: Arc::new(tokio::sync::Semaphore::new(num_cpus::get())),
         };
 
         let root = router_write_handle.root.clone();
@@ -522,11 +524,7 @@ pub struct RouterDatabaseReadHandle {
 
 impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(
-            &self.current_read_handle,
-            &self.cache,
-            &self.root.file_dir
-        )
+        ReadCommands::new(&self.current_read_handle, &self.cache, &self.root.file_dir)
     }
 
     pub fn history(&self) -> HistoryReadCommands<'_> {

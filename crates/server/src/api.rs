@@ -1,12 +1,8 @@
 //! HTTP API types and request handlers for all servers.
 
-
-
-
 use utoipa::OpenApi;
 
 use self::utils::SecurityApiAccessTokenDefault;
-
 
 // Routes
 pub mod account;
@@ -192,7 +188,6 @@ pub mod utils;
     )
 )]
 pub struct ApiDoc;
-
 
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.

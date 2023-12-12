@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tracing::{error, info};

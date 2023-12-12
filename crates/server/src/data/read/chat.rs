@@ -1,28 +1,22 @@
-
-use model::{AccountInteractionState, AccountIdInternal, SentLikesPage, ReceivedLikesPage, SentBlocksPage, ReceivedBlocksPage, MatchesPage, PendingMessagesPage, MessageNumber};
 use error_stack::{Result, ResultExt};
-use crate::data::DataError;
+use model::{
+    AccountIdInternal, AccountInteractionState, MatchesPage, MessageNumber, PendingMessagesPage,
+    ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage,
+};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
     ReadCommands,
 };
+use crate::data::DataError;
 
 define_read_commands!(ReadCommandsChat);
 
 impl ReadCommandsChat<'_> {
-
-    pub async fn all_sent_likes(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<SentLikesPage, DataError> {
+    pub async fn all_sent_likes(&self, id: AccountIdInternal) -> Result<SentLikesPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
-                .all_sender_account_interactions(
-                    id,
-                    AccountInteractionState::Like,
-                    true,
-                )
+                .all_sender_account_interactions(id, AccountInteractionState::Like, true)
         })
         .await
         .map(|profiles| SentLikesPage { profiles })
@@ -34,10 +28,7 @@ impl ReadCommandsChat<'_> {
     ) -> Result<ReceivedLikesPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
-                .all_receiver_account_interactions(
-                    id,
-                    AccountInteractionState::Like,
-                )
+                .all_receiver_account_interactions(id, AccountInteractionState::Like)
         })
         .await
         .map(|profiles| ReceivedLikesPage { profiles })
@@ -49,11 +40,7 @@ impl ReadCommandsChat<'_> {
     ) -> Result<SentBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
-                .all_sender_account_interactions(
-                    id,
-                    AccountInteractionState::Block,
-                    false,
-                )
+                .all_sender_account_interactions(id, AccountInteractionState::Block, false)
         })
         .await
         .map(|profiles| SentBlocksPage { profiles })
@@ -65,56 +52,44 @@ impl ReadCommandsChat<'_> {
     ) -> Result<ReceivedBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
-                .all_receiver_account_interactions(
-                    id,
-                    AccountInteractionState::Block,
-                )
+                .all_receiver_account_interactions(id, AccountInteractionState::Block)
         })
         .await
         .map(|profiles| ReceivedBlocksPage { profiles })
     }
 
-    pub async fn all_matches(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<MatchesPage, DataError> {
+    pub async fn all_matches(&self, id: AccountIdInternal) -> Result<MatchesPage, DataError> {
         // TODO: Is single SQL query possible?
 
-        let mut sent = self.db_read(move |mut cmds| {
-            cmds.chat()
-                .all_sender_account_interactions(
+        let mut sent = self
+            .db_read(move |mut cmds| {
+                cmds.chat().all_sender_account_interactions(
                     id,
                     AccountInteractionState::Match,
                     false,
                 )
-        })
-        .await?;
+            })
+            .await?;
 
-        let mut received = self.db_read(move |mut cmds| {
-            cmds.chat()
-                .all_receiver_account_interactions(
-                    id,
-                    AccountInteractionState::Match,
-                )
-        })
-        .await?;
+        let mut received = self
+            .db_read(move |mut cmds| {
+                cmds.chat()
+                    .all_receiver_account_interactions(id, AccountInteractionState::Match)
+            })
+            .await?;
 
         sent.append(&mut received);
 
-        Ok(MatchesPage {
-            profiles: sent,
-        })
+        Ok(MatchesPage { profiles: sent })
     }
 
     pub async fn all_pending_messages(
         &self,
         id: AccountIdInternal,
     ) -> Result<PendingMessagesPage, DataError> {
-        self.db_read(move |mut cmds| {
-            cmds.chat().all_pending_messages(id)
-        })
-        .await
-        .map(|messages| PendingMessagesPage { messages })
+        self.db_read(move |mut cmds| cmds.chat().all_pending_messages(id))
+            .await
+            .map(|messages| PendingMessagesPage { messages })
     }
 
     /// Get message number of message that receiver has viewed the latest
@@ -123,21 +98,23 @@ impl ReadCommandsChat<'_> {
         id_message_sender: AccountIdInternal,
         id_message_receiver: AccountIdInternal,
     ) -> Result<MessageNumber, DataError> {
-        let number = self.db_read(move |mut cmds| {
-            cmds.chat().account_interaction(id_message_sender, id_message_receiver)
-        })
-        .await?
-        .map(|interaction| {
-            // Who is sender and receiver in the interaction data depends
-            // on who did the first like
-            if interaction.account_id_sender == Some(id_message_sender.into_db_id()) {
-                interaction.receiver_latest_viewed_message
-            } else {
-                interaction.sender_latest_viewed_message
-            }
-        })
-        .flatten()
-        .unwrap_or_default();
+        let number = self
+            .db_read(move |mut cmds| {
+                cmds.chat()
+                    .account_interaction(id_message_sender, id_message_receiver)
+            })
+            .await?
+            .map(|interaction| {
+                // Who is sender and receiver in the interaction data depends
+                // on who did the first like
+                if interaction.account_id_sender == Some(id_message_sender.into_db_id()) {
+                    interaction.receiver_latest_viewed_message
+                } else {
+                    interaction.sender_latest_viewed_message
+                }
+            })
+            .flatten()
+            .unwrap_or_default();
         Ok(number)
     }
 }

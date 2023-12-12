@@ -2,11 +2,9 @@ use diesel::{insert_into, prelude::*, ExpressionMethods};
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Profile};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-use simple_backend_utils::{current_unix_time, };
+use simple_backend_utils::current_unix_time;
 
-use crate::{
-    IntoDatabaseError,
-};
+use crate::IntoDatabaseError;
 
 define_write_commands!(HistoryWriteProfile, HistorySyncWriteProfile);
 

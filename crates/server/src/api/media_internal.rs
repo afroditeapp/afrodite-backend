@@ -5,7 +5,7 @@ use model::{AccountId, BooleanSetting, Profile};
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{GetAccounts, GetInternalApi, ReadData, GetConfig},
+    app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
 };
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =

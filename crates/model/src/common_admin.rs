@@ -1,16 +1,10 @@
-
-
-use diesel::{
-    prelude::*,
-};
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema};
-
-
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendConfig {
-    pub bots: Option<BotConfig>
+    pub bots: Option<BotConfig>,
 }
 
 /// Enable automatic bots when server starts.

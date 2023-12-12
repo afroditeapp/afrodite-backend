@@ -2,11 +2,14 @@
 
 use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 use hyper::StatusCode;
-use model::{AccessToken, Account, AccountIdInternal, BooleanSetting, Profile, ProfileInternal, AccountState, Capabilities};
+use model::{
+    AccessToken, Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
+    ProfileInternal,
+};
+use simple_backend_utils::ContextExt;
 use tracing::{error, info, warn};
-use simple_backend_utils::{ ContextExt};
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
 use crate::{
@@ -214,14 +217,16 @@ impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'
             return Err(InternalApiError::MissingComponent.report());
         }
 
-        let mut current = self.read_database()
+        let mut current = self
+            .read_database()
             .account()
             .account(account_id)
             .await
             .change_context(InternalApiError::DataError)?
             .into_capablities();
 
-        let mut shared_state = self.read_database()
+        let mut shared_state = self
+            .read_database()
             .common()
             .shared_state(account_id)
             .await
@@ -312,7 +317,8 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
 }
 
 impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'_, S> {
-    pub async fn profile_initial_setup( // TODO
+    pub async fn profile_initial_setup(
+        // TODO
         &self,
         account_id: AccountIdInternal,
         profile_name: String,
@@ -320,9 +326,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData + WriteData> InternalApiManager<'
         if self.config().components().profile {
             self.state
                 .write(move |cmds| async move {
-                    cmds.profile()
-                        .profile_name(account_id, profile_name)
-                        .await
+                    cmds.profile().profile_name(account_id, profile_name).await
                 })
                 .await
                 .change_context(InternalApiError::DataError)

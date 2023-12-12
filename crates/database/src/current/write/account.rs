@@ -1,12 +1,10 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSetup, RefreshToken,
-    SignInWithInfo, AccountInternal,
+    AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup,
+    RefreshToken, SignInWithInfo,
 };
-
-
-use simple_backend_database::{diesel_db::{ConnectionProvider, DieselDatabaseError}};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 
@@ -121,10 +119,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
         use model::schema::account::dsl::*;
 
         insert_into(account)
-            .values((
-                account_id.eq(id.as_db_id()),
-                email.eq(account_data.email)
-            ))
+            .values((account_id.eq(id.as_db_id()), email.eq(account_data.email)))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 

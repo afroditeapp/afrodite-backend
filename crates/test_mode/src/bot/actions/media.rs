@@ -8,7 +8,6 @@ use api_client::{
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
 
-
 use super::{super::super::client::TestError, BotAction, BotState};
 use crate::bot::utils::image::ImageProvider;
 
@@ -63,33 +62,25 @@ impl BotAction for SendImageToSlot {
             ImageProvider::jpeg_image()
         };
 
-        let content_id = put_image_to_moderation_slot_fixed(
-            state.api.media(),
-            self.slot,
-            img_data.clone(),
-        )
-        .await
-        .change_context(TestError::ApiRequest)?;
+        let content_id =
+            put_image_to_moderation_slot_fixed(state.api.media(), self.slot, img_data.clone())
+                .await
+                .change_context(TestError::ApiRequest)?;
         state.media.slots[self.slot as usize] = Some(content_id);
 
         let img_data = if self.mark_copied_image {
-            ImageProvider::mark_jpeg_image(&img_data)
-                .unwrap_or_else(|e| {
-                    tracing::error!("{e:?}");
-                    img_data
-                })
+            ImageProvider::mark_jpeg_image(&img_data).unwrap_or_else(|e| {
+                tracing::error!("{e:?}");
+                img_data
+            })
         } else {
             img_data
         };
 
         if let Some(slot) = self.copy_to_slot {
-            let content_id = put_image_to_moderation_slot_fixed(
-                state.api.media(),
-                slot,
-                img_data,
-            )
-            .await
-            .change_context(TestError::ApiRequest)?;
+            let content_id = put_image_to_moderation_slot_fixed(state.api.media(), slot, img_data)
+                .await
+                .change_context(TestError::ApiRequest)?;
             state.media.slots[slot as usize] = Some(content_id);
         }
 

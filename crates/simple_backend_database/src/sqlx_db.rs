@@ -3,15 +3,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-
-use simple_backend_config::{SimpleBackendConfig, file::{SqliteDatabase}};
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
+use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
+use simple_backend_utils::ComponentError;
 use sqlx::{
     sqlite::{self, SqliteConnectOptions, SqlitePoolOptions, SqliteRow},
     Row, SqlitePool,
 };
 use tracing::log::error;
-use simple_backend_utils::ComponentError;
 
 pub const DATABASE_FILE_EXTENSION: &str = ".db";
 
@@ -95,10 +94,7 @@ pub struct DbWriteHandle {
 }
 
 impl DbWriteHandle {
-    pub fn new(
-        database_info: SqliteDatabase,
-        handle: SqlxWriteHandle,
-    ) -> Self {
+    pub fn new(database_info: SqliteDatabase, handle: SqlxWriteHandle) -> Self {
         Self {
             database_info,
             read_handle: SqlxReadHandle {
@@ -184,7 +180,12 @@ impl SqlxWriteHandle {
         };
 
         let pool = pool
-            .connect_with(create_sqlite_connect_options(config, database_info, &db_path, true)?)
+            .connect_with(create_sqlite_connect_options(
+                config,
+                database_info,
+                &db_path,
+                true,
+            )?)
             .await
             .change_context(SqliteDatabaseError::Connect)?;
 
@@ -255,7 +256,12 @@ impl SqlxReadHandle {
         };
 
         let pool = pool
-            .connect_with(create_sqlite_connect_options(&config, database_info, &db_path, false)?)
+            .connect_with(create_sqlite_connect_options(
+                &config,
+                database_info,
+                &db_path,
+                false,
+            )?)
             .await
             .change_context(SqliteDatabaseError::Connect)?;
 

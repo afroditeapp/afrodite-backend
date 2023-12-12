@@ -57,7 +57,10 @@ impl Account {
     }
 
     pub fn new_from(state: AccountState, capablities: Capabilities) -> Self {
-        Self { state, capabilities: capablities }
+        Self {
+            state,
+            capabilities: capablities,
+        }
     }
 
     pub fn state(&self) -> AccountState {
@@ -89,8 +92,10 @@ impl Account {
     pub fn add_admin_capablities(&mut self) {
         self.capabilities.admin_moderate_images = true;
         self.capabilities.admin_server_maintenance_view_info = true;
-        self.capabilities.admin_server_maintenance_view_backend_config = true;
-        self.capabilities.admin_server_maintenance_save_backend_config = true;
+        self.capabilities
+            .admin_server_maintenance_view_backend_config = true;
+        self.capabilities
+            .admin_server_maintenance_save_backend_config = true;
         self.capabilities.admin_server_maintenance_update_software = true;
         self.capabilities.admin_server_maintenance_reset_data = true;
         self.capabilities.admin_server_maintenance_reboot_backend = true;
@@ -126,7 +131,6 @@ impl std::fmt::Display for AccountStateError {
     }
 }
 impl std::error::Error for AccountStateError {}
-
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub enum AccountState {

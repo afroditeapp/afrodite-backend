@@ -1,15 +1,12 @@
-use diesel::{insert_into, prelude::*, update, delete};
-use error_stack::{Result};
+use diesel::{delete, insert_into, prelude::*, update};
+use error_stack::Result;
 use model::{
-    AccountIdInternal, AccountInteractionInternal, PendingMessageId, AccountInteractionState,
+    AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PendingMessageId,
 };
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use simple_backend_utils::current_unix_time;
 
-use crate::{IntoDatabaseError, current::read::{CurrentSyncReadCommands}, TransactionError};
-
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-
-
+use crate::{current::read::CurrentSyncReadCommands, IntoDatabaseError, TransactionError};
 
 define_write_commands!(CurrentWriteChat, CurrentSyncWriteChat);
 
@@ -19,8 +16,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         account1: AccountIdInternal,
         account2: AccountIdInternal,
     ) -> Result<AccountInteractionInternal, DieselDatabaseError> {
-        use model::schema::account_interaction_index::dsl::*;
-        use model::schema::account_interaction::dsl::*;
+        use model::schema::{account_interaction::dsl::*, account_interaction_index::dsl::*};
 
         let interaction_value = insert_into(account_interaction)
             .default_values()
@@ -32,7 +28,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
             .values((
                 account_id_first.eq(account1.as_db_id()),
                 account_id_second.eq(account2.as_db_id()),
-                interaction_id.eq(interaction_value.id)
+                interaction_id.eq(interaction_value.id),
             ))
             .execute(transaction_conn.conn())
             .into_db_error(DieselDatabaseError::Execute, (account1, account2))?;
@@ -41,7 +37,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
             .values((
                 account_id_first.eq(account2.as_db_id()),
                 account_id_second.eq(account1.as_db_id()),
-                interaction_id.eq(interaction_value.id)
+                interaction_id.eq(interaction_value.id),
             ))
             .execute(transaction_conn.conn())
             .into_db_error(DieselDatabaseError::Execute, (account1, account2))?;
@@ -73,11 +69,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         account2: AccountIdInternal,
     ) -> Result<AccountInteractionInternal, DieselDatabaseError> {
         let value = self.conn().transaction(|mut conn| {
-            let interaction = CurrentSyncReadCommands::new(conn.conn()).chat().account_interaction(account1, account2)?;
+            let interaction = CurrentSyncReadCommands::new(conn.conn())
+                .chat()
+                .account_interaction(account1, account2)?;
             match interaction {
                 Some(interaction) => Ok(interaction),
                 None => {
-                    let value = CurrentSyncWriteChat::insert_account_interaction(conn, account1, account2)?;
+                    let value =
+                        CurrentSyncWriteChat::insert_account_interaction(conn, account1, account2)?;
                     Ok::<_, TransactionError<_>>(value)
                 }
             }
@@ -97,12 +96,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
             for message in messages {
                 delete(
                     pending_messages.filter(
-                        message_number.eq(message.message_number)
-                            .and(account_id_receiver.eq(message_receiver.as_db_id()))
-                        )
+                        message_number
+                            .eq(message.message_number)
+                            .and(account_id_receiver.eq(message_receiver.as_db_id())),
+                    ),
                 )
-                    .execute(conn.conn())
-                    .into_db_error(DieselDatabaseError::Execute, message_receiver)?;
+                .execute(conn.conn())
+                .into_db_error(DieselDatabaseError::Execute, message_receiver)?;
             }
             Ok::<_, TransactionError<_>>(())
         })?;
@@ -116,8 +116,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         receiver: AccountIdInternal,
         message: String,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::pending_messages::dsl::*;
-        use model::schema::account_interaction;
+        use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = current_unix_time();
         let interaction = self.get_or_create_account_interaction(sender, receiver)?;
         // Skip message number 0, so that latest viewed message number
@@ -132,7 +131,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
             update(account_interaction::table.find(interaction.id))
                 .set(account_interaction::message_counter.eq(new_message_number))
                 .execute(conn)
-                .into_db_error(DieselDatabaseError::Execute, (sender, receiver, new_message_number))?;
+                .into_db_error(
+                    DieselDatabaseError::Execute,
+                    (sender, receiver, new_message_number),
+                )?;
 
             insert_into(pending_messages)
                 .values((
@@ -143,12 +145,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
                     message_text.eq(message),
                 ))
                 .execute(conn)
-                .into_db_error(DieselDatabaseError::Execute, (sender, receiver, new_message_number))?;
+                .into_db_error(
+                    DieselDatabaseError::Execute,
+                    (sender, receiver, new_message_number),
+                )?;
 
             Ok::<_, TransactionError<_>>(())
         })?;
 
         Ok(())
     }
-
 }

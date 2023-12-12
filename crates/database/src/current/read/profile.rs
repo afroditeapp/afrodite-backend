@@ -1,10 +1,7 @@
-use diesel::{prelude::*};
+use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ProfileInternal, Location};
-
-
+use model::{AccountIdInternal, Location, ProfileInternal};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-
 
 define_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 
@@ -44,13 +41,17 @@ impl<C: ConnectionProvider> CurrentSyncReadProfile<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
-        use crate::schema::favorite_profile;
-        use crate::schema::account_id;
+        use crate::schema::{account_id, favorite_profile};
 
         let favorites = favorite_profile::table
-            .inner_join(account_id::table.on(favorite_profile::favorite_account_id.eq(account_id::id)))
+            .inner_join(
+                account_id::table.on(favorite_profile::favorite_account_id.eq(account_id::id)),
+            )
             .filter(favorite_profile::account_id.eq(id.as_db_id()))
-            .order((favorite_profile::unix_time.asc(), favorite_profile::favorite_account_id.asc()))
+            .order((
+                favorite_profile::unix_time.asc(),
+                favorite_profile::favorite_account_id.asc(),
+            ))
             .select(AccountIdInternal::as_select())
             .load(self.conn())
             .change_context(DieselDatabaseError::Execute)?;

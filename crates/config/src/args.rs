@@ -1,12 +1,10 @@
 //! Config given as command line arguments
 
-use std::{
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser, ValueEnum};
 use reqwest::Url;
-use simple_backend_config::args::{ServerModeArgs, ImageProcessModeArgs};
+use simple_backend_config::args::{ImageProcessModeArgs, ServerModeArgs};
 
 #[derive(Args, Debug, Clone)]
 pub struct ArgsConfig {
@@ -19,7 +17,6 @@ pub struct ArgsConfig {
 
     #[command(subcommand)]
     pub mode: Option<AppMode>,
-
 }
 
 #[derive(Parser, Debug, Clone)]

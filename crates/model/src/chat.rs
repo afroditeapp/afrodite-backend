@@ -1,12 +1,8 @@
-
-use diesel::{prelude::*, deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema};
+use utoipa::ToSchema;
 
-
-use crate::{
-    macros::{diesel_i64_wrapper}, AccountIdDb, AccountIdInternal, AccountId,
-};
+use crate::{macros::diesel_i64_wrapper, AccountId, AccountIdDb, AccountIdInternal};
 
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionStateError {
@@ -14,7 +10,7 @@ pub enum AccountInteractionStateError {
     Transition {
         from: AccountInteractionState,
         to: AccountInteractionState,
-    }
+    },
 }
 impl AccountInteractionStateError {
     pub fn wrong_state_number(number: i64) -> Self {
@@ -31,7 +27,11 @@ impl std::fmt::Display for AccountInteractionStateError {
                 write!(f, "Wrong state number: {}", number)
             }
             AccountInteractionStateError::Transition { from, to } => {
-                write!(f, "State transition from {:?} to {:?} is not allowed", from, to)
+                write!(
+                    f,
+                    "State transition from {:?} to {:?} is not allowed",
+                    from, to
+                )
             }
         }
     }
@@ -72,9 +72,9 @@ impl AccountInteractionInternal {
                 ..self
             }),
             AccountInteractionState::Like => Ok(self),
-            AccountInteractionState::Match |
-            AccountInteractionState::Block =>
-                Err(AccountInteractionStateError::transition(state, target)),
+            AccountInteractionState::Match | AccountInteractionState::Block => {
+                Err(AccountInteractionStateError::transition(state, target))
+            }
         }
     }
 
@@ -89,9 +89,9 @@ impl AccountInteractionInternal {
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),
-            AccountInteractionState::Empty |
-            AccountInteractionState::Block =>
-                Err(AccountInteractionStateError::transition(state, target)),
+            AccountInteractionState::Empty | AccountInteractionState::Block => {
+                Err(AccountInteractionStateError::transition(state, target))
+            }
         }
     }
 
@@ -102,9 +102,9 @@ impl AccountInteractionInternal {
     ) -> Result<Self, AccountInteractionStateError> {
         let state = AccountInteractionState::try_from(self.state_number)?;
         match state {
-            AccountInteractionState::Empty |
-            AccountInteractionState::Like |
-            AccountInteractionState::Match => Ok(Self {
+            AccountInteractionState::Empty
+            | AccountInteractionState::Like
+            | AccountInteractionState::Match => Ok(Self {
                 state_number: AccountInteractionState::Block as i64,
                 account_id_sender: Some(id_block_sender.into_db_id()),
                 account_id_receiver: Some(id_block_receiver.into_db_id()),
@@ -120,8 +120,7 @@ impl AccountInteractionInternal {
         let target = AccountInteractionState::Empty;
         let state = AccountInteractionState::try_from(self.state_number)?;
         match state {
-            AccountInteractionState::Block |
-            AccountInteractionState::Like => Ok(Self {
+            AccountInteractionState::Block | AccountInteractionState::Like => Ok(Self {
                 state_number: target as i64,
                 account_id_sender: None,
                 account_id_receiver: None,
@@ -130,8 +129,9 @@ impl AccountInteractionInternal {
                 ..self
             }),
             AccountInteractionState::Empty => Ok(self),
-            AccountInteractionState::Match =>
-                Err(AccountInteractionStateError::transition(state, target)),
+            AccountInteractionState::Match => {
+                Err(AccountInteractionStateError::transition(state, target))
+            }
         }
     }
 
@@ -245,7 +245,19 @@ pub struct PendingMessageDeleteList {
 }
 
 /// Message order number in a conversation.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Default,
+    sqlx::Type,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 pub struct MessageNumber {
     pub message_number: i64,

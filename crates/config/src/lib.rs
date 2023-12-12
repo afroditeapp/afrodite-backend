@@ -4,30 +4,21 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod args;
-pub mod file_dynamic;
 pub mod file;
+pub mod file_dynamic;
 
-use std::{
-    sync::{Arc},
-};
+use std::sync::Arc;
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{Result, ResultExt};
 use file::{QueueLimitsConfig, StaticBotConfig};
-use file_dynamic::{ConfigFileDynamic};
+use file_dynamic::ConfigFileDynamic;
 use model::BotConfig;
 use reqwest::Url;
-
 use simple_backend_config::SimpleBackendConfig;
-
 use simple_backend_utils::ContextExt;
 
-use self::{
-    file::{
-        Components, ConfigFile, ExternalServices, InternalApiConfig,
-        LocationConfig,
-    },
-};
+use self::file::{Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig};
 
 pub const DATABASE_MESSAGE_CHANNEL_BUFFER: usize = 32;
 
@@ -143,9 +134,9 @@ pub fn get_config(
     let simple_backend_config = simple_backend_config::get_config(
         args_config.server,
         backend_code_version,
-        backend_semver_version
+        backend_semver_version,
     )
-        .change_context(GetConfigError::SimpleBackendError)?;
+    .change_context(GetConfigError::SimpleBackendError)?;
 
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
     let file_config =
@@ -162,9 +153,16 @@ pub fn get_config(
     let file_dynamic =
         ConfigFileDynamic::load(current_dir).change_context(GetConfigError::LoadFileError)?;
 
-    if file_dynamic.backend_config.bots.is_some() && !file_config.internal_api.as_ref().map(|c| c.bot_login).unwrap_or_default() {
-        return Err(GetConfigError::InvalidConfiguration)
-            .attach_printable("When bots are enabled, internal API bot login must be also enabled");
+    if file_dynamic.backend_config.bots.is_some()
+        && !file_config
+            .internal_api
+            .as_ref()
+            .map(|c| c.bot_login)
+            .unwrap_or_default()
+    {
+        return Err(GetConfigError::InvalidConfiguration).attach_printable(
+            "When bots are enabled, internal API bot login must be also enabled",
+        );
     }
 
     let config = Config {

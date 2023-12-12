@@ -8,9 +8,10 @@ use error_stack::{Result, ResultExt};
 use model::AccountId;
 use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 
-
 use super::{
-    write_concurrent::{ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle, ConcurrentWriteAction},
+    write_concurrent::{
+        ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
+    },
     RouterDatabaseWriteHandle, SyncWriteHandle,
 };
 use crate::data::DataError;
@@ -88,10 +89,8 @@ impl WriteCommandRunnerHandle {
 
         let handle = tokio::spawn(async move {
             let action_future = match action {
-                ConcurrentWriteAction::Image { handle, action } =>
-                    action(handle),
-                ConcurrentWriteAction::Profile { handle, action } =>
-                    action(handle),
+                ConcurrentWriteAction::Image { handle, action } => action(handle),
+                ConcurrentWriteAction::Profile { handle, action } => action(handle),
             };
 
             let result = Box::into_pin(action_future).await;

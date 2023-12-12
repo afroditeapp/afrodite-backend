@@ -2,12 +2,11 @@
 
 use std::sync::Arc;
 
-use error_stack::{ResultExt, Result};
-use model::{EventToClient, AccountId, EventToClientInternal, NotificationEvent};
+use error_stack::{Result, ResultExt};
+use model::{AccountId, EventToClient, EventToClientInternal, NotificationEvent};
 use tokio::sync::mpsc;
 
 use crate::data::RouterDatabaseReadHandle;
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum EventError {
@@ -17,12 +16,8 @@ pub enum EventError {
 
 pub fn event_channel() -> (EventSender, EventReceiver) {
     let (sender, receiver) = tokio::sync::mpsc::channel(10);
-    let sender = EventSender {
-        sender,
-    };
-    let receiver = EventReceiver {
-        receiver,
-    };
+    let sender = EventSender { sender };
+    let receiver = EventReceiver { receiver };
     (sender, receiver)
 }
 
@@ -55,43 +50,50 @@ pub enum EventMode {
     Connected(EventSender),
 }
 
-
 pub struct EventManager {
     database: Arc<RouterDatabaseReadHandle>,
 }
 
 impl EventManager {
     pub fn new(database: Arc<RouterDatabaseReadHandle>) -> Self {
-        Self {
-            database,
-        }
+        Self { database }
     }
     /// Send only if the client is connected.
-    pub async fn send_connected_event(&self, account: impl Into<AccountId>, event: EventToClientInternal) -> Result<(), EventError> {
-        self.database.read().common().access_event_mode(
-            account.into(),
-            move |mode| {
+    pub async fn send_connected_event(
+        &self,
+        account: impl Into<AccountId>,
+        event: EventToClientInternal,
+    ) -> Result<(), EventError> {
+        self.database
+            .read()
+            .common()
+            .access_event_mode(account.into(), move |mode| {
                 if let EventMode::Connected(sender) = mode {
                     let _ = sender.send(event.into());
                 }
-        })
+            })
             .await
             .change_context(EventError::EventModeAccessFailed)
     }
 
     /// Send event to connected client or if not connected
     /// send using push notification.
-    pub async fn send_notification(&self, account: impl Into<AccountId>, event: NotificationEvent) -> Result<(), EventError> {
+    pub async fn send_notification(
+        &self,
+        account: impl Into<AccountId>,
+        event: NotificationEvent,
+    ) -> Result<(), EventError> {
         // TODO: Push notification support
 
-        self.database.read().common().access_event_mode(
-            account.into(),
-            move |mode| {
+        self.database
+            .read()
+            .common()
+            .access_event_mode(account.into(), move |mode| {
                 let event: EventToClientInternal = event.into();
                 if let EventMode::Connected(sender) = mode {
                     let _ = sender.send(event.into());
                 }
-        })
+            })
             .await
             .change_context(EventError::EventModeAccessFailed)
     }

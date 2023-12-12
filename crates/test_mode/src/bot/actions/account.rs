@@ -4,20 +4,17 @@ use api_client::{
     apis::account_api::{
         self, get_account_state, post_account_setup, post_complete_setup, post_login, post_register,
     },
-    models::{auth_pair, AccountSetup, AccountState, BooleanSetting, AccountData},
+    models::{auth_pair, AccountData, AccountSetup, AccountState, BooleanSetting},
 };
 use async_trait::async_trait;
 use base64::Engine;
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 use futures::SinkExt;
 use headers::HeaderValue;
 use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{client::IntoClientRequest, Message};
 use url::Url;
-use utils::{
-    api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT},
-
-};
+use utils::api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT};
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::{
@@ -111,7 +108,9 @@ async fn connect_websocket(
             .map_err(|_| TestError::WebSocket.report())?;
     }
 
-    let mut r = url.into_client_request().change_context(TestError::WebSocket)?;
+    let mut r = url
+        .into_client_request()
+        .change_context(TestError::WebSocket)?;
     r.headers_mut().insert(
         ACCESS_TOKEN_HEADER_STR,
         HeaderValue::from_str(&auth.access.access_token).change_context(TestError::WebSocket)?,
@@ -172,7 +171,10 @@ pub struct SetAccountSetup<'a> {
 
 impl SetAccountSetup<'static> {
     pub const fn new() -> Self {
-        Self { email: None, name: None }
+        Self {
+            email: None,
+            name: None,
+        }
     }
 
     pub const fn admin() -> Self {
@@ -184,9 +186,10 @@ impl SetAccountSetup<'static> {
 }
 
 #[async_trait]
-impl <'a> BotAction for SetAccountSetup<'a> {
+impl<'a> BotAction for SetAccountSetup<'a> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let name = self.name
+        let name = self
+            .name
             .map(|s| s.to_string())
             .unwrap_or_else(|| NameProvider::men_first_name().to_string());
         let setup = AccountSetup {

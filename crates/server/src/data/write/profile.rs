@@ -1,7 +1,9 @@
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
-use crate::data::{cache::CacheError, DataError, IntoDataError, index::location::LocationIndexIteratorState};
+use crate::data::{
+    cache::CacheError, index::location::LocationIndexIteratorState, DataError, IntoDataError,
+};
 
 define_write_commands!(WriteCommandsProfile);
 
@@ -41,7 +43,9 @@ impl WriteCommandsProfile<'_> {
                 .update_profile_link(id.as_id(), profile_link, location)
                 .await?;
         } else {
-            self.location().remove_profile_link(id.as_id(), location).await?;
+            self.location()
+                .remove_profile_link(id.as_id(), location)
+                .await?;
         }
 
         Ok(())
@@ -62,22 +66,26 @@ impl WriteCommandsProfile<'_> {
             .ok_or(DataError::FeatureDisabled)?;
 
         let new_location_key = self.location().coordinates_to_key(&coordinates);
-        self.db_write(move |cmds|
-            cmds.into_profile().profile_location(id, coordinates)
-        )
+        self.db_write(move |cmds| cmds.into_profile().profile_location(id, coordinates))
             .await?;
 
         self.location()
             .update_profile_location(id.as_id(), location.current_position, new_location_key)
             .await?;
 
-        let new_iterator_state = self.location_iterator().reset_iterator(LocationIndexIteratorState::new(), new_location_key);
+        let new_iterator_state = self
+            .location_iterator()
+            .reset_iterator(LocationIndexIteratorState::new(), new_location_key);
         self.write_cache(id, |entry| {
-            let p = entry.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+            let p = entry
+                .profile
+                .as_mut()
+                .ok_or(CacheError::FeatureNotEnabled)?;
             p.location.current_position = new_location_key;
             p.location.current_iterator = new_iterator_state;
             Ok(())
-        }).await?;
+        })
+        .await?;
 
         Ok(())
     }
@@ -105,11 +113,7 @@ impl WriteCommandsProfile<'_> {
         Ok(())
     }
 
-    pub async fn profile_name(
-        self,
-        id: AccountIdInternal,
-        data: String,
-    ) -> Result<(), DataError> {
+    pub async fn profile_name(self, id: AccountIdInternal, data: String) -> Result<(), DataError> {
         let profile_data = data.clone();
         self.db_write(move |cmds| cmds.into_profile().profile_name(id, profile_data))
             .await?;

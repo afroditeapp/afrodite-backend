@@ -4,14 +4,16 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use config::{Config, file::ConfigFileError, file_dynamic::ConfigFileDynamic};
+use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::{Result, ResultExt};
 use futures::Future;
-use model::{AccountId, BackendVersion, BackendConfig};
-
-use self::{
-    routes_connected::ConnectedApp,
+use model::{AccountId, BackendConfig, BackendVersion};
+use simple_backend::{
+    app::{GetSimpleBackendConfig, SimpleBackendAppState},
+    web_socket::WebSocketManager,
 };
+
+use self::routes_connected::ConnectedApp;
 use super::{
     data::{
         read::ReadCommands,
@@ -20,11 +22,12 @@ use super::{
         DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
     },
     internal::{InternalApiClient, InternalApiManager},
-
 };
-use crate::{data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, event::EventManager, api};
-
-use simple_backend::{app::{SimpleBackendAppState, GetSimpleBackendConfig}, web_socket::WebSocketManager};
+use crate::{
+    api,
+    data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+    event::EventManager,
+};
 
 pub mod routes_connected;
 pub mod routes_internal;
@@ -104,7 +107,10 @@ impl WriteData for SimpleBackendAppState<AppState> {
         account: AccountId,
         cmd: GetCmd,
     ) -> Result<CmdResult, DataError> {
-        self.business_logic_state().write_queue.concurrent_write(account, cmd).await
+        self.business_logic_state()
+            .write_queue
+            .concurrent_write(account, cmd)
+            .await
     }
 }
 
@@ -134,7 +140,6 @@ pub trait GetConfig {
     fn config(&self) -> &Config;
 }
 
-
 impl GetConfig for SimpleBackendAppState<AppState> {
     fn config(&self) -> &Config {
         &self.business_logic_state().config
@@ -143,12 +148,9 @@ impl GetConfig for SimpleBackendAppState<AppState> {
 
 #[async_trait::async_trait]
 pub trait WriteDynamicConfig {
-    async fn write_config(
-        &self,
-        config: BackendConfig,
-    ) -> error_stack::Result<(), ConfigFileError>;
+    async fn write_config(&self, config: BackendConfig)
+        -> error_stack::Result<(), ConfigFileError>;
 }
-
 
 #[async_trait::async_trait]
 impl WriteDynamicConfig for SimpleBackendAppState<AppState> {
@@ -170,25 +172,18 @@ impl WriteDynamicConfig for SimpleBackendAppState<AppState> {
     }
 }
 
-
 #[async_trait::async_trait]
 pub trait ReadDynamicConfig {
-    async fn read_config(
-        &self,
-    ) -> error_stack::Result<BackendConfig, ConfigFileError>;
+    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError>;
 }
 
 #[async_trait::async_trait]
 impl ReadDynamicConfig for SimpleBackendAppState<AppState> {
-    async fn read_config(
-        &self,
-    ) -> error_stack::Result<BackendConfig, ConfigFileError> {
-
-        let config = tokio::task::spawn_blocking(move || {
-            ConfigFileDynamic::load_from_current_dir()
-        })
-        .await
-        .change_context(ConfigFileError::LoadConfig)??;
+    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
+        let config =
+            tokio::task::spawn_blocking(move || ConfigFileDynamic::load_from_current_dir())
+                .await
+                .change_context(ConfigFileError::LoadConfig)??;
 
         Ok(config.backend_config)
     }
@@ -201,8 +196,14 @@ pub trait BackendVersionProvider {
 impl BackendVersionProvider for SimpleBackendAppState<AppState> {
     fn backend_version(&self) -> BackendVersion {
         BackendVersion {
-            backend_code_version: self.simple_backend_config().backend_code_version().to_string(),
-            backend_version: self.simple_backend_config().backend_semver_version().to_string(),
+            backend_code_version: self
+                .simple_backend_config()
+                .backend_code_version()
+                .to_string(),
+            backend_version: self
+                .simple_backend_config()
+                .backend_semver_version()
+                .to_string(),
             protocol_version: "1.0.0".to_string(),
         }
     }
@@ -242,8 +243,14 @@ impl App {
         state
     }
 
-    pub fn new(state: SimpleBackendAppState<AppState>, web_socket_manager: WebSocketManager) -> Self {
-        Self { state, web_socket_manager: web_socket_manager.into() }
+    pub fn new(
+        state: SimpleBackendAppState<AppState>,
+        web_socket_manager: WebSocketManager,
+    ) -> Self {
+        Self {
+            state,
+            web_socket_manager: web_socket_manager.into(),
+        }
     }
 
     pub fn state(&self) -> SimpleBackendAppState<AppState> {
@@ -256,7 +263,10 @@ impl App {
                 api::common::PATH_CONNECT, // This route checks the access token by itself.
                 get({
                     let state = self.state.clone();
-                    let ws_manager = self.web_socket_manager.take().expect("This should be called only once");
+                    let ws_manager = self
+                        .web_socket_manager
+                        .take()
+                        .expect("This should be called only once");
                     move |param1, param2, param3| {
                         api::common::get_connect_websocket(
                             param1, param2, param3, ws_manager, state,

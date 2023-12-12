@@ -2,9 +2,9 @@ use axum::{extract::Path, Extension};
 use model::{AccountId, AccountIdInternal, HandleModerationRequest, ModerationList, SecurityImage};
 
 use super::{
+    super::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
-    super::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
 };
 
 pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";

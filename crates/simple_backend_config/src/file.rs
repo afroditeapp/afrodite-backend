@@ -1,7 +1,8 @@
 use std::{
+    collections::HashMap,
     io::Write,
     net::SocketAddr,
-    path::{Path, PathBuf}, collections::HashMap,
+    path::{Path, PathBuf},
 };
 
 use error_stack::{Report, Result, ResultExt};
@@ -96,11 +97,8 @@ pub struct SimpleBackendConfigFile {
 
 impl SimpleBackendConfigFile {
     pub fn load(dir: impl AsRef<Path>) -> Result<SimpleBackendConfigFile, ConfigFileError> {
-        let config_string = ConfigFileUtils::load_string(
-            dir,
-            CONFIG_FILE_NAME,
-            DEFAULT_CONFIG_FILE_TEXT,
-        )?;
+        let config_string =
+            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT)?;
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 }
@@ -108,18 +106,17 @@ impl SimpleBackendConfigFile {
 pub struct ConfigFileUtils;
 
 impl ConfigFileUtils {
-    pub fn save_string(
-        file_path: impl AsRef<Path>,
-        text: &str,
-    ) -> Result<(), ConfigFileError> {
-        let mut file =
-            std::fs::File::create(file_path).change_context(ConfigFileError::Save)?;
+    pub fn save_string(file_path: impl AsRef<Path>, text: &str) -> Result<(), ConfigFileError> {
+        let mut file = std::fs::File::create(file_path).change_context(ConfigFileError::Save)?;
         file.write_all(text.as_bytes())
             .change_context(ConfigFileError::Save)?;
         Ok(())
     }
 
-    pub fn join_dir_path_and_file_name(dir: impl AsRef<Path>, file_name: &str) -> Result<PathBuf, ConfigFileError> {
+    pub fn join_dir_path_and_file_name(
+        dir: impl AsRef<Path>,
+        file_name: &str,
+    ) -> Result<PathBuf, ConfigFileError> {
         if !dir.as_ref().is_dir() {
             return Err(Report::new(ConfigFileError::NotDirectory));
         }
@@ -128,17 +125,18 @@ impl ConfigFileUtils {
         return Ok(file_path);
     }
 
-    pub fn load_string(dir: impl AsRef<Path>, file_name: &str, default: &str) -> Result<String, ConfigFileError> {
-        let file_path =
-            Self::join_dir_path_and_file_name(&dir, file_name)
-                .change_context(ConfigFileError::LoadConfig)?;
+    pub fn load_string(
+        dir: impl AsRef<Path>,
+        file_name: &str,
+        default: &str,
+    ) -> Result<String, ConfigFileError> {
+        let file_path = Self::join_dir_path_and_file_name(&dir, file_name)
+            .change_context(ConfigFileError::LoadConfig)?;
         if !file_path.exists() {
-            Self::save_string(&file_path, default)
-                .change_context(ConfigFileError::SaveDefault)?;
+            Self::save_string(&file_path, default).change_context(ConfigFileError::SaveDefault)?;
         }
 
-        std::fs::read_to_string(&file_path)
-            .change_context(ConfigFileError::LoadConfig)
+        std::fs::read_to_string(&file_path).change_context(ConfigFileError::LoadConfig)
     }
 }
 
@@ -172,9 +170,7 @@ pub struct SqliteDatabase {
 
 #[derive(Debug, Clone)]
 pub enum DatabaseInfo {
-    Sqlite {
-        name: String,
-    },
+    Sqlite { name: String },
 }
 
 impl DatabaseInfo {
@@ -193,9 +189,7 @@ impl DatabaseInfo {
 
 impl From<SqliteDatabase> for DatabaseInfo {
     fn from(value: SqliteDatabase) -> Self {
-        Self::Sqlite {
-            name: value.name,
-        }
+        Self::Sqlite { name: value.name }
     }
 }
 
@@ -218,7 +212,6 @@ pub struct TileMapConfig {
     /// Tiles must be stored in z/x/y.png format.
     pub tile_dir: PathBuf,
 }
-
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SignInWithGoogleConfig {

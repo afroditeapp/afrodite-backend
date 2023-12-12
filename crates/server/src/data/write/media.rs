@@ -1,4 +1,4 @@
-use database::{current::write::media::CurrentSyncWriteMedia};
+use database::current::write::media::CurrentSyncWriteMedia;
 use error_stack::{Result, ResultExt};
 use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
 use simple_backend_database::diesel_db::DieselDatabaseError;

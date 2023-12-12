@@ -1,6 +1,8 @@
-use database::current::write::{CurrentSyncWriteCommands};
+use database::current::write::CurrentSyncWriteCommands;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AccountSetup, Capabilities, AccountData, AccountInternal, SharedState};
+use model::{
+    AccountData, AccountIdInternal, AccountInternal, AccountSetup, Capabilities, SharedState,
+};
 
 use crate::data::DataError;
 
@@ -26,7 +28,8 @@ impl WriteCommandsAccount<'_> {
                 cmds.common().account_capabilities(id, capabilities)?;
             }
             Ok(())
-        }).await?;
+        })
+        .await?;
 
         self.write_cache(id, |cache| {
             if let Some(state) = shared_state {
@@ -36,7 +39,8 @@ impl WriteCommandsAccount<'_> {
                 cache.capabilities = capabilities;
             }
             Ok(())
-        }).await?;
+        })
+        .await?;
 
         Ok(())
     }

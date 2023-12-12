@@ -9,14 +9,19 @@ use database::{
         write::{CurrentSyncWriteCommands, TransactionConnection},
     },
     history::write::{HistorySyncWriteCommands, HistoryWriteCommands},
-    TransactionError, CurrentWriteHandle, HistoryWriteHandle,
+    CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountId, AccountIdInternal, AccountSetup, SignInWithInfo, SharedStateInternal, AccountInternal};
+use model::{
+    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, SharedStateInternal,
+    SignInWithInfo,
+};
 use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_database::{diesel_db::{DieselConnection, DieselDatabaseError}, PoolObject};
+use simple_backend_database::{
+    diesel_db::{DieselConnection, DieselDatabaseError},
+    PoolObject,
+};
 use simple_backend_utils::IntoReportFromString;
-
 
 use self::{
     account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
@@ -30,7 +35,7 @@ use super::{
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
     IntoDataError,
 };
-use crate::{data::DataError};
+use crate::data::DataError;
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -94,9 +99,10 @@ macro_rules! define_write_commands {
                         database::current::write::CurrentSyncWriteCommands<
                             &mut simple_backend_database::diesel_db::DieselConnection,
                         >,
-                    )
-                        -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
-                    + Send
+                    ) -> error_stack::Result<
+                        R,
+                        simple_backend_database::diesel_db::DieselDatabaseError,
+                    > + Send
                     + 'static,
                 R: Send + 'static,
             >(
@@ -112,7 +118,9 @@ macro_rules! define_write_commands {
                         &mut simple_backend_database::diesel_db::DieselConnection,
                     ) -> std::result::Result<
                         R,
-                        database::TransactionError<simple_backend_database::diesel_db::DieselDatabaseError>,
+                        database::TransactionError<
+                            simple_backend_database::diesel_db::DieselDatabaseError,
+                        >,
                     > + Send
                     + 'static,
                 R: Send + 'static,
@@ -129,9 +137,10 @@ macro_rules! define_write_commands {
                         database::current::read::CurrentSyncReadCommands<
                             &mut simple_backend_database::diesel_db::DieselConnection,
                         >,
-                    )
-                        -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
-                    + Send
+                    ) -> error_stack::Result<
+                        R,
+                        simple_backend_database::diesel_db::DieselDatabaseError,
+                    > + Send
                     + 'static,
                 R: Send + 'static,
             >(
@@ -296,13 +305,17 @@ impl<'a> WriteCommands<'a> {
         current.account().insert_access_token(id, None)?;
         current.account().insert_refresh_token(id, None)?;
         current.common().insert_default_account_capabilities(id)?;
-        current.common().insert_shared_state(id, SharedStateInternal::default())?;
+        current
+            .common()
+            .insert_shared_state(id, SharedStateInternal::default())?;
 
         // Common history
         history.account().insert_account_id(id)?;
 
         if config.components().account {
-            current.account().insert_account(id, AccountInternal::default())?;
+            current
+                .account()
+                .insert_account(id, AccountInternal::default())?;
             current.account().insert_account_setup(id, &account_setup)?;
             current
                 .account()

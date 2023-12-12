@@ -2,11 +2,18 @@ use api_client::models::{Location, Profile, ProfileVersion};
 
 use super::SingleTest;
 use crate::{
-    bot::{actions::{
-        account::{SetProfileVisibility, GetAccount},
-        profile::{GetProfileList, ResetProfileIterator, UpdateLocation, GetProfile, ProfileText, ChangeProfileText, GetLocation},
-        AssertEqualsFn, BotAction, ModifyTaskState, RunActions, SleepUntil, TO_NORMAL_STATE, AssertEqualsTestFn,
-    }, utils::name::NameProvider},
+    bot::{
+        actions::{
+            account::{GetAccount, SetProfileVisibility},
+            profile::{
+                ChangeProfileText, GetLocation, GetProfile, GetProfileList, ProfileText,
+                ResetProfileIterator, UpdateLocation,
+            },
+            AssertEqualsFn, AssertEqualsTestFn, BotAction, ModifyTaskState, RunActions, SleepUntil,
+            TO_NORMAL_STATE,
+        },
+        utils::name::NameProvider,
+    },
     test,
 };
 
@@ -25,16 +32,16 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
             UpdateLocation(LOCATION_LAT_LON_10),
             SetProfileVisibility(true),
             AssertEqualsFn(
-                |v, _| v.account().capabilities.user_view_public_profiles.unwrap_or_default(),
+                |v, _| v
+                    .account()
+                    .capabilities
+                    .user_view_public_profiles
+                    .unwrap_or_default(),
                 true,
                 &GetAccount
-             ),
-            ModifyTaskState(|s| s.bot_count_update_location_to_lat_lon_10 += 1),
-            AssertEqualsFn(
-               |v, _| v.location(),
-               LOCATION_LAT_LON_10,
-               &GetLocation
             ),
+            ModifyTaskState(|s| s.bot_count_update_location_to_lat_lon_10 += 1),
+            AssertEqualsFn(|v, _| v.location(), LOCATION_LAT_LON_10, &GetLocation),
         ]
     ),
     test!(
@@ -55,7 +62,9 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
         "Get profile",
         [
             RunActions(TO_NORMAL_STATE),
-            ChangeProfileText { mode: ProfileText::Static("profile123")},
+            ChangeProfileText {
+                mode: ProfileText::Static("profile123")
+            },
             AssertEqualsTestFn(
                 |v, _| {
                     let mut profile = v.profile().clone();

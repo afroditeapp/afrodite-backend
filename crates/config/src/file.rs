@@ -80,12 +80,9 @@ pub struct ConfigFile {
 
 impl ConfigFile {
     pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
-        let config_string = ConfigFileUtils::load_string(
-            dir,
-            CONFIG_FILE_NAME,
-            DEFAULT_CONFIG_FILE_TEXT,
-        )
-            .change_context(ConfigFileError::SimpleBackendError)?;
+        let config_string =
+            ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT)
+                .change_context(ConfigFileError::SimpleBackendError)?;
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 }
@@ -151,7 +148,6 @@ pub struct InternalApiConfig {
     pub bot_login: bool,
 }
 
-
 /// Server queue limits
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct QueueLimitsConfig {
@@ -160,8 +156,6 @@ pub struct QueueLimitsConfig {
 
 impl Default for QueueLimitsConfig {
     fn default() -> Self {
-        Self {
-            image_upload: 10,
-        }
+        Self { image_upload: 10 }
     }
 }

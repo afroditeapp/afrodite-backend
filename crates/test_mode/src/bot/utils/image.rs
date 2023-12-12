@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use image::{codecs::jpeg::{JpegEncoder}, ImageBuffer, Rgb};
+use image::{codecs::jpeg::JpegEncoder, ImageBuffer, Rgb};
 use rand::seq::SliceRandom;
 
 pub struct ImageProvider {}
@@ -78,8 +78,7 @@ impl ImageProvider {
 
                 let mut data = vec![];
                 let mut encoder = JpegEncoder::new(&mut data);
-                encoder.encode_image(&img)
-                    .map(|_| data)
+                encoder.encode_image(&img).map(|_| data)
             })
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
     }

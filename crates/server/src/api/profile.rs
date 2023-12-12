@@ -1,15 +1,17 @@
 use axum::{extract::Path, Extension};
 use model::{
-    AccountId, AccountIdInternal, Location, Profile, ProfilePage, ProfileUpdate,
-    ProfileUpdateInternal, ProfileLink, FavoriteProfilesPage,
+    AccountId, AccountIdInternal, FavoriteProfilesPage, Location, Profile, ProfileLink,
+    ProfilePage, ProfileUpdate, ProfileUpdateInternal,
 };
 
-use crate::data::{write_concurrent::{ConcurrentWriteProfileHandle, ConcurrentWriteAction}, DataError};
-
 use super::{
+    super::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
-    super::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
+};
+use crate::data::{
+    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle},
+    DataError,
 };
 
 // TODO: Add timeout for database commands
@@ -154,10 +156,7 @@ pub async fn get_location<S: GetAccessTokens + ReadData>(
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<Location>, StatusCode> {
-    let location = state
-        .read()
-        .profile()
-        .profile_location(account_id).await?;
+    let location = state.read().profile().profile_location(account_id).await?;
     Ok(location.into())
 }
 
@@ -204,11 +203,11 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
 ) -> Result<Json<ProfilePage>, StatusCode> {
     let data = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<error_stack::Result<Vec<ProfileLink>, DataError>> = cmds.accquire_profile(
-                move |cmds: ConcurrentWriteProfileHandle| Box::new(async move {
-                    cmds.next_profiles(account_id).await
+            let out: ConcurrentWriteAction<error_stack::Result<Vec<ProfileLink>, DataError>> = cmds
+                .accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
+                    Box::new(async move { cmds.next_profiles(account_id).await })
                 })
-            ).await;
+                .await;
             out
         })
         .await??;
@@ -238,11 +237,11 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
 ) -> Result<(), StatusCode> {
     state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds.accquire_profile(
-                move |cmds: ConcurrentWriteProfileHandle| Box::new(async move {
-                    cmds.reset_profile_iterator(account_id).await
+            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
+                .accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
+                    Box::new(async move { cmds.reset_profile_iterator(account_id).await })
                 })
-            ).await;
+                .await;
             out
         })
         .await??;
@@ -314,13 +313,10 @@ pub async fn get_favorite_profiles<S: ReadData>(
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<FavoriteProfilesPage>, StatusCode> {
-    let profiles = state
-        .read()
-        .profile()
-        .favorite_profiles(account_id).await?;
+    let profiles = state.read().profile().favorite_profiles(account_id).await?;
 
     let page = FavoriteProfilesPage {
-        profiles: profiles.into_iter().map(|p| p.uuid).collect()
+        profiles: profiles.into_iter().map(|p| p.uuid).collect(),
     };
 
     Ok(page.into())
@@ -345,12 +341,10 @@ pub async fn post_favorite_profile<S: WriteData + GetAccounts>(
     Json(favorite): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let favorite_account_id =
-        state.accounts().get_internal_id(favorite).await?;
+    let favorite_account_id = state.accounts().get_internal_id(favorite).await?;
     db_write!(state, move |cmds| cmds
         .profile()
-        .insert_favorite_profile(account_id, favorite_account_id)
-    )?;
+        .insert_favorite_profile(account_id, favorite_account_id))?;
 
     Ok(())
 }
@@ -374,12 +368,10 @@ pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
     Json(favorite): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let favorite_account_id =
-        state.accounts().get_internal_id(favorite).await?;
+    let favorite_account_id = state.accounts().get_internal_id(favorite).await?;
     db_write!(state, move |cmds| cmds
         .profile()
-        .remove_favorite_profile(account_id, favorite_account_id)
-    )?;
+        .remove_favorite_profile(account_id, favorite_account_id))?;
 
     Ok(())
 }

@@ -1,7 +1,9 @@
-use simple_backend_config::SimpleBackendConfig;
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 use manager_api::{ApiKey, Configuration, ManagerApi};
-use manager_model::{BuildInfo, SoftwareInfo, SoftwareOptions, SystemInfoList, ResetDataQueryParam};
+use manager_model::{
+    BuildInfo, ResetDataQueryParam, SoftwareInfo, SoftwareOptions, SystemInfoList,
+};
+use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tracing::{error, info};
 

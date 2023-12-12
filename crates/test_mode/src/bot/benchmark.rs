@@ -18,11 +18,13 @@ use error_stack::{Result, ResultExt};
 use tokio::time::sleep;
 use tracing::log::info;
 
-
 use super::{
     actions::{
         account::{Login, Register, SetProfileVisibility},
-        profile::{ChangeProfileText, GetProfileList, ResetProfileIterator, UpdateLocationRandom, ProfileText},
+        profile::{
+            ChangeProfileText, GetProfileList, ProfileText, ResetProfileIterator,
+            UpdateLocationRandom,
+        },
         BotAction, RepeatUntilFn, RunActions, TO_NORMAL_STATE,
     },
     utils::{Counters, Timer},
@@ -190,9 +192,12 @@ pub struct GetProfileFromDatabase;
 #[async_trait]
 impl BotAction for GetProfileFromDatabase {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile_from_database_debug_mode_benchmark(state.api.profile(), &state.account_id_string()?)
-            .await
-            .change_context(TestError::ApiRequest)?;
+        get_profile_from_database_debug_mode_benchmark(
+            state.api.profile(),
+            &state.account_id_string()?,
+        )
+        .await
+        .change_context(TestError::ApiRequest)?;
         Ok(())
     }
 }
@@ -207,7 +212,11 @@ impl BotAction for PostProfile {
         state: &mut BotState,
         task_state: &mut TaskState,
     ) -> Result<(), TestError> {
-        ChangeProfileText { mode: ProfileText::Random }.excecute(state, task_state).await?;
+        ChangeProfileText {
+            mode: ProfileText::Random,
+        }
+        .excecute(state, task_state)
+        .await?;
         Ok(())
     }
 }

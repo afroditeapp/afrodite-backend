@@ -4,7 +4,6 @@ use api_client::apis::media_admin_api;
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
 
-
 use super::{super::super::client::TestError, BotAction, BotState};
 
 #[derive(Debug)]

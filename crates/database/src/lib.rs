@@ -8,17 +8,16 @@ pub mod history;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use current::{write::{CurrentWriteCommands}, read::CurrentReadCommands};
-use diesel_migrations::{EmbeddedMigrations, embed_migrations};
+use current::{read::CurrentReadCommands, write::CurrentWriteCommands};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+use error_stack::{Context, Result, ResultExt};
 use history::{read::HistoryReadCommands, write::HistoryWriteCommands};
-use simple_backend_config::RUNNING_IN_DEBUG_MODE;
-use error_stack::{Context, ResultExt, Result};
 pub use model::schema;
-use model::{IsLoggingAllowed};
-use simple_backend_database::{diesel_db::{DieselDatabaseError}, DbWriteHandle, DbReadHandle};
+use model::IsLoggingAllowed;
+use simple_backend_config::RUNNING_IN_DEBUG_MODE;
+use simple_backend_database::{diesel_db::DieselDatabaseError, DbReadHandle, DbWriteHandle};
 
 pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
-
 
 /// Write handle for current database.
 #[derive(Clone, Debug)]
@@ -120,12 +119,11 @@ pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
         e: Err,
         request_context: T,
     ) -> Result<Self::Ok, Err> {
-        self.change_context(e)
-            .attach_printable_lazy(move || {
-                let context = ErrorContext::<T, Self::Ok>::new(request_context);
+        self.change_context(e).attach_printable_lazy(move || {
+            let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
-                format!("{:#?}", context)
-            })
+            format!("{:#?}", context)
+        })
     }
 
     #[track_caller]
@@ -161,10 +159,7 @@ impl<Ok> IntoDatabaseError<DieselDatabaseError>
 {
 }
 
-impl<Ok> IntoDatabaseError<DieselDatabaseError>
-    for std::result::Result<Ok, DieselDatabaseError>
-{
-}
+impl<Ok> IntoDatabaseError<DieselDatabaseError> for std::result::Result<Ok, DieselDatabaseError> {}
 
 impl<Ok> IntoDatabaseError<DieselDatabaseError>
     for std::result::Result<Ok, model::account::AccountStateError>

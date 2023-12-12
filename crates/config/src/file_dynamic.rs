@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use error_stack::{Result, ResultExt};
-use model::{BotConfig, BackendConfig};
+use model::{BackendConfig, BotConfig};
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
 use toml_edit::{Document, Item};
@@ -39,7 +39,7 @@ impl ConfigFileDynamic {
             CONFIG_FILE_DYNAMIC_NAME,
             DEFAULT_CONFIG_FILE_DYNAMIC_TEXT,
         )
-            .change_context(ConfigFileError::SimpleBackendError)?;
+        .change_context(ConfigFileError::SimpleBackendError)?;
         toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)
     }
 
@@ -48,16 +48,15 @@ impl ConfigFileDynamic {
         Self::load(current_dir)
     }
 
-    pub fn edit_bot_config_from_current_dir(
-        bot_config: BotConfig,
-    ) -> Result<(), ConfigFileError> {
+    pub fn edit_bot_config_from_current_dir(bot_config: BotConfig) -> Result<(), ConfigFileError> {
         let dir = std::env::current_dir().change_context(ConfigFileError::LoadConfig)?;
 
         let config = ConfigFileUtils::load_string(
             &dir,
             CONFIG_FILE_DYNAMIC_NAME,
             DEFAULT_CONFIG_FILE_DYNAMIC_TEXT,
-        ).change_context(ConfigFileError::SimpleBackendError)?;
+        )
+        .change_context(ConfigFileError::SimpleBackendError)?;
 
         let mut config_document = config
             .parse::<Document>()
@@ -103,7 +102,7 @@ fn edit_document_bot_config(
 
 #[cfg(test)]
 mod tests {
-    use std::{str::FromStr};
+    use std::str::FromStr;
 
     use super::*;
 

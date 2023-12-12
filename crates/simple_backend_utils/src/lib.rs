@@ -7,7 +7,7 @@ pub mod markers;
 
 use std::fmt::Display;
 
-use error_stack::{Context, ResultExt, Result, Report};
+use error_stack::{Context, Report, Result, ResultExt};
 
 pub trait IntoReportFromString {
     type Ok;

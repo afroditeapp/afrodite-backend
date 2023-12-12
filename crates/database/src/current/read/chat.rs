@@ -1,16 +1,13 @@
 use diesel::prelude::*;
-use error_stack::{Result};
-
+use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PendingMessage, PendingMessageInternal, PendingMessageId,
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
+    PendingMessage, PendingMessageId, PendingMessageInternal,
 };
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
-use crate::{
-    IntoDatabaseError,
-};
-
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+use crate::IntoDatabaseError;
 
 define_read_commands!(CurrentReadChat, CurrentSyncReadChat);
 
@@ -20,7 +17,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
         account2: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> Result<Option<AccountInteractionInternal>, DieselDatabaseError> {
-        use crate::schema::{account_interaction_index::dsl::*, account_interaction::dsl::*};
+        use crate::schema::{account_interaction::dsl::*, account_interaction_index::dsl::*};
 
         let interaction_id_value = account_interaction_index
             .filter(account_id_first.eq(account1.as_db_id()))
@@ -51,13 +48,17 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
         with_state: AccountInteractionState,
         only_public_profiles: bool,
     ) -> Result<Vec<AccountId>, DieselDatabaseError> {
-        use crate::schema::account_interaction::dsl::*;
-        use crate::schema::account_id;
-        use crate::schema::shared_state;
+        use crate::schema::{account_id, account_interaction::dsl::*, shared_state};
 
         let partial_command = account_interaction
-            .inner_join(account_id::table.on(account_id_receiver.assume_not_null().eq(account_id::id)))
-            .inner_join(shared_state::table.on(account_id_receiver.assume_not_null().eq(shared_state::account_id)))
+            .inner_join(
+                account_id::table.on(account_id_receiver.assume_not_null().eq(account_id::id)),
+            )
+            .inner_join(
+                shared_state::table.on(account_id_receiver
+                    .assume_not_null()
+                    .eq(shared_state::account_id)),
+            )
             .filter(account_id_receiver.is_not_null())
             .filter(account_id_sender.eq(id_sender.as_db_id()))
             .filter(state_number.eq(with_state as i64));
@@ -84,11 +85,12 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
         id_receiver: AccountIdInternal,
         with_state: AccountInteractionState,
     ) -> Result<Vec<AccountId>, DieselDatabaseError> {
-        use crate::schema::account_interaction::dsl::*;
-        use crate::schema::account_id;
+        use crate::schema::{account_id, account_interaction::dsl::*};
 
         let value: Vec<AccountId> = account_interaction
-            .inner_join(account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)))
+            .inner_join(
+                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+            )
             .filter(account_id_sender.is_not_null())
             .filter(account_id_receiver.eq(id_receiver.as_db_id()))
             .filter(state_number.eq(with_state as i64))
@@ -103,29 +105,28 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
         &mut self,
         id_message_receiver: AccountIdInternal,
     ) -> Result<Vec<PendingMessage>, DieselDatabaseError> {
-        use crate::schema::pending_messages::dsl::*;
-        use crate::schema::account_id;
+        use crate::schema::{account_id, pending_messages::dsl::*};
 
         let value: Vec<(AccountId, PendingMessageInternal)> = pending_messages
-            .inner_join(account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)))
+            .inner_join(
+                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+            )
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
-            .select((
-                account_id::uuid,
-                PendingMessageInternal::as_select()
-            ))
+            .select((account_id::uuid, PendingMessageInternal::as_select()))
             .load(self.conn())
             .into_db_error(DieselDatabaseError::Execute, ())?;
 
-        let messages = value.into_iter().map(|(sender_uuid, msg)| {
-            PendingMessage {
+        let messages = value
+            .into_iter()
+            .map(|(sender_uuid, msg)| PendingMessage {
                 id: PendingMessageId {
                     account_id_sender: sender_uuid,
                     message_number: msg.message_number,
                 },
                 unix_time: msg.unix_time,
                 message: msg.message_text,
-            }
-        }).collect();
+            })
+            .collect();
 
         Ok(messages)
     }

@@ -1,4 +1,4 @@
-use crate::HistoryReadHandle;
+use simple_backend_database::{diesel_db::ConnectionProvider, sqlx_db::SqlxReadHandle};
 
 use self::{
     account::HistorySyncReadAccount, account_admin::HistorySyncReadAccountAdmin,
@@ -6,8 +6,7 @@ use self::{
     media_admin::HistorySyncReadMediaAdmin, profile::HistorySyncReadProfile,
     profile_admin::HistorySyncReadProfileAdmin,
 };
-
-use simple_backend_database::{diesel_db::ConnectionProvider, sqlx_db::SqlxReadHandle};
+use crate::HistoryReadHandle;
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -56,7 +55,9 @@ pub struct HistoryReadCommands<'a> {
 
 impl<'a> HistoryReadCommands<'a> {
     pub fn new(handle: &'a HistoryReadHandle) -> Self {
-        Self { handle: handle.0.sqlx() }
+        Self {
+            handle: handle.0.sqlx(),
+        }
     }
 }
 

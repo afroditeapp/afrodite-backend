@@ -1,9 +1,7 @@
-
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AccountInteractionInternal, PendingMessageId, MessageNumber};
+use model::{AccountIdInternal, AccountInteractionInternal, MessageNumber, PendingMessageId};
 
-use crate::{data::{DataError}};
-
+use crate::data::DataError;
 
 define_write_commands!(WriteCommandsChat);
 
@@ -16,18 +14,22 @@ impl WriteCommandsChat<'_> {
         id_like_sender: AccountIdInternal,
         id_like_receiver: AccountIdInternal,
     ) -> Result<AccountInteractionInternal, DataError> {
-        let interaction = self.db_write(move |cmds|
-            cmds.into_chat().get_or_create_account_interaction(id_like_sender, id_like_receiver)
-        )
+        let interaction = self
+            .db_write(move |cmds| {
+                cmds.into_chat()
+                    .get_or_create_account_interaction(id_like_sender, id_like_receiver)
+            })
             .await?;
 
-        let updated = if interaction.is_like() &&
-            interaction.account_id_sender == Some(id_like_sender.into_db_id()) &&
-            interaction.account_id_receiver == Some(id_like_receiver.into_db_id()) {
+        let updated = if interaction.is_like()
+            && interaction.account_id_sender == Some(id_like_sender.into_db_id())
+            && interaction.account_id_receiver == Some(id_like_receiver.into_db_id())
+        {
             return Err(DataError::AlreadyDone.report());
-        } else if interaction.is_like() &&
-            interaction.account_id_sender == Some(id_like_receiver.into_db_id()) &&
-            interaction.account_id_receiver == Some(id_like_sender.into_db_id()) {
+        } else if interaction.is_like()
+            && interaction.account_id_sender == Some(id_like_receiver.into_db_id())
+            && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
+        {
             interaction
                 .try_into_match()
                 .change_context(DataError::NotAllowed)?
@@ -40,9 +42,7 @@ impl WriteCommandsChat<'_> {
         };
 
         let updated_clone = updated.clone();
-        self.db_write(move |cmds|
-            cmds.into_chat().update_account_interaction(updated)
-        )
+        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(updated))
             .await?;
 
         Ok(updated_clone)
@@ -56,9 +56,11 @@ impl WriteCommandsChat<'_> {
         id_sender: AccountIdInternal,
         id_receiver: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let interaction = self.db_write(move |cmds|
-            cmds.into_chat().get_or_create_account_interaction(id_sender, id_receiver)
-        )
+        let interaction = self
+            .db_write(move |cmds| {
+                cmds.into_chat()
+                    .get_or_create_account_interaction(id_sender, id_receiver)
+            })
             .await?;
         if interaction.is_empty() {
             return Err(DataError::AlreadyDone.report());
@@ -69,9 +71,7 @@ impl WriteCommandsChat<'_> {
         let updated = interaction
             .try_into_empty()
             .change_context(DataError::NotAllowed)?;
-        self.db_write(move |cmds|
-            cmds.into_chat().update_account_interaction(updated)
-        )
+        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(updated))
             .await?;
 
         Ok(())
@@ -85,9 +85,11 @@ impl WriteCommandsChat<'_> {
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let interaction = self.db_write(move |cmds|
-            cmds.into_chat().get_or_create_account_interaction(id_block_sender, id_block_receiver)
-        )
+        let interaction = self
+            .db_write(move |cmds| {
+                cmds.into_chat()
+                    .get_or_create_account_interaction(id_block_sender, id_block_receiver)
+            })
             .await?;
         if interaction.is_blocked() {
             return Err(DataError::AlreadyDone.report());
@@ -95,9 +97,7 @@ impl WriteCommandsChat<'_> {
         let updated = interaction
             .try_into_block(id_block_sender, id_block_receiver)
             .change_context(DataError::NotAllowed)?;
-        self.db_write(move |cmds|
-            cmds.into_chat().update_account_interaction(updated)
-        )
+        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(updated))
             .await?;
 
         Ok(())
@@ -109,10 +109,11 @@ impl WriteCommandsChat<'_> {
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds|
-            cmds.into_chat().delete_pending_message_list(message_receiver, messages)
-        )
-            .await
+        self.db_write(move |cmds| {
+            cmds.into_chat()
+                .delete_pending_message_list(message_receiver, messages)
+        })
+        .await
     }
 
     /// Update message number which my account has viewed from the sender
@@ -122,11 +123,13 @@ impl WriteCommandsChat<'_> {
         id_message_sender: AccountIdInternal,
         new_message_number: MessageNumber,
     ) -> Result<(), DataError> {
-        let mut interaction = self.db_read(move |mut cmds| {
-            cmds.chat().account_interaction(id_my_account, id_message_sender)
-        })
-        .await?
-        .ok_or(DataError::NotFound.report())?;
+        let mut interaction = self
+            .db_read(move |mut cmds| {
+                cmds.chat()
+                    .account_interaction(id_my_account, id_message_sender)
+            })
+            .await?
+            .ok_or(DataError::NotFound.report())?;
 
         // Prevent marking future messages as viewed
         if new_message_number.message_number > interaction.message_counter {
@@ -136,13 +139,9 @@ impl WriteCommandsChat<'_> {
         // Who is sender and receiver in the interaction data depends
         // on who did the first like
         let modify_number = if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
-            interaction
-                .sender_latest_viewed_message
-                .as_mut()
+            interaction.sender_latest_viewed_message.as_mut()
         } else {
-            interaction
-                .receiver_latest_viewed_message
-                .as_mut()
+            interaction.receiver_latest_viewed_message.as_mut()
         };
 
         if let Some(number) = modify_number {
@@ -151,10 +150,8 @@ impl WriteCommandsChat<'_> {
             return Err(DataError::NotAllowed.report());
         }
 
-        self.db_write(move |cmds| {
-            cmds.into_chat().update_account_interaction(interaction)
-        })
-        .await?;
+        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(interaction))
+            .await?;
 
         Ok(())
     }
@@ -166,9 +163,10 @@ impl WriteCommandsChat<'_> {
         receiver: AccountIdInternal,
         message: String,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds|
-            cmds.into_chat().insert_pending_message_if_match(sender, receiver, message)
-        )
-            .await
+        self.db_write(move |cmds| {
+            cmds.into_chat()
+                .insert_pending_message_if_match(sender, receiver, message)
+        })
+        .await
     }
 }

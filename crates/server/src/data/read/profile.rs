@@ -1,5 +1,5 @@
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ProfileInternal, Location};
+use model::{AccountIdInternal, Location, ProfileInternal};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
@@ -31,7 +31,10 @@ impl ReadCommandsProfile<'_> {
             .await
     }
 
-    pub async fn favorite_profiles(&self, id: AccountIdInternal) -> Result<Vec<AccountIdInternal>, DataError> {
+    pub async fn favorite_profiles(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.profile().favorites(id))
             .await
     }

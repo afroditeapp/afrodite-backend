@@ -11,16 +11,19 @@ use axum::{
     response::IntoResponse,
     TypedHeader,
 };
-use error_stack::{ResultExt, Result};
-use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, EventToClient, EventToClientInternal};
+use error_stack::{Result, ResultExt};
+use model::{
+    AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,
+    RefreshToken,
+};
 use simple_backend::web_socket::WebSocketManager;
-use tracing::error;
 use simple_backend_utils::ContextExt;
+use tracing::error;
 pub use utils::api::PATH_CONNECT;
 
 use super::{
-    utils::{AccessTokenHeader, Json, StatusCode},
     super::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
+    utils::{AccessTokenHeader, Json, StatusCode},
 };
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
@@ -220,13 +223,9 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .change_context(WebSocketError::Send)?;
 
     let mut event_receiver = state
-        .write(move |cmds| async move {
-            cmds.common()
-                .init_connection_session_events(
-                    id.uuid,
-                )
-                .await
-        })
+        .write(
+            move |cmds| async move { cmds.common().init_connection_session_events(id.uuid).await },
+        )
         .await
         .change_context(WebSocketError::DatabaseSaveTokens)?;
 
@@ -270,21 +269,23 @@ async fn send_account_state<S: WriteData + ReadData>(
         .await
         .change_context(WebSocketError::DatabaseAccountStateQuery)?;
 
-    let event: EventToClient = EventToClientInternal::AccountStateChanged { state: current_account.state() }.into();
-    let event = serde_json::to_string(
-        &event
-    )
-        .change_context(WebSocketError::Serialize)?;
-    socket.send(Message::Text(event))
+    let event: EventToClient = EventToClientInternal::AccountStateChanged {
+        state: current_account.state(),
+    }
+    .into();
+    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
+    socket
+        .send(Message::Text(event))
         .await
         .change_context(WebSocketError::Send)?;
 
-    let event: EventToClient = EventToClientInternal::AccountCapabilitiesChanged { capabilities: current_account.into_capablities() }.into();
-    let event = serde_json::to_string(
-        &event
-    )
-        .change_context(WebSocketError::Serialize)?;
-    socket.send(Message::Text(event))
+    let event: EventToClient = EventToClientInternal::AccountCapabilitiesChanged {
+        capabilities: current_account.into_capablities(),
+    }
+    .into();
+    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
+    socket
+        .send(Message::Text(event))
         .await
         .change_context(WebSocketError::Send)?;
 

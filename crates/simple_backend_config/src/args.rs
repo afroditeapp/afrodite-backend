@@ -1,11 +1,8 @@
 //! Config given as command line arguments
 
-use std::{
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use clap::{arg, Args};
-
 
 #[derive(Args, Debug, Clone)]
 pub struct ServerModeArgs {
@@ -16,7 +13,6 @@ pub struct ServerModeArgs {
     /// Use in RAM mode for SQLite.
     #[arg(short, long)]
     pub sqlite_in_ram: bool,
-
 }
 
 #[derive(Args, Debug, Clone)]

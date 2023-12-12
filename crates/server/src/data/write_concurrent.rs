@@ -5,9 +5,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
 use axum::extract::BodyStream;
 use config::Config;
-use database::{
-    history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle,
-};
+use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
 use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentId, ProfileLink};
@@ -15,21 +13,24 @@ use simple_backend::image::ImageProcess;
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
-    cache::DatabaseCache, file::utils::FileDir, IntoDataError,
-    RouterDatabaseWriteHandle, index::LocationIndexIteratorHandle,
+    cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorHandle, IntoDataError,
+    RouterDatabaseWriteHandle,
 };
-use crate::{data::DataError};
+use crate::data::DataError;
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + Sync + 'static>;
 
 pub enum ConcurrentWriteAction<R> {
     Image {
         handle: ConcurrentWriteImageHandle,
-        action: Box<dyn FnOnce(ConcurrentWriteImageHandle) -> OutputFuture<R> + Send + Sync + 'static>
+        action:
+            Box<dyn FnOnce(ConcurrentWriteImageHandle) -> OutputFuture<R> + Send + Sync + 'static>,
     },
     Profile {
         handle: ConcurrentWriteProfileHandle,
-        action: Box<dyn FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + Sync + 'static>
+        action: Box<
+            dyn FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + Sync + 'static,
+        >,
     },
 }
 
@@ -76,7 +77,8 @@ impl ConcurrentWriteCommandHandle {
     pub fn new(write: RouterDatabaseWriteHandle, config: &Config) -> Self {
         Self {
             write: write.into(),
-            image_upload_queue: tokio::sync::Semaphore::new(config.queue_limits().image_upload).into(),
+            image_upload_queue: tokio::sync::Semaphore::new(config.queue_limits().image_upload)
+                .into(),
             profile_index_queue: tokio::sync::Semaphore::new(num_cpus::get()).into(),
             account_write_locks: AccountWriteLockManager::default(),
         }
@@ -111,7 +113,10 @@ impl ConcurrentWriteSelectorHandle {
     pub async fn accquire_image<
         R,
         A: FnOnce(ConcurrentWriteImageHandle) -> OutputFuture<R> + Send + Sync + 'static,
-    >(self, action: A) -> ConcurrentWriteAction<R> {
+    >(
+        self,
+        action: A,
+    ) -> ConcurrentWriteAction<R> {
         let permit = self
             .image_upload_queue
             .clone()
@@ -136,7 +141,10 @@ impl ConcurrentWriteSelectorHandle {
     pub async fn accquire_profile<
         R,
         A: FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + Sync + 'static,
-    >(self, action: A) -> ConcurrentWriteAction<R> {
+    >(
+        self,
+        action: A,
+    ) -> ConcurrentWriteAction<R> {
         let permit = self
             .profile_index_queue
             .clone()
@@ -279,9 +287,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             // panic.
             .expect("Semaphore was closed. This should not happen.");
 
-        let tmp_img = self
-            .file_dir
-            .processed_image_upload(id.as_id(), content_id);
+        let tmp_img = self.file_dir.processed_image_upload(id.as_id(), content_id);
         ImageProcess::start_image_process(tmp_raw_img.as_path(), tmp_img.as_path())
             .await
             .change_context(DataError::ImageProcess)?;
@@ -309,7 +315,10 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .into_data_error(id)?
             .ok_or(DataError::FeatureDisabled)?;
 
-        let (next_state, profiles) = self.location.next_profiles(location.current_iterator).await?;
+        let (next_state, profiles) = self
+            .location
+            .next_profiles(location.current_iterator)
+            .await?;
         self.cache
             .write_cache(id.as_id(), |e| {
                 e.profile
@@ -333,8 +342,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .into_data_error(id)?
             .ok_or(DataError::FeatureDisabled)?;
 
-        let next_state =
-            self.location.reset_iterator(location.current_iterator, location.current_position);
+        let next_state = self
+            .location
+            .reset_iterator(location.current_iterator, location.current_position);
         self.cache
             .write_cache(id.as_id(), |e| {
                 e.profile

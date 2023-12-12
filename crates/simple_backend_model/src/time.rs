@@ -1,16 +1,23 @@
-
-
-use diesel::{
-    sql_types::{BigInt},
-    AsExpression, FromSqlRow,
-};
+use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
-use utoipa::{ToSchema};
+use utoipa::ToSchema;
 
-use crate::{macros::{diesel_i64_wrapper}};
+use crate::macros::diesel_i64_wrapper;
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, sqlx::Type, FromSqlRow, AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Default,
+    sqlx::Type,
+    FromSqlRow,
+    AsExpression,
+)]
 #[diesel(sql_type = BigInt)]
 pub struct UnixTime {
     pub unix_time: i64,
@@ -26,7 +33,9 @@ impl UnixTime {
     }
 
     pub fn current_time() -> Self {
-        Self { unix_time: current_unix_time() }
+        Self {
+            unix_time: current_unix_time(),
+        }
     }
 }
 

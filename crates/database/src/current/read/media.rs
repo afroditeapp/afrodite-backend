@@ -8,12 +8,9 @@ use model::{
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
     ModerationRequestId, ModerationRequestInternal, ModerationRequestRaw, ModerationRequestState,
 };
-
-
-use crate::{
-    IntoDatabaseError,
-};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+
+use crate::IntoDatabaseError;
 
 define_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
 

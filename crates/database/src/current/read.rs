@@ -1,17 +1,20 @@
-use simple_backend_database::{sqlx_db::SqlxReadHandle, diesel_db::{ConnectionProvider, DieselConnection}};
-
-use crate::CurrentReadHandle;
+use simple_backend_database::{
+    diesel_db::{ConnectionProvider, DieselConnection},
+    sqlx_db::SqlxReadHandle,
+};
 
 use self::{
     account::{CurrentReadAccount, CurrentSyncReadAccount},
     account_admin::CurrentSyncReadAccountAdmin,
     chat::{CurrentReadChat, CurrentSyncReadChat},
     chat_admin::CurrentSyncReadChatAdmin,
+    common::CurrentSyncReadCommon,
     media::{CurrentReadMedia, CurrentSyncReadMedia},
     media_admin::CurrentSyncReadMediaAdmin,
     profile::{CurrentReadProfile, CurrentSyncReadProfile},
-    profile_admin::CurrentSyncReadProfileAdmin, common::CurrentSyncReadCommon,
+    profile_admin::CurrentSyncReadProfileAdmin,
 };
+use crate::CurrentReadHandle;
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -38,8 +41,11 @@ macro_rules! define_read_commands {
                 Self { cmds }
             }
 
-
-            fn cmds(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
+            fn cmds(
+                &mut self,
+            ) -> crate::current::read::CurrentSyncReadCommands<
+                &mut simple_backend_database::diesel_db::DieselConnection,
+            > {
                 crate::current::read::CurrentSyncReadCommands::new(self.conn())
             }
 
@@ -52,9 +58,9 @@ macro_rules! define_read_commands {
 
 pub mod account;
 pub mod account_admin;
-pub mod common;
 pub mod chat;
 pub mod chat_admin;
+pub mod common;
 pub mod media;
 pub mod media_admin;
 pub mod profile;
@@ -66,7 +72,9 @@ pub struct CurrentReadCommands<'a> {
 
 impl<'a> CurrentReadCommands<'a> {
     pub fn new(handle: &'a CurrentReadHandle) -> Self {
-        Self { handle: handle.0.sqlx() }
+        Self {
+            handle: handle.0.sqlx(),
+        }
     }
 
     pub fn account(&self) -> CurrentReadAccount<'_> {
@@ -173,7 +181,6 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
         CurrentSyncReadCommon::new(self.conn())
     }
 }
-
 
 trait ReadFromConn: ConnectionProvider {
     fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {

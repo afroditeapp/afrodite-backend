@@ -1,28 +1,25 @@
 use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use config::Config;
-use database::{
-    current::read::{CurrentSyncReadCommands}, CurrentReadHandle,
-};
-use error_stack::{ResultExt, Result};
+use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
+use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, LocationIndexKey, ProfileInternal, ProfileLink, Capabilities, SharedState,
+    AccessToken, AccountId, AccountIdInternal, Capabilities, LocationIndexKey, ProfileInternal,
+    ProfileLink, SharedState,
 };
-use simple_backend_database::{diesel_db::{DieselConnection, DieselDatabaseError}};
+use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use tracing::info;
 
-use crate::{data::index::LocationIndexWriteHandle, event::EventMode};
-
 use super::{
     index::{
-        location::LocationIndexIteratorState,
-        LocationIndexIteratorHandle, LocationIndexManager,
+        location::LocationIndexIteratorState, LocationIndexIteratorHandle, LocationIndexManager,
     },
     WithInfo,
 };
+use crate::{data::index::LocationIndexWriteHandle, event::EventMode};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
@@ -193,16 +190,14 @@ impl DatabaseCache {
                 })
                 .await?;
                 if account.capablities().user_view_public_profiles {
-                    index_writer.update_profile_link(
-                        account_id.uuid,
-                        ProfileLink::new(
+                    index_writer
+                        .update_profile_link(
                             account_id.uuid,
-                            &profile_data.data
-                        ),
-                        location_key
-                    )
-                    .await
-                    .change_context(CacheError::Init)?;
+                            ProfileLink::new(account_id.uuid, &profile_data.data),
+                            location_key,
+                        )
+                        .await
+                        .change_context(CacheError::Init)?;
                 }
             }
 

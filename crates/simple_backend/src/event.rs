@@ -8,7 +8,6 @@
 
 // use crate::data::RouterDatabaseReadHandle;
 
-
 // #[derive(thiserror::Error, Debug)]
 // pub enum EventError {
 //     #[error("Event mode access failed")]
@@ -54,7 +53,6 @@
 //     None,
 //     Connected(EventSender),
 // }
-
 
 // pub struct EventManager {
 //     database: Arc<RouterDatabaseReadHandle>,

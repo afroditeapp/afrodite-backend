@@ -1,13 +1,12 @@
 use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
-    apis::profile_api::{self, post_profile, get_profile, get_location},
+    apis::profile_api::{self, get_location, get_profile, post_profile},
     models::{Location, ProfileUpdate},
 };
 use async_trait::async_trait;
 use config::file::LocationConfig;
 use error_stack::{Result, ResultExt};
-
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::utils::location::LocationConfigUtils;
@@ -39,7 +38,6 @@ impl BotAction for ChangeProfileText {
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 pub struct GetProfile;
@@ -101,7 +99,8 @@ pub struct UpdateLocationRandom(pub Option<LocationConfig>);
 #[async_trait]
 impl BotAction for UpdateLocationRandom {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let config = self.0
+        let config = self
+            .0
             .clone()
             .unwrap_or(state.server_config.location().clone());
         let location = config.generate_random_location();

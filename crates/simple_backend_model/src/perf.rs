@@ -1,13 +1,8 @@
-
-
-use diesel::{
-    prelude::*,
-};
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-use utoipa::{ToSchema};
-
-use crate::{UnixTime};
+use crate::UnixTime;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub enum TimeGranularity {

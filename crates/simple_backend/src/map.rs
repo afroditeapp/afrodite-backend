@@ -1,7 +1,7 @@
 //! Slippy map tile server logic.
 
-use simple_backend_config::{SimpleBackendConfig, file::TileMapConfig};
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
+use simple_backend_config::{file::TileMapConfig, SimpleBackendConfig};
 
 #[derive(thiserror::Error, Debug)]
 pub enum TileMapError {
@@ -18,11 +18,19 @@ pub struct TileMapManager {
 
 impl TileMapManager {
     pub fn new(config: &SimpleBackendConfig) -> Self {
-        Self { config: config.tile_map().cloned() }
+        Self {
+            config: config.tile_map().cloned(),
+        }
     }
 
-    pub async fn load_map_tile(&self, z: u32, x: u32, y: u32) -> Result<Option<Vec<u8>>, TileMapError> {
-        let config = self.config
+    pub async fn load_map_tile(
+        &self,
+        z: u32,
+        x: u32,
+        y: u32,
+    ) -> Result<Option<Vec<u8>>, TileMapError> {
+        let config = self
+            .config
             .as_ref()
             .ok_or(TileMapError::MissingTileMapConfig)?;
 

@@ -1,13 +1,10 @@
 use diesel::{insert_into, prelude::*};
 use error_stack::{Result, ResultExt};
 use model::{Account, AccountIdInternal, AccountSetup};
-use simple_backend_utils::{current_unix_time, };
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+use simple_backend_utils::current_unix_time;
 
-use simple_backend_database::{diesel_db::{DieselDatabaseError, ConnectionProvider}};
-
-use crate::{
-    IntoDatabaseError,
-};
+use crate::IntoDatabaseError;
 
 define_write_commands!(HistoryWriteAccount, HistorySyncWriteAccount);
 

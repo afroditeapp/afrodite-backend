@@ -1,3 +1,7 @@
+use simple_backend_database::{
+    diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError},
+    sqlx_db::SqlxWriteHandle,
+};
 use sqlx::SqlitePool;
 
 // use sqlx::SqlitePool;
@@ -8,9 +12,7 @@ use self::{
     media_admin::{HistorySyncWriteMediaAdmin, HistoryWriteMediaAdmin},
     profile::{HistorySyncWriteProfile, HistoryWriteProfile},
 };
-use crate::{TransactionError, HistoryWriteHandle};
-
-use simple_backend_database::{diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError}, sqlx_db::{SqlxWriteHandle}};
+use crate::{HistoryWriteHandle, TransactionError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -51,8 +53,9 @@ macro_rules! define_write_commands {
 
             pub fn read(
                 conn: &mut simple_backend_database::diesel_db::DieselConnection,
-            ) -> crate::history::read::HistorySyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection>
-            {
+            ) -> crate::history::read::HistorySyncReadCommands<
+                &mut simple_backend_database::diesel_db::DieselConnection,
+            > {
                 crate::history::read::HistorySyncReadCommands::new(conn)
             }
         }
@@ -75,7 +78,9 @@ pub struct HistoryWriteCommands<'a> {
 
 impl<'a> HistoryWriteCommands<'a> {
     pub fn new(handle: &'a HistoryWriteHandle) -> Self {
-        Self { handle: handle.0.sqlx() }
+        Self {
+            handle: handle.0.sqlx(),
+        }
     }
 
     pub fn account(&'a self) -> HistoryWriteAccount<'a> {

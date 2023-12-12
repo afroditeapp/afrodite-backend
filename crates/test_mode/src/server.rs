@@ -12,7 +12,9 @@ use config::{
 };
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
-use simple_backend_config::file::{SimpleBackendConfigFile, DataConfig, SocketConfig, SqliteDatabase};
+use simple_backend_config::file::{
+    DataConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase,
+};
 use tokio::process::Child;
 use tracing::info;
 
@@ -156,7 +158,8 @@ fn new_config(
             DEFAULT_LOCATION_CONFIG_BENCHMARK
         } else {
             DEFAULT_LOCATION_CONFIG
-        }.into(),
+        }
+        .into(),
         external_services,
         internal_api: Some(InternalApiConfig { bot_login: true }),
         queue_limits: None,
@@ -216,7 +219,11 @@ impl ServerInstance {
         std::fs::write(dir.join(CONFIG_FILE_NAME), config).unwrap();
 
         let config = toml::to_string_pretty(&simple_backend_config).unwrap();
-        std::fs::write(dir.join(simple_backend_config::file::CONFIG_FILE_NAME), config).unwrap();
+        std::fs::write(
+            dir.join(simple_backend_config::file::CONFIG_FILE_NAME),
+            config,
+        )
+        .unwrap();
 
         let start_cmd = env::args().next().unwrap();
         let start_cmd = std::fs::canonicalize(&start_cmd).unwrap();

@@ -1,13 +1,12 @@
-use std::{collections::HashMap, sync::Arc, num::{NonZeroU8}, mem::size_of};
+use std::{collections::HashMap, mem::size_of, num::NonZeroU8, sync::Arc};
 
 use config::Config;
 use error_stack::ResultExt;
-use model::{AccountId, Location, LocationIndexKey, ProfileLink, CellData};
+use model::{AccountId, CellData, Location, LocationIndexKey, ProfileLink};
 use tokio::sync::RwLock;
 use tracing::info;
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
-
 use super::DataError;
 
 pub mod location;
@@ -31,11 +30,7 @@ impl LocationIndexManager {
             coordinates.height().try_into().unwrap(),
         );
 
-        let index = LocationIndex::new(
-            width,
-            height,
-        )
-        .into();
+        let index = LocationIndex::new(width, height).into();
 
         let byte_count = width.get() as usize * height.get() as usize * size_of::<CellData>();
         info!(
@@ -97,16 +92,16 @@ impl<'a> LocationIndexIteratorHandle<'a> {
     pub async fn next_profiles(
         &self,
         previous_iterator_state: LocationIndexIteratorState,
-    ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), DataError> {
+    ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), DataError>
+    {
         let index = self.index.clone();
-        let (iterator, key) =
-            tokio::task::spawn_blocking(move || {
-                let mut iterator = previous_iterator_state.to_iterator(index);
-                let key = iterator.next();
-                (iterator, key)
-            })
-                .await
-                .change_context(DataError::ProfileIndex)?;
+        let (iterator, key) = tokio::task::spawn_blocking(move || {
+            let mut iterator = previous_iterator_state.to_iterator(index);
+            let key = iterator.next();
+            (iterator, key)
+        })
+        .await
+        .change_context(DataError::ProfileIndex)?;
         let data = match key {
             None => (iterator.into(), None),
             Some(key) => match self.profiles.read().await.get(&key) {
@@ -190,8 +185,8 @@ impl<'a> LocationIndexWriteHandle<'a> {
                             tokio::task::spawn_blocking(move || {
                                 updater.flag_cell_to_have_profiles(new_key)
                             })
-                                .await
-                                .change_context(DataError::ProfileIndex)?;
+                            .await
+                            .change_context(DataError::ProfileIndex)?;
                         }
                     }
                     None => {
@@ -200,8 +195,8 @@ impl<'a> LocationIndexWriteHandle<'a> {
                         tokio::task::spawn_blocking(move || {
                             updater.flag_cell_to_have_profiles(new_key)
                         })
-                            .await
-                            .change_context(DataError::ProfileIndex)?;
+                        .await
+                        .change_context(DataError::ProfileIndex)?;
                     }
                 }
             } else {
@@ -215,8 +210,8 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 tokio::task::spawn_blocking(move || {
                     updater.remove_profile_flag_from_cell(previous_key);
                 })
-                    .await
-                    .change_context(DataError::ProfileIndex)?;
+                .await
+                .change_context(DataError::ProfileIndex)?;
             }
         }
 
@@ -239,9 +234,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 if update_index {
                     drop(profiles);
                     let mut updater = IndexUpdater::new(self.index.clone());
-                    tokio::task::spawn_blocking(move || {
-                        updater.flag_cell_to_have_profiles(key)
-                    })
+                    tokio::task::spawn_blocking(move || updater.flag_cell_to_have_profiles(key))
                         .await
                         .change_context(DataError::ProfileIndex)?;
                 }
@@ -250,9 +243,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 profiles.insert(key, ProfilesAtLocation::new(account_id, profile_link));
                 drop(profiles);
                 let mut updater = IndexUpdater::new(self.index.clone());
-                tokio::task::spawn_blocking(move || {
-                    updater.flag_cell_to_have_profiles(key)
-                })
+                tokio::task::spawn_blocking(move || updater.flag_cell_to_have_profiles(key))
                     .await
                     .change_context(DataError::ProfileIndex)?;
             }
@@ -260,7 +251,11 @@ impl<'a> LocationIndexWriteHandle<'a> {
         Ok(())
     }
 
-    pub async fn remove_profile_link(&self, account_id: AccountId, key: LocationIndexKey) -> error_stack::Result<(), DataError> {
+    pub async fn remove_profile_link(
+        &self,
+        account_id: AccountId,
+        key: LocationIndexKey,
+    ) -> error_stack::Result<(), DataError> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
@@ -272,9 +267,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 {
                     drop(profiles);
                     let mut updater = IndexUpdater::new(self.index.clone());
-                    tokio::task::spawn_blocking(move || {
-                        updater.remove_profile_flag_from_cell(key)
-                    })
+                    tokio::task::spawn_blocking(move || updater.remove_profile_flag_from_cell(key))
                         .await
                         .change_context(DataError::ProfileIndex)?;
                 }
@@ -356,7 +349,8 @@ fn calculate_tile_x(longitude_deg: f64, zoom_level: u8) -> u32 {
 fn calculate_tile_y(latitude_deg: f64, zoom_level: u8) -> u32 {
     let n = 2.0_f64.powi(zoom_level as i32);
     let latitude_rad = latitude_deg.to_radians();
-    let y = n * (1.0 - (latitude_rad.tan() + (1.0 / latitude_rad.cos())).ln() / std::f64::consts::PI)
+    let y = n
+        * (1.0 - (latitude_rad.tan() + (1.0 / latitude_rad.cos())).ln() / std::f64::consts::PI)
         / 2.0;
     y as u32
 }
@@ -371,7 +365,8 @@ pub struct CoordinateManager {
 
 impl CoordinateManager {
     fn new(config: Arc<Config>) -> Self {
-        let (zoom_level, tile_side_length_km) = find_nearest_zoom_level(config.location().index_cell_square_km);
+        let (zoom_level, tile_side_length_km) =
+            find_nearest_zoom_level(config.location().index_cell_square_km);
         Self {
             zoom_level,
             tile_side_length_km,
@@ -390,12 +385,18 @@ impl CoordinateManager {
 
     // Max y tile number of the index area.
     fn y_max_tile(&self) -> u32 {
-        calculate_tile_y(self.config.location().latitude_bottom_right, self.zoom_level)
+        calculate_tile_y(
+            self.config.location().latitude_bottom_right,
+            self.zoom_level,
+        )
     }
 
     // Max x tile number of the index area.
     fn x_max_tile(&self) -> u32 {
-        calculate_tile_x(self.config.location().longitude_bottom_right, self.zoom_level)
+        calculate_tile_x(
+            self.config.location().longitude_bottom_right,
+            self.zoom_level,
+        )
     }
 
     fn height(&self) -> u16 {
@@ -453,7 +454,6 @@ impl CoordinateManager {
         self.config.location().latitude_top_left
     }
 }
-
 
 // TODO: Is there bug that if profile is put on same tile twice
 // it disappears? Update: this should now be fixed

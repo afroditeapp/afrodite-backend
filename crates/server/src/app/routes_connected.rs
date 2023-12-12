@@ -1,6 +1,6 @@
 use axum::{
     middleware,
-    routing::{get, patch, post, put, delete},
+    routing::{delete, get, patch, post, put},
     Router,
 };
 use simple_backend::app::SimpleBackendAppState;
@@ -82,11 +82,7 @@ impl ConnectedApp {
                 api::common_admin::PATH_GET_BACKEND_CONFIG,
                 get({
                     let state = self.state.clone();
-                    move |param1| {
-                        api::common_admin::get_backend_config(
-                            param1, state,
-                        )
-                    }
+                    move |param1| api::common_admin::get_backend_config(param1, state)
                 }),
             )
             .route(
@@ -94,9 +90,7 @@ impl ConnectedApp {
                 post({
                     let state = self.state.clone();
                     move |param1, param2| {
-                        api::common_admin::post_backend_config(
-                            param1, param2, state,
-                        )
+                        api::common_admin::post_backend_config(param1, param2, state)
                     }
                 }),
             )
@@ -105,9 +99,7 @@ impl ConnectedApp {
                 get({
                     let state = self.state.clone();
                     move |param1, param2, param3| {
-                        api::common_admin::get_perf_data(
-                            param1, param2, param3, state,
-                        )
+                        api::common_admin::get_perf_data(param1, param2, param3, state)
                     }
                 }),
             )
@@ -277,7 +269,9 @@ impl ConnectedApp {
                 api::profile::PATH_DELETE_FAVORITE_PROFILE,
                 delete({
                     let state = self.state.clone();
-                    move |param1, param2| api::profile::delete_favorite_profile(param1, param2, state)
+                    move |param1, param2| {
+                        api::profile::delete_favorite_profile(param1, param2, state)
+                    }
                 }),
             )
             .route_layer({
@@ -480,14 +474,22 @@ impl ConnectedApp {
                 api::chat::PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2| api::chat::get_message_number_of_latest_viewed_message(param1, param2, state)
+                    move |param1, param2| {
+                        api::chat::get_message_number_of_latest_viewed_message(
+                            param1, param2, state,
+                        )
+                    }
                 }),
             )
             .route(
                 api::chat::PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2| api::chat::post_message_number_of_latest_viewed_message(param1, param2, state)
+                    move |param1, param2| {
+                        api::chat::post_message_number_of_latest_viewed_message(
+                            param1, param2, state,
+                        )
+                    }
                 }),
             )
             .route(

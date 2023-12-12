@@ -8,7 +8,10 @@ use std::{fmt::Debug, sync::Arc, vec};
 
 use api_client::models::AccountId;
 use async_trait::async_trait;
-use config::{args::{TestMode, TestModeSubMode, SelectedBenchmark}, Config};
+use config::{
+    args::{SelectedBenchmark, TestMode, TestModeSubMode},
+    Config,
+};
 use error_stack::{Result, ResultExt};
 use tokio::{
     net::TcpStream,
@@ -184,8 +187,13 @@ impl BotManager {
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) {
         let bot = match config.mode {
-            TestModeSubMode::Benchmark(_)
-            | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(task_id, old_state, server_config, config, _bot_running_handle),
+            TestModeSubMode::Benchmark(_) | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(
+                task_id,
+                old_state,
+                server_config,
+                config,
+                _bot_running_handle,
+            ),
             TestModeSubMode::Qa(_) => Self::qa(task_id, server_config, config, _bot_running_handle),
         };
 
@@ -209,7 +217,7 @@ impl BotManager {
                             .map(|s| AccountId::new(s.account_id))
                     })
                     .flatten(),
-                    server_config.clone(),
+                server_config.clone(),
                 config.clone(),
                 task_id,
                 bot_i,
@@ -217,29 +225,27 @@ impl BotManager {
             );
 
             match (config.selected_benchmark(), config.bot_mode()) {
-                (Some(benchmark), _) => {
-                    match benchmark {
-                        SelectedBenchmark::GetProfile => {
-                            bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
-                        }
-                        SelectedBenchmark::GetProfileFromDatabase => bots.push(Box::new(
-                            Benchmark::benchmark_get_profile_from_database(state),
-                        )),
-                        SelectedBenchmark::GetProfileList => {
-                            let benchmark = match bot_i {
-                                0 => Benchmark::benchmark_get_profile_list(state),
-                                _ => Benchmark::benchmark_get_profile_list_bot(state),
-                            };
-                            bots.push(Box::new(benchmark))
-                        }
-                        SelectedBenchmark::PostProfile => {
-                            bots.push(Box::new(Benchmark::benchmark_post_profile(state)))
-                        }
-                        SelectedBenchmark::PostProfileToDatabase => bots.push(Box::new(
-                            Benchmark::benchmark_post_profile_to_database(state),
-                        )),
+                (Some(benchmark), _) => match benchmark {
+                    SelectedBenchmark::GetProfile => {
+                        bots.push(Box::new(Benchmark::benchmark_get_profile(state)))
                     }
-                }
+                    SelectedBenchmark::GetProfileFromDatabase => bots.push(Box::new(
+                        Benchmark::benchmark_get_profile_from_database(state),
+                    )),
+                    SelectedBenchmark::GetProfileList => {
+                        let benchmark = match bot_i {
+                            0 => Benchmark::benchmark_get_profile_list(state),
+                            _ => Benchmark::benchmark_get_profile_list_bot(state),
+                        };
+                        bots.push(Box::new(benchmark))
+                    }
+                    SelectedBenchmark::PostProfile => {
+                        bots.push(Box::new(Benchmark::benchmark_post_profile(state)))
+                    }
+                    SelectedBenchmark::PostProfileToDatabase => bots.push(Box::new(
+                        Benchmark::benchmark_post_profile_to_database(state),
+                    )),
+                },
                 (_, Some(_)) => bots.push(Box::new(ClientBot::new(state))),
                 test_config => panic!("Invalid test config {:?}", test_config),
             };

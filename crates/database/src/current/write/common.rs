@@ -1,13 +1,10 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::{Result};
-use model::{
-    AccountIdInternal, SharedStateInternal, Capabilities, AccountState, SharedState,
-};
+use error_stack::Result;
+use model::{AccountIdInternal, AccountState, Capabilities, SharedState, SharedStateInternal};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-
 use super::ConnectionProvider;
-use crate::{IntoDatabaseError};
+use crate::IntoDatabaseError;
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteCommon);
 
@@ -55,9 +52,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommon<C> {
         use model::schema::account_capabilities::dsl::*;
 
         insert_into(account_capabilities)
-            .values((
-                account_id.eq(id.as_db_id()),
-            ))
+            .values((account_id.eq(id.as_db_id()),))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 

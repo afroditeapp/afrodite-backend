@@ -3,13 +3,13 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-pub mod build_info;
 pub mod args;
+pub mod build_info;
 
 use std::process::exit;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
-use config::{get_config, args::{AppMode}};
+use config::{args::AppMode, get_config};
 use server::PihkaServer;
 use simple_backend_config::args::ImageProcessModeArgs;
 use test_mode::TestRunner;
@@ -33,17 +33,12 @@ fn main() {
 
     match config.current_mode() {
         Some(config::args::AppMode::ImageProcess(_)) => unreachable!(),
-        Some(config::args::AppMode::Test(test_mode_config)) =>
-            runtime.block_on(async {
-                TestRunner::new(config, test_mode_config).run().await
-            }),
-        None =>
-            runtime.block_on(async {
-                PihkaServer::new(config).run().await
-            }),
+        Some(config::args::AppMode::Test(test_mode_config)) => {
+            runtime.block_on(async { TestRunner::new(config, test_mode_config).run().await })
+        }
+        None => runtime.block_on(async { PihkaServer::new(config).run().await }),
     }
 }
-
 
 fn handle_image_process_mode(settings: ImageProcessModeArgs) {
     let settings = image_process::Settings {

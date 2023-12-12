@@ -2,12 +2,20 @@
 //!
 //!
 
-use std::{sync::{atomic::{AtomicU32, Ordering}, Arc}, collections::HashMap, time::Duration};
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
 
-
-use simple_backend_model::{UnixTime, PerfHistoryQueryResult, PerfValueArea, PerfHistoryValue, TimeGranularity};
 use simple_backend_config::SimpleBackendConfig;
-use tokio::{task::JoinHandle, sync::RwLock};
+use simple_backend_model::{
+    PerfHistoryQueryResult, PerfHistoryValue, PerfValueArea, TimeGranularity, UnixTime,
+};
+use tokio::{sync::RwLock, task::JoinHandle};
 use tracing::{error, warn};
 
 use crate::ServerQuitWatcher;
@@ -110,9 +118,7 @@ pub struct CounterCategory {
 
 impl CounterCategory {
     pub const fn new(name: &'static str, counter_list: &'static [&'static PerfCounter]) -> Self {
-        Self {
-            name, counter_list
-        }
+        Self { name, counter_list }
     }
 }
 
@@ -134,9 +140,7 @@ pub struct PerformanceCounterHistory {
 }
 
 impl PerformanceCounterHistory {
-    pub fn new(
-        counters: AllCounters,
-    ) -> Self {
+    pub fn new(counters: AllCounters) -> Self {
         let mut data = vec![];
         for _ in 0..MINUTES_PER_DAY {
             data.push(HashMap::new());
@@ -188,7 +192,7 @@ impl PerformanceCounterHistory {
         for (counter_name, values) in counter_data {
             let value = PerfHistoryValue {
                 counter_name,
-                values
+                values,
             };
             counters.push(value);
         }
@@ -226,7 +230,9 @@ impl PerformanceCounterHistory {
                 None
             } else {
                 let seconds = 60 * ((self.next_index as i64) - 1);
-                let area_start_time = UnixTime { unix_time: start_time.unix_time + seconds };
+                let area_start_time = UnixTime {
+                    unix_time: start_time.unix_time + seconds,
+                };
                 let data = &self.data[..self.next_index];
                 Some((area_start_time, data))
             }
@@ -242,7 +248,9 @@ impl PerformanceCounterHistory {
                 Some((previous_start_time, &self.data))
             } else {
                 let seconds = 60 * self.next_index as i64;
-                let area_start_time = UnixTime { unix_time: previous_start_time.unix_time + seconds };
+                let area_start_time = UnixTime {
+                    unix_time: previous_start_time.unix_time + seconds,
+                };
                 let data = &self.data[self.next_index..];
                 Some((area_start_time, data))
             }
@@ -251,7 +259,6 @@ impl PerformanceCounterHistory {
         }
     }
 }
-
 
 #[derive(Debug)]
 pub struct PerfCounterManagerQuitHandle {
@@ -269,15 +276,12 @@ impl PerfCounterManagerQuitHandle {
     }
 }
 
-
 pub struct PerfCounterManagerData {
     history: RwLock<PerformanceCounterHistory>,
 }
 
 impl PerfCounterManagerData {
-    pub fn new(
-        counters: AllCounters,
-    ) -> Self {
+    pub fn new(counters: AllCounters) -> Self {
         Self {
             history: RwLock::new(PerformanceCounterHistory::new(counters)),
         }
@@ -301,16 +305,11 @@ impl PerfCounterManager {
         config: Arc<SimpleBackendConfig>,
         quit_notification: ServerQuitWatcher,
     ) -> PerfCounterManagerQuitHandle {
-        let manager = Self {
-            data,
-            config,
-        };
+        let manager = Self { data, config };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
-        let quit_handle = PerfCounterManagerQuitHandle {
-            task,
-        };
+        let quit_handle = PerfCounterManagerQuitHandle { task };
 
         quit_handle
     }

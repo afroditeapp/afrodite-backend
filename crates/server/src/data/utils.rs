@@ -1,7 +1,6 @@
 use std::net::SocketAddr;
 
-
-use error_stack::{Result};
+use error_stack::Result;
 use model::{AccessToken, AccountId, AccountIdInternal, Capabilities};
 
 use super::{cache::DatabaseCache, DataError, IntoDataError};
@@ -38,9 +37,7 @@ pub struct AccountIdManager<'a> {
 
 impl<'a> AccountIdManager<'a> {
     pub fn new(cache: &'a DatabaseCache) -> Self {
-        Self {
-            cache,
-        }
+        Self { cache }
     }
 
     pub async fn get_internal_id(&self, id: AccountId) -> Result<AccountIdInternal, DataError> {

@@ -1,9 +1,8 @@
-use tokio::sync::{mpsc};
+use tokio::sync::mpsc;
 
 use crate::ServerQuitWatcher;
 
 pub type WsQuitReady = mpsc::Receiver<()>;
-
 
 /// Handle to WebSocket connections. Server main loop should use this
 /// when closing the server.

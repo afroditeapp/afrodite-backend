@@ -3,26 +3,24 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+pub mod data;
 pub mod diesel_db;
 pub mod sqlx_db;
-pub mod data;
 
-use std::{fmt::Debug};
+use std::fmt::Debug;
 
-use diesel_db::{DieselReadHandle, DieselReadCloseHandle, DieselWriteHandle, DieselWriteCloseHandle};
+use diesel_db::{
+    DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle, DieselWriteHandle,
+};
 // use ::diesel::migration::MigrationSource;
 // use diesel::{DieselReadHandle, DieselWriteHandle, DieselReadCloseHandle, DieselWriteCloseHandle};
 use diesel_migrations::EmbeddedMigrations;
-use simple_backend_config::{SimpleBackendConfig};
-use error_stack::{ResultExt, Result};
-use simple_backend_utils::{ContextExt};
-use sqlx_db::{SqlxReadHandle, SqlxReadCloseHandle, SqlxWriteCloseHandle, SqlxWriteHandle};
-
-
-
+use error_stack::{Result, ResultExt};
+use simple_backend_config::SimpleBackendConfig;
+use simple_backend_utils::ContextExt;
+use sqlx_db::{SqlxReadCloseHandle, SqlxReadHandle, SqlxWriteCloseHandle, SqlxWriteHandle};
 
 pub type PoolObject = deadpool_diesel::sqlite::Connection;
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum DataError {
@@ -168,7 +166,6 @@ pub enum DataError {
 //     }
 // }
 
-
 #[derive(Clone, Debug)]
 pub struct DbReadHandle {
     sqlx_read: SqlxReadHandle,
@@ -234,9 +231,7 @@ impl DbWriteCloseHandle {
     }
 }
 
-pub struct DatabaseHandleCreator {
-
-}
+pub struct DatabaseHandleCreator {}
 
 impl DatabaseHandleCreator {
     /// Create read handle for database.
@@ -244,9 +239,13 @@ impl DatabaseHandleCreator {
     /// Create the write handle first. Only that runs migrations.
     pub async fn create_read_handle_from_config(
         config: &SimpleBackendConfig,
-        name: &'static str
+        name: &'static str,
     ) -> Result<(DbReadHandle, DbReadCloseHandle), DataError> {
-        let info = config.databases().iter().find(|db| db.file_name() == name).ok_or(DataError::MatchingDatabaseNotFoundFromConfig.report())?;
+        let info = config
+            .databases()
+            .iter()
+            .find(|db| db.file_name() == name)
+            .ok_or(DataError::MatchingDatabaseNotFoundFromConfig.report())?;
         if info.file_name() != name {
             return Err(DataError::MatchingDatabaseNotFoundFromConfig.report());
         }
@@ -255,11 +254,14 @@ impl DatabaseHandleCreator {
 
         let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, &info)?;
 
-        let (diesel_read, diesel_read_close) = DieselReadHandle::new(&config, &info, db_file_path.clone())
-            .await.change_context(DataError::Diesel)?;
+        let (diesel_read, diesel_read_close) =
+            DieselReadHandle::new(&config, &info, db_file_path.clone())
+                .await
+                .change_context(DataError::Diesel)?;
 
         let (sqlx_read, sqlx_read_close) = SqlxReadHandle::new(&config, &info, db_file_path)
-            .await.change_context(DataError::Sqlx)?;
+            .await
+            .change_context(DataError::Sqlx)?;
 
         let read = DbReadHandle {
             sqlx_read,
@@ -281,7 +283,11 @@ impl DatabaseHandleCreator {
         name: &'static str,
         migrations: EmbeddedMigrations,
     ) -> Result<(DbWriteHandle, DbWriteCloseHandle), DataError> {
-        let info = config.databases().iter().find(|db| db.file_name() == name).ok_or(DataError::MatchingDatabaseNotFoundFromConfig.report())?;
+        let info = config
+            .databases()
+            .iter()
+            .find(|db| db.file_name() == name)
+            .ok_or(DataError::MatchingDatabaseNotFoundFromConfig.report())?;
         if info.file_name() != name {
             return Err(DataError::MatchingDatabaseNotFoundFromConfig.report());
         }
@@ -290,16 +296,14 @@ impl DatabaseHandleCreator {
 
         let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, &info)?;
 
-        let (diesel_write, diesel_write_close) = DieselWriteHandle::new(
-            &config,
-            &info,
-            db_file_path.clone(),
-            migrations,
-        )
-            .await.change_context(DataError::Diesel)?;
+        let (diesel_write, diesel_write_close) =
+            DieselWriteHandle::new(&config, &info, db_file_path.clone(), migrations)
+                .await
+                .change_context(DataError::Diesel)?;
 
         let (sqlx_write, sqlx_write_close) = SqlxWriteHandle::new(&config, &info, db_file_path)
-            .await.change_context(DataError::Sqlx)?;
+            .await
+            .change_context(DataError::Sqlx)?;
 
         let write = DbWriteHandle {
             sqlx_write,

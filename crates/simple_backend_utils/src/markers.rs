@@ -1,7 +1,5 @@
 use std::fmt::Debug;
 
-
-
 pub struct Allowed;
 pub struct NotAllowed;
 

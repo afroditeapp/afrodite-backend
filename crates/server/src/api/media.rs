@@ -4,18 +4,24 @@ use axum::{
 };
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ImageSlot, MediaContentType,
-    ModerationRequest, ModerationRequestContent, NormalImages, PrimaryImage, SlotId, MapTileX, MapTileY, MapTileZ,
+    AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ImageSlot, MapTileX, MapTileY,
+    MapTileZ, MediaContentType, ModerationRequest, ModerationRequestContent, NormalImages,
+    PrimaryImage, SlotId,
 };
 use simple_backend::app::GetTileMap;
 use tracing::error;
 
-use crate::{data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImageHandle}, DataError}, perf::MEDIA};
-
 use super::{
+    super::app::{GetAccessTokens, GetAccounts, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
-    super::app::{GetAccessTokens, GetAccounts, ReadData, WriteData},
+};
+use crate::{
+    data::{
+        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImageHandle},
+        DataError,
+    },
+    perf::MEDIA,
 };
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
@@ -292,11 +298,11 @@ pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
 
     let content_id = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds.accquire_image(
-                move |cmds: ConcurrentWriteImageHandle| Box::new(async move {
-                    cmds.save_to_tmp(account_id, image).await
+            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
+                .accquire_image(move |cmds: ConcurrentWriteImageHandle| {
+                    Box::new(async move { cmds.save_to_tmp(account_id, image).await })
                 })
-            ).await;
+                .await;
             out
         })
         .await??;
@@ -311,7 +317,6 @@ pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
 
     Ok(content_id.into())
 }
-
 
 pub const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/:z/:x/:y";
 
@@ -338,7 +343,9 @@ pub async fn get_map_tile<S: GetTileMap>(
     MEDIA.get_map_tile.incr();
 
     let y_string = y.y.trim_end_matches(".png");
-    let y = y_string.parse::<u32>().map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
+    let y = y_string
+        .parse::<u32>()
+        .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
     let data = state
         .tile_map()

@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Instant};
 
-use error_stack::{ResultExt, Result};
+use error_stack::{Result, ResultExt};
 use headers::{CacheControl, HeaderMapExt};
 use hyper::Method;
 use jsonwebtoken::{
@@ -13,7 +13,6 @@ use simple_backend_utils::ContextExt;
 use tokio::sync::RwLock;
 use tracing::error;
 // use utils::ContextExt;
-
 
 // TODO: Send serverAuthCode to server. Get refresh and access tokens from
 // google with that and save the tokens to database. After server receives app's

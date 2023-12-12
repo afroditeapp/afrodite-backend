@@ -4,30 +4,30 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod app;
+pub mod event;
+pub mod image;
 pub mod litestream;
 pub mod manager_client;
-pub mod media_backup;
-pub mod utils;
-pub mod image;
 pub mod map;
-pub mod event;
+pub mod media_backup;
 pub mod perf;
-pub mod web_socket;
 pub mod sign_in_with;
+pub mod utils;
+pub mod web_socket;
 
 use std::{net::SocketAddr, pin::Pin, sync::Arc};
 
 use app::SimpleBackendAppState;
 use async_trait::async_trait;
 use axum::Router;
-use media_backup::MediaBackupHandle;
-use perf::AllCounters;
-use simple_backend_config::SimpleBackendConfig;
 use futures::future::poll_fn;
 use hyper::server::{
     accept::Accept,
     conn::{AddrIncoming, Http},
 };
+use media_backup::MediaBackupHandle;
+use perf::AllCounters;
+use simple_backend_config::SimpleBackendConfig;
 use tokio::{
     net::TcpListener,
     signal::{
@@ -41,19 +41,18 @@ use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
 use tower::MakeService;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer, EnvFilter};
-
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::{
-    web_socket::{WebSocketManager},
-    app::{
-        // routes_internal::InternalApp,
-        App,
-    },
+    app::App,
     // data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
+    web_socket::WebSocketManager,
 };
-use crate::{media_backup::MediaBackupManager, perf::{PerfCounterManager, PerfCounterManagerData}};
+use crate::{
+    media_backup::MediaBackupManager,
+    perf::{PerfCounterManager, PerfCounterManagerData},
+};
 
 /// Drop this when quit starts
 pub type ServerQuitHandle = broadcast::Sender<()>;
@@ -61,36 +60,40 @@ pub type ServerQuitHandle = broadcast::Sender<()>;
 /// Use resubscribe() for cloning.
 pub type ServerQuitWatcher = broadcast::Receiver<()>;
 
-
 #[async_trait]
 pub trait BusinessLogic: Sized + Send + Sync + 'static {
     type AppState: Clone;
 
     /// Access prerformance counter list
-    fn all_counters(&self) -> AllCounters { &[] }
+    fn all_counters(&self) -> AllCounters {
+        &[]
+    }
 
     /// Create router for public API
     fn public_api_router(
         &self,
         _web_socket_manager: WebSocketManager,
         _state: &SimpleBackendAppState<Self::AppState>,
-    ) -> Router { Router::new() }
+    ) -> Router {
+        Router::new()
+    }
     /// Create router for internal API
-    fn internal_api_router(
-        &self,
-        _state: &SimpleBackendAppState<Self::AppState>,
-    ) -> Router { Router::new() }
+    fn internal_api_router(&self, _state: &SimpleBackendAppState<Self::AppState>) -> Router {
+        Router::new()
+    }
 
     /// Swagger UI which added to enabled in public and internal API router
     /// only if debug mode is enabled.
-    fn create_swagger_ui(&self) -> Option<SwaggerUi> { None }
+    fn create_swagger_ui(&self) -> Option<SwaggerUi> {
+        None
+    }
 
     /// Callback for doing something before server start
     ///
     /// For example databases can be opened here.
     async fn on_before_server_start(
         &mut self,
-        media_backup_handle: MediaBackupHandle
+        media_backup_handle: MediaBackupHandle,
     ) -> Self::AppState;
 
     /// Callback for doing something after server has been started
@@ -110,12 +113,9 @@ pub struct SimpleBackend<T: BusinessLogic> {
     config: Arc<SimpleBackendConfig>,
 }
 
-impl <T: BusinessLogic> SimpleBackend<T> {
+impl<T: BusinessLogic> SimpleBackend<T> {
     pub fn new(logic: T, config: Arc<SimpleBackendConfig>) -> Self {
-        Self {
-            logic,
-            config,
-        }
+        Self { logic, config }
     }
 
     pub async fn run(mut self) {
@@ -123,10 +123,7 @@ impl <T: BusinessLogic> SimpleBackend<T> {
             let layer = console_subscriber::spawn();
             tracing_subscriber::registry()
                 .with(layer)
-                .with(
-                    tracing_subscriber::fmt::layer()
-                        .with_filter(EnvFilter::from_default_env())
-                )
+                .with(tracing_subscriber::fmt::layer().with_filter(EnvFilter::from_default_env()))
                 .init();
         } else {
             tracing_subscriber::fmt::init();
@@ -161,12 +158,11 @@ impl <T: BusinessLogic> SimpleBackend<T> {
             MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
 
         let perf_data = Arc::new(PerfCounterManagerData::new(self.logic.all_counters()));
-        let perf_manager_quit_handle =
-            PerfCounterManager::new(
-                perf_data.clone(),
-                self.config.clone(),
-                server_quit_watcher.resubscribe()
-            );
+        let perf_manager_quit_handle = PerfCounterManager::new(
+            perf_data.clone(),
+            self.config.clone(),
+            server_quit_watcher.resubscribe(),
+        );
 
         let logic_app_state = self.logic.on_before_server_start(media_backup_handle).await;
         // let (database_manager, router_database_handle, router_database_write_handle) =
@@ -184,16 +180,16 @@ impl <T: BusinessLogic> SimpleBackend<T> {
         // let (write_cmd_runner_handle, write_cmd_waiter) =
         //     WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config);
 
-        let app = App::new(
-            self.config.clone(),
-            perf_data,
-            logic_app_state,
-        )
-        .await
-        .expect("App init failed");
+        let app = App::new(self.config.clone(), perf_data, logic_app_state)
+            .await
+            .expect("App init failed");
 
         let server_task = self
-            .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager, &app.state())
+            .create_public_api_server_task(
+                server_quit_watcher.resubscribe(),
+                ws_manager,
+                &app.state(),
+            )
             .await;
         let internal_server_task = self
             .create_internal_api_server_task(server_quit_watcher.resubscribe(), &app.state())
@@ -268,8 +264,7 @@ impl <T: BusinessLogic> SimpleBackend<T> {
                     router
                 };
 
-                router
-                    .merge(self.logic.internal_api_router(app_state))
+                router.merge(self.logic.internal_api_router(app_state))
             } else {
                 router
             };

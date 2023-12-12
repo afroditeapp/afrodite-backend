@@ -1,9 +1,12 @@
 use std::net::SocketAddr;
 
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AuthPair, AccountId, SharedState};
+use model::{AccountId, AccountIdInternal, AuthPair, SharedState};
 
-use crate::{data::{DataError, IntoDataError}, event::{EventReceiver, event_channel, EventMode}};
+use crate::{
+    data::{DataError, IntoDataError},
+    event::{event_channel, EventMode, EventReceiver},
+};
 
 define_write_commands!(WriteCommandsCommon);
 
@@ -54,7 +57,8 @@ impl WriteCommandsCommon<'_> {
         self.write_cache(id, move |entry| {
             entry.current_event_connection = EventMode::Connected(sender);
             Ok(())
-        }).await?;
+        })
+        .await?;
 
         Ok(receiver)
     }
@@ -83,7 +87,11 @@ impl WriteCommandsCommon<'_> {
         Ok(())
     }
 
-    pub async fn shared_state(&self, id: AccountIdInternal, state: SharedState) -> Result<(), DataError> {
+    pub async fn shared_state(
+        &self,
+        id: AccountIdInternal,
+        state: SharedState,
+    ) -> Result<(), DataError> {
         self.db_write(move |mut cmds| cmds.common().shared_state(id, state))
             .await?;
         Ok(())

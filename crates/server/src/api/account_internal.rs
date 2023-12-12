@@ -3,11 +3,11 @@
 use axum::extract::Path;
 use model::{AccessToken, Account, AccountId};
 
-use crate::{api::{
-    utils::{Json, StatusCode},
-}, perf::ACCOUNT_INTERNAL};
-
-use crate::app::{GetAccessTokens, GetAccounts, ReadData};
+use crate::{
+    api::utils::{Json, StatusCode},
+    app::{GetAccessTokens, GetAccounts, ReadData},
+    perf::ACCOUNT_INTERNAL,
+};
 
 pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
 

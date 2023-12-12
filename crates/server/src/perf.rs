@@ -2,14 +2,10 @@
 //!
 //!
 
-
-
-
-
-
-
-
-use simple_backend::{create_counters, perf::{CounterCategory, PerfCounter}};
+use simple_backend::{
+    create_counters,
+    perf::{CounterCategory, PerfCounter},
+};
 
 create_counters!(
     AccountInternalCounters,
@@ -80,7 +76,6 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
 // }
 
 // const MINUTES_PER_DAY: usize = 24 * 60;
-
 
 // /// History has counter values every minute 24 hours
 // pub struct PerformanceCounterHistory {
@@ -206,7 +201,6 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
 //     }
 // }
 
-
 // #[derive(Debug)]
 // pub struct PerfCounterManagerQuitHandle {
 //     task: JoinHandle<()>,
@@ -222,7 +216,6 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
 //         }
 //     }
 // }
-
 
 // pub struct PerfCounterManagerData {
 //     history: RwLock<PerformanceCounterHistory>,

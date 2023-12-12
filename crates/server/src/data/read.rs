@@ -1,19 +1,20 @@
 use database::{
-    current::read::{CurrentSyncReadCommands}, CurrentReadHandle,
+    current::read::CurrentSyncReadCommands,
+    CurrentReadHandle,
     // diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
     // sqlite::SqlxReadHandle,
 };
 use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, ContentId, MediaContentInternal, ModerationRequest};
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
+use simple_backend_utils::IntoReportFromString;
 use tokio_util::io::ReaderStream;
-use simple_backend_utils::{ IntoReportFromString};
 
 use self::{
     account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin, chat::ReadCommandsChat,
-    chat_admin::ReadCommandsChatAdmin, media::ReadCommandsMedia,
+    chat_admin::ReadCommandsChatAdmin, common::ReadCommandsCommon, media::ReadCommandsMedia,
     media_admin::ReadCommandsMediaAdmin, profile::ReadCommandsProfile,
-    profile_admin::ReadCommandsProfileAdmin, common::ReadCommandsCommon,
+    profile_admin::ReadCommandsProfileAdmin,
 };
 use super::{cache::DatabaseCache, file::utils::FileDir, DataError, IntoDataError};
 
@@ -49,9 +50,10 @@ macro_rules! define_read_commands {
                         database::current::read::CurrentSyncReadCommands<
                             &mut simple_backend_database::diesel_db::DieselConnection,
                         >,
-                    )
-                        -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
-                    + Send
+                    ) -> error_stack::Result<
+                        R,
+                        simple_backend_database::diesel_db::DieselDatabaseError,
+                    > + Send
                     + 'static,
                 R: Send + 'static,
             >(

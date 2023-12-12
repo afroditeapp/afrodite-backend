@@ -1,15 +1,11 @@
-use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl, delete};
+use diesel::{delete, insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
-use model::{
-    AccountIdInternal, ProfileInternal, ProfileUpdateInternal, ProfileVersion, Location,
-};
+use model::{AccountIdInternal, Location, ProfileInternal, ProfileUpdateInternal, ProfileVersion};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::current_unix_time;
 
-
-use crate::IntoDatabaseError;
-
 use super::ConnectionProvider;
+use crate::IntoDatabaseError;
 
 define_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
 
@@ -67,9 +63,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
         use crate::schema::profile::dsl::*;
 
         update(profile.find(id.as_db_id()))
-            .set((
-                name.eq(data),
-            ))
+            .set((name.eq(data),))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 
@@ -84,10 +78,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
         use crate::schema::profile_location::dsl::*;
 
         update(profile_location.find(id.as_db_id()))
-            .set((
-                latitude.eq(data.latitude),
-                longitude.eq(data.longitude),
-            ))
+            .set((latitude.eq(data.latitude), longitude.eq(data.longitude)))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 
@@ -107,7 +98,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
             .values((
                 account_id.eq(id.as_db_id()),
                 favorite_account_id.eq(favorite.as_db_id()),
-                unix_time.eq(time)
+                unix_time.eq(time),
             ))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;

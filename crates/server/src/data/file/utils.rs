@@ -3,11 +3,10 @@ use std::path::{Path, PathBuf};
 use axum::extract::BodyStream;
 use error_stack::{Result, ResultExt};
 use model::{AccountId, ContentId};
+use simple_backend_utils::ContextExt;
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 use tokio_util::io::ReaderStream;
-use simple_backend_utils::ContextExt;
-
 
 use super::super::FileError;
 
@@ -41,9 +40,7 @@ impl FileDir {
     }
 
     pub fn image_content(&self, id: AccountId, content_id: ContentId) -> ImageFile {
-        self.account_dir(id)
-            .image_dir()
-            .image_content(content_id)
+        self.account_dir(id).image_dir().image_content(content_id)
     }
 
     pub fn account_dir(&self, id: AccountId) -> AccountDir {
@@ -272,7 +269,9 @@ impl PathToFile {
                 .change_context(FileError::IoFileWrite)?;
         }
         file.flush().await.change_context(FileError::IoFileFlush)?;
-        file.sync_all().await.change_context(FileError::IoFileSync)?;
+        file.sync_all()
+            .await
+            .change_context(FileError::IoFileSync)?;
         Ok(())
     }
 

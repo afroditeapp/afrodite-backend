@@ -5,13 +5,10 @@ use model::{
     MediaContentType, Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
     ModerationRequestState, PrimaryImage,
 };
-use simple_backend_database::diesel_db::{DieselDatabaseError, DieselConnection};
-
+use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 
 use super::{media::CurrentSyncWriteMedia, ConnectionProvider};
-use crate::{
-    IntoDatabaseError, TransactionError,
-};
+use crate::{IntoDatabaseError, TransactionError};
 
 define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
 
@@ -138,10 +135,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             .moderation_request(moderation_request_owner)?
             .ok_or(DieselDatabaseError::MissingModerationRequest)?;
 
-        let currently_selected_images =
-            self.read()
-                .media()
-                .current_account_media(moderation_request_owner)?;
+        let currently_selected_images = self
+            .read()
+            .media()
+            .current_account_media(moderation_request_owner)?;
 
         let moderation_id = ModerationId {
             request_id: ModerationRequestId {
@@ -150,10 +147,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             account_id: moderator_id,
         };
 
-        let content =
-            self.read()
-                .media_admin()
-                .moderation(moderation_id)?;
+        let content = self.read().media_admin().moderation(moderation_id)?;
 
         let state = if result.accept {
             ModerationRequestState::Accepted

@@ -2,15 +2,9 @@
 
 use std::{env, os::unix::process::CommandExt, path::Path, str::from_utf8};
 
-use error_stack::ResultExt;
-
+use error_stack::{Result, ResultExt};
 use simple_backend_utils::ContextExt;
-
-
 use tracing::error;
-
-use error_stack::{Result};
-
 
 #[derive(thiserror::Error, Debug)]
 pub enum ImageProcessError {
@@ -39,19 +33,20 @@ impl ImageProcess {
             .ok_or(ImageProcessError::LaunchCommand.report())?
             .to_string();
 
-        let start_cmd = std::fs::canonicalize(&start_cmd)
-            .change_context(ImageProcessError::LaunchCommand)?;
+        let start_cmd =
+            std::fs::canonicalize(&start_cmd).change_context(ImageProcessError::LaunchCommand)?;
 
         if !start_cmd.is_file() {
-            return Err(ImageProcessError::LaunchCommand)
-                .attach_printable(format!("First argument does not point to a file {:?}", start_cmd));
+            return Err(ImageProcessError::LaunchCommand).attach_printable(format!(
+                "First argument does not point to a file {:?}",
+                start_cmd
+            ));
         }
 
-        let input = std::fs::canonicalize(&input)
-            .change_context(ImageProcessError::LaunchCommand)?;
+        let input =
+            std::fs::canonicalize(&input).change_context(ImageProcessError::LaunchCommand)?;
         let output = if output.exists() {
-            std::fs::canonicalize(&output)
-                .change_context(ImageProcessError::LaunchCommand)?
+            std::fs::canonicalize(&output).change_context(ImageProcessError::LaunchCommand)?
         } else {
             let output_file_name = output
                 .file_name()

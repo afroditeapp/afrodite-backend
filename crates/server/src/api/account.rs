@@ -1,20 +1,23 @@
 use axum::Extension;
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, AccountSetup, AccountState, AuthPair,
-    BooleanSetting, DeleteStatus, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
-    SignInWithLoginInfo, EventToClientInternal, AccountData,
+    AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, AccountState,
+    AuthPair, BooleanSetting, DeleteStatus, EventToClientInternal, GoogleAccountId, LoginResult,
+    RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 use simple_backend::app::SignInWith;
 use tracing::error;
-
-use crate::{perf::ACCOUNT};
 
 use super::{
     db_write,
     utils::{Json, StatusCode},
 };
-
-use crate::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData, EventManagerProvider};
+use crate::{
+    app::{
+        EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData,
+        WriteData,
+    },
+    perf::ACCOUNT,
+};
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -382,7 +385,9 @@ pub async fn post_complete_setup<
                 account.add_admin_capablities();
             }
         } else {
-            if let Some(sign_in_with_config) = state.config().simple_backend().sign_in_with_google_config() {
+            if let Some(sign_in_with_config) =
+                state.config().simple_backend().sign_in_with_google_config()
+            {
                 if sign_in_with_info.google_account_id
                     == Some(model::GoogleAccountId(
                         sign_in_with_config.admin_google_account_id.clone(),
@@ -395,28 +400,33 @@ pub async fn post_complete_setup<
         }
 
         let new_account_copy = account.clone();
-        state.internal_api()
-            .modify_and_sync_account_state(
-                id,
-                |d| {
-                    *d.state = new_account_copy.state();
-                    *d.capabilities = new_account_copy.into_capablities();
-                }
-            ).await?;
+        state
+            .internal_api()
+            .modify_and_sync_account_state(id, |d| {
+                *d.state = new_account_copy.state();
+                *d.capabilities = new_account_copy.into_capablities();
+            })
+            .await?;
 
         state
             .event_manager()
             .send_connected_event(
                 id.uuid,
-                EventToClientInternal::AccountStateChanged { state: account.state() },
-            ).await?;
+                EventToClientInternal::AccountStateChanged {
+                    state: account.state(),
+                },
+            )
+            .await?;
 
         state
             .event_manager()
             .send_connected_event(
                 id.uuid,
-                EventToClientInternal::AccountCapabilitiesChanged { capabilities: account.into_capablities() },
-            ).await?;
+                EventToClientInternal::AccountCapabilitiesChanged {
+                    capabilities: account.into_capablities(),
+                },
+            )
+            .await?;
 
         Ok(())
     } else {
@@ -469,8 +479,11 @@ pub async fn put_setting_profile_visiblity<
         .event_manager()
         .send_connected_event(
             id.uuid,
-            EventToClientInternal::AccountCapabilitiesChanged { capabilities: new_capabilities },
-        ).await?;
+            EventToClientInternal::AccountCapabilitiesChanged {
+                capabilities: new_capabilities,
+            },
+        )
+        .await?;
 
     // TODO could this be removed, because there is already the sync call above?
     state

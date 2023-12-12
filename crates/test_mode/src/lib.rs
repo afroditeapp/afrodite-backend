@@ -84,7 +84,8 @@ impl TestRunner {
 
             info!(
                 "Task count: {}, Bot count per task: {}",
-                self.test_config.tasks(), self.test_config.bots(),
+                self.test_config.tasks(),
+                self.test_config.bots(),
             );
 
             while task_number < self.test_config.tasks() {
@@ -182,11 +183,9 @@ impl TestRunner {
     }
 
     fn state_data_file(&self) -> PathBuf {
-        let data_file =
-            format!("test_{}_state_data.json", self.test_config.test_name());
+        let data_file = format!("test_{}_state_data.json", self.test_config.test_name());
         if !self.test_config.server.test_database.exists() {
-            std::fs::create_dir_all(&self.test_config.server.test_database)
-                .unwrap();
+            std::fs::create_dir_all(&self.test_config.server.test_database).unwrap();
         }
         self.test_config.server.test_database.join(data_file)
     }

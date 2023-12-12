@@ -2,16 +2,17 @@
 
 use std::{env, os::unix::process::CommandExt, process::Stdio};
 
-use config::{Config};
-use error_stack::ResultExt;
+use config::Config;
+use error_stack::{Result, ResultExt};
 use model::BotConfig;
-use nix::{unistd::Pid, sys::signal::Signal};
-use tokio::{process::Child, task::JoinHandle, io::{AsyncRead, AsyncBufReadExt}};
+use nix::{sys::signal::Signal, unistd::Pid};
 use simple_backend_utils::ContextExt;
-
-use tracing::{info, error};
-
-use error_stack::{Result};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncRead},
+    process::Child,
+    task::JoinHandle,
+};
+use tracing::{error, info};
 
 const BOT_DATA_DIR_NAME: &str = "bots";
 
@@ -47,18 +48,23 @@ pub struct BotClient {
 }
 
 impl BotClient {
-    pub async fn start_bots(config: &Config, bot_config: &BotConfig) -> Result<Self, BotClientError> {
+    pub async fn start_bots(
+        config: &Config,
+        bot_config: &BotConfig,
+    ) -> Result<Self, BotClientError> {
         let start_cmd = env::args()
             .next()
             .ok_or(BotClientError::LaunchCommand.report())?
             .to_string();
 
-        let start_cmd = std::fs::canonicalize(&start_cmd)
-            .change_context(BotClientError::LaunchCommand)?;
+        let start_cmd =
+            std::fs::canonicalize(&start_cmd).change_context(BotClientError::LaunchCommand)?;
 
         if !start_cmd.is_file() {
-            return Err(BotClientError::LaunchCommand)
-                .attach_printable(format!("First argument does not point to a file {:?}", start_cmd));
+            return Err(BotClientError::LaunchCommand).attach_printable(format!(
+                "First argument does not point to a file {:?}",
+                start_cmd
+            ));
         }
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
@@ -83,24 +89,25 @@ impl BotClient {
             .arg("--url-chat")
             .arg(Self::public_api_url(config));
 
-        if let Some(dir) = &config.static_bot_config().and_then(|c| c.man_image_dir.as_ref()) {
-            let dir = std::fs::canonicalize(dir)
-                .change_context(BotClientError::LaunchCommand)?;
-            command
-                .arg("--images-man")
-                .arg(dir);
+        if let Some(dir) = &config
+            .static_bot_config()
+            .and_then(|c| c.man_image_dir.as_ref())
+        {
+            let dir = std::fs::canonicalize(dir).change_context(BotClientError::LaunchCommand)?;
+            command.arg("--images-man").arg(dir);
         }
 
-        if let Some(dir) = &config.static_bot_config().and_then(|c| c.woman_image_dir.as_ref()) {
-            let dir = std::fs::canonicalize(dir)
-                .change_context(BotClientError::LaunchCommand)?;
-            command
-                .arg("--images-woman")
-                .arg(dir);
+        if let Some(dir) = &config
+            .static_bot_config()
+            .and_then(|c| c.woman_image_dir.as_ref())
+        {
+            let dir = std::fs::canonicalize(dir).change_context(BotClientError::LaunchCommand)?;
+            command.arg("--images-woman").arg(dir);
         }
 
         // Bot mode config
-        command.arg("bot")
+        command
+            .arg("bot")
             .arg("--save-state")
             .arg("--users")
             .arg(bot_config.users.to_string())
@@ -108,8 +115,7 @@ impl BotClient {
             .arg(bot_config.admins.to_string());
 
         // Setup logging and prevent signal propagation
-        command.env("RUST_LOG", "info")
-            .process_group(0);
+        command.env("RUST_LOG", "info").process_group(0);
 
         let mut tokio_command: tokio::process::Command = command.into();
         let mut bot_client = tokio_command
@@ -164,12 +170,15 @@ impl BotClient {
 
     pub async fn stop_bots(mut self) -> Result<(), BotClientError> {
         if let Some(pid) = self.bot_client.id() {
-            let pid = Pid::from_raw(TryInto::<i32>::try_into(pid).change_context(BotClientError::InvalidPid)?);
+            let pid = Pid::from_raw(
+                TryInto::<i32>::try_into(pid).change_context(BotClientError::InvalidPid)?,
+            );
             // Send CTRL-C
             nix::sys::signal::kill(pid, Signal::SIGINT)
                 .change_context(BotClientError::SendSignal)?;
 
-            let status = self.bot_client
+            let status = self
+                .bot_client
                 .wait()
                 .await
                 .change_context(BotClientError::Close)?;
@@ -178,7 +187,8 @@ impl BotClient {
             }
         } else {
             error!("Bot client closed too early");
-            let status = self.bot_client
+            let status = self
+                .bot_client
                 .wait()
                 .await
                 .change_context(BotClientError::Close)?;
@@ -186,12 +196,10 @@ impl BotClient {
                 error!("Bot client process exited with error, status: {:?}", status);
             }
         }
-        self
-            .stderr_task
+        self.stderr_task
             .await
             .change_context(BotClientError::CloseStderrFailed)?;
-        self
-            .stdout_task
+        self.stdout_task
             .await
             .change_context(BotClientError::CloseStdoutFailed)?;
         Ok(())

@@ -1,19 +1,12 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-
-use model::{
-    AccountIdInternal, SharedStateInternal, Capabilities, SharedState, AccountState,
-};
+use model::{AccountIdInternal, AccountState, Capabilities, SharedState, SharedStateInternal};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
-use crate::{
-    IntoDatabaseError,
-};
-
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+use crate::IntoDatabaseError;
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadCommon);
-
 
 impl<C: ConnectionProvider> CurrentSyncReadCommon<C> {
     pub fn shared_state(
@@ -28,9 +21,7 @@ impl<C: ConnectionProvider> CurrentSyncReadCommon<C> {
             .first(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)?;
 
-        let state: AccountState = TryInto::<AccountState>::try_into(
-            data.account_state_number
-        )
+        let state: AccountState = TryInto::<AccountState>::try_into(data.account_state_number)
             .change_context(DieselDatabaseError::DataFormatConversion)?;
 
         Ok(SharedState {

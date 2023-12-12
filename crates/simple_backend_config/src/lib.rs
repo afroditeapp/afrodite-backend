@@ -14,16 +14,15 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::{TileMapConfig, DatabaseInfo};
+use file::{DatabaseInfo, TileMapConfig};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
 
-use self::
-    file::{
-        AppManagerConfig, SimpleBackendConfigFile,
-        LitestreamConfig, MediaBackupConfig, SignInWithGoogleConfig, SocketConfig,
-    };
+use self::file::{
+    AppManagerConfig, LitestreamConfig, MediaBackupConfig, SignInWithGoogleConfig,
+    SimpleBackendConfigFile, SocketConfig,
+};
 
 /// Config file debug mode status.
 ///
@@ -169,8 +168,8 @@ pub fn get_config(
     backend_semver_version: String,
 ) -> Result<SimpleBackendConfig, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_config =
-        file::SimpleBackendConfigFile::load(&current_dir).change_context(GetConfigError::LoadFileError)?;
+    let file_config = file::SimpleBackendConfigFile::load(&current_dir)
+        .change_context(GetConfigError::LoadFileError)?;
 
     let data_dir = if let Some(dir) = args_config.data_dir {
         dir
@@ -215,9 +214,7 @@ pub fn get_config(
         false
     };
 
-    let databases = file_config
-        .data
-        .get_databases()?;
+    let databases = file_config.data.get_databases()?;
 
     let config = SimpleBackendConfig {
         file: file_config,

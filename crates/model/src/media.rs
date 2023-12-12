@@ -12,7 +12,6 @@ use crate::{
     AccountId, AccountIdDb,
 };
 
-
 /// Y coordinate of slippy map tile.
 ///
 /// This might include also .png file extension.

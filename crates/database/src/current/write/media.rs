@@ -4,13 +4,10 @@ use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, ImageSlot, ModerationQueueNumber,
     ModerationRequestContent, PrimaryImage, QueueNumberRaw,
 };
-use simple_backend_database::diesel_db::{DieselDatabaseError, DieselConnection};
-
+use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 
 use super::ConnectionProvider;
-use crate::{
-    IntoDatabaseError, TransactionError,
-};
+use crate::{IntoDatabaseError, TransactionError};
 
 define_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
 
@@ -178,8 +175,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
             let _account_row_id = request_creator.row_id();
             let queue_number_new =
                 Self::create_new_moderation_request_queue_number(conn, request_creator)?;
-            let request_info =
-                serde_json::to_string(&request).change_context(DieselDatabaseError::SerdeSerialize)?;
+            let request_info = serde_json::to_string(&request)
+                .change_context(DieselDatabaseError::SerdeSerialize)?;
             insert_into(media_moderation_request)
                 .values((
                     account_id.eq(request_creator.as_db_id()),
@@ -205,8 +202,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         // It does not matter if update is done even if moderation would be on
         // going.
 
-        let request_info =
-            serde_json::to_string(&new_request).change_context(DieselDatabaseError::SerdeSerialize)?;
+        let request_info = serde_json::to_string(&new_request)
+            .change_context(DieselDatabaseError::SerdeSerialize)?;
 
         update(media_moderation_request.find(request_owner_account_id.as_db_id()))
             .set(json_text.eq(request_info))

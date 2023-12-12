@@ -7,10 +7,10 @@ pub mod api;
 pub mod app;
 pub mod bot;
 pub mod data;
-pub mod internal;
-pub mod utils;
 pub mod event;
+pub mod internal;
 pub mod perf;
+pub mod utils;
 
 use std::sync::Arc;
 
@@ -20,16 +20,16 @@ use axum::Router;
 use config::Config;
 use data::write_commands::WriteCmdWatcher;
 use perf::ALL_COUNTERS;
-use simple_backend::{BusinessLogic, perf::AllCounters, app::SimpleBackendAppState, media_backup::MediaBackupHandle, web_socket::WebSocketManager};
+use simple_backend::{
+    app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::AllCounters,
+    web_socket::WebSocketManager, BusinessLogic,
+};
 use tracing::{error, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::{
-    app::{
-        routes_internal::InternalApp,
-        App,
-    },
+    app::{routes_internal::InternalApp, App},
     data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
 };
 use crate::{api::ApiDoc, bot::BotClient};
@@ -53,10 +53,7 @@ impl PihkaServer {
             write_cmd_waiter: None,
             database_manager: None,
         };
-        let server = simple_backend::SimpleBackend::new(
-            logic,
-            self.config.simple_backend_arc()
-        );
+        let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
     }
 }
@@ -79,8 +76,8 @@ impl BusinessLogic for PihkaBusinessLogic {
 
     fn public_api_router(
         &self,
-        web_socket_manager:WebSocketManager,
-        state: &SimpleBackendAppState<Self::AppState>
+        web_socket_manager: WebSocketManager,
+        state: &SimpleBackendAppState<Self::AppState>,
     ) -> Router {
         let mut app = App::new(state.clone(), web_socket_manager);
         let mut router = app.create_common_server_router();
@@ -104,10 +101,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         router
     }
 
-    fn internal_api_router(
-        &self,
-        state: &SimpleBackendAppState<Self::AppState>
-    ) -> Router {
+    fn internal_api_router(&self, state: &SimpleBackendAppState<Self::AppState>) -> Router {
         let mut router = Router::new();
         if self.config.components().account {
             router = router.merge(InternalApp::create_account_server_router(state.clone()))
@@ -128,22 +122,22 @@ impl BusinessLogic for PihkaBusinessLogic {
         router
     }
 
-    fn create_swagger_ui(&self) -> Option<SwaggerUi>{
+    fn create_swagger_ui(&self) -> Option<SwaggerUi> {
         Some(SwaggerUi::new("/swagger-ui").url("/api-doc/pihka_api.json", ApiDoc::openapi()))
     }
 
     async fn on_before_server_start(
         &mut self,
-        media_backup_handle: MediaBackupHandle
+        media_backup_handle: MediaBackupHandle,
     ) -> Self::AppState {
         let (database_manager, router_database_handle, router_database_write_handle) =
-        DatabaseManager::new(
-            self.config.simple_backend().data_dir().to_path_buf(),
-            self.config.clone(),
-            media_backup_handle,
-        )
-        .await
-        .expect("Database init failed");
+            DatabaseManager::new(
+                self.config.simple_backend().data_dir().to_path_buf(),
+                self.config.clone(),
+                media_backup_handle,
+            )
+            .await
+            .expect("Database init failed");
 
         let (write_cmd_runner_handle, write_cmd_waiter) =
             WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config);
@@ -157,8 +151,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         .await;
 
         let bot_client = if let Some(bot_config) = self.config.bot_config() {
-            let result = BotClient::start_bots(&self.config, bot_config)
-                .await;
+            let result = BotClient::start_bots(&self.config, bot_config).await;
 
             match result {
                 Ok(bot_manager) => Some(bot_manager),
@@ -191,7 +184,13 @@ impl BusinessLogic for PihkaBusinessLogic {
 
     async fn on_after_server_quit(self) {
         drop(self.app_state.expect("Not initialized"));
-        self.write_cmd_waiter.expect("Not initialized").wait_untill_all_writing_ends().await;
-        self.database_manager.expect("Not initialized").close().await;
+        self.write_cmd_waiter
+            .expect("Not initialized")
+            .wait_untill_all_writing_ends()
+            .await;
+        self.database_manager
+            .expect("Not initialized")
+            .close()
+            .await;
     }
 }

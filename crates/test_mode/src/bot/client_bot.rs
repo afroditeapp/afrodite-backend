@@ -7,7 +7,7 @@ use std::{
 };
 
 use api_client::{
-    apis::{account_api::get_account_state, profile_api::{post_profile}},
+    apis::{account_api::get_account_state, profile_api::post_profile},
     models::{AccountState, ProfileUpdate},
 };
 use async_trait::async_trait;
@@ -18,7 +18,8 @@ use super::{
     actions::{
         account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility},
         media::SendImageToSlot,
-        BotAction, RunActions, profile::{UpdateLocationRandom, GetProfile}, RunActionsIf,
+        profile::{GetProfile, UpdateLocationRandom},
+        BotAction, RunActions, RunActionsIf,
     },
     BotState, BotStruct, TaskState,
 };
@@ -81,21 +82,16 @@ impl ClientBot {
                 &ActionsBeforeIteration as &dyn BotAction,
                 &GetProfile,
                 &RunActionsIf(
-                    action_array!(
-                        UpdateLocationRandom(None),
-                        ChangeBotProfileText,
-                    ),
+                    action_array!(UpdateLocationRandom(None), ChangeBotProfileText,),
                     || rand::random::<f32>() < 0.2,
                 ),
                 // TODO: Toggle the profile visiblity in the future?
-                &RunActionsIf(
-                    action_array!(SetProfileVisibility(true)),
-                    || rand::random::<f32>() < 0.5,
-                ),
-                &RunActionsIf(
-                    action_array!(SetProfileVisibility(false)),
-                    || rand::random::<f32>() < 0.1,
-                ),
+                &RunActionsIf(action_array!(SetProfileVisibility(true)), || {
+                    rand::random::<f32>() < 0.5
+                }),
+                &RunActionsIf(action_array!(SetProfileVisibility(false)), || {
+                    rand::random::<f32>() < 0.1
+                }),
                 &ActionsAfterIteration,
             ];
             let iter = setup.into_iter().chain(action_loop.into_iter().cycle());
@@ -179,9 +175,10 @@ pub struct ChangeBotProfileText;
 #[async_trait]
 impl BotAction for ChangeBotProfileText {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = ProfileUpdate::new(
-            format!("Hello! My location is\n{:#?}", state.previous_value.location())
-        );
+        let profile = ProfileUpdate::new(format!(
+            "Hello! My location is\n{:#?}",
+            state.previous_value.location()
+        ));
         post_profile(state.api.profile(), profile)
             .await
             .change_context(TestError::ApiRequest)?;

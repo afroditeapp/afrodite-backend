@@ -1,16 +1,18 @@
-use simple_backend_database::{sqlx_db::{SqlxWriteHandle}, diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError}};
+use simple_backend_database::{
+    diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError},
+    sqlx_db::SqlxWriteHandle,
+};
 use sqlx::SqlitePool;
 
 use self::{
     account::{CurrentSyncWriteAccount, CurrentWriteAccount},
     chat::{CurrentSyncWriteChat, CurrentWriteChat},
+    common::CurrentSyncWriteCommon,
     media::{CurrentSyncWriteMedia, CurrentWriteMedia},
     media_admin::{CurrentSyncWriteMediaAdmin, CurrentWriteMediaAdmin},
-    profile::{CurrentSyncWriteProfile, CurrentWriteProfile}, common::CurrentSyncWriteCommon,
+    profile::{CurrentSyncWriteProfile, CurrentWriteProfile},
 };
-use crate::{
-    TransactionError, CurrentWriteHandle,
-};
+use crate::{CurrentWriteHandle, TransactionError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
@@ -45,19 +47,27 @@ macro_rules! define_write_commands {
             //     self.cmds.conn
             // }
 
-            pub fn cmds(&mut self) -> crate::current::write::CurrentSyncWriteCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
+            pub fn cmds(
+                &mut self,
+            ) -> crate::current::write::CurrentSyncWriteCommands<
+                &mut simple_backend_database::diesel_db::DieselConnection,
+            > {
                 crate::current::write::CurrentSyncWriteCommands::new(self.conn())
             }
 
             pub fn read_conn(
                 conn: &mut simple_backend_database::diesel_db::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
+            ) -> crate::current::read::CurrentSyncReadCommands<
+                &mut simple_backend_database::diesel_db::DieselConnection,
+            > {
                 crate::current::read::CurrentSyncReadCommands::new(conn)
             }
 
             pub fn read(
                 &mut self,
-            ) -> crate::current::read::CurrentSyncReadCommands<&mut simple_backend_database::diesel_db::DieselConnection> {
+            ) -> crate::current::read::CurrentSyncReadCommands<
+                &mut simple_backend_database::diesel_db::DieselConnection,
+            > {
                 crate::current::read::CurrentSyncReadCommands::new(self.conn())
             }
         }
@@ -66,9 +76,9 @@ macro_rules! define_write_commands {
 
 pub mod account;
 pub mod account_admin;
-pub mod common;
 pub mod chat;
 pub mod chat_admin;
+pub mod common;
 pub mod media;
 pub mod media_admin;
 pub mod profile;
@@ -81,7 +91,9 @@ pub struct CurrentWriteCommands<'a> {
 
 impl<'a> CurrentWriteCommands<'a> {
     pub fn new(handle: &'a CurrentWriteHandle) -> Self {
-        Self { handle: handle.0.sqlx() }
+        Self {
+            handle: handle.0.sqlx(),
+        }
     }
 
     pub fn account(&'a self) -> CurrentWriteAccount<'a> {
@@ -138,9 +150,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
         CurrentSyncWriteChat::new(self.conn)
     }
 
-    pub fn read(
-        &mut self,
-    ) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
+    pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
         crate::current::read::CurrentSyncReadCommands::new(self.conn.conn())
     }
 

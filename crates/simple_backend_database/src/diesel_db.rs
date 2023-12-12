@@ -2,12 +2,12 @@ use std::{fmt, path::PathBuf};
 
 use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
-use diesel::{RunQueryDsl};
+use diesel::RunQueryDsl;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
-use error_stack::{ResultExt, Result};
-use simple_backend_config::{SimpleBackendConfig, file::SqliteDatabase};
+use error_stack::{Result, ResultExt};
+use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
+use simple_backend_utils::{ComponentError, ContextExt, IntoReportFromString};
 use tracing::log::error;
-use simple_backend_utils::{ComponentError, IntoReportFromString, ContextExt};
 
 pub type HookError = deadpool::managed::HookError<deadpool_diesel::Error>;
 
@@ -97,10 +97,7 @@ fn create_manager(
 ) -> Result<Manager, DieselDatabaseError> {
     let manager = if config.sqlite_in_ram() {
         // TODO: validate name?
-        let ram_str = format!(
-            "file:{}?mode=memory&cache=shared",
-            database_info.name
-        );
+        let ram_str = format!("file:{}?mode=memory&cache=shared", database_info.name);
 
         Manager::new(ram_str, deadpool_diesel::Runtime::Tokio1)
     } else {
@@ -123,7 +120,7 @@ impl DieselWriteHandle {
         config: &SimpleBackendConfig,
         database_info: &SqliteDatabase,
         db_path: PathBuf,
-        migrations: EmbeddedMigrations
+        migrations: EmbeddedMigrations,
     ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
         let manager = create_manager(config, database_info, db_path)?;
 

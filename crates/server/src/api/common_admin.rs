@@ -1,22 +1,19 @@
 //! Common routes related to admin features
 
 use axum::{extract::Query, Extension};
-
 use manager_model::{
-    BuildInfo, RebootQueryParam, SoftwareInfo, SoftwareOptionsQueryParam, SystemInfoList, ResetDataQueryParam,
+    BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
+    SystemInfoList,
 };
 use model::{Account, AccountIdInternal, BackendConfig, Capabilities};
 use simple_backend::app::{GetManagerApi, PerfCounterDataProvider};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
-
-use crate::api::{
-    utils::{Json, StatusCode},
-
-};
-
 use tracing::info;
 
-use crate::app::{WriteDynamicConfig, ReadDynamicConfig, ReadData};
+use crate::{
+    api::utils::{Json, StatusCode},
+    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig},
+};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -220,7 +217,8 @@ pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
     }
 }
 
-pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str = "/common_api/request_restart_or_reset_backend";
+pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
+    "/common_api/request_restart_or_reset_backend";
 
 /// Request restarting or reseting backend through app-manager instance.
 ///
@@ -348,9 +346,7 @@ pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
             api_caller_account_id.as_uuid(),
             backend_config
         );
-        state
-            .write_config(backend_config)
-            .await?;
+        state.write_config(backend_config).await?;
 
         Ok(())
     } else {
