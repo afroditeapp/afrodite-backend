@@ -12,8 +12,10 @@ pub enum TimeGranularity {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
 pub struct PerfHistoryQuery {
-    pub start_time: UnixTime,
-    pub end_time: UnixTime,
+    /// Start time for query results.
+    pub start_time: Option<UnixTime>,
+    /// End time for query results.
+    pub end_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
