@@ -219,8 +219,10 @@ impl EventManagerProvider for SimpleBackendAppState<AppState> {
     }
 }
 
+type S = SimpleBackendAppState<AppState>;
+
 pub struct App {
-    state: SimpleBackendAppState<AppState>,
+    state: S,
     web_socket_manager: Option<WebSocketManager>,
 }
 
@@ -244,7 +246,7 @@ impl App {
     }
 
     pub fn new(
-        state: SimpleBackendAppState<AppState>,
+        state: S,
         web_socket_manager: WebSocketManager,
     ) -> Self {
         Self {
@@ -253,7 +255,7 @@ impl App {
         }
     }
 
-    pub fn state(&self) -> SimpleBackendAppState<AppState> {
+    pub fn state(&self) -> S {
         self.state.clone()
     }
 
@@ -262,25 +264,22 @@ impl App {
             .route(
                 api::common::PATH_CONNECT, // This route checks the access token by itself.
                 get({
-                    let state = self.state.clone();
                     let ws_manager = self
                         .web_socket_manager
                         .take()
                         .expect("This should be called only once");
-                    move |param1, param2, param3| {
-                        api::common::get_connect_websocket(
-                            param1, param2, param3, ws_manager, state,
+                    move |state, param1, param2, param3| {
+                        api::common::get_connect_websocket::<S>(
+                            state, param1, param2, param3, ws_manager,
                         )
                     }
                 }),
             )
             .route(
                 api::common::PATH_GET_VERSION,
-                get({
-                    let state = self.state.clone();
-                    move || api::common::get_version(state)
-                }),
-            );
+                get(api::common::get_version::<S>),
+            )
+            .with_state(self.state());
 
         public.merge(ConnectedApp::new(self.state.clone()).private_common_router())
     }
@@ -288,11 +287,8 @@ impl App {
     pub fn create_account_server_router(&self) -> Router {
         let public = Router::new().route(
             api::account::PATH_SIGN_IN_WITH_LOGIN,
-            post({
-                let state = self.state.clone();
-                move |body| api::account::post_sign_in_with_login(body, state)
-            }),
-        );
+            post(api::account::post_sign_in_with_login::<S>),
+        ).with_state(self.state());
 
         public.merge(ConnectedApp::new(self.state.clone()).private_account_server_router())
     }

@@ -40,17 +40,11 @@ impl InternalApp {
             router = router
                 .route(
                     api::account::PATH_REGISTER,
-                    post({
-                        let state = state.clone();
-                        move || api::account::post_register(state)
-                    }),
+                    post(api::account::post_register::<S>),
                 )
                 .route(
                     api::account::PATH_LOGIN,
-                    post({
-                        let state = state.clone();
-                        move |body| api::account::post_login(body, state)
-                    }),
+                    post(api::account::post_login::<S>),
                 )
         }
 

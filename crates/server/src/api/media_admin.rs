@@ -1,4 +1,4 @@
-use axum::{extract::Path, Extension};
+use axum::{extract::{Path, State}, Extension};
 use model::{AccountId, AccountIdInternal, HandleModerationRequest, ModerationList, SecurityImage};
 
 use crate::perf::MEDIA_ADMIN;
@@ -24,9 +24,9 @@ pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:
     security(("access_token" = [])),
 )]
 pub async fn get_security_image_info<S: ReadData + GetAccounts>(
+    State(state): State<S>,
     Path(requested_account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<SecurityImage>, StatusCode> {
     MEDIA_ADMIN.get_security_image_info.incr();
 
@@ -68,8 +68,8 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/p
     security(("access_token" = [])),
 )]
 pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<ModerationList>, StatusCode> {
     MEDIA_ADMIN.patch_moderation_request_list.incr();
 
@@ -108,10 +108,10 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
 pub async fn post_handle_moderation_request<
     S: GetInternalApi + WriteData + GetAccessTokens + GetAccounts + GetConfig + ReadData,
 >(
+    State(state): State<S>,
     Path(moderation_request_owner_account_id): Path<AccountId>,
     Extension(admin_account_id): Extension<AccountIdInternal>,
     Json(moderation_decision): Json<HandleModerationRequest>,
-    state: S,
 ) -> Result<(), StatusCode> {
     MEDIA_ADMIN.post_handle_moderation_request.incr();
 

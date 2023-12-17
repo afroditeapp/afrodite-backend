@@ -6,7 +6,7 @@ use std::net::SocketAddr;
 use axum::{
     extract::{
         ws::{Message, WebSocket},
-        ConnectInfo, WebSocketUpgrade,
+        ConnectInfo, WebSocketUpgrade, State,
     },
     response::IntoResponse,
     TypedHeader,
@@ -39,7 +39,9 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
         (status = 200, description = "Version information.", body = BackendVersion),
     )
 )]
-pub async fn get_version<S: BackendVersionProvider>(state: S) -> Json<BackendVersion> {
+pub async fn get_version<S: BackendVersionProvider>(
+    State(state): State<S>,
+) -> Json<BackendVersion> {
     COMMON.get_version.incr();
     state.backend_version().into()
 }
@@ -69,11 +71,11 @@ pub async fn get_version<S: BackendVersionProvider>(state: S) -> Json<BackendVer
 pub async fn get_connect_websocket<
     S: WriteData + ReadData + GetAccessTokens + Send + Sync + 'static,
 >(
+    State(state): State<S>,
     websocket: WebSocketUpgrade,
     TypedHeader(access_token): TypedHeader<AccessTokenHeader>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     ws_manager: WebSocketManager,
-    state: S,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
     COMMON.get_connect_websocket.incr();
 

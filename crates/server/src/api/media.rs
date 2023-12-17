@@ -1,5 +1,5 @@
 use axum::{
-    extract::{BodyStream, Path, Query},
+    extract::{BodyStream, Path, Query, State},
     Extension, TypedHeader,
 };
 use headers::ContentType;
@@ -43,10 +43,10 @@ pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
     security(("access_token" = [])),
 )]
 pub async fn get_image<S: ReadData>(
+    State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Path(content_id): Path<ContentId>,
     Query(_access_check): Query<ImageAccessCheck>,
-    state: S,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
     MEDIA.get_image.incr();
 
@@ -84,10 +84,10 @@ pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:ac
     security(("access_token" = [])),
 )]
 pub async fn get_primary_image_info<S: ReadData + GetAccounts + GetAccessTokens>(
+    State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Query(_access_check): Query<ImageAccessCheck>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<PrimaryImage>, StatusCode> {
     MEDIA.get_primary_image_info.incr();
 
@@ -131,9 +131,9 @@ pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_
     security(("access_token" = [])),
 )]
 pub async fn get_all_normal_images<S: ReadData + GetAccounts>(
+    State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<NormalImages>, StatusCode> {
     MEDIA.get_all_normal_images.incr();
 
@@ -186,9 +186,9 @@ pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image";
     security(("access_token" = [])),
 )]
 pub async fn put_primary_image<S: WriteData>(
+    State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Json(new_image): Json<PrimaryImage>,
-    state: S,
 ) -> Result<(), StatusCode> {
     MEDIA.put_primary_image.incr();
 
@@ -217,8 +217,8 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     security(("access_token" = [])),
 )]
 pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<ModerationRequest>, StatusCode> {
     MEDIA.get_moderation_request.incr();
 
@@ -248,9 +248,9 @@ pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
     security(("access_token" = [])),
 )]
 pub async fn put_moderation_request<S: WriteData + GetAccessTokens>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(moderation_request): Json<ModerationRequestContent>,
-    state: S,
 ) -> Result<(), StatusCode> {
     MEDIA.put_moderation_request.incr();
 
@@ -282,10 +282,10 @@ pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/sl
     security(("access_token" = [])),
 )]
 pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Path(slot_number): Path<SlotId>,
     image: BodyStream,
-    state: S,
 ) -> Result<Json<ContentId>, StatusCode> {
     MEDIA.put_image_to_moderation_slot.incr();
 
@@ -335,10 +335,10 @@ pub const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/:z/:x/:y";
     security(("access_token" = [])),
 )]
 pub async fn get_map_tile<S: GetTileMap>(
+    State(state): State<S>,
     Path(z): Path<MapTileZ>,
     Path(x): Path<MapTileX>,
     Path(y): Path<MapTileY>,
-    state: S,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
     MEDIA.get_map_tile.incr();
 

@@ -1,6 +1,6 @@
 //! Common routes related to admin features
 
-use axum::{extract::Query, Extension};
+use axum::{extract::{Query, State}, Extension};
 use manager_model::{
     BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
     SystemInfoList,
@@ -29,8 +29,8 @@ pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
     security(("access_token" = [])),
 )]
 pub async fn get_system_info<S: GetManagerApi>(
+    State(state): State<S>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    state: S,
 ) -> Result<Json<SystemInfoList>, StatusCode> {
     COMMON_ADMIN.get_system_info.incr();
 
@@ -56,8 +56,8 @@ pub const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
     security(("access_token" = [])),
 )]
 pub async fn get_software_info<S: GetManagerApi>(
+    State(state): State<S>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    state: S,
 ) -> Result<Json<SoftwareInfo>, StatusCode> {
     COMMON_ADMIN.get_software_info.incr();
 
@@ -85,9 +85,9 @@ pub const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info"
     security(("access_token" = [])),
 )]
 pub async fn get_latest_build_info<S: GetManagerApi>(
+    State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    state: S,
 ) -> Result<Json<BuildInfo>, StatusCode> {
     COMMON_ADMIN.get_latest_build_info.incr();
 
@@ -117,9 +117,9 @@ pub const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_so
     security(("access_token" = [])),
 )]
 pub async fn post_request_build_software<S: GetManagerApi>(
+    State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    state: S,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_request_build_software.incr();
 
@@ -163,12 +163,12 @@ pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_
     security(("access_token" = [])),
 )]
 pub async fn post_request_update_software<S: GetManagerApi>(
+    State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
     Query(reboot): Query<RebootQueryParam>,
     Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    state: S,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_request_update_software.incr();
 
@@ -216,10 +216,10 @@ pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
     security(("access_token" = [])),
 )]
 pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
+    State(state): State<S>,
     Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    state: S,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_request_restart_or_reset_backend.incr();
 
@@ -263,8 +263,8 @@ pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
     security(("access_token" = [])),
 )]
 pub async fn get_backend_config<S: ReadDynamicConfig>(
+    State(state): State<S>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    state: S,
 ) -> Result<Json<BackendConfig>, StatusCode> {
     COMMON_ADMIN.get_backend_config.incr();
 
@@ -297,10 +297,10 @@ pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
     security(("access_token" = [])),
 )]
 pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
+    State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
     Json(backend_config): Json<BackendConfig>,
-    state: S,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_backend_config.incr();
 
@@ -338,9 +338,9 @@ pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
     security(("access_token" = [])),
 )]
 pub async fn get_perf_data<S: PerfCounterDataProvider>(
+    State(state): State<S>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
     Query(_query): Query<PerfHistoryQuery>,
-    state: S,
 ) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
     COMMON_ADMIN.get_perf_data.incr();
     if api_caller_capabilities.admin_server_maintenance_view_info {

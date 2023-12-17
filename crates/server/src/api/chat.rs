@@ -1,4 +1,4 @@
-use axum::Extension;
+use axum::{Extension, extract::State};
 use model::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MatchesPage,
     MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage,
@@ -28,9 +28,9 @@ pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
     security(("access_token" = [])),
 )]
 pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-    state: S,
 ) -> Result<(), StatusCode> {
     CHAT.post_send_like.incr();
 
@@ -79,8 +79,8 @@ pub const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
     security(("access_token" = [])),
 )]
 pub async fn get_sent_likes<S: ReadData>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<SentLikesPage>, StatusCode> {
     CHAT.get_sent_likes.incr();
 
@@ -106,8 +106,8 @@ pub const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
     security(("access_token" = [])),
 )]
 pub async fn get_received_likes<S: ReadData>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<ReceivedLikesPage>, StatusCode> {
     CHAT.get_received_likes.incr();
 
@@ -132,9 +132,9 @@ pub const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
     security(("access_token" = [])),
 )]
 pub async fn delete_like<S: GetAccounts + WriteData + EventManagerProvider>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-    state: S,
 ) -> Result<(), StatusCode> {
     CHAT.delete_like.incr();
 
@@ -166,8 +166,8 @@ pub const PATH_GET_MATCHES: &str = "/chat_api/matches";
     security(("access_token" = [])),
 )]
 pub async fn get_matches<S: ReadData>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<MatchesPage>, StatusCode> {
     CHAT.get_matches.incr();
 
@@ -190,9 +190,9 @@ pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
     security(("access_token" = [])),
 )]
 pub async fn post_block_profile<S: GetAccounts + WriteData + EventManagerProvider>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-    state: S,
 ) -> Result<(), StatusCode> {
     CHAT.post_block_profile.incr();
 
@@ -228,9 +228,9 @@ pub const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
     security(("access_token" = [])),
 )]
 pub async fn post_unblock_profile<S: GetAccounts + WriteData + EventManagerProvider>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-    state: S,
 ) -> Result<(), StatusCode> {
     CHAT.post_unblock_profile.incr();
 
@@ -265,8 +265,8 @@ pub const PATH_GET_SENT_BLOCKS: &str = "/chat_api/sent_blocks";
     security(("access_token" = [])),
 )]
 pub async fn get_sent_blocks<S: ReadData>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<SentBlocksPage>, StatusCode> {
     CHAT.get_sent_blocks.incr();
 
@@ -291,8 +291,8 @@ pub const PATH_GET_RECEIVED_BLOCKS: &str = "/chat_api/received_blocks";
     security(("access_token" = [])),
 )]
 pub async fn get_received_blocks<S: ReadData>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<ReceivedBlocksPage>, StatusCode> {
     CHAT.get_received_blocks.incr();
 
@@ -314,8 +314,8 @@ pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     security(("access_token" = [])),
 )]
 pub async fn get_pending_messages<S: ReadData>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<PendingMessagesPage>, StatusCode> {
     CHAT.get_pending_messages.incr();
 
@@ -338,9 +338,9 @@ pub const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     security(("access_token" = [])),
 )]
 pub async fn delete_pending_messages<S: WriteData>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(list): Json<PendingMessageDeleteList>,
-    state: S,
 ) -> Result<(), StatusCode> {
     CHAT.delete_pending_messages.incr();
 
@@ -367,9 +367,9 @@ pub const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     security(("access_token" = [])),
 )]
 pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccounts>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-    state: S,
 ) -> Result<Json<MessageNumber>, StatusCode> {
     CHAT.get_message_number_of_latest_viewed_message.incr();
 
@@ -400,9 +400,9 @@ pub const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
 pub async fn post_message_number_of_latest_viewed_message<
     S: GetAccounts + WriteData + EventManagerProvider,
 >(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(update_info): Json<UpdateMessageViewStatus>,
-    state: S,
 ) -> Result<(), StatusCode> {
     CHAT.post_message_number_of_latest_viewed_message.incr();
 
@@ -446,9 +446,9 @@ pub const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
     security(("access_token" = [])),
 )]
 pub async fn post_send_message<S: GetAccounts + WriteData + EventManagerProvider>(
+    State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(message_info): Json<SendMessageToAccount>,
-    state: S,
 ) -> Result<(), StatusCode> {
     CHAT.post_send_message.incr();
 

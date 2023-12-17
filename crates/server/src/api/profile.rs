@@ -1,4 +1,4 @@
-use axum::{extract::Path, Extension};
+use axum::{extract::{Path, State}, Extension};
 use model::{
     AccountId, AccountIdInternal, FavoriteProfilesPage, Location, Profile, ProfileLink,
     ProfilePage, ProfileUpdate, ProfileUpdateInternal,
@@ -49,9 +49,9 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 pub async fn get_profile<
     S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
 >(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Path(requested_profile): Path<AccountId>,
-    state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     PROFILE.get_profile.incr();
 
@@ -126,9 +126,9 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
     security(("access_token" = [])),
 )]
 pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(profile): Json<ProfileUpdate>,
-    state: S,
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile.incr();
 
@@ -157,8 +157,8 @@ pub const PATH_GET_LOCATION: &str = "/profile_api/location";
     security(("access_token" = [])),
 )]
 pub async fn get_location<S: GetAccessTokens + ReadData>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<Location>, StatusCode> {
     PROFILE.get_location.incr();
 
@@ -181,9 +181,9 @@ pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
     security(("access_token" = [])),
 )]
 pub async fn put_location<S: GetAccessTokens + WriteData>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(location): Json<Location>,
-    state: S,
 ) -> Result<(), StatusCode> {
     PROFILE.put_location.incr();
 
@@ -206,8 +206,8 @@ pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     security(("access_token" = [])),
 )]
 pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     PROFILE.post_get_next_profile_page.incr();
 
@@ -242,8 +242,8 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     security(("access_token" = [])),
 )]
 pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<(), StatusCode> {
     PROFILE.post_reset_profile_paging.incr();
     state
@@ -274,8 +274,8 @@ pub const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
     security(("access_token" = [])),
 )]
 pub async fn get_favorite_profiles<S: ReadData>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    state: S,
 ) -> Result<Json<FavoriteProfilesPage>, StatusCode> {
     PROFILE.get_favorite_profiles.incr();
     let profiles = state.read().profile().favorite_profiles(account_id).await?;
@@ -302,9 +302,9 @@ pub const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
     security(("access_token" = [])),
 )]
 pub async fn post_favorite_profile<S: WriteData + GetAccounts>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(favorite): Json<AccountId>,
-    state: S,
 ) -> Result<(), StatusCode> {
     PROFILE.post_favorite_profile.incr();
 
@@ -331,9 +331,9 @@ pub const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
     security(("access_token" = [])),
 )]
 pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(favorite): Json<AccountId>,
-    state: S,
 ) -> Result<(), StatusCode> {
     PROFILE.delete_favorite_profile.incr();
     let favorite_account_id = state.accounts().get_internal_id(favorite).await?;
@@ -368,9 +368,9 @@ pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
 pub async fn get_profile_from_database_debug_mode_benchmark<
     S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
 >(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Path(requested_profile): Path<AccountId>,
-    state: S,
 ) -> Result<Json<Profile>, StatusCode> {
     PROFILE.get_profile_from_database_debug_mode_benchmark.incr();
 
@@ -414,9 +414,9 @@ pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmar
 pub async fn post_profile_to_database_debug_mode_benchmark<
     S: GetAccessTokens + WriteData + ReadData,
 >(
+    State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(profile): Json<ProfileUpdate>,
-    state: S,
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_to_database_debug_mode_benchmark.incr();
 

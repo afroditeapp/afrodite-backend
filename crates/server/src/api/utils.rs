@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use axum::{
-    extract::{rejection::JsonRejection, ConnectInfo, FromRequest},
+    extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -40,8 +40,8 @@ pub static ACCESS_TOKEN_HEADER: header::HeaderName =
 /// Adds `Capabilities` extension to request, so that adding
 /// "Extension(api_caller_capabilities): Extension<Capabilities>"
 /// to handlers is possible.
-pub async fn authenticate_with_access_token<T, S: GetAccessTokens + ReadData>(
-    state: S,
+pub async fn authenticate_with_access_token<S: GetAccessTokens + ReadData, T>(
+    State(state): State<S>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     mut req: Request<T>,
     next: Next<T>,
