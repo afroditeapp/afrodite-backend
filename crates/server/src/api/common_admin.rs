@@ -5,14 +5,14 @@ use manager_model::{
     BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
     SystemInfoList,
 };
-use model::{Account, AccountIdInternal, BackendConfig, Capabilities};
+use model::{AccountIdInternal, BackendConfig, Capabilities};
 use simple_backend::app::{GetManagerApi, PerfCounterDataProvider};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
 use tracing::info;
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig},
+    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig}, perf::COMMON_ADMIN,
 };
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
@@ -28,17 +28,13 @@ pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_system_info<S: GetManagerApi + ReadData>(
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+pub async fn get_system_info<S: GetManagerApi>(
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     state: S,
 ) -> Result<Json<SystemInfoList>, StatusCode> {
-    let account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.get_system_info.incr();
 
-    if account.capablities().admin_server_maintenance_view_info {
+    if api_caller_capabilities.admin_server_maintenance_view_info {
         let info = state.manager_api().system_info().await?;
         Ok(info.into())
     } else {
@@ -59,17 +55,13 @@ pub const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_software_info<S: GetManagerApi + ReadData>(
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+pub async fn get_software_info<S: GetManagerApi>(
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     state: S,
 ) -> Result<Json<SoftwareInfo>, StatusCode> {
-    let account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.get_software_info.incr();
 
-    if account.capablities().admin_server_maintenance_view_info {
+    if api_caller_capabilities.admin_server_maintenance_view_info {
         let info = state.manager_api().software_info().await?;
         Ok(info.into())
     } else {
@@ -92,18 +84,14 @@ pub const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info"
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_latest_build_info<S: GetManagerApi + ReadData>(
+pub async fn get_latest_build_info<S: GetManagerApi>(
     Query(software): Query<SoftwareOptionsQueryParam>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     state: S,
 ) -> Result<Json<BuildInfo>, StatusCode> {
-    let account: Account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.get_latest_build_info.incr();
 
-    if account.capablities().admin_server_maintenance_view_info {
+    if api_caller_capabilities.admin_server_maintenance_view_info {
         let info = state
             .manager_api()
             .get_latest_build_info(software.software_options)
@@ -128,19 +116,14 @@ pub const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_so
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_request_build_software<S: GetManagerApi + ReadData>(
+pub async fn post_request_build_software<S: GetManagerApi>(
     Query(software): Query<SoftwareOptionsQueryParam>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account: Account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.post_request_build_software.incr();
 
-    if account
-        .capablities()
+    if api_caller_capabilities
         .admin_server_maintenance_update_software
     {
         state
@@ -179,25 +162,21 @@ pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_request_update_software<S: GetManagerApi + ReadData>(
+pub async fn post_request_update_software<S: GetManagerApi>(
     Query(software): Query<SoftwareOptionsQueryParam>,
     Query(reboot): Query<RebootQueryParam>,
     Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.post_request_update_software.incr();
 
-    if reset_data.reset_data && !account.capablities().admin_server_maintenance_reset_data {
+    if reset_data.reset_data && !api_caller_capabilities.admin_server_maintenance_reset_data {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if account
-        .capablities()
+    if api_caller_capabilities
         .admin_server_maintenance_update_software
     {
         info!(
@@ -236,23 +215,19 @@ pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_request_restart_or_reset_backend<S: GetManagerApi + ReadData>(
+pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
     Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.post_request_restart_or_reset_backend.incr();
 
-    if reset_data.reset_data && !account.capablities().admin_server_maintenance_reset_data {
+    if reset_data.reset_data && !api_caller_capabilities.admin_server_maintenance_reset_data {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if account
-        .capablities()
+    if api_caller_capabilities
         .admin_server_maintenance_update_software
     {
         info!(
@@ -287,18 +262,13 @@ pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_backend_config<S: ReadData + ReadDynamicConfig>(
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+pub async fn get_backend_config<S: ReadDynamicConfig>(
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     state: S,
 ) -> Result<Json<BackendConfig>, StatusCode> {
-    let account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.get_backend_config.incr();
 
-    if account
-        .capablities()
+    if api_caller_capabilities
         .admin_server_maintenance_view_backend_config
     {
         let config = state.read_config().await?;
@@ -328,17 +298,13 @@ pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
 )]
 pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     Json(backend_config): Json<BackendConfig>,
     state: S,
 ) -> Result<(), StatusCode> {
-    let account = state
-        .read()
-        .account()
-        .account(api_caller_account_id)
-        .await?;
+    COMMON_ADMIN.post_backend_config.incr();
 
-    if account
-        .capablities()
+    if api_caller_capabilities
         .admin_server_maintenance_save_backend_config
     {
         info!(
@@ -372,11 +338,11 @@ pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
     security(("access_token" = [])),
 )]
 pub async fn get_perf_data<S: PerfCounterDataProvider>(
-    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
     Query(_query): Query<PerfHistoryQuery>,
     state: S,
 ) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
+    COMMON_ADMIN.get_perf_data.incr();
     if api_caller_capabilities.admin_server_maintenance_view_info {
         let data = state.perf_counter_data().get_history().await;
         Ok(data.into())

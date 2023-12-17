@@ -1,6 +1,8 @@
 use axum::{extract::Path, Extension};
 use model::{AccountId, AccountIdInternal, HandleModerationRequest, ModerationList, SecurityImage};
 
+use crate::perf::MEDIA_ADMIN;
+
 use super::{
     super::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
     db_write,
@@ -26,6 +28,8 @@ pub async fn get_security_image_info<S: ReadData + GetAccounts>(
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SecurityImage>, StatusCode> {
+    MEDIA_ADMIN.get_security_image_info.incr();
+
     // TODO: access restrictions
 
     let internal_id = state
@@ -67,6 +71,8 @@ pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ModerationList>, StatusCode> {
+    MEDIA_ADMIN.patch_moderation_request_list.incr();
+
     // TODO: Access restrictions
 
     let data = db_write!(state, move |cmds| {
@@ -107,6 +113,8 @@ pub async fn post_handle_moderation_request<
     Json(moderation_decision): Json<HandleModerationRequest>,
     state: S,
 ) -> Result<(), StatusCode> {
+    MEDIA_ADMIN.post_handle_moderation_request.incr();
+
     let account = state
         .internal_api()
         .get_account_state(admin_account_id)

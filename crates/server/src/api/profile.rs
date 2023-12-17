@@ -9,10 +9,10 @@ use super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::data::{
+use crate::{data::{
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle},
     DataError,
-};
+}, perf::PROFILE};
 
 // TODO: Add timeout for database commands
 
@@ -53,6 +53,8 @@ pub async fn get_profile<
     Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
+    PROFILE.get_profile.incr();
+
     // TODO: Change return type to GetProfileResult, because
     //       current style spams errors to logs.
     // TODO: check capablities
@@ -128,6 +130,8 @@ pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
+    PROFILE.post_profile.incr();
+
     let old_profile: Profile = state.read().profile().profile(account_id).await?.into();
 
     if profile == old_profile.into_update() {
@@ -156,6 +160,8 @@ pub async fn get_location<S: GetAccessTokens + ReadData>(
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<Location>, StatusCode> {
+    PROFILE.get_location.incr();
+
     let location = state.read().profile().profile_location(account_id).await?;
     Ok(location.into())
 }
@@ -179,6 +185,8 @@ pub async fn put_location<S: GetAccessTokens + WriteData>(
     Json(location): Json<Location>,
     state: S,
 ) -> Result<(), StatusCode> {
+    PROFILE.put_location.incr();
+
     db_write!(state, move |cmds| cmds
         .profile()
         .profile_update_location(account_id, location))
@@ -201,6 +209,8 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ProfilePage>, StatusCode> {
+    PROFILE.post_get_next_profile_page.incr();
+
     let data = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<error_stack::Result<Vec<ProfileLink>, DataError>> = cmds
@@ -235,6 +245,7 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     Extension(account_id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<(), StatusCode> {
+    PROFILE.post_reset_profile_paging.incr();
     state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
@@ -245,6 +256,90 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
             out
         })
         .await??;
+
+    Ok(())
+}
+
+pub const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
+
+/// Get list of all favorite profiles.
+#[utoipa::path(
+    get,
+    path = "/profile_api/favorite_profiles",
+    responses(
+        (status = 200, description = "Get successfull.", body = FavoriteProfilesPage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_favorite_profiles<S: ReadData>(
+    Extension(account_id): Extension<AccountIdInternal>,
+    state: S,
+) -> Result<Json<FavoriteProfilesPage>, StatusCode> {
+    PROFILE.get_favorite_profiles.incr();
+    let profiles = state.read().profile().favorite_profiles(account_id).await?;
+
+    let page = FavoriteProfilesPage {
+        profiles: profiles.into_iter().map(|p| p.uuid).collect(),
+    };
+
+    Ok(page.into())
+}
+
+pub const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
+
+/// Add new favorite profile
+#[utoipa::path(
+    post,
+    path = "/profile_api/favorite_profile",
+    request_body(content = AccountId),
+    responses(
+        (status = 200, description = "Request successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_favorite_profile<S: WriteData + GetAccounts>(
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(favorite): Json<AccountId>,
+    state: S,
+) -> Result<(), StatusCode> {
+    PROFILE.post_favorite_profile.incr();
+
+    let favorite_account_id = state.accounts().get_internal_id(favorite).await?;
+    db_write!(state, move |cmds| cmds
+        .profile()
+        .insert_favorite_profile(account_id, favorite_account_id))?;
+
+    Ok(())
+}
+
+pub const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
+
+/// Delete favorite profile
+#[utoipa::path(
+    delete,
+    path = "/profile_api/favorite_profile",
+    request_body(content = AccountId),
+    responses(
+        (status = 200, description = "Request successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(favorite): Json<AccountId>,
+    state: S,
+) -> Result<(), StatusCode> {
+    PROFILE.delete_favorite_profile.incr();
+    let favorite_account_id = state.accounts().get_internal_id(favorite).await?;
+    db_write!(state, move |cmds| cmds
+        .profile()
+        .remove_favorite_profile(account_id, favorite_account_id))?;
 
     Ok(())
 }
@@ -277,6 +372,8 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
     Path(requested_profile): Path<AccountId>,
     state: S,
 ) -> Result<Json<Profile>, StatusCode> {
+    PROFILE.get_profile_from_database_debug_mode_benchmark.incr();
+
     if !state.config().debug_mode() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
@@ -294,86 +391,6 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
-}
-
-pub const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
-
-/// Get list of all favorite profiles.
-#[utoipa::path(
-    get,
-    path = "/profile_api/favorite_profiles",
-    responses(
-        (status = 200, description = "Get successfull.", body = FavoriteProfilesPage),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_favorite_profiles<S: ReadData>(
-    Extension(account_id): Extension<AccountIdInternal>,
-    state: S,
-) -> Result<Json<FavoriteProfilesPage>, StatusCode> {
-    let profiles = state.read().profile().favorite_profiles(account_id).await?;
-
-    let page = FavoriteProfilesPage {
-        profiles: profiles.into_iter().map(|p| p.uuid).collect(),
-    };
-
-    Ok(page.into())
-}
-
-pub const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
-
-/// Add new favorite profile
-#[utoipa::path(
-    post,
-    path = "/profile_api/favorite_profile",
-    request_body(content = AccountId),
-    responses(
-        (status = 200, description = "Request successfull."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_favorite_profile<S: WriteData + GetAccounts>(
-    Extension(account_id): Extension<AccountIdInternal>,
-    Json(favorite): Json<AccountId>,
-    state: S,
-) -> Result<(), StatusCode> {
-    let favorite_account_id = state.accounts().get_internal_id(favorite).await?;
-    db_write!(state, move |cmds| cmds
-        .profile()
-        .insert_favorite_profile(account_id, favorite_account_id))?;
-
-    Ok(())
-}
-
-pub const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
-
-/// Delete favorite profile
-#[utoipa::path(
-    delete,
-    path = "/profile_api/favorite_profile",
-    request_body(content = AccountId),
-    responses(
-        (status = 200, description = "Request successfull."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
-    Extension(account_id): Extension<AccountIdInternal>,
-    Json(favorite): Json<AccountId>,
-    state: S,
-) -> Result<(), StatusCode> {
-    let favorite_account_id = state.accounts().get_internal_id(favorite).await?;
-    db_write!(state, move |cmds| cmds
-        .profile()
-        .remove_favorite_profile(account_id, favorite_account_id))?;
-
-    Ok(())
 }
 
 pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile";
@@ -401,6 +418,8 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
     Json(profile): Json<ProfileUpdate>,
     state: S,
 ) -> Result<(), StatusCode> {
+    PROFILE.post_profile_to_database_debug_mode_benchmark.incr();
+
     let old_profile: Profile = state.read().profile().profile(account_id).await?.into();
 
     if profile == old_profile.into_update() {
@@ -414,3 +433,5 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
             .benchmark_update_profile_bypassing_cache(account_id, new)
     })
 }
+
+// ------------------- Benchmark routes end ----------------------------

@@ -10,7 +10,7 @@ use super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::app::{EventManagerProvider, GetAccounts, ReadData, WriteData};
+use crate::{app::{EventManagerProvider, GetAccounts, ReadData, WriteData}, perf::CHAT};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -32,6 +32,8 @@ pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
+    CHAT.post_send_like.incr();
+
     // TODO: Check is profile public and is age ok.
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
@@ -80,6 +82,8 @@ pub async fn get_sent_likes<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SentLikesPage>, StatusCode> {
+    CHAT.get_sent_likes.incr();
+
     let page = state.read().chat().all_sent_likes(id).await?;
     Ok(page.into())
 }
@@ -105,6 +109,8 @@ pub async fn get_received_likes<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ReceivedLikesPage>, StatusCode> {
+    CHAT.get_received_likes.incr();
+
     let page = state.read().chat().all_received_likes(id).await?;
     Ok(page.into())
 }
@@ -130,6 +136,8 @@ pub async fn delete_like<S: GetAccounts + WriteData + EventManagerProvider>(
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
+    CHAT.delete_like.incr();
+
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write!(state, move |cmds| {
@@ -161,6 +169,8 @@ pub async fn get_matches<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<MatchesPage>, StatusCode> {
+    CHAT.get_matches.incr();
+
     let page = state.read().chat().all_matches(id).await?;
     Ok(page.into())
 }
@@ -184,6 +194,8 @@ pub async fn post_block_profile<S: GetAccounts + WriteData + EventManagerProvide
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
+    CHAT.post_block_profile.incr();
+
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write!(state, move |cmds| {
@@ -220,6 +232,8 @@ pub async fn post_unblock_profile<S: GetAccounts + WriteData + EventManagerProvi
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
+    CHAT.post_unblock_profile.incr();
+
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write!(state, move |cmds| {
@@ -254,6 +268,8 @@ pub async fn get_sent_blocks<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<SentBlocksPage>, StatusCode> {
+    CHAT.get_sent_blocks.incr();
+
     let page = state.read().chat().all_sent_blocks(id).await?;
     Ok(page.into())
 }
@@ -278,6 +294,8 @@ pub async fn get_received_blocks<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<ReceivedBlocksPage>, StatusCode> {
+    CHAT.get_received_blocks.incr();
+
     let page = state.read().chat().all_received_blocks(id).await?;
     Ok(page.into())
 }
@@ -299,6 +317,8 @@ pub async fn get_pending_messages<S: ReadData>(
     Extension(id): Extension<AccountIdInternal>,
     state: S,
 ) -> Result<Json<PendingMessagesPage>, StatusCode> {
+    CHAT.get_pending_messages.incr();
+
     let page = state.read().chat().all_pending_messages(id).await?;
     Ok(page.into())
 }
@@ -322,6 +342,8 @@ pub async fn delete_pending_messages<S: WriteData>(
     Json(list): Json<PendingMessageDeleteList>,
     state: S,
 ) -> Result<(), StatusCode> {
+    CHAT.delete_pending_messages.incr();
+
     db_write!(state, move |cmds| {
         cmds.chat()
             .delete_pending_message_list(id, list.messages_ids)
@@ -349,6 +371,8 @@ pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccoun
     Json(requested_profile): Json<AccountId>,
     state: S,
 ) -> Result<Json<MessageNumber>, StatusCode> {
+    CHAT.get_message_number_of_latest_viewed_message.incr();
+
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
     let number = state
         .read()
@@ -380,6 +404,8 @@ pub async fn post_message_number_of_latest_viewed_message<
     Json(update_info): Json<UpdateMessageViewStatus>,
     state: S,
 ) -> Result<(), StatusCode> {
+    CHAT.post_message_number_of_latest_viewed_message.incr();
+
     let message_sender = state
         .accounts()
         .get_internal_id(update_info.account_id_sender)
@@ -424,6 +450,8 @@ pub async fn post_send_message<S: GetAccounts + WriteData + EventManagerProvider
     Json(message_info): Json<SendMessageToAccount>,
     state: S,
 ) -> Result<(), StatusCode> {
+    CHAT.post_send_message.incr();
+
     let message_reciever = state
         .accounts()
         .get_internal_id(message_info.receiver)

@@ -21,6 +21,8 @@ use simple_backend_utils::ContextExt;
 use tracing::error;
 pub use utils::api::PATH_CONNECT;
 
+use crate::perf::COMMON;
+
 use super::{
     super::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
     utils::{AccessTokenHeader, Json, StatusCode},
@@ -38,6 +40,7 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
     )
 )]
 pub async fn get_version<S: BackendVersionProvider>(state: S) -> Json<BackendVersion> {
+    COMMON.get_version.incr();
     state.backend_version().into()
 }
 
@@ -72,6 +75,8 @@ pub async fn get_connect_websocket<
     ws_manager: WebSocketManager,
     state: S,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
+    COMMON.get_connect_websocket.incr();
+
     // NOTE: This handler does not have authentication layer enabled, so
     // authentication must be done manually.
 

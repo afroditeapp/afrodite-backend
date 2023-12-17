@@ -6,7 +6,7 @@ use model::{AccountId, BooleanSetting};
 use super::super::app::{
     GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData,
 };
-use crate::api::utils::StatusCode;
+use crate::{api::utils::StatusCode, perf::{PROFILE_INTERNAL}};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
@@ -28,6 +28,10 @@ pub async fn internal_post_update_profile_visibility<
     Path(value): Path<BooleanSetting>,
     state: S,
 ) -> Result<(), StatusCode> {
+    PROFILE_INTERNAL
+        .internal_post_update_profile_visibility
+        .incr();
+
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
     state

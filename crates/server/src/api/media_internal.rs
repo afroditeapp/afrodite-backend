@@ -5,7 +5,7 @@ use model::{AccountId, BooleanSetting, Profile};
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
+    app::{GetAccounts, GetConfig, GetInternalApi, ReadData}, perf::MEDIA_INTERNAL,
 };
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
@@ -28,6 +28,10 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
     Path(account_id): Path<AccountId>,
     state: S,
 ) -> Result<(), StatusCode> {
+    MEDIA_INTERNAL
+        .internal_get_check_moderation_request_for_account
+        .incr();
+
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
     let request = state
@@ -65,6 +69,10 @@ pub async fn internal_post_update_profile_image_visibility<
     Json(profile): Json<Profile>,
     state: S,
 ) -> Result<(), StatusCode> {
+    MEDIA_INTERNAL
+        .internal_post_update_profile_image_visibility
+        .incr();
+
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
     state

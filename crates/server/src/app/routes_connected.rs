@@ -60,9 +60,9 @@ impl ConnectedApp {
                 api::common_admin::PATH_POST_REQUEST_UPDATE_SOFTWARE,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2, param3, param4| {
+                    move |param1, param2, param3, param4, param5| {
                         api::common_admin::post_request_update_software(
-                            param1, param2, param3, param4, state,
+                            param1, param2, param3, param4, param5, state,
                         )
                     }
                 }),
@@ -71,9 +71,9 @@ impl ConnectedApp {
                 api::common_admin::PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2| {
+                    move |param1, param2, param3| {
                         api::common_admin::post_request_restart_or_reset_backend(
-                            param1, param2, state,
+                            param1, param2, param3, state,
                         )
                     }
                 }),
@@ -89,8 +89,8 @@ impl ConnectedApp {
                 api::common_admin::PATH_POST_BACKEND_CONFIG,
                 post({
                     let state = self.state.clone();
-                    move |param1, param2| {
-                        api::common_admin::post_backend_config(param1, param2, state)
+                    move |param1, param2, param3| {
+                        api::common_admin::post_backend_config(param1, param2, param3, state)
                     }
                 }),
             )
@@ -98,8 +98,8 @@ impl ConnectedApp {
                 api::common_admin::PATH_GET_PERF_DATA,
                 get({
                     let state = self.state.clone();
-                    move |param1, param2, param3| {
-                        api::common_admin::get_perf_data(param1, param2, param3, state)
+                    move |param1, param2| {
+                        api::common_admin::get_perf_data(param1, param2, state)
                     }
                 }),
             )
