@@ -108,7 +108,7 @@ pub mod utils;
         model::common::AccessToken,
         model::common::RefreshToken,
         model::common::LatestViewedMessageChanged,
-        model::common::UnixTime,
+        simple_backend_model::UnixTime,
         // Common admin
         model::common_admin::BackendConfig,
         model::common_admin::BotConfig,

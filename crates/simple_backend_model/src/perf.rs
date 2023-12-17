@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{ToSchema, IntoParams};
 
 use crate::UnixTime;
 
@@ -10,7 +10,7 @@ pub enum TimeGranularity {
     Hours,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, ToSchema, IntoParams)]
 pub struct PerfHistoryQuery {
     /// Start time for query results.
     pub start_time: Option<UnixTime>,

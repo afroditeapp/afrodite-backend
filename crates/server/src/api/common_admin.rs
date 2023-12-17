@@ -363,7 +363,7 @@ pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 #[utoipa::path(
     get,
     path = "/common_api/perf_data",
-    request_body(content = PerfHistoryQuery),
+    params(PerfHistoryQuery),
     responses(
         (status = 200, description = "Get was successfull.", body = PerfHistoryQueryResult),
         (status = 401, description = "Unauthorized."),
@@ -374,7 +374,7 @@ pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 pub async fn get_perf_data<S: PerfCounterDataProvider>(
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
-    Json(_query): Json<PerfHistoryQuery>,
+    Query(_query): Query<PerfHistoryQuery>,
     state: S,
 ) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
     if api_caller_capabilities.admin_server_maintenance_view_info {

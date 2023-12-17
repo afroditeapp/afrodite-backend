@@ -178,7 +178,7 @@ impl PerformanceCounterHistory {
             self.next_index = 0;
             self.previous_start_time = self.start_time;
         } else {
-            self.next_index += 0;
+            self.next_index += 1;
         }
     }
 

@@ -1,7 +1,7 @@
 use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
-use utoipa::ToSchema;
+use utoipa::{ToSchema, IntoParams};
 
 use crate::macros::diesel_i64_wrapper;
 
@@ -12,6 +12,7 @@ use crate::macros::diesel_i64_wrapper;
     Deserialize,
     Serialize,
     ToSchema,
+    IntoParams,
     PartialEq,
     Default,
     sqlx::Type,
