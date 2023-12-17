@@ -1,6 +1,6 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-use axum::extract::Path;
+use axum::extract::{Path, State};
 use model::{AccountId, BooleanSetting, Profile};
 
 use crate::{
@@ -25,8 +25,8 @@ pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     ),
 )]
 pub async fn internal_get_check_moderation_request_for_account<S: ReadData + GetAccounts>(
+    State(state): State<S>,
     Path(account_id): Path<AccountId>,
-    state: S,
 ) -> Result<(), StatusCode> {
     MEDIA_INTERNAL
         .internal_get_check_moderation_request_for_account
@@ -64,10 +64,10 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
 pub async fn internal_post_update_profile_image_visibility<
     S: ReadData + GetAccounts + GetInternalApi + GetConfig,
 >(
+    State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Path(value): Path<BooleanSetting>,
     Json(profile): Json<Profile>,
-    state: S,
 ) -> Result<(), StatusCode> {
     MEDIA_INTERNAL
         .internal_post_update_profile_image_visibility

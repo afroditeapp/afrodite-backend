@@ -14,25 +14,21 @@ use crate::{
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
 
+type S = SimpleBackendAppState<AppState>;
+
 /// Internal route handlers for server to server communication.
 pub struct InternalApp;
 
 impl InternalApp {
-    pub fn create_account_server_router(state: SimpleBackendAppState<AppState>) -> Router {
+    pub fn create_account_server_router(state: S) -> Router {
         let mut router = Router::new()
             .route(
                 api::account_internal::PATH_INTERNAL_CHECK_ACCESS_TOKEN,
-                get({
-                    let state = state.clone();
-                    move |body| api::account_internal::check_access_token(body, state)
-                }),
+                get(api::account_internal::check_access_token::<S>),
             )
             .route(
                 api::account_internal::PATH_INTERNAL_GET_ACCOUNT_STATE,
-                get({
-                    let state = state.clone();
-                    move |param1| api::account_internal::internal_get_account_state(param1, state)
-                }),
+                get( api::account_internal::internal_get_account_state::<S>),
             );
 
         if state
@@ -59,47 +55,31 @@ impl InternalApp {
         }
 
         router
+            .with_state(state)
     }
 
-    pub fn create_profile_server_router(state: SimpleBackendAppState<AppState>) -> Router {
+    pub fn create_profile_server_router(state: S) -> Router {
         Router::new().route(
             api::profile_internal::PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY,
-            post({
-                let state = state.clone();
-                move |p1, p2| {
-                    api::profile_internal::internal_post_update_profile_visibility(p1, p2, state)
-                }
-            }),
+            post(api::profile_internal::internal_post_update_profile_visibility::<S>),
         )
+        .with_state(state)
     }
 
-    pub fn create_media_server_router(state: SimpleBackendAppState<AppState>) -> Router {
+    pub fn create_media_server_router(state: S) -> Router {
         Router::new()
             .route(
                 api::media_internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
-                post({
-                    let state = state.clone();
-                    move |parameter1| {
-                        api::media_internal::internal_get_check_moderation_request_for_account(
-                            parameter1, state,
-                        )
-                    }
-                }),
+                post(api::media_internal::internal_get_check_moderation_request_for_account::<S>),
             )
             .route(
                 api::media_internal::PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY,
-                post({
-                    let state = state.clone();
-                    move |p1, p2, p3| {
-                        api::media_internal::internal_post_update_profile_image_visibility(
-                            p1, p2, p3, state,
-                        )
-                    }
-                }),
+                post(api::media_internal::internal_post_update_profile_image_visibility::<S>),
             )
+            .with_state(state)
     }
 
-    pub fn create_chat_server_router(_state: SimpleBackendAppState<AppState>) -> Router {
+    pub fn create_chat_server_router(_state: S) -> Router {
         Router::new()
         // .route(
         //     api::media::internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,

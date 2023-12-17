@@ -1,6 +1,6 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-use axum::extract::Path;
+use axum::extract::{Path, State};
 use model::{AccountId, BooleanSetting};
 
 use super::super::app::{
@@ -24,9 +24,9 @@ pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
 pub async fn internal_post_update_profile_visibility<
     S: ReadData + GetAccounts + GetInternalApi + GetAccessTokens + GetConfig + WriteData,
 >(
+    State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Path(value): Path<BooleanSetting>,
-    state: S,
 ) -> Result<(), StatusCode> {
     PROFILE_INTERNAL
         .internal_post_update_profile_visibility
