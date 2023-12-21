@@ -69,6 +69,36 @@ CREATE TABLE IF NOT EXISTS shared_state(
             ON UPDATE CASCADE
 );
 
+-- All next new queue numbers are stored here.
+-- This table should contain only one row.
+CREATE TABLE IF NOT EXISTS next_queue_number(
+    -- Only ID 0 should exist.
+    id                          INTEGER PRIMARY KEY     NOT NULL,
+    -- Queue type number: 0 = media moderation
+    media_moderation            INTEGER                 NOT NULL DEFAULT 0,
+    -- Queue type number: 1 = initial media moderation
+    initial_media_moderation    INTEGER                 NOT NULL DEFAULT 0,
+);
+
+-- Table for storing active queue entries.
+-- Only active queue entries are stored here.
+CREATE TABLE IF NOT EXISTS queue_entry(
+    id INTEGER PRIMARY KEY                         NOT NULL,
+    -- Queue number from next_queue_number table.
+    -- The number in that table is incremented when
+    -- new queue entry is created.
+    queue_number   INTEGER                         NOT NULL,
+    -- Queue entry type number. Check next_queue_number table for
+    -- available queue type numbers.
+    queue_type_number     INTEGER                  NOT NULL,
+    -- Associate queue entry with account.
+    account_id   INTEGER                           NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component account ----------
 
 -- Sign in with related IDs for account
