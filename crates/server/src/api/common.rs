@@ -243,7 +243,10 @@ async fn handle_socket_result<S: WriteData + ReadData>(
             result = socket.recv() => {
                 match result {
                     Some(Err(_)) | None => break,
-                    Some(Ok(_)) => continue,
+                    Some(Ok(value)) => {
+                        error!("Unexpected value: {:?}, from: {}", value, address);
+                        continue;
+                    },
                 }
             }
             event = event_receiver.recv() => {
