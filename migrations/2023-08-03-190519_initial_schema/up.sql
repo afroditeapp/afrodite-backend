@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS next_queue_number(
     -- Queue type number: 0 = media moderation
     media_moderation            INTEGER                 NOT NULL DEFAULT 0,
     -- Queue type number: 1 = initial media moderation
-    initial_media_moderation    INTEGER                 NOT NULL DEFAULT 0,
+    initial_media_moderation    INTEGER                 NOT NULL DEFAULT 0
 );
 
 -- Table for storing active queue entries.
