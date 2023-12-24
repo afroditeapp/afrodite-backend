@@ -159,6 +159,7 @@ diesel::table! {
         uuid -> Binary,
         account_id -> Integer,
         moderation_state -> Integer,
+        secure_capture -> Bool,
         content_type -> Integer,
         slot_number -> Integer,
     }
@@ -171,17 +172,6 @@ diesel::table! {
         account_id -> Integer,
         moderation_request_id -> Integer,
         state_number -> Integer,
-        json_text -> Text,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
-    media_moderation_queue_number (queue_number) {
-        queue_number -> Integer,
-        account_id -> Integer,
-        sub_queue -> Integer,
     }
 }
 
@@ -192,7 +182,22 @@ diesel::table! {
         id -> Integer,
         account_id -> Integer,
         queue_number -> Integer,
-        json_text -> Text,
+        initial_moderation_security_image -> Nullable<Binary>,
+        content_id_1 -> Binary,
+        content_id_2 -> Nullable<Binary>,
+        content_id_3 -> Nullable<Binary>,
+        content_id_4 -> Nullable<Binary>,
+        content_id_5 -> Nullable<Binary>,
+        content_id_6 -> Nullable<Binary>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    next_queue_number (queue_type_number) {
+        queue_type_number -> Integer,
+        next_number -> Integer,
     }
 }
 
@@ -227,6 +232,16 @@ diesel::table! {
         account_id -> Integer,
         latitude -> Double,
         longitude -> Double,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    queue_entry (queue_number, queue_type_number) {
+        queue_number -> Integer,
+        queue_type_number -> Integer,
+        account_id -> Integer,
     }
 }
 
@@ -271,10 +286,10 @@ diesel::joinable!(history_profile -> account_id (account_id));
 diesel::joinable!(media_content -> account_id (account_id));
 diesel::joinable!(media_moderation -> account_id (account_id));
 diesel::joinable!(media_moderation -> media_moderation_request (moderation_request_id));
-diesel::joinable!(media_moderation_queue_number -> account_id (account_id));
 diesel::joinable!(media_moderation_request -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_location -> account_id (account_id));
+diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
 diesel::joinable!(shared_state -> account_id (account_id));
 diesel::joinable!(sign_in_with_info -> account_id (account_id));
@@ -295,11 +310,12 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile,
     media_content,
     media_moderation,
-    media_moderation_queue_number,
     media_moderation_request,
+    next_queue_number,
     pending_messages,
     profile,
     profile_location,
+    queue_entry,
     refresh_token,
     shared_state,
     sign_in_with_info,

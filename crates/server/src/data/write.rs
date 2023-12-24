@@ -115,10 +115,10 @@ macro_rules! define_write_commands {
             #[track_caller]
             pub async fn db_transaction<
                 T: FnOnce(
-                        &mut simple_backend_database::diesel_db::DieselConnection,
+                        database::current::write::CurrentSyncWriteCommands<&mut simple_backend_database::diesel_db::DieselConnection>,
                     ) -> std::result::Result<
                         R,
-                        database::TransactionError<
+                        error_stack::Report<
                             simple_backend_database::diesel_db::DieselDatabaseError,
                         >,
                     > + Send
@@ -373,8 +373,8 @@ impl<'a> WriteCommands<'a> {
     #[track_caller]
     pub async fn db_transaction<
         T: FnOnce(
-                &mut simple_backend_database::diesel_db::DieselConnection,
-            ) -> std::result::Result<R, TransactionError<DieselDatabaseError>>
+                database::current::write::CurrentSyncWriteCommands<&mut simple_backend_database::diesel_db::DieselConnection>,
+            ) -> std::result::Result<R, error_stack::Report<DieselDatabaseError>>
             + Send
             + 'static,
         R: Send + 'static,
@@ -392,7 +392,10 @@ impl<'a> WriteCommands<'a> {
             .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
-        conn.interact(move |conn| CurrentSyncWriteCommands::new(conn).transaction(cmd))
+        conn.interact(move |conn| CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
+            cmd(CurrentSyncWriteCommands::new(conn))
+                .map_err(|err| err.into())
+        }))
             .await
             .into_error_string(DieselDatabaseError::Execute)
             .change_context(DataError::Diesel)?

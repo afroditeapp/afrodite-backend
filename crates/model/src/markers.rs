@@ -72,6 +72,7 @@ enable_logging!(
     ImageSlot,
     ModerationId,
     ModerationQueueNumber,
+    NextQueueNumberType,
 );
 
 disable_logging!(

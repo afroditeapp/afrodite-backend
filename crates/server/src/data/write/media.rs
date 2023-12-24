@@ -13,7 +13,7 @@ impl WriteCommandsMedia<'_> {
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DataError> {
-        self.db_write(move |mut cmds| {
+        self.db_transaction(move |mut cmds| {
             cmds.media()
                 .create_new_moderation_request(account_id, request)
         })
@@ -58,8 +58,8 @@ impl WriteCommandsMedia<'_> {
             return Err(DataError::ContentSlotNotEmpty.report());
         }
 
-        self.db_transaction(move |conn| {
-            CurrentSyncWriteMedia::insert_content_id_to_slot(conn, id, content_id, slot)?;
+        self.db_transaction(move |mut cmds| {
+            cmds.media().insert_content_id_to_slot(id, content_id, slot)?;
 
             // Move image from tmp to image dir
             tmp_img

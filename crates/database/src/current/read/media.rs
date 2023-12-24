@@ -6,7 +6,7 @@ use model::{
     AccountId, AccountIdInternal, ContentId, ContentIdInternal, ContentState,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, ImageSlot, MediaContentInternal,
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
-    ModerationRequestId, ModerationRequestInternal, ModerationRequestRaw, ModerationRequestState,
+    ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -20,13 +20,13 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         request_creator: AccountIdInternal,
     ) -> Result<Option<ModerationRequestInternal>, DieselDatabaseError> {
         let conn = self.conn();
-        let request: ModerationRequestRaw = {
+        let request: MediaModerationRequestRaw = {
             use crate::schema::media_moderation_request::dsl::*;
 
-            let request: Option<ModerationRequestRaw> = media_moderation_request
+            let request: Option<MediaModerationRequestRaw> = media_moderation_request
                 .filter(account_id.eq(request_creator.as_db_id()))
-                .select(ModerationRequestRaw::as_select())
-                .first::<ModerationRequestRaw>(conn)
+                .select(MediaModerationRequestRaw::as_select())
+                .first::<MediaModerationRequestRaw>(conn)
                 .optional()
                 .into_db_error(DieselDatabaseError::Execute, request_creator)?;
 
@@ -43,8 +43,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
             .load(conn)
             .into_db_error(DieselDatabaseError::Execute, (request_creator, request.id))?;
 
-        let (state, data) = match moderations.first() {
-            None => (ModerationRequestState::Waiting, &request.json_text),
+        let state = match moderations.first() {
+            None => ModerationRequestState::Waiting,
             Some(first) => {
                 let accepted = moderations
                     .iter()
@@ -54,19 +54,16 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
                     .find(|r| r.state_number == ModerationRequestState::Denied as i64);
 
                 if let Some(accepted) = accepted {
-                    (ModerationRequestState::Accepted, &accepted.json_text)
+                    ModerationRequestState::Accepted
                 } else if let Some(denied) = denied {
-                    (ModerationRequestState::Denied, &denied.json_text)
+                    ModerationRequestState::Denied
                 } else {
-                    (ModerationRequestState::InProgress, &first.json_text)
+                    ModerationRequestState::InProgress
                 }
             }
         };
 
-        let data: ModerationRequestContent = serde_json::from_str(data).into_db_error(
-            DieselDatabaseError::SerdeDeserialize,
-            (request_creator, request.id),
-        )?;
+        let data: ModerationRequestContent = request.to_moderation_request_content();
 
         Ok(Some(ModerationRequestInternal::new(
             request.id,
@@ -223,7 +220,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
     pub fn get_moderation_request_content(
         &mut self,
         owner_id: ModerationRequestId,
-    ) -> Result<(ModerationRequestContent, ModerationQueueNumber, AccountId), DieselDatabaseError>
+    ) -> Result<(MediaModerationRequestRaw, ModerationQueueNumber, AccountId), DieselDatabaseError>
     {
         let (request, account_id) = {
             use crate::schema::{
@@ -234,17 +231,15 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
                 .inner_join(account_id::table)
                 .filter(id.eq(owner_id.request_row_id))
                 .select((
-                    ModerationRequestRaw::as_select(),
+                    MediaModerationRequestRaw::as_select(),
                     AccountIdInternal::as_select(),
                 ))
                 .first(self.conn())
                 .into_db_error(DieselDatabaseError::Execute, owner_id)?
         };
-        let data: ModerationRequestContent = serde_json::from_str(&request.json_text)
-            .change_context(DieselDatabaseError::SerdeDeserialize)?;
 
         Ok((
-            data,
+            request.clone(),
             ModerationQueueNumber(request.queue_number),
             account_id.uuid,
         ))

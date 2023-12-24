@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, MediaModerationRaw, Moderation, ModerationId, ModerationRequestContent,
-    ModerationRequestId, ModerationRequestRaw, ModerationRequestState,
+    ModerationRequestId, MediaModerationRequestRaw, ModerationRequestState,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -17,7 +17,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
         let _account_row_id = moderator_id.row_id();
         let state_in_progress = ModerationRequestState::InProgress as i64;
-        let data: Vec<(MediaModerationRaw, ModerationRequestRaw, AccountIdInternal)> = {
+        let data: Vec<(MediaModerationRaw, MediaModerationRequestRaw, AccountIdInternal)> = {
             use crate::schema::{
                 account_id, media_moderation, media_moderation::dsl::*, media_moderation_request,
             };
@@ -28,7 +28,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
                 .filter(state_number.eq(state_in_progress))
                 .select((
                     MediaModerationRaw::as_select(),
-                    ModerationRequestRaw::as_select(),
+                    MediaModerationRequestRaw::as_select(),
                     AccountIdInternal::as_select(),
                 ))
                 .load(self.conn())
@@ -37,16 +37,13 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
 
         let mut new_data = vec![];
         for (moderation, moderation_request, account) in data.into_iter() {
-            let data: ModerationRequestContent = serde_json::from_str(&moderation.json_text)
-                .change_context(DieselDatabaseError::SerdeDeserialize)?;
-
             let moderation = Moderation {
                 request_creator_id: account.as_id(),
                 moderator_id: moderator_id.as_id(),
                 request_id: ModerationRequestId {
                     request_row_id: moderation_request.id,
                 },
-                content: data,
+                content: moderation_request.to_moderation_request_content(),
             };
             new_data.push(moderation);
         }
@@ -56,26 +53,39 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
 
     pub fn get_next_active_moderation_request(
         &mut self,
-        sub_queue_value: i64,
+        initial_moderation: bool,
         moderator_id_for_logging: AccountIdInternal,
     ) -> Result<Option<ModerationRequestId>, DieselDatabaseError> {
-        let data: Option<ModerationRequestRaw> = {
+        let data: Option<MediaModerationRequestRaw> = {
             use crate::schema::{
-                media_moderation_queue_number, media_moderation_queue_number::dsl::*,
+                queue_entry,
                 media_moderation_request,
             };
 
-            media_moderation_queue_number::table
+            let first = queue_entry::table
                 .inner_join(
                     media_moderation_request::table
-                        .on(queue_number.eq(media_moderation_request::queue_number)),
+                        .on(
+                            queue_entry::queue_number.eq(media_moderation_request::queue_number).and(
+                                queue_entry::account_id.eq(media_moderation_request::account_id)
+                            ))
                 )
-                .filter(sub_queue.eq(sub_queue_value))
-                .select(ModerationRequestRaw::as_select())
-                .order_by(queue_number.asc())
-                .first(self.conn())
-                .optional()
-                .into_db_error(DieselDatabaseError::Execute, moderator_id_for_logging)?
+                .select(MediaModerationRequestRaw::as_select())
+                .order_by(media_moderation_request::queue_number.asc());
+
+            if initial_moderation {
+                first
+                    .filter(media_moderation_request::initial_moderation_security_image.is_not_null())
+                    .first(self.conn())
+                    .optional()
+                    .into_db_error(DieselDatabaseError::Execute, moderator_id_for_logging)?
+            } else {
+                first
+                    .filter(media_moderation_request::initial_moderation_security_image.is_null())
+                    .first(self.conn())
+                    .optional()
+                    .into_db_error(DieselDatabaseError::Execute, moderator_id_for_logging)?
+            }
         };
 
         let request_row_id = match data.map(|r| r.id) {
@@ -90,20 +100,22 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
         &mut self,
         moderation: ModerationId,
     ) -> Result<ModerationRequestContent, DieselDatabaseError> {
-        let request: MediaModerationRaw = {
-            use crate::schema::media_moderation::dsl::*;
+        let (moderation, request) = {
+            use crate::schema::media_moderation;
+            use crate::schema::media_moderation_request;
 
-            media_moderation
-                .filter(account_id.eq(moderation.account_id.as_db_id()))
-                .filter(moderation_request_id.eq(moderation.request_id.request_row_id))
-                .select(MediaModerationRaw::as_select())
+            media_moderation::table
+                .inner_join(media_moderation_request::table)
+                .filter(media_moderation::account_id.eq(moderation.account_id.as_db_id()))
+                .filter(media_moderation::moderation_request_id.eq(moderation.request_id.request_row_id))
+                .select((
+                    MediaModerationRaw::as_select(),
+                    MediaModerationRequestRaw::as_select()
+                ))
                 .first(self.conn())
                 .into_db_error(DieselDatabaseError::Execute, moderation)?
         };
 
-        let data: ModerationRequestContent = serde_json::from_str(&request.json_text)
-            .change_context(DieselDatabaseError::SerdeDeserialize)?;
-
-        Ok(data)
+        Ok(request.to_moderation_request_content())
     }
 }

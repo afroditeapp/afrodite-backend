@@ -1,9 +1,10 @@
 use diesel::{prelude::*, Associations};
 use serde::{Deserialize, Serialize};
+use simple_backend_model::diesel_string_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    macros::diesel_string_wrapper, AccessToken, AccountIdDb, AccountIdInternal, RefreshToken,
+    AccessToken, AccountIdDb, AccountIdInternal, RefreshToken,
 };
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]

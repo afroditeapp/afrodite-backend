@@ -30,7 +30,6 @@ pub struct MediaModerationRaw {
     pub account_id: AccountIdDb,
     pub moderation_request_id: ModerationRequestIdDb,
     pub state_number: i64,
-    pub json_text: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]

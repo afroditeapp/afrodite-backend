@@ -4,11 +4,11 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
+use simple_backend_model::{diesel_uuid_wrapper, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
-    macros::{diesel_i64_wrapper, diesel_uuid_wrapper},
     AccountId, AccountIdDb,
 };
 
@@ -43,57 +43,79 @@ pub enum ImageSlot {
     Image1 = 0,
     Image2 = 1,
     Image3 = 2,
+    Image4 = 3,
+    Image5 = 4,
+    Image6 = 5,
+    Image7 = 6,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequestContent {
-    /// Use slot 1 image as camera image.
-    camera_image: bool,
-    /// Include slot 1 image in moderation request.
-    image1: ContentId,
-    /// Include slot 2 image in moderation request.
-    image2: Option<ContentId>,
-    /// Include slot 3 image in moderation request.
-    image3: Option<ContentId>,
+    pub initial_moderation_security_image: Option<ContentId>,
+    pub content1: ContentId,
+    pub content2: Option<ContentId>,
+    pub content3: Option<ContentId>,
+    pub content4: Option<ContentId>,
+    pub content5: Option<ContentId>,
+    pub content6: Option<ContentId>,
 }
 
 impl ModerationRequestContent {
     pub fn content(&self) -> impl Iterator<Item = ContentId> {
-        [Some(self.image1), self.image2, self.image3]
+        [
+            self.initial_moderation_security_image,
+            Some(self.content1),
+            self.content2,
+            self.content3,
+            self.content4,
+            self.content5,
+            self.content6
+        ]
             .into_iter()
             .flatten()
     }
 
-    pub fn slot_1_is_security_image(&self) -> bool {
-        self.camera_image
-    }
+    // pub fn slot_1_is_security_image(&self) -> bool {
+    //     self.camera_image
+    // }
 
-    pub fn slot_1(&self) -> ContentId {
-        self.image1
-    }
+    // pub fn slot_1(&self) -> ContentId {
+    //     self.image1
+    // }
 
-    pub fn slot_2(&self) -> Option<ContentId> {
-        self.image2
-    }
-}
-
-#[derive(Debug, Clone, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::media_moderation_queue_number)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct QueueNumberRaw {
-    pub queue_number: ModerationQueueNumber,
-    pub account_id: AccountIdDb,
-    pub sub_queue: i64,
+    // pub fn slot_2(&self) -> Option<ContentId> {
+    //     self.image2
+    // }
 }
 
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_moderation_request)]
 #[diesel(check_for_backend(crate::Db))]
-pub struct ModerationRequestRaw {
+pub struct MediaModerationRequestRaw {
     pub id: ModerationRequestIdDb,
     pub account_id: AccountIdDb,
     pub queue_number: i64,
-    pub json_text: String,
+    pub initial_moderation_security_image: Option<ContentId>,
+    pub content_id_1: ContentId,
+    pub content_id_2: Option<ContentId>,
+    pub content_id_3: Option<ContentId>,
+    pub content_id_4: Option<ContentId>,
+    pub content_id_5: Option<ContentId>,
+    pub content_id_6: Option<ContentId>,
+}
+
+impl MediaModerationRequestRaw {
+    pub fn to_moderation_request_content(&self) -> ModerationRequestContent {
+        ModerationRequestContent {
+            initial_moderation_security_image: self.initial_moderation_security_image,
+            content1: self.content_id_1,
+            content2: self.content_id_2,
+            content3: self.content_id_3,
+            content4: self.content_id_4,
+            content5: self.content_id_5,
+            content6: self.content_id_6,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -142,6 +164,7 @@ pub enum EnumParsingError {
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, ToSchema, PartialEq)]
 #[repr(i64)]
 pub enum ModerationRequestState {
+    /// Admin has not started progress on moderating.
     Waiting = 0,
     InProgress = 1,
     Accepted = 2,

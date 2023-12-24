@@ -3,10 +3,11 @@ use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use diesel::{deserialize::FromSql, prelude::*, serialize::ToSql, sql_types::Binary};
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
+use simple_backend_model::diesel_uuid_wrapper;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{macros::diesel_uuid_wrapper, AccountId, AccountIdDb};
+use crate::{AccountId, AccountIdDb};
 
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]

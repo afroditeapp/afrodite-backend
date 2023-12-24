@@ -16,7 +16,6 @@ pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
 
-mod macros;
 mod markers;
 pub mod schema;
 mod schema_sqlite_types;

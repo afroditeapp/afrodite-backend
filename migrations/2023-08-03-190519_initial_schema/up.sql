@@ -70,29 +70,27 @@ CREATE TABLE IF NOT EXISTS shared_state(
 );
 
 -- All next new queue numbers are stored here.
--- This table should contain only one row.
 CREATE TABLE IF NOT EXISTS next_queue_number(
-    -- Only ID 0 should exist.
-    id                          INTEGER PRIMARY KEY     NOT NULL,
     -- Queue type number: 0 = media moderation
-    media_moderation            INTEGER                 NOT NULL DEFAULT 0,
     -- Queue type number: 1 = initial media moderation
-    initial_media_moderation    INTEGER                 NOT NULL DEFAULT 0
+    queue_type_number       INTEGER PRIMARY KEY     NOT NULL,
+    -- Next unused queue number
+    next_number             INTEGER                 NOT NULL DEFAULT 0
 );
 
 -- Table for storing active queue entries.
 -- Only active queue entries are stored here.
 CREATE TABLE IF NOT EXISTS queue_entry(
-    id INTEGER PRIMARY KEY                         NOT NULL,
     -- Queue number from next_queue_number table.
     -- The number in that table is incremented when
     -- new queue entry is created.
-    queue_number   INTEGER                         NOT NULL,
+    queue_number      INTEGER                        NOT NULL,
     -- Queue entry type number. Check next_queue_number table for
     -- available queue type numbers.
-    queue_type_number     INTEGER                  NOT NULL,
+    queue_type_number INTEGER                        NOT NULL,
     -- Associate queue entry with account.
-    account_id   INTEGER                           NOT NULL,
+    account_id        INTEGER                        NOT NULL,
+    PRIMARY KEY (queue_number, queue_type_number),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -208,6 +206,8 @@ CREATE TABLE IF NOT EXISTS media_content(
     uuid             BLOB                NOT NULL   UNIQUE,
     account_id       INTEGER             NOT NULL,
     moderation_state INTEGER             NOT NULL,
+    -- Client captured this media
+    secure_capture    BOOLEAN             NOT NULL,
     -- Moderator sets this. 0 not set, 1 normal, 2 security
     content_type     INTEGER             NOT NULL   DEFAULT 0,
     slot_number      INTEGER             NOT NULL,
@@ -217,54 +217,37 @@ CREATE TABLE IF NOT EXISTS media_content(
             ON UPDATE CASCADE
 );
 
--- Table for crating moderation queue numbers using the
--- automatically incrementing queue_number column.
--- Only active queue numbers are stored here.
-CREATE TABLE IF NOT EXISTS media_moderation_queue_number(
-    queue_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    -- Associate queue number with account. Only one queue
-    -- number per account is allowed.
-    account_id   INTEGER                           NOT NULL UNIQUE,
-    -- Priority number for the queue number.
-    sub_queue    INTEGER                           NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
--- User made moderation request
+-- User made moderation request.
+-- If media moderation for one row exists, then prevent
+-- modifications to that row.
 CREATE TABLE IF NOT EXISTS media_moderation_request(
     id                  INTEGER PRIMARY KEY NOT NULL,
     -- Request owner Account ID. One request per account.
     account_id          INTEGER             NOT NULL  UNIQUE,
     -- Queue number which this media_moderation_request has.
     queue_number        INTEGER             NOT NULL,
-    json_text           TEXT                NOT NULL,
+    -- If this is set the moderation is the initial moderation
+    initial_moderation_security_image BLOB,
+    content_id_1        BLOB                NOT NULL,
+    content_id_2        BLOB,
+    content_id_3        BLOB,
+    content_id_4        BLOB,
+    content_id_5        BLOB,
+    content_id_6        BLOB,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
-    -- TODO: Disabled foregin key contraint for queue_number to make deletion
-    -- possible. Figure out could queue_number be deleted here or constraint SET
-    -- NULL? Or just use current version?
-    -- Update: modified this when added diesel support.
-    -- FOREIGN KEY (queue_number)
-    --    REFERENCES MediaModerationQueueNumber (queue_number)
-    --        ON DELETE SET NULL
-    --        ON UPDATE RESTRICT
 );
 
 -- Admin made moderation
 CREATE TABLE IF NOT EXISTS media_moderation(
     -- What admin account is moderating
-    account_id                INTEGER NOT NULL,
+    account_id              INTEGER NOT NULL,
     -- What request is in moderation
     moderation_request_id   INTEGER NOT NULL,
     -- State of the moderation
     state_number            INTEGER NOT NULL,
-    -- What was moderated
-    json_text               TEXT    NOT NULL,
     PRIMARY KEY (account_id, moderation_request_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

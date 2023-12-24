@@ -18,9 +18,7 @@ impl WriteCommandsAccount<'_> {
     ) -> Result<(), DataError> {
         let state_copy = shared_state.clone();
         let capabilities_copy = capabilities.clone();
-        self.db_transaction(move |cmds| {
-            let mut cmds = CurrentSyncWriteCommands::new(cmds);
-
+        self.db_transaction(move |mut cmds| {
             if let Some(state) = state_copy {
                 cmds.common().shared_state(id, state)?;
             }

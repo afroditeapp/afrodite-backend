@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use base64::Engine;
 use diesel::{
     prelude::*,
@@ -8,9 +10,9 @@ use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
 use utoipa::{IntoParams, ToSchema};
 
+use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, diesel_i64_try_from};
 use crate::{
-    macros::{diesel_i64_wrapper, diesel_uuid_wrapper},
-    AccountState, Capabilities, MessageNumber,
+    AccountState, Capabilities, MessageNumber, schema_sqlite_types::Integer,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
@@ -380,6 +382,47 @@ pub struct SharedStateInternal {
 pub struct SharedState {
     pub is_profile_public: bool,
     pub account_state: AccountState,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::next_queue_number)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct NextQueueNumbersRaw {
+    pub queue_type_number: NextQueueNumberType,
+    /// Next unused queue number
+    pub next_number: i64,
+}
+
+#[derive(Debug, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
+pub enum NextQueueNumberType {
+    MediaModeration = 0,
+    InitialMediaModeration = 1,
+}
+
+impl TryFrom<i64> for NextQueueNumberType {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let number_type = match value {
+            0 => Self::MediaModeration,
+            1 => Self::InitialMediaModeration,
+            value => return Err(format!("Unknown QueueNumberType value {}", value)),
+        };
+
+        Ok(number_type)
+    }
+}
+
+diesel_i64_try_from!(NextQueueNumberType);
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::queue_entry)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct QueueEntryRaw {
+    pub queue_number: i64,
+    pub queue_type_number: NextQueueNumberType,
+    pub account_id: AccountIdDb,
 }
 
 // #[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]

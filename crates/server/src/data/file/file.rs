@@ -27,6 +27,10 @@ impl GetStaticFileName for ImageSlot {
             Self::Image1 => "slot1.jpg",
             Self::Image2 => "slot2.jpg",
             Self::Image3 => "slot3.jpg",
+            Self::Image4 => "slot4.jpg",
+            Self::Image5 => "slot5.jpg",
+            Self::Image6 => "slot6.jpg",
+            Self::Image7 => "slot7.jpg",
         })
     }
 }

@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, AccountState, Capabilities, SharedState, SharedStateInternal};
+use model::{AccountIdInternal, AccountState, Capabilities, SharedState, SharedStateInternal, NextQueueNumbersRaw, NextQueueNumberType};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
@@ -41,5 +41,22 @@ impl<C: ConnectionProvider> CurrentSyncReadCommon<C> {
             .select(Capabilities::as_select())
             .first(self.conn())
             .into_db_error(DieselDatabaseError::Execute, id)
+    }
+
+    pub fn next_queue_number(
+        &mut self,
+        queue: NextQueueNumberType,
+    ) -> Result<i64, DieselDatabaseError> {
+        use crate::schema::next_queue_number::dsl::*;
+
+        let number = next_queue_number
+            .filter(queue_type_number.eq(queue))
+            .select(next_number)
+            .first(self.conn())
+            .optional()
+            .into_db_error(DieselDatabaseError::Execute, queue)?
+            .unwrap_or(0);
+
+        Ok(number)
     }
 }

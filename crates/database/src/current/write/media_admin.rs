@@ -3,30 +3,18 @@ use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, HandleModerationRequest,
     MediaContentType, Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
-    ModerationRequestState, PrimaryImage,
+    ModerationRequestState, PrimaryImage, NextQueueNumberType, schema::media_moderation_request::content_id_1,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 
 use super::{media::CurrentSyncWriteMedia, ConnectionProvider};
-use crate::{IntoDatabaseError, TransactionError};
+use crate::{IntoDatabaseError, TransactionError, current::write::CurrentSyncWriteCommands};
 
 define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
 
 pub struct DeletedSomething;
 
 impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
-    fn delete_queue_number(
-        &mut self,
-        number: ModerationQueueNumber,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::media_moderation_queue_number::dsl::*;
-
-        delete(media_moderation_queue_number.filter(queue_number.eq(number)))
-            .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, number)?;
-
-        Ok(())
-    }
 
     pub fn moderation_get_list_and_create_new_if_necessary(
         &mut self,
@@ -42,9 +30,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             return Ok(moderations);
         }
 
-        let mut cmds = self.cmds();
         for _ in moderations.len()..MAX_COUNT {
-            match cmds
+            match self.cmds()
                 .media_admin()
                 .create_moderation_from_next_request_in_queue(moderator_id)?
             {
@@ -60,13 +47,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         &mut self,
         moderator_id: AccountIdInternal,
     ) -> Result<Option<Moderation>, DieselDatabaseError> {
-        // TODO: Really support multiple sub queues after account premium mode
-        // is implemented.
-
         let id = self
             .read()
             .media_admin()
-            .get_next_active_moderation_request(0, moderator_id)?;
+            .get_next_active_moderation_request(true, moderator_id)?;
 
         match id {
             None => Ok(None),
@@ -85,10 +69,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         // TODO: Currently is possible that two moderators moderate the same
         // request. Should that be prevented?
 
-        let (content, queue_number, request_creator_id) = self
+        let (request_raw, queue_number, request_creator_id) = self
             .read()
             .media()
             .get_moderation_request_content(target_id)?;
+        let content = request_raw.to_moderation_request_content();
         let content_string =
             serde_json::to_string(&content).change_context(DieselDatabaseError::SerdeSerialize)?;
 
@@ -99,13 +84,17 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
                     moderation_request_id.eq(target_id.request_row_id),
                     account_id.eq(moderator_id.as_db_id()),
                     state_number.eq(ModerationRequestState::InProgress as i64),
-                    json_text.eq(content_string.clone()),
                 ))
                 .execute(self.cmds.conn())
                 .into_db_error(DieselDatabaseError::Execute, (target_id, moderator_id))?;
         }
 
-        self.delete_queue_number(queue_number)?;
+        let queue_type = if request_raw.initial_moderation_security_image.is_some() {
+            NextQueueNumberType::InitialMediaModeration
+        } else {
+            NextQueueNumberType::MediaModeration
+        };
+        self.cmds().common().delete_queue_entry(queue_number.0, queue_type)?;
 
         let moderation = Moderation {
             request_creator_id,
@@ -128,7 +117,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
     ) -> Result<(), DieselDatabaseError> {
-        //let conn = self.conn();
         let request = self
             .read()
             .media()
@@ -164,36 +152,42 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
 
         self.conn().transaction(|mut conn| {
             for c in content.content() {
+                let is_security = if let Some(content) = content.initial_moderation_security_image {
+                    content == c
+                } else {
+                    false
+                };
                 CurrentSyncWriteMediaAdmin::<C>::update_content_state(
                     &mut conn,
                     c,
                     new_content_state,
-                    content.slot_1_is_security_image() && content.slot_1() == c,
+                    is_security,
                 )?;
             }
 
-            if content.slot_1_is_security_image()
-                && state == ModerationRequestState::Accepted
-                && currently_selected_images.security_content_id.is_none()
-            {
-                CurrentSyncWriteMediaAdmin::<C>::update_current_security_image(
-                    &mut conn,
-                    moderation_request_owner,
-                    content.slot_1(),
-                )?;
+            if let Some(security_image) = content.initial_moderation_security_image {
+                if state == ModerationRequestState::Accepted
+                && currently_selected_images.security_content_id.is_none() {
+                    CurrentSyncWriteMediaAdmin::<C>::update_current_security_image(
+                        &mut conn,
+                        moderation_request_owner,
+                        security_image,
+                    )?;
 
-                let primary_image = PrimaryImage {
-                    content_id: content.slot_2(),
-                    grid_crop_size: 0.0,
-                    grid_crop_x: 0.0,
-                    grid_crop_y: 0.0,
-                };
+                    let primary_image = PrimaryImage {
+                        content_id: Some(content.content1),
+                        grid_crop_size: 0.0,
+                        grid_crop_x: 0.0,
+                        grid_crop_y: 0.0,
+                    };
 
-                CurrentSyncWriteMedia::<C>::update_current_account_media_with_primary_image(
-                    &mut conn,
-                    moderation_request_owner,
-                    primary_image,
-                )?;
+                    CurrentSyncWriteMedia::<C>::update_current_account_media_with_primary_image(
+                        &mut conn,
+                        moderation_request_owner,
+                        primary_image,
+                    )?;
+                }
+
             }
 
             let _state_number = state as i64;

@@ -40,7 +40,7 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
         .await?
         .ok_or(StatusCode::NOT_FOUND)?;
 
-    if request.content.slot_1_is_security_image() {
+    if request.content.initial_moderation_security_image.is_some() {
         Ok(())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)

@@ -300,7 +300,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
                 .ok_or(InternalApiError::MissingValue)
                 .with_info(account_id)?;
 
-            if request.content.slot_1_is_security_image() {
+            if request.content.initial_moderation_security_image.is_some() {
                 Ok(())
             } else {
                 Err(InternalApiError::MissingValue).with_info(account_id)

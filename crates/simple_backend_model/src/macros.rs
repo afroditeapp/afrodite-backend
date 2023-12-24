@@ -1,3 +1,4 @@
+
 /// Type must have new() and to_uuid() methods. Also diesel::FromSqlRow and
 /// diesel::AsExpression derives are needed.
 ///
@@ -24,6 +25,8 @@
 /// diesel_uuid_wrapper!(UuidWrapper);
 ///
 /// ```
+///
+#[macro_export]
 macro_rules! diesel_uuid_wrapper {
     ($name:ty) => {
         impl<DB: diesel::backend::Backend>
@@ -85,6 +88,7 @@ pub(crate) use diesel_uuid_wrapper;
 /// diesel_string_wrapper!(StringWrapper);
 ///
 /// ```
+#[macro_export]
 macro_rules! diesel_string_wrapper {
     ($name:ty) => {
         impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::Text, DB>
@@ -115,6 +119,8 @@ macro_rules! diesel_string_wrapper {
     };
 }
 
+pub(crate) use diesel_string_wrapper;
+
 /// Type must have new() and as_i64() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
@@ -141,6 +147,7 @@ macro_rules! diesel_string_wrapper {
 /// diesel_i64_wrapper!(NumberWrapper);
 ///
 /// ```
+#[macro_export]
 macro_rules! diesel_i64_wrapper {
     ($name:ty) => {
         impl<DB: diesel::backend::Backend>
@@ -172,3 +179,72 @@ macro_rules! diesel_i64_wrapper {
 }
 
 pub(crate) use diesel_i64_wrapper;
+
+
+/// Enum type must have TryFrom implementation.
+/// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
+///
+/// ```
+/// #[derive(
+///     diesel::FromSqlRow,
+///     diesel::AsExpression,
+/// )]
+/// #[diesel(sql_type = Integer)]
+/// pub enum NumberEnum {
+///     Value = 1,
+/// }
+///
+/// impl TryFrom<i64> for NumberEnum {
+///     type Error = String;
+///
+///     fn try_from(value: i64) -> Result<Self, Self::Error> {
+///         let number_type = match value {
+///             0 => Self::Value,
+///             value => return Err(format!("Unknown value {}", value)),
+///         };
+///
+///         Ok(number_type)
+///     }
+/// }
+///
+/// diesel_i64_try_from!(NumberEnum);
+///
+/// ```
+#[macro_export]
+macro_rules! diesel_i64_try_from {
+    ($name:ty) => {
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB> for $name
+        where
+            i64: diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB>,
+        {
+            fn from_sql(
+                value: <DB as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let value = i64::from_sql(value)?;
+                TryInto::<$name>::try_into(value)
+                    .map_err(|e| e.into())
+            }
+        }
+
+        // TODO: Support other databases?
+        // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
+
+        impl diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>
+            for NextQueueNumberType
+        where
+            i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+            ) -> diesel::serialize::Result {
+                let value = *self as i64;
+                out.set_value(value);
+                Ok(diesel::serialize::IsNull::No)
+            }
+        }
+    };
+}
+
+pub(crate) use diesel_i64_try_from;

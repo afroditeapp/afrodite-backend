@@ -10,8 +10,8 @@ impl WriteCommandsMediaAdmin<'_> {
         self,
         account_id: AccountIdInternal,
     ) -> Result<Vec<Moderation>, DataError> {
-        self.db_write(move |cmds| {
-            cmds.into_media_admin()
+        self.db_transaction(move |mut cmds| {
+            cmds.media_admin()
                 .moderation_get_list_and_create_new_if_necessary(account_id)
         })
         .await

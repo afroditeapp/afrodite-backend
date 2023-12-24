@@ -1,8 +1,9 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
+use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
-use crate::{macros::diesel_i64_wrapper, AccountId, AccountIdDb, AccountIdInternal};
+use crate::{AccountId, AccountIdDb, AccountIdInternal};
 
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionStateError {
