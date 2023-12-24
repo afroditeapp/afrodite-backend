@@ -88,10 +88,25 @@ diesel::table! {
     current_account_media (account_id) {
         account_id -> Integer,
         security_content_id -> Nullable<Integer>,
-        profile_content_id -> Nullable<Integer>,
-        grid_crop_size -> Double,
-        grid_crop_x -> Double,
-        grid_crop_y -> Double,
+        profile_content_id_1 -> Nullable<Integer>,
+        profile_content_id_2 -> Nullable<Integer>,
+        profile_content_id_3 -> Nullable<Integer>,
+        profile_content_id_4 -> Nullable<Integer>,
+        profile_content_id_5 -> Nullable<Integer>,
+        profile_content_id_6 -> Nullable<Integer>,
+        grid_crop_size -> Nullable<Double>,
+        grid_crop_x -> Nullable<Double>,
+        grid_crop_y -> Nullable<Double>,
+        pending_security_content_id -> Nullable<Integer>,
+        pending_profile_content_id_1 -> Nullable<Integer>,
+        pending_profile_content_id_2 -> Nullable<Integer>,
+        pending_profile_content_id_3 -> Nullable<Integer>,
+        pending_profile_content_id_4 -> Nullable<Integer>,
+        pending_profile_content_id_5 -> Nullable<Integer>,
+        pending_profile_content_id_6 -> Nullable<Integer>,
+        pending_grid_crop_size -> Nullable<Double>,
+        pending_grid_crop_x -> Nullable<Double>,
+        pending_grid_crop_y -> Nullable<Double>,
     }
 }
 
@@ -158,9 +173,9 @@ diesel::table! {
         id -> Integer,
         uuid -> Binary,
         account_id -> Integer,
-        moderation_state -> Integer,
+        content_state -> Integer,
         secure_capture -> Bool,
-        content_type -> Integer,
+        contains_face -> Bool,
         slot_number -> Integer,
     }
 }

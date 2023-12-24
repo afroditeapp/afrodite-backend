@@ -4,12 +4,12 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_uuid_wrapper, diesel_i64_wrapper};
+use simple_backend_model::{diesel_uuid_wrapper, diesel_i64_wrapper, diesel_i64_try_from};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
-    AccountId, AccountIdDb,
+    AccountId, AccountIdDb, schema_sqlite_types::Integer,
 };
 
 /// Y coordinate of slippy map tile.
@@ -195,30 +195,34 @@ impl TryFrom<i64> for ModerationRequestState {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ContentState {
     /// If user uploads new content to slot the current will be removed.
     InSlot = 0,
     /// Content is in moderation. User can not remove the content.
     InModeration = 1,
-    /// Content is moderated as accepted. User can not remove the content.
+    /// Content is moderated as accepted. User can not remove the content until
+    /// specific time elapses.
     ModeratedAsAccepted = 2,
     /// Content is moderated as denied. Making new moderation request removes
     /// the content.
     ModeratedAsDenied = 3,
 }
 
+diesel_i64_try_from!(ContentState);
+
 /// Admin sets this when moderating the image.
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq)]
-#[repr(i64)]
-pub enum MediaContentType {
-    NotSet = 0,
-    /// Normal image.
-    Normal = 1,
-    /// Security image.
-    Security = 2,
-}
+// #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq)]
+// #[repr(i64)]
+// pub enum MediaContentType {
+//     NotSet = 0,
+//     /// Normal image.
+//     Normal = 1,
+//     /// Security image.
+//     Security = 2,
+// }
 
 // TODO: Remove content with state ModeratedAsDenied when new moderation request
 // is created. Get content id from Moderation table.
@@ -238,19 +242,19 @@ impl TryFrom<i64> for ContentState {
     }
 }
 
-impl TryFrom<i64> for MediaContentType {
-    type Error = EnumParsingError;
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value = match value {
-            0 => Self::NotSet,
-            1 => Self::Normal,
-            2 => Self::Security,
-            _ => return Err(EnumParsingError::ParsingError(value)),
-        };
+// impl TryFrom<i64> for MediaContentType {
+//     type Error = EnumParsingError;
+//     fn try_from(value: i64) -> Result<Self, Self::Error> {
+//         let value = match value {
+//             0 => Self::NotSet,
+//             1 => Self::Normal,
+//             2 => Self::Security,
+//             _ => return Err(EnumParsingError::ParsingError(value)),
+//         };
 
-        Ok(value)
-    }
-}
+//         Ok(value)
+//     }
+// }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotId {
@@ -356,8 +360,9 @@ pub struct MediaContentRaw {
     pub id: ContentIdDb,
     pub uuid: ContentId,
     pub account_id: AccountIdDb,
-    pub moderation_state: i64,
-    pub content_type: i64,
+    pub content_state: ContentState,
+    pub secure_capture: bool,
+    pub contains_face: bool,
     pub slot_number: i64,
 }
 
@@ -374,7 +379,8 @@ impl MediaContentRaw {
 pub struct MediaContentInternal {
     pub content_id: ContentIdInternal,
     pub state: ContentState,
-    pub content_type: MediaContentType,
+    pub secure_capture: bool,
+    pub contains_face: bool,
     pub slot_number: i64,
 }
 
@@ -396,10 +402,25 @@ impl ContentIdInternal {
 pub struct CurrentAccountMediaRaw {
     pub account_id: AccountIdDb,
     pub security_content_id: Option<ContentIdDb>,
-    pub profile_content_id: Option<ContentIdDb>,
-    pub grid_crop_size: f64,
-    pub grid_crop_x: f64,
-    pub grid_crop_y: f64,
+    pub profile_content_id_1: Option<ContentIdDb>,
+    pub profile_content_id_2: Option<ContentIdDb>,
+    pub profile_content_id_3: Option<ContentIdDb>,
+    pub profile_content_id_4: Option<ContentIdDb>,
+    pub profile_content_id_5: Option<ContentIdDb>,
+    pub profile_content_id_6: Option<ContentIdDb>,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
+    pub pending_security_content_id: Option<ContentIdDb>,
+    pub pending_profile_content_id_1: Option<ContentIdDb>,
+    pub pending_profile_content_id_2: Option<ContentIdDb>,
+    pub pending_profile_content_id_3: Option<ContentIdDb>,
+    pub pending_profile_content_id_4: Option<ContentIdDb>,
+    pub pending_profile_content_id_5: Option<ContentIdDb>,
+    pub pending_profile_content_id_6: Option<ContentIdDb>,
+    pub pending_grid_crop_size: Option<f64>,
+    pub pending_grid_crop_x: Option<f64>,
+    pub pending_grid_crop_y: Option<f64>,
 }
 
 #[derive(Debug, Clone)]
@@ -409,6 +430,12 @@ pub struct CurrentAccountMediaInternal {
     pub grid_crop_size: f64,
     pub grid_crop_x: f64,
     pub grid_crop_y: f64,
+}
+
+impl CurrentAccountMediaInternal {
+    pub const GRID_CROP_SIZE_DEFAULT: f64 = 1.0;
+    pub const GRID_CROP_X_DEFAULT: f64 = 0.0;
+    pub const GRID_CROP_Y_DEFAULT: f64 = 0.0;
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]

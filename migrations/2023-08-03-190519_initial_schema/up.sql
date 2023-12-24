@@ -173,19 +173,36 @@ CREATE TABLE IF NOT EXISTS favorite_profile(
 
 ---------- Tables for server component media ----------
 
--- Currently selected images for account
+-- Currently selected images for account.
+-- Contains profile editing related pending profile image info.
 CREATE TABLE IF NOT EXISTS current_account_media(
     account_id           INTEGER PRIMARY KEY NOT NULL,
     security_content_id  INTEGER,
-    profile_content_id   INTEGER,
-    -- Image's max square size multipler
-    grid_crop_size       DOUBLE              NOT NULL DEFAULT 1.0,
+    profile_content_id_1 INTEGER,
+    profile_content_id_2 INTEGER,
+    profile_content_id_3 INTEGER,
+    profile_content_id_4 INTEGER,
+    profile_content_id_5 INTEGER,
+    profile_content_id_6 INTEGER,
+    -- Image's max square size multipler.
+    -- Value 1.0 is the max size and the size of the original image.
+    grid_crop_size       DOUBLE,
     -- X coordinate for square top left corner.
     -- Counted from top left corner of the original image.
-    grid_crop_x          DOUBLE              NOT NULL DEFAULT 0.0,
+    grid_crop_x          DOUBLE,
     -- Y coordinate for square top left corner.
     -- Counted from top left corner of the original image.
-    grid_crop_y          DOUBLE              NOT NULL DEFAULT 0.0,
+    grid_crop_y          DOUBLE,
+    pending_security_content_id  INTEGER,
+    pending_profile_content_id_1 INTEGER,
+    pending_profile_content_id_2 INTEGER,
+    pending_profile_content_id_3 INTEGER,
+    pending_profile_content_id_4 INTEGER,
+    pending_profile_content_id_5 INTEGER,
+    pending_profile_content_id_6 INTEGER,
+    pending_grid_crop_size       DOUBLE,
+    pending_grid_crop_x          DOUBLE,
+    pending_grid_crop_y          DOUBLE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -194,7 +211,55 @@ CREATE TABLE IF NOT EXISTS current_account_media(
         REFERENCES media_content (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE,
-    FOREIGN KEY (profile_content_id)
+    FOREIGN KEY (profile_content_id_1)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_content_id_2)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_content_id_3)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_content_id_4)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_content_id_5)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_content_id_6)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (pending_security_content_id)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (pending_profile_content_id_1)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (pending_profile_content_id_2)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (pending_profile_content_id_3)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (pending_profile_content_id_4)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (pending_profile_content_id_5)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (pending_profile_content_id_6)
         REFERENCES media_content (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE
@@ -205,11 +270,17 @@ CREATE TABLE IF NOT EXISTS media_content(
     id               INTEGER PRIMARY KEY NOT NULL,
     uuid             BLOB                NOT NULL   UNIQUE,
     account_id       INTEGER             NOT NULL,
-    moderation_state INTEGER             NOT NULL,
+    -- InSlot = 0, If user uploads new content to slot the current will be removed.
+    -- InModeration = 1, Content is in moderation. User can not remove the content.
+    -- InModeration = 2, Content is moderated as accepted. User can not remove the content until
+    --                   specific time elapses.
+    -- ModeratedAsDenied = 3, Content is moderated as denied. Making new moderation request removes
+    --                        the content.
+    content_state    INTEGER             NOT NULL,
     -- Client captured this media
-    secure_capture    BOOLEAN             NOT NULL,
-    -- Moderator sets this. 0 not set, 1 normal, 2 security
-    content_type     INTEGER             NOT NULL   DEFAULT 0,
+    secure_capture   BOOLEAN             NOT NULL,
+    contains_face    BOOLEAN             NOT NULL,
+    -- Numbers from 0 to 6.
     slot_number      INTEGER             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

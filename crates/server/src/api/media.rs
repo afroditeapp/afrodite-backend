@@ -5,7 +5,7 @@ use axum::{
 use headers::ContentType;
 use model::{
     AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ImageSlot, MapTileX, MapTileY,
-    MapTileZ, MediaContentType, ModerationRequest, ModerationRequestContent, NormalImages,
+    MapTileZ, ModerationRequest, ModerationRequestContent, NormalImages,
     PrimaryImage, SlotId,
 };
 use simple_backend::app::GetTileMap;
@@ -160,7 +160,7 @@ pub async fn get_all_normal_images<S: ReadData + GetAccounts>(
     let data = internal_current_media
         .into_iter()
         .filter_map(|m| {
-            if m.content_type == MediaContentType::Normal {
+            if !m.secure_capture {
                 Some(m.content_id.as_content_id())
             } else {
                 None

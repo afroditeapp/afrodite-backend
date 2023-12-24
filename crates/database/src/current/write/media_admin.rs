@@ -2,7 +2,7 @@ use diesel::{delete, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, HandleModerationRequest,
-    MediaContentType, Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
+    Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
     ModerationRequestState, PrimaryImage, NextQueueNumberType, schema::media_moderation_request::content_id_1,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
@@ -150,66 +150,59 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             ModerationRequestState::Waiting => ContentState::InSlot,
         };
 
-        self.conn().transaction(|mut conn| {
-            for c in content.content() {
-                let is_security = if let Some(content) = content.initial_moderation_security_image {
-                    content == c
-                } else {
-                    false
+        for c in content.content() {
+            let is_security = if let Some(content) = content.initial_moderation_security_image {
+                content == c
+            } else {
+                false
+            };
+            self.update_content_state(
+                c,
+                new_content_state,
+                is_security,
+            )?;
+        }
+
+        if let Some(security_image) = content.initial_moderation_security_image {
+            if state == ModerationRequestState::Accepted
+            && currently_selected_images.security_content_id.is_none() {
+                self.update_current_security_image(
+                    moderation_request_owner,
+                    security_image,
+                )?;
+
+                let primary_image = PrimaryImage {
+                    content_id: Some(content.content1),
+                    grid_crop_size: 0.0,
+                    grid_crop_x: 0.0,
+                    grid_crop_y: 0.0,
                 };
-                CurrentSyncWriteMediaAdmin::<C>::update_content_state(
-                    &mut conn,
-                    c,
-                    new_content_state,
-                    is_security,
+
+                self.cmds().media().update_current_account_media_with_primary_image(
+                    moderation_request_owner,
+                    primary_image,
                 )?;
             }
 
-            if let Some(security_image) = content.initial_moderation_security_image {
-                if state == ModerationRequestState::Accepted
-                && currently_selected_images.security_content_id.is_none() {
-                    CurrentSyncWriteMediaAdmin::<C>::update_current_security_image(
-                        &mut conn,
-                        moderation_request_owner,
-                        security_image,
-                    )?;
+        }
 
-                    let primary_image = PrimaryImage {
-                        content_id: Some(content.content1),
-                        grid_crop_size: 0.0,
-                        grid_crop_x: 0.0,
-                        grid_crop_y: 0.0,
-                    };
+        let _state_number = state as i64;
 
-                    CurrentSyncWriteMedia::<C>::update_current_account_media_with_primary_image(
-                        &mut conn,
-                        moderation_request_owner,
-                        primary_image,
-                    )?;
-                }
-
-            }
-
-            let _state_number = state as i64;
-
-            {
-                use model::schema::media_moderation::dsl::*;
-                update(media_moderation)
-                    .filter(account_id.eq(moderation_id.account_id.as_db_id()))
-                    .filter(moderation_request_id.eq(moderation_id.request_id.request_row_id))
-                    .set(state_number.eq(state as i64))
-                    .execute(conn)
-                    .into_transaction_error(DieselDatabaseError::Execute, ())?;
-            }
-
-            Ok::<_, TransactionError<_>>(())
-        })?;
+        {
+            use model::schema::media_moderation::dsl::*;
+            update(media_moderation)
+                .filter(account_id.eq(moderation_id.account_id.as_db_id()))
+                .filter(moderation_request_id.eq(moderation_id.request_id.request_row_id))
+                .set(state_number.eq(state as i64))
+                .execute(self.conn())
+                .into_transaction_error(DieselDatabaseError::Execute, ())?;
+        }
 
         Ok(())
     }
 
     fn update_current_security_image(
-        conn: &mut DieselConnection,
+        &mut self,
         moderation_request_owner: AccountIdInternal,
         image: ContentId,
     ) -> Result<(), DieselDatabaseError> {
@@ -218,7 +211,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         let content_id = media_content::table
             .filter(media_content::uuid.eq(image))
             .select(media_content::id)
-            .first::<ContentIdDb>(conn)
+            .first::<ContentIdDb>(self.conn())
             .into_db_error(
                 DieselDatabaseError::Execute,
                 (moderation_request_owner, image),
@@ -226,7 +219,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
 
         update(current_account_media.find(moderation_request_owner.as_db_id()))
             .set((security_content_id.eq(content_id),))
-            .execute(conn)
+            .execute(self.conn())
             .into_db_error(
                 DieselDatabaseError::Execute,
                 (moderation_request_owner, image),
@@ -274,26 +267,18 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
     // }
 
     fn update_content_state(
-        transaction_conn: &mut DieselConnection,
+        &mut self,
         content_id: ContentId,
         new_state: ContentState,
         is_security: bool,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
-        let state = new_state as i64;
-        let content_type_value = if is_security {
-            MediaContentType::Security as i64
-        } else {
-            MediaContentType::Normal as i64
-        };
-
         update(media_content.filter(uuid.eq(content_id)))
             .set((
-                moderation_state.eq(state),
-                content_type.eq(content_type_value),
+                content_state.eq(new_state),
             ))
-            .execute(transaction_conn)
+            .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, (content_id, new_state))?;
 
         Ok(())

@@ -102,7 +102,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
             None
         };
 
-        let profile = if let Some(content_id) = current_media.profile_content_id {
+        let profile = if let Some(content_id) = current_media.profile_content_id_1 {
             use crate::schema::media_content::dsl::*;
 
             let content = media_content
@@ -119,9 +119,12 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         Ok(CurrentAccountMediaInternal {
             security_content_id: security,
             profile_content_id: profile,
-            grid_crop_size: current_media.grid_crop_size,
-            grid_crop_x: current_media.grid_crop_x,
-            grid_crop_y: current_media.grid_crop_y,
+            grid_crop_size: current_media.grid_crop_size
+                .unwrap_or(CurrentAccountMediaInternal::GRID_CROP_SIZE_DEFAULT),
+            grid_crop_x: current_media.grid_crop_x
+                .unwrap_or(CurrentAccountMediaInternal::GRID_CROP_X_DEFAULT),
+            grid_crop_y: current_media.grid_crop_y
+                .unwrap_or(CurrentAccountMediaInternal::GRID_CROP_Y_DEFAULT),
         })
     }
 
@@ -141,19 +144,17 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
 
         let content = data
             .into_iter()
-            .filter_map(|r| {
-                let state = r.moderation_state.try_into().ok()?;
-                let content_type = r.content_type.try_into().ok()?;
-
-                Some(MediaContentInternal {
+            .map(|r| {
+                MediaContentInternal {
                     content_id: ContentIdInternal {
                         content_id: r.uuid,
                         content_row_id: r.id,
                     },
-                    state,
-                    content_type,
+                    state: r.content_state,
                     slot_number: r.slot_number,
-                })
+                    secure_capture: r.secure_capture,
+                    contains_face: r.contains_face,
+                }
             })
             .collect();
 
@@ -173,7 +174,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
 
             media_content
                 .filter(account_id.eq(slot_owner.as_db_id()))
-                .filter(moderation_state.eq(required_state))
+                .filter(content_state.eq(required_state))
                 .filter(slot_number.eq(required_slot))
                 .select(MediaContentRaw::as_select())
                 .first(self.conn())
@@ -201,7 +202,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
 
             media_content
                 .filter(account_id.eq(content_owner.as_db_id()))
-                .filter(moderation_state.eq(required_state))
+                .filter(content_state.eq(required_state))
                 .select(MediaContentRaw::as_select())
                 .load(self.conn())
                 .into_db_error(DieselDatabaseError::Execute, content_owner)?

@@ -29,16 +29,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         Ok(())
     }
 
-    pub fn primary_image(
-        &mut self,
-        id: AccountIdInternal,
-        primary_image: PrimaryImage,
-    ) -> Result<(), DieselDatabaseError> {
-        Self::update_current_account_media_with_primary_image(self.conn(), id, primary_image)
-    }
-
     pub fn update_current_account_media_with_primary_image(
-        conn: &mut DieselConnection,
+        &mut self,
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DieselDatabaseError> {
@@ -48,7 +40,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
             media_content::table
                 .filter(media_content::uuid.eq(content_uuid))
                 .select(media_content::id)
-                .first::<ContentIdDb>(conn)
+                .first::<ContentIdDb>(self.conn())
                 .into_db_error(DieselDatabaseError::Execute, primary_image)?
                 .into()
         } else {
@@ -57,12 +49,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
 
         update(current_account_media.find(id.as_db_id()))
             .set((
-                profile_content_id.eq(content_id),
+                profile_content_id_1.eq(content_id),
                 grid_crop_size.eq(primary_image.grid_crop_size),
                 grid_crop_x.eq(primary_image.grid_crop_x),
                 grid_crop_y.eq(primary_image.grid_crop_y),
             ))
-            .execute(conn)
+            .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, (id, primary_image))?;
 
         Ok(())
@@ -82,7 +74,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
             .values((
                 account_id.eq(content_uploader.as_db_id()),
                 uuid.eq(content_id),
-                moderation_state.eq(ContentState::InSlot as i64),
+                content_state.eq(ContentState::InSlot),
                 slot_number.eq(slot as i64),
                 secure_capture.eq(true),
             ))
@@ -105,7 +97,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         let deleted_count = delete(
             media_content
                 .filter(account_id.eq(request_creator.as_db_id()))
-                .filter(moderation_state.eq(ContentState::InSlot as i64))
+                .filter(content_state.eq(ContentState::InSlot))
                 .filter(slot_number.eq(slot as i64)),
         )
         .execute(self.conn())

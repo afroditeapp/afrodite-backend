@@ -231,7 +231,7 @@ macro_rules! diesel_i64_try_from {
         // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
 
         impl diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>
-            for NextQueueNumberType
+            for $name
         where
             i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>,
         {

@@ -85,7 +85,7 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         primary_image: PrimaryImage,
     ) -> Result<(), DataError> {
-        self.db_write(move |mut cmds| cmds.media().primary_image(id, primary_image))
+        self.db_transaction(move |mut cmds| cmds.media().update_current_account_media_with_primary_image(id, primary_image))
             .await
     }
 }

@@ -23,7 +23,7 @@ impl WriteCommandsMediaAdmin<'_> {
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| {
+        self.db_transaction(move |cmds| {
             cmds.into_media_admin().update_moderation(
                 moderator_id,
                 moderation_request_owner,
