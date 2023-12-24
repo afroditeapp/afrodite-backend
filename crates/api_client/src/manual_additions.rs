@@ -4,7 +4,7 @@ use crate::{
         media_api::{GetImageError, PutImageToModerationSlotError},
         Error, ResponseContent,
     },
-    models::{AccountId, ContentId, Location},
+    models::{AccountId, ContentId, Location, UnixTime},
 };
 
 impl Copy for AccountId {}
@@ -20,6 +20,12 @@ impl Copy for ContentId {}
 impl ContentId {
     pub fn to_string(&self) -> String {
         self.content_id.hyphenated().to_string()
+    }
+}
+
+impl UnixTime {
+    pub fn to_string(&self) -> String {
+        self.unix_time.to_string()
     }
 }
 

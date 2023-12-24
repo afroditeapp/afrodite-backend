@@ -13,24 +13,32 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ModerationRequestContent {
-    /// Use slot 1 image as camera image.
-    #[serde(rename = "camera_image")]
-    pub camera_image: bool,
-    #[serde(rename = "image1")]
-    pub image1: Box<crate::models::ContentId>,
-    #[serde(rename = "image2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub image2: Option<Option<Box<crate::models::ContentId>>>,
-    #[serde(rename = "image3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub image3: Option<Option<Box<crate::models::ContentId>>>,
+    #[serde(rename = "content1")]
+    pub content1: Box<crate::models::ContentId>,
+    #[serde(rename = "content2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content2: Option<Option<Box<crate::models::ContentId>>>,
+    #[serde(rename = "content3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content3: Option<Option<Box<crate::models::ContentId>>>,
+    #[serde(rename = "content4", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content4: Option<Option<Box<crate::models::ContentId>>>,
+    #[serde(rename = "content5", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content5: Option<Option<Box<crate::models::ContentId>>>,
+    #[serde(rename = "content6", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content6: Option<Option<Box<crate::models::ContentId>>>,
+    #[serde(rename = "initial_moderation_security_image", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub initial_moderation_security_image: Option<Option<Box<crate::models::ContentId>>>,
 }
 
 impl ModerationRequestContent {
-    pub fn new(camera_image: bool, image1: crate::models::ContentId) -> ModerationRequestContent {
+    pub fn new(content1: crate::models::ContentId) -> ModerationRequestContent {
         ModerationRequestContent {
-            camera_image,
-            image1: Box::new(image1),
-            image2: None,
-            image3: None,
+            content1: Box::new(content1),
+            content2: None,
+            content3: None,
+            content4: None,
+            content5: None,
+            content6: None,
+            initial_moderation_security_image: None,
         }
     }
 }

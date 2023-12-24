@@ -17,6 +17,14 @@ pub enum EventType {
     AccountStateChanged,
     #[serde(rename = "AccountCapabilitiesChanged")]
     AccountCapabilitiesChanged,
+    #[serde(rename = "NewMessageReceived")]
+    NewMessageReceived,
+    #[serde(rename = "LikesChanged")]
+    LikesChanged,
+    #[serde(rename = "ReceivedBlocksChanged")]
+    ReceivedBlocksChanged,
+    #[serde(rename = "LatestViewedMessageChanged")]
+    LatestViewedMessageChanged,
 
 }
 
@@ -25,6 +33,10 @@ impl ToString for EventType {
         match self {
             Self::AccountStateChanged => String::from("AccountStateChanged"),
             Self::AccountCapabilitiesChanged => String::from("AccountCapabilitiesChanged"),
+            Self::NewMessageReceived => String::from("NewMessageReceived"),
+            Self::LikesChanged => String::from("LikesChanged"),
+            Self::ReceivedBlocksChanged => String::from("ReceivedBlocksChanged"),
+            Self::LatestViewedMessageChanged => String::from("LatestViewedMessageChanged"),
         }
     }
 }

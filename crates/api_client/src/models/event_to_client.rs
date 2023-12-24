@@ -20,6 +20,8 @@ pub struct EventToClient {
     pub capabilities: Option<Option<Box<crate::models::Capabilities>>>,
     #[serde(rename = "event")]
     pub event: crate::models::EventType,
+    #[serde(rename = "latest_viewed_message_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub latest_viewed_message_changed: Option<Option<Box<crate::models::LatestViewedMessageChanged>>>,
 }
 
 impl EventToClient {
@@ -29,6 +31,7 @@ impl EventToClient {
             account_state: None,
             capabilities: None,
             event,
+            latest_viewed_message_changed: None,
         }
     }
 }

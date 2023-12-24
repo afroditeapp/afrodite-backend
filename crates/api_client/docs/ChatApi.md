@@ -15,8 +15,8 @@ Method | HTTP request | Description
 [**get_sent_likes**](ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
 [**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
 [**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
-[**post_send_like**](ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account.
-[**post_send_message**](ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message
+[**post_send_like**](ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
+[**post_send_message**](ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match
 [**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 
 
@@ -251,7 +251,7 @@ This endpoint does not need any parameter.
 > crate::models::SentLikesPage get_sent_likes()
 Get sent likes.
 
-Get sent likes.  Profile will not be returned if:  - Profile is hidden - Profile is blocked - Profile is a match
+Get sent likes.  Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
 
 ### Parameters
 
@@ -336,9 +336,9 @@ Name | Type | Description  | Required | Notes
 ## post_send_like
 
 > post_send_like(account_id)
-Send a like to some account.
+Send a like to some account. If both will like each other, then
 
-Send a like to some account.
+Send a like to some account. If both will like each other, then the accounts will be a match.
 
 ### Parameters
 
@@ -366,9 +366,9 @@ Name | Type | Description  | Required | Notes
 ## post_send_message
 
 > post_send_message(send_message_to_account)
-Send message
+Send message to a match
 
-Send message
+Send message to a match
 
 ### Parameters
 

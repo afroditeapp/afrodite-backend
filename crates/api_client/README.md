@@ -51,13 +51,14 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_sent_likes**](docs/ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
 *ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
-*ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account.
-*ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message
+*ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
+*ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
 *CommonAdminApi* | [**get_backend_config**](docs/CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
 *CommonAdminApi* | [**get_latest_build_info**](docs/CommonAdminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager
+*CommonAdminApi* | [**get_perf_data**](docs/CommonAdminApi.md#get_perf_data) | **GET** /common_api/perf_data | Get performance data
 *CommonAdminApi* | [**get_software_info**](docs/CommonAdminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
 *CommonAdminApi* | [**post_backend_config**](docs/CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
@@ -116,6 +117,7 @@ Class | Method | HTTP request | Description
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [ImageAccessCheck](docs/ImageAccessCheck.md)
+ - [LatestViewedMessageChanged](docs/LatestViewedMessageChanged.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
  - [MapTileX](docs/MapTileX.md)
@@ -134,6 +136,10 @@ Class | Method | HTTP request | Description
  - [PendingMessageDeleteList](docs/PendingMessageDeleteList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingMessagesPage](docs/PendingMessagesPage.md)
+ - [PerfHistoryQuery](docs/PerfHistoryQuery.md)
+ - [PerfHistoryQueryResult](docs/PerfHistoryQueryResult.md)
+ - [PerfHistoryValue](docs/PerfHistoryValue.md)
+ - [PerfValueArea](docs/PerfValueArea.md)
  - [PrimaryImage](docs/PrimaryImage.md)
  - [Profile](docs/Profile.md)
  - [ProfileLink](docs/ProfileLink.md)
@@ -155,6 +161,8 @@ Class | Method | HTTP request | Description
  - [SoftwareOptions](docs/SoftwareOptions.md)
  - [SystemInfo](docs/SystemInfo.md)
  - [SystemInfoList](docs/SystemInfoList.md)
+ - [TimeGranularity](docs/TimeGranularity.md)
+ - [UnixTime](docs/UnixTime.md)
  - [UpdateMessageViewStatus](docs/UpdateMessageViewStatus.md)
 
 

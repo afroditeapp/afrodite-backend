@@ -433,7 +433,7 @@ pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> 
     }
 }
 
-/// Get sent likes.  Profile will not be returned if:  - Profile is hidden - Profile is blocked - Profile is a match
+/// Get sent likes.  Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
 pub async fn get_sent_likes(configuration: &configuration::Configuration, ) -> Result<crate::models::SentLikesPage, Error<GetSentLikesError>> {
     let local_var_configuration = configuration;
 
@@ -543,7 +543,7 @@ pub async fn post_message_number_of_latest_viewed_message(configuration: &config
     }
 }
 
-/// Send a like to some account.
+/// Send a like to some account. If both will like each other, then the accounts will be a match.
 pub async fn post_send_like(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<(), Error<PostSendLikeError>> {
     let local_var_configuration = configuration;
 
@@ -580,7 +580,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Send message
+/// Send message to a match
 pub async fn post_send_message(configuration: &configuration::Configuration, send_message_to_account: crate::models::SendMessageToAccount) -> Result<(), Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 
