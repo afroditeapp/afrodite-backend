@@ -73,19 +73,20 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
                 .select(MediaModerationRequestRaw::as_select())
                 .order_by(media_moderation_request::queue_number.asc());
 
-            if initial_moderation {
+            // TODO
+            //if initial_moderation {
                 first
-                    .filter(media_moderation_request::initial_moderation_security_image.is_not_null())
+                    .filter(media_moderation_request::account_id.is_not_null())
                     .first(self.conn())
                     .optional()
                     .into_db_error(DieselDatabaseError::Execute, moderator_id_for_logging)?
-            } else {
-                first
-                    .filter(media_moderation_request::initial_moderation_security_image.is_null())
-                    .first(self.conn())
-                    .optional()
-                    .into_db_error(DieselDatabaseError::Execute, moderator_id_for_logging)?
-            }
+            // } else {
+            //     first
+            //         .filter(media_moderation_request::initial_moderation_security_image.is_null())
+            //         .first(self.conn())
+            //         .optional()
+            //         .into_db_error(DieselDatabaseError::Execute, moderator_id_for_logging)?
+            // }
         };
 
         let request_row_id = match data.map(|r| r.id) {

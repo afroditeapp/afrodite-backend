@@ -25,12 +25,14 @@ use super::{
 };
 use crate::{
     api,
-    data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
-    event::EventManager,
+    data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, file::utils::FileDir},
+    event::EventManager, content_processing::{ContentProcessingManagerData, self},
 };
 
 pub mod routes_connected;
 pub mod routes_internal;
+
+type S = SimpleBackendAppState<AppState>;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -39,6 +41,7 @@ pub struct AppState {
     internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
     events: Arc<EventManager>,
+    content_processing: Arc<ContentProcessingManagerData>,
 }
 
 pub trait GetAccessTokens {
@@ -46,7 +49,7 @@ pub trait GetAccessTokens {
     fn access_tokens(&self) -> AccessTokenManager<'_>;
 }
 
-impl GetAccessTokens for SimpleBackendAppState<AppState> {
+impl GetAccessTokens for S {
     fn access_tokens(&self) -> AccessTokenManager<'_> {
         self.business_logic_state().database.access_token_manager()
     }
@@ -57,7 +60,7 @@ pub trait GetAccounts {
     fn accounts(&self) -> AccountIdManager<'_>;
 }
 
-impl GetAccounts for SimpleBackendAppState<AppState> {
+impl GetAccounts for S {
     fn accounts(&self) -> AccountIdManager<'_> {
         self.business_logic_state().database.account_id_manager()
     }
@@ -86,7 +89,7 @@ pub trait WriteData {
 }
 
 #[async_trait::async_trait]
-impl WriteData for SimpleBackendAppState<AppState> {
+impl WriteData for S {
     async fn write<
         CmdResult: Send + 'static,
         Cmd: Future<Output = Result<CmdResult, DataError>> + Send + 'static,
@@ -118,7 +121,7 @@ pub trait ReadData {
     fn read(&self) -> ReadCommands<'_>;
 }
 
-impl ReadData for SimpleBackendAppState<AppState> {
+impl ReadData for S {
     fn read(&self) -> ReadCommands<'_> {
         self.business_logic_state().database.read()
     }
@@ -130,7 +133,7 @@ pub trait GetInternalApi {
         Self: Sized;
 }
 
-impl GetInternalApi for SimpleBackendAppState<AppState> {
+impl GetInternalApi for S {
     fn internal_api(&self) -> InternalApiManager<Self> {
         InternalApiManager::new(self, &self.business_logic_state().internal_api)
     }
@@ -140,7 +143,7 @@ pub trait GetConfig {
     fn config(&self) -> &Config;
 }
 
-impl GetConfig for SimpleBackendAppState<AppState> {
+impl GetConfig for S {
     fn config(&self) -> &Config {
         &self.business_logic_state().config
     }
@@ -153,7 +156,7 @@ pub trait WriteDynamicConfig {
 }
 
 #[async_trait::async_trait]
-impl WriteDynamicConfig for SimpleBackendAppState<AppState> {
+impl WriteDynamicConfig for S {
     async fn write_config(
         &self,
         config: BackendConfig,
@@ -178,7 +181,7 @@ pub trait ReadDynamicConfig {
 }
 
 #[async_trait::async_trait]
-impl ReadDynamicConfig for SimpleBackendAppState<AppState> {
+impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
         let config =
             tokio::task::spawn_blocking(move || ConfigFileDynamic::load_from_current_dir())
@@ -193,7 +196,7 @@ pub trait BackendVersionProvider {
     fn backend_version(&self) -> BackendVersion;
 }
 
-impl BackendVersionProvider for SimpleBackendAppState<AppState> {
+impl BackendVersionProvider for S {
     fn backend_version(&self) -> BackendVersion {
         BackendVersion {
             backend_code_version: self
@@ -213,13 +216,31 @@ pub trait EventManagerProvider {
     fn event_manager(&self) -> &EventManager;
 }
 
-impl EventManagerProvider for SimpleBackendAppState<AppState> {
+impl EventManagerProvider for S {
     fn event_manager(&self) -> &EventManager {
         &self.business_logic_state().events
     }
 }
 
-type S = SimpleBackendAppState<AppState>;
+pub trait ContentProcessingProvider {
+    fn content_processing(&self) -> &ContentProcessingManagerData;
+}
+
+impl ContentProcessingProvider for S {
+    fn content_processing(&self) -> &ContentProcessingManagerData {
+        &self.business_logic_state().content_processing
+    }
+}
+
+// pub trait FileAccessProvider {
+//     fn file_access(&self) -> &FileDir;
+// }
+
+// impl FileAccessProvider for S {
+//     fn file_access(&self) -> &FileDir {
+//         &self.business_logic_state().
+//     }
+// }
 
 pub struct App {
     state: S,
@@ -232,14 +253,17 @@ impl App {
         _database_write_handle: RouterDatabaseWriteHandle,
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
+        content_processing: Arc<ContentProcessingManagerData>,
     ) -> AppState {
         let database = Arc::new(database_handle);
+        let events = EventManager::new(database.clone()).into();
         let state = AppState {
             config: config.clone(),
             database: database.clone(),
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
-            events: EventManager::new(database).into(),
+            events,
+            content_processing
         };
 
         state

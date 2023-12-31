@@ -200,8 +200,12 @@ impl ConnectedApp {
                 put(api::media::put_moderation_request::<S>),
             )
             .route(
-                api::media::PATH_MODERATION_REQUEST_SLOT,
-                put(api::media::put_image_to_moderation_slot::<S>),
+                api::media::PATH_PUT_CONTENT_TO_CONTENT_SLOT,
+                put(api::media::put_content_to_content_slot::<S>),
+            )
+            .route(
+                api::media::PATH_GET_CONTENT_SLOT_STATE,
+                get(api::media::get_content_slot_state::<S>),
             )
             .route(
                 api::media::PATH_GET_MAP_TILE,

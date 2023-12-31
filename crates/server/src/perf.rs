@@ -68,7 +68,8 @@ create_counters!(
     put_primary_image,
     get_moderation_request,
     put_moderation_request,
-    put_image_to_moderation_slot,
+    put_content_to_content_slot,
+    get_content_slot_state,
     get_map_tile,
 );
 

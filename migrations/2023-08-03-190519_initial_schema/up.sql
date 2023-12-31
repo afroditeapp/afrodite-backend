@@ -178,12 +178,12 @@ CREATE TABLE IF NOT EXISTS favorite_profile(
 CREATE TABLE IF NOT EXISTS current_account_media(
     account_id           INTEGER PRIMARY KEY NOT NULL,
     security_content_id  INTEGER,
+    profile_content_id_0 INTEGER,
     profile_content_id_1 INTEGER,
     profile_content_id_2 INTEGER,
     profile_content_id_3 INTEGER,
     profile_content_id_4 INTEGER,
     profile_content_id_5 INTEGER,
-    profile_content_id_6 INTEGER,
     -- Image's max square size multipler.
     -- Value 1.0 is the max size and the size of the original image.
     grid_crop_size       DOUBLE,
@@ -194,12 +194,12 @@ CREATE TABLE IF NOT EXISTS current_account_media(
     -- Counted from top left corner of the original image.
     grid_crop_y          DOUBLE,
     pending_security_content_id  INTEGER,
+    pending_profile_content_id_0 INTEGER,
     pending_profile_content_id_1 INTEGER,
     pending_profile_content_id_2 INTEGER,
     pending_profile_content_id_3 INTEGER,
     pending_profile_content_id_4 INTEGER,
     pending_profile_content_id_5 INTEGER,
-    pending_profile_content_id_6 INTEGER,
     pending_grid_crop_size       DOUBLE,
     pending_grid_crop_x          DOUBLE,
     pending_grid_crop_y          DOUBLE,
@@ -208,6 +208,10 @@ CREATE TABLE IF NOT EXISTS current_account_media(
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     FOREIGN KEY (security_content_id)
+        REFERENCES media_content (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_content_id_0)
         REFERENCES media_content (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE,
@@ -231,11 +235,11 @@ CREATE TABLE IF NOT EXISTS current_account_media(
         REFERENCES media_content (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE,
-    FOREIGN KEY (profile_content_id_6)
+    FOREIGN KEY (pending_security_content_id)
         REFERENCES media_content (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE,
-    FOREIGN KEY (pending_security_content_id)
+    FOREIGN KEY (pending_profile_content_id_0)
         REFERENCES media_content (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE,
@@ -256,10 +260,6 @@ CREATE TABLE IF NOT EXISTS current_account_media(
             ON DELETE SET NULL
             ON UPDATE CASCADE,
     FOREIGN KEY (pending_profile_content_id_5)
-        REFERENCES media_content (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (pending_profile_content_id_6)
         REFERENCES media_content (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE
@@ -297,9 +297,8 @@ CREATE TABLE IF NOT EXISTS media_moderation_request(
     account_id          INTEGER             NOT NULL  UNIQUE,
     -- Queue number which this media_moderation_request has.
     queue_number        INTEGER             NOT NULL,
-    -- If this is set the moderation is the initial moderation
-    initial_moderation_security_image BLOB,
-    content_id_1        BLOB                NOT NULL,
+    content_id_0        BLOB                NOT NULL,
+    content_id_1        BLOB,
     content_id_2        BLOB,
     content_id_3        BLOB,
     content_id_4        BLOB,

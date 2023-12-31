@@ -11,6 +11,7 @@ pub mod event;
 pub mod internal;
 pub mod perf;
 pub mod utils;
+pub mod content_processing;
 
 use std::sync::Arc;
 
@@ -18,14 +19,15 @@ use app::AppState;
 use async_trait::async_trait;
 use axum::Router;
 use config::Config;
+use content_processing::{ContentProcessingManagerData, ContentProcessingManagerQuitHandle, ContentProcessingManager};
 use data::write_commands::WriteCmdWatcher;
 use perf::ALL_COUNTERS;
 use simple_backend::{
-    app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::AllCounters,
-    web_socket::WebSocketManager, BusinessLogic,
+    app::{SimpleBackendAppState, StateBuilder}, media_backup::MediaBackupHandle, perf::AllCounters,
+    web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher,
 };
 use tracing::{error, warn};
-use utoipa::OpenApi;
+use utoipa::{OpenApi, openapi::content};
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::{
@@ -48,10 +50,10 @@ impl PihkaServer {
     pub async fn run(self) {
         let logic = PihkaBusinessLogic {
             config: self.config.clone(),
-            app_state: None,
             bot_client: None,
             write_cmd_waiter: None,
             database_manager: None,
+            content_processing_quit_handle: None,
         };
         let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
@@ -60,10 +62,10 @@ impl PihkaServer {
 
 pub struct PihkaBusinessLogic {
     config: Arc<Config>,
-    app_state: Option<AppState>,
     bot_client: Option<BotClient>,
     write_cmd_waiter: Option<WriteCmdWatcher>,
     database_manager: Option<DatabaseManager>,
+    content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
 }
 
 #[async_trait]
@@ -128,8 +130,10 @@ impl BusinessLogic for PihkaBusinessLogic {
 
     async fn on_before_server_start(
         &mut self,
+        state_builder: StateBuilder,
         media_backup_handle: MediaBackupHandle,
-    ) -> Self::AppState {
+        server_quit_watcher: ServerQuitWatcher,
+    ) -> SimpleBackendAppState<Self::AppState> {
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
@@ -142,13 +146,25 @@ impl BusinessLogic for PihkaBusinessLogic {
         let (write_cmd_runner_handle, write_cmd_waiter) =
             WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config);
 
+        let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
+        let content_processing = Arc::new(content_processing);
+
         let app_state = App::create_app_state(
             router_database_handle,
             router_database_write_handle,
             write_cmd_runner_handle,
             self.config.clone(),
+            content_processing.clone(),
         )
         .await;
+
+        let state = state_builder.build(app_state.clone());
+
+        let content_processing_quit_handle = ContentProcessingManager::new(
+            content_processing_receiver,
+            state.clone(),
+            server_quit_watcher.resubscribe(),
+        );
 
         let bot_client = if let Some(bot_config) = self.config.bot_config() {
             let result = BotClient::start_bots(&self.config, bot_config).await;
@@ -164,11 +180,11 @@ impl BusinessLogic for PihkaBusinessLogic {
             None
         };
 
-        self.app_state = Some(app_state.clone());
         self.bot_client = bot_client;
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);
-        app_state
+        self.content_processing_quit_handle = Some(content_processing_quit_handle);
+        state
     }
 
     async fn on_after_server_start(&mut self) {}
@@ -183,7 +199,10 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     async fn on_after_server_quit(self) {
-        drop(self.app_state.expect("Not initialized"));
+        self.content_processing_quit_handle
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
         self.write_cmd_waiter
             .expect("Not initialized")
             .wait_untill_all_writing_ends()

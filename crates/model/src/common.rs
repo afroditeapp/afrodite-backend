@@ -12,7 +12,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, diesel_i64_try_from};
 use crate::{
-    AccountState, Capabilities, MessageNumber, schema_sqlite_types::Integer,
+    AccountState, Capabilities, MessageNumber, schema_sqlite_types::Integer, ContentProcessingId, ContentProcessingState,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
@@ -40,6 +40,8 @@ pub enum EventType {
     /// New latest viewed message number changed
     /// Data: latest_viewed_message_changed
     LatestViewedMessageChanged,
+    /// Data: content_processing_state_changed
+    ContentProcessingStateChanged,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -48,6 +50,12 @@ pub struct LatestViewedMessageChanged {
     pub account_id_viewer: AccountId,
     /// New value for latest vieqed message
     pub new_latest_viewed_message: MessageNumber,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ContentProcessingStateChanged {
+    pub id: ContentProcessingId,
+    pub new_state: ContentProcessingState,
 }
 
 /// Event to client which is sent through websocket.
@@ -63,6 +71,8 @@ pub struct EventToClient {
     capabilities: Option<Capabilities>,
     /// Data for event LatestViewedMessageChanged
     latest_viewed_message_changed: Option<LatestViewedMessageChanged>,
+    /// Data for event ContentProcessingStateChanged
+    content_processing_state_changed: Option<ContentProcessingStateChanged>,
 }
 
 pub enum EventToClientInternal {
@@ -78,6 +88,7 @@ pub enum EventToClientInternal {
     LikesChanged,
     ReceivedBlocksChanged,
     LatestViewedMessageChanged(LatestViewedMessageChanged),
+    ContentProcessingStateChanged(ContentProcessingStateChanged),
 }
 
 impl From<EventToClientInternal> for EventToClient {
@@ -87,6 +98,7 @@ impl From<EventToClientInternal> for EventToClient {
             account_state: None,
             capabilities: None,
             latest_viewed_message_changed: None,
+            content_processing_state_changed: None,
         };
 
         match internal {
@@ -110,6 +122,10 @@ impl From<EventToClientInternal> for EventToClient {
             EventToClientInternal::LatestViewedMessageChanged(latest_viewed_message_changed) => {
                 value.event = EventType::LatestViewedMessageChanged;
                 value.latest_viewed_message_changed = Some(latest_viewed_message_changed);
+            }
+            EventToClientInternal::ContentProcessingStateChanged(data) => {
+                value.event = EventType::ContentProcessingStateChanged;
+                value.content_processing_state_changed = Some(data);
             }
         }
 

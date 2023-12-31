@@ -89,7 +89,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
                 .into_db_error(DieselDatabaseError::Execute, (target_id, moderator_id))?;
         }
 
-        let queue_type = if request_raw.initial_moderation_security_image.is_some() {
+        // TODO
+        let queue_type = if true { //if request_raw.initial_moderation_security_image.is_some() {
             NextQueueNumberType::InitialMediaModeration
         } else {
             NextQueueNumberType::MediaModeration
@@ -151,40 +152,46 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         };
 
         for c in content.content() {
-            let is_security = if let Some(content) = content.initial_moderation_security_image {
-                content == c
+            let content_info = self.read().media().get_media_content_raw(c)?;
+            // TODO
+            //let is_security = if let Some(content) = content.initial_moderation_security_image {
+            let is_security = if true {
+                //content == c
+                true
             } else {
                 false
             };
             self.update_content_state(
                 c,
                 new_content_state,
-                is_security,
+                // is_security,
             )?;
         }
 
-        if let Some(security_image) = content.initial_moderation_security_image {
-            if state == ModerationRequestState::Accepted
-            && currently_selected_images.security_content_id.is_none() {
-                self.update_current_security_image(
-                    moderation_request_owner,
-                    security_image,
-                )?;
+        // TODO
+        // if let Some(security_image) = content.initial_moderation_security_image {
+        //     if state == ModerationRequestState::Accepted
+        //     && currently_selected_images.security_content_id.is_none() {
+        //         self.update_current_security_image(
+        //             moderation_request_owner,
+        //             security_image,
+        //         )?;
 
-                let primary_image = PrimaryImage {
-                    content_id: Some(content.content1),
-                    grid_crop_size: 0.0,
-                    grid_crop_x: 0.0,
-                    grid_crop_y: 0.0,
-                };
+        //         let primary_image = PrimaryImage {
+        //             //content_id: Some(content.content1),
+        //             content_id: Some(content.content0),
+        //             grid_crop_size: 0.0,
+        //             grid_crop_x: 0.0,
+        //             grid_crop_y: 0.0,
+        //         };
 
-                self.cmds().media().update_current_account_media_with_primary_image(
-                    moderation_request_owner,
-                    primary_image,
-                )?;
-            }
+        //         self.cmds().media().update_current_account_media_with_primary_image(
+        //             moderation_request_owner,
+        //             primary_image,
+        //         )?;
+        //     }
 
-        }
+        // }
 
         let _state_number = state as i64;
 
@@ -270,7 +277,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         &mut self,
         content_id: ContentId,
         new_state: ContentState,
-        is_security: bool,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
@@ -295,7 +301,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
 //         pool: &'a sqlx::Pool<Sqlite>,
 //         content_uploader: AccountIdInternal,
 //         content_id: ContentId,
-//         slot: ImageSlot,
+//         slot: ContentSlot,
 //     ) -> error_stack::Result<DatabaseTransaction<'a>, SqliteDatabaseError> {
 //         let content_uuid = content_id.as_uuid();
 //         let account_row_id = content_uploader.row_id();

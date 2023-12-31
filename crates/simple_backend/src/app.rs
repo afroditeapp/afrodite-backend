@@ -74,70 +74,35 @@ impl<T: Clone> PerfCounterDataProvider for SimpleBackendAppState<T> {
     }
 }
 
-pub struct App<T: Clone> {
-    state: SimpleBackendAppState<T>,
+pub struct StateBuilder {
+    config: Arc<SimpleBackendConfig>,
+    perf_data: Arc<PerfCounterManagerData>,
+    manager_api: Arc<ManagerApiClient>,
 }
 
-impl<T: Clone> App<T> {
-    pub async fn new(
+impl StateBuilder {
+    pub fn new(
         config: Arc<SimpleBackendConfig>,
         perf_data: Arc<PerfCounterManagerData>,
-        business_logic_state: T,
     ) -> Result<Self, ManagerClientError> {
-        let state = SimpleBackendAppState {
-            config: config.clone(),
-            manager_api: ManagerApiClient::new(&config)?.into(),
-            tile_map: TileMapManager::new(&config).into(),
-            sign_in_with: SignInWithManager::new(config).into(),
+        let manager_api = ManagerApiClient::new(&config)?.into();
+        Ok(Self {
+            config,
             perf_data,
+            manager_api,
+        })
+    }
+
+    pub fn build<T: Clone>(self, business_logic_state: T) -> SimpleBackendAppState<T> {
+        let state = SimpleBackendAppState {
+            config: self.config.clone(),
+            manager_api: self.manager_api,
+            tile_map: TileMapManager::new(&self.config).into(),
+            sign_in_with: SignInWithManager::new(self.config).into(),
+            perf_data: self.perf_data,
             business_logic_data: Arc::new(business_logic_state),
         };
 
-        Ok(Self { state })
+        state
     }
-
-    pub fn state(&self) -> SimpleBackendAppState<T> {
-        self.state.clone()
-    }
-
-    pub fn into_state(self) -> SimpleBackendAppState<T> {
-        self.state
-    }
-
-    // pub fn create_common_server_router(&mut self) -> Router {
-    //     let public = Router::new()
-    //         .route(
-    //             api::common::PATH_CONNECT, // This route checks the access token by itself.
-    //             get({
-    //                 let state = self.state.clone();
-    //                 let ws_manager = self.ws_manager.take().unwrap(); // Only one instance required.
-    //                 move |param1, param2, param3| {
-    //                     api::common::get_connect_websocket(
-    //                         param1, param2, param3, ws_manager, state,
-    //                     )
-    //                 }
-    //             }),
-    //         )
-    //         .route(
-    //             api::common::PATH_GET_VERSION,
-    //             get({
-    //                 let state = self.state.clone();
-    //                 move || api::common::get_version(state)
-    //             }),
-    //         );
-
-    //     public.merge(ConnectedApp::new(self.state.clone()).private_common_router())
-    // }
-
-    // pub fn create_account_server_router(&self) -> Router {
-    //     let public = Router::new().route(
-    //         api::account::PATH_SIGN_IN_WITH_LOGIN,
-    //         post({
-    //             let state = self.state.clone();
-    //             move |body| api::account::post_sign_in_with_login(body, state)
-    //         }),
-    //     );
-
-    //     public.merge(ConnectedApp::new(self.state.clone()).private_account_server_router())
-    // }
 }

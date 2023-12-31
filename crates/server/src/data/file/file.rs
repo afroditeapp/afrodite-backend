@@ -1,6 +1,6 @@
 //! Types related to files
 
-use model::ImageSlot;
+use model::ContentSlot;
 
 #[derive(Debug)]
 pub struct StaticFileName<'a>(&'a str);
@@ -21,16 +21,16 @@ pub trait GetStaticFileName {
     fn file_name(&self) -> StaticFileName<'static>;
 }
 
-impl GetStaticFileName for ImageSlot {
+impl GetStaticFileName for ContentSlot {
     fn file_name(&self) -> StaticFileName<'static> {
         StaticFileName(match self {
-            Self::Image1 => "slot1.jpg",
-            Self::Image2 => "slot2.jpg",
-            Self::Image3 => "slot3.jpg",
-            Self::Image4 => "slot4.jpg",
-            Self::Image5 => "slot5.jpg",
-            Self::Image6 => "slot6.jpg",
-            Self::Image7 => "slot7.jpg",
+            Self::Content0 => "slot0.jpg",
+            Self::Content1 => "slot1.jpg",
+            Self::Content2 => "slot2.jpg",
+            Self::Content3 => "slot3.jpg",
+            Self::Content4 => "slot4.jpg",
+            Self::Content5 => "slot5.jpg",
+            Self::Content6 => "slot6.jpg",
         })
     }
 }

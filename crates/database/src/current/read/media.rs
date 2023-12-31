@@ -4,7 +4,7 @@ use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{
     AccountId, AccountIdInternal, ContentId, ContentIdInternal, ContentState,
-    CurrentAccountMediaInternal, CurrentAccountMediaRaw, ImageSlot, MediaContentInternal,
+    CurrentAccountMediaInternal, CurrentAccountMediaRaw, ContentSlot, MediaContentInternal,
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
     ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState,
 };
@@ -128,6 +128,19 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         })
     }
 
+    pub fn get_media_content_raw(
+        &mut self,
+        content_id: ContentId,
+    ) -> Result<MediaContentRaw, DieselDatabaseError> {
+        use crate::schema::media_content::dsl::*;
+        let content = media_content
+            .filter(uuid.eq(content_id))
+            .select(MediaContentRaw::as_select())
+            .first(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, content_id)?;
+        Ok(content)
+    }
+
     pub fn get_account_media(
         &mut self,
         media_owner_id: AccountIdInternal,
@@ -164,7 +177,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
     pub fn get_content_id_from_slot(
         &mut self,
         slot_owner: AccountIdInternal,
-        slot: ImageSlot,
+        slot: ContentSlot,
     ) -> Result<Option<ContentIdInternal>, DieselDatabaseError> {
         let required_state = ContentState::InSlot as i64;
         let required_slot = slot as i64;

@@ -300,11 +300,11 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
                 .ok_or(InternalApiError::MissingValue)
                 .with_info(account_id)?;
 
-            if request.content.initial_moderation_security_image.is_some() {
-                Ok(())
-            } else {
+            // if request.content.initial_moderation_security_image.is_some() {
+            //     Ok(())
+            // } else {
                 Err(InternalApiError::MissingValue).with_info(account_id)
-            }
+            // }
         } else {
             InternalApi::media_check_moderation_request_for_account(
                 self.api_client.media()?,

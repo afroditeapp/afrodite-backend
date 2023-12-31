@@ -1,7 +1,7 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt, report};
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, ImageSlot, ModerationQueueNumber,
+    AccountIdInternal, ContentId, ContentIdDb, ContentState, ContentSlot, ModerationQueueNumber,
     ModerationRequestContent, PrimaryImage, NextQueueNumbersRaw, ModerationRequestState, NextQueueNumberType,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
@@ -64,7 +64,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         &mut self,
         content_uploader: AccountIdInternal,
         content_id: ContentId,
-        slot: ImageSlot,
+        slot: ContentSlot,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
@@ -90,7 +90,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     pub fn delete_image_from_slot(
         &mut self,
         request_creator: AccountIdInternal,
-        slot: ImageSlot,
+        slot: ContentSlot,
     ) -> Result<Option<DeletedSomething>, DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
@@ -187,7 +187,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         if update_possible {
             update(media_moderation_request.find(request_owner_account_id.as_db_id()))
                 .set((
-                    initial_moderation_security_image.eq(new_request.initial_moderation_security_image),
+                    // TODO
+                    //initial_moderation_security_image.eq(new_request.initial_moderation_security_image),
                     content_id_1.eq(new_request.content1),
                     content_id_2.eq(new_request.content2),
                     content_id_3.eq(new_request.content3),

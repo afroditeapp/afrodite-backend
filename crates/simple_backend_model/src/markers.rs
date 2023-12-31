@@ -69,7 +69,7 @@
 //     ModerationRequestId, // TODO: combine with ModerationRequestIdDb
 //     ContentIdDb,
 //     ContentId,
-//     ImageSlot,
+//     ContentSlot,
 //     ModerationId,
 //     ModerationQueueNumber,
 // );

@@ -49,7 +49,7 @@ chat = true
 # media_internal = "http://127.0.0.1:4000"
 
 # [queue_limits]
-# image_upload = 10
+# content_upload = 10
 
 "#;
 
@@ -151,11 +151,13 @@ pub struct InternalApiConfig {
 /// Server queue limits
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct QueueLimitsConfig {
-    pub image_upload: usize,
+    /// Simultaneous media content uploads. Processing of the media content
+    /// will be done sequentially.
+    pub content_upload: usize,
 }
 
 impl Default for QueueLimitsConfig {
     fn default() -> Self {
-        Self { image_upload: 10 }
+        Self { content_upload: 10 }
     }
 }

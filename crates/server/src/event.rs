@@ -59,6 +59,8 @@ impl EventManager {
         Self { database }
     }
     /// Send only if the client is connected.
+    ///
+    /// Event will be skipped if event queue is full.
     pub async fn send_connected_event(
         &self,
         account: impl Into<AccountId>,

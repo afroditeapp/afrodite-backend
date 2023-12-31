@@ -32,27 +32,123 @@ pub struct MapTileZ {
     pub z: u32,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct SlotNumber {
-    pub slot_number: u8,
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub enum ContentProcessingStateType {
+    /// This content slot is empty.
+    Empty = 0,
+    /// Content is waiting in processing queue.
+    InQueue = 1,
+    /// Content processing is ongoing.
+    Processing = 2,
+    /// Content is processed and content ID is now available.
+    Completed = 3,
+    /// Content processing failed.
+    Failed = 4,
 }
 
-#[derive(Debug, Clone, Copy)]
-#[repr(i64)]
-pub enum ImageSlot {
-    Image1 = 0,
-    Image2 = 1,
-    Image3 = 2,
-    Image4 = 3,
-    Image5 = 4,
-    Image6 = 5,
-    Image7 = 6,
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ContentProcessingState {
+    pub state: ContentProcessingStateType,
+    /// Current position in processing queue.
+    ///
+    /// If ProcessingContentId is added to empty queue, then
+    /// this will be 1.
+    pub wait_queue_position: Option<u64>,
+    /// Content ID of the processed content.
+    pub content_id: Option<ContentId>,
 }
+
+impl ContentProcessingState {
+    pub fn empty() -> Self {
+        Self {
+            state: ContentProcessingStateType::Empty,
+            wait_queue_position: None,
+            content_id: None,
+        }
+    }
+
+    pub fn in_queue_state(wait_queue_position: u64) -> Self {
+        Self {
+            state: ContentProcessingStateType::InQueue,
+            wait_queue_position: Some(wait_queue_position),
+            content_id: None,
+        }
+    }
+
+    pub fn change_to_processing(&mut self) {
+        self.state = ContentProcessingStateType::Processing;
+        self.wait_queue_position = None;
+        self.content_id = None;
+    }
+
+    pub fn change_to_completed(&mut self, content_id: ContentId) {
+        self.state = ContentProcessingStateType::Completed;
+        self.wait_queue_position = None;
+        self.content_id = Some(content_id);
+    }
+
+    pub fn change_to_failed(&mut self) {
+        self.state = ContentProcessingStateType::Failed;
+        self.wait_queue_position = None;
+        self.content_id = None;
+    }
+}
+
+/// Content ID which is queued to be processed
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize, ToSchema)]
+pub struct ContentProcessingId {
+    id: uuid::Uuid,
+}
+
+impl ContentProcessingId {
+    pub fn new_random_id() -> Self {
+        Self {
+            id: Uuid::new_v4(),
+        }
+    }
+
+    pub fn to_content_id(&self) -> ContentId {
+        ContentId::new(self.id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
+#[repr(i64)]
+pub enum ContentSlot {
+    Content0 = 0,
+    Content1 = 1,
+    Content2 = 2,
+    Content3 = 3,
+    Content4 = 4,
+    Content5 = 5,
+    Content6 = 6,
+}
+
+impl TryFrom<i64> for ContentSlot {
+    type Error = String;
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let slot = match value {
+            0 => Self::Content0,
+            1 => Self::Content1,
+            2 => Self::Content2,
+            3 => Self::Content3,
+            4 => Self::Content4,
+            5 => Self::Content5,
+            6 => Self::Content6,
+            value => return Err(format!("Unknown content slot value {}", value)),
+        };
+
+        Ok(slot)
+    }
+}
+
+diesel_i64_try_from!(ContentSlot);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequestContent {
-    pub initial_moderation_security_image: Option<ContentId>,
-    pub content1: ContentId,
+    pub content0: ContentId,
+    pub content1: Option<ContentId>,
     pub content2: Option<ContentId>,
     pub content3: Option<ContentId>,
     pub content4: Option<ContentId>,
@@ -63,8 +159,8 @@ pub struct ModerationRequestContent {
 impl ModerationRequestContent {
     pub fn content(&self) -> impl Iterator<Item = ContentId> {
         [
-            self.initial_moderation_security_image,
-            Some(self.content1),
+            Some(self.content0),
+            self.content1,
             self.content2,
             self.content3,
             self.content4,
@@ -74,18 +170,6 @@ impl ModerationRequestContent {
             .into_iter()
             .flatten()
     }
-
-    // pub fn slot_1_is_security_image(&self) -> bool {
-    //     self.camera_image
-    // }
-
-    // pub fn slot_1(&self) -> ContentId {
-    //     self.image1
-    // }
-
-    // pub fn slot_2(&self) -> Option<ContentId> {
-    //     self.image2
-    // }
 }
 
 #[derive(Debug, Clone, Queryable, Selectable)]
@@ -95,8 +179,8 @@ pub struct MediaModerationRequestRaw {
     pub id: ModerationRequestIdDb,
     pub account_id: AccountIdDb,
     pub queue_number: i64,
-    pub initial_moderation_security_image: Option<ContentId>,
-    pub content_id_1: ContentId,
+    pub content_id_0: ContentId,
+    pub content_id_1: Option<ContentId>,
     pub content_id_2: Option<ContentId>,
     pub content_id_3: Option<ContentId>,
     pub content_id_4: Option<ContentId>,
@@ -107,7 +191,7 @@ pub struct MediaModerationRequestRaw {
 impl MediaModerationRequestRaw {
     pub fn to_moderation_request_content(&self) -> ModerationRequestContent {
         ModerationRequestContent {
-            initial_moderation_security_image: self.initial_moderation_security_image,
+            content0: self.content_id_0,
             content1: self.content_id_1,
             content2: self.content_id_2,
             content3: self.content_id_3,
@@ -161,7 +245,8 @@ pub enum EnumParsingError {
     ParsingError(i64),
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, ToSchema, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, ToSchema, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ModerationRequestState {
     /// Admin has not started progress on moderating.
@@ -170,6 +255,8 @@ pub enum ModerationRequestState {
     Accepted = 2,
     Denied = 3,
 }
+
+diesel_i64_try_from!(ModerationRequestState);
 
 impl ModerationRequestState {
     pub fn completed(&self) -> bool {
@@ -213,17 +300,6 @@ pub enum ContentState {
 
 diesel_i64_try_from!(ContentState);
 
-/// Admin sets this when moderating the image.
-// #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq)]
-// #[repr(i64)]
-// pub enum MediaContentType {
-//     NotSet = 0,
-//     /// Normal image.
-//     Normal = 1,
-//     /// Security image.
-//     Security = 2,
-// }
-
 // TODO: Remove content with state ModeratedAsDenied when new moderation request
 // is created. Get content id from Moderation table.
 
@@ -242,23 +318,18 @@ impl TryFrom<i64> for ContentState {
     }
 }
 
-// impl TryFrom<i64> for MediaContentType {
-//     type Error = EnumParsingError;
-//     fn try_from(value: i64) -> Result<Self, Self::Error> {
-//         let value = match value {
-//             0 => Self::NotSet,
-//             1 => Self::Normal,
-//             2 => Self::Security,
-//             _ => return Err(EnumParsingError::ParsingError(value)),
-//         };
-
-//         Ok(value)
-//     }
-// }
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct SlotId {
     pub slot_id: u8,
+}
+
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct NewContentParams {
+    /// Client captured this content.
+    pub secure_content: bool,
+    /// User sets this to true if the content contains the account owner's face.
+    pub contains_face: bool,
 }
 
 /// Content ID for media content for example images
@@ -363,7 +434,7 @@ pub struct MediaContentRaw {
     pub content_state: ContentState,
     pub secure_capture: bool,
     pub contains_face: bool,
-    pub slot_number: i64,
+    pub slot_number: ContentSlot,
 }
 
 impl MediaContentRaw {
@@ -381,7 +452,7 @@ pub struct MediaContentInternal {
     pub state: ContentState,
     pub secure_capture: bool,
     pub contains_face: bool,
-    pub slot_number: i64,
+    pub slot_number: ContentSlot,
 }
 
 #[derive(Debug, Clone)]
@@ -402,22 +473,22 @@ impl ContentIdInternal {
 pub struct CurrentAccountMediaRaw {
     pub account_id: AccountIdDb,
     pub security_content_id: Option<ContentIdDb>,
+    pub profile_content_id_0: Option<ContentIdDb>,
     pub profile_content_id_1: Option<ContentIdDb>,
     pub profile_content_id_2: Option<ContentIdDb>,
     pub profile_content_id_3: Option<ContentIdDb>,
     pub profile_content_id_4: Option<ContentIdDb>,
     pub profile_content_id_5: Option<ContentIdDb>,
-    pub profile_content_id_6: Option<ContentIdDb>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
     pub pending_security_content_id: Option<ContentIdDb>,
+    pub pending_profile_content_id_0: Option<ContentIdDb>,
     pub pending_profile_content_id_1: Option<ContentIdDb>,
     pub pending_profile_content_id_2: Option<ContentIdDb>,
     pub pending_profile_content_id_3: Option<ContentIdDb>,
     pub pending_profile_content_id_4: Option<ContentIdDb>,
     pub pending_profile_content_id_5: Option<ContentIdDb>,
-    pub pending_profile_content_id_6: Option<ContentIdDb>,
     pub pending_grid_crop_size: Option<f64>,
     pub pending_grid_crop_x: Option<f64>,
     pub pending_grid_crop_y: Option<f64>,

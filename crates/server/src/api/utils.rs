@@ -25,7 +25,7 @@ use crate::{
     app::{GetAccessTokens, ReadData},
     data::{cache::CacheError, DataError},
     event::EventError,
-    internal::InternalApiError,
+    internal::InternalApiError, content_processing::ContentProcessingError,
 };
 
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =
@@ -217,6 +217,8 @@ enum RequestError {
     ConfigFileError,
     #[error("Event error")]
     EventError,
+    #[error("Content processing error")]
+    ContentProcessingError,
 }
 
 impl From<error_stack::Report<DataError>> for StatusCode {

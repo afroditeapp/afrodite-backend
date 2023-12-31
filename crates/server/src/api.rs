@@ -74,7 +74,8 @@ pub mod utils;
         media::get_moderation_request,
         media::get_map_tile,
         media::put_moderation_request,
-        media::put_image_to_moderation_slot,
+        media::put_content_to_content_slot,
+        media::get_content_slot_state,
         media::put_primary_image,
         // Media admin
         media_admin::patch_moderation_request_list,
@@ -108,6 +109,7 @@ pub mod utils;
         model::common::AccessToken,
         model::common::RefreshToken,
         model::common::LatestViewedMessageChanged,
+        model::common::ContentProcessingStateChanged,
         simple_backend_model::UnixTime,
         // Common admin
         model::common_admin::BackendConfig,
@@ -143,6 +145,10 @@ pub mod utils;
         model::media::ModerationRequestState,
         model::media::SlotId,
         model::media::ContentId,
+        model::media::ContentProcessingId,
+        model::media::ContentProcessingState,
+        model::media::ContentProcessingStateType,
+        model::media::NewContentParams,
         model::media::PrimaryImage,
         model::media::SecurityImage,
         model::media::ImageAccessCheck,

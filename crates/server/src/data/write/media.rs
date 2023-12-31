@@ -1,6 +1,7 @@
+use axum::extract::BodyStream;
 use database::current::write::media::CurrentSyncWriteMedia;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ContentId, ImageSlot, ModerationRequestContent, PrimaryImage};
+use model::{AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, PrimaryImage, ContentProcessingId, NewContentParams};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::data::DataError;
@@ -25,7 +26,8 @@ impl WriteCommandsMedia<'_> {
         &self,
         id: AccountIdInternal,
         content_id: ContentId,
-        slot: ImageSlot,
+        slot: ContentSlot,
+        new_content_params: NewContentParams,
     ) -> Result<(), DataError> {
         // Remove previous slot image.
         let current_content_in_slot = self

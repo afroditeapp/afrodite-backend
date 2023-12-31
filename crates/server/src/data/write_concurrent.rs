@@ -8,7 +8,7 @@ use config::Config;
 use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
 use error_stack::{Result, ResultExt};
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentId, ProfileLink};
+use model::{AccountId, AccountIdInternal, ContentId, ProfileLink, ContentProcessingId};
 use simple_backend::image::ImageProcess;
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
@@ -16,15 +16,15 @@ use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorHandle, IntoDataError,
     RouterDatabaseWriteHandle,
 };
-use crate::data::DataError;
+use crate::{data::DataError, content_processing::{NewContentInfo}};
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + Sync + 'static>;
 
 pub enum ConcurrentWriteAction<R> {
     Image {
-        handle: ConcurrentWriteImageHandle,
+        handle: ConcurrentWriteContentHandle,
         action:
-            Box<dyn FnOnce(ConcurrentWriteImageHandle) -> OutputFuture<R> + Send + Sync + 'static>,
+            Box<dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + Sync + 'static>,
     },
     Profile {
         handle: ConcurrentWriteProfileHandle,
@@ -66,8 +66,8 @@ impl AccountWriteLockManager {
 #[derive(Debug)]
 pub struct ConcurrentWriteCommandHandle {
     write: Arc<RouterDatabaseWriteHandle>,
-    /// Image upload queue
-    image_upload_queue: Arc<tokio::sync::Semaphore>,
+    /// Content upload queue
+    content_upload_queue: Arc<tokio::sync::Semaphore>,
     /// Profile index write queue
     profile_index_queue: Arc<tokio::sync::Semaphore>,
     account_write_locks: AccountWriteLockManager,
@@ -77,7 +77,7 @@ impl ConcurrentWriteCommandHandle {
     pub fn new(write: RouterDatabaseWriteHandle, config: &Config) -> Self {
         Self {
             write: write.into(),
-            image_upload_queue: tokio::sync::Semaphore::new(config.queue_limits().image_upload)
+            content_upload_queue: tokio::sync::Semaphore::new(config.queue_limits().content_upload)
                 .into(),
             profile_index_queue: tokio::sync::Semaphore::new(num_cpus::get()).into(),
             account_write_locks: AccountWriteLockManager::default(),
@@ -89,7 +89,7 @@ impl ConcurrentWriteCommandHandle {
 
         ConcurrentWriteSelectorHandle {
             write: self.write.clone(),
-            image_upload_queue: self.image_upload_queue.clone(),
+            content_upload_queue: self.content_upload_queue.clone(),
             profile_index_queue: self.profile_index_queue.clone(),
             _account_write_lock: lock,
         }
@@ -98,7 +98,7 @@ impl ConcurrentWriteCommandHandle {
 
 pub struct ConcurrentWriteSelectorHandle {
     write: Arc<RouterDatabaseWriteHandle>,
-    image_upload_queue: Arc<tokio::sync::Semaphore>,
+    content_upload_queue: Arc<tokio::sync::Semaphore>,
     profile_index_queue: Arc<tokio::sync::Semaphore>,
     _account_write_lock: OwnedMutexGuard<AccountHandle>,
 }
@@ -112,13 +112,13 @@ impl fmt::Debug for ConcurrentWriteSelectorHandle {
 impl ConcurrentWriteSelectorHandle {
     pub async fn accquire_image<
         R,
-        A: FnOnce(ConcurrentWriteImageHandle) -> OutputFuture<R> + Send + Sync + 'static,
+        A: FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + Sync + 'static,
     >(
         self,
         action: A,
     ) -> ConcurrentWriteAction<R> {
         let permit = self
-            .image_upload_queue
+            .content_upload_queue
             .clone()
             .acquire_owned()
             .await
@@ -126,7 +126,7 @@ impl ConcurrentWriteSelectorHandle {
             // panic.
             .expect("Semaphore was closed. This should not happen.");
 
-        let handle = ConcurrentWriteImageHandle {
+        let handle = ConcurrentWriteContentHandle {
             write: self.write,
             _permit: permit,
             _account_write_lock: self._account_write_lock,
@@ -167,24 +167,24 @@ impl ConcurrentWriteSelectorHandle {
     }
 }
 
-pub struct ConcurrentWriteImageHandle {
+pub struct ConcurrentWriteContentHandle {
     write: Arc<RouterDatabaseWriteHandle>,
     _permit: tokio::sync::OwnedSemaphorePermit,
     _account_write_lock: OwnedMutexGuard<AccountHandle>,
 }
 
-impl fmt::Debug for ConcurrentWriteImageHandle {
+impl fmt::Debug for ConcurrentWriteContentHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ConcurrentWriteImageHandle").finish()
     }
 }
 
-impl ConcurrentWriteImageHandle {
+impl ConcurrentWriteContentHandle {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,
         stream: BodyStream,
-    ) -> Result<ContentId, DataError> {
+    ) -> Result<NewContentInfo, DataError> {
         self.write
             .user_write_commands_account()
             .save_to_tmp(id, stream)
@@ -233,7 +233,6 @@ pub struct WriteCommandsConcurrent<'a> {
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     location: LocationIndexIteratorHandle<'a>,
-    image_processing_queue: &'a Arc<tokio::sync::Semaphore>,
 }
 
 impl<'a> WriteCommandsConcurrent<'a> {
@@ -243,7 +242,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         location: LocationIndexIteratorHandle<'a>,
-        image_processing_queue: &'a Arc<tokio::sync::Semaphore>,
     ) -> Self {
         Self {
             current_write_handle,
@@ -251,7 +249,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
             cache,
             file_dir,
             location,
-            image_processing_queue,
         }
     }
 
@@ -259,10 +256,10 @@ impl<'a> WriteCommandsConcurrent<'a> {
         &self,
         id: AccountIdInternal,
         stream: BodyStream,
-    ) -> Result<ContentId, DataError> {
-        let content_id = ContentId::new_random_id();
+    ) -> Result<NewContentInfo, DataError> {
+        let content_id = ContentProcessingId::new_random_id();
 
-        // Clear tmp dir if previous image writing failed and there is no
+        // Clear tmp dir in case previous image writing failed and there is no
         // content ID in the database about it.
         self.file_dir
             .tmp_dir(id.as_id())
@@ -272,34 +269,19 @@ impl<'a> WriteCommandsConcurrent<'a> {
 
         let tmp_raw_img = self
             .file_dir
-            .unprocessed_image_upload(id.as_id(), content_id);
+            .unprocessed_image_upload(id.as_id(), content_id.to_content_id());
         tmp_raw_img
             .save_stream(stream)
             .await
             .change_context(DataError::File)?;
 
-        // Limit image processing because of memory usage
-        let permit = self
-            .image_processing_queue
-            .acquire()
-            .await
-            // Code does not call close method of Semaphore, so this should not
-            // panic.
-            .expect("Semaphore was closed. This should not happen.");
+        let tmp_img = self.file_dir.processed_image_upload(id.as_id(), content_id.to_content_id());
 
-        let tmp_img = self.file_dir.processed_image_upload(id.as_id(), content_id);
-        ImageProcess::start_image_process(tmp_raw_img.as_path(), tmp_img.as_path())
-            .await
-            .change_context(DataError::ImageProcess)?;
-
-        drop(permit);
-
-        tmp_raw_img
-            .remove_if_exists()
-            .await
-            .change_context(DataError::File)?;
-
-        Ok(content_id)
+        Ok(NewContentInfo {
+            processing_id: content_id,
+            tmp_raw_img,
+            tmp_img,
+        })
     }
 
     pub async fn next_profiles(

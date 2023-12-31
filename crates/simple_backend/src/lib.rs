@@ -44,14 +44,10 @@ use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 use utoipa_swagger_ui::SwaggerUi;
 
-use self::{
-    app::App,
-    // data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
-    web_socket::WebSocketManager,
-};
+use self::web_socket::WebSocketManager;
 use crate::{
     media_backup::MediaBackupManager,
-    perf::{PerfCounterManager, PerfCounterManagerData},
+    perf::{PerfCounterManager, PerfCounterManagerData}, app::StateBuilder,
 };
 
 /// Drop this when quit starts
@@ -93,8 +89,10 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     /// For example databases can be opened here.
     async fn on_before_server_start(
         &mut self,
+        state_builder: StateBuilder,
         media_backup_handle: MediaBackupHandle,
-    ) -> Self::AppState;
+        quit_notification: ServerQuitWatcher,
+    ) -> SimpleBackendAppState<Self::AppState>;
 
     /// Callback for doing something after server has been started
     async fn on_after_server_start(&mut self) {}
@@ -164,35 +162,27 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             server_quit_watcher.resubscribe(),
         );
 
-        let logic_app_state = self.logic.on_before_server_start(media_backup_handle).await;
-        // let (database_manager, router_database_handle, router_database_write_handle) =
-        //     DatabaseManager::new(
-        //         self.config.data_dir().to_path_buf(),
-        //         self.config.clone(),
-        //         media_backup_handle,
-        //     )
-        //     .await
-        //     .expect("Database init failed");
+        let state_builder = StateBuilder::new(self.config.clone(), perf_data)
+            .expect("State builder init failed");
+
+        let state = self.logic.on_before_server_start(
+            state_builder,
+            media_backup_handle,
+            server_quit_watcher.resubscribe(),
+        ).await;
 
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
-
-        // let (write_cmd_runner_handle, write_cmd_waiter) =
-        //     WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config);
-
-        let app = App::new(self.config.clone(), perf_data, logic_app_state)
-            .await
-            .expect("App init failed");
 
         let server_task = self
             .create_public_api_server_task(
                 server_quit_watcher.resubscribe(),
                 ws_manager,
-                &app.state(),
+                &state,
             )
             .await;
         let internal_server_task = self
-            .create_internal_api_server_task(server_quit_watcher.resubscribe(), &app.state())
+            .create_internal_api_server_task(server_quit_watcher.resubscribe(), &state)
             .await;
 
         self.logic.on_after_server_start().await;
@@ -221,7 +211,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             }
         }
 
-        drop(app);
+        drop(state);
         perf_manager_quit_handle.wait_quit().await;
         media_backup_quit.wait_quit().await;
         self.logic.on_after_server_quit().await;

@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use axum::extract::BodyStream;
 use error_stack::{Result, ResultExt};
-use model::{AccountId, ContentId};
+use model::{AccountId, ContentId, ContentProcessingState};
 use simple_backend_utils::ContextExt;
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};

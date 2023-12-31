@@ -4,9 +4,9 @@ use axum::{
 };
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ImageSlot, MapTileX, MapTileY,
+    AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ContentSlot, MapTileX, MapTileY,
     MapTileZ, ModerationRequest, ModerationRequestContent, NormalImages,
-    PrimaryImage, SlotId,
+    PrimaryImage, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState,
 };
 use simple_backend::app::GetTileMap;
 use tracing::error;
@@ -18,10 +18,10 @@ use super::{
 };
 use crate::{
     data::{
-        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteImageHandle},
+        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
         DataError,
     },
-    perf::MEDIA,
+    perf::MEDIA, app::ContentProcessingProvider,
 };
 
 pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
@@ -216,7 +216,7 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
+pub async fn get_moderation_request<S: ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ModerationRequest>, StatusCode> {
@@ -247,7 +247,7 @@ pub async fn get_moderation_request<S: ReadData + GetAccessTokens>(
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_moderation_request<S: WriteData + GetAccessTokens>(
+pub async fn put_moderation_request<S: WriteData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(moderation_request): Json<ModerationRequestContent>,
@@ -260,46 +260,51 @@ pub async fn put_moderation_request<S: WriteData + GetAccessTokens>(
     })
 }
 
-pub const PATH_MODERATION_REQUEST_SLOT: &str = "/media_api/moderation/request/slot/:slot_id";
+pub const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/:slot_id";
 
-/// Set image to moderation request slot.
+/// Set content to content processing slot.
+/// Processing ID will be returned and processing of the content
+/// will begin.
+/// Events about the content processing will be sent to the client.
 ///
-/// Slots from 0 to 2 are available.
+/// The state of the processing can be also queired. The querying is
+/// required to receive the content ID.
 ///
-/// TODO: resize and check images at some point
+/// Slots from 0 to 6 are available.
+///
+/// One account can only have one content in upload or processing state.
+/// New upload might potentially delete the previous if processing of it is
+/// not complete.
 ///
 #[utoipa::path(
     put,
-    path = "/media_api/moderation/request/slot/{slot_id}",
-    params(SlotId),
+    path = "/media_api/content_slot/{slot_id}",
+    params(SlotId, NewContentParams),
     request_body(content = Vec<u8>, content_type = "image/jpeg"),
     responses(
-        (status = 200, description = "Sending or updating new image moderation request was successfull.", body = ContentId),
+        (status = 200, description = "Image upload was successful.", body = ContentProcessingId),
         (status = 401, description = "Unauthorized."),
         (status = 406, description = "Unknown slot ID."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
+pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvider>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Path(slot_number): Path<SlotId>,
+    Query(new_content_params): Query<NewContentParams>,
     image: BodyStream,
-) -> Result<Json<ContentId>, StatusCode> {
-    MEDIA.put_image_to_moderation_slot.incr();
+) -> Result<Json<ContentProcessingId>, StatusCode> {
+    MEDIA.put_content_to_content_slot.incr();
 
-    let slot = match slot_number.slot_id {
-        0 => ImageSlot::Image1,
-        1 => ImageSlot::Image2,
-        2 => ImageSlot::Image3,
-        _ => return Err(StatusCode::NOT_ACCEPTABLE),
-    };
+    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i64)
+        .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
-    let content_id = state
+    let content_info = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
-                .accquire_image(move |cmds: ConcurrentWriteImageHandle| {
+                .accquire_image(move |cmds: ConcurrentWriteContentHandle| {
                     Box::new(async move { cmds.save_to_tmp(account_id, image).await })
                 })
                 .await;
@@ -307,15 +312,49 @@ pub async fn put_image_to_moderation_slot<S: GetAccessTokens + WriteData>(
         })
         .await??;
 
-    state
-        .write(move |cmds| async move {
-            cmds.media()
-                .save_to_slot(account_id, content_id, slot)
-                .await
-        })
-        .await?;
+    state.content_processing().queue_new_content(
+        account_id,
+        slot,
+        content_info.clone(),
+        new_content_params
+    ).await;
 
-    Ok(content_id.into())
+    Ok(content_info.processing_id.into())
+}
+
+pub const PATH_GET_CONTENT_SLOT_STATE: &str = "/media_api/content_slot/:slot_id";
+
+/// Get state of content slot.
+///
+/// Slots from 0 to 6 are available.
+///
+#[utoipa::path(
+    get,
+    path = "/media_api/content_slot/{slot_id}",
+    params(SlotId),
+    responses(
+        (status = 200, description = "Successful.", body = ContentProcessingState),
+        (status = 401, description = "Unauthorized."),
+        (status = 406, description = "Unknown slot ID."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_content_slot_state<S: ContentProcessingProvider>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Path(slot_number): Path<SlotId>,
+) -> Result<Json<ContentProcessingState>, StatusCode> {
+    MEDIA.get_content_slot_state.incr();
+
+    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i64)
+        .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
+
+    if let Some(state) = state.content_processing().get_state(account_id, slot).await {
+        Ok(state.into())
+    } else {
+        Ok(ContentProcessingState::empty().into())
+    }
 }
 
 pub const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/:z/:x/:y";
