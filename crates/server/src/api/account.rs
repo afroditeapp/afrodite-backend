@@ -4,7 +4,7 @@ use model::{
     AuthPair, BooleanSetting, DeleteStatus, EventToClientInternal, GoogleAccountId, LoginResult,
     RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
-use simple_backend::app::SignInWith;
+use simple_backend::{app::SignInWith, create_counters};
 use tracing::error;
 
 use super::{
@@ -16,7 +16,6 @@ use crate::{
         EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData,
         WriteData,
     },
-    perf::ACCOUNT,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -564,3 +563,23 @@ pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
     // TODO
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
+
+
+create_counters!(
+    AccountCounters,
+    ACCOUNT,
+    ACCOUNT_COUNTERS_LIST,
+    post_register,
+    post_login,
+    post_sign_in_with_login,
+    get_account_state,
+    get_account_setup,
+    post_account_setup,
+    get_account_data,
+    post_account_data,
+    post_complete_setup,
+    put_setting_profile_visiblity,
+    post_delete,
+    get_deletion_status,
+    delete_cancel_deletion,
+);

@@ -6,13 +6,13 @@ use manager_model::{
     SystemInfoList,
 };
 use model::{AccountIdInternal, BackendConfig, Capabilities};
-use simple_backend::app::{GetManagerApi, PerfCounterDataProvider};
+use simple_backend::{app::{GetManagerApi, PerfCounterDataProvider}, create_counters};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
 use tracing::info;
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig}, perf::COMMON_ADMIN,
+    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig},
 };
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
@@ -350,3 +350,18 @@ pub async fn get_perf_data<S: PerfCounterDataProvider>(
         Err(StatusCode::UNAUTHORIZED)
     }
 }
+
+create_counters!(
+    CommonAdminCounters,
+    COMMON_ADMIN,
+    COMMON_ADMIN_COUNTERS_LIST,
+    get_system_info,
+    get_software_info,
+    get_latest_build_info,
+    post_request_build_software,
+    post_request_update_software,
+    post_request_restart_or_reset_backend,
+    get_backend_config,
+    post_backend_config,
+    get_perf_data,
+);

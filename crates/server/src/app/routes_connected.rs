@@ -1,14 +1,12 @@
 use axum::{
     middleware,
-    routing::{delete, get, patch, post, put},
+    routing::{delete, get, post, put},
     Router,
 };
-use simple_backend::app::SimpleBackendAppState;
+use crate::app::S;
 
 use super::AppState;
 use crate::api::{self};
-
-type S = SimpleBackendAppState<AppState>;
 
 /// Private routes only accessible when WebSocket is connected.
 pub struct ConnectedApp {
@@ -171,58 +169,17 @@ impl ConnectedApp {
 
     pub fn private_media_server_router(&self) -> Router {
         let private = Router::new()
-            .route(
-                api::media::PATH_GET_CONTENT,
-                get(api::media::get_content::<S>),
-            )
-            .route(
-                api::media::PATH_GET_PROFILE_CONTENT_INFO,
-                get(api::media::get_profile_content_info::<S>),
-            )
-            .route(
-                api::media::PATH_GET_SECURITY_IMAGE_INFO,
-                get(api::media::get_security_image_info::<S>),
-            )
-            .route(
-                api::media::PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
-                get(api::media::get_all_account_media_content::<S>),
-            )
-            .route(
-                api::media::PATH_PUT_PROFILE_CONTENT,
-                put(api::media::put_profile_content::<S>),
-            )
-            .route(
-                api::media::PATH_MODERATION_REQUEST,
-                get(api::media::get_moderation_request::<S>),
-            )
-            .route(
-                api::media::PATH_MODERATION_REQUEST,
-                put(api::media::put_moderation_request::<S>),
-            )
-            .route(
-                api::media::PATH_PUT_CONTENT_TO_CONTENT_SLOT,
-                put(api::media::put_content_to_content_slot::<S>),
-            )
-            .route(
-                api::media::PATH_GET_CONTENT_SLOT_STATE,
-                get(api::media::get_content_slot_state::<S>),
-            )
-            .route(
-                api::media::PATH_GET_MAP_TILE,
-                get(api::media::get_map_tile::<S>),
-            )
-            .route(
-                api::media_admin::PATH_ADMIN_MODERATION_PAGE_NEXT,
-                patch(api::media_admin::patch_moderation_request_list::<S>),
-            )
-            .route(
-                api::media_admin::PATH_ADMIN_MODERATION_HANDLE_REQUEST,
-                post(api::media_admin::post_handle_moderation_request::<S>),
-            )
+            // Media
+            .merge(api::media::profile_content_router(self.state.clone()))
+            .merge(api::media::security_image_router(self.state.clone()))
+            .merge(api::media::moderation_request_router(self.state.clone()))
+            .merge(api::media::content_router(self.state.clone()))
+            .merge(api::media::tile_map_router(self.state.clone()))
+            // Media admin
+            .merge(api::media_admin::admin_moderation_router(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(self.state.clone(), api::utils::authenticate_with_access_token::<S, _>)
-            })
-            .with_state(self.state());
+            });
 
         private
     }

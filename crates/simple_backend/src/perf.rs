@@ -59,9 +59,9 @@ impl PerfCounter {
 ///
 /// ```
 /// create_counters!(
-///     AccountCounters,       // Struct name
-///     ACCOUNT,               // Static struct instance name
-///     ACCOUNT_COUNTERS_LIST, // Static counter list name
+///     AccountCounters,       // Struct name (private)
+///     ACCOUNT,               // Static struct instance name (private)
+///     ACCOUNT_COUNTERS_LIST, // Static counter list name (public)
 ///     check_access_token,    // Struct field name
 ///     get_account_state,     // Struct field name
 ///     // ...
@@ -75,9 +75,9 @@ macro_rules! create_counters {
         $counters_list_name:ident,
         $( $name:ident , )*
     ) => {
-        pub struct $counters_struct_type_name {
+        struct $counters_struct_type_name {
             $(
-                pub $name: PerfCounter,
+                pub $name: $crate::perf::PerfCounter,
             )*
         }
 
@@ -85,19 +85,19 @@ macro_rules! create_counters {
             const fn new() -> Self {
                 Self {
                     $(
-                        $name: PerfCounter::new(stringify!($name)),
+                        $name: $crate::perf::PerfCounter::new(stringify!($name)),
                     )*
                 }
             }
         }
 
-        static $counters_list_name: &'static [&'static PerfCounter] = &[
+        pub static $counters_list_name: &'static [&'static $crate::perf::PerfCounter] = &[
             $(
                 &$counters_static_name.$name,
             )*
         ];
 
-        pub static $counters_static_name: $counters_struct_type_name =
+        static $counters_static_name: $counters_struct_type_name =
             $counters_struct_type_name::new();
     };
 }

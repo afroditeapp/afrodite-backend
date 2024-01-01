@@ -2,10 +2,11 @@
 
 use axum::extract::{Path, State};
 use model::{AccountId, BooleanSetting, Profile};
+use simple_backend::create_counters;
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{GetAccounts, GetConfig, GetInternalApi, ReadData}, perf::MEDIA_INTERNAL,
+    app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
 };
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
@@ -82,3 +83,12 @@ pub async fn internal_post_update_profile_image_visibility<
         .await?;
     Ok(())
 }
+
+
+create_counters!(
+    MediaInternalCounters,
+    MEDIA_INTERNAL,
+    MEDIA_INTERNAL_COUNTERS_LIST,
+    internal_get_check_moderation_request_for_account,
+    internal_post_update_profile_image_visibility,
+);

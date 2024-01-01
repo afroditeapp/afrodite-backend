@@ -2,11 +2,11 @@
 
 use axum::extract::{Path, State};
 use model::{AccessToken, Account, AccountId};
+use simple_backend::create_counters;
 
 use crate::{
     api::utils::{Json, StatusCode},
     app::{GetAccessTokens, GetAccounts, ReadData},
-    perf::ACCOUNT_INTERNAL,
 };
 
 pub const PATH_INTERNAL_CHECK_ACCESS_TOKEN: &str = "/internal/check_access_token";
@@ -57,3 +57,11 @@ pub async fn internal_get_account_state<S: ReadData + GetAccounts>(
 
     Ok(account.into())
 }
+
+create_counters!(
+    AccountInternalCounters,
+    ACCOUNT_INTERNAL,
+    ACCOUNT_INTERNAL_COUNTERS_LIST,
+    check_access_token,
+    internal_get_account_state,
+);

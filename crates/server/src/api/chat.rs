@@ -5,12 +5,13 @@ use model::{
     ReceivedBlocksPage, ReceivedLikesPage, SendMessageToAccount, SentBlocksPage, SentLikesPage,
     UpdateMessageViewStatus,
 };
+use simple_backend::create_counters;
 
 use super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{app::{EventManagerProvider, GetAccounts, ReadData, WriteData}, perf::CHAT};
+use crate::{app::{EventManagerProvider, GetAccounts, ReadData, WriteData}};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -466,3 +467,24 @@ pub async fn post_send_message<S: GetAccounts + WriteData + EventManagerProvider
         .await?;
     Ok(())
 }
+
+
+create_counters!(
+    ChatCounters,
+    CHAT,
+    CHAT_COUNTERS_LIST,
+    post_send_like,
+    get_sent_likes,
+    get_received_likes,
+    delete_like,
+    get_matches,
+    post_block_profile,
+    post_unblock_profile,
+    get_sent_blocks,
+    get_received_blocks,
+    get_pending_messages,
+    delete_pending_messages,
+    get_message_number_of_latest_viewed_message,
+    post_message_number_of_latest_viewed_message,
+    post_send_message,
+);

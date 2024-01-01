@@ -16,12 +16,10 @@ use model::{
     AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,
     RefreshToken,
 };
-use simple_backend::web_socket::WebSocketManager;
+use simple_backend::{web_socket::WebSocketManager, create_counters};
 use simple_backend_utils::ContextExt;
 use tracing::error;
 pub use utils::api::PATH_CONNECT;
-
-use crate::perf::COMMON;
 
 use super::{
     super::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
@@ -301,3 +299,11 @@ async fn send_account_state<S: WriteData + ReadData>(
 
     Ok(())
 }
+
+create_counters!(
+    CommonCounters,
+    COMMON,
+    COMMON_COUNTERS_LIST,
+    get_version,
+    get_connect_websocket,
+);

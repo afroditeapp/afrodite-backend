@@ -3,6 +3,7 @@ use model::{
     AccountId, AccountIdInternal, FavoriteProfilesPage, Location, Profile, ProfileLink,
     ProfilePage, ProfileUpdate, ProfileUpdateInternal,
 };
+use simple_backend::create_counters;
 
 use super::{
     super::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
@@ -12,7 +13,7 @@ use super::{
 use crate::{data::{
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle},
     DataError,
-}, perf::PROFILE};
+}};
 
 // TODO: Add timeout for database commands
 
@@ -435,3 +436,21 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 }
 
 // ------------------- Benchmark routes end ----------------------------
+
+
+create_counters!(
+    ProfileCounters,
+    PROFILE,
+    PROFILE_COUNTERS_LIST,
+    get_profile,
+    post_profile,
+    get_location,
+    put_location,
+    post_get_next_profile_page,
+    post_reset_profile_paging,
+    get_favorite_profiles,
+    post_favorite_profile,
+    delete_favorite_profile,
+    get_profile_from_database_debug_mode_benchmark,
+    post_profile_to_database_debug_mode_benchmark,
+);

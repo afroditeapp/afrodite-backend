@@ -2,11 +2,12 @@
 
 use axum::extract::{Path, State};
 use model::{AccountId, BooleanSetting};
+use simple_backend::create_counters;
 
 use super::super::app::{
     GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData,
 };
-use crate::{api::utils::StatusCode, perf::{PROFILE_INTERNAL}};
+use crate::{api::utils::StatusCode};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
@@ -41,3 +42,10 @@ pub async fn internal_post_update_profile_visibility<
 
     Ok(())
 }
+
+create_counters!(
+    ProfileInternalCounters,
+    PROFILE_INTERNAL,
+    PROFILE_INTERNAL_COUNTERS_LIST,
+    internal_post_update_profile_visibility,
+);

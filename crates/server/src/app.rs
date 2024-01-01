@@ -32,7 +32,8 @@ use crate::{
 pub mod routes_connected;
 pub mod routes_internal;
 
-type S = SimpleBackendAppState<AppState>;
+/// State type for route handlers.
+pub type S = SimpleBackendAppState<AppState>;
 
 #[derive(Clone)]
 pub struct AppState {
