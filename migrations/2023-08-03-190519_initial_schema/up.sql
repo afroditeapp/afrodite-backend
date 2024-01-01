@@ -267,21 +267,22 @@ CREATE TABLE IF NOT EXISTS current_account_media(
 
 -- Information about uploaded media content
 CREATE TABLE IF NOT EXISTS media_content(
-    id               INTEGER PRIMARY KEY NOT NULL,
-    uuid             BLOB                NOT NULL   UNIQUE,
-    account_id       INTEGER             NOT NULL,
+    id                  INTEGER PRIMARY KEY NOT NULL,
+    uuid                BLOB                NOT NULL   UNIQUE,
+    account_id          INTEGER             NOT NULL,
     -- InSlot = 0, If user uploads new content to slot the current will be removed.
     -- InModeration = 1, Content is in moderation. User can not remove the content.
     -- InModeration = 2, Content is moderated as accepted. User can not remove the content until
     --                   specific time elapses.
     -- ModeratedAsDenied = 3, Content is moderated as denied. Making new moderation request removes
     --                        the content.
-    content_state    INTEGER             NOT NULL,
+    content_state       INTEGER             NOT NULL,
     -- Client captured this media
-    secure_capture   BOOLEAN             NOT NULL,
-    contains_face    BOOLEAN             NOT NULL,
+    secure_capture      BOOLEAN             NOT NULL,
+    -- JpegImage = 0, Jpeg image
+    content_type_number INTEGER             NOT NULL,
     -- Numbers from 0 to 6.
-    slot_number      INTEGER             NOT NULL,
+    slot_number         INTEGER             NOT NULL,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

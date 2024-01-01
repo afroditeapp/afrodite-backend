@@ -2,7 +2,7 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt, report};
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, ContentSlot, ModerationQueueNumber,
-    ModerationRequestContent, PrimaryImage, NextQueueNumbersRaw, ModerationRequestState, NextQueueNumberType,
+    ModerationRequestContent, ProfileContent, NextQueueNumbersRaw, ModerationRequestState, NextQueueNumberType, NewContentParams, SetProfileContent, MediaContentInternal, MediaContentType, PendingProfileContent, SetProfileContentInternal,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::ContextExt;
@@ -29,33 +29,102 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         Ok(())
     }
 
-    pub fn update_current_account_media_with_primary_image(
+    pub fn update_profile_content_if_possible(
         &mut self,
         id: AccountIdInternal,
-        primary_image: PrimaryImage,
+        new: SetProfileContent,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::{current_account_media::dsl::*, media_content};
+        use model::schema::current_account_media::dsl::*;
 
-        let content_id = if let Some(content_uuid) = primary_image.content_id {
-            media_content::table
-                .filter(media_content::uuid.eq(content_uuid))
-                .select(media_content::id)
-                .first::<ContentIdDb>(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, primary_image)?
-                .into()
-        } else {
-            None
+        let all_content = self.read().media().get_account_media_content(id)?;
+        let convert = |content_id: Option<ContentId>| {
+            if let Some(content_id) = content_id {
+                let found = all_content
+                    .iter()
+                    .find(|content|
+                        content.content_id == content_id &&
+                        content.state == ContentState::ModeratedAsAccepted &&
+                        content.content_type == MediaContentType::JpegImage
+                    );
+
+                if let Some(c) = found {
+                    Ok(Some(c.content_row_id))
+                } else {
+                    Err(DieselDatabaseError::NotAllowed.report())
+                }
+            } else {
+                Ok(None)
+            }
         };
 
         update(current_account_media.find(id.as_db_id()))
             .set((
-                profile_content_id_1.eq(content_id),
-                grid_crop_size.eq(primary_image.grid_crop_size),
-                grid_crop_x.eq(primary_image.grid_crop_x),
-                grid_crop_y.eq(primary_image.grid_crop_y),
+                profile_content_id_0.eq(convert(Some(new.content_id_0))?),
+                profile_content_id_1.eq(convert(new.content_id_1)?),
+                profile_content_id_2.eq(convert(new.content_id_2)?),
+                profile_content_id_3.eq(convert(new.content_id_3)?),
+                profile_content_id_4.eq(convert(new.content_id_4)?),
+                profile_content_id_5.eq(convert(new.content_id_5)?),
+                grid_crop_size.eq(new.grid_crop_size),
+                grid_crop_x.eq(new.grid_crop_x),
+                grid_crop_y.eq(new.grid_crop_y),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (id, primary_image))?;
+            .into_db_error(DieselDatabaseError::Execute, (id, new))?;
+
+        Ok(())
+    }
+
+    pub fn update_or_delete_pending_profile_content_if_possible(
+        &mut self,
+        id: AccountIdInternal,
+        new: Option<SetProfileContent>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::current_account_media::dsl::*;
+
+        let new = if let Some(new) = new {
+            // Update
+            new.into()
+        } else {
+            // Delete
+            SetProfileContentInternal::default()
+        };
+
+        let all_content = self.read().media().get_account_media_content(id)?;
+        let convert = |content_id: Option<ContentId>| {
+            if let Some(content_id) = content_id {
+                let found = all_content
+                    .iter()
+                    .find(|content|
+                        content.content_id == content_id &&
+                        content.state != ContentState::ModeratedAsDenied &&
+                        content.content_type == MediaContentType::JpegImage
+                    );
+
+                if let Some(c) = found {
+                    Ok(Some(c.content_row_id))
+                } else {
+                    Err(DieselDatabaseError::NotAllowed.report())
+                }
+            } else {
+                Ok(None)
+            }
+        };
+
+        update(current_account_media.find(id.as_db_id()))
+            .set((
+                pending_profile_content_id_0.eq(convert(new.content_id_0)?),
+                pending_profile_content_id_1.eq(convert(new.content_id_1)?),
+                pending_profile_content_id_2.eq(convert(new.content_id_2)?),
+                pending_profile_content_id_3.eq(convert(new.content_id_3)?),
+                pending_profile_content_id_4.eq(convert(new.content_id_4)?),
+                pending_profile_content_id_5.eq(convert(new.content_id_5)?),
+                pending_grid_crop_size.eq(new.grid_crop_size),
+                pending_grid_crop_x.eq(new.grid_crop_x),
+                pending_grid_crop_y.eq(new.grid_crop_y),
+            ))
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, (id, new))?;
 
         Ok(())
     }
@@ -65,10 +134,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         content_uploader: AccountIdInternal,
         content_id: ContentId,
         slot: ContentSlot,
+        content_params: NewContentParams,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
-
-        // TODO: API support for secure capture
 
         insert_into(media_content)
             .values((
@@ -76,7 +144,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
                 uuid.eq(content_id),
                 content_state.eq(ContentState::InSlot),
                 slot_number.eq(slot as i64),
-                secure_capture.eq(true),
+                secure_capture.eq(content_params.secure_capture),
+                content_type_number.eq(content_params.content_type),
             ))
             .execute(self.conn())
             .into_db_error(
@@ -87,7 +156,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         Ok(())
     }
 
-    pub fn delete_image_from_slot(
+    pub fn delete_content_from_slot(
         &mut self,
         request_creator: AccountIdInternal,
         slot: ContentSlot,
@@ -202,5 +271,78 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         } else {
             Err(DieselDatabaseError::NotAllowed.report())
         }
+    }
+
+    pub fn update_security_image(
+        &mut self,
+        image_owner: AccountIdInternal,
+        content_id: ContentId,
+    ) -> Result<(), DieselDatabaseError> {
+
+        unimplemented!("TODO")
+    }
+
+    pub fn update_or_delete_pending_security_image(
+        &mut self,
+        image_owner: AccountIdInternal,
+        content_id: Option<ContentId>,
+    ) -> Result<(), DieselDatabaseError> {
+
+        unimplemented!("TODO")
+    }
+
+    pub fn delete_content(
+        &mut self,
+        content_owner: AccountIdInternal,
+        content_id: ContentId,
+    ) -> Result<(), DieselDatabaseError> {
+        // // Delete old queue number and request
+        // {
+        //     use model::schema::queue_entry::dsl::*;
+        //     delete(queue_entry.filter(
+        //         account_id.eq(request_creator.row_id())
+        //             .and(queue_type_number.eq(NextQueueNumberType::MediaModeration)
+        //                 .or(queue_type_number.eq(NextQueueNumberType::InitialMediaModeration))
+        //             )))
+        //         .execute(self.conn())
+        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        // }
+        // {
+        //     use model::schema::media_moderation_request::dsl::*;
+        //     delete(media_moderation_request.filter(account_id.eq(request_creator.row_id())))
+        //         .execute(self.conn())
+        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        // }
+        // // Foreign key constraint removes MediaModeration rows.
+        // // Old data is not needed in current data database.
+        // Ok(())
+        unimplemented!("TODO")
+    }
+
+    pub fn delete_moderation_request_not_yet_in_moderation(
+        &mut self,
+        request_owner: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        // // Delete old queue number and request
+        // {
+        //     use model::schema::queue_entry::dsl::*;
+        //     delete(queue_entry.filter(
+        //         account_id.eq(request_creator.row_id())
+        //             .and(queue_type_number.eq(NextQueueNumberType::MediaModeration)
+        //                 .or(queue_type_number.eq(NextQueueNumberType::InitialMediaModeration))
+        //             )))
+        //         .execute(self.conn())
+        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        // }
+        // {
+        //     use model::schema::media_moderation_request::dsl::*;
+        //     delete(media_moderation_request.filter(account_id.eq(request_creator.row_id())))
+        //         .execute(self.conn())
+        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        // }
+        // // Foreign key constraint removes MediaModeration rows.
+        // // Old data is not needed in current data database.
+        // Ok(())
+        unimplemented!("TODO")
     }
 }

@@ -9,44 +9,6 @@ use super::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
-
-/// Get current security image for selected profile. Only for admins.
-#[utoipa::path(
-    get,
-    path = "/media_api/security_image_info/{account_id}",
-    params(AccountId),
-    responses(
-        (status = 200, description = "Get security image info.", body = SecurityImage),
-        (status = 401, description = "Unauthorized."),
-        (status = 500),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_security_image_info<S: ReadData + GetAccounts>(
-    State(state): State<S>,
-    Path(requested_account_id): Path<AccountId>,
-    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<SecurityImage>, StatusCode> {
-    MEDIA_ADMIN.get_security_image_info.incr();
-
-    // TODO: access restrictions
-
-    let internal_id = state
-        .accounts()
-        .get_internal_id(requested_account_id)
-        .await?;
-
-    let internal_current_media = state
-        .read()
-        .media()
-        .current_account_media(internal_id)
-        .await?;
-
-    let info: SecurityImage = internal_current_media.into();
-    Ok(info.into())
-}
-
 pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/next";
 
 /// Get current list of moderation requests in my moderation queue.

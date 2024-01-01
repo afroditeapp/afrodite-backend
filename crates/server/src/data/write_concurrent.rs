@@ -259,7 +259,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
     ) -> Result<NewContentInfo, DataError> {
         let content_id = ContentProcessingId::new_random_id();
 
-        // Clear tmp dir in case previous image writing failed and there is no
+        // Clear tmp dir in case previous content writing failed and there is no
         // content ID in the database about it.
         self.file_dir
             .tmp_dir(id.as_id())
@@ -269,13 +269,13 @@ impl<'a> WriteCommandsConcurrent<'a> {
 
         let tmp_raw_img = self
             .file_dir
-            .unprocessed_image_upload(id.as_id(), content_id.to_content_id());
+            .raw_content_upload(id.as_id(), content_id.to_content_id());
         tmp_raw_img
             .save_stream(stream)
             .await
             .change_context(DataError::File)?;
 
-        let tmp_img = self.file_dir.processed_image_upload(id.as_id(), content_id.to_content_id());
+        let tmp_img = self.file_dir.processed_content_upload(id.as_id(), content_id.to_content_id());
 
         Ok(NewContentInfo {
             processing_id: content_id,

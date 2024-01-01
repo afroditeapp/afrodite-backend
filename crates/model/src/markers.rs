@@ -80,7 +80,9 @@ disable_logging!(
     GoogleAccountId,
     // Media
     ModerationRequestContent,
-    PrimaryImage,
+    ProfileContent,
+    SetProfileContent,
+    SetProfileContentInternal,
     ContentState,
     i64,
     (),

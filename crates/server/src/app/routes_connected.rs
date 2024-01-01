@@ -172,24 +172,24 @@ impl ConnectedApp {
     pub fn private_media_server_router(&self) -> Router {
         let private = Router::new()
             .route(
-                api::media::PATH_GET_IMAGE,
-                get(api::media::get_image::<S>),
+                api::media::PATH_GET_CONTENT,
+                get(api::media::get_content::<S>),
             )
             .route(
-                api::media::PATH_GET_PRIMARY_IMAGE_INFO,
-                get(api::media::get_primary_image_info::<S>),
+                api::media::PATH_GET_PROFILE_CONTENT_INFO,
+                get(api::media::get_profile_content_info::<S>),
             )
             .route(
-                api::media_admin::PATH_GET_SECURITY_IMAGE_INFO,
-                get(api::media_admin::get_security_image_info::<S>),
+                api::media::PATH_GET_SECURITY_IMAGE_INFO,
+                get(api::media::get_security_image_info::<S>),
             )
             .route(
-                api::media::PATH_GET_ALL_NORMAL_IMAGES_INFO,
-                get(api::media::get_all_normal_images::<S>),
+                api::media::PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
+                get(api::media::get_all_account_media_content::<S>),
             )
             .route(
-                api::media::PATH_PUT_PRIMARY_IMAGE,
-                put(api::media::put_primary_image::<S>),
+                api::media::PATH_PUT_PROFILE_CONTENT,
+                put(api::media::put_profile_content::<S>),
             )
             .route(
                 api::media::PATH_MODERATION_REQUEST,

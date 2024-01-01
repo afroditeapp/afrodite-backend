@@ -150,17 +150,17 @@ impl<'a> ReadCommands<'a> {
         content_id: ContentId,
     ) -> Result<ReaderStream<tokio::fs::File>, DataError> {
         self.files
-            .image_content(account_id, content_id)
+            .media_content(account_id, content_id)
             .read_stream()
             .await
             .into_data_error((account_id, content_id))
     }
 
-    pub async fn all_account_media(
+    pub async fn all_account_media_content(
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Vec<MediaContentInternal>, DataError> {
-        self.db_read(move |mut cmds| cmds.media().get_account_media(account_id))
+        self.db_read(move |mut cmds| cmds.media().get_account_media_content(account_id))
             .await
     }
 

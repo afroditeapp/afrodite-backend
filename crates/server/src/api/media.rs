@@ -1,12 +1,14 @@
+use std::fmt::Write;
+
 use axum::{
     extract::{BodyStream, Path, Query, State},
     Extension, TypedHeader,
 };
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ImageAccessCheck, ContentSlot, MapTileX, MapTileY,
-    MapTileZ, ModerationRequest, ModerationRequestContent, NormalImages,
-    PrimaryImage, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState,
+    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, MapTileX, MapTileY,
+    MapTileZ, ModerationRequest, ModerationRequestContent, AccountContent,
+    ProfileContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState, SetProfileContent, PendingProfileContent, SecurityImage, PendingSecurityImage,
 };
 use simple_backend::app::GetTileMap;
 use tracing::error;
@@ -24,31 +26,27 @@ use crate::{
     perf::MEDIA, app::ContentProcessingProvider,
 };
 
-pub const PATH_GET_IMAGE: &str = "/media_api/image/:account_id/:content_id";
+pub const PATH_GET_CONTENT: &str = "/media_api/content/:account_id/:content_id";
 
-// TODO:
-//       Security image should only be downloadable for the owner of the image
-//       or admin with moderation rights.
-
-/// Get profile image
+/// Get content data
 #[utoipa::path(
     get,
-    path = "/media_api/image/{account_id}/{content_id}",
-    params(AccountId, ContentId, ImageAccessCheck),
+    path = "/media_api/content/{account_id}/{content_id}",
+    params(AccountId, ContentId, ContentAccessCheck),
     responses(
-        (status = 200, description = "Get image file.", body = Vec<u8>, content_type = "image/jpeg"),
+        (status = 200, description = "Get content file.", body = Vec<u8>, content_type = "application/octet-stream"),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_image<S: ReadData>(
+pub async fn get_content<S: ReadData>(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Path(content_id): Path<ContentId>,
-    Query(_access_check): Query<ImageAccessCheck>,
+    Query(_access_check): Query<ContentAccessCheck>,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
-    MEDIA.get_image.incr();
+    MEDIA.get_content.incr();
 
     // TODO: Add access restrictions.
 
@@ -59,146 +57,379 @@ pub async fn get_image<S: ReadData>(
     let data = state
         .read()
         .media()
-        .image(account_id, content_id)
-        .await
-        .map_err(|e| {
-            error!("{:?}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .content_data(account_id, content_id)
+        .await?;
 
-    Ok((TypedHeader(ContentType::jpeg()), data))
+    Ok((TypedHeader(ContentType::octet_stream()), data))
 }
 
-pub const PATH_GET_PRIMARY_IMAGE_INFO: &str = "/media_api/primary_image_info/:account_id";
+pub const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/:account_id";
 
-/// Get current public image for selected profile
+/// Get current profile content for selected profile
 #[utoipa::path(
     get,
-    path = "/media_api/primary_image_info/{account_id}",
-    params(AccountId, ImageAccessCheck),
+    path = "/media_api/profile_content_info/{account_id}",
+    params(AccountId, ContentAccessCheck),
     responses(
-        (status = 200, description = "Get primary image info.", body = PrimaryImage),
+        (status = 200, description = "Get profile content info.", body = ProfileContent),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_primary_image_info<S: ReadData + GetAccounts + GetAccessTokens>(
+pub async fn get_profile_content_info<S: ReadData + GetAccounts>(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
-    Query(_access_check): Query<ImageAccessCheck>,
+    Query(_access_check): Query<ContentAccessCheck>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<PrimaryImage>, StatusCode> {
-    MEDIA.get_primary_image_info.incr();
+) -> Result<Json<ProfileContent>, StatusCode> {
+    MEDIA.get_profile_content_info.incr();
 
     // TODO: access restrictions
 
     let internal_id = state
         .accounts()
         .get_internal_id(account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     let internal_current_media = state
         .read()
         .media()
         .current_account_media(internal_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
-    let info: PrimaryImage = internal_current_media.into();
+    let info: ProfileContent = internal_current_media.into();
     Ok(info.into())
 }
 
-pub const PATH_GET_ALL_NORMAL_IMAGES_INFO: &str = "/media_api/all_normal_images_info/:account_id";
+pub const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_content/:account_id";
 
-/// Get list of all normal images on the server for one account.
+/// Get list of all media content on the server for one account.
 #[utoipa::path(
     get,
-    path = "/media_api/all_normal_images/{account_id}",
+    path = "/media_api/all_account_media_content/{account_id}",
     params(AccountId),
     responses(
-        (status = 200, description = "Get list of available primary images.", body = NormalImages),
+        (status = 200, description = "Successful.", body = AccountContent),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_all_normal_images<S: ReadData + GetAccounts>(
+pub async fn get_all_account_media_content<S: ReadData + GetAccounts>(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<NormalImages>, StatusCode> {
-    MEDIA.get_all_normal_images.incr();
+) -> Result<Json<AccountContent>, StatusCode> {
+    MEDIA.get_all_account_media_content.incr();
 
     // TODO: access restrictions
 
     let internal_id = state
         .accounts()
         .get_internal_id(account_id)
-        .await
-        .map_err(|e| {
-            error!("{e:?}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     let internal_current_media =
         state
             .read()
-            .all_account_media(internal_id)
-            .await
-            .map_err(|e| {
-                error!("{e:?}");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+            .all_account_media_content(internal_id)
+            .await?;
+
     let data = internal_current_media
         .into_iter()
-        .filter_map(|m| {
-            if !m.secure_capture {
-                Some(m.content_id.as_content_id())
-            } else {
-                None
-            }
-        })
+        .map(|m| m.into())
         .collect();
 
-    Ok(NormalImages { data }.into())
+    Ok(AccountContent { data }.into())
 }
 
-pub const PATH_PUT_PRIMARY_IMAGE: &str = "/media_api/primary_image";
+pub const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
 
-/// Set primary image for account. Image content ID can not be empty.
+/// Set new profile content for current account.
+///
+/// # Restrictions
+/// - All content must be moderated as accepted.
+/// - All content must be owned by the account.
+/// - All content must be images.
 #[utoipa::path(
     put,
-    path = "/media_api/primary_image",
-    request_body(content = PrimaryImage),
+    path = "/media_api/profile_content",
+    request_body(content = SetProfileContent),
     responses(
-        (status = 200, description = "Primary image update successfull"),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_primary_image<S: WriteData>(
+pub async fn put_profile_content<S: WriteData>(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
-    Json(new_image): Json<PrimaryImage>,
+    Json(new): Json<SetProfileContent>,
 ) -> Result<(), StatusCode> {
-    MEDIA.put_primary_image.incr();
-
-    if new_image.content_id.is_none() {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
+    MEDIA.put_profile_content.incr();
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_primary_image(api_caller_account_id, new_image))
+        .update_profile_content(api_caller_account_id, new))
+}
+
+pub const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str = "/media_api/pending_profile_content_info/:account_id";
+
+/// Get pending profile content for selected profile
+#[utoipa::path(
+    get,
+    path = "/media_api/pending_profile_content_info/{account_id}",
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successful.", body = PendingProfileContent),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_pending_profile_content_info<S: ReadData + GetAccounts>(
+    State(state): State<S>,
+    Path(account_id): Path<AccountId>,
+    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
+) -> Result<Json<PendingProfileContent>, StatusCode> {
+    MEDIA.get_pending_profile_content_info.incr();
+
+    // TODO: access restrictions
+
+    let internal_id = state
+        .accounts()
+        .get_internal_id(account_id)
+        .await?;
+
+    let internal_current_media = state
+        .read()
+        .media()
+        .current_account_media(internal_id)
+        .await?;
+
+    let info: PendingProfileContent = internal_current_media.into();
+    Ok(info.into())
+}
+
+pub const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
+
+/// Set new pending profile content for current account.
+/// Server will switch to pending content when next moderation request is
+/// accepted.
+///
+/// # Restrictions
+/// - All content must not be moderated as denied.
+/// - All content must be owned by the account.
+/// - All content must be images.
+#[utoipa::path(
+    put,
+    path = "/media_api/pending_profile_content",
+    request_body(content = SetProfileContent),
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn put_pending_profile_content<S: WriteData>(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Json(new): Json<SetProfileContent>,
+) -> Result<(), StatusCode> {
+    MEDIA.put_pending_profile_content.incr();
+
+    db_write!(state, move |cmds| cmds
+        .media()
+        .update_or_delete_pending_profile_content(api_caller_account_id, Some(new)))
+}
+
+pub const PATH_DELETE_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
+
+/// Delete new pending profile content for current account.
+/// Server will not switch to pending content when next moderation request is
+/// accepted.
+#[utoipa::path(
+    delete,
+    path = "/media_api/pending_profile_content",
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn delete_pending_profile_content<S: WriteData>(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+) -> Result<(), StatusCode> {
+    MEDIA.delete_pending_profile_content.incr();
+
+    db_write!(state, move |cmds| cmds
+        .media()
+        .update_or_delete_pending_profile_content(api_caller_account_id, None))
+}
+
+pub const PATH_GET_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info/:account_id";
+
+/// Get current security image for selected profile.
+#[utoipa::path(
+    get,
+    path = "/media_api/security_image_info/{account_id}",
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successful.", body = SecurityImage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_security_image_info<S: ReadData + GetAccounts>(
+    State(state): State<S>,
+    Path(requested_account_id): Path<AccountId>,
+    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
+) -> Result<Json<SecurityImage>, StatusCode> {
+    MEDIA.get_security_image_info.incr();
+
+    // TODO: access restrictions
+
+    let internal_id = state
+        .accounts()
+        .get_internal_id(requested_account_id)
+        .await?;
+
+    let internal_current_media = state
+        .read()
+        .media()
+        .current_account_media(internal_id)
+        .await?;
+
+    let info: SecurityImage = internal_current_media.into();
+    Ok(info.into())
+}
+
+pub const PATH_GET_PENDING_SECURITY_IMAGE_INFO: &str = "/media_api/pending_security_image_info/:account_id";
+
+/// Get pending security image for selected profile.
+#[utoipa::path(
+    get,
+    path = "/media_api/pending_security_image_info/{account_id}",
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successful.", body = PendingSecurityImage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_pending_security_image_info<S: ReadData + GetAccounts>(
+    State(state): State<S>,
+    Path(requested_account_id): Path<AccountId>,
+    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
+) -> Result<Json<PendingSecurityImage>, StatusCode> {
+    MEDIA.get_pending_security_image_info.incr();
+
+    // TODO: access restrictions
+
+    let internal_id = state
+        .accounts()
+        .get_internal_id(requested_account_id)
+        .await?;
+
+    let internal_current_media = state
+        .read()
+        .media()
+        .current_account_media(internal_id)
+        .await?;
+
+    let info: PendingSecurityImage = internal_current_media.into();
+    Ok(info.into())
+}
+
+pub const PATH_PUT_SECURITY_IMAGE_INFO: &str = "/media_api/security_image_info";
+
+/// Set current security image content for current account.
+///
+/// # Restrictions
+/// - The content must be moderated as accepted.
+/// - The content must be owned by the account.
+/// - The content must be an image.
+/// - The content must be captured by client.
+#[utoipa::path(
+    put,
+    path = "/media_api/security_image_info",
+    request_body = ContentId,
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn put_security_image_info<S: WriteData>(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Json(content_id): Json<ContentId>,
+) -> Result<(), StatusCode> {
+    MEDIA.put_security_image_info.incr();
+
+    db_write!(state, move |cmds| cmds
+        .media()
+        .update_security_image(api_caller_account_id, content_id))
+}
+
+pub const PATH_PUT_PENDING_SECURITY_IMAGE_INFO: &str = "/media_api/pending_security_image_info";
+
+/// Set pending security image for current account.
+#[utoipa::path(
+    put,
+    path = "/media_api/pending_security_image_info",
+    request_body = ContentId,
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn put_pending_security_image_info<S: WriteData>(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Json(content_id): Json<ContentId>,
+) -> Result<(), StatusCode> {
+    MEDIA.put_pending_security_image_info.incr();
+
+    db_write!(state, move |cmds| cmds
+        .media()
+        .update_or_delete_pending_security_image(api_caller_account_id, Some(content_id)))
+}
+
+pub const DELETE_PENDING_SECURITY_IMAGE_INFO: &str = "/media_api/pending_security_image_info";
+
+/// Delete pending security image for current account.
+/// Server will not change the security image when next moderation request
+/// is moderated as accepted.
+#[utoipa::path(
+    delete,
+    path = "/media_api/pending_security_image_info",
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn delete_pending_security_image_info<S: WriteData>(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+) -> Result<(), StatusCode> {
+    MEDIA.put_pending_security_image_info.incr();
+
+    db_write!(state, move |cmds| cmds
+        .media()
+        .update_or_delete_pending_security_image(api_caller_account_id, None))
 }
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
@@ -260,6 +491,29 @@ pub async fn put_moderation_request<S: WriteData>(
     })
 }
 
+/// Delete current moderation request which is not yet in moderation.
+#[utoipa::path(
+    delete,
+    path = "/media_api/moderation/request",
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn delete_moderation_request<S: WriteData>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<(), StatusCode> {
+    MEDIA.delete_moderation_request.incr();
+
+    db_write!(state, move |cmds| {
+        cmds.media()
+            .delete_moderation_request_if_possible(account_id)
+    })
+}
+
 pub const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/:slot_id";
 
 /// Set content to content processing slot.
@@ -294,7 +548,7 @@ pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvide
     Extension(account_id): Extension<AccountIdInternal>,
     Path(slot_number): Path<SlotId>,
     Query(new_content_params): Query<NewContentParams>,
-    image: BodyStream,
+    content_data: BodyStream,
 ) -> Result<Json<ContentProcessingId>, StatusCode> {
     MEDIA.put_content_to_content_slot.incr();
 
@@ -305,7 +559,7 @@ pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvide
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
                 .accquire_image(move |cmds: ConcurrentWriteContentHandle| {
-                    Box::new(async move { cmds.save_to_tmp(account_id, image).await })
+                    Box::new(async move { cmds.save_to_tmp(account_id, content_data).await })
                 })
                 .await;
             out
@@ -355,6 +609,43 @@ pub async fn get_content_slot_state<S: ContentProcessingProvider>(
     } else {
         Ok(ContentProcessingState::empty().into())
     }
+}
+
+pub const PATH_DELETE_CONTENT: &str = "/media_api/content/:account_id/:content_id";
+
+/// Delete content data. Content can be removed after specific time has passed
+/// since removing all usage from it (content is not a security image or profile
+/// content).
+#[utoipa::path(
+    delete,
+    path = "/media_api/content/{account_id}/{content_id}",
+    params(AccountId, ContentId),
+    responses(
+        (status = 200, description = "Content data deleted."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn delete_content<S: WriteData + GetAccounts>(
+    State(state): State<S>,
+    Path(account_id): Path<AccountId>,
+    Path(content_id): Path<ContentId>,
+) -> Result<(), StatusCode> {
+    MEDIA.delete_content.incr();
+
+    // TODO: Add access restrictions.
+
+    // TODO: Add database support for keeping track of content usage.
+
+    let internal_id = state
+        .accounts()
+        .get_internal_id(account_id)
+        .await?;
+
+    db_write!(state, move |cmds| cmds
+        .media()
+        .delete_content(internal_id, content_id))
 }
 
 pub const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/:z/:x/:y";

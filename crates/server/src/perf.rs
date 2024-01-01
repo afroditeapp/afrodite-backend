@@ -62,14 +62,23 @@ create_counters!(
     MediaCounters,
     MEDIA,
     MEDIA_COUNTERS_LIST,
-    get_image,
-    get_primary_image_info,
-    get_all_normal_images,
-    put_primary_image,
+    get_content,
+    get_profile_content_info,
+    get_pending_profile_content_info,
+    get_security_image_info,
+    get_pending_security_image_info,
+    put_security_image_info,
+    put_pending_security_image_info,
+    get_all_account_media_content,
+    put_profile_content,
+    put_pending_profile_content,
+    delete_pending_profile_content,
     get_moderation_request,
     put_moderation_request,
+    delete_moderation_request,
     put_content_to_content_slot,
     get_content_slot_state,
+    delete_content,
     get_map_tile,
 );
 
@@ -79,7 +88,6 @@ create_counters!(
     MEDIA_ADMIN_COUNTERS_LIST,
     patch_moderation_request_list,
     post_handle_moderation_request,
-    get_security_image_info,
 );
 
 create_counters!(

@@ -90,8 +90,6 @@ pub enum DataError {
     FeatureDisabled,
     #[error("Not found")]
     NotFound,
-    #[error("Content slot not empty")]
-    ContentSlotNotEmpty,
     #[error("Tried to do something that is not allowed")]
     NotAllowed,
     #[error("Action is already done")]

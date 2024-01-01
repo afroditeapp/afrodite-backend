@@ -175,7 +175,7 @@ diesel::table! {
         account_id -> Integer,
         content_state -> Integer,
         secure_capture -> Bool,
-        contains_face -> Bool,
+        content_type_number -> Integer,
         slot_number -> Integer,
     }
 }

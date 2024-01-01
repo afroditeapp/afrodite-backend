@@ -1,7 +1,7 @@
 use axum::extract::BodyStream;
 use database::current::write::media::CurrentSyncWriteMedia;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, PrimaryImage, ContentProcessingId, NewContentParams};
+use model::{AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ProfileContent, ContentProcessingId, NewContentParams, SetProfileContent, PendingProfileContent};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::data::DataError;
@@ -29,41 +29,33 @@ impl WriteCommandsMedia<'_> {
         slot: ContentSlot,
         new_content_params: NewContentParams,
     ) -> Result<(), DataError> {
-        // Remove previous slot image.
+        // Remove previous slot content.
         let current_content_in_slot = self
-            .db_read(move |mut cmds| cmds.media().get_content_id_from_slot(id, slot))
+            .db_read(move |mut cmds| cmds.media().get_media_content_from_slot(id, slot))
             .await?;
 
-        if let Some(current_id) = current_content_in_slot {
+        if let Some(content) = current_content_in_slot {
             let path = self
                 .file_dir()
-                .image_content(id.as_id(), current_id.as_content_id());
+                .media_content(id.as_id(), content.into());
             path.remove_if_exists()
                 .await
                 .change_context(DataError::File)?;
-            self.db_write(move |mut cmds| cmds.media().delete_image_from_slot(id, slot))
+            self.db_write(move |mut cmds| cmds.media().delete_content_from_slot(id, slot))
                 .await
                 .change_context(DataError::Sqlite)?;
         }
 
-        // Paths related to moving image from tmp to image dir
+        // Paths related to moving content from tmp dir to content dir
         let tmp_img = self
             .file_dir()
-            .processed_image_upload(id.as_id(), content_id);
-        let processed_content_path = self.file_dir().image_content(id.as_id(), content_id);
-
-        if self
-            .db_read(move |mut cmds| cmds.media().get_content_id_from_slot(id, slot))
-            .await?
-            .is_some()
-        {
-            return Err(DataError::ContentSlotNotEmpty.report());
-        }
+            .processed_content_upload(id.as_id(), content_id);
+        let processed_content_path = self.file_dir().media_content(id.as_id(), content_id);
 
         self.db_transaction(move |mut cmds| {
-            cmds.media().insert_content_id_to_slot(id, content_id, slot)?;
+            cmds.media().insert_content_id_to_slot(id, content_id, slot, new_content_params)?;
 
-            // Move image from tmp to image dir
+            // Move content from tmp dir to content dir
             tmp_img
                 .move_to_blocking(&processed_content_path)
                 .change_context(DieselDatabaseError::File)?;
@@ -82,12 +74,69 @@ impl WriteCommandsMedia<'_> {
         Ok(())
     }
 
-    pub async fn update_primary_image(
+    pub async fn update_profile_content(
         self,
         id: AccountIdInternal,
-        primary_image: PrimaryImage,
+        new: SetProfileContent,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| cmds.media().update_current_account_media_with_primary_image(id, primary_image))
+        self.db_transaction(move |mut cmds|
+            cmds.media().update_profile_content_if_possible(id, new)
+        )
+            .await
+    }
+
+    pub async fn update_or_delete_pending_profile_content(
+        self,
+        id: AccountIdInternal,
+        new: Option<SetProfileContent>,
+    ) -> Result<(), DataError> {
+        self.db_transaction(move |mut cmds|
+            cmds.media().update_or_delete_pending_profile_content_if_possible(id, new)
+        )
+            .await
+    }
+
+    pub async fn update_security_image(
+        self,
+        content_owner: AccountIdInternal,
+        content: ContentId,
+    ) -> Result<(), DataError> {
+        self.db_transaction(move |mut cmds|
+            cmds.media().delete_content(content_owner, content)
+        )
+            .await
+    }
+
+    pub async fn update_or_delete_pending_security_image(
+        self,
+        content_owner: AccountIdInternal,
+        content: Option<ContentId>,
+    ) -> Result<(), DataError> {
+        self.db_transaction(move |mut cmds|
+            cmds.media().update_or_delete_pending_security_image(content_owner, content)
+        )
+            .await
+    }
+
+
+    pub async fn delete_content(
+        self,
+        content_owner: AccountIdInternal,
+        content: ContentId,
+    ) -> Result<(), DataError> {
+        self.db_transaction(move |mut cmds|
+            cmds.media().delete_content(content_owner, content)
+        )
+            .await
+    }
+
+    pub async fn delete_moderation_request_if_possible(
+        self,
+        moderation_request_owner: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.db_transaction(move |mut cmds|
+            cmds.media().delete_moderation_request_not_yet_in_moderation(moderation_request_owner)
+        )
             .await
     }
 }

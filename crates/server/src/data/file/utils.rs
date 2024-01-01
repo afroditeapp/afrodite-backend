@@ -11,7 +11,7 @@ use tokio_util::io::ReaderStream;
 use super::super::FileError;
 
 pub const TMP_DIR_NAME: &str = "tmp";
-pub const IMAGE_DIR_NAME: &str = "images";
+pub const CONTENT_DIR_NAME: &str = "content";
 pub const EXPORT_DIR_NAME: &str = "export";
 
 /// Path to directory which contains all account data directories.
@@ -27,20 +27,21 @@ impl FileDir {
         }
     }
 
-    pub fn unprocessed_image_upload(&self, id: AccountId, content: ContentId) -> TmpImageFile {
+    /// Unprocessed content upload.
+    pub fn raw_content_upload(&self, id: AccountId, content: ContentId) -> TmpContentFile {
         self.account_dir(id)
             .tmp_dir()
-            .unprocessed_image_upload(content)
+            .raw_content_upload(content)
     }
 
-    pub fn processed_image_upload(&self, id: AccountId, content: ContentId) -> TmpImageFile {
+    pub fn processed_content_upload(&self, id: AccountId, content: ContentId) -> TmpContentFile {
         self.account_dir(id)
             .tmp_dir()
-            .processed_image_upload(content)
+            .processed_content_upload(content)
     }
 
-    pub fn image_content(&self, id: AccountId, content_id: ContentId) -> ImageFile {
-        self.account_dir(id).image_dir().image_content(content_id)
+    pub fn media_content(&self, id: AccountId, content_id: ContentId) -> ContentFile {
+        self.account_dir(id).content_dir().media_content(content_id)
     }
 
     pub fn account_dir(&self, id: AccountId) -> AccountDir {
@@ -78,9 +79,9 @@ impl AccountDir {
         ExportDir { dir: self.dir }
     }
 
-    fn image_dir(mut self) -> ImageDir {
-        self.dir.push(IMAGE_DIR_NAME);
-        ImageDir { dir: self.dir }
+    fn content_dir(mut self) -> ContentDir {
+        self.dir.push(CONTENT_DIR_NAME);
+        ContentDir { dir: self.dir }
     }
 }
 
@@ -125,34 +126,34 @@ impl TmpDir {
         }
     }
 
-    pub fn unprocessed_image_upload(mut self, id: ContentId) -> TmpImageFile {
-        self.dir.push(id.raw_jpg_image());
-        TmpImageFile {
+    pub fn raw_content_upload(mut self, id: ContentId) -> TmpContentFile {
+        self.dir.push(id.raw_content_file_name());
+        TmpContentFile {
             path: PathToFile { path: self.dir },
         }
     }
 
-    pub fn processed_image_upload(mut self, id: ContentId) -> TmpImageFile {
-        self.dir.push(id.jpg_image());
-        TmpImageFile {
+    pub fn processed_content_upload(mut self, id: ContentId) -> TmpContentFile {
+        self.dir.push(id.content_file_name());
+        TmpContentFile {
             path: PathToFile { path: self.dir },
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct ImageDir {
+pub struct ContentDir {
     dir: PathBuf,
 }
 
-impl ImageDir {
+impl ContentDir {
     pub fn path(&self) -> &PathBuf {
         &self.dir
     }
 
-    pub fn image_content(mut self, content_id: ContentId) -> ImageFile {
-        self.dir.push(content_id.jpg_image());
-        ImageFile {
+    pub fn media_content(mut self, content_id: ContentId) -> ContentFile {
+        self.dir.push(content_id.content_file_name());
+        ContentFile {
             path: PathToFile { path: self.dir },
         }
     }
@@ -170,11 +171,11 @@ impl ExportDir {
 }
 
 #[derive(Debug, Clone)]
-pub struct ImageFile {
+pub struct ContentFile {
     path: PathToFile,
 }
 
-impl ImageFile {
+impl ContentFile {
     pub fn path(&self) -> &PathBuf {
         self.path.as_path()
     }
@@ -193,20 +194,20 @@ impl ImageFile {
 }
 
 #[derive(Debug, Clone)]
-pub struct TmpImageFile {
+pub struct TmpContentFile {
     path: PathToFile,
 }
 
-impl TmpImageFile {
+impl TmpContentFile {
     pub async fn save_stream(&self, stream: BodyStream) -> Result<(), FileError> {
         self.path.save_stream(stream).await
     }
 
-    pub async fn move_to(self, new_location: &ImageFile) -> Result<(), FileError> {
+    pub async fn move_to(self, new_location: &ContentFile) -> Result<(), FileError> {
         self.path.move_to(&new_location.path).await
     }
 
-    pub fn move_to_blocking(self, new_location: &ImageFile) -> Result<(), FileError> {
+    pub fn move_to_blocking(self, new_location: &ContentFile) -> Result<(), FileError> {
         self.path.move_to_blocking(&new_location.path)
     }
 

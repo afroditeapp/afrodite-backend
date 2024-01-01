@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
-use diesel::prelude::*;
+use diesel::{prelude::*, backend::Backend};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentIdInternal, ContentState,
+    AccountId, AccountIdInternal, ContentId, ContentState,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, ContentSlot, MediaContentInternal,
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
-    ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState,
+    ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState, AccountIdDb, ContentIdDb, MediaContentType,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -73,58 +73,74 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         )))
     }
 
+    fn media_content_raw(
+        &mut self,
+        media_owner_id: AccountIdInternal,
+        id: Option<ContentIdDb>
+    ) -> Result<Option<MediaContentInternal>, DieselDatabaseError> {
+        if let Some(content_id) = id {
+            use crate::schema::media_content::dsl::*;
+
+            let content = media_content
+                .filter(id.eq(content_id))
+                .select(MediaContentRaw::as_select())
+                .first(self.conn())
+                .into_db_error(DieselDatabaseError::Execute, (media_owner_id, content_id))?;
+
+            Ok(Some(content.into()))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub fn current_account_media(
         &mut self,
         media_owner_id: AccountIdInternal,
     ) -> Result<CurrentAccountMediaInternal, DieselDatabaseError> {
-        let conn = self.conn();
-        let current_media = {
-            use crate::schema::current_account_media::dsl::*;
+        use crate::schema::current_account_media;
 
-            current_account_media
-                .filter(account_id.eq(media_owner_id.as_db_id()))
-                .select(CurrentAccountMediaRaw::as_select())
-                .first(conn)
-                .into_db_error(DieselDatabaseError::Execute, media_owner_id)?
-        };
+        let raw = current_account_media::table
+            .filter(current_account_media::account_id.eq(media_owner_id.as_db_id()))
+            .select(CurrentAccountMediaRaw::as_select())
+            .first::<CurrentAccountMediaRaw>(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, media_owner_id)?;
 
-        let security = if let Some(content_id) = current_media.security_content_id {
-            use crate::schema::media_content::dsl::*;
-
-            let content = media_content
-                .filter(id.eq(content_id))
-                .select(MediaContentRaw::as_select())
-                .first(conn)
-                .into_db_error(DieselDatabaseError::Execute, (media_owner_id, content_id))?;
-
-            Some(content.to_content_id_internal())
-        } else {
-            None
-        };
-
-        let profile = if let Some(content_id) = current_media.profile_content_id_1 {
-            use crate::schema::media_content::dsl::*;
-
-            let content = media_content
-                .filter(id.eq(content_id))
-                .select(MediaContentRaw::as_select())
-                .first(conn)
-                .into_db_error(DieselDatabaseError::Execute, (media_owner_id, content_id))?;
-
-            Some(content.to_content_id_internal())
-        } else {
-            None
-        };
+        let security_content_id = self.media_content_raw(media_owner_id, raw.security_content_id)?;
+        let pending_security_content_id = self.media_content_raw(media_owner_id, raw.pending_security_content_id)?;
+        let profile_content_id_0 = self.media_content_raw(media_owner_id, raw.profile_content_id_0)?;
+        let profile_content_id_1 = self.media_content_raw(media_owner_id, raw.profile_content_id_1)?;
+        let profile_content_id_2 = self.media_content_raw(media_owner_id, raw.profile_content_id_2)?;
+        let profile_content_id_3 = self.media_content_raw(media_owner_id, raw.profile_content_id_3)?;
+        let profile_content_id_4 = self.media_content_raw(media_owner_id, raw.profile_content_id_4)?;
+        let profile_content_id_5 = self.media_content_raw(media_owner_id, raw.profile_content_id_5)?;
+        let pending_profile_content_id_0 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_0)?;
+        let pending_profile_content_id_1 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_1)?;
+        let pending_profile_content_id_2 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_2)?;
+        let pending_profile_content_id_3 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_3)?;
+        let pending_profile_content_id_4 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_4)?;
+        let pending_profile_content_id_5 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_5)?;
 
         Ok(CurrentAccountMediaInternal {
-            security_content_id: security,
-            profile_content_id: profile,
-            grid_crop_size: current_media.grid_crop_size
-                .unwrap_or(CurrentAccountMediaInternal::GRID_CROP_SIZE_DEFAULT),
-            grid_crop_x: current_media.grid_crop_x
-                .unwrap_or(CurrentAccountMediaInternal::GRID_CROP_X_DEFAULT),
-            grid_crop_y: current_media.grid_crop_y
-                .unwrap_or(CurrentAccountMediaInternal::GRID_CROP_Y_DEFAULT),
+            grid_crop_size: raw.grid_crop_size,
+            grid_crop_x: raw.grid_crop_x,
+            grid_crop_y: raw.grid_crop_y,
+            pending_grid_crop_size: raw.pending_grid_crop_size,
+            pending_grid_crop_x: raw.pending_grid_crop_x,
+            pending_grid_crop_y: raw.pending_grid_crop_y,
+            security_content_id,
+            pending_security_content_id,
+            profile_content_id_0,
+            profile_content_id_1,
+            profile_content_id_2,
+            profile_content_id_3,
+            profile_content_id_4,
+            profile_content_id_5,
+            pending_profile_content_id_0,
+            pending_profile_content_id_1,
+            pending_profile_content_id_2,
+            pending_profile_content_id_3,
+            pending_profile_content_id_4,
+            pending_profile_content_id_5,
         })
     }
 
@@ -141,7 +157,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         Ok(content)
     }
 
-    pub fn get_account_media(
+    pub fn get_account_media_content(
         &mut self,
         media_owner_id: AccountIdInternal,
     ) -> Result<Vec<MediaContentInternal>, DieselDatabaseError> {
@@ -158,27 +174,18 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         let content = data
             .into_iter()
             .map(|r| {
-                MediaContentInternal {
-                    content_id: ContentIdInternal {
-                        content_id: r.uuid,
-                        content_row_id: r.id,
-                    },
-                    state: r.content_state,
-                    slot_number: r.slot_number,
-                    secure_capture: r.secure_capture,
-                    contains_face: r.contains_face,
-                }
+                r.into()
             })
             .collect();
 
         Ok(content)
     }
 
-    pub fn get_content_id_from_slot(
+    pub fn get_media_content_from_slot(
         &mut self,
         slot_owner: AccountIdInternal,
         slot: ContentSlot,
-    ) -> Result<Option<ContentIdInternal>, DieselDatabaseError> {
+    ) -> Result<Option<MediaContentInternal>, DieselDatabaseError> {
         let required_state = ContentState::InSlot as i64;
         let required_slot = slot as i64;
 
@@ -195,7 +202,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
                 .into_db_error(DieselDatabaseError::Execute, (slot_owner, slot))?
         };
 
-        Ok(data.map(|data| data.to_content_id_internal()))
+        Ok(data.map(|data| data.into()))
     }
 
     /// Validate moderation request content.
@@ -260,25 +267,111 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
     }
 }
 
-// async fn get_content_id_from_row_id(
-//     &self,
-//     id: i64,
-// ) -> error_stack::Result<ContentIdInternal, SqliteDatabaseError> {
-//     let request = sqlx::query!(
-//         r#"
-//         SELECT uuid as "content_id: uuid::Uuid"
-//         FROM media_content
-//         WHERE account_id = ?
-//         "#,
-//         id,
-//     )
-//     .fetch_one(self.pool())
-//     .await
-//     .map(|r| ContentIdInternal {
-//         content_id: r.content_id,
-//         content_row_id: id,
-//     })
-//     .change_context(SqliteDatabaseError::Fetch)?;
+// --------------------------------------------------------------------
+// Some code if future optimization is wanted:
 
-//     Ok(request)
-// }
+// use crate::schema::current_account_media;
+// use crate::schema::media_content;
+
+// let (
+//     security_content,
+//     content_0,
+//     content_1,
+//     content_2,
+//     content_3,
+//     content_4,
+//     content_5,
+//     pending_security_content,
+//     pending_content_0,
+//     pending_content_1,
+//     pending_content_2,
+//     pending_content_3,
+//     pending_content_4,
+//     pending_content_5,
+// ) = diesel::alias!(
+//     media_content as security_content,
+//     media_content as content_0,
+//     media_content as content_1,
+//     media_content as content_2,
+//     media_content as content_3,
+//     media_content as content_4,
+//     media_content as content_5,
+//     media_content as pending_security_content,
+//     media_content as pending_content_0,
+//     media_content as pending_content_1,
+//     media_content as pending_content_2,
+//     media_content as pending_content_3,
+//     media_content as pending_content_4,
+//     media_content as pending_content_5,
+// );
+
+// let (
+//     raw,
+//     s,
+//     c0,
+//     c1,
+//     c2,
+//     c3,
+//     c4,
+//     c5,
+//     ps,
+//     pc0,
+//     pc1,
+//     pc2,
+//     pc3,
+//     pc4,
+//     pc5,
+// ) =
+//     current_account_media::table
+//         .left_join(security_content.on(current_account_media::security_content_id.assume_not_null().eq(security_content.field(media_content::id))))
+//         .left_join(content_0.on(current_account_media::profile_content_id_0.assume_not_null().eq(content_0.field(media_content::id))))
+//         .left_join(content_1.on(current_account_media::profile_content_id_1.assume_not_null().eq(content_1.field(media_content::id))))
+//         .left_join(content_2.on(current_account_media::profile_content_id_2.assume_not_null().eq(content_2.field(media_content::id))))
+//         .left_join(content_3.on(current_account_media::profile_content_id_3.assume_not_null().eq(content_3.field(media_content::id))))
+//         .left_join(content_4.on(current_account_media::profile_content_id_4.assume_not_null().eq(content_4.field(media_content::id))))
+//         .left_join(content_5.on(current_account_media::profile_content_id_5.assume_not_null().eq(content_5.field(media_content::id))))
+//         .left_join(pending_security_content.on(current_account_media::pending_security_content_id.assume_not_null().eq(pending_security_content.field(media_content::id))))
+//         .left_join(pending_content_0.on(current_account_media::pending_profile_content_id_0.assume_not_null().eq(pending_content_0.field(media_content::id))))
+//         .left_join(pending_content_1.on(current_account_media::pending_profile_content_id_1.assume_not_null().eq(pending_content_1.field(media_content::id))))
+//         .left_join(pending_content_2.on(current_account_media::pending_profile_content_id_2.assume_not_null().eq(pending_content_2.field(media_content::id))))
+//         .left_join(pending_content_3.on(current_account_media::pending_profile_content_id_3.assume_not_null().eq(pending_content_3.field(media_content::id))))
+//         .left_join(pending_content_4.on(current_account_media::pending_profile_content_id_4.assume_not_null().eq(pending_content_4.field(media_content::id))))
+//         .left_join(pending_content_5.on(current_account_media::pending_profile_content_id_5.assume_not_null().eq(pending_content_5.field(media_content::id))))
+//         .filter(current_account_media::account_id.eq(media_owner_id.as_db_id()))
+//         .select(
+//             (
+//                 CurrentAccountMediaRaw::as_select(),
+//                 security_content.field(media_content::uuid).nullable(),
+//                 content_0.field(media_content::uuid).nullable(),
+//                 content_1.field(media_content::uuid).nullable(),
+//                 content_2.field(media_content::uuid).nullable(),
+//                 content_3.field(media_content::uuid).nullable(),
+//                 content_4.field(media_content::uuid).nullable(),
+//                 content_5.field(media_content::uuid).nullable(),
+//                 pending_security_content.field(media_content::uuid).nullable(),
+//                 pending_content_0.field(media_content::uuid).nullable(),
+//                 pending_content_1.field(media_content::uuid).nullable(),
+//                 pending_content_2.field(media_content::uuid).nullable(),
+//                 pending_content_3.field(media_content::uuid).nullable(),
+//                 pending_content_4.field(media_content::uuid).nullable(),
+//                 pending_content_5.field(media_content::uuid).nullable(),
+//             )
+//         )
+//         .first::<(
+//             CurrentAccountMediaRaw,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//             Option<ContentId>,
+//         )>(self.conn())
+//         .into_db_error(DieselDatabaseError::Execute, media_owner_id)?;

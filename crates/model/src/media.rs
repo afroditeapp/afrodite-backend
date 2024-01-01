@@ -32,6 +32,35 @@ pub struct MapTileZ {
     pub z: u32,
 }
 
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, diesel::FromSqlRow, diesel::AsExpression, ToSchema)]
+#[diesel(sql_type = Integer)]
+#[repr(i64)]
+pub enum MediaContentType {
+    JpegImage = 0,
+}
+
+impl MediaContentType {
+    pub fn file_extension(&self) -> &'static str {
+        match self {
+            Self::JpegImage => "jpg",
+        }
+    }
+}
+
+diesel_i64_try_from!(MediaContentType);
+
+impl TryFrom<i64> for MediaContentType {
+    type Error = String;
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let value = match value {
+            0 => Self::JpegImage,
+            _ => return Err(format!("Unknown media content type {}", value)),
+        };
+
+        Ok(value)
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum ContentProcessingStateType {
     /// This content slot is empty.
@@ -112,7 +141,7 @@ impl ContentProcessingId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ContentSlot {
@@ -282,7 +311,7 @@ impl TryFrom<i64> for ModerationRequestState {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ContentState {
@@ -293,8 +322,7 @@ pub enum ContentState {
     /// Content is moderated as accepted. User can not remove the content until
     /// specific time elapses.
     ModeratedAsAccepted = 2,
-    /// Content is moderated as denied. Making new moderation request removes
-    /// the content.
+    /// Content is moderated as denied.
     ModeratedAsDenied = 3,
 }
 
@@ -323,13 +351,26 @@ pub struct SlotId {
     pub slot_id: u8,
 }
 
-
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct NewContentParams {
     /// Client captured this content.
-    pub secure_content: bool,
-    /// User sets this to true if the content contains the account owner's face.
-    pub contains_face: bool,
+    pub secure_capture: bool,
+    pub content_type: MediaContentType,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct ContentInfo {
+    pub id: ContentId,
+    pub content_type: MediaContentType,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct ContentInfoDetailed {
+    pub id: ContentId,
+    pub content_type: MediaContentType,
+    pub state: ContentState,
+    pub slot: Option<ContentSlot>,
+    pub secure_capture: bool,
 }
 
 /// Content ID for media content for example images
@@ -369,13 +410,13 @@ impl ContentId {
         &self.content_id
     }
 
-    pub fn raw_jpg_image(&self) -> String {
-        format!("{}.raw.jpg", self.content_id.as_hyphenated())
+    /// File name for unprocessed user uploaded content.
+    pub fn raw_content_file_name(&self) -> String {
+        format!("{}.raw", self.content_id.as_hyphenated())
     }
 
-    /// Image file name with extension.
-    pub fn jpg_image(&self) -> String {
-        format!("{}.jpg", self.content_id.as_hyphenated())
+    pub fn content_file_name(&self) -> String {
+        format!("{}", self.content_id.as_hyphenated())
     }
 }
 
@@ -433,37 +474,61 @@ pub struct MediaContentRaw {
     pub account_id: AccountIdDb,
     pub content_state: ContentState,
     pub secure_capture: bool,
-    pub contains_face: bool,
+    pub content_type_number: MediaContentType,
     pub slot_number: ContentSlot,
 }
 
-impl MediaContentRaw {
-    pub fn to_content_id_internal(&self) -> ContentIdInternal {
-        ContentIdInternal {
-            content_id: self.uuid,
-            content_row_id: self.id,
+impl From<MediaContentRaw> for MediaContentInternal {
+    fn from(value: MediaContentRaw) -> MediaContentInternal {
+        MediaContentInternal {
+            content_id: value.uuid,
+            content_row_id: value.id,
+            content_type: value.content_type_number,
+            state: value.content_state,
+            secure_capture: value.secure_capture,
+            slot_number: if value.content_state == ContentState::InSlot {
+                Some(value.slot_number)
+            } else {
+                None
+            },
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct MediaContentInternal {
-    pub content_id: ContentIdInternal,
-    pub state: ContentState,
-    pub secure_capture: bool,
-    pub contains_face: bool,
-    pub slot_number: ContentSlot,
-}
-
-#[derive(Debug, Clone)]
-pub struct ContentIdInternal {
     pub content_id: ContentId,
     pub content_row_id: ContentIdDb,
+    pub content_type: MediaContentType,
+    pub state: ContentState,
+    pub secure_capture: bool,
+    pub slot_number: Option<ContentSlot>,
 }
 
-impl ContentIdInternal {
-    pub fn as_content_id(&self) -> ContentId {
-        self.content_id
+impl From<MediaContentInternal> for ContentId {
+    fn from(value: MediaContentInternal) -> Self {
+        value.content_id
+    }
+}
+
+impl From<MediaContentInternal> for ContentInfo {
+    fn from(value: MediaContentInternal) -> Self {
+        ContentInfo {
+            id: value.content_id,
+            content_type: value.content_type,
+        }
+    }
+}
+
+impl From<MediaContentInternal> for ContentInfoDetailed {
+    fn from(value: MediaContentInternal) -> Self {
+        ContentInfoDetailed {
+            id: value.content_id,
+            content_type: value.content_type,
+            state: value.state,
+            slot: value.slot_number,
+            secure_capture: value.secure_capture,
+        }
     }
 }
 
@@ -496,11 +561,26 @@ pub struct CurrentAccountMediaRaw {
 
 #[derive(Debug, Clone)]
 pub struct CurrentAccountMediaInternal {
-    pub security_content_id: Option<ContentIdInternal>,
-    pub profile_content_id: Option<ContentIdInternal>,
-    pub grid_crop_size: f64,
-    pub grid_crop_x: f64,
-    pub grid_crop_y: f64,
+    pub security_content_id: Option<MediaContentInternal>,
+    pub profile_content_id_0: Option<MediaContentInternal>,
+    pub profile_content_id_1: Option<MediaContentInternal>,
+    pub profile_content_id_2: Option<MediaContentInternal>,
+    pub profile_content_id_3: Option<MediaContentInternal>,
+    pub profile_content_id_4: Option<MediaContentInternal>,
+    pub profile_content_id_5: Option<MediaContentInternal>,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
+    pub pending_security_content_id: Option<MediaContentInternal>,
+    pub pending_profile_content_id_0: Option<MediaContentInternal>,
+    pub pending_profile_content_id_1: Option<MediaContentInternal>,
+    pub pending_profile_content_id_2: Option<MediaContentInternal>,
+    pub pending_profile_content_id_3: Option<MediaContentInternal>,
+    pub pending_profile_content_id_4: Option<MediaContentInternal>,
+    pub pending_profile_content_id_5: Option<MediaContentInternal>,
+    pub pending_grid_crop_size: Option<f64>,
+    pub pending_grid_crop_x: Option<f64>,
+    pub pending_grid_crop_y: Option<f64>,
 }
 
 impl CurrentAccountMediaInternal {
@@ -509,18 +589,59 @@ impl CurrentAccountMediaInternal {
     pub const GRID_CROP_Y_DEFAULT: f64 = 0.0;
 }
 
+/// Update normal or pending profile content
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct PrimaryImage {
-    pub content_id: Option<ContentId>,
-    pub grid_crop_size: f64,
-    pub grid_crop_x: f64,
-    pub grid_crop_y: f64,
+pub struct SetProfileContent {
+    /// Primary profile image which is shown in grid view.
+    pub content_id_0: ContentId,
+    pub content_id_1: Option<ContentId>,
+    pub content_id_2: Option<ContentId>,
+    pub content_id_3: Option<ContentId>,
+    pub content_id_4: Option<ContentId>,
+    pub content_id_5: Option<ContentId>,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
 }
 
-impl From<CurrentAccountMediaInternal> for PrimaryImage {
-    fn from(value: CurrentAccountMediaInternal) -> Self {
+impl SetProfileContent {
+    pub fn iter(&self) -> impl Iterator<Item = ContentId> {
+        [
+            Some(self.content_id_0),
+            self.content_id_1,
+            self.content_id_2,
+            self.content_id_3,
+            self.content_id_4,
+            self.content_id_5,
+        ]
+            .into_iter()
+            .filter_map(|c| c.as_ref().cloned())
+    }
+}
+
+#[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct SetProfileContentInternal {
+    /// Primary profile image which is shown in grid view.
+    pub content_id_0: Option<ContentId>,
+    pub content_id_1: Option<ContentId>,
+    pub content_id_2: Option<ContentId>,
+    pub content_id_3: Option<ContentId>,
+    pub content_id_4: Option<ContentId>,
+    pub content_id_5: Option<ContentId>,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
+}
+
+impl From<SetProfileContent> for SetProfileContentInternal {
+    fn from(value: SetProfileContent) -> Self {
         Self {
-            content_id: value.profile_content_id.map(|c| c.as_content_id()),
+            content_id_0: Some(value.content_id_0),
+            content_id_1: value.content_id_1,
+            content_id_2: value.content_id_2,
+            content_id_3: value.content_id_3,
+            content_id_4: value.content_id_4,
+            content_id_5: value.content_id_5,
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -528,29 +649,110 @@ impl From<CurrentAccountMediaInternal> for PrimaryImage {
     }
 }
 
+/// Current content in public profile.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct SecurityImage {
-    pub content_id: Option<ContentId>,
+pub struct ProfileContent {
+    /// Primary profile image which is shown in grid view.
+    pub content_id_0: Option<ContentInfo>,
+    pub content_id_1: Option<ContentInfo>,
+    pub content_id_2: Option<ContentInfo>,
+    pub content_id_3: Option<ContentInfo>,
+    pub content_id_4: Option<ContentInfo>,
+    pub content_id_5: Option<ContentInfo>,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
 }
 
-impl From<CurrentAccountMediaInternal> for SecurityImage {
+impl From<CurrentAccountMediaInternal> for ProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            content_id: value.security_content_id.map(|c| c.as_content_id()),
+            content_id_0: value.profile_content_id_0.map(|c| c.into()),
+            content_id_1: value.profile_content_id_1.map(|c| c.into()),
+            content_id_2: value.profile_content_id_2.map(|c| c.into()),
+            content_id_3: value.profile_content_id_3.map(|c| c.into()),
+            content_id_4: value.profile_content_id_4.map(|c| c.into()),
+            content_id_5: value.profile_content_id_5.map(|c| c.into()),
+            grid_crop_size: value.grid_crop_size,
+            grid_crop_x: value.grid_crop_x,
+            grid_crop_y: value.grid_crop_y,
+        }
+    }
+}
+
+/// Profile image settings which will be applied when moderation request is
+/// accepted.
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct PendingProfileContent {
+    /// Primary profile image which is shown in grid view.
+    ///
+    /// If this is None, then server will not change the current profile content
+    /// when moderation is accepted.
+    pub content_id_0: Option<ContentInfo>,
+    pub content_id_1: Option<ContentInfo>,
+    pub content_id_2: Option<ContentInfo>,
+    pub content_id_3: Option<ContentInfo>,
+    pub content_id_4: Option<ContentInfo>,
+    pub content_id_5: Option<ContentInfo>,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
+}
+
+impl From<CurrentAccountMediaInternal> for PendingProfileContent {
+    fn from(value: CurrentAccountMediaInternal) -> Self {
+        Self {
+            content_id_0: value.pending_profile_content_id_0.map(|c| c.into()),
+            content_id_1: value.pending_profile_content_id_1.map(|c| c.into()),
+            content_id_2: value.pending_profile_content_id_2.map(|c| c.into()),
+            content_id_3: value.pending_profile_content_id_3.map(|c| c.into()),
+            content_id_4: value.pending_profile_content_id_4.map(|c| c.into()),
+            content_id_5: value.pending_profile_content_id_5.map(|c| c.into()),
+            grid_crop_size: value.pending_grid_crop_size,
+            grid_crop_x: value.pending_grid_crop_x,
+            grid_crop_y: value.pending_grid_crop_y,
         }
     }
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct ImageAccessCheck {
-    /// If false image access is allowed when profile is set as public.
-    /// If true image access is allowed when users are a match.
+pub struct SecurityImage {
+    pub content_id: Option<ContentInfo>,
+}
+
+impl From<CurrentAccountMediaInternal> for SecurityImage {
+    fn from(value: CurrentAccountMediaInternal) -> Self {
+        Self {
+            content_id: value.security_content_id.map(|c| c.into()),
+        }
+    }
+}
+
+/// Security image settings which will be applied when moderation request is
+/// accepted.
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct PendingSecurityImage {
+    pub content_id: Option<ContentInfo>,
+}
+
+impl From<CurrentAccountMediaInternal> for PendingSecurityImage {
+    fn from(value: CurrentAccountMediaInternal) -> Self {
+        Self {
+            content_id: value.pending_security_content_id.map(|c| c.into()),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct ContentAccessCheck {
+    /// If false media content access is allowed when profile is set as public.
+    /// If true media content access is allowed when users are a match.
     pub is_match: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct NormalImages {
-    pub data: Vec<ContentId>,
+pub struct AccountContent {
+    pub data: Vec<ContentInfoDetailed>,
 }
 
 #[derive(

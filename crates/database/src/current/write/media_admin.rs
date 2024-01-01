@@ -3,7 +3,7 @@ use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, HandleModerationRequest,
     Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
-    ModerationRequestState, PrimaryImage, NextQueueNumberType, schema::media_moderation_request::content_id_1,
+    ModerationRequestState, ProfileContent, NextQueueNumberType, schema::media_moderation_request::content_id_1,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 

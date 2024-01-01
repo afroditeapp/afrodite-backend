@@ -1,14 +1,14 @@
 use std::{collections::{HashMap, VecDeque}, time::Duration, sync::Arc};
 
 use config::Config;
-use model::{ContentProcessingId, ContentProcessingState, AccountId, ContentSlot, AccountIdInternal, ContentProcessingStateChanged, NewContentParams, AccountIdDb};
+use model::{ContentProcessingId, ContentProcessingState, AccountId, ContentSlot, AccountIdInternal, ContentProcessingStateChanged, NewContentParams, AccountIdDb, MediaContentType};
 use simple_backend::{ServerQuitWatcher, app::SimpleBackendAppState, image::{ImageProcess, ImageProcessError}};
 use simple_backend_utils::ContextExt;
 use tokio::{task::JoinHandle, sync::{mpsc, RwLock, Notify}};
 use tracing::{warn, error};
 use utoipa::openapi::Content;
 
-use crate::{event::EventManager, app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData}, data::file::utils::TmpImageFile};
+use crate::{event::EventManager, app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData}, data::file::utils::TmpContentFile};
 
 use error_stack::{Result, FutureExt, ResultExt};
 
@@ -40,8 +40,8 @@ impl ContentProcessingManagerQuitHandle {
 #[derive(Debug, Clone)]
 pub struct NewContentInfo {
     pub processing_id: ContentProcessingId,
-    pub tmp_raw_img: TmpImageFile,
-    pub tmp_img: TmpImageFile,
+    pub tmp_raw_img: TmpContentFile,
+    pub tmp_img: TmpContentFile,
 }
 
 #[derive(Debug, Clone)]
@@ -50,8 +50,8 @@ pub struct ProcessingState {
     content_owner: AccountIdInternal,
     slot: ContentSlot,
     processing_state: ContentProcessingState,
-    tmp_raw_img: TmpImageFile,
-    tmp_img: TmpImageFile,
+    tmp_raw_img: TmpContentFile,
+    tmp_img: TmpContentFile,
     new_content_params: NewContentParams,
 }
 
@@ -75,22 +75,6 @@ impl ProcessingKey {
         }
     }
 }
-
-// impl ProcessingState {
-//     pub fn new(
-//         content_owner: AccountIdInternal,
-//         slot: ContentSlot,
-//         processing_id: ContentProcessingId,
-//         queue_position: u64,
-//     ) -> Self {
-//         ProcessingState {
-//             processing_id,
-//             content_owner,
-//             slot,
-//             processing_state: ContentProcessingState::in_queue_state(queue_position),
-//         }
-//     }
-// }
 
 struct Data {
     queue: VecDeque<ProcessingKey>,
@@ -142,8 +126,8 @@ impl ContentProcessingManagerData {
 
         // Reuse the same queue position. This might happen if API is used wrongly.
         let key = ProcessingKey::new(content_owner, slot);
-        let queue_position = match queue.iter().enumerate().find(|(i, k)| **k == key) {
-            Some((old_i, key)) => {
+        let queue_position = match queue.iter().enumerate().find(|(_, k)| **k == key) {
+            Some((old_i, _)) => {
                 old_i as u64 + 1
             }
             None => {
@@ -236,9 +220,13 @@ impl ContentProcessingManager {
     }
 
     pub async fn handle_content(&self, content: ProcessingState) {
-        let result = ImageProcess::start_image_process(content.tmp_raw_img.as_path(), content.tmp_img.as_path())
-            .change_context(ContentProcessingError::ContentProcessingFailed)
-            .await;
+        let result = match content.new_content_params.content_type {
+            MediaContentType::JpegImage => {
+                ImageProcess::start_image_process(content.tmp_raw_img.as_path(), content.tmp_img.as_path())
+                    .change_context(ContentProcessingError::ContentProcessingFailed)
+                    .await
+            }
+        };
 
         let mut write = self.state.content_processing().data.write().await;
         if let Some(state) = write.processing_states.get_mut(&content.to_key()) {

@@ -10,13 +10,13 @@ use crate::data::IntoDataError;
 define_read_commands!(ReadCommandsMedia);
 
 impl ReadCommandsMedia<'_> {
-    pub async fn image(
+    pub async fn content_data(
         &self,
         account_id: AccountId,
         content_id: ContentId,
     ) -> Result<Vec<u8>, DataError> {
         self.files()
-            .image_content(account_id, content_id)
+            .media_content(account_id, content_id)
             .read_all()
             .await
             .into_data_error((account_id, content_id))
