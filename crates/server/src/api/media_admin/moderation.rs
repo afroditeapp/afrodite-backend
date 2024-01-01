@@ -25,6 +25,9 @@ use crate::{
     }, app::ContentProcessingProvider,
 };
 
+// TODO: Add moderation content moderation weight to account and use it when moderating.
+//       Moderation should have some value which keeps track how much moderation
+//       request has moderation weight added. Perhaps this should not be in MVP?
 
 pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/next";
 
