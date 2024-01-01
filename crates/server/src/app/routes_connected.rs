@@ -70,37 +70,13 @@ impl ConnectedApp {
 
     pub fn private_account_server_router(&self) -> Router {
         let private = Router::new()
-            .route(
-                api::account::PATH_ACCOUNT_STATE,
-                get(api::account::get_account_state::<S>),
-            )
-            .route(
-                api::account::PATH_GET_ACCOUNT_SETUP,
-                get(api::account::get_account_setup::<S>),
-            )
-            .route(
-                api::account::PATH_GET_ACCOUNT_DATA,
-                get(api::account::get_account_data::<S>),
-            )
-            .route(
-                api::account::PATH_POST_ACCOUNT_SETUP,
-                post(api::account::post_account_setup::<S>),
-            )
-            .route(
-                api::account::PATH_POST_ACCOUNT_DATA,
-                post(api::account::post_account_data::<S>),
-            )
-            .route(
-                api::account::PATH_ACCOUNT_COMPLETE_SETUP,
-                post(api::account::post_complete_setup::<S>),
-            )
-            .route(
-                api::account::PATH_SETTING_PROFILE_VISIBILITY,
-                put(api::account::put_setting_profile_visiblity::<S>),
-            );
+            .merge(api::account::register_router(self.state.clone()))
+            .merge(api::account::delete_router(self.state.clone()))
+            .merge(api::account::settings_router(self.state.clone()))
+            .merge(api::account::state_router(self.state.clone()));
 
         let private = if self.state.business_logic_state().config.debug_mode() {
-            private
+            let r = Router::new()
                 .route(
                     api::profile::PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK,
                     get(api::profile::get_profile_from_database_debug_mode_benchmark::<S>),
@@ -109,6 +85,8 @@ impl ConnectedApp {
                     api::profile::PATH_POST_PROFILE_TO_DATABASE_BENCHMARK,
                     post(api::profile::post_profile_to_database_debug_mode_benchmark::<S>),
                 )
+                .with_state(self.state());
+            private.merge(r)
         } else {
             private
         };
@@ -118,7 +96,6 @@ impl ConnectedApp {
         });
 
         private
-            .with_state(self.state())
     }
 
     pub fn private_profile_server_router(&self) -> Router {
