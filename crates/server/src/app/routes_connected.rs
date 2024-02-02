@@ -24,46 +24,12 @@ impl ConnectedApp {
 
     pub fn private_common_router(&self) -> Router {
         let private = Router::new()
-            .route(
-                api::common_admin::PATH_GET_SYSTEM_INFO,
-                get(api::common_admin::get_system_info::<S>),
-            )
-            .route(
-                api::common_admin::PATH_GET_SOFTWARE_INFO,
-                get(api::common_admin::get_software_info::<S>),
-            )
-            .route(
-                api::common_admin::PATH_GET_LATEST_BUILD_INFO,
-                get(api::common_admin::get_latest_build_info::<S>),
-            )
-            .route(
-                api::common_admin::PATH_POST_REQUEST_BUILD_SOFTWARE,
-                post(api::common_admin::post_request_build_software::<S>),
-            )
-            .route(
-                api::common_admin::PATH_POST_REQUEST_UPDATE_SOFTWARE,
-                post(api::common_admin::post_request_update_software::<S>),
-            )
-            .route(
-                api::common_admin::PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND,
-                post(api::common_admin::post_request_restart_or_reset_backend::<S>),
-            )
-            .route(
-                api::common_admin::PATH_GET_BACKEND_CONFIG,
-                get(api::common_admin::get_backend_config::<S>),
-            )
-            .route(
-                api::common_admin::PATH_POST_BACKEND_CONFIG,
-                post(api::common_admin::post_backend_config::<S>),
-            )
-            .route(
-                api::common_admin::PATH_GET_PERF_DATA,
-                get(api::common_admin::get_perf_data::<S>),
-            )
+            .merge(api::common_admin::manager_router(self.state.clone()))
+            .merge(api::common_admin::config_router(self.state.clone()))
+            .merge(api::common_admin::perf_router(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(self.state(), api::utils::authenticate_with_access_token::<S, _>)
-            })
-            .with_state(self.state());
+            });
 
         private
     }
