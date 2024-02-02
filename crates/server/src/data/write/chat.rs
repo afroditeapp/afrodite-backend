@@ -126,6 +126,7 @@ impl WriteCommandsChat<'_> {
         let mut interaction = self
             .db_read(move |mut cmds| {
                 cmds.chat()
+                    .interaction()
                     .account_interaction(id_my_account, id_message_sender)
             })
             .await?

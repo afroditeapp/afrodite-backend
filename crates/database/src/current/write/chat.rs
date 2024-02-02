@@ -71,6 +71,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         let value = self.conn().transaction(|mut conn| {
             let interaction = CurrentSyncReadCommands::new(conn.conn())
                 .chat()
+                .interaction()
                 .account_interaction(account1, account2)?;
             match interaction {
                 Some(interaction) => Ok(interaction),

@@ -16,6 +16,7 @@ impl ReadCommandsChat<'_> {
     pub async fn all_sent_likes(&self, id: AccountIdInternal) -> Result<SentLikesPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
+                .interaction()
                 .all_sender_account_interactions(id, AccountInteractionState::Like, true)
         })
         .await
@@ -28,6 +29,7 @@ impl ReadCommandsChat<'_> {
     ) -> Result<ReceivedLikesPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
+                .interaction()
                 .all_receiver_account_interactions(id, AccountInteractionState::Like)
         })
         .await
@@ -40,6 +42,7 @@ impl ReadCommandsChat<'_> {
     ) -> Result<SentBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
+                .interaction()
                 .all_sender_account_interactions(id, AccountInteractionState::Block, false)
         })
         .await
@@ -52,6 +55,7 @@ impl ReadCommandsChat<'_> {
     ) -> Result<ReceivedBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.chat()
+                .interaction()
                 .all_receiver_account_interactions(id, AccountInteractionState::Block)
         })
         .await
@@ -63,7 +67,7 @@ impl ReadCommandsChat<'_> {
 
         let mut sent = self
             .db_read(move |mut cmds| {
-                cmds.chat().all_sender_account_interactions(
+                cmds.chat().interaction().all_sender_account_interactions(
                     id,
                     AccountInteractionState::Match,
                     false,
@@ -73,7 +77,7 @@ impl ReadCommandsChat<'_> {
 
         let mut received = self
             .db_read(move |mut cmds| {
-                cmds.chat()
+                cmds.chat().interaction()
                     .all_receiver_account_interactions(id, AccountInteractionState::Match)
             })
             .await?;
@@ -87,7 +91,7 @@ impl ReadCommandsChat<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<PendingMessagesPage, DataError> {
-        self.db_read(move |mut cmds| cmds.chat().all_pending_messages(id))
+        self.db_read(move |mut cmds| cmds.chat().message().all_pending_messages(id))
             .await
             .map(|messages| PendingMessagesPage { messages })
     }
@@ -100,7 +104,7 @@ impl ReadCommandsChat<'_> {
     ) -> Result<MessageNumber, DataError> {
         let number = self
             .db_read(move |mut cmds| {
-                cmds.chat()
+                cmds.chat().interaction()
                     .account_interaction(id_message_sender, id_message_receiver)
             })
             .await?
