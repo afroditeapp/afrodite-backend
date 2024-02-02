@@ -242,6 +242,8 @@ async fn handle_socket_result<S: WriteData + ReadData>(
                 match result {
                     Some(Err(_)) | None => break,
                     Some(Ok(value)) => {
+                        // TODO: Fix possible CPU usage bug here.
+                        // Replace continue with break?
                         error!("Unexpected value: {:?}, from: {}", value, address);
                         continue;
                     },
