@@ -18,7 +18,7 @@ impl WriteCommandsCommon<'_> {
         address: Option<SocketAddr>,
     ) -> Result<(), DataError> {
         let current_access_token = self
-            .db_read(move |mut cmds| cmds.account().access_token(id))
+            .db_read(move |mut cmds| cmds.account().token().access_token(id))
             .await?;
 
         let access = pair.access.clone();
@@ -70,7 +70,7 @@ impl WriteCommandsCommon<'_> {
         remove_access_token: bool,
     ) -> Result<(), DataError> {
         let current_access_token = if remove_access_token {
-            self.db_read(move |mut cmds| cmds.account().access_token(id))
+            self.db_read(move |mut cmds| cmds.account().token().access_token(id))
                 .await?
         } else {
             None

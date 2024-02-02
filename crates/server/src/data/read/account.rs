@@ -23,7 +23,7 @@ impl ReadCommandsAccount<'_> {
             .to_account_id_internal(id)
             .await
             .into_data_error(id)?;
-        self.db_read(move |mut cmds| cmds.account().access_token(id))
+        self.db_read(move |mut cmds| cmds.account().token().access_token(id))
             .await
     }
 
@@ -31,7 +31,7 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<Option<RefreshToken>, DataError> {
-        self.db_read(move |mut cmds| cmds.account().refresh_token(id))
+        self.db_read(move |mut cmds| cmds.account().token().refresh_token(id))
             .await
     }
 
@@ -39,7 +39,7 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<SignInWithInfo, DataError> {
-        self.db_read(move |mut cmds| cmds.account().sign_in_with_info(id))
+        self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_info(id))
             .await
     }
 
@@ -53,12 +53,12 @@ impl ReadCommandsAccount<'_> {
     }
 
     pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
-        self.db_read(move |mut cmds| cmds.account().account_data(id))
+        self.db_read(move |mut cmds| cmds.account().data().account_data(id))
             .await
     }
 
     pub async fn account_setup(&self, id: AccountIdInternal) -> Result<AccountSetup, DataError> {
-        self.db_read(move |mut cmds| cmds.account().account_setup(id))
+        self.db_read(move |mut cmds| cmds.account().data().account_setup(id))
             .await
     }
 
@@ -68,7 +68,8 @@ impl ReadCommandsAccount<'_> {
     ) -> Result<(), DataError> {
         let db = self.db();
         let account = db.account();
-        let mut users = account.account_ids_stream();
+        let data = account.data();
+        let mut users = data.account_ids_stream();
         while let Some(user_id) = users.try_next().await.change_context(DataError::Sqlite)? {
             handler(user_id)
         }
@@ -80,7 +81,7 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: GoogleAccountId,
     ) -> Result<Option<AccountIdInternal>, DataError> {
-        self.db_read(move |mut cmds| cmds.account().google_account_id_to_account_id(id))
+        self.db_read(move |mut cmds| cmds.account().sign_in_with().google_account_id_to_account_id(id))
             .await
             .map(Some)
     }

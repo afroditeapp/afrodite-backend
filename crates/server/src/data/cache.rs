@@ -86,7 +86,8 @@ impl DatabaseCache {
         info!("Starting to load data from database to memory");
 
         let account = read.account();
-        let mut accounts = account.account_ids_stream();
+        let data = account.data();
+        let mut accounts = data.account_ids_stream();
         while let Some(r) = accounts.next().await {
             let id = r.change_context(CacheError::Init)?;
             // Diesel connection used here so no deadlock
@@ -129,7 +130,7 @@ impl DatabaseCache {
             .ok_or(CacheError::KeyNotExists.report())?;
 
         let access_token = db_read(current_db, move |mut cmds| {
-            cmds.account().access_token(account_id)
+            cmds.account().token().access_token(account_id)
         })
         .await?;
 
@@ -186,7 +187,7 @@ impl DatabaseCache {
             //       mode is enabled then use the visibility value from account.
             if config.components().account {
                 let account = db_read(current_db, move |mut cmds| {
-                    cmds.account().account(account_id)
+                    cmds.account().data().account(account_id)
                 })
                 .await?;
                 if account.capablities().user_view_public_profiles {
