@@ -163,66 +163,14 @@ impl ConnectedApp {
 
     pub fn private_chat_server_router(&self) -> Router {
         let private = Router::new()
-            .route(
-                api::chat::PATH_POST_SEND_LIKE,
-                post(api::chat::post_send_like::<S>),
-            )
-            .route(
-                api::chat::PATH_GET_SENT_LIKES,
-                get(api::chat::get_sent_likes::<S>),
-            )
-            .route(
-                api::chat::PATH_GET_RECEIVED_LIKES,
-                get(api::chat::get_received_likes::<S>),
-            )
-            .route(
-                api::chat::PATH_DELETE_LIKE,
-                delete(api::chat::delete_like::<S>),
-            )
-            .route(
-                api::chat::PATH_GET_MATCHES,
-                get(api::chat::get_matches::<S>),
-            )
-            .route(
-                api::chat::PATH_POST_BLOCK_PROFILE,
-                post(api::chat::post_block_profile::<S>),
-            )
-            .route(
-                api::chat::PATH_POST_UNBLOCK_PROFILE,
-                post(api::chat::post_unblock_profile::<S>),
-            )
-            .route(
-                api::chat::PATH_GET_SENT_BLOCKS,
-                get(api::chat::get_sent_blocks::<S>),
-            )
-            .route(
-                api::chat::PATH_GET_RECEIVED_BLOCKS,
-                get(api::chat::get_received_blocks::<S>),
-            )
-            .route(
-                api::chat::PATH_GET_PENDING_MESSAGES,
-                get(api::chat::get_pending_messages::<S>),
-            )
-            .route(
-                api::chat::PATH_DELETE_PENDING_MESSAGES,
-                delete(api::chat::delete_pending_messages::<S>),
-            )
-            .route(
-                api::chat::PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
-                get(api::chat::get_message_number_of_latest_viewed_message::<S>),
-            )
-            .route(
-                api::chat::PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
-                post(api::chat::post_message_number_of_latest_viewed_message::<S>),
-            )
-            .route(
-                api::chat::PATH_POST_SEND_MESSAGE,
-                post(api::chat::post_send_message::<S>),
-            )
+            // Chat
+            .merge(api::chat::like::like_router(self.state.clone()))
+            .merge(api::chat::block::block_router(self.state.clone()))
+            .merge(api::chat::match_routes::match_router(self.state.clone()))
+            .merge(api::chat::message::message_router(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(self.state.clone(), api::utils::authenticate_with_access_token::<S, _>)
-            })
-            .with_state(self.state());
+            });
 
         private
     }
