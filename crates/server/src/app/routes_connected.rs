@@ -76,17 +76,7 @@ impl ConnectedApp {
             .merge(api::account::state_router(self.state.clone()));
 
         let private = if self.state.business_logic_state().config.debug_mode() {
-            let r = Router::new()
-                .route(
-                    api::profile::PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK,
-                    get(api::profile::get_profile_from_database_debug_mode_benchmark::<S>),
-                )
-                .route(
-                    api::profile::PATH_POST_PROFILE_TO_DATABASE_BENCHMARK,
-                    post(api::profile::post_profile_to_database_debug_mode_benchmark::<S>),
-                )
-                .with_state(self.state());
-            private.merge(r)
+            private.merge(api::profile::benchmark_router(self.state.clone()))
         } else {
             private
         };
@@ -100,46 +90,13 @@ impl ConnectedApp {
 
     pub fn private_profile_server_router(&self) -> Router {
         let private = Router::new()
-            .route(
-                api::profile::PATH_GET_PROFILE,
-                get(api::profile::get_profile::<S>),
-            )
-            .route(
-                api::profile::PATH_GET_LOCATION,
-                get(api::profile::get_location::<S>),
-            )
-            .route(
-                api::profile::PATH_GET_FAVORITE_PROFILES,
-                get(api::profile::get_favorite_profiles::<S>),
-            )
-            .route(
-                api::profile::PATH_POST_PROFILE,
-                post(api::profile::post_profile::<S>),
-            )
-            .route(
-                api::profile::PATH_PUT_LOCATION,
-                put(api::profile::put_location::<S>),
-            )
-            .route(
-                api::profile::PATH_POST_NEXT_PROFILE_PAGE,
-                post(api::profile::post_get_next_profile_page::<S>),
-            )
-            .route(
-                api::profile::PATH_POST_RESET_PROFILE_PAGING,
-                post(api::profile::post_reset_profile_paging::<S>),
-            )
-            .route(
-                api::profile::PATH_POST_FAVORITE_PROFILE,
-                post(api::profile::post_favorite_profile::<S>),
-            )
-            .route(
-                api::profile::PATH_DELETE_FAVORITE_PROFILE,
-                delete(api::profile::delete_favorite_profile::<S>),
-            )
+            .merge(api::profile::profile_data_router(self.state.clone()))
+            .merge(api::profile::location_router(self.state.clone()))
+            .merge(api::profile::favorite_router(self.state.clone()))
+            .merge(api::profile::iterate_profiles_router(self.state.clone()))
             .route_layer({
                 middleware::from_fn_with_state(self.state(), api::utils::authenticate_with_access_token::<S, _>)
-            })
-            .with_state(self.state());
+            });
 
         private
     }
