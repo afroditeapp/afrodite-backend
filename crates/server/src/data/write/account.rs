@@ -20,10 +20,10 @@ impl WriteCommandsAccount<'_> {
         let capabilities_copy = capabilities.clone();
         self.db_transaction(move |mut cmds| {
             if let Some(state) = state_copy {
-                cmds.common().shared_state(id, state)?;
+                cmds.common().state().shared_state(id, state)?;
             }
             if let Some(capabilities) = capabilities_copy {
-                cmds.common().account_capabilities(id, capabilities)?;
+                cmds.common().state().account_capabilities(id, capabilities)?;
             }
             Ok(())
         })

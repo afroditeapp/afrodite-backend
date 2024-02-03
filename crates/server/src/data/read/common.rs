@@ -22,7 +22,7 @@ impl ReadCommandsCommon<'_> {
     }
 
     pub async fn shared_state(&self, id: AccountIdInternal) -> Result<SharedState, DataError> {
-        self.db_read(move |mut cmds| cmds.common().shared_state(id))
+        self.db_read(move |mut cmds| cmds.common().state().shared_state(id))
             .await
     }
 

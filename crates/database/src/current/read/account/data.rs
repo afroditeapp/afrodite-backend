@@ -44,7 +44,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
     pub fn account(&mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {
         use crate::schema::account_capabilities;
 
-        let shared_state = self.cmds().common().shared_state(id)?;
+        let shared_state = self.cmds().common().state().shared_state(id)?;
 
         let capabilities: Capabilities = account_capabilities::table
             .filter(account_capabilities::account_id.eq(id.as_db_id()))

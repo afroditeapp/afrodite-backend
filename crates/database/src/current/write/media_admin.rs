@@ -98,7 +98,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         } else {
             NextQueueNumberType::MediaModeration
         };
-        self.cmds().common().delete_queue_entry(queue_number.0, queue_type)?;
+        self.cmds().common().queue_number().delete_queue_entry(queue_number.0, queue_type)?;
 
         let moderation = Moderation {
             request_creator_id,

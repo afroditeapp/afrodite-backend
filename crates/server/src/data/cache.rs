@@ -147,12 +147,12 @@ impl DatabaseCache {
 
         // Common
         let capabilities = db_read(current_db, move |mut cmds| {
-            cmds.common().account_capabilities(account_id)
+            cmds.common().state().account_capabilities(account_id)
         })
         .await?;
         entry.capabilities = capabilities;
         let state = db_read(current_db, move |mut cmds| {
-            cmds.common().shared_state(account_id)
+            cmds.common().state().shared_state(account_id)
         })
         .await?;
         entry.shared_state = state;

@@ -92,7 +92,7 @@ impl WriteCommandsCommon<'_> {
         id: AccountIdInternal,
         state: SharedState,
     ) -> Result<(), DataError> {
-        self.db_write(move |mut cmds| cmds.common().shared_state(id, state))
+        self.db_write(move |mut cmds| cmds.common().state().shared_state(id, state))
             .await?;
         Ok(())
     }

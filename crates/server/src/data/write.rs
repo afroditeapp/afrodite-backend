@@ -304,9 +304,10 @@ impl<'a> WriteCommands<'a> {
         let id = current.account().data().insert_account_id(id_light)?;
         current.account().token().insert_access_token(id, None)?;
         current.account().token().insert_refresh_token(id, None)?;
-        current.common().insert_default_account_capabilities(id)?;
+        current.common().state().insert_default_account_capabilities(id)?;
         current
             .common()
+            .state()
             .insert_shared_state(id, SharedStateInternal::default())?;
 
         // Common history

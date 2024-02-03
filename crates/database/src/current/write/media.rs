@@ -226,7 +226,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
 
         let _account_row_id = request_creator.row_id();
         let queue_number_new =
-            self.cmds().common().create_new_queue_entry(request_creator, NextQueueNumberType::InitialMediaModeration)?;
+            self.cmds().common().queue_number().create_new_queue_entry(request_creator, NextQueueNumberType::InitialMediaModeration)?;
         let request_info = serde_json::to_string(&request)
             .change_context(DieselDatabaseError::SerdeSerialize)?;
         insert_into(media_moderation_request)
