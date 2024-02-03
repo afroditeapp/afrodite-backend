@@ -17,8 +17,8 @@ use error_stack::{Result, ResultExt};
 use file::{DatabaseInfo, TileMapConfig};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
-use tokio_rustls::rustls::{Certificate, PrivateKey, ServerConfig};
-
+use tokio_rustls::rustls::{ServerConfig};
+use tokio_rustls::rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use self::file::{
     AppManagerConfig, LitestreamConfig, MediaBackupConfig, SignInWithGoogleConfig,
     SimpleBackendConfigFile, SocketConfig,
@@ -277,33 +277,38 @@ fn generate_server_config(
     let mut key_reader = BufReader::new(
         std::fs::File::open(key_path).change_context(GetConfigError::CreateTlsConfig)?,
     );
-    let all_keys =
-        rsa_private_keys(&mut key_reader).change_context(GetConfigError::CreateTlsConfig)?;
+    let all_keys: Vec<_> =
+        rsa_private_keys(&mut key_reader).map(|r| r.map(|c| c.clone_key())).collect();
+    let mut key_iter = all_keys.into_iter();
 
-    let key = if let [key] = &all_keys[..] {
-        PrivateKey(key.clone())
-    } else if all_keys.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No key found");
+    let key = if let Some(key) = key_iter.next() {
+        key.change_context(GetConfigError::CreateTlsConfig)?
     } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one key supported");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("No key found");
     };
+
+    if key_iter.next().is_some() {
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one key supported");
+    }
 
     let mut cert_reader = BufReader::new(
         std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?,
     );
-    let all_certs = certs(&mut cert_reader).change_context(GetConfigError::CreateTlsConfig)?;
-    let cert = if let [cert] = &all_certs[..] {
-        Certificate(cert.clone())
-    } else if all_certs.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
+    let all_certs: Vec<_> = certs(&mut cert_reader).map(|r| r.map(|c| c.into_owned())).collect();
+    let mut cert_iter = all_certs.into_iter();
+    let cert = if let Some(cert) = cert_iter.next() {
+        cert.change_context(GetConfigError::CreateTlsConfig)?
     } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
     };
 
+    if cert_iter.next().is_some() {
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
+    }
+
     let config = ServerConfig::builder()
-        .with_safe_defaults()
         .with_no_client_auth() // TODO: configure at some point
-        .with_single_cert(vec![cert], key)
+        .with_single_cert(vec![cert], key.into())
         .change_context(GetConfigError::CreateTlsConfig)?;
 
     Ok(config)
@@ -313,14 +318,19 @@ fn load_root_certificate(cert_path: &Path) -> Result<reqwest::Certificate, GetCo
     let mut cert_reader = BufReader::new(
         std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?,
     );
-    let all_certs = certs(&mut cert_reader).change_context(GetConfigError::CreateTlsConfig)?;
-    let cert = if let [cert] = &all_certs[..] {
-        reqwest::Certificate::from_der(&cert.clone())
-    } else if all_certs.is_empty() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
+    let all_certs: Vec<_> = certs(&mut cert_reader).collect();
+    let mut cert_iter = all_certs.into_iter();
+    let cert = if let Some(cert) = cert_iter.next() {
+        let cert = cert.change_context(GetConfigError::CreateTlsConfig)?;
+        reqwest::Certificate::from_der(&cert)
+            .change_context(GetConfigError::CreateTlsConfig)?
     } else {
+        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
+    };
+
+    if cert_iter.next().is_some() {
         return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
     }
-    .change_context(GetConfigError::CreateTlsConfig)?;
+
     Ok(cert)
 }
