@@ -1,6 +1,5 @@
 use std::{fmt, path::PathBuf};
 
-use deadpool::managed::HookErrorCause;
 use deadpool_diesel::sqlite::{Hook, Manager, Pool};
 use diesel::RunQueryDsl;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
@@ -234,11 +233,11 @@ pub fn sqlite_setup_hook(config: &SimpleBackendConfig) -> Hook {
             .await
             .map_err(|e| {
                 error!("Error: {}", e);
-                HookError::Abort(HookErrorCause::Message(e.to_string()))
+                HookError::Message(e.to_string())
             })?
             .map_err(|e: diesel::result::Error| {
                 error!("Error: {}", e);
-                HookError::Abort(HookErrorCause::Backend(e.into()))
+                HookError::Backend(e.into())
             })
         })
     })

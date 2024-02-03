@@ -26,48 +26,48 @@ members = [
 [workspace.dependencies]
 
 # Build dependencies
-vergen = { version = "8.0.0", features = ["cargo", "git", "gitcl", "rustc"] }
+vergen = { version = "8.3.1", features = ["cargo", "git", "gitcl", "rustc"] }
 
-
-error-stack = "0.4"
-thiserror = "1.0.37"
+error-stack = "0.4.1"
+thiserror = "1.0.56"
 
 rand = "0.8.5"
-time = "0.3.20"
-uuid = { version = "1.1.2", features = ["v4", "serde"] }
-base64 = "0.21.0"
-nalgebra = "0.32.2"
+time = "0.3.33"
+uuid = { version = "1.7.0", features = ["v4", "serde"] }
+base64 = "0.21.7"
+nalgebra = "0.32.3"
 num_cpus = "1.16.0"
-nix = { version = "0.26.2", default-features = false, features = ["signal"] }
-image = { version = "0.24.6", default-features = false, features = ["jpeg"] }
-mozjpeg = "0.10.1"
+nix = { version = "0.27.1", default-features = false, features = ["signal"] }
+image = { version = "0.24.8", default-features = false, features = ["jpeg"] }
+mozjpeg = "0.10.6"
 kamadak-exif = "0.5.5"
 
-clap = { version = "4.4", features = ["cargo", "derive"] }
+clap = { version = "4.4.18", features = ["cargo", "derive"] }
 
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 # For tokio-console debugging
 console-subscriber = "0.2.0"
 
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-toml = "0.7.2"
-toml_edit = "0.19.14"
+serde = { version = "1.0.196", features = ["derive"] }
+serde_json = "1.0.113"
+toml = "0.8.9"
+toml_edit = "0.21.1"
 
-sqlx = { version = "0.7.1", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
-diesel = { version = "2.1.0", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
+diesel = { version = "2.1.4", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 diesel_migrations = "2.1.0"
-deadpool = { version = "0.9.0" }
-deadpool-diesel = { version = "0.4.1", features = ["sqlite"] }
+deadpool = { version = "0.10.0" }
+deadpool-diesel = { version = "0.5.0", features = ["sqlite"] }
 
-futures = "0.3.28"
-tokio = { version = "1", features = ["full"] }
-tokio-stream = { version = "0.1.10", features = ["sync"] }
-tokio-util = { version = "0.7.7", features = ["io"]}
-async-trait = "0.1.66"
+futures = "0.3.30"
+tokio = { version = "1.36.0", features = ["full"] }
+tokio-stream = { version = "0.1.14", features = ["sync"] }
+tokio-util = { version = "0.7.10", features = ["io"]}
+async-trait = "0.1.77"
 
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11.24", features = ["json"] }
+# TODO: Update web related dependencies
 utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 url = { version = "2.3.1", features = ["serde"] }
