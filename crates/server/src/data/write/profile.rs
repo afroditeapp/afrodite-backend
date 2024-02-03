@@ -66,7 +66,7 @@ impl WriteCommandsProfile<'_> {
             .ok_or(DataError::FeatureDisabled)?;
 
         let new_location_key = self.location().coordinates_to_key(&coordinates);
-        self.db_write(move |cmds| cmds.into_profile().profile_location(id, coordinates))
+        self.db_write(move |cmds| cmds.into_profile().data().profile_location(id, coordinates))
             .await?;
 
         self.location()
@@ -96,7 +96,7 @@ impl WriteCommandsProfile<'_> {
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
-        self.db_write(move |cmds| cmds.into_profile().profile(id, profile_data))
+        self.db_write(move |cmds| cmds.into_profile().data().profile(id, profile_data))
             .await?;
 
         self.cache()
@@ -115,7 +115,7 @@ impl WriteCommandsProfile<'_> {
 
     pub async fn profile_name(self, id: AccountIdInternal, data: String) -> Result<(), DataError> {
         let profile_data = data.clone();
-        self.db_write(move |cmds| cmds.into_profile().profile_name(id, profile_data))
+        self.db_write(move |cmds| cmds.into_profile().data().profile_name(id, profile_data))
             .await?;
 
         self.cache()
@@ -135,7 +135,7 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_profile().insert_favorite_profile(id, favorite))
+        self.db_write(move |cmds| cmds.into_profile().favorite().insert_favorite_profile(id, favorite))
             .await
     }
 
@@ -144,7 +144,7 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_profile().remove_favorite_profile(id, favorite))
+        self.db_write(move |cmds| cmds.into_profile().favorite().remove_favorite_profile(id, favorite))
             .await
     }
 
@@ -153,7 +153,7 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_profile().profile(id, data))
+        self.db_write(move |cmds| cmds.into_profile().data().profile(id, data))
             .await?;
 
         //self.cmds.update_data(id, &data).await?;

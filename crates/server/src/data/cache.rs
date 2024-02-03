@@ -163,11 +163,11 @@ impl DatabaseCache {
 
         if config.components().profile {
             let profile = db_read(current_db, move |mut cmds| {
-                cmds.profile().profile(account_id)
+                cmds.profile().data().profile(account_id)
             })
             .await?;
             let profile_location = db_read(current_db, move |mut cmds| {
-                cmds.profile().profile_location(account_id)
+                cmds.profile().data().profile_location(account_id)
             })
             .await?;
 

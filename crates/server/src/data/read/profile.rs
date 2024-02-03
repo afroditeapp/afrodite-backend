@@ -19,7 +19,7 @@ impl ReadCommandsProfile<'_> {
     }
 
     pub async fn profile_location(&self, id: AccountIdInternal) -> Result<Location, DataError> {
-        self.db_read(move |mut cmds| cmds.profile().profile_location(id))
+        self.db_read(move |mut cmds| cmds.profile().data().profile_location(id))
             .await
     }
 
@@ -27,7 +27,7 @@ impl ReadCommandsProfile<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DataError> {
-        self.db_read(move |mut cmds| cmds.profile().profile(id))
+        self.db_read(move |mut cmds| cmds.profile().data().profile(id))
             .await
     }
 
@@ -35,7 +35,7 @@ impl ReadCommandsProfile<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<Vec<AccountIdInternal>, DataError> {
-        self.db_read(move |mut cmds| cmds.profile().favorites(id))
+        self.db_read(move |mut cmds| cmds.profile().favorite().favorites(id))
             .await
     }
 }
