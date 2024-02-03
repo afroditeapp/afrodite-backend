@@ -17,6 +17,7 @@ impl WriteCommandsChat<'_> {
         let interaction = self
             .db_write(move |cmds| {
                 cmds.into_chat()
+                    .interaction()
                     .get_or_create_account_interaction(id_like_sender, id_like_receiver)
             })
             .await?;
@@ -42,7 +43,7 @@ impl WriteCommandsChat<'_> {
         };
 
         let updated_clone = updated.clone();
-        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(updated))
+        self.db_write(move |cmds| cmds.into_chat().interaction().update_account_interaction(updated))
             .await?;
 
         Ok(updated_clone)
@@ -59,6 +60,7 @@ impl WriteCommandsChat<'_> {
         let interaction = self
             .db_write(move |cmds| {
                 cmds.into_chat()
+                    .interaction()
                     .get_or_create_account_interaction(id_sender, id_receiver)
             })
             .await?;
@@ -71,7 +73,7 @@ impl WriteCommandsChat<'_> {
         let updated = interaction
             .try_into_empty()
             .change_context(DataError::NotAllowed)?;
-        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(updated))
+        self.db_write(move |cmds| cmds.into_chat().interaction().update_account_interaction(updated))
             .await?;
 
         Ok(())
@@ -88,6 +90,7 @@ impl WriteCommandsChat<'_> {
         let interaction = self
             .db_write(move |cmds| {
                 cmds.into_chat()
+                    .interaction()
                     .get_or_create_account_interaction(id_block_sender, id_block_receiver)
             })
             .await?;
@@ -97,7 +100,7 @@ impl WriteCommandsChat<'_> {
         let updated = interaction
             .try_into_block(id_block_sender, id_block_receiver)
             .change_context(DataError::NotAllowed)?;
-        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(updated))
+        self.db_write(move |cmds| cmds.into_chat().interaction().update_account_interaction(updated))
             .await?;
 
         Ok(())
@@ -111,6 +114,7 @@ impl WriteCommandsChat<'_> {
     ) -> Result<(), DataError> {
         self.db_write(move |cmds| {
             cmds.into_chat()
+                .message()
                 .delete_pending_message_list(message_receiver, messages)
         })
         .await
@@ -151,7 +155,7 @@ impl WriteCommandsChat<'_> {
             return Err(DataError::NotAllowed.report());
         }
 
-        self.db_write(move |cmds| cmds.into_chat().update_account_interaction(interaction))
+        self.db_write(move |cmds| cmds.into_chat().interaction().update_account_interaction(interaction))
             .await?;
 
         Ok(())
@@ -166,6 +170,7 @@ impl WriteCommandsChat<'_> {
     ) -> Result<(), DataError> {
         self.db_write(move |cmds| {
             cmds.into_chat()
+                .message()
                 .insert_pending_message_if_match(sender, receiver, message)
         })
         .await

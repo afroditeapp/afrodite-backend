@@ -301,9 +301,9 @@ impl<'a> WriteCommands<'a> {
         let mut history = HistorySyncWriteCommands::new(history_conn.deref_mut());
 
         // Common
-        let id = current.account().insert_account_id(id_light)?;
-        current.account().insert_access_token(id, None)?;
-        current.account().insert_refresh_token(id, None)?;
+        let id = current.account().data().insert_account_id(id_light)?;
+        current.account().token().insert_access_token(id, None)?;
+        current.account().token().insert_refresh_token(id, None)?;
         current.common().insert_default_account_capabilities(id)?;
         current
             .common()
@@ -315,10 +315,12 @@ impl<'a> WriteCommands<'a> {
         if config.components().account {
             current
                 .account()
+                .data()
                 .insert_account(id, AccountInternal::default())?;
-            current.account().insert_account_setup(id, &account_setup)?;
+            current.account().data().insert_account_setup(id, &account_setup)?;
             current
                 .account()
+                .sign_in_with()
                 .insert_sign_in_with_info(id, &sign_in_with_info)?;
 
             // Account history

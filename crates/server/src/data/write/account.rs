@@ -48,7 +48,7 @@ impl WriteCommandsAccount<'_> {
         id: AccountIdInternal,
         account_setup: AccountSetup,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_account().account_setup(id, &account_setup))
+        self.db_write(move |cmds| cmds.into_account().data().account_setup(id, &account_setup))
             .await?;
         Ok(())
     }
@@ -62,7 +62,7 @@ impl WriteCommandsAccount<'_> {
             email: account_data.email,
         };
 
-        self.db_write(move |cmds| cmds.into_account().account(id, &internal))
+        self.db_write(move |cmds| cmds.into_account().data().account(id, &internal))
             .await?;
         Ok(())
     }

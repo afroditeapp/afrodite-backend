@@ -22,9 +22,9 @@ impl WriteCommandsCommon<'_> {
             .await?;
 
         let access = pair.access.clone();
-        self.db_write(move |mut cmds| cmds.account().access_token(id, Some(access)))
+        self.db_write(move |mut cmds| cmds.account().token().access_token(id, Some(access)))
             .await?;
-        self.db_write(move |mut cmds| cmds.account().refresh_token(id, Some(pair.refresh)))
+        self.db_write(move |mut cmds| cmds.account().token().refresh_token(id, Some(pair.refresh)))
             .await?;
 
         self.cache()
@@ -40,7 +40,7 @@ impl WriteCommandsCommon<'_> {
 
     /// Remove current connection address, access and refresh tokens.
     pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        self.db_write(move |mut cmds| cmds.account().refresh_token(id, None))
+        self.db_write(move |mut cmds| cmds.account().token().refresh_token(id, None))
             .await?;
 
         self.end_connection_session(id, true).await?;
@@ -81,7 +81,7 @@ impl WriteCommandsCommon<'_> {
             .await
             .into_data_error(id)?;
 
-        self.db_write(move |mut cmds| cmds.account().access_token(id, None))
+        self.db_write(move |mut cmds| cmds.account().token().access_token(id, None))
             .await?;
 
         Ok(())
