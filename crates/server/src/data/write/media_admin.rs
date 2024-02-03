@@ -12,6 +12,7 @@ impl WriteCommandsMediaAdmin<'_> {
     ) -> Result<Vec<Moderation>, DataError> {
         self.db_transaction(move |mut cmds| {
             cmds.media_admin()
+                .moderation()
                 .moderation_get_list_and_create_new_if_necessary(account_id)
         })
         .await
@@ -24,7 +25,7 @@ impl WriteCommandsMediaAdmin<'_> {
         result: HandleModerationRequest,
     ) -> Result<(), DataError> {
         self.db_transaction(move |cmds| {
-            cmds.into_media_admin().update_moderation(
+            cmds.into_media_admin().moderation().update_moderation(
                 moderator_id,
                 moderation_request_owner,
                 result,

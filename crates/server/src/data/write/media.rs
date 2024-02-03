@@ -16,6 +16,7 @@ impl WriteCommandsMedia<'_> {
     ) -> Result<(), DataError> {
         self.db_transaction(move |mut cmds| {
             cmds.media()
+                .moderation_request()
                 .create_new_moderation_request(account_id, request)
         })
         .await
@@ -41,7 +42,7 @@ impl WriteCommandsMedia<'_> {
             path.remove_if_exists()
                 .await
                 .change_context(DataError::File)?;
-            self.db_write(move |mut cmds| cmds.media().delete_content_from_slot(id, slot))
+            self.db_write(move |mut cmds| cmds.media().moderation_request().delete_content_from_slot(id, slot))
                 .await
                 .change_context(DataError::Sqlite)?;
         }
@@ -53,7 +54,7 @@ impl WriteCommandsMedia<'_> {
         let processed_content_path = self.file_dir().media_content(id.as_id(), content_id);
 
         self.db_transaction(move |mut cmds| {
-            cmds.media().insert_content_id_to_slot(id, content_id, slot, new_content_params)?;
+            cmds.media().moderation_request().insert_content_id_to_slot(id, content_id, slot, new_content_params)?;
 
             // Move content from tmp dir to content dir
             tmp_img
@@ -80,7 +81,7 @@ impl WriteCommandsMedia<'_> {
         new: SetProfileContent,
     ) -> Result<(), DataError> {
         self.db_transaction(move |mut cmds|
-            cmds.media().update_profile_content_if_possible(id, new)
+            cmds.media().media_content().update_profile_content_if_possible(id, new)
         )
             .await
     }
@@ -91,7 +92,7 @@ impl WriteCommandsMedia<'_> {
         new: Option<SetProfileContent>,
     ) -> Result<(), DataError> {
         self.db_transaction(move |mut cmds|
-            cmds.media().update_or_delete_pending_profile_content_if_possible(id, new)
+            cmds.media().media_content().update_or_delete_pending_profile_content_if_possible(id, new)
         )
             .await
     }
@@ -102,7 +103,7 @@ impl WriteCommandsMedia<'_> {
         content: ContentId,
     ) -> Result<(), DataError> {
         self.db_transaction(move |mut cmds|
-            cmds.media().delete_content(content_owner, content)
+            cmds.media().media_content().delete_content(content_owner, content)
         )
             .await
     }
@@ -113,7 +114,7 @@ impl WriteCommandsMedia<'_> {
         content: Option<ContentId>,
     ) -> Result<(), DataError> {
         self.db_transaction(move |mut cmds|
-            cmds.media().update_or_delete_pending_security_image(content_owner, content)
+            cmds.media().media_content().update_or_delete_pending_security_image(content_owner, content)
         )
             .await
     }
@@ -125,7 +126,7 @@ impl WriteCommandsMedia<'_> {
         content: ContentId,
     ) -> Result<(), DataError> {
         self.db_transaction(move |mut cmds|
-            cmds.media().delete_content(content_owner, content)
+            cmds.media().media_content().delete_content(content_owner, content)
         )
             .await
     }
@@ -135,7 +136,7 @@ impl WriteCommandsMedia<'_> {
         moderation_request_owner: AccountIdInternal,
     ) -> Result<(), DataError> {
         self.db_transaction(move |mut cmds|
-            cmds.media().delete_moderation_request_not_yet_in_moderation(moderation_request_owner)
+            cmds.media().moderation_request().delete_moderation_request_not_yet_in_moderation(moderation_request_owner)
         )
             .await
     }

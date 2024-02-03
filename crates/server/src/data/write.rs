@@ -338,7 +338,7 @@ impl<'a> WriteCommands<'a> {
         }
 
         if config.components().media {
-            current.media().insert_current_account_media(id)?;
+            current.media().media_content().insert_current_account_media(id)?;
         }
 
         Ok(id.clone())
