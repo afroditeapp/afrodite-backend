@@ -7,12 +7,12 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-
+use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, diesel_i64_try_from};
 use crate::{
-    AccountState, Capabilities, MessageNumber, schema_sqlite_types::Integer, ContentProcessingId, ContentProcessingState,
+    schema_sqlite_types::Integer, AccountState, Capabilities, ContentProcessingId,
+    ContentProcessingState, MessageNumber,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

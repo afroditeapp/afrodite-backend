@@ -1,14 +1,17 @@
 use diesel::prelude::*;
-use error_stack::{Result};
+use error_stack::Result;
 use model::{
-    AccountIdInternal, MediaModerationRaw, Moderation, ModerationId, ModerationRequestContent,
-    ModerationRequestId, MediaModerationRequestRaw, ModerationRequestState,
+    AccountIdInternal, MediaModerationRaw, MediaModerationRequestRaw, Moderation, ModerationId,
+    ModerationRequestContent, ModerationRequestId, ModerationRequestState,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 
-define_read_commands!(CurrentReadMediaAdminModeration, CurrentSyncReadMediaAdminModeration);
+define_read_commands!(
+    CurrentReadMediaAdminModeration,
+    CurrentSyncReadMediaAdminModeration
+);
 
 impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
     pub fn get_in_progress_moderations(
@@ -17,7 +20,11 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
         let _account_row_id = moderator_id.row_id();
         let state_in_progress = ModerationRequestState::InProgress as i64;
-        let data: Vec<(MediaModerationRaw, MediaModerationRequestRaw, AccountIdInternal)> = {
+        let data: Vec<(
+            MediaModerationRaw,
+            MediaModerationRequestRaw,
+            AccountIdInternal,
+        )> = {
             use crate::schema::{
                 account_id, media_moderation, media_moderation::dsl::*, media_moderation_request,
             };
@@ -56,16 +63,18 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
         moderation: ModerationId,
     ) -> Result<ModerationRequestContent, DieselDatabaseError> {
         let (_moderation, request) = {
-            use crate::schema::media_moderation;
-            use crate::schema::media_moderation_request;
+            use crate::schema::{media_moderation, media_moderation_request};
 
             media_moderation::table
                 .inner_join(media_moderation_request::table)
                 .filter(media_moderation::account_id.eq(moderation.account_id.as_db_id()))
-                .filter(media_moderation::moderation_request_id.eq(moderation.request_id.request_row_id))
+                .filter(
+                    media_moderation::moderation_request_id
+                        .eq(moderation.request_id.request_row_id),
+                )
                 .select((
                     MediaModerationRaw::as_select(),
-                    MediaModerationRequestRaw::as_select()
+                    MediaModerationRequestRaw::as_select(),
                 ))
                 .first(self.conn())
                 .into_db_error(DieselDatabaseError::Execute, moderation)?

@@ -1,10 +1,7 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{
-    AccountIdInternal, AccountInteractionInternal,
-};
+use model::{AccountIdInternal, AccountInteractionInternal};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-
 
 use crate::{current::read::CurrentSyncReadCommands, IntoDatabaseError, TransactionError};
 
@@ -77,7 +74,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
                 Some(interaction) => Ok(interaction),
                 None => {
                     let value: AccountInteractionInternal =
-                        CurrentSyncWriteChatInteraction::insert_account_interaction(conn, account1, account2)?;
+                        CurrentSyncWriteChatInteraction::insert_account_interaction(
+                            conn, account1, account2,
+                        )?;
                     Ok::<_, TransactionError<_>>(value)
                 }
             }

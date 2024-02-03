@@ -1,6 +1,6 @@
 use diesel::{delete, insert_into, prelude::*, ExpressionMethods, QueryDsl};
-use error_stack::{Result};
-use model::{AccountIdInternal};
+use error_stack::Result;
+use model::AccountIdInternal;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::current_unix_time;
 
@@ -10,7 +10,6 @@ use crate::IntoDatabaseError;
 define_write_commands!(CurrentWriteProfileFavorite, CurrentSyncWriteProfileFavorite);
 
 impl<C: ConnectionProvider> CurrentSyncWriteProfileFavorite<C> {
-
     pub fn insert_favorite_profile(
         &mut self,
         id: AccountIdInternal,

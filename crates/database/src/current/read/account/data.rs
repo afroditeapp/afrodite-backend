@@ -2,8 +2,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use futures::Stream;
 use model::{
-    Account, AccountData, AccountId, AccountIdDb, AccountIdInternal,
-    AccountInternal, AccountSetup, Capabilities,
+    Account, AccountData, AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup,
+    Capabilities,
 };
 use simple_backend_database::{
     diesel_db::{ConnectionProvider, DieselDatabaseError},
@@ -14,7 +14,6 @@ use tokio_stream::StreamExt;
 use crate::IntoDatabaseError;
 
 define_read_commands!(CurrentReadAccountData, CurrentSyncReadAccountData);
-
 
 impl CurrentReadAccountData<'_> {
     pub fn account_ids_stream(

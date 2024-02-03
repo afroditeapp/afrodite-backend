@@ -1,13 +1,4 @@
-
-
-
-
-use simple_backend_database::{
-    diesel_db::{ConnectionProvider},
-};
-
-
-
+use simple_backend_database::diesel_db::ConnectionProvider;
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 

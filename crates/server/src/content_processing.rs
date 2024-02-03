@@ -1,16 +1,25 @@
-use std::{collections::{HashMap, VecDeque}, sync::Arc};
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::Arc,
+};
 
+use error_stack::{FutureExt, Result, ResultExt};
+use model::{
+    AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
+    ContentProcessingStateChanged, ContentSlot, MediaContentType, NewContentParams,
+};
+use simple_backend::{app::SimpleBackendAppState, image::ImageProcess, ServerQuitWatcher};
+use tokio::{
+    sync::{Notify, RwLock},
+    task::JoinHandle,
+};
+use tracing::{error, warn};
 
-use model::{ContentProcessingId, ContentProcessingState, ContentSlot, AccountIdInternal, ContentProcessingStateChanged, NewContentParams, AccountIdDb, MediaContentType};
-use simple_backend::{ServerQuitWatcher, app::SimpleBackendAppState, image::{ImageProcess}};
-
-use tokio::{task::JoinHandle, sync::{RwLock, Notify}};
-use tracing::{warn, error};
-
-
-use crate::{event::EventManager, app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData}, data::file::utils::TmpContentFile};
-
-use error_stack::{Result, FutureExt, ResultExt};
+use crate::{
+    app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData},
+    data::file::utils::TmpContentFile,
+    event::EventManager,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ContentProcessingError {
@@ -78,7 +87,7 @@ impl ProcessingKey {
 
 struct Data {
     queue: VecDeque<ProcessingKey>,
-    processing_states: HashMap<ProcessingKey, ProcessingState>
+    processing_states: HashMap<ProcessingKey, ProcessingState>,
 }
 
 impl Data {
@@ -89,7 +98,12 @@ impl Data {
         }
     }
 
-    pub fn split(&mut self) -> (&mut VecDeque<ProcessingKey>, &mut HashMap<ProcessingKey, ProcessingState>) {
+    pub fn split(
+        &mut self,
+    ) -> (
+        &mut VecDeque<ProcessingKey>,
+        &mut HashMap<ProcessingKey, ProcessingState>,
+    ) {
         (&mut self.queue, &mut self.processing_states)
     }
 }
@@ -127,9 +141,7 @@ impl ContentProcessingManagerData {
         // Reuse the same queue position. This might happen if API is used wrongly.
         let key = ProcessingKey::new(content_owner, slot);
         let queue_position = match queue.iter().enumerate().find(|(_, k)| **k == key) {
-            Some((old_i, _)) => {
-                old_i as u64 + 1
-            }
+            Some((old_i, _)) => old_i as u64 + 1,
             None => {
                 queue.push_back(key);
                 queue.len() as u64
@@ -172,9 +184,18 @@ impl ContentProcessingManagerData {
         Some(state.clone())
     }
 
-    pub async fn get_state(&self, account_id: AccountIdInternal, slot: ContentSlot) -> Option<ContentProcessingState> {
+    pub async fn get_state(
+        &self,
+        account_id: AccountIdInternal,
+        slot: ContentSlot,
+    ) -> Option<ContentProcessingState> {
         let key = ProcessingKey::new(account_id, slot);
-        self.data.read().await.processing_states.get(&key).map(|d| d.processing_state.clone())
+        self.data
+            .read()
+            .await
+            .processing_states
+            .get(&key)
+            .map(|d| d.processing_state.clone())
     }
 }
 
@@ -188,9 +209,7 @@ impl ContentProcessingManager {
         state: SimpleBackendAppState<AppState>,
         quit_notification: ServerQuitWatcher,
     ) -> ContentProcessingManagerQuitHandle {
-        let manager = Self {
-            state,
-        };
+        let manager = Self { state };
 
         let task = tokio::spawn(manager.run(notifier, quit_notification));
 
@@ -202,7 +221,7 @@ impl ContentProcessingManager {
     pub async fn run(
         self,
         notifier: ContentProcessingNotify,
-        mut quit_notification: ServerQuitWatcher
+        mut quit_notification: ServerQuitWatcher,
     ) {
         loop {
             tokio::select! {
@@ -222,9 +241,12 @@ impl ContentProcessingManager {
     pub async fn handle_content(&self, content: ProcessingState) {
         let result = match content.new_content_params.content_type {
             MediaContentType::JpegImage => {
-                ImageProcess::start_image_process(content.tmp_raw_img.as_path(), content.tmp_img.as_path())
-                    .change_context(ContentProcessingError::ContentProcessingFailed)
-                    .await
+                ImageProcess::start_image_process(
+                    content.tmp_raw_img.as_path(),
+                    content.tmp_img.as_path(),
+                )
+                .change_context(ContentProcessingError::ContentProcessingFailed)
+                .await
             }
         };
 
@@ -233,8 +255,10 @@ impl ContentProcessingManager {
             let result = self.if_successful_save_to_database(result, state).await;
             match result {
                 Ok(()) => {
-                    state.processing_state.change_to_completed(state.processing_id.to_content_id());
-                },
+                    state
+                        .processing_state
+                        .change_to_completed(state.processing_id.to_content_id());
+                }
                 Err(e) => {
                     state.processing_state.change_to_failed();
                     error!("Content processing error: {}", e);
@@ -252,17 +276,15 @@ impl ContentProcessingManager {
             }
         }
 
-        if let Err(e) = content.tmp_raw_img
-            .remove_if_exists()
-            .await {
-                warn!("content.tmp_raw_img removing failed {}", e)
-            }
+        if let Err(e) = content.tmp_raw_img.remove_if_exists().await {
+            warn!("content.tmp_raw_img removing failed {}", e)
+        }
     }
 
     pub async fn if_successful_save_to_database(
         &self,
         result: Result<(), ContentProcessingError>,
-        state: &mut ProcessingState
+        state: &mut ProcessingState,
     ) -> Result<(), ContentProcessingError> {
         if let Err(e) = result {
             return Err(e);
@@ -276,7 +298,7 @@ impl ContentProcessingManager {
                         state_copy.content_owner,
                         state_copy.processing_id.to_content_id(),
                         state_copy.slot,
-                        state_copy.new_content_params
+                        state_copy.new_content_params,
                     )
                     .await
             })
@@ -293,10 +315,13 @@ async fn notify_client(event_manager: &EventManager, state: &ProcessingState) {
         new_state: state.processing_state.clone(),
     };
 
-    if let Err(e) = event_manager.send_connected_event(
-        state.content_owner,
-        model::EventToClientInternal::ContentProcessingStateChanged(state_change)
-    ).await {
+    if let Err(e) = event_manager
+        .send_connected_event(
+            state.content_owner,
+            model::EventToClientInternal::ContentProcessingStateChanged(state_change),
+        )
+        .await
+    {
         warn!("Event sending failed {}", e);
     }
 }

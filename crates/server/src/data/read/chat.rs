@@ -15,9 +15,11 @@ define_read_commands!(ReadCommandsChat);
 impl ReadCommandsChat<'_> {
     pub async fn all_sent_likes(&self, id: AccountIdInternal) -> Result<SentLikesPage, DataError> {
         self.db_read(move |mut cmds| {
-            cmds.chat()
-                .interaction()
-                .all_sender_account_interactions(id, AccountInteractionState::Like, true)
+            cmds.chat().interaction().all_sender_account_interactions(
+                id,
+                AccountInteractionState::Like,
+                true,
+            )
         })
         .await
         .map(|profiles| SentLikesPage { profiles })
@@ -41,9 +43,11 @@ impl ReadCommandsChat<'_> {
         id: AccountIdInternal,
     ) -> Result<SentBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
-            cmds.chat()
-                .interaction()
-                .all_sender_account_interactions(id, AccountInteractionState::Block, false)
+            cmds.chat().interaction().all_sender_account_interactions(
+                id,
+                AccountInteractionState::Block,
+                false,
+            )
         })
         .await
         .map(|profiles| SentBlocksPage { profiles })
@@ -77,7 +81,8 @@ impl ReadCommandsChat<'_> {
 
         let mut received = self
             .db_read(move |mut cmds| {
-                cmds.chat().interaction()
+                cmds.chat()
+                    .interaction()
                     .all_receiver_account_interactions(id, AccountInteractionState::Match)
             })
             .await?;
@@ -104,7 +109,8 @@ impl ReadCommandsChat<'_> {
     ) -> Result<MessageNumber, DataError> {
         let number = self
             .db_read(move |mut cmds| {
-                cmds.chat().interaction()
+                cmds.chat()
+                    .interaction()
                     .account_interaction(id_message_sender, id_message_receiver)
             })
             .await?

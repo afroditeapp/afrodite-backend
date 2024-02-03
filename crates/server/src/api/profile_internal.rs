@@ -7,7 +7,7 @@ use simple_backend::create_counters;
 use super::super::app::{
     GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData,
 };
-use crate::{api::utils::StatusCode};
+use crate::api::utils::StatusCode;
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";

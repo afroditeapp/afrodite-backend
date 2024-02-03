@@ -1,9 +1,4 @@
-
-
-
-use simple_backend_database::diesel_db::{ConnectionProvider};
-
-
+use simple_backend_database::diesel_db::ConnectionProvider;
 
 mod data;
 mod sign_in_with;

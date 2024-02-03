@@ -1,21 +1,15 @@
-
-
 use diesel::prelude::*;
 use error_stack::Result;
-
-use model::{
-    AccountIdInternal, GoogleAccountId,
-    SignInWithInfo, SignInWithInfoRaw,
-};
-use simple_backend_database::{
-    diesel_db::{ConnectionProvider, DieselDatabaseError},
-};
+use model::{AccountIdInternal, GoogleAccountId, SignInWithInfo, SignInWithInfoRaw};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
 use crate::IntoDatabaseError;
 
-define_read_commands!(CurrentReadAccountSignInWith, CurrentSyncReadAccountSignInWith);
-
+define_read_commands!(
+    CurrentReadAccountSignInWith,
+    CurrentSyncReadAccountSignInWith
+);
 
 impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
     pub fn google_account_id_to_account_id(

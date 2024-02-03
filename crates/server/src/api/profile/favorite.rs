@@ -1,16 +1,14 @@
-
-use axum::{extract::{State}, Extension, Router};
-use model::{
-    AccountId, AccountIdInternal, FavoriteProfilesPage,
-};
+use axum::{extract::State, Extension, Router};
+use model::{AccountId, AccountIdInternal, FavoriteProfilesPage};
 use simple_backend::create_counters;
 
-use crate::app::{GetAccounts, ReadData, WriteData};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
+use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{GetAccounts, ReadData, WriteData},
 };
-
 
 pub const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
 
@@ -97,17 +95,19 @@ pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
 }
 
 pub fn favorite_router(s: crate::app::S) -> Router {
+    use axum::routing::{delete, get, post};
+
     use crate::app::S;
-    use axum::routing::{get, post, delete};
 
     Router::new()
         .route(PATH_GET_FAVORITE_PROFILES, get(get_favorite_profiles::<S>))
         .route(PATH_POST_FAVORITE_PROFILE, post(post_favorite_profile::<S>))
-        .route(PATH_DELETE_FAVORITE_PROFILE, delete(delete_favorite_profile::<S>))
+        .route(
+            PATH_DELETE_FAVORITE_PROFILE,
+            delete(delete_favorite_profile::<S>),
+        )
         .with_state(s)
 }
-
-
 
 create_counters!(
     ProfileCounters,

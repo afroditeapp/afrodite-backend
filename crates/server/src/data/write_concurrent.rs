@@ -8,23 +8,23 @@ use config::Config;
 use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
 use error_stack::{Result, ResultExt};
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ProfileLink, ContentProcessingId};
-
+use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorHandle, IntoDataError,
     RouterDatabaseWriteHandle,
 };
-use crate::{data::DataError, content_processing::{NewContentInfo}};
+use crate::{content_processing::NewContentInfo, data::DataError};
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + Sync + 'static>;
 
 pub enum ConcurrentWriteAction<R> {
     Image {
         handle: ConcurrentWriteContentHandle,
-        action:
-            Box<dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + Sync + 'static>,
+        action: Box<
+            dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + Sync + 'static,
+        >,
     },
     Profile {
         handle: ConcurrentWriteProfileHandle,
@@ -275,7 +275,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .await
             .change_context(DataError::File)?;
 
-        let tmp_img = self.file_dir.processed_content_upload(id.as_id(), content_id.to_content_id());
+        let tmp_img = self
+            .file_dir
+            .processed_content_upload(id.as_id(), content_id.to_content_id());
 
         Ok(NewContentInfo {
             processing_id: content_id,

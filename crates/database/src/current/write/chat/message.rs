@@ -1,8 +1,6 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{
-    AccountIdInternal, AccountInteractionState, PendingMessageId,
-};
+use model::{AccountIdInternal, AccountInteractionState, PendingMessageId};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use simple_backend_utils::current_unix_time;
 
@@ -11,7 +9,6 @@ use crate::{IntoDatabaseError, TransactionError};
 define_write_commands!(CurrentWriteChatMessage, CurrentSyncWriteChatMessage);
 
 impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
-
     pub fn delete_pending_message_list(
         &mut self,
         message_receiver: AccountIdInternal,
@@ -45,7 +42,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = current_unix_time();
-        let interaction = self.cmds().chat().interaction().get_or_create_account_interaction(sender, receiver)?;
+        let interaction = self
+            .cmds()
+            .chat()
+            .interaction()
+            .get_or_create_account_interaction(sender, receiver)?;
         // Skip message number 0, so that latest viewed message number
         // does not have that message already viewed.
         let new_message_number = interaction.message_counter + 1;

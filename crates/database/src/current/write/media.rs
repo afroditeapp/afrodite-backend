@@ -1,11 +1,4 @@
-
-
-
-
-
-
 use super::ConnectionProvider;
-
 
 mod media_content;
 mod moderation_request;
@@ -19,7 +12,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
         media_content::CurrentSyncWriteMediaContent::new(self.cmds)
     }
 
-    pub fn moderation_request(self) -> moderation_request::CurrentSyncWriteMediaModerationRequest<C> {
+    pub fn moderation_request(
+        self,
+    ) -> moderation_request::CurrentSyncWriteMediaModerationRequest<C> {
         moderation_request::CurrentSyncWriteMediaModerationRequest::new(self.cmds)
     }
 }

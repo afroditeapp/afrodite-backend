@@ -81,8 +81,12 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: GoogleAccountId,
     ) -> Result<Option<AccountIdInternal>, DataError> {
-        self.db_read(move |mut cmds| cmds.account().sign_in_with().google_account_id_to_account_id(id))
-            .await
-            .map(Some)
+        self.db_read(move |mut cmds| {
+            cmds.account()
+                .sign_in_with()
+                .google_account_id_to_account_id(id)
+        })
+        .await
+        .map(Some)
     }
 }

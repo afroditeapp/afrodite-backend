@@ -43,7 +43,7 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
 
     // TODO
     //if request.content.initial_moderation_security_image.is_some() {
-        // Ok(())
+    // Ok(())
     // } else {
     // }
     Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -83,7 +83,6 @@ pub async fn internal_post_update_profile_image_visibility<
         .await?;
     Ok(())
 }
-
 
 create_counters!(
     MediaInternalCounters,

@@ -1,21 +1,11 @@
-
 use axum::{extract::State, Router};
-use model::{
-    DeleteStatus,
-};
-use simple_backend::{create_counters};
+use model::DeleteStatus;
+use simple_backend::create_counters;
 
-
-use crate::api::{
-    utils::{Json, StatusCode},
-};
 use crate::{
-    app::{
-        GetAccessTokens, ReadData,
-    },
+    api::utils::{Json, StatusCode},
+    app::{GetAccessTokens, ReadData},
 };
-
-
 
 pub const PATH_POST_DELETE: &str = "/account_api/delete";
 
@@ -89,8 +79,9 @@ pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
 }
 
 pub fn delete_router(s: crate::app::S) -> Router {
+    use axum::routing::{delete, get, post};
+
     use crate::app::S;
-    use axum::routing::{get, post, delete};
 
     Router::new()
         .route(PATH_POST_DELETE, post(post_delete::<S>))

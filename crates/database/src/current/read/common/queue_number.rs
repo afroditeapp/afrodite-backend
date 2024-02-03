@@ -1,12 +1,15 @@
 use diesel::prelude::*;
-use error_stack::{Result};
-use model::{NextQueueNumberType};
+use error_stack::Result;
+use model::NextQueueNumberType;
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
 use crate::IntoDatabaseError;
 
-define_read_commands!(CurrentReadAccountQueueNumber, CurrentSyncReadCommonQueueNumber);
+define_read_commands!(
+    CurrentReadAccountQueueNumber,
+    CurrentSyncReadCommonQueueNumber
+);
 
 impl<C: ConnectionProvider> CurrentSyncReadCommonQueueNumber<C> {
     pub fn next_queue_number(

@@ -1,16 +1,14 @@
-use axum::{extract::{State}, Extension, Router};
-use model::{
-    AccountIdInternal, Location,
-};
+use axum::{extract::State, Extension, Router};
+use model::{AccountIdInternal, Location};
 use simple_backend::create_counters;
 
-use crate::app::{GetAccessTokens, ReadData, WriteData};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
+use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{GetAccessTokens, ReadData, WriteData},
 };
-
-
 
 pub const PATH_GET_LOCATION: &str = "/profile_api/location";
 
@@ -62,8 +60,9 @@ pub async fn put_location<S: GetAccessTokens + WriteData>(
 }
 
 pub fn location_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{get, put};
+
+    use crate::app::S;
 
     Router::new()
         .route(PATH_GET_LOCATION, get(get_location::<S>))

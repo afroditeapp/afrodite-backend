@@ -1,30 +1,25 @@
-
-
 use axum::{
     extract::{BodyStream, Path, Query, State},
-    Extension, TypedHeader, Router,
+    Extension, Router, TypedHeader,
 };
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, AccountContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState,
+    AccountContent, AccountId, AccountIdInternal, ContentAccessCheck, ContentId,
+    ContentProcessingId, ContentProcessingState, ContentSlot, NewContentParams, SlotId,
 };
-use simple_backend::{create_counters};
+use simple_backend::create_counters;
 
-
-use crate::app::{GetAccounts, ReadData, WriteData};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
-};
 use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{ContentProcessingProvider, GetAccounts, ReadData, WriteData},
     data::{
         write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
         DataError,
     },
-    app::ContentProcessingProvider,
 };
-
-
 
 pub const PATH_GET_CONTENT: &str = "/media_api/content/:account_id/:content_id";
 
@@ -63,8 +58,8 @@ pub async fn get_content<S: ReadData>(
     Ok((TypedHeader(ContentType::octet_stream()), data))
 }
 
-
-pub const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_content/:account_id";
+pub const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str =
+    "/media_api/all_account_media_content/:account_id";
 
 /// Get list of all media content on the server for one account.
 #[utoipa::path(
@@ -87,16 +82,9 @@ pub async fn get_all_account_media_content<S: ReadData + GetAccounts>(
 
     // TODO: access restrictions
 
-    let internal_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let internal_id = state.accounts().get_internal_id(account_id).await?;
 
-    let internal_current_media =
-        state
-            .read()
-            .all_account_media_content(internal_id)
-            .await?;
+    let internal_current_media = state.read().all_account_media_content(internal_id).await?;
 
     let data = internal_current_media
         .into_iter()
@@ -105,8 +93,6 @@ pub async fn get_all_account_media_content<S: ReadData + GetAccounts>(
 
     Ok(AccountContent { data }.into())
 }
-
-
 
 pub const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/:slot_id";
 
@@ -160,12 +146,10 @@ pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvide
         })
         .await??;
 
-    state.content_processing().queue_new_content(
-        account_id,
-        slot,
-        content_info.clone(),
-        new_content_params
-    ).await;
+    state
+        .content_processing()
+        .queue_new_content(account_id, slot, content_info.clone(), new_content_params)
+        .await;
 
     Ok(content_info.processing_id.into())
 }
@@ -232,30 +216,35 @@ pub async fn delete_content<S: WriteData + GetAccounts>(
 
     // TODO: Add database support for keeping track of content usage.
 
-    let internal_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let internal_id = state.accounts().get_internal_id(account_id).await?;
 
     db_write!(state, move |cmds| cmds
         .media()
         .delete_content(internal_id, content_id))
 }
 
-
 pub fn content_router(s: crate::app::S) -> Router {
+    use axum::routing::{delete, get, put};
+
     use crate::app::S;
-    use axum::routing::{get, put, delete};
 
     Router::new()
         .route(PATH_GET_CONTENT, get(get_content::<S>))
-        .route(PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT, get(get_all_account_media_content::<S>))
-        .route(PATH_PUT_CONTENT_TO_CONTENT_SLOT, put(put_content_to_content_slot::<S>))
-        .route(PATH_GET_CONTENT_SLOT_STATE, get(get_content_slot_state::<S>))
+        .route(
+            PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
+            get(get_all_account_media_content::<S>),
+        )
+        .route(
+            PATH_PUT_CONTENT_TO_CONTENT_SLOT,
+            put(put_content_to_content_slot::<S>),
+        )
+        .route(
+            PATH_GET_CONTENT_SLOT_STATE,
+            get(get_content_slot_state::<S>),
+        )
         .route(PATH_DELETE_CONTENT, delete(delete_content::<S>))
         .with_state(s)
 }
-
 
 create_counters!(
     MediaCounters,

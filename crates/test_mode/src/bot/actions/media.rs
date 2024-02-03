@@ -97,18 +97,23 @@ pub struct MakeModerationRequest {
 impl BotAction for MakeModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let security_image = if self.camera {
-            Some(Box::new(state.media.slots[0].clone().unwrap_or(ContentId {
-                content_id: uuid::Uuid::new_v4(),
-            })))
+            Some(Box::new(state.media.slots[0].clone().unwrap_or(
+                ContentId {
+                    content_id: uuid::Uuid::new_v4(),
+                },
+            )))
         } else {
             None
         };
 
         let new = ModerationRequestContent {
             initial_moderation_security_image: security_image.into(),
-            content1: state.media.slots[1].clone().map(|id| Box::new(id)).unwrap_or(Box::new(ContentId {
-                content_id: uuid::Uuid::new_v4(),
-            })),
+            content1: state.media.slots[1]
+                .clone()
+                .map(|id| Box::new(id))
+                .unwrap_or(Box::new(ContentId {
+                    content_id: uuid::Uuid::new_v4(),
+                })),
             content2: state.media.slots[2].clone().map(|id| Some(Box::new(id))),
             content3: None,
             content4: None,

@@ -1,19 +1,21 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, ContentId, ContentState, ContentSlot,
-    ModerationRequestContent, ModerationRequestState, NextQueueNumberType, NewContentParams,
+    AccountIdInternal, ContentId, ContentSlot, ContentState, ModerationRequestContent,
+    ModerationRequestState, NewContentParams, NextQueueNumberType,
 };
-use simple_backend_database::diesel_db::{DieselDatabaseError};
+use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
 use super::{ConnectionProvider, DeletedSomething};
-use crate::{IntoDatabaseError};
+use crate::IntoDatabaseError;
 
-define_write_commands!(CurrentWriteMediaModerationRequest, CurrentSyncWriteMediaModerationRequest);
+define_write_commands!(
+    CurrentWriteMediaModerationRequest,
+    CurrentSyncWriteMediaModerationRequest
+);
 
 impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
-
     pub fn insert_content_id_to_slot(
         &mut self,
         content_uploader: AccountIdInternal,
@@ -71,13 +73,17 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         // Delete old queue number and request
         {
             use model::schema::queue_entry::dsl::*;
-            delete(queue_entry.filter(
-                account_id.eq(request_creator.row_id())
-                    .and(queue_type_number.eq(NextQueueNumberType::MediaModeration)
-                        .or(queue_type_number.eq(NextQueueNumberType::InitialMediaModeration))
-                    )))
-                .execute(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+            delete(
+                queue_entry.filter(
+                    account_id.eq(request_creator.row_id()).and(
+                        queue_type_number
+                            .eq(NextQueueNumberType::MediaModeration)
+                            .or(queue_type_number.eq(NextQueueNumberType::InitialMediaModeration)),
+                    ),
+                ),
+            )
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, request_creator)?;
         }
         {
             use model::schema::media_moderation_request::dsl::*;
@@ -110,10 +116,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         self.delete_moderation_request(request_creator)?;
 
         let _account_row_id = request_creator.row_id();
-        let queue_number_new =
-            self.cmds().common().queue_number().create_new_queue_entry(request_creator, NextQueueNumberType::InitialMediaModeration)?;
-        let _request_info = serde_json::to_string(&request)
-            .change_context(DieselDatabaseError::SerdeSerialize)?;
+        let queue_number_new = self
+            .cmds()
+            .common()
+            .queue_number()
+            .create_new_queue_entry(request_creator, NextQueueNumberType::InitialMediaModeration)?;
+        let _request_info =
+            serde_json::to_string(&request).change_context(DieselDatabaseError::SerdeSerialize)?;
         insert_into(media_moderation_request)
             .values((
                 account_id.eq(request_creator.as_db_id()),
@@ -132,7 +141,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::media_moderation_request::dsl::*;
 
-        let current_request = self.read().media().moderation_request().moderation_request(request_owner_account_id)?;
+        let current_request = self
+            .read()
+            .media()
+            .moderation_request()
+            .moderation_request(request_owner_account_id)?;
         let update_possible = if let Some(request) = current_request {
             request.state == ModerationRequestState::Waiting
         } else {

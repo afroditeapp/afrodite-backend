@@ -1,18 +1,12 @@
-
-
 use axum::{extract::State, Extension, Router};
-use model::{
-    AccountId, AccountIdInternal,
-    ReceivedBlocksPage, SentBlocksPage,
-};
+use model::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
 use simple_backend::create_counters;
 
 use super::super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{app::{EventManagerProvider, GetAccounts, ReadData, WriteData}};
-
+use crate::app::{EventManagerProvider, GetAccounts, ReadData, WriteData};
 
 pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
 
@@ -140,8 +134,9 @@ pub async fn get_received_blocks<S: ReadData>(
 }
 
 pub fn block_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{get, post};
+
+    use crate::app::S;
 
     Router::new()
         .route(PATH_POST_BLOCK_PROFILE, post(post_block_profile::<S>))

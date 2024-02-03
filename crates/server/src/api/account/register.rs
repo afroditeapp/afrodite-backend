@@ -1,23 +1,17 @@
-
-use axum::{Extension, extract::State, Router};
+use axum::{extract::State, Extension, Router};
 use model::{
     AccountId, AccountIdInternal, AccountSetup, AccountState, EventToClientInternal, SignInWithInfo,
 };
-use simple_backend::{create_counters};
+use simple_backend::create_counters;
 use tracing::error;
 
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
-};
 use crate::{
-    app::{
-        EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData,
-        WriteData,
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
     },
+    app::{EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
 };
-
-
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -65,8 +59,6 @@ pub async fn register_impl<S: WriteData + GetConfig>(
         }
     }
 }
-
-
 
 pub const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
@@ -131,8 +123,6 @@ pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
         Err(StatusCode::NOT_ACCEPTABLE)
     }
 }
-
-
 
 pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 
@@ -242,8 +232,9 @@ pub async fn post_complete_setup<
 
 /// Contains only routes which require authentication.
 pub fn register_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{get, post};
+
+    use crate::app::S;
 
     Router::new()
         // Skip PATH_REGISTER because it does not need authentication.

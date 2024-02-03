@@ -1,21 +1,11 @@
+use axum::{extract::State, Extension, Router};
+use model::{Account, AccountIdInternal};
+use simple_backend::create_counters;
 
-use axum::{Extension, extract::State, Router};
-use model::{
-    Account, AccountIdInternal,
-};
-use simple_backend::{create_counters};
-
-
-use crate::api::{
-    utils::{Json, StatusCode},
-};
 use crate::{
-    app::{
-        GetAccessTokens, ReadData,
-    },
+    api::utils::{Json, StatusCode},
+    app::{GetAccessTokens, ReadData},
 };
-
-
 
 pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
 
@@ -44,8 +34,9 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
 }
 
 pub fn state_router(s: crate::app::S) -> Router {
+    use axum::routing::get;
+
     use crate::app::S;
-    use axum::routing::{get};
 
     Router::new()
         .route(PATH_ACCOUNT_STATE, get(get_account_state::<S>))

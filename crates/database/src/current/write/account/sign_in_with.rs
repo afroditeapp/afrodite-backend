@@ -1,16 +1,16 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::{Result};
-use model::{
-    AccountIdInternal, SignInWithInfo,
-};
+use error_stack::Result;
+use model::{AccountIdInternal, SignInWithInfo};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 
-define_write_commands!(CurrentWriteAccountSignInWith, CurrentSyncWriteAccountSignInWith);
+define_write_commands!(
+    CurrentWriteAccountSignInWith,
+    CurrentSyncWriteAccountSignInWith
+);
 
 impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
-
     pub fn insert_sign_in_with_info(
         &mut self,
         id: AccountIdInternal,

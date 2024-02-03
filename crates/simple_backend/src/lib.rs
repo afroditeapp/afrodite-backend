@@ -46,8 +46,9 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use self::web_socket::WebSocketManager;
 use crate::{
+    app::StateBuilder,
     media_backup::MediaBackupManager,
-    perf::{PerfCounterManager, PerfCounterManagerData}, app::StateBuilder,
+    perf::{PerfCounterManager, PerfCounterManagerData},
 };
 
 /// Drop this when quit starts
@@ -162,24 +163,23 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             server_quit_watcher.resubscribe(),
         );
 
-        let state_builder = StateBuilder::new(self.config.clone(), perf_data)
-            .expect("State builder init failed");
+        let state_builder =
+            StateBuilder::new(self.config.clone(), perf_data).expect("State builder init failed");
 
-        let state = self.logic.on_before_server_start(
-            state_builder,
-            media_backup_handle,
-            server_quit_watcher.resubscribe(),
-        ).await;
+        let state = self
+            .logic
+            .on_before_server_start(
+                state_builder,
+                media_backup_handle,
+                server_quit_watcher.resubscribe(),
+            )
+            .await;
 
         let (ws_manager, mut ws_quit_ready) =
             WebSocketManager::new(server_quit_watcher.resubscribe());
 
         let server_task = self
-            .create_public_api_server_task(
-                server_quit_watcher.resubscribe(),
-                ws_manager,
-                &state,
-            )
+            .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager, &state)
             .await;
         let internal_server_task = self
             .create_internal_api_server_task(server_quit_watcher.resubscribe(), &state)

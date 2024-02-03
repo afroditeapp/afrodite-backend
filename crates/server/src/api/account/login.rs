@@ -1,25 +1,17 @@
-
-use axum::{extract::State};
+use axum::extract::State;
 use model::{
-    AccessToken, AccountId,
-    AuthPair, GoogleAccountId, LoginResult,
-    RefreshToken, SignInWithInfo, SignInWithLoginInfo,
+    AccessToken, AccountId, AuthPair, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
+    SignInWithLoginInfo,
 };
 use simple_backend::{app::SignInWith, create_counters};
 
-
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
-};
 use crate::{
-    app::{
-        GetAccessTokens, GetAccounts, GetConfig, ReadData,
-        WriteData,
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
     },
+    app::{GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData},
 };
-
-
 
 pub const PATH_LOGIN: &str = "/account_api/login";
 

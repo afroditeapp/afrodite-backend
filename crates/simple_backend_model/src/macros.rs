@@ -1,4 +1,3 @@
-
 /// Type must have new() and to_uuid() methods. Also diesel::FromSqlRow and
 /// diesel::AsExpression derives are needed.
 ///
@@ -60,8 +59,6 @@ macro_rules! diesel_uuid_wrapper {
     };
 }
 
-
-
 /// Type must have new() and as_str() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
@@ -118,8 +115,6 @@ macro_rules! diesel_string_wrapper {
         }
     };
 }
-
-
 
 /// Type must have new() and as_i64() methods.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
@@ -180,7 +175,6 @@ macro_rules! diesel_i64_wrapper {
 
 pub(crate) use diesel_i64_wrapper;
 
-
 /// Enum type must have TryFrom implementation.
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
@@ -222,16 +216,14 @@ macro_rules! diesel_i64_try_from {
                 value: <DB as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let value = i64::from_sql(value)?;
-                TryInto::<$name>::try_into(value)
-                    .map_err(|e| e.into())
+                TryInto::<$name>::try_into(value).map_err(|e| e.into())
             }
         }
 
         // TODO: Support other databases?
         // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
 
-        impl diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>
-            for $name
+        impl diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite> for $name
         where
             i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>,
         {
@@ -246,5 +238,3 @@ macro_rules! diesel_i64_try_from {
         }
     };
 }
-
-

@@ -6,12 +6,12 @@
 pub mod api;
 pub mod app;
 pub mod bot;
+pub mod content_processing;
 pub mod data;
 pub mod event;
 pub mod internal;
 pub mod perf;
 pub mod utils;
-pub mod content_processing;
 
 use std::sync::Arc;
 
@@ -19,15 +19,20 @@ use app::AppState;
 use async_trait::async_trait;
 use axum::Router;
 use config::Config;
-use content_processing::{ContentProcessingManagerData, ContentProcessingManagerQuitHandle, ContentProcessingManager};
+use content_processing::{
+    ContentProcessingManager, ContentProcessingManagerData, ContentProcessingManagerQuitHandle,
+};
 use data::write_commands::WriteCmdWatcher;
 use perf::ALL_COUNTERS;
 use simple_backend::{
-    app::{SimpleBackendAppState, StateBuilder}, media_backup::MediaBackupHandle, perf::AllCounters,
-    web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher,
+    app::{SimpleBackendAppState, StateBuilder},
+    media_backup::MediaBackupHandle,
+    perf::AllCounters,
+    web_socket::WebSocketManager,
+    BusinessLogic, ServerQuitWatcher,
 };
 use tracing::{error, warn};
-use utoipa::{OpenApi};
+use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::{

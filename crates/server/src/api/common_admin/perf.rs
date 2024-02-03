@@ -1,16 +1,12 @@
-
-
-use axum::{extract::{Query, State}, Extension, Router};
-
-use model::{Capabilities};
-use simple_backend::{app::{PerfCounterDataProvider}, create_counters};
+use axum::{
+    extract::{Query, State},
+    Extension, Router,
+};
+use model::Capabilities;
+use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
 
-
-use crate::{
-    api::utils::{Json, StatusCode},
-};
-
+use crate::api::utils::{Json, StatusCode};
 
 pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 
@@ -44,8 +40,9 @@ pub async fn get_perf_data<S: PerfCounterDataProvider>(
 }
 
 pub fn perf_router(s: crate::app::S) -> Router {
+    use axum::routing::get;
+
     use crate::app::S;
-    use axum::routing::{get};
 
     Router::new()
         .route(PATH_GET_PERF_DATA, get(get_perf_data::<S>))

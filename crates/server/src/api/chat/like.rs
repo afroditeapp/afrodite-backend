@@ -1,14 +1,12 @@
 use axum::{extract::State, Extension, Router};
-use model::{
-    AccountId, AccountIdInternal, ReceivedLikesPage, SentLikesPage,
-};
+use model::{AccountId, AccountIdInternal, ReceivedLikesPage, SentLikesPage};
 use simple_backend::create_counters;
 
 use super::super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{app::{EventManagerProvider, GetAccounts, ReadData, WriteData}};
+use crate::app::{EventManagerProvider, GetAccounts, ReadData, WriteData};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -151,8 +149,9 @@ pub async fn delete_like<S: GetAccounts + WriteData + EventManagerProvider>(
 }
 
 pub fn like_router(s: crate::app::S) -> Router {
+    use axum::routing::{delete, get, post};
+
     use crate::app::S;
-    use axum::routing::{get, post, delete};
 
     Router::new()
         .route(PATH_POST_SEND_LIKE, post(post_send_like::<S>))

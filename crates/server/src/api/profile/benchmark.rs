@@ -1,16 +1,17 @@
-use axum::{extract::{Path, State}, Extension, Router};
-use model::{
-    AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal,
+use axum::{
+    extract::{Path, State},
+    Extension, Router,
 };
+use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal};
 use simple_backend::create_counters;
 
-use crate::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
+use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
 };
-
-
 
 // ------------------- Benchmark routes ----------------------------
 
@@ -40,7 +41,9 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
     Extension(account_id): Extension<AccountIdInternal>,
     Path(requested_profile): Path<AccountId>,
 ) -> Result<Json<Profile>, StatusCode> {
-    PROFILE.get_profile_from_database_debug_mode_benchmark.incr();
+    PROFILE
+        .get_profile_from_database_debug_mode_benchmark
+        .incr();
 
     if !state.config().debug_mode() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -105,12 +108,19 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 // ------------------- Benchmark routes end ----------------------------
 
 pub fn benchmark_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{get, post};
 
+    use crate::app::S;
+
     Router::new()
-        .route(PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK, get(get_profile_from_database_debug_mode_benchmark::<S>))
-        .route(PATH_POST_PROFILE_TO_DATABASE_BENCHMARK, post(post_profile_to_database_debug_mode_benchmark::<S>))
+        .route(
+            PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK,
+            get(get_profile_from_database_debug_mode_benchmark::<S>),
+        )
+        .route(
+            PATH_POST_PROFILE_TO_DATABASE_BENCHMARK,
+            post(post_profile_to_database_debug_mode_benchmark::<S>),
+        )
         .with_state(s)
 }
 

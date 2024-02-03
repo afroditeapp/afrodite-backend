@@ -1,25 +1,23 @@
-
-
-use diesel::{prelude::*};
-use error_stack::{Result};
+use diesel::prelude::*;
+use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentId,
-    CurrentAccountMediaInternal, CurrentAccountMediaRaw, MediaContentInternal,
-    MediaContentRaw, ContentIdDb,
+    AccountIdInternal, ContentId, ContentIdDb, CurrentAccountMediaInternal, CurrentAccountMediaRaw,
+    MediaContentInternal, MediaContentRaw,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 
-define_read_commands!(CurrentReadMediaMediaContent, CurrentSyncReadMediaMediaContent);
-
+define_read_commands!(
+    CurrentReadMediaMediaContent,
+    CurrentSyncReadMediaMediaContent
+);
 
 impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
-
     fn media_content_raw(
         &mut self,
         media_owner_id: AccountIdInternal,
-        id: Option<ContentIdDb>
+        id: Option<ContentIdDb>,
     ) -> Result<Option<MediaContentInternal>, DieselDatabaseError> {
         if let Some(content_id) = id {
             use crate::schema::media_content::dsl::*;
@@ -36,7 +34,6 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
         }
     }
 
-
     pub fn current_account_media(
         &mut self,
         media_owner_id: AccountIdInternal,
@@ -49,20 +46,34 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
             .first::<CurrentAccountMediaRaw>(self.conn())
             .into_db_error(DieselDatabaseError::Execute, media_owner_id)?;
 
-        let security_content_id = self.media_content_raw(media_owner_id, raw.security_content_id)?;
-        let pending_security_content_id = self.media_content_raw(media_owner_id, raw.pending_security_content_id)?;
-        let profile_content_id_0 = self.media_content_raw(media_owner_id, raw.profile_content_id_0)?;
-        let profile_content_id_1 = self.media_content_raw(media_owner_id, raw.profile_content_id_1)?;
-        let profile_content_id_2 = self.media_content_raw(media_owner_id, raw.profile_content_id_2)?;
-        let profile_content_id_3 = self.media_content_raw(media_owner_id, raw.profile_content_id_3)?;
-        let profile_content_id_4 = self.media_content_raw(media_owner_id, raw.profile_content_id_4)?;
-        let profile_content_id_5 = self.media_content_raw(media_owner_id, raw.profile_content_id_5)?;
-        let pending_profile_content_id_0 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_0)?;
-        let pending_profile_content_id_1 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_1)?;
-        let pending_profile_content_id_2 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_2)?;
-        let pending_profile_content_id_3 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_3)?;
-        let pending_profile_content_id_4 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_4)?;
-        let pending_profile_content_id_5 = self.media_content_raw(media_owner_id, raw.pending_profile_content_id_5)?;
+        let security_content_id =
+            self.media_content_raw(media_owner_id, raw.security_content_id)?;
+        let pending_security_content_id =
+            self.media_content_raw(media_owner_id, raw.pending_security_content_id)?;
+        let profile_content_id_0 =
+            self.media_content_raw(media_owner_id, raw.profile_content_id_0)?;
+        let profile_content_id_1 =
+            self.media_content_raw(media_owner_id, raw.profile_content_id_1)?;
+        let profile_content_id_2 =
+            self.media_content_raw(media_owner_id, raw.profile_content_id_2)?;
+        let profile_content_id_3 =
+            self.media_content_raw(media_owner_id, raw.profile_content_id_3)?;
+        let profile_content_id_4 =
+            self.media_content_raw(media_owner_id, raw.profile_content_id_4)?;
+        let profile_content_id_5 =
+            self.media_content_raw(media_owner_id, raw.profile_content_id_5)?;
+        let pending_profile_content_id_0 =
+            self.media_content_raw(media_owner_id, raw.pending_profile_content_id_0)?;
+        let pending_profile_content_id_1 =
+            self.media_content_raw(media_owner_id, raw.pending_profile_content_id_1)?;
+        let pending_profile_content_id_2 =
+            self.media_content_raw(media_owner_id, raw.pending_profile_content_id_2)?;
+        let pending_profile_content_id_3 =
+            self.media_content_raw(media_owner_id, raw.pending_profile_content_id_3)?;
+        let pending_profile_content_id_4 =
+            self.media_content_raw(media_owner_id, raw.pending_profile_content_id_4)?;
+        let pending_profile_content_id_5 =
+            self.media_content_raw(media_owner_id, raw.pending_profile_content_id_5)?;
 
         Ok(CurrentAccountMediaInternal {
             grid_crop_size: raw.grid_crop_size,
@@ -115,15 +126,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
                 .into_db_error(DieselDatabaseError::Execute, media_owner_id)?
         };
 
-        let content = data
-            .into_iter()
-            .map(|r| {
-                r.into()
-            })
-            .collect();
+        let content = data.into_iter().map(|r| r.into()).collect();
 
         Ok(content)
     }
-
-
 }

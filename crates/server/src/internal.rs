@@ -303,7 +303,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
             // if request.content.initial_moderation_security_image.is_some() {
             //     Ok(())
             // } else {
-                Err(InternalApiError::MissingValue).with_info(account_id)
+            Err(InternalApiError::MissingValue).with_info(account_id)
             // }
         } else {
             InternalApi::media_check_moderation_request_for_account(

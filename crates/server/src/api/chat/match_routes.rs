@@ -1,15 +1,11 @@
 //! Match related routes
 
 use axum::{extract::State, Extension, Router};
-use model::{
-    AccountIdInternal, MatchesPage,
-};
+use model::{AccountIdInternal, MatchesPage};
 use simple_backend::create_counters;
 
-use super::super::{
-    utils::{Json, StatusCode},
-};
-use crate::{app::{ReadData}};
+use super::super::utils::{Json, StatusCode};
+use crate::app::ReadData;
 
 pub const PATH_GET_MATCHES: &str = "/chat_api/matches";
 
@@ -35,17 +31,13 @@ pub async fn get_matches<S: ReadData>(
 }
 
 pub fn match_router(s: crate::app::S) -> Router {
+    use axum::routing::get;
+
     use crate::app::S;
-    use axum::routing::{get};
 
     Router::new()
         .route(PATH_GET_MATCHES, get(get_matches::<S>))
         .with_state(s)
 }
 
-create_counters!(
-    ChatCounters,
-    CHAT,
-    CHAT_MATCH_COUNTERS_LIST,
-    get_matches,
-);
+create_counters!(ChatCounters, CHAT, CHAT_MATCH_COUNTERS_LIST, get_matches,);

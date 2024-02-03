@@ -1,14 +1,14 @@
-
 use diesel::{insert_into, prelude::*, update};
-use error_stack::{Result};
+use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentId, ContentState, SetProfileContent, MediaContentType, SetProfileContentInternal,
+    AccountIdInternal, ContentId, ContentState, MediaContentType, SetProfileContent,
+    SetProfileContentInternal,
 };
-use simple_backend_database::diesel_db::{DieselDatabaseError};
+use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
 use super::ConnectionProvider;
-use crate::{IntoDatabaseError};
+use crate::IntoDatabaseError;
 
 define_write_commands!(CurrentWriteMediaContent, CurrentSyncWriteMediaContent);
 
@@ -34,16 +34,18 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
 
-        let all_content = self.read().media().media_content().get_account_media_content(id)?;
+        let all_content = self
+            .read()
+            .media()
+            .media_content()
+            .get_account_media_content(id)?;
         let convert = |content_id: Option<ContentId>| {
             if let Some(content_id) = content_id {
-                let found = all_content
-                    .iter()
-                    .find(|content|
-                        content.content_id == content_id &&
-                        content.state == ContentState::ModeratedAsAccepted &&
-                        content.content_type == MediaContentType::JpegImage
-                    );
+                let found = all_content.iter().find(|content| {
+                    content.content_id == content_id
+                        && content.state == ContentState::ModeratedAsAccepted
+                        && content.content_type == MediaContentType::JpegImage
+                });
 
                 if let Some(c) = found {
                     Ok(Some(c.content_row_id))
@@ -88,16 +90,18 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             SetProfileContentInternal::default()
         };
 
-        let all_content = self.read().media().media_content().get_account_media_content(id)?;
+        let all_content = self
+            .read()
+            .media()
+            .media_content()
+            .get_account_media_content(id)?;
         let convert = |content_id: Option<ContentId>| {
             if let Some(content_id) = content_id {
-                let found = all_content
-                    .iter()
-                    .find(|content|
-                        content.content_id == content_id &&
-                        content.state != ContentState::ModeratedAsDenied &&
-                        content.content_type == MediaContentType::JpegImage
-                    );
+                let found = all_content.iter().find(|content| {
+                    content.content_id == content_id
+                        && content.state != ContentState::ModeratedAsDenied
+                        && content.content_type == MediaContentType::JpegImage
+                });
 
                 if let Some(c) = found {
                     Ok(Some(c.content_row_id))
@@ -127,13 +131,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         Ok(())
     }
 
-
     pub fn update_security_image(
         &mut self,
         _image_owner: AccountIdInternal,
         _content_id: ContentId,
     ) -> Result<(), DieselDatabaseError> {
-
         unimplemented!("TODO")
     }
 
@@ -142,7 +144,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         _image_owner: AccountIdInternal,
         _content_id: Option<ContentId>,
     ) -> Result<(), DieselDatabaseError> {
-
         unimplemented!("TODO")
     }
 

@@ -1,13 +1,7 @@
+use super::ConnectionProvider;
 
-
-
-
-
-use super::{ConnectionProvider};
-
-
-mod moderation;
 mod media_content;
+mod moderation;
 
 define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
 

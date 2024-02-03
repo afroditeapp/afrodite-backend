@@ -1,21 +1,13 @@
-
-
 use axum::{
-    extract::{Path, State}, TypedHeader, Router,
+    extract::{Path, State},
+    Router, TypedHeader,
 };
 use headers::ContentType;
-use model::{
-    MapTileX, MapTileY,
-    MapTileZ,
-};
+use model::{MapTileX, MapTileY, MapTileZ};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 
-
-use crate::api::{
-    utils::{StatusCode},
-};
-
+use crate::api::utils::StatusCode;
 
 pub const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/:z/:x/:y";
 
@@ -62,8 +54,9 @@ pub async fn get_map_tile<S: GetTileMap>(
 }
 
 pub fn tile_map_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::get;
+
+    use crate::app::S;
 
     Router::new()
         .route(PATH_GET_MAP_TILE, get(get_map_tile::<S>))

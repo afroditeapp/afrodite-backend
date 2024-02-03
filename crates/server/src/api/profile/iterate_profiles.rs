@@ -1,20 +1,15 @@
-
-
-use axum::{extract::{State}, Extension, Router};
-use model::{
-    AccountIdInternal, ProfileLink,
-    ProfilePage,
-};
+use axum::{extract::State, Extension, Router};
+use model::{AccountIdInternal, ProfileLink, ProfilePage};
 use simple_backend::create_counters;
 
-use crate::{app::{GetAccessTokens, ReadData, WriteData}};
-use crate::api::{
-    utils::{Json, StatusCode},
+use crate::{
+    api::utils::{Json, StatusCode},
+    app::{GetAccessTokens, ReadData, WriteData},
+    data::{
+        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle},
+        DataError,
+    },
 };
-use crate::{data::{
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle},
-    DataError,
-}};
 
 pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 
@@ -85,12 +80,19 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
 }
 
 pub fn iterate_profiles_router(s: crate::app::S) -> Router {
+    use axum::routing::post;
+
     use crate::app::S;
-    use axum::routing::{post};
 
     Router::new()
-        .route(PATH_POST_NEXT_PROFILE_PAGE, post(post_get_next_profile_page::<S>))
-        .route(PATH_POST_RESET_PROFILE_PAGING, post(post_reset_profile_paging::<S>))
+        .route(
+            PATH_POST_NEXT_PROFILE_PAGE,
+            post(post_get_next_profile_page::<S>),
+        )
+        .route(
+            PATH_POST_RESET_PROFILE_PAGING,
+            post(post_reset_profile_paging::<S>),
+        )
         .with_state(s)
 }
 

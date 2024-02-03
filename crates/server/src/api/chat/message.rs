@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged,
-    MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage, SendMessageToAccount,
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber,
+    NotificationEvent, PendingMessageDeleteList, PendingMessagesPage, SendMessageToAccount,
     UpdateMessageViewStatus,
 };
 use simple_backend::create_counters;
@@ -10,8 +10,7 @@ use super::super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{app::{EventManagerProvider, GetAccounts, ReadData, WriteData}};
-
+use crate::app::{EventManagerProvider, GetAccounts, ReadData, WriteData};
 
 pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
@@ -181,12 +180,16 @@ pub async fn post_send_message<S: GetAccounts + WriteData + EventManagerProvider
 }
 
 pub fn message_router(s: crate::app::S) -> Router {
+    use axum::routing::{delete, get, post};
+
     use crate::app::S;
-    use axum::routing::{get, post, delete};
 
     Router::new()
         .route(PATH_GET_PENDING_MESSAGES, get(get_pending_messages::<S>))
-        .route(PATH_DELETE_PENDING_MESSAGES, delete(delete_pending_messages::<S>))
+        .route(
+            PATH_DELETE_PENDING_MESSAGES,
+            delete(delete_pending_messages::<S>),
+        )
         .route(
             PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
             get(get_message_number_of_latest_viewed_message::<S>),

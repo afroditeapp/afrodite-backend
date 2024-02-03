@@ -1,17 +1,21 @@
 use std::collections::HashSet;
 
-use diesel::{prelude::*};
-use error_stack::{Result};
+use diesel::prelude::*;
+use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentState, ContentSlot, MediaContentInternal,
-    MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
-    ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState,
+    AccountId, AccountIdInternal, ContentId, ContentSlot, ContentState, MediaContentInternal,
+    MediaContentRaw, MediaModerationRaw, MediaModerationRequestRaw, ModerationQueueNumber,
+    ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
+    ModerationRequestState,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 
-define_read_commands!(CurrentReadMediaModerationRequest, CurrentSyncReadMediaModerationRequest);
+define_read_commands!(
+    CurrentReadMediaModerationRequest,
+    CurrentSyncReadMediaModerationRequest
+);
 
 impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
     pub fn moderation_request(

@@ -25,8 +25,9 @@ use super::{
 };
 use crate::{
     api,
-    data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}},
-    event::EventManager, content_processing::{ContentProcessingManagerData},
+    content_processing::ContentProcessingManagerData,
+    data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+    event::EventManager,
 };
 
 pub mod routes_connected;
@@ -264,16 +265,13 @@ impl App {
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             events,
-            content_processing
+            content_processing,
         };
 
         state
     }
 
-    pub fn new(
-        state: S,
-        web_socket_manager: WebSocketManager,
-    ) -> Self {
+    pub fn new(state: S, web_socket_manager: WebSocketManager) -> Self {
         Self {
             state,
             web_socket_manager: web_socket_manager.into(),
@@ -310,10 +308,12 @@ impl App {
     }
 
     pub fn create_account_server_router(&self) -> Router {
-        let public = Router::new().route(
-            api::account::PATH_SIGN_IN_WITH_LOGIN,
-            post(api::account::post_sign_in_with_login::<S>),
-        ).with_state(self.state());
+        let public = Router::new()
+            .route(
+                api::account::PATH_SIGN_IN_WITH_LOGIN,
+                post(api::account::post_sign_in_with_login::<S>),
+            )
+            .with_state(self.state());
 
         public.merge(ConnectedApp::new(self.state.clone()).private_account_server_router())
     }

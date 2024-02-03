@@ -1,23 +1,14 @@
+use axum::{extract::State, Extension, Router};
+use model::{AccountIdInternal, ModerationRequest, ModerationRequestContent};
+use simple_backend::create_counters;
 
-
-use axum::{
-    extract::{State},
-    Extension, Router,
+use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{ReadData, WriteData},
 };
-
-use model::{
-    AccountIdInternal, ModerationRequest, ModerationRequestContent,
-};
-use simple_backend::{create_counters};
-
-
-use crate::app::{ReadData, WriteData};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
-};
-
-
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
 
@@ -101,18 +92,20 @@ pub async fn delete_moderation_request<S: WriteData>(
     })
 }
 
-
 pub fn moderation_request_router(s: crate::app::S) -> Router {
+    use axum::routing::{delete, get, put};
+
     use crate::app::S;
-    use axum::routing::{get, put, delete};
 
     Router::new()
         .route(PATH_MODERATION_REQUEST, get(get_moderation_request::<S>))
         .route(PATH_MODERATION_REQUEST, put(put_moderation_request::<S>))
-        .route(PATH_MODERATION_REQUEST, delete(delete_moderation_request::<S>))
+        .route(
+            PATH_MODERATION_REQUEST,
+            delete(delete_moderation_request::<S>),
+        )
         .with_state(s)
 }
-
 
 create_counters!(
     MediaCounters,

@@ -1,20 +1,20 @@
-
 use diesel::{prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, ContentState, HandleModerationRequest,
-    Moderation, ModerationId, ModerationRequestId,
-    ModerationRequestState, NextQueueNumberType,
+    AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId,
+    ModerationRequestId, ModerationRequestState, NextQueueNumberType,
 };
-use simple_backend_database::diesel_db::{DieselDatabaseError};
+use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use super::{ConnectionProvider};
-use crate::{IntoDatabaseError};
+use super::ConnectionProvider;
+use crate::IntoDatabaseError;
 
-define_write_commands!(CurrentWriteMediaAdminModeration, CurrentSyncWriteMediaAdminModeration);
+define_write_commands!(
+    CurrentWriteMediaAdminModeration,
+    CurrentSyncWriteMediaAdminModeration
+);
 
 impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
-
     pub fn moderation_get_list_and_create_new_if_necessary(
         &mut self,
         moderator_id: AccountIdInternal,
@@ -31,7 +31,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         }
 
         for _ in moderations.len()..MAX_COUNT {
-            match self.cmds()
+            match self
+                .cmds()
                 .media_admin()
                 .moderation()
                 .create_moderation_from_next_request_in_queue(moderator_id)?
@@ -93,12 +94,16 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         }
 
         // TODO
-        let queue_type = if true { //if request_raw.initial_moderation_security_image.is_some() {
+        let queue_type = if true {
+            //if request_raw.initial_moderation_security_image.is_some() {
             NextQueueNumberType::InitialMediaModeration
         } else {
             NextQueueNumberType::MediaModeration
         };
-        self.cmds().common().queue_number().delete_queue_entry(queue_number.0, queue_type)?;
+        self.cmds()
+            .common()
+            .queue_number()
+            .delete_queue_entry(queue_number.0, queue_type)?;
 
         let moderation = Moderation {
             request_creator_id,
@@ -141,7 +146,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             account_id: moderator_id,
         };
 
-        let content = self.read().media_admin().moderation().moderation(moderation_id)?;
+        let content = self
+            .read()
+            .media_admin()
+            .moderation()
+            .moderation(moderation_id)?;
 
         let state = if result.accept {
             ModerationRequestState::Accepted
@@ -157,7 +166,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         };
 
         for c in content.content() {
-            let _content_info = self.read().media().media_content().get_media_content_raw(c)?;
+            let _content_info = self
+                .read()
+                .media()
+                .media_content()
+                .get_media_content_raw(c)?;
             // TODO
             //let is_security = if let Some(content) = content.initial_moderation_security_image {
             let _is_security = if true {
@@ -166,11 +179,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             } else {
                 false
             };
-            self.cmds().media_admin().media_content().update_content_state(
-                c,
-                new_content_state,
-                // is_security,
-            )?;
+            self.cmds()
+                .media_admin()
+                .media_content()
+                .update_content_state(
+                    c,
+                    new_content_state,
+                    // is_security,
+                )?;
         }
 
         // TODO

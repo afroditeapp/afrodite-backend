@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_string_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    AccessToken, AccountIdDb, AccountIdInternal, RefreshToken,
-};
+use crate::{AccessToken, AccountIdDb, AccountIdInternal, RefreshToken};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {

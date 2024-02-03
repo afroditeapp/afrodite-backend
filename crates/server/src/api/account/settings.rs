@@ -1,20 +1,13 @@
+use axum::{extract::State, Extension, Router};
+use model::{AccountData, AccountIdInternal, AccountState, BooleanSetting, EventToClientInternal};
+use simple_backend::create_counters;
 
-use axum::{Extension, extract::State, Router};
-use model::{
-    AccountData, AccountIdInternal, AccountState, BooleanSetting, EventToClientInternal,
-};
-use simple_backend::{create_counters};
-
-
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
-};
 use crate::{
-    app::{
-        EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData,
-        WriteData,
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
     },
+    app::{EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
 };
 
 pub const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
@@ -72,8 +65,6 @@ pub async fn post_account_data<S: GetAccessTokens + ReadData + WriteData>(
         .account()
         .account_data(api_caller_account_id, data))
 }
-
-
 
 pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
@@ -136,8 +127,9 @@ pub async fn put_setting_profile_visiblity<
 }
 
 pub fn settings_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{get, post, put};
+
+    use crate::app::S;
 
     Router::new()
         .route(PATH_GET_ACCOUNT_DATA, get(get_account_data::<S>))

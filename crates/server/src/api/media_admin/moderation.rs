@@ -1,22 +1,17 @@
-
-
 use axum::{
     extract::{Path, State},
     Extension, Router,
 };
+use model::{AccountId, AccountIdInternal, HandleModerationRequest, ModerationList};
+use simple_backend::create_counters;
 
-use model::{
-    AccountId, AccountIdInternal, HandleModerationRequest, ModerationList,
+use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
 };
-use simple_backend::{create_counters};
-
-
-use crate::{app::{GetAccessTokens, GetAccounts, ReadData, WriteData, GetInternalApi, GetConfig}};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
-};
-
 
 // TODO: Add moderation content moderation weight to account and use it when moderating.
 //       Moderation should have some value which keeps track how much moderation
@@ -113,14 +108,20 @@ pub async fn post_handle_moderation_request<
     }
 }
 
-
 pub fn admin_moderation_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{patch, post};
 
+    use crate::app::S;
+
     Router::new()
-        .route(PATH_ADMIN_MODERATION_PAGE_NEXT, patch(patch_moderation_request_list::<S>))
-        .route(PATH_ADMIN_MODERATION_HANDLE_REQUEST, post(post_handle_moderation_request::<S>))
+        .route(
+            PATH_ADMIN_MODERATION_PAGE_NEXT,
+            patch(patch_moderation_request_list::<S>),
+        )
+        .route(
+            PATH_ADMIN_MODERATION_HANDLE_REQUEST,
+            post(post_handle_moderation_request::<S>),
+        )
         .with_state(s)
 }
 

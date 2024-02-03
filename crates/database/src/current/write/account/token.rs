@@ -1,9 +1,6 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
-use model::{
-    AccessToken, AccountIdInternal,
-    RefreshToken,
-};
+use model::{AccessToken, AccountIdInternal, RefreshToken};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
@@ -92,5 +89,4 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountToken<C> {
 
         Ok(())
     }
-
 }

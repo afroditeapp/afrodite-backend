@@ -6,7 +6,7 @@ use std::net::SocketAddr;
 use axum::{
     extract::{
         ws::{Message, WebSocket},
-        ConnectInfo, WebSocketUpgrade, State,
+        ConnectInfo, State, WebSocketUpgrade,
     },
     response::IntoResponse,
     TypedHeader,
@@ -16,7 +16,7 @@ use model::{
     AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,
     RefreshToken,
 };
-use simple_backend::{web_socket::WebSocketManager, create_counters};
+use simple_backend::{create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::ContextExt;
 use tracing::error;
 pub use utils::api::PATH_CONNECT;

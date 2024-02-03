@@ -1,4 +1,3 @@
-
 use error_stack::{Result, ResultExt};
 use model::{
     AccountData, AccountIdInternal, AccountInternal, AccountSetup, Capabilities, SharedState,
@@ -23,7 +22,9 @@ impl WriteCommandsAccount<'_> {
                 cmds.common().state().shared_state(id, state)?;
             }
             if let Some(capabilities) = capabilities_copy {
-                cmds.common().state().account_capabilities(id, capabilities)?;
+                cmds.common()
+                    .state()
+                    .account_capabilities(id, capabilities)?;
             }
             Ok(())
         })

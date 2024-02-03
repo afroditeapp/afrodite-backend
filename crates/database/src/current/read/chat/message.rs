@@ -1,9 +1,7 @@
-
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal,
-    PendingMessage, PendingMessageId, PendingMessageInternal,
+    AccountId, AccountIdInternal, PendingMessage, PendingMessageId, PendingMessageInternal,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;

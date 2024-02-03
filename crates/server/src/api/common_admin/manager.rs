@@ -1,19 +1,16 @@
-
-
-use axum::{extract::{Query, State}, Extension, Router};
+use axum::{
+    extract::{Query, State},
+    Extension, Router,
+};
 use manager_model::{
     BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
     SystemInfoList,
 };
 use model::{AccountIdInternal, Capabilities};
-use simple_backend::{app::{GetManagerApi}, create_counters};
-
+use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
 
-use crate::{
-    api::utils::{Json, StatusCode},
-};
-
+use crate::api::utils::{Json, StatusCode};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
@@ -123,9 +120,7 @@ pub async fn post_request_build_software<S: GetManagerApi>(
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_request_build_software.incr();
 
-    if api_caller_capabilities
-        .admin_server_maintenance_update_software
-    {
+    if api_caller_capabilities.admin_server_maintenance_update_software {
         state
             .manager_api()
             .request_build_software_from_build_server(software.software_options)
@@ -176,9 +171,7 @@ pub async fn post_request_update_software<S: GetManagerApi>(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if api_caller_capabilities
-        .admin_server_maintenance_update_software
-    {
+    if api_caller_capabilities.admin_server_maintenance_update_software {
         info!(
             "Requesting update software, account: {}, software: {:?}, reboot: {}, reset_data: {},",
             api_caller_account_id.as_uuid(),
@@ -227,9 +220,7 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if api_caller_capabilities
-        .admin_server_maintenance_update_software
-    {
+    if api_caller_capabilities.admin_server_maintenance_update_software {
         info!(
             "Requesting reset or restart backend, account: {}, reset_data: {}",
             api_caller_account_id.as_uuid(),
@@ -245,18 +236,27 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
     }
 }
 
-
 pub fn manager_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{get, post};
+
+    use crate::app::S;
 
     Router::new()
         .route(PATH_GET_SYSTEM_INFO, get(get_system_info::<S>))
         .route(PATH_GET_SOFTWARE_INFO, get(get_software_info::<S>))
         .route(PATH_GET_LATEST_BUILD_INFO, get(get_latest_build_info::<S>))
-        .route(PATH_POST_REQUEST_BUILD_SOFTWARE, post(post_request_build_software::<S>))
-        .route(PATH_POST_REQUEST_UPDATE_SOFTWARE, post(post_request_update_software::<S>))
-        .route(PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND, post(post_request_restart_or_reset_backend::<S>))
+        .route(
+            PATH_POST_REQUEST_BUILD_SOFTWARE,
+            post(post_request_build_software::<S>),
+        )
+        .route(
+            PATH_POST_REQUEST_UPDATE_SOFTWARE,
+            post(post_request_update_software::<S>),
+        )
+        .route(
+            PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND,
+            post(post_request_restart_or_reset_backend::<S>),
+        )
         .with_state(s)
 }
 

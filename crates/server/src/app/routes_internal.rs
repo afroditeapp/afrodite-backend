@@ -28,7 +28,7 @@ impl InternalApp {
             )
             .route(
                 api::account_internal::PATH_INTERNAL_GET_ACCOUNT_STATE,
-                get( api::account_internal::internal_get_account_state::<S>),
+                get(api::account_internal::internal_get_account_state::<S>),
             );
 
         if state
@@ -48,16 +48,16 @@ impl InternalApp {
                 )
         }
 
-        router
-            .with_state(state)
+        router.with_state(state)
     }
 
     pub fn create_profile_server_router(state: S) -> Router {
-        Router::new().route(
-            api::profile_internal::PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY,
-            post(api::profile_internal::internal_post_update_profile_visibility::<S>),
-        )
-        .with_state(state)
+        Router::new()
+            .route(
+                api::profile_internal::PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY,
+                post(api::profile_internal::internal_post_update_profile_visibility::<S>),
+            )
+            .with_state(state)
     }
 
     pub fn create_media_server_router(state: S) -> Router {

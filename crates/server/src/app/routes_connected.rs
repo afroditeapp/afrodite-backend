@@ -1,11 +1,9 @@
-use axum::{
-    middleware,
-    Router,
+use axum::{middleware, Router};
+
+use crate::{
+    api::{self},
+    app::S,
 };
-use crate::app::S;
-
-
-use crate::api::{self};
 
 /// Private routes only accessible when WebSocket is connected.
 pub struct ConnectedApp {
@@ -27,7 +25,10 @@ impl ConnectedApp {
             .merge(api::common_admin::config_router(self.state.clone()))
             .merge(api::common_admin::perf_router(self.state.clone()))
             .route_layer({
-                middleware::from_fn_with_state(self.state(), api::utils::authenticate_with_access_token::<S, _>)
+                middleware::from_fn_with_state(
+                    self.state(),
+                    api::utils::authenticate_with_access_token::<S, _>,
+                )
             });
 
         private
@@ -47,7 +48,10 @@ impl ConnectedApp {
         };
 
         let private = private.route_layer({
-            middleware::from_fn_with_state(self.state(), api::utils::authenticate_with_access_token::<S, _>)
+            middleware::from_fn_with_state(
+                self.state(),
+                api::utils::authenticate_with_access_token::<S, _>,
+            )
         });
 
         private
@@ -60,7 +64,10 @@ impl ConnectedApp {
             .merge(api::profile::favorite_router(self.state.clone()))
             .merge(api::profile::iterate_profiles_router(self.state.clone()))
             .route_layer({
-                middleware::from_fn_with_state(self.state(), api::utils::authenticate_with_access_token::<S, _>)
+                middleware::from_fn_with_state(
+                    self.state(),
+                    api::utils::authenticate_with_access_token::<S, _>,
+                )
             });
 
         private
@@ -75,9 +82,14 @@ impl ConnectedApp {
             .merge(api::media::content_router(self.state.clone()))
             .merge(api::media::tile_map_router(self.state.clone()))
             // Media admin
-            .merge(api::media_admin::admin_moderation_router(self.state.clone()))
+            .merge(api::media_admin::admin_moderation_router(
+                self.state.clone(),
+            ))
             .route_layer({
-                middleware::from_fn_with_state(self.state.clone(), api::utils::authenticate_with_access_token::<S, _>)
+                middleware::from_fn_with_state(
+                    self.state.clone(),
+                    api::utils::authenticate_with_access_token::<S, _>,
+                )
             });
 
         private
@@ -91,7 +103,10 @@ impl ConnectedApp {
             .merge(api::chat::match_routes::match_router(self.state.clone()))
             .merge(api::chat::message::message_router(self.state.clone()))
             .route_layer({
-                middleware::from_fn_with_state(self.state.clone(), api::utils::authenticate_with_access_token::<S, _>)
+                middleware::from_fn_with_state(
+                    self.state.clone(),
+                    api::utils::authenticate_with_access_token::<S, _>,
+                )
             });
 
         private

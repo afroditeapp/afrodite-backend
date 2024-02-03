@@ -1,11 +1,4 @@
-
-
-
-
-
-use simple_backend_database::diesel_db::{ConnectionProvider};
-
-
+use simple_backend_database::diesel_db::ConnectionProvider;
 
 mod media_content;
 mod moderation_request;
@@ -17,7 +10,9 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
         media_content::CurrentSyncReadMediaMediaContent::new(self.cmds)
     }
 
-    pub fn moderation_request(self) -> moderation_request::CurrentSyncReadMediaModerationRequest<C> {
+    pub fn moderation_request(
+        self,
+    ) -> moderation_request::CurrentSyncReadMediaModerationRequest<C> {
         moderation_request::CurrentSyncReadMediaModerationRequest::new(self.cmds)
     }
 }

@@ -1,16 +1,17 @@
-use axum::{extract::{Path, State}, Extension, Router};
-use model::{
-    AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal,
+use axum::{
+    extract::{Path, State},
+    Extension, Router,
 };
+use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal};
 use simple_backend::create_counters;
 
-use crate::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
+use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
 };
-
-
 
 // TODO: Add timeout for database commands
 
@@ -142,8 +143,9 @@ pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
 }
 
 pub fn profile_data_router(s: crate::app::S) -> Router {
-    use crate::app::S;
     use axum::routing::{get, post};
+
+    use crate::app::S;
 
     Router::new()
         .route(PATH_GET_PROFILE, get(get_profile::<S>))

@@ -1,14 +1,15 @@
 use diesel::{prelude::*, update};
-use error_stack::{Result};
-use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState,
-};
-use simple_backend_database::diesel_db::{DieselDatabaseError};
+use error_stack::Result;
+use model::{AccountIdInternal, ContentId, ContentIdDb, ContentState};
+use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use super::{ConnectionProvider};
-use crate::{IntoDatabaseError};
+use super::ConnectionProvider;
+use crate::IntoDatabaseError;
 
-define_write_commands!(CurrentWriteMediaAdminMediaContent, CurrentSyncWriteMediaAdminMediaContent);
+define_write_commands!(
+    CurrentWriteMediaAdminMediaContent,
+    CurrentSyncWriteMediaAdminMediaContent
+);
 
 impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminMediaContent<C> {
     fn update_current_security_image(
@@ -84,9 +85,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminMediaContent<C> {
         use model::schema::media_content::dsl::*;
 
         update(media_content.filter(uuid.eq(content_id)))
-            .set((
-                content_state.eq(new_state),
-            ))
+            .set((content_state.eq(new_state),))
             .execute(self.conn())
             .into_db_error(DieselDatabaseError::Execute, (content_id, new_state))?;
 

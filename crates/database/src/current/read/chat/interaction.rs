@@ -1,16 +1,12 @@
-
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-};
+use model::{AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
 use crate::IntoDatabaseError;
 
 define_read_commands!(CurrentReadChatInteraction, CurrentSyncReadChatInteraction);
-
 
 impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
     pub fn account_interaction(

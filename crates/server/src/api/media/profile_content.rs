@@ -1,23 +1,20 @@
-
-
 use axum::{
     extract::{Path, Query, State},
     Extension, Router,
 };
-
 use model::{
-    AccountId, AccountIdInternal, ContentAccessCheck,
-    ProfileContent, SetProfileContent, PendingProfileContent,
+    AccountId, AccountIdInternal, ContentAccessCheck, PendingProfileContent, ProfileContent,
+    SetProfileContent,
 };
-use simple_backend::{create_counters};
+use simple_backend::create_counters;
 
-
-use crate::app::{GetAccounts, ReadData, WriteData};
-use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
+use crate::{
+    api::{
+        db_write,
+        utils::{Json, StatusCode},
+    },
+    app::{GetAccounts, ReadData, WriteData},
 };
-
 
 pub const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/:account_id";
 
@@ -43,10 +40,7 @@ pub async fn get_profile_content_info<S: ReadData + GetAccounts>(
 
     // TODO: access restrictions
 
-    let internal_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let internal_id = state.accounts().get_internal_id(account_id).await?;
 
     let internal_current_media = state
         .read()
@@ -89,7 +83,8 @@ pub async fn put_profile_content<S: WriteData>(
         .update_profile_content(api_caller_account_id, new))
 }
 
-pub const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str = "/media_api/pending_profile_content_info/:account_id";
+pub const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str =
+    "/media_api/pending_profile_content_info/:account_id";
 
 /// Get pending profile content for selected profile
 #[utoipa::path(
@@ -112,10 +107,7 @@ pub async fn get_pending_profile_content_info<S: ReadData + GetAccounts>(
 
     // TODO: access restrictions
 
-    let internal_id = state
-        .accounts()
-        .get_internal_id(account_id)
-        .await?;
+    let internal_id = state.accounts().get_internal_id(account_id).await?;
 
     let internal_current_media = state
         .read()
@@ -157,7 +149,10 @@ pub async fn put_pending_profile_content<S: WriteData>(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_or_delete_pending_profile_content(api_caller_account_id, Some(new)))
+        .update_or_delete_pending_profile_content(
+            api_caller_account_id,
+            Some(new)
+        ))
 }
 
 pub const PATH_DELETE_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
@@ -183,23 +178,37 @@ pub async fn delete_pending_profile_content<S: WriteData>(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_or_delete_pending_profile_content(api_caller_account_id, None))
+        .update_or_delete_pending_profile_content(
+            api_caller_account_id,
+            None
+        ))
 }
-
 
 pub fn profile_content_router(s: crate::app::S) -> Router {
+    use axum::routing::{delete, get, put};
+
     use crate::app::S;
-    use axum::routing::{get, put, delete};
 
     Router::new()
-        .route(PATH_GET_PROFILE_CONTENT_INFO, get(get_profile_content_info::<S>))
+        .route(
+            PATH_GET_PROFILE_CONTENT_INFO,
+            get(get_profile_content_info::<S>),
+        )
         .route(PATH_PUT_PROFILE_CONTENT, put(put_profile_content::<S>))
-        .route(PATH_GET_PENDING_PROFILE_CONTENT_INFO, get(get_pending_profile_content_info::<S>))
-        .route(PATH_PUT_PENDING_PROFILE_CONTENT, put(put_pending_profile_content::<S>))
-        .route(PATH_DELETE_PENDING_PROFILE_CONTENT, delete(delete_pending_profile_content::<S>))
+        .route(
+            PATH_GET_PENDING_PROFILE_CONTENT_INFO,
+            get(get_pending_profile_content_info::<S>),
+        )
+        .route(
+            PATH_PUT_PENDING_PROFILE_CONTENT,
+            put(put_pending_profile_content::<S>),
+        )
+        .route(
+            PATH_DELETE_PENDING_PROFILE_CONTENT,
+            delete(delete_pending_profile_content::<S>),
+        )
         .with_state(s)
 }
-
 
 create_counters!(
     MediaCounters,

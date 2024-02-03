@@ -135,8 +135,12 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_profile().favorite().insert_favorite_profile(id, favorite))
-            .await
+        self.db_write(move |cmds| {
+            cmds.into_profile()
+                .favorite()
+                .insert_favorite_profile(id, favorite)
+        })
+        .await
     }
 
     pub async fn remove_favorite_profile(
@@ -144,8 +148,12 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_profile().favorite().remove_favorite_profile(id, favorite))
-            .await
+        self.db_write(move |cmds| {
+            cmds.into_profile()
+                .favorite()
+                .remove_favorite_profile(id, favorite)
+        })
+        .await
     }
 
     pub async fn benchmark_update_profile_bypassing_cache(

@@ -1,8 +1,6 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::{Result};
-use model::{
-    AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup,
-};
+use error_stack::Result;
+use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;

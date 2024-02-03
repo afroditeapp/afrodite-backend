@@ -115,7 +115,9 @@ macro_rules! define_write_commands {
             #[track_caller]
             pub async fn db_transaction<
                 T: FnOnce(
-                        database::current::write::CurrentSyncWriteCommands<&mut simple_backend_database::diesel_db::DieselConnection>,
+                        database::current::write::CurrentSyncWriteCommands<
+                            &mut simple_backend_database::diesel_db::DieselConnection,
+                        >,
                     ) -> std::result::Result<
                         R,
                         error_stack::Report<
@@ -304,7 +306,10 @@ impl<'a> WriteCommands<'a> {
         let id = current.account().data().insert_account_id(id_light)?;
         current.account().token().insert_access_token(id, None)?;
         current.account().token().insert_refresh_token(id, None)?;
-        current.common().state().insert_default_account_capabilities(id)?;
+        current
+            .common()
+            .state()
+            .insert_default_account_capabilities(id)?;
         current
             .common()
             .state()
@@ -318,7 +323,10 @@ impl<'a> WriteCommands<'a> {
                 .account()
                 .data()
                 .insert_account(id, AccountInternal::default())?;
-            current.account().data().insert_account_setup(id, &account_setup)?;
+            current
+                .account()
+                .data()
+                .insert_account_setup(id, &account_setup)?;
             current
                 .account()
                 .sign_in_with()
@@ -338,7 +346,10 @@ impl<'a> WriteCommands<'a> {
         }
 
         if config.components().media {
-            current.media().media_content().insert_current_account_media(id)?;
+            current
+                .media()
+                .media_content()
+                .insert_current_account_media(id)?;
         }
 
         Ok(id.clone())
@@ -376,7 +387,9 @@ impl<'a> WriteCommands<'a> {
     #[track_caller]
     pub async fn db_transaction<
         T: FnOnce(
-                database::current::write::CurrentSyncWriteCommands<&mut simple_backend_database::diesel_db::DieselConnection>,
+                database::current::write::CurrentSyncWriteCommands<
+                    &mut simple_backend_database::diesel_db::DieselConnection,
+                >,
             ) -> std::result::Result<R, error_stack::Report<DieselDatabaseError>>
             + Send
             + 'static,
@@ -395,14 +408,15 @@ impl<'a> WriteCommands<'a> {
             .change_context(DieselDatabaseError::GetConnection)
             .change_context(DataError::Diesel)?;
 
-        conn.interact(move |conn| CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-            cmd(CurrentSyncWriteCommands::new(conn))
-                .map_err(|err| err.into())
-        }))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DataError::Diesel)?
-            .change_context(DataError::Diesel)
+        conn.interact(move |conn| {
+            CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
+                cmd(CurrentSyncWriteCommands::new(conn)).map_err(|err| err.into())
+            })
+        })
+        .await
+        .into_error_string(DieselDatabaseError::Execute)
+        .change_context(DataError::Diesel)?
+        .change_context(DataError::Diesel)
     }
 
     #[track_caller]

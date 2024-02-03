@@ -29,9 +29,7 @@ impl FileDir {
 
     /// Unprocessed content upload.
     pub fn raw_content_upload(&self, id: AccountId, content: ContentId) -> TmpContentFile {
-        self.account_dir(id)
-            .tmp_dir()
-            .raw_content_upload(content)
+        self.account_dir(id).tmp_dir().raw_content_upload(content)
     }
 
     pub fn processed_content_upload(&self, id: AccountId, content: ContentId) -> TmpContentFile {

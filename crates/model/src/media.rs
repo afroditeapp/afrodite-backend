@@ -4,13 +4,11 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_uuid_wrapper, diesel_i64_wrapper, diesel_i64_try_from};
+use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{
-    AccountId, AccountIdDb, schema_sqlite_types::Integer,
-};
+use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb};
 
 /// Y coordinate of slippy map tile.
 ///
@@ -32,7 +30,19 @@ pub struct MapTileZ {
     pub z: u32,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, diesel::FromSqlRow, diesel::AsExpression, ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    Eq,
+    Hash,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+    ToSchema,
+)]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum MediaContentType {
@@ -131,9 +141,7 @@ pub struct ContentProcessingId {
 
 impl ContentProcessingId {
     pub fn new_random_id() -> Self {
-        Self {
-            id: Uuid::new_v4(),
-        }
+        Self { id: Uuid::new_v4() }
     }
 
     pub fn to_content_id(&self) -> ContentId {
@@ -141,7 +149,18 @@ impl ContentProcessingId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ContentSlot {
@@ -194,10 +213,10 @@ impl ModerationRequestContent {
             self.content3,
             self.content4,
             self.content5,
-            self.content6
+            self.content6,
         ]
-            .into_iter()
-            .flatten()
+        .into_iter()
+        .flatten()
     }
 }
 
@@ -274,7 +293,17 @@ pub enum EnumParsingError {
     ParsingError(i64),
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, ToSchema, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Deserialize,
+    Serialize,
+    Clone,
+    Copy,
+    ToSchema,
+    PartialEq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ModerationRequestState {
@@ -311,7 +340,17 @@ impl TryFrom<i64> for ModerationRequestState {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Deserialize,
+    Serialize,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Integer)]
 #[repr(i64)]
 pub enum ContentState {
@@ -614,8 +653,8 @@ impl SetProfileContent {
             self.content_id_4,
             self.content_id_5,
         ]
-            .into_iter()
-            .filter_map(|c| c.as_ref().cloned())
+        .into_iter()
+        .filter_map(|c| c.as_ref().cloned())
     }
 }
 
