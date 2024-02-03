@@ -1346,18 +1346,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "image_process"
-version = "0.0.0"
-dependencies = [
- "error-stack",
- "image",
- "kamadak-exif",
- "mozjpeg",
- "thiserror",
- "utils",
-]
-
-[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1998,9 +1986,9 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "config",
- "image_process",
  "server",
  "simple_backend_config",
+ "simple_backend_image_process",
  "test_mode",
  "tokio",
  "vergen",
@@ -2834,6 +2822,18 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "simple_backend_image_process"
+version = "0.0.0"
+dependencies = [
+ "error-stack",
+ "image",
+ "kamadak-exif",
+ "mozjpeg",
+ "thiserror",
+ "utils",
 ]
 
 [[package]]

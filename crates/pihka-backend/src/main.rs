@@ -41,13 +41,13 @@ fn main() {
 }
 
 fn handle_image_process_mode(settings: ImageProcessModeArgs) {
-    let settings = image_process::Settings {
+    let settings = simple_backend_image_process::Settings {
         input: settings.input,
         output: settings.output,
         quality: settings.quality as f32,
     };
 
-    match image_process::handle_image(settings) {
+    match simple_backend_image_process::handle_image(settings) {
         Ok(()) => exit(0),
         Err(e) => {
             eprintln!("{:?}", e);
