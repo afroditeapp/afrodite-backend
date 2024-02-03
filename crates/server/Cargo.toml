@@ -7,33 +7,33 @@ edition = "2021"
 
 [dependencies]
 
-uuid = { version = "1.1.2", features = ["v4", "serde"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
 
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
-futures = "0.3.28"
-tokio = { version = "1", features = ["full"] }
-tokio-stream = { version = "0.1.10", features = ["sync"] }
-tokio-util = { version = "0.7.7", features = ["io"]}
-hyper = { version = "0.14", features = ["full"] }
-axum = { version = "0.6", features = ["headers", "ws", "macros"] }
-tracing = { version = "0.1" }
-headers = "0.3.8"
-reqwest = { version = "0.11", features = ["json"] }
+futures = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tokio-stream = { workspace = true, features = ["sync"] }
+tokio-util = { workspace = true, features = ["io"]}
+hyper = { workspace = true, features = ["full"] }
+axum = { workspace = true, features = ["headers", "ws", "macros"] }
+tracing = { workspace = true }
+headers = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
 
-utoipa = { version = "3.0.1", features = ["axum_extras", "uuid"] }
-utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
+utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
+utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 
-thiserror = "1.0.37"
-error-stack = "0.4"
+thiserror = { workspace = true }
+error-stack = { workspace = true }
 
-async-trait = "0.1.66"
+async-trait = { workspace = true }
 
-nalgebra = "0.32.2"
+nalgebra = { workspace = true }
 
-num_cpus = "1.16.0"
-nix = { version = "0.26.2", default-features = false, features = ["signal"] }
+num_cpus = { workspace = true }
+nix = { workspace = true, default-features = false, features = ["signal"] }
 
 manager_model = { path = "../app-manager/crates/manager_model" }
 

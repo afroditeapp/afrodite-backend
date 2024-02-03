@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.4", features = ["cargo", "derive"] }
+clap = { workspace = true, features = ["cargo", "derive"] }
 
-tokio = { version = "1", features = ["full"] }
+tokio = { workspace = true, features = ["full"] }
 
 config = { path = "../config" }
 test_mode = { path = "../test_mode" }
@@ -18,4 +18,4 @@ image_process = { path = "../image_process" }
 simple_backend_config = { path = "../simple_backend_config" }
 
 [build-dependencies]
-vergen = { version = "8.0.0", features = ["cargo", "git", "gitcl", "rustc"] }
+vergen = { workspace = true, features = ["cargo", "git", "gitcl", "rustc"] }

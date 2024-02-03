@@ -6,20 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.4", features = ["cargo", "derive"] }
+clap = { workspace = true, features = ["cargo", "derive"] }
 
-serde = { version = "1.0", features = ["derive"] }
-toml = "0.7.2"
+serde = { workspace = true, features = ["derive"] }
+toml = { workspace = true }
 
-tracing = "0.1"
-reqwest = { version = "0.11" }
-url = { version = "2.3.1", features = ["serde"] }
+tracing = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true, features = ["serde"] }
 
 # Server TLS
-tokio-rustls = "0.24.0"
-rustls-pemfile = "1.0.2"
+tokio-rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
 
-thiserror = "1.0.37"
-error-stack = "0.4"
+thiserror = { workspace = true }
+error-stack = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils" }
