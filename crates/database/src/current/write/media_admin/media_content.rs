@@ -1,14 +1,12 @@
-use diesel::{delete, prelude::*, update};
-use error_stack::{Result, ResultExt};
+use diesel::{prelude::*, update};
+use error_stack::{Result};
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, HandleModerationRequest,
-    Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
-    ModerationRequestState, ProfileContent, NextQueueNumberType, schema::media_moderation_request::content_id_1,
+    AccountIdInternal, ContentId, ContentIdDb, ContentState,
 };
-use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
+use simple_backend_database::diesel_db::{DieselDatabaseError};
 
 use super::{ConnectionProvider};
-use crate::{IntoDatabaseError, TransactionError, current::write::CurrentSyncWriteCommands};
+use crate::{IntoDatabaseError};
 
 define_write_commands!(CurrentWriteMediaAdminMediaContent, CurrentSyncWriteMediaAdminMediaContent);
 

@@ -1,12 +1,11 @@
-use std::collections::HashSet;
 
-use diesel::{prelude::*, backend::Backend};
-use error_stack::{Result, ResultExt};
+
+use diesel::{prelude::*};
+use error_stack::{Result};
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentState,
-    CurrentAccountMediaInternal, CurrentAccountMediaRaw, ContentSlot, MediaContentInternal,
-    MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
-    ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState, AccountIdDb, ContentIdDb, MediaContentType,
+    AccountIdInternal, ContentId,
+    CurrentAccountMediaInternal, CurrentAccountMediaRaw, MediaContentInternal,
+    MediaContentRaw, ContentIdDb,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 

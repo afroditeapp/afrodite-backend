@@ -1,8 +1,8 @@
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 use model::{
-    AccountIdInternal, MediaModerationRaw, Moderation, ModerationId, ModerationRequestContent,
-    ModerationRequestId, MediaModerationRequestRaw, ModerationRequestState,
+    AccountIdInternal,
+    ModerationRequestId, MediaModerationRequestRaw,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -15,7 +15,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModerationRequest<C> {
 
     pub fn get_next_active_moderation_request(
         &mut self,
-        initial_moderation: bool,
+        _initial_moderation: bool,
         moderator_id_for_logging: AccountIdInternal,
     ) -> Result<Option<ModerationRequestId>, DieselDatabaseError> {
         let data: Option<MediaModerationRequestRaw> = {

@@ -35,7 +35,7 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
 
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
-    let request = state
+    let _request = state
         .read()
         .moderation_request(account_id)
         .await?

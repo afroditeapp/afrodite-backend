@@ -1,12 +1,12 @@
 
-use axum::{Extension, extract::State, Router};
+use axum::{extract::State};
 use model::{
-    AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, AccountState,
-    AuthPair, BooleanSetting, DeleteStatus, EventToClientInternal, GoogleAccountId, LoginResult,
+    AccessToken, AccountId,
+    AuthPair, GoogleAccountId, LoginResult,
     RefreshToken, SignInWithInfo, SignInWithLoginInfo,
 };
 use simple_backend::{app::SignInWith, create_counters};
-use tracing::error;
+
 
 use crate::api::{
     db_write,
@@ -14,7 +14,7 @@ use crate::api::{
 };
 use crate::{
     app::{
-        EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData,
+        GetAccessTokens, GetAccounts, GetConfig, ReadData,
         WriteData,
     },
 };

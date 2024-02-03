@@ -1,12 +1,12 @@
-use std::{collections::{HashMap, VecDeque}, time::Duration, sync::Arc};
+use std::{collections::{HashMap, VecDeque}, sync::Arc};
 
-use config::Config;
-use model::{ContentProcessingId, ContentProcessingState, AccountId, ContentSlot, AccountIdInternal, ContentProcessingStateChanged, NewContentParams, AccountIdDb, MediaContentType};
-use simple_backend::{ServerQuitWatcher, app::SimpleBackendAppState, image::{ImageProcess, ImageProcessError}};
-use simple_backend_utils::ContextExt;
-use tokio::{task::JoinHandle, sync::{mpsc, RwLock, Notify}};
+
+use model::{ContentProcessingId, ContentProcessingState, ContentSlot, AccountIdInternal, ContentProcessingStateChanged, NewContentParams, AccountIdDb, MediaContentType};
+use simple_backend::{ServerQuitWatcher, app::SimpleBackendAppState, image::{ImageProcess}};
+
+use tokio::{task::JoinHandle, sync::{RwLock, Notify}};
 use tracing::{warn, error};
-use utoipa::openapi::Content;
+
 
 use crate::{event::EventManager, app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData}, data::file::utils::TmpContentFile};
 

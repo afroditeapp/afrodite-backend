@@ -25,8 +25,8 @@ use super::{
 };
 use crate::{
     api,
-    data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, file::utils::FileDir},
-    event::EventManager, content_processing::{ContentProcessingManagerData, self},
+    data::{write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}},
+    event::EventManager, content_processing::{ContentProcessingManagerData},
 };
 
 pub mod routes_connected;

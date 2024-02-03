@@ -1,12 +1,11 @@
 use std::collections::HashSet;
 
-use diesel::{prelude::*, backend::Backend};
-use error_stack::{Result, ResultExt};
+use diesel::{prelude::*};
+use error_stack::{Result};
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentState,
-    CurrentAccountMediaInternal, CurrentAccountMediaRaw, ContentSlot, MediaContentInternal,
+    AccountId, AccountIdInternal, ContentId, ContentState, ContentSlot, MediaContentInternal,
     MediaContentRaw, MediaModerationRaw, ModerationQueueNumber, ModerationRequestContent,
-    ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState, AccountIdDb, ContentIdDb, MediaContentType,
+    ModerationRequestId, ModerationRequestInternal, MediaModerationRequestRaw, ModerationRequestState,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -45,7 +44,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
 
         let state = match moderations.first() {
             None => ModerationRequestState::Waiting,
-            Some(first) => {
+            Some(_first) => {
                 let accepted = moderations
                     .iter()
                     .find(|r| r.state_number == ModerationRequestState::Accepted as i64);
@@ -53,9 +52,9 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
                     .iter()
                     .find(|r| r.state_number == ModerationRequestState::Denied as i64);
 
-                if let Some(accepted) = accepted {
+                if let Some(_accepted) = accepted {
                     ModerationRequestState::Accepted
-                } else if let Some(denied) = denied {
+                } else if let Some(_denied) = denied {
                     ModerationRequestState::Denied
                 } else {
                     ModerationRequestState::InProgress

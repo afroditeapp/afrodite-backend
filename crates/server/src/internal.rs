@@ -292,7 +292,7 @@ impl<S: GetAccessTokens + GetConfig + ReadData> InternalApiManager<'_, S> {
         account_id: AccountIdInternal,
     ) -> Result<(), InternalApiError> {
         if self.config().components().media {
-            let request = self
+            let _request = self
                 .read_database()
                 .moderation_request(account_id)
                 .await

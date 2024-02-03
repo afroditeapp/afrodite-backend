@@ -25,7 +25,7 @@ use crate::{
     app::{GetAccessTokens, ReadData},
     data::{cache::CacheError, DataError},
     event::EventError,
-    internal::InternalApiError, content_processing::ContentProcessingError,
+    internal::InternalApiError,
 };
 
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =

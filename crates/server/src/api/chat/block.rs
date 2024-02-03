@@ -2,10 +2,8 @@
 
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MatchesPage,
-    MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage,
-    ReceivedBlocksPage, ReceivedLikesPage, SendMessageToAccount, SentBlocksPage, SentLikesPage,
-    UpdateMessageViewStatus,
+    AccountId, AccountIdInternal,
+    ReceivedBlocksPage, SentBlocksPage,
 };
 use simple_backend::create_counters;
 
@@ -143,7 +141,7 @@ pub async fn get_received_blocks<S: ReadData>(
 
 pub fn block_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{get, post};
 
     Router::new()
         .route(PATH_POST_BLOCK_PROFILE, post(post_block_profile::<S>))

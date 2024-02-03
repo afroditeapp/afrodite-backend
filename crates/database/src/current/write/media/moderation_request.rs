@@ -1,14 +1,14 @@
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::{Result, ResultExt, report};
+use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, ContentSlot, ModerationQueueNumber,
-    ModerationRequestContent, ProfileContent, NextQueueNumbersRaw, ModerationRequestState, NextQueueNumberType, NewContentParams, SetProfileContent, MediaContentInternal, MediaContentType, PendingProfileContent, SetProfileContentInternal,
+    AccountIdInternal, ContentId, ContentState, ContentSlot,
+    ModerationRequestContent, ModerationRequestState, NextQueueNumberType, NewContentParams,
 };
-use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
+use simple_backend_database::diesel_db::{DieselDatabaseError};
 use simple_backend_utils::ContextExt;
 
 use super::{ConnectionProvider, DeletedSomething};
-use crate::{IntoDatabaseError, TransactionError};
+use crate::{IntoDatabaseError};
 
 define_write_commands!(CurrentWriteMediaModerationRequest, CurrentSyncWriteMediaModerationRequest);
 
@@ -112,7 +112,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         let _account_row_id = request_creator.row_id();
         let queue_number_new =
             self.cmds().common().queue_number().create_new_queue_entry(request_creator, NextQueueNumberType::InitialMediaModeration)?;
-        let request_info = serde_json::to_string(&request)
+        let _request_info = serde_json::to_string(&request)
             .change_context(DieselDatabaseError::SerdeSerialize)?;
         insert_into(media_moderation_request)
             .values((
@@ -161,7 +161,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
 
     pub fn delete_moderation_request_not_yet_in_moderation(
         &mut self,
-        request_owner: AccountIdInternal,
+        _request_owner: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         // // Delete old queue number and request
         // {

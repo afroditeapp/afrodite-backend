@@ -1,29 +1,23 @@
-use std::fmt::Write;
+
 
 use axum::{
-    extract::{BodyStream, Path, Query, State},
-    Extension, TypedHeader, Router,
+    extract::{Path, Query, State},
+    Extension, Router,
 };
-use headers::ContentType;
-use model::{
-    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, MapTileX, MapTileY,
-    MapTileZ, ModerationRequest, ModerationRequestContent, AccountContent,
-    ProfileContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState, SetProfileContent, PendingProfileContent, SecurityImage, PendingSecurityImage,
-};
-use simple_backend::{app::GetTileMap, create_counters};
-use tracing::error;
 
-use crate::app::{GetAccessTokens, GetAccounts, ReadData, WriteData};
+use model::{
+    AccountId, AccountIdInternal, ContentAccessCheck,
+    ProfileContent, SetProfileContent, PendingProfileContent,
+};
+use simple_backend::{create_counters};
+
+
+use crate::app::{GetAccounts, ReadData, WriteData};
 use crate::api::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{
-    data::{
-        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
-        DataError,
-    }, app::ContentProcessingProvider,
-};
+
 
 pub const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/:account_id";
 

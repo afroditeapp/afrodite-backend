@@ -5,14 +5,13 @@ use manager_model::{
     BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
     SystemInfoList,
 };
-use model::{AccountIdInternal, BackendConfig, Capabilities};
-use simple_backend::{app::{GetManagerApi, PerfCounterDataProvider}, create_counters};
-use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
+use model::{AccountIdInternal, Capabilities};
+use simple_backend::{app::{GetManagerApi}, create_counters};
+
 use tracing::info;
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig},
 };
 
 
@@ -249,7 +248,7 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
 
 pub fn manager_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{get, post};
 
     Router::new()
         .route(PATH_GET_SYSTEM_INFO, get(get_system_info::<S>))

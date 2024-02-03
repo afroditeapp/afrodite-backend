@@ -1,6 +1,6 @@
-use diesel::{delete, insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
-use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, ProfileInternal, ProfileUpdateInternal, ProfileVersion};
+use diesel::{delete, insert_into, prelude::*, ExpressionMethods, QueryDsl};
+use error_stack::{Result};
+use model::{AccountIdInternal};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::current_unix_time;
 

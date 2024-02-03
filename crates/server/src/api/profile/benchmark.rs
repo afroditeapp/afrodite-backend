@@ -1,7 +1,6 @@
 use axum::{extract::{Path, State}, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, FavoriteProfilesPage, Location, Profile, ProfileLink,
-    ProfilePage, ProfileUpdate, ProfileUpdateInternal,
+    AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal,
 };
 use simple_backend::create_counters;
 
@@ -10,10 +9,7 @@ use crate::api::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{data::{
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle},
-    DataError,
-}};
+
 
 
 // ------------------- Benchmark routes ----------------------------
@@ -110,7 +106,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 
 pub fn benchmark_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{get, post};
 
     Router::new()
         .route(PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK, get(get_profile_from_database_debug_mode_benchmark::<S>))

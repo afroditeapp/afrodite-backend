@@ -1,29 +1,21 @@
-use std::fmt::Write;
+
 
 use axum::{
-    extract::{BodyStream, Path, Query, State},
-    Extension, TypedHeader, Router,
+    extract::{Path, State}, TypedHeader, Router,
 };
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, MapTileX, MapTileY,
-    MapTileZ, ModerationRequest, ModerationRequestContent, AccountContent,
-    ProfileContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState, SetProfileContent, PendingProfileContent, SecurityImage, PendingSecurityImage,
+    MapTileX, MapTileY,
+    MapTileZ,
 };
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 
-use crate::app::{GetAccessTokens, GetAccounts, ReadData, WriteData};
+
 use crate::api::{
-    db_write,
-    utils::{Json, StatusCode},
+    utils::{StatusCode},
 };
-use crate::{
-    data::{
-        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
-        DataError,
-    }, app::ContentProcessingProvider,
-};
+
 
 pub const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/:z/:x/:y";
 

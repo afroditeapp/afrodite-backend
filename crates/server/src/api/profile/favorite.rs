@@ -1,20 +1,16 @@
 
-use axum::{extract::{Path, State}, Extension, Router};
+use axum::{extract::{State}, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, FavoriteProfilesPage, Location, Profile, ProfileLink,
-    ProfilePage, ProfileUpdate, ProfileUpdateInternal,
+    AccountId, AccountIdInternal, FavoriteProfilesPage,
 };
 use simple_backend::create_counters;
 
-use crate::app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData};
+use crate::app::{GetAccounts, ReadData, WriteData};
 use crate::api::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{data::{
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle},
-    DataError,
-}};
+
 
 pub const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
 

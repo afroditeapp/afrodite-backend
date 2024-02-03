@@ -1,6 +1,6 @@
-use diesel::{insert_into, prelude::*, update, delete};
+use diesel::{insert_into, prelude::*, delete};
 use error_stack::Result;
-use model::{AccountIdInternal, AccountState, Capabilities, SharedState, SharedStateInternal, NextQueueNumberType, QueueEntryRaw};
+use model::{AccountIdInternal, NextQueueNumberType};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::ConnectionProvider;

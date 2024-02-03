@@ -1,21 +1,17 @@
 
-use axum::{Extension, extract::State, Router};
+use axum::{extract::State, Router};
 use model::{
-    AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, AccountState,
-    AuthPair, BooleanSetting, DeleteStatus, EventToClientInternal, GoogleAccountId, LoginResult,
-    RefreshToken, SignInWithInfo, SignInWithLoginInfo,
+    DeleteStatus,
 };
-use simple_backend::{app::SignInWith, create_counters};
-use tracing::error;
+use simple_backend::{create_counters};
+
 
 use crate::api::{
-    db_write,
     utils::{Json, StatusCode},
 };
 use crate::{
     app::{
-        EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData,
-        WriteData,
+        GetAccessTokens, ReadData,
     },
 };
 
@@ -39,7 +35,7 @@ pub const PATH_POST_DELETE: &str = "/account_api/delete";
     security(("access_token" = [])),
 )]
 pub async fn post_delete<S: GetAccessTokens + ReadData>(
-    State(state): State<S>,
+    State(_state): State<S>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_delete.incr();
     // TODO
@@ -62,7 +58,7 @@ pub const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
     security(("access_token" = [])),
 )]
 pub async fn get_deletion_status<S: GetAccessTokens + ReadData>(
-    State(state): State<S>,
+    State(_state): State<S>,
 ) -> Result<Json<DeleteStatus>, StatusCode> {
     ACCOUNT.get_deletion_status.incr();
     // TODO
@@ -85,7 +81,7 @@ pub const PATH_CANCEL_DELETION: &str = "/account_api/delete";
     security(("access_token" = [])),
 )]
 pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
-    State(state): State<S>,
+    State(_state): State<S>,
 ) -> Result<Json<DeleteStatus>, StatusCode> {
     ACCOUNT.delete_cancel_deletion.incr();
     // TODO

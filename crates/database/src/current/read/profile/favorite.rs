@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, ProfileInternal};
+use model::{AccountIdInternal};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 define_read_commands!(CurrentReadProfileFavorite, CurrentSyncReadProfileFavorite);

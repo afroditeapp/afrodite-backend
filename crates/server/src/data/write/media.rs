@@ -1,7 +1,7 @@
-use axum::extract::BodyStream;
-use database::current::write::media::CurrentSyncWriteMedia;
+
+
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ProfileContent, ContentProcessingId, NewContentParams, SetProfileContent, PendingProfileContent};
+use model::{AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, NewContentParams, SetProfileContent};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::data::DataError;

@@ -1,4 +1,4 @@
-use database::current::write::CurrentSyncWriteCommands;
+
 use error_stack::{Result, ResultExt};
 use model::{
     AccountData, AccountIdInternal, AccountInternal, AccountSetup, Capabilities, SharedState,

@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 use model::{
     AccountIdInternal, MediaModerationRaw, Moderation, ModerationId, ModerationRequestContent,
     ModerationRequestId, MediaModerationRequestRaw, ModerationRequestState,
@@ -36,7 +36,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
         };
 
         let mut new_data = vec![];
-        for (moderation, moderation_request, account) in data.into_iter() {
+        for (_moderation, moderation_request, account) in data.into_iter() {
             let moderation = Moderation {
                 request_creator_id: account.as_id(),
                 moderator_id: moderator_id.as_id(),
@@ -55,7 +55,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
         &mut self,
         moderation: ModerationId,
     ) -> Result<ModerationRequestContent, DieselDatabaseError> {
-        let (moderation, request) = {
+        let (_moderation, request) = {
             use crate::schema::media_moderation;
             use crate::schema::media_moderation_request;
 

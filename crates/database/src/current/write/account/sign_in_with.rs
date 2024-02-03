@@ -1,8 +1,7 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 use model::{
-    AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup,
-    RefreshToken, SignInWithInfo,
+    AccountIdInternal, SignInWithInfo,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 

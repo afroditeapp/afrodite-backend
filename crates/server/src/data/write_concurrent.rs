@@ -8,8 +8,8 @@ use config::Config;
 use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
 use error_stack::{Result, ResultExt};
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentId, ProfileLink, ContentProcessingId};
-use simple_backend::image::ImageProcess;
+use model::{AccountId, AccountIdInternal, ProfileLink, ContentProcessingId};
+
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{

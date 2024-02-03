@@ -1,13 +1,10 @@
-use diesel::prelude::*;
-use error_stack::Result;
-use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    PendingMessage, PendingMessageId, PendingMessageInternal,
-};
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-use tokio_stream::StreamExt;
 
-use crate::IntoDatabaseError;
+
+
+use simple_backend_database::diesel_db::{ConnectionProvider};
+
+
+
 
 mod interaction;
 mod message;

@@ -1,15 +1,14 @@
 
 
-use axum::{extract::{Path, State}, Extension, Router};
+use axum::{extract::{State}, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, FavoriteProfilesPage, Location, Profile, ProfileLink,
-    ProfilePage, ProfileUpdate, ProfileUpdateInternal,
+    AccountIdInternal, ProfileLink,
+    ProfilePage,
 };
 use simple_backend::create_counters;
 
-use crate::{api::account::PATH_GET_ACCOUNT_DATA, app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}};
+use crate::{app::{GetAccessTokens, ReadData, WriteData}};
 use crate::api::{
-    db_write,
     utils::{Json, StatusCode},
 };
 use crate::{data::{
@@ -87,7 +86,7 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
 
 pub fn iterate_profiles_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{post};
 
     Router::new()
         .route(PATH_POST_NEXT_PROFILE_PAGE, post(post_get_next_profile_page::<S>))

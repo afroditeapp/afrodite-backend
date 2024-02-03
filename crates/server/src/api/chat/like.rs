@@ -1,9 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MatchesPage,
-    MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage,
-    ReceivedBlocksPage, ReceivedLikesPage, SendMessageToAccount, SentBlocksPage, SentLikesPage,
-    UpdateMessageViewStatus,
+    AccountId, AccountIdInternal, ReceivedLikesPage, SentLikesPage,
 };
 use simple_backend::create_counters;
 

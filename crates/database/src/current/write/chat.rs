@@ -1,12 +1,10 @@
-use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::Result;
-use model::{
-    AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PendingMessageId,
-};
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-use simple_backend_utils::current_unix_time;
 
-use crate::{current::read::CurrentSyncReadCommands, IntoDatabaseError, TransactionError};
+
+
+use simple_backend_database::diesel_db::{ConnectionProvider};
+
+
+
 
 mod interaction;
 mod message;

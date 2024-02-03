@@ -1,18 +1,14 @@
 
 
 use axum::{extract::{Query, State}, Extension, Router};
-use manager_model::{
-    BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
-    SystemInfoList,
-};
-use model::{AccountIdInternal, BackendConfig, Capabilities};
-use simple_backend::{app::{GetManagerApi, PerfCounterDataProvider}, create_counters};
+
+use model::{Capabilities};
+use simple_backend::{app::{PerfCounterDataProvider}, create_counters};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
-use tracing::info;
+
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig},
 };
 
 
@@ -49,7 +45,7 @@ pub async fn get_perf_data<S: PerfCounterDataProvider>(
 
 pub fn perf_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{get};
 
     Router::new()
         .route(PATH_GET_PERF_DATA, get(get_perf_data::<S>))

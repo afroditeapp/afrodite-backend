@@ -1,29 +1,22 @@
-use std::fmt::Write;
+
 
 use axum::{
-    extract::{BodyStream, Path, Query, State},
-    Extension, TypedHeader, Router,
+    extract::{State},
+    Extension, Router,
 };
-use headers::ContentType;
-use model::{
-    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, MapTileX, MapTileY,
-    MapTileZ, ModerationRequest, ModerationRequestContent, AccountContent,
-    ProfileContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState, SetProfileContent, PendingProfileContent, SecurityImage, PendingSecurityImage,
-};
-use simple_backend::{app::GetTileMap, create_counters};
-use tracing::error;
 
-use crate::app::{GetAccessTokens, GetAccounts, ReadData, WriteData};
+use model::{
+    AccountIdInternal, ModerationRequest, ModerationRequestContent,
+};
+use simple_backend::{create_counters};
+
+
+use crate::app::{ReadData, WriteData};
 use crate::api::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{
-    data::{
-        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
-        DataError,
-    }, app::ContentProcessingProvider,
-};
+
 
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";

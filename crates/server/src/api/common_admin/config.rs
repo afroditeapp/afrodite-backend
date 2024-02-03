@@ -1,12 +1,9 @@
 
-use axum::{extract::{Query, State}, Extension, Router};
-use manager_model::{
-    BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
-    SystemInfoList,
-};
+use axum::{extract::{State}, Extension, Router};
+
 use model::{AccountIdInternal, BackendConfig, Capabilities};
-use simple_backend::{app::{GetManagerApi, PerfCounterDataProvider}, create_counters};
-use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
+use simple_backend::{create_counters};
+
 use tracing::info;
 
 use crate::{
@@ -91,7 +88,7 @@ pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
 
 pub fn config_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{get, post};
 
     Router::new()
         .route(PATH_GET_BACKEND_CONFIG, get(get_backend_config::<S>))

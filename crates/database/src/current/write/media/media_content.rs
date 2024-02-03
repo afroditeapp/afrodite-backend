@@ -1,15 +1,14 @@
 
-use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::{Result, ResultExt, report};
+use diesel::{insert_into, prelude::*, update};
+use error_stack::{Result};
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, ContentSlot, ModerationQueueNumber,
-    ModerationRequestContent, ProfileContent, NextQueueNumbersRaw, ModerationRequestState, NextQueueNumberType, NewContentParams, SetProfileContent, MediaContentInternal, MediaContentType, PendingProfileContent, SetProfileContentInternal,
+    AccountIdInternal, ContentId, ContentState, SetProfileContent, MediaContentType, SetProfileContentInternal,
 };
-use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
+use simple_backend_database::diesel_db::{DieselDatabaseError};
 use simple_backend_utils::ContextExt;
 
 use super::ConnectionProvider;
-use crate::{IntoDatabaseError, TransactionError};
+use crate::{IntoDatabaseError};
 
 define_write_commands!(CurrentWriteMediaContent, CurrentSyncWriteMediaContent);
 
@@ -131,8 +130,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
 
     pub fn update_security_image(
         &mut self,
-        image_owner: AccountIdInternal,
-        content_id: ContentId,
+        _image_owner: AccountIdInternal,
+        _content_id: ContentId,
     ) -> Result<(), DieselDatabaseError> {
 
         unimplemented!("TODO")
@@ -140,8 +139,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
 
     pub fn update_or_delete_pending_security_image(
         &mut self,
-        image_owner: AccountIdInternal,
-        content_id: Option<ContentId>,
+        _image_owner: AccountIdInternal,
+        _content_id: Option<ContentId>,
     ) -> Result<(), DieselDatabaseError> {
 
         unimplemented!("TODO")
@@ -149,8 +148,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
 
     pub fn delete_content(
         &mut self,
-        content_owner: AccountIdInternal,
-        content_id: ContentId,
+        _content_owner: AccountIdInternal,
+        _content_id: ContentId,
     ) -> Result<(), DieselDatabaseError> {
         // // Delete old queue number and request
         // {

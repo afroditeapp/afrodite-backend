@@ -2,18 +2,14 @@
 
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MatchesPage,
-    MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage,
-    ReceivedBlocksPage, ReceivedLikesPage, SendMessageToAccount, SentBlocksPage, SentLikesPage,
-    UpdateMessageViewStatus,
+    AccountIdInternal, MatchesPage,
 };
 use simple_backend::create_counters;
 
 use super::super::{
-    db_write,
     utils::{Json, StatusCode},
 };
-use crate::{app::{EventManagerProvider, GetAccounts, ReadData, WriteData}};
+use crate::{app::{ReadData}};
 
 pub const PATH_GET_MATCHES: &str = "/chat_api/matches";
 
@@ -40,7 +36,7 @@ pub async fn get_matches<S: ReadData>(
 
 pub fn match_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{get};
 
     Router::new()
         .route(PATH_GET_MATCHES, get(get_matches::<S>))

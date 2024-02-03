@@ -7,7 +7,7 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_utils::current_unix_time;
+
 use utoipa::{IntoParams, ToSchema};
 
 use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, diesel_i64_try_from};

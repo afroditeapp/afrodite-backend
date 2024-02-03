@@ -1,21 +1,17 @@
 
 use axum::{Extension, extract::State, Router};
 use model::{
-    AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, AccountState,
-    AuthPair, BooleanSetting, DeleteStatus, EventToClientInternal, GoogleAccountId, LoginResult,
-    RefreshToken, SignInWithInfo, SignInWithLoginInfo,
+    Account, AccountIdInternal,
 };
-use simple_backend::{app::SignInWith, create_counters};
-use tracing::error;
+use simple_backend::{create_counters};
+
 
 use crate::api::{
-    db_write,
     utils::{Json, StatusCode},
 };
 use crate::{
     app::{
-        EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData,
-        WriteData,
+        GetAccessTokens, ReadData,
     },
 };
 
@@ -49,7 +45,7 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
 
 pub fn state_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, put};
+    use axum::routing::{get};
 
     Router::new()
         .route(PATH_ACCOUNT_STATE, get(get_account_state::<S>))

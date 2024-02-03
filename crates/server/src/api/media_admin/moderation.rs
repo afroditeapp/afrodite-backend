@@ -1,29 +1,22 @@
-use std::fmt::Write;
+
 
 use axum::{
-    extract::{BodyStream, Path, Query, State},
-    Extension, TypedHeader, Router,
+    extract::{Path, State},
+    Extension, Router,
 };
-use headers::ContentType;
+
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, MapTileX, MapTileY,
-    MapTileZ, ModerationRequest, ModerationRequestContent, AccountContent,
-    ProfileContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState, SetProfileContent, PendingProfileContent, SecurityImage, PendingSecurityImage, HandleModerationRequest, ModerationList,
+    AccountId, AccountIdInternal, HandleModerationRequest, ModerationList,
 };
-use simple_backend::{app::GetTileMap, create_counters};
-use tracing::error;
+use simple_backend::{create_counters};
+
 
 use crate::{app::{GetAccessTokens, GetAccounts, ReadData, WriteData, GetInternalApi, GetConfig}};
 use crate::api::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{
-    data::{
-        write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
-        DataError,
-    }, app::ContentProcessingProvider,
-};
+
 
 // TODO: Add moderation content moderation weight to account and use it when moderating.
 //       Moderation should have some value which keeps track how much moderation

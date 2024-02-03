@@ -1,15 +1,15 @@
 
-use diesel::{delete, prelude::*, update};
+use diesel::{prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, HandleModerationRequest,
-    Moderation, ModerationId, ModerationQueueNumber, ModerationRequestId,
-    ModerationRequestState, ProfileContent, NextQueueNumberType, schema::media_moderation_request::content_id_1,
+    AccountIdInternal, ContentState, HandleModerationRequest,
+    Moderation, ModerationId, ModerationRequestId,
+    ModerationRequestState, NextQueueNumberType,
 };
-use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
+use simple_backend_database::diesel_db::{DieselDatabaseError};
 
 use super::{ConnectionProvider};
-use crate::{IntoDatabaseError, TransactionError, current::write::CurrentSyncWriteCommands};
+use crate::{IntoDatabaseError};
 
 define_write_commands!(CurrentWriteMediaAdminModeration, CurrentSyncWriteMediaAdminModeration);
 
@@ -77,7 +77,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             .moderation_request()
             .get_moderation_request_content(target_id)?;
         let content = request_raw.to_moderation_request_content();
-        let content_string =
+        let _content_string =
             serde_json::to_string(&content).change_context(DieselDatabaseError::SerdeSerialize)?;
 
         {
@@ -128,7 +128,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             .moderation_request(moderation_request_owner)?
             .ok_or(DieselDatabaseError::MissingModerationRequest)?;
 
-        let currently_selected_images = self
+        let _currently_selected_images = self
             .read()
             .media()
             .media_content()
@@ -157,10 +157,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         };
 
         for c in content.content() {
-            let content_info = self.read().media().media_content().get_media_content_raw(c)?;
+            let _content_info = self.read().media().media_content().get_media_content_raw(c)?;
             // TODO
             //let is_security = if let Some(content) = content.initial_moderation_security_image {
-            let is_security = if true {
+            let _is_security = if true {
                 //content == c
                 true
             } else {

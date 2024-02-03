@@ -1,4 +1,4 @@
-use std::fmt::Write;
+
 
 use axum::{
     extract::{BodyStream, Path, Query, State},
@@ -6,14 +6,12 @@ use axum::{
 };
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, MapTileX, MapTileY,
-    MapTileZ, ModerationRequest, ModerationRequestContent, AccountContent,
-    ProfileContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState, SetProfileContent, PendingProfileContent, SecurityImage, PendingSecurityImage,
+    AccountId, AccountIdInternal, ContentId, ContentAccessCheck, ContentSlot, AccountContent, SlotId, NewContentParams, ContentProcessingId, ContentProcessingState,
 };
-use simple_backend::{app::GetTileMap, create_counters};
-use tracing::error;
+use simple_backend::{create_counters};
 
-use crate::app::{GetAccessTokens, GetAccounts, ReadData, WriteData};
+
+use crate::app::{GetAccounts, ReadData, WriteData};
 use crate::api::{
     db_write,
     utils::{Json, StatusCode},

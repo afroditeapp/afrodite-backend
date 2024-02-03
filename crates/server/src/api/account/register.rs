@@ -1,11 +1,9 @@
 
 use axum::{Extension, extract::State, Router};
 use model::{
-    AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, AccountState,
-    AuthPair, BooleanSetting, DeleteStatus, EventToClientInternal, GoogleAccountId, LoginResult,
-    RefreshToken, SignInWithInfo, SignInWithLoginInfo,
+    AccountId, AccountIdInternal, AccountSetup, AccountState, EventToClientInternal, SignInWithInfo,
 };
-use simple_backend::{app::SignInWith, create_counters};
+use simple_backend::{create_counters};
 use tracing::error;
 
 use crate::api::{
@@ -14,7 +12,7 @@ use crate::api::{
 };
 use crate::{
     app::{
-        EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData,
+        EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData,
         WriteData,
     },
 };
@@ -245,7 +243,7 @@ pub async fn post_complete_setup<
 /// Contains only routes which require authentication.
 pub fn register_router(s: crate::app::S) -> Router {
     use crate::app::S;
-    use axum::routing::{get, post, delete};
+    use axum::routing::{get, post};
 
     Router::new()
         // Skip PATH_REGISTER because it does not need authentication.
