@@ -23,6 +23,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         let mut moderations = self
             .read()
             .media_admin()
+            .moderation()
             .get_in_progress_moderations(moderator_id)?;
 
         const MAX_COUNT: usize = 5;
@@ -50,6 +51,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         let id = self
             .read()
             .media_admin()
+            .moderation_request()
             .get_next_active_moderation_request(true, moderator_id)?;
 
         match id {
@@ -72,6 +74,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         let (request_raw, queue_number, request_creator_id) = self
             .read()
             .media()
+            .moderation_request()
             .get_moderation_request_content(target_id)?;
         let content = request_raw.to_moderation_request_content();
         let content_string =
@@ -121,12 +124,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         let request = self
             .read()
             .media()
+            .moderation_request()
             .moderation_request(moderation_request_owner)?
             .ok_or(DieselDatabaseError::MissingModerationRequest)?;
 
         let currently_selected_images = self
             .read()
             .media()
+            .media_content()
             .current_account_media(moderation_request_owner)?;
 
         let moderation_id = ModerationId {
@@ -136,7 +141,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
             account_id: moderator_id,
         };
 
-        let content = self.read().media_admin().moderation(moderation_id)?;
+        let content = self.read().media_admin().moderation().moderation(moderation_id)?;
 
         let state = if result.accept {
             ModerationRequestState::Accepted
@@ -152,7 +157,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {
         };
 
         for c in content.content() {
-            let content_info = self.read().media().get_media_content_raw(c)?;
+            let content_info = self.read().media().media_content().get_media_content_raw(c)?;
             // TODO
             //let is_security = if let Some(content) = content.initial_moderation_security_image {
             let is_security = if true {

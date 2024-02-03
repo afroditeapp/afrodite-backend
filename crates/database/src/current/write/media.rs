@@ -36,7 +36,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
 
-        let all_content = self.read().media().get_account_media_content(id)?;
+        let all_content = self.read().media().media_content().get_account_media_content(id)?;
         let convert = |content_id: Option<ContentId>| {
             if let Some(content_id) = content_id {
                 let found = all_content
@@ -90,7 +90,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
             SetProfileContentInternal::default()
         };
 
-        let all_content = self.read().media().get_account_media_content(id)?;
+        let all_content = self.read().media().media_content().get_account_media_content(id)?;
         let convert = |content_id: Option<ContentId>| {
             if let Some(content_id) = content_id {
                 let found = all_content
@@ -218,6 +218,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
 
         self.read()
             .media()
+            .moderation_request()
             .content_validate_moderation_request_content(request_creator, &request)?;
 
         // Delete old queue number and request
@@ -246,7 +247,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::media_moderation_request::dsl::*;
 
-        let current_request = self.read().media().moderation_request(request_owner_account_id)?;
+        let current_request = self.read().media().moderation_request().moderation_request(request_owner_account_id)?;
         let update_possible = if let Some(request) = current_request {
             request.state == ModerationRequestState::Waiting
         } else {

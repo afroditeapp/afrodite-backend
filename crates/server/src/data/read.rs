@@ -160,7 +160,7 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Vec<MediaContentInternal>, DataError> {
-        self.db_read(move |mut cmds| cmds.media().get_account_media_content(account_id))
+        self.db_read(move |mut cmds| cmds.media().media_content().get_account_media_content(account_id))
             .await
     }
 
@@ -168,7 +168,7 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, DataError> {
-        self.db_read(move |mut cmds| cmds.media().moderation_request(account_id))
+        self.db_read(move |mut cmds| cmds.media().moderation_request().moderation_request(account_id))
             .await
             .map(|r| r.map(|request| request.into_request()))
     }

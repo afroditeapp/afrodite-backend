@@ -31,7 +31,7 @@ impl WriteCommandsMedia<'_> {
     ) -> Result<(), DataError> {
         // Remove previous slot content.
         let current_content_in_slot = self
-            .db_read(move |mut cmds| cmds.media().get_media_content_from_slot(id, slot))
+            .db_read(move |mut cmds| cmds.media().moderation_request().get_media_content_from_slot(id, slot))
             .await?;
 
         if let Some(content) = current_content_in_slot {
