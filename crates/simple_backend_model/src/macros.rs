@@ -2,7 +2,11 @@
 /// diesel::AsExpression derives are needed.
 ///
 /// ```
+/// use diesel::sql_types::Binary;
+/// use simple_backend_model::diesel_uuid_wrapper;
+///
 /// #[derive(
+///     Debug,
 ///     diesel::FromSqlRow,
 ///     diesel::AsExpression,
 /// )]
@@ -16,8 +20,8 @@
 ///         Self { uuid }
 ///     }
 ///
-///     pub fn to_uuid(&self) -> uuid::Uuid {
-///         self.uuid
+///     pub fn as_uuid(&self) -> &uuid::Uuid {
+///         &self.uuid
 ///     }
 /// }
 ///
@@ -63,7 +67,11 @@ macro_rules! diesel_uuid_wrapper {
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
+/// use diesel::sql_types::Text;
+/// use simple_backend_model::diesel_string_wrapper;
+///
 /// #[derive(
+///     Debug,
 ///     diesel::FromSqlRow,
 ///     diesel::AsExpression,
 /// )]
@@ -120,7 +128,13 @@ macro_rules! diesel_string_wrapper {
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
+/// use diesel::sql_types::Integer;
+/// use simple_backend_model::diesel_i64_wrapper;
+///
 /// #[derive(
+///     Debug,
+///     Clone,
+///     Copy,
 ///     diesel::FromSqlRow,
 ///     diesel::AsExpression,
 /// )]
@@ -135,7 +149,7 @@ macro_rules! diesel_string_wrapper {
 ///     }
 ///
 ///     pub fn as_i64(&self) -> &i64 {
-///        &self.0
+///        &self.number
 ///     }
 /// }
 ///
@@ -179,7 +193,13 @@ pub(crate) use diesel_i64_wrapper;
 /// Also diesel::FromSqlRow and diesel::AsExpression derives are needed.
 ///
 /// ```
+/// use diesel::sql_types::Integer;
+/// use simple_backend_model::diesel_i64_try_from;
+///
 /// #[derive(
+///     Debug,
+///     Clone,
+///     Copy,
 ///     diesel::FromSqlRow,
 ///     diesel::AsExpression,
 /// )]
@@ -193,7 +213,7 @@ pub(crate) use diesel_i64_wrapper;
 ///
 ///     fn try_from(value: i64) -> Result<Self, Self::Error> {
 ///         let number_type = match value {
-///             0 => Self::Value,
+///             1 => Self::Value,
 ///             value => return Err(format!("Unknown value {}", value)),
 ///         };
 ///

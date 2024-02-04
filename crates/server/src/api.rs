@@ -216,25 +216,26 @@ pub struct ApiDoc;
 ///
 /// Example usage:
 ///
-/// ```rust
-/// pub async fn axum_route_handler<S: WriteDatabase>(
+/// ```
+/// use server::api::db_write;
+/// use server::api::utils::StatusCode;
+/// use server::app::WriteData;
+/// pub async fn axum_route_handler<S: WriteData>(
 ///     state: S,
 /// ) -> Result<(), StatusCode> {
-///     let api_caller_account_id = todo!();
-///     let new_image = todo!();
 ///     db_write!(state, move |cmds|
-///         cmds.media()
-///             .update_primary_image(api_caller_account_id, new_image)
+///         async move { Ok(()) }
 ///     )
 /// }
 /// ```
+#[macro_export]
 macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {
         async {
-            let r: error_stack::Result<_, crate::data::DataError> = $state
+            let r: error_stack::Result<_, $crate::data::DataError> = $state
                 .write(move |$cmds| async move { ($commands).await })
                 .await;
-            let r: std::result::Result<_, crate::api::utils::StatusCode> = r.map_err(|e| e.into());
+            let r: std::result::Result<_, $crate::api::utils::StatusCode> = r.map_err(|e| e.into());
             r
         }
         .await
@@ -242,4 +243,4 @@ macro_rules! db_write {
 }
 
 // Make db_write available in all modules
-pub(crate) use db_write;
+pub use db_write;

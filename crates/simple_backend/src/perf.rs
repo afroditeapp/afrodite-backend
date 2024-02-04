@@ -58,6 +58,7 @@ impl PerfCounter {
 /// Create a new counter struct and statics related to it.
 ///
 /// ```
+/// use simple_backend::create_counters;
 /// create_counters!(
 ///     AccountCounters,       // Struct name (private)
 ///     ACCOUNT,               // Static struct instance name (private)
@@ -105,6 +106,16 @@ macro_rules! create_counters {
 /// Type for storing references to all counter categories.
 ///
 /// ```
+/// use simple_backend::create_counters;
+/// create_counters!(
+///     AccountCounters,       // Struct name (private)
+///     ACCOUNT,               // Static struct instance name (private)
+///     ACCOUNT_COUNTERS_LIST, // Static counter list name (public)
+///     check_access_token,    // Struct field name
+///     get_account_state,     // Struct field name
+///     // ...
+/// );
+/// use simple_backend::perf::CounterCategory;
 /// static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
 ///     &CounterCategory::new("account", ACCOUNT_COUNTERS_LIST),
 /// ];
