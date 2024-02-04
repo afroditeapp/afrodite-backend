@@ -15,16 +15,14 @@ pub mod sign_in_with;
 pub mod utils;
 pub mod web_socket;
 
-use std::{net::SocketAddr, pin::Pin, sync::Arc};
+use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sync::Arc};
 
 use app::SimpleBackendAppState;
 use async_trait::async_trait;
-use axum::Router;
+use axum::{extract::connect_info::Connected, Router};
 use futures::future::poll_fn;
-use hyper::server::{
-    accept::Accept,
-    conn::{AddrIncoming, Http},
-};
+use hyper::body::Incoming;
+use hyper_util::rt::{TokioExecutor, TokioIo};
 use media_backup::MediaBackupHandle;
 use perf::AllCounters;
 use simple_backend_config::SimpleBackendConfig;
@@ -38,7 +36,7 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
-use tower::MakeService;
+use tower::{MakeService, Service};
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
@@ -277,6 +275,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 .await
         } else {
             self.create_server_task_no_tls(router, addr, "Public API", quit_notification)
+                .await
         }
     }
 
@@ -287,62 +286,70 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         tls_config: Arc<ServerConfig>,
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
-        let listener = TcpListener::bind(addr)
+        let mut listener = TcpListener::bind(addr)
             .await
             .expect("Address not available");
-        let mut listener =
-            AddrIncoming::from_listener(listener).expect("AddrIncoming creation failed");
-        listener.set_sleep_on_errors(true);
-
-        let protocol = Arc::new(Http::new());
         let acceptor = TlsAcceptor::from(tls_config);
-
-        let mut app_service = router.into_make_service_with_connect_info::<SocketAddr>();
+        let app_service = router.into_make_service_with_connect_info::<SocketAddr>();
 
         tokio::spawn(async move {
             let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
 
             loop {
-                let next_addr_stream = poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
+                let next_addr_stream =
+                    poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
 
-                let stream = tokio::select! {
+                let (tcp_stream, addr) = tokio::select! {
                     _ = quit_notification.recv() => {
                         break;
                     }
                     addr = next_addr_stream => {
                         match addr {
-                            None => {
-                                error!("Socket closed");
-                                break;
+                            Ok(stream_and_addr) => {
+                                stream_and_addr
                             }
-                            Some(Err(e)) => {
+                            Err(e) => {
+                                // TODO: Can this happen if there is no more
+                                //       file descriptors available?
                                 error!("Address stream error {e}");
-                                continue;
-                            }
-                            Some(Ok(stream)) => {
-                                stream
+                                return;
                             }
                         }
                     }
                 };
 
                 let acceptor = acceptor.clone();
-                let protocol = protocol.clone();
-                let service = app_service.make_service(&stream);
+                let app_service_with_connect_info =
+                    unwrap_infallible_result(app_service.clone().call(addr).await);
 
                 let mut quit_notification = quit_notification.resubscribe();
                 let drop_on_quit = drop_after_connection.clone();
                 tokio::spawn(async move {
                     tokio::select! {
                         _ = quit_notification.recv() => {} // Graceful shutdown for connections?
-                        connection = acceptor.accept(stream) => {
+                        connection = acceptor.accept(tcp_stream) => {
                             match connection {
-                                Ok(connection) => {
-                                    if let Ok(service) = service.await {
-                                        let _ = protocol.serve_connection(connection, service).with_upgrades().await;
+                                Ok(tls_connection) => {
+                                    let data_stream = TokioIo::new(tls_connection);
+
+                                    let hyper_service = hyper::service::service_fn(move |request: hyper::Request<Incoming>| {
+                                        app_service_with_connect_info.clone().call(request)
+                                    });
+
+                                    let connection_serving_result =
+                                        hyper_util::server::conn::auto::Builder::new(TokioExecutor::new())
+                                            .serve_connection_with_upgrades(data_stream, hyper_service)
+                                            .await;
+
+                                    match connection_serving_result {
+                                        Ok(()) => {},
+                                        Err(e) => {
+                                            // TODO: Remove to avoid log spam?
+                                            error!("Connection serving error: {}", e);
+                                        }
                                     }
                                 }
-                                Err(_) => {},
+                                Err(_) => {}, // TLS handshake failed
                             }
                         }
                     }
@@ -362,7 +369,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         })
     }
 
-    pub fn create_server_task_no_tls(
+    pub async fn create_server_task_no_tls(
         &self,
         router: Router,
         addr: SocketAddr,
@@ -370,21 +377,26 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
         let normal_api_server = {
-            axum::Server::bind(&addr)
-                .serve(router.into_make_service_with_connect_info::<SocketAddr>())
+            let listener = tokio::net::TcpListener::bind(addr).await.expect("Address not available");
+            axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>())
         };
 
         tokio::spawn(async move {
-            let shutdown_handle = normal_api_server.with_graceful_shutdown(async {
-                let _ = quit_notification.recv().await;
-            });
-
-            match shutdown_handle.await {
-                Ok(()) => {
-                    info!("{name_for_log_message} server future returned Ok()");
+            // There is no graceful shutdown because data writing is done in
+            // separate tasks.
+            tokio::select! {
+                _ = quit_notification.recv() => {
+                    info!("{name_for_log_message} server quit signal received");
                 }
-                Err(e) => {
-                    error!("{name_for_log_message} server future returned error: {}", e);
+                result = normal_api_server.into_future() => {
+                    match result {
+                        Ok(()) => {
+                            info!("{name_for_log_message} server quit by itself");
+                        }
+                        Err(e) => {
+                            error!("{name_for_log_message} server quit by error: {}", e);
+                        }
+                    }
                 }
             }
         })
@@ -414,6 +426,14 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                 .await
         } else {
             self.create_server_task_no_tls(router, addr, "Internal API", quit_notification)
+                .await
         }
+    }
+}
+
+fn unwrap_infallible_result<T>(r: Result<T, Infallible>) -> T {
+    match r {
+        Ok(v) => v,
+        Err(i) => match i {},
     }
 }

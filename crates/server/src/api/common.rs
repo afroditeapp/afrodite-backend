@@ -9,8 +9,8 @@ use axum::{
         ConnectInfo, State, WebSocketUpgrade,
     },
     response::IntoResponse,
-    TypedHeader,
 };
+use axum_extra::TypedHeader;
 use error_stack::{Result, ResultExt};
 use model::{
     AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,

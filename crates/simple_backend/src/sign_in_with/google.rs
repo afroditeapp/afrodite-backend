@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Instant};
 
 use error_stack::{Result, ResultExt};
-use headers::{CacheControl, HeaderMapExt};
+use reqwest_headers::{CacheControl, HeaderMapExt};
 use hyper::Method;
 use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
@@ -58,9 +58,6 @@ pub enum SignInWithGoogleError {
 
     #[error("Decoding key generation failed")]
     DecodingKeyGenerationFailed,
-
-    #[error("Google public key missing algorithm field")]
-    GooglePublicKeyMissingAlgorithmField,
 
     #[error("Sign in with Google is not enabled from server settings file")]
     NotEnabled,
@@ -127,12 +124,7 @@ impl SignInWithGoogleManager {
         let key = DecodingKey::from_jwk(&google_public_key)
             .change_context(SignInWithGoogleError::DecodingKeyGenerationFailed)?;
 
-        let mut v = Validation::new(
-            google_public_key
-                .common
-                .algorithm
-                .ok_or(SignInWithGoogleError::GooglePublicKeyMissingAlgorithmField)?,
-        );
+        let mut v = Validation::new(not_validated_header.alg);
         v.set_required_spec_claims(&["exp", "aud", "iss"]);
         v.set_issuer(POSSIBLE_ISS_VALUES_GOOGLE);
         v.set_audience(&[&google_config.client_id_server]);
@@ -198,7 +190,7 @@ impl SignInWithGoogleManager {
         wanted_kid: &str,
     ) -> Result<Jwk, SignInWithGoogleError> {
         let download_request = reqwest::Request::new(
-            Method::GET,
+            reqwest::Method::GET,
             self.config.sign_in_with_urls().google_public_keys.clone(),
         );
 

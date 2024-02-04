@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use axum::extract::BodyStream;
+use axum::body::{Body, BodyDataStream};
 use error_stack::{Result, ResultExt};
 use model::{AccountId, ContentId};
 use simple_backend_utils::ContextExt;
@@ -197,7 +197,7 @@ pub struct TmpContentFile {
 }
 
 impl TmpContentFile {
-    pub async fn save_stream(&self, stream: BodyStream) -> Result<(), FileError> {
+    pub async fn save_stream(&self, stream: BodyDataStream) -> Result<(), FileError> {
         self.path.save_stream(stream).await
     }
 
@@ -254,7 +254,7 @@ impl PathToFile {
         }
     }
 
-    pub async fn save_stream(&self, mut stream: BodyStream) -> Result<(), FileError> {
+    pub async fn save_stream(&self, mut stream: BodyDataStream) -> Result<(), FileError> {
         self.create_parent_dirs().await?;
 
         let mut file = tokio::fs::File::create(&self.path)

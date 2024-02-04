@@ -1,9 +1,7 @@
 use std::net::SocketAddr;
 
 use axum::{
-    extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State},
-    middleware::Next,
-    response::{IntoResponse, Response},
+    body::Body, extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State}, middleware::Next, response::{IntoResponse, Response}
 };
 use config::file::ConfigFileError;
 use headers::{Header, HeaderValue};
@@ -40,11 +38,11 @@ pub static ACCESS_TOKEN_HEADER: header::HeaderName =
 /// Adds `Capabilities` extension to request, so that adding
 /// "Extension(api_caller_capabilities): Extension<Capabilities>"
 /// to handlers is possible.
-pub async fn authenticate_with_access_token<S: GetAccessTokens + ReadData, T>(
+pub async fn authenticate_with_access_token<S: GetAccessTokens + ReadData>(
     State(state): State<S>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    mut req: Request<T>,
-    next: Next<T>,
+    mut req: Request<Body>,
+    next: Next,
 ) -> Result<Response, StatusCode> {
     let header = req
         .headers()

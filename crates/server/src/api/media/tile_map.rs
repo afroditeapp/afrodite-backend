@@ -1,7 +1,8 @@
 use axum::{
     extract::{Path, State},
-    Router, TypedHeader,
+    Router,
 };
+use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{MapTileX, MapTileY, MapTileZ};
 use simple_backend::{app::GetTileMap, create_counters};

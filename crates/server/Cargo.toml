@@ -17,7 +17,8 @@ tokio = { workspace = true, features = ["full"] }
 tokio-stream = { workspace = true, features = ["sync"] }
 tokio-util = { workspace = true, features = ["io"]}
 hyper = { workspace = true, features = ["full"] }
-axum = { workspace = true, features = ["headers", "ws", "macros"] }
+axum = { workspace = true, features = ["ws", "macros"] }
+axum-extra = { workspace = true, features = ["typed-header"] }
 tracing = { workspace = true }
 headers = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }

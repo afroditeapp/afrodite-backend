@@ -151,7 +151,7 @@ impl<S: GetConfig + GetAccessTokens> InternalApiManager<'_, S> {
                     Ok(AuthResponse::Ok)
                 }
                 Err(api_internal::Error::ResponseError(response))
-                    if response.status == StatusCode::UNAUTHORIZED =>
+                    if response.status.as_u16() == StatusCode::UNAUTHORIZED.as_u16() =>
                 {
                     // TODO: NOTE: Logging every error is not good as it would spam
                     // the log, but maybe an error counter or logging just

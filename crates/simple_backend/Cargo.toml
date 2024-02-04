@@ -17,13 +17,14 @@ tokio = { workspace = true, features = ["full"] }
 tokio-stream = { workspace = true, features = ["sync"] }
 tokio-util = { workspace = true, features = ["io"]}
 hyper = { workspace = true, features = ["full"] }
-axum = { workspace = true, features = ["headers", "ws", "macros"] }
+hyper-util = { workspace = true, features = ["full"] }
+axum = { workspace = true, features = ["ws", "macros"] }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["trace"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
-headers = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
+reqwest_headers = { workspace = true }
 http = { workspace = true }
 
 # For tokio-console debugging

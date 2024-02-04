@@ -1,7 +1,7 @@
 use axum::{
-    extract::{BodyStream, Path, Query, State},
-    Extension, Router, TypedHeader,
+    body::Body, extract::{Path, Query, State}, Extension, Router
 };
+use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{
     AccountContent, AccountId, AccountIdInternal, ContentAccessCheck, ContentId,
@@ -128,18 +128,20 @@ pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvide
     Extension(account_id): Extension<AccountIdInternal>,
     Path(slot_number): Path<SlotId>,
     Query(new_content_params): Query<NewContentParams>,
-    content_data: BodyStream,
+    content_data: Body,
 ) -> Result<Json<ContentProcessingId>, StatusCode> {
     MEDIA.put_content_to_content_slot.incr();
 
     let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i64)
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
+    let stream = content_data.into_data_stream();
+
     let content_info = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
                 .accquire_image(move |cmds: ConcurrentWriteContentHandle| {
-                    Box::new(async move { cmds.save_to_tmp(account_id, content_data).await })
+                    Box::new(async move { cmds.save_to_tmp(account_id, stream).await })
                 })
                 .await;
             out

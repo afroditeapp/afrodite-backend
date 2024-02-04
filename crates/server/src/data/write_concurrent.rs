@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
-use axum::extract::BodyStream;
+use axum::body::{Body, BodyDataStream};
 use config::Config;
 use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
 use error_stack::{Result, ResultExt};
@@ -17,19 +17,19 @@ use super::{
 };
 use crate::{content_processing::NewContentInfo, data::DataError};
 
-pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + Sync + 'static>;
+pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;
 
 pub enum ConcurrentWriteAction<R> {
     Image {
         handle: ConcurrentWriteContentHandle,
         action: Box<
-            dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + Sync + 'static,
+            dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + 'static,
         >,
     },
     Profile {
         handle: ConcurrentWriteProfileHandle,
         action: Box<
-            dyn FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + Sync + 'static,
+            dyn FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + 'static,
         >,
     },
 }
@@ -112,7 +112,7 @@ impl fmt::Debug for ConcurrentWriteSelectorHandle {
 impl ConcurrentWriteSelectorHandle {
     pub async fn accquire_image<
         R,
-        A: FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + Sync + 'static,
+        A: FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + 'static,
     >(
         self,
         action: A,
@@ -183,7 +183,7 @@ impl ConcurrentWriteContentHandle {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,
-        stream: BodyStream,
+        stream: BodyDataStream,
     ) -> Result<NewContentInfo, DataError> {
         self.write
             .user_write_commands_account()
@@ -255,7 +255,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,
-        stream: BodyStream,
+        stream: BodyDataStream,
     ) -> Result<NewContentInfo, DataError> {
         let content_id = ContentProcessingId::new_random_id();
 

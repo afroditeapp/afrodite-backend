@@ -27,7 +27,7 @@ impl ConnectedApp {
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state(),
-                    api::utils::authenticate_with_access_token::<S, _>,
+                    api::utils::authenticate_with_access_token::<S>,
                 )
             });
 
@@ -50,7 +50,7 @@ impl ConnectedApp {
         let private = private.route_layer({
             middleware::from_fn_with_state(
                 self.state(),
-                api::utils::authenticate_with_access_token::<S, _>,
+                api::utils::authenticate_with_access_token::<S>,
             )
         });
 
@@ -66,7 +66,7 @@ impl ConnectedApp {
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state(),
-                    api::utils::authenticate_with_access_token::<S, _>,
+                    api::utils::authenticate_with_access_token::<S>,
                 )
             });
 
@@ -88,7 +88,7 @@ impl ConnectedApp {
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.clone(),
-                    api::utils::authenticate_with_access_token::<S, _>,
+                    api::utils::authenticate_with_access_token::<S>,
                 )
             });
 
@@ -105,7 +105,7 @@ impl ConnectedApp {
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.clone(),
-                    api::utils::authenticate_with_access_token::<S, _>,
+                    api::utils::authenticate_with_access_token::<S>,
                 )
             });
 
