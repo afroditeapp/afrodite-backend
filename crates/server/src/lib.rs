@@ -205,21 +205,17 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     async fn on_after_server_quit(self) {
-        info!("7");
         self.content_processing_quit_handle
             .expect("Not initialized")
             .wait_quit()
             .await;
-        info!("8");
         self.write_cmd_waiter
             .expect("Not initialized")
             .wait_untill_all_writing_ends()
             .await;
-        info!("9");
         self.database_manager
             .expect("Not initialized")
             .close()
             .await;
-        info!("10");
     }
 }
