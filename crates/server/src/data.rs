@@ -94,6 +94,8 @@ pub enum DataError {
     NotAllowed,
     #[error("Action is already done")]
     AlreadyDone,
+    #[error("Server closing in progress")]
+    ServerClosingInProgress,
 
     #[error("Command runner quit too early")]
     CommandRunnerQuit,

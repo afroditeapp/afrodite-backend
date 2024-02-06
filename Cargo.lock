@@ -1537,6 +1537,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "inventory"
+version = "0.3.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f958d3d68f4167080a18141e10381e7634563984a537f2a49a30fd8e53ac5767"
+
+[[package]]
 name = "ipnet"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3393,12 +3399,14 @@ dependencies = [
  "headers 0.4.0",
  "hyper 1.1.0",
  "image",
+ "inventory",
  "nix",
  "rand",
  "reqwest",
  "serde",
  "serde_json",
  "simple_backend_config",
+ "test_mode_macro",
  "thiserror",
  "time",
  "tokio",
@@ -3410,6 +3418,15 @@ dependencies = [
  "url",
  "utils",
  "uuid",
+]
+
+[[package]]
+name = "test_mode_macro"
+version = "0.0.0"
+dependencies = [
+ "inventory",
+ "quote",
+ "syn 2.0.48",
 ]
 
 [[package]]

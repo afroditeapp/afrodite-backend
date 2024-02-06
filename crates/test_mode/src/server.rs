@@ -1,5 +1,5 @@
 use std::{
-    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, sync::Arc,
+    env, fmt::format, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, process::Stdio, sync::Arc
 };
 
 use config::{
@@ -10,12 +10,13 @@ use config::{
     },
     Config,
 };
+use futures::select;
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use simple_backend_config::file::{
     DataConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase,
 };
-use tokio::process::Child;
+use tokio::{io::{AsyncBufReadExt, AsyncRead}, process::Child, sync::Mutex, task::JoinHandle};
 use tracing::info;
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
@@ -36,19 +37,29 @@ pub const DEFAULT_LOCATION_CONFIG_BENCHMARK: LocationConfig = LocationConfig {
     ..DEFAULT_LOCATION_CONFIG
 };
 
+#[derive(Debug, Clone, Default)]
+pub struct AdditionalSettings {
+    /// Store logs in RAM instead of using standard output or error.
+    pub log_to_memory: bool,
+}
+
 pub struct ServerManager {
     servers: Vec<ServerInstance>,
     config: Arc<TestMode>,
 }
 
 impl ServerManager {
-    pub async fn new(all_config: &Config, config: Arc<TestMode>) -> Self {
+    pub async fn new(
+        all_config: &Config,
+        config: Arc<TestMode>,
+        settings: Option<AdditionalSettings>,
+    ) -> Self {
+        let settings = settings.unwrap_or_default();
+
         let dir = config.server.test_database.clone();
         if !dir.exists() {
             std::fs::create_dir_all(&dir).unwrap();
         }
-
-        info!("data dir: {:?}", dir);
 
         let check_host = |url: &Url, name| {
             let host = url.host_str().unwrap();
@@ -94,6 +105,7 @@ impl ServerManager {
             &all_config,
             account_config,
             &config,
+            settings.clone(),
         )];
 
         if config.server.microservice_media {
@@ -112,6 +124,7 @@ impl ServerManager {
                 &all_config,
                 server_config,
                 &config,
+                settings.clone(),
             ));
         }
 
@@ -131,8 +144,11 @@ impl ServerManager {
                 &all_config,
                 server_config,
                 &config,
+                settings.clone(),
             ));
         }
+
+        // TODO: Chat microservice
 
         Self { servers, config }
     }
@@ -141,6 +157,15 @@ impl ServerManager {
         for s in self.servers {
             s.close_and_maeby_remove_data(!self.config.no_clean).await;
         }
+    }
+
+    pub async fn logs(&self) -> Vec<String> {
+        let mut logs = Vec::new();
+        for (i, s) in self.servers.iter().enumerate() {
+            logs.push(format!("Server {} logs:\n", i));
+            logs.extend(s.logs().await);
+        }
+        logs
     }
 }
 
@@ -197,6 +222,9 @@ fn new_config(
 pub struct ServerInstance {
     server: Child,
     dir: PathBuf,
+    stdout_task: Option<JoinHandle<()>>,
+    stderr_task: Option<JoinHandle<()>>,
+    logs: Arc<Mutex<Vec<String>>>,
 }
 
 impl ServerInstance {
@@ -205,6 +233,7 @@ impl ServerInstance {
         all_config: &Config,
         (server_config, simple_backend_config): (ConfigFile, SimpleBackendConfigFile),
         args_config: &TestMode,
+        settings: AdditionalSettings,
     ) -> Self {
         let id = uuid::Uuid::new_v4();
         let dir = dir.join(format!(
@@ -232,8 +261,6 @@ impl ServerInstance {
             panic!("First argument does not point to a file {:?}", &start_cmd);
         }
 
-        info!("Path to server binary: {:?}", &start_cmd);
-
         let log_value = if args_config.server.log_debug {
             "debug"
         } else {
@@ -251,9 +278,60 @@ impl ServerInstance {
         }
 
         let mut tokio_command: tokio::process::Command = command.into();
-        let server = tokio_command.kill_on_drop(true).spawn().unwrap();
 
-        Self { server, dir }
+        if settings.log_to_memory {
+            tokio_command
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
+        }
+
+        let mut server = tokio_command.kill_on_drop(true).spawn().unwrap();
+
+        let logs = Arc::new(Mutex::new(Vec::new()));
+        let (stdout_task, stderr_task) = if settings.log_to_memory {
+            let stdout = server
+                .stdout
+                .take()
+                .expect("Stdout handle is missing");
+            let stderr = server
+                .stderr
+                .take()
+                .expect("Stderr handle is missing");
+
+            fn create_read_lines_task(
+                stream: impl AsyncRead + Unpin + Send + 'static,
+                stream_name: &'static str,
+                logs: Arc<Mutex<Vec<String>>>,
+            ) -> JoinHandle<()> {
+                tokio::spawn(async move {
+                    let mut line_stream = tokio::io::BufReader::new(stream).lines();
+                    loop {
+                        match line_stream.next_line().await {
+                            Ok(Some(line)) => {
+                                logs.lock().await.push(line);
+                            }
+                            Ok(None) => {
+                                logs.lock().await.push(format!("Server {stream_name} closed"));
+                                break;
+                            }
+                            Err(e) => {
+                                logs.lock().await.push(format!("Server {stream_name} error: {e:?}"));
+                                break;
+                            }
+                        }
+                    }
+                })
+            }
+
+            let stdout_task = create_read_lines_task(stdout, "stdout", logs.clone());
+            let stderr_task = create_read_lines_task(stderr, "stderr", logs.clone());
+
+            (Some(stdout_task), Some(stderr_task))
+        } else {
+            (None, None)
+        };
+
+        Self { server, dir, stdout_task, stderr_task, logs }
     }
 
     fn running(&mut self) -> bool {
@@ -273,5 +351,17 @@ impl ServerInstance {
                 panic!("Not database instance dir {}", dir);
             }
         }
+
+        if let Some(handle) = self.stdout_task {
+            handle.await.unwrap();
+        }
+
+        if let Some(handle) = self.stderr_task {
+            handle.await.unwrap();
+        }
+    }
+
+    pub async fn logs(&self) -> Vec<String> {
+        self.logs.lock().await.clone()
     }
 }

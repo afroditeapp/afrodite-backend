@@ -96,8 +96,26 @@ async fn handle_socket<S: WriteData + ReadData>(
     state: S,
     mut ws_manager: WebSocketManager,
 ) {
+    let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await {
+        quit_lock
+    } else {
+        return;
+    };
+
     tokio::select! {
-        _ = ws_manager.server_quit_watcher.recv() => (),
+        _ = ws_manager.server_quit_detected() => {
+            // TODO: Probably sessions should be ended when server quits?
+            //       Test does this code path work with client.
+            let result = state.write(move |cmds| async move {
+                cmds.common()
+                    .end_connection_session(id, false)
+                    .await
+            }).await;
+
+            if let Err(e) = result {
+                error!("server quit end_connection_session, {e:?}")
+            }
+        },
         r = handle_socket_result(socket, address, id, &state) => {
             match r {
                 Ok(()) => {
@@ -126,7 +144,7 @@ async fn handle_socket<S: WriteData + ReadData>(
         }
     }
 
-    drop(ws_manager.quit_handle);
+    drop(quit_lock);
 }
 
 #[derive(thiserror::Error, Debug)]

@@ -1,7 +1,7 @@
 //! Database writing commands
 //!
 
-use std::{future::Future, sync::Arc};
+use std::{future::Future, sync::{Arc, OnceLock}};
 
 use config::Config;
 use error_stack::{Result, ResultExt};
@@ -17,6 +17,14 @@ use super::{
 use crate::data::DataError;
 
 pub type WriteCmds = Cmds;
+
+fn get_quit_lock() -> &'static Mutex<Option<mpsc::Sender<()>>> {
+    /// Use static for storing the data writing quit lock as storing the Sender
+    /// in WriteCommandRunnerHandle causes ongoing HTTP connections to
+    /// prevent the server from shutting down.
+    static QUIT_LOCK: OnceLock<Mutex<Option<mpsc::Sender<()>>>> = OnceLock::new();
+    QUIT_LOCK.get_or_init(|| Mutex::new(None))
+}
 
 /// Make VSCode rust-analyzer code type annotation shorter.
 /// The annotation is displayed when calling write() method.
@@ -34,19 +42,18 @@ impl std::ops::Deref for Cmds {
 
 #[derive(Debug)]
 pub struct WriteCommandRunnerHandle {
-    quit_lock: mpsc::Sender<()>,
     sync_write_mutex: Arc<Mutex<SyncWriteHandle>>,
     concurrent_write: ConcurrentWriteCommandHandle,
 }
 
 impl WriteCommandRunnerHandle {
-    pub fn new(write: RouterDatabaseWriteHandle, config: &Config) -> (Self, WriteCmdWatcher) {
+    pub async fn new(write: RouterDatabaseWriteHandle, config: &Config) -> (Self, WriteCmdWatcher) {
         let (quit_lock, quit_handle) = mpsc::channel::<()>(1);
+        *get_quit_lock().lock().await = Some(quit_lock);
 
         let cmd_watcher = WriteCmdWatcher::new(quit_handle);
 
         let runner_handle = Self {
-            quit_lock,
             sync_write_mutex: Mutex::new(write.clone().into_sync_handle()).into(),
             concurrent_write: ConcurrentWriteCommandHandle::new(write.clone(), config),
         };
@@ -61,7 +68,12 @@ impl WriteCommandRunnerHandle {
         &self,
         write_cmd: GetCmd,
     ) -> Result<CmdResult, DataError> {
-        let quit_lock = self.quit_lock.clone();
+        let quit_lock_storage = get_quit_lock().lock().await;
+        let quit_lock = quit_lock_storage
+            .clone()
+            .ok_or(DataError::ServerClosingInProgress.report())?;
+        drop(quit_lock_storage);
+
         let lock = self.sync_write_mutex.clone().lock_owned().await;
         let handle = tokio::spawn(async move {
             let result = write_cmd(Cmds { write: lock }).await;
@@ -83,7 +95,12 @@ impl WriteCommandRunnerHandle {
         account: AccountId,
         write_cmd: GetCmd,
     ) -> Result<CmdResult, DataError> {
-        let quit_lock = self.quit_lock.clone();
+        let quit_lock_storage = get_quit_lock().lock().await;
+        let quit_lock = quit_lock_storage
+            .clone()
+            .ok_or(DataError::ServerClosingInProgress.report())?;
+        drop(quit_lock_storage);
+
         let lock = self.concurrent_write.accquire(account).await;
         let action = write_cmd(lock).await;
 
@@ -114,6 +131,11 @@ impl WriteCmdWatcher {
     }
 
     pub async fn wait_untill_all_writing_ends(mut self) {
+        let mut quit_lock_storage = get_quit_lock().lock().await;
+        let quit_lock = quit_lock_storage.take();
+        drop(quit_lock);
+        drop(quit_lock_storage);
+
         loop {
             match self.receiver.recv().await {
                 Some(_) => (),

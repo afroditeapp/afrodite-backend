@@ -59,7 +59,7 @@ impl TestError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ApiClient {
     /// Where Account API reqister and login is available
     register: Configuration,

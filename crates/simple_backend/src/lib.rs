@@ -173,8 +173,9 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             )
             .await;
 
-        let (ws_manager, mut ws_quit_ready) =
-            WebSocketManager::new(server_quit_watcher.resubscribe());
+        let (ws_manager, mut ws_watcher) =
+            WebSocketManager::new(server_quit_watcher.resubscribe())
+                .await;
 
         let server_task = self
             .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager, &state)
@@ -202,12 +203,9 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .await
             .expect("Internal API server task panic detected");
 
-        loop {
-            match ws_quit_ready.recv().await {
-                Some(()) => (),
-                None => break,
-            }
-        }
+        ws_watcher
+            .wait_for_quit()
+            .await;
 
         drop(state);
         perf_manager_quit_handle.wait_quit().await;

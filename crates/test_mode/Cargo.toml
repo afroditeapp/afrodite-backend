@@ -39,9 +39,12 @@ rand = { workspace = true }
 nix = { workspace = true, default-features = false, features = ["signal"] }
 image = { workspace = true, default-features = false, features = ["jpeg"] }
 tokio-tungstenite = { workspace = true }
+inventory = { workspace = true }
 
 api_client = { path = "../api_client" }
 
+
+test_mode_macro = { path = "../test_mode_macro" }
 utils = { path = "../utils" }
 config = { path = "../config" }
 simple_backend_config = { path = "../simple_backend_config" }
