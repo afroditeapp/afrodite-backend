@@ -158,6 +158,7 @@ impl ContentProcessingId {
     Hash,
     Serialize,
     Deserialize,
+    ToSchema,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]
@@ -348,6 +349,7 @@ impl TryFrom<i64> for ModerationRequestState {
     Copy,
     PartialEq,
     Eq,
+    ToSchema,
     diesel::FromSqlRow,
     diesel::AsExpression,
 )]

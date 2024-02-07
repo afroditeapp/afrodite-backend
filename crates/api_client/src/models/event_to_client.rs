@@ -18,6 +18,8 @@ pub struct EventToClient {
     pub account_state: Option<Option<Box<crate::models::AccountState>>>,
     #[serde(rename = "capabilities", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub capabilities: Option<Option<Box<crate::models::Capabilities>>>,
+    #[serde(rename = "content_processing_state_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content_processing_state_changed: Option<Option<Box<crate::models::ContentProcessingStateChanged>>>,
     #[serde(rename = "event")]
     pub event: crate::models::EventType,
     #[serde(rename = "latest_viewed_message_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -30,6 +32,7 @@ impl EventToClient {
         EventToClient {
             account_state: None,
             capabilities: None,
+            content_processing_state_changed: None,
             event,
             latest_viewed_message_changed: None,
         }

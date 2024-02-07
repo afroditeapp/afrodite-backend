@@ -1,10 +1,10 @@
-# SecurityImage
+# AccountContent
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**content_id** | Option<[**crate::models::ContentInfo**](ContentInfo.md)> |  | [optional]
+**data** | [**Vec<crate::models::ContentInfoDetailed>**](ContentInfoDetailed.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

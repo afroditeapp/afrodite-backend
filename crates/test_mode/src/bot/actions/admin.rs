@@ -18,8 +18,8 @@ impl BotAction for ModerateMediaModerationRequest {
 
         for request in list.list {
             let images = [
-                request.content.initial_moderation_security_image.flatten(),
-                Some(request.content.content1),
+                Some(request.content.content0),
+                request.content.content1.flatten(),
                 request.content.content2.flatten(),
                 request.content.content3.flatten(),
                 request.content.content4.flatten(),
@@ -27,7 +27,7 @@ impl BotAction for ModerateMediaModerationRequest {
                 request.content.content6.flatten(),
             ];
             for content_id in images.iter().flatten() {
-                api_client::manual_additions::get_image_fixed(
+                api_client::manual_additions::get_content_fixed(
                     state.api.media(),
                     &request.request_creator_id.to_string(),
                     &content_id.to_string(),

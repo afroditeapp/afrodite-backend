@@ -1,9 +1,7 @@
 use std::fmt::Debug;
 
 use api_client::{
-    apis::media_api::put_moderation_request,
-    manual_additions::put_image_to_moderation_slot_fixed,
-    models::{ContentId, ModerationRequestContent},
+    apis::media_api::{get_content_slot_state, put_moderation_request}, manual_additions::put_content_to_content_slot_fixed, models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent}
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -32,6 +30,7 @@ pub struct SendImageToSlot {
 }
 
 impl SendImageToSlot {
+    /// Slot 0 will be used as secure capture every time
     pub const fn slot(slot: i32) -> Self {
         Self {
             slot,
@@ -63,10 +62,33 @@ impl BotAction for SendImageToSlot {
         };
 
         let content_id =
-            put_image_to_moderation_slot_fixed(state.api.media(), self.slot, img_data.clone())
+            put_content_to_content_slot_fixed(
+                state.api.media(),
+                self.slot,
+                if self.slot == 0 { true } else { false }, // secure capture
+                MediaContentType::JpegImage,
+                img_data.clone()
+            )
                 .await
                 .change_context(TestError::ApiRequest)?;
-        state.media.slots[self.slot as usize] = Some(content_id);
+
+        let content_id = loop {
+            let slot_state = get_content_slot_state(state.api.media(), self.slot)
+                .await
+                .change_context(TestError::ApiRequest)?;
+
+            match slot_state.state {
+                ContentProcessingStateType::Empty |
+                ContentProcessingStateType::Failed => return Err(TestError::ApiRequest.report()),
+                ContentProcessingStateType::Processing |
+                ContentProcessingStateType::InQueue =>
+                    tokio::time::sleep(std::time::Duration::from_millis(10)).await,
+                ContentProcessingStateType::Completed =>
+                    break slot_state.content_id.flatten().expect("Content ID is missing"),
+            }
+        };
+
+        state.media.slots[self.slot as usize] = Some(*content_id);
 
         let img_data = if self.mark_copied_image {
             ImageProvider::mark_jpeg_image(&img_data).unwrap_or_else(|e| {
@@ -78,10 +100,33 @@ impl BotAction for SendImageToSlot {
         };
 
         if let Some(slot) = self.copy_to_slot {
-            let content_id = put_image_to_moderation_slot_fixed(state.api.media(), slot, img_data)
+            let content_id = put_content_to_content_slot_fixed(
+                state.api.media(),
+                slot,
+                if slot == 0 { true } else { false }, // secure capture
+                MediaContentType::JpegImage,
+                img_data
+            )
                 .await
                 .change_context(TestError::ApiRequest)?;
-            state.media.slots[slot as usize] = Some(content_id);
+
+            let content_id = loop {
+                let slot_state = get_content_slot_state(state.api.media(), self.slot)
+                    .await
+                    .change_context(TestError::ApiRequest)?;
+
+                match slot_state.state {
+                    ContentProcessingStateType::Empty |
+                    ContentProcessingStateType::Failed => return Err(TestError::ApiRequest.report()),
+                    ContentProcessingStateType::Processing |
+                    ContentProcessingStateType::InQueue =>
+                        tokio::time::sleep(std::time::Duration::from_millis(10)).await,
+                    ContentProcessingStateType::Completed =>
+                        break slot_state.content_id.flatten().expect("Content ID is missing"),
+                }
+            };
+
+            state.media.slots[slot as usize] = Some(*content_id);
         }
 
         Ok(())
@@ -96,25 +141,37 @@ pub struct MakeModerationRequest {
 #[async_trait]
 impl BotAction for MakeModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let security_image = if self.camera {
-            Some(Box::new(state.media.slots[0].clone().unwrap_or(
-                ContentId {
-                    content_id: uuid::Uuid::new_v4(),
-                },
-            )))
-        } else {
-            None
-        };
+        let mut content_ids: Vec<Option<Box<ContentId>>> = vec![];
 
-        let new = ModerationRequestContent {
-            initial_moderation_security_image: security_image.into(),
-            content1: state.media.slots[1]
+        if self.camera {
+            content_ids.push(
+                Box::new(state.media.slots[0].clone().unwrap_or(
+                    ContentId {
+                        content_id: uuid::Uuid::new_v4(),
+                    },
+                ))
+                    .into()
+            );
+        }
+
+        content_ids.push(
+            state.media.slots[1]
                 .clone()
                 .map(|id| Box::new(id))
                 .unwrap_or(Box::new(ContentId {
                     content_id: uuid::Uuid::new_v4(),
-                })),
-            content2: state.media.slots[2].clone().map(|id| Some(Box::new(id))),
+                }))
+                .into()
+        );
+
+        content_ids.push(
+            state.media.slots[2].clone().map(|id| Box::new(id))
+        );
+
+        let new = ModerationRequestContent {
+            content0: content_ids[0].clone().expect("Content ID is missing"),
+            content1: content_ids[1].clone().into(),
+            content2: content_ids[2].clone().into(),
             content3: None,
             content4: None,
             content5: None,

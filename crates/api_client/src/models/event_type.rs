@@ -25,6 +25,8 @@ pub enum EventType {
     ReceivedBlocksChanged,
     #[serde(rename = "LatestViewedMessageChanged")]
     LatestViewedMessageChanged,
+    #[serde(rename = "ContentProcessingStateChanged")]
+    ContentProcessingStateChanged,
 
 }
 
@@ -37,6 +39,7 @@ impl ToString for EventType {
             Self::LikesChanged => String::from("LikesChanged"),
             Self::ReceivedBlocksChanged => String::from("ReceivedBlocksChanged"),
             Self::LatestViewedMessageChanged => String::from("LatestViewedMessageChanged"),
+            Self::ContentProcessingStateChanged => String::from("ContentProcessingStateChanged"),
         }
     }
 }

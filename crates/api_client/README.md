@@ -65,15 +65,23 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_request_build_software**](docs/CommonAdminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
 *CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /common_api/request_restart_or_reset_backend | Request restarting or reseting backend through app-manager instance.
 *CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
-*MediaApi* | [**get_all_normal_images**](docs/MediaApi.md#get_all_normal_images) | **GET** /media_api/all_normal_images/{account_id} | Get list of all normal images on the server for one account.
-*MediaApi* | [**get_image**](docs/MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
+*MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /media_api/content/{account_id}/{content_id} | Delete content data. Content can be removed after specific time has passed
+*MediaApi* | [**delete_pending_security_image_info**](docs/MediaApi.md#delete_pending_security_image_info) | **DELETE** /media_api/pending_security_image_info | Delete pending security image for current account.
+*MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{account_id} | Get list of all media content on the server for one account.
+*MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /media_api/content/{account_id}/{content_id} | Get content data
+*MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
 *MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
-*MediaApi* | [**get_primary_image_info**](docs/MediaApi.md#get_primary_image_info) | **GET** /media_api/primary_image_info/{account_id} | Get current public image for selected profile
-*MediaApi* | [**put_image_to_moderation_slot**](docs/MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
+*MediaApi* | [**get_pending_profile_content_info**](docs/MediaApi.md#get_pending_profile_content_info) | **GET** /media_api/pending_profile_content_info/{account_id} | Get pending profile content for selected profile
+*MediaApi* | [**get_pending_security_image_info**](docs/MediaApi.md#get_pending_security_image_info) | **GET** /media_api/pending_security_image_info/{account_id} | Get pending security image for selected profile.
+*MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile
+*MediaApi* | [**get_security_image_info**](docs/MediaApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile.
+*MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Set content to content processing slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
-*MediaApi* | [**put_primary_image**](docs/MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image | Set primary image for account. Image content ID can not be empty.
-*MediaAdminApi* | [**get_security_image_info**](docs/MediaAdminApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile. Only for admins.
+*MediaApi* | [**put_pending_profile_content**](docs/MediaApi.md#put_pending_profile_content) | **PUT** /media_api/pending_profile_content | Set new pending profile content for current account.
+*MediaApi* | [**put_pending_security_image_info**](docs/MediaApi.md#put_pending_security_image_info) | **PUT** /media_api/pending_security_image_info | Set pending security image for current account.
+*MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
+*MediaApi* | [**put_security_image_info**](docs/MediaApi.md#put_security_image_info) | **PUT** /media_api/security_image_info | Set current security image content for current account.
 *MediaAdminApi* | [**patch_moderation_request_list**](docs/MediaAdminApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
 *MediaAdminApi* | [**post_handle_moderation_request**](docs/MediaAdminApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 *MediaInternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
@@ -96,6 +104,7 @@ Class | Method | HTTP request | Description
 
  - [AccessToken](docs/AccessToken.md)
  - [Account](docs/Account.md)
+ - [AccountContent](docs/AccountContent.md)
  - [AccountData](docs/AccountData.md)
  - [AccountId](docs/AccountId.md)
  - [AccountSetup](docs/AccountSetup.md)
@@ -108,7 +117,16 @@ Class | Method | HTTP request | Description
  - [BuildInfo](docs/BuildInfo.md)
  - [Capabilities](docs/Capabilities.md)
  - [CommandOutput](docs/CommandOutput.md)
+ - [ContentAccessCheck](docs/ContentAccessCheck.md)
  - [ContentId](docs/ContentId.md)
+ - [ContentInfo](docs/ContentInfo.md)
+ - [ContentInfoDetailed](docs/ContentInfoDetailed.md)
+ - [ContentProcessingId](docs/ContentProcessingId.md)
+ - [ContentProcessingState](docs/ContentProcessingState.md)
+ - [ContentProcessingStateChanged](docs/ContentProcessingStateChanged.md)
+ - [ContentProcessingStateType](docs/ContentProcessingStateType.md)
+ - [ContentSlot](docs/ContentSlot.md)
+ - [ContentState](docs/ContentState.md)
  - [DeleteStatus](docs/DeleteStatus.md)
  - [DownloadType](docs/DownloadType.md)
  - [DownloadTypeQueryParam](docs/DownloadTypeQueryParam.md)
@@ -116,7 +134,6 @@ Class | Method | HTTP request | Description
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
- - [ImageAccessCheck](docs/ImageAccessCheck.md)
  - [LatestViewedMessageChanged](docs/LatestViewedMessageChanged.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
@@ -124,6 +141,7 @@ Class | Method | HTTP request | Description
  - [MapTileY](docs/MapTileY.md)
  - [MapTileZ](docs/MapTileZ.md)
  - [MatchesPage](docs/MatchesPage.md)
+ - [MediaContentType](docs/MediaContentType.md)
  - [MessageNumber](docs/MessageNumber.md)
  - [Moderation](docs/Moderation.md)
  - [ModerationList](docs/ModerationList.md)
@@ -131,17 +149,19 @@ Class | Method | HTTP request | Description
  - [ModerationRequestContent](docs/ModerationRequestContent.md)
  - [ModerationRequestId](docs/ModerationRequestId.md)
  - [ModerationRequestState](docs/ModerationRequestState.md)
- - [NormalImages](docs/NormalImages.md)
+ - [NewContentParams](docs/NewContentParams.md)
  - [PendingMessage](docs/PendingMessage.md)
  - [PendingMessageDeleteList](docs/PendingMessageDeleteList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingMessagesPage](docs/PendingMessagesPage.md)
+ - [PendingProfileContent](docs/PendingProfileContent.md)
+ - [PendingSecurityImage](docs/PendingSecurityImage.md)
  - [PerfHistoryQuery](docs/PerfHistoryQuery.md)
  - [PerfHistoryQueryResult](docs/PerfHistoryQueryResult.md)
  - [PerfHistoryValue](docs/PerfHistoryValue.md)
  - [PerfValueArea](docs/PerfValueArea.md)
- - [PrimaryImage](docs/PrimaryImage.md)
  - [Profile](docs/Profile.md)
+ - [ProfileContent](docs/ProfileContent.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
@@ -155,6 +175,7 @@ Class | Method | HTTP request | Description
  - [SendMessageToAccount](docs/SendMessageToAccount.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
  - [SentLikesPage](docs/SentLikesPage.md)
+ - [SetProfileContent](docs/SetProfileContent.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SlotId](docs/SlotId.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)

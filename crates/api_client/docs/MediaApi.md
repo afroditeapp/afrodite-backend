@@ -4,23 +4,90 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_all_normal_images**](MediaApi.md#get_all_normal_images) | **GET** /media_api/all_normal_images/{account_id} | Get list of all normal images on the server for one account.
-[**get_image**](MediaApi.md#get_image) | **GET** /media_api/image/{account_id}/{content_id} | Get profile image
+[**delete_content**](MediaApi.md#delete_content) | **DELETE** /media_api/content/{account_id}/{content_id} | Delete content data. Content can be removed after specific time has passed
+[**delete_pending_security_image_info**](MediaApi.md#delete_pending_security_image_info) | **DELETE** /media_api/pending_security_image_info | Delete pending security image for current account.
+[**get_all_account_media_content**](MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{account_id} | Get list of all media content on the server for one account.
+[**get_content**](MediaApi.md#get_content) | **GET** /media_api/content/{account_id}/{content_id} | Get content data
+[**get_content_slot_state**](MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
 [**get_map_tile**](MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
 [**get_moderation_request**](MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
-[**get_primary_image_info**](MediaApi.md#get_primary_image_info) | **GET** /media_api/primary_image_info/{account_id} | Get current public image for selected profile
-[**put_image_to_moderation_slot**](MediaApi.md#put_image_to_moderation_slot) | **PUT** /media_api/moderation/request/slot/{slot_id} | Set image to moderation request slot.
+[**get_pending_profile_content_info**](MediaApi.md#get_pending_profile_content_info) | **GET** /media_api/pending_profile_content_info/{account_id} | Get pending profile content for selected profile
+[**get_pending_security_image_info**](MediaApi.md#get_pending_security_image_info) | **GET** /media_api/pending_security_image_info/{account_id} | Get pending security image for selected profile.
+[**get_profile_content_info**](MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile
+[**get_security_image_info**](MediaApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile.
+[**put_content_to_content_slot**](MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Set content to content processing slot.
 [**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
-[**put_primary_image**](MediaApi.md#put_primary_image) | **PUT** /media_api/primary_image | Set primary image for account. Image content ID can not be empty.
+[**put_pending_profile_content**](MediaApi.md#put_pending_profile_content) | **PUT** /media_api/pending_profile_content | Set new pending profile content for current account.
+[**put_pending_security_image_info**](MediaApi.md#put_pending_security_image_info) | **PUT** /media_api/pending_security_image_info | Set pending security image for current account.
+[**put_profile_content**](MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
+[**put_security_image_info**](MediaApi.md#put_security_image_info) | **PUT** /media_api/security_image_info | Set current security image content for current account.
 
 
 
-## get_all_normal_images
+## delete_content
 
-> crate::models::NormalImages get_all_normal_images(account_id)
-Get list of all normal images on the server for one account.
+> delete_content(account_id, content_id)
+Delete content data. Content can be removed after specific time has passed
 
-Get list of all normal images on the server for one account.
+Delete content data. Content can be removed after specific time has passed since removing all usage from it (content is not a security image or profile content).
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | **uuid::Uuid** |  | [required] |
+**content_id** | **uuid::Uuid** |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## delete_pending_security_image_info
+
+> delete_pending_security_image_info()
+Delete pending security image for current account.
+
+Delete pending security image for current account. Server will not change the security image when next moderation request is moderated as accepted.
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_all_account_media_content
+
+> crate::models::AccountContent get_all_account_media_content(account_id)
+Get list of all media content on the server for one account.
+
+Get list of all media content on the server for one account.
 
 ### Parameters
 
@@ -31,7 +98,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::NormalImages**](NormalImages.md)
+[**crate::models::AccountContent**](AccountContent.md)
 
 ### Authorization
 
@@ -45,12 +112,12 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## get_image
+## get_content
 
-> std::path::PathBuf get_image(account_id, content_id, is_match)
-Get profile image
+> std::path::PathBuf get_content(account_id, content_id, is_match)
+Get content data
 
-Get profile image
+Get content data
 
 ### Parameters
 
@@ -59,7 +126,7 @@ Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
 **content_id** | **uuid::Uuid** |  | [required] |
-**is_match** | **bool** | If false image access is allowed when profile is set as public. If true image access is allowed when users are a match. | [required] |
+**is_match** | **bool** | If false media content access is allowed when profile is set as public. If true media content access is allowed when users are a match. | [required] |
 
 ### Return type
 
@@ -72,7 +139,37 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: image/jpeg
+- **Accept**: application/octet-stream
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_content_slot_state
+
+> crate::models::ContentProcessingState get_content_slot_state(slot_id)
+Get state of content slot.
+
+Get state of content slot.  Slots from 0 to 6 are available. 
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**slot_id** | **i32** |  | [required] |
+
+### Return type
+
+[**crate::models::ContentProcessingState**](ContentProcessingState.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -136,12 +233,12 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## get_primary_image_info
+## get_pending_profile_content_info
 
-> crate::models::PrimaryImage get_primary_image_info(account_id, is_match)
-Get current public image for selected profile
+> crate::models::PendingProfileContent get_pending_profile_content_info(account_id)
+Get pending profile content for selected profile
 
-Get current public image for selected profile
+Get pending profile content for selected profile
 
 ### Parameters
 
@@ -149,11 +246,10 @@ Get current public image for selected profile
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
-**is_match** | **bool** | If false image access is allowed when profile is set as public. If true image access is allowed when users are a match. | [required] |
 
 ### Return type
 
-[**crate::models::PrimaryImage**](PrimaryImage.md)
+[**crate::models::PendingProfileContent**](PendingProfileContent.md)
 
 ### Authorization
 
@@ -167,12 +263,103 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## put_image_to_moderation_slot
+## get_pending_security_image_info
 
-> crate::models::ContentId put_image_to_moderation_slot(slot_id, body)
-Set image to moderation request slot.
+> crate::models::PendingSecurityImage get_pending_security_image_info(account_id)
+Get pending security image for selected profile.
 
-Set image to moderation request slot.  Slots from 0 to 2 are available.  TODO: resize and check images at some point 
+Get pending security image for selected profile.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | **uuid::Uuid** |  | [required] |
+
+### Return type
+
+[**crate::models::PendingSecurityImage**](PendingSecurityImage.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_profile_content_info
+
+> crate::models::ProfileContent get_profile_content_info(account_id, is_match)
+Get current profile content for selected profile
+
+Get current profile content for selected profile
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | **uuid::Uuid** |  | [required] |
+**is_match** | **bool** | If false media content access is allowed when profile is set as public. If true media content access is allowed when users are a match. | [required] |
+
+### Return type
+
+[**crate::models::ProfileContent**](ProfileContent.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_security_image_info
+
+> crate::models::SecurityImage get_security_image_info(account_id)
+Get current security image for selected profile.
+
+Get current security image for selected profile.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | **uuid::Uuid** |  | [required] |
+
+### Return type
+
+[**crate::models::SecurityImage**](SecurityImage.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## put_content_to_content_slot
+
+> crate::models::ContentProcessingId put_content_to_content_slot(slot_id, secure_capture, content_type, body)
+Set content to content processing slot.
+
+Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete. 
 
 ### Parameters
 
@@ -180,11 +367,13 @@ Set image to moderation request slot.  Slots from 0 to 2 are available.  TODO: r
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **slot_id** | **i32** |  | [required] |
+**secure_capture** | **bool** | Client captured this content. | [required] |
+**content_type** | [**MediaContentType**](.md) |  | [required] |
 **body** | **std::path::PathBuf** |  | [required] |
 
 ### Return type
 
-[**crate::models::ContentId**](ContentId.md)
+[**crate::models::ContentProcessingId**](ContentProcessingId.md)
 
 ### Authorization
 
@@ -228,19 +417,109 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## put_primary_image
+## put_pending_profile_content
 
-> put_primary_image(primary_image)
-Set primary image for account. Image content ID can not be empty.
+> put_pending_profile_content(set_profile_content)
+Set new pending profile content for current account.
 
-Set primary image for account. Image content ID can not be empty.
+Set new pending profile content for current account. Server will switch to pending content when next moderation request is accepted.  # Restrictions - All content must not be moderated as denied. - All content must be owned by the account. - All content must be images.
 
 ### Parameters
 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**primary_image** | [**PrimaryImage**](PrimaryImage.md) |  | [required] |
+**set_profile_content** | [**SetProfileContent**](SetProfileContent.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## put_pending_security_image_info
+
+> put_pending_security_image_info(content_id)
+Set pending security image for current account.
+
+Set pending security image for current account.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**content_id** | [**ContentId**](ContentId.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## put_profile_content
+
+> put_profile_content(set_profile_content)
+Set new profile content for current account.
+
+Set new profile content for current account.  # Restrictions - All content must be moderated as accepted. - All content must be owned by the account. - All content must be images.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**set_profile_content** | [**SetProfileContent**](SetProfileContent.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## put_security_image_info
+
+> put_security_image_info(content_id)
+Set current security image content for current account.
+
+Set current security image content for current account.  # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**content_id** | [**ContentId**](ContentId.md) |  | [required] |
 
 ### Return type
 

@@ -13,8 +13,10 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ModerationRequestContent {
-    #[serde(rename = "content1")]
-    pub content1: Box<crate::models::ContentId>,
+    #[serde(rename = "content0")]
+    pub content0: Box<crate::models::ContentId>,
+    #[serde(rename = "content1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content1: Option<Option<Box<crate::models::ContentId>>>,
     #[serde(rename = "content2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub content2: Option<Option<Box<crate::models::ContentId>>>,
     #[serde(rename = "content3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -25,20 +27,18 @@ pub struct ModerationRequestContent {
     pub content5: Option<Option<Box<crate::models::ContentId>>>,
     #[serde(rename = "content6", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub content6: Option<Option<Box<crate::models::ContentId>>>,
-    #[serde(rename = "initial_moderation_security_image", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub initial_moderation_security_image: Option<Option<Box<crate::models::ContentId>>>,
 }
 
 impl ModerationRequestContent {
-    pub fn new(content1: crate::models::ContentId) -> ModerationRequestContent {
+    pub fn new(content0: crate::models::ContentId) -> ModerationRequestContent {
         ModerationRequestContent {
-            content1: Box::new(content1),
+            content0: Box::new(content0),
+            content1: None,
             content2: None,
             content3: None,
             content4: None,
             content5: None,
             content6: None,
-            initial_moderation_security_image: None,
         }
     }
 }

@@ -261,7 +261,7 @@ impl ContentProcessingManager {
                 }
                 Err(e) => {
                     state.processing_state.change_to_failed();
-                    error!("Content processing error: {}", e);
+                    error!("Content processing error: {:?}", e);
                 }
             }
 
@@ -271,13 +271,13 @@ impl ContentProcessingManager {
             match result {
                 Ok(()) => (),
                 Err(e) => {
-                    error!("Content processing error: {}", e);
+                    error!("Content processing error: {:?}", e);
                 }
             }
         }
 
         if let Err(e) = content.tmp_raw_img.remove_if_exists().await {
-            warn!("content.tmp_raw_img removing failed {}", e)
+            warn!("content.tmp_raw_img removing failed {:?}", e)
         }
     }
 
