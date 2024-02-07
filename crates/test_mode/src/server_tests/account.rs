@@ -1,5 +1,4 @@
 
 //! Account API tests
 
-
-mod register;
+mod initial_setup;

@@ -17,6 +17,7 @@ use crate::{runner::utils::wait_that_servers_start, server::AdditionalSettings, 
 use crate::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState};
 
 pub mod context;
+pub mod assert;
 
 pub struct QaTestRunner {
     config: Arc<Config>,
@@ -66,7 +67,7 @@ impl QaTestRunner {
             a.name().cmp(&b.name())
         });
 
-        for test_function in test_functions {
+        for test_function in test_functions.iter() {
             print!("test {} ... ", test_function.name());
 
             let manager = ServerManager::new(
@@ -108,10 +109,11 @@ impl QaTestRunner {
         };
 
         println!(
-            "\ntest result: {}. {} passed; {} failed; finished in {:.2?}\n\n",
+            "\ntest result: {}. {} passed; {} failed; {} tests; finished in {:.2?}\n\n",
             result,
             passed_number,
             if failed { 1 } else { 0 },
+            test_functions.len(),
             start_time.elapsed()
         );
     }

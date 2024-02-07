@@ -20,7 +20,7 @@ use super::{super::client::TestError, BotState, TaskState};
 #[macro_export]
 macro_rules! action_array {
     [ $( $actions:expr ),* $(,)? ] => {
-        &[   $( &($actions) as &dyn BotAction, )*    ]
+        &[   $( &($actions) as &dyn crate::bot::actions::BotAction, )*    ]
     };
 }
 
