@@ -6,8 +6,8 @@ use syn::{parse_macro_input, ReturnType};
 
 /// Mark a function as an integration test for the server.
 ///
-/// `inventory` and `error-stack` crates are required
-/// dependencies when using this macro.
+/// `inventory` crate is required
+/// dependency when using this macro.
 ///
 /// Example:
 ///
@@ -16,40 +16,22 @@ use syn::{parse_macro_input, ReturnType};
 /// use test_mode_macro::server_test;
 ///
 /// /// This must be defined in the root of the crate.
-/// #[derive(thiserror::Error, Debug)]
-/// pub enum TestError {
-///    #[error("Error")]
-///    Err,
-/// }
+/// pub type TestResult = Result<(), ()>;
 ///
 /// /// This must be defined in the root of the crate.
 /// pub struct TestContext;
 ///
 /// /// This must be defined in the root of the crate.
 /// pub struct TestFunction {
-///     name: &'static str,
-///     module_path: &'static str,
-///     function: fn(TestContext) -> Box<dyn Future<Output = error_stack::Result<(), TestError>>>,
-/// }
-///
-/// impl TestFunction {
-///     pub const fn new(
-///         name: &'static str,
-///         module_path: &'static str,
-///         function: fn(TestContext) -> Box<dyn Future<Output = error_stack::Result<(), TestError>>>,
-///     ) -> Self {
-///         Self {
-///             name,
-///             module_path,
-///             function,
-///         }
-///     }
+///     pub name: &'static str,
+///     pub module_path: &'static str,
+///     pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult>>,
 /// }
 ///
 /// inventory::collect!(TestFunction);
 ///
 /// #[server_test]
-/// async fn hello_register(context: TestContext) -> error_stack::Result<(), TestError> {
+/// async fn hello_register(context: TestContext) -> TestResult {
 ///     Ok(())
 /// }
 ///
@@ -76,16 +58,16 @@ pub fn server_test(_attr: TokenStream, input: TokenStream) -> TokenStream {
 
         fn #hidden_fn_name(
             test_context: crate::TestContext,
-        ) -> Box<dyn std::future::Future<Output = error_stack::Result<(), crate::TestError>>> {
+        ) -> Box<dyn std::future::Future<Output = crate::TestResult>> {
             Box::new(#test_fn_name(test_context))
         }
 
         inventory::submit! {
-            crate::TestFunction::new(
-                stringify!(#test_fn_name),
-                module_path!(),
-                #hidden_fn_name,
-            )
+            crate::TestFunction {
+                name: stringify!(#test_fn_name),
+                module_path: module_path!(),
+                function: #hidden_fn_name,
+            }
         }
     };
 

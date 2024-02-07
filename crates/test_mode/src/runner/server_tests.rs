@@ -13,7 +13,7 @@ use tokio::{
 use tracing::{error, info};
 use utils::api;
 
-use crate::{runner::utils::wait_that_servers_start, server::AdditionalSettings, state::StateData, TestContext, TestFunction};
+use crate::{runner::utils::wait_that_servers_start, server::AdditionalSettings, state::StateData, TestContext, TestFunction, TestResult};
 use crate::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState};
 
 pub mod context;
@@ -79,14 +79,14 @@ impl QaTestRunner {
 
             let test_future = (test_function.function)(test_context.clone());
             let test_future =
-                Box::<dyn futures::Future<Output = error_stack::Result<(), crate::TestError>>>::into_pin(test_future);
+                Box::<dyn futures::Future<Output = TestResult>>::into_pin(test_future);
 
             match test_future.await {
                 Ok(()) => println!("ok"),
                 Err(e) => {
                     failed = true;
                     println!("FAILED\n");
-                    println!("Test failed: {:?}\n", e);
+                    println!("Test failed: {:?}\n", e.error);
                     println!("{}", manager.logs_string().await);
                 }
             }

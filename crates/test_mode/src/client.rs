@@ -50,6 +50,9 @@ pub enum TestError {
 
     #[error("Not an error. Just an indication that bot is waiting.")]
     BotIsWaiting,
+
+    #[error("Server integration test failed.")]
+    ServerTestFailed,
 }
 
 impl TestError {

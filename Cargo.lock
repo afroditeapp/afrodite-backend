@@ -3425,11 +3425,9 @@ dependencies = [
 name = "test_mode_macro"
 version = "0.0.0"
 dependencies = [
- "error-stack",
  "inventory",
  "quote",
  "syn 2.0.48",
- "thiserror",
 ]
 
 [[package]]

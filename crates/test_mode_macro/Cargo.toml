@@ -14,5 +14,3 @@ quote = { workspace = true }
 
 [dev-dependencies]
 inventory = { workspace = true }
-thiserror = { workspace = true }
-error-stack = { workspace = true }
