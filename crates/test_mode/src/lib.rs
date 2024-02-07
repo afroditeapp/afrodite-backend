@@ -5,14 +5,14 @@
 
 //! Run test suite and benchmarks
 
-mod bot;
+pub mod bot;
 pub mod client;
 mod server;
 mod state;
 mod server_tests;
 mod runner;
 
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use std::{fmt::format, future::Future, panic::UnwindSafe, path::PathBuf, sync::Arc, time::Duration};
 
 use api_client::{apis::configuration::Configuration, manual_additions};
 use config::{args::{TestMode, TestModeSubMode}, Config};
@@ -54,17 +54,29 @@ impl TestRunner {
 pub struct TestFunction {
     pub name: &'static str,
     pub module_path: &'static str,
-    pub function: fn(),
+    pub function: fn(TestContext) -> Box<dyn Future<Output = error_stack::Result<(), TestError>>>,
 }
 
 impl TestFunction {
-    pub const fn new(name: &'static str, module_path: &'static str, function: fn()) -> Self {
+    pub const fn new(
+        name: &'static str,
+        module_path: &'static str,
+        function: fn(TestContext) -> Box<dyn Future<Output = error_stack::Result<(), TestError>>>,
+    ) -> Self {
         Self {
             name,
             module_path,
             function,
         }
     }
+
+    pub fn name(&self) -> String {
+        let start = self.module_path.trim_start_matches("test_mode::server_tests::");
+        format!("{}::{}", start, self.name)
+    }
 }
 
 inventory::collect!(TestFunction);
+
+pub use crate::runner::server_tests::context::TestContext;
+pub use crate::client::TestError;

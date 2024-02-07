@@ -90,6 +90,8 @@ impl BotAction for Login {
             state.connections.media = connect_websocket(*profile, url, state).await?.into();
         }
 
+        // TODO: Chat server
+
         Ok(())
     }
 }

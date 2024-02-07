@@ -1,4 +1,4 @@
-mod actions;
+pub mod actions;
 mod benchmark;
 mod client_bot;
 mod qa;
@@ -44,6 +44,22 @@ pub struct BotConnections {
     account: Option<WsConnection>,
     profile: Option<WsConnection>,
     media: Option<WsConnection>,
+}
+
+impl BotConnections {
+    pub fn take_connections(&mut self) -> Vec<WsConnection> {
+        let mut connections = vec![];
+        if let Some(account) = self.account.take() {
+            connections.push(account);
+        }
+        if let Some(profile) = self.profile.take() {
+            connections.push(profile);
+        }
+        if let Some(media) = self.media.take() {
+            connections.push(media);
+        }
+        connections
+    }
 }
 
 #[derive(Debug)]

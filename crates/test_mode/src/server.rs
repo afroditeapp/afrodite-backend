@@ -167,6 +167,10 @@ impl ServerManager {
         }
         logs
     }
+
+    pub async fn logs_string(&self) -> String {
+        self.logs().await.join("\n")
+    }
 }
 
 fn new_config(

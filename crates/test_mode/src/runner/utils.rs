@@ -27,7 +27,7 @@ pub async fn check_api(config: &Configuration) {
             Err(()) => (),
         }
 
-        tokio::time::sleep(Duration::from_millis(500)).await;
+        tokio::time::sleep(Duration::from_millis(10)).await;
     }
 }
 
