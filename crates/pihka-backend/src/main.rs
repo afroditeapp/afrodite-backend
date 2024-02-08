@@ -43,6 +43,7 @@ fn main() {
 fn handle_image_process_mode(settings: ImageProcessModeArgs) {
     let settings = simple_backend_image_process::Settings {
         input: settings.input,
+        input_file_type: settings.input_file_type,
         output: settings.output,
         quality: settings.quality as f32,
     };

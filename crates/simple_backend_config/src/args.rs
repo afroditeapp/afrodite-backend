@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use clap::{arg, Args};
+use clap::{arg, Args, ValueEnum};
 
 #[derive(Args, Debug, Clone)]
 pub struct ServerModeArgs {
@@ -20,6 +20,9 @@ pub struct ImageProcessModeArgs {
     #[arg(long, value_name = "FILE")]
     pub input: PathBuf,
 
+    #[arg(long, value_name = "TYPE")]
+    pub input_file_type: InputFileType,
+
     #[arg(long, value_name = "FILE")]
     pub output: PathBuf,
 
@@ -27,4 +30,18 @@ pub struct ImageProcessModeArgs {
     /// Mozjpeg library recommends 60-80 values
     #[arg(long, value_name = "NUMBER", default_value = "60")]
     pub quality: u8,
+}
+
+#[derive(Debug, Clone, PartialEq, ValueEnum)]
+pub enum InputFileType {
+    JpegImage,
+}
+
+impl InputFileType {
+    pub fn to_cmd_arg_value(&self) -> String {
+        self.to_possible_value()
+            .expect("Input file type variant hidden by mistake")
+            .get_name()
+            .to_string()
+    }
 }

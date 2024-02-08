@@ -3,6 +3,7 @@
 use std::{env, os::unix::process::CommandExt, path::Path, str::from_utf8};
 
 use error_stack::{Result, ResultExt};
+use simple_backend_config::args::InputFileType;
 use simple_backend_utils::ContextExt;
 use tracing::error;
 
@@ -24,10 +25,12 @@ pub enum ImageProcessError {
 /// The server binary must implement the `image-process` subcommand.
 /// Argument struct can be found from
 /// `simple_backend_config::args::ImageProcessModeArgs`.
+///
+/// Outputs JPEG images only.
 pub struct ImageProcess;
 
 impl ImageProcess {
-    pub async fn start_image_process(input: &Path, output: &Path) -> Result<(), ImageProcessError> {
+    pub async fn start_image_process(input: &Path, input_file_type: InputFileType, output: &Path) -> Result<(), ImageProcessError> {
         let start_cmd = env::args()
             .next()
             .ok_or(ImageProcessError::LaunchCommand.report())?
@@ -66,6 +69,8 @@ impl ImageProcess {
             .arg("image-process")
             .arg("--input")
             .arg(input)
+            .arg("--input-file-type")
+            .arg(input_file_type.to_cmd_arg_value())
             .arg("--output")
             .arg(output)
             .process_group(0);

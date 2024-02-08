@@ -61,7 +61,9 @@ impl BotAction for SendImageToSlot {
             ImageProvider::jpeg_image()
         };
 
-        let content_id =
+        let processing_sleep_time = std::time::Duration::from_millis(100);
+
+        let _ =
             put_content_to_content_slot_fixed(
                 state.api.media(),
                 self.slot,
@@ -73,7 +75,12 @@ impl BotAction for SendImageToSlot {
                 .change_context(TestError::ApiRequest)?;
 
         let content_id = loop {
-            let slot_state = get_content_slot_state(state.api.media(), self.slot)
+            tokio::time::sleep(processing_sleep_time).await;
+
+            let slot_state = get_content_slot_state(
+                state.api.media(),
+                self.slot
+            )
                 .await
                 .change_context(TestError::ApiRequest)?;
 
@@ -82,7 +89,7 @@ impl BotAction for SendImageToSlot {
                 ContentProcessingStateType::Failed => return Err(TestError::ApiRequest.report()),
                 ContentProcessingStateType::Processing |
                 ContentProcessingStateType::InQueue =>
-                    tokio::time::sleep(std::time::Duration::from_millis(10)).await,
+                    tokio::time::sleep(processing_sleep_time).await,
                 ContentProcessingStateType::Completed =>
                     break slot_state.content_id.flatten().expect("Content ID is missing"),
             }
@@ -100,7 +107,7 @@ impl BotAction for SendImageToSlot {
         };
 
         if let Some(slot) = self.copy_to_slot {
-            let content_id = put_content_to_content_slot_fixed(
+            let _ = put_content_to_content_slot_fixed(
                 state.api.media(),
                 slot,
                 if slot == 0 { true } else { false }, // secure capture
@@ -111,7 +118,12 @@ impl BotAction for SendImageToSlot {
                 .change_context(TestError::ApiRequest)?;
 
             let content_id = loop {
-                let slot_state = get_content_slot_state(state.api.media(), self.slot)
+                tokio::time::sleep(processing_sleep_time).await;
+
+                let slot_state = get_content_slot_state(
+                    state.api.media(),
+                    slot
+                )
                     .await
                     .change_context(TestError::ApiRequest)?;
 
@@ -120,7 +132,7 @@ impl BotAction for SendImageToSlot {
                     ContentProcessingStateType::Failed => return Err(TestError::ApiRequest.report()),
                     ContentProcessingStateType::Processing |
                     ContentProcessingStateType::InQueue =>
-                        tokio::time::sleep(std::time::Duration::from_millis(10)).await,
+                        tokio::time::sleep(processing_sleep_time).await,
                     ContentProcessingStateType::Completed =>
                         break slot_state.content_id.flatten().expect("Content ID is missing"),
                 }
@@ -170,8 +182,8 @@ impl BotAction for MakeModerationRequest {
 
         let new = ModerationRequestContent {
             content0: content_ids[0].clone().expect("Content ID is missing"),
-            content1: content_ids[1].clone().into(),
-            content2: content_ids[2].clone().into(),
+            content1: content_ids.get(1).cloned(),
+            content2: content_ids.get(2).cloned(),
             content3: None,
             content4: None,
             content5: None,

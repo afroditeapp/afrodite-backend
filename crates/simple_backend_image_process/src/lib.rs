@@ -1,7 +1,8 @@
-use std::path::{PathBuf, Path};
+use std::{io::BufReader, path::{PathBuf, Path}, time::Duration};
 
 use error_stack::{Result, ResultExt, report};
 use image::{EncodableLayout, DynamicImage};
+use simple_backend_config::args::InputFileType;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ImageProcessError {
@@ -22,8 +23,9 @@ pub enum ImageProcessError {
 }
 
 pub struct Settings {
-    /// Input image file. Only jpeg is supported currently.
+    /// Input image file.
     pub input: PathBuf,
+    pub input_file_type: InputFileType,
     /// Output jpeg image file. Will be overwritten if exists.
     pub output: PathBuf,
     /// Output jpeg image quality. Clamped to 1-100 range.
@@ -32,12 +34,21 @@ pub struct Settings {
 }
 
 pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
+    let format = match settings.input_file_type {
+        InputFileType::JpegImage => image::ImageFormat::Jpeg,
+    };
+
+    // Only JPEG images are supported
     let rotation = match read_exif_rotation_info(&settings.input) {
         Ok(rotation) => rotation,
         Err(_) => 0,
     };
 
-    let img = image::open(settings.input)
+    let img_file = std::fs::File::open(&settings.input)
+        .change_context(ImageProcessError::InputReadingFailed)?;
+    let buffered_reader = BufReader::new(img_file);
+    let img = image::io::Reader::with_format(buffered_reader, format)
+        .decode()
         .change_context(ImageProcessError::InputReadingFailed)?;
 
     let img = resize_and_rotate_image(img, rotation);
@@ -85,7 +96,6 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
 
     std::fs::write(&settings.output, &data)
         .change_context(ImageProcessError::FileWriting)?;
-
 
     Ok(())
 }

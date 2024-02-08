@@ -100,7 +100,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
         Ok(data.map(|data| data.into()))
     }
 
-    /// Validate moderation request content.
+    /// Validate moderation request content, so that all content points to
+    /// content owner image slots.
     ///
     /// Returns `Err(DieselDatabaseError::ModerationRequestContentInvalid)` if the
     /// content is invalid.
@@ -125,12 +126,14 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
 
         let database_content_set: HashSet<ContentId> = data.into_iter().map(|r| r.uuid).collect();
 
-        if requested_content_set == database_content_set {
-            Ok(())
-        } else {
-            Err(DieselDatabaseError::ModerationRequestContentInvalid)
-                .with_info((content_owner, request_content))
+        for content in requested_content_set.iter() {
+            if !database_content_set.contains(content) {
+                return Err(DieselDatabaseError::ModerationRequestContentInvalid)
+                    .with_info((content_owner, request_content));
+            }
         }
+
+        Ok(())
     }
 
     pub fn get_moderation_request_content(

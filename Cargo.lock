@@ -3008,8 +3008,8 @@ dependencies = [
  "image",
  "kamadak-exif",
  "mozjpeg",
+ "simple_backend_config",
  "thiserror",
- "utils",
 ]
 
 [[package]]

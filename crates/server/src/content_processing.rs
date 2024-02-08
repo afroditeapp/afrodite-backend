@@ -9,6 +9,7 @@ use model::{
     ContentProcessingStateChanged, ContentSlot, MediaContentType, NewContentParams,
 };
 use simple_backend::{app::SimpleBackendAppState, image::ImageProcess, ServerQuitWatcher};
+use simple_backend_config::args::InputFileType;
 use tokio::{
     sync::{Notify, RwLock},
     task::JoinHandle,
@@ -243,6 +244,7 @@ impl ContentProcessingManager {
             MediaContentType::JpegImage => {
                 ImageProcess::start_image_process(
                     content.tmp_raw_img.as_path(),
+                    InputFileType::JpegImage,
                     content.tmp_img.as_path(),
                 )
                 .change_context(ContentProcessingError::ContentProcessingFailed)

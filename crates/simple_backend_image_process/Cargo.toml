@@ -13,4 +13,4 @@ kamadak-exif = { workspace = true }
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 
-utils = { path = "../utils" }
+simple_backend_config = { path = "../simple_backend_config" }

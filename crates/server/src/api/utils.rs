@@ -215,8 +215,6 @@ enum RequestError {
     ConfigFileError,
     #[error("Event error")]
     EventError,
-    #[error("Content processing error")]
-    ContentProcessingError,
 }
 
 impl From<error_stack::Report<DataError>> for StatusCode {
