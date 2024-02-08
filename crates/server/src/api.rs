@@ -225,7 +225,7 @@ pub struct ApiDoc;
 /// use server::app::WriteData;
 /// pub async fn axum_route_handler<S: WriteData>(
 ///     state: S,
-/// ) -> Result<(), StatusCode> {
+/// ) -> std::result::Result<(), StatusCode> {
 ///     db_write!(state, move |cmds|
 ///         async move { Ok(()) }
 ///     )
@@ -234,14 +234,19 @@ pub struct ApiDoc;
 #[macro_export]
 macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {
-        async {
-            let r: error_stack::Result<_, $crate::data::DataError> = $state
-                .write(move |$cmds| async move { ($commands).await })
-                .await;
-            let r: std::result::Result<_, $crate::api::utils::StatusCode> = r.map_err(|e| e.into());
-            r
+        {
+
+            let r = async {
+                let r: $crate::result::Result<_, $crate::data::DataError> = $state
+                    .write(move |$cmds| async move { ($commands).await })
+                    .await;
+                r
+            }
+            .await;
+
+            use $crate::api::utils::ConvertDataErrorToStatusCode;
+            r.convert_data_error_to_status_code()
         }
-        .await
     };
 }
 

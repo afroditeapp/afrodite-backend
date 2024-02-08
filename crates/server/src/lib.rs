@@ -12,6 +12,7 @@ pub mod event;
 pub mod internal;
 pub mod perf;
 pub mod utils;
+pub mod result;
 
 use std::sync::Arc;
 

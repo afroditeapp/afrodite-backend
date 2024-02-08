@@ -2,19 +2,19 @@
 
 use api_internal::{Configuration, InternalApi};
 use config::{Config, InternalApiUrls};
-use error_stack::{Result, ResultExt};
 use hyper::StatusCode;
 use model::{
     AccessToken, Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
     ProfileInternal,
 };
-use simple_backend_utils::ContextExt;
+
 use tracing::{error, info, warn};
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
 use crate::{
     app::{GetAccessTokens, GetConfig, ReadData, WriteData},
-    data::WithInfo,
+    data::{WithInfo, WrappedWithInfo},
+    result::{Result, WrappedContextExt, WrappedResultExt, WrappedResultExt2},
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
@@ -48,7 +48,7 @@ pub enum InternalApiError {
     MissingComponent,
 }
 
-// TOOD: PrintWarningsTriggersAtomics?
+// TOOD: What is PrintWarningsTriggersAtomics?
 pub struct PrintWarningsTriggersAtomics {}
 
 pub struct InternalApiClient {

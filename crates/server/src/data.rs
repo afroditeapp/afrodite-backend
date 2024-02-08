@@ -10,19 +10,17 @@ use database::{
     history::read::HistoryReadCommands,
     CurrentReadHandle,
     CurrentWriteHandle,
-    // sqlite::{
-    //     CurrentDataWriteHandle, DatabaseType, HistoryWriteHandle, SqliteDatabasePath,
-    //     SqliteWriteCloseHandle, SqliteWriteHandle, SqlxReadCloseHandle, SqlxReadHandle,
-    // },
     ErrorContext,
     HistoryReadHandle,
     HistoryWriteHandle,
 };
-use error_stack::{Context, Result, ResultExt};
+use error_stack::{Context, ResultExt};
+use simple_backend_utils::IntoReportFromString;
+
+use crate::result::{Result, WrappedContextExt, WrappedReport, WrappedResultExt};
 use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
-use simple_backend_utils::ContextExt;
 use tracing::info;
 
 use self::{
@@ -50,8 +48,6 @@ pub mod write;
 pub mod write_commands;
 pub mod write_concurrent;
 
-pub const DB_HISTORY_DIR_NAME: &str = "history";
-pub const DB_CURRENT_DATA_DIR_NAME: &str = "current";
 pub const DB_FILE_DIR_NAME: &str = "files";
 
 pub type DatabeseEntryId = String;
@@ -66,6 +62,8 @@ pub enum DataError {
     Cache,
     #[error("File error")]
     File,
+    #[error("I/O error")]
+    Io,
     #[error("Profile index error")]
     ProfileIndex,
     #[error("Media backup error")]
@@ -104,78 +102,117 @@ pub enum DataError {
     SqliteVersionMismatch,
 }
 
-impl DataError {
-    #[track_caller]
-    pub fn report(self) -> error_stack::Report<Self> {
-        error_stack::report!(self)
-    }
-}
+// impl DataError {
+//     #[track_caller]
+//     pub fn report(self) -> error_stack::Report<Self> {
+//         error_stack::report!(self)
+//     }
+// }
+
+/// Attach more info to current error
+///
+/// This trait is for error container error_stack::Report<Err>
 pub trait WithInfo<Ok, Err: Context>: Sized {
-    fn into_error_without_context(self) -> Result<Ok, Err>;
+    fn into_error_without_context(self) -> std::result::Result<Ok, error_stack::Report<Err>>;
 
     #[track_caller]
-    fn with_info<T: Debug + IsLoggingAllowed>(self, request_context: T) -> Result<Ok, Err> {
+    fn with_info<T: Debug + IsLoggingAllowed>(self, request_context: T) -> std::result::Result<Ok, error_stack::Report<Err>> {
         self.into_error_without_context()
-            .attach_printable_lazy(move || {
+            .map_err(|e| {
                 let context = ErrorContext::<T, Ok>::new(request_context);
-
-                format!("{:#?}", context)
+                e.attach_printable(format!("{:#?}", context))
             })
     }
 }
 
-impl<Ok> WithInfo<Ok, DataError> for Result<Ok, DataError> {
+impl <Ok, Err: Context> WithInfo<Ok, Err> for std::result::Result<Ok, error_stack::Report<Err>> {
     #[track_caller]
-    fn into_error_without_context(self) -> Result<Ok, DataError> {
+    fn into_error_without_context(self) -> std::result::Result<Ok, error_stack::Report<Err>> {
         self
     }
 }
-impl<Ok> WithInfo<Ok, CacheError> for Result<Ok, CacheError> {
+
+/// Attach more info to current error.
+///
+/// This trait is for error container WrappedReport<error_stack::Report<Err>>
+pub trait WrappedWithInfo<Ok, Err: Context>: Sized {
+    fn into_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>>;
+
     #[track_caller]
-    fn into_error_without_context(self) -> Result<Ok, CacheError> {
+    fn with_info<T: Debug + IsLoggingAllowed>(self, request_context: T) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
+        self.into_error_without_context()
+            .map_err(|e| {
+                let context = ErrorContext::<T, Ok>::new(request_context);
+                e.attach_printable(format!("{:#?}", context))
+            })
+    }
+}
+
+impl <Ok, Err: Context> WrappedWithInfo<Ok, Err> for std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
+    #[track_caller]
+    fn into_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
         self
     }
 }
-impl<Ok> WithInfo<Ok, InternalApiError> for Result<Ok, InternalApiError> {
+
+impl<Ok> WrappedWithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
     #[track_caller]
-    fn into_error_without_context(self) -> Result<Ok, InternalApiError> {
-        self
-    }
-}
-impl<Ok> WithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
-    #[track_caller]
-    fn into_error_without_context(self) -> Result<Ok, InternalApiError> {
+    fn into_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<InternalApiError>>> {
         self.map_err(|e| e.report())
     }
 }
 
+/// Convert to DataError and attach more info to current error
 pub trait IntoDataError<Ok, Err: Context>: Sized {
-    fn into_data_error_without_context(self) -> Result<Ok, Err>;
+    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>>;
 
     #[track_caller]
-    fn into_data_error<T: Debug + IsLoggingAllowed>(self, request_context: T) -> Result<Ok, Err> {
+    fn into_data_error<T: Debug + IsLoggingAllowed>(self, request_context: T) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
         self.into_data_error_without_context()
-            .attach_printable_lazy(move || {
+            .map_err(|e| {
                 let context = ErrorContext::<T, Ok>::new(request_context);
-
-                format!("{:#?}", context)
+                e.attach_printable(format!("{:#?}", context))
             })
     }
-}
 
-impl<Ok> IntoDataError<Ok, DataError> for Result<Ok, crate::data::file::FileError> {
     #[track_caller]
-    fn into_data_error_without_context(self) -> Result<Ok, DataError> {
-        self.change_context(DataError::File)
+    fn into_error(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
+        self.into_data_error_without_context()
     }
 }
 
-impl<Ok> IntoDataError<Ok, DataError> for Result<Ok, crate::data::cache::CacheError> {
+impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::file::FileError> {
     #[track_caller]
-    fn into_data_error_without_context(self) -> Result<Ok, DataError> {
-        self.change_context(DataError::Cache)
+    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+        let value = self?;
+        Ok(value)
     }
 }
+
+impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::cache::CacheError> {
+    #[track_caller]
+    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+        let value = self?;
+        Ok(value)
+    }
+}
+
+impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, simple_backend_database::DataError> {
+    #[track_caller]
+    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+        let value = self?;
+        Ok(value)
+    }
+}
+
+impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, simple_backend_database::diesel_db::DieselDatabaseError> {
+    #[track_caller]
+    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+        let value = self?;
+        Ok(value)
+    }
+}
+
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
@@ -188,70 +225,24 @@ impl DatabaseRoot {
     pub fn new<T: AsRef<Path>>(path: T) -> Result<Self, DataError> {
         let root = path.as_ref().to_path_buf();
         if !root.exists() {
-            fs::create_dir(&root).change_context(DataError::Init)?;
+            fs::create_dir(&root)?;
         }
-
-        // let history = root.join(DB_HISTORY_DIR_NAME);
-        // if !history.exists() {
-        //     fs::create_dir(&history).change_context(DataError::Init)?;
-        // }
-        // let history = SqliteDatabasePath::new(history);
-
-        // let current = root.join(DB_CURRENT_DATA_DIR_NAME);
-        // if !current.exists() {
-        //     fs::create_dir(&current).change_context(DataError::Init)?;
-        // }
-        // let current = SqliteDatabasePath::new(current);
 
         let file_dir = root.join(DB_FILE_DIR_NAME);
         if !file_dir.exists() {
-            fs::create_dir(&file_dir).change_context(DataError::Init)?;
+            fs::create_dir(&file_dir)?;
         }
         let file_dir = FileDir::new(file_dir);
 
         Ok(Self {
             root,
-            // history,
-            // current,
             file_dir,
         })
     }
 
-    // /// History Sqlite database path
-    // pub fn history(&self) -> SqliteDatabasePath {
-    //     self.history.clone()
-    // }
-
-    // pub fn history_ref(&self) -> &SqliteDatabasePath {
-    //     &self.history
-    // }
-
-    // /// Sqlite database path
-    // pub fn current(&self) -> SqliteDatabasePath {
-    //     self.current.clone()
-    // }
-
-    // pub fn current_ref(&self) -> &SqliteDatabasePath {
-    //     &self.current
-    // }
-
     pub fn file_dir(&self) -> &FileDir {
         &self.file_dir
     }
-
-    // pub fn current_db_file(&self) -> PathBuf {
-    //     self.current
-    //         .clone()
-    //         .path()
-    //         .join(DatabaseType::Current.to_file_name())
-    // }
-
-    // pub fn history_db_file(&self) -> PathBuf {
-    //     self.history
-    //         .clone()
-    //         .path()
-    //         .join(DatabaseType::History.to_file_name())
-    // }
 }
 
 /// Handle SQLite databases and write command runner.
@@ -281,21 +272,18 @@ impl DatabaseManager {
                 "current",
                 database::DIESEL_MIGRATIONS,
             )
-            .await
-            .change_context(DataError::Init)?;
+            .await?;
 
         let diesel_sqlite = current_write
             .diesel()
             .sqlite_version()
-            .await
-            .change_context(DataError::Sqlite)?;
+            .await?;
         info!("Diesel SQLite version: {}", diesel_sqlite);
 
         let sqlx_sqlite = current_write
             .sqlx()
             .sqlite_version()
-            .await
-            .change_context(DataError::Init)?;
+            .await?;
         info!("Sqlx SQLite version: {}", sqlx_sqlite);
 
         if diesel_sqlite != sqlx_sqlite {
@@ -308,8 +296,7 @@ impl DatabaseManager {
                 "history",
                 database::DIESEL_MIGRATIONS,
             )
-            .await
-            .change_context(DataError::Init)?;
+            .await?;
 
         // Read handles
 
@@ -318,20 +305,15 @@ impl DatabaseManager {
                 config.simple_backend(),
                 "current",
             )
-            .await
-            .change_context(DataError::Init)?;
+            .await?;
 
         let (history_read, history_read_close) =
             DatabaseHandleCreator::create_read_handle_from_config(
                 config.simple_backend(),
                 "history",
             )
-            .await
-            .change_context(DataError::Init)?;
+            .await?;
 
-        // Sqlx
-
-        // let read_commands = CurrentReadCommands::new(current_read.sqlx());
         let index = LocationIndexManager::new(config.clone());
         let current_read_handle = CurrentReadHandle(current_read);
         let current_write_handle = CurrentWriteHandle(current_write);
@@ -339,8 +321,7 @@ impl DatabaseManager {
         let history_write_handle = HistoryWriteHandle(history_write);
 
         let cache = DatabaseCache::new(&current_read_handle, &index, &config)
-            .await
-            .change_context(DataError::Cache)?;
+            .await?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),

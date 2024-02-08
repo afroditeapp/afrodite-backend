@@ -1,8 +1,9 @@
 use std::net::SocketAddr;
 
-use error_stack::Result;
+
 use model::{AccessToken, AccountId, AccountIdInternal, Capabilities};
 
+use crate::result::Result;
 use super::{cache::DatabaseCache, DataError, IntoDataError};
 
 pub struct AccessTokenManager<'a> {

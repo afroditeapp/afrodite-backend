@@ -139,7 +139,7 @@ pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvide
 
     let content_info = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
+            let out: ConcurrentWriteAction<crate::result::Result<_, DataError>> = cmds
                 .accquire_image(move |cmds: ConcurrentWriteContentHandle| {
                     Box::new(async move { cmds.save_to_tmp(account_id, stream).await })
                 })

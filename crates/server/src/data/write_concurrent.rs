@@ -6,7 +6,6 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::{Body, BodyDataStream};
 use config::Config;
 use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
-use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
@@ -15,7 +14,11 @@ use super::{
     cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorHandle, IntoDataError,
     RouterDatabaseWriteHandle,
 };
-use crate::{content_processing::NewContentInfo, data::DataError};
+use crate::{
+    content_processing::NewContentInfo,
+    data::DataError,
+    result::{Result, WrappedContextExt, WrappedResultExt2},
+};
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;
 
@@ -264,16 +267,14 @@ impl<'a> WriteCommandsConcurrent<'a> {
         self.file_dir
             .tmp_dir(id.as_id())
             .remove_contents_if_exists()
-            .await
-            .change_context(DataError::File)?;
+            .await?;
 
         let tmp_raw_img = self
             .file_dir
             .raw_content_upload(id.as_id(), content_id.to_content_id());
         tmp_raw_img
             .save_stream(stream)
-            .await
-            .change_context(DataError::File)?;
+            .await?;
 
         let tmp_img = self
             .file_dir
@@ -297,7 +298,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             })
             .await
             .into_data_error(id)?
-            .ok_or(DataError::FeatureDisabled)?;
+            .ok_or(DataError::FeatureDisabled.report())?;
 
         let (next_state, profiles) = self
             .location
@@ -324,7 +325,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             })
             .await
             .into_data_error(id)?
-            .ok_or(DataError::FeatureDisabled)?;
+            .ok_or(DataError::FeatureDisabled.report())?;
 
         let next_state = self
             .location

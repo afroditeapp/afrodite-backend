@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 
+use api_internal::InternalApi;
 use axum::{
     body::Body, extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State}, middleware::Next, response::{IntoResponse, Response}
 };
@@ -217,79 +218,60 @@ enum RequestError {
     EventError,
 }
 
-impl From<error_stack::Report<DataError>> for StatusCode {
+/// Convert error to status code. This is workaround for track_caller seems
+/// to not work when converting using Into::into. Early return with ? seems
+/// to have the correct caller location. This fixes error location printed
+/// from db_write macro.
+///
+pub trait ConvertDataErrorToStatusCode<Ok> {
     #[track_caller]
-    fn from(value: error_stack::Report<DataError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::Data));
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
+    fn convert_data_error_to_status_code(
+        self
+    ) -> std::result::Result<Ok, crate::api::utils::StatusCode>;
 }
 
-impl From<error_stack::Report<CacheError>> for StatusCode {
-    #[track_caller]
-    fn from(value: error_stack::Report<CacheError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::Cache));
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
+macro_rules! impl_error_to_status_code {
+    ($err_type:ty, $err_expr:expr) => {
+        impl From<$crate::result::WrappedReport<error_stack::Report<$err_type>>> for StatusCode {
+            #[track_caller]
+            fn from(value: $crate::result::WrappedReport<error_stack::Report<$err_type>>) -> Self {
+                tracing::error!("{:?}", value.change_context($err_expr));
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        }
+
+        impl From<error_stack::Report<$err_type>> for StatusCode {
+            #[track_caller]
+            fn from(value: error_stack::Report<$err_type>) -> Self {
+                tracing::error!("{:?}", value.change_context($err_expr));
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        }
+
+        impl <Ok> ConvertDataErrorToStatusCode<Ok> for Result<Ok, $crate::result::WrappedReport<error_stack::Report<$err_type>>>{
+            #[track_caller]
+            fn convert_data_error_to_status_code(
+                self
+            ) -> std::result::Result<Ok, crate::api::utils::StatusCode> {
+                use $crate::result::WrappedResultExt;
+                let result = self.change_context($err_expr);
+                match result {
+                    Ok(ok) => Ok(ok),
+                    Err(err) => {
+                        tracing::error!("{:?}", err);
+                        Err(StatusCode::INTERNAL_SERVER_ERROR)
+                    }
+                }
+            }
+        }
+    };
 }
 
-impl From<error_stack::Report<SignInWithGoogleError>> for StatusCode {
-    #[track_caller]
-    fn from(value: error_stack::Report<SignInWithGoogleError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::SignInWithGoogle));
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-}
-
-impl From<error_stack::Report<SignInWithAppleError>> for StatusCode {
-    #[track_caller]
-    fn from(value: error_stack::Report<SignInWithAppleError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::SignInWithApple));
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-}
-
-impl From<error_stack::Report<InternalApiError>> for StatusCode {
-    #[track_caller]
-    fn from(value: error_stack::Report<InternalApiError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::InternalApiError));
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-}
-
-impl From<error_stack::Report<ManagerClientError>> for StatusCode {
-    #[track_caller]
-    fn from(value: error_stack::Report<ManagerClientError>) -> Self {
-        tracing::error!(
-            "{:?}",
-            value.change_context(RequestError::ManagerClientError)
-        );
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-}
-
-impl From<error_stack::Report<ConfigFileError>> for StatusCode {
-    #[track_caller]
-    fn from(value: error_stack::Report<ConfigFileError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::ConfigFileError));
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-}
-
-impl From<error_stack::Report<EventError>> for StatusCode {
-    #[track_caller]
-    fn from(value: error_stack::Report<EventError>) -> Self {
-        tracing::error!("{:?}", value.change_context(RequestError::EventError));
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-}
-
-// pub trait IntoStatusCodeError<Ok, Err: Into<StatusCode>>: Sized {
-//     fn into_status_error(self) -> std::result::Result<Ok, StatusCode>;
-// }
-
-// impl <Ok, Err: Into<StatusCode>> IntoStatusCodeError<Ok, Err> for std::result::Result<Ok, Err> {
-//     fn into_status_error(self) -> std::result::Result<Ok, StatusCode> {
-//         self.map_err(|err| err.into())
-//     }
-// }
+impl_error_to_status_code!(DataError, RequestError::Data);
+impl_error_to_status_code!(CacheError, RequestError::Cache);
+impl_error_to_status_code!(SignInWithGoogleError, RequestError::SignInWithGoogle);
+impl_error_to_status_code!(SignInWithAppleError, RequestError::SignInWithApple);
+impl_error_to_status_code!(InternalApiError, RequestError::InternalApiError);
+impl_error_to_status_code!(ManagerClientError, RequestError::ManagerClientError);
+impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
+impl_error_to_status_code!(EventError, RequestError::EventError);

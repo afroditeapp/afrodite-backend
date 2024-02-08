@@ -4,7 +4,6 @@
 use std::{future::Future, sync::{Arc, OnceLock}};
 
 use config::Config;
-use error_stack::{Result, ResultExt};
 use model::AccountId;
 use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 
@@ -14,7 +13,7 @@ use super::{
     },
     RouterDatabaseWriteHandle, SyncWriteHandle,
 };
-use crate::data::DataError;
+use crate::{data::DataError, result::{WrappedContextExt, WrappedResultExt2}};
 
 pub type WriteCmds = Cmds;
 
@@ -62,12 +61,12 @@ impl WriteCommandRunnerHandle {
 
     pub async fn write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DataError>> + Send,
+        Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
     >(
         &self,
         write_cmd: GetCmd,
-    ) -> Result<CmdResult, DataError> {
+    ) -> crate::result::Result<CmdResult, DataError> {
         let quit_lock_storage = get_quit_lock().lock().await;
         let quit_lock = quit_lock_storage
             .clone()
@@ -94,7 +93,7 @@ impl WriteCommandRunnerHandle {
         &self,
         account: AccountId,
         write_cmd: GetCmd,
-    ) -> Result<CmdResult, DataError> {
+    ) -> crate::result::Result<CmdResult, DataError> {
         let quit_lock_storage = get_quit_lock().lock().await;
         let quit_lock = quit_lock_storage
             .clone()

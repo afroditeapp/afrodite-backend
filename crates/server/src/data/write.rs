@@ -11,7 +11,7 @@ use database::{
     history::write::{HistorySyncWriteCommands, HistoryWriteCommands},
     CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::{ResultExt};
 use model::{
     Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, SharedStateInternal,
     SignInWithInfo,
@@ -36,6 +36,7 @@ use super::{
     IntoDataError,
 };
 use crate::data::DataError;
+use crate::result::Result;
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -93,7 +94,6 @@ macro_rules! define_write_commands {
                 super::super::write::HistoryWriteCommands::new(&self.history_write())
             }
 
-            #[track_caller]
             pub async fn db_write<
                 T: FnOnce(
                         database::current::write::CurrentSyncWriteCommands<
@@ -108,11 +108,10 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DataError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
                 self.cmds.db_write(cmd).await
             }
 
-            #[track_caller]
             pub async fn db_transaction<
                 T: FnOnce(
                         database::current::write::CurrentSyncWriteCommands<
@@ -129,11 +128,10 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DataError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
                 self.cmds.db_transaction(cmd).await
             }
 
-            #[track_caller]
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<
@@ -148,23 +146,20 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DataError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
                 self.cmds.db_read(cmd).await
             }
 
-            #[track_caller]
             pub async fn write_cache<T, Id: Into<model::AccountId>>(
                 &self,
                 id: Id,
                 cache_operation: impl FnOnce(
                     &mut crate::data::cache::CacheEntry,
                 ) -> error_stack::Result<T, crate::data::CacheError>,
-            ) -> error_stack::Result<T, crate::data::DataError> {
-                use error_stack::ResultExt;
+            ) -> error_stack::Result<T, crate::data::CacheError> {
                 self.cache()
                     .write_cache(id, cache_operation)
                     .await
-                    .change_context(crate::data::DataError::Cache)
             }
         }
     };
@@ -355,18 +350,17 @@ impl<'a> WriteCommands<'a> {
         Ok(id.clone())
     }
 
-    #[track_caller]
     pub async fn db_write<
         T: FnOnce(
                 CurrentSyncWriteCommands<&mut DieselConnection>,
-            ) -> Result<R, DieselDatabaseError>
+            ) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DataError> {
+    ) -> error_stack::Result<R, DieselDatabaseError> {
         let conn = self
             .current_write_handle
             .0
@@ -374,30 +368,26 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .change_context(DieselDatabaseError::GetConnection)
-            .change_context(DataError::Diesel)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| cmd(CurrentSyncWriteCommands::new(conn)))
             .await
-            .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DataError::Diesel)?
-            .change_context(DataError::Diesel)
+            .into_error_string(DieselDatabaseError::Execute)?
     }
 
-    #[track_caller]
     pub async fn db_transaction<
         T: FnOnce(
                 database::current::write::CurrentSyncWriteCommands<
                     &mut simple_backend_database::diesel_db::DieselConnection,
                 >,
-            ) -> std::result::Result<R, error_stack::Report<DieselDatabaseError>>
+            ) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DataError> {
+    ) -> error_stack::Result<R, DieselDatabaseError> {
         let conn = self
             .current_write_handle
             .0
@@ -405,8 +395,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .change_context(DieselDatabaseError::GetConnection)
-            .change_context(DataError::Diesel)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| {
             CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
@@ -414,16 +403,13 @@ impl<'a> WriteCommands<'a> {
             })
         })
         .await
-        .into_error_string(DieselDatabaseError::Execute)
-        .change_context(DataError::Diesel)?
-        .change_context(DataError::Diesel)
+        .into_error_string(DieselDatabaseError::Execute)?
     }
 
-    #[track_caller]
     pub async fn db_transaction_with_history<T, R: Send + 'static>(
         &self,
         cmd: T,
-    ) -> Result<R, DataError>
+    ) -> error_stack::Result<R, DieselDatabaseError>
     where
         T: FnOnce(
                 TransactionConnection<'_>,
@@ -439,8 +425,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .change_context(DieselDatabaseError::GetConnection)
-            .change_context(DataError::Diesel)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
 
         let conn_history = self
             .history_write_handle
@@ -449,8 +434,7 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .change_context(DieselDatabaseError::GetConnection)
-            .change_context(DataError::Diesel)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| {
             CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
@@ -459,21 +443,18 @@ impl<'a> WriteCommands<'a> {
             })
         })
         .await
-        .into_error_string(DieselDatabaseError::Execute)
-        .change_context(DataError::Diesel)?
-        .change_context(DataError::Diesel)
+        .into_error_string(DieselDatabaseError::Execute)?
     }
 
-    #[track_caller]
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError>
+        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DataError> {
+    ) -> error_stack::Result<R, DieselDatabaseError> {
         let conn = self
             .current_write_handle
             .0
@@ -481,13 +462,10 @@ impl<'a> WriteCommands<'a> {
             .pool()
             .get()
             .await
-            .change_context(DieselDatabaseError::GetConnection)
-            .change_context(DataError::Diesel)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
             .await
-            .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DataError::Diesel)?
-            .change_context(DataError::Diesel)
+            .into_error_string(DieselDatabaseError::Execute)?
     }
 }

@@ -1,10 +1,10 @@
 use database::{
     current::read::CurrentSyncReadCommands,
     CurrentReadHandle,
-    // diesel::{DieselConnection, DieselCurrentReadHandle, DieselDatabaseError},
-    // sqlite::SqlxReadHandle,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+
+use crate::result::Result;
 use model::{AccountId, AccountIdInternal, ContentId, MediaContentInternal, ModerationRequest};
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::IntoReportFromString;
@@ -59,7 +59,7 @@ macro_rules! define_read_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, crate::data::DataError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
                 self.cmds.db_read(cmd).await
             }
 
@@ -68,12 +68,10 @@ macro_rules! define_read_commands {
                 &self,
                 id: Id,
                 cache_operation: impl Fn(&crate::data::cache::CacheEntry) -> T,
-            ) -> error_stack::Result<T, crate::data::DataError> {
-                use error_stack::ResultExt;
+            ) -> error_stack::Result<T, crate::data::CacheError> {
                 self.cache()
                     .read_cache(id, cache_operation)
                     .await
-                    .change_context(crate::data::DataError::Cache)
             }
         }
     };
@@ -166,6 +164,7 @@ impl<'a> ReadCommands<'a> {
                 .get_account_media_content(account_id)
         })
         .await
+        .into_error()
     }
 
     pub async fn moderation_request(
@@ -179,6 +178,7 @@ impl<'a> ReadCommands<'a> {
         })
         .await
         .map(|r| r.map(|request| request.into_request()))
+        .into_error()
     }
 
     pub async fn profile_visibility(
@@ -190,19 +190,18 @@ impl<'a> ReadCommands<'a> {
                 e.profile.as_ref().map(|p| p.public).flatten()
             })
             .await
-            .change_context(DataError::Cache)
+            .into_error()
     }
 
-    #[track_caller]
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError>
+        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> Result<R, DataError> {
+    ) -> error_stack::Result<R, DieselDatabaseError> {
         let conn = self
             .db
             .0
@@ -210,13 +209,10 @@ impl<'a> ReadCommands<'a> {
             .pool()
             .get()
             .await
-            .change_context(DieselDatabaseError::GetConnection)
-            .change_context(DataError::Diesel)?;
+            .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
             .await
-            .into_error_string(DieselDatabaseError::Execute)
-            .change_context(DataError::Diesel)?
-            .change_context(DataError::Diesel)
+            .into_error_string(DieselDatabaseError::Execute)?
     }
 }

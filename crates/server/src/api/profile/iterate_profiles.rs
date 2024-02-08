@@ -32,7 +32,7 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
 
     let data = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<error_stack::Result<Vec<ProfileLink>, DataError>> = cmds
+            let out: ConcurrentWriteAction<crate::result::Result<Vec<ProfileLink>, DataError>> = cmds
                 .accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
                     Box::new(async move { cmds.next_profiles(account_id).await })
                 })
@@ -67,7 +67,7 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     PROFILE.post_reset_profile_paging.incr();
     state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<error_stack::Result<_, DataError>> = cmds
+            let out: ConcurrentWriteAction<crate::result::Result<_, DataError>> = cmds
                 .accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
                     Box::new(async move { cmds.reset_profile_iterator(account_id).await })
                 })

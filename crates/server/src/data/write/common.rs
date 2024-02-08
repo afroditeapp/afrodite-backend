@@ -1,11 +1,11 @@
 use std::net::SocketAddr;
 
-use error_stack::{Result, ResultExt};
 use model::{AccountId, AccountIdInternal, AuthPair, SharedState};
 
 use crate::{
     data::{DataError, IntoDataError},
     event::{event_channel, EventMode, EventReceiver},
+    result::{Result, WrappedResultExt},
 };
 
 define_write_commands!(WriteCommandsCommon);

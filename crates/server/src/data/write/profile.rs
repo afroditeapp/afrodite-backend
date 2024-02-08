@@ -1,4 +1,5 @@
-use error_stack::{Result, ResultExt};
+
+use crate::result::{Result, WrappedContextExt, WrappedResultExt};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use crate::data::{
@@ -63,7 +64,7 @@ impl WriteCommandsProfile<'_> {
             })
             .await
             .into_data_error(id)?
-            .ok_or(DataError::FeatureDisabled)?;
+            .ok_or(DataError::FeatureDisabled.report())?;
 
         let new_location_key = self.location().coordinates_to_key(&coordinates);
         self.db_write(move |cmds| cmds.into_profile().data().profile_location(id, coordinates))
@@ -141,6 +142,7 @@ impl WriteCommandsProfile<'_> {
                 .insert_favorite_profile(id, favorite)
         })
         .await
+        .into_error()
     }
 
     pub async fn remove_favorite_profile(
@@ -154,6 +156,7 @@ impl WriteCommandsProfile<'_> {
                 .remove_favorite_profile(id, favorite)
         })
         .await
+        .into_error()
     }
 
     pub async fn benchmark_update_profile_bypassing_cache(

@@ -7,9 +7,15 @@ use tokio::sync::RwLock;
 use tracing::info;
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
-use super::DataError;
 
 pub mod location;
+
+#[derive(thiserror::Error, Debug)]
+pub enum IndexError {
+    #[error("Profile location index error")]
+    ProfileIndex,
+    // TODO: more detailed errors
+}
 
 #[derive(Debug)]
 pub struct LocationIndexManager {
@@ -92,7 +98,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
     pub async fn next_profiles(
         &self,
         previous_iterator_state: LocationIndexIteratorState,
-    ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), DataError>
+    ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), IndexError>
     {
         let index = self.index.clone();
         let (iterator, key) = tokio::task::spawn_blocking(move || {
@@ -101,7 +107,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
             (iterator, key)
         })
         .await
-        .change_context(DataError::ProfileIndex)?;
+        .change_context(IndexError::ProfileIndex)?;
         let data = match key {
             None => (iterator.into(), None),
             Some(key) => match self.profiles.read().await.get(&key) {
@@ -154,7 +160,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         account_id: AccountId,
         previous_key: LocationIndexKey,
         new_key: LocationIndexKey,
-    ) -> error_stack::Result<(), DataError> {
+    ) -> error_stack::Result<(), IndexError> {
         if previous_key == new_key {
             // No update needed. If return would not be here then
             // if new_size == 0 check would make profile disappear.
@@ -186,7 +192,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                                 updater.flag_cell_to_have_profiles(new_key)
                             })
                             .await
-                            .change_context(DataError::ProfileIndex)?;
+                            .change_context(IndexError::ProfileIndex)?;
                         }
                     }
                     None => {
@@ -196,7 +202,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                             updater.flag_cell_to_have_profiles(new_key)
                         })
                         .await
-                        .change_context(DataError::ProfileIndex)?;
+                        .change_context(IndexError::ProfileIndex)?;
                     }
                 }
             } else {
@@ -211,7 +217,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                     updater.remove_profile_flag_from_cell(previous_key);
                 })
                 .await
-                .change_context(DataError::ProfileIndex)?;
+                .change_context(IndexError::ProfileIndex)?;
             }
         }
 
@@ -223,7 +229,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         account_id: AccountId,
         profile_link: ProfileLink,
         key: LocationIndexKey,
-    ) -> error_stack::Result<(), DataError> {
+    ) -> error_stack::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
@@ -236,7 +242,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                     let mut updater = IndexUpdater::new(self.index.clone());
                     tokio::task::spawn_blocking(move || updater.flag_cell_to_have_profiles(key))
                         .await
-                        .change_context(DataError::ProfileIndex)?;
+                        .change_context(IndexError::ProfileIndex)?;
                 }
             }
             None => {
@@ -245,7 +251,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 let mut updater = IndexUpdater::new(self.index.clone());
                 tokio::task::spawn_blocking(move || updater.flag_cell_to_have_profiles(key))
                     .await
-                    .change_context(DataError::ProfileIndex)?;
+                    .change_context(IndexError::ProfileIndex)?;
             }
         }
         Ok(())
@@ -255,7 +261,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         &self,
         account_id: AccountId,
         key: LocationIndexKey,
-    ) -> error_stack::Result<(), DataError> {
+    ) -> error_stack::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
@@ -269,7 +275,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                     let mut updater = IndexUpdater::new(self.index.clone());
                     tokio::task::spawn_blocking(move || updater.remove_profile_flag_from_cell(key))
                         .await
-                        .change_context(DataError::ProfileIndex)?;
+                        .change_context(IndexError::ProfileIndex)?;
                 }
             }
             None => (),

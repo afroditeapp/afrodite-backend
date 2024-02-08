@@ -1,4 +1,5 @@
-use error_stack::{Result, ResultExt};
+use error_stack::{FutureExt, ResultExt};
+use crate::{data::IntoDataError, result::Result};
 use model::{AccountIdInternal, HandleModerationRequest, Moderation};
 
 use crate::data::DataError;
@@ -16,6 +17,7 @@ impl WriteCommandsMediaAdmin<'_> {
                 .moderation_get_list_and_create_new_if_necessary(account_id)
         })
         .await
+        .into_error()
     }
 
     pub async fn update_moderation(
@@ -32,5 +34,6 @@ impl WriteCommandsMediaAdmin<'_> {
             )
         })
         .await
+        .into_error()
     }
 }

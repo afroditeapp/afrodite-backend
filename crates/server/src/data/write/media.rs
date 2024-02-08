@@ -1,4 +1,4 @@
-use error_stack::{Result, ResultExt};
+use crate::{data::IntoDataError, result::{Result, WrappedResultExt}};
 use model::{
     AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, NewContentParams,
     SetProfileContent,
@@ -21,6 +21,7 @@ impl WriteCommandsMedia<'_> {
                 .create_new_moderation_request(account_id, request)
         })
         .await
+        .into_error()
     }
 
     /// Completes previous save_to_tmp.
@@ -68,7 +69,7 @@ impl WriteCommandsMedia<'_> {
             // Move content from tmp dir to content dir
             tmp_img
                 .move_to_blocking(&processed_content_path)
-                .change_context(DieselDatabaseError::File)?;
+                .map_err(|e| e.change_context(DieselDatabaseError::File))?;
             // If moving fails, diesel rollbacks the transaction.
 
             Ok(())
@@ -95,6 +96,7 @@ impl WriteCommandsMedia<'_> {
                 .update_profile_content_if_possible(id, new)
         })
         .await
+        .into_error()
     }
 
     pub async fn update_or_delete_pending_profile_content(
@@ -108,6 +110,7 @@ impl WriteCommandsMedia<'_> {
                 .update_or_delete_pending_profile_content_if_possible(id, new)
         })
         .await
+        .into_error()
     }
 
     pub async fn update_security_image(
@@ -121,6 +124,7 @@ impl WriteCommandsMedia<'_> {
                 .delete_content(content_owner, content)
         })
         .await
+        .into_error()
     }
 
     pub async fn update_or_delete_pending_security_image(
@@ -134,6 +138,7 @@ impl WriteCommandsMedia<'_> {
                 .update_or_delete_pending_security_image(content_owner, content)
         })
         .await
+        .into_error()
     }
 
     pub async fn delete_content(
@@ -147,6 +152,7 @@ impl WriteCommandsMedia<'_> {
                 .delete_content(content_owner, content)
         })
         .await
+        .into_error()
     }
 
     pub async fn delete_moderation_request_if_possible(
@@ -159,5 +165,6 @@ impl WriteCommandsMedia<'_> {
                 .delete_moderation_request_not_yet_in_moderation(moderation_request_owner)
         })
         .await
+        .into_error()
     }
 }

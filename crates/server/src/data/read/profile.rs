@@ -1,4 +1,4 @@
-use error_stack::{Result, ResultExt};
+use crate::{data::IntoDataError, result::{Result, WrappedContextExt}};
 use model::{AccountIdInternal, Location, ProfileInternal};
 
 use super::{
@@ -21,6 +21,7 @@ impl ReadCommandsProfile<'_> {
     pub async fn profile_location(&self, id: AccountIdInternal) -> Result<Location, DataError> {
         self.db_read(move |mut cmds| cmds.profile().data().profile_location(id))
             .await
+            .into_error()
     }
 
     pub async fn read_profile_directly_from_database(
@@ -29,6 +30,7 @@ impl ReadCommandsProfile<'_> {
     ) -> Result<ProfileInternal, DataError> {
         self.db_read(move |mut cmds| cmds.profile().data().profile(id))
             .await
+            .into_error()
     }
 
     pub async fn favorite_profiles(
@@ -37,5 +39,6 @@ impl ReadCommandsProfile<'_> {
     ) -> Result<Vec<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.profile().favorite().favorites(id))
             .await
+            .into_error()
     }
 }

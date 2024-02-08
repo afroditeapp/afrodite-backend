@@ -1,4 +1,5 @@
-use error_stack::{Result, ResultExt};
+use error_stack::{FutureExt, ResultExt};
+use crate::{data::IntoDataError, result::Result};
 use model::{
     AccountIdInternal, AccountInteractionState, MatchesPage, MessageNumber, PendingMessagesPage,
     ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage,
@@ -23,6 +24,7 @@ impl ReadCommandsChat<'_> {
         })
         .await
         .map(|profiles| SentLikesPage { profiles })
+        .into_error()
     }
 
     pub async fn all_received_likes(
@@ -36,6 +38,7 @@ impl ReadCommandsChat<'_> {
         })
         .await
         .map(|profiles| ReceivedLikesPage { profiles })
+        .into_error()
     }
 
     pub async fn all_sent_blocks(
@@ -51,6 +54,7 @@ impl ReadCommandsChat<'_> {
         })
         .await
         .map(|profiles| SentBlocksPage { profiles })
+        .into_error()
     }
 
     pub async fn all_received_blocks(
@@ -64,6 +68,7 @@ impl ReadCommandsChat<'_> {
         })
         .await
         .map(|profiles| ReceivedBlocksPage { profiles })
+        .into_error()
     }
 
     pub async fn all_matches(&self, id: AccountIdInternal) -> Result<MatchesPage, DataError> {
@@ -99,6 +104,7 @@ impl ReadCommandsChat<'_> {
         self.db_read(move |mut cmds| cmds.chat().message().all_pending_messages(id))
             .await
             .map(|messages| PendingMessagesPage { messages })
+            .into_error()
     }
 
     /// Get message number of message that receiver has viewed the latest

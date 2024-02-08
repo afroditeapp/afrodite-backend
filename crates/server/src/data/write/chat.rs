@@ -1,4 +1,4 @@
-use error_stack::{Result, ResultExt};
+use crate::{data::IntoDataError, result::{Result, WrappedContextExt, WrappedResultExt2}};
 use model::{AccountIdInternal, AccountInteractionInternal, MessageNumber, PendingMessageId};
 
 use crate::data::DataError;
@@ -130,6 +130,7 @@ impl WriteCommandsChat<'_> {
                 .delete_pending_message_list(message_receiver, messages)
         })
         .await
+        .into_error()
     }
 
     /// Update message number which my account has viewed from the sender
@@ -190,5 +191,6 @@ impl WriteCommandsChat<'_> {
                 .insert_pending_message_if_match(sender, receiver, message)
         })
         .await
+        .into_error()
     }
 }

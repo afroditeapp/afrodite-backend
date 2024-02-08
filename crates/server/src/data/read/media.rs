@@ -1,4 +1,5 @@
-use error_stack::{Result, ResultExt};
+use error_stack::{FutureExt, ResultExt};
+use crate::result::Result;
 use model::{AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal};
 
 use super::{
@@ -32,5 +33,6 @@ impl ReadCommandsMedia<'_> {
                 .current_account_media(account_id)
         })
         .await
+        .into_error()
     }
 }

@@ -1,4 +1,5 @@
-use error_stack::{FutureExt, Result, ResultExt};
+use error_stack::{FutureExt, ResultExt};
+use crate::result::Result;
 use model::{
     AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, GoogleAccountId,
     RefreshToken, SignInWithInfo,
@@ -25,6 +26,7 @@ impl ReadCommandsAccount<'_> {
             .into_data_error(id)?;
         self.db_read(move |mut cmds| cmds.account().token().access_token(id))
             .await
+            .into_error()
     }
 
     pub async fn account_refresh_token(
@@ -33,6 +35,7 @@ impl ReadCommandsAccount<'_> {
     ) -> Result<Option<RefreshToken>, DataError> {
         self.db_read(move |mut cmds| cmds.account().token().refresh_token(id))
             .await
+            .into_error()
     }
 
     pub async fn account_sign_in_with_info(
@@ -41,6 +44,7 @@ impl ReadCommandsAccount<'_> {
     ) -> Result<SignInWithInfo, DataError> {
         self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_info(id))
             .await
+            .into_error()
     }
 
     pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
@@ -55,11 +59,13 @@ impl ReadCommandsAccount<'_> {
     pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_data(id))
             .await
+            .into_error()
     }
 
     pub async fn account_setup(&self, id: AccountIdInternal) -> Result<AccountSetup, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_setup(id))
             .await
+            .into_error()
     }
 
     pub async fn account_ids<T: FnMut(AccountIdInternal)>(
@@ -70,7 +76,7 @@ impl ReadCommandsAccount<'_> {
         let account = db.account();
         let data = account.data();
         let mut users = data.account_ids_stream();
-        while let Some(user_id) = users.try_next().await.change_context(DataError::Sqlite)? {
+        while let Some(user_id) = users.try_next().await? {
             handler(user_id)
         }
 
@@ -88,5 +94,6 @@ impl ReadCommandsAccount<'_> {
         })
         .await
         .map(Some)
+        .into_error()
     }
 }

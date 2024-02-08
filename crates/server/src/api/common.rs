@@ -11,13 +11,12 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use error_stack::{Result, ResultExt};
+use crate::result::{Result, WrappedContextExt, WrappedResultExt, WrappedResultExt2};
 use model::{
     AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,
     RefreshToken,
 };
 use simple_backend::{create_counters, web_socket::WebSocketManager};
-use simple_backend_utils::ContextExt;
 use tracing::error;
 pub use utils::api::PATH_CONNECT;
 
@@ -190,7 +189,7 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .account_refresh_token(id)
         .await
         .change_context(WebSocketError::DatabaseNoRefreshToken)?
-        .ok_or(WebSocketError::DatabaseNoRefreshToken)?
+        .ok_or(WebSocketError::DatabaseNoRefreshToken.report())?
         .bytes()
         .change_context(WebSocketError::InvalidRefreshTokenInDatabase)?;
 
@@ -198,7 +197,7 @@ async fn handle_socket_result<S: WriteData + ReadData>(
     match socket
         .recv()
         .await
-        .ok_or(WebSocketError::Receive)?
+        .ok_or(WebSocketError::Receive.report())?
         .change_context(WebSocketError::Receive)?
     {
         Message::Binary(refresh_token) => {

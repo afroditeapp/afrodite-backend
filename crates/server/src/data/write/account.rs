@@ -1,4 +1,5 @@
-use error_stack::{Result, ResultExt};
+use error_stack::{FutureExt, ResultExt};
+use crate::result::Result;
 use model::{
     AccountData, AccountIdInternal, AccountInternal, AccountSetup, Capabilities, SharedState,
 };

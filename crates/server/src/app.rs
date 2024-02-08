@@ -72,12 +72,12 @@ impl GetAccounts for S {
 pub trait WriteData {
     async fn write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = error_stack::Result<CmdResult, DataError>> + Send + 'static,
+        Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send + 'static,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
     >(
         &self,
         cmd: GetCmd,
-    ) -> error_stack::Result<CmdResult, DataError>;
+    ) -> crate::result::Result<CmdResult, DataError>;
 
     async fn write_concurrent<
         CmdResult: Send + 'static,
@@ -87,19 +87,19 @@ pub trait WriteData {
         &self,
         account: AccountId,
         cmd: GetCmd,
-    ) -> error_stack::Result<CmdResult, DataError>;
+    ) -> crate::result::Result<CmdResult, DataError>;
 }
 
 #[async_trait::async_trait]
 impl WriteData for S {
     async fn write<
         CmdResult: Send + 'static,
-        Cmd: Future<Output = Result<CmdResult, DataError>> + Send + 'static,
+        Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send + 'static,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
     >(
         &self,
         cmd: GetCmd,
-    ) -> Result<CmdResult, DataError> {
+    ) -> crate::result::Result<CmdResult, DataError> {
         self.business_logic_state().write_queue.write(cmd).await
     }
 
@@ -111,7 +111,7 @@ impl WriteData for S {
         &self,
         account: AccountId,
         cmd: GetCmd,
-    ) -> Result<CmdResult, DataError> {
+    ) -> crate::result::Result<CmdResult, DataError> {
         self.business_logic_state()
             .write_queue
             .concurrent_write(account, cmd)

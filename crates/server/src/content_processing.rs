@@ -3,7 +3,6 @@ use std::{
     sync::Arc,
 };
 
-use error_stack::{FutureExt, Result, ResultExt};
 use model::{
     AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
     ContentProcessingStateChanged, ContentSlot, MediaContentType, NewContentParams,
@@ -20,6 +19,7 @@ use crate::{
     app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData},
     data::file::utils::TmpContentFile,
     event::EventManager,
+    result::{Result, WrappedResultExt, WrappedResultExt2}
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -247,8 +247,8 @@ impl ContentProcessingManager {
                     InputFileType::JpegImage,
                     content.tmp_img.as_path(),
                 )
-                .change_context(ContentProcessingError::ContentProcessingFailed)
                 .await
+                .change_context(ContentProcessingError::ContentProcessingFailed)
             }
         };
 
