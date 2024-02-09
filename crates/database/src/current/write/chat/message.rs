@@ -4,7 +4,7 @@ use model::{AccountIdInternal, AccountInteractionState, PendingMessageId};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 use simple_backend_utils::current_unix_time;
 
-use crate::{IntoDatabaseError, TransactionError};
+use crate::IntoDatabaseError;
 
 define_write_commands!(CurrentWriteChatMessage, CurrentSyncWriteChatMessage);
 
@@ -16,20 +16,17 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
 
-        self.conn().transaction(|mut conn| {
-            for message in messages {
-                delete(
-                    pending_messages.filter(
-                        message_number
-                            .eq(message.message_number)
-                            .and(account_id_receiver.eq(message_receiver.as_db_id())),
-                    ),
-                )
-                .execute(conn.conn())
-                .into_db_error(DieselDatabaseError::Execute, message_receiver)?;
-            }
-            Ok::<_, TransactionError<_>>(())
-        })?;
+        for message in messages {
+            delete(
+                pending_messages.filter(
+                    message_number
+                        .eq(message.message_number)
+                        .and(account_id_receiver.eq(message_receiver.as_db_id())),
+                ),
+            )
+            .execute(self.conn())
+            .into_db_error(DieselDatabaseError::Execute, message_receiver)?;
+        }
 
         Ok(())
     }
@@ -55,31 +52,27 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 
-        self.conn().transaction(|conn| {
-            update(account_interaction::table.find(interaction.id))
-                .set(account_interaction::message_counter.eq(new_message_number))
-                .execute(conn)
-                .into_db_error(
-                    DieselDatabaseError::Execute,
-                    (sender, receiver, new_message_number),
-                )?;
+        update(account_interaction::table.find(interaction.id))
+            .set(account_interaction::message_counter.eq(new_message_number))
+            .execute(self.conn())
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (sender, receiver, new_message_number),
+            )?;
 
-            insert_into(pending_messages)
-                .values((
-                    account_id_sender.eq(sender.as_db_id()),
-                    account_id_receiver.eq(receiver.as_db_id()),
-                    unix_time.eq(time),
-                    message_number.eq(new_message_number),
-                    message_text.eq(message),
-                ))
-                .execute(conn)
-                .into_db_error(
-                    DieselDatabaseError::Execute,
-                    (sender, receiver, new_message_number),
-                )?;
-
-            Ok::<_, TransactionError<_>>(())
-        })?;
+        insert_into(pending_messages)
+            .values((
+                account_id_sender.eq(sender.as_db_id()),
+                account_id_receiver.eq(receiver.as_db_id()),
+                unix_time.eq(time),
+                message_number.eq(new_message_number),
+                message_text.eq(message),
+            ))
+            .execute(self.conn())
+            .into_db_error(
+                DieselDatabaseError::Execute,
+                (sender, receiver, new_message_number),
+            )?;
 
         Ok(())
     }

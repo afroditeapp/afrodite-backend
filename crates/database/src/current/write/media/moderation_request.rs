@@ -129,7 +129,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                 queue_number.eq(queue_number_new),
             ))
             .execute(self.conn())
-            .into_transaction_error(DieselDatabaseError::Execute, (request_creator, request))?;
+            .into_db_error(DieselDatabaseError::Execute, (request_creator, request))?;
 
         Ok(())
     }

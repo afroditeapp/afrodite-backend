@@ -143,6 +143,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
     }
 }
 
+/// Write commands for current database. All commands must be run in
+/// a database transaction.
 impl CurrentSyncWriteCommands<&mut DieselConnection> {
     pub fn account(&mut self) -> CurrentSyncWriteAccount<&mut DieselConnection> {
         CurrentSyncWriteAccount::new(self.write())

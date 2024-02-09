@@ -223,7 +223,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 .filter(moderation_request_id.eq(moderation_id.request_id.request_row_id))
                 .set(state_number.eq(state as i64))
                 .execute(self.conn())
-                .into_transaction_error(DieselDatabaseError::Execute, ())?;
+                .into_db_error(DieselDatabaseError::Execute, ())?;
         }
 
         Ok(())
