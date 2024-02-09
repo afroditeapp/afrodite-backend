@@ -27,10 +27,7 @@ impl<C: ConnectionProvider> HistorySyncWriteProfile<C> {
                 json_text.eq(text),
             ))
             .execute(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (account_id_internal, account_id_internal),
-            )?;
+            .into_db_error((account_id_internal, account_id_internal))?;
         Ok(())
     }
 }

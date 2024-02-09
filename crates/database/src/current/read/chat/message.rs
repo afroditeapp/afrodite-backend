@@ -24,7 +24,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
             .select((account_id::uuid, PendingMessageInternal::as_select()))
             .load(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, ())?;
+            .into_db_error(())?;
 
         let messages = value
             .into_iter()

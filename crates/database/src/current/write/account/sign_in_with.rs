@@ -24,7 +24,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
                 google_account_id.eq(&data.google_account_id),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -42,7 +42,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
                 google_account_id.eq(&data.google_account_id),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }

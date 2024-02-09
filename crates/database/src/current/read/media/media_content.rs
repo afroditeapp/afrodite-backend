@@ -26,7 +26,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
                 .filter(id.eq(content_id))
                 .select(MediaContentRaw::as_select())
                 .first(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, (media_owner_id, content_id))?;
+                .into_db_error((media_owner_id, content_id))?;
 
             Ok(Some(content.into()))
         } else {
@@ -44,7 +44,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
             .filter(current_account_media::account_id.eq(media_owner_id.as_db_id()))
             .select(CurrentAccountMediaRaw::as_select())
             .first::<CurrentAccountMediaRaw>(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, media_owner_id)?;
+            .into_db_error(media_owner_id)?;
 
         let security_content_id =
             self.media_content_raw(media_owner_id, raw.security_content_id)?;
@@ -108,7 +108,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
             .filter(uuid.eq(content_id))
             .select(MediaContentRaw::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, content_id)?;
+            .into_db_error(content_id)?;
         Ok(content)
     }
 
@@ -123,7 +123,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
                 .filter(account_id.eq(media_owner_id.as_db_id()))
                 .select(MediaContentRaw::as_select())
                 .load(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, media_owner_id)?
+                .into_db_error(media_owner_id)?
         };
 
         let content = data.into_iter().map(|r| r.into()).collect();

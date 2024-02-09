@@ -18,7 +18,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
             .values(uuid.eq(account_uuid))
             .returning(id)
             .get_result(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, account_uuid)?;
+            .into_db_error(account_uuid)?;
 
         Ok(AccountIdInternal {
             uuid: account_uuid,
@@ -36,7 +36,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         insert_into(account)
             .values((account_id.eq(id.as_db_id()), email.eq(account_data.email)))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -51,7 +51,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         update(account.find(id.as_db_id()))
             .set(account_data)
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -66,7 +66,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         insert_into(account_setup)
             .values((account_id.eq(id.as_db_id()), account_data))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -81,7 +81,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         update(account_setup.find(id.as_db_id()))
             .set(account_data)
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }

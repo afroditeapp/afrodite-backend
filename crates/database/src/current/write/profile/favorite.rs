@@ -26,7 +26,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileFavorite<C> {
                 unix_time.eq(time),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -42,7 +42,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileFavorite<C> {
             .filter(account_id.eq(id.as_db_id()))
             .filter(favorite_account_id.eq(favorite.as_db_id()))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }

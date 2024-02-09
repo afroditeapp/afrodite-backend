@@ -20,7 +20,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountToken<C> {
         insert_into(access_token)
             .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -37,7 +37,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountToken<C> {
         update(access_token.find(id.as_db_id()))
             .set(token.eq(token_value))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -61,7 +61,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountToken<C> {
         insert_into(refresh_token)
             .values((account_id.eq(id.as_db_id()), token.eq(token_value)))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -85,7 +85,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountToken<C> {
         update(refresh_token.find(id.as_db_id()))
             .set(token.eq(token_value))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }

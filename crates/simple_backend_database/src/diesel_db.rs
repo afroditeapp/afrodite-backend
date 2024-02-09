@@ -74,6 +74,9 @@ pub enum DieselDatabaseError {
 
     #[error("File operation failed")]
     File,
+
+    #[error("Diesel error")]
+    DieselError,
 }
 
 pub struct DieselWriteCloseHandle {

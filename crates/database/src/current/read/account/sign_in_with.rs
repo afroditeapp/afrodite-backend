@@ -23,7 +23,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
             .filter(sign_in_with_info::google_account_id.eq(google_id.as_str()))
             .select(AccountIdInternal::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, google_id)
+            .into_db_error(google_id)
     }
 
     pub fn sign_in_with_info(
@@ -36,7 +36,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(SignInWithInfoRaw::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)
+            .into_db_error(id)
             .map(Into::into)
     }
 }

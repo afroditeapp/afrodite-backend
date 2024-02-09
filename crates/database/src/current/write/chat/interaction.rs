@@ -19,7 +19,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
             .default_values()
             .returning(AccountInteractionInternal::as_returning())
             .get_result::<AccountInteractionInternal>(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (account1, account2))?;
+            .into_db_error((account1, account2))?;
 
         insert_into(account_interaction_index)
             .values((
@@ -28,7 +28,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
                 interaction_id.eq(interaction_value.id),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (account1, account2))?;
+            .into_db_error((account1, account2))?;
 
         insert_into(account_interaction_index)
             .values((
@@ -37,7 +37,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
                 interaction_id.eq(interaction_value.id),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (account1, account2))?;
+            .into_db_error((account1, account2))?;
 
         Ok(interaction_value)
     }
@@ -55,7 +55,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
         update(account_interaction.find(value.id))
             .set(value)
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (id_value, account1, account2))?;
+            .into_db_error((id_value, account1, account2))?;
 
         Ok(())
     }

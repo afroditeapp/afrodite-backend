@@ -31,7 +31,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonQueueNumber<C> {
             .do_update()
             .set(next_number.eq(new_next))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (queue, next, new_next))?;
+            .into_db_error((queue, next, new_next))?;
 
         Ok(next)
     }
@@ -52,7 +52,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonQueueNumber<C> {
                 queue_type_number.eq(queue_type),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+            .into_db_error(request_creator)?;
 
         Ok(number)
     }
@@ -72,7 +72,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonQueueNumber<C> {
             ),
         )
         .execute(self.conn())
-        .into_db_error(DieselDatabaseError::Execute, queue_number_entry)?;
+        .into_db_error(queue_number_entry)?;
 
         Ok(())
     }

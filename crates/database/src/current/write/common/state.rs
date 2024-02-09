@@ -22,7 +22,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
                 is_profile_public.eq(&data.is_profile_public),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -40,7 +40,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
                 is_profile_public.eq(&data.is_profile_public),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -54,7 +54,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         insert_into(account_capabilities)
             .values((account_id.eq(id.as_db_id()),))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -69,7 +69,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         update(account_capabilities.find(id.as_db_id()))
             .set(data)
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -84,7 +84,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         update(shared_state.find(id.as_db_id()))
             .set(account_state_number.eq(state as i64))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }

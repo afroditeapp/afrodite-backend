@@ -19,7 +19,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountToken<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(RefreshTokenRaw::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         if let Some(data) = raw.token {
             Ok(Some(RefreshToken::from_bytes(&data)))
@@ -38,7 +38,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountToken<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(AccessTokenRaw::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         if let Some(data) = raw.token {
             Ok(Some(AccessToken::new(data)))

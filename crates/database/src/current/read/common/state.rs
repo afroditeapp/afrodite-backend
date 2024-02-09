@@ -19,7 +19,7 @@ impl<C: ConnectionProvider> CurrentSyncReadCommonState<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(SharedStateInternal::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         let state: AccountState = TryInto::<AccountState>::try_into(data.account_state_number)
             .change_context(DieselDatabaseError::DataFormatConversion)?;
@@ -40,6 +40,6 @@ impl<C: ConnectionProvider> CurrentSyncReadCommonState<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(Capabilities::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)
+            .into_db_error(id)
     }
 }

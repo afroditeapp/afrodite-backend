@@ -22,7 +22,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         insert_into(current_account_media)
             .values(account_id.eq(id.as_db_id()))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(())
     }
@@ -70,7 +70,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
                 grid_crop_y.eq(new.grid_crop_y),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (id, new))?;
+            .into_db_error((id, new))?;
 
         Ok(())
     }
@@ -126,7 +126,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
                 pending_grid_crop_y.eq(new.grid_crop_y),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (id, new))?;
+            .into_db_error((id, new))?;
 
         Ok(())
     }
@@ -161,13 +161,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         //                 .or(queue_type_number.eq(NextQueueNumberType::InitialMediaModeration))
         //             )))
         //         .execute(self.conn())
-        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        //         .into_db_error(request_creator)?;
         // }
         // {
         //     use model::schema::media_moderation_request::dsl::*;
         //     delete(media_moderation_request.filter(account_id.eq(request_creator.row_id())))
         //         .execute(self.conn())
-        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        //         .into_db_error(request_creator)?;
         // }
         // // Foreign key constraint removes MediaModeration rows.
         // // Old data is not needed in current data database.

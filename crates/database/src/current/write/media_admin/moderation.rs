@@ -90,7 +90,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                     state_number.eq(ModerationRequestState::InProgress as i64),
                 ))
                 .execute(self.cmds.conn())
-                .into_db_error(DieselDatabaseError::Execute, (target_id, moderator_id))?;
+                .into_db_error((target_id, moderator_id))?;
         }
 
         // TODO
@@ -223,7 +223,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 .filter(moderation_request_id.eq(moderation_id.request_id.request_row_id))
                 .set(state_number.eq(state as i64))
                 .execute(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, ())?;
+                .into_db_error(())?;
         }
 
         Ok(())

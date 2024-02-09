@@ -23,18 +23,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminMediaContent<C> {
             .filter(media_content::uuid.eq(image))
             .select(media_content::id)
             .first::<ContentIdDb>(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (moderation_request_owner, image),
-            )?;
+            .into_db_error((moderation_request_owner, image))?;
 
         update(current_account_media.find(moderation_request_owner.as_db_id()))
             .set((security_content_id.eq(content_id),))
             .execute(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (moderation_request_owner, image),
-            )?;
+            .into_db_error((moderation_request_owner, image))?;
 
         Ok(())
     }
@@ -49,7 +43,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminMediaContent<C> {
         update(media_content.filter(uuid.eq(content_id)))
             .set((content_state.eq(new_state),))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (content_id, new_state))?;
+            .into_db_error((content_id, new_state))?;
 
         Ok(())
     }

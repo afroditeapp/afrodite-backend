@@ -35,10 +35,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                 content_type_number.eq(content_params.content_type),
             ))
             .execute(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (content_uploader, content_id, slot),
-            )?;
+            .into_db_error((content_uploader, content_id, slot))?;
 
         Ok(())
     }
@@ -57,7 +54,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                 .filter(slot_number.eq(slot as i64)),
         )
         .execute(self.conn())
-        .into_db_error(DieselDatabaseError::Execute, (request_creator, slot))?;
+        .into_db_error((request_creator, slot))?;
 
         if deleted_count > 0 {
             Ok(Some(DeletedSomething))
@@ -83,13 +80,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                 ),
             )
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+            .into_db_error(request_creator)?;
         }
         {
             use model::schema::media_moderation_request::dsl::*;
             delete(media_moderation_request.filter(account_id.eq(request_creator.row_id())))
                 .execute(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+                .into_db_error(request_creator)?;
         }
         // Foreign key constraint removes MediaModeration rows.
         // Old data is not needed in current data database.
@@ -129,7 +126,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                 queue_number.eq(queue_number_new),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (request_creator, request))?;
+            .into_db_error((request_creator, request))?;
 
         Ok(())
     }
@@ -185,13 +182,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         //                 .or(queue_type_number.eq(NextQueueNumberType::InitialMediaModeration))
         //             )))
         //         .execute(self.conn())
-        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        //         .into_db_error(request_creator)?;
         // }
         // {
         //     use model::schema::media_moderation_request::dsl::*;
         //     delete(media_moderation_request.filter(account_id.eq(request_creator.row_id())))
         //         .execute(self.conn())
-        //         .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+        //         .into_db_error(request_creator)?;
         // }
         // // Foreign key constraint removes MediaModeration rows.
         // // Old data is not needed in current data database.

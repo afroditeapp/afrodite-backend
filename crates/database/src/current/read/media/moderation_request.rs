@@ -10,7 +10,7 @@ use model::{
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
-use crate::IntoDatabaseError;
+use crate::{IntoDatabaseError, IntoDatabaseErrorExt};
 
 define_read_commands!(
     CurrentReadMediaModerationRequest,
@@ -31,7 +31,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
                 .select(MediaModerationRequestRaw::as_select())
                 .first::<MediaModerationRequestRaw>(conn)
                 .optional()
-                .into_db_error(DieselDatabaseError::Execute, request_creator)?;
+                .into_db_error(request_creator)?;
 
             match request {
                 None => return Ok(None),
@@ -44,7 +44,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             .filter(moderation_request_id.eq(request.id))
             .select(MediaModerationRaw::as_select())
             .load(conn)
-            .into_db_error(DieselDatabaseError::Execute, (request_creator, request.id))?;
+            .into_db_error((request_creator, request.id))?;
 
         let state = match moderations.first() {
             None => ModerationRequestState::Waiting,
@@ -94,7 +94,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
                 .select(MediaContentRaw::as_select())
                 .first(self.conn())
                 .optional()
-                .into_db_error(DieselDatabaseError::Execute, (slot_owner, slot))?
+                .into_db_error((slot_owner, slot))?
         };
 
         Ok(data.map(|data| data.into()))
@@ -121,7 +121,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
                 .filter(content_state.eq(required_state))
                 .select(MediaContentRaw::as_select())
                 .load(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, content_owner)?
+                .into_db_error(content_owner)?
         };
 
         let database_content_set: HashSet<ContentId> = data.into_iter().map(|r| r.uuid).collect();
@@ -154,7 +154,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
                     AccountIdInternal::as_select(),
                 ))
                 .first(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, owner_id)?
+                .into_db_error(owner_id)?
         };
 
         Ok((
@@ -272,4 +272,4 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
 //             Option<ContentId>,
 //             Option<ContentId>,
 //         )>(self.conn())
-//         .into_db_error(DieselDatabaseError::Execute, media_owner_id)?;
+//         .into_db_error(media_owner_id)?;

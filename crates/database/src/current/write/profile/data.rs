@@ -20,7 +20,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
             .values((account_id.eq(id.as_db_id()), version_uuid.eq(version)))
             .returning(ProfileInternal::as_returning())
             .get_result(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)
+            .into_db_error(id)
     }
 
     pub fn insert_profile_location(
@@ -33,7 +33,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
             .values(account_id.eq(id.as_db_id()))
             .returning(Location::as_returning())
             .get_result(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)
+            .into_db_error(id)
     }
 
     pub fn profile(

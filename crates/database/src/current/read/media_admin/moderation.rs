@@ -39,7 +39,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
                     AccountIdInternal::as_select(),
                 ))
                 .load(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, moderator_id)?
+                .into_db_error(moderator_id)?
         };
 
         let mut new_data = vec![];
@@ -77,7 +77,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
                     MediaModerationRequestRaw::as_select(),
                 ))
                 .first(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, moderation)?
+                .into_db_error(moderation)?
         };
 
         Ok(request.to_moderation_request_content())

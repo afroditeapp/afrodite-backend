@@ -23,7 +23,7 @@ impl<C: ConnectionProvider> CurrentSyncReadCommonQueueNumber<C> {
             .select(next_number)
             .first(self.conn())
             .optional()
-            .into_db_error(DieselDatabaseError::Execute, queue)?
+            .into_db_error(queue)?
             .unwrap_or(0);
 
         Ok(number)

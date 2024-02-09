@@ -25,7 +25,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
                 ),
             )
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, message_receiver)?;
+            .into_db_error(message_receiver)?;
         }
 
         Ok(())
@@ -55,10 +55,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         update(account_interaction::table.find(interaction.id))
             .set(account_interaction::message_counter.eq(new_message_number))
             .execute(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (sender, receiver, new_message_number),
-            )?;
+            .into_db_error((sender, receiver, new_message_number))?;
 
         insert_into(pending_messages)
             .values((
@@ -69,10 +66,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
                 message_text.eq(message),
             ))
             .execute(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (sender, receiver, new_message_number),
-            )?;
+            .into_db_error((sender, receiver, new_message_number))?;
 
         Ok(())
     }

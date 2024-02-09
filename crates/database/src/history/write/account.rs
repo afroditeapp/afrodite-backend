@@ -21,7 +21,7 @@ impl<C: ConnectionProvider> HistorySyncWriteAccount<C> {
                 id.eq(account_id_internal.as_db_id()),
             ))
             .execute(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, account_id_internal)?;
+            .into_db_error(account_id_internal)?;
         Ok(())
     }
 
@@ -43,10 +43,7 @@ impl<C: ConnectionProvider> HistorySyncWriteAccount<C> {
                 json_text.eq(text),
             ))
             .execute(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (account_id_internal, account_id_internal),
-            )?;
+            .into_db_error((account_id_internal, account_id_internal))?;
         Ok(())
     }
 
@@ -68,10 +65,7 @@ impl<C: ConnectionProvider> HistorySyncWriteAccount<C> {
                 json_text.eq(text),
             ))
             .execute(self.conn())
-            .into_db_error(
-                DieselDatabaseError::Execute,
-                (account_id_internal, account_id_internal),
-            )?;
+            .into_db_error((account_id_internal, account_id_internal))?;
         Ok(())
     }
 
@@ -94,7 +88,7 @@ impl<C: ConnectionProvider> HistorySyncWriteAccount<C> {
     //     update(refresh_token.find(id.as_db_id()))
     //         .set(token.eq(token_value))
     //         .execute(self.conn())
-    //         .into_db_error(DieselDatabaseError::Execute, id)?;
+    //         .into_db_error(id)?;
 
     //     Ok(())
     // }

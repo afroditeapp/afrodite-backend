@@ -11,7 +11,7 @@ use simple_backend_database::{
 };
 use tokio_stream::StreamExt;
 
-use crate::IntoDatabaseError;
+use crate::{IntoDatabaseError, IntoDatabaseErrorExt};
 
 define_read_commands!(CurrentReadAccountData, CurrentSyncReadAccountData);
 
@@ -33,7 +33,7 @@ impl CurrentReadAccountData<'_> {
                     let account_id = AccountId::new(data.account_id);
                     AccountIdInternal::new(id, account_id)
                 })
-                .into_db_error(SqliteDatabaseError::Fetch, ())
+                .into_db_error_with_new_context(SqliteDatabaseError::Fetch, ())
         })
     }
 }
@@ -48,7 +48,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
             .filter(account_capabilities::account_id.eq(id.as_db_id()))
             .select(Capabilities::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(Account::new_from(shared_state.account_state, capabilities))
     }
@@ -63,7 +63,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(AccountSetup::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)
+            .into_db_error(id)
     }
 
     pub fn account_data(
@@ -76,7 +76,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
             .filter(account_id.eq(id.as_db_id()))
             .select(AccountInternal::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, id)?;
+            .into_db_error(id)?;
 
         Ok(AccountData {
             email: account_internal.email,

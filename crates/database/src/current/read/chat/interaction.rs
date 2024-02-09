@@ -22,7 +22,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
             .select(interaction_id)
             .first::<i64>(self.conn())
             .optional()
-            .into_db_error(DieselDatabaseError::Execute, (account1, account2))?;
+            .into_db_error((account1, account2))?;
 
         let interaction_id_value = match interaction_id_value {
             Some(value) => value,
@@ -33,7 +33,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
             .filter(id.eq(interaction_id_value))
             .select(AccountInteractionInternal::as_select())
             .first(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, (account1, account2))?;
+            .into_db_error((account1, account2))?;
 
         Ok(Some(value))
     }
@@ -65,12 +65,12 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
                 .filter(shared_state::is_profile_public.eq(true))
                 .select(account_id::uuid)
                 .load(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, ())?
+                .into_db_error(())?
         } else {
             partial_command
                 .select(account_id::uuid)
                 .load(self.conn())
-                .into_db_error(DieselDatabaseError::Execute, ())?
+                .into_db_error(())?
         };
 
         Ok(value)
@@ -93,7 +93,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
             .filter(state_number.eq(with_state as i64))
             .select(account_id::uuid)
             .load(self.conn())
-            .into_db_error(DieselDatabaseError::Execute, ())?;
+            .into_db_error(())?;
 
         Ok(value)
     }

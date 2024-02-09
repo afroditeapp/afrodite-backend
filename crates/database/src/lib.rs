@@ -112,9 +112,26 @@ impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> std::fmt::Debug for ErrorContext
     }
 }
 
-pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
+trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
+    const DEFAULT_NEW_ERROR: Self::NewError;
+    type NewError: Context;
+
     #[track_caller]
     fn into_db_error<T: Debug + IsLoggingAllowed>(
+        self,
+        request_context: T,
+    ) -> Result<Self::Ok, Self::NewError> {
+        self.change_context(Self::DEFAULT_NEW_ERROR).attach_printable_lazy(move || {
+            let context = ErrorContext::<T, Self::Ok>::new(request_context);
+
+            format!("{:#?}", context)
+        })
+    }
+}
+
+trait IntoDatabaseErrorExt<Err: Context>: ResultExt + Sized {
+    #[track_caller]
+    fn into_db_error_with_new_context<T: Debug + IsLoggingAllowed>(
         self,
         e: Err,
         request_context: T,
@@ -124,16 +141,6 @@ pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
 
             format!("{:#?}", context)
         })
-    }
-
-    #[track_caller]
-    fn into_transaction_error<T: Debug + IsLoggingAllowed>(
-        self,
-        e: Err,
-        request_context: T,
-    ) -> std::result::Result<Self::Ok, TransactionError<Err>> {
-        self.into_db_error(e, request_context)
-            .map_err(TransactionError)
     }
 
     #[track_caller]
@@ -152,24 +159,23 @@ pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
 impl<Ok> IntoDatabaseError<DieselDatabaseError>
     for std::result::Result<Ok, ::diesel::result::Error>
 {
+    const DEFAULT_NEW_ERROR: Self::NewError = DieselDatabaseError::DieselError;
+    type NewError = DieselDatabaseError;
 }
 
-impl<Ok> IntoDatabaseError<DieselDatabaseError>
+impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
     for std::result::Result<Ok, ::serde_json::error::Error>
-{
-}
+{}
 
-impl<Ok> IntoDatabaseError<DieselDatabaseError> for std::result::Result<Ok, DieselDatabaseError> {}
+impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError> for std::result::Result<Ok, DieselDatabaseError> {}
 
-impl<Ok> IntoDatabaseError<DieselDatabaseError>
+impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
     for std::result::Result<Ok, model::account::AccountStateError>
-{
-}
+{}
 
-impl<Ok> IntoDatabaseError<simple_backend_database::sqlx_db::SqliteDatabaseError>
+impl<Ok> IntoDatabaseErrorExt<simple_backend_database::sqlx_db::SqliteDatabaseError>
     for std::result::Result<Ok, ::sqlx::Error>
-{
-}
+{}
 
 // Workaround because it is not possible to implement From<diesel::result::Error>
 // to error_stack::Report from here.
