@@ -6,6 +6,8 @@ use model::{
 
 use crate::data::DataError;
 
+use super::db_transaction;
+
 define_write_commands!(WriteCommandsAccount);
 
 impl WriteCommandsAccount<'_> {
@@ -18,7 +20,7 @@ impl WriteCommandsAccount<'_> {
     ) -> Result<(), DataError> {
         let state_copy = shared_state.clone();
         let capabilities_copy = capabilities.clone();
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             if let Some(state) = state_copy {
                 cmds.common().state().shared_state(id, state)?;
             }
@@ -28,8 +30,7 @@ impl WriteCommandsAccount<'_> {
                     .account_capabilities(id, capabilities)?;
             }
             Ok(())
-        })
-        .await?;
+        })?;
 
         self.write_cache(id, |cache| {
             if let Some(state) = shared_state {
@@ -50,9 +51,9 @@ impl WriteCommandsAccount<'_> {
         id: AccountIdInternal,
         account_setup: AccountSetup,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_account().data().account_setup(id, &account_setup))
-            .await?;
-        Ok(())
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().data().account_setup(id, &account_setup)
+        })
     }
 
     pub async fn account_data(
@@ -64,9 +65,9 @@ impl WriteCommandsAccount<'_> {
             email: account_data.email,
         };
 
-        self.db_write(move |cmds| cmds.into_account().data().account(id, &internal))
-            .await?;
-        Ok(())
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().data().account(id, &internal)
+        })
     }
 
     // Remember to sync another servers if you use this method

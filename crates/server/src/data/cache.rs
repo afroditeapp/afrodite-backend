@@ -260,7 +260,8 @@ impl DatabaseCache {
         }
     }
 
-    pub async fn delete_access_token_and_connection(
+    /// Delete connection. Also delete access token if it is Some.
+    pub async fn delete_connection_and_specific_access_token(
         &self,
         id: AccountId,
         token: Option<AccessToken>,

@@ -17,7 +17,7 @@ use super::{
 use crate::{
     content_processing::NewContentInfo,
     data::DataError,
-    result::{Result, WrappedContextExt, WrappedResultExt2},
+    result::{Result, WrappedContextExt},
 };
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;

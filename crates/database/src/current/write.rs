@@ -130,26 +130,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
         Self { conn }
     }
 
-    pub fn into_account(self) -> CurrentSyncWriteAccount<C> {
-        CurrentSyncWriteAccount::new(self.conn)
-    }
-
-    pub fn into_media(self) -> CurrentSyncWriteMedia<C> {
-        CurrentSyncWriteMedia::new(self.conn)
-    }
-
-    pub fn into_media_admin(self) -> CurrentSyncWriteMediaAdmin<C> {
-        CurrentSyncWriteMediaAdmin::new(self.conn)
-    }
-
-    pub fn into_profile(self) -> CurrentSyncWriteProfile<C> {
-        CurrentSyncWriteProfile::new(self.conn)
-    }
-
-    pub fn into_chat(self) -> CurrentSyncWriteChat<C> {
-        CurrentSyncWriteChat::new(self.conn)
-    }
-
     pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
         crate::current::read::CurrentSyncReadCommands::new(self.conn.conn())
     }

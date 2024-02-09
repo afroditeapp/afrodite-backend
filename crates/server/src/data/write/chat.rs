@@ -1,5 +1,8 @@
-use crate::{data::IntoDataError, result::{Result, WrappedContextExt, WrappedResultExt2}};
+use crate::{data::{write::db_transaction}, result::Result};
+use error_stack::ResultExt;
 use model::{AccountIdInternal, AccountInteractionInternal, MessageNumber, PendingMessageId};
+use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::ContextExt;
 
 use crate::data::DataError;
 
@@ -14,43 +17,37 @@ impl WriteCommandsChat<'_> {
         id_like_sender: AccountIdInternal,
         id_like_receiver: AccountIdInternal,
     ) -> Result<AccountInteractionInternal, DataError> {
-        let interaction = self
-            .db_write(move |cmds| {
-                cmds.into_chat()
-                    .interaction()
-                    .get_or_create_account_interaction(id_like_sender, id_like_receiver)
-            })
-            .await?;
-
-        let updated = if interaction.is_like()
-            && interaction.account_id_sender == Some(id_like_sender.into_db_id())
-            && interaction.account_id_receiver == Some(id_like_receiver.into_db_id())
-        {
-            return Err(DataError::AlreadyDone.report());
-        } else if interaction.is_like()
-            && interaction.account_id_sender == Some(id_like_receiver.into_db_id())
-            && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
-        {
-            interaction
-                .try_into_match()
-                .change_context(DataError::NotAllowed)?
-        } else if interaction.is_match() {
-            return Err(DataError::AlreadyDone.report());
-        } else {
-            interaction
-                .try_into_like(id_like_sender, id_like_receiver)
-                .change_context(DataError::NotAllowed)?
-        };
-
-        let updated_clone = updated.clone();
-        self.db_write(move |cmds| {
-            cmds.into_chat()
+        db_transaction!(self, move |mut cmds| {
+            let interaction = cmds.chat()
                 .interaction()
-                .update_account_interaction(updated)
-        })
-        .await?;
+                .get_or_create_account_interaction(id_like_sender, id_like_receiver)?;
 
-        Ok(updated_clone)
+            let updated = if interaction.is_like()
+                && interaction.account_id_sender == Some(id_like_sender.into_db_id())
+                && interaction.account_id_receiver == Some(id_like_receiver.into_db_id())
+            {
+                return Err(DieselDatabaseError::AlreadyDone.report());
+            } else if interaction.is_like()
+                && interaction.account_id_sender == Some(id_like_receiver.into_db_id())
+                && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
+            {
+                interaction
+                    .try_into_match()
+                    .change_context(DieselDatabaseError::NotAllowed)?
+            } else if interaction.is_match() {
+                return Err(DieselDatabaseError::AlreadyDone.report());
+            } else {
+                interaction
+                    .try_into_like(id_like_sender, id_like_receiver)
+                    .change_context(DieselDatabaseError::NotAllowed)?
+            };
+
+            cmds.chat()
+                .interaction()
+                .update_account_interaction(updated.clone())?;
+
+            Ok(updated)
+        })
     }
 
     /// Delete a like or block.
@@ -61,30 +58,27 @@ impl WriteCommandsChat<'_> {
         id_sender: AccountIdInternal,
         id_receiver: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let interaction = self
-            .db_write(move |cmds| {
-                cmds.into_chat()
+        db_transaction!(self, move |mut cmds| {
+            let interaction = cmds.chat()
                     .interaction()
-                    .get_or_create_account_interaction(id_sender, id_receiver)
-            })
-            .await?;
-        if interaction.is_empty() {
-            return Err(DataError::AlreadyDone.report());
-        }
-        if interaction.account_id_sender != Some(id_sender.into_db_id()) {
-            return Err(DataError::NotAllowed.report());
-        }
-        let updated = interaction
-            .try_into_empty()
-            .change_context(DataError::NotAllowed)?;
-        self.db_write(move |cmds| {
-            cmds.into_chat()
-                .interaction()
-                .update_account_interaction(updated)
-        })
-        .await?;
+                    .get_or_create_account_interaction(id_sender, id_receiver)?;
 
-        Ok(())
+            if interaction.is_empty() {
+                return Err(DieselDatabaseError::AlreadyDone.report());
+            }
+            if interaction.account_id_sender != Some(id_sender.into_db_id()) {
+                return Err(DieselDatabaseError::NotAllowed.report());
+            }
+            let updated = interaction
+                .try_into_empty()
+                .change_context(DieselDatabaseError::NotAllowed)?;
+
+            cmds.chat()
+                .interaction()
+                .update_account_interaction(updated)?;
+
+            Ok(())
+        })
     }
 
     /// Block a profile.
@@ -95,27 +89,23 @@ impl WriteCommandsChat<'_> {
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let interaction = self
-            .db_write(move |cmds| {
-                cmds.into_chat()
-                    .interaction()
-                    .get_or_create_account_interaction(id_block_sender, id_block_receiver)
-            })
-            .await?;
-        if interaction.is_blocked() {
-            return Err(DataError::AlreadyDone.report());
-        }
-        let updated = interaction
-            .try_into_block(id_block_sender, id_block_receiver)
-            .change_context(DataError::NotAllowed)?;
-        self.db_write(move |cmds| {
-            cmds.into_chat()
+        db_transaction!(self, move |mut cmds| {
+            let interaction = cmds.chat()
                 .interaction()
-                .update_account_interaction(updated)
-        })
-        .await?;
+                .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
 
-        Ok(())
+            if interaction.is_blocked() {
+                return Err(DieselDatabaseError::AlreadyDone.report());
+            }
+            let updated = interaction
+                .try_into_block(id_block_sender, id_block_receiver)
+                .change_context(DieselDatabaseError::NotAllowed)?;
+            cmds.chat()
+                .interaction()
+                .update_account_interaction(updated)?;
+
+            Ok(())
+        })
     }
 
     /// Delete these pending messages which the receiver has received
@@ -124,13 +114,11 @@ impl WriteCommandsChat<'_> {
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| {
-            cmds.into_chat()
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
                 .message()
                 .delete_pending_message_list(message_receiver, messages)
         })
-        .await
-        .into_error()
     }
 
     /// Update message number which my account has viewed from the sender
@@ -140,42 +128,39 @@ impl WriteCommandsChat<'_> {
         id_message_sender: AccountIdInternal,
         new_message_number: MessageNumber,
     ) -> Result<(), DataError> {
-        let mut interaction = self
-            .db_read(move |mut cmds| {
-                cmds.chat()
-                    .interaction()
-                    .account_interaction(id_my_account, id_message_sender)
-            })
-            .await?
-            .ok_or(DataError::NotFound.report())?;
-
-        // Prevent marking future messages as viewed
-        if new_message_number.message_number > interaction.message_counter {
-            return Err(DataError::NotAllowed.report());
-        }
-
-        // Who is sender and receiver in the interaction data depends
-        // on who did the first like
-        let modify_number = if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
-            interaction.sender_latest_viewed_message.as_mut()
-        } else {
-            interaction.receiver_latest_viewed_message.as_mut()
-        };
-
-        if let Some(number) = modify_number {
-            *number = new_message_number;
-        } else {
-            return Err(DataError::NotAllowed.report());
-        }
-
-        self.db_write(move |cmds| {
-            cmds.into_chat()
+        db_transaction!(self, move |mut cmds| {
+            let mut interaction = cmds
+                .read()
+                .chat()
                 .interaction()
-                .update_account_interaction(interaction)
-        })
-        .await?;
+                .account_interaction(id_my_account, id_message_sender)?
+                .ok_or(DieselDatabaseError::NotFound.report())?;
 
-        Ok(())
+            // Prevent marking future messages as viewed
+            if new_message_number.message_number > interaction.message_counter {
+                return Err(DieselDatabaseError::NotAllowed.report());
+            }
+
+            // Who is sender and receiver in the interaction data depends
+            // on who did the first like
+            let modify_number = if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
+                interaction.sender_latest_viewed_message.as_mut()
+            } else {
+                interaction.receiver_latest_viewed_message.as_mut()
+            };
+
+            if let Some(number) = modify_number {
+                *number = new_message_number;
+            } else {
+                return Err(DieselDatabaseError::NotAllowed.report());
+            }
+
+            cmds.chat()
+                .interaction()
+                .update_account_interaction(interaction)?;
+
+            Ok(())
+        })
     }
 
     /// Insert a new pending message if sender and receiver are a match
@@ -185,12 +170,10 @@ impl WriteCommandsChat<'_> {
         receiver: AccountIdInternal,
         message: String,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| {
-            cmds.into_chat()
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
                 .message()
                 .insert_pending_message_if_match(sender, receiver, message)
         })
-        .await
-        .into_error()
     }
 }

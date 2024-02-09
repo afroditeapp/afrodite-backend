@@ -272,6 +272,8 @@ pub struct AccessTokenRaw {
     pub token: Option<String>,
 }
 
+/// AccessToken is used as a short lived token for API access.
+///
 /// This is just a random string.
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct AccessToken {

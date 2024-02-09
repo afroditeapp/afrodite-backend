@@ -7,6 +7,8 @@ use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::data::DataError;
 
+use super::db_transaction;
+
 define_write_commands!(WriteCommandsMedia);
 
 impl WriteCommandsMedia<'_> {
@@ -15,13 +17,11 @@ impl WriteCommandsMedia<'_> {
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .moderation_request()
                 .create_new_moderation_request(account_id, request)
         })
-        .await
-        .into_error()
     }
 
     /// Completes previous save_to_tmp.
@@ -90,13 +90,11 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         new: SetProfileContent,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .update_profile_content_if_possible(id, new)
         })
-        .await
-        .into_error()
     }
 
     pub async fn update_or_delete_pending_profile_content(
@@ -104,13 +102,11 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         new: Option<SetProfileContent>,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .update_or_delete_pending_profile_content_if_possible(id, new)
         })
-        .await
-        .into_error()
     }
 
     pub async fn update_security_image(
@@ -118,13 +114,11 @@ impl WriteCommandsMedia<'_> {
         content_owner: AccountIdInternal,
         content: ContentId,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .delete_content(content_owner, content)
         })
-        .await
-        .into_error()
     }
 
     pub async fn update_or_delete_pending_security_image(
@@ -132,13 +126,11 @@ impl WriteCommandsMedia<'_> {
         content_owner: AccountIdInternal,
         content: Option<ContentId>,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .update_or_delete_pending_security_image(content_owner, content)
         })
-        .await
-        .into_error()
     }
 
     pub async fn delete_content(
@@ -146,25 +138,21 @@ impl WriteCommandsMedia<'_> {
         content_owner: AccountIdInternal,
         content: ContentId,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .delete_content(content_owner, content)
         })
-        .await
-        .into_error()
     }
 
     pub async fn delete_moderation_request_if_possible(
         self,
         moderation_request_owner: AccountIdInternal,
     ) -> Result<(), DataError> {
-        self.db_transaction(move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .moderation_request()
                 .delete_moderation_request_not_yet_in_moderation(moderation_request_owner)
         })
-        .await
-        .into_error()
     }
 }

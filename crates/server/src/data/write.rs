@@ -11,7 +11,6 @@ use database::{
     history::write::{HistorySyncWriteCommands, HistoryWriteCommands},
     CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
-use error_stack::{ResultExt};
 use model::{
     Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, SharedStateInternal,
     SignInWithInfo,
@@ -41,11 +40,11 @@ use crate::result::Result;
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
         pub struct $struct_name<'a> {
-            cmds: super::WriteCommands<'a>,
+            cmds: $crate::data::write::WriteCommands<'a>,
         }
 
         impl<'a> $struct_name<'a> {
-            pub fn new(cmds: super::WriteCommands<'a>) -> Self {
+            pub fn new(cmds: $crate::data::write::WriteCommands<'a>) -> Self {
                 Self { cmds }
             }
 
@@ -60,23 +59,23 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
-            fn cache(&self) -> &super::super::cache::DatabaseCache {
+            fn cache(&self) -> &$crate::data::cache::DatabaseCache {
                 &self.cmds.cache
             }
 
             #[allow(dead_code)]
-            fn file_dir(&self) -> &super::super::FileDir {
+            fn file_dir(&self) -> &$crate::data::FileDir {
                 &self.cmds.file_dir
             }
 
             #[allow(dead_code)]
-            fn location(&self) -> super::super::index::LocationIndexWriteHandle<'a> {
-                super::super::index::LocationIndexWriteHandle::new(&self.cmds.location_index)
+            fn location(&self) -> $crate::data::index::LocationIndexWriteHandle<'a> {
+                $crate::data::index::LocationIndexWriteHandle::new(&self.cmds.location_index)
             }
 
             #[allow(dead_code)]
-            fn location_iterator(&self) -> super::super::index::LocationIndexIteratorHandle<'a> {
-                super::super::index::LocationIndexIteratorHandle::new(&self.cmds.location_index)
+            fn location_iterator(&self) -> $crate::data::index::LocationIndexIteratorHandle<'a> {
+                $crate::data::index::LocationIndexIteratorHandle::new(&self.cmds.location_index)
             }
 
             #[allow(dead_code)]
@@ -90,8 +89,8 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
-            fn history(&self) -> super::super::write::HistoryWriteCommands {
-                super::super::write::HistoryWriteCommands::new(&self.history_write())
+            fn history(&self) -> $crate::data::write::HistoryWriteCommands {
+                $crate::data::write::HistoryWriteCommands::new(&self.history_write())
             }
 
             pub async fn db_write<
@@ -117,11 +116,9 @@ macro_rules! define_write_commands {
                         database::current::write::CurrentSyncWriteCommands<
                             &mut simple_backend_database::diesel_db::DieselConnection,
                         >,
-                    ) -> std::result::Result<
+                    ) -> error_stack::Result<
                         R,
-                        error_stack::Report<
-                            simple_backend_database::diesel_db::DieselDatabaseError,
-                        >,
+                        simple_backend_database::diesel_db::DieselDatabaseError,
                     > + Send
                     + 'static,
                 R: Send + 'static,
@@ -154,9 +151,9 @@ macro_rules! define_write_commands {
                 &self,
                 id: Id,
                 cache_operation: impl FnOnce(
-                    &mut crate::data::cache::CacheEntry,
-                ) -> error_stack::Result<T, crate::data::CacheError>,
-            ) -> error_stack::Result<T, crate::data::CacheError> {
+                    &mut $crate::data::cache::CacheEntry,
+                ) -> error_stack::Result<T, $crate::data::CacheError>,
+            ) -> error_stack::Result<T, $crate::data::CacheError> {
                 self.cache()
                     .write_cache(id, cache_operation)
                     .await
@@ -361,6 +358,8 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
+        use error_stack::ResultExt;
+
         let conn = self
             .current_write_handle
             .0
@@ -388,6 +387,8 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
+        use error_stack::ResultExt;
+
         let conn = self
             .current_write_handle
             .0
@@ -397,13 +398,22 @@ impl<'a> WriteCommands<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        conn.interact(move |conn| {
+        let result = conn.interact(move |conn| {
             CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
                 cmd(CurrentSyncWriteCommands::new(conn)).map_err(|err| err.into())
             })
         })
         .await
-        .into_error_string(DieselDatabaseError::Execute)?
+        .into_error_string(DieselDatabaseError::Execute);
+
+        match result {
+            Ok(result) =>
+                match result {
+                    Ok(result) => Ok(result),
+                    Err(err) => Err(err.into()),
+                },
+            Err(err) => Err(err.into()),
+        }
     }
 
     pub async fn db_transaction_with_history<T, R: Send + 'static>(
@@ -418,6 +428,8 @@ impl<'a> WriteCommands<'a> {
             + Send
             + 'static,
     {
+        use error_stack::ResultExt;
+
         let conn = self
             .current_write_handle
             .0
@@ -455,6 +467,8 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
+        use error_stack::ResultExt;
+
         let conn = self
             .current_write_handle
             .0
@@ -469,3 +483,48 @@ impl<'a> WriteCommands<'a> {
             .into_error_string(DieselDatabaseError::Execute)?
     }
 }
+
+
+/// Macro for writing to current database with transaction.
+/// Calls await automatically.
+///
+/// ```ignore
+/// use server::data::DataError;
+/// use server::data::write::{define_write_commands, db_transaction};
+///
+/// define_write_commands!(WriteCommandsTest);
+///
+/// impl WriteCommandsTest<'_> {
+///     pub async fn test(
+///         &self,
+///     ) -> server::result::Result<(), DataError> {
+///         db_transaction!(self, move |mut cmds| {
+///             Ok(())
+///         })?;
+///         Ok(())
+///     }
+/// }
+/// ```
+macro_rules! db_transaction {
+    ($state:expr, move |mut $cmds:ident| $commands:expr) => {
+        {
+            $crate::data::IntoDataError::into_error(
+                $state
+                    .db_transaction(move |mut $cmds| ($commands) )
+                    .await
+            )
+        }
+    };
+    ($state:expr, move |$cmds:ident| $commands:expr) => {
+        {
+            $crate::data::IntoDataError::into_error(
+                $state
+                    .db_transaction(move |$cmds| ($commands) )
+                    .await
+            )
+        }
+    };
+}
+
+// Make db_transaction available in all modules
+pub(crate) use db_transaction;

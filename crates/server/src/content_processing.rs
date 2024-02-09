@@ -19,7 +19,7 @@ use crate::{
     app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData},
     data::file::utils::TmpContentFile,
     event::EventManager,
-    result::{Result, WrappedResultExt, WrappedResultExt2}
+    result::{Result, WrappedResultExt}
 };
 
 #[derive(thiserror::Error, Debug)]

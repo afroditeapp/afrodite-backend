@@ -11,7 +11,7 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use crate::result::{Result, WrappedContextExt, WrappedResultExt, WrappedResultExt2};
+use crate::result::{Result, WrappedContextExt, WrappedResultExt};
 use model::{
     AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,
     RefreshToken,
@@ -107,7 +107,7 @@ async fn handle_socket<S: WriteData + ReadData>(
             //       Test does this code path work with client.
             let result = state.write(move |cmds| async move {
                 cmds.common()
-                    .end_connection_session(id, false)
+                    .end_connection_session(id)
                     .await
             }).await;
 
@@ -120,7 +120,7 @@ async fn handle_socket<S: WriteData + ReadData>(
                 Ok(()) => {
                     let result = state.write(move |cmds| async move {
                         cmds.common()
-                            .end_connection_session(id, false)
+                            .end_connection_session(id)
                             .await
                     }).await;
 

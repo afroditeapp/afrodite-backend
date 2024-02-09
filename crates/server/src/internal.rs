@@ -14,7 +14,7 @@ use super::data::{read::ReadCommands, utils::AccessTokenManager};
 use crate::{
     app::{GetAccessTokens, GetConfig, ReadData, WriteData},
     data::{WithInfo, WrappedWithInfo},
-    result::{Result, WrappedContextExt, WrappedResultExt, WrappedResultExt2},
+    result::{Result, WrappedContextExt, WrappedResultExt},
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted

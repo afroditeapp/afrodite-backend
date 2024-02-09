@@ -3,6 +3,7 @@ use std::ops::ShlAssign;
 use simple_backend_database::{diesel_db::DieselDatabaseError};
 
 use error_stack::{Context, Report, ResultExt};
+use simple_backend_utils::ContextExt;
 
 use crate::data::{cache::CacheError, file::FileError, index::IndexError, DataError};
 
@@ -29,6 +30,10 @@ impl <E> WrappedReport<Report<E>> {
             report: self.report.attach_printable(attachment)
         }
     }
+
+    pub fn into_report(self) -> Report<E> {
+        self.report
+    }
 }
 
 impl <E> std::fmt::Debug for WrappedReport<Report<E>> {
@@ -40,6 +45,15 @@ impl <E> std::fmt::Debug for WrappedReport<Report<E>> {
 impl <E> std::fmt::Display for WrappedReport<Report<E>> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.report)
+    }
+}
+
+impl <C: Context> From<Report<C>> for WrappedReport<Report<C>> {
+    #[track_caller]
+    fn from(error: Report<C>) -> Self {
+        Self {
+            report: error
+        }
     }
 }
 
@@ -106,56 +120,93 @@ impl From<std::io::Error> for WrappedReport<Report<DataError>> {
     }
 }
 
-
-/// Create wrapped Reports
-pub trait WrappedContextExt: error_stack::Context + Sized {
+/// Convert errors to WrappedReports or Reports.
+pub trait WrappedContextExt<ReportAndError>: Context + Sized {
     #[track_caller]
-    fn report(self) -> WrappedReport<Report<Self>> {
+    fn report(self) -> ReportAndError;
+}
+
+impl <E: Context> WrappedContextExt<WrappedReport<Report<E>>> for E {
+    #[track_caller]
+    fn report(self) -> WrappedReport<Report<E>> {
         WrappedReport {
             report: error_stack::report!(self),
         }
     }
 }
 
-impl <E: Context> WrappedContextExt for E {}
-
-pub trait WrappedResultExt<Ok>: Sized {
+pub trait WrappedResultExt<
+    Ok,
+    InContext: Context,
+    OutContext: Context,
+    InReportAndError,
+    OutReportAndError,
+>: Sized {
     #[track_caller]
-    fn change_context<C: Context>(self, context: C) -> std::result::Result<Ok, WrappedReport<Report<C>>>;
+    fn change_context(self, context: OutContext) -> std::result::Result<Ok, OutReportAndError>;
 }
 
-impl <Ok, Err: Context> WrappedResultExt<Ok> for std::result::Result<Ok, Report<Err>> {
+impl <
+    Ok,
+    InContext: Context,
+    OutContext: Context,
+> WrappedResultExt<
+    Ok,
+    InContext,
+    OutContext,
+    WrappedReport<Report<InContext>>,
+    WrappedReport<Report<OutContext>>
+> for std::result::Result<Ok, WrappedReport<Report<InContext>>> {
     #[track_caller]
-    fn change_context<C: Context>(self, context: C) -> std::result::Result<Ok, WrappedReport<Report<C>>> {
-        self.map_err(|e| {
-            WrappedReport {
-                report: e.change_context(context),
-            }
-        })
-    }
-}
-
-impl <Ok, Err: Context> WrappedResultExt<Ok> for std::result::Result<Ok, WrappedReport<Report<Err>>> {
-    #[track_caller]
-    fn change_context<C: Context>(self, context: C) -> std::result::Result<Ok, WrappedReport<Report<C>>> {
+    fn change_context(self, context: OutContext) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self {
             Ok(ok) => Ok(ok),
-            Err(err) => Err(err.change_context(context)),
+            Err(err) => Err(
+                WrappedReport {
+                    report: err.report.change_context(context),
+                }
+            ),
         }
     }
 }
 
-/// WrappedResultExt2 is same as WrappedResultExt but different trait is needed
-/// as it was not possible to implement WrappedResultExt for both
-/// std::result::Result<Ok, Report<Err>> and std::result::Result<Ok, Err>.
-pub trait WrappedResultExt2<Ok>: Sized {
+impl <
+    Ok,
+    InContext: Context,
+    OutContext: Context,
+> WrappedResultExt<
+    Ok,
+    InContext,
+    OutContext,
+    Report<InContext>,
+    WrappedReport<Report<OutContext>>
+> for std::result::Result<Ok, Report<InContext>> {
     #[track_caller]
-    fn change_context<C: Context>(self, context: C) -> std::result::Result<Ok, WrappedReport<Report<C>>>;
+    fn change_context(self, context: OutContext) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
+        match self {
+            Ok(ok) => Ok(ok),
+            Err(err) => Err(
+                WrappedReport {
+                    report: err.change_context(context),
+                }
+            ),
+        }
+    }
 }
 
-impl <Ok, Err: Context> WrappedResultExt2<Ok> for std::result::Result<Ok, Err> {
+impl <
+    Ok,
+    InContext: Context,
+    OutContext: Context,
+> WrappedResultExt<
+    Ok,
+    InContext,
+    OutContext,
+    InContext,
+    WrappedReport<Report<OutContext>>
+> for std::result::Result<Ok, InContext> {
     #[track_caller]
-    fn change_context<C: Context>(self, context: C) -> std::result::Result<Ok, WrappedReport<Report<C>>> {
+    fn change_context(self, context: OutContext) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self {
             Ok(ok) => Ok(ok),
             Err(err) => Err(

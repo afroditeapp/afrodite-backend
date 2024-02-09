@@ -1,5 +1,5 @@
 
-use crate::result::{Result, WrappedContextExt, WrappedResultExt};
+use crate::{data::write::db_transaction, result::{Result, WrappedContextExt}};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
 use crate::data::{
@@ -67,8 +67,9 @@ impl WriteCommandsProfile<'_> {
             .ok_or(DataError::FeatureDisabled.report())?;
 
         let new_location_key = self.location().coordinates_to_key(&coordinates);
-        self.db_write(move |cmds| cmds.into_profile().data().profile_location(id, coordinates))
-            .await?;
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().profile_location(id, coordinates)
+        })?;
 
         self.location()
             .update_profile_location(id.as_id(), location.current_position, new_location_key)
@@ -97,8 +98,9 @@ impl WriteCommandsProfile<'_> {
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
-        self.db_write(move |cmds| cmds.into_profile().data().profile(id, profile_data))
-            .await?;
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().profile(id, profile_data)
+        })?;
 
         self.cache()
             .write_cache(id.as_id(), |e| {
@@ -116,8 +118,9 @@ impl WriteCommandsProfile<'_> {
 
     pub async fn profile_name(self, id: AccountIdInternal, data: String) -> Result<(), DataError> {
         let profile_data = data.clone();
-        self.db_write(move |cmds| cmds.into_profile().data().profile_name(id, profile_data))
-            .await?;
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().profile_name(id, profile_data)
+        })?;
 
         self.cache()
             .write_cache(id.as_id(), |e| {
@@ -136,13 +139,11 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| {
-            cmds.into_profile()
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile()
                 .favorite()
                 .insert_favorite_profile(id, favorite)
         })
-        .await
-        .into_error()
     }
 
     pub async fn remove_favorite_profile(
@@ -150,13 +151,11 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| {
-            cmds.into_profile()
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile()
                 .favorite()
                 .remove_favorite_profile(id, favorite)
         })
-        .await
-        .into_error()
     }
 
     pub async fn benchmark_update_profile_bypassing_cache(
@@ -164,11 +163,8 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
-        self.db_write(move |cmds| cmds.into_profile().data().profile(id, data))
-            .await?;
-
-        //self.cmds.update_data(id, &data).await?;
-
-        Ok(())
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().profile(id, data)
+        })
     }
 }

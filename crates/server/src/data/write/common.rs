@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use model::{AccountId, AccountIdInternal, AuthPair, SharedState};
 
 use crate::{
-    data::{DataError, IntoDataError},
+    data::{write::db_transaction, DataError, IntoDataError},
     event::{event_channel, EventMode, EventReceiver},
     result::{Result, WrappedResultExt},
 };
@@ -17,15 +17,13 @@ impl WriteCommandsCommon<'_> {
         pair: AuthPair,
         address: Option<SocketAddr>,
     ) -> Result<(), DataError> {
-        let current_access_token = self
-            .db_read(move |mut cmds| cmds.account().token().access_token(id))
-            .await?;
-
         let access = pair.access.clone();
-        self.db_write(move |mut cmds| cmds.account().token().access_token(id, Some(access)))
-            .await?;
-        self.db_write(move |mut cmds| cmds.account().token().refresh_token(id, Some(pair.refresh)))
-            .await?;
+        let current_access_token = db_transaction!(self, move |mut cmds| {
+            let current_access_token = cmds.read().account().token().access_token(id)?;
+            cmds.account().token().access_token(id, Some(access))?;
+            cmds.account().token().refresh_token(id, Some(pair.refresh))?;
+            Ok(current_access_token)
+        })?;
 
         self.cache()
             .update_access_token_and_connection(
@@ -40,10 +38,17 @@ impl WriteCommandsCommon<'_> {
 
     /// Remove current connection address, access and refresh tokens.
     pub async fn logout(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        self.db_write(move |mut cmds| cmds.account().token().refresh_token(id, None))
-            .await?;
+        let current_access_token = db_transaction!(self, move |mut cmds| {
+            let current_access_token = cmds.read().account().token().access_token(id);
+            cmds.account().token().access_token(id, None)?;
+            cmds.account().token().refresh_token(id, None)?;
+            current_access_token
+        })?;
 
-        self.end_connection_session(id, true).await?;
+        self.cache()
+            .delete_connection_and_specific_access_token(id.as_id(), current_access_token)
+            .await
+            .into_data_error(id)?;
 
         Ok(())
     }
@@ -66,23 +71,20 @@ impl WriteCommandsCommon<'_> {
     /// Remove current connection address and access token.
     pub async fn end_connection_session(
         &self,
-        id: AccountIdInternal,
-        remove_access_token: bool,
+        id: AccountIdInternal
     ) -> Result<(), DataError> {
-        let current_access_token = if remove_access_token {
-            self.db_read(move |mut cmds| cmds.account().token().access_token(id))
-                .await?
-        } else {
-            None
-        };
+        // TODO: Previous implementation didn't remove access token from cache.
+        //       Was that a bug?
+        let current_access_token = db_transaction!(self, move |mut cmds| {
+            let current_access_token = cmds.read().account().token().access_token(id);
+            cmds.account().token().access_token(id, None)?;
+            current_access_token
+        })?;
 
         self.cache()
-            .delete_access_token_and_connection(id.as_id(), current_access_token)
+            .delete_connection_and_specific_access_token(id.as_id(), current_access_token)
             .await
             .into_data_error(id)?;
-
-        self.db_write(move |mut cmds| cmds.account().token().access_token(id, None))
-            .await?;
 
         Ok(())
     }
@@ -92,8 +94,8 @@ impl WriteCommandsCommon<'_> {
         id: AccountIdInternal,
         state: SharedState,
     ) -> Result<(), DataError> {
-        self.db_write(move |mut cmds| cmds.common().state().shared_state(id, state))
-            .await?;
-        Ok(())
+        db_transaction!(self, move |mut cmds| {
+            cmds.common().state().shared_state(id, state)
+        })
     }
 }
