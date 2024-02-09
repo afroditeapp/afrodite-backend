@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::format_ident;
-use syn::{parse_macro_input, ReturnType};
+use syn::{parse_macro_input};
 
 /// Mark a function as an integration test for the server.
 ///

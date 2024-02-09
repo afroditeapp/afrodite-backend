@@ -2,7 +2,6 @@
 
 use std::sync::Arc;
 
-use error_stack::ResultExt;
 use model::{AccountId, EventToClient, EventToClientInternal, NotificationEvent};
 use tokio::sync::mpsc;
 

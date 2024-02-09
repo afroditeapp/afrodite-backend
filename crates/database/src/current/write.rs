@@ -21,10 +21,12 @@ macro_rules! define_write_commands {
         }
 
         impl<'a> $struct_name<'a> {
+            #[allow(dead_code)]
             pub fn new(cmds: &'a crate::current::write::CurrentWriteCommands<'a>) -> Self {
                 Self { cmds }
             }
 
+            #[allow(dead_code)]
             pub fn pool(&self) -> &'a sqlx::SqlitePool {
                 self.cmds.handle.pool()
             }

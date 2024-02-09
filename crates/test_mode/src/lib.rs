@@ -19,7 +19,6 @@ use config::{
     args::{TestMode, TestModeSubMode},
     Config,
 };
-use error_stack::ResultExt;
 use runner::{bot::BotTestRunner, server_tests::QaTestRunner};
 
 pub struct TestRunner {

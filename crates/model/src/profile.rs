@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 
-use diesel::{deserialize::FromSql, prelude::*, serialize::ToSql, sql_types::Binary};
+use diesel::{prelude::*, sql_types::Binary};
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_uuid_wrapper;

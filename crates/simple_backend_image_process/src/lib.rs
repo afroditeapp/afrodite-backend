@@ -1,7 +1,6 @@
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
-    time::Duration,
 };
 
 use error_stack::{report, Result, ResultExt};

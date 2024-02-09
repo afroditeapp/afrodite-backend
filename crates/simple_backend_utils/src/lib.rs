@@ -3,8 +3,6 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-pub mod markers;
-
 use std::fmt::Display;
 
 use error_stack::{Context, Report, Result, ResultExt};

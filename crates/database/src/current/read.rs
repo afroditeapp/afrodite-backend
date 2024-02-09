@@ -23,10 +23,12 @@ macro_rules! define_read_commands {
         }
 
         impl<'a> $struct_name<'a> {
+            #[allow(dead_code)]
             pub fn new(cmds: &'a crate::current::read::CurrentReadCommands<'a>) -> Self {
                 Self { cmds }
             }
 
+            #[allow(dead_code)]
             pub fn pool(&self) -> &'a sqlx::SqlitePool {
                 self.cmds.handle.pool()
             }
@@ -41,7 +43,8 @@ macro_rules! define_read_commands {
                 Self { cmds }
             }
 
-            fn cmds(
+            #[allow(dead_code)]
+            fn read(
                 &mut self,
             ) -> crate::current::read::CurrentSyncReadCommands<
                 &mut simple_backend_database::diesel_db::DieselConnection,

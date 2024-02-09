@@ -1,6 +1,5 @@
-use error_stack::{Context, Report, ResultExt};
+use error_stack::{Context, Report};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use simple_backend_utils::ContextExt;
 
 use crate::data::{cache::CacheError, file::FileError, index::IndexError, DataError};
 

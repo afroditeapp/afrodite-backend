@@ -10,7 +10,7 @@ use database::{
     history::read::HistoryReadCommands, CurrentReadHandle, CurrentWriteHandle, ErrorContext,
     HistoryReadHandle, HistoryWriteHandle,
 };
-use error_stack::{Context, ResultExt};
+use error_stack::Context;
 use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};

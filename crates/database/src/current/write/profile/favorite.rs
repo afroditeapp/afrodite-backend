@@ -1,4 +1,4 @@
-use diesel::{delete, insert_into, prelude::*, ExpressionMethods, QueryDsl};
+use diesel::{delete, insert_into, prelude::*, ExpressionMethods};
 use error_stack::Result;
 use model::AccountIdInternal;
 use simple_backend_database::diesel_db::DieselDatabaseError;

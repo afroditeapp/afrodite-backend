@@ -739,7 +739,6 @@ dependencies = [
  "simple_backend_database",
  "simple_backend_utils",
  "sqlx",
- "time",
  "tokio-stream",
  "uuid",
 ]
@@ -2961,7 +2960,6 @@ dependencies = [
  "thiserror",
  "tokio-rustls",
  "toml 0.8.9",
- "tracing",
  "url",
 ]
 
@@ -2969,24 +2967,17 @@ dependencies = [
 name = "simple_backend_database"
 version = "0.0.0"
 dependencies = [
- "async-trait",
  "deadpool",
  "deadpool-diesel",
  "diesel",
  "diesel_migrations",
  "error-stack",
- "futures",
  "num_cpus",
- "serde_json",
  "simple_backend_config",
  "simple_backend_utils",
  "sqlx",
  "thiserror",
- "time",
- "tokio",
- "tokio-stream",
  "tracing",
- "uuid",
 ]
 
 [[package]]

@@ -4,7 +4,6 @@ use model::{
     AccountId, AccountIdInternal, PendingMessage, PendingMessageId, PendingMessageInternal,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-use tokio_stream::StreamExt;
 
 use crate::IntoDatabaseError;
 
