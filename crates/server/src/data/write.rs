@@ -34,8 +34,7 @@ use super::{
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
     IntoDataError,
 };
-use crate::data::DataError;
-use crate::result::Result;
+use crate::{data::DataError, result::Result};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -107,7 +106,8 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            {
                 self.cmds.db_write(cmd).await
             }
 
@@ -125,7 +125,8 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            {
                 self.cmds.db_transaction(cmd).await
             }
 
@@ -143,7 +144,8 @@ macro_rules! define_write_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            {
                 self.cmds.db_read(cmd).await
             }
 
@@ -152,11 +154,10 @@ macro_rules! define_write_commands {
                 id: Id,
                 cache_operation: impl FnOnce(
                     &mut $crate::data::cache::CacheEntry,
-                ) -> error_stack::Result<T, $crate::data::CacheError>,
+                )
+                    -> error_stack::Result<T, $crate::data::CacheError>,
             ) -> error_stack::Result<T, $crate::data::CacheError> {
-                self.cache()
-                    .write_cache(id, cache_operation)
-                    .await
+                self.cache().write_cache(id, cache_operation).await
             }
         }
     };
@@ -398,20 +399,20 @@ impl<'a> WriteCommands<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        let result = conn.interact(move |conn| {
-            CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-                cmd(CurrentSyncWriteCommands::new(conn)).map_err(|err| err.into())
+        let result = conn
+            .interact(move |conn| {
+                CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
+                    cmd(CurrentSyncWriteCommands::new(conn)).map_err(|err| err.into())
+                })
             })
-        })
-        .await
-        .into_error_string(DieselDatabaseError::Execute);
+            .await
+            .into_error_string(DieselDatabaseError::Execute);
 
         match result {
-            Ok(result) =>
-                match result {
-                    Ok(result) => Ok(result),
-                    Err(err) => Err(err.into()),
-                },
+            Ok(result) => match result {
+                Ok(result) => Ok(result),
+                Err(err) => Err(err.into()),
+            },
             Err(err) => Err(err.into()),
         }
     }
@@ -459,7 +460,9 @@ impl<'a> WriteCommands<'a> {
     }
 
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(
+                CurrentSyncReadCommands<&mut DieselConnection>,
+            ) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -484,7 +487,6 @@ impl<'a> WriteCommands<'a> {
     }
 }
 
-
 /// Macro for writing to current database with transaction.
 /// Calls await automatically.
 ///
@@ -506,24 +508,16 @@ impl<'a> WriteCommands<'a> {
 /// }
 /// ```
 macro_rules! db_transaction {
-    ($state:expr, move |mut $cmds:ident| $commands:expr) => {
-        {
-            $crate::data::IntoDataError::into_error(
-                $state
-                    .db_transaction(move |mut $cmds| ($commands) )
-                    .await
-            )
-        }
-    };
-    ($state:expr, move |$cmds:ident| $commands:expr) => {
-        {
-            $crate::data::IntoDataError::into_error(
-                $state
-                    .db_transaction(move |$cmds| ($commands) )
-                    .await
-            )
-        }
-    };
+    ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
+        $crate::data::IntoDataError::into_error(
+            $state.db_transaction(move |mut $cmds| ($commands)).await,
+        )
+    }};
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        $crate::data::IntoDataError::into_error(
+            $state.db_transaction(move |$cmds| ($commands)).await,
+        )
+    }};
 }
 
 // Make db_transaction available in all modules

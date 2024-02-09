@@ -1,7 +1,11 @@
-use std::{io::BufReader, path::{PathBuf, Path}, time::Duration};
+use std::{
+    io::BufReader,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
-use error_stack::{Result, ResultExt, report};
-use image::{EncodableLayout, DynamicImage};
+use error_stack::{report, Result, ResultExt};
+use image::{DynamicImage, EncodableLayout};
 use simple_backend_config::args::InputFileType;
 
 #[derive(thiserror::Error, Debug)]
@@ -64,38 +68,37 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
         );
 
         let quality = settings.quality.clamp(1.0, 100.0);
-        let quality = if quality.is_nan() {
-            1.0
-        } else {
-            quality
-        };
+        let quality = if quality.is_nan() { 1.0 } else { quality };
         compress.set_quality(quality);
 
-        let mut compress = compress.start_compress(Vec::new())
+        let mut compress = compress
+            .start_compress(Vec::new())
             .change_context(ImageProcessError::EncodingError)?;
 
         let data = img.into_rgb8();
-        compress.write_scanlines(data.as_bytes())
+        compress
+            .write_scanlines(data.as_bytes())
             .change_context(ImageProcessError::EncodingError)?;
 
-        let data = compress.finish().change_context(ImageProcessError::EncodingError)?;
+        let data = compress
+            .finish()
+            .change_context(ImageProcessError::EncodingError)?;
         Ok(data)
     });
 
     let data = match result {
         Ok(result) => result,
         Err(e) => {
-            let error = e.downcast_ref::<&str>()
+            let error = e
+                .downcast_ref::<&str>()
                 .map(|message| message.to_string())
                 .unwrap_or_default();
-            return Err(report!(ImageProcessError::MozjpegPanic)
-                .attach_printable(error));
+            return Err(report!(ImageProcessError::MozjpegPanic).attach_printable(error));
         }
     }
-        .change_context(ImageProcessError::EncodingError)?;
+    .change_context(ImageProcessError::EncodingError)?;
 
-    std::fs::write(&settings.output, &data)
-        .change_context(ImageProcessError::FileWriting)?;
+    std::fs::write(&settings.output, &data).change_context(ImageProcessError::FileWriting)?;
 
     Ok(())
 }
@@ -103,16 +106,19 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
 /// Read exif rotation info from jpeg image.
 /// Returns error if reading failed or the rotation info does not exists.
 fn read_exif_rotation_info(image: &Path) -> Result<u32, ImageProcessError> {
-    let file = std::fs::File::open(image)
-        .change_context(ImageProcessError::ExifReadingFailed)?;
+    let file = std::fs::File::open(image).change_context(ImageProcessError::ExifReadingFailed)?;
     let mut buf_reader = std::io::BufReader::new(file);
     let reader = exif::Reader::new();
-    let exif = reader.read_from_container(&mut buf_reader)
+    let exif = reader
+        .read_from_container(&mut buf_reader)
         .change_context(ImageProcessError::ExifReadingFailed)?;
 
-    let field = exif.get_field(exif::Tag::Orientation, exif::In::PRIMARY)
+    let field = exif
+        .get_field(exif::Tag::Orientation, exif::In::PRIMARY)
         .ok_or(report!(ImageProcessError::ExifReadingFailed))?;
-    let value = field.value.get_uint(0)
+    let value = field
+        .value
+        .get_uint(0)
         .ok_or(report!(ImageProcessError::ExifReadingFailed))?;
 
     Ok(value)

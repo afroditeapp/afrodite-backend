@@ -7,24 +7,20 @@
 
 pub mod bot;
 pub mod client;
-mod server;
-mod state;
-mod server_tests;
 mod runner;
+mod server;
+mod server_tests;
+mod state;
 
 use std::{future::Future, sync::Arc};
 
-
-
 use client::TestError;
-use config::{args::{TestMode, TestModeSubMode}, Config};
+use config::{
+    args::{TestMode, TestModeSubMode},
+    Config,
+};
 use error_stack::ResultExt;
 use runner::{bot::BotTestRunner, server_tests::QaTestRunner};
-
-
-
-
-
 
 pub struct TestRunner {
     config: Arc<Config>,
@@ -45,7 +41,9 @@ impl TestRunner {
         if let TestModeSubMode::Qa(_) = self.test_config.mode {
             QaTestRunner::new(self.config, self.test_config).run().await;
         } else {
-            BotTestRunner::new(self.config, self.test_config).run().await;
+            BotTestRunner::new(self.config, self.test_config)
+                .run()
+                .await;
         }
     }
 }
@@ -58,7 +56,9 @@ pub struct TestFunction {
 
 impl TestFunction {
     pub fn name(&self) -> String {
-        let start = self.module_path.trim_start_matches("test_mode::server_tests::");
+        let start = self
+            .module_path
+            .trim_start_matches("test_mode::server_tests::");
         format!("{}::{}", start, self.name)
     }
 }
@@ -72,14 +72,12 @@ pub type TestResult = Result<(), ServerTestError>;
 /// Workaround for api_client error type conversion to
 /// avoid change_context calls.
 pub struct ServerTestError {
-    pub error: error_stack::Report<TestError>
+    pub error: error_stack::Report<TestError>,
 }
 
 impl ServerTestError {
     pub fn new(error: error_stack::Report<crate::client::TestError>) -> Self {
-        Self {
-            error
-        }
+        Self { error }
     }
 }
 
@@ -87,18 +85,19 @@ impl From<error_stack::Report<crate::client::TestError>> for ServerTestError {
     #[track_caller]
     fn from(error: error_stack::Report<crate::client::TestError>) -> Self {
         Self {
-            error: error.change_context(TestError::ServerTestFailed)
+            error: error.change_context(TestError::ServerTestFailed),
         }
     }
 }
 
-impl <T> From<api_client::apis::Error<T>> for ServerTestError
-where api_client::apis::Error<T>: error_stack::Context {
+impl<T> From<api_client::apis::Error<T>> for ServerTestError
+where
+    api_client::apis::Error<T>: error_stack::Context,
+{
     #[track_caller]
     fn from(error: api_client::apis::Error<T>) -> Self {
         Self {
-            error: error_stack::Report::from(error)
-                .change_context(TestError::ServerTestFailed)
+            error: error_stack::Report::from(error).change_context(TestError::ServerTestFailed),
         }
     }
 }

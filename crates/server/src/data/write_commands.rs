@@ -1,7 +1,10 @@
 //! Database writing commands
 //!
 
-use std::{future::Future, sync::{Arc, OnceLock}};
+use std::{
+    future::Future,
+    sync::{Arc, OnceLock},
+};
 
 use config::Config;
 use model::AccountId;
@@ -13,7 +16,10 @@ use super::{
     },
     RouterDatabaseWriteHandle, SyncWriteHandle,
 };
-use crate::{data::DataError, result::{WrappedContextExt, WrappedResultExt}};
+use crate::{
+    data::DataError,
+    result::{WrappedContextExt, WrappedResultExt},
+};
 
 pub type WriteCmds = Cmds;
 

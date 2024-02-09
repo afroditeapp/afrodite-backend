@@ -1,12 +1,10 @@
-
-use crate::result::Result;
 use model::{AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
-use crate::data::IntoDataError;
+use crate::{data::IntoDataError, result::Result};
 
 define_read_commands!(ReadCommandsMedia);
 

@@ -11,7 +11,6 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use crate::result::{Result, WrappedContextExt, WrappedResultExt};
 use model::{
     AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,
     RefreshToken,
@@ -24,6 +23,7 @@ use super::{
     super::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
     utils::{AccessTokenHeader, Json, StatusCode},
 };
+use crate::result::{Result, WrappedContextExt, WrappedResultExt};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
@@ -95,7 +95,8 @@ async fn handle_socket<S: WriteData + ReadData>(
     state: S,
     mut ws_manager: WebSocketManager,
 ) {
-    let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await {
+    let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await
+    {
         quit_lock
     } else {
         return;

@@ -1,12 +1,10 @@
-
-use crate::result::Result;
 use model::{AccountId, AccountIdInternal, SharedState};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
-use crate::{data::IntoDataError, event::EventMode};
+use crate::{data::IntoDataError, event::EventMode, result::Result};
 
 define_read_commands!(ReadCommandsCommon);
 

@@ -1,27 +1,26 @@
+use std::sync::Arc;
 
-
-use std::{sync::Arc};
-
-use api_client::{apis::{configuration::Configuration}, models::{AccountId}};
+use api_client::{apis::configuration::Configuration, models::AccountId};
 use config::{args::TestMode, Config};
-
-use tokio::{
-    sync::{Mutex}
-};
-
-
-
-use crate::{bot::{actions::{account::{Login, Register}, BotAction}, BotState, WsConnection}, TestError};
-use crate::{client::ApiClient};
-
 use error_stack::Result;
+use tokio::sync::Mutex;
 
+use crate::{
+    bot::{
+        actions::{
+            account::{Login, Register},
+            BotAction,
+        },
+        BotState, WsConnection,
+    },
+    client::ApiClient,
+    TestError,
+};
 
 #[derive(Debug)]
 struct State {
     pub web_sockets: Vec<WsConnection>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct TestContext {
@@ -31,10 +30,7 @@ pub struct TestContext {
 }
 
 impl TestContext {
-    pub fn new(
-        config: Arc<Config>,
-        test_config: Arc<TestMode>,
-    ) -> Self {
+    pub fn new(config: Arc<Config>, test_config: Arc<TestMode>) -> Self {
         Self {
             state: Arc::new(Mutex::new(State {
                 web_sockets: vec![],

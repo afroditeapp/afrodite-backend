@@ -73,7 +73,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
 
         match interaction {
             Some(interaction) => Ok(interaction),
-            None => self.insert_account_interaction(account1, account2)
+            None => self.insert_account_interaction(account1, account2),
         }
     }
 }

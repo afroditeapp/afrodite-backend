@@ -1,5 +1,6 @@
 use std::{
-    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, process::Stdio, sync::Arc
+    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf,
+    process::Stdio, sync::Arc,
 };
 
 use config::{
@@ -10,14 +11,17 @@ use config::{
     },
     Config,
 };
-
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use simple_backend_config::file::{
     DataConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase,
 };
-use tokio::{io::{AsyncBufReadExt, AsyncRead}, process::Child, sync::Mutex, task::JoinHandle};
-
+use tokio::{
+    io::{AsyncBufReadExt, AsyncRead},
+    process::Child,
+    sync::Mutex,
+    task::JoinHandle,
+};
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
 
@@ -284,23 +288,15 @@ impl ServerInstance {
         let mut tokio_command: tokio::process::Command = command.into();
 
         if settings.log_to_memory {
-            tokio_command
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped());
+            tokio_command.stdout(Stdio::piped()).stderr(Stdio::piped());
         }
 
         let mut server = tokio_command.kill_on_drop(true).spawn().unwrap();
 
         let logs = Arc::new(Mutex::new(Vec::new()));
         let (stdout_task, stderr_task) = if settings.log_to_memory {
-            let stdout = server
-                .stdout
-                .take()
-                .expect("Stdout handle is missing");
-            let stderr = server
-                .stderr
-                .take()
-                .expect("Stderr handle is missing");
+            let stdout = server.stdout.take().expect("Stdout handle is missing");
+            let stderr = server.stderr.take().expect("Stderr handle is missing");
 
             fn create_read_lines_task(
                 stream: impl AsyncRead + Unpin + Send + 'static,
@@ -315,11 +311,15 @@ impl ServerInstance {
                                 logs.lock().await.push(line);
                             }
                             Ok(None) => {
-                                logs.lock().await.push(format!("Server {stream_name} closed"));
+                                logs.lock()
+                                    .await
+                                    .push(format!("Server {stream_name} closed"));
                                 break;
                             }
                             Err(e) => {
-                                logs.lock().await.push(format!("Server {stream_name} error: {e:?}"));
+                                logs.lock()
+                                    .await
+                                    .push(format!("Server {stream_name} error: {e:?}"));
                                 break;
                             }
                         }
@@ -335,7 +335,13 @@ impl ServerInstance {
             (None, None)
         };
 
-        Self { server, dir, stdout_task, stderr_task, logs }
+        Self {
+            server,
+            dir,
+            stdout_task,
+            stderr_task,
+            logs,
+        }
     }
 
     fn running(&mut self) -> bool {

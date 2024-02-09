@@ -1,9 +1,11 @@
-
-use crate::{data::write::db_transaction, result::{Result, WrappedContextExt}};
 use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
 
-use crate::data::{
-    cache::CacheError, index::location::LocationIndexIteratorState, DataError, IntoDataError,
+use crate::{
+    data::{
+        cache::CacheError, index::location::LocationIndexIteratorState, write::db_transaction,
+        DataError, IntoDataError,
+    },
+    result::{Result, WrappedContextExt},
 };
 
 define_write_commands!(WriteCommandsProfile);

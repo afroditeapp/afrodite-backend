@@ -30,7 +30,11 @@ pub enum ImageProcessError {
 pub struct ImageProcess;
 
 impl ImageProcess {
-    pub async fn start_image_process(input: &Path, input_file_type: InputFileType, output: &Path) -> Result<(), ImageProcessError> {
+    pub async fn start_image_process(
+        input: &Path,
+        input_file_type: InputFileType,
+        output: &Path,
+    ) -> Result<(), ImageProcessError> {
         let start_cmd = env::args()
             .next()
             .ok_or(ImageProcessError::LaunchCommand.report())?

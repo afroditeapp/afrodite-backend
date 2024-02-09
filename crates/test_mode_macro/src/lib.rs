@@ -1,8 +1,6 @@
-
 use proc_macro::TokenStream;
 use quote::format_ident;
 use syn::{parse_macro_input, ReturnType};
-
 
 /// Mark a function as an integration test for the server.
 ///
@@ -41,7 +39,6 @@ use syn::{parse_macro_input, ReturnType};
 ///
 #[proc_macro_attribute]
 pub fn server_test(_attr: TokenStream, input: TokenStream) -> TokenStream {
-
     let test_fn: syn::ItemFn = parse_macro_input!(input as syn::ItemFn);
     let test_fn_name = &test_fn.sig.ident;
     let hidden_fn_name = format_ident!("__hidden_{}", test_fn_name);

@@ -1,10 +1,5 @@
-use database::{
-    current::read::CurrentSyncReadCommands,
-    CurrentReadHandle,
-};
+use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::ResultExt;
-
-use crate::result::Result;
 use model::{AccountId, AccountIdInternal, ContentId, MediaContentInternal, ModerationRequest};
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::IntoReportFromString;
@@ -17,6 +12,7 @@ use self::{
     profile_admin::ReadCommandsProfileAdmin,
 };
 use super::{cache::DatabaseCache, file::utils::FileDir, DataError, IntoDataError};
+use crate::result::Result;
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
@@ -59,7 +55,8 @@ macro_rules! define_read_commands {
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError> {
+            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            {
                 self.cmds.db_read(cmd).await
             }
 
@@ -69,9 +66,7 @@ macro_rules! define_read_commands {
                 id: Id,
                 cache_operation: impl Fn(&crate::data::cache::CacheEntry) -> T,
             ) -> error_stack::Result<T, crate::data::CacheError> {
-                self.cache()
-                    .read_cache(id, cache_operation)
-                    .await
+                self.cache().read_cache(id, cache_operation).await
             }
         }
     };
@@ -194,7 +189,9 @@ impl<'a> ReadCommands<'a> {
     }
 
     pub async fn db_read<
-        T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(
+                CurrentSyncReadCommands<&mut DieselConnection>,
+            ) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,

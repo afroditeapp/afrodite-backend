@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
-use axum::body::{BodyDataStream};
+use axum::body::BodyDataStream;
 use config::Config;
 use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
 use futures::Future;
@@ -25,15 +25,11 @@ pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;
 pub enum ConcurrentWriteAction<R> {
     Image {
         handle: ConcurrentWriteContentHandle,
-        action: Box<
-            dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + 'static,
-        >,
+        action: Box<dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + 'static>,
     },
     Profile {
         handle: ConcurrentWriteProfileHandle,
-        action: Box<
-            dyn FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + 'static,
-        >,
+        action: Box<dyn FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + 'static>,
     },
 }
 
@@ -272,9 +268,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let tmp_raw_img = self
             .file_dir
             .raw_content_upload(id.as_id(), content_id.to_content_id());
-        tmp_raw_img
-            .save_stream(stream)
-            .await?;
+        tmp_raw_img.save_stream(stream).await?;
 
         let tmp_img = self
             .file_dir

@@ -1,7 +1,9 @@
 use std::fmt::Debug;
 
 use api_client::{
-    apis::media_api::{get_content_slot_state, put_moderation_request}, manual_additions::put_content_to_content_slot_fixed, models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent}
+    apis::media_api::{get_content_slot_state, put_moderation_request},
+    manual_additions::put_content_to_content_slot_fixed,
+    models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -63,35 +65,36 @@ impl BotAction for SendImageToSlot {
 
         let processing_sleep_time = std::time::Duration::from_millis(100);
 
-        let _ =
-            put_content_to_content_slot_fixed(
-                state.api.media(),
-                self.slot,
-                if self.slot == 0 { true } else { false }, // secure capture
-                MediaContentType::JpegImage,
-                img_data.clone()
-            )
-                .await
-                .change_context(TestError::ApiRequest)?;
+        let _ = put_content_to_content_slot_fixed(
+            state.api.media(),
+            self.slot,
+            if self.slot == 0 { true } else { false }, // secure capture
+            MediaContentType::JpegImage,
+            img_data.clone(),
+        )
+        .await
+        .change_context(TestError::ApiRequest)?;
 
         let content_id = loop {
             tokio::time::sleep(processing_sleep_time).await;
 
-            let slot_state = get_content_slot_state(
-                state.api.media(),
-                self.slot
-            )
+            let slot_state = get_content_slot_state(state.api.media(), self.slot)
                 .await
                 .change_context(TestError::ApiRequest)?;
 
             match slot_state.state {
-                ContentProcessingStateType::Empty |
-                ContentProcessingStateType::Failed => return Err(TestError::ApiRequest.report()),
-                ContentProcessingStateType::Processing |
-                ContentProcessingStateType::InQueue =>
-                    tokio::time::sleep(processing_sleep_time).await,
-                ContentProcessingStateType::Completed =>
-                    break slot_state.content_id.flatten().expect("Content ID is missing"),
+                ContentProcessingStateType::Empty | ContentProcessingStateType::Failed => {
+                    return Err(TestError::ApiRequest.report())
+                }
+                ContentProcessingStateType::Processing | ContentProcessingStateType::InQueue => {
+                    tokio::time::sleep(processing_sleep_time).await
+                }
+                ContentProcessingStateType::Completed => {
+                    break slot_state
+                        .content_id
+                        .flatten()
+                        .expect("Content ID is missing")
+                }
             }
         };
 
@@ -112,29 +115,32 @@ impl BotAction for SendImageToSlot {
                 slot,
                 if slot == 0 { true } else { false }, // secure capture
                 MediaContentType::JpegImage,
-                img_data
+                img_data,
             )
-                .await
-                .change_context(TestError::ApiRequest)?;
+            .await
+            .change_context(TestError::ApiRequest)?;
 
             let content_id = loop {
                 tokio::time::sleep(processing_sleep_time).await;
 
-                let slot_state = get_content_slot_state(
-                    state.api.media(),
-                    slot
-                )
+                let slot_state = get_content_slot_state(state.api.media(), slot)
                     .await
                     .change_context(TestError::ApiRequest)?;
 
                 match slot_state.state {
-                    ContentProcessingStateType::Empty |
-                    ContentProcessingStateType::Failed => return Err(TestError::ApiRequest.report()),
-                    ContentProcessingStateType::Processing |
-                    ContentProcessingStateType::InQueue =>
-                        tokio::time::sleep(processing_sleep_time).await,
-                    ContentProcessingStateType::Completed =>
-                        break slot_state.content_id.flatten().expect("Content ID is missing"),
+                    ContentProcessingStateType::Empty | ContentProcessingStateType::Failed => {
+                        return Err(TestError::ApiRequest.report())
+                    }
+                    ContentProcessingStateType::Processing
+                    | ContentProcessingStateType::InQueue => {
+                        tokio::time::sleep(processing_sleep_time).await
+                    }
+                    ContentProcessingStateType::Completed => {
+                        break slot_state
+                            .content_id
+                            .flatten()
+                            .expect("Content ID is missing")
+                    }
                 }
             };
 
@@ -157,12 +163,10 @@ impl BotAction for MakeModerationRequest {
 
         if self.camera {
             content_ids.push(
-                Box::new(state.media.slots[0].clone().unwrap_or(
-                    ContentId {
-                        content_id: uuid::Uuid::new_v4(),
-                    },
-                ))
-                    .into()
+                Box::new(state.media.slots[0].clone().unwrap_or(ContentId {
+                    content_id: uuid::Uuid::new_v4(),
+                }))
+                .into(),
             );
         }
 
@@ -173,12 +177,10 @@ impl BotAction for MakeModerationRequest {
                 .unwrap_or(Box::new(ContentId {
                     content_id: uuid::Uuid::new_v4(),
                 }))
-                .into()
+                .into(),
         );
 
-        content_ids.push(
-            state.media.slots[2].clone().map(|id| Box::new(id))
-        );
+        content_ids.push(state.media.slots[2].clone().map(|id| Box::new(id)));
 
         let new = ModerationRequestContent {
             content0: content_ids[0].clone().expect("Content ID is missing"),

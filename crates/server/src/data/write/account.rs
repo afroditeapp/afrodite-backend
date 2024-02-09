@@ -1,12 +1,9 @@
-
-use crate::result::Result;
 use model::{
     AccountData, AccountIdInternal, AccountInternal, AccountSetup, Capabilities, SharedState,
 };
 
-use crate::data::DataError;
-
 use super::db_transaction;
+use crate::{data::DataError, result::Result};
 
 define_write_commands!(WriteCommandsAccount);
 

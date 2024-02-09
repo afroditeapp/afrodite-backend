@@ -1,23 +1,20 @@
-
-
 //! Runner for tests in `server_tests` module
 
-use std::{sync::Arc};
-
+use std::sync::Arc;
 
 use config::{args::TestMode, Config};
-
-use tokio::{
-    select, signal
-};
+use tokio::{select, signal};
 use tracing::{error, info};
 
+use crate::{
+    client::ApiClient,
+    runner::utils::wait_that_servers_start,
+    server::{AdditionalSettings, ServerManager},
+    TestContext, TestFunction, TestResult,
+};
 
-use crate::{runner::utils::wait_that_servers_start, server::AdditionalSettings, TestContext, TestFunction, TestResult};
-use crate::{client::ApiClient, server::ServerManager};
-
-pub mod context;
 pub mod assert;
+pub mod context;
 
 pub struct QaTestRunner {
     config: Arc<Config>,
@@ -52,20 +49,16 @@ impl QaTestRunner {
         let api_client = ApiClient::new(self.test_config.server.api_urls.clone());
         api_client.print_to_log();
 
-        let mut test_context = TestContext::new(
-            self.config.clone(),
-            self.test_config.clone()
-        );
+        let mut test_context = TestContext::new(self.config.clone(), self.test_config.clone());
 
         let mut failed = false;
         let mut passed_number = 0;
         let start_time = std::time::Instant::now();
 
         print!("Running tests...\n");
-        let mut test_functions: Vec<&'static TestFunction> = inventory::iter::<TestFunction>().collect();
-        test_functions.sort_by(|a, b| {
-            a.name().cmp(&b.name())
-        });
+        let mut test_functions: Vec<&'static TestFunction> =
+            inventory::iter::<TestFunction>().collect();
+        test_functions.sort_by(|a, b| a.name().cmp(&b.name()));
 
         for test_function in test_functions.iter() {
             print!("test {} ... ", test_function.name());
@@ -73,8 +66,11 @@ impl QaTestRunner {
             let manager = ServerManager::new(
                 &self.config,
                 self.test_config.clone(),
-                Some(AdditionalSettings { log_to_memory: true })
-            ).await;
+                Some(AdditionalSettings {
+                    log_to_memory: true,
+                }),
+            )
+            .await;
 
             wait_that_servers_start(api_client.clone()).await;
 
@@ -102,11 +98,7 @@ impl QaTestRunner {
             }
         }
 
-        let result = if failed {
-            "FAILED"
-        } else {
-            "ok"
-        };
+        let result = if failed { "FAILED" } else { "ok" };
 
         println!(
             "\ntest result: {}. {} passed; {} failed; {} tests; finished in {:.2?}\n\n",

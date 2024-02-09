@@ -35,9 +35,7 @@ impl WebSocketManager {
             Self {
                 server_quit_watcher,
             },
-            WsWatcher {
-                quit_handle,
-            },
+            WsWatcher { quit_handle },
         )
     }
 

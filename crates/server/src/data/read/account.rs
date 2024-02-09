@@ -1,5 +1,3 @@
-
-use crate::result::Result;
 use model::{
     AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, GoogleAccountId,
     RefreshToken, SignInWithInfo,
@@ -10,7 +8,7 @@ use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DataError},
     ReadCommands,
 };
-use crate::data::IntoDataError;
+use crate::{data::IntoDataError, result::Result};
 
 define_read_commands!(ReadCommandsAccount);
 

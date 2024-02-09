@@ -7,17 +7,10 @@ use std::{
 
 use config::Config;
 use database::{
-    history::read::HistoryReadCommands,
-    CurrentReadHandle,
-    CurrentWriteHandle,
-    ErrorContext,
-    HistoryReadHandle,
-    HistoryWriteHandle,
+    history::read::HistoryReadCommands, CurrentReadHandle, CurrentWriteHandle, ErrorContext,
+    HistoryReadHandle, HistoryWriteHandle,
 };
 use error_stack::{Context, ResultExt};
-
-
-use crate::result::{Result, WrappedContextExt, WrappedReport};
 use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
@@ -37,7 +30,10 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
-use crate::internal::InternalApiError;
+use crate::{
+    internal::InternalApiError,
+    result::{Result, WrappedContextExt, WrappedReport},
+};
 
 pub mod cache;
 pub mod file;
@@ -116,16 +112,18 @@ pub trait WithInfo<Ok, Err: Context>: Sized {
     fn into_error_without_context(self) -> std::result::Result<Ok, error_stack::Report<Err>>;
 
     #[track_caller]
-    fn with_info<T: Debug + IsLoggingAllowed>(self, request_context: T) -> std::result::Result<Ok, error_stack::Report<Err>> {
-        self.into_error_without_context()
-            .map_err(|e| {
-                let context = ErrorContext::<T, Ok>::new(request_context);
-                e.attach_printable(format!("{:#?}", context))
-            })
+    fn with_info<T: Debug + IsLoggingAllowed>(
+        self,
+        request_context: T,
+    ) -> std::result::Result<Ok, error_stack::Report<Err>> {
+        self.into_error_without_context().map_err(|e| {
+            let context = ErrorContext::<T, Ok>::new(request_context);
+            e.attach_printable(format!("{:#?}", context))
+        })
     }
 }
 
-impl <Ok, Err: Context> WithInfo<Ok, Err> for std::result::Result<Ok, error_stack::Report<Err>> {
+impl<Ok, Err: Context> WithInfo<Ok, Err> for std::result::Result<Ok, error_stack::Report<Err>> {
     #[track_caller]
     fn into_error_without_context(self) -> std::result::Result<Ok, error_stack::Report<Err>> {
         self
@@ -136,43 +134,57 @@ impl <Ok, Err: Context> WithInfo<Ok, Err> for std::result::Result<Ok, error_stac
 ///
 /// This trait is for error container WrappedReport<error_stack::Report<Err>>
 pub trait WrappedWithInfo<Ok, Err: Context>: Sized {
-    fn into_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>>;
+    fn into_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>>;
 
     #[track_caller]
-    fn with_info<T: Debug + IsLoggingAllowed>(self, request_context: T) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
-        self.into_error_without_context()
-            .map_err(|e| {
-                let context = ErrorContext::<T, Ok>::new(request_context);
-                e.attach_printable(format!("{:#?}", context))
-            })
+    fn with_info<T: Debug + IsLoggingAllowed>(
+        self,
+        request_context: T,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
+        self.into_error_without_context().map_err(|e| {
+            let context = ErrorContext::<T, Ok>::new(request_context);
+            e.attach_printable(format!("{:#?}", context))
+        })
     }
 }
 
-impl <Ok, Err: Context> WrappedWithInfo<Ok, Err> for std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
+impl<Ok, Err: Context> WrappedWithInfo<Ok, Err>
+    for std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>>
+{
     #[track_caller]
-    fn into_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
+    fn into_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
         self
     }
 }
 
 impl<Ok> WrappedWithInfo<Ok, InternalApiError> for std::result::Result<Ok, InternalApiError> {
     #[track_caller]
-    fn into_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<InternalApiError>>> {
+    fn into_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<InternalApiError>>> {
         self.map_err(|e| e.report())
     }
 }
 
 /// Convert to DataError and attach more info to current error
 pub trait IntoDataError<Ok, Err: Context>: Sized {
-    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>>;
+    fn into_data_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>>;
 
     #[track_caller]
-    fn into_data_error<T: Debug + IsLoggingAllowed>(self, request_context: T) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
-        self.into_data_error_without_context()
-            .map_err(|e| {
-                let context = ErrorContext::<T, Ok>::new(request_context);
-                e.attach_printable(format!("{:#?}", context))
-            })
+    fn into_data_error<T: Debug + IsLoggingAllowed>(
+        self,
+        request_context: T,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
+        self.into_data_error_without_context().map_err(|e| {
+            let context = ErrorContext::<T, Ok>::new(request_context);
+            e.attach_printable(format!("{:#?}", context))
+        })
     }
 
     #[track_caller]
@@ -183,7 +195,9 @@ pub trait IntoDataError<Ok, Err: Context>: Sized {
 
 impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::file::FileError> {
     #[track_caller]
-    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+    fn into_data_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
         let value = self?;
         Ok(value)
     }
@@ -191,28 +205,37 @@ impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::f
 
 impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::cache::CacheError> {
     #[track_caller]
-    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+    fn into_data_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
         let value = self?;
         Ok(value)
     }
 }
 
-impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, simple_backend_database::DataError> {
+impl<Ok> IntoDataError<Ok, DataError>
+    for error_stack::Result<Ok, simple_backend_database::DataError>
+{
     #[track_caller]
-    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+    fn into_data_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
         let value = self?;
         Ok(value)
     }
 }
 
-impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, simple_backend_database::diesel_db::DieselDatabaseError> {
+impl<Ok> IntoDataError<Ok, DataError>
+    for error_stack::Result<Ok, simple_backend_database::diesel_db::DieselDatabaseError>
+{
     #[track_caller]
-    fn into_data_error_without_context(self) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+    fn into_data_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
         let value = self?;
         Ok(value)
     }
 }
-
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
@@ -234,10 +257,7 @@ impl DatabaseRoot {
         }
         let file_dir = FileDir::new(file_dir);
 
-        Ok(Self {
-            root,
-            file_dir,
-        })
+        Ok(Self { root, file_dir })
     }
 
     pub fn file_dir(&self) -> &FileDir {
@@ -274,16 +294,10 @@ impl DatabaseManager {
             )
             .await?;
 
-        let diesel_sqlite = current_write
-            .diesel()
-            .sqlite_version()
-            .await?;
+        let diesel_sqlite = current_write.diesel().sqlite_version().await?;
         info!("Diesel SQLite version: {}", diesel_sqlite);
 
-        let sqlx_sqlite = current_write
-            .sqlx()
-            .sqlite_version()
-            .await?;
+        let sqlx_sqlite = current_write.sqlx().sqlite_version().await?;
         info!("Sqlx SQLite version: {}", sqlx_sqlite);
 
         if diesel_sqlite != sqlx_sqlite {
@@ -320,8 +334,7 @@ impl DatabaseManager {
         let history_read_handle = HistoryReadHandle(history_read);
         let history_write_handle = HistoryWriteHandle(history_write);
 
-        let cache = DatabaseCache::new(&current_read_handle, &index, &config)
-            .await?;
+        let cache = DatabaseCache::new(&current_read_handle, &index, &config).await?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),

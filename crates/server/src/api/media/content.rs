@@ -1,5 +1,7 @@
 use axum::{
-    body::Body, extract::{Path, Query, State}, Extension, Router
+    body::Body,
+    extract::{Path, Query, State},
+    Extension, Router,
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;

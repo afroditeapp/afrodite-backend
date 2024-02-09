@@ -32,8 +32,8 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
 
     let data = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<crate::result::Result<Vec<ProfileLink>, DataError>> = cmds
-                .accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
+            let out: ConcurrentWriteAction<crate::result::Result<Vec<ProfileLink>, DataError>> =
+                cmds.accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
                     Box::new(async move { cmds.next_profiles(account_id).await })
                 })
                 .await;

@@ -2,9 +2,6 @@ use core::fmt;
 
 use crate::{client::TestError, TestResult};
 
-
-
-
 /// Assert that value is true
 pub fn assert(value: bool) -> TestResult {
     if value {

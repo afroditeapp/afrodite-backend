@@ -1,5 +1,3 @@
-
-use crate::{data::IntoDataError, result::Result};
 use model::{
     AccountIdInternal, AccountInteractionState, MatchesPage, MessageNumber, PendingMessagesPage,
     ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage,
@@ -9,7 +7,10 @@ use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
     ReadCommands,
 };
-use crate::data::DataError;
+use crate::{
+    data::{DataError, IntoDataError},
+    result::Result,
+};
 
 define_read_commands!(ReadCommandsChat);
 

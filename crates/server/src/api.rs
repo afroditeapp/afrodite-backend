@@ -233,21 +233,18 @@ pub struct ApiDoc;
 /// ```
 #[macro_export]
 macro_rules! db_write {
-    ($state:expr, move |$cmds:ident| $commands:expr) => {
-        {
-
-            let r = async {
-                let r: $crate::result::Result<_, $crate::data::DataError> = $state
-                    .write(move |$cmds| async move { ($commands).await })
-                    .await;
-                r
-            }
-            .await;
-
-            use $crate::api::utils::ConvertDataErrorToStatusCode;
-            r.convert_data_error_to_status_code()
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        let r = async {
+            let r: $crate::result::Result<_, $crate::data::DataError> = $state
+                .write(move |$cmds| async move { ($commands).await })
+                .await;
+            r
         }
-    };
+        .await;
+
+        use $crate::api::utils::ConvertDataErrorToStatusCode;
+        r.convert_data_error_to_status_code()
+    }};
 }
 
 // Make db_write available in all modules

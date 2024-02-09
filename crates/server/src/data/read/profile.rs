@@ -1,11 +1,13 @@
-use crate::{data::IntoDataError, result::{Result, WrappedContextExt}};
 use model::{AccountIdInternal, Location, ProfileInternal};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
     ReadCommands,
 };
-use crate::data::DataError;
+use crate::{
+    data::{DataError, IntoDataError},
+    result::{Result, WrappedContextExt},
+};
 
 define_read_commands!(ReadCommandsProfile);
 

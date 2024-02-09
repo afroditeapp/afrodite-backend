@@ -121,11 +121,12 @@ trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
         self,
         request_context: T,
     ) -> Result<Self::Ok, Self::NewError> {
-        self.change_context(Self::DEFAULT_NEW_ERROR).attach_printable_lazy(move || {
-            let context = ErrorContext::<T, Self::Ok>::new(request_context);
+        self.change_context(Self::DEFAULT_NEW_ERROR)
+            .attach_printable_lazy(move || {
+                let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
-            format!("{:#?}", context)
-        })
+                format!("{:#?}", context)
+            })
     }
 }
 
@@ -165,17 +166,23 @@ impl<Ok> IntoDatabaseError<DieselDatabaseError>
 
 impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
     for std::result::Result<Ok, ::serde_json::error::Error>
-{}
+{
+}
 
-impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError> for std::result::Result<Ok, DieselDatabaseError> {}
+impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
+    for std::result::Result<Ok, DieselDatabaseError>
+{
+}
 
 impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
     for std::result::Result<Ok, model::account::AccountStateError>
-{}
+{
+}
 
 impl<Ok> IntoDatabaseErrorExt<simple_backend_database::sqlx_db::SqliteDatabaseError>
     for std::result::Result<Ok, ::sqlx::Error>
-{}
+{
+}
 
 // Workaround because it is not possible to implement From<diesel::result::Error>
 // to error_stack::Report from here.

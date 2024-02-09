@@ -2,12 +2,14 @@
 
 use std::sync::Arc;
 
-use error_stack::{ResultExt};
-use crate::result::{Result, WrappedResultExt};
+use error_stack::ResultExt;
 use model::{AccountId, EventToClient, EventToClientInternal, NotificationEvent};
 use tokio::sync::mpsc;
 
-use crate::data::RouterDatabaseReadHandle;
+use crate::{
+    data::RouterDatabaseReadHandle,
+    result::{Result, WrappedResultExt},
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum EventError {

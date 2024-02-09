@@ -1,8 +1,10 @@
 use std::net::SocketAddr;
 
-
 use axum::{
-    body::Body, extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State}, middleware::Next, response::{IntoResponse, Response}
+    body::Body,
+    extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State},
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
 use config::file::ConfigFileError;
 use headers::{Header, HeaderValue};
@@ -226,7 +228,7 @@ enum RequestError {
 pub trait ConvertDataErrorToStatusCode<Ok> {
     #[track_caller]
     fn convert_data_error_to_status_code(
-        self
+        self,
     ) -> std::result::Result<Ok, crate::api::utils::StatusCode>;
 }
 
@@ -248,10 +250,12 @@ macro_rules! impl_error_to_status_code {
             }
         }
 
-        impl <Ok> ConvertDataErrorToStatusCode<Ok> for Result<Ok, $crate::result::WrappedReport<error_stack::Report<$err_type>>>{
+        impl<Ok> ConvertDataErrorToStatusCode<Ok>
+            for Result<Ok, $crate::result::WrappedReport<error_stack::Report<$err_type>>>
+        {
             #[track_caller]
             fn convert_data_error_to_status_code(
-                self
+                self,
             ) -> std::result::Result<Ok, crate::api::utils::StatusCode> {
                 use $crate::result::WrappedResultExt;
                 let result = self.change_context($err_expr);

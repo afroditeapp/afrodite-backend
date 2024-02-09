@@ -7,7 +7,6 @@ use model::{
     AccessToken, Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
     ProfileInternal,
 };
-
 use tracing::{error, info, warn};
 
 use super::data::{read::ReadCommands, utils::AccessTokenManager};

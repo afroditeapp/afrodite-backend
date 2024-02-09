@@ -1,10 +1,12 @@
-use crate::{data::{write::db_transaction}, result::Result};
 use error_stack::ResultExt;
 use model::{AccountIdInternal, AccountInteractionInternal, MessageNumber, PendingMessageId};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
-use crate::data::DataError;
+use crate::{
+    data::{write::db_transaction, DataError},
+    result::Result,
+};
 
 define_write_commands!(WriteCommandsChat);
 
@@ -18,7 +20,8 @@ impl WriteCommandsChat<'_> {
         id_like_receiver: AccountIdInternal,
     ) -> Result<AccountInteractionInternal, DataError> {
         db_transaction!(self, move |mut cmds| {
-            let interaction = cmds.chat()
+            let interaction = cmds
+                .chat()
                 .interaction()
                 .get_or_create_account_interaction(id_like_sender, id_like_receiver)?;
 
@@ -59,9 +62,10 @@ impl WriteCommandsChat<'_> {
         id_receiver: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            let interaction = cmds.chat()
-                    .interaction()
-                    .get_or_create_account_interaction(id_sender, id_receiver)?;
+            let interaction = cmds
+                .chat()
+                .interaction()
+                .get_or_create_account_interaction(id_sender, id_receiver)?;
 
             if interaction.is_empty() {
                 return Err(DieselDatabaseError::AlreadyDone.report());
@@ -90,7 +94,8 @@ impl WriteCommandsChat<'_> {
         id_block_receiver: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            let interaction = cmds.chat()
+            let interaction = cmds
+                .chat()
                 .interaction()
                 .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
 
@@ -143,7 +148,8 @@ impl WriteCommandsChat<'_> {
 
             // Who is sender and receiver in the interaction data depends
             // on who did the first like
-            let modify_number = if interaction.account_id_sender == Some(id_my_account.into_db_id()) {
+            let modify_number = if interaction.account_id_sender == Some(id_my_account.into_db_id())
+            {
                 interaction.sender_latest_viewed_message.as_mut()
             } else {
                 interaction.receiver_latest_viewed_message.as_mut()

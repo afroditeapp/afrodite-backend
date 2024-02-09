@@ -19,7 +19,7 @@ use crate::{
     app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData},
     data::file::utils::TmpContentFile,
     event::EventManager,
-    result::{Result, WrappedResultExt}
+    result::{Result, WrappedResultExt},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -241,15 +241,13 @@ impl ContentProcessingManager {
 
     pub async fn handle_content(&self, content: ProcessingState) {
         let result = match content.new_content_params.content_type {
-            MediaContentType::JpegImage => {
-                ImageProcess::start_image_process(
-                    content.tmp_raw_img.as_path(),
-                    InputFileType::JpegImage,
-                    content.tmp_img.as_path(),
-                )
-                .await
-                .change_context(ContentProcessingError::ContentProcessingFailed)
-            }
+            MediaContentType::JpegImage => ImageProcess::start_image_process(
+                content.tmp_raw_img.as_path(),
+                InputFileType::JpegImage,
+                content.tmp_img.as_path(),
+            )
+            .await
+            .change_context(ContentProcessingError::ContentProcessingFailed),
         };
 
         let mut write = self.state.content_processing().data.write().await;

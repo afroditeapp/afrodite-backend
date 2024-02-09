@@ -5,7 +5,7 @@ use model::{AccountId, AccountIdInternal, AuthPair, SharedState};
 use crate::{
     data::{write::db_transaction, DataError, IntoDataError},
     event::{event_channel, EventMode, EventReceiver},
-    result::{Result},
+    result::Result,
 };
 
 define_write_commands!(WriteCommandsCommon);
@@ -21,7 +21,9 @@ impl WriteCommandsCommon<'_> {
         let current_access_token = db_transaction!(self, move |mut cmds| {
             let current_access_token = cmds.read().account().token().access_token(id)?;
             cmds.account().token().access_token(id, Some(access))?;
-            cmds.account().token().refresh_token(id, Some(pair.refresh))?;
+            cmds.account()
+                .token()
+                .refresh_token(id, Some(pair.refresh))?;
             Ok(current_access_token)
         })?;
 
@@ -69,10 +71,7 @@ impl WriteCommandsCommon<'_> {
     }
 
     /// Remove current connection address and access token.
-    pub async fn end_connection_session(
-        &self,
-        id: AccountIdInternal
-    ) -> Result<(), DataError> {
+    pub async fn end_connection_session(&self, id: AccountIdInternal) -> Result<(), DataError> {
         // TODO: Previous implementation didn't remove access token from cache.
         //       Was that a bug?
         let current_access_token = db_transaction!(self, move |mut cmds| {

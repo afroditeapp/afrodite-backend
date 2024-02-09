@@ -19,7 +19,7 @@ use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sy
 
 use app::SimpleBackendAppState;
 use async_trait::async_trait;
-use axum::{Router};
+use axum::Router;
 use futures::future::poll_fn;
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
@@ -36,7 +36,7 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
-use tower::{Service};
+use tower::Service;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
@@ -174,8 +174,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .await;
 
         let (ws_manager, mut ws_watcher) =
-            WebSocketManager::new(server_quit_watcher.resubscribe())
-                .await;
+            WebSocketManager::new(server_quit_watcher.resubscribe()).await;
 
         let server_task = self
             .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager, &state)
@@ -203,9 +202,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .await
             .expect("Internal API server task panic detected");
 
-        ws_watcher
-            .wait_for_quit()
-            .await;
+        ws_watcher.wait_for_quit().await;
 
         drop(state);
         perf_manager_quit_handle.wait_quit().await;
@@ -294,8 +291,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
 
             loop {
-                let next_addr_stream =
-                    poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
+                let next_addr_stream = poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
 
                 let (tcp_stream, addr) = tokio::select! {
                     _ = quit_notification.recv() => {
@@ -375,8 +371,13 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
         let normal_api_server = {
-            let listener = tokio::net::TcpListener::bind(addr).await.expect("Address not available");
-            axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>())
+            let listener = tokio::net::TcpListener::bind(addr)
+                .await
+                .expect("Address not available");
+            axum::serve(
+                listener,
+                router.into_make_service_with_connect_info::<SocketAddr>(),
+            )
         };
 
         tokio::spawn(async move {

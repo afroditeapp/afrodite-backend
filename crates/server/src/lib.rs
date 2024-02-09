@@ -11,8 +11,8 @@ pub mod data;
 pub mod event;
 pub mod internal;
 pub mod perf;
-pub mod utils;
 pub mod result;
+pub mod utils;
 
 use std::sync::Arc;
 
@@ -150,8 +150,7 @@ impl BusinessLogic for PihkaBusinessLogic {
             .expect("Database init failed");
 
         let (write_cmd_runner_handle, write_cmd_waiter) =
-            WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config)
-                .await;
+            WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config).await;
 
         let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
         let content_processing = Arc::new(content_processing);

@@ -1,13 +1,14 @@
-use crate::{result::{Result, WrappedResultExt}};
 use model::{
     AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, NewContentParams,
     SetProfileContent,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::data::DataError;
-
 use super::db_transaction;
+use crate::{
+    data::DataError,
+    result::{Result, WrappedResultExt},
+};
 
 define_write_commands!(WriteCommandsMedia);
 

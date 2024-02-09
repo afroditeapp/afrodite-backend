@@ -1,10 +1,6 @@
-
 //! Bot mode related test/bot runner.
 
-
-
 use std::{path::PathBuf, sync::Arc};
-
 
 use config::{args::TestMode, Config};
 use tokio::{
@@ -14,8 +10,13 @@ use tokio::{
 };
 use tracing::{error, info};
 
-use crate::{runner::utils::wait_that_servers_start, state::StateData};
-use crate::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState};
+use crate::{
+    bot::BotManager,
+    client::ApiClient,
+    runner::utils::wait_that_servers_start,
+    server::ServerManager,
+    state::{BotPersistentState, StateData},
+};
 
 pub struct BotTestRunner {
     config: Arc<Config>,
