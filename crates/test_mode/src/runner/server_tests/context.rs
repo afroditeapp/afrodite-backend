@@ -1,18 +1,18 @@
 
 
-use std::{panic::UnwindSafe, path::PathBuf, process::{exit, Termination}, sync::Arc, time::Duration};
+use std::{sync::Arc};
 
-use api_client::{apis::{account_api::post_register, configuration::Configuration}, manual_additions, models::{account_id, AccountId, LoginResult}};
+use api_client::{apis::{configuration::Configuration}, models::{AccountId}};
 use config::{args::TestMode, Config};
-use futures::{FutureExt, TryFutureExt};
-use tokio::{
-    io::AsyncWriteExt, select, signal, sync::{mpsc, watch, Mutex}, time::sleep
-};
-use tracing::{error, info};
-use utils::api;
 
-use crate::{bot::{actions::{account::{Login, Register}, BotAction}, BotState, WsConnection}, runner::utils::wait_that_servers_start, server::AdditionalSettings, state::StateData, TestError, TestFunction};
-use crate::{bot::BotManager, client::ApiClient, server::ServerManager, state::BotPersistentState};
+use tokio::{
+    sync::{Mutex}
+};
+
+
+
+use crate::{bot::{actions::{account::{Login, Register}, BotAction}, BotState, WsConnection}, TestError};
+use crate::{client::ApiClient};
 
 use error_stack::Result;
 

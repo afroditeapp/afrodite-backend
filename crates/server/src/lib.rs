@@ -32,7 +32,7 @@ use simple_backend::{
     web_socket::WebSocketManager,
     BusinessLogic, ServerQuitWatcher,
 };
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 

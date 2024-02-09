@@ -5,7 +5,7 @@ use model::{AccountId, AccountIdInternal, AuthPair, SharedState};
 use crate::{
     data::{write::db_transaction, DataError, IntoDataError},
     event::{event_channel, EventMode, EventReceiver},
-    result::{Result, WrappedResultExt},
+    result::{Result},
 };
 
 define_write_commands!(WriteCommandsCommon);

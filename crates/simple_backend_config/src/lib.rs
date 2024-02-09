@@ -18,7 +18,7 @@ use file::{DatabaseInfo, TileMapConfig};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::{ServerConfig};
-use tokio_rustls::rustls::pki_types::{CertificateDer, PrivateKeyDer};
+
 use self::file::{
     AppManagerConfig, LitestreamConfig, MediaBackupConfig, SignInWithGoogleConfig,
     SimpleBackendConfigFile, SocketConfig,

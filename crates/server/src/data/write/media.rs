@@ -1,4 +1,4 @@
-use crate::{data::IntoDataError, result::{Result, WrappedResultExt}};
+use crate::{result::{Result, WrappedResultExt}};
 use model::{
     AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, NewContentParams,
     SetProfileContent,

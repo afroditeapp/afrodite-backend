@@ -1,5 +1,5 @@
 use std::{
-    env, fmt::format, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, process::Stdio, sync::Arc
+    env, net::SocketAddrV4, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, process::Stdio, sync::Arc
 };
 
 use config::{
@@ -10,14 +10,14 @@ use config::{
     },
     Config,
 };
-use futures::select;
+
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
 use simple_backend_config::file::{
     DataConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase,
 };
 use tokio::{io::{AsyncBufReadExt, AsyncRead}, process::Child, sync::Mutex, task::JoinHandle};
-use tracing::info;
+
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
 

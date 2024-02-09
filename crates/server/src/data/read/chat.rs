@@ -1,4 +1,4 @@
-use error_stack::{FutureExt, ResultExt};
+
 use crate::{data::IntoDataError, result::Result};
 use model::{
     AccountIdInternal, AccountInteractionState, MatchesPage, MessageNumber, PendingMessagesPage,

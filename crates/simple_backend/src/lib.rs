@@ -19,7 +19,7 @@ use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sy
 
 use app::SimpleBackendAppState;
 use async_trait::async_trait;
-use axum::{extract::connect_info::Connected, Router};
+use axum::{Router};
 use futures::future::poll_fn;
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
@@ -36,7 +36,7 @@ use tokio::{
     task::JoinHandle,
 };
 use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
-use tower::{MakeService, Service};
+use tower::{Service};
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};

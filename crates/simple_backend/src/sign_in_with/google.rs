@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Instant};
 
 use error_stack::{Result, ResultExt};
 use reqwest_headers::{CacheControl, HeaderMapExt};
-use hyper::Method;
+
 use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
     DecodingKey, Validation,

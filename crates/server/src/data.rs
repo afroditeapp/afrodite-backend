@@ -15,9 +15,9 @@ use database::{
     HistoryWriteHandle,
 };
 use error_stack::{Context, ResultExt};
-use simple_backend_utils::IntoReportFromString;
 
-use crate::result::{Result, WrappedContextExt, WrappedReport, WrappedResultExt};
+
+use crate::result::{Result, WrappedContextExt, WrappedReport};
 use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};

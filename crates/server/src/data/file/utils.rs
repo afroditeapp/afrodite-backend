@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use axum::body::{Body, BodyDataStream};
+use axum::body::{BodyDataStream};
 use error_stack::{Result, ResultExt};
 use model::{AccountId, ContentId};
 use simple_backend_utils::ContextExt;

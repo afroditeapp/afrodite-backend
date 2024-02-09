@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
-use axum::body::{Body, BodyDataStream};
+use axum::body::{BodyDataStream};
 use config::Config;
 use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
 use futures::Future;

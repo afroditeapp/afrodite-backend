@@ -1,5 +1,5 @@
-use error_stack::{FutureExt, ResultExt};
-use crate::{data::IntoDataError, result::Result};
+
+use crate::{result::Result};
 use model::{AccountIdInternal, HandleModerationRequest, Moderation};
 
 use crate::data::DataError;

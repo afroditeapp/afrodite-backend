@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use api_internal::InternalApi;
+
 use axum::{
     body::Body, extract::{rejection::JsonRejection, ConnectInfo, FromRequest, State}, middleware::Next, response::{IntoResponse, Response}
 };
