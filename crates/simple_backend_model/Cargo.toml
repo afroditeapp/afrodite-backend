@@ -8,15 +8,8 @@ edition = "2021"
 [dependencies]
 
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-uuid = { workspace = true, features = ["v4", "serde"] }
 utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
 sqlx = { workspace = true, features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
 diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
-
-nalgebra = { workspace = true }
-base64 = { workspace = true }
-
-thiserror = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils"}

@@ -7,30 +7,27 @@ edition = "2021"
 
 [dependencies]
 
-uuid = { workspace = true, features = ["v4", "serde"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+
+# For tokio-console debugging
+console-subscriber = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+time = { workspace = true }
 
-futures = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true, features = ["sync"] }
-tokio-util = { workspace = true, features = ["io"]}
+futures = { workspace = true }
+async-trait = { workspace = true }
+
 hyper = { workspace = true, features = ["full"] }
 hyper-util = { workspace = true, features = ["full"] }
 axum = { workspace = true, features = ["ws", "macros"] }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["trace"] }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["env-filter"] }
 reqwest = { workspace = true, features = ["json"] }
 reqwest_headers = { workspace = true }
-http = { workspace = true }
 
-# For tokio-console debugging
-console-subscriber = { workspace = true }
-
-utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 
 # Server TLS
@@ -39,15 +36,7 @@ tokio-rustls = { workspace = true }
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 
-async-trait = { workspace = true }
-
-time = { workspace = true }
-nalgebra = { workspace = true }
-
 jsonwebtoken = { workspace = true }
-
-num_cpus = { workspace = true }
-nix = { workspace = true, default-features = false, features = ["signal"] }
 
 manager_api = { path = "../app-manager/crates/manager_api" }
 manager_model = { path = "../app-manager/crates/manager_model" }

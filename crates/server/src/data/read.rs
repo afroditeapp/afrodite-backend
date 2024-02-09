@@ -40,7 +40,6 @@ macro_rules! define_read_commands {
                 &self.cmds.files
             }
 
-            #[track_caller]
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<
@@ -60,7 +59,6 @@ macro_rules! define_read_commands {
                 self.cmds.db_read(cmd).await
             }
 
-            #[track_caller]
             pub async fn read_cache<T, Id: Into<model::AccountId>>(
                 &self,
                 id: Id,

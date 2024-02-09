@@ -133,7 +133,6 @@ version = "0.1.0"
 dependencies = [
  "api_client",
  "model",
- "serde",
  "serde_json",
 ]
 
@@ -1818,7 +1817,6 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_backend_model",
- "simple_backend_utils",
  "sqlx",
  "thiserror",
  "utoipa",
@@ -2928,18 +2926,13 @@ dependencies = [
  "error-stack",
  "futures",
  "headers 0.3.9",
- "http 1.0.0",
  "hyper 1.1.0",
  "hyper-util",
  "jsonwebtoken",
  "manager_api",
  "manager_model",
- "nalgebra",
- "nix",
- "num_cpus",
  "reqwest",
  "serde",
- "serde_json",
  "simple_backend_config",
  "simple_backend_database",
  "simple_backend_model",
@@ -2948,15 +2941,11 @@ dependencies = [
  "time",
  "tokio",
  "tokio-rustls",
- "tokio-stream",
- "tokio-util",
  "tower",
  "tower-http",
  "tracing",
  "tracing-subscriber",
- "utoipa",
  "utoipa-swagger-ui",
- "uuid",
 ]
 
 [[package]]
@@ -3016,16 +3005,11 @@ dependencies = [
 name = "simple_backend_model"
 version = "0.0.0"
 dependencies = [
- "base64 0.21.7",
  "diesel",
- "nalgebra",
  "serde",
- "serde_json",
  "simple_backend_utils",
  "sqlx",
- "thiserror",
  "utoipa",
- "uuid",
 ]
 
 [[package]]

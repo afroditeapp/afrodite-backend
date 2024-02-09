@@ -12,7 +12,7 @@ use tracing::{error, info, warn};
 use super::data::{read::ReadCommands, utils::AccessTokenManager};
 use crate::{
     app::{GetAccessTokens, GetConfig, ReadData, WriteData},
-    data::{WithInfo, WrappedWithInfo},
+    data::WrappedWithInfo,
     result::{Result, WrappedContextExt, WrappedResultExt},
 };
 

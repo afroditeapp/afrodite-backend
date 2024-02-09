@@ -2,7 +2,6 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{AccessToken, AccessTokenRaw, AccountIdInternal, RefreshToken, RefreshTokenRaw};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-use tokio_stream::StreamExt;
 
 use crate::IntoDatabaseError;
 
