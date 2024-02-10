@@ -1,7 +1,12 @@
-use error_stack::{Context, Report};
-use simple_backend_database::diesel_db::DieselDatabaseError;
+use std::fmt::Debug;
 
-use crate::data::{cache::CacheError, file::FileError, index::IndexError, DataError};
+use database::ErrorContext;
+use error_stack::{Context, Report};
+use model::IsLoggingAllowed;
+use simple_backend_database::diesel_db::DieselDatabaseError;
+use tracing::info_span;
+
+use crate::{data::{cache::CacheError, file::FileError, index::IndexError, DataError}, internal_api::InternalApiError};
 
 pub type Result<Ok, Err> = std::result::Result<Ok, WrappedReport<Report<Err>>>;
 
@@ -117,6 +122,15 @@ impl From<std::io::Error> for WrappedReport<Report<DataError>> {
     }
 }
 
+impl From<InternalApiError> for WrappedReport<Report<InternalApiError>> {
+    #[track_caller]
+    fn from(error: InternalApiError) -> Self {
+        Self {
+            report: Report::from(error),
+        }
+    }
+}
+
 /// Convert errors to WrappedReports or Reports.
 pub trait WrappedContextExt<ReportAndError>: Context + Sized {
     #[track_caller]
@@ -142,6 +156,13 @@ pub trait WrappedResultExt<
 {
     #[track_caller]
     fn change_context(self, context: OutContext) -> std::result::Result<Ok, OutReportAndError>;
+
+    #[track_caller]
+    fn change_context_with_info<T: Debug + IsLoggingAllowed>(
+        self,
+        context: OutContext,
+        info: T,
+    ) -> std::result::Result<Ok, OutReportAndError>;
 }
 
 impl<Ok, InContext: Context, OutContext: Context>
@@ -163,6 +184,19 @@ impl<Ok, InContext: Context, OutContext: Context>
             Err(err) => Err(WrappedReport {
                 report: err.report.change_context(context),
             }),
+        }
+    }
+
+    #[track_caller]
+    fn change_context_with_info<T: Debug + IsLoggingAllowed>(
+        self,
+        context: OutContext,
+        info: T,
+    ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
+        match self.change_context(context) {
+            Ok(ok) => Ok(ok),
+            Err(err) =>
+                Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable()))
         }
     }
 }
@@ -188,6 +222,19 @@ impl<Ok, InContext: Context, OutContext: Context>
             }),
         }
     }
+
+    #[track_caller]
+    fn change_context_with_info<T: Debug + IsLoggingAllowed>(
+        self,
+        context: OutContext,
+        info: T,
+    ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
+        match self.change_context(context) {
+            Ok(ok) => Ok(ok),
+            Err(err) =>
+                Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable()))
+        }
+    }
 }
 
 impl<Ok, InContext: Context, OutContext: Context>
@@ -204,6 +251,19 @@ impl<Ok, InContext: Context, OutContext: Context>
             Err(err) => Err(WrappedReport {
                 report: Report::from(err).change_context(context),
             }),
+        }
+    }
+
+    #[track_caller]
+    fn change_context_with_info<T: Debug + IsLoggingAllowed>(
+        self,
+        context: OutContext,
+        info: T,
+    ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
+        match self.change_context(context) {
+            Ok(ok) => Ok(ok),
+            Err(err) =>
+                Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable()))
         }
     }
 }

@@ -1,8 +1,7 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ContentState, ModerationRequestContent,
-    ModerationRequestState, NewContentParams, NextQueueNumberType,
+    AccountIdInternal, ContentId, ContentSlot, ContentState, MediaModerationRequestRaw, ModerationRequestContent, ModerationRequestInternal, ModerationRequestState, NewContentParams, NextQueueNumberType
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -112,18 +111,23 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         // Delete old queue number and request
         self.delete_moderation_request(request_creator)?;
 
-        let _account_row_id = request_creator.row_id();
         let queue_number_new = self
             .cmds()
             .common()
             .queue_number()
             .create_new_queue_entry(request_creator, NextQueueNumberType::InitialMediaModeration)?;
-        let _request_info =
-            serde_json::to_string(&request).change_context(DieselDatabaseError::SerdeSerialize)?;
+
         insert_into(media_moderation_request)
             .values((
                 account_id.eq(request_creator.as_db_id()),
                 queue_number.eq(queue_number_new),
+                content_id_0.eq(request.content0),
+                content_id_1.eq(request.content1),
+                content_id_2.eq(request.content2),
+                content_id_3.eq(request.content3),
+                content_id_4.eq(request.content4),
+                content_id_5.eq(request.content5),
+                content_id_6.eq(request.content6),
             ))
             .execute(self.conn())
             .into_db_error((request_creator, request))?;
@@ -131,6 +135,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         Ok(())
     }
 
+    /// Update already existing moderation request if it is still in Waiting
+    /// state.
+    ///
+    /// New moderation request content must content ids which point to your own
+    /// image slots. Otherwise this returns an error.
     pub fn update_moderation_request(
         &mut self,
         request_owner_account_id: AccountIdInternal,
@@ -138,34 +147,34 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::media_moderation_request::dsl::*;
 
+        self.read()
+            .media()
+            .moderation_request()
+            .content_validate_moderation_request_content(request_owner_account_id, &new_request)?;
+
         let current_request = self
             .read()
             .media()
             .moderation_request()
             .moderation_request(request_owner_account_id)?;
-        let update_possible = if let Some(request) = current_request {
-            request.state == ModerationRequestState::Waiting
-        } else {
-            false
-        };
 
-        if update_possible {
-            update(media_moderation_request.find(request_owner_account_id.as_db_id()))
-                .set((
-                    // TODO
-                    //initial_moderation_security_image.eq(new_request.initial_moderation_security_image),
-                    content_id_1.eq(new_request.content1),
-                    content_id_2.eq(new_request.content2),
-                    content_id_3.eq(new_request.content3),
-                    content_id_4.eq(new_request.content4),
-                    content_id_5.eq(new_request.content5),
-                    content_id_6.eq(new_request.content6),
-                ))
-                .execute(self.conn())
-                .change_context(DieselDatabaseError::Execute)?;
-            Ok(())
-        } else {
-            Err(DieselDatabaseError::NotAllowed.report())
+        match current_request {
+            Some(ModerationRequestInternal { state: ModerationRequestState::Waiting, ..}) => {
+                update(media_moderation_request.find(request_owner_account_id.as_db_id()))
+                    .set((
+                        content_id_0.eq(new_request.content0),
+                        content_id_1.eq(new_request.content1),
+                        content_id_2.eq(new_request.content2),
+                        content_id_3.eq(new_request.content3),
+                        content_id_4.eq(new_request.content4),
+                        content_id_5.eq(new_request.content5),
+                        content_id_6.eq(new_request.content6),
+                    ))
+                    .execute(self.conn())
+                    .change_context(DieselDatabaseError::Execute)?;
+                Ok(())
+            }
+            _ => Err(DieselDatabaseError::NotAllowed.report())
         }
     }
 

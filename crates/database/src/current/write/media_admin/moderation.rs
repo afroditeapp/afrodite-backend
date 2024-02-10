@@ -165,7 +165,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             ModerationRequestState::Waiting => ContentState::InSlot,
         };
 
-        for c in content.content() {
+        for c in content.iter() {
             let _content_info = self
                 .read()
                 .media()

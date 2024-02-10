@@ -84,7 +84,7 @@ async fn initial_setup_successful(context: TestContext) -> TestResult {
         ])
         .await?;
 
-    assert_failure(post_complete_setup(account.account_api()).await)?;
+    post_complete_setup(account.account_api()).await?;
     assert_eq(
         AccountState::Normal,
         get_account_state(account.account_api()).await?.state,

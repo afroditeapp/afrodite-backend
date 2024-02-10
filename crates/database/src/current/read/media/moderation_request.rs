@@ -110,7 +110,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
         content_owner: AccountIdInternal,
         request_content: &ModerationRequestContent,
     ) -> Result<(), DieselDatabaseError> {
-        let requested_content_set: HashSet<ContentId> = request_content.content().collect();
+        let requested_content_set: HashSet<ContentId> = request_content.iter().collect();
 
         let required_state = ContentState::InSlot as i64;
         let data: Vec<MediaContentRaw> = {

@@ -83,6 +83,12 @@ impl<T, Ok> ErrorContext<T, Ok> {
     }
 }
 
+impl <T: IsLoggingAllowed + std::fmt::Debug, Ok> ErrorContext<T, Ok> {
+    pub fn printable(&self) -> String {
+        format!("{:#?}", self)
+    }
+}
+
 impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> std::fmt::Debug for ErrorContext<T, Ok> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         struct Printer<'a, T> {

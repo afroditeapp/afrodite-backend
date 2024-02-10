@@ -3,6 +3,7 @@ use core::fmt;
 use crate::{client::TestError, TestResult};
 
 /// Assert that value is true
+#[track_caller]
 pub fn assert(value: bool) -> TestResult {
     if value {
         Ok(())
@@ -13,6 +14,7 @@ pub fn assert(value: bool) -> TestResult {
 }
 
 /// Assert that value equals expected value
+#[track_caller]
 pub fn assert_eq<T: PartialEq + fmt::Debug>(expect: T, value: T) -> TestResult {
     if expect == value {
         Ok(())
@@ -22,6 +24,7 @@ pub fn assert_eq<T: PartialEq + fmt::Debug>(expect: T, value: T) -> TestResult {
     }
 }
 
+#[track_caller]
 pub fn assert_failure<Ok, Err>(result: Result<Ok, Err>) -> TestResult {
     if result.is_err() {
         Ok(())

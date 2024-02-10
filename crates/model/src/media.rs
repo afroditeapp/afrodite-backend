@@ -206,7 +206,7 @@ pub struct ModerationRequestContent {
 }
 
 impl ModerationRequestContent {
-    pub fn content(&self) -> impl Iterator<Item = ContentId> {
+    pub fn iter(&self) -> impl Iterator<Item = ContentId> {
         [
             Some(self.content0),
             self.content1,
@@ -218,6 +218,10 @@ impl ModerationRequestContent {
         ]
         .into_iter()
         .flatten()
+    }
+
+    pub fn exists(&self, id: ContentId) -> bool {
+        self.iter().find(|c| *c == id).is_some()
     }
 }
 

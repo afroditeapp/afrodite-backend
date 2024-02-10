@@ -98,13 +98,6 @@ pub enum DataError {
     SqliteVersionMismatch,
 }
 
-// impl DataError {
-//     #[track_caller]
-//     pub fn report(self) -> error_stack::Report<Self> {
-//         error_stack::report!(self)
-//     }
-// }
-
 /// Attach more info to current error
 ///
 /// This trait is for error container error_stack::Report<Err>
@@ -117,8 +110,7 @@ pub trait WithInfo<Ok, Err: Context>: Sized {
         request_context: T,
     ) -> std::result::Result<Ok, error_stack::Report<Err>> {
         self.into_error_without_context().map_err(|e| {
-            let context = ErrorContext::<T, Ok>::new(request_context);
-            e.attach_printable(format!("{:#?}", context))
+            e.attach_printable(ErrorContext::<T, Ok>::new(request_context).printable())
         })
     }
 }
@@ -144,8 +136,7 @@ pub trait WrappedWithInfo<Ok, Err: Context>: Sized {
         request_context: T,
     ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
         self.into_error_without_context().map_err(|e| {
-            let context = ErrorContext::<T, Ok>::new(request_context);
-            e.attach_printable(format!("{:#?}", context))
+            e.attach_printable(ErrorContext::<T, Ok>::new(request_context).printable())
         })
     }
 }
@@ -166,7 +157,8 @@ impl<Ok> WrappedWithInfo<Ok, InternalApiError> for std::result::Result<Ok, Inter
     fn into_error_without_context(
         self,
     ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<InternalApiError>>> {
-        self.map_err(|e| e.report())
+        let value = self?;
+        Ok(value)
     }
 }
 
@@ -182,8 +174,7 @@ pub trait IntoDataError<Ok, Err: Context>: Sized {
         request_context: T,
     ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
         self.into_data_error_without_context().map_err(|e| {
-            let context = ErrorContext::<T, Ok>::new(request_context);
-            e.attach_printable(format!("{:#?}", context))
+            e.attach_printable(ErrorContext::<T, Ok>::new(request_context).printable())
         })
     }
 
