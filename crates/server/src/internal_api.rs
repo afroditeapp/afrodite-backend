@@ -1,0 +1,107 @@
+//! Functions which makes requests to internal API. If the required
+//! feature (server component) is located on the current server, then
+//! request is not made.
+
+use api_internal::{Configuration, InternalApi};
+use config::{Config, InternalApiUrls};
+use hyper::StatusCode;
+use model::{
+    AccessToken, Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
+    ProfileInternal,
+};
+use tracing::{error, info, warn};
+
+use super::data::{read::ReadCommands, utils::AccessTokenManager};
+use crate::{
+    app::{GetAccessTokens, GetConfig, ReadData, WriteData},
+    data::WrappedWithInfo,
+    result::{Result, WrappedContextExt, WrappedResultExt},
+};
+
+pub mod common;
+pub mod media;
+pub mod profile;
+pub mod account;
+
+// TODO: Use TLS for checking that all internal communication comes from trusted
+//       sources.
+
+#[derive(thiserror::Error, Debug)]
+pub enum InternalApiError {
+    #[error("API request failed")]
+    ApiRequest,
+
+    #[error("Database call failed")]
+    DataError,
+
+    #[error("Account API URL not configured")]
+    AccountApiUrlNotConfigured,
+
+    #[error("Media API URL not configured")]
+    MediaApiUrlNotConfigured,
+    // #[error("Wrong status code")]
+    // StatusCode,
+
+    // #[error("Joining text to URL failed")]
+    // ApiUrlJoinError,
+    #[error("Missing value")]
+    MissingValue,
+
+    #[error("Invalid value")]
+    InvalidValue,
+
+    #[error("Required server component is not enabled")]
+    MissingComponent,
+}
+
+// TOOD: What is PrintWarningsTriggersAtomics?
+pub struct PrintWarningsTriggersAtomics {}
+
+pub struct InternalApiClient {
+    account: Option<Configuration>,
+    media: Option<Configuration>,
+}
+
+impl InternalApiClient {
+    pub fn new(base_urls: InternalApiUrls) -> Self {
+        let client = reqwest::Client::new();
+
+        let account = base_urls.account_base_url.map(|url| {
+            let url = url.as_str().trim_end_matches('/').to_string();
+
+            info!("Account internal API base url: {}", url);
+
+            Configuration {
+                base_path: url,
+                client: client.clone(),
+                ..Configuration::default()
+            }
+        });
+
+        let media = base_urls.media_base_url.map(|url| {
+            let url = url.as_str().trim_end_matches('/').to_string();
+
+            info!("Media internal API base url: {}", url);
+
+            Configuration {
+                base_path: url,
+                client: client.clone(),
+                ..Configuration::default()
+            }
+        });
+
+        Self { account, media }
+    }
+
+    pub fn account(&self) -> Result<&Configuration, InternalApiError> {
+        self.account
+            .as_ref()
+            .ok_or(InternalApiError::AccountApiUrlNotConfigured.report())
+    }
+
+    pub fn media(&self) -> Result<&Configuration, InternalApiError> {
+        self.media
+            .as_ref()
+            .ok_or(InternalApiError::MediaApiUrlNotConfigured.report())
+    }
+}

@@ -31,7 +31,7 @@ use self::{
     write_concurrent::WriteCommandsConcurrent,
 };
 use crate::{
-    internal::InternalApiError,
+    internal_api::InternalApiError,
     result::{Result, WrappedContextExt, WrappedReport},
 };
 

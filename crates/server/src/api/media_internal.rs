@@ -6,7 +6,7 @@ use simple_backend::create_counters;
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
+    app::{GetAccounts, GetConfig, GetInternalApi, ReadData}, internal_api,
 };
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
@@ -77,10 +77,13 @@ pub async fn internal_post_update_profile_image_visibility<
 
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
-    state
-        .internal_api()
-        .media_api_profile_visiblity(account_id, value, profile)
-        .await?;
+    internal_api::media::media_api_profile_visiblity(
+        &state,
+        account_id,
+        value,
+        profile,
+    ).await?;
+
     Ok(())
 }
 

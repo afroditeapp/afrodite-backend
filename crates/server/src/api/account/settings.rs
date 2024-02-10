@@ -7,7 +7,7 @@ use crate::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
+    app::{EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
 };
 
 pub const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
@@ -99,13 +99,14 @@ pub async fn put_setting_profile_visiblity<
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let new_capabilities = state
-        .internal_api()
-        .modify_and_sync_account_state(id, |d| {
+    let new_capabilities = internal_api::account::modify_and_sync_account_state(
+        &state,
+        id,
+        |d| {
             d.capabilities.user_view_public_profiles = new_value.value;
             *d.is_profile_public = new_value.value;
-        })
-        .await?;
+        },
+    ).await?;
 
     state
         .event_manager()
@@ -118,10 +119,11 @@ pub async fn put_setting_profile_visiblity<
         .await?;
 
     // TODO could this be removed, because there is already the sync call above?
-    state
-        .internal_api()
-        .profile_api_set_profile_visiblity(id, new_value)
-        .await?;
+    internal_api::profile::profile_api_set_profile_visiblity(
+        &state,
+        id,
+        new_value,
+    ).await?;
 
     Ok(())
 }

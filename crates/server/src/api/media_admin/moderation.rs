@@ -10,7 +10,7 @@ use crate::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
 };
 
 // TODO: Add moderation content moderation weight to account and use it when moderating.
@@ -85,10 +85,10 @@ pub async fn post_handle_moderation_request<
 ) -> Result<(), StatusCode> {
     MEDIA_ADMIN.post_handle_moderation_request.incr();
 
-    let account = state
-        .internal_api()
-        .get_account_state(admin_account_id)
-        .await?;
+    let account = internal_api::account::get_account_state(
+        &state,
+        admin_account_id,
+    ).await?;
 
     if account.capablities().admin_moderate_images {
         let moderation_request_owner = state

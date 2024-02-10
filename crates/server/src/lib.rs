@@ -9,7 +9,7 @@ pub mod bot;
 pub mod content_processing;
 pub mod data;
 pub mod event;
-pub mod internal;
+pub mod internal_api;
 pub mod perf;
 pub mod result;
 pub mod utils;

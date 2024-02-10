@@ -21,7 +21,7 @@ use super::{
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
         DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
     },
-    internal::{InternalApiClient, InternalApiManager},
+    internal_api::{InternalApiClient},
 };
 use crate::{
     api,
@@ -130,14 +130,12 @@ impl ReadData for S {
 }
 
 pub trait GetInternalApi {
-    fn internal_api(&self) -> InternalApiManager<Self>
-    where
-        Self: Sized;
+    fn internal_api_client(&self) -> &InternalApiClient;
 }
 
 impl GetInternalApi for S {
-    fn internal_api(&self) -> InternalApiManager<Self> {
-        InternalApiManager::new(self, &self.business_logic_state().internal_api)
+    fn internal_api_client(&self) -> &InternalApiClient {
+        &self.business_logic_state().internal_api
     }
 }
 

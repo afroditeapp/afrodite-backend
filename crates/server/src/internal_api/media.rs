@@ -1,0 +1,67 @@
+use api_internal::{Configuration, InternalApi};
+use config::{Config, InternalApiUrls};
+use hyper::StatusCode;
+use model::{
+    AccessToken, Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
+    ProfileInternal,
+};
+use tracing::{error, info, warn};
+
+use crate::{data::{read::ReadCommands, utils::AccessTokenManager}};
+use crate::{
+    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
+    data::WrappedWithInfo,
+    result::{Result, WrappedContextExt, WrappedResultExt},
+};
+
+use super::{account, InternalApiError};
+
+pub async fn media_check_moderation_request_for_account<S: GetAccessTokens + GetConfig + ReadData + GetInternalApi>(
+    state: &S,
+    account_id: AccountIdInternal,
+) -> Result<(), InternalApiError> {
+    if state.config().components().media {
+        let _request = state
+            .read()
+            .moderation_request(account_id)
+            .await
+            .change_context(InternalApiError::DataError)?
+            .ok_or(InternalApiError::MissingValue)
+            .with_info(account_id)?;
+
+        // if request.content.initial_moderation_security_image.is_some() {
+        //     Ok(())
+        // } else {
+        Err(InternalApiError::MissingValue).with_info(account_id)
+        // }
+    } else {
+        InternalApi::media_check_moderation_request_for_account(
+            state.internal_api_client().media()?,
+            account_id.as_id(),
+        )
+        .await
+        .change_context(InternalApiError::MissingValue)
+    }
+}
+
+// TODO: Can media_api_profile_visiblity be removed?
+
+pub async fn media_api_profile_visiblity<S: GetConfig>(
+    state: &S,
+    _account_id: AccountIdInternal,
+    _boolean_setting: BooleanSetting,
+    _current_profile: Profile,
+) -> Result<(), InternalApiError> {
+    if state.config().components().media {
+        // TODO: Save visibility information to cache?
+        Ok(())
+    } else {
+        // TODO: request to internal media API
+        Ok(())
+    }
+}
+
+// TODO: Prevent creating a new moderation request when there is camera
+// image in the current one. Or also make possible to change the ongoing
+// moderation request but leave the camera image. Where information about
+// the camera image should be stored?

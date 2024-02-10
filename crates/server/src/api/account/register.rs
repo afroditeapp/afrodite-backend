@@ -11,6 +11,7 @@ use crate::{
         utils::{Json, StatusCode},
     },
     app::{EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
+    internal_api,
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -155,10 +156,7 @@ pub async fn post_complete_setup<
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
-    state
-        .internal_api()
-        .media_check_moderation_request_for_account(id)
-        .await?;
+    internal_api::media::media_check_moderation_request_for_account(&state, id).await?;
 
     let mut account = state.read().account().account(id).await?;
     let account_data = state.read().account().account_data(id).await?;
@@ -167,10 +165,11 @@ pub async fn post_complete_setup<
 
     if account.state() == AccountState::InitialSetup {
         // Handle profile related initial setup
-        state
-            .internal_api()
-            .profile_initial_setup(id, account_setup.name().to_string())
-            .await?;
+        internal_api::profile::profile_initial_setup(
+            &state,
+            id,
+            account_setup.name().to_string(),
+        ).await?;
 
         // Handle account related initial setup
 
@@ -196,13 +195,14 @@ pub async fn post_complete_setup<
         }
 
         let new_account_copy = account.clone();
-        state
-            .internal_api()
-            .modify_and_sync_account_state(id, |d| {
+        internal_api::account::modify_and_sync_account_state(
+            &state,
+            id,
+            |d| {
                 *d.state = new_account_copy.state();
                 *d.capabilities = new_account_copy.into_capablities();
-            })
-            .await?;
+            }
+        ).await?;
 
         state
             .event_manager()

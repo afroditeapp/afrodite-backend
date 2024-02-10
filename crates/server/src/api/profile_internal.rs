@@ -7,7 +7,7 @@ use simple_backend::create_counters;
 use super::super::app::{
     GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData,
 };
-use crate::api::utils::StatusCode;
+use crate::{api::utils::StatusCode, internal_api};
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
     "/internal/profile_api/visibility/:account_id/:value";
@@ -35,10 +35,11 @@ pub async fn internal_post_update_profile_visibility<
 
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
-    state
-        .internal_api()
-        .profile_api_set_profile_visiblity(account_id, value)
-        .await?;
+    internal_api::profile::profile_api_set_profile_visiblity(
+        &state,
+        account_id,
+        value,
+    ).await?;
 
     Ok(())
 }

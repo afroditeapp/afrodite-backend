@@ -10,7 +10,7 @@ use crate::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
 };
 
 // TODO: Add timeout for database commands
@@ -75,10 +75,11 @@ pub async fn get_profile<
     let visiblity = match visibility {
         Some(v) => v,
         None => {
-            let account = state
-                .internal_api()
-                .get_account_state(requested_profile)
-                .await?;
+            let account = internal_api::account::get_account_state(
+                &state,
+                requested_profile,
+            ).await?;
+
             let visibility = account.capablities().user_view_public_profiles;
             db_write!(state, move |cmds| {
                 cmds.profile()
