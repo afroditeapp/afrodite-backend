@@ -387,7 +387,7 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
     SetAccountSetup::new(),
     SendImageToSlot::slot(0),
     SendImageToSlot::slot(1),
-    MakeModerationRequest { camera: true },
+    MakeModerationRequest { slot_0_secure_capture: true },
     CompleteAccountSetup,
     AssertAccountState(AccountState::Normal),
 ];

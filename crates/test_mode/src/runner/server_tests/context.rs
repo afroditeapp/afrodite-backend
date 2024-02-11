@@ -126,4 +126,8 @@ impl Account {
         }
         Ok(())
     }
+
+    pub fn print(&self) {
+        println!("BotState media {:#?}", self.bot_state.media);
+    }
 }

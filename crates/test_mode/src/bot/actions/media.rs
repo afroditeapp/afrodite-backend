@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
 use api_client::{
-    apis::media_api::{get_content_slot_state, put_moderation_request},
+    apis::media_api::{get_content_slot_state, put_moderation_request, put_pending_profile_content, put_pending_security_image_info},
     manual_additions::put_content_to_content_slot_fixed,
-    models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent},
+    models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent, PendingSecurityImage, SetProfileContent},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -153,7 +153,8 @@ impl BotAction for SendImageToSlot {
 
 #[derive(Debug)]
 pub struct MakeModerationRequest {
-    pub camera: bool,
+    /// Use the first slot as secure capture slot
+    pub slot_0_secure_capture: bool,
 }
 
 #[async_trait]
@@ -161,7 +162,7 @@ impl BotAction for MakeModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let mut content_ids: Vec<Option<Box<ContentId>>> = vec![];
 
-        if self.camera {
+        if self.slot_0_secure_capture {
             content_ids.push(
                 Box::new(state.media.slots[0].clone().unwrap_or(ContentId {
                     content_id: uuid::Uuid::new_v4(),
@@ -195,6 +196,38 @@ impl BotAction for MakeModerationRequest {
         put_moderation_request(state.api.media(), new)
             .await
             .change_context(TestError::ApiRequest)?;
+        Ok(())
+    }
+}
+
+
+#[derive(Debug)]
+pub struct SetPendingContent {
+    pub security_content_slot_i: Option<usize>,
+    pub content_0_slot_i: Option<usize>,
+}
+
+#[async_trait]
+impl BotAction for SetPendingContent {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        if let Some(i) = self.security_content_slot_i {
+            let content_id = state.media.slots[i].clone().unwrap();
+            put_pending_security_image_info(state.api.media(), content_id)
+                .await
+                .change_context(TestError::ApiRequest)?;
+        }
+
+        if let Some(i) = self.content_0_slot_i {
+            let content_id = state.media.slots[i].clone().unwrap();
+            let info = SetProfileContent {
+                content_id_0: content_id.into(),
+                ..SetProfileContent::default()
+            };
+            put_pending_profile_content(state.api.media(), info)
+                .await
+                .change_context(TestError::ApiRequest)?;
+        }
+
         Ok(())
     }
 }

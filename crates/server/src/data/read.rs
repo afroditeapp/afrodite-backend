@@ -1,6 +1,6 @@
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::ResultExt;
-use model::{AccountId, AccountIdInternal, ContentId, MediaContentInternal, ModerationRequest};
+use model::{AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest};
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::IntoReportFromString;
 use tokio_util::io::ReaderStream;
@@ -150,7 +150,7 @@ impl<'a> ReadCommands<'a> {
     pub async fn all_account_media_content(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<Vec<MediaContentInternal>, DataError> {
+    ) -> Result<Vec<MediaContentRaw>, DataError> {
         self.db_read(move |mut cmds| {
             cmds.media()
                 .media_content()

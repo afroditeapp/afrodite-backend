@@ -49,7 +49,7 @@ pub async fn media_check_moderation_request_for_account<S: GetAccessTokens + Get
             if !content.secure_capture {
                 return Err(InternalApiError::SecureCaptureFlagFalse).with_info(account_id)
             }
-            if request.content.exists(content.content_id) {
+            if request.content.find(content.content_id()).is_none() {
                 return Err(InternalApiError::SecurityContentNotInModerationRequest).with_info(account_id)
             }
         } else {
@@ -60,7 +60,7 @@ pub async fn media_check_moderation_request_for_account<S: GetAccessTokens + Get
         let current_or_pending_profile_content = account_media.profile_content_id_0
             .or(account_media.pending_profile_content_id_0);
         if let Some(content) = current_or_pending_profile_content {
-            if request.content.exists(content.content_id) {
+            if request.content.find(content.content_id()).is_none() {
                 return Err(InternalApiError::ContentNotInModerationRequest).with_info(account_id)
             }
         } else {

@@ -69,6 +69,7 @@ enable_logging!(
     ModerationRequestId, // TODO: combine with ModerationRequestIdDb
     ContentIdDb,
     ContentId,
+    Option<ContentId>,
     ContentSlot,
     ModerationId,
     ModerationQueueNumber,

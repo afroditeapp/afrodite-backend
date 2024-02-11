@@ -1,7 +1,6 @@
 //! QA testing
 //!
 
-pub mod account;
 pub mod chat;
 pub mod common;
 pub mod media;
@@ -14,7 +13,7 @@ use async_trait::async_trait;
 use tracing::log::info;
 
 use self::{
-    account::ACCOUNT_TESTS, chat::CHAT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS,
+    chat::CHAT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS,
     profile::PROFILE_TESTS,
 };
 use super::{
@@ -45,7 +44,6 @@ macro_rules! test {
 }
 
 pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[
-    ACCOUNT_TESTS,
     MEDIA_TESTS,
     PROFILE_TESTS,
     COMMON_TESTS,
@@ -105,7 +103,7 @@ impl Qa {
             SetAccountSetup::admin(),
             SendImageToSlot::slot(0),
             SendImageToSlot::slot(1),
-            MakeModerationRequest { camera: true },
+            MakeModerationRequest { slot_0_secure_capture: true },
             CompleteAccountSetup,
             AssertAccountState(AccountState::Normal),
         ];

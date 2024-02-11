@@ -156,7 +156,7 @@ impl BotAction for DoInitialSetupIfNeeded {
                     copy_to_slot: Some(0),
                     mark_copied_image: true,
                 },
-                MakeModerationRequest { camera: true },
+                MakeModerationRequest { slot_0_secure_capture: true },
                 CompleteAccountSetup,
                 AssertAccountState(AccountState::Normal),
             );

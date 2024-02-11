@@ -94,7 +94,7 @@ impl WriteCommandsMedia<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .update_profile_content_if_possible(id, new)
+                .update_profile_content(id, new)
         })
     }
 
@@ -106,11 +106,11 @@ impl WriteCommandsMedia<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .update_or_delete_pending_profile_content_if_possible(id, new)
+                .update_or_delete_pending_profile_content(id, new)
         })
     }
 
-    pub async fn update_security_image(
+    pub async fn update_security_content(
         self,
         content_owner: AccountIdInternal,
         content: ContentId,
@@ -118,11 +118,11 @@ impl WriteCommandsMedia<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .delete_content(content_owner, content)
+                .update_security_content(content_owner, content)
         })
     }
 
-    pub async fn update_or_delete_pending_security_image(
+    pub async fn update_or_delete_pending_security_content(
         self,
         content_owner: AccountIdInternal,
         content: Option<ContentId>,
@@ -130,7 +130,7 @@ impl WriteCommandsMedia<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .update_or_delete_pending_security_image(content_owner, content)
+                .update_or_delete_pending_security_content(content_owner, content)
         })
     }
 
@@ -146,7 +146,7 @@ impl WriteCommandsMedia<'_> {
         })
     }
 
-    pub async fn delete_moderation_request_if_possible(
+    pub async fn delete_moderation_request_not_yet_in_moderation(
         self,
         moderation_request_owner: AccountIdInternal,
     ) -> Result<(), DataError> {

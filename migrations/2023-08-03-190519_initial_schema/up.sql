@@ -272,10 +272,10 @@ CREATE TABLE IF NOT EXISTS media_content(
     account_id          INTEGER             NOT NULL,
     -- InSlot = 0, If user uploads new content to slot the current will be removed.
     -- InModeration = 1, Content is in moderation. User can not remove the content.
-    -- InModeration = 2, Content is moderated as accepted. User can not remove the content until
-    --                   specific time elapses.
-    -- ModeratedAsDenied = 3, Content is moderated as denied. Making new moderation request removes
-    --                        the content.
+    -- ModeratedAsAccepted = 2, Content is moderated as accepted. User can not remove the content until
+    --                          specific time elapses.
+    -- ModeratedAsDenied = 3, Content is moderated as denied. Content deleting
+    --                        is possible.
     content_state       INTEGER             NOT NULL,
     -- Client captured this media
     secure_capture      BOOLEAN             NOT NULL,

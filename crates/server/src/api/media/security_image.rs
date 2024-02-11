@@ -80,7 +80,7 @@ pub async fn put_security_image_info<S: WriteData>(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_security_image(api_caller_account_id, content_id))
+        .update_security_content(api_caller_account_id, content_id))
 }
 
 pub const PATH_GET_PENDING_SECURITY_IMAGE_INFO: &str =
@@ -145,7 +145,7 @@ pub async fn put_pending_security_image_info<S: WriteData>(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_or_delete_pending_security_image(
+        .update_or_delete_pending_security_content(
             api_caller_account_id,
             Some(content_id)
         ))
@@ -174,7 +174,7 @@ pub async fn delete_pending_security_image_info<S: WriteData>(
 
     db_write!(state, move |cmds| cmds
         .media()
-        .update_or_delete_pending_security_image(
+        .update_or_delete_pending_security_content(
             api_caller_account_id,
             None
         ))

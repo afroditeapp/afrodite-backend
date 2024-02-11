@@ -47,6 +47,8 @@ pub enum DieselDatabaseError {
     #[error("Serializing failed")]
     SerdeSerialize,
 
+    #[error("Content it is in use")]
+    ContentIsInUse,
     #[error("Content slot not empty")]
     ContentSlotNotEmpty,
     #[error("Content slot empty")]

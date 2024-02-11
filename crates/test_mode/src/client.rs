@@ -58,7 +58,7 @@ pub enum TestError {
 impl TestError {
     #[track_caller]
     pub fn report(self) -> error_stack::Report<Self> {
-        error_stack::report!(self)
+        error_stack::Report::from(self)
     }
 }
 

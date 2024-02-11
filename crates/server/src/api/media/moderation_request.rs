@@ -88,7 +88,7 @@ pub async fn delete_moderation_request<S: WriteData>(
 
     db_write!(state, move |cmds| {
         cmds.media()
-            .delete_moderation_request_if_possible(account_id)
+            .delete_moderation_request_not_yet_in_moderation(account_id)
     })
 }
 

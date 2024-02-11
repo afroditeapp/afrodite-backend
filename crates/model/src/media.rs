@@ -1,9 +1,12 @@
+use std::ops::Not;
+
 use diesel::{
     prelude::*,
     sql_types::{BigInt, Binary},
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::map::IntoIter;
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -221,7 +224,15 @@ impl ModerationRequestContent {
     }
 
     pub fn exists(&self, id: ContentId) -> bool {
-        self.iter().find(|c| *c == id).is_some()
+        self.find(id).is_some()
+    }
+
+    pub fn not_exists(&self, id: ContentId) -> bool {
+        !self.exists(id)
+    }
+
+    pub fn find(&self, id: ContentId) -> Option<ContentId> {
+        self.iter().find(|c| *c == id)
     }
 }
 
@@ -463,6 +474,10 @@ impl ContentId {
     pub fn content_file_name(&self) -> String {
         format!("{}", self.content_id.as_hyphenated())
     }
+
+    pub fn not_in(&self, mut iter: impl Iterator<Item = ContentId>) -> bool {
+        iter.find(|c| *c == *self).is_none()
+    }
 }
 
 impl sqlx::Type<sqlx::Sqlite> for ContentId {
@@ -520,58 +535,57 @@ pub struct MediaContentRaw {
     pub content_state: ContentState,
     pub secure_capture: bool,
     pub content_type_number: MediaContentType,
-    pub slot_number: ContentSlot,
+    slot_number: ContentSlot,
 }
 
-impl From<MediaContentRaw> for MediaContentInternal {
-    fn from(value: MediaContentRaw) -> MediaContentInternal {
-        MediaContentInternal {
-            content_id: value.uuid,
-            content_row_id: value.id,
+impl MediaContentRaw {
+    pub fn slot_number(&self) -> Option<ContentSlot> {
+        if self.content_state == ContentState::InSlot {
+            Some(self.slot_number)
+        } else {
+            None
+        }
+    }
+
+    pub fn content_id(&self) -> ContentId {
+        self.uuid
+    }
+
+    pub fn state(&self) -> ContentState {
+        self.content_state
+    }
+
+    pub fn content_type(&self) -> MediaContentType {
+        self.content_type_number
+    }
+
+    pub fn content_row_id(&self) -> ContentIdDb {
+        self.id
+    }
+}
+
+impl From<MediaContentRaw> for ContentId {
+    fn from(value: MediaContentRaw) -> Self {
+        value.uuid
+    }
+}
+
+impl From<MediaContentRaw> for ContentInfo {
+    fn from(value: MediaContentRaw) -> Self {
+        ContentInfo {
+            id: value.uuid,
+            content_type: value.content_type_number,
+        }
+    }
+}
+
+impl From<MediaContentRaw> for ContentInfoDetailed {
+    fn from(value: MediaContentRaw) -> Self {
+        ContentInfoDetailed {
+            id: value.uuid,
             content_type: value.content_type_number,
             state: value.content_state,
-            secure_capture: value.secure_capture,
-            slot_number: if value.content_state == ContentState::InSlot {
-                Some(value.slot_number)
-            } else {
-                None
-            },
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct MediaContentInternal {
-    pub content_id: ContentId,
-    pub content_row_id: ContentIdDb,
-    pub content_type: MediaContentType,
-    pub state: ContentState,
-    pub secure_capture: bool,
-    pub slot_number: Option<ContentSlot>,
-}
-
-impl From<MediaContentInternal> for ContentId {
-    fn from(value: MediaContentInternal) -> Self {
-        value.content_id
-    }
-}
-
-impl From<MediaContentInternal> for ContentInfo {
-    fn from(value: MediaContentInternal) -> Self {
-        ContentInfo {
-            id: value.content_id,
-            content_type: value.content_type,
-        }
-    }
-}
-
-impl From<MediaContentInternal> for ContentInfoDetailed {
-    fn from(value: MediaContentInternal) -> Self {
-        ContentInfoDetailed {
-            id: value.content_id,
-            content_type: value.content_type,
-            state: value.state,
-            slot: value.slot_number,
+            slot: value.slot_number(),
             secure_capture: value.secure_capture,
         }
     }
@@ -606,23 +620,23 @@ pub struct CurrentAccountMediaRaw {
 
 #[derive(Debug, Clone)]
 pub struct CurrentAccountMediaInternal {
-    pub security_content_id: Option<MediaContentInternal>,
-    pub profile_content_id_0: Option<MediaContentInternal>,
-    pub profile_content_id_1: Option<MediaContentInternal>,
-    pub profile_content_id_2: Option<MediaContentInternal>,
-    pub profile_content_id_3: Option<MediaContentInternal>,
-    pub profile_content_id_4: Option<MediaContentInternal>,
-    pub profile_content_id_5: Option<MediaContentInternal>,
+    pub security_content_id: Option<MediaContentRaw>,
+    pub profile_content_id_0: Option<MediaContentRaw>,
+    pub profile_content_id_1: Option<MediaContentRaw>,
+    pub profile_content_id_2: Option<MediaContentRaw>,
+    pub profile_content_id_3: Option<MediaContentRaw>,
+    pub profile_content_id_4: Option<MediaContentRaw>,
+    pub profile_content_id_5: Option<MediaContentRaw>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
-    pub pending_security_content_id: Option<MediaContentInternal>,
-    pub pending_profile_content_id_0: Option<MediaContentInternal>,
-    pub pending_profile_content_id_1: Option<MediaContentInternal>,
-    pub pending_profile_content_id_2: Option<MediaContentInternal>,
-    pub pending_profile_content_id_3: Option<MediaContentInternal>,
-    pub pending_profile_content_id_4: Option<MediaContentInternal>,
-    pub pending_profile_content_id_5: Option<MediaContentInternal>,
+    pub pending_security_content_id: Option<MediaContentRaw>,
+    pub pending_profile_content_id_0: Option<MediaContentRaw>,
+    pub pending_profile_content_id_1: Option<MediaContentRaw>,
+    pub pending_profile_content_id_2: Option<MediaContentRaw>,
+    pub pending_profile_content_id_3: Option<MediaContentRaw>,
+    pub pending_profile_content_id_4: Option<MediaContentRaw>,
+    pub pending_profile_content_id_5: Option<MediaContentRaw>,
     pub pending_grid_crop_size: Option<f64>,
     pub pending_grid_crop_x: Option<f64>,
     pub pending_grid_crop_y: Option<f64>,
@@ -632,6 +646,39 @@ impl CurrentAccountMediaInternal {
     pub const GRID_CROP_SIZE_DEFAULT: f64 = 1.0;
     pub const GRID_CROP_X_DEFAULT: f64 = 0.0;
     pub const GRID_CROP_Y_DEFAULT: f64 = 0.0;
+
+    pub fn iter_all_content(&self) -> impl Iterator<Item = &MediaContentRaw> {
+        self.iter_current_profile_content()
+            .chain(self.iter_pending_profile_content())
+            .chain(self.security_content_id.iter())
+            .chain(self.pending_security_content_id.iter())
+    }
+
+    fn iter_current_profile_content(&self) -> impl Iterator<Item = &MediaContentRaw> {
+        [
+            &self.profile_content_id_0,
+            &self.profile_content_id_1,
+            &self.profile_content_id_2,
+            &self.profile_content_id_3,
+            &self.profile_content_id_4,
+            &self.profile_content_id_5,
+        ]
+        .into_iter()
+        .flatten()
+    }
+
+    fn iter_pending_profile_content(&self) -> impl Iterator<Item = &MediaContentRaw> {
+        [
+            &self.pending_profile_content_id_0,
+            &self.pending_profile_content_id_1,
+            &self.pending_profile_content_id_2,
+            &self.pending_profile_content_id_3,
+            &self.pending_profile_content_id_4,
+            &self.pending_profile_content_id_5,
+        ]
+        .into_iter()
+        .flatten()
+    }
 }
 
 /// Update normal or pending profile content

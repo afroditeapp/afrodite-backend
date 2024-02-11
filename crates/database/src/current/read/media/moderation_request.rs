@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentSlot, ContentState, MediaContentInternal,
+    AccountId, AccountIdInternal, ContentId, ContentSlot, ContentState,
     MediaContentRaw, MediaModerationRaw, MediaModerationRequestRaw, ModerationQueueNumber,
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
     ModerationRequestState,
@@ -22,14 +22,13 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
         &mut self,
         request_creator: AccountIdInternal,
     ) -> Result<Option<ModerationRequestInternal>, DieselDatabaseError> {
-        let conn = self.conn();
-        let request: MediaModerationRequestRaw = {
+        let request = {
             use crate::schema::media_moderation_request::dsl::*;
 
             let request: Option<MediaModerationRequestRaw> = media_moderation_request
                 .filter(account_id.eq(request_creator.as_db_id()))
                 .select(MediaModerationRequestRaw::as_select())
-                .first::<MediaModerationRequestRaw>(conn)
+                .first::<MediaModerationRequestRaw>(self.conn())
                 .optional()
                 .into_db_error(request_creator)?;
 
@@ -43,7 +42,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
         let moderations: Vec<MediaModerationRaw> = media_moderation
             .filter(moderation_request_id.eq(request.id))
             .select(MediaModerationRaw::as_select())
-            .load(conn)
+            .load(self.conn())
             .into_db_error((request_creator, request.id))?;
 
         let state = match moderations.first() {
@@ -51,14 +50,14 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             Some(_first) => {
                 let accepted = moderations
                     .iter()
-                    .find(|r| r.state_number == ModerationRequestState::Accepted as i64);
+                    .find(|r| r.state_number == ModerationRequestState::Accepted);
                 let denied = moderations
                     .iter()
-                    .find(|r| r.state_number == ModerationRequestState::Denied as i64);
+                    .find(|r| r.state_number == ModerationRequestState::Denied);
 
-                if let Some(_accepted) = accepted {
+                if accepted.is_some() {
                     ModerationRequestState::Accepted
-                } else if let Some(_denied) = denied {
+                } else if denied.is_some() {
                     ModerationRequestState::Denied
                 } else {
                     ModerationRequestState::InProgress
@@ -80,24 +79,17 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
         &mut self,
         slot_owner: AccountIdInternal,
         slot: ContentSlot,
-    ) -> Result<Option<MediaContentInternal>, DieselDatabaseError> {
-        let required_state = ContentState::InSlot as i64;
-        let required_slot = slot as i64;
+    ) -> Result<Option<MediaContentRaw>, DieselDatabaseError> {
+        use crate::schema::media_content::dsl::*;
 
-        let data: Option<MediaContentRaw> = {
-            use crate::schema::media_content::dsl::*;
-
-            media_content
-                .filter(account_id.eq(slot_owner.as_db_id()))
-                .filter(content_state.eq(required_state))
-                .filter(slot_number.eq(required_slot))
-                .select(MediaContentRaw::as_select())
-                .first(self.conn())
-                .optional()
-                .into_db_error((slot_owner, slot))?
-        };
-
-        Ok(data.map(|data| data.into()))
+        media_content
+            .filter(account_id.eq(slot_owner.as_db_id()))
+            .filter(content_state.eq(ContentState::InSlot))
+            .filter(slot_number.eq(slot))
+            .select(MediaContentRaw::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error((slot_owner, slot))
     }
 
     /// Validate moderation request content, so that all content points to

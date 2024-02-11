@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::{client::TestError, TestResult};
+use crate::{client::TestError, ServerTestError, TestResult};
 
 /// Assert that value is true
 #[track_caller]
@@ -9,7 +9,7 @@ pub fn assert(value: bool) -> TestResult {
         Ok(())
     } else {
         let error = TestError::AssertError(format!("{}", value));
-        Err(error.report().into())
+        Err(ServerTestError::new(error.report()))
     }
 }
 
@@ -20,7 +20,7 @@ pub fn assert_eq<T: PartialEq + fmt::Debug>(expect: T, value: T) -> TestResult {
         Ok(())
     } else {
         let error = TestError::AssertError(format!("expected: {:?}, actual: {:?}", expect, value));
-        Err(error.report().into())
+        Err(ServerTestError::new(error.report()))
     }
 }
 
@@ -30,6 +30,6 @@ pub fn assert_failure<Ok, Err>(result: Result<Ok, Err>) -> TestResult {
         Ok(())
     } else {
         let error = TestError::AssertError(format!("expected: Err, actual: Ok"));
-        Err(error.report().into())
+        Err(ServerTestError::new(error.report()))
     }
 }

@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, CurrentAccountMediaInternal, CurrentAccountMediaRaw,
-    MediaContentInternal, MediaContentRaw,
+    MediaContentRaw,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -18,7 +18,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
         &mut self,
         media_owner_id: AccountIdInternal,
         id: Option<ContentIdDb>,
-    ) -> Result<Option<MediaContentInternal>, DieselDatabaseError> {
+    ) -> Result<Option<MediaContentRaw>, DieselDatabaseError> {
         if let Some(content_id) = id {
             use crate::schema::media_content::dsl::*;
 
@@ -28,7 +28,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
                 .first(self.conn())
                 .into_db_error((media_owner_id, content_id))?;
 
-            Ok(Some(content.into()))
+            Ok(Some(content))
         } else {
             Ok(None)
         }
@@ -115,19 +115,13 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
     pub fn get_account_media_content(
         &mut self,
         media_owner_id: AccountIdInternal,
-    ) -> Result<Vec<MediaContentInternal>, DieselDatabaseError> {
-        let data: Vec<MediaContentRaw> = {
-            use crate::schema::media_content::dsl::*;
+    ) -> Result<Vec<MediaContentRaw>, DieselDatabaseError> {
+        use crate::schema::media_content::dsl::*;
 
-            media_content
-                .filter(account_id.eq(media_owner_id.as_db_id()))
-                .select(MediaContentRaw::as_select())
-                .load(self.conn())
-                .into_db_error(media_owner_id)?
-        };
-
-        let content = data.into_iter().map(|r| r.into()).collect();
-
-        Ok(content)
+        media_content
+            .filter(account_id.eq(media_owner_id.as_db_id()))
+            .select(MediaContentRaw::as_select())
+            .load(self.conn())
+            .into_db_error(media_owner_id)
     }
 }
