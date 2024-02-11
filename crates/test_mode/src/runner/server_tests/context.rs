@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::{mem, sync::Arc};
 
-use api_client::{apis::configuration::Configuration, models::AccountId};
+use api_client::{apis::configuration::Configuration, models::{AccountId, EventToClient}};
 use config::{args::TestMode, Config};
 use error_stack::Result;
 use tokio::sync::Mutex;
@@ -10,8 +10,7 @@ use crate::{
         actions::{
             account::{Login, Register},
             BotAction,
-        },
-        BotState, WsConnection,
+        }, AccountConnections, BotState
     },
     client::ApiClient,
     TestError,
@@ -19,7 +18,7 @@ use crate::{
 
 #[derive(Debug)]
 struct State {
-    pub web_sockets: Vec<WsConnection>,
+    pub connections: Vec<AccountConnections>,
 }
 
 #[derive(Debug, Clone)]
@@ -33,30 +32,29 @@ impl TestContext {
     pub fn new(config: Arc<Config>, test_config: Arc<TestMode>) -> Self {
         Self {
             state: Arc::new(Mutex::new(State {
-                web_sockets: vec![],
+                connections: vec![],
             })),
             config,
             test_config,
         }
     }
 
-    pub async fn clear(&mut self) {
+    pub async fn close_websocket_connections(&mut self) {
         let mut state = self.state.lock().await;
-
-        for ws in state.web_sockets.iter_mut() {
-            let _ = ws.close(None).await;
+        let mut connections = Vec::new();
+        mem::swap(&mut connections, &mut state.connections);
+        for connections in connections.into_iter() {
+            connections.close().await;
         }
-
-        state.web_sockets.clear();
     }
 
     pub async fn new_account(&self) -> Result<Account, TestError> {
         Account::register_and_login(self.clone()).await
     }
 
-    async fn add_web_socket(&mut self, ws: WsConnection) {
+    async fn add_account_connections(&mut self, connections: AccountConnections) {
         let mut state = self.state.lock().await;
-        state.web_sockets.push(ws);
+        state.connections.push(connections);
     }
 }
 
@@ -75,14 +73,13 @@ impl Account {
             0,
             ApiClient::new(test_context.test_config.server.api_urls.clone()),
         );
+        state.connections.enable_event_sending = true;
 
         Register.excecute_impl(&mut state).await?;
         Login.excecute_impl(&mut state).await?;
 
-        let connections = state.connections.take_connections();
-        for ws in connections {
-            test_context.add_web_socket(ws).await;
-        }
+        let connections = state.connections.unwrap_account_connections();
+        test_context.add_account_connections(connections).await;
 
         Ok(Self {
             test_context,
@@ -127,7 +124,13 @@ impl Account {
         Ok(())
     }
 
+    /// Debug print BotState partially
     pub fn print(&self) {
         println!("BotState media {:#?}", self.bot_state.media);
+    }
+
+    /// Wait event if event sending enabled or timeout after 5 seconds
+    pub async fn wait_event(&mut self, check: impl Fn(&EventToClient) -> bool) -> Result<(), TestError> {
+        self.bot_state.wait_event(check).await
     }
 }

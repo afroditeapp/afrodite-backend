@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use api_client::{
     apis::media_api::{get_content_slot_state, put_moderation_request, put_pending_profile_content, put_pending_security_image_info},
     manual_additions::put_content_to_content_slot_fixed,
-    models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent, PendingSecurityImage, SetProfileContent},
+    models::{content_processing_state, ContentId, ContentProcessingStateType, EventToClient, EventType, MediaContentType, ModerationRequestContent, PendingSecurityImage, SetProfileContent},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -63,8 +63,6 @@ impl BotAction for SendImageToSlot {
             ImageProvider::jpeg_image()
         };
 
-        let processing_sleep_time = std::time::Duration::from_millis(100);
-
         let _ = put_content_to_content_slot_fixed(
             state.api.media(),
             self.slot,
@@ -75,30 +73,36 @@ impl BotAction for SendImageToSlot {
         .await
         .change_context(TestError::ApiRequest)?;
 
-        let content_id = loop {
-            tokio::time::sleep(processing_sleep_time).await;
-
-            let slot_state = get_content_slot_state(state.api.media(), self.slot)
-                .await
-                .change_context(TestError::ApiRequest)?;
-
-            match slot_state.state {
-                ContentProcessingStateType::Empty | ContentProcessingStateType::Failed => {
-                    return Err(TestError::ApiRequest.report())
+        async fn wait_for_content_id(slot: i32, state: &mut BotState) -> Result<ContentId, TestError> {
+            state.wait_event(|e|
+                match e.content_processing_state_changed.as_ref() {
+                    Some(Some(content_processing_state)) =>
+                        content_processing_state.new_state.state == ContentProcessingStateType::Completed,
+                    _ => false,
                 }
-                ContentProcessingStateType::Processing | ContentProcessingStateType::InQueue => {
-                    tokio::time::sleep(processing_sleep_time).await
-                }
-                ContentProcessingStateType::Completed => {
-                    break slot_state
-                        .content_id
-                        .flatten()
-                        .expect("Content ID is missing")
+            ).await?;
+
+            loop {
+                let slot_state = get_content_slot_state(state.api.media(), slot)
+                    .await
+                    .change_context(TestError::ApiRequest)?;
+
+                match slot_state.state {
+                    ContentProcessingStateType::Empty | ContentProcessingStateType::Failed =>
+                        return Err(TestError::ApiRequest.report()),
+                    ContentProcessingStateType::Processing | ContentProcessingStateType::InQueue =>
+                        tokio::time::sleep(std::time::Duration::from_millis(200)).await,
+                    ContentProcessingStateType::Completed =>
+                        return Ok(*slot_state
+                            .content_id
+                            .flatten()
+                            .expect("Content ID is missing")),
                 }
             }
-        };
+        }
 
-        state.media.slots[self.slot as usize] = Some(*content_id);
+        let content_id = wait_for_content_id(self.slot, state).await?;
+        state.media.slots[self.slot as usize] = Some(content_id);
 
         let img_data = if self.mark_copied_image {
             ImageProvider::mark_jpeg_image(&img_data).unwrap_or_else(|e| {
@@ -120,31 +124,8 @@ impl BotAction for SendImageToSlot {
             .await
             .change_context(TestError::ApiRequest)?;
 
-            let content_id = loop {
-                tokio::time::sleep(processing_sleep_time).await;
-
-                let slot_state = get_content_slot_state(state.api.media(), slot)
-                    .await
-                    .change_context(TestError::ApiRequest)?;
-
-                match slot_state.state {
-                    ContentProcessingStateType::Empty | ContentProcessingStateType::Failed => {
-                        return Err(TestError::ApiRequest.report())
-                    }
-                    ContentProcessingStateType::Processing
-                    | ContentProcessingStateType::InQueue => {
-                        tokio::time::sleep(processing_sleep_time).await
-                    }
-                    ContentProcessingStateType::Completed => {
-                        break slot_state
-                            .content_id
-                            .flatten()
-                            .expect("Content ID is missing")
-                    }
-                }
-            };
-
-            state.media.slots[slot as usize] = Some(*content_id);
+            let content_id = wait_for_content_id(slot, state).await?;
+            state.media.slots[slot as usize] = Some(content_id);
         }
 
         Ok(())

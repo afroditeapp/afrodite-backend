@@ -22,6 +22,12 @@ pub enum TestError {
     WebSocket,
     #[error("WebSocket wrong value received")]
     WebSocketWrongValue,
+    #[error("Event channel closed")]
+    EventChannelClosed,
+    #[error("Event receiving handle missing")]
+    EventReceivingHandleMissing,
+    #[error("Event receiving timeout")]
+    EventReceivingTimeout,
 
     // Other errors
     #[error("Serde deserialization error")]

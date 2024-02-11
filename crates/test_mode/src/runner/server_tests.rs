@@ -88,8 +88,8 @@ impl QaTestRunner {
                 }
             }
 
+            test_context.close_websocket_connections().await;
             manager.close().await;
-            test_context.clear().await;
 
             if failed {
                 break;

@@ -1,10 +1,10 @@
-use std::fmt::Debug;
+use std::{fmt::Debug};
 
 use api_client::{
     apis::account_api::{
         self, get_account_state, post_account_setup, post_complete_setup, post_login, post_register,
     },
-    models::{auth_pair, AccountData, AccountSetup, AccountState, BooleanSetting},
+    models::{auth_pair, AccountData, AccountSetup, AccountState, BooleanSetting, EventToClient},
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -18,8 +18,7 @@ use utils::api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT};
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::{
-    utils::{assert::bot_assert_eq, name::NameProvider},
-    WsConnection,
+    create_event_channel, utils::{assert::bot_assert_eq, name::NameProvider}, AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream
 };
 
 #[derive(Debug)]
@@ -57,6 +56,9 @@ impl BotAction for Login {
             .api
             .set_access_token(login_result.account.access.access_token.clone());
 
+        let (event_sender, event_receiver, quit_handle) = create_event_channel(state.connections.enable_event_sending);
+        state.connections.events = Some(event_receiver);
+
         let url = state
             .config
             .server
@@ -64,11 +66,11 @@ impl BotAction for Login {
             .url_account
             .join(PATH_CONNECT)
             .change_context(TestError::WebSocket)?;
-        state.connections.account = connect_websocket(*login_result.account, url, state)
+        let account: Option<WsConnection> = connect_websocket(*login_result.account, url, state, event_sender.clone())
             .await?
             .into();
 
-        if let Some(media) = login_result.media.flatten() {
+        let media = if let Some(media) = login_result.media.flatten() {
             let url = state
                 .config
                 .server
@@ -76,10 +78,12 @@ impl BotAction for Login {
                 .url_media
                 .join(PATH_CONNECT)
                 .change_context(TestError::WebSocket)?;
-            state.connections.media = connect_websocket(*media, url, state).await?.into();
-        }
+            connect_websocket(*media, url, state, event_sender.clone()).await?.into()
+        } else {
+            None
+        };
 
-        if let Some(profile) = login_result.profile.flatten() {
+        let profile = if let Some(profile) = login_result.profile.flatten() {
             let url = state
                 .config
                 .server
@@ -87,10 +91,14 @@ impl BotAction for Login {
                 .url_profile
                 .join(PATH_CONNECT)
                 .change_context(TestError::WebSocket)?;
-            state.connections.media = connect_websocket(*profile, url, state).await?.into();
-        }
+            connect_websocket(*profile, url, state, event_sender.clone()).await?.into()
+        } else {
+            None
+        };
 
         // TODO: Chat server
+
+        state.connections.connections = Some(AccountConnections { account, profile, media, quit_handle });
 
         Ok(())
     }
@@ -100,6 +108,7 @@ async fn connect_websocket(
     auth: auth_pair::AuthPair,
     mut url: Url,
     state: &mut BotState,
+    events: EventSenderAndQuitWatcher,
 ) -> Result<WsConnection, TestError> {
     if url.scheme() == "https" {
         url.set_scheme("wss")
@@ -148,7 +157,40 @@ async fn connect_websocket(
         Message::Text(access_token) => state.api.set_access_token(access_token),
         _ => return Err(TestError::WebSocketWrongValue.report()),
     }
-    Ok(stream)
+
+    let task = tokio::spawn(async move {
+        let mut events = events;
+        tokio::select! {
+            _ = events.quit_watcher.recv() => (),
+            _ = handle_connection(stream, &events.event_sender) => ()
+        }
+    });
+
+    Ok(WsConnection { task })
+}
+
+async fn handle_connection(mut stream: WsStream, sender: &EventSender) {
+    loop {
+        match stream.next().await {
+            Some(event) => {
+                match event {
+                    Ok(Message::Text(event)) => {
+                        let event: EventToClient = serde_json::from_str(&event).expect("Failed to parse WebSocket event");
+                        sender.send_if_sending_enabled(event).await;
+                    }
+                    Ok(_) => {
+                        panic!("Unexpected WebSocket message type");
+                    }
+                    Err(_) => {
+                        panic!("Unexpected WebSocket error");
+                    }
+                }
+            }
+            None => {
+                panic!("Unexpected WebSocket connection closing");
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
