@@ -203,7 +203,11 @@ pub struct BenchmarkConfig {
 }
 
 #[derive(Args, Debug, Clone)]
-pub struct QaTestConfig;
+pub struct QaTestConfig {
+    /// Try to continue from test which name contains this text
+    #[arg(long)]
+    pub continue_from: Option<String>,
+}
 
 #[derive(Args, Debug, Clone)]
 pub struct BotModeConfig {

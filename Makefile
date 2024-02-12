@@ -15,6 +15,10 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p simple_backend_image_process \
 					-p pihka-backend
 
+ifdef CONTINUE_FROM
+TEST_ARGS = --continue-from $(CONTINUE_FROM)
+endif
+
 # Default rule
 run:
 	RUST_LOG=$${RUST_LOG:-info} cargo run --bin pihka-backend
@@ -27,7 +31,7 @@ fmt:
 fix:
 	cargo fix ${CARGO_CRATE_ARGS}
 test:
-	RUST_LOG=info cargo run --bin pihka-backend -- --sqlite-in-ram test qa
+	RUST_LOG=info cargo run --bin pihka-backend -- --sqlite-in-ram test qa ${TEST_ARGS}
 unit-test:
 	DATABASE_URL="sqlite:database/current/current.db" cargo test
 

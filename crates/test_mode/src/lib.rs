@@ -37,8 +37,8 @@ impl TestRunner {
     pub async fn run(self) {
         tracing_subscriber::fmt::init();
 
-        if let TestModeSubMode::Qa(_) = self.test_config.mode {
-            QaTestRunner::new(self.config, self.test_config).run().await;
+        if let TestModeSubMode::Qa(config) = self.test_config.mode.clone() {
+            QaTestRunner::new(self.config, self.test_config, config).run().await;
         } else {
             BotTestRunner::new(self.config, self.test_config)
                 .run()
