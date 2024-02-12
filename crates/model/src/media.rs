@@ -808,11 +808,11 @@ impl From<CurrentAccountMediaInternal> for PendingProfileContent {
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct SecurityImage {
+pub struct SecurityContent {
     pub content_id: Option<ContentInfo>,
 }
 
-impl From<CurrentAccountMediaInternal> for SecurityImage {
+impl From<CurrentAccountMediaInternal> for SecurityContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
             content_id: value.security_content_id.map(|c| c.into()),
@@ -820,14 +820,14 @@ impl From<CurrentAccountMediaInternal> for SecurityImage {
     }
 }
 
-/// Security image settings which will be applied when moderation request is
+/// Security content settings which will be applied when moderation request is
 /// accepted.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct PendingSecurityImage {
+pub struct PendingSecurityContent {
     pub content_id: Option<ContentInfo>,
 }
 
-impl From<CurrentAccountMediaInternal> for PendingSecurityImage {
+impl From<CurrentAccountMediaInternal> for PendingSecurityContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
             content_id: value.pending_security_content_id.map(|c| c.into()),

@@ -42,7 +42,7 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
         .ok_or(StatusCode::NOT_FOUND)?;
 
     // TODO
-    //if request.content.initial_moderation_security_image.is_some() {
+    //if request.content.initial_moderation_security_content.is_some() {
     // Ok(())
     // } else {
     // }

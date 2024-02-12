@@ -95,7 +95,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
 
         // TODO
         let queue_type = if true {
-            //if request_raw.initial_moderation_security_image.is_some() {
+            //if request_raw.initial_moderation_security_content.is_some() {
             NextQueueNumberType::InitialMediaModeration
         } else {
             NextQueueNumberType::MediaModeration
@@ -172,7 +172,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 .media_content()
                 .get_media_content_raw(c)?;
             // TODO
-            //let is_security = if let Some(content) = content.initial_moderation_security_image {
+            //let is_security = if let Some(content) = content.initial_moderation_security_content {
             let _is_security = if true {
                 //content == c
                 true
@@ -190,12 +190,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         }
 
         // TODO
-        // if let Some(security_image) = content.initial_moderation_security_image {
+        // if let Some(security_content) = content.initial_moderation_security_content {
         //     if state == ModerationRequestState::Accepted
         //     && currently_selected_images.security_content_id.is_none() {
-        //         self.update_current_security_image(
+        //         self.update_current_security_content(
         //             moderation_request_owner,
-        //             security_image,
+        //             security_content,
         //         )?;
 
         //         let primary_image = PrimaryImage {

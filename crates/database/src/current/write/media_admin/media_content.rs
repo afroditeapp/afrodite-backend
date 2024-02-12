@@ -12,7 +12,7 @@ define_write_commands!(
 );
 
 impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminMediaContent<C> {
-    fn update_current_security_image(
+    fn update_current_security_content(
         &mut self,
         moderation_request_owner: AccountIdInternal,
         image: ContentId,

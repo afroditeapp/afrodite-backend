@@ -21,7 +21,7 @@ use crate::api::{
     },
     media::{
         MEDIA_CONTENT_COUNTERS_LIST, MEDIA_MODERATION_REQUEST_COUNTERS_LIST,
-        MEDIA_PROFILE_CONTENT_COUNTERS_LIST, MEDIA_SECURITY_IMAGE_COUNTERS_LIST,
+        MEDIA_PROFILE_CONTENT_COUNTERS_LIST, MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
         MEDIA_TILE_MAP_COUNTERS_LIST,
     },
     media_admin::MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
@@ -52,7 +52,7 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
     // Media
     &CounterCategory::new("media_content", MEDIA_CONTENT_COUNTERS_LIST),
     &CounterCategory::new("media_profile_content", MEDIA_PROFILE_CONTENT_COUNTERS_LIST),
-    &CounterCategory::new("media_security_image", MEDIA_SECURITY_IMAGE_COUNTERS_LIST),
+    &CounterCategory::new("media_security_content", MEDIA_SECURITY_CONTENT_COUNTERS_LIST),
     &CounterCategory::new(
         "media_moderation_request",
         MEDIA_MODERATION_REQUEST_COUNTERS_LIST,

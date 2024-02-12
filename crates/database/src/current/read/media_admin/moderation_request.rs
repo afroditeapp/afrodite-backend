@@ -37,7 +37,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModerationRequest<C> {
                 .into_db_error(moderator_id_for_logging)?
             // } else {
             //     first
-            //         .filter(media_moderation_request::initial_moderation_security_image.is_null())
+            //         .filter(media_moderation_request::initial_moderation_security_content.is_null())
             //         .first(self.conn())
             //         .optional()
             //         .into_db_error(moderator_id_for_logging)?
