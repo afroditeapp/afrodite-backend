@@ -5,22 +5,22 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**delete_content**](MediaApi.md#delete_content) | **DELETE** /media_api/content/{account_id}/{content_id} | Delete content data. Content can be removed after specific time has passed
-[**delete_pending_security_image_info**](MediaApi.md#delete_pending_security_image_info) | **DELETE** /media_api/pending_security_image_info | Delete pending security image for current account.
+[**delete_pending_security_content_info**](MediaApi.md#delete_pending_security_content_info) | **DELETE** /media_api/pending_security_content_info | Delete pending security content for current account.
 [**get_all_account_media_content**](MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{account_id} | Get list of all media content on the server for one account.
 [**get_content**](MediaApi.md#get_content) | **GET** /media_api/content/{account_id}/{content_id} | Get content data
 [**get_content_slot_state**](MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
 [**get_map_tile**](MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
 [**get_moderation_request**](MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 [**get_pending_profile_content_info**](MediaApi.md#get_pending_profile_content_info) | **GET** /media_api/pending_profile_content_info/{account_id} | Get pending profile content for selected profile
-[**get_pending_security_image_info**](MediaApi.md#get_pending_security_image_info) | **GET** /media_api/pending_security_image_info/{account_id} | Get pending security image for selected profile.
+[**get_pending_security_content_info**](MediaApi.md#get_pending_security_content_info) | **GET** /media_api/pending_security_content_info/{account_id} | Get pending security content for selected profile.
 [**get_profile_content_info**](MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile
-[**get_security_image_info**](MediaApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile.
+[**get_security_content_info**](MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{account_id} | Get current security content for selected profile.
 [**put_content_to_content_slot**](MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Set content to content processing slot.
 [**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
 [**put_pending_profile_content**](MediaApi.md#put_pending_profile_content) | **PUT** /media_api/pending_profile_content | Set new pending profile content for current account.
-[**put_pending_security_image_info**](MediaApi.md#put_pending_security_image_info) | **PUT** /media_api/pending_security_image_info | Set pending security image for current account.
+[**put_pending_security_content_info**](MediaApi.md#put_pending_security_content_info) | **PUT** /media_api/pending_security_content_info | Set pending security content for current account.
 [**put_profile_content**](MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
-[**put_security_image_info**](MediaApi.md#put_security_image_info) | **PUT** /media_api/security_image_info | Set current security image content for current account.
+[**put_security_content_info**](MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content content for current account.
 
 
 
@@ -55,12 +55,12 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## delete_pending_security_image_info
+## delete_pending_security_content_info
 
-> delete_pending_security_image_info()
-Delete pending security image for current account.
+> delete_pending_security_content_info()
+Delete pending security content for current account.
 
-Delete pending security image for current account. Server will not change the security image when next moderation request is moderated as accepted.
+Delete pending security content for current account. Server will not change the security content when next moderation request is moderated as accepted.
 
 ### Parameters
 
@@ -263,12 +263,12 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## get_pending_security_image_info
+## get_pending_security_content_info
 
-> crate::models::PendingSecurityImage get_pending_security_image_info(account_id)
-Get pending security image for selected profile.
+> crate::models::PendingSecurityContent get_pending_security_content_info(account_id)
+Get pending security content for selected profile.
 
-Get pending security image for selected profile.
+Get pending security content for selected profile.
 
 ### Parameters
 
@@ -279,7 +279,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::PendingSecurityImage**](PendingSecurityImage.md)
+[**crate::models::PendingSecurityContent**](PendingSecurityContent.md)
 
 ### Authorization
 
@@ -324,12 +324,12 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## get_security_image_info
+## get_security_content_info
 
-> crate::models::SecurityImage get_security_image_info(account_id)
-Get current security image for selected profile.
+> crate::models::SecurityContent get_security_content_info(account_id)
+Get current security content for selected profile.
 
-Get current security image for selected profile.
+Get current security content for selected profile.
 
 ### Parameters
 
@@ -340,7 +340,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::SecurityImage**](SecurityImage.md)
+[**crate::models::SecurityContent**](SecurityContent.md)
 
 ### Authorization
 
@@ -447,12 +447,12 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## put_pending_security_image_info
+## put_pending_security_content_info
 
-> put_pending_security_image_info(content_id)
-Set pending security image for current account.
+> put_pending_security_content_info(content_id)
+Set pending security content for current account.
 
-Set pending security image for current account.
+Set pending security content for current account.
 
 ### Parameters
 
@@ -507,12 +507,12 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## put_security_image_info
+## put_security_content_info
 
-> put_security_image_info(content_id)
-Set current security image content for current account.
+> put_security_content_info(content_id)
+Set current security content content for current account.
 
-Set current security image content for current account.  # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client.
+Set current security content content for current account.  # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client.
 
 ### Parameters
 

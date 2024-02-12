@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
 use api_client::{
-    apis::media_api::{get_content_slot_state, put_moderation_request, put_pending_profile_content, put_pending_security_image_info},
+    apis::media_api::{get_content_slot_state, put_moderation_request, put_pending_profile_content, put_pending_security_content_info},
     manual_additions::put_content_to_content_slot_fixed,
-    models::{content_processing_state, ContentId, ContentProcessingStateType, EventToClient, EventType, MediaContentType, ModerationRequestContent, PendingSecurityImage, SetProfileContent},
+    models::{content_processing_state, ContentId, ContentProcessingStateType, EventToClient, EventType, MediaContentType, ModerationRequestContent, SetProfileContent},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -193,7 +193,7 @@ impl BotAction for SetPendingContent {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(i) = self.security_content_slot_i {
             let content_id = state.media.slots[i].clone().unwrap();
-            put_pending_security_image_info(state.api.media(), content_id)
+            put_pending_security_content_info(state.api.media(), content_id)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }

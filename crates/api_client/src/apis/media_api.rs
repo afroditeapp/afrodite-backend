@@ -11,9 +11,9 @@
 
 use reqwest;
 
-use crate::apis::ResponseContent;
+use crate::{apis::ResponseContent, models::MediaContentType};
 use super::{Error, configuration};
-use crate::models::MediaContentType;
+
 
 /// struct for typed errors of method [`delete_content`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,10 +24,10 @@ pub enum DeleteContentError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`delete_pending_security_image_info`]
+/// struct for typed errors of method [`delete_pending_security_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum DeletePendingSecurityImageInfoError {
+pub enum DeletePendingSecurityContentInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -88,10 +88,10 @@ pub enum GetPendingProfileContentInfoError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_pending_security_image_info`]
+/// struct for typed errors of method [`get_pending_security_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetPendingSecurityImageInfoError {
+pub enum GetPendingSecurityContentInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -106,10 +106,10 @@ pub enum GetProfileContentInfoError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_security_image_info`]
+/// struct for typed errors of method [`get_security_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetSecurityImageInfoError {
+pub enum GetSecurityContentInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -143,10 +143,10 @@ pub enum PutPendingProfileContentError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`put_pending_security_image_info`]
+/// struct for typed errors of method [`put_pending_security_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PutPendingSecurityImageInfoError {
+pub enum PutPendingSecurityContentInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -161,10 +161,10 @@ pub enum PutProfileContentError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`put_security_image_info`]
+/// struct for typed errors of method [`put_security_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PutSecurityImageInfoError {
+pub enum PutSecurityContentInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -207,13 +207,13 @@ pub async fn delete_content(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Delete pending security image for current account. Server will not change the security image when next moderation request is moderated as accepted.
-pub async fn delete_pending_security_image_info(configuration: &configuration::Configuration, ) -> Result<(), Error<DeletePendingSecurityImageInfoError>> {
+/// Delete pending security content for current account. Server will not change the security content when next moderation request is moderated as accepted.
+pub async fn delete_pending_security_content_info(configuration: &configuration::Configuration, ) -> Result<(), Error<DeletePendingSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_security_image_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/media_api/pending_security_content_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -237,7 +237,7 @@ pub async fn delete_pending_security_image_info(configuration: &configuration::C
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<DeletePendingSecurityImageInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<DeletePendingSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -460,13 +460,13 @@ pub async fn get_pending_profile_content_info(configuration: &configuration::Con
     }
 }
 
-/// Get pending security image for selected profile.
-pub async fn get_pending_security_image_info(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::PendingSecurityImage, Error<GetPendingSecurityImageInfoError>> {
+/// Get pending security content for selected profile.
+pub async fn get_pending_security_content_info(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::PendingSecurityContent, Error<GetPendingSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_security_image_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/media_api/pending_security_content_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -490,7 +490,7 @@ pub async fn get_pending_security_image_info(configuration: &configuration::Conf
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetPendingSecurityImageInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetPendingSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -533,13 +533,13 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
     }
 }
 
-/// Get current security image for selected profile.
-pub async fn get_security_image_info(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::SecurityImage, Error<GetSecurityImageInfoError>> {
+/// Get current security content for selected profile.
+pub async fn get_security_content_info(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::SecurityContent, Error<GetSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/security_image_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/media_api/security_content_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -563,7 +563,7 @@ pub async fn get_security_image_info(configuration: &configuration::Configuratio
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<GetSecurityImageInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<GetSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -682,13 +682,13 @@ pub async fn put_pending_profile_content(configuration: &configuration::Configur
     }
 }
 
-/// Set pending security image for current account.
-pub async fn put_pending_security_image_info(configuration: &configuration::Configuration, content_id: crate::models::ContentId) -> Result<(), Error<PutPendingSecurityImageInfoError>> {
+/// Set pending security content for current account.
+pub async fn put_pending_security_content_info(configuration: &configuration::Configuration, content_id: crate::models::ContentId) -> Result<(), Error<PutPendingSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_security_image_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/media_api/pending_security_content_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -713,7 +713,7 @@ pub async fn put_pending_security_image_info(configuration: &configuration::Conf
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PutPendingSecurityImageInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PutPendingSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -756,13 +756,13 @@ pub async fn put_profile_content(configuration: &configuration::Configuration, s
     }
 }
 
-/// Set current security image content for current account.  # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client.
-pub async fn put_security_image_info(configuration: &configuration::Configuration, content_id: crate::models::ContentId) -> Result<(), Error<PutSecurityImageInfoError>> {
+/// Set current security content content for current account.  # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client.
+pub async fn put_security_content_info(configuration: &configuration::Configuration, content_id: crate::models::ContentId) -> Result<(), Error<PutSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/security_image_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/media_api/security_content_info", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -787,7 +787,7 @@ pub async fn put_security_image_info(configuration: &configuration::Configuratio
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         Ok(())
     } else {
-        let local_var_entity: Option<PutSecurityImageInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PutSecurityContentInfoError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

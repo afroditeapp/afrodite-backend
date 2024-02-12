@@ -66,22 +66,22 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /common_api/request_restart_or_reset_backend | Request restarting or reseting backend through app-manager instance.
 *CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
 *MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /media_api/content/{account_id}/{content_id} | Delete content data. Content can be removed after specific time has passed
-*MediaApi* | [**delete_pending_security_image_info**](docs/MediaApi.md#delete_pending_security_image_info) | **DELETE** /media_api/pending_security_image_info | Delete pending security image for current account.
+*MediaApi* | [**delete_pending_security_content_info**](docs/MediaApi.md#delete_pending_security_content_info) | **DELETE** /media_api/pending_security_content_info | Delete pending security content for current account.
 *MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{account_id} | Get list of all media content on the server for one account.
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /media_api/content/{account_id}/{content_id} | Get content data
 *MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
 *MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 *MediaApi* | [**get_pending_profile_content_info**](docs/MediaApi.md#get_pending_profile_content_info) | **GET** /media_api/pending_profile_content_info/{account_id} | Get pending profile content for selected profile
-*MediaApi* | [**get_pending_security_image_info**](docs/MediaApi.md#get_pending_security_image_info) | **GET** /media_api/pending_security_image_info/{account_id} | Get pending security image for selected profile.
+*MediaApi* | [**get_pending_security_content_info**](docs/MediaApi.md#get_pending_security_content_info) | **GET** /media_api/pending_security_content_info/{account_id} | Get pending security content for selected profile.
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile
-*MediaApi* | [**get_security_image_info**](docs/MediaApi.md#get_security_image_info) | **GET** /media_api/security_image_info/{account_id} | Get current security image for selected profile.
+*MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{account_id} | Get current security content for selected profile.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Set content to content processing slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
 *MediaApi* | [**put_pending_profile_content**](docs/MediaApi.md#put_pending_profile_content) | **PUT** /media_api/pending_profile_content | Set new pending profile content for current account.
-*MediaApi* | [**put_pending_security_image_info**](docs/MediaApi.md#put_pending_security_image_info) | **PUT** /media_api/pending_security_image_info | Set pending security image for current account.
+*MediaApi* | [**put_pending_security_content_info**](docs/MediaApi.md#put_pending_security_content_info) | **PUT** /media_api/pending_security_content_info | Set pending security content for current account.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
-*MediaApi* | [**put_security_image_info**](docs/MediaApi.md#put_security_image_info) | **PUT** /media_api/security_image_info | Set current security image content for current account.
+*MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content content for current account.
 *MediaAdminApi* | [**patch_moderation_request_list**](docs/MediaAdminApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
 *MediaAdminApi* | [**post_handle_moderation_request**](docs/MediaAdminApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
 *MediaInternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
@@ -155,7 +155,7 @@ Class | Method | HTTP request | Description
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingMessagesPage](docs/PendingMessagesPage.md)
  - [PendingProfileContent](docs/PendingProfileContent.md)
- - [PendingSecurityImage](docs/PendingSecurityImage.md)
+ - [PendingSecurityContent](docs/PendingSecurityContent.md)
  - [PerfHistoryQuery](docs/PerfHistoryQuery.md)
  - [PerfHistoryQueryResult](docs/PerfHistoryQueryResult.md)
  - [PerfHistoryValue](docs/PerfHistoryValue.md)
@@ -171,7 +171,7 @@ Class | Method | HTTP request | Description
  - [ReceivedLikesPage](docs/ReceivedLikesPage.md)
  - [RefreshToken](docs/RefreshToken.md)
  - [ResetDataQueryParam](docs/ResetDataQueryParam.md)
- - [SecurityImage](docs/SecurityImage.md)
+ - [SecurityContent](docs/SecurityContent.md)
  - [SendMessageToAccount](docs/SendMessageToAccount.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
  - [SentLikesPage](docs/SentLikesPage.md)
