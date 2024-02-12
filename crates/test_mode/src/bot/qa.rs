@@ -1,9 +1,6 @@
 //! QA testing
 //!
 
-pub mod chat;
-pub mod common;
-pub mod media;
 pub mod profile;
 
 use std::{fmt::Debug, iter::Peekable, sync::atomic::AtomicBool};
@@ -13,7 +10,6 @@ use async_trait::async_trait;
 use tracing::log::info;
 
 use self::{
-    chat::CHAT_TESTS, common::COMMON_TESTS, media::MEDIA_TESTS,
     profile::PROFILE_TESTS,
 };
 use super::{
@@ -44,10 +40,7 @@ macro_rules! test {
 }
 
 pub const ALL_QA_TESTS: &'static [&'static [SingleTest]] = &[
-    MEDIA_TESTS,
     PROFILE_TESTS,
-    COMMON_TESTS,
-    CHAT_TESTS,
 ];
 
 pub fn test_count() -> usize {

@@ -13,7 +13,10 @@ use crate::bot::utils::image::ImageProvider;
 
 #[derive(Debug, Default)]
 pub struct MediaState {
-    slots: [Option<ContentId>; 3],
+    /// Max slot count and one extra to allow current
+    /// content sending code work when testing that sending
+    /// content to the extra slot will make an error.
+    slots: [Option<ContentId>; 8],
 }
 
 impl MediaState {

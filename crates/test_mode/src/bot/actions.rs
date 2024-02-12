@@ -1,7 +1,6 @@
 pub mod account;
 pub mod admin;
 pub mod chat;
-pub mod common;
 pub mod media;
 pub mod profile;
 
