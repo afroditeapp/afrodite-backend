@@ -212,6 +212,9 @@ pub struct ApiDoc;
 /// Makes "async move" and "await" keywords unnecessary.
 /// The macro "closure" should work like a real closure.
 ///
+/// This macro will guarantee that contents of the closure will run
+/// completely even if HTTP connection fails when closure is running.
+///
 /// Converts crate::data::DataError to crate::api::utils::StatusCode.
 ///
 /// Example usage:
@@ -246,3 +249,23 @@ macro_rules! db_write {
 
 // Make db_write available in all modules
 pub use db_write;
+
+/// Same as db_write! but allows multiple commands to be executed because the
+/// commands are not automatically awaited.
+macro_rules! db_write_multiple {
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        let r = async {
+            let r: $crate::result::Result<_, $crate::data::DataError> = $state
+                .write(move |$cmds| async move { ($commands) })
+                .await;
+            r
+        }
+        .await;
+
+        use $crate::api::utils::ConvertDataErrorToStatusCode;
+        r.convert_data_error_to_status_code()
+    }};
+}
+
+// Make db_write available in all modules
+pub(crate) use db_write_multiple;

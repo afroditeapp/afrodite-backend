@@ -1,5 +1,5 @@
 use database::current::write::media_admin::InitialModerationRequestIsNowAccepted;
-use model::{AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType, Profile, ProfileVisibility, SharedStateRaw};
+use model::{AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType, ProfileVisibility};
 
 use super::db_transaction;
 use crate::{data::DataError, result::Result};
@@ -9,6 +9,12 @@ define_write_commands!(WriteCommandsMediaAdmin);
 // TODO(prod): Move event sending to WriteCommands instead of route handlers
 //             to avoid disappearing events in case client disconnects before
 //             event is sent.
+
+pub struct UpdateModerationInfo {
+    pub new_visibility: Option<ProfileVisibility>,
+    pub initial_request_accepted: Option<InitialModerationRequestIsNowAccepted>,
+    location_cache_should_be_updated: Option<ProfileVisibility>,
+}
 
 impl WriteCommandsMediaAdmin<'_> {
     pub async fn moderation_get_list_and_create_new_if_necessary(
@@ -30,9 +36,9 @@ impl WriteCommandsMediaAdmin<'_> {
         moderator_id: AccountIdInternal,
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
-    ) -> Result<Option<InitialModerationRequestIsNowAccepted>, DataError> {
+    ) -> Result<UpdateModerationInfo, DataError> {
         let account_component_enabled = self.config().components().account;
-        let (initial_request_accepted_status, update_visibility) = db_transaction!(self, move |mut cmds| {
+        let info = db_transaction!(self, move |mut cmds| {
             let initial_request_accepted_status = cmds.media_admin().moderation().update_moderation(
                 moderator_id,
                 moderation_request_owner,
@@ -56,22 +62,30 @@ impl WriteCommandsMediaAdmin<'_> {
                     Ok(())
                 })?;
 
-                let update_visiblity = if visibility.is_currently_public() != new_visibility.is_currently_public() {
+                let location_cache_should_be_updated = if visibility.is_currently_public() != new_visibility.is_currently_public() {
                     Some(new_visibility)
                 } else {
                     None
                 };
 
-                Ok((initial_request_accepted_status, update_visiblity))
+                Ok(UpdateModerationInfo {
+                    new_visibility: Some(new_visibility),
+                    initial_request_accepted: initial_request_accepted_status,
+                    location_cache_should_be_updated,
+                })
             } else {
-                Ok((initial_request_accepted_status, None))
+                Ok(UpdateModerationInfo {
+                    new_visibility: None,
+                    initial_request_accepted: initial_request_accepted_status,
+                    location_cache_should_be_updated: None,
+                })
             }
         })?;
 
-        if let Some(visibility) = update_visibility {
+        if let Some(visibility) = info.location_cache_should_be_updated {
             self.cmds.account().profile_update_visibility(moderation_request_owner, visibility.is_currently_public()).await?;
         }
 
-        Ok(initial_request_accepted_status)
+        Ok(info)
     }
 }

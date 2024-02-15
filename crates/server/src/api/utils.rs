@@ -41,6 +41,10 @@ pub static ACCESS_TOKEN_HEADER: header::HeaderName =
 /// Adds `Capabilities` extension to request, so that adding
 /// "Extension(api_caller_capabilities): Extension<Capabilities>"
 /// to handlers is possible.
+///
+/// Adds `AccountState` extension to request, so that adding
+/// "Extension(api_caller_account_state): Extension<AccountState>"
+/// to handlers is possible.
 pub async fn authenticate_with_access_token<S: GetAccessTokens + ReadData>(
     State(state): State<S>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -54,13 +58,14 @@ pub async fn authenticate_with_access_token<S: GetAccessTokens + ReadData>(
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = AccessToken::new(key_str.to_string());
 
-    if let Some((id, capabilities)) = state
+    if let Some((id, capabilities, account_state)) = state
         .access_tokens()
         .access_token_and_connection_exists(&key, addr)
         .await
     {
         req.extensions_mut().insert(id);
         req.extensions_mut().insert(capabilities);
+        req.extensions_mut().insert(account_state);
         Ok(next.run(req).await)
     } else {
         Err(StatusCode::UNAUTHORIZED)

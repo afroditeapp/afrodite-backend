@@ -2,14 +2,14 @@ use axum::{
     extract::{Path, Query, State},
     Extension, Router,
 };
-use model::{schema::shared_state::profile_visibility_state_number, AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueType, ModerationQueueTypeParam};
+use model::{AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueType, ModerationQueueTypeParam};
 use simple_backend::create_counters;
 
 use crate::{
     api::{
-        db_write, media::moderation_request, utils::{Json, StatusCode}
+        db_write, db_write_multiple, media::moderation_request, utils::{Json, StatusCode}
     },
-    app::{EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
 };
 
 // TODO: Add moderation content moderation weight to account and use it when moderating.
@@ -80,59 +80,53 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     security(("access_token" = [])),
 )]
 pub async fn post_handle_moderation_request<
-    S: GetInternalApi + WriteData + GetAccounts + GetConfig + ReadData + EventManagerProvider,
+    S: GetInternalApi + WriteData + GetAccounts + GetConfig,
 >(
     State(state): State<S>,
     Path(moderation_request_owner_account_id): Path<AccountId>,
     Extension(admin_account_id): Extension<AccountIdInternal>,
+    Extension(api_caller_capabilities): Extension<Capabilities>,
     Json(moderation_decision): Json<HandleModerationRequest>,
 ) -> Result<(), StatusCode> {
     MEDIA_ADMIN.post_handle_moderation_request.incr();
 
-    let account = state.read()
-        .common()
-        .account(admin_account_id)
+    if !api_caller_capabilities.admin_moderate_images {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    let moderation_request_owner = state
+        .accounts()
+        .get_internal_id(moderation_request_owner_account_id)
         .await?;
 
-    if account.capablities().admin_moderate_images {
-        let moderation_request_owner = state
-            .accounts()
-            .get_internal_id(moderation_request_owner_account_id)
-            .await?;
+    db_write_multiple!(state, move |cmds| {
+        let info = cmds.media_admin().update_moderation(
+            admin_account_id,
+            moderation_request_owner,
+            moderation_decision,
+        ).await?;
 
-        let profile_visibility_changed = db_write!(state, move |cmds| {
-            cmds.media_admin().update_moderation(
-                admin_account_id,
-                moderation_request_owner,
-                moderation_decision,
-            )
-        })?;
-
-        if profile_visibility_changed.is_some() &&
-            state.config().components().account {
-                let moderation_request_owner_account = state
-                    .read()
-                    .common()
-                    .account(moderation_request_owner)
-                    .await?;
-                state
-                    .event_manager()
+        if cmds.config().components().account {
+            if let Some(new_visibility) = info.new_visibility {
+                cmds
+                    .events()
                     .send_connected_event(
                         moderation_request_owner,
                         EventToClientInternal::ProfileVisibilityChanged(
-                            moderation_request_owner_account.profile_visibility(),
+                            new_visibility,
                         ),
                     )
                     .await?;
-        } else {
-            // TODO(microservice): Add profile visibility change notification
-            //                     to account internal API.
+            }
         }
 
         Ok(())
-    } else {
-        Err(StatusCode::UNAUTHORIZED)
-    }
+    })?;
+
+    // TODO(microservice): Add profile visibility change notification
+    //                     to account internal API.
+
+    Ok(())
 }
 
 pub fn admin_moderation_router(s: crate::app::S) -> Router {

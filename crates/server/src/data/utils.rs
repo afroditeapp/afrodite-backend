@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use model::{AccessToken, AccountId, AccountIdInternal, Capabilities};
+use model::{AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities};
 
 use super::{cache::DatabaseCache, DataError, IntoDataError};
 use crate::result::Result;
@@ -24,7 +24,7 @@ impl<'a> AccessTokenManager<'a> {
         &self,
         token: &AccessToken,
         connection: SocketAddr,
-    ) -> Option<(AccountIdInternal, Capabilities)> {
+    ) -> Option<(AccountIdInternal, Capabilities, AccountState)> {
         self.cache
             .access_token_and_connection_exists(token, connection)
             .await

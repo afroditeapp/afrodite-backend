@@ -1,12 +1,12 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, ReceivedLikesPage, SentLikesPage};
+use model::{AccountId, AccountIdInternal, NotificationEvent, ReceivedLikesPage, SentLikesPage};
 use simple_backend::create_counters;
 
 use super::super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::app::{EventManagerProvider, GetAccounts, ReadData, WriteData};
+use crate::{api::db_write_multiple, app::{GetAccounts, ReadData, WriteData}};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -23,7 +23,7 @@ pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
+pub async fn post_send_like<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -34,23 +34,19 @@ pub async fn post_send_like<S: GetAccounts + WriteData + EventManagerProvider>(
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
-    let new_state = db_write!(state, move |cmds| {
-        cmds.chat().like_or_match_profile(id, requested_profile)
+    db_write_multiple!(state, move |cmds| {
+        let new_state = cmds.chat().like_or_match_profile(id, requested_profile).await?;
+
+        cmds.events().send_notification(requested_profile, NotificationEvent::LikesChanged).await?;
+
+        if new_state.is_match() {
+            // State is now match so the account was removed from
+            // received likes of the API caller.
+            cmds.events().send_notification(id, NotificationEvent::LikesChanged).await?;
+        }
+        Ok(())
     })?;
 
-    state
-        .event_manager()
-        .send_notification(requested_profile, model::NotificationEvent::LikesChanged)
-        .await?;
-
-    if new_state.is_match() {
-        // State is now match so the account was removed from
-        // received likes of the API caller.
-        state
-            .event_manager()
-            .send_notification(id, model::NotificationEvent::LikesChanged)
-            .await?;
-    }
 
     Ok(())
 }
@@ -127,7 +123,7 @@ pub const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_like<S: GetAccounts + WriteData + EventManagerProvider>(
+pub async fn delete_like<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -136,14 +132,11 @@ pub async fn delete_like<S: GetAccounts + WriteData + EventManagerProvider>(
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
-    db_write!(state, move |cmds| {
-        cmds.chat().delete_like_or_block(id, requested_profile)
+    db_write_multiple!(state, move |cmds| {
+        cmds.chat().delete_like_or_block(id, requested_profile).await?;
+        cmds.events().send_notification(requested_profile, model::NotificationEvent::LikesChanged).await?;
+        Ok(())
     })?;
-
-    state
-        .event_manager()
-        .send_notification(requested_profile, model::NotificationEvent::LikesChanged)
-        .await?;
 
     Ok(())
 }

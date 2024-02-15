@@ -2,11 +2,8 @@ use axum::{extract::State, Extension, Router};
 use model::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
 use simple_backend::create_counters;
 
-use super::super::{
-    db_write,
-    utils::{Json, StatusCode},
-};
-use crate::app::{EventManagerProvider, GetAccounts, ReadData, WriteData};
+use super::super::utils::{Json, StatusCode};
+use crate::{api::db_write_multiple, app::{GetAccounts, ReadData, WriteData}};
 
 pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
 
@@ -22,7 +19,7 @@ pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_block_profile<S: GetAccounts + WriteData + EventManagerProvider>(
+pub async fn post_block_profile<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -31,17 +28,18 @@ pub async fn post_block_profile<S: GetAccounts + WriteData + EventManagerProvide
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
-    db_write!(state, move |cmds| {
-        cmds.chat().block_profile(id, requested_profile)
-    })?;
+    db_write_multiple!(state, move |cmds| {
+        cmds.chat().block_profile(id, requested_profile).await?;
+        cmds
+            .events()
+            .send_notification(
+                requested_profile,
+                model::NotificationEvent::ReceivedBlocksChanged,
+            )
+            .await?;
 
-    state
-        .event_manager()
-        .send_notification(
-            requested_profile,
-            model::NotificationEvent::ReceivedBlocksChanged,
-        )
-        .await?;
+        Ok(())
+    })?;
 
     Ok(())
 }
@@ -60,7 +58,7 @@ pub const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_unblock_profile<S: GetAccounts + WriteData + EventManagerProvider>(
+pub async fn post_unblock_profile<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -69,17 +67,19 @@ pub async fn post_unblock_profile<S: GetAccounts + WriteData + EventManagerProvi
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
-    db_write!(state, move |cmds| {
-        cmds.chat().delete_like_or_block(id, requested_profile)
-    })?;
+    db_write_multiple!(state, move |cmds| {
+        cmds.chat().delete_like_or_block(id, requested_profile).await?;
 
-    state
-        .event_manager()
-        .send_notification(
-            requested_profile,
-            model::NotificationEvent::ReceivedBlocksChanged,
-        )
-        .await?;
+        cmds
+            .events()
+            .send_notification(
+                requested_profile,
+                model::NotificationEvent::ReceivedBlocksChanged,
+            )
+            .await?;
+
+        Ok(())
+    })?;
 
     Ok(())
 }

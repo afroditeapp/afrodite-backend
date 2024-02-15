@@ -6,7 +6,7 @@ use model::{AccountId, EventToClient, EventToClientInternal, NotificationEvent};
 use tokio::sync::mpsc;
 
 use crate::{
-    data::RouterDatabaseReadHandle,
+    data::{cache::DatabaseCache, DataError, IntoDataError, RouterDatabaseReadHandle},
     result::{Result, WrappedResultExt},
 };
 
@@ -52,6 +52,8 @@ pub enum EventMode {
     Connected(EventSender),
 }
 
+// TODO: Remove EventManager complately and use EventManagerWithCacheReference
+//       instead?
 pub struct EventManager {
     database: Arc<RouterDatabaseReadHandle>,
 }
@@ -68,15 +70,8 @@ impl EventManager {
         account: impl Into<AccountId>,
         event: EventToClientInternal,
     ) -> Result<(), EventError> {
-        self.database
-            .read()
-            .common()
-            .access_event_mode(account.into(), move |mode| {
-                if let EventMode::Connected(sender) = mode {
-                    let _ = sender.send(event.into());
-                }
-            })
-            .await
+        self.database.event_manager()
+            .send_connected_event(account, event).await
             .change_context(EventError::EventModeAccessFailed)
     }
 
@@ -87,18 +82,65 @@ impl EventManager {
         account: impl Into<AccountId>,
         event: NotificationEvent,
     ) -> Result<(), EventError> {
+        self.database.event_manager()
+            .send_notification(account, event).await
+            .change_context(EventError::EventModeAccessFailed)
+    }
+}
+
+pub struct EventManagerWithCacheReference<'a> {
+    cache: &'a DatabaseCache,
+}
+
+impl <'a> EventManagerWithCacheReference<'a> {
+    pub fn new(cache: &'a DatabaseCache) -> Self {
+        Self { cache }
+    }
+
+    async fn access_event_mode<T>(
+        &self,
+        id: AccountId,
+        action: impl FnOnce(&EventMode) -> T,
+    ) -> Result<T, DataError> {
+        self.cache
+            .read_cache(id, move |entry| action(&entry.current_event_connection))
+            .await
+            .into_data_error(id)
+    }
+
+    /// Send only if the client is connected.
+    ///
+    /// Event will be skipped if event queue is full.
+    pub async fn send_connected_event(
+        &self,
+        account: impl Into<AccountId>,
+        event: EventToClientInternal,
+    ) -> Result<(), DataError> {
+        self.access_event_mode(account.into(), move |mode| {
+                if let EventMode::Connected(sender) = mode {
+                    let _ = sender.send(event.into());
+                }
+            })
+            .await
+            .change_context(DataError::EventModeAccessFailed)
+    }
+
+    /// Send event to connected client or if not connected
+    /// send using push notification.
+    pub async fn send_notification(
+        &self,
+        account: impl Into<AccountId>,
+        event: NotificationEvent,
+    ) -> Result<(), DataError> {
         // TODO: Push notification support
 
-        self.database
-            .read()
-            .common()
-            .access_event_mode(account.into(), move |mode| {
+        self.access_event_mode(account.into(), move |mode| {
                 let event: EventToClientInternal = event.into();
                 if let EventMode::Connected(sender) = mode {
                     let _ = sender.send(event.into());
                 }
             })
             .await
-            .change_context(EventError::EventModeAccessFailed)
+            .change_context(DataError::EventModeAccessFailed)
     }
 }

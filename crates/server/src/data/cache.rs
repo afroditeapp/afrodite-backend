@@ -4,8 +4,7 @@ use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, Capabilities, LocationIndexKey, ProfileInternal,
-    ProfileLink, SharedStateRaw,
+    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, ProfileInternal, ProfileLink, SharedStateRaw
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
@@ -286,12 +285,12 @@ impl DatabaseCache {
         &self,
         access_token: &AccessToken,
         connection: SocketAddr,
-    ) -> Option<(AccountIdInternal, Capabilities)> {
+    ) -> Option<(AccountIdInternal, Capabilities, AccountState)> {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
             if r.current_connection.map(|a| a.ip()) == Some(connection.ip()) {
-                Some((entry.account_id_internal, r.capabilities.clone()))
+                Some((entry.account_id_internal, r.capabilities.clone(), r.shared_state.account_state_number))
             } else {
                 None
             }

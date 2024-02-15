@@ -7,10 +7,9 @@ use tracing::error;
 
 use crate::{
     api::{
-        db_write,
-        utils::{Json, StatusCode},
+        db_write, db_write_multiple, utils::{Json, StatusCode}
     },
-    app::{EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
+    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
     internal_api,
 };
 
@@ -148,19 +147,22 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("access_token" = [])),
 )]
 pub async fn post_complete_setup<
-    S: GetAccessTokens + ReadData + WriteData + GetInternalApi + GetConfig + EventManagerProvider,
+    S: ReadData + WriteData + GetInternalApi + GetConfig,
 >(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_complete_setup.incr();
 
-    let account = state.read().common().account(id).await?;
-    if account.state() != AccountState::InitialSetup {
+    if account_state != AccountState::InitialSetup {
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
-    // Validate media moderation
+    // Validate media moderation.
+    // Moderation request creation also validates that the initial request
+    // contains security content, so there is no possibility that user
+    // changes the request to be invalid just after this check.
     internal_api::media::media_check_moderation_request_for_account(&state, id).await?;
 
     let account_data = state.read().account().account_data(id).await?;
@@ -181,43 +183,47 @@ pub async fn post_complete_setup<
         }
     };
 
-    let new_account = db_write!(state, move |cmds| cmds
-        .account()
-        .update_syncable_account_data(id, move |state, capabilities, _| {
-            if *state == AccountState::InitialSetup {
-                *state = AccountState::Normal;
-                if enable_all_capabilities {
-                    *capabilities = Capabilities::all_enabled();
+    let new_account = db_write_multiple!(state, move |cmds| {
+        let new_account = cmds
+            .account()
+            .update_syncable_account_data(id, move |state, capabilities, _| {
+                if *state == AccountState::InitialSetup {
+                    *state = AccountState::Normal;
+                    if enable_all_capabilities {
+                        *capabilities = Capabilities::all_enabled();
+                    }
                 }
-            }
-            Ok(())
-        }))?;
+                Ok(())
+            }).await?;
+
+        cmds
+            .events()
+            .send_connected_event(
+                id.uuid,
+                EventToClientInternal::AccountStateChanged(
+                    new_account.state(),
+                ),
+            )
+            .await?;
+
+        cmds
+            .events()
+            .send_connected_event(
+                id.uuid,
+                EventToClientInternal::AccountCapabilitiesChanged(
+                    new_account.capablities(),
+                ),
+            )
+            .await?;
+
+        Ok(new_account)
+    })?;
 
     internal_api::common::sync_account_state(
         &state,
         id,
         new_account,
     ).await?;
-
-    state
-        .event_manager()
-        .send_connected_event(
-            id.uuid,
-            EventToClientInternal::AccountStateChanged(
-                account.state(),
-            ),
-        )
-        .await?;
-
-    state
-        .event_manager()
-        .send_connected_event(
-            id.uuid,
-            EventToClientInternal::AccountCapabilitiesChanged(
-                account.capablities(),
-            ),
-        )
-        .await?;
 
     Ok(())
 }

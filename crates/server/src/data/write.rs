@@ -63,6 +63,11 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
+            fn events(&self) -> $crate::event::EventManagerWithCacheReference {
+                $crate::event::EventManagerWithCacheReference::new(&self.cmds.cache)
+            }
+
+            #[allow(dead_code)]
             fn config(&self) -> &config::Config {
                 &self.cmds.config
             }

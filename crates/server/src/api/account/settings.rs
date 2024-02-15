@@ -4,10 +4,9 @@ use simple_backend::create_counters;
 
 use crate::{
     api::{
-        db_write,
-        utils::{Json, StatusCode},
+        db_write, db_write_multiple, utils::{Json, StatusCode}
     },
-    app::{EventManagerProvider, GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
+    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
 };
 
 pub const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
@@ -81,50 +80,51 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     security(("access_token" = [])),
 )]
 pub async fn put_setting_profile_visiblity<
-    S: GetAccessTokens + ReadData + GetInternalApi + GetConfig + WriteData + EventManagerProvider,
+    S: GetInternalApi + GetConfig + WriteData,
 >(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
     Json(new_value): Json<BooleanSetting>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_profile_visiblity.incr();
 
-    let account = state.read().common().account(id).await?;
-    if account.state() != AccountState::Normal {
+    if account_state != AccountState::Normal {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let new_account = db_write!(state, move |cmds| cmds
-        .account()
-        .update_syncable_account_data(id, move |_, _, visiblity| {
-            *visiblity = if visiblity.is_pending() {
-                if new_value.value {
-                    ProfileVisibility::PendingPublic
+    let new_account = db_write_multiple!(state, move |cmds| {
+        let new_account = cmds
+            .account()
+            .update_syncable_account_data(id, move |_, _, visiblity| {
+                *visiblity = if visiblity.is_pending() {
+                    if new_value.value {
+                        ProfileVisibility::PendingPublic
+                    } else {
+                        ProfileVisibility::PendingPrivate
+                    }
                 } else {
-                    ProfileVisibility::PendingPrivate
-                }
-            } else {
-                if new_value.value {
-                    ProfileVisibility::Public
-                } else {
-                    ProfileVisibility::Private
-                }
-            };
-            Ok(())
-        })
-    )?;
+                    if new_value.value {
+                        ProfileVisibility::Public
+                    } else {
+                        ProfileVisibility::Private
+                    }
+                };
+                Ok(())
+            }).await?;
+        cmds
+            .events()
+            .send_connected_event(
+                id.uuid,
+                EventToClientInternal::ProfileVisibilityChanged(
+                    new_account.profile_visibility()
+                ),
+            )
+            .await?;
+        Ok(new_account)
+    })?;
 
     internal_api::common::sync_account_state(&state, id, new_account.clone()).await?;
-
-    state
-        .event_manager()
-        .send_connected_event(
-            id.uuid,
-            EventToClientInternal::ProfileVisibilityChanged(
-                new_account.profile_visibility()
-            ),
-        )
-        .await?;
 
     Ok(())
 }

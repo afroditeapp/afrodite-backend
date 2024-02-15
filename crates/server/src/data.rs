@@ -31,8 +31,7 @@ use self::{
     write_concurrent::WriteCommandsConcurrent,
 };
 use crate::{
-    internal_api::InternalApiError,
-    result::{Result, WrappedContextExt, WrappedReport},
+    event::EventManagerWithCacheReference, internal_api::InternalApiError, result::{Result, WrappedContextExt, WrappedReport}
 };
 
 pub mod cache;
@@ -96,6 +95,9 @@ pub enum DataError {
 
     #[error("Different SQLite versions detected between diesel and sqlx")]
     SqliteVersionMismatch,
+
+    #[error("Event mode access failed")]
+    EventModeAccessFailed,
 }
 
 /// Attach more info to current error
@@ -488,6 +490,14 @@ impl SyncWriteHandle {
         self.cmds().chat_admin()
     }
 
+    pub fn events(&self) -> EventManagerWithCacheReference {
+        EventManagerWithCacheReference::new(&self.cache)
+    }
+
+    pub fn config(&self) -> &Config {
+        &self.config
+    }
+
     pub async fn register(
         &self,
         id_light: AccountId,
@@ -523,5 +533,9 @@ impl RouterDatabaseReadHandle {
 
     pub fn account_id_manager(&self) -> AccountIdManager<'_> {
         AccountIdManager::new(&self.cache)
+    }
+
+    pub fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
+        EventManagerWithCacheReference::new(&self.cache)
     }
 }
