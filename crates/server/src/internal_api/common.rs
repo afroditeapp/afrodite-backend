@@ -21,6 +21,7 @@ pub enum AuthResponse {
     Unauthorized,
 }
 
+// TODO(microservice): Remove check_access_token?
 /// Check that API key is valid. Use this only from AccessToken checker handler.
 /// This function will cache the account ID, so it can be found using normal
 /// database calls after this runs.
@@ -59,4 +60,43 @@ pub async fn check_access_token<S: GetConfig + GetAccessTokens + GetInternalApi>
     } else {
         Ok(AuthResponse::Unauthorized)
     }
+}
+
+
+/// Sync new Account to possible other servers.
+/// Only account server can call this function.
+pub async fn sync_account_state<S: GetConfig + GetInternalApi>(
+    state: &S,
+    account_id: AccountIdInternal,
+    account: Account,
+) -> Result<(), InternalApiError> {
+    if !state.config().components().account {
+        warn!("Account component not enabled, cannot send new Account to other servers");
+        return Err(InternalApiError::MissingComponent.report());
+    }
+
+    // TODO(microservice): Add sync account state command to common internal api
+
+    if !state.config().components().profile {
+        // let account =
+        // InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
+        //     .await
+        //     .change_context(InternalApiError::ApiRequest)?;
+    }
+
+    if !state.config().components().media {
+        // let account =
+        // InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
+        //     .await
+        //     .change_context(InternalApiError::ApiRequest)?;
+    }
+
+    if !state.config().components().chat {
+        // let account =
+        // InternalApi::get_account_state(self.api_client.account()?, account_id.as_id())
+        //     .await
+        //     .change_context(InternalApiError::ApiRequest)?;
+    }
+
+    Ok(())
 }

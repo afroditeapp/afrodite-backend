@@ -1,7 +1,9 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, AccountState, Capabilities, SharedState, SharedStateInternal};
+use model::{Account, AccountIdInternal, AccountState, Capabilities, ProfileVisibility, SharedStateRaw};
+use serde_json::error;
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::ContextExt;
 
 use super::ConnectionProvider;
 use crate::IntoDatabaseError;
@@ -12,14 +14,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
     pub fn insert_shared_state(
         &mut self,
         id: AccountIdInternal,
-        data: SharedStateInternal,
+        data: SharedStateRaw,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::shared_state::dsl::*;
 
         insert_into(shared_state)
             .values((
                 account_id.eq(id.as_db_id()),
-                is_profile_public.eq(&data.is_profile_public),
+                data,
             ))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -27,18 +29,15 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
-    pub fn shared_state(
+    fn shared_state(
         &mut self,
         id: AccountIdInternal,
-        data: SharedState,
+        data: SharedStateRaw,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::shared_state::dsl::*;
 
         update(shared_state.find(id.as_db_id()))
-            .set((
-                account_state_number.eq(data.account_state as i64),
-                is_profile_public.eq(&data.is_profile_public),
-            ))
+            .set(data)
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -59,7 +58,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
-    pub fn account_capabilities(
+    fn account_capabilities(
         &mut self,
         id: AccountIdInternal,
         data: Capabilities,
@@ -74,18 +73,27 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
-    pub fn account_state(
-        mut self,
+    /// The only method which can modify AccountState, Capabilities and
+    /// ProfileVisibility.
+    ///
+    /// Returns the modified Account.
+    pub fn update_syncable_account_data(
+        &mut self,
         id: AccountIdInternal,
-        state: AccountState,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::shared_state::dsl::*;
+        account: Account,
+        modify_action: impl FnOnce(&mut AccountState, &mut Capabilities, &mut ProfileVisibility) -> error_stack::Result<(), DieselDatabaseError> + Send + 'static,
+    ) -> Result<Account, DieselDatabaseError> {
+        let mut state = account.state();
+        let mut capabilities = account.capablities();
+        let mut profile_visibility = account.profile_visibility();
+        modify_action(&mut state, &mut capabilities, &mut profile_visibility).map_err(|_| DieselDatabaseError::NotAllowed.report())?;
+        let new_version = account.sync_version().increment_if_not_max_value();
+        let new_account = Account::new_from(capabilities, state, profile_visibility, new_version);
 
-        update(shared_state.find(id.as_db_id()))
-            .set(account_state_number.eq(state as i64))
-            .execute(self.conn())
-            .into_db_error(id)?;
+        self.account_capabilities(id, new_account.capablities())?;
+        self.shared_state(id, new_account.clone().into())?;
 
-        Ok(())
+        Ok(new_account)
     }
+
 }

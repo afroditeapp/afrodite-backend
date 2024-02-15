@@ -1,5 +1,6 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
+use api_internal::InternalApi;
 use axum::extract::{Path, State};
 use model::{AccountId, BooleanSetting, Profile};
 use simple_backend::create_counters;
@@ -12,20 +13,18 @@ use crate::{
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
 
-/// Check that current moderation request for account exists. Requires also
-/// that request contains camera image.
+/// Check that media server has correct state for completing initial setup.
 ///
 #[utoipa::path(
     get,
     path = "/internal/media_api/moderation/request/{account_id}",
     params(AccountId),
     responses(
-        (status = 200, description = "Get moderation request was successfull."),
-        (status = 404, description = "No account or moderation request found."),
+        (status = 200, description = "Successful."),
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn internal_get_check_moderation_request_for_account<S: ReadData + GetAccounts>(
+pub async fn internal_get_check_moderation_request_for_account<S: GetConfig + ReadData + GetAccounts + GetInternalApi>(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
 ) -> Result<(), StatusCode> {
@@ -35,18 +34,12 @@ pub async fn internal_get_check_moderation_request_for_account<S: ReadData + Get
 
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
-    let _request = state
-        .read()
-        .moderation_request(account_id)
-        .await?
-        .ok_or(StatusCode::NOT_FOUND)?;
-
-    // TODO
-    //if request.content.initial_moderation_security_content.is_some() {
-    // Ok(())
-    // } else {
-    // }
-    Err(StatusCode::INTERNAL_SERVER_ERROR)
+    if state.config().components().media {
+        internal_api::media::media_check_moderation_request_for_account(&state, account_id).await?;
+        Ok(())
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }
 
 pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
@@ -77,12 +70,13 @@ pub async fn internal_post_update_profile_image_visibility<
 
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
-    internal_api::media::media_api_profile_visiblity(
-        &state,
-        account_id,
-        value,
-        profile,
-    ).await?;
+    // TODO
+    // internal_api::media::media_api_profile_visiblity(
+    //     &state,
+    //     account_id,
+    //     value,
+    //     profile,
+    // ).await?;
 
     Ok(())
 }

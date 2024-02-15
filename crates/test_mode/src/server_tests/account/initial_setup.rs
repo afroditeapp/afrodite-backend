@@ -16,14 +16,14 @@ use crate::{
 
 #[server_test]
 async fn account_state_is_initial_setup_after_login(context: TestContext) -> TestResult {
-    let account = context.new_account().await?;
+    let account = context.new_account_in_initial_setup_state().await?;
     let state = get_account_state(account.account_api()).await?;
     assert_eq(AccountState::InitialSetup, state.state)
 }
 
 #[server_test]
 async fn complete_setup_fails_if_no_setup_info_is_set(context: TestContext) -> TestResult {
-    let mut account = context.new_account().await?;
+    let mut account = context.new_account_in_initial_setup_state().await?;
     account
         .run_actions(action_array![
             SendImageToSlot::slot(0),
@@ -45,7 +45,7 @@ async fn complete_setup_fails_if_no_setup_info_is_set(context: TestContext) -> T
 
 #[server_test]
 async fn complete_setup_fails_if_no_image_moderation_request(context: TestContext) -> TestResult {
-    let mut account = context.new_account().await?;
+    let mut account = context.new_account_in_initial_setup_state().await?;
     account
     .run_actions(action_array![
         SendImageToSlot::slot(0),
@@ -68,7 +68,7 @@ async fn complete_setup_fails_if_no_image_moderation_request(context: TestContex
 async fn complete_setup_fails_if_image_request_does_not_contain_secure_capture_content(
     context: TestContext,
 ) -> TestResult {
-    let mut account = context.new_account().await?;
+    let mut account = context.new_account_in_initial_setup_state().await?;
     account
         .run_actions(action_array![
             SetAccountSetup::new(),
@@ -91,7 +91,7 @@ async fn complete_setup_fails_if_image_request_does_not_contain_secure_capture_c
 
 #[server_test]
 async fn complete_setup_fails_if_no_pending_content_set(context: TestContext) -> TestResult {
-    let mut account = context.new_account().await?;
+    let mut account = context.new_account_in_initial_setup_state().await?;
     account
         .run_actions(action_array![
             SetAccountSetup::new(),
@@ -110,7 +110,7 @@ async fn complete_setup_fails_if_no_pending_content_set(context: TestContext) ->
 
 #[server_test]
 async fn initial_setup_successful(context: TestContext) -> TestResult {
-    let mut account = context.new_account().await?;
+    let mut account = context.new_account_in_initial_setup_state().await?;
     account
         .run_actions(action_array![
             SetAccountSetup::new(),

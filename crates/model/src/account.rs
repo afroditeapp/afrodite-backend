@@ -1,9 +1,9 @@
 use diesel::{prelude::*, Associations};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_string_wrapper;
+use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccessToken, AccountIdDb, AccountIdInternal, RefreshToken};
+use crate::{schema::shared_state, schema_sqlite_types::Integer, AccessToken, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {
@@ -41,24 +41,42 @@ pub struct AccountData {
     pub email: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Account {
     state: AccountState,
     capabilities: Capabilities,
+    visibility: ProfileVisibility,
+    sync_version: AccountSyncVersion,
 }
 
 impl Account {
     pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn new_from_internal_types(
+        capabilities: Capabilities,
+        shared_state: SharedStateRaw,
+    ) -> Self {
         Self {
-            state: AccountState::InitialSetup,
-            capabilities: Default::default(),
+            state: shared_state.account_state_number,
+            capabilities,
+            visibility: shared_state.profile_visibility(),
+            sync_version: shared_state.sync_version,
         }
     }
 
-    pub fn new_from(state: AccountState, capablities: Capabilities) -> Self {
+    pub fn new_from(
+        capabilities: Capabilities,
+        state: AccountState,
+        visibility: ProfileVisibility,
+        sync_version: AccountSyncVersion,
+    ) -> Self {
         Self {
+            capabilities,
             state,
-            capabilities: capablities,
+            visibility,
+            sync_version,
         }
     }
 
@@ -66,48 +84,16 @@ impl Account {
         self.state
     }
 
-    pub fn capablities(&self) -> &Capabilities {
-        &self.capabilities
+    pub fn capablities(&self) -> Capabilities {
+        self.capabilities.clone()
     }
 
-    pub fn into_capablities(self) -> Capabilities {
-        self.capabilities
+    pub fn profile_visibility(&self) -> ProfileVisibility {
+        self.visibility
     }
 
-    pub fn capablities_mut(&mut self) -> &mut Capabilities {
-        &mut self.capabilities
-    }
-
-    pub fn state_mut(&mut self) -> &mut AccountState {
-        &mut self.state
-    }
-
-    pub fn complete_setup(&mut self) {
-        if self.state == AccountState::InitialSetup {
-            self.state = AccountState::Normal;
-        }
-    }
-
-    pub fn add_admin_capablities(&mut self) {
-        self.capabilities.admin_moderate_images = true;
-        self.capabilities.admin_server_maintenance_view_info = true;
-        self.capabilities
-            .admin_server_maintenance_view_backend_config = true;
-        self.capabilities
-            .admin_server_maintenance_save_backend_config = true;
-        self.capabilities.admin_server_maintenance_update_software = true;
-        self.capabilities.admin_server_maintenance_reset_data = true;
-        self.capabilities.admin_server_maintenance_reboot_backend = true;
-        // TOOD: Other capablities as well?
-    }
-}
-
-impl Default for Account {
-    fn default() -> Self {
-        Self {
-            state: AccountState::InitialSetup,
-            capabilities: Capabilities::default(),
-        }
+    pub fn sync_version(&self) -> AccountSyncVersion {
+        self.sync_version
     }
 }
 
@@ -131,7 +117,8 @@ impl std::fmt::Display for AccountStateError {
 }
 impl std::error::Error for AccountStateError {}
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
 pub enum AccountState {
     InitialSetup = 0,
     Normal = 1,
@@ -153,11 +140,62 @@ impl TryFrom<i64> for AccountState {
     }
 }
 
+diesel_i64_try_from!(AccountState);
+
 impl Default for AccountState {
     fn default() -> Self {
         Self::InitialSetup
     }
 }
+
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
+pub enum ProfileVisibility {
+    /// Profile is currently private and its visibility is not
+    /// changed when initial moderation request will be moderated as accepted.
+    PendingPrivate = 0,
+    /// Profile is currently private and its visibility will
+    /// change to public when initial moderation request will be moderated as
+    /// accepted.
+    PendingPublic = 1,
+    /// Profile is currently private.
+    Private = 2,
+    /// Profile is currently public.
+    Public = 3,
+}
+
+impl Default for ProfileVisibility {
+    fn default() -> Self {
+        Self::PendingPrivate
+    }
+}
+
+impl ProfileVisibility {
+    pub fn is_currently_public(&self) -> bool {
+        *self == Self::Public
+    }
+
+    pub fn is_pending(&self) -> bool {
+        *self == Self::PendingPrivate || *self == Self::PendingPublic
+    }
+}
+
+impl TryFrom<i64> for ProfileVisibility {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::PendingPrivate),
+            1 => Ok(Self::PendingPublic),
+            2 => Ok(Self::Private),
+            3 => Ok(Self::Public),
+            _ => Err(format!("Unknown visibility number: {}", value)),
+        }
+    }
+}
+
+diesel_i64_try_from!(ProfileVisibility);
 
 macro_rules! define_capablities {
     ($( $( #[doc = $text:literal] )* $name:ident , )* ) => {
@@ -172,6 +210,16 @@ macro_rules! define_capablities {
                 #[schema(default = false)]
                 pub $name: bool,
             )*
+        }
+
+        impl Capabilities {
+            pub fn all_enabled() -> Self {
+                Self {
+                    $(
+                        $name: true,
+                    )*
+                }
+            }
         }
 
     };
@@ -193,9 +241,6 @@ define_capablities!(
     admin_server_maintenance_reset_data,
     admin_server_maintenance_reboot_backend,
     admin_server_maintenance_save_backend_config,
-    /// View public profiles. Automatically enabled once initial
-    /// image moderation is complete.
-    user_view_public_profiles,
 );
 
 #[derive(
@@ -215,19 +260,10 @@ define_capablities!(
 #[diesel(table_name = crate::schema::account_setup)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {
-    name: String,
     birthdate: String,
 }
 
-impl AccountSetup {
-    pub fn is_empty(&self) -> bool {
-        self.name.is_empty()
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-}
+// TODO(prod): Birthdate validation
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
 pub struct BooleanSetting {
@@ -265,6 +301,16 @@ impl From<SignInWithInfoRaw> for SignInWithInfo {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct SignInWithInfo {
     pub google_account_id: Option<GoogleAccountId>,
+}
+
+impl SignInWithInfo {
+    pub fn google_account_id_matches_with(&self, id: &str) -> bool {
+        if let Some(google_account_id) = &self.google_account_id {
+            google_account_id.as_str() == id
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::Type, PartialEq)]

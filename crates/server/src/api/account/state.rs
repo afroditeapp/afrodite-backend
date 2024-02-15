@@ -27,7 +27,7 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
     ACCOUNT.get_account_state.incr();
     let account = state
         .read()
-        .account()
+        .common()
         .account(api_caller_account_id)
         .await?;
     Ok(account.into())

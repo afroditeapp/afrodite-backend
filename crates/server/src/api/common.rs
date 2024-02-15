@@ -12,8 +12,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use model::{
-    AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, EventToClientInternal,
-    RefreshToken,
+    AccessToken, AccountIdInternal, AccountSyncVersion, AccountSyncVersionFromClient, AuthPair, BackendVersion, EventToClient, EventToClientInternal, RefreshToken, SpecialEventToClient
 };
 use simple_backend::{create_counters, web_socket::WebSocketManager};
 use tracing::error;
@@ -43,17 +42,24 @@ pub async fn get_version<S: BackendVersionProvider>(
     state.backend_version().into()
 }
 
+// TODO(prod): Check access and refresh key lenghts.
+
 // ------------------------- WebSocket -------------------------
 
 /// Connect to server using WebSocket after getting refresh and access tokens.
 /// Connection is required as API access is allowed for connected clients.
 ///
-/// Send the current refersh token as Binary. The server will send the next
-/// refresh token (Binary) and after that the new access token (Text). After
-/// that API can be used.
+/// Protocol:
+/// 1. Client sends protocol version byte as Binary message.
+/// 2. Client sends current refresh token as Binary message.
+/// 3. Server sends next refresh token as Binary message.
+/// 4. Server sends new access token as Text message.
+///    (At this point API can be used.)
+/// 5. Client sends account state sync version as Binary message.
+///    The version is i64 value with little endian byte order.
+/// 6. Server starts to send JSON events as Text messages.
 ///
-/// The access token is valid until this WebSocket is closed. Server might send
-/// events as Text which is JSON.
+/// The new access token is valid until this WebSocket is closed.
 ///
 #[utoipa::path(
     get,
@@ -153,6 +159,12 @@ pub enum WebSocketError {
     Receive,
     #[error("Received something else than refresh token")]
     ReceiveMissingRefreshToken,
+    #[error("Received something else than supported protocol version")]
+    ReceiveUnsupportedProtocolVersion,
+    #[error("Received unsupported account state sync version")]
+    ReceiveUnsupportedSyncVersion,
+    #[error("Received wrong refresh token")]
+    ReceiveWrongRefreshToken,
     #[error("Websocket data sending error")]
     Send,
     #[error("Data serialization error")]
@@ -181,8 +193,23 @@ async fn handle_socket_result<S: WriteData + ReadData>(
     id: AccountIdInternal,
     state: &S,
 ) -> Result<(), WebSocketError> {
-    // TODO: add close server notification select? Or probably not needed as
-    // server should shutdown after main future?
+
+    // Receive protocol version byte.
+    match socket
+        .recv()
+        .await
+        .ok_or(WebSocketError::Receive.report())?
+        .change_context(WebSocketError::Receive)?
+        {
+            Message::Binary(version) => {
+                if let [1] = version.as_slice() {
+                    // Supported version
+                } else {
+                    return Err(WebSocketError::ReceiveUnsupportedProtocolVersion.report());
+                }
+            }
+            _ => return Err(WebSocketError::ReceiveUnsupportedProtocolVersion.report()),
+        };
 
     let current_refresh_token = state
         .read()
@@ -203,11 +230,10 @@ async fn handle_socket_result<S: WriteData + ReadData>(
     {
         Message::Binary(refresh_token) => {
             if refresh_token != current_refresh_token {
-                state
-                    .write(move |cmds| async move { cmds.common().logout(id).await })
-                    .await
-                    .change_context(WebSocketError::DatabaseLogoutFailed)?;
-                return Ok(());
+                // Returning error does the logout, so it is not needed here.
+                // For this case the logout is needed to prevent refresh
+                // token quessing.
+                return Err(WebSocketError::ReceiveWrongRefreshToken.report());
             }
         }
         _ => return Err(WebSocketError::ReceiveMissingRefreshToken.report()),
@@ -245,6 +271,21 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .await
         .change_context(WebSocketError::Send)?;
 
+    // Receive account state sync version
+    let sync_version = match socket
+        .recv()
+        .await
+        .ok_or(WebSocketError::Receive.report())?
+        .change_context(WebSocketError::Receive)?
+        {
+            Message::Binary(version) => {
+                let array: [u8; 8] = TryInto::<[u8; 8]>::try_into(version)
+                    .map_err(|_| WebSocketError::ReceiveUnsupportedSyncVersion.report())?;
+                AccountSyncVersionFromClient::new(i64::from_le_bytes(array))
+            }
+            _ => return Err(WebSocketError::ReceiveUnsupportedSyncVersion.report()),
+        };
+
     let mut event_receiver = state
         .write(
             move |cmds| async move { cmds.common().init_connection_session_events(id.uuid).await },
@@ -252,7 +293,7 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .await
         .change_context(WebSocketError::DatabaseSaveTokens)?;
 
-    send_account_state(&mut socket, id, state).await?;
+    send_account_state(state, &mut socket, id, sync_version).await?;
 
     loop {
         tokio::select! {
@@ -286,31 +327,61 @@ async fn handle_socket_result<S: WriteData + ReadData>(
 }
 
 async fn send_account_state<S: WriteData + ReadData>(
+    state: &S,
     socket: &mut WebSocket,
     id: AccountIdInternal,
-    state: &S,
+    sync_version: AccountSyncVersionFromClient,
 ) -> Result<(), WebSocketError> {
     let current_account = state
         .read()
-        .account()
+        .common()
         .account(id)
         .await
         .change_context(WebSocketError::DatabaseAccountStateQuery)?;
 
-    let event: EventToClient = EventToClientInternal::AccountStateChanged {
-        state: current_account.state(),
+    if !current_account.sync_version().sync_required(sync_version) {
+        return Ok(());
     }
-    .into();
-    let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
-    socket
-        .send(Message::Text(event))
-        .await
-        .change_context(WebSocketError::Send)?;
 
-    let event: EventToClient = EventToClientInternal::AccountCapabilitiesChanged {
-        capabilities: current_account.into_capablities(),
-    }
-    .into();
+    send_event(
+        socket,
+        EventToClientInternal::AccountStateChanged(
+            current_account.state()
+        )
+    ).await?;
+
+    send_event(
+        socket,
+        EventToClientInternal::AccountCapabilitiesChanged(
+            current_account.capablities().clone()
+        )
+    ).await?;
+
+    send_event(
+        socket,
+        EventToClientInternal::ProfileVisibilityChanged(
+            current_account.profile_visibility()
+        )
+    ).await?;
+
+    // AccountSyncNumber
+    // This must be the last to make sure that client has
+    // reveived all sync data.
+    send_event(
+        socket,
+        SpecialEventToClient::AccountSyncVersionChanged(
+            current_account.sync_version()
+        )
+    ).await?;
+
+    Ok(())
+}
+
+async fn send_event(
+    socket: &mut WebSocket,
+    event: impl Into<EventToClient>,
+) -> Result<(), WebSocketError> {
+    let event: EventToClient = event.into();
     let event = serde_json::to_string(&event).change_context(WebSocketError::Serialize)?;
     socket
         .send(Message::Text(event))

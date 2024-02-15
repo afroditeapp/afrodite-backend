@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountData, AccountIdInternal, AccountState, BooleanSetting, EventToClientInternal};
+use model::{AccountData, AccountIdInternal, AccountState, BooleanSetting, Capabilities, EventToClientInternal, ProfileVisibility};
 use simple_backend::create_counters;
 
 use crate::{
@@ -68,12 +68,7 @@ pub async fn post_account_data<S: GetAccessTokens + ReadData + WriteData>(
 
 pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
-/// Update profile visiblity value.
-///
-/// This will check that the first image moderation request has been moderated
-/// before this turns the profile public.
-///
-/// Sets capablity `view_public_profiles` on or off depending on the value.
+/// Update current or pending profile visiblity value.
 #[utoipa::path(
     put,
     path = "/account_api/settings/profile_visibility",
@@ -93,37 +88,43 @@ pub async fn put_setting_profile_visiblity<
     Json(new_value): Json<BooleanSetting>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_profile_visiblity.incr();
-    let account = state.read().account().account(id).await?;
 
+    let account = state.read().common().account(id).await?;
     if account.state() != AccountState::Normal {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let new_capabilities = internal_api::account::modify_and_sync_account_state(
-        &state,
-        id,
-        |d| {
-            d.capabilities.user_view_public_profiles = new_value.value;
-            *d.is_profile_public = new_value.value;
-        },
-    ).await?;
+    let new_account = db_write!(state, move |cmds| cmds
+        .account()
+        .update_syncable_account_data(id, move |_, _, visiblity| {
+            *visiblity = if visiblity.is_pending() {
+                if new_value.value {
+                    ProfileVisibility::PendingPublic
+                } else {
+                    ProfileVisibility::PendingPrivate
+                }
+            } else {
+                if new_value.value {
+                    ProfileVisibility::Public
+                } else {
+                    ProfileVisibility::Private
+                }
+            };
+            Ok(())
+        })
+    )?;
+
+    internal_api::common::sync_account_state(&state, id, new_account.clone()).await?;
 
     state
         .event_manager()
         .send_connected_event(
             id.uuid,
-            EventToClientInternal::AccountCapabilitiesChanged {
-                capabilities: new_capabilities,
-            },
+            EventToClientInternal::ProfileVisibilityChanged(
+                new_account.profile_visibility()
+            ),
         )
         .await?;
-
-    // TODO could this be removed, because there is already the sync call above?
-    internal_api::profile::profile_api_set_profile_visiblity(
-        &state,
-        id,
-        new_value,
-    ).await?;
 
     Ok(())
 }

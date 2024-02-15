@@ -45,15 +45,6 @@ impl ReadCommandsAccount<'_> {
             .into_error()
     }
 
-    pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
-        let account = self
-            .read_cache(id, |cache| {
-                Account::new_from(cache.shared_state.account_state, cache.capabilities.clone())
-            })
-            .await?;
-        Ok(account)
-    }
-
     pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_data(id))
             .await

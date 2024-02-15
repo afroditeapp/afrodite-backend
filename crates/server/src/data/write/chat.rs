@@ -113,6 +113,8 @@ impl WriteCommandsChat<'_> {
         })
     }
 
+    // TODO(prod): Change SQLite settings that delete is overwriting.
+
     /// Delete these pending messages which the receiver has received
     pub async fn delete_pending_message_list(
         &mut self,

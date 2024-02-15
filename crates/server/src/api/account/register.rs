@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, AccountSetup, AccountState, EventToClientInternal, SignInWithInfo,
+    AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EventToClientInternal, SignInWithInfo
 };
 use simple_backend::create_counters;
 use tracing::error;
@@ -112,7 +112,7 @@ pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
     ACCOUNT.post_account_setup.incr();
     let account = state
         .read()
-        .account()
+        .common()
         .account(api_caller_account_id)
         .await?;
 
@@ -129,17 +129,21 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 
 /// Complete initial setup.
 ///
-/// Request to this handler will complete if client is in `initial setup`,
-/// setup information is set and image moderation request has been made.
+/// Requirements:
+///  - Account must be in `InitialSetup` state.
+///  - Account must have a moderation request.
+///  - The current or pending security image of the account is in the request.
+///  - The current or pending first profile image of the account is in the
+///    request.
 ///
 #[utoipa::path(
     post,
     path = "/account_api/complete_setup",
     responses(
         (status = 200, description = "Request successfull."),
-        (status = 406, description = "Current state is not initial setup, AccountSetup is empty or moderation request does not contain camera image."),
+        (status = 406, description = "Current state is not initial setup."),
         (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
+        (status = 500, description = "Internal server error or current state is invalid for Normal state."),
     ),
     security(("access_token" = [])),
 )]
@@ -150,84 +154,72 @@ pub async fn post_complete_setup<
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_complete_setup.incr();
-    let account_setup = state.read().account().account_setup(id).await?;
 
-    if account_setup.is_empty() {
+    let account = state.read().common().account(id).await?;
+    if account.state() != AccountState::InitialSetup {
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
+    // Validate media moderation
     internal_api::media::media_check_moderation_request_for_account(&state, id).await?;
 
-    let mut account = state.read().account().account(id).await?;
     let account_data = state.read().account().account_data(id).await?;
-
     let sign_in_with_info = state.read().account().account_sign_in_with_info(id).await?;
-
-    if account.state() == AccountState::InitialSetup {
-        // Handle profile related initial setup
-        internal_api::profile::profile_initial_setup(
-            &state,
-            id,
-            account_setup.name().to_string(),
-        ).await?;
-
-        // Handle account related initial setup
-
-        account.complete_setup();
-
-        if state.config().debug_mode() {
-            if account_data.email == state.config().admin_email() {
-                account.add_admin_capablities();
-            }
+    let enable_all_capabilities = if state.config().debug_mode() {
+        account_data.email == state.config().admin_email()
+    } else {
+        if let Some(sign_in_with_config) =
+            state.config().simple_backend().sign_in_with_google_config()
+        {
+            sign_in_with_info
+                .google_account_id_matches_with(
+                    &sign_in_with_config.admin_google_account_id
+                )
+                && account_data.email == state.config().admin_email()
         } else {
-            if let Some(sign_in_with_config) =
-                state.config().simple_backend().sign_in_with_google_config()
-            {
-                if sign_in_with_info.google_account_id
-                    == Some(model::GoogleAccountId(
-                        sign_in_with_config.admin_google_account_id.clone(),
-                    ))
-                    && account_data.email == state.config().admin_email()
-                {
-                    account.add_admin_capablities();
+            false
+        }
+    };
+
+    let new_account = db_write!(state, move |cmds| cmds
+        .account()
+        .update_syncable_account_data(id, move |state, capabilities, _| {
+            if *state == AccountState::InitialSetup {
+                *state = AccountState::Normal;
+                if enable_all_capabilities {
+                    *capabilities = Capabilities::all_enabled();
                 }
             }
-        }
+            Ok(())
+        }))?;
 
-        let new_account_copy = account.clone();
-        internal_api::account::modify_and_sync_account_state(
-            &state,
-            id,
-            |d| {
-                *d.state = new_account_copy.state();
-                *d.capabilities = new_account_copy.into_capablities();
-            }
-        ).await?;
+    internal_api::common::sync_account_state(
+        &state,
+        id,
+        new_account,
+    ).await?;
 
-        state
-            .event_manager()
-            .send_connected_event(
-                id.uuid,
-                EventToClientInternal::AccountStateChanged {
-                    state: account.state(),
-                },
-            )
-            .await?;
+    state
+        .event_manager()
+        .send_connected_event(
+            id.uuid,
+            EventToClientInternal::AccountStateChanged(
+                account.state(),
+            ),
+        )
+        .await?;
 
-        state
-            .event_manager()
-            .send_connected_event(
-                id.uuid,
-                EventToClientInternal::AccountCapabilitiesChanged {
-                    capabilities: account.into_capablities(),
-                },
-            )
-            .await?;
+    state
+        .event_manager()
+        .send_connected_event(
+            id.uuid,
+            EventToClientInternal::AccountCapabilitiesChanged(
+                account.capablities(),
+            ),
+        )
+        .await?;
 
-        Ok(())
-    } else {
-        Err(StatusCode::NOT_ACCEPTABLE)
-    }
+    Ok(())
 }
 
 /// Contains only routes which require authentication.

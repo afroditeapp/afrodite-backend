@@ -174,18 +174,6 @@ impl<'a> ReadCommands<'a> {
         .into_error()
     }
 
-    pub async fn profile_visibility(
-        &self,
-        account_id: AccountIdInternal,
-    ) -> Result<Option<bool>, DataError> {
-        self.cache
-            .read_cache(account_id.as_id(), |e| {
-                e.profile.as_ref().map(|p| p.public).flatten()
-            })
-            .await
-            .into_error()
-    }
-
     pub async fn db_read<
         T: FnOnce(
                 CurrentSyncReadCommands<&mut DieselConnection>,

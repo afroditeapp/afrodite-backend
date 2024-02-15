@@ -21,7 +21,6 @@ use crate::{
 pub mod common;
 pub mod media;
 pub mod profile;
-pub mod account;
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.

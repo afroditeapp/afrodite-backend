@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use model::{AccountId, AccountIdInternal, AuthPair, SharedState};
+use model::{AccountId, AccountIdInternal, AuthPair, SharedStateRaw};
 
 use crate::{
     data::{write::db_transaction, DataError, IntoDataError},
@@ -86,15 +86,5 @@ impl WriteCommandsCommon<'_> {
             .into_data_error(id)?;
 
         Ok(())
-    }
-
-    pub async fn shared_state(
-        &self,
-        id: AccountIdInternal,
-        state: SharedState,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.common().state().shared_state(id, state)
-        })
     }
 }

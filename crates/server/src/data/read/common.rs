@@ -1,4 +1,4 @@
-use model::{AccountId, AccountIdInternal, SharedState};
+use model::{Account, AccountId, AccountIdInternal, SharedStateRaw};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir, DataError},
@@ -20,22 +20,17 @@ impl ReadCommandsCommon<'_> {
             .into_data_error(id)
     }
 
-    pub async fn shared_state(&self, id: AccountIdInternal) -> Result<SharedState, DataError> {
-        self.db_read(move |mut cmds| cmds.common().state().shared_state(id))
-            .await
-            .into_error()
+    /// Account is available on all servers as account server will sync it to
+    /// others if server is running in microservice mode.
+    pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
+        let account = self
+            .read_cache(id, |cache| {
+                Account::new_from_internal_types(
+                    cache.capabilities.clone(),
+                    cache.shared_state.clone(),
+                )
+            })
+            .await?;
+        Ok(account)
     }
-
-    // pub async fn <T>(
-    //     &self,
-    //     id: AccountId,
-    // ) -> Result<SharedState, DataError> {
-    //     self
-    //         .cache()
-    //         .read_cache(id, move |entry| {
-    //             action(&entry.current_event_connection)
-    //         })
-    //         .await
-    //         .into_data_error(id)
-    // }
 }

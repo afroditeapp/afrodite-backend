@@ -35,11 +35,7 @@ pub async fn internal_post_update_profile_visibility<
 
     let account_id = state.accounts().get_internal_id(account_id).await?;
 
-    internal_api::profile::profile_api_set_profile_visiblity(
-        &state,
-        account_id,
-        value,
-    ).await?;
+    // TODO: remove this route
 
     Ok(())
 }

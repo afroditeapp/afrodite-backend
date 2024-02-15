@@ -16,7 +16,7 @@ impl AllowedStatus for NotAllowed {
 }
 
 /// Control logging when server debug mode is disabled.
-pub trait IsLoggingAllowed {
+pub trait IsLoggingAllowed: Debug {
     type Value: AllowedStatus;
     const LOGGING_ALLOWED: bool = Self::Value::LOGGING_ALLOWED;
 

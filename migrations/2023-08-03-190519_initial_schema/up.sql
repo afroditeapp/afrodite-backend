@@ -45,7 +45,6 @@ CREATE TABLE IF NOT EXISTS account_capabilities(
     admin_server_maintenance_reset_data          BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_reboot_backend      BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT 0,
-    user_view_public_profiles                    BOOLEAN NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -56,13 +55,21 @@ CREATE TABLE IF NOT EXISTS account_capabilities(
 -- If the data is located in this table it should be set through account
 -- server as it propagates the changes to other components.
 CREATE TABLE IF NOT EXISTS shared_state(
-    account_id              INTEGER PRIMARY KEY NOT NULL,
+    account_id                INTEGER PRIMARY KEY NOT NULL,
     -- initial setup = 0
     -- normal = 1
     -- banned = 2
     -- pending deletion = 3
-    account_state_number    INTEGER             NOT NULL DEFAULT 0,
-    is_profile_public       BOOLEAN             NOT NULL DEFAULT 0,
+    account_state_number      INTEGER              NOT NULL DEFAULT 0,
+    -- pending private = 0
+    -- pending public = 1
+    -- private = 2
+    -- public = 3
+    profile_visibility_state_number INTEGER NOT NULL DEFAULT 0,
+    -- Version number which only account server increments.
+    -- Used in receiving end to avoid saving old state in case of
+    -- concurrent updates.
+    sync_version              INTEGER              NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -172,6 +179,19 @@ CREATE TABLE IF NOT EXISTS favorite_profile(
 );
 
 ---------- Tables for server component media ----------
+
+-- State specific to media component.
+CREATE TABLE IF NOT EXISTS media_state(
+    account_id              INTEGER PRIMARY KEY NOT NULL,
+    -- Media component sends this to account component when
+    -- this turns to true. Account component then updates
+    -- the profile visibility for both profile and media.
+    initial_moderation_request_accepted BOOLEAN           NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
 
 -- Currently selected images for account.
 -- Contains profile editing related pending profile image info.

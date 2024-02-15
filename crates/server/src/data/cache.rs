@@ -5,7 +5,7 @@ use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
     AccessToken, AccountId, AccountIdInternal, Capabilities, LocationIndexKey, ProfileInternal,
-    ProfileLink, SharedState,
+    ProfileLink, SharedStateRaw,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
@@ -107,11 +107,6 @@ impl DatabaseCache {
         Ok(cache)
     }
 
-    pub async fn load_state_from_external_services() {
-        // TODO
-        //index_writer.update_profile_link(internal_id.as_light(), ProfileLink::new(internal_id.as_light(), &profile_data.data), location_key).await;
-    }
-
     pub async fn load_account_from_db(
         &self,
         account_id: AccountIdInternal,
@@ -178,28 +173,19 @@ impl DatabaseCache {
             profile_data.location.current_iterator =
                 index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
 
-            // TODO: Add to location index only if visiblity is public
-            //       Was the visiblity basically stored only on account server?
-            //       If so, perhaps the best and clearest option would be creating
-            //       new media and profile server specific tables for storing
-            //       cached account server state.
-            //       Update: simple solution for now, when also account server
-            //       mode is enabled then use the visibility value from account.
-            if config.components().account {
-                let account = db_read(current_db, move |mut cmds| {
-                    cmds.account().data().account(account_id)
-                })
-                .await?;
-                if account.capablities().user_view_public_profiles {
-                    index_writer
-                        .update_profile_link(
-                            account_id.uuid,
-                            ProfileLink::new(account_id.uuid, &profile_data.data),
-                            location_key,
-                        )
-                        .await
-                        .change_context(CacheError::Init)?;
-                }
+            let account = db_read(current_db, move |mut cmds| {
+                cmds.common().account(account_id)
+            })
+            .await?;
+            if account.profile_visibility().is_currently_public() {
+                index_writer
+                    .update_profile_link(
+                        account_id.uuid,
+                        ProfileLink::new(account_id.uuid, &profile_data.data),
+                        location_key,
+                    )
+                    .await
+                    .change_context(CacheError::Init)?;
             }
 
             entry.profile = Some(Box::new(profile_data));
@@ -390,8 +376,6 @@ impl DatabaseCache {
 
 #[derive(Debug)]
 pub struct CachedProfile {
-    /// If None there is no profile visibility value fetched from account server.
-    pub public: Option<bool>,
     pub data: ProfileInternal,
     pub location: LocationData,
 }
@@ -399,7 +383,6 @@ pub struct CachedProfile {
 impl From<ProfileInternal> for CachedProfile {
     fn from(value: ProfileInternal) -> Self {
         Self {
-            public: None,
             data: value,
             location: LocationData {
                 current_position: LocationIndexKey::default(),
@@ -419,7 +402,7 @@ pub struct LocationData {
 pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
     pub capabilities: Capabilities,
-    pub shared_state: SharedState,
+    pub shared_state: SharedStateRaw,
     pub current_connection: Option<SocketAddr>,
     pub current_event_connection: EventMode,
 }
@@ -429,7 +412,7 @@ impl CacheEntry {
         Self {
             profile: None,
             capabilities: Capabilities::default(),
-            shared_state: SharedState::default(),
+            shared_state: SharedStateRaw::default(),
             current_connection: None,
             current_event_connection: EventMode::None,
         }

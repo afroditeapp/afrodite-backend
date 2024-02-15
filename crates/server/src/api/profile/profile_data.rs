@@ -56,7 +56,7 @@ pub async fn get_profile<
 
     // TODO: Change return type to GetProfileResult, because
     //       current style spams errors to logs.
-    // TODO: check capablities
+    // TODO: check capablities so that admin can view all profiles
 
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
@@ -70,27 +70,9 @@ pub async fn get_profile<
             .map(|p| Into::<Profile>::into(p).into());
     }
 
-    let visibility = state.read().profile_visibility(requested_profile).await?;
+    let visibility = state.read().common().account(requested_profile).await?.profile_visibility().is_currently_public();
 
-    let visiblity = match visibility {
-        Some(v) => v,
-        None => {
-            let account = internal_api::account::get_account_state(
-                &state,
-                requested_profile,
-            ).await?;
-
-            let visibility = account.capablities().user_view_public_profiles;
-            db_write!(state, move |cmds| {
-                cmds.profile()
-                    .profile_update_visibility(requested_profile, visibility, true)
-            })?;
-
-            visibility
-        }
-    };
-
-    if visiblity {
+    if visibility {
         state
             .read()
             .profile()

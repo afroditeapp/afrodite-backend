@@ -65,7 +65,7 @@ pub async fn put_moderation_request<S: WriteData>(
 
     db_write!(state, move |cmds| {
         cmds.media()
-            .set_moderation_request(account_id, moderation_request)
+            .create_or_update_moderation_request(account_id, moderation_request)
     })
 }
 

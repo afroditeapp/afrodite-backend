@@ -9,8 +9,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, AccountState, Capabilities, ContentProcessingId,
-    ContentProcessingState, MessageNumber,
+    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, Profile, ProfileVisibility
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
@@ -32,6 +31,12 @@ pub enum EventType {
     /// New capabilities for client.
     /// Data: capabilities
     AccountCapabilitiesChanged,
+    /// New profile visiblity for client.
+    /// Data: visibility
+    ProfileVisibilityChanged,
+    /// New account sync version value for client.
+    /// Data: sync_version
+    AccountSyncVersionChanged,
     NewMessageReceived,
     LikesChanged,
     ReceivedBlocksChanged,
@@ -67,21 +72,55 @@ pub struct EventToClient {
     account_state: Option<AccountState>,
     /// Data for event AccountCapabilitiesChanged
     capabilities: Option<Capabilities>,
+    /// Data for event ProfileVisibilityChanged
+    visibility: Option<ProfileVisibility>,
+    /// Data for event AccountSyncVersionChanged
+    sync_version: Option<AccountSyncVersion>,
     /// Data for event LatestViewedMessageChanged
     latest_viewed_message_changed: Option<LatestViewedMessageChanged>,
     /// Data for event ContentProcessingStateChanged
     content_processing_state_changed: Option<ContentProcessingStateChanged>,
 }
 
+/// Events which only WebSocket code can send.
+pub enum SpecialEventToClient {
+    /// New account sync version value for client.
+    ///
+    /// Only WebSocket code must send this event to avoid data races which
+    /// would make client think that older data is newer.
+    AccountSyncVersionChanged(AccountSyncVersion),
+}
+
+impl From<SpecialEventToClient> for EventToClient {
+    fn from(internal: SpecialEventToClient) -> Self {
+        let mut value = Self {
+            event: EventType::AccountStateChanged,
+            account_state: None,
+            capabilities: None,
+            visibility: None,
+            sync_version: None,
+            latest_viewed_message_changed: None,
+            content_processing_state_changed: None,
+        };
+
+        match internal {
+            SpecialEventToClient::AccountSyncVersionChanged(sync_version) => {
+                value.event = EventType::AccountSyncVersionChanged;
+                value.sync_version = Some(sync_version);
+            }
+        }
+
+        value
+    }
+}
+
 pub enum EventToClientInternal {
     /// New account state for client
-    AccountStateChanged {
-        state: AccountState,
-    },
+    AccountStateChanged(AccountState),
     /// New capabilities for client
-    AccountCapabilitiesChanged {
-        capabilities: Capabilities,
-    },
+    AccountCapabilitiesChanged(Capabilities),
+    /// New profile visiblity for client
+    ProfileVisibilityChanged(ProfileVisibility),
     NewMessageReceived,
     LikesChanged,
     ReceivedBlocksChanged,
@@ -95,18 +134,24 @@ impl From<EventToClientInternal> for EventToClient {
             event: EventType::AccountStateChanged,
             account_state: None,
             capabilities: None,
+            visibility: None,
+            sync_version: None,
             latest_viewed_message_changed: None,
             content_processing_state_changed: None,
         };
 
         match internal {
-            EventToClientInternal::AccountStateChanged { state } => {
+            EventToClientInternal::AccountStateChanged(state) => {
                 value.event = EventType::AccountStateChanged;
                 value.account_state = Some(state);
             }
-            EventToClientInternal::AccountCapabilitiesChanged { capabilities } => {
+            EventToClientInternal::AccountCapabilitiesChanged(capabilities) => {
                 value.event = EventType::AccountCapabilitiesChanged;
                 value.capabilities = Some(capabilities);
+            }
+            EventToClientInternal::ProfileVisibilityChanged(visibility) => {
+                value.event = EventType::ProfileVisibilityChanged;
+                value.visibility = Some(visibility);
             }
             EventToClientInternal::NewMessageReceived => {
                 value.event = EventType::NewMessageReceived;
@@ -386,18 +431,102 @@ impl AccountIdDb {
 
 diesel_i64_wrapper!(AccountIdDb);
 
-#[derive(Debug, Clone, Default, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::shared_state)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct SharedStateInternal {
-    pub is_profile_public: bool,
-    pub account_state_number: i64,
+pub struct AccountSyncVersionFromClient(i64);
+
+impl AccountSyncVersionFromClient {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct SharedState {
-    pub is_profile_public: bool,
-    pub account_state: AccountState,
+/// Version number for account data which must be synced to client.
+/// Only account server can change this number.
+///
+/// If the value is the i64::MAX, the server does full sync to client.
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    sqlx::Type,
+    PartialEq,
+    Eq,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+#[serde(transparent)]
+#[sqlx(transparent)]
+pub struct AccountSyncVersion(pub i64);
+
+impl AccountSyncVersion {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.0
+    }
+
+    pub fn sync_required(&self, client_value: AccountSyncVersionFromClient) -> bool {
+        if client_value.0 == i64::MAX {
+            // Force full sync as there is no logic for wrapping the number.
+            true
+        } else if client_value.0 > self.0 {
+            // Client has newer version. This is a bug in the client.
+            true
+        } else if self.0 > client_value.0 {
+            // Server has newer version.
+            true
+        } else {
+            // Client has the same version.
+            false
+        }
+    }
+
+    pub fn increment_if_not_max_value(&self) -> AccountSyncVersion {
+        if self.0 == i64::MAX {
+            // Do nothing
+            *self
+        } else {
+            AccountSyncVersion(self.0 + 1)
+        }
+    }
+}
+
+impl Default for AccountSyncVersion {
+    fn default() -> Self {
+        Self(0)
+    }
+}
+
+diesel_i64_wrapper!(AccountSyncVersion);
+
+#[derive(Debug, Clone, Default, Queryable, Selectable, Insertable, AsChangeset)]
+#[diesel(table_name = crate::schema::shared_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct SharedStateRaw {
+    pub profile_visibility_state_number: ProfileVisibility,
+    pub account_state_number: AccountState,
+    pub sync_version: AccountSyncVersion,
+}
+
+impl SharedStateRaw {
+    pub fn profile_visibility(&self) -> ProfileVisibility {
+        self.profile_visibility_state_number
+    }
+}
+
+impl From<Account> for SharedStateRaw {
+    fn from(account: Account) -> Self {
+        Self {
+            profile_visibility_state_number: account.profile_visibility(),
+            account_state_number: account.state(),
+            sync_version: account.sync_version(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Queryable, Selectable)]
@@ -423,7 +552,7 @@ impl TryFrom<i64> for NextQueueNumberType {
         let number_type = match value {
             0 => Self::MediaModeration,
             1 => Self::InitialMediaModeration,
-            value => return Err(format!("Unknown QueueNumberType value {}", value)),
+            value => return Err(format!("Unknown NextQueueNumberType value {}", value)),
         };
 
         Ok(number_type)
@@ -432,31 +561,65 @@ impl TryFrom<i64> for NextQueueNumberType {
 
 diesel_i64_try_from!(NextQueueNumberType);
 
+/// Subset of NextQueueNumberType containing only moderation queue types.
+pub enum ModerationQueueType {
+    MediaModeration,
+    InitialMediaModeration,
+}
+
+impl From<ModerationQueueType> for NextQueueNumberType {
+    fn from(value: ModerationQueueType) -> Self {
+        match value {
+            ModerationQueueType::MediaModeration => Self::MediaModeration,
+            ModerationQueueType::InitialMediaModeration => Self::InitialMediaModeration,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::queue_entry)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct QueueEntryRaw {
-    pub queue_number: i64,
+    pub queue_number: QueueNumber,
     pub queue_type_number: NextQueueNumberType,
     pub account_id: AccountIdDb,
 }
 
-// #[derive(Debug, Serialize, Deserialize, Clone, Copy, sqlx::Type, PartialEq, Eq, Hash, FromSqlRow, AsExpression)]
-// #[diesel(sql_type = BigInt)]
-// #[serde(transparent)]
-// #[sqlx(transparent)]
-// pub struct DbId(pub i64);
+// TODO(prod): Add UnixTime to unix time fields
 
-// impl DbId {
-//     pub fn new(id: i64) -> Self {
-//         Self(id)
-//     }
 
-//     pub fn as_i64(&self) -> &i64 {
-//         &self.0
-//     }
-// }
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    Copy,
+    sqlx::Type,
+    PartialEq,
+    Eq,
+    Hash,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+#[serde(transparent)]
+#[sqlx(transparent)]
+pub struct QueueNumber(pub i64);
 
-// diesel_i64_wrapper!(DbId);
+impl QueueNumber {
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
 
-// TODO: Add UnixTime to unix time fields
+    pub fn as_i64(&self) -> &i64 {
+        &self.0
+    }
+}
+
+impl From<ModerationQueueNumber> for QueueNumber {
+    fn from(value: ModerationQueueNumber) -> Self {
+        Self(value.0)
+    }
+}
+
+diesel_i64_wrapper!(QueueNumber);

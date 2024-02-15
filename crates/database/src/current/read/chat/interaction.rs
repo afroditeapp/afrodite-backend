@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState};
+use model::{AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, ProfileVisibility};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
@@ -61,7 +61,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
 
         let value: Vec<AccountId> = if only_public_profiles {
             partial_command
-                .filter(shared_state::is_profile_public.eq(true))
+                .filter(shared_state::profile_visibility_state_number.eq(ProfileVisibility::Public))
                 .select(account_id::uuid)
                 .load(self.conn())
                 .into_db_error(())?

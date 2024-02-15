@@ -12,7 +12,7 @@ use database::{
     CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
 use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, SharedStateInternal,
+    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, SharedStateRaw,
     SignInWithInfo,
 };
 use simple_backend::media_backup::MediaBackupHandle;
@@ -60,6 +60,11 @@ macro_rules! define_write_commands {
             #[allow(dead_code)]
             fn cache(&self) -> &$crate::data::cache::DatabaseCache {
                 &self.cmds.cache
+            }
+
+            #[allow(dead_code)]
+            fn config(&self) -> &config::Config {
+                &self.cmds.config
             }
 
             #[allow(dead_code)]
@@ -306,7 +311,7 @@ impl<'a> WriteCommands<'a> {
         current
             .common()
             .state()
-            .insert_shared_state(id, SharedStateInternal::default())?;
+            .insert_shared_state(id, SharedStateRaw::default())?;
 
         // Common history
         history.account().insert_account_id(id)?;
@@ -339,6 +344,10 @@ impl<'a> WriteCommands<'a> {
         }
 
         if config.components().media {
+            current
+                .media()
+                .insert_media_state(id)?;
+
             current
                 .media()
                 .media_content()

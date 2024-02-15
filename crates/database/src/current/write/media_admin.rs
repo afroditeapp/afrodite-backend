@@ -3,6 +3,8 @@ use super::ConnectionProvider;
 mod media_content;
 mod moderation;
 
+pub struct InitialModerationRequestIsNowAccepted;
+
 define_write_commands!(CurrentWriteMediaAdmin, CurrentSyncWriteMediaAdmin);
 
 impl<C: ConnectionProvider> CurrentSyncWriteMediaAdmin<C> {

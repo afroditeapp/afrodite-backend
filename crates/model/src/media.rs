@@ -242,7 +242,7 @@ impl ModerationRequestContent {
 pub struct MediaModerationRequestRaw {
     pub id: ModerationRequestIdDb,
     pub account_id: AccountIdDb,
-    pub queue_number: i64,
+    pub queue_number: ModerationQueueNumber,
     pub content_id_0: ContentId,
     pub content_id_1: Option<ContentId>,
     pub content_id_2: Option<ContentId>,
@@ -643,10 +643,6 @@ pub struct CurrentAccountMediaInternal {
 }
 
 impl CurrentAccountMediaInternal {
-    pub const GRID_CROP_SIZE_DEFAULT: f64 = 1.0;
-    pub const GRID_CROP_X_DEFAULT: f64 = 0.0;
-    pub const GRID_CROP_Y_DEFAULT: f64 = 0.0;
-
     pub fn iter_all_content(&self) -> impl Iterator<Item = &MediaContentRaw> {
         self.iter_current_profile_content()
             .chain(self.iter_pending_profile_content())
@@ -678,6 +674,17 @@ impl CurrentAccountMediaInternal {
         ]
         .into_iter()
         .flatten()
+    }
+
+    /// Returns true if pending security and profile content is empty.
+    pub fn pending_content_is_empty(&self) -> bool {
+        self.pending_security_content_id.is_none()
+            && self.pending_profile_content_id_0.is_none()
+            && self.pending_profile_content_id_1.is_none()
+            && self.pending_profile_content_id_2.is_none()
+            && self.pending_profile_content_id_3.is_none()
+            && self.pending_profile_content_id_4.is_none()
+            && self.pending_profile_content_id_5.is_none()
     }
 }
 
@@ -937,3 +944,17 @@ impl ContentIdDb {
 }
 
 diesel_i64_wrapper!(ContentIdDb);
+
+
+#[derive(Debug, Clone, Default, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::media_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct MediaStateRaw {
+    pub initial_moderation_request_accepted: bool,
+}
+
+impl MediaStateRaw {
+    pub fn current_moderation_request_is_initial(&self) -> bool {
+        !self.initial_moderation_request_accepted
+    }
+}

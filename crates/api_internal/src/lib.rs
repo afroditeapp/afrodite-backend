@@ -39,31 +39,6 @@ impl InternalApi {
         .map(|data| AccountId::new(data.account_id))
     }
 
-    pub async fn get_account_state(
-        configuration: &Configuration,
-        account_id: AccountId,
-    ) -> Result<Account, Error<InternalGetAccountStateError>> {
-        let account = account_internal_api::internal_get_account_state(
-            configuration,
-            &account_id.to_string(),
-        )
-        .await?;
-
-        let state = match account.state {
-            api_client::models::AccountState::InitialSetup => AccountState::InitialSetup,
-            api_client::models::AccountState::Normal => AccountState::Normal,
-            api_client::models::AccountState::Banned => AccountState::Banned,
-            api_client::models::AccountState::PendingDeletion => AccountState::PendingDeletion,
-        };
-
-        let capabilities_string =
-            serde_json::to_string(&account.capabilities).map_err(|e| Error::Serde(e))?;
-        let capabilities: Capabilities =
-            serde_json::from_str(&capabilities_string).map_err(|e| Error::Serde(e))?;
-
-        Ok(Account::new_from(state, capabilities))
-    }
-
     pub async fn media_check_moderation_request_for_account(
         configuration: &Configuration,
         account_id: AccountId,

@@ -1,28 +1,58 @@
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, NewContentParams,
-    SetProfileContent,
+    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, SetProfileContent
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::db_transaction;
 use crate::{
     data::DataError,
-    result::{Result, WrappedResultExt},
+    result::{Result, WrappedContextExt, WrappedResultExt},
 };
 
 define_write_commands!(WriteCommandsMedia);
 
 impl WriteCommandsMedia<'_> {
-    pub async fn set_moderation_request(
+    pub async fn create_or_update_moderation_request(
         &self,
         account_id: AccountIdInternal,
         request: ModerationRequestContent,
     ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.media()
-                .moderation_request()
-                .create_new_moderation_request(account_id, request)
-        })
+        let current_request = self
+            .db_read(move |mut cmds| {
+                cmds.media()
+                    .moderation_request()
+                    .moderation_request(account_id)
+            })
+            .await?;
+
+        if let Some(current_request) = current_request {
+            match current_request.state {
+                ModerationRequestState::Waiting => {
+                    db_transaction!(self, move |mut cmds| {
+                        cmds.media()
+                            .moderation_request()
+                            .update_moderation_request(account_id, request)
+                    })
+                }
+                ModerationRequestState::InProgress => {
+                    Err(DataError::NotAllowed.report())
+                }
+                ModerationRequestState::Accepted |
+                ModerationRequestState::Denied => {
+                    db_transaction!(self, move |mut cmds| {
+                        cmds.media()
+                            .moderation_request()
+                            .create_new_moderation_request(account_id, request)
+                    })
+                }
+            }
+        } else {
+            db_transaction!(self, move |mut cmds| {
+                cmds.media()
+                    .moderation_request()
+                    .create_new_moderation_request(account_id, request)
+            })
+        }
     }
 
     /// Completes previous save_to_tmp.
@@ -77,7 +107,7 @@ impl WriteCommandsMedia<'_> {
         })
         .await?;
 
-        // TODO: Update media backup code
+        // TODO(prod): Update media backup code
         // self.media_backup()
         //     .backup_jpeg_image(id.as_id(), content_id)
         //     .await

@@ -14,7 +14,7 @@ use crate::{
     result::{Result, WrappedContextExt, WrappedResultExt},
 };
 
-use super::{account, InternalApiError};
+use super::{InternalApiError};
 
 /// Check that media server has correct state for completing initial setup.
 ///
@@ -26,7 +26,7 @@ use super::{account, InternalApiError};
 ///
 /// TODO(prod): Make sure that moderation request is not removed when admin
 ///             interacts with it.
-pub async fn media_check_moderation_request_for_account<S: GetAccessTokens + GetConfig + ReadData + GetInternalApi>(
+pub async fn media_check_moderation_request_for_account<S: GetConfig + ReadData + GetInternalApi>(
     state: &S,
     account_id: AccountIdInternal,
 ) -> Result<(), InternalApiError> {
@@ -77,25 +77,3 @@ pub async fn media_check_moderation_request_for_account<S: GetAccessTokens + Get
         .change_context(InternalApiError::MissingValue)
     }
 }
-
-// TODO: Can media_api_profile_visiblity be removed?
-
-pub async fn media_api_profile_visiblity<S: GetConfig>(
-    state: &S,
-    _account_id: AccountIdInternal,
-    _boolean_setting: BooleanSetting,
-    _current_profile: Profile,
-) -> Result<(), InternalApiError> {
-    if state.config().components().media {
-        // TODO: Save visibility information to cache?
-        Ok(())
-    } else {
-        // TODO: request to internal media API
-        Ok(())
-    }
-}
-
-// TODO: Prevent creating a new moderation request when there is camera
-// image in the current one. Or also make possible to change the ongoing
-// moderation request but leave the camera image. Where information about
-// the camera image should be stored?

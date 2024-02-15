@@ -2,15 +2,14 @@ use axum::{
     extract::{Path, State},
     Extension, Router,
 };
-use model::{AccountId, AccountIdInternal, HandleModerationRequest, ModerationList};
+use model::{schema::shared_state::profile_visibility_state_number, AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList};
 use simple_backend::create_counters;
 
 use crate::{
     api::{
-        db_write,
-        utils::{Json, StatusCode},
+        db_write, media::moderation_request, utils::{Json, StatusCode}
     },
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
+    app::{EventManagerProvider, GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
 };
 
 // TODO: Add moderation content moderation weight to account and use it when moderating.
@@ -47,11 +46,14 @@ pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
 
     let data = db_write!(state, move |cmds| {
         cmds.media_admin()
-            .moderation_get_list_and_create_new_if_necessary(account_id)
+            .moderation_get_list_and_create_new_if_necessary(account_id, ModerationQueueType::InitialMediaModeration)
     })?;
 
     Ok(ModerationList { list: data }.into())
 }
+
+// TODO(prod): Check that make, get and moderate requests in both moderation
+//             queues.
 
 pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     "/media_api/admin/moderation/handle_request/:account_id";
@@ -76,7 +78,7 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     security(("access_token" = [])),
 )]
 pub async fn post_handle_moderation_request<
-    S: GetInternalApi + WriteData + GetAccessTokens + GetAccounts + GetConfig + ReadData,
+    S: GetInternalApi + WriteData + GetAccounts + GetConfig + ReadData + EventManagerProvider,
 >(
     State(state): State<S>,
     Path(moderation_request_owner_account_id): Path<AccountId>,
@@ -85,10 +87,10 @@ pub async fn post_handle_moderation_request<
 ) -> Result<(), StatusCode> {
     MEDIA_ADMIN.post_handle_moderation_request.incr();
 
-    let account = internal_api::account::get_account_state(
-        &state,
-        admin_account_id,
-    ).await?;
+    let account = state.read()
+        .common()
+        .account(admin_account_id)
+        .await?;
 
     if account.capablities().admin_moderate_images {
         let moderation_request_owner = state
@@ -96,13 +98,36 @@ pub async fn post_handle_moderation_request<
             .get_internal_id(moderation_request_owner_account_id)
             .await?;
 
-        db_write!(state, move |cmds| {
+        let profile_visibility_changed = db_write!(state, move |cmds| {
             cmds.media_admin().update_moderation(
                 admin_account_id,
                 moderation_request_owner,
                 moderation_decision,
             )
-        })
+        })?;
+
+        if profile_visibility_changed.is_some() &&
+            state.config().components().account {
+                let moderation_request_owner_account = state
+                    .read()
+                    .common()
+                    .account(moderation_request_owner)
+                    .await?;
+                state
+                    .event_manager()
+                    .send_connected_event(
+                        moderation_request_owner,
+                        EventToClientInternal::ProfileVisibilityChanged(
+                            moderation_request_owner_account.profile_visibility(),
+                        ),
+                    )
+                    .await?;
+        } else {
+            // TODO(microservice): Add profile visibility change notification
+            //                     to account internal API.
+        }
+
+        Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }

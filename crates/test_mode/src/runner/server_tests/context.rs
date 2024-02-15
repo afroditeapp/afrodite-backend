@@ -6,14 +6,11 @@ use error_stack::Result;
 use tokio::sync::Mutex;
 
 use crate::{
-    bot::{
+    action_array, bot::{
         actions::{
-            account::{Login, Register},
-            BotAction,
+            account::{Login, Register, SetAccountSetup}, media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, BotAction
         }, AccountConnections, BotState
-    },
-    client::ApiClient,
-    TestError,
+    }, client::ApiClient, TestError
 };
 
 #[derive(Debug)]
@@ -48,8 +45,27 @@ impl TestContext {
         }
     }
 
-    pub async fn new_account(&self) -> Result<Account, TestError> {
+    /// Account with InitialSetup state.
+    pub async fn new_account_in_initial_setup_state(&self) -> Result<Account, TestError> {
         Account::register_and_login(self.clone()).await
+    }
+
+    /// Account with Normal state.
+    pub async fn new_account(&self) -> Result<Account, TestError> {
+        let mut account = Account::register_and_login(self.clone()).await?;
+        account
+            .run_actions(action_array![
+                SetAccountSetup::new(),
+                SendImageToSlot::slot(0),
+                SendImageToSlot::slot(1),
+                SetPendingContent {
+                    security_content_slot_i: Some(0),
+                    content_0_slot_i: Some(1),
+                },
+                MakeModerationRequest { slot_0_secure_capture: true },
+            ])
+            .await?;
+        Ok(account)
     }
 
     async fn add_account_connections(&mut self, connections: AccountConnections) {

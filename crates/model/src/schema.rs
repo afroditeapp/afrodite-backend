@@ -35,7 +35,6 @@ diesel::table! {
         admin_server_maintenance_reset_data -> Bool,
         admin_server_maintenance_reboot_backend -> Bool,
         admin_server_maintenance_save_backend_config -> Bool,
-        user_view_public_profiles -> Bool,
     }
 }
 
@@ -210,6 +209,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    media_state (account_id) {
+        account_id -> Integer,
+        initial_moderation_request_accepted -> Bool,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     next_queue_number (queue_type_number) {
         queue_type_number -> Integer,
         next_number -> Integer,
@@ -275,7 +283,8 @@ diesel::table! {
     shared_state (account_id) {
         account_id -> Integer,
         account_state_number -> Integer,
-        is_profile_public -> Bool,
+        profile_visibility_state_number -> Integer,
+        sync_version -> Integer,
     }
 }
 
@@ -302,6 +311,7 @@ diesel::joinable!(media_content -> account_id (account_id));
 diesel::joinable!(media_moderation -> account_id (account_id));
 diesel::joinable!(media_moderation -> media_moderation_request (moderation_request_id));
 diesel::joinable!(media_moderation_request -> account_id (account_id));
+diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_location -> account_id (account_id));
 diesel::joinable!(queue_entry -> account_id (account_id));
@@ -326,6 +336,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     media_content,
     media_moderation,
     media_moderation_request,
+    media_state,
     next_queue_number,
     pending_messages,
     profile,

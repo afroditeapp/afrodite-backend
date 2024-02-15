@@ -1,7 +1,7 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ContentState, MediaModerationRequestRaw, ModerationRequestContent, ModerationRequestInternal, ModerationRequestState, NewContentParams, NextQueueNumberType
+    AccountIdInternal, ContentId, ContentSlot, ContentState, ModerationRequestContent, ModerationRequestInternal, ModerationRequestState, NewContentParams, NextQueueNumberType
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -94,8 +94,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
 
     /// Used when a user creates a new moderation request
     ///
-    /// Moderation request content must content ids which point to your own
-    /// image slots. Otherwise this returns an error.
+    /// Requirements:
+    /// - All content must point to content owner image slots.
+    /// - If this is initial moderation request, then there must be one
+    ///   content with secure capture flag set.
     pub fn create_new_moderation_request(
         &mut self,
         request_creator: AccountIdInternal,
@@ -138,8 +140,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
     /// Update already existing moderation request if it is still in Waiting
     /// state.
     ///
-    /// New moderation request content must content ids which point to your own
-    /// image slots. Otherwise this returns an error.
+    /// Requirements:
+    /// - All content must point to content owner image slots.
+    /// - If this is initial moderation request, then there must be one
+    ///   content with secure capture flag set.
     pub fn update_moderation_request(
         &mut self,
         request_owner_account_id: AccountIdInternal,
@@ -180,28 +184,18 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
 
     pub fn delete_moderation_request_not_yet_in_moderation(
         &mut self,
-        _request_owner: AccountIdInternal,
+        request_owner: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        // // Delete old queue number and request
-        // {
-        //     use model::schema::queue_entry::dsl::*;
-        //     delete(queue_entry.filter(
-        //         account_id.eq(request_creator.row_id())
-        //             .and(queue_type_number.eq(NextQueueNumberType::MediaModeration)
-        //                 .or(queue_type_number.eq(NextQueueNumberType::InitialMediaModeration))
-        //             )))
-        //         .execute(self.conn())
-        //         .into_db_error(request_creator)?;
-        // }
-        // {
-        //     use model::schema::media_moderation_request::dsl::*;
-        //     delete(media_moderation_request.filter(account_id.eq(request_creator.row_id())))
-        //         .execute(self.conn())
-        //         .into_db_error(request_creator)?;
-        // }
-        // // Foreign key constraint removes MediaModeration rows.
-        // // Old data is not needed in current data database.
-        // Ok(())
-        unimplemented!("TODO")
+        let current_request = self
+            .read()
+            .media()
+            .moderation_request()
+            .moderation_request(request_owner)?;
+
+        if let Some(ModerationRequestInternal { state: ModerationRequestState::Waiting, .. }) = current_request {
+            self.delete_moderation_request(request_owner)
+        } else {
+            Err(DieselDatabaseError::NotAllowed.report())
+        }
     }
 }

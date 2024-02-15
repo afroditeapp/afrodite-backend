@@ -53,7 +53,7 @@ pub async fn internal_get_account_state<S: ReadData + GetAccounts>(
     ACCOUNT_INTERNAL.internal_get_account_state.incr();
     let internal_id = state.accounts().get_internal_id(account_id).await?;
 
-    let account = state.read().account().account(internal_id).await?;
+    let account = state.read().common().account(internal_id).await?;
 
     Ok(account.into())
 }

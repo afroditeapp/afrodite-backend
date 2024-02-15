@@ -175,8 +175,7 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
     pub fn transaction<
         F: FnOnce(
                 &mut DieselConnection,
-            ) -> std::result::Result<T, TransactionError<DieselDatabaseError>>
-            + 'static,
+            ) -> std::result::Result<T, TransactionError<DieselDatabaseError>>,
         T,
     >(
         self,

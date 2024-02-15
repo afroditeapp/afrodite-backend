@@ -34,17 +34,24 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
         }
     }
 
+    pub fn current_account_media_raw(
+        &mut self,
+        media_owner_id: AccountIdInternal,
+    ) -> Result<CurrentAccountMediaRaw, DieselDatabaseError> {
+        use crate::schema::current_account_media;
+
+        current_account_media::table
+            .filter(current_account_media::account_id.eq(media_owner_id.as_db_id()))
+            .select(CurrentAccountMediaRaw::as_select())
+            .first::<CurrentAccountMediaRaw>(self.conn())
+            .into_db_error(media_owner_id)
+    }
+
     pub fn current_account_media(
         &mut self,
         media_owner_id: AccountIdInternal,
     ) -> Result<CurrentAccountMediaInternal, DieselDatabaseError> {
-        use crate::schema::current_account_media;
-
-        let raw = current_account_media::table
-            .filter(current_account_media::account_id.eq(media_owner_id.as_db_id()))
-            .select(CurrentAccountMediaRaw::as_select())
-            .first::<CurrentAccountMediaRaw>(self.conn())
-            .into_db_error(media_owner_id)?;
+        let raw = self.current_account_media_raw(media_owner_id)?;
 
         let security_content_id =
             self.media_content_raw(media_owner_id, raw.security_content_id)?;

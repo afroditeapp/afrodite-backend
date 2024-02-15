@@ -1,7 +1,7 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType, SetProfileContent, SetProfileContentInternal
+    AccountIdInternal, ContentId, ContentIdDb, ContentState, CurrentAccountMediaInternal, MediaContentRaw, MediaContentType, SetProfileContent, SetProfileContentInternal
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -269,5 +269,45 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         } else {
             Err(DieselDatabaseError::NotAllowed.report())
         }
+    }
+
+    pub fn move_pending_content_to_current_content(
+        &mut self,
+        content_owner: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::current_account_media::dsl::*;
+        let c = self
+            .read()
+            .media()
+            .media_content()
+            .current_account_media_raw(content_owner)?;
+
+        update(current_account_media.find(content_owner.as_db_id()))
+            .set((
+                security_content_id.eq(c.pending_security_content_id),
+                profile_content_id_0.eq(c.pending_profile_content_id_0),
+                profile_content_id_1.eq(c.pending_profile_content_id_1),
+                profile_content_id_2.eq(c.pending_profile_content_id_2),
+                profile_content_id_3.eq(c.pending_profile_content_id_3),
+                profile_content_id_4.eq(c.pending_profile_content_id_4),
+                profile_content_id_5.eq(c.pending_profile_content_id_5),
+                grid_crop_size.eq(c.pending_grid_crop_size),
+                grid_crop_x.eq(c.pending_grid_crop_x),
+                grid_crop_y.eq(c.pending_grid_crop_y),
+                pending_security_content_id.eq(None::<ContentIdDb>),
+                pending_profile_content_id_0.eq(None::<ContentIdDb>),
+                pending_profile_content_id_1.eq(None::<ContentIdDb>),
+                pending_profile_content_id_2.eq(None::<ContentIdDb>),
+                pending_profile_content_id_3.eq(None::<ContentIdDb>),
+                pending_profile_content_id_4.eq(None::<ContentIdDb>),
+                pending_profile_content_id_5.eq(None::<ContentIdDb>),
+                pending_grid_crop_size.eq(None::<f64>),
+                pending_grid_crop_x.eq(None::<f64>),
+                pending_grid_crop_y.eq(None::<f64>),
+            ))
+            .execute(self.conn())
+            .into_db_error(content_owner)?;
+
+        Ok(())
     }
 }

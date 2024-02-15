@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, Location, ProfileLink, ProfileUpdateInternal};
+use model::{AccountIdInternal, Location, ProfileUpdateInternal};
 
 use crate::{
     data::{
@@ -11,49 +11,6 @@ use crate::{
 define_write_commands!(WriteCommandsProfile);
 
 impl WriteCommandsProfile<'_> {
-    pub async fn profile_update_visibility(
-        self,
-        id: AccountIdInternal,
-        public: bool,
-        update_only_if_no_value: bool,
-    ) -> Result<(), DataError> {
-        let (visiblity, location, profile_link) = self
-            .cache()
-            .write_cache(id.as_id(), |e| {
-                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
-
-                // Handle race condition between remote fetch and update.
-                // Update will override the initial fetch.
-                if update_only_if_no_value {
-                    if p.public.is_none() {
-                        p.public = Some(public);
-                    }
-                } else {
-                    p.public = Some(public);
-                }
-
-                Ok((
-                    p.public.unwrap_or_default(),
-                    p.location.current_position,
-                    ProfileLink::new(id.as_id(), &p.data),
-                ))
-            })
-            .await
-            .into_data_error(id)?;
-
-        if visiblity {
-            self.location()
-                .update_profile_link(id.as_id(), profile_link, location)
-                .await?;
-        } else {
-            self.location()
-                .remove_profile_link(id.as_id(), location)
-                .await?;
-        }
-
-        Ok(())
-    }
-
     pub async fn profile_update_location(
         self,
         id: AccountIdInternal,

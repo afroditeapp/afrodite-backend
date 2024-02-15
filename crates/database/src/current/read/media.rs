@@ -1,4 +1,11 @@
-use simple_backend_database::diesel_db::ConnectionProvider;
+use model::{AccountIdInternal, MediaContentRaw, MediaStateRaw};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+
+use diesel::prelude::*;
+
+use error_stack::Result;
+
+use crate::IntoDatabaseError;
 
 mod media_content;
 mod moderation_request;
@@ -15,4 +22,18 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
     ) -> moderation_request::CurrentSyncReadMediaModerationRequest<C> {
         moderation_request::CurrentSyncReadMediaModerationRequest::new(self.cmds)
     }
+
+    pub fn get_media_state(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<MediaStateRaw, DieselDatabaseError> {
+        use crate::schema::media_state::dsl::*;
+
+        media_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(MediaStateRaw::as_select())
+            .first(self.conn())
+            .into_db_error(id)
+    }
+
 }

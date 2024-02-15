@@ -1,6 +1,8 @@
+use std::fmt::Debug;
+
 use diesel::{delete, insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, NextQueueNumberType};
+use model::{AccountIdInternal, NextQueueNumberType, QueueNumber};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::ConnectionProvider;
@@ -59,7 +61,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonQueueNumber<C> {
 
     pub fn delete_queue_entry(
         &mut self,
-        queue_number_entry: i64,
+        queue_number_entry: impl Into<QueueNumber> + model::IsLoggingAllowed + Copy,
         queue: NextQueueNumberType,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::queue_entry::dsl::*;
@@ -67,7 +69,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonQueueNumber<C> {
         delete(
             queue_entry.filter(
                 queue_number
-                    .eq(queue_number_entry)
+                    .eq(queue_number_entry.into())
                     .and(queue_type_number.eq(queue)),
             ),
         )

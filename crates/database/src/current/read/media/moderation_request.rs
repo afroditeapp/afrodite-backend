@@ -8,7 +8,7 @@ use model::{
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
     ModerationRequestState,
 };
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+use simple_backend_database::{data, diesel_db::{ConnectionProvider, DieselDatabaseError}};
 
 use crate::{IntoDatabaseError, IntoDatabaseErrorExt};
 
@@ -92,8 +92,12 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             .into_db_error((slot_owner, slot))
     }
 
-    /// Validate moderation request content, so that all content points to
-    /// content owner image slots.
+    /// Validate moderation request content.
+    ///
+    /// Requirements:
+    /// - All content must point to content owner image slots.
+    /// - If this is initial moderation request, then there must be one
+    ///   content with secure capture flag set.
     ///
     /// Returns `Err(DieselDatabaseError::ModerationRequestContentInvalid)` if the
     /// content is invalid.
@@ -102,22 +106,19 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
         content_owner: AccountIdInternal,
         request_content: &ModerationRequestContent,
     ) -> Result<(), DieselDatabaseError> {
-        let requested_content_set: HashSet<ContentId> = request_content.iter().collect();
-
-        let required_state = ContentState::InSlot as i64;
         let data: Vec<MediaContentRaw> = {
             use crate::schema::media_content::dsl::*;
 
             media_content
                 .filter(account_id.eq(content_owner.as_db_id()))
-                .filter(content_state.eq(required_state))
+                .filter(content_state.eq(ContentState::InSlot))
                 .select(MediaContentRaw::as_select())
                 .load(self.conn())
                 .into_db_error(content_owner)?
         };
 
-        let database_content_set: HashSet<ContentId> = data.into_iter().map(|r| r.uuid).collect();
-
+        let database_content_set: HashSet<ContentId> = data.iter().map(|r| r.uuid).collect();
+        let requested_content_set: HashSet<ContentId> = request_content.iter().collect();
         for content in requested_content_set.iter() {
             if !database_content_set.contains(content) {
                 return Err(DieselDatabaseError::ModerationRequestContentInvalid)
@@ -125,34 +126,50 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             }
         }
 
-        Ok(())
+        let mut secure_capture_found_from_request = false;
+        for content in requested_content_set.iter() {
+            if data
+                .iter()
+                .find(|c| c.secure_capture && c.uuid == *content)
+                .is_some() {
+                secure_capture_found_from_request = true;
+                break;
+            }
+        }
+
+        // Initial moderation request must have secure capture content.
+        let media_state = self.read().media().get_media_state(content_owner)?;
+        if media_state.initial_moderation_request_accepted || secure_capture_found_from_request {
+            Ok(())
+        } else {
+            Err(DieselDatabaseError::ModerationRequestContentInvalid)
+                    .with_info((content_owner, request_content))
+        }
     }
 
+    /// Return moderation request and its creator's AccountIdInternal.
     pub fn get_moderation_request_content(
         &mut self,
-        owner_id: ModerationRequestId,
-    ) -> Result<(MediaModerationRequestRaw, ModerationQueueNumber, AccountId), DieselDatabaseError>
+        request_owner_id: ModerationRequestId,
+    ) -> Result<(MediaModerationRequestRaw, AccountIdInternal), DieselDatabaseError>
     {
-        let (request, account_id) = {
-            use crate::schema::{
-                account_id, media_moderation_request, media_moderation_request::dsl::*,
-            };
-
-            media_moderation_request::table
-                .inner_join(account_id::table)
-                .filter(id.eq(owner_id.request_row_id))
-                .select((
-                    MediaModerationRequestRaw::as_select(),
-                    AccountIdInternal::as_select(),
-                ))
-                .first(self.conn())
-                .into_db_error(owner_id)?
+        use crate::schema::{
+            account_id, media_moderation_request, media_moderation_request::dsl::*,
         };
 
+        let (request, request_owner_account_id) = media_moderation_request::table
+            .inner_join(account_id::table)
+            .filter(id.eq(request_owner_id.request_row_id))
+            .select((
+                MediaModerationRequestRaw::as_select(),
+                AccountIdInternal::as_select(),
+            ))
+            .first(self.conn())
+            .into_db_error(request_owner_id)?;
+
         Ok((
-            request.clone(),
-            ModerationQueueNumber(request.queue_number),
-            account_id.uuid,
+            request,
+            request_owner_account_id,
         ))
     }
 }
