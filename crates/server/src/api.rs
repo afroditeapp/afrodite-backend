@@ -176,6 +176,8 @@ pub mod utils;
         model::media_admin::ModerationRequestId,
         model::media_admin::ModerationList,
         model::media_admin::Moderation,
+        model::media_admin::ModerationQueueType,
+        model::media_admin::ModerationQueueTypeParam,
         model::media_admin::HandleModerationRequest,
         // Chat
         model::chat::SentLikesPage,

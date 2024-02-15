@@ -9,7 +9,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, Profile, ProfileVisibility
+    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Profile, ProfileVisibility
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
@@ -560,13 +560,6 @@ impl TryFrom<i64> for NextQueueNumberType {
 }
 
 diesel_i64_try_from!(NextQueueNumberType);
-
-#[derive(Debug, Clone, Copy)]
-/// Subset of NextQueueNumberType containing only moderation queue types.
-pub enum ModerationQueueType {
-    MediaModeration,
-    InitialMediaModeration,
-}
 
 impl From<ModerationQueueType> for NextQueueNumberType {
     fn from(value: ModerationQueueType) -> Self {

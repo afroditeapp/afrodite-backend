@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Extension, Router,
 };
-use model::{schema::shared_state::profile_visibility_state_number, AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueType};
+use model::{schema::shared_state::profile_visibility_state_number, AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueType, ModerationQueueTypeParam};
 use simple_backend::create_counters;
 
 use crate::{
@@ -29,6 +29,7 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/p
 #[utoipa::path(
     patch,
     path = "/media_api/admin/moderation/page/next",
+    params(ModerationQueueTypeParam),
     responses(
         (status = 200, description = "Get moderation request list was successfull.", body = ModerationList),
         (status = 401, description = "Unauthorized."),
@@ -38,6 +39,7 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/p
 )]
 pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
     State(state): State<S>,
+    Query(queue_type): Query<ModerationQueueTypeParam>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ModerationList>, StatusCode> {
     MEDIA_ADMIN.patch_moderation_request_list.incr();
@@ -46,7 +48,7 @@ pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
 
     let data = db_write!(state, move |cmds| {
         cmds.media_admin()
-            .moderation_get_list_and_create_new_if_necessary(account_id, ModerationQueueType::InitialMediaModeration)
+            .moderation_get_list_and_create_new_if_necessary(account_id, queue_type.queue)
     })?;
 
     Ok(ModerationList { list: data }.into())

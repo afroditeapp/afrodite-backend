@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    AccountId, AccountIdDb, AccountIdInternal, ModerationRequestContent, ModerationRequestIdDb, ModerationRequestState,
+    AccountId, AccountIdDb, AccountIdInternal, ModerationRequestContent, ModerationRequestIdDb, ModerationRequestState
 };
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
@@ -43,4 +43,16 @@ pub struct Moderation {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationRequestId {
     pub request_row_id: ModerationRequestIdDb,
+}
+
+/// Subset of NextQueueNumberType containing only moderation queue types.
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+pub enum ModerationQueueType {
+    MediaModeration,
+    InitialMediaModeration,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct ModerationQueueTypeParam {
+    pub queue: ModerationQueueType,
 }

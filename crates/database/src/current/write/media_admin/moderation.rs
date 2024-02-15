@@ -1,10 +1,9 @@
 use diesel::{prelude::*, update};
-use error_stack::{Result, ResultExt};
+use error_stack::Result;
 use model::{
-    media, schema::media_state::initial_moderation_request_accepted, AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId, ModerationQueueNumber, ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType
+    AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId, ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use tokio_stream::Elapsed;
 
 use super::{ConnectionProvider, InitialModerationRequestIsNowAccepted};
 use crate::IntoDatabaseError;
