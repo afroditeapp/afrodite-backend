@@ -42,49 +42,9 @@ pub async fn internal_get_check_moderation_request_for_account<S: GetConfig + Re
     }
 }
 
-pub const PATH_INTERNAL_POST_UPDATE_PROFILE_IMAGE_VISIBLITY: &str =
-    "/internal/media_api/visibility/:account_id/:value";
-
-#[utoipa::path(
-    post,
-    path = "/internal/media_api/visiblity/{account_id}/{value}",
-    params(AccountId, BooleanSetting),
-    request_body(content = Profile),
-    responses(
-        (status = 200, description = "Visibility update successfull"),
-        (status = 404, description = "No account found."),
-        (status = 500, description = "Internal server error."),
-    ),
-)]
-pub async fn internal_post_update_profile_image_visibility<
-    S: ReadData + GetAccounts + GetInternalApi + GetConfig,
->(
-    State(state): State<S>,
-    Path(account_id): Path<AccountId>,
-    Path(value): Path<BooleanSetting>,
-    Json(profile): Json<Profile>,
-) -> Result<(), StatusCode> {
-    MEDIA_INTERNAL
-        .internal_post_update_profile_image_visibility
-        .incr();
-
-    let account_id = state.accounts().get_internal_id(account_id).await?;
-
-    // TODO
-    // internal_api::media::media_api_profile_visiblity(
-    //     &state,
-    //     account_id,
-    //     value,
-    //     profile,
-    // ).await?;
-
-    Ok(())
-}
-
 create_counters!(
     MediaInternalCounters,
     MEDIA_INTERNAL,
     MEDIA_INTERNAL_COUNTERS_LIST,
     internal_get_check_moderation_request_for_account,
-    internal_post_update_profile_image_visibility,
 );

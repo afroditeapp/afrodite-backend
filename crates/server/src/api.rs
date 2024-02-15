@@ -10,6 +10,7 @@ pub mod account_internal;
 pub mod chat;
 pub mod common;
 pub mod common_admin;
+pub mod common_internal;
 pub mod media;
 pub mod media_admin;
 pub mod media_internal;
@@ -50,9 +51,6 @@ pub mod utils;
         account::get_account_data,
         account::get_deletion_status,
         account::delete_cancel_deletion,
-        // Account internal
-        account_internal::check_access_token,
-        account_internal::internal_get_account_state,
         // Profile
         profile::get_profile,
         profile::get_profile_from_database_debug_mode_benchmark,
@@ -65,8 +63,6 @@ pub mod utils;
         profile::post_favorite_profile,
         profile::put_location,
         profile::delete_favorite_profile,
-        // Profile internal
-        profile_internal::internal_post_update_profile_visibility,
         // Media
         media::get_profile_content_info,
         media::get_pending_profile_content_info,
@@ -90,7 +86,6 @@ pub mod utils;
         media_admin::post_handle_moderation_request,
         // Media internal
         media_internal::internal_get_check_moderation_request_for_account,
-        media_internal::internal_post_update_profile_image_visibility,
         // Chat
         chat::get_sent_likes,
         chat::get_received_likes,
