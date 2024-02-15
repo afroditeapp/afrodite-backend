@@ -59,9 +59,16 @@ code-stats:
 	crates/config \
 	crates/database \
 	crates/model \
-	crates/pihka-backend \
 	crates/server \
 	crates/test_mode \
+	crates/test_mode_macro \
 	crates/utils \
+	crates/simple_backend \
+	crates/simple_backend_utils \
+	crates/simple_backend_model \
+	crates/simple_backend_config \
+	crates/simple_backend_database \
+	crates/simple_backend_image_process \
+	crates/pihka-backend \
 	-name '*.rs' | xargs wc -l | tail -n 1
 	@echo "\nCommits:   `git rev-list --count HEAD` total"
