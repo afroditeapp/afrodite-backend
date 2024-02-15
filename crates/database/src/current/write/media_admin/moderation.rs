@@ -27,7 +27,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             .read()
             .media_admin()
             .moderation()
-            .get_in_progress_moderations(moderator_id)?;
+            .get_in_progress_moderations(moderator_id, queue)?;
 
         const MAX_COUNT: usize = 5;
         if moderations.len() >= MAX_COUNT {

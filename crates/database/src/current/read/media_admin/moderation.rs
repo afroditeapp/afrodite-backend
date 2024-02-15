@@ -1,8 +1,7 @@
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountIdInternal, MediaModerationRaw, MediaModerationRequestRaw, Moderation, ModerationId,
-    ModerationRequestContent, ModerationRequestId, ModerationRequestState,
+    AccountIdInternal, MediaModerationRaw, MediaModerationRequestRaw, Moderation, ModerationId, ModerationQueueType, ModerationRequestContent, ModerationRequestId, ModerationRequestState, NextQueueNumberType
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -17,24 +16,30 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
     pub fn get_in_progress_moderations(
         &mut self,
         moderator_id: AccountIdInternal,
+        queue: ModerationQueueType,
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
-        let _account_row_id = moderator_id.row_id();
-        let state_in_progress = ModerationRequestState::InProgress as i64;
         let data: Vec<(
-            MediaModerationRaw,
             MediaModerationRequestRaw,
             AccountIdInternal,
         )> = {
             use crate::schema::{
-                account_id, media_moderation, media_moderation::dsl::*, media_moderation_request,
+                account_id, media_moderation, media_moderation::dsl::*, media_moderation_request, queue_entry,
             };
 
+            let queue_type: NextQueueNumberType = queue.into();
             media_moderation::table
-                .inner_join(media_moderation_request::table.inner_join(account_id::table))
+                .inner_join(media_moderation_request::table)
+                .inner_join(account_id::table)
+                .inner_join(
+                    queue_entry::table.on(
+                        queue_entry::queue_number
+                            .eq(media_moderation_request::queue_number)
+                    )
+                )
                 .filter(account_id.eq(moderator_id.as_db_id()))
-                .filter(state_number.eq(state_in_progress))
+                .filter(state_number.eq(ModerationRequestState::InProgress))
+                .filter(queue_entry::queue_type_number.eq(queue_type))
                 .select((
-                    MediaModerationRaw::as_select(),
                     MediaModerationRequestRaw::as_select(),
                     AccountIdInternal::as_select(),
                 ))
@@ -42,18 +47,16 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
                 .into_db_error(moderator_id)?
         };
 
-        let mut new_data = vec![];
-        for (_moderation, moderation_request, account) in data.into_iter() {
-            let moderation = Moderation {
+        let new_data = data.into_iter().map(|(moderation_request, account)| {
+            Moderation {
                 request_creator_id: account.as_id(),
                 moderator_id: moderator_id.as_id(),
                 request_id: ModerationRequestId {
                     request_row_id: moderation_request.id,
                 },
                 content: moderation_request.to_moderation_request_content(),
-            };
-            new_data.push(moderation);
-        }
+            }
+        }).collect();
 
         Ok(new_data)
     }

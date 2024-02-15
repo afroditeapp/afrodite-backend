@@ -1,5 +1,5 @@
 use database::current::write::media_admin::InitialModerationRequestIsNowAccepted;
-use model::{AccountIdInternal, HandleModerationRequest, Moderation, Profile, ProfileVisibility, SharedStateRaw};
+use model::{AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType, Profile, ProfileVisibility, SharedStateRaw};
 
 use super::db_transaction;
 use crate::{data::DataError, result::Result};
@@ -19,7 +19,7 @@ impl WriteCommandsMediaAdmin<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.media_admin()
                 .moderation()
-                .moderation_get_list_and_create_new_if_necessary(account_id)
+                .moderation_get_list_and_create_new_if_necessary(account_id, queue)
         })
     }
 

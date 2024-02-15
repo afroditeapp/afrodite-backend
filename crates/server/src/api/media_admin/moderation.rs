@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Extension, Router,
 };
-use model::{schema::shared_state::profile_visibility_state_number, AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList};
+use model::{schema::shared_state::profile_visibility_state_number, AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueType};
 use simple_backend::create_counters;
 
 use crate::{

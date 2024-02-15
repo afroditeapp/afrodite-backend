@@ -73,6 +73,7 @@ enable_logging!(
     ContentSlot,
     ModerationId,
     ModerationQueueNumber,
+    ModerationQueueType,
     NextQueueNumberType,
 );
 

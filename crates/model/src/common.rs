@@ -561,6 +561,7 @@ impl TryFrom<i64> for NextQueueNumberType {
 
 diesel_i64_try_from!(NextQueueNumberType);
 
+#[derive(Debug, Clone, Copy)]
 /// Subset of NextQueueNumberType containing only moderation queue types.
 pub enum ModerationQueueType {
     MediaModeration,
