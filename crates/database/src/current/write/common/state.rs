@@ -1,6 +1,6 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{Account, AccountIdInternal, AccountState, Capabilities, ProfileVisibility, SharedStateRaw};
+use model::{Account, AccountIdInternal, AccountState, AccountSyncVersion, Capabilities, ProfileVisibility, SharedStateRaw, SyncVersionUtils};
 use serde_json::error;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -96,4 +96,16 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(new_account)
     }
 
+    /// Reset Account data version number to 0.
+    ///
+    /// Only the WebSocket code must modify the version number.
+    pub fn reset_account_data_version_number(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        let mut shared_state: SharedStateRaw = self.read().common().account(id)?.into();
+        shared_state.sync_version = AccountSyncVersion::default();
+        self.shared_state(id, shared_state)?;
+        Ok(())
+    }
 }

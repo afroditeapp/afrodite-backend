@@ -43,6 +43,16 @@ impl WriteCommandsAccount<'_> {
         Ok(new_account)
     }
 
+    /// Only server WebSocket code should call this method.
+    pub async fn reset_syncable_account_data_version(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common().state().reset_account_data_version_number(id)
+        })
+    }
+
     pub async fn profile_update_visibility(
         &self,
         id: AccountIdInternal,

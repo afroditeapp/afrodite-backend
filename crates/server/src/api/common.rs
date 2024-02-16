@@ -12,17 +12,18 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use model::{
-    AccessToken, AccountIdInternal, AccountSyncVersion, AccountSyncVersionFromClient, AuthPair, BackendVersion, EventToClient, EventToClientInternal, RefreshToken, SpecialEventToClient
+    AccessToken, AccountIdInternal, AccountSyncVersion, AuthPair, BackendVersion, EventToClient, EventToClientInternal, RefreshToken, SpecialEventToClient, SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils
 };
 use simple_backend::{create_counters, web_socket::WebSocketManager};
-use tracing::error;
+use simple_backend_utils::IntoReportFromString;
+use tracing::{error, info};
 pub use utils::api::PATH_CONNECT;
 
 use super::{
     super::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
     utils::{AccessTokenHeader, Json, StatusCode},
 };
-use crate::result::{Result, WrappedContextExt, WrappedResultExt};
+use crate::{app::GetConfig, db_write, result::{Result, WrappedContextExt, WrappedResultExt}};
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
@@ -50,13 +51,29 @@ pub async fn get_version<S: BackendVersionProvider>(
 /// Connection is required as API access is allowed for connected clients.
 ///
 /// Protocol:
-/// 1. Client sends protocol version byte as Binary message.
+/// 1. Client sends version information as Binary message, where
+///    - u8: Client WebSocket protocol version (currently 0).
+///    - u8: Client type number. (0 = Android, 1 = iOS, 255 = Test mode bot)
+///    - u16: Client Major version.
+///    - u16: Client Minor version.
+///    - u16: Client Patch version.
+///
+///    The u16 values are in little endian byte order.
 /// 2. Client sends current refresh token as Binary message.
-/// 3. Server sends next refresh token as Binary message.
+/// 3. If server supports the client, the server sends next refresh token
+///    as Binary message.
+///    If server does not support the client, the server sends Text message
+///    and closes the connection.
 /// 4. Server sends new access token as Text message.
 ///    (At this point API can be used.)
-/// 5. Client sends account state sync version as Binary message.
-///    The version is i64 value with little endian byte order.
+/// 5. Client sends list of current data sync versions as Binary message, where
+///    items are [u8; 2] and the first u8 of an item is the data type number
+///    and the second u8 of an item is the sync version number for that data.
+///    If client does not have any version of the data, the client should
+///    send 255 as the version number.
+///
+///    Available data types:
+///    - 0: Account
 /// 6. Server starts to send JSON events as Text messages.
 ///
 /// The new access token is valid until this WebSocket is closed.
@@ -72,7 +89,7 @@ pub async fn get_version<S: BackendVersionProvider>(
     security(("access_token" = [])),
 )]
 pub async fn get_connect_websocket<
-    S: WriteData + ReadData + GetAccessTokens + Send + Sync + 'static,
+    S: WriteData + ReadData + GetAccessTokens + GetConfig + Send + Sync + 'static,
 >(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
@@ -94,7 +111,7 @@ pub async fn get_connect_websocket<
     Ok(websocket.on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager)))
 }
 
-async fn handle_socket<S: WriteData + ReadData>(
+async fn handle_socket<S: WriteData + ReadData + GetConfig>(
     socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
@@ -157,16 +174,16 @@ async fn handle_socket<S: WriteData + ReadData>(
 pub enum WebSocketError {
     #[error("Receive error")]
     Receive,
-    #[error("Received something else than refresh token")]
-    ReceiveMissingRefreshToken,
-    #[error("Received something else than supported protocol version")]
-    ReceiveUnsupportedProtocolVersion,
-    #[error("Received unsupported account state sync version")]
-    ReceiveUnsupportedSyncVersion,
+    #[error("Client sent something unsupported")]
+    ProtocolError,
+    #[error("Client version is unsupported")]
+    ClientVersionUnsupported,
     #[error("Received wrong refresh token")]
     ReceiveWrongRefreshToken,
     #[error("Websocket data sending error")]
     Send,
+    #[error("Websocket closing failed")]
+    Close,
     #[error("Data serialization error")]
     Serialize,
 
@@ -181,13 +198,19 @@ pub enum WebSocketError {
     DatabaseSaveTokens,
     #[error("Database: Account state query failed")]
     DatabaseAccountStateQuery,
+    #[error("Database: Pending messages query failed")]
+    DatabasePendingMessagesQuery,
 
     // Event errors
     #[error("Event channel creation failed")]
     EventChannelCreationFailed,
+
+    // Sync
+    #[error("Account data version number reset failed")]
+    AccountDataVersionResetFailed,
 }
 
-async fn handle_socket_result<S: WriteData + ReadData>(
+async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
     mut socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
@@ -195,20 +218,28 @@ async fn handle_socket_result<S: WriteData + ReadData>(
 ) -> Result<(), WebSocketError> {
 
     // Receive protocol version byte.
-    match socket
+    let client_is_supported = match socket
         .recv()
         .await
         .ok_or(WebSocketError::Receive.report())?
         .change_context(WebSocketError::Receive)?
         {
             Message::Binary(version) => {
-                if let [1] = version.as_slice() {
-                    // Supported version
-                } else {
-                    return Err(WebSocketError::ReceiveUnsupportedProtocolVersion.report());
+                match version.as_slice() {
+                    [0, info_bytes @ ..] => {
+                        let info = model::WebSocketClientInfo::parse(info_bytes)
+                            .into_error_string(WebSocketError::ProtocolError)?;
+                        // TODO: remove after client is tested to work with the
+                        // new protocol
+                        info!("{:#?}", info);
+                        // In the future there is possibility to blacklist some
+                        // old client versions.
+                        true
+                    }
+                    _ => return Err(WebSocketError::ProtocolError.report()),
                 }
             }
-            _ => return Err(WebSocketError::ReceiveUnsupportedProtocolVersion.report()),
+            _ => return Err(WebSocketError::ProtocolError.report()),
         };
 
     let current_refresh_token = state
@@ -236,10 +267,21 @@ async fn handle_socket_result<S: WriteData + ReadData>(
                 return Err(WebSocketError::ReceiveWrongRefreshToken.report());
             }
         }
-        _ => return Err(WebSocketError::ReceiveMissingRefreshToken.report()),
+        _ => return Err(WebSocketError::ProtocolError.report()),
     };
 
-    // Refresh token matched
+    if !client_is_supported {
+        socket
+            .send(Message::Text(String::new()))
+            .await
+            .change_context(WebSocketError::Send)?;
+        socket.close()
+            .await
+            .change_context(WebSocketError::Close)?;
+        return Err(WebSocketError::ClientVersionUnsupported.report());
+    }
+
+    // Refresh check was successful, so the new refresh token can be sent.
 
     let (new_refresh_token, new_refresh_token_bytes) = RefreshToken::generate_new_with_bytes();
     let new_access_token = AccessToken::generate_new();
@@ -271,19 +313,18 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .await
         .change_context(WebSocketError::Send)?;
 
-    // Receive account state sync version
-    let sync_version = match socket
+    // Receive sync data version list
+    let data_sync_versions = match socket
         .recv()
         .await
         .ok_or(WebSocketError::Receive.report())?
         .change_context(WebSocketError::Receive)?
         {
-            Message::Binary(version) => {
-                let array: [u8; 8] = TryInto::<[u8; 8]>::try_into(version)
-                    .map_err(|_| WebSocketError::ReceiveUnsupportedSyncVersion.report())?;
-                AccountSyncVersionFromClient::new(i64::from_le_bytes(array))
+            Message::Binary(sync_data_version_list) => {
+                SyncDataVersionFromClient::parse_sync_data_list(&sync_data_version_list)
+                    .into_error_string(WebSocketError::ProtocolError)?
             }
-            _ => return Err(WebSocketError::ReceiveUnsupportedSyncVersion.report()),
+            _ => return Err(WebSocketError::ProtocolError.report()),
         };
 
     let mut event_receiver = state
@@ -293,7 +334,8 @@ async fn handle_socket_result<S: WriteData + ReadData>(
         .await
         .change_context(WebSocketError::DatabaseSaveTokens)?;
 
-    send_account_state(state, &mut socket, id, sync_version).await?;
+    sync_data_with_client_if_needed(state, &mut socket, id, data_sync_versions).await?;
+    send_new_messages_event_if_needed(state, &mut socket, id).await?;
 
     loop {
         tokio::select! {
@@ -326,51 +368,92 @@ async fn handle_socket_result<S: WriteData + ReadData>(
     Ok(())
 }
 
-async fn send_account_state<S: WriteData + ReadData>(
+async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig>(
     state: &S,
     socket: &mut WebSocket,
     id: AccountIdInternal,
-    sync_version: AccountSyncVersionFromClient,
+    sync_versions: Vec<SyncDataVersionFromClient>,
 ) -> Result<(), WebSocketError> {
-    let current_account = state
+
+    for version in sync_versions {
+        match version.data_type {
+            SyncCheckDataType::Account => {
+                if state.config().components().account {
+                    handle_account_data_sync(
+                        state,
+                        socket,
+                        id,
+                        version.version,
+                    ).await?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_account_data_sync<S: WriteData + ReadData>(
+    state: &S,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    sync_version: SyncVersionFromClient,
+) -> Result<(), WebSocketError> {
+    let account = state
         .read()
         .common()
         .account(id)
         .await
         .change_context(WebSocketError::DatabaseAccountStateQuery)?;
 
-    if !current_account.sync_version().sync_required(sync_version) {
-        return Ok(());
-    }
+    let account = match account.sync_version().check_is_sync_required(sync_version) {
+        SyncCheckResult::DoNothing => return Ok(()),
+        SyncCheckResult::ResetVersionAndSync => {
+            state.write(
+                move |cmds| async move {
+                    cmds.account().reset_syncable_account_data_version(id).await
+                },
+            )
+                .await
+                .change_context(WebSocketError::AccountDataVersionResetFailed)?;
+
+            state
+                .read()
+                .common()
+                .account(id)
+                .await
+                .change_context(WebSocketError::DatabaseAccountStateQuery)?
+        }
+        SyncCheckResult::Sync => account,
+    };
 
     send_event(
         socket,
         EventToClientInternal::AccountStateChanged(
-            current_account.state()
+            account.state()
         )
     ).await?;
 
     send_event(
         socket,
         EventToClientInternal::AccountCapabilitiesChanged(
-            current_account.capablities().clone()
+            account.capablities().clone()
         )
     ).await?;
 
     send_event(
         socket,
         EventToClientInternal::ProfileVisibilityChanged(
-            current_account.profile_visibility()
+            account.profile_visibility()
         )
     ).await?;
 
-    // AccountSyncNumber
     // This must be the last to make sure that client has
     // reveived all sync data.
     send_event(
         socket,
         SpecialEventToClient::AccountSyncVersionChanged(
-            current_account.sync_version()
+            account.sync_version()
         )
     ).await?;
 
@@ -387,6 +470,30 @@ async fn send_event(
         .send(Message::Text(event))
         .await
         .change_context(WebSocketError::Send)?;
+
+    Ok(())
+}
+
+async fn send_new_messages_event_if_needed<S: WriteData + ReadData + GetConfig>(
+    state: &S,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+) -> Result<(), WebSocketError> {
+    if state.config().components().chat {
+        let pending_messages = state
+            .read()
+            .chat()
+            .all_pending_messages(id)
+            .await
+            .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
+
+        if !pending_messages.messages.is_empty() {
+            send_event(
+                socket,
+                EventToClientInternal::NewMessageReceived
+            ).await?;
+        }
+    }
 
     Ok(())
 }

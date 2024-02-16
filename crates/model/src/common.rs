@@ -12,6 +12,12 @@ use crate::{
     schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Profile, ProfileVisibility
 };
 
+pub mod sync_version;
+pub mod version;
+
+pub use version::*;
+pub use sync_version::*;
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
     /// Backend code version.
@@ -35,7 +41,7 @@ pub enum EventType {
     /// Data: visibility
     ProfileVisibilityChanged,
     /// New account sync version value for client.
-    /// Data: sync_version
+    /// Data: account_sync_version
     AccountSyncVersionChanged,
     NewMessageReceived,
     LikesChanged,
@@ -75,7 +81,7 @@ pub struct EventToClient {
     /// Data for event ProfileVisibilityChanged
     visibility: Option<ProfileVisibility>,
     /// Data for event AccountSyncVersionChanged
-    sync_version: Option<AccountSyncVersion>,
+    account_sync_version: Option<AccountSyncVersion>,
     /// Data for event LatestViewedMessageChanged
     latest_viewed_message_changed: Option<LatestViewedMessageChanged>,
     /// Data for event ContentProcessingStateChanged
@@ -98,7 +104,7 @@ impl From<SpecialEventToClient> for EventToClient {
             account_state: None,
             capabilities: None,
             visibility: None,
-            sync_version: None,
+            account_sync_version: None,
             latest_viewed_message_changed: None,
             content_processing_state_changed: None,
         };
@@ -106,7 +112,7 @@ impl From<SpecialEventToClient> for EventToClient {
         match internal {
             SpecialEventToClient::AccountSyncVersionChanged(sync_version) => {
                 value.event = EventType::AccountSyncVersionChanged;
-                value.sync_version = Some(sync_version);
+                value.account_sync_version = Some(sync_version);
             }
         }
 
@@ -135,7 +141,7 @@ impl From<EventToClientInternal> for EventToClient {
             account_state: None,
             capabilities: None,
             visibility: None,
-            sync_version: None,
+            account_sync_version: None,
             latest_viewed_message_changed: None,
             content_processing_state_changed: None,
         };
@@ -431,78 +437,6 @@ impl AccountIdDb {
 
 diesel_i64_wrapper!(AccountIdDb);
 
-pub struct AccountSyncVersionFromClient(i64);
-
-impl AccountSyncVersionFromClient {
-    pub fn new(id: i64) -> Self {
-        Self(id)
-    }
-}
-
-/// Version number for account data which must be synced to client.
-/// Only account server can change this number.
-///
-/// If the value is the i64::MAX, the server does full sync to client.
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-    Copy,
-    sqlx::Type,
-    PartialEq,
-    Eq,
-    Hash,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-#[serde(transparent)]
-#[sqlx(transparent)]
-pub struct AccountSyncVersion(pub i64);
-
-impl AccountSyncVersion {
-    pub fn new(id: i64) -> Self {
-        Self(id)
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.0
-    }
-
-    pub fn sync_required(&self, client_value: AccountSyncVersionFromClient) -> bool {
-        if client_value.0 == i64::MAX {
-            // Force full sync as there is no logic for wrapping the number.
-            true
-        } else if client_value.0 > self.0 {
-            // Client has newer version. This is a bug in the client.
-            true
-        } else if self.0 > client_value.0 {
-            // Server has newer version.
-            true
-        } else {
-            // Client has the same version.
-            false
-        }
-    }
-
-    pub fn increment_if_not_max_value(&self) -> AccountSyncVersion {
-        if self.0 == i64::MAX {
-            // Do nothing
-            *self
-        } else {
-            AccountSyncVersion(self.0 + 1)
-        }
-    }
-}
-
-impl Default for AccountSyncVersion {
-    fn default() -> Self {
-        Self(0)
-    }
-}
-
-diesel_i64_wrapper!(AccountSyncVersion);
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, Insertable, AsChangeset)]
 #[diesel(table_name = crate::schema::shared_state)]
