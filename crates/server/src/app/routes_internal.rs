@@ -45,10 +45,6 @@ impl InternalApp {
 
     pub fn create_profile_server_router(state: S) -> Router {
         Router::new()
-            .route(
-                api::profile_internal::PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY,
-                post(api::profile_internal::internal_post_update_profile_visibility::<S>),
-            )
             .with_state(state)
     }
 

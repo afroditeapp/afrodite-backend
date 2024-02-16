@@ -9,40 +9,9 @@ use super::super::app::{
 };
 use crate::{api::utils::StatusCode, internal_api};
 
-pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
-    "/internal/profile_api/visibility/:account_id/:value";
-
-#[utoipa::path(
-    post,
-    path = "/internal/profile_api/visiblity/{account_id}/{value}",
-    params(AccountId, BooleanSetting),
-    responses(
-        (status = 200, description = "Visibility update successfull"),
-        (status = 404, description = "No account found."),
-        (status = 500, description = "Internal server error."),
-    ),
-)]
-pub async fn internal_post_update_profile_visibility<
-    S: ReadData + GetAccounts + GetInternalApi + GetAccessTokens + GetConfig + WriteData,
->(
-    State(state): State<S>,
-    Path(account_id): Path<AccountId>,
-    Path(value): Path<BooleanSetting>,
-) -> Result<(), StatusCode> {
-    PROFILE_INTERNAL
-        .internal_post_update_profile_visibility
-        .incr();
-
-    let account_id = state.accounts().get_internal_id(account_id).await?;
-
-    // TODO: remove this route
-
-    Ok(())
-}
 
 create_counters!(
     ProfileInternalCounters,
     PROFILE_INTERNAL,
     PROFILE_INTERNAL_COUNTERS_LIST,
-    internal_post_update_profile_visibility,
 );
