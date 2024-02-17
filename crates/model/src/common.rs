@@ -513,9 +513,6 @@ pub struct QueueEntryRaw {
     pub account_id: AccountIdDb,
 }
 
-// TODO(prod): Add UnixTime to unix time fields
-
-
 #[derive(
     Debug,
     Serialize,

@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_i64_wrapper;
+use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::ToSchema;
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal};
@@ -156,11 +156,11 @@ impl AccountInteractionInternal {
 /// Account interaction states
 ///
 /// Possible state transitions:
-/// Empty -> Like -> Match -> Block
-/// Empty -> Like -> Block
-/// Empty -> Block
-/// Block -> Empty
-/// Like -> Empty
+/// - Empty -> Like -> Match -> Block
+/// - Empty -> Like -> Block
+/// - Empty -> Block
+/// - Block -> Empty
+/// - Like -> Empty
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionState {
     Empty = 0,
@@ -190,7 +190,7 @@ pub struct PendingMessageInternal {
     pub id: i64,
     pub account_id_sender: AccountIdDb,
     pub account_id_receiver: AccountIdDb,
-    pub unix_time: i64,
+    pub unix_time: UnixTime,
     pub message_number: MessageNumber,
     pub message_text: String,
 }
@@ -224,7 +224,7 @@ pub struct ReceivedBlocksPage {
 pub struct PendingMessage {
     pub id: PendingMessageId,
     /// Unix time when server received the message.
-    pub unix_time: i64,
+    pub unix_time: UnixTime,
     pub message: String,
 }
 
