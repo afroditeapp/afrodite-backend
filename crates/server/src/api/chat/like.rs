@@ -35,15 +35,9 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let new_state = cmds.chat().like_or_match_profile(id, requested_profile).await?;
-
-        cmds.events().send_notification(requested_profile, NotificationEvent::LikesChanged).await?;
-
-        if new_state.is_match() {
-            // State is now match so the account was removed from
-            // received likes of the API caller.
-            cmds.events().send_notification(id, NotificationEvent::LikesChanged).await?;
-        }
+        let changes = cmds.chat().like_or_match_profile(id, requested_profile).await?;
+        cmds.events().handle_chat_state_changes(changes.sender).await?;
+        cmds.events().handle_chat_state_changes(changes.receiver).await?;
         Ok(())
     })?;
 
@@ -133,8 +127,9 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds.chat().delete_like_or_block(id, requested_profile).await?;
-        cmds.events().send_notification(requested_profile, model::NotificationEvent::LikesChanged).await?;
+        let changes = cmds.chat().delete_like_or_block(id, requested_profile).await?;
+        cmds.events().handle_chat_state_changes(changes.sender).await?;
+        cmds.events().handle_chat_state_changes(changes.receiver).await?;
         Ok(())
     })?;
 

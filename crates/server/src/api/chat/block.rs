@@ -29,15 +29,9 @@ pub async fn post_block_profile<S: GetAccounts + WriteData>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds.chat().block_profile(id, requested_profile).await?;
-        cmds
-            .events()
-            .send_notification(
-                requested_profile,
-                model::NotificationEvent::ReceivedBlocksChanged,
-            )
-            .await?;
-
+        let changes = cmds.chat().block_profile(id, requested_profile).await?;
+        cmds.events().handle_chat_state_changes(changes.sender).await?;
+        cmds.events().handle_chat_state_changes(changes.receiver).await?;
         Ok(())
     })?;
 
@@ -68,16 +62,9 @@ pub async fn post_unblock_profile<S: GetAccounts + WriteData>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        cmds.chat().delete_like_or_block(id, requested_profile).await?;
-
-        cmds
-            .events()
-            .send_notification(
-                requested_profile,
-                model::NotificationEvent::ReceivedBlocksChanged,
-            )
-            .await?;
-
+        let changes = cmds.chat().delete_like_or_block(id, requested_profile).await?;
+        cmds.events().handle_chat_state_changes(changes.sender).await?;
+        cmds.events().handle_chat_state_changes(changes.receiver).await?;
         Ok(())
     })?;
 

@@ -1,6 +1,5 @@
 use model::{
-    AccountIdInternal, AccountInteractionState, MatchesPage, MessageNumber, PendingMessagesPage,
-    ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage,
+    AccountIdInternal, AccountInteractionState, ChatStateRaw, MatchesPage, MessageNumber, PendingMessagesPage, ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage
 };
 
 use super::{
@@ -15,16 +14,26 @@ use crate::{
 define_read_commands!(ReadCommandsChat);
 
 impl ReadCommandsChat<'_> {
+    pub async fn chat_state(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ChatStateRaw, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().chat_state(id))
+            .await
+            .into_error()
+    }
+
     pub async fn all_sent_likes(&self, id: AccountIdInternal) -> Result<SentLikesPage, DataError> {
         self.db_read(move |mut cmds| {
-            cmds.chat().interaction().all_sender_account_interactions(
+            let profiles = cmds.chat().interaction().all_sender_account_interactions(
                 id,
                 AccountInteractionState::Like,
                 true,
-            )
+            )?;
+            let version = cmds.chat().chat_state(id)?.sent_likes_sync_version;
+            Ok(SentLikesPage { profiles, version })
         })
         .await
-        .map(|profiles| SentLikesPage { profiles })
         .into_error()
     }
 
@@ -33,12 +42,13 @@ impl ReadCommandsChat<'_> {
         id: AccountIdInternal,
     ) -> Result<ReceivedLikesPage, DataError> {
         self.db_read(move |mut cmds| {
-            cmds.chat()
+            let profiles = cmds.chat()
                 .interaction()
-                .all_receiver_account_interactions(id, AccountInteractionState::Like)
+                .all_receiver_account_interactions(id, AccountInteractionState::Like)?;
+            let version = cmds.chat().chat_state(id)?.received_likes_sync_version;
+            Ok(ReceivedLikesPage { profiles, version })
         })
         .await
-        .map(|profiles| ReceivedLikesPage { profiles })
         .into_error()
     }
 
@@ -47,14 +57,15 @@ impl ReadCommandsChat<'_> {
         id: AccountIdInternal,
     ) -> Result<SentBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
-            cmds.chat().interaction().all_sender_account_interactions(
+            let profiles = cmds.chat().interaction().all_sender_account_interactions(
                 id,
                 AccountInteractionState::Block,
                 false,
-            )
+            )?;
+            let version = cmds.chat().chat_state(id)?.sent_blocks_sync_version;
+            Ok(SentBlocksPage { profiles, version })
         })
         .await
-        .map(|profiles| SentBlocksPage { profiles })
         .into_error()
     }
 
@@ -63,12 +74,13 @@ impl ReadCommandsChat<'_> {
         id: AccountIdInternal,
     ) -> Result<ReceivedBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
-            cmds.chat()
+            let profiles = cmds.chat()
                 .interaction()
-                .all_receiver_account_interactions(id, AccountInteractionState::Block)
+                .all_receiver_account_interactions(id, AccountInteractionState::Block)?;
+            let version = cmds.chat().chat_state(id)?.received_blocks_sync_version;
+            Ok(ReceivedBlocksPage { profiles, version })
         })
         .await
-        .map(|profiles| ReceivedBlocksPage { profiles })
         .into_error()
     }
 
@@ -95,7 +107,12 @@ impl ReadCommandsChat<'_> {
 
         sent.append(&mut received);
 
-        Ok(MatchesPage { profiles: sent })
+        let version = self.db_read(move |mut cmds|
+            Ok(cmds.chat().chat_state(id)?.matches_sync_version)
+        )
+            .await?;
+
+        Ok(MatchesPage { profiles: sent, version })
     }
 
     pub async fn all_pending_messages(

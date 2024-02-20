@@ -359,6 +359,12 @@ impl<'a> WriteCommands<'a> {
                 .insert_current_account_media(id)?;
         }
 
+        if config.components().chat {
+            current
+                .chat()
+                .insert_chat_state(id)?;
+        }
+
         Ok(id.clone())
     }
 

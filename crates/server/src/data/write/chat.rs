@@ -1,5 +1,6 @@
+use database::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, AccountInteractionInternal, MessageNumber, PendingMessageId};
+use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, SyncVersionUtils};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
@@ -11,6 +12,18 @@ use crate::{
 define_write_commands!(WriteCommandsChat);
 
 impl WriteCommandsChat<'_> {
+
+    pub async fn modify_chat_state(
+        &mut self,
+        id: AccountIdInternal,
+        action: impl Fn(&mut ChatStateRaw) + Send + 'static,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat().modify_chat_state(id, action)?;
+            Ok(())
+        })
+    }
+
     /// Like or match a profile.
     ///
     /// Returns Ok only if the state change happened.
@@ -18,7 +31,7 @@ impl WriteCommandsChat<'_> {
         &mut self,
         id_like_sender: AccountIdInternal,
         id_like_receiver: AccountIdInternal,
-    ) -> Result<AccountInteractionInternal, DataError> {
+    ) -> Result<SenderAndReceiverStateChanges, DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
@@ -35,21 +48,41 @@ impl WriteCommandsChat<'_> {
                 && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
             {
                 interaction
+                    .clone()
                     .try_into_match()
                     .change_context(DieselDatabaseError::NotAllowed)?
             } else if interaction.is_match() {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             } else {
                 interaction
+                    .clone()
                     .try_into_like(id_like_sender, id_like_receiver)
                     .change_context(DieselDatabaseError::NotAllowed)?
             };
-
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated.clone())?;
 
-            Ok(updated)
+            let sender = cmds.chat().modify_chat_state(id_like_sender, |s| {
+                if interaction.is_empty() {
+                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
+                } else if interaction.is_like() {
+                    s.matches_sync_version.increment_if_not_max_value_mut();
+                }
+            })?;
+
+            let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
+                if interaction.is_empty() {
+                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                } else if interaction.is_like() {
+                    s.matches_sync_version.increment_if_not_max_value_mut();
+                }
+            })?;
+
+            Ok(SenderAndReceiverStateChanges {
+                sender,
+                receiver,
+            })
         })
     }
 
@@ -60,7 +93,7 @@ impl WriteCommandsChat<'_> {
         &mut self,
         id_sender: AccountIdInternal,
         id_receiver: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<SenderAndReceiverStateChanges, DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
@@ -74,14 +107,33 @@ impl WriteCommandsChat<'_> {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
             let updated = interaction
+                .clone()
                 .try_into_empty()
                 .change_context(DieselDatabaseError::NotAllowed)?;
-
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated)?;
 
-            Ok(())
+            let sender = cmds.chat().modify_chat_state(id_sender, |s| {
+                if interaction.is_like() {
+                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
+                } else if interaction.is_blocked() {
+                    s.sent_blocks_sync_version.increment_if_not_max_value_mut();
+                }
+            })?;
+
+            let receiver = cmds.chat().modify_chat_state(id_receiver, |s| {
+                if interaction.is_like() {
+                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                } else if interaction.is_blocked() {
+                    s.received_blocks_sync_version.increment_if_not_max_value_mut();
+                }
+            })?;
+
+            Ok(SenderAndReceiverStateChanges {
+                sender,
+                receiver,
+            })
         })
     }
 
@@ -92,7 +144,7 @@ impl WriteCommandsChat<'_> {
         &mut self,
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<SenderAndReceiverStateChanges, DataError> {
         db_transaction!(self, move |mut cmds| {
             let interaction = cmds
                 .chat()
@@ -103,13 +155,37 @@ impl WriteCommandsChat<'_> {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             }
             let updated = interaction
+                .clone()
                 .try_into_block(id_block_sender, id_block_receiver)
                 .change_context(DieselDatabaseError::NotAllowed)?;
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated)?;
 
-            Ok(())
+            let sender = cmds.chat().modify_chat_state(id_block_sender, |s| {
+                s.sent_blocks_sync_version.increment_if_not_max_value_mut();
+                if interaction.is_like() {
+                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
+                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                } else if interaction.is_match() {
+                    s.matches_sync_version.increment_if_not_max_value_mut();
+                }
+            })?;
+
+            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |s| {
+                s.received_blocks_sync_version.increment_if_not_max_value_mut();
+                if interaction.is_like() {
+                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
+                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                } else if interaction.is_match() {
+                    s.matches_sync_version.increment_if_not_max_value_mut();
+                }
+            })?;
+
+            Ok(SenderAndReceiverStateChanges {
+                sender,
+                receiver,
+            })
         })
     }
 
@@ -184,4 +260,10 @@ impl WriteCommandsChat<'_> {
                 .insert_pending_message_if_match(sender, receiver, message)
         })
     }
+}
+
+
+pub struct SenderAndReceiverStateChanges {
+    pub sender: ChatStateChanges,
+    pub receiver: ChatStateChanges,
 }

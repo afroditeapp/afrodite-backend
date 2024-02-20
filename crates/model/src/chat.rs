@@ -3,7 +3,21 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::ToSchema;
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, SyncVersionUtils};
+
+pub mod sync_version;
+pub use sync_version::*;
+
+#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[diesel(table_name = crate::schema::chat_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ChatStateRaw {
+    pub received_blocks_sync_version: ReceivedBlocksSyncVersion,
+    pub received_likes_sync_version: ReceivedLikesSyncVersion,
+    pub sent_blocks_sync_version: SentBlocksSyncVersion,
+    pub sent_likes_sync_version: SentLikesSyncVersion,
+    pub matches_sync_version: MatchesSyncVersion,
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum AccountInteractionStateError {
@@ -197,26 +211,41 @@ pub struct PendingMessageInternal {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct SentLikesPage {
+    /// This version can be sent to the server when WebSocket protocol
+    /// data sync is happening.
+    pub version: SentLikesSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ReceivedLikesPage {
+    /// This version can be sent to the server when WebSocket protocol
+    /// data sync is happening.
+    pub version: ReceivedLikesSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct MatchesPage {
+    /// This version can be sent to the server when WebSocket protocol
+    /// data sync is happening.
+    pub version: MatchesSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct SentBlocksPage {
+    /// This version can be sent to the server when WebSocket protocol
+    /// data sync is happening.
+    pub version: SentBlocksSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ReceivedBlocksPage {
+    /// This version can be sent to the server when WebSocket protocol
+    /// data sync is happening.
+    pub version: ReceivedBlocksSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 

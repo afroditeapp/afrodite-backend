@@ -44,6 +44,11 @@ impl SyncDataVersionFromClient {
 #[repr(u8)]
 pub enum SyncCheckDataType {
     Account = 0,
+    ReveivedLikes = 1,
+    ReveivedBlocks = 2,
+    SentLikes = 3,
+    SentBlocks = 4,
+    Matches = 5,
 }
 
 impl TryFrom<u8> for SyncCheckDataType {
@@ -106,11 +111,11 @@ impl SyncVersionFromClient {
 pub struct SyncVersion(i64);
 
 impl SyncVersion {
-    fn new(id: i64) -> Self {
+    pub(crate) fn new(id: i64) -> Self {
         Self(id.clamp(0, u8::MAX as i64))
     }
 
-    fn as_i64(&self) -> &i64 {
+    pub(crate) fn as_i64(&self) -> &i64 {
         &self.0
     }
 
@@ -139,7 +144,6 @@ impl Default for SyncVersion {
     }
 }
 
-
 pub trait SyncVersionUtils: Sized + Default {
     fn sync_version(&self) -> SyncVersion;
     fn new_with_sync_version(sync_version: SyncVersion) -> Self;
@@ -151,46 +155,69 @@ pub trait SyncVersionUtils: Sized + Default {
     fn increment_if_not_max_value(&self) -> Self {
         Self::new_with_sync_version(self.sync_version().increment_if_not_max_value())
     }
-}
 
-
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    ToSchema,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-#[serde(transparent)]
-pub struct AccountSyncVersion(SyncVersion);
-
-impl AccountSyncVersion {
-    pub fn new(id: i64) -> Self {
-        Self(SyncVersion::new(id))
+    fn increment_if_not_max_value_mut(&mut self) {
+        let new = Self::new_with_sync_version(self.sync_version().increment_if_not_max_value());
+        *self = new;
     }
 
-    pub fn as_i64(&self) -> &i64 {
-        self.0.as_i64()
+    fn return_new_if_different(&self, new: Self) -> Option<Self> {
+        if self.sync_version() != new.sync_version() {
+            Some(new)
+        } else {
+            None
+        }
     }
 }
 
-diesel_i64_wrapper!(AccountSyncVersion);
+macro_rules! sync_version_wrappers {
+    ( $( $name:ident ,)* ) => {
+        $(
+            #[derive(
+                Debug,
+                Serialize,
+                Deserialize,
+                Default,
+                Clone,
+                Copy,
+                PartialEq,
+                Eq,
+                Hash,
+                ToSchema,
+                FromSqlRow,
+                AsExpression,
+            )]
+            #[diesel(sql_type = BigInt)]
+            #[serde(transparent)]
+            pub struct $name(crate::SyncVersion);
 
+            impl $name {
+                pub fn new(id: i64) -> Self {
+                    Self(crate::SyncVersion::new(id))
+                }
 
-impl SyncVersionUtils for AccountSyncVersion {
-    fn sync_version(&self) -> SyncVersion {
-        self.0
-    }
+                pub fn as_i64(&self) -> &i64 {
+                    self.0.as_i64()
+                }
+            }
 
-    fn new_with_sync_version(sync_version: SyncVersion) -> Self {
-        Self(sync_version)
-    }
+            diesel_i64_wrapper!($name);
+
+            impl SyncVersionUtils for $name {
+                fn sync_version(&self) -> crate::SyncVersion {
+                    self.0
+                }
+
+                fn new_with_sync_version(sync_version: crate::SyncVersion) -> Self {
+                    Self(sync_version)
+                }
+            }
+        )*
+    };
 }
+
+pub(crate) use sync_version_wrappers;
+
+sync_version_wrappers!(
+    AccountSyncVersion,
+);

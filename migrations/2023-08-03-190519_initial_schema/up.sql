@@ -352,6 +352,20 @@ CREATE TABLE IF NOT EXISTS media_moderation(
 
 ---------- Tables for server component chat ----------
 
+-- State specific to chat component.
+CREATE TABLE IF NOT EXISTS chat_state(
+    account_id              INTEGER PRIMARY KEY NOT NULL,
+    received_blocks_sync_version INTEGER        NOT NULL DEFAULT 0,
+    received_likes_sync_version  INTEGER        NOT NULL DEFAULT 0,
+    sent_blocks_sync_version     INTEGER        NOT NULL DEFAULT 0,
+    sent_likes_sync_version      INTEGER        NOT NULL DEFAULT 0,
+    matches_sync_version         INTEGER        NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Lookup table for finding interaction ID for a pair of accounts.
 -- One account pair has two rows in this table, so accessing
 -- with (a1, a2) and (a2, a1) is possible.

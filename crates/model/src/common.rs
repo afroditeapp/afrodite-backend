@@ -44,8 +44,11 @@ pub enum EventType {
     /// Data: account_sync_version
     AccountSyncVersionChanged,
     NewMessageReceived,
-    LikesChanged,
+    ReceivedLikesChanged,
     ReceivedBlocksChanged,
+    SentLikesChanged,
+    SentBlocksChanged,
+    MatchesChanged,
     /// New latest viewed message number changed
     /// Data: latest_viewed_message_changed
     LatestViewedMessageChanged,
@@ -120,6 +123,11 @@ impl From<SpecialEventToClient> for EventToClient {
     }
 }
 
+/// Internal data type for events.
+///
+/// If data is not included in the event it might be too large to send
+/// over WebSocket as it might block more important events for some time
+/// depending on network connection speed.
 pub enum EventToClientInternal {
     /// New account state for client
     AccountStateChanged(AccountState),
@@ -127,17 +135,39 @@ pub enum EventToClientInternal {
     AccountCapabilitiesChanged(Capabilities),
     /// New profile visiblity for client
     ProfileVisibilityChanged(ProfileVisibility),
-    NewMessageReceived,
-    LikesChanged,
-    ReceivedBlocksChanged,
     LatestViewedMessageChanged(LatestViewedMessageChanged),
     ContentProcessingStateChanged(ContentProcessingStateChanged),
+    NewMessageReceived,
+    ReceivedLikesChanged,
+    ReceivedBlocksChanged,
+    SentLikesChanged,
+    SentBlocksChanged,
+    MatchesChanged,
+}
+
+impl From<&EventToClientInternal> for EventType {
+    fn from(value: &EventToClientInternal) -> Self {
+        use EventToClientInternal::*;
+        match value {
+            AccountStateChanged(_) => Self::AccountStateChanged,
+            AccountCapabilitiesChanged(_) => Self::AccountCapabilitiesChanged,
+            ProfileVisibilityChanged(_) => Self::ProfileVisibilityChanged,
+            LatestViewedMessageChanged(_) => Self::LatestViewedMessageChanged,
+            ContentProcessingStateChanged(_) => Self::ContentProcessingStateChanged,
+            NewMessageReceived => Self::NewMessageReceived,
+            ReceivedLikesChanged => Self::ReceivedLikesChanged,
+            ReceivedBlocksChanged => Self::ReceivedBlocksChanged,
+            SentLikesChanged => Self::ReceivedLikesChanged,
+            SentBlocksChanged => Self::SentBlocksChanged,
+            MatchesChanged => Self::MatchesChanged,
+        }
+    }
 }
 
 impl From<EventToClientInternal> for EventToClient {
     fn from(internal: EventToClientInternal) -> Self {
         let mut value = Self {
-            event: EventType::AccountStateChanged,
+            event: (&internal).into(),
             account_state: None,
             capabilities: None,
             visibility: None,
@@ -146,36 +176,20 @@ impl From<EventToClientInternal> for EventToClient {
             content_processing_state_changed: None,
         };
 
+        use EventToClientInternal::*;
+
         match internal {
-            EventToClientInternal::AccountStateChanged(state) => {
-                value.event = EventType::AccountStateChanged;
-                value.account_state = Some(state);
-            }
-            EventToClientInternal::AccountCapabilitiesChanged(capabilities) => {
-                value.event = EventType::AccountCapabilitiesChanged;
-                value.capabilities = Some(capabilities);
-            }
-            EventToClientInternal::ProfileVisibilityChanged(visibility) => {
-                value.event = EventType::ProfileVisibilityChanged;
-                value.visibility = Some(visibility);
-            }
-            EventToClientInternal::NewMessageReceived => {
-                value.event = EventType::NewMessageReceived;
-            }
-            EventToClientInternal::LikesChanged => {
-                value.event = EventType::LikesChanged;
-            }
-            EventToClientInternal::ReceivedBlocksChanged => {
-                value.event = EventType::ReceivedBlocksChanged;
-            }
-            EventToClientInternal::LatestViewedMessageChanged(latest_viewed_message_changed) => {
-                value.event = EventType::LatestViewedMessageChanged;
-                value.latest_viewed_message_changed = Some(latest_viewed_message_changed);
-            }
-            EventToClientInternal::ContentProcessingStateChanged(data) => {
-                value.event = EventType::ContentProcessingStateChanged;
-                value.content_processing_state_changed = Some(data);
-            }
+            AccountStateChanged(v) => value.account_state = Some(v),
+            AccountCapabilitiesChanged(v) => value.capabilities = Some(v),
+            ProfileVisibilityChanged(v) => value.visibility = Some(v),
+            LatestViewedMessageChanged(v) => value.latest_viewed_message_changed = Some(v),
+            ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
+            NewMessageReceived |
+            ReceivedLikesChanged |
+            ReceivedBlocksChanged |
+            SentLikesChanged |
+            SentBlocksChanged |
+            MatchesChanged => (),
         }
 
         value
@@ -185,7 +199,6 @@ impl From<EventToClientInternal> for EventToClient {
 #[derive(Debug, Clone)]
 pub enum NotificationEvent {
     NewMessageReceived,
-    LikesChanged,
     ReceivedBlocksChanged,
 }
 
@@ -193,7 +206,6 @@ impl From<NotificationEvent> for EventToClientInternal {
     fn from(event: NotificationEvent) -> Self {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
-            NotificationEvent::LikesChanged => EventToClientInternal::LikesChanged,
             NotificationEvent::ReceivedBlocksChanged => {
                 EventToClientInternal::ReceivedBlocksChanged
             }
