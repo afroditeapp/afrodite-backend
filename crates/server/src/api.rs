@@ -112,6 +112,8 @@ pub mod utils;
         model::common::RefreshToken,
         model::common::LatestViewedMessageChanged,
         model::common::ContentProcessingStateChanged,
+        model::common::sync_version::SyncVersion,
+        model::common::sync_version::AccountSyncVersion,
         simple_backend_model::UnixTime,
         // Common admin
         model::common_admin::BackendConfig,
@@ -132,6 +134,7 @@ pub mod utils;
         model::account::SignInWithLoginInfo,
         model::account::LoginResult,
         model::account::AuthPair,
+        model::account::ProfileVisibility,
         // Profile
         model::profile::Profile,
         model::profile::ProfilePage,
@@ -187,6 +190,11 @@ pub mod utils;
         model::chat::MessageNumber,
         model::chat::SendMessageToAccount,
         model::chat::UpdateMessageViewStatus,
+        model::chat::ReceivedBlocksSyncVersion,
+        model::chat::ReceivedLikesSyncVersion,
+        model::chat::SentBlocksSyncVersion,
+        model::chat::SentLikesSyncVersion,
+        model::chat::MatchesSyncVersion,
         // Manager
         manager_model::SystemInfoList,
         manager_model::SystemInfo,

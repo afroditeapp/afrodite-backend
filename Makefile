@@ -44,6 +44,9 @@ update-api-bindings:
 	-g rust \
 	-o crates/api_client \
 	--package-name api_client
+validate-openapi:
+	openapi-generator-cli validate \
+	-i http://localhost:3000/api-doc/pihka_api.json
 
 migrations-run:
 	mkdir -p database/sqlite/current

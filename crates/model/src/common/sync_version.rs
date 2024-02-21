@@ -106,34 +106,35 @@ impl SyncVersionFromClient {
     Hash,
     ToSchema,
 )]
-#[serde(transparent)]
 /// Sync version stored on the server. The value has range of [0, 255].
-pub struct SyncVersion(i64);
+pub struct SyncVersion {
+    version: i64
+}
 
 impl SyncVersion {
     pub(crate) fn new(id: i64) -> Self {
-        Self(id.clamp(0, u8::MAX as i64))
+        Self { version: id.clamp(0, u8::MAX as i64) }
     }
 
     pub(crate) fn as_i64(&self) -> &i64 {
-        &self.0
+        &self.version
     }
 
     fn check_is_sync_required(&self, client_value: SyncVersionFromClient) -> SyncCheckResult {
         if client_value.0 >= u8::MAX {
             SyncCheckResult::ResetVersionAndSync
-        } else if client_value.0 as i64 == self.0 {
+        } else if client_value.0 as i64 == self.version {
             SyncCheckResult::DoNothing
         } else {
             SyncCheckResult::Sync
         }
     }
 
-    fn increment_if_not_max_value(&self) -> SyncVersion {
-        if self.0 >= u8::MAX as i64 {
-            SyncVersion(u8::MAX as i64)
+    fn increment_if_not_max_value(&self) -> Self {
+        if self.version >= u8::MAX as i64 {
+            Self { version: u8::MAX as i64 }
         } else {
-            SyncVersion(self.0 + 1)
+            Self { version: self.version + 1 }
         }
     }
 }
@@ -188,28 +189,30 @@ macro_rules! sync_version_wrappers {
                 AsExpression,
             )]
             #[diesel(sql_type = BigInt)]
-            #[serde(transparent)]
-            pub struct $name(crate::SyncVersion);
+            pub struct $name {
+                #[serde(flatten)]
+                version: SyncVersion
+            }
 
             impl $name {
                 pub fn new(id: i64) -> Self {
-                    Self(crate::SyncVersion::new(id))
+                    Self { version: SyncVersion::new(id) }
                 }
 
                 pub fn as_i64(&self) -> &i64 {
-                    self.0.as_i64()
+                    self.version.as_i64()
                 }
             }
 
             diesel_i64_wrapper!($name);
 
             impl SyncVersionUtils for $name {
-                fn sync_version(&self) -> crate::SyncVersion {
-                    self.0
+                fn sync_version(&self) -> SyncVersion {
+                    self.version
                 }
 
-                fn new_with_sync_version(sync_version: crate::SyncVersion) -> Self {
-                    Self(sync_version)
+                fn new_with_sync_version(sync_version: SyncVersion) -> Self {
+                    Self { version: sync_version }
                 }
             }
         )*
