@@ -1,7 +1,6 @@
 use std::{fs, path::PathBuf};
 
 use error_stack::{Result, ResultExt};
-// use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
 use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
 
 use crate::DataError;
@@ -23,12 +22,12 @@ pub fn create_dirs_and_get_sqlite_database_file_path(
         fs::create_dir(&sqlite).change_context(DataError::FilePathCreationFailed)?;
     }
 
-    let db_dir = root.join(database_info.name.clone());
+    let db_dir = sqlite.join(database_info.name.clone());
     if !db_dir.exists() {
         fs::create_dir(&db_dir).change_context(DataError::FilePathCreationFailed)?;
     }
 
-    let db_file = root.join(format!("{}.db", database_info.name));
+    let db_file = db_dir.join(format!("{}.db", database_info.name));
 
     Ok(db_file)
 }

@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal, SyncVersionUtils};
 
-pub mod sync_version;
+mod sync_version;
 pub use sync_version::*;
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]

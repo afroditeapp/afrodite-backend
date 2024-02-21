@@ -33,7 +33,8 @@ fix:
 test:
 	RUST_LOG=info cargo run --bin pihka-backend -- --sqlite-in-ram test qa ${TEST_ARGS}
 unit-test:
-	DATABASE_URL="sqlite:database/current/current.db" cargo test
+	mkdir -p database/sqlite/current
+	DATABASE_URL="sqlite:database/sqlite/current/current.db" cargo test
 
 update-manager-submodule:
 	git submodule update --remote --merge
@@ -45,9 +46,11 @@ update-api-bindings:
 	--package-name api_client
 
 migrations-run:
-	DATABASE_URL="database/current/current.db" diesel migration run
+	mkdir -p database/sqlite/current
+	DATABASE_URL="database/sqlite/current/current.db" diesel migration run
 reset-database:
-	DATABASE_URL="database/current/current.db" diesel database reset
+	mkdir -p database/sqlite/current
+	DATABASE_URL="database/sqlite/current/current.db" diesel database reset
 
 profile-build:
 	RUSTFLAGS=-Zself-profile=target/profile-build cargo +nightly build --bin pihka-backend
