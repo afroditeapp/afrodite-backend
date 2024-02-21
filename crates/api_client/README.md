@@ -37,9 +37,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_login**](docs/AccountApi.md#post_login) | **POST** /account_api/login | Get new AccessToken.
 *AccountApi* | [**post_register**](docs/AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
-*AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update profile visiblity value.
-*AccountInternalApi* | [**check_access_token**](docs/AccountInternalApi.md#check_access_token) | **GET** /internal/check_access_token | 
-*AccountInternalApi* | [**internal_get_account_state**](docs/AccountInternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
+*AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
 *ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
 *ChatApi* | [**delete_pending_messages**](docs/ChatApi.md#delete_pending_messages) | **DELETE** /chat_api/pending_messages | Delete list of pending messages
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
@@ -84,8 +82,7 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content content for current account.
 *MediaAdminApi* | [**patch_moderation_request_list**](docs/MediaAdminApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
 *MediaAdminApi* | [**post_handle_moderation_request**](docs/MediaAdminApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
-*MediaInternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that current moderation request for account exists. Requires also
-*MediaInternalApi* | [**internal_post_update_profile_image_visibility**](docs/MediaInternalApi.md#internal_post_update_profile_image_visibility) | **POST** /internal/media_api/visiblity/{account_id}/{value} | 
+*MediaInternalApi* | [**internal_get_check_moderation_request_for_account**](docs/MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that media server has correct state for completing initial setup.
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
 *ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
 *ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
@@ -97,7 +94,6 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled
 *ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location for account which makes this request.
-*ProfileInternalApi* | [**internal_post_update_profile_visibility**](docs/ProfileInternalApi.md#internal_post_update_profile_visibility) | **POST** /internal/profile_api/visiblity/{account_id}/{value} | 
 
 
 ## Documentation For Models
@@ -109,6 +105,7 @@ Class | Method | HTTP request | Description
  - [AccountId](docs/AccountId.md)
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountState](docs/AccountState.md)
+ - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AuthPair](docs/AuthPair.md)
  - [BackendConfig](docs/BackendConfig.md)
  - [BackendVersion](docs/BackendVersion.md)
@@ -141,10 +138,13 @@ Class | Method | HTTP request | Description
  - [MapTileY](docs/MapTileY.md)
  - [MapTileZ](docs/MapTileZ.md)
  - [MatchesPage](docs/MatchesPage.md)
+ - [MatchesSyncVersion](docs/MatchesSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
  - [MessageNumber](docs/MessageNumber.md)
  - [Moderation](docs/Moderation.md)
  - [ModerationList](docs/ModerationList.md)
+ - [ModerationQueueType](docs/ModerationQueueType.md)
+ - [ModerationQueueTypeParam](docs/ModerationQueueTypeParam.md)
  - [ModerationRequest](docs/ModerationRequest.md)
  - [ModerationRequestContent](docs/ModerationRequestContent.md)
  - [ModerationRequestId](docs/ModerationRequestId.md)
@@ -166,20 +166,26 @@ Class | Method | HTTP request | Description
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
+ - [ProfileVisibility](docs/ProfileVisibility.md)
  - [RebootQueryParam](docs/RebootQueryParam.md)
  - [ReceivedBlocksPage](docs/ReceivedBlocksPage.md)
+ - [ReceivedBlocksSyncVersion](docs/ReceivedBlocksSyncVersion.md)
  - [ReceivedLikesPage](docs/ReceivedLikesPage.md)
+ - [ReceivedLikesSyncVersion](docs/ReceivedLikesSyncVersion.md)
  - [RefreshToken](docs/RefreshToken.md)
  - [ResetDataQueryParam](docs/ResetDataQueryParam.md)
  - [SecurityContent](docs/SecurityContent.md)
  - [SendMessageToAccount](docs/SendMessageToAccount.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
+ - [SentBlocksSyncVersion](docs/SentBlocksSyncVersion.md)
  - [SentLikesPage](docs/SentLikesPage.md)
+ - [SentLikesSyncVersion](docs/SentLikesSyncVersion.md)
  - [SetProfileContent](docs/SetProfileContent.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SlotId](docs/SlotId.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)
  - [SoftwareOptions](docs/SoftwareOptions.md)
+ - [SyncVersion](docs/SyncVersion.md)
  - [SystemInfo](docs/SystemInfo.md)
  - [SystemInfoList](docs/SystemInfoList.md)
  - [TimeGranularity](docs/TimeGranularity.md)

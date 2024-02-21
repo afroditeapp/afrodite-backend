@@ -19,22 +19,12 @@ use super::{Error, configuration};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InternalGetCheckModerationRequestForAccountError {
-    Status404(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`internal_post_update_profile_image_visibility`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum InternalPostUpdateProfileImageVisibilityError {
-    Status404(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
 
-/// Check that current moderation request for account exists. Requires also that request contains camera image. 
+/// Check that media server has correct state for completing initial setup. 
 pub async fn internal_get_check_moderation_request_for_account(configuration: &configuration::Configuration, account_id: &str) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
     let local_var_configuration = configuration;
 
@@ -57,34 +47,6 @@ pub async fn internal_get_check_moderation_request_for_account(configuration: &c
         Ok(())
     } else {
         let local_var_entity: Option<InternalGetCheckModerationRequestForAccountError> = serde_json::from_str(&local_var_content).ok();
-        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
-        Err(Error::ResponseError(local_var_error))
-    }
-}
-
-pub async fn internal_post_update_profile_image_visibility(configuration: &configuration::Configuration, account_id: &str, value: bool, profile: crate::models::Profile) -> Result<(), Error<InternalPostUpdateProfileImageVisibilityError>> {
-    let local_var_configuration = configuration;
-
-    let local_var_client = &local_var_configuration.client;
-
-    let local_var_uri_str = format!("{}/internal/media_api/visiblity/{account_id}/{value}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), value=value);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
-
-    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
-        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
-    }
-    local_var_req_builder = local_var_req_builder.json(&profile);
-
-    let local_var_req = local_var_req_builder.build()?;
-    let local_var_resp = local_var_client.execute(local_var_req).await?;
-
-    let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
-
-    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
-    } else {
-        let local_var_entity: Option<InternalPostUpdateProfileImageVisibilityError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

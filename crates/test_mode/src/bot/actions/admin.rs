@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use api_client::apis::media_admin_api;
+use api_client::{apis::media_admin_api, models::ModerationQueueType};
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
 
@@ -12,7 +12,10 @@ pub struct ModerateMediaModerationRequest;
 #[async_trait]
 impl BotAction for ModerateMediaModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let list = media_admin_api::patch_moderation_request_list(state.api.media())
+        let list = media_admin_api::patch_moderation_request_list(
+            state.api.media(),
+            ModerationQueueType::InitialMediaModeration,
+        )
             .await
             .change_context(TestError::ApiRequest)?;
 

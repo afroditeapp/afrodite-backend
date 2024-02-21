@@ -15,12 +15,15 @@
 pub struct SentBlocksPage {
     #[serde(rename = "profiles")]
     pub profiles: Vec<crate::models::AccountId>,
+    #[serde(rename = "version")]
+    pub version: Box<crate::models::SentBlocksSyncVersion>,
 }
 
 impl SentBlocksPage {
-    pub fn new(profiles: Vec<crate::models::AccountId>) -> SentBlocksPage {
+    pub fn new(profiles: Vec<crate::models::AccountId>, version: crate::models::SentBlocksSyncVersion) -> SentBlocksPage {
         SentBlocksPage {
             profiles,
+            version: Box::new(version),
         }
     }
 }

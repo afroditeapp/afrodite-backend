@@ -386,7 +386,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, ac
     }
 }
 
-/// Complete initial setup.  Request to this handler will complete if client is in `initial setup`, setup information is set and image moderation request has been made. 
+/// Complete initial setup.  Requirements: - Account must be in `InitialSetup` state. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
 pub async fn post_complete_setup(configuration: &configuration::Configuration, ) -> Result<(), Error<PostCompleteSetupError>> {
     let local_var_configuration = configuration;
 
@@ -544,7 +544,7 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
     }
 }
 
-/// Update profile visiblity value.  This will check that the first image moderation request has been moderated before this turns the profile public.  Sets capablity `view_public_profiles` on or off depending on the value.
+/// Update current or pending profile visiblity value.
 pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: crate::models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
     let local_var_configuration = configuration;
 

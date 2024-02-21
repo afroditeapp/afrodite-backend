@@ -16,7 +16,6 @@ Name | Type | Description | Notes
 **admin_view_all_profiles** | Option<**bool**> | View public and private profiles. | [optional][default to false]
 **admin_view_private_info** | Option<**bool**> |  | [optional][default to false]
 **admin_view_profile_history** | Option<**bool**> |  | [optional][default to false]
-**user_view_public_profiles** | Option<**bool**> | View public profiles. Automatically enabled once initial image moderation is complete. | [optional][default to false]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

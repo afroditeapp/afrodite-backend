@@ -17,12 +17,22 @@ pub enum EventType {
     AccountStateChanged,
     #[serde(rename = "AccountCapabilitiesChanged")]
     AccountCapabilitiesChanged,
+    #[serde(rename = "ProfileVisibilityChanged")]
+    ProfileVisibilityChanged,
+    #[serde(rename = "AccountSyncVersionChanged")]
+    AccountSyncVersionChanged,
     #[serde(rename = "NewMessageReceived")]
     NewMessageReceived,
-    #[serde(rename = "LikesChanged")]
-    LikesChanged,
+    #[serde(rename = "ReceivedLikesChanged")]
+    ReceivedLikesChanged,
     #[serde(rename = "ReceivedBlocksChanged")]
     ReceivedBlocksChanged,
+    #[serde(rename = "SentLikesChanged")]
+    SentLikesChanged,
+    #[serde(rename = "SentBlocksChanged")]
+    SentBlocksChanged,
+    #[serde(rename = "MatchesChanged")]
+    MatchesChanged,
     #[serde(rename = "LatestViewedMessageChanged")]
     LatestViewedMessageChanged,
     #[serde(rename = "ContentProcessingStateChanged")]
@@ -35,9 +45,14 @@ impl ToString for EventType {
         match self {
             Self::AccountStateChanged => String::from("AccountStateChanged"),
             Self::AccountCapabilitiesChanged => String::from("AccountCapabilitiesChanged"),
+            Self::ProfileVisibilityChanged => String::from("ProfileVisibilityChanged"),
+            Self::AccountSyncVersionChanged => String::from("AccountSyncVersionChanged"),
             Self::NewMessageReceived => String::from("NewMessageReceived"),
-            Self::LikesChanged => String::from("LikesChanged"),
+            Self::ReceivedLikesChanged => String::from("ReceivedLikesChanged"),
             Self::ReceivedBlocksChanged => String::from("ReceivedBlocksChanged"),
+            Self::SentLikesChanged => String::from("SentLikesChanged"),
+            Self::SentBlocksChanged => String::from("SentBlocksChanged"),
+            Self::MatchesChanged => String::from("MatchesChanged"),
             Self::LatestViewedMessageChanged => String::from("LatestViewedMessageChanged"),
             Self::ContentProcessingStateChanged => String::from("ContentProcessingStateChanged"),
         }

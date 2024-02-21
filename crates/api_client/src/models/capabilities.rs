@@ -39,9 +39,6 @@ pub struct Capabilities {
     pub admin_view_private_info: Option<bool>,
     #[serde(rename = "admin_view_profile_history", skip_serializing_if = "Option::is_none")]
     pub admin_view_profile_history: Option<bool>,
-    /// View public profiles. Automatically enabled once initial image moderation is complete.
-    #[serde(rename = "user_view_public_profiles", skip_serializing_if = "Option::is_none")]
-    pub user_view_public_profiles: Option<bool>,
 }
 
 impl Capabilities {
@@ -59,7 +56,6 @@ impl Capabilities {
             admin_view_all_profiles: None,
             admin_view_private_info: None,
             admin_view_profile_history: None,
-            user_view_public_profiles: None,
         }
     }
 }

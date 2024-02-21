@@ -237,7 +237,8 @@ impl<'a> BotAction for SetAccountSetup<'a> {
             .map(|s| s.to_string())
             .unwrap_or_else(|| NameProvider::men_first_name().to_string());
         let setup = AccountSetup {
-            name: name.clone(),
+            // TODO: Remove name related code?
+            // name: name.clone(),
             birthdate: "".to_string(),
         };
         post_account_setup(state.api.account(), setup)

@@ -15,12 +15,15 @@
 pub struct ReceivedLikesPage {
     #[serde(rename = "profiles")]
     pub profiles: Vec<crate::models::AccountId>,
+    #[serde(rename = "version")]
+    pub version: Box<crate::models::ReceivedLikesSyncVersion>,
 }
 
 impl ReceivedLikesPage {
-    pub fn new(profiles: Vec<crate::models::AccountId>) -> ReceivedLikesPage {
+    pub fn new(profiles: Vec<crate::models::AccountId>, version: crate::models::ReceivedLikesSyncVersion) -> ReceivedLikesPage {
         ReceivedLikesPage {
             profiles,
+            version: Box::new(version),
         }
     }
 }

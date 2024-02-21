@@ -7,7 +7,6 @@
 //! Prevents exposing api_client crate model types to server code.
 
 use api_client::apis::{
-    account_internal_api,
     media_internal_api::{self},
 };
 pub use api_client::apis::{configuration::Configuration, Error};
@@ -17,7 +16,6 @@ use model::{
 };
 
 pub use crate::{
-    account_internal_api::{CheckAccessTokenError, InternalGetAccountStateError},
     media_internal_api::InternalGetCheckModerationRequestForAccountError,
 };
 

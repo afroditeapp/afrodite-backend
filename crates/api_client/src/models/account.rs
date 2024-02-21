@@ -17,13 +17,19 @@ pub struct Account {
     pub capabilities: Box<crate::models::Capabilities>,
     #[serde(rename = "state")]
     pub state: crate::models::AccountState,
+    #[serde(rename = "sync_version")]
+    pub sync_version: Box<crate::models::AccountSyncVersion>,
+    #[serde(rename = "visibility")]
+    pub visibility: crate::models::ProfileVisibility,
 }
 
 impl Account {
-    pub fn new(capabilities: crate::models::Capabilities, state: crate::models::AccountState) -> Account {
+    pub fn new(capabilities: crate::models::Capabilities, state: crate::models::AccountState, sync_version: crate::models::AccountSyncVersion, visibility: crate::models::ProfileVisibility) -> Account {
         Account {
             capabilities: Box::new(capabilities),
             state,
+            sync_version: Box::new(sync_version),
+            visibility,
         }
     }
 }

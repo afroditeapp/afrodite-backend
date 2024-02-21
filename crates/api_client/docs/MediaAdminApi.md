@@ -11,14 +11,17 @@ Method | HTTP request | Description
 
 ## patch_moderation_request_list
 
-> crate::models::ModerationList patch_moderation_request_list()
+> crate::models::ModerationList patch_moderation_request_list(queue)
 Get current list of moderation requests in my moderation queue.
 
 Get current list of moderation requests in my moderation queue. Additional requests will be added to my queue if necessary.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
 
 ### Parameters
 
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**queue** | [**ModerationQueueType**](.md) |  | [required] |
 
 ### Return type
 

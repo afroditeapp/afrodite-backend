@@ -16,6 +16,8 @@
 pub struct EventToClient {
     #[serde(rename = "account_state", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub account_state: Option<Option<Box<crate::models::AccountState>>>,
+    #[serde(rename = "account_sync_version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub account_sync_version: Option<Option<Box<crate::models::AccountSyncVersion>>>,
     #[serde(rename = "capabilities", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub capabilities: Option<Option<Box<crate::models::Capabilities>>>,
     #[serde(rename = "content_processing_state_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -24,6 +26,8 @@ pub struct EventToClient {
     pub event: crate::models::EventType,
     #[serde(rename = "latest_viewed_message_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub latest_viewed_message_changed: Option<Option<Box<crate::models::LatestViewedMessageChanged>>>,
+    #[serde(rename = "visibility", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub visibility: Option<Option<Box<crate::models::ProfileVisibility>>>,
 }
 
 impl EventToClient {
@@ -31,10 +35,12 @@ impl EventToClient {
     pub fn new(event: crate::models::EventType) -> EventToClient {
         EventToClient {
             account_state: None,
+            account_sync_version: None,
             capabilities: None,
             content_processing_state_changed: None,
             event,
             latest_viewed_message_changed: None,
+            visibility: None,
         }
     }
 }

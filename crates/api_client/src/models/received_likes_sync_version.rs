@@ -12,15 +12,15 @@
 
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
-pub struct AccountSetup {
-    #[serde(rename = "birthdate")]
-    pub birthdate: String,
+pub struct ReceivedLikesSyncVersion {
+    #[serde(rename = "version")]
+    pub version: i64,
 }
 
-impl AccountSetup {
-    pub fn new(birthdate: String) -> AccountSetup {
-        AccountSetup {
-            birthdate,
+impl ReceivedLikesSyncVersion {
+    pub fn new(version: i64) -> ReceivedLikesSyncVersion {
+        ReceivedLikesSyncVersion {
+            version,
         }
     }
 }

@@ -1,4 +1,4 @@
-use api_client::models::{Location, Profile, ProfileVersion};
+use api_client::models::{Location, Profile, ProfileVersion, ProfileVisibility};
 
 use super::SingleTest;
 use crate::{
@@ -34,10 +34,8 @@ pub const PROFILE_TESTS: &[SingleTest] = &[
             AssertEqualsFn(
                 |v, _| v
                     .account()
-                    .capabilities
-                    .user_view_public_profiles
-                    .unwrap_or_default(),
-                true,
+                    .visibility,
+                ProfileVisibility::PendingPublic,
                 &GetAccount
             ),
             ModifyTaskState(|s| s.bot_count_update_location_to_lat_lon_10 += 1),
