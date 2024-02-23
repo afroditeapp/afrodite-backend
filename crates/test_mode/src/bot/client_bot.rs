@@ -59,9 +59,14 @@ impl ClientBot {
                 &Login,
                 &DoInitialSetupIfNeeded { admin: true },
             ];
+            const MODERATE_INITIAL: ModerateMediaModerationRequest =
+                ModerateMediaModerationRequest::moderate_initial_content();
+            const MODERATE_ADDITIONAL: ModerateMediaModerationRequest =
+                ModerateMediaModerationRequest::moderate_additional_content();
             let action_loop = [
                 &ActionsBeforeIteration as &dyn BotAction,
-                &ModerateMediaModerationRequest,
+                &MODERATE_INITIAL,
+                &MODERATE_ADDITIONAL,
                 &ActionsAfterIteration,
             ];
             let iter = setup.into_iter().chain(action_loop.into_iter().cycle());

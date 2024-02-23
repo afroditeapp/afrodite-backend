@@ -74,7 +74,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
     }
 
     /// The only method which can modify AccountState, Capabilities and
-    /// ProfileVisibility.
+    /// ProfileVisibility. Updates automatically the AccountSyncVersion number.
     ///
     /// Returns the modified Account.
     pub fn update_syncable_account_data(

@@ -263,6 +263,12 @@ pub struct AccountSetup {
     birthdate: String,
 }
 
+impl AccountSetup {
+    pub fn is_invalid(&self) -> bool {
+        self.birthdate.is_empty()
+    }
+}
+
 // TODO(prod): Birthdate validation
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]

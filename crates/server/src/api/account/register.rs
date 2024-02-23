@@ -1,4 +1,5 @@
 use axum::{extract::State, Extension, Router};
+use database::current::read::account_admin;
 use model::{
     AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EventToClientInternal, SignInWithInfo
 };
@@ -130,6 +131,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 ///
 /// Requirements:
 ///  - Account must be in `InitialSetup` state.
+///  - Account must have a valid AccountSetup info set.
 ///  - Account must have a moderation request.
 ///  - The current or pending security image of the account is in the request.
 ///  - The current or pending first profile image of the account is in the
@@ -156,6 +158,11 @@ pub async fn post_complete_setup<
     ACCOUNT.post_complete_setup.incr();
 
     if account_state != AccountState::InitialSetup {
+        return Err(StatusCode::NOT_ACCEPTABLE);
+    }
+
+    let account_setup = state.read().account().account_setup(id).await?;
+    if account_setup.is_invalid() {
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 

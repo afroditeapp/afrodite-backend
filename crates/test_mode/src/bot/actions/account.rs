@@ -1,4 +1,4 @@
-use std::{fmt::Debug};
+use std::fmt::Debug;
 
 use api_client::{
     apis::account_api::{
@@ -130,6 +130,20 @@ async fn connect_websocket(
         .await
         .change_context(TestError::WebSocket)?;
 
+    let web_socket_protocol_version: u8 = 0;
+    let client_type_number = u8::MAX; // Test mode bot client type
+    let major_version = 0u16;
+    let minor_version = 0u16;
+    let patch_version = 0u16;
+    let mut version_bytes: Vec<u8> = vec![web_socket_protocol_version, client_type_number];
+    version_bytes.extend_from_slice(&major_version.to_le_bytes());
+    version_bytes.extend_from_slice(&minor_version.to_le_bytes());
+    version_bytes.extend_from_slice(&patch_version.to_le_bytes());
+    stream
+        .send(Message::Binary(version_bytes))
+        .await
+        .change_context(TestError::WebSocket)?;
+
     let binary_token = base64::engine::general_purpose::STANDARD
         .decode(auth.refresh.token)
         .change_context(TestError::WebSocket)?;
@@ -157,6 +171,12 @@ async fn connect_websocket(
         Message::Text(access_token) => state.api.set_access_token(access_token),
         _ => return Err(TestError::WebSocketWrongValue.report()),
     }
+
+    // Send empty sync data list
+    stream
+        .send(Message::Binary(vec![]))
+        .await
+        .change_context(TestError::WebSocket)?;
 
     let task = tokio::spawn(async move {
         let mut events = events;
@@ -239,7 +259,7 @@ impl<'a> BotAction for SetAccountSetup<'a> {
         let setup = AccountSetup {
             // TODO: Remove name related code?
             // name: name.clone(),
-            birthdate: "".to_string(),
+            birthdate: "1.1.2000".to_string(),
         };
         post_account_setup(state.api.account(), setup)
             .await

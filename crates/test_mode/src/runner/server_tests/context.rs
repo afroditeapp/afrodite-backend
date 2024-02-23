@@ -1,16 +1,16 @@
 use std::{mem, sync::Arc};
 
-use api_client::{apis::configuration::Configuration, models::{AccountId, EventToClient}};
+use api_client::{apis::{configuration::Configuration, media_admin_api}, models::{AccountId, EventToClient, ModerationQueueType}};
 use config::{args::TestMode, Config};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use tokio::sync::Mutex;
 
 use crate::{
     action_array, bot::{
         actions::{
-            account::{Login, Register, SetAccountSetup}, media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, BotAction
+            account::{CompleteAccountSetup, Login, Register, SetAccountSetup}, admin::ModerateMediaModerationRequest, media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, BotAction
         }, AccountConnections, BotState
-    }, client::ApiClient, TestError
+    }, client::ApiClient, TestError, TestResult
 };
 
 #[derive(Debug)]
@@ -63,9 +63,36 @@ impl TestContext {
                     content_0_slot_i: Some(1),
                 },
                 MakeModerationRequest { slot_0_secure_capture: true },
+                CompleteAccountSetup,
             ])
             .await?;
         Ok(account)
+    }
+
+    /// Admin account with Normal state.
+    pub async fn new_admin(&self) -> Result<Admin, TestError> {
+        let mut account = Account::register_and_login(self.clone()).await?;
+        account
+            .run_actions(action_array![
+                SetAccountSetup::admin(),
+                SendImageToSlot::slot(0),
+                SendImageToSlot::slot(1),
+                SetPendingContent {
+                    security_content_slot_i: Some(0),
+                    content_0_slot_i: Some(1),
+                },
+                MakeModerationRequest { slot_0_secure_capture: true },
+                CompleteAccountSetup,
+            ])
+            .await?;
+        Ok(Admin { account })
+    }
+
+    /// Admin account with Normal state.
+    pub async fn new_admin_and_moderate_initial_content(&self) -> Result<Admin, TestError> {
+        let mut admin = self.new_admin().await?;
+        admin.accept_initial_content_moderation_requests().await?;
+        Ok(admin)
     }
 
     async fn add_account_connections(&mut self, connections: AccountConnections) {
@@ -148,5 +175,42 @@ impl Account {
     /// Wait event if event sending enabled or timeout after 5 seconds
     pub async fn wait_event(&mut self, check: impl Fn(&EventToClient) -> bool) -> Result<(), TestError> {
         self.bot_state.wait_event(check).await
+    }
+}
+
+
+pub struct Admin {
+    account: Account,
+}
+
+impl Admin {
+    pub fn account(&self) -> &Account {
+        &self.account
+    }
+
+    pub fn account_mut(&mut self) -> &mut Account {
+        &mut self.account
+    }
+
+    pub async fn accept_initial_content_moderation_requests(&mut self) -> Result<(), TestError> {
+        self.accept_content_moderation_requests(ModerationQueueType::InitialMediaModeration).await
+    }
+
+    pub async fn accept_content_moderation_requests(&mut self, queue: ModerationQueueType) -> Result<(), TestError> {
+        loop {
+            self.account.run(ModerateMediaModerationRequest::from_queue(queue)).await?;
+
+            let list = media_admin_api::patch_moderation_request_list(
+                self.account.media_api(),
+                queue,
+            )
+                .await
+                .change_context(TestError::ApiRequest)?;
+
+            if list.list.is_empty() {
+                break;
+            }
+        }
+        Ok(())
     }
 }

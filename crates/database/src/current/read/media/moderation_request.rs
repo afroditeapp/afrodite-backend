@@ -143,7 +143,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             Ok(())
         } else {
             Err(DieselDatabaseError::ModerationRequestContentInvalid)
-                    .with_info((content_owner, request_content))
+                .with_info((content_owner, request_content))
         }
     }
 

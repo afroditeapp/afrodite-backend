@@ -8,7 +8,7 @@ use crate::{
     action_array,
     bot::actions::{
         account::SetAccountSetup,
-        media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
+        media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, AssertFailure,
     },
     runner::server_tests::assert::{assert_eq, assert_failure},
     TestContext, TestResult,
@@ -78,7 +78,7 @@ async fn complete_setup_fails_if_image_request_does_not_contain_secure_capture_c
                 security_content_slot_i: Some(0),
                 content_0_slot_i: Some(1),
             },
-            MakeModerationRequest { slot_0_secure_capture: false },
+            AssertFailure(MakeModerationRequest { slot_0_secure_capture: false }),
         ])
         .await?;
 

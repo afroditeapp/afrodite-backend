@@ -68,6 +68,9 @@ pub async fn post_account_data<S: GetAccessTokens + ReadData + WriteData>(
 pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
 /// Update current or pending profile visiblity value.
+///
+/// Requirements:
+/// - Account state must be `Normal`.
 #[utoipa::path(
     put,
     path = "/account_api/settings/profile_visibility",

@@ -7,14 +7,30 @@ use error_stack::{Result, ResultExt};
 use super::{super::super::client::TestError, BotAction, BotState};
 
 #[derive(Debug)]
-pub struct ModerateMediaModerationRequest;
+pub struct ModerateMediaModerationRequest {
+    queue: ModerationQueueType,
+}
+
+impl ModerateMediaModerationRequest {
+    pub const fn moderate_initial_content() -> Self {
+        Self { queue: ModerationQueueType::InitialMediaModeration }
+    }
+
+    pub const fn moderate_additional_content() -> Self {
+        Self { queue: ModerationQueueType::MediaModeration }
+    }
+
+    pub const fn from_queue(queue: ModerationQueueType) -> Self {
+        Self { queue }
+    }
+}
 
 #[async_trait]
 impl BotAction for ModerateMediaModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let list = media_admin_api::patch_moderation_request_list(
             state.api.media(),
-            ModerationQueueType::InitialMediaModeration,
+            self.queue,
         )
             .await
             .change_context(TestError::ApiRequest)?;

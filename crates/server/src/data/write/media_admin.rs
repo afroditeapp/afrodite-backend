@@ -1,5 +1,5 @@
 use database::current::write::media_admin::InitialModerationRequestIsNowAccepted;
-use model::{AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType, ProfileVisibility};
+use model::{Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType, ProfileVisibility};
 
 use super::db_transaction;
 use crate::{data::DataError, result::Result};
@@ -13,7 +13,13 @@ define_write_commands!(WriteCommandsMediaAdmin);
 pub struct UpdateModerationInfo {
     pub new_visibility: Option<ProfileVisibility>,
     pub initial_request_accepted: Option<InitialModerationRequestIsNowAccepted>,
-    location_cache_should_be_updated: Option<ProfileVisibility>,
+    cache_should_be_updated: Option<CurrentAndNewAccount>,
+}
+
+pub struct CurrentAndNewAccount {
+    pub id: AccountIdInternal,
+    pub current: Account,
+    pub new: Account,
 }
 
 impl WriteCommandsMediaAdmin<'_> {
@@ -49,41 +55,43 @@ impl WriteCommandsMediaAdmin<'_> {
             // state if server crashes right after current transaction.
 
             if initial_request_accepted_status.is_some() && account_component_enabled {
-                let account = cmds.read().common().account(moderation_request_owner)?;
-                let visibility = account.profile_visibility();
+                let current_account = cmds.read().common().account(moderation_request_owner)?;
+                let visibility = current_account.profile_visibility();
                 let new_visibility = match visibility {
                     ProfileVisibility::Public => ProfileVisibility::Public,
                     ProfileVisibility::Private => ProfileVisibility::Private,
                     ProfileVisibility::PendingPublic => ProfileVisibility::Public,
                     ProfileVisibility::PendingPrivate => ProfileVisibility::Private,
                 };
-                cmds.common().state().update_syncable_account_data(moderation_request_owner, account, move |_, _, visibility| {
+                let new_account = cmds.common().state().update_syncable_account_data(moderation_request_owner, current_account.clone(), move |_, _, visibility| {
                     *visibility = new_visibility;
                     Ok(())
                 })?;
 
-                let location_cache_should_be_updated = if visibility.is_currently_public() != new_visibility.is_currently_public() {
-                    Some(new_visibility)
-                } else {
-                    None
-                };
-
                 Ok(UpdateModerationInfo {
                     new_visibility: Some(new_visibility),
                     initial_request_accepted: initial_request_accepted_status,
-                    location_cache_should_be_updated,
+                    cache_should_be_updated: Some(CurrentAndNewAccount {
+                        id: moderation_request_owner,
+                        current: current_account.clone(),
+                        new: new_account
+                    }),
                 })
             } else {
                 Ok(UpdateModerationInfo {
                     new_visibility: None,
                     initial_request_accepted: initial_request_accepted_status,
-                    location_cache_should_be_updated: None,
+                    cache_should_be_updated: None,
                 })
             }
         })?;
 
-        if let Some(visibility) = info.location_cache_should_be_updated {
-            self.cmds.account().profile_update_visibility(moderation_request_owner, visibility.is_currently_public()).await?;
+        if let Some(accounts) = &info.cache_should_be_updated {
+            self.cmds.account().internal_handle_new_account_data_after_db_modification(
+                accounts.id,
+                &accounts.current,
+                &accounts.new
+            ).await?;
         }
 
         Ok(info)
