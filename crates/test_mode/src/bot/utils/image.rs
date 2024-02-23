@@ -3,11 +3,17 @@ use std::path::Path;
 use image::{codecs::jpeg::JpegEncoder, ImageBuffer, Rgb};
 use rand::seq::SliceRandom;
 
+const GENERATED_IMG_WIDTH: u32 = 1;
+const GENERATED_IMG_HEIGHT: u32 = 1;
+
 pub struct ImageProvider {}
 
 impl ImageProvider {
     pub fn jpeg_image() -> Vec<u8> {
-        let mut buffer: ImageBuffer<Rgb<u8>, _> = image::ImageBuffer::new(512, 512);
+        let mut buffer: ImageBuffer<Rgb<u8>, _> = image::ImageBuffer::new(
+            GENERATED_IMG_WIDTH,
+            GENERATED_IMG_HEIGHT
+        );
 
         for pixel in buffer.pixels_mut() {
             pixel.0 = [255, 255, 255];
@@ -21,7 +27,10 @@ impl ImageProvider {
     }
 
     pub fn random_jpeg_image() -> Vec<u8> {
-        let mut buffer: ImageBuffer<Rgb<u8>, _> = image::ImageBuffer::new(512, 512);
+        let mut buffer: ImageBuffer<Rgb<u8>, _> = image::ImageBuffer::new(
+            GENERATED_IMG_WIDTH,
+            GENERATED_IMG_HEIGHT
+        );
 
         let img_color = rand::random();
 

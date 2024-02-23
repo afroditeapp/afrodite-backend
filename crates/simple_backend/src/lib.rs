@@ -49,6 +49,8 @@ use crate::{
     perf::{PerfCounterManager, PerfCounterManagerData},
 };
 
+pub const SERVER_START_MESSAGE: &str = "Server start complete";
+
 /// Drop this when quit starts
 pub type ServerQuitHandle = broadcast::Sender<()>;
 
@@ -184,6 +186,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .await;
 
         self.logic.on_after_server_start().await;
+        // Use println to make sure that this message is visible in logs.
+        println!("{SERVER_START_MESSAGE}");
 
         Self::wait_quit_signal(&mut terminate_signal).await;
         info!("Server quit signal received");

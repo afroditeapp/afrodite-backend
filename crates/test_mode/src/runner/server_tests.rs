@@ -8,7 +8,6 @@ use tracing::{error, info};
 
 use crate::{
     client::ApiClient,
-    runner::utils::wait_that_servers_start,
     server::{AdditionalSettings, ServerManager},
     TestContext, TestFunction, TestResult,
 };
@@ -72,7 +71,6 @@ impl QaTestRunner {
         for test_function in test_functions.iter() {
             current_test = test_function.name();
             print!("test {} ... ", &current_test);
-
             let manager = ServerManager::new(
                 &self.config,
                 self.test_config.clone(),
@@ -81,8 +79,6 @@ impl QaTestRunner {
                 }),
             )
             .await;
-
-            wait_that_servers_start(api_client.clone()).await;
 
             let test_future = (test_function.function)(test_context.clone());
             let test_future =

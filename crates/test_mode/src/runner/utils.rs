@@ -1,26 +1,4 @@
-use std::time::Duration;
 
-use api_client::{apis::configuration::Configuration, manual_additions};
-
-use crate::client::ApiClient;
-
-pub async fn wait_that_servers_start(api: ApiClient) {
-    check_api(api.account()).await;
-    check_api(api.profile()).await;
-    check_api(api.media()).await;
-    check_api(api.chat()).await;
-}
-
-pub async fn check_api(config: &Configuration) {
-    loop {
-        match manual_additions::api_available(config).await {
-            Ok(()) => break,
-            Err(()) => (),
-        }
-
-        tokio::time::sleep(Duration::from_millis(10)).await;
-    }
-}
 
 // Code that might be useful when implementing concurrent server test excecution
 

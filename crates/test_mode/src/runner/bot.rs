@@ -13,7 +13,6 @@ use tracing::{error, info};
 use crate::{
     bot::BotManager,
     client::ApiClient,
-    runner::utils::wait_that_servers_start,
     server::ServerManager,
     state::{BotPersistentState, StateData},
 };
@@ -46,38 +45,32 @@ impl BotTestRunner {
 
         ApiClient::new(self.test_config.server.api_urls.clone()).print_to_log();
 
-        let server = if !self.test_config.no_servers {
-            Some(ServerManager::new(&self.config, self.test_config.clone(), None).await)
+        let (quit_now, server) = if !self.test_config.no_servers {
+            info!("Creating ServerManager...");
+            select! {
+                result = signal::ctrl_c() =>
+                    match result {
+                        Ok(()) => (true, None),
+                        Err(e) => {
+                            error!("Failed to listen CTRL+C. Error: {}", e);
+                            (true, None)
+                        }
+                    },
+                server = ServerManager::new(&self.config, self.test_config.clone(), None) => {
+                    info!("...crated");
+                    (false, Some(server))
+                }
+            }
         } else {
-            None
+            (false, None)
         };
 
         let (bot_running_handle, mut wait_all_bots) = mpsc::channel::<Vec<BotPersistentState>>(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());
 
         let mut task_number = 0;
-        let api_urls = Arc::new(self.test_config.server.api_urls.clone());
-
-        info!("Waiting API availability...");
-
-        let quit_now = select! {
-            result = signal::ctrl_c() => {
-                match result {
-                    Ok(()) => true,
-                    Err(e) => {
-                        error!("Failed to listen CTRL+C. Error: {}", e);
-                        true
-                    }
-                }
-            }
-            _ = wait_that_servers_start(ApiClient::new(api_urls.as_ref().clone())) => {
-                false
-            },
-        };
 
         if !quit_now {
-            info!("...API ready");
-
             info!(
                 "Task count: {}, Bot count per task: {}",
                 self.test_config.tasks(),

@@ -172,6 +172,13 @@ impl BusinessLogic for PihkaBusinessLogic {
             server_quit_watcher.resubscribe(),
         );
 
+        self.database_manager = Some(database_manager);
+        self.write_cmd_waiter = Some(write_cmd_waiter);
+        self.content_processing_quit_handle = Some(content_processing_quit_handle);
+        state
+    }
+
+    async fn on_after_server_start(&mut self) {
         let bot_client = if let Some(bot_config) = self.config.bot_config() {
             let result = BotClient::start_bots(&self.config, bot_config).await;
 
@@ -187,13 +194,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         };
 
         self.bot_client = bot_client;
-        self.database_manager = Some(database_manager);
-        self.write_cmd_waiter = Some(write_cmd_waiter);
-        self.content_processing_quit_handle = Some(content_processing_quit_handle);
-        state
     }
-
-    async fn on_after_server_start(&mut self) {}
 
     async fn on_before_server_quit(&mut self) {
         if let Some(bot_client) = self.bot_client.take() {

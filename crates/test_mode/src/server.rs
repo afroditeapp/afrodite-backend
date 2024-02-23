@@ -110,7 +110,7 @@ impl ServerManager {
             account_config,
             &config,
             settings.clone(),
-        )];
+        ).await];
 
         if config.server.microservice_media {
             let server_config = new_config(
@@ -129,7 +129,7 @@ impl ServerManager {
                 server_config,
                 &config,
                 settings.clone(),
-            ));
+            ).await);
         }
 
         if config.server.microservice_profile {
@@ -149,7 +149,7 @@ impl ServerManager {
                 server_config,
                 &config,
                 settings.clone(),
-            ));
+            ).await);
         }
 
         // TODO: Chat microservice
@@ -230,13 +230,13 @@ fn new_config(
 pub struct ServerInstance {
     server: Child,
     dir: PathBuf,
-    stdout_task: Option<JoinHandle<()>>,
-    stderr_task: Option<JoinHandle<()>>,
+    stdout_task: JoinHandle<()>,
+    stderr_task: JoinHandle<()>,
     logs: Arc<Mutex<Vec<String>>>,
 }
 
 impl ServerInstance {
-    pub fn new(
+    pub async fn new(
         dir: PathBuf,
         all_config: &Config,
         (server_config, simple_backend_config): (ConfigFile, SimpleBackendConfigFile),
@@ -287,53 +287,79 @@ impl ServerInstance {
 
         let mut tokio_command: tokio::process::Command = command.into();
 
-        if settings.log_to_memory {
-            tokio_command.stdout(Stdio::piped()).stderr(Stdio::piped());
-        }
+        tokio_command
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
 
         let mut server = tokio_command.kill_on_drop(true).spawn().unwrap();
 
         let logs = Arc::new(Mutex::new(Vec::new()));
-        let (stdout_task, stderr_task) = if settings.log_to_memory {
-            let stdout = server.stdout.take().expect("Stdout handle is missing");
-            let stderr = server.stderr.take().expect("Stderr handle is missing");
+        let stdout = server.stdout.take().expect("Stdout handle is missing");
+        let stderr = server.stderr.take().expect("Stderr handle is missing");
+        let (start_sender, start_receiver) = tokio::sync::oneshot::channel::<()>();
 
-            fn create_read_lines_task(
-                stream: impl AsyncRead + Unpin + Send + 'static,
-                stream_name: &'static str,
-                logs: Arc<Mutex<Vec<String>>>,
-            ) -> JoinHandle<()> {
-                tokio::spawn(async move {
-                    let mut line_stream = tokio::io::BufReader::new(stream).lines();
-                    loop {
-                        match line_stream.next_line().await {
-                            Ok(Some(line)) => {
-                                logs.lock().await.push(line);
-                            }
-                            Ok(None) => {
-                                logs.lock()
-                                    .await
-                                    .push(format!("Server {stream_name} closed"));
-                                break;
-                            }
-                            Err(e) => {
-                                logs.lock()
-                                    .await
-                                    .push(format!("Server {stream_name} error: {e:?}"));
-                                break;
-                            }
+        fn create_read_lines_task(
+            stream: impl AsyncRead + Unpin + Send + 'static,
+            stream_name: &'static str,
+            logs: Arc<Mutex<Vec<String>>>,
+            log_to_memory: bool,
+            start_sender: Option<tokio::sync::oneshot::Sender<()>>,
+        ) -> JoinHandle<()> {
+            tokio::spawn(async move {
+                let mut start_sender = start_sender;
+                let mut line_stream = tokio::io::BufReader::new(stream).lines();
+                loop {
+                    let (line, stream_ended) = match line_stream.next_line().await {
+                        Ok(Some(line)) =>
+                            (line, false),
+                        Ok(None) =>
+                            (format!("Server {stream_name} closed"), true),
+                        Err(e) =>
+                            (format!("Server {stream_name} error: {e:?}"), true),
+                    };
+
+                    if let Some(sender) = start_sender.take() {
+                        if line.contains(simple_backend::SERVER_START_MESSAGE) {
+                            sender.send(()).unwrap();
+                        } else {
+                            start_sender = Some(sender);
                         }
                     }
-                })
+
+                    if log_to_memory {
+                        logs.lock().await.push(line);
+                    } else {
+                        println!("{line}");
+                    }
+
+                    if stream_ended {
+                        break;
+                    }
+                }
+            })
+        }
+
+        let stdout_task = create_read_lines_task(
+            stdout,
+            "stdout",
+            logs.clone(),
+            settings.log_to_memory,
+            Some(start_sender),
+        );
+        let stderr_task = create_read_lines_task(
+            stderr,
+            "stderr",
+            logs.clone(),
+            settings.log_to_memory,
+            None,
+        );
+
+        tokio::select! {
+            _ = start_receiver => (),
+            _ = tokio::time::sleep(std::time::Duration::from_secs(5)) => {
+                panic!("Server did not start in 5 seconds");
             }
-
-            let stdout_task = create_read_lines_task(stdout, "stdout", logs.clone());
-            let stderr_task = create_read_lines_task(stderr, "stderr", logs.clone());
-
-            (Some(stdout_task), Some(stderr_task))
-        } else {
-            (None, None)
-        };
+        }
 
         Self {
             server,
@@ -362,13 +388,8 @@ impl ServerInstance {
             }
         }
 
-        if let Some(handle) = self.stdout_task {
-            handle.await.unwrap();
-        }
-
-        if let Some(handle) = self.stderr_task {
-            handle.await.unwrap();
-        }
+        self.stdout_task.await.unwrap();
+        self.stderr_task.await.unwrap();
     }
 
     pub async fn logs(&self) -> Vec<String> {

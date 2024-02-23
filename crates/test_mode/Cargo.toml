@@ -47,4 +47,5 @@ api_client = { path = "../api_client" }
 test_mode_macro = { path = "../test_mode_macro" }
 utils = { path = "../utils" }
 config = { path = "../config" }
+simple_backend = { path = "../simple_backend" }
 simple_backend_config = { path = "../simple_backend_config" }
