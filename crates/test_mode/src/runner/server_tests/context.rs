@@ -154,6 +154,10 @@ impl Account {
         self.bot_state.id.unwrap()
     }
 
+    pub fn account_id_string(&self) -> String {
+        self.account_id().account_id.to_string()
+    }
+
     /// Only actions without TaskState usage are supported
     pub async fn run<T: BotAction>(&mut self, action: T) -> Result<(), TestError> {
         action.excecute_impl(&mut self.bot_state).await

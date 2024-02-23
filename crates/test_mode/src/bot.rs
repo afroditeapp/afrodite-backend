@@ -1,7 +1,6 @@
 pub mod actions;
 mod benchmark;
 mod client_bot;
-mod qa;
 mod utils;
 
 use std::{fmt::Debug, sync::Arc, vec};
@@ -25,7 +24,6 @@ use self::{
     actions::{media::MediaState, BotAction, DoNothing, PreviousValue},
     benchmark::{Benchmark, BenchmarkState},
     client_bot::ClientBot,
-    qa::Qa,
 };
 use super::{
     client::{ApiClient, TestError},
@@ -33,9 +31,7 @@ use super::{
 };
 
 #[derive(Debug, Default)]
-pub struct TaskState {
-    pub bot_count_update_location_to_lat_lon_10: u64,
-}
+pub struct TaskState;
 
 pub fn create_event_channel(enable_event_sending: bool) -> (EventSenderAndQuitWatcher, EventReceiver, broadcast::Sender<()>) {
     let (event_sender, event_receiver) = mpsc::unbounded_channel();
@@ -325,7 +321,7 @@ impl BotManager {
                 config,
                 _bot_running_handle,
             ),
-            TestModeSubMode::Qa(_) => Self::qa(task_id, server_config, config, _bot_running_handle),
+            TestModeSubMode::Qa(_) => panic!("Server tests use different test runner"),
         };
 
         tokio::spawn(bot.run(bot_quit_receiver));
@@ -380,60 +376,6 @@ impl BotManager {
                 (_, Some(_)) => bots.push(Box::new(ClientBot::new(state))),
                 test_config => panic!("Invalid test config {:?}", test_config),
             };
-        }
-
-        Self {
-            bots,
-            _bot_running_handle,
-            task_id,
-            config,
-        }
-    }
-
-    pub fn qa(
-        task_id: u32,
-        server_config: Arc<Config>,
-        config: Arc<TestMode>,
-        _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
-    ) -> Self {
-        if task_id >= 1 {
-            panic!("Only task count 1 is supported for QA tests");
-        }
-
-        let required_bots = qa::test_count() + 1;
-
-        if (config.bots() as usize) < required_bots {
-            warn!("Increasing bot count to {}", required_bots);
-        }
-
-        let mut bots = Vec::<Box<dyn BotStruct>>::new();
-        let new_bot_state = |bot_i| {
-            BotState::new(
-                None,
-                server_config.clone(),
-                config.clone(),
-                task_id,
-                bot_i,
-                ApiClient::new(config.server.api_urls.clone()),
-            )
-        };
-
-        bots.push(Box::new(Qa::admin(new_bot_state(0))));
-
-        for (i, (test_name, test)) in qa::ALL_QA_TESTS
-            .into_iter()
-            .map(|tests| *tests)
-            .flatten()
-            .enumerate()
-        {
-            let state = new_bot_state(i as u32 + 1);
-            let actions = test
-                .into_iter()
-                .map(|actions| *actions)
-                .flatten()
-                .map(|action| *action);
-            let bot = Qa::user_test(state, test_name, Box::new(actions));
-            bots.push(Box::new(bot));
         }
 
         Self {
