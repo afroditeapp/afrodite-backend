@@ -27,7 +27,7 @@ use crate::{
     action_array,
     bot::actions::{
         account::CompleteAccountSetup, admin::ModerateMediaModerationRequest,
-        media::MakeModerationRequest, ActionArray,
+        media::{MakeModerationRequest, SetPendingContent}, ActionArray,
     },
     client::TestError,
 };
@@ -160,6 +160,10 @@ impl BotAction for DoInitialSetupIfNeeded {
                     random: true,
                     copy_to_slot: Some(0),
                     mark_copied_image: true,
+                },
+                SetPendingContent {
+                    security_content_slot_i: Some(0),
+                    content_0_slot_i: Some(1),
                 },
                 MakeModerationRequest { slot_0_secure_capture: true },
                 CompleteAccountSetup,

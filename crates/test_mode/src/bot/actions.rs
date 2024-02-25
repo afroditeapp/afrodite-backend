@@ -12,7 +12,7 @@ use error_stack::{Result, ResultExt};
 
 use self::{
     account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
-    media::{MakeModerationRequest, SendImageToSlot},
+    media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
 };
 use super::{super::client::TestError, BotState, TaskState};
 
@@ -386,6 +386,10 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
     SetAccountSetup::new(),
     SendImageToSlot::slot(0),
     SendImageToSlot::slot(1),
+    SetPendingContent {
+        security_content_slot_i: Some(0),
+        content_0_slot_i: Some(1),
+    },
     MakeModerationRequest { slot_0_secure_capture: true },
     CompleteAccountSetup,
     AssertAccountState(AccountState::Normal),
