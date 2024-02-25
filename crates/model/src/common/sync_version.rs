@@ -57,6 +57,11 @@ impl TryFrom<u8> for SyncCheckDataType {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Account),
+            1 => Ok(Self::ReveivedLikes),
+            2 => Ok(Self::ReveivedBlocks),
+            3 => Ok(Self::SentLikes),
+            4 => Ok(Self::SentBlocks),
+            5 => Ok(Self::Matches),
             _ => Err(format!("Unknown sync check data type {}", value)),
         }
     }
