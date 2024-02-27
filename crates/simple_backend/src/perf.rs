@@ -185,11 +185,11 @@ impl PerformanceCounterHistory {
             }
         }
 
+        self.next_index += 1;
+
         if self.next_index >= self.data.len() {
             self.next_index = 0;
             self.previous_start_time = self.start_time;
-        } else {
-            self.next_index += 1;
         }
     }
 
