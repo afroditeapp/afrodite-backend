@@ -1,6 +1,6 @@
 use diesel::{insert_into, prelude::*, update, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, ProfileInternal, ProfileUpdateInternal, ProfileVersion};
+use model::{AccountIdInternal, Location, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::ConnectionProvider;
@@ -23,17 +23,18 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
             .into_db_error(id)
     }
 
-    pub fn insert_profile_location(
+    pub fn insert_profile_state(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<Location, DieselDatabaseError> {
-        use model::schema::profile_location::dsl::*;
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_state::dsl::*;
 
-        insert_into(profile_location)
+        insert_into(profile_state)
             .values(account_id.eq(id.as_db_id()))
-            .returning(Location::as_returning())
-            .get_result(self.conn())
-            .into_db_error(id)
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
     }
 
     pub fn profile(
@@ -74,10 +75,25 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         id: AccountIdInternal,
         data: Location,
     ) -> Result<(), DieselDatabaseError> {
-        use crate::schema::profile_location::dsl::*;
+        use crate::schema::profile_state::dsl::*;
 
-        update(profile_location.find(id.as_db_id()))
-            .set((latitude.eq(data.latitude), longitude.eq(data.longitude)))
+        update(profile_state.find(id.as_db_id()))
+            .set(data)
+            .execute(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub fn profile_state(
+        &mut self,
+        id: AccountIdInternal,
+        data: ProfileStateInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::profile_state::dsl::*;
+
+        update(profile_state.find(id.as_db_id()))
+            .set(data)
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 

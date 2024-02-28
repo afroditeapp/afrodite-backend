@@ -11,7 +11,7 @@ use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
-    cache::DatabaseCache, file::utils::FileDir, index::LocationIndexIteratorHandle, IntoDataError,
+    cache::{CacheError, DatabaseCache}, file::utils::FileDir, index::LocationIndexIteratorHandle, IntoDataError,
     RouterDatabaseWriteHandle,
 };
 use crate::{
@@ -285,18 +285,21 @@ impl<'a> WriteCommandsConcurrent<'a> {
         &self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileLink>, DataError> {
-        let location = self
+        let (location, query_maker_filters) = self
             .cache
             .read_cache(id.as_id(), |e| {
-                e.profile.as_ref().map(|p| p.location.clone())
+                let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
+                error_stack::Result::<_, CacheError>::Ok((
+                    p.location.clone(),
+                    p.filters(),
+                ))
             })
             .await
-            .into_data_error(id)?
-            .ok_or(DataError::FeatureDisabled.report())?;
+            .into_data_error(id)??;
 
         let (next_state, profiles) = self
             .location
-            .next_profiles(location.current_iterator)
+            .next_profiles(location.current_iterator, query_maker_filters)
             .await?;
         self.cache
             .write_cache(id.as_id(), |e| {

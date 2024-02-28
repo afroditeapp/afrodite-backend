@@ -221,6 +221,8 @@ impl LocationIndexIterator {
     }
 
     /// Get next cell where are profiles.
+    ///
+    /// If None then there is not any more cells with profiles.
     pub fn next(&mut self) -> Option<LocationIndexKey> {
         self.next_raw().map(|(y, x)| LocationIndexKey { y, x })
     }

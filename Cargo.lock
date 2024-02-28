@@ -1811,6 +1811,7 @@ name = "model"
 version = "0.0.0"
 dependencies = [
  "base64 0.21.7",
+ "bitflags 2.4.2",
  "diesel",
  "nalgebra",
  "serde",

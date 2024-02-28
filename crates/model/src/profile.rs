@@ -3,11 +3,11 @@ use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use diesel::{prelude::*, sql_types::Binary};
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::diesel_uuid_wrapper;
+use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{AccountId, AccountIdDb};
+use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb};
 
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]
@@ -18,6 +18,8 @@ pub struct ProfileInternal {
     pub version_uuid: ProfileVersion,
     pub name: String,
     pub profile_text: String,
+    pub age: ProfileAge,
+    pub profile_mood: ProfileMood,
 }
 
 /// Prfile for HTTP GET
@@ -44,6 +46,398 @@ impl From<ProfileInternal> for Profile {
             profile_text: value.profile_text,
             version: value.version_uuid,
         }
+    }
+}
+
+
+/// Private profile related database data
+#[derive(Debug, Clone, Queryable, Selectable, AsChangeset)]
+#[diesel(table_name = crate::schema::profile_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ProfileStateInternal {
+    pub search_age_range_min: ProfileAge,
+    pub search_age_range_max: ProfileAge,
+    #[diesel(deserialize_as = i64, serialize_as = i64)]
+    pub search_group_flags: SearchGroupFlags,
+}
+
+/// Profile age value which is in inclusive range `[18, 99]`.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
+#[serde(try_from = "i64")]
+pub struct ProfileAge {
+    value: u8,
+}
+
+impl ProfileAge {
+    pub const MIN_AGE: u8 = 18;
+    pub const MAX_AGE: u8 = 99;
+
+    pub fn new_clamped(age: u8) -> Self {
+        Self {
+            value: age.clamp(Self::MIN_AGE, Self::MAX_AGE),
+        }
+    }
+    pub fn value(&self) -> u8 {
+        self.value
+    }
+}
+
+impl Default for ProfileAge {
+    fn default() -> Self {
+        Self { value: Self::MIN_AGE }
+    }
+}
+
+impl TryFrom<i64> for ProfileAge {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        if value < Self::MIN_AGE as i64 || value > Self::MAX_AGE as i64 {
+            Err(format!("Profile age must be in range [{}, {}]", Self::MIN_AGE, Self::MAX_AGE))
+        } else {
+            Ok(Self { value: value as u8 })
+        }
+    }
+}
+
+impl From<ProfileAge> for i64 {
+    fn from(value: ProfileAge) -> Self {
+        value.value as i64
+    }
+}
+
+diesel_i64_struct_try_from!(ProfileAge);
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileSearchAgeRange {
+    pub min: u8,
+    pub max: u8,
+}
+
+/// Profile search age range which min and max are in
+/// inclusive range of `[18, 99]`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ProfileSearchAgeRangeValidated {
+    min: ProfileAge,
+    max: ProfileAge,
+}
+
+impl ProfileSearchAgeRangeValidated {
+    /// New range from two values. Automatically orders the values.
+    pub fn new(value1: ProfileAge, value2: ProfileAge) -> Self {
+        if value1.value() <= value2.value() {
+            Self {
+                min: value1,
+                max: value2,
+            }
+        } else {
+            Self {
+                min: value2,
+                max: value1,
+            }
+        }
+    }
+
+    pub fn is_match(&self, age: ProfileAge) -> bool {
+        age.value() >= self.min.value() && age.value() <= self.max.value()
+    }
+}
+
+impl TryFrom<ProfileSearchAgeRange> for ProfileSearchAgeRangeValidated {
+    type Error = String;
+
+    fn try_from(value: ProfileSearchAgeRange) -> Result<Self, Self::Error> {
+        if value.min > value.max {
+            Err("Min value must be less than or equal to max value".to_string())
+        } else {
+            let min = (value.min as i64).try_into()?;
+            let max = (value.max as i64).try_into()?;
+            Ok(Self {
+                min,
+                max,
+            })
+        }
+    }
+}
+
+/// What is the profile owner searching for.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
+#[repr(u8)]
+pub enum ProfileMood {
+    #[default]
+    Nothing = 0,
+    NotSureYet = 1,
+    Friend = 2,
+    Fun = 3,
+    IntimateRelationship = 4,
+}
+
+impl TryFrom<i64> for ProfileMood {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Nothing),
+            1 => Ok(Self::NotSureYet),
+            2 => Ok(Self::Friend),
+            3 => Ok(Self::Fun),
+            4 => Ok(Self::IntimateRelationship),
+            _ => Err(format!("Unknown profile mood value {}", value)),
+        }
+    }
+}
+
+diesel_i64_try_from!(ProfileMood);
+
+
+/// My gender and what gender I'm searching for.
+///
+/// Fileds should be read "I'm x and I'm searching for y".
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default)]
+pub struct SearchGroups {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")] // Skips false
+    #[schema(default = false)]
+    pub man_for_woman: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub man_for_man: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub man_for_non_binary: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub woman_for_man: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub woman_for_woman: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub woman_for_non_binary: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub non_binary_for_man: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub non_binary_for_woman: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub non_binary_for_non_binary: bool,
+}
+
+impl SearchGroups {
+    fn to_validated_man(&self) -> Option<ValidatedSearchGroups> {
+        if self.man_for_woman || self.man_for_man || self.man_for_non_binary {
+            Some(ValidatedSearchGroups::ManFor {
+                woman: self.man_for_woman,
+                man: self.man_for_man,
+                non_binary: self.man_for_non_binary,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn to_validated_woman(&self) -> Option<ValidatedSearchGroups> {
+        if self.woman_for_man || self.woman_for_woman || self.woman_for_non_binary {
+            Some(ValidatedSearchGroups::WomanFor {
+                man: self.woman_for_man,
+                woman: self.woman_for_woman,
+                non_binary: self.woman_for_non_binary,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn to_validated_non_binary(&self) -> Option<ValidatedSearchGroups> {
+        if self.non_binary_for_man || self.non_binary_for_woman || self.non_binary_for_non_binary {
+            Some(ValidatedSearchGroups::NonBinaryFor {
+                man: self.non_binary_for_man,
+                woman: self.non_binary_for_woman,
+                non_binary: self.non_binary_for_non_binary,
+            })
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ValidatedSearchGroups {
+    ManFor {
+        woman: bool,
+        man: bool,
+        non_binary: bool,
+    },
+    WomanFor {
+        man: bool,
+        woman: bool,
+        non_binary: bool,
+    },
+    NonBinaryFor {
+        man: bool,
+        woman: bool,
+        non_binary: bool,
+    },
+}
+
+impl TryFrom<SearchGroups> for ValidatedSearchGroups {
+    type Error = &'static str;
+
+    fn try_from(value: SearchGroups) -> Result<Self, Self::Error> {
+        match (value.to_validated_man(), value.to_validated_woman(), value.to_validated_non_binary()) {
+            (Some(v), None, None) => Ok(v),
+            (None, Some(v), None) => Ok(v),
+            (None, None, Some(v)) => Ok(v),
+            (None, None, None) => Err("Gender not set"),
+            _ => Err("Unambiguous gender")
+        }
+    }
+}
+
+bitflags::bitflags! {
+    /// Same as SearchGroups but as bitflags. The biflags are used in database.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub struct SearchGroupFlags: u16 {
+        const MAN_FOR_WOMAN = 0x1;
+        const MAN_FOR_MAN = 0x2;
+        const MAN_FOR_NON_BINARY = 0x4;
+        const WOMAN_FOR_MAN = 0x8;
+        const WOMAN_FOR_WOMAN = 0x10;
+        const WOMAN_FOR_NON_BINARY = 0x20;
+        const NON_BINARY_FOR_MAN = 0x40;
+        const NON_BINARY_FOR_WOMAN = 0x80;
+        const NON_BINARY_FOR_NON_BINARY = 0x100;
+    }
+}
+
+impl SearchGroupFlags {
+    pub fn to_filter(&self) -> SearchGroupFlagsFilter {
+        SearchGroupFlagsFilter::new(*self)
+    }
+}
+
+impl TryFrom<i64> for SearchGroupFlags {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let value = TryInto::<u16>::try_into(value).map_err(|e| e.to_string())?;
+        Ok(Self::from_bits(value).ok_or_else(|| "Unknown bitflag".to_string())?)
+    }
+}
+
+impl From<SearchGroupFlags> for i64 {
+    fn from(value: SearchGroupFlags) -> Self {
+        value.bits() as i64
+    }
+}
+
+impl From<ValidatedSearchGroups> for SearchGroupFlags {
+    fn from(value: ValidatedSearchGroups) -> Self {
+        let mut flags: SearchGroupFlags = Self::empty();
+        match value {
+            ValidatedSearchGroups::ManFor { woman, man, non_binary } => {
+                if woman {
+                    flags |= Self::MAN_FOR_WOMAN;
+                }
+                if man {
+                    flags |= Self::MAN_FOR_MAN;
+                }
+                if non_binary {
+                    flags |= Self::MAN_FOR_NON_BINARY;
+                }
+            }
+            ValidatedSearchGroups::WomanFor { man, woman, non_binary } => {
+                if man {
+                    flags |= Self::WOMAN_FOR_MAN;
+                }
+                if woman {
+                    flags |= Self::WOMAN_FOR_WOMAN;
+                }
+                if non_binary {
+                    flags |= Self::WOMAN_FOR_NON_BINARY;
+                }
+            }
+            ValidatedSearchGroups::NonBinaryFor { man, woman, non_binary } => {
+                if man {
+                    flags |= Self::NON_BINARY_FOR_MAN;
+                }
+                if woman {
+                    flags |= Self::NON_BINARY_FOR_WOMAN;
+                }
+                if non_binary {
+                    flags |= Self::NON_BINARY_FOR_NON_BINARY;
+                }
+            }
+        }
+        flags
+    }
+}
+
+impl From<SearchGroupFlags> for SearchGroups {
+    fn from(v: SearchGroupFlags) -> Self {
+        Self {
+            man_for_woman: v.contains(SearchGroupFlags::MAN_FOR_WOMAN),
+            man_for_man: v.contains(SearchGroupFlags::MAN_FOR_MAN),
+            man_for_non_binary: v.contains(SearchGroupFlags::MAN_FOR_NON_BINARY),
+            woman_for_man: v.contains(SearchGroupFlags::WOMAN_FOR_MAN),
+            woman_for_woman: v.contains(SearchGroupFlags::WOMAN_FOR_WOMAN),
+            woman_for_non_binary: v.contains(SearchGroupFlags::WOMAN_FOR_NON_BINARY),
+            non_binary_for_man: v.contains(SearchGroupFlags::NON_BINARY_FOR_MAN),
+            non_binary_for_woman: v.contains(SearchGroupFlags::NON_BINARY_FOR_WOMAN),
+            non_binary_for_non_binary: v.contains(SearchGroupFlags::NON_BINARY_FOR_NON_BINARY),
+        }
+    }
+}
+
+/// Filter which finds matches with other SearchGroupFlags.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SearchGroupFlagsFilter {
+    filter: SearchGroupFlags,
+}
+
+impl SearchGroupFlagsFilter {
+    fn new(flags: SearchGroupFlags) -> Self {
+        let mut filter = SearchGroupFlags::empty();
+
+        // Man
+        if flags.contains(SearchGroupFlags::MAN_FOR_WOMAN) {
+            filter |= SearchGroupFlags::WOMAN_FOR_MAN;
+        }
+        if flags.contains(SearchGroupFlags::MAN_FOR_MAN) {
+            filter |= SearchGroupFlags::MAN_FOR_MAN;
+        }
+        if flags.contains(SearchGroupFlags::MAN_FOR_NON_BINARY) {
+            filter |= SearchGroupFlags::NON_BINARY_FOR_MAN;
+        }
+        // Woman
+        if flags.contains(SearchGroupFlags::WOMAN_FOR_MAN) {
+            filter |= SearchGroupFlags::MAN_FOR_WOMAN;
+        }
+        if flags.contains(SearchGroupFlags::WOMAN_FOR_WOMAN) {
+            filter |= SearchGroupFlags::WOMAN_FOR_WOMAN;
+        }
+        if flags.contains(SearchGroupFlags::WOMAN_FOR_NON_BINARY) {
+            filter |= SearchGroupFlags::NON_BINARY_FOR_WOMAN;
+        }
+        // Non-binary
+        if flags.contains(SearchGroupFlags::NON_BINARY_FOR_MAN) {
+            filter |= SearchGroupFlags::MAN_FOR_NON_BINARY;
+        }
+        if flags.contains(SearchGroupFlags::NON_BINARY_FOR_WOMAN) {
+            filter |= SearchGroupFlags::WOMAN_FOR_NON_BINARY;
+        }
+        if flags.contains(SearchGroupFlags::NON_BINARY_FOR_NON_BINARY) {
+            filter |= SearchGroupFlags::NON_BINARY_FOR_NON_BINARY;
+        }
+
+        Self { filter }
+    }
+
+    fn is_match(&self, flags: SearchGroupFlags) -> bool {
+        self.filter.intersects(flags)
     }
 }
 
@@ -109,14 +503,55 @@ impl ProfileUpdateInternal {
 //     }
 // }
 
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
+#[serde(try_from = "f64")]
+pub struct FiniteDouble {
+    value: f64,
+}
+
+impl TryFrom<f64> for FiniteDouble {
+    type Error = String;
+
+    fn try_from(value: f64) -> Result<Self, Self::Error> {
+        if value.is_finite() {
+            Ok(Self { value })
+        } else {
+            Err("Value must be finite".to_string())
+        }
+    }
+}
+
+impl From<FiniteDouble> for f64 {
+    fn from(value: FiniteDouble) -> Self {
+        value.value
+    }
+}
+
+/// Location in latitude and longitude.
+/// The values are not NaN, infinity or negative infinity.
 #[derive(
-    Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable,
+    Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable, AsChangeset
 )]
-#[diesel(table_name = crate::schema::profile_location)]
+#[diesel(table_name = crate::schema::profile_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct Location {
-    pub latitude: f64,
-    pub longitude: f64,
+    #[schema(value_type = f64)]
+    #[diesel(deserialize_as = f64, serialize_as = f64)]
+    latitude: FiniteDouble,
+    #[schema(value_type = f64)]
+    #[diesel(deserialize_as = f64, serialize_as = f64)]
+    longitude: FiniteDouble,
+}
+
+impl Location {
+    pub fn latitude(&self) -> f64 {
+        self.latitude.into()
+    }
+
+    pub fn longitude(&self) -> f64 {
+        self.longitude.into()
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
@@ -129,7 +564,7 @@ pub struct ProfilePage {
     pub profiles: Vec<ProfileLink>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ProfileLink {
     id: AccountId,
     version: ProfileVersion,
@@ -141,6 +576,82 @@ impl ProfileLink {
             id,
             version: profile.version_uuid,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct ProfileQueryMakerDetails {
+    pub age: ProfileAge,
+    pub search_age_range: ProfileSearchAgeRangeValidated,
+    pub search_groups_filter: SearchGroupFlagsFilter,
+    /// If this is true, then also filter with ProfileMood value.
+    pub filter_profile_mood: Option<ProfileMood>,
+}
+
+impl ProfileQueryMakerDetails {
+    pub fn new(
+        profile: &ProfileInternal,
+        state: &ProfileStateInternal,
+    ) -> Self {
+        Self {
+            age: profile.age,
+            search_age_range: ProfileSearchAgeRangeValidated::new(
+                state.search_age_range_min,
+                state.search_age_range_max,
+            ),
+            search_groups_filter: state.search_group_flags.to_filter(),
+            // TODO(prod): implement when implementing other filters.
+            filter_profile_mood: None,
+        }
+    }
+}
+
+/// All data which location index needs for returning filtered profiles when
+/// user queries new profiles.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LocationIndexProfileData {
+    /// Simple profile information for client.
+    profile_link: ProfileLink,
+    age: ProfileAge,
+    search_age_range: ProfileSearchAgeRangeValidated,
+    search_groups: SearchGroupFlags,
+    profile_mood: ProfileMood,
+}
+
+impl LocationIndexProfileData {
+    pub fn new(
+        id: AccountId,
+        profile: &ProfileInternal,
+        state: &ProfileStateInternal,
+    ) -> Self {
+        Self {
+            profile_link: ProfileLink::new(id, profile),
+            age: profile.age,
+            search_age_range: ProfileSearchAgeRangeValidated::new(
+                state.search_age_range_min,
+                state.search_age_range_max,
+            ),
+            search_groups: state.search_group_flags,
+            profile_mood: profile.profile_mood,
+        }
+    }
+
+    pub fn is_match(&self, query_maker_details: &ProfileQueryMakerDetails) -> bool {
+        let mut is_match = self.search_age_range.is_match(query_maker_details.age) &&
+            query_maker_details.search_age_range.is_match(self.age) &&
+            query_maker_details.search_groups_filter.is_match(self.search_groups);
+
+        if let Some(filter_mood) = query_maker_details.filter_profile_mood {
+            is_match &= self.profile_mood == filter_mood
+        }
+
+        is_match
+    }
+}
+
+impl From<&LocationIndexProfileData> for ProfileLink {
+    fn from(value: &LocationIndexProfileData) -> Self {
+        value.profile_link
     }
 }
 

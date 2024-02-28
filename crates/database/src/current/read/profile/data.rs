@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, ProfileInternal};
+use model::{AccountIdInternal, Location, ProfileInternal, ProfileStateInternal};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 define_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);
@@ -23,17 +23,25 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Location, DieselDatabaseError> {
-        use crate::schema::profile_location::dsl::*;
+        use crate::schema::profile_state::dsl::*;
 
-        let (lat, lon) = profile_location
+        profile_state
             .filter(account_id.eq(id.as_db_id()))
-            .select((latitude, longitude))
-            .first::<(f64, f64)>(self.conn())
-            .change_context(DieselDatabaseError::Execute)?;
+            .select(Location::as_select())
+            .first(self.conn())
+            .change_context(DieselDatabaseError::Execute)
+    }
 
-        Ok(Location {
-            latitude: lat,
-            longitude: lon,
-        })
+    pub fn profile_state(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileStateInternal, DieselDatabaseError> {
+        use crate::schema::profile_state::dsl::*;
+
+        profile_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(ProfileStateInternal::as_select())
+            .first(self.conn())
+            .change_context(DieselDatabaseError::Execute)
     }
 }

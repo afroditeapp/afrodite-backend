@@ -4,7 +4,7 @@ use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, ProfileInternal, ProfileLink, SharedStateRaw
+    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateInternal, SharedStateRaw
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
@@ -160,12 +160,16 @@ impl DatabaseCache {
                 cmds.profile().data().profile(account_id)
             })
             .await?;
+            let state = db_read(current_db, move |mut cmds| {
+                cmds.profile().data().profile_state(account_id)
+            })
+            .await?;
             let profile_location = db_read(current_db, move |mut cmds| {
                 cmds.profile().data().profile_location(account_id)
             })
             .await?;
 
-            let mut profile_data: CachedProfile = profile.into();
+            let mut profile_data = CachedProfile::new(account_id.uuid, profile, state);
 
             let location_key = index_writer.coordinates_to_key(&profile_location);
             profile_data.location.current_position = location_key;
@@ -178,9 +182,9 @@ impl DatabaseCache {
             .await?;
             if account.profile_visibility().is_currently_public() {
                 index_writer
-                    .update_profile_link(
+                    .update_profile_data(
                         account_id.uuid,
-                        ProfileLink::new(account_id.uuid, &profile_data.data),
+                        profile_data.location_index_profile_data(),
                         location_key,
                     )
                     .await
@@ -375,19 +379,32 @@ impl DatabaseCache {
 
 #[derive(Debug)]
 pub struct CachedProfile {
+    pub account_id: AccountId,
     pub data: ProfileInternal,
+    pub state: ProfileStateInternal,
     pub location: LocationData,
 }
 
-impl From<ProfileInternal> for CachedProfile {
-    fn from(value: ProfileInternal) -> Self {
+impl CachedProfile {
+    pub fn new(account_id: AccountId, data: ProfileInternal, state: ProfileStateInternal) -> Self {
         Self {
-            data: value,
+            account_id,
+            data,
+            state,
             location: LocationData {
                 current_position: LocationIndexKey::default(),
                 current_iterator: LocationIndexIteratorState::new(),
             },
         }
+    }
+
+    pub fn location_index_profile_data(&self) -> LocationIndexProfileData {
+        LocationIndexProfileData::new(self.account_id, &self.data, &self.state)
+    }
+
+    pub fn filters(&self) -> ProfileQueryMakerDetails {
+        ProfileQueryMakerDetails::new(&self.data, &self.state)
+
     }
 }
 

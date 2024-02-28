@@ -342,7 +342,7 @@ impl<'a> WriteCommands<'a> {
 
         if config.components().profile {
             let profile = current.profile().data().insert_profile(id)?;
-            current.profile().data().insert_profile_location(id)?;
+            current.profile().data().insert_profile_state(id)?;
 
             // Profile history
             history.profile().insert_profile(id, &profile.into())?;

@@ -59,6 +59,7 @@ macro_rules! define_read_commands {
                 self.cmds.db_read(cmd).await
             }
 
+            // TODO: change cache operation to return Result?
             pub async fn read_cache<T, Id: Into<model::AccountId>>(
                 &self,
                 id: Id,

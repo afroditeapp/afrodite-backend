@@ -139,21 +139,41 @@ CREATE TABLE IF NOT EXISTS account_setup(
 
 ---------- Tables for server component profile ----------
 
-CREATE TABLE IF NOT EXISTS profile(
-    account_id      INTEGER PRIMARY KEY NOT NULL,
-    version_uuid    BLOB                NOT NULL,
-    name            TEXT                NOT NULL    DEFAULT '',
-    profile_text    TEXT                NOT NULL    DEFAULT '',
+-- Private profile related state for some account.
+CREATE TABLE IF NOT EXISTS profile_state(
+    account_id           INTEGER PRIMARY KEY  NOT NULL,
+    -- Min age in years and inside inclusive range of [18,99] for
+    -- searching profiles.
+    search_age_range_min INTEGER              NOT NULL    DEFAULT 18,
+    -- Max age in years and inside inclusive range of [18,99] for
+    -- searching profiles.
+    search_age_range_max INTEGER              NOT NULL    DEFAULT 18,
+    -- Bitflags value containing gender and genders that
+    -- the profile owner searches for.
+    search_group_flags   INTEGER              NOT NULL    DEFAULT 0,
+    latitude             DOUBLE               NOT NULL    DEFAULT 0.0,
+    longitude            DOUBLE               NOT NULL    DEFAULT 0.0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS profile_location(
+-- Profile information which can be sent to clients if
+-- profile visibility is public.
+CREATE TABLE IF NOT EXISTS profile(
     account_id      INTEGER PRIMARY KEY NOT NULL,
-    latitude        DOUBLE              NOT NULL    DEFAULT 0.0,
-    longitude       DOUBLE              NOT NULL    DEFAULT 0.0,
+    version_uuid    BLOB                NOT NULL,
+    name            TEXT                NOT NULL    DEFAULT '',
+    profile_text    TEXT                NOT NULL    DEFAULT '',
+    -- Age in years and inside inclusive range of [18,99].
+    age             INTEGER             NOT NULL    DEFAULT 18,
+    -- 0 = nothing
+    -- 1 = not sure yet
+    -- 2 = friend
+    -- 3 = fun
+    -- 4 = intimate relationship
+    profile_mood INTEGER         NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

@@ -2,7 +2,7 @@ use std::{collections::HashMap, mem::size_of, num::NonZeroU8, sync::Arc};
 
 use config::Config;
 use error_stack::ResultExt;
-use model::{AccountId, CellData, Location, LocationIndexKey, ProfileLink};
+use model::{AccountId, CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink, ProfileQueryMakerDetails};
 use tokio::sync::RwLock;
 use tracing::info;
 
@@ -78,6 +78,14 @@ fn format_size_in_bytes(size: usize) -> String {
     format!("{:.2} {}", size, unit)
 }
 
+enum IteratorResultInternal {
+    NoProfiles,
+    TryAgain,
+    MatchingProfilesFound {
+        profiles: Vec<ProfileLink>,
+    }
+}
+
 #[derive(Debug)]
 pub struct LocationIndexIteratorHandle<'a> {
     index: &'a Arc<LocationIndex>,
@@ -98,7 +106,36 @@ impl<'a> LocationIndexIteratorHandle<'a> {
     pub async fn next_profiles(
         &self,
         previous_iterator_state: LocationIndexIteratorState,
+        query_maker_details: ProfileQueryMakerDetails,
     ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), IndexError>
+    {
+        let mut iterator_state = previous_iterator_state;
+        loop {
+            let (new_state, result) = self
+                .next_profiles_internal(iterator_state, &query_maker_details)
+                .await?;
+            iterator_state = new_state;
+            match result {
+                IteratorResultInternal::NoProfiles => {
+                    return Ok((iterator_state, None));
+                }
+                IteratorResultInternal::MatchingProfilesFound { profiles } => {
+                    return Ok((iterator_state, Some(profiles)));
+                }
+                IteratorResultInternal::TryAgain => {
+                    continue;
+                }
+            }
+        }
+    }
+
+    /// Iterate to next index cell which has profiles and get all matching
+    /// profiles.
+    async fn next_profiles_internal(
+        &self,
+        previous_iterator_state: LocationIndexIteratorState,
+        query_maker_details: &ProfileQueryMakerDetails,
+    ) -> error_stack::Result<(LocationIndexIteratorState, IteratorResultInternal), IndexError>
     {
         let index = self.index.clone();
         let (iterator, key) = tokio::task::spawn_blocking(move || {
@@ -108,17 +145,32 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         })
         .await
         .change_context(IndexError::ProfileIndex)?;
-        let data = match key {
-            None => (iterator.into(), None),
+        let result = match key {
+            None => IteratorResultInternal::NoProfiles,
             Some(key) => match self.profiles.read().await.get(&key) {
-                None => (iterator.into(), None),
-                Some(profiles) => (
-                    iterator.into(),
-                    Some(profiles.profiles.values().map(|p| p.clone()).collect()),
-                ),
+                // Possible data race occurred where profile was removed
+                // from the data storage when iterating the index.
+                None => IteratorResultInternal::TryAgain,
+                // TODO(perf): Currently all profiles in one index cell are
+                // sent to client, which might cause issues if everyone will
+                // set profile to same location.
+                Some(profiles) => {
+                    let matches: Vec<ProfileLink> = profiles.profiles
+                        .values()
+                        .filter(|p| p.is_match(&query_maker_details))
+                        .map(|p| p.into())
+                        .collect();
+                    if matches.len() == 0 {
+                        IteratorResultInternal::TryAgain
+                    } else {
+                        IteratorResultInternal::MatchingProfilesFound {
+                            profiles: matches,
+                        }
+                    }
+                }
             },
         };
-        Ok(data)
+        Ok((iterator.into(), result))
     }
 
     pub fn reset_iterator(
@@ -151,10 +203,10 @@ impl<'a> LocationIndexWriteHandle<'a> {
 
     pub fn coordinates_to_key(&self, location: &Location) -> LocationIndexKey {
         self.coordinates
-            .to_index_key(location.latitude, location.longitude)
+            .to_index_key(location.latitude(), location.longitude())
     }
 
-    /// Move ProfileLink to another index location
+    /// Move LocationIndexProfileData to another index location
     pub async fn update_profile_location(
         &self,
         account_id: AccountId,
@@ -224,10 +276,11 @@ impl<'a> LocationIndexWriteHandle<'a> {
         Ok(())
     }
 
-    pub async fn update_profile_link(
+    /// Set LocationIndexProfileData to specific index location
+    pub async fn update_profile_data(
         &self,
         account_id: AccountId,
-        profile_link: ProfileLink,
+        profile_data: LocationIndexProfileData,
         key: LocationIndexKey,
     ) -> error_stack::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
@@ -236,7 +289,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 let update_index = some_other_profiles_also.profiles.len() == 0;
                 some_other_profiles_also
                     .profiles
-                    .insert(account_id, profile_link);
+                    .insert(account_id, profile_data);
                 if update_index {
                     drop(profiles);
                     let mut updater = IndexUpdater::new(self.index.clone());
@@ -246,7 +299,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                 }
             }
             None => {
-                profiles.insert(key, ProfilesAtLocation::new(account_id, profile_link));
+                profiles.insert(key, ProfilesAtLocation::new(account_id, profile_data));
                 drop(profiles);
                 let mut updater = IndexUpdater::new(self.index.clone());
                 tokio::task::spawn_blocking(move || updater.flag_cell_to_have_profiles(key))
@@ -257,7 +310,8 @@ impl<'a> LocationIndexWriteHandle<'a> {
         Ok(())
     }
 
-    pub async fn remove_profile_link(
+    /// Remove LocationIndexProfileData from specific index location
+    pub async fn remove_profile_data(
         &self,
         account_id: AccountId,
         key: LocationIndexKey,
@@ -271,6 +325,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
                     .is_some()
                     && some_other_profiles_also.profiles.len() == 0
                 {
+                    profiles.remove(&key);
                     drop(profiles);
                     let mut updater = IndexUpdater::new(self.index.clone());
                     tokio::task::spawn_blocking(move || updater.remove_profile_flag_from_cell(key))
@@ -286,11 +341,11 @@ impl<'a> LocationIndexWriteHandle<'a> {
 
 #[derive(Debug, Clone)]
 pub struct ProfilesAtLocation {
-    profiles: HashMap<AccountId, ProfileLink>,
+    profiles: HashMap<AccountId, LocationIndexProfileData>,
 }
 
 impl ProfilesAtLocation {
-    pub fn new(account_id: AccountId, profile: ProfileLink) -> Self {
+    pub fn new(account_id: AccountId, profile: LocationIndexProfileData) -> Self {
         let mut profiles = HashMap::new();
         profiles.insert(account_id, profile);
         Self { profiles }

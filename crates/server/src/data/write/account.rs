@@ -69,14 +69,14 @@ impl WriteCommandsAccount<'_> {
         id: AccountIdInternal,
         visibility: bool,
     ) -> Result<(), DataError> {
-        let (location, profile_link) = self
+        let (location, profile_data) = self
             .cache()
             .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
                 Ok((
                     p.location.current_position,
-                    ProfileLink::new(id.as_id(), &p.data),
+                    p.location_index_profile_data(),
                 ))
             })
             .await
@@ -84,11 +84,11 @@ impl WriteCommandsAccount<'_> {
 
         if visibility {
             self.location()
-                .update_profile_link(id.as_id(), profile_link, location)
+                .update_profile_data(id.as_id(), profile_data, location)
                 .await?;
         } else {
             self.location()
-                .remove_profile_link(id.as_id(), location)
+                .remove_profile_data(id.as_id(), location)
                 .await?;
         }
 

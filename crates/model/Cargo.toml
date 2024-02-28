@@ -16,6 +16,7 @@ diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite
 
 nalgebra = { workspace = true }
 base64 = { workspace = true }
+bitflags = { workspace = true }
 
 thiserror = { workspace = true }
 

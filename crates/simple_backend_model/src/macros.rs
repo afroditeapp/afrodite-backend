@@ -258,3 +258,40 @@ macro_rules! diesel_i64_try_from {
         }
     };
 }
+
+/// Same as diesel_i64_try_from! but for struct.
+/// The struct needs to have `Into<i64>` implementation.
+#[macro_export]
+macro_rules! diesel_i64_struct_try_from {
+    ($name:ty) => {
+        impl<DB: diesel::backend::Backend>
+            diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB> for $name
+        where
+            i64: diesel::deserialize::FromSql<diesel::sql_types::BigInt, DB>,
+        {
+            fn from_sql(
+                value: <DB as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let value = i64::from_sql(value)?;
+                TryInto::<$name>::try_into(value).map_err(|e| e.into())
+            }
+        }
+
+        // TODO: Support other databases?
+        // https://docs.diesel.rs/2.0.x/diesel/serialize/trait.ToSql.html
+
+        impl diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite> for $name
+        where
+            i64: diesel::serialize::ToSql<diesel::sql_types::BigInt, diesel::sqlite::Sqlite>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+            ) -> diesel::serialize::Result {
+                let value = Into::<i64>::into(*self);
+                out.set_value(value);
+                Ok(diesel::serialize::IsNull::No)
+            }
+        }
+    };
+}
