@@ -153,6 +153,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     search_group_flags   INTEGER              NOT NULL    DEFAULT 0,
     latitude             DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude            DOUBLE               NOT NULL    DEFAULT 0.0,
+    -- Filter profile mood bitflag value. Zero means no filtering.
+    filter_profile_mood  INTEGER              NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -168,12 +170,13 @@ CREATE TABLE IF NOT EXISTS profile(
     profile_text    TEXT                NOT NULL    DEFAULT '',
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,
-    -- 0 = nothing
-    -- 1 = not sure yet
-    -- 2 = friend
-    -- 3 = fun
-    -- 4 = intimate relationship
-    profile_mood INTEGER         NOT NULL    DEFAULT 0,
+    -- Single profile mood bitflag value.
+    -- 0x1 = nothing
+    -- 0x2 = not sure yet
+    -- 0x4 = friend
+    -- 0x8 = fun
+    -- 0x10 = intimate relationship
+    profile_mood INTEGER         NOT NULL    DEFAULT 1,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

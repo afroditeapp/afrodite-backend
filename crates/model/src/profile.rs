@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 
 use diesel::{prelude::*, sql_types::Binary};
 use nalgebra::DMatrix;
-use serde::{Deserialize, Serialize};
+use serde::{de::value, Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -27,6 +27,8 @@ pub struct ProfileInternal {
 pub struct Profile {
     pub name: String,
     pub profile_text: String,
+    pub age: ProfileAge,
+    pub profile_mood: ProfileMood,
     /// Version used for caching profile in client side.
     pub version: ProfileVersion,
 }
@@ -35,6 +37,9 @@ impl Profile {
     pub fn into_update(self) -> ProfileUpdate {
         ProfileUpdate {
             profile_text: self.profile_text,
+            name: self.name,
+            age: self.age,
+            profile_mood: self.profile_mood,
         }
     }
 }
@@ -44,6 +49,8 @@ impl From<ProfileInternal> for Profile {
         Self {
             name: value.name,
             profile_text: value.profile_text,
+            age: value.age,
+            profile_mood: value.profile_mood,
             version: value.version_uuid,
         }
     }
@@ -59,6 +66,8 @@ pub struct ProfileStateInternal {
     pub search_age_range_max: ProfileAge,
     #[diesel(deserialize_as = i64, serialize_as = i64)]
     pub search_group_flags: SearchGroupFlags,
+    #[diesel(deserialize_as = i64, serialize_as = i64)]
+    pub filter_profile_mood: ProfileMoodFlags,
 }
 
 /// Profile age value which is in inclusive range `[18, 99]`.
@@ -161,17 +170,19 @@ impl TryFrom<ProfileSearchAgeRange> for ProfileSearchAgeRangeValidated {
     }
 }
 
-/// What is the profile owner searching for.
+/// What is the profile owner searching for currently.
+///
+/// The enum values are bitflag values to allow fast and easy profile filtering.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]
 #[repr(u8)]
 pub enum ProfileMood {
     #[default]
-    Nothing = 0,
-    NotSureYet = 1,
-    Friend = 2,
-    Fun = 3,
-    IntimateRelationship = 4,
+    Nothing = 0x1,
+    NotSureYet = 0x2,
+    Friend = 0x4,
+    Fun = 0x8,
+    IntimateRelationship = 0x10,
 }
 
 impl TryFrom<i64> for ProfileMood {
@@ -179,11 +190,11 @@ impl TryFrom<i64> for ProfileMood {
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Self::Nothing),
-            1 => Ok(Self::NotSureYet),
-            2 => Ok(Self::Friend),
-            3 => Ok(Self::Fun),
-            4 => Ok(Self::IntimateRelationship),
+            0x1 => Ok(Self::Nothing),
+            0x2 => Ok(Self::NotSureYet),
+            0x4 => Ok(Self::Friend),
+            0x8 => Ok(Self::Fun),
+            0x10 => Ok(Self::IntimateRelationship),
             _ => Err(format!("Unknown profile mood value {}", value)),
         }
     }
@@ -191,6 +202,34 @@ impl TryFrom<i64> for ProfileMood {
 
 diesel_i64_try_from!(ProfileMood);
 
+bitflags::bitflags! {
+    /// Profile mood filter
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub struct ProfileMoodFlags: u8 {
+        const NOTHING = ProfileMood::Nothing as u8;
+        const NOT_SURE_YET = ProfileMood::NotSureYet as u8;
+        const FRIEND = ProfileMood::Friend as u8;
+        const FUN = ProfileMood::Fun as u8;
+        const INTIMATE_RELATIONSHIP = ProfileMood::IntimateRelationship as u8;
+    }
+}
+
+impl TryFrom<i64> for ProfileMoodFlags {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let value = TryInto::<u8>::try_into(value)
+            .map_err(|e| e.to_string())?;
+        Self::from_bits(value)
+            .ok_or_else(|| format!("Unknown profile mood value {}", value))
+    }
+}
+
+impl From<ProfileMoodFlags> for i64 {
+    fn from(value: ProfileMoodFlags) -> Self {
+        value.bits() as i64
+    }
+}
 
 /// My gender and what gender I'm searching for.
 ///
@@ -444,6 +483,9 @@ impl SearchGroupFlagsFilter {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default)]
 pub struct ProfileUpdate {
     pub profile_text: String,
+    pub name: String,
+    pub age: ProfileAge,
+    pub profile_mood: ProfileMood,
 }
 
 impl Profile {

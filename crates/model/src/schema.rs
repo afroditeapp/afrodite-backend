@@ -273,6 +273,7 @@ diesel::table! {
         search_group_flags -> Integer,
         latitude -> Double,
         longitude -> Double,
+        filter_profile_mood -> Integer,
     }
 }
 
