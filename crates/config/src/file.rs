@@ -69,11 +69,12 @@ pub enum ConfigFileError {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
     pub admin_email: String,
+    pub profile_attributes_file: Option<PathBuf>,
+
     pub components: Components,
     pub location: Option<LocationConfig>,
     pub bots: Option<StaticBotConfig>,
     pub external_services: Option<ExternalServices>,
-
     pub internal_api: Option<InternalApiConfig>,
     pub queue_limits: Option<QueueLimitsConfig>,
 }

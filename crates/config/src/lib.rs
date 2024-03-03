@@ -13,10 +13,10 @@ use args::{AppMode, ArgsConfig};
 use error_stack::{Result, ResultExt};
 use file::{QueueLimitsConfig, StaticBotConfig};
 use file_dynamic::ConfigFileDynamic;
-use model::BotConfig;
+use model::{AttributesFileInternal, BotConfig, ProfileAttributes};
 use reqwest::Url;
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, IntoReportFromString};
 
 use self::file::{Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig};
 
@@ -58,6 +58,7 @@ pub struct Config {
 
     // Other configs
     mode: Option<AppMode>,
+    profile_attributes: Option<ProfileAttributes>,
 }
 
 impl Config {
@@ -165,6 +166,18 @@ pub fn get_config(
         );
     }
 
+    let profile_attributes = if let Some(path) = &file_config.profile_attributes_file {
+        let attributes = std::fs::read_to_string(path)
+            .change_context(GetConfigError::LoadFileError)?;
+        let attributes: AttributesFileInternal = toml::from_str(&attributes)
+            .change_context(GetConfigError::InvalidConfiguration)?;
+        let attributes = attributes.validate()
+            .into_error_string(GetConfigError::InvalidConfiguration)?;
+        Some(attributes)
+    } else {
+        None
+    };
+
     let config = Config {
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
@@ -172,6 +185,7 @@ pub fn get_config(
         external_services,
         client_api_urls,
         mode: args_config.mode.clone(),
+        profile_attributes,
     };
 
     Ok(config)

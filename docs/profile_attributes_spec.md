@@ -45,16 +45,14 @@ group_values = [ # Optional
     ] },
 ]
 translations = [ # Optonal
-    [
-        {
-            lang = "se",
-            values = [
-                { key = "city", value = "Stad" }
-                { key = "helsinki", value = "Helsingfors" },
-                { key = "kallio", value = "Berghäll" },
-            ]
-        }
-    ]
+    {
+        lang = "se",
+        values = [
+            { key = "city", value = "Stad" },
+            { key = "helsinki", value = "Helsingfors" },
+            { key = "kallio", value = "Berghäll" },
+        ]
+    }
 ]
 
 [[attribute]]
@@ -62,6 +60,7 @@ key = "favorite-color"
 name = "Favorite Color"
 mode = "SelectSingleFilterMultiple"
 icon = "material:color_lens"
+id = 1
 values = [
     "Red",   # id = 0x2
     "Green", # id = 0x4
@@ -84,6 +83,8 @@ values = [
         Only top level values are possible to set. Max value count is 7.
         (Internal representation is 8 bit bitflag and zero bit is
         reserved for filtering purposes)
+    - `SelectMultipleFilterMultiple` - same as `SelectSingleFilterMultiple`
+        but selecting multiple bitflags are possible.
 - `icon` - icon to be used for the attribute. The format is
         `src:icon_identifier`. The `src` value `material` states
         that the `icon_identifier` value is from the material icon set.

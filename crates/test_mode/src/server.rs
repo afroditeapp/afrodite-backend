@@ -197,6 +197,7 @@ fn new_config(
         internal_api: Some(InternalApiConfig { bot_login: true }),
         queue_limits: None,
         bots: None,
+        profile_attributes_file: None,
     };
 
     let simple_backend_config = SimpleBackendConfigFile {

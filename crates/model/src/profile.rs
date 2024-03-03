@@ -9,6 +9,10 @@ use uuid::Uuid;
 
 use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb};
 
+mod attribute;
+
+pub use attribute::*;
+
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::profile)]

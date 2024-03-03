@@ -1819,6 +1819,7 @@ dependencies = [
  "simple_backend_model",
  "sqlx",
  "thiserror",
+ "toml 0.8.9",
  "utoipa",
  "uuid",
 ]
