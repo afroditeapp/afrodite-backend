@@ -17,24 +17,32 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
+    attribute_order: AttributeOrderMode,
     attribute: Vec<AttributeInternal>,
 }
 
 impl AttributesFileInternal {
-    fn validate_uniquenes_of_keys_and_ids(self) -> Result<Vec<AttributeInternal>, String> {
+    fn validate_uniquenes_of_keys_ids_and_order_numbers(self) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
+        let mut order_numbers = HashSet::new();
         for attribute in &self.attribute {
             if keys.contains(&attribute.key) {
                 return Err(format!("Duplicate key {}", attribute.key));
             }
             keys.insert(attribute.key.clone());
+
             if ids.contains(&attribute.id) {
                 return Err(format!("Duplicate id {}", attribute.id));
             }
             ids.insert(attribute.id);
+
+            if order_numbers.contains(&attribute.order_number) {
+                return Err(format!("Duplicate order number {}", attribute.order_number));
+            }
+            order_numbers.insert(attribute.order_number);
         }
-        Ok(self.attribute)
+        Ok((self.attribute_order, self.attribute))
     }
 
     pub fn validate(self) -> Result<ProfileAttributes, String> {
@@ -55,6 +63,8 @@ pub struct AttributeInternal {
     pub required: bool,
     pub icon: IconResource,
     pub id: u16,
+    pub order_number: u16,
+    pub value_order: AttributeValueOrderMode,
     /// Array of strings or objects
     pub values: toml::value::Array,
     #[serde(default = "value_empty_vec")]
@@ -107,11 +117,11 @@ impl ModeAndIdSequenceNumber {
         }
     }
 
-    fn set_id(&mut self, id: u16) -> Result<(), String> {
-        if id < self.current_id {
-            return Err(format!("Invalid ID {}, id < current_id {}", id, self.current_id));
-        }
+    fn new_increment_only_mode() -> Self {
+        Self::new(AttributeMode::SelectSingleFilterSingle)
+    }
 
+    fn set_value(&mut self, id: u16) -> Result<(), String> {
         match self.mode {
             AttributeMode::SelectSingleFilterSingle => {
                 self.current_id = id;
@@ -126,7 +136,7 @@ impl ModeAndIdSequenceNumber {
         Ok(())
     }
 
-    fn current_id(&self) -> u16 {
+    fn current_value(&self) -> u16 {
         self.current_id
     }
 
@@ -147,7 +157,7 @@ impl ModeAndIdSequenceNumber {
     }
 
     /// Increment the current ID and return the updated current ID.
-    fn increment_id(&mut self) -> Result<u16, String> {
+    fn increment_value(&mut self) -> Result<u16, String> {
         match self.mode {
             AttributeMode::SelectSingleFilterSingle => {
                 self.current_id += 1;
@@ -172,18 +182,13 @@ struct AttributeInfoValidated {
 
 impl AttributeInternal {
     fn validate(&self) -> Result<AttributeInfoValidated, String> {
-        let mut top_level_ids = HashSet::new();
-        let mut current_top_level_id = ModeAndIdSequenceNumber::new(self.mode);
-        let mut keys = HashSet::new();
-        let mut values = Vec::new();
-
-        keys.insert(self.key.clone());
-
         fn handle_attribute_value(
             v: toml::Value,
             all_ids: &mut HashSet<u16>,
+            all_order_numbers: &mut HashSet<u16>,
             all_keys: &mut HashSet<String>,
             id_state: &mut ModeAndIdSequenceNumber,
+            order_number_state: &mut ModeAndIdSequenceNumber,
         ) -> Result<AttributeValue, String> {
             match v {
                 toml::Value::Table(t) => {
@@ -192,13 +197,13 @@ impl AttributeInternal {
                         .map_err(|e| format!("Attribute value error: {}", e))?;
 
                     match value.id {
-                        Some(id) => id_state.set_id(id)?,
+                        Some(id) => id_state.set_value(id)?,
                         None => {
-                            id_state.increment_id()?;
+                            id_state.increment_value()?;
                         }
                     }
 
-                    let id = id_state.current_id();
+                    let id = id_state.current_value();
                     if all_ids.contains(&id) {
                         return Err(format!("Duplicate id {}", id));
                     }
@@ -209,10 +214,23 @@ impl AttributeInternal {
                     }
                     all_keys.insert(value.key.clone());
 
+                    match value.order_number {
+                        Some(order_number) => order_number_state.set_value(order_number)?,
+                        None => {
+                            order_number_state.increment_value()?;
+                        }
+                    }
+                    let order_number = order_number_state.current_value();
+                    if all_order_numbers.contains(&order_number) {
+                        return Err(format!("Duplicate order number {}", order_number));
+                    }
+                    all_order_numbers.insert(order_number);
+
                     let value = AttributeValue {
                         key: value.key,
                         value: value.value,
-                        id: id_state.current_id(),
+                        id: id_state.current_value(),
+                        order_number: order_number_state.current_value(),
                         editable: value.editable,
                         visible: value.visible,
                         icon: value.icon,
@@ -223,7 +241,8 @@ impl AttributeInternal {
                     let value = AttributeValue {
                         key: s.to_lowercase(),
                         value: s,
-                        id: id_state.increment_id()?,
+                        id: id_state.increment_value()?,
+                        order_number: order_number_state.increment_value()?,
                         editable: true,
                         visible: true,
                         icon: None,
@@ -239,11 +258,25 @@ impl AttributeInternal {
                     }
                     all_keys.insert(value.key.clone());
 
+                    if all_order_numbers.contains(&value.order_number) {
+                        return Err(format!("Duplicate order number {}", value.order_number));
+                    }
+                    all_order_numbers.insert(value.order_number);
+
                     Ok(value)
                 }
                 _ => return Err(format!("Invalid value type: {:?}", v)),
             }
         }
+
+        let mut keys = HashSet::new();
+        keys.insert(self.key.clone());
+
+        let mut top_level_ids = HashSet::new();
+        let mut top_level_order_numbers = HashSet::new();
+        let mut current_top_level_id = ModeAndIdSequenceNumber::new(self.mode);
+        let mut current_top_level_count_number = ModeAndIdSequenceNumber::new_increment_only_mode();
+        let mut values = Vec::new();
 
         for v in  self
             .values
@@ -253,8 +286,10 @@ impl AttributeInternal {
                     handle_attribute_value(
                         v,
                         &mut top_level_ids,
+                        &mut top_level_order_numbers,
                         &mut keys,
-                        &mut current_top_level_id
+                        &mut current_top_level_id,
+                        &mut current_top_level_count_number,
                     )?
                 );
             }
@@ -273,15 +308,19 @@ impl AttributeInternal {
                 }
 
                 let mut sub_level_ids = HashSet::new();
+                let mut sub_level_order_numbers = HashSet::new();
                 let mut current_sub_level_id = ModeAndIdSequenceNumber::new(self.mode);
+                let mut current_sub_level_count_number = ModeAndIdSequenceNumber::new_increment_only_mode();
                 let mut values = Vec::new();
 
                 for v in g.values {
                     let value = handle_attribute_value(
                         v,
                         &mut sub_level_ids,
+                        &mut sub_level_order_numbers,
                         &mut keys,
                         &mut current_sub_level_id,
+                        &mut current_sub_level_count_number,
                     )?;
                     values.push(value);
                 }
@@ -334,6 +373,7 @@ pub struct AttributeValueInternal {
     pub key: String,
     pub value: String,
     pub id: Option<u16>,
+    pub order_number: Option<u16>,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     pub editable: bool,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
@@ -352,6 +392,9 @@ pub struct AttributeValue {
     /// value in top level group A, sub level group C and sub level group B
     /// can have the same ID.
     pub id: u16,
+    /// Order number for client to determine in what order the
+    /// values should be displayed.
+    pub order_number: u16,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     pub editable: bool,
@@ -376,11 +419,23 @@ pub struct Translation {
     pub value: String,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
 pub enum AttributeMode {
     SelectSingleFilterSingle,
     SelectSingleFilterMultiple,
     SelectMultipleFilterMultiple,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+pub enum AttributeOrderMode {
+    OrderNumber,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+pub enum AttributeValueOrderMode {
+    AlphabethicalKey,
+    AlphabethicalValue,
+    OrderNumber,
 }
 
 impl AttributeMode {
@@ -447,12 +502,13 @@ impl From<IconResource> for String {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ProfileAttributes {
+    pub attribute_order: AttributeOrderMode,
     pub attributes: Vec<Attribute>,
 }
 
 impl ProfileAttributes {
     pub fn from_file(file: AttributesFileInternal) -> Result<Self, String> {
-        let internal_attributes = file.validate_uniquenes_of_keys_and_ids()?;
+        let (attribute_order, internal_attributes) = file.validate_uniquenes_of_keys_ids_and_order_numbers()?;
 
         let mut attributes = vec![];
         for a in internal_attributes {
@@ -466,13 +522,18 @@ impl ProfileAttributes {
                 required: a.required,
                 icon: a.icon,
                 id: a.id,
+                order_number: a.order_number,
+                value_order: a.value_order,
                 values: info.values,
                 group_values: info.group_values,
                 translations: info.translations,
             };
             attributes.push(a);
         }
-        Ok(Self { attributes })
+        Ok(Self {
+            attribute_order,
+            attributes,
+        })
     }
 }
 
@@ -500,6 +561,11 @@ pub struct Attribute {
     pub icon: IconResource,
     /// Numeric unique identifier for the attribute.
     pub id: u16,
+    /// Attribute order number.
+    pub order_number: u16,
+    /// Attribute value ordering mode for client to determine in what order
+    /// the values should be displayed.
+    pub value_order: AttributeValueOrderMode,
     /// Top level values for the attribute.
     pub values: Vec<AttributeValue>,
     /// Sub level values for the attribute.

@@ -11,6 +11,8 @@ displaying and editing of the attributes.
 
 ```toml
 
+attribute_order = "OrderNumber"
+
 [[attribute]]
 key = "city"
 name = "City"
@@ -20,6 +22,8 @@ visible = true # Optional
 required = false # Optional
 icon = "material:location_city"
 id = 0
+order = 0
+value_order = "AlphabeticalValue"
 values = [
     {
         key = "helsinki",
@@ -64,6 +68,7 @@ name = "Favorite Color"
 mode = "SelectSingleFilterMultiple"
 icon = "material:color_lens"
 id = 1
+order = 1
 values = [
     "Red",   # id = 0x2
     "Green", # id = 0x4
@@ -72,8 +77,13 @@ values = [
 
 
 ```
+### Top level fields
 
-### Common attribute section fields
+- `attribute_order` - Display order mode for attributes.
+    Possible values are
+    - `OrderNumber` - use the order numbers to sort the attributes.
+
+### Attribute section fields
 
 #### Required fields
 - `key` - unique identifier of the attribute
@@ -88,6 +98,15 @@ values = [
         reserved for filtering purposes)
     - `SelectMultipleFilterMultiple` - same as `SelectSingleFilterMultiple`
         but selecting multiple bitflags are possible.
+- `order_number` - Unique order number for the attribute.
+        0 is the first attribute.
+- `value_order` - Display order mode for the attribute values.
+    Possible values are
+    - `AlphabeticalKey` - ignore order numbers and sort the attribute values
+        alphabetically using attribute value key.
+    - `AlphabeticalValue` - ignore order numbers and sort the attribute
+      values alphabetically using displayed attribute value/translation.
+    - `OrderNumber` - use the order numbers to sort the attribute values.
 - `icon` - icon to be used for the attribute. The format is
         `src:icon_identifier`. The `src` value `material` states
         that the `icon_identifier` value is from the material icon set.
@@ -110,6 +129,11 @@ values = [
     - `icon` - Icon to be used for the attribute.
         This field has the same format as the attribute `icon` field.
         (default: null)
+    - `order_number` - Display order number for the value.
+        0 is the first value.
+        Default value starts from 0 and default value for next
+        list item is the previous + 1.
+        The field is optional.
     - `editable` - boolean value to state if the value is visible
             in client's profile editing view
             (default: true)
@@ -154,6 +178,11 @@ possible to set:
         - `icon` - Icon to be used for the attribute.
             This field has the same format as the attribute `icon` field.
             (default: null)
+        - `order_number` - Display order number for the value.
+            0 is the first value.
+            Default value starts from 0 and default value for next
+            list item is the previous + 1.
+            The field is optional.
         - `editable` - boolean value to state if the value is visible
             in client's profile editing view
             (default: true)
