@@ -153,8 +153,11 @@ CREATE TABLE IF NOT EXISTS profile_state(
     search_group_flags   INTEGER              NOT NULL    DEFAULT 0,
     latitude             DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude            DOUBLE               NOT NULL    DEFAULT 0.0,
-    -- Filter profile mood bitflag value. Zero means no filtering.
-    filter_profile_mood  INTEGER              NOT NULL    DEFAULT 0,
+    -- Filter profile mood bitflag value. Null means no filtering.
+    -- Flag 0x1 is "match with "
+    filter_profile_mood  INTEGER,
+    -- Sync version for profile attributes config file.
+    profile_attributes_sync_version INTEGER   NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -171,12 +174,24 @@ CREATE TABLE IF NOT EXISTS profile(
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,
     -- Single profile mood bitflag value.
-    -- 0x1 = nothing
-    -- 0x2 = not sure yet
-    -- 0x4 = friend
-    -- 0x8 = fun
-    -- 0x10 = intimate relationship
-    profile_mood INTEGER         NOT NULL    DEFAULT 1,
+    -- 0x2 = nothing
+    -- 0x4 = not sure yet
+    -- 0x8 = friend
+    -- 0x10 = fun
+    -- 0x20 = intimate relationship
+    profile_mood INTEGER                NOT NULL    DEFAULT 2,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Store profile attributes which config file defines.
+CREATE TABLE IF NOT EXISTS profile_attributes(
+    account_id      INTEGER PRIMARY KEY NOT NULL,
+    attribute_id    INTEGER             NOT NULL,
+    attribute_value INTEGER,
+    filter_value    INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

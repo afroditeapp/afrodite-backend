@@ -51,6 +51,8 @@ pub struct AttributeInternal {
     pub editable: bool,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     pub visible: bool,
+    #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
+    pub required: bool,
     pub icon: IconResource,
     pub id: u16,
     /// Array of strings or objects
@@ -65,8 +67,16 @@ fn value_bool_true() -> bool {
     true
 }
 
+fn value_bool_false() -> bool {
+    false
+}
+
 fn value_is_true(v: &bool) -> bool {
     *v
+}
+
+fn value_is_false(v: &bool) -> bool {
+    !*v
 }
 
 fn value_empty_vec<T>() -> Vec<T> {
@@ -205,6 +215,7 @@ impl AttributeInternal {
                         id: id_state.current_id(),
                         editable: value.editable,
                         visible: value.visible,
+                        icon: value.icon,
                     };
                     Ok(value)
                 }
@@ -215,6 +226,7 @@ impl AttributeInternal {
                         id: id_state.increment_id()?,
                         editable: true,
                         visible: true,
+                        icon: None,
                     };
 
                     if all_ids.contains(&value.id) {
@@ -251,8 +263,6 @@ impl AttributeInternal {
             return Err(format!("Attribute {} must have at least one value", self.key));
         }
 
-        let mut sub_level_ids = HashSet::new();
-        let mut current_sub_level_id = ModeAndIdSequenceNumber::new(self.mode);
         let mut group_values = Vec::new();
 
         for g in self
@@ -262,6 +272,8 @@ impl AttributeInternal {
                     return Err(format!("Missing attribute value definition for key {}", g.key));
                 }
 
+                let mut sub_level_ids = HashSet::new();
+                let mut current_sub_level_id = ModeAndIdSequenceNumber::new(self.mode);
                 let mut values = Vec::new();
 
                 for v in g.values {
@@ -326,12 +338,19 @@ pub struct AttributeValueInternal {
     pub editable: bool,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     pub visible: bool,
+    pub icon: Option<IconResource>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct AttributeValue {
+    /// Unique string identifier for the attribute value.
     pub key: String,
+    /// English text for the attribute value.
     pub value: String,
+    /// Numeric unique identifier for the attribute value.
+    /// Note that the value must only be unique within a group of values, so
+    /// value in top level group A, sub level group C and sub level group B
+    /// can have the same ID.
     pub id: u16,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
@@ -339,17 +358,21 @@ pub struct AttributeValue {
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     pub visible: bool,
+    pub icon: Option<IconResource>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Language {
+    /// Language code.
     pub lang: String,
     pub values: Vec<Translation>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Translation {
+    /// Attribute name or attribute value key.
     pub key: String,
+    /// Translated text.
     pub value: String,
 }
 
@@ -440,6 +463,7 @@ impl ProfileAttributes {
                 mode: a.mode,
                 editable: a.editable,
                 visible: a.visible,
+                required: a.required,
                 icon: a.icon,
                 id: a.id,
                 values: info.values,
@@ -454,21 +478,36 @@ impl ProfileAttributes {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Attribute {
+    /// String unique identifier for the attribute.
     pub key: String,
+    /// English text for the attribute.
     pub name: String,
+    /// Mode of the attribute.
     pub mode: AttributeMode,
+    /// Client should show this attribute when editing a profile.
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     pub editable: bool,
+    /// Client should show this attribute when viewing a profile.
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     pub visible: bool,
+    /// Client should ask this attribute when doing account initial setup.
+    #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
+    #[schema(default = false)]
+    pub required: bool,
+    /// Icon for the attribute.
     pub icon: IconResource,
+    /// Numeric unique identifier for the attribute.
     pub id: u16,
+    /// Top level values for the attribute.
     pub values: Vec<AttributeValue>,
+    /// Sub level values for the attribute.
+    /// When group_values is not empty, the there is 2 levels of values.
     #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
     #[schema(default = "Vec<GroupValues>::new")]
     pub group_values: Vec<GroupValues>,
+    /// Translations for attribute name and attribute values.
     #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
     #[schema(default = "Vec<Language>::new")]
     pub translations: Vec<Language>,

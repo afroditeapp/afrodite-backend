@@ -17,6 +17,7 @@ name = "City"
 mode = "SelectSingleFilterSingle"
 editable = true # Optional
 visible = true # Optional
+required = false # Optional
 icon = "material:location_city"
 id = 0
 values = [
@@ -26,6 +27,7 @@ values = [
         id = 0, # Optional
         editable = true, # Optional
         visible = true, # Optional
+        icon = null # Optional
     },
     # Or simply just
     # "Helsinki",
@@ -39,6 +41,7 @@ group_values = [ # Optional
             id = 0, # Optional
             editable = true, # Optional
             visible = true, # Optional
+            icon = null # Optional
         },
         # Or simply just
         # "Kallio",
@@ -104,6 +107,9 @@ values = [
             previous << 1. Max value is 0x80 so 7 values are possible
             to define.
         The field is optional.
+    - `icon` - Icon to be used for the attribute.
+        This field has the same format as the attribute `icon` field.
+        (default: null)
     - `editable` - boolean value to state if the value is visible
             in client's profile editing view
             (default: true)
@@ -119,6 +125,9 @@ values = [
 - `visible` - boolean value to state if the attribute is visible
                 in client's profile view
                 (default: true)
+- `required` - boolean value to state if the attribute must be set
+                when client sets up the account
+                (default: false)
 - `translations` - list of language objects which has fields
     - `lang` - language code
     - `values` - list of translation objects with fields
@@ -142,6 +151,9 @@ possible to set:
                 Max value is u16::MAX.
             - Behavior for `SelectSingleFilterMultiple` - Not possible to set.
             The field is optional.
+        - `icon` - Icon to be used for the attribute.
+            This field has the same format as the attribute `icon` field.
+            (default: null)
         - `editable` - boolean value to state if the value is visible
             in client's profile editing view
             (default: true)
