@@ -180,6 +180,10 @@ struct AttributeInfoValidated {
     translations: Vec<Language>,
 }
 
+fn english_text_to_key(s: &str) -> String {
+    s.to_lowercase().replace(" ", "_")
+}
+
 impl AttributeInternal {
     fn validate(&self) -> Result<AttributeInfoValidated, String> {
         fn handle_attribute_value(
@@ -209,10 +213,14 @@ impl AttributeInternal {
                     }
                     all_ids.insert(id);
 
-                    if all_keys.contains(&value.key) {
-                        return Err(format!("Duplicate key {}", value.key));
+                    let key = match value.key {
+                        Some(key) => key,
+                        None => english_text_to_key(&value.value),
+                    };
+                    if all_keys.contains(&key) {
+                        return Err(format!("Duplicate key {}", key));
                     }
-                    all_keys.insert(value.key.clone());
+                    all_keys.insert(key.clone());
 
                     match value.order_number {
                         Some(order_number) => order_number_state.set_value(order_number)?,
@@ -227,7 +235,7 @@ impl AttributeInternal {
                     all_order_numbers.insert(order_number);
 
                     let value = AttributeValue {
-                        key: value.key,
+                        key,
                         value: value.value,
                         id: id_state.current_value(),
                         order_number: order_number_state.current_value(),
@@ -239,7 +247,7 @@ impl AttributeInternal {
                 }
                 toml::Value::String(s) => {
                     let value = AttributeValue {
-                        key: s.to_lowercase(),
+                        key: english_text_to_key(&s),
                         value: s,
                         id: id_state.increment_value()?,
                         order_number: order_number_state.increment_value()?,
@@ -370,7 +378,7 @@ pub struct GroupValues {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributeValueInternal {
-    pub key: String,
+    pub key: Option<String>,
     pub value: String,
     pub id: Option<u16>,
     pub order_number: Option<u16>,

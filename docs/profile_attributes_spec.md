@@ -63,7 +63,7 @@ translations = [ # Optonal
 ]
 
 [[attribute]]
-key = "favorite-color"
+key = "favorite_color"
 name = "Favorite Color"
 mode = "SelectSingleFilterMultiple"
 icon = "material:color_lens"
