@@ -120,7 +120,7 @@ values = [
         is different depending on the `type` attribute.
         - Behavior for `SelectSingleFilterSingle` - Default value starts
             from 0 and default value for next list item is the previous + 1.
-            Max value is u16::MAX.
+            Max value is i16::MAX.
         - Behavior for `SelectSingleFilterMultiple` - Default value starts
             from 0x2 and default value for next list item is the
             previous << 1. Max value is 0x80 so 7 values are possible
@@ -172,7 +172,7 @@ possible to set:
             is different depending on the `type` attribute.
             - Behavior for `SelectSingleFilterSingle` - Default value starts
                 from 0 and default value for next list item is the previous + 1.
-                Max value is u16::MAX.
+                Max value is i16::MAX.
             - Behavior for `SelectSingleFilterMultiple` - Not possible to set.
             The field is optional.
         - `icon` - Icon to be used for the attribute.

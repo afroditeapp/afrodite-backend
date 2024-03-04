@@ -103,6 +103,7 @@ struct ModeAndIdSequenceNumber {
 }
 
 impl ModeAndIdSequenceNumber {
+    const LAST_INTEGER_ID: u16 = i16::MAX as u16;
     const FIRST_BITFLAG_ID: u16 = 2;
     const LAST_BITFLAG_ID: u16 = 0x80;
 
@@ -124,6 +125,7 @@ impl ModeAndIdSequenceNumber {
     fn set_value(&mut self, id: u16) -> Result<(), String> {
         match self.mode {
             AttributeMode::SelectSingleFilterSingle => {
+                Self::validate_integer_id(id)?;
                 self.current_id = id;
             }
             AttributeMode::SelectSingleFilterMultiple |
@@ -138,6 +140,14 @@ impl ModeAndIdSequenceNumber {
 
     fn current_value(&self) -> u16 {
         self.current_id
+    }
+
+    fn validate_integer_id(id: u16) -> Result<(), String> {
+        if id > Self::LAST_INTEGER_ID {
+            return Err(format!("Invalid ID {}, id > {}", id, Self::LAST_INTEGER_ID));
+        }
+
+        Ok(())
     }
 
     fn validate_bitflag_id(id: u16) -> Result<(), String> {
@@ -160,7 +170,9 @@ impl ModeAndIdSequenceNumber {
     fn increment_value(&mut self) -> Result<u16, String> {
         match self.mode {
             AttributeMode::SelectSingleFilterSingle => {
-                self.current_id += 1;
+                let tmp = self.current_id + 1;
+                Self::validate_integer_id(tmp)?;
+                self.current_id = tmp;
                 Ok(self.current_id)
             }
             AttributeMode::SelectSingleFilterMultiple |
