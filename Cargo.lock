@@ -550,6 +550,7 @@ dependencies = [
  "model",
  "reqwest",
  "serde",
+ "sha2",
  "simple_backend_config",
  "simple_backend_utils",
  "thiserror",

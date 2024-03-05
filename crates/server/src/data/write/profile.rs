@@ -8,6 +8,9 @@ use crate::{
     result::{Result, WrappedContextExt},
 };
 
+use tracing::info;
+
+
 define_write_commands!(WriteCommandsProfile);
 
 impl WriteCommandsProfile<'_> {
@@ -127,6 +130,44 @@ impl WriteCommandsProfile<'_> {
             cmds.profile()
                 .favorite()
                 .remove_favorite_profile(id, favorite)
+        })
+    }
+
+    /// Updates the profile attributes sha256 and sync version for it for every
+    /// account if needed.
+    pub async fn update_profile_attributes_sha256_and_sync_versions(
+        self,
+        sha256: String,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            let current_hash = cmds.read().profile().data().attribute_file_hash()?;
+
+            if current_hash.as_deref() != Some(&sha256) {
+                info!(
+                    "Profile attributes file hash changed from {:?} to {:?}",
+                    current_hash, Some(&sha256)
+                );
+
+                cmds.profile()
+                    .data()
+                    .upsert_profile_attributes_file_hash(&sha256)?;
+
+                cmds.profile()
+                    .data()
+                    .increment_profile_attributes_sync_version_for_every_account()?;
+            }
+
+            Ok(())
+        })
+    }
+
+    /// Only server WebSocket code should call this method.
+    pub async fn reset_profile_attributes_sync_version(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().reset_profile_attributes_sync_version(id)
         })
     }
 

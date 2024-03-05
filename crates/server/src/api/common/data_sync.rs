@@ -134,6 +134,15 @@ pub async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig
                         EventToClientInternal::MatchesChanged,
                     ).await?;
                 }
+            SyncCheckDataType::AvailableProfileAttributes =>
+                if state.config().components().profile {
+                    handle_profile_attributes_sync_version_check(
+                        state,
+                        socket,
+                        id,
+                        version.version,
+                    ).await?;
+                }
         }
     }
 
@@ -235,6 +244,38 @@ async fn handle_chat_state_version_check<S: WriteData + ReadData, T: SyncVersion
     };
 
     send_event(socket, event).await?;
+
+    Ok(())
+}
+
+async fn handle_profile_attributes_sync_version_check<S: WriteData + ReadData>(
+    state: &S,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    sync_version: SyncVersionFromClient,
+) -> Result<(), WebSocketError> {
+    let current = state
+        .read()
+        .profile()
+        .profile_state(id)
+        .await
+        .change_context(WebSocketError::DatabaseProfileStateQuery)?
+        .profile_attributes_sync_version;
+    match current.check_is_sync_required(sync_version) {
+        SyncCheckResult::DoNothing => return Ok(()),
+        SyncCheckResult::ResetVersionAndSync => {
+            state.write(
+                move |cmds| async move {
+                    cmds.profile().reset_profile_attributes_sync_version(id).await
+                },
+            )
+                .await
+                .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?;
+        }
+        SyncCheckResult::Sync => (),
+    };
+
+    send_event(socket, EventToClientInternal::AvailableProfileAttributesChanged).await?;
 
     Ok(())
 }

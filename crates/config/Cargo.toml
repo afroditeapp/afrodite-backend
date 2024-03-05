@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 clap = { workspace = true, features = ["cargo", "derive"] }
 
+sha2 = { workspace = true }
+
 serde = { workspace = true, features = ["derive"] }
 toml = { workspace = true }
 toml_edit = { workspace = true }

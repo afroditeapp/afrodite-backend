@@ -114,7 +114,7 @@ fn value_is_empty<T>(v: &Vec<T>) -> bool {
 
 struct ModeAndIdSequenceNumber {
     mode: AttributeMode,
-    current_id: u16,
+    current_id: Option<u16>,
 }
 
 impl ModeAndIdSequenceNumber {
@@ -125,11 +125,7 @@ impl ModeAndIdSequenceNumber {
     fn new(mode: AttributeMode) -> Self {
         Self {
             mode,
-            current_id: match mode {
-                AttributeMode::SelectSingleFilterSingle => 0,
-                AttributeMode::SelectSingleFilterMultiple |
-                AttributeMode::SelectMultipleFilterMultiple => Self::FIRST_BITFLAG_ID,
-            }
+            current_id: None,
         }
     }
 
@@ -137,24 +133,20 @@ impl ModeAndIdSequenceNumber {
         Self::new(AttributeMode::SelectSingleFilterSingle)
     }
 
-    fn set_value(&mut self, id: u16) -> Result<(), String> {
+    fn set_value(&mut self, id: u16) -> Result<u16, String> {
         match self.mode {
             AttributeMode::SelectSingleFilterSingle => {
                 Self::validate_integer_id(id)?;
-                self.current_id = id;
+                self.current_id = Some(id);
             }
             AttributeMode::SelectSingleFilterMultiple |
             AttributeMode::SelectMultipleFilterMultiple => {
                 Self::validate_bitflag_id(id)?;
-                self.current_id = id;
+                self.current_id = Some(id);
             }
         }
 
-        Ok(())
-    }
-
-    fn current_value(&self) -> u16 {
-        self.current_id
+        Ok(id)
     }
 
     fn validate_integer_id(id: u16) -> Result<(), String> {
@@ -185,17 +177,25 @@ impl ModeAndIdSequenceNumber {
     fn increment_value(&mut self) -> Result<u16, String> {
         match self.mode {
             AttributeMode::SelectSingleFilterSingle => {
-                let tmp = self.current_id + 1;
+                let tmp = if let Some(current_id) = self.current_id {
+                    current_id + 1
+                } else {
+                    0
+                };
                 Self::validate_integer_id(tmp)?;
-                self.current_id = tmp;
-                Ok(self.current_id)
+                self.current_id = Some(tmp);
+                Ok(tmp)
             }
             AttributeMode::SelectSingleFilterMultiple |
             AttributeMode::SelectMultipleFilterMultiple => {
-                let tmp = self.current_id << 1;
+                let tmp = if let Some(current_id) = self.current_id {
+                    current_id << 1
+                } else {
+                    1
+                };
                 Self::validate_bitflag_id(tmp)?;
-                self.current_id = tmp;
-                Ok(self.current_id)
+                self.current_id = Some(tmp);
+                Ok(tmp)
             }
         }
     }
@@ -226,14 +226,10 @@ impl AttributeInternal {
                         .try_into()
                         .map_err(|e| format!("Attribute value error: {}", e))?;
 
-                    match value.id {
+                    let id = match value.id {
                         Some(id) => id_state.set_value(id)?,
-                        None => {
-                            id_state.increment_value()?;
-                        }
-                    }
-
-                    let id = id_state.current_value();
+                        None => id_state.increment_value()?,
+                    };
                     if all_ids.contains(&id) {
                         return Err(format!("Duplicate id {}", id));
                     }
@@ -248,13 +244,10 @@ impl AttributeInternal {
                     }
                     all_keys.insert(key.clone());
 
-                    match value.order_number {
+                    let order_number = match value.order_number {
                         Some(order_number) => order_number_state.set_value(order_number)?,
-                        None => {
-                            order_number_state.increment_value()?;
-                        }
-                    }
-                    let order_number = order_number_state.current_value();
+                        None => order_number_state.increment_value()?
+                    };
                     if all_order_numbers.contains(&order_number) {
                         return Err(format!("Duplicate order number {}", order_number));
                     }
@@ -263,8 +256,8 @@ impl AttributeInternal {
                     let value = AttributeValue {
                         key,
                         value: value.value,
-                        id: id_state.current_value(),
-                        order_number: order_number_state.current_value(),
+                        id,
+                        order_number,
                         editable: value.editable,
                         visible: value.visible,
                         icon: value.icon,
@@ -335,15 +328,30 @@ impl AttributeInternal {
         }
 
         // Check that correct IDs are used.
-        for i in 0..self.values.len() {
-            let i = i as u16;
-            if top_level_ids.get(&i).is_none() {
-                return Err(format!(
-                    "ID {} is missing from attribute value IDs for attribute {}, all numbers between 0 and {} should be used",
-                    i,
-                    self.key,
-                    self.values.len() - 1
-                ));
+        if self.mode.is_bitflag_mode() {
+            let mut current = 1;
+            for _ in 0..values.len() {
+                if top_level_ids.get(&current).is_none() {
+                    return Err(format!(
+                        "ID {} is missing from attribute value IDs for attribute {}, all bitflags between 0 and {} should be used",
+                        current,
+                        self.key,
+                        1 << (self.values.len() - 1)
+                    ));
+                }
+                current <<= 1;
+            }
+        } else {
+            for i in 0..self.values.len() {
+                let i = i as u16;
+                if top_level_ids.get(&i).is_none() {
+                    return Err(format!(
+                        "ID {} is missing from attribute value IDs for attribute {}, all numbers between 0 and {} should be used",
+                        i,
+                        self.key,
+                        self.values.len() - 1
+                    ));
+                }
             }
         }
         values.sort_by(|a, b| a.id.cmp(&b.id));
@@ -650,8 +658,8 @@ pub struct Attribute {
     pub value_order: AttributeValueOrderMode,
     /// Top level values for the attribute.
     ///
-    /// Values are sorted by AttributeValue ID and ID can be used to
-    /// index this list.
+    /// Values are sorted by AttributeValue ID. Indexing with it is
+    /// not possible as ID might be a bitflag value.
     pub values: Vec<AttributeValue>,
     /// Translations for attribute name and attribute values.
     #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]

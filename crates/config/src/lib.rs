@@ -15,6 +15,7 @@ use file::{QueueLimitsConfig, StaticBotConfig};
 use file_dynamic::ConfigFileDynamic;
 use model::{AttributesFileInternal, BotConfig, ProfileAttributes};
 use reqwest::Url;
+use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 
@@ -59,6 +60,7 @@ pub struct Config {
     // Other configs
     mode: Option<AppMode>,
     profile_attributes: Option<ProfileAttributes>,
+    profile_attributes_sha256: Option<String>,
 }
 
 impl Config {
@@ -122,6 +124,10 @@ impl Config {
         self.profile_attributes.as_ref()
     }
 
+    pub fn profile_attributes_sha256(&self) -> Option<&str> {
+        self.profile_attributes_sha256.as_deref()
+    }
+
     pub fn simple_backend(&self) -> &SimpleBackendConfig {
         &self.simple_backend_config
     }
@@ -170,16 +176,17 @@ pub fn get_config(
         );
     }
 
-    let profile_attributes = if let Some(path) = &file_config.profile_attributes_file {
+    let (profile_attributes, profile_attributes_sha256) = if let Some(path) = &file_config.profile_attributes_file {
         let attributes = std::fs::read_to_string(path)
             .change_context(GetConfigError::LoadFileError)?;
+        let profile_attributes_sha256 = format!("{:x}", Sha256::digest(attributes.as_bytes()));
         let attributes: AttributesFileInternal = toml::from_str(&attributes)
             .change_context(GetConfigError::InvalidConfiguration)?;
         let attributes = attributes.validate()
             .into_error_string(GetConfigError::InvalidConfiguration)?;
-        Some(attributes)
+        (Some(attributes), Some(profile_attributes_sha256))
     } else {
-        None
+        (None, None)
     };
 
     let config = Config {
@@ -190,6 +197,7 @@ pub fn get_config(
         client_api_urls,
         mode: args_config.mode.clone(),
         profile_attributes,
+        profile_attributes_sha256,
     };
 
     Ok(config)

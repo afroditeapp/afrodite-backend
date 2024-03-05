@@ -13,6 +13,7 @@ pub mod internal_api;
 pub mod perf;
 pub mod result;
 pub mod utils;
+pub mod startup_tasks;
 
 use std::sync::Arc;
 
@@ -32,6 +33,7 @@ use simple_backend::{
     web_socket::WebSocketManager,
     BusinessLogic, ServerQuitWatcher,
 };
+use startup_tasks::StartupTasks;
 use tracing::{error, warn};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -171,6 +173,11 @@ impl BusinessLogic for PihkaBusinessLogic {
             state.clone(),
             server_quit_watcher.resubscribe(),
         );
+
+        StartupTasks::new(state.clone())
+            .run_and_wait_completion()
+            .await
+            .expect("Startup tasks failed");
 
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);

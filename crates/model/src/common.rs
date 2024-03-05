@@ -54,6 +54,7 @@ pub enum EventType {
     LatestViewedMessageChanged,
     /// Data: content_processing_state_changed
     ContentProcessingStateChanged,
+    AvailableProfileAttributesChanged,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -143,6 +144,7 @@ pub enum EventToClientInternal {
     SentLikesChanged,
     SentBlocksChanged,
     MatchesChanged,
+    AvailableProfileAttributesChanged,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -160,6 +162,7 @@ impl From<&EventToClientInternal> for EventType {
             SentLikesChanged => Self::ReceivedLikesChanged,
             SentBlocksChanged => Self::SentBlocksChanged,
             MatchesChanged => Self::MatchesChanged,
+            AvailableProfileAttributesChanged => Self::AvailableProfileAttributesChanged,
         }
     }
 }
@@ -189,7 +192,8 @@ impl From<EventToClientInternal> for EventToClient {
             ReceivedBlocksChanged |
             SentLikesChanged |
             SentBlocksChanged |
-            MatchesChanged => (),
+            MatchesChanged |
+            AvailableProfileAttributesChanged => (),
         }
 
         value

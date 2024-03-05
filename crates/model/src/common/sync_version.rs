@@ -49,6 +49,7 @@ pub enum SyncCheckDataType {
     SentLikes = 3,
     SentBlocks = 4,
     Matches = 5,
+    AvailableProfileAttributes = 6,
 }
 
 impl TryFrom<u8> for SyncCheckDataType {
@@ -62,6 +63,7 @@ impl TryFrom<u8> for SyncCheckDataType {
             3 => Ok(Self::SentLikes),
             4 => Ok(Self::SentBlocks),
             5 => Ok(Self::Matches),
+            6 => Ok(Self::AvailableProfileAttributes),
             _ => Err(format!("Unknown sync check data type {}", value)),
         }
     }
@@ -117,8 +119,10 @@ pub struct SyncVersion {
 }
 
 impl SyncVersion {
+    pub const MAX_VALUE: i64 = u8::MAX as i64;
+
     pub(crate) fn new(id: i64) -> Self {
-        Self { version: id.clamp(0, u8::MAX as i64) }
+        Self { version: id.clamp(0, Self::MAX_VALUE) }
     }
 
     pub(crate) fn as_i64(&self) -> &i64 {
@@ -126,7 +130,7 @@ impl SyncVersion {
     }
 
     fn check_is_sync_required(&self, client_value: SyncVersionFromClient) -> SyncCheckResult {
-        if client_value.0 >= u8::MAX {
+        if client_value.0 as i64 >= Self::MAX_VALUE {
             SyncCheckResult::ResetVersionAndSync
         } else if client_value.0 as i64 == self.version {
             SyncCheckResult::DoNothing
@@ -136,8 +140,8 @@ impl SyncVersion {
     }
 
     fn increment_if_not_max_value(&self) -> Self {
-        if self.version >= u8::MAX as i64 {
-            Self { version: u8::MAX as i64 }
+        if self.version >= Self::MAX_VALUE {
+            Self { version: Self::MAX_VALUE }
         } else {
             Self { version: self.version + 1 }
         }

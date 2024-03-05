@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, Location, Profile, ProfileInternal};
+use model::{AccountIdInternal, Location, Profile, ProfileInternal, ProfileStateInternal};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
@@ -52,6 +52,15 @@ impl ReadCommandsProfile<'_> {
         id: AccountIdInternal,
     ) -> Result<Vec<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.profile().favorite().favorites(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn profile_state(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileStateInternal, DataError> {
+        self.db_read(move |mut cmds| cmds.profile().data().profile_state(id))
             .await
             .into_error()
     }

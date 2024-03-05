@@ -202,6 +202,8 @@ pub enum WebSocketError {
     DatabaseAccountStateQuery,
     #[error("Database: Chat state query failed")]
     DatabaseChatStateQuery,
+    #[error("Database: Profile state query failed")]
+    DatabaseProfileStateQuery,
     #[error("Database: Pending messages query failed")]
     DatabasePendingMessagesQuery,
 
@@ -214,6 +216,8 @@ pub enum WebSocketError {
     AccountDataVersionResetFailed,
     #[error("Chat data version number reset failed")]
     ChatDataVersionResetFailed,
+    #[error("Profile attributes sync version number reset failed")]
+    ProfileAttributesSyncVersionResetFailed,
 }
 
 async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
