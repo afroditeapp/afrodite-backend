@@ -259,7 +259,29 @@ diesel::table! {
         name -> Text,
         profile_text -> Text,
         age -> Integer,
-        profile_mood -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    profile_attributes (account_id, attribute_id) {
+        account_id -> Integer,
+        attribute_id -> Integer,
+        attribute_value_part1 -> Nullable<Integer>,
+        attribute_value_part2 -> Nullable<Integer>,
+        filter_value_part1 -> Nullable<Integer>,
+        filter_value_part2 -> Nullable<Integer>,
+        filter_accept_missing_attribute -> Bool,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    profile_attributes_file_hash (row_type) {
+        row_type -> Integer,
+        sha256_hash -> Text,
     }
 }
 
@@ -273,7 +295,7 @@ diesel::table! {
         search_group_flags -> Integer,
         latitude -> Double,
         longitude -> Double,
-        filter_profile_mood -> Integer,
+        profile_attributes_sync_version -> Integer,
     }
 }
 
@@ -333,6 +355,7 @@ diesel::joinable!(media_moderation -> media_moderation_request (moderation_reque
 diesel::joinable!(media_moderation_request -> account_id (account_id));
 diesel::joinable!(media_state -> account_id (account_id));
 diesel::joinable!(profile -> account_id (account_id));
+diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_state -> account_id (account_id));
 diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
@@ -361,6 +384,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     next_queue_number,
     pending_messages,
     profile,
+    profile_attributes,
+    profile_attributes_file_hash,
     profile_state,
     queue_entry,
     refresh_token,

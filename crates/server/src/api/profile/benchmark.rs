@@ -4,13 +4,14 @@ use axum::{
 };
 use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal};
 use simple_backend::create_counters;
+use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     api::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, data::DataError,
 };
 
 // ------------------- Benchmark routes ----------------------------
@@ -83,7 +84,7 @@ pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmar
     security(("access_token" = [])),
 )]
 pub async fn post_profile_to_database_debug_mode_benchmark<
-    S: GetAccessTokens + WriteData + ReadData,
+    S: GetConfig + GetAccessTokens + WriteData + ReadData,
 >(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
@@ -91,9 +92,12 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_to_database_debug_mode_benchmark.incr();
 
-    let old_profile: Profile = state.read().profile().profile(account_id).await?.into();
+    let profile = profile
+        .validate(state.config().profile_attributes())
+        .into_error_string(DataError::NotAllowed)?;
+    let old_profile = state.read().profile().profile(account_id).await?;
 
-    if profile == old_profile.into_update() {
+    if profile.equals_with(&old_profile) {
         return Ok(());
     }
 

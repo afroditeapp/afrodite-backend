@@ -118,6 +118,10 @@ impl Config {
         self.file.queue_limits.clone().unwrap_or_default()
     }
 
+    pub fn profile_attributes(&self) -> Option<&ProfileAttributes> {
+        self.profile_attributes.as_ref()
+    }
+
     pub fn simple_backend(&self) -> &SimpleBackendConfig {
         &self.simple_backend_config
     }

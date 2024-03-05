@@ -4,7 +4,7 @@ use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateInternal, SharedStateRaw
+    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
@@ -157,7 +157,7 @@ impl DatabaseCache {
 
         if config.components().profile {
             let profile = db_read(current_db, move |mut cmds| {
-                cmds.profile().data().profile(account_id)
+                cmds.profile().data().profile_internal(account_id)
             })
             .await?;
             let state = db_read(current_db, move |mut cmds| {
@@ -168,8 +168,22 @@ impl DatabaseCache {
                 cmds.profile().data().profile_location(account_id)
             })
             .await?;
+            let attributes = db_read(current_db, move |mut cmds| {
+                cmds.profile().data().profile_attribute_values(account_id)
+            })
+            .await?;
+            let filters = db_read(current_db, move |mut cmds| {
+                cmds.profile().data().profile_attribute_filters(account_id)
+            })
+            .await?;
 
-            let mut profile_data = CachedProfile::new(account_id.uuid, profile, state);
+            let mut profile_data = CachedProfile::new(
+                account_id.uuid,
+                profile,
+                state,
+                attributes,
+                filters,
+            );
 
             let location_key = index_writer.coordinates_to_key(&profile_location);
             profile_data.location.current_position = location_key;
@@ -383,10 +397,18 @@ pub struct CachedProfile {
     pub data: ProfileInternal,
     pub state: ProfileStateInternal,
     pub location: LocationData,
+    pub attributes: SortedProfileAttributes,
+    pub filters: Vec<ProfileAttributeFilterValue>,
 }
 
 impl CachedProfile {
-    pub fn new(account_id: AccountId, data: ProfileInternal, state: ProfileStateInternal) -> Self {
+    pub fn new(
+        account_id: AccountId,
+        data: ProfileInternal,
+        state: ProfileStateInternal,
+        attributes: Vec<ProfileAttributeValue>,
+        filters: Vec<ProfileAttributeFilterValue>,
+    ) -> Self {
         Self {
             account_id,
             data,
@@ -395,16 +417,26 @@ impl CachedProfile {
                 current_position: LocationIndexKey::default(),
                 current_iterator: LocationIndexIteratorState::new(),
             },
+            attributes: SortedProfileAttributes::new(attributes),
+            filters,
         }
     }
 
     pub fn location_index_profile_data(&self) -> LocationIndexProfileData {
-        LocationIndexProfileData::new(self.account_id, &self.data, &self.state)
+        LocationIndexProfileData::new(
+            self.account_id,
+            &self.data,
+            &self.state,
+            self.attributes.clone()
+        )
     }
 
     pub fn filters(&self) -> ProfileQueryMakerDetails {
-        ProfileQueryMakerDetails::new(&self.data, &self.state)
-
+        ProfileQueryMakerDetails::new(
+            &self.data,
+            &self.state,
+            self.filters.clone(),
+        )
     }
 }
 

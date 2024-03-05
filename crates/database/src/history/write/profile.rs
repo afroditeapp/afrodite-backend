@@ -16,6 +16,8 @@ impl<C: ConnectionProvider> HistorySyncWriteProfile<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::history_profile::dsl::*;
 
+        // TODO: remove?
+
         let text =
             serde_json::to_string(profile).change_context(DieselDatabaseError::SerdeSerialize)?;
         let time = current_unix_time();

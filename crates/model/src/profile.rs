@@ -1,13 +1,13 @@
-use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
+use std::{collections::{HashMap, HashSet}, sync::atomic::{AtomicBool, AtomicU16, Ordering}};
 
-use diesel::{prelude::*, sql_types::Binary};
+use diesel::{prelude::*, sql_types::Binary, AsExpression, FromSqlRow, sql_types::BigInt};
 use nalgebra::DMatrix;
 use serde::{de::value, Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_uuid_wrapper};
+use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_uuid_wrapper, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb};
+use crate::{schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils};
 
 mod attribute;
 
@@ -23,7 +23,198 @@ pub struct ProfileInternal {
     pub name: String,
     pub profile_text: String,
     pub age: ProfileAge,
-    pub profile_mood: ProfileMood,
+}
+
+impl ProfileInternal {
+    pub fn update_from(&mut self, update: &ProfileUpdateValidated) {
+        self.name = update.name.clone();
+        self.profile_text = update.profile_text.clone();
+        self.age = update.age;
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileAttributeValueUpdate {
+    /// Attribute ID
+    pub id: u16,
+    /// Bitflags value or top level attribute value ID.
+    pub value_part1: Option<u16>,
+    /// Sub level attribute value ID.
+    pub value_part2: Option<u16>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileAttributeValue {
+    /// Attribute ID
+    id: u16,
+    /// Bitflags value or top level attribute value ID.
+    value_part1: u16,
+    /// Sub level attribute value ID.
+    value_part2: Option<u16>,
+}
+
+impl ProfileAttributeValue {
+    pub fn new(id: u16, value_part1: u16, value_part2: Option<u16>) -> Self {
+        Self {
+            id,
+            value_part1,
+            value_part2,
+        }
+    }
+
+    pub fn id(&self) -> u16 {
+        self.id
+    }
+
+    pub fn as_bitflags(&self) -> u16 {
+        self.value_part1
+    }
+
+    /// ID number for top level AttributeValue ID.
+    pub fn as_top_level_id(&self) -> u16 {
+        self.value_part1
+    }
+
+    /// ID number for sub level AttributeValue ID.
+    pub fn as_sub_level_id(&self) -> Option<u16> {
+        self.value_part2
+    }
+}
+
+impl From<ProfileAttributeValue> for ProfileAttributeValueUpdate {
+    fn from(value: ProfileAttributeValue) -> Self {
+        Self {
+            id: value.id,
+            value_part1: Some(value.value_part1),
+            value_part2: value.value_part2,
+        }
+    }
+}
+
+impl TryFrom<ProfileAttributeValueUpdate> for ProfileAttributeValue {
+    type Error = String;
+
+    fn try_from(value: ProfileAttributeValueUpdate) -> Result<ProfileAttributeValue, Self::Error> {
+        match value.value_part1 {
+            Some(part1) => Ok(Self::new(
+                value.id,
+                part1,
+                value.value_part2,
+            )),
+            None => Err("Value part1 missing".to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SortedProfileAttributes {
+    attributes: Vec<ProfileAttributeValue>,
+}
+
+impl SortedProfileAttributes {
+    pub fn new(attributes: Vec<ProfileAttributeValue>) -> Self {
+        let mut attributes = attributes;
+        attributes.sort_by(|a, b| a.id.cmp(&b.id));
+        Self { attributes }
+    }
+
+    pub fn attributes(&self) -> &Vec<ProfileAttributeValue> {
+        &self.attributes
+    }
+
+    pub fn find_id(&self, id: u16) -> Option<&ProfileAttributeValue> {
+        self.attributes.binary_search_by(|a| a.id.cmp(&id))
+            .ok()
+            .map(|i| self.attributes.get(i))
+            .flatten()
+    }
+
+    pub fn update_from(&mut self, update: &ProfileUpdateValidated) {
+        let mut attributes = update
+            .attributes
+            .iter()
+            .filter_map(|v|
+                TryInto::<ProfileAttributeValue>::try_into(*v).ok()
+            )
+            .collect::<Vec<_>>();
+        attributes.sort_by(|a, b| a.id.cmp(&b.id));
+        self.attributes = attributes;
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileAttributeFilterValueUpdate {
+    /// Attribute ID
+    pub id: u16,
+    /// Bitflags value or top level attribute value ID filter.
+    pub filter_part1: Option<u16>,
+    /// Sub level attribute value ID filter.
+    pub filter_part2: Option<u16>,
+    pub accept_missing_attribute: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileAttributeFilterValue {
+    /// Attribute ID
+    id: u16,
+    /// Bitflags value or top level attribute value ID filter.
+    filter_part1: u16,
+    /// Sub level attribute value ID filter.
+    filter_part2: Option<u16>,
+    accept_missing_attribute: bool,
+}
+
+impl ProfileAttributeFilterValue {
+    pub fn new(id: u16, filter_part1: u16, filter_part2: Option<u16>, accept_missing_attribute: bool) -> Self {
+        Self {
+            id,
+            filter_part1,
+            filter_part2,
+            accept_missing_attribute,
+        }
+    }
+
+    pub fn id(&self) -> u16 {
+        self.id
+    }
+
+    pub fn accept_missing_attribute_enabled(&self) -> bool {
+        self.accept_missing_attribute
+    }
+
+    /// Bitflag filter value
+    pub fn as_bitflags(&self) -> u16 {
+        self.filter_part1
+    }
+
+    /// ID number for top level AttributeValue ID.
+    pub fn as_top_level_id(&self) -> u16 {
+        self.filter_part1
+    }
+
+    /// ID number for sub level AttributeValue ID.
+    pub fn as_sub_level_id(&self) -> Option<u16> {
+        self.filter_part2
+    }
+
+    pub fn is_match(&self, value: &ProfileAttributeValue, attribute_info: &Attribute) -> bool {
+        if self.id != value.id {
+            return false;
+        }
+
+        if attribute_info.mode.is_bitflag_mode() {
+            self.as_bitflags() & value.as_bitflags() != 0
+        } else {
+            if self.as_top_level_id() == value.as_top_level_id() {
+                match self.as_sub_level_id() {
+                    wanted @ Some(_) => wanted == value.as_sub_level_id(),
+                    None => true,
+                }
+            } else {
+                false
+            }
+        }
+    }
 }
 
 /// Prfile for HTTP GET
@@ -32,34 +223,22 @@ pub struct Profile {
     pub name: String,
     pub profile_text: String,
     pub age: ProfileAge,
-    pub profile_mood: ProfileMood,
+    pub attributes: Vec<ProfileAttributeValue>,
     /// Version used for caching profile in client side.
     pub version: ProfileVersion,
 }
 
 impl Profile {
-    pub fn into_update(self) -> ProfileUpdate {
-        ProfileUpdate {
-            profile_text: self.profile_text,
-            name: self.name,
-            age: self.age,
-            profile_mood: self.profile_mood,
-        }
-    }
-}
-
-impl From<ProfileInternal> for Profile {
-    fn from(value: ProfileInternal) -> Self {
+    pub fn new(value: ProfileInternal, attributes: Vec<ProfileAttributeValue>) -> Self {
         Self {
             name: value.name,
             profile_text: value.profile_text,
             age: value.age,
-            profile_mood: value.profile_mood,
+            attributes: attributes,
             version: value.version_uuid,
         }
     }
 }
-
 
 /// Private profile related database data
 #[derive(Debug, Clone, Queryable, Selectable, AsChangeset)]
@@ -70,9 +249,12 @@ pub struct ProfileStateInternal {
     pub search_age_range_max: ProfileAge,
     #[diesel(deserialize_as = i64, serialize_as = i64)]
     pub search_group_flags: SearchGroupFlags,
-    #[diesel(deserialize_as = i64, serialize_as = i64)]
-    pub filter_profile_mood: ProfileMoodFlags,
+    pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
 }
+
+sync_version_wrappers!(
+    ProfileAttributesSyncVersion,
+);
 
 /// Profile age value which is in inclusive range `[18, 99]`.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
@@ -484,36 +666,77 @@ impl SearchGroupFlagsFilter {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {
     pub profile_text: String,
     pub name: String,
     pub age: ProfileAge,
-    pub profile_mood: ProfileMood,
+    pub attributes: Vec<ProfileAttributeValueUpdate>,
 }
 
-impl Profile {
-    // pub fn new(name: String) -> Self {
-    //     Self {
-    //         name,
-    //         version: None,
-    //     }
-    // }
+impl ProfileUpdate {
+    pub fn validate(self, attribute_info: Option<&ProfileAttributes>) -> Result<ProfileUpdateValidated, String> {
+        let mut hash_set = HashSet::new();
+        for a in &self.attributes {
+            if !hash_set.insert(a.id) {
+                return Err("Duplicate attribute ID".to_string());
+            }
 
-    pub fn name(&self) -> &str {
-        &self.name
+            if let Some(info) = attribute_info {
+                if info.attributes.get(a.id as usize).is_none() {
+                    return Err("Unknown attribute ID".to_string());
+                }
+            } else {
+                return Err("Profile attributes are disabled".to_string());
+            }
+        }
+
+        Ok(ProfileUpdateValidated {
+            profile_text: self.profile_text,
+            name: self.name,
+            age: self.age,
+            attributes: self.attributes,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ProfileUpdateValidated {
+    pub profile_text: String,
+    pub name: String,
+    pub age: ProfileAge,
+    pub attributes: Vec<ProfileAttributeValueUpdate>,
+}
+
+impl ProfileUpdateValidated {
+    pub fn equals_with(&self, other: &Profile) -> bool {
+        let basic = self.name == other.name &&
+            self.profile_text == other.profile_text &&
+            self.age == other.age;
+        if basic {
+            let a1: HashMap::<u16, ProfileAttributeValueUpdate> = HashMap::from_iter(
+                self.attributes.iter().map(|v| (v.id, *v))
+            );
+            let a2: HashMap::<u16, ProfileAttributeValueUpdate> = HashMap::from_iter(
+                other.attributes.iter().map(|v| (v.id, (*v).into()))
+            );
+
+            a1 == a2
+        } else {
+            false
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ProfileUpdateInternal {
-    pub new_data: ProfileUpdate,
+    pub new_data: ProfileUpdateValidated,
     /// Version used for caching profile in client side.
     pub version: ProfileVersion,
 }
 
 impl ProfileUpdateInternal {
-    pub fn new(new_data: ProfileUpdate) -> Self {
+    pub fn new(new_data: ProfileUpdateValidated) -> Self {
         Self {
             new_data,
             version: ProfileVersion {
@@ -630,14 +853,14 @@ pub struct ProfileQueryMakerDetails {
     pub age: ProfileAge,
     pub search_age_range: ProfileSearchAgeRangeValidated,
     pub search_groups_filter: SearchGroupFlagsFilter,
-    /// If this is true, then also filter with ProfileMood value.
-    pub filter_profile_mood: Option<ProfileMood>,
+    pub attribute_filters: Vec<ProfileAttributeFilterValue>,
 }
 
 impl ProfileQueryMakerDetails {
     pub fn new(
         profile: &ProfileInternal,
         state: &ProfileStateInternal,
+        attribute_filters: Vec<ProfileAttributeFilterValue>,
     ) -> Self {
         Self {
             age: profile.age,
@@ -646,8 +869,7 @@ impl ProfileQueryMakerDetails {
                 state.search_age_range_max,
             ),
             search_groups_filter: state.search_group_flags.to_filter(),
-            // TODO(prod): implement when implementing other filters.
-            filter_profile_mood: None,
+            attribute_filters,
         }
     }
 }
@@ -661,7 +883,7 @@ pub struct LocationIndexProfileData {
     age: ProfileAge,
     search_age_range: ProfileSearchAgeRangeValidated,
     search_groups: SearchGroupFlags,
-    profile_mood: ProfileMood,
+    attributes: SortedProfileAttributes,
 }
 
 impl LocationIndexProfileData {
@@ -669,6 +891,7 @@ impl LocationIndexProfileData {
         id: AccountId,
         profile: &ProfileInternal,
         state: &ProfileStateInternal,
+        attributes: SortedProfileAttributes,
     ) -> Self {
         Self {
             profile_link: ProfileLink::new(id, profile),
@@ -678,20 +901,50 @@ impl LocationIndexProfileData {
                 state.search_age_range_max,
             ),
             search_groups: state.search_group_flags,
-            profile_mood: profile.profile_mood,
+            attributes,
         }
     }
 
-    pub fn is_match(&self, query_maker_details: &ProfileQueryMakerDetails) -> bool {
+    pub fn is_match(
+        &self,
+        query_maker_details: &ProfileQueryMakerDetails,
+        attribute_info: Option<&ProfileAttributes>,
+    ) -> bool {
         let mut is_match = self.search_age_range.is_match(query_maker_details.age) &&
             query_maker_details.search_age_range.is_match(self.age) &&
             query_maker_details.search_groups_filter.is_match(self.search_groups);
 
-        if let Some(filter_mood) = query_maker_details.filter_profile_mood {
-            is_match &= self.profile_mood == filter_mood
+        if let Some(attribute_info) = attribute_info {
+            is_match &= self.attribute_filters_match(query_maker_details, attribute_info);
         }
 
         is_match
+    }
+
+    fn attribute_filters_match(
+        &self,
+        query_maker_details: &ProfileQueryMakerDetails,
+        attribute_info: &ProfileAttributes,
+    ) -> bool {
+        for filter in &query_maker_details.attribute_filters {
+            let attribute_info = if let Some(info) = attribute_info.attributes.get(filter.id as usize) {
+                info
+            } else {
+                return false;
+            };
+
+            if let Some(value) = self.attributes.find_id(filter.id) {
+                if !filter.is_match(value, attribute_info) {
+                    return false;
+                }
+            } else {
+                if !filter.accept_missing_attribute_enabled() {
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 }
 

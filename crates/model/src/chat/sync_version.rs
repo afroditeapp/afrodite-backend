@@ -1,16 +1,14 @@
 
-use base64::Engine;
+
 use diesel::{
-    prelude::*,
-    sql_types::{BigInt, Binary},
-    AsExpression, FromSqlRow,
+    AsExpression, FromSqlRow, sql_types::BigInt,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
-use utoipa::{IntoParams, ToSchema};
+use simple_backend_model::diesel_i64_wrapper;
+use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::Integer, sync_version_wrappers, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Profile, ProfileVisibility, SyncVersion, SyncVersionUtils
+    sync_version_wrappers, SyncVersion, SyncVersionUtils
 };
 
 

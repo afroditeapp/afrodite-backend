@@ -57,20 +57,33 @@ impl WriteCommandsProfile<'_> {
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
-        db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().profile(id, profile_data)
+        let account = db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().profile(id, &profile_data)?;
+            cmds.profile().data().upsert_profile_attributes(id, profile_data.new_data.attributes)?;
+            cmds.read().common().account(id)
         })?;
 
-        self.cache()
+        let (location, profile_data) = self.cache()
             .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
-                p.data.profile_text = data.new_data.profile_text;
+                p.data.update_from(&data.new_data);
+                p.attributes.update_from(&data.new_data);
                 p.data.version_uuid = data.version;
-                Ok(())
+
+                Ok((
+                    p.location.current_position,
+                    p.location_index_profile_data(),
+                ))
             })
             .await
             .into_data_error(id)?;
+
+        if account.profile_visibility().is_currently_public() {
+            self.location()
+                .update_profile_data(id.as_id(), profile_data, location)
+                .await?;
+        }
 
         Ok(())
     }
@@ -123,7 +136,7 @@ impl WriteCommandsProfile<'_> {
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().profile(id, data)
+            cmds.profile().data().profile(id, &data)
         })
     }
 }

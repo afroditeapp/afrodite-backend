@@ -22,10 +22,11 @@ pub struct AttributesFileInternal {
 }
 
 impl AttributesFileInternal {
-    fn validate_uniquenes_of_keys_ids_and_order_numbers(self) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
+    fn validate_attributes(mut self) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
+        // Validate uniquenes of keys, IDs and order numbers.
         for attribute in &self.attribute {
             if keys.contains(&attribute.key) {
                 return Err(format!("Duplicate key {}", attribute.key));
@@ -42,6 +43,20 @@ impl AttributesFileInternal {
             }
             order_numbers.insert(attribute.order_number);
         }
+
+        // Check that correct IDs are used.
+        for i in 0..self.attribute.len() {
+            let i = i as u16;
+            if ids.get(&i).is_none() {
+                return Err(format!(
+                    "ID {} is missing from attribute ID values, all numbers between 0 and {} should be used",
+                    i,
+                    self.attribute.len() - 1
+                ));
+            }
+        }
+        self.attribute.sort_by_key(|a| a.id);
+
         Ok((self.attribute_order, self.attribute))
     }
 
@@ -104,8 +119,8 @@ struct ModeAndIdSequenceNumber {
 
 impl ModeAndIdSequenceNumber {
     const LAST_INTEGER_ID: u16 = i16::MAX as u16;
-    const FIRST_BITFLAG_ID: u16 = 2;
-    const LAST_BITFLAG_ID: u16 = 0x80;
+    const FIRST_BITFLAG_ID: u16 = 1;
+    const LAST_BITFLAG_ID: u16 = 0x40;
 
     fn new(mode: AttributeMode) -> Self {
         Self {
@@ -188,7 +203,6 @@ impl ModeAndIdSequenceNumber {
 
 struct AttributeInfoValidated {
     values: Vec<AttributeValue>,
-    group_values: Vec<GroupValues>,
     translations: Vec<Language>,
 }
 
@@ -254,6 +268,7 @@ impl AttributeInternal {
                         editable: value.editable,
                         visible: value.visible,
                         icon: value.icon,
+                        group_values: None,
                     };
                     Ok(value)
                 }
@@ -266,6 +281,7 @@ impl AttributeInternal {
                         editable: true,
                         visible: true,
                         icon: None,
+                        group_values: None,
                     };
 
                     if all_ids.contains(&value.id) {
@@ -318,6 +334,20 @@ impl AttributeInternal {
             return Err(format!("Attribute {} must have at least one value", self.key));
         }
 
+        // Check that correct IDs are used.
+        for i in 0..self.values.len() {
+            let i = i as u16;
+            if top_level_ids.get(&i).is_none() {
+                return Err(format!(
+                    "ID {} is missing from attribute value IDs for attribute {}, all numbers between 0 and {} should be used",
+                    i,
+                    self.key,
+                    self.values.len() - 1
+                ));
+            }
+        }
+        values.sort_by(|a, b| a.id.cmp(&b.id));
+
         let mut group_values = Vec::new();
 
         for g in self
@@ -345,6 +375,24 @@ impl AttributeInternal {
                     values.push(value);
                 }
 
+                if values.is_empty() {
+                    return Err(format!("Value group {} must have at least one value", g.key));
+                }
+
+                // Check that correct IDs are used.
+                for i in 0..values.len() {
+                    let i = i as u16;
+                    if sub_level_ids.get(&i).is_none() {
+                        return Err(format!(
+                            "ID {} is missing from value IDs for value group {}, all numbers between 0 and {} should be used",
+                            i,
+                            g.key,
+                            values.len() - 1
+                        ));
+                    }
+                }
+                values.sort_by(|a, b| a.id.cmp(&b.id));
+
                 group_values.push(
                     GroupValues {
                         key: g.key,
@@ -355,6 +403,12 @@ impl AttributeInternal {
 
         if self.mode.is_bitflag_mode() && !group_values.is_empty() {
             return Err("Bitflag mode cannot have group values".to_string());
+        }
+
+        for g in group_values.into_iter() {
+            if let Some(v) = values.iter_mut().find(|v| v.key == g.key) {
+                v.group_values = Some(g);
+            }
         }
 
         for t in self
@@ -369,7 +423,6 @@ impl AttributeInternal {
 
         Ok(AttributeInfoValidated {
             values,
-            group_values,
             translations: self.translations.clone(),
         })
     }
@@ -385,6 +438,10 @@ pub struct GroupValuesInternal {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GroupValues {
     pub key: String,
+    /// Values for this group.
+    ///
+    /// Values are sorted by AttributeValue ID related to this group
+    /// and ID can be used to index this list.
     pub values: Vec<AttributeValue>,
 }
 
@@ -422,6 +479,8 @@ pub struct AttributeValue {
     #[schema(default = true)]
     pub visible: bool,
     pub icon: Option<IconResource>,
+    /// Sub level values for this attribute value.
+    pub group_values: Option<GroupValues>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -523,12 +582,16 @@ impl From<IconResource> for String {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ProfileAttributes {
     pub attribute_order: AttributeOrderMode,
+    /// List of attributes.
+    ///
+    /// Attributes are sorted by Attribute ID and ID can be used to
+    /// index this list.
     pub attributes: Vec<Attribute>,
 }
 
 impl ProfileAttributes {
     pub fn from_file(file: AttributesFileInternal) -> Result<Self, String> {
-        let (attribute_order, internal_attributes) = file.validate_uniquenes_of_keys_ids_and_order_numbers()?;
+        let (attribute_order, internal_attributes) = file.validate_attributes()?;
 
         let mut attributes = vec![];
         for a in internal_attributes {
@@ -545,7 +608,6 @@ impl ProfileAttributes {
                 order_number: a.order_number,
                 value_order: a.value_order,
                 values: info.values,
-                group_values: info.group_values,
                 translations: info.translations,
             };
             attributes.push(a);
@@ -587,12 +649,10 @@ pub struct Attribute {
     /// the values should be displayed.
     pub value_order: AttributeValueOrderMode,
     /// Top level values for the attribute.
+    ///
+    /// Values are sorted by AttributeValue ID and ID can be used to
+    /// index this list.
     pub values: Vec<AttributeValue>,
-    /// Sub level values for the attribute.
-    /// When group_values is not empty, the there is 2 levels of values.
-    #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
-    #[schema(default = "Vec<GroupValues>::new")]
-    pub group_values: Vec<GroupValues>,
     /// Translations for attribute name and attribute values.
     #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
     #[schema(default = "Vec<Language>::new")]

@@ -153,9 +153,6 @@ CREATE TABLE IF NOT EXISTS profile_state(
     search_group_flags   INTEGER              NOT NULL    DEFAULT 0,
     latitude             DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude            DOUBLE               NOT NULL    DEFAULT 0.0,
-    -- Filter profile mood bitflag value. Null means no filtering.
-    -- Flag 0x1 is "match with "
-    filter_profile_mood  INTEGER,
     -- Sync version for profile attributes config file.
     profile_attributes_sync_version INTEGER   NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
@@ -173,13 +170,6 @@ CREATE TABLE IF NOT EXISTS profile(
     profile_text    TEXT                NOT NULL    DEFAULT '',
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,
-    -- Single profile mood bitflag value.
-    -- 0x2 = nothing
-    -- 0x4 = not sure yet
-    -- 0x8 = friend
-    -- 0x10 = fun
-    -- 0x20 = intimate relationship
-    profile_mood INTEGER                NOT NULL    DEFAULT 2,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -188,14 +178,30 @@ CREATE TABLE IF NOT EXISTS profile(
 
 -- Store profile attributes which config file defines.
 CREATE TABLE IF NOT EXISTS profile_attributes(
-    account_id      INTEGER PRIMARY KEY NOT NULL,
+    account_id      INTEGER             NOT NULL,
     attribute_id    INTEGER             NOT NULL,
-    attribute_value INTEGER,
-    filter_value    INTEGER,
+    -- Bitflags value or top level attribute value
+    attribute_value_part1 INTEGER,
+    -- Sub level attribute value
+    attribute_value_part2 INTEGER,
+    -- Bitflags value or top level attribute value
+    filter_value_part1    INTEGER,
+    -- Sub level attribute value
+    filter_value_part2    INTEGER,
+    filter_accept_missing_attribute BOOLEAN       NOT NULL DEFAULT 0,
+    PRIMARY KEY (account_id, attribute_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
+);
+
+-- Store profile attributes file hash, so that changes to it can be detected
+-- when server starts.
+CREATE TABLE IF NOT EXISTS profile_attributes_file_hash(
+    -- 0 = profile attributes file hash
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    sha256_hash   TEXT                NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS favorite_profile(

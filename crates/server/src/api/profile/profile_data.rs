@@ -4,13 +4,13 @@ use axum::{
 };
 use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal};
 use simple_backend::create_counters;
+use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     api::{
         db_write,
         utils::{Json, StatusCode},
-    },
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
+    }, app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, data::DataError, internal_api
 };
 
 // TODO: Add timeout for database commands
@@ -67,7 +67,7 @@ pub async fn get_profile<
             .profile(requested_profile)
             .await
             .map_err(Into::into)
-            .map(|p| Into::<Profile>::into(p).into());
+            .map(|p| p.into());
     }
 
     let visibility = state.read().common().account(requested_profile).await?.profile_visibility().is_currently_public();
@@ -79,7 +79,7 @@ pub async fn get_profile<
             .profile(requested_profile)
             .await
             .map_err(Into::into)
-            .map(|p| Into::<Profile>::into(p).into())
+            .map(|p| p.into())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
@@ -107,16 +107,19 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_profile<S: GetAccessTokens + WriteData + ReadData>(
+pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(profile): Json<ProfileUpdate>,
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile.incr();
 
-    let old_profile: Profile = state.read().profile().profile(account_id).await?.into();
+    let profile = profile
+        .validate(state.config().profile_attributes())
+        .into_error_string(DataError::NotAllowed)?;
+    let old_profile = state.read().profile().profile(account_id).await?;
 
-    if profile == old_profile.into_update() {
+    if profile.equals_with(&old_profile) {
         return Ok(());
     }
 

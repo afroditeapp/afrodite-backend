@@ -88,6 +88,7 @@ enum IteratorResultInternal {
 
 #[derive(Debug)]
 pub struct LocationIndexIteratorHandle<'a> {
+    config: &'a Config,
     index: &'a Arc<LocationIndex>,
     profiles: &'a RwLock<HashMap<LocationIndexKey, ProfilesAtLocation>>,
     coordinates: &'a CoordinateManager,
@@ -96,6 +97,7 @@ pub struct LocationIndexIteratorHandle<'a> {
 impl<'a> LocationIndexIteratorHandle<'a> {
     pub fn new(manager: &'a LocationIndexManager) -> Self {
         Self {
+            config: &manager.config,
             index: &manager.index,
             profiles: &manager.profiles,
             coordinates: &manager.coordinates,
@@ -157,7 +159,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                 Some(profiles) => {
                     let matches: Vec<ProfileLink> = profiles.profiles
                         .values()
-                        .filter(|p| p.is_match(&query_maker_details))
+                        .filter(|p| p.is_match(&query_maker_details, self.config.profile_attributes()))
                         .map(|p| p.into())
                         .collect();
                     if matches.len() == 0 {

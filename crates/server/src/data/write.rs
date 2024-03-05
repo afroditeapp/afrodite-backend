@@ -12,8 +12,7 @@ use database::{
     CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
 use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, SharedStateRaw,
-    SignInWithInfo,
+    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, Profile, SharedStateRaw, SignInWithInfo
 };
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{
@@ -345,7 +344,9 @@ impl<'a> WriteCommands<'a> {
             current.profile().data().insert_profile_state(id)?;
 
             // Profile history
-            history.profile().insert_profile(id, &profile.into())?;
+            let attributes = current.read().profile().data().profile_attribute_values(id)?;
+            let profile = Profile::new(profile, attributes);
+            history.profile().insert_profile(id, &profile)?;
         }
 
         if config.components().media {
