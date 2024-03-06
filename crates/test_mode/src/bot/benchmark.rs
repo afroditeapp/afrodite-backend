@@ -11,7 +11,7 @@ use api_client::{
         get_profile, get_profile_from_database_debug_mode_benchmark,
         post_profile_to_database_debug_mode_benchmark,
     },
-    models::ProfileUpdate,
+    models::{ProfileUpdate, ProfileAge},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -232,7 +232,12 @@ impl BotAction for PostProfileToDatabase {
         _task_state: &mut TaskState,
     ) -> Result<(), TestError> {
         let profile = uuid::Uuid::new_v4(); // Uuid has same string size every time.
-        let profile = ProfileUpdate::new(format!("{}", profile));
+        let profile = ProfileUpdate {
+            attributes: vec![],
+            age: 18,
+            name: format!(""),
+            profile_text: format!("{}", profile),
+        };
         post_profile_to_database_debug_mode_benchmark(state.api.profile(), profile)
             .await
             .change_context(TestError::ApiRequest)?;

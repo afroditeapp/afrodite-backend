@@ -4,6 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**age** | **i64** |  | 
+**attributes** | [**Vec<crate::models::ProfileAttributeValue>**](ProfileAttributeValue.md) |  | 
 **name** | **String** |  | 
 **profile_text** | **String** |  | 
 **version** | [**crate::models::ProfileVersion**](ProfileVersion.md) |  | 

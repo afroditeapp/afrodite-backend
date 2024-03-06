@@ -386,7 +386,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, ac
     }
 }
 
-/// Complete initial setup.  Requirements: - Account must be in `InitialSetup` state. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
+/// Complete initial setup.  Requirements: - Account must be in `InitialSetup` state. - Account must have a valid AccountSetup info set. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
 pub async fn post_complete_setup(configuration: &configuration::Configuration, ) -> Result<(), Error<PostCompleteSetupError>> {
     let local_var_configuration = configuration;
 
@@ -544,7 +544,7 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
     }
 }
 
-/// Update current or pending profile visiblity value.
+/// Update current or pending profile visiblity value.  Requirements: - Account state must be `Normal`.
 pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: crate::models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
     let local_var_configuration = configuration;
 

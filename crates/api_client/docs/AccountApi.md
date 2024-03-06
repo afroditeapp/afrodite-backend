@@ -220,7 +220,7 @@ Name | Type | Description  | Required | Notes
 > post_complete_setup()
 Complete initial setup.
 
-Complete initial setup.  Requirements: - Account must be in `InitialSetup` state. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
+Complete initial setup.  Requirements: - Account must be in `InitialSetup` state. - Account must have a valid AccountSetup info set. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
 
 ### Parameters
 
@@ -361,7 +361,7 @@ No authorization required
 > put_setting_profile_visiblity(boolean_setting)
 Update current or pending profile visiblity value.
 
-Update current or pending profile visiblity value.
+Update current or pending profile visiblity value.  Requirements: - Account state must be `Normal`.
 
 ### Parameters
 

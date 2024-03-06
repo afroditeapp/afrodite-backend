@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::profile_api::{self, get_location, get_profile, post_profile},
-    models::{Location, ProfileUpdate},
+    models::{Location, ProfileUpdate, ProfileAttributeValueUpdate},
 };
 use async_trait::async_trait;
 use config::file::LocationConfig;
@@ -14,6 +14,7 @@ use crate::bot::utils::location::LocationConfigUtils;
 #[derive(Debug)]
 pub enum ProfileText {
     Static(&'static str),
+    String(String),
     Random,
 }
 
@@ -25,14 +26,29 @@ pub struct ChangeProfileText {
 #[async_trait]
 impl BotAction for ChangeProfileText {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = match self.mode {
+        let id = state.account_id_string()?;
+        let current_profile = get_profile(state.api.profile(), &id)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        let profile_text = match &self.mode {
             ProfileText::Static(text) => text.to_string(),
+            ProfileText::String(text) => text.clone(),
             ProfileText::Random => {
                 uuid::Uuid::new_v4().to_string() // Uuid has same string size every time.
             }
         };
-        let profile = ProfileUpdate::new(format!("{}", profile));
-        post_profile(state.api.profile(), profile)
+        let update = ProfileUpdate {
+            attributes: current_profile.attributes.iter().map(|a| ProfileAttributeValueUpdate {
+                id: a.id.clone(),
+                value_part1: Some(Some(a.value_part1)),
+                value_part2: a.value_part2,
+            }).collect(),
+            age: current_profile.age,
+            name: current_profile.name,
+            profile_text,
+        };
+        post_profile(state.api.profile(), update)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())

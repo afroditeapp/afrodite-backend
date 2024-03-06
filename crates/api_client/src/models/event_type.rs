@@ -37,6 +37,8 @@ pub enum EventType {
     LatestViewedMessageChanged,
     #[serde(rename = "ContentProcessingStateChanged")]
     ContentProcessingStateChanged,
+    #[serde(rename = "AvailableProfileAttributesChanged")]
+    AvailableProfileAttributesChanged,
 
 }
 
@@ -55,6 +57,7 @@ impl ToString for EventType {
             Self::MatchesChanged => String::from("MatchesChanged"),
             Self::LatestViewedMessageChanged => String::from("LatestViewedMessageChanged"),
             Self::ContentProcessingStateChanged => String::from("ContentProcessingStateChanged"),
+            Self::AvailableProfileAttributesChanged => String::from("AvailableProfileAttributesChanged"),
         }
     }
 }

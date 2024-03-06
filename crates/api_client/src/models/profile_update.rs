@@ -13,13 +13,22 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProfileUpdate {
+    #[serde(rename = "age")]
+    pub age: i64,
+    #[serde(rename = "attributes")]
+    pub attributes: Vec<crate::models::ProfileAttributeValueUpdate>,
+    #[serde(rename = "name")]
+    pub name: String,
     #[serde(rename = "profile_text")]
     pub profile_text: String,
 }
 
 impl ProfileUpdate {
-    pub fn new(profile_text: String) -> ProfileUpdate {
+    pub fn new(age: i64, attributes: Vec<crate::models::ProfileAttributeValueUpdate>, name: String, profile_text: String) -> ProfileUpdate {
         ProfileUpdate {
+            age,
+            attributes,
+            name,
             profile_text,
         }
     }

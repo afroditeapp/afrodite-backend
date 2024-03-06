@@ -14,6 +14,10 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Profile {
+    #[serde(rename = "age")]
+    pub age: i64,
+    #[serde(rename = "attributes")]
+    pub attributes: Vec<crate::models::ProfileAttributeValue>,
     #[serde(rename = "name")]
     pub name: String,
     #[serde(rename = "profile_text")]
@@ -24,8 +28,10 @@ pub struct Profile {
 
 impl Profile {
     /// Prfile for HTTP GET
-    pub fn new(name: String, profile_text: String, version: crate::models::ProfileVersion) -> Profile {
+    pub fn new(age: i64, attributes: Vec<crate::models::ProfileAttributeValue>, name: String, profile_text: String, version: crate::models::ProfileVersion) -> Profile {
         Profile {
+            age,
+            attributes,
             name,
             profile_text,
             version: Box::new(version),

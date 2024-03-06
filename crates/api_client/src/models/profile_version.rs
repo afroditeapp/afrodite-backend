@@ -13,14 +13,14 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProfileVersion {
-    #[serde(rename = "version_uuid")]
-    pub version_uuid: uuid::Uuid,
+    #[serde(rename = "version")]
+    pub version: uuid::Uuid,
 }
 
 impl ProfileVersion {
-    pub fn new(version_uuid: uuid::Uuid) -> ProfileVersion {
+    pub fn new(version: uuid::Uuid) -> ProfileVersion {
         ProfileVersion {
-            version_uuid,
+            version,
         }
     }
 }

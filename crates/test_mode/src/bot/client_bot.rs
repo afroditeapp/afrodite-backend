@@ -18,7 +18,7 @@ use super::{
     actions::{
         account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility},
         media::SendImageToSlot,
-        profile::{GetProfile, UpdateLocationRandom},
+        profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandom},
         BotAction, RunActions, RunActionsIf,
     },
     BotState, BotStruct, TaskState,
@@ -184,13 +184,15 @@ pub struct ChangeBotProfileText;
 #[async_trait]
 impl BotAction for ChangeBotProfileText {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = ProfileUpdate::new(format!(
+        let text = format!(
             "Hello! My location is\n{:#?}",
             state.previous_value.location()
-        ));
-        post_profile(state.api.profile(), profile)
-            .await
-            .change_context(TestError::ApiRequest)?;
+        );
+
+        ChangeProfileText {
+            mode: ProfileText::String(text),
+        }.excecute_impl(state).await?;
+
         Ok(())
     }
 }

@@ -260,6 +260,7 @@ impl ProfileAttributeFilterValue {
 pub struct Profile {
     pub name: String,
     pub profile_text: String,
+    #[schema(value_type = i64)]
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValue>,
     /// Version used for caching profile in client side.
@@ -317,6 +318,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]
 #[serde(try_from = "i64")]
+#[serde(into = "i64")]
 pub struct ProfileAge {
     value: u8,
 }
@@ -746,6 +748,7 @@ impl SearchGroupFlagsFilter {
 pub struct ProfileUpdate {
     pub profile_text: String,
     pub name: String,
+    #[schema(value_type = i64)]
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValueUpdate>,
 }
@@ -816,7 +819,7 @@ impl ProfileUpdateInternal {
         Self {
             new_data,
             version: ProfileVersion {
-                version_uuid: uuid::Uuid::new_v4(),
+                version: uuid::Uuid::new_v4(),
             },
         }
     }
@@ -851,6 +854,7 @@ impl ProfileUpdateInternal {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
 #[serde(try_from = "f64")]
+#[serde(into = "f64")]
 pub struct FiniteDouble {
     value: f64,
 }
@@ -1046,21 +1050,21 @@ impl From<&LocationIndexProfileData> for ProfileLink {
 )]
 #[diesel(sql_type = Binary)]
 pub struct ProfileVersion {
-    version_uuid: uuid::Uuid,
+    version: uuid::Uuid,
 }
 
 impl ProfileVersion {
-    pub fn new(version_uuid: uuid::Uuid) -> Self {
-        Self { version_uuid }
+    pub fn new(version: uuid::Uuid) -> Self {
+        Self { version }
     }
 
     pub fn new_random() -> Self {
-        let version_uuid = uuid::Uuid::new_v4();
-        Self { version_uuid }
+        let version = uuid::Uuid::new_v4();
+        Self { version }
     }
 
     pub fn as_uuid(&self) -> &uuid::Uuid {
-        &self.version_uuid
+        &self.version
     }
 }
 
@@ -1079,7 +1083,7 @@ impl<'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
         &self,
         buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
     ) -> sqlx::encode::IsNull {
-        self.version_uuid.encode_by_ref(buf)
+        self.version.encode_by_ref(buf)
     }
 
     fn encode<'q>(
@@ -1089,15 +1093,15 @@ impl<'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
     where
         Self: Sized,
     {
-        self.version_uuid.encode_by_ref(buf)
+        self.version.encode_by_ref(buf)
     }
 
     fn produces(&self) -> Option<<sqlx::Sqlite as sqlx::Database>::TypeInfo> {
-        <Uuid as sqlx::Encode<'a, sqlx::Sqlite>>::produces(&self.version_uuid)
+        <Uuid as sqlx::Encode<'a, sqlx::Sqlite>>::produces(&self.version)
     }
 
     fn size_hint(&self) -> usize {
-        self.version_uuid.size_hint()
+        self.version.size_hint()
     }
 }
 
@@ -1106,7 +1110,7 @@ impl sqlx::Decode<'_, sqlx::Sqlite> for ProfileVersion {
         value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef,
     ) -> Result<Self, sqlx::error::BoxDynError> {
         <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value)
-            .map(|id| ProfileVersion { version_uuid: id })
+            .map(|id| ProfileVersion { version: id })
     }
 }
 

@@ -1,6 +1,6 @@
-use std::{mem, sync::Arc};
+use std::{fmt::format, mem, sync::Arc};
 
-use api_client::{apis::{configuration::Configuration, media_admin_api}, models::{AccountId, EventToClient, ModerationQueueType}};
+use api_client::{apis::{configuration::Configuration, media_admin_api, profile_api::{post_profile, post_search_age_range, post_search_groups}}, models::{AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate, SearchGroups}};
 use config::{args::TestMode, Config};
 use error_stack::{Result, ResultExt};
 use tokio::sync::Mutex;
@@ -67,6 +67,78 @@ impl TestContext {
             ])
             .await?;
         Ok(account)
+    }
+
+    pub async fn new_account_with_settings(
+        &self,
+        age: i64,
+        name: &str,
+        min_age: i32,
+        max_age: i32,
+        groups: SearchGroups,
+    ) -> Result<Account, TestError> {
+        let account = self.new_account().await?;
+        let update = ProfileUpdate {
+            attributes: vec![],
+            age: age,
+            name: name.to_string(),
+            profile_text: format!(""),
+        };
+        post_profile(account.profile_api(), update).await
+            .change_context(TestError::ApiRequest)?;
+
+        let range = ProfileSearchAgeRange {
+            min: min_age,
+            max: max_age,
+        };
+        post_search_age_range(account.profile_api(), range)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        post_search_groups(account.profile_api(), groups)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        Ok(account)
+    }
+
+    pub async fn new_man_18_years(&self) -> Result<Account, TestError> {
+        self.new_account_with_settings(
+            18,
+            "M",
+            18,
+            18,
+            SearchGroups {
+                man_for_woman: Some(true),
+                ..SearchGroups::default()
+            }
+        ).await
+    }
+
+    pub async fn new_man_4_man_18_years(&self) -> Result<Account, TestError> {
+        self.new_account_with_settings(
+            18,
+            "M",
+            18,
+            18,
+            SearchGroups {
+                man_for_man: Some(true),
+                ..SearchGroups::default()
+            }
+        ).await
+    }
+
+    pub async fn new_woman_18_years(&self) -> Result<Account, TestError> {
+        self.new_account_with_settings(
+            18,
+            "W",
+            18,
+            18,
+            SearchGroups {
+                woman_for_man: Some(true),
+                ..SearchGroups::default()
+            }
+        ).await
     }
 
     /// Admin account with Normal state.

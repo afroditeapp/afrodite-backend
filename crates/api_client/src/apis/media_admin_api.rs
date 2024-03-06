@@ -11,10 +11,9 @@
 
 use reqwest;
 
-use crate::apis::ResponseContent;
+use crate::{apis::ResponseContent, models::ModerationQueueType};
 use super::{Error, configuration};
 
-use crate::models::ModerationQueueType;
 
 /// struct for typed errors of method [`patch_moderation_request_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
