@@ -146,6 +146,8 @@ pub mod profile;
 pub use self::profile::Profile;
 pub mod profile_age;
 pub use self::profile_age::ProfileAge;
+pub mod profile_all_of;
+pub use self::profile_all_of::ProfileAllOf;
 pub mod profile_attribute_filter_list;
 pub use self::profile_attribute_filter_list::ProfileAttributeFilterList;
 pub mod profile_attribute_filter_list_update;

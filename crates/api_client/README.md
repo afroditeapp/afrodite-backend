@@ -179,6 +179,7 @@ Class | Method | HTTP request | Description
  - [PerfValueArea](docs/PerfValueArea.md)
  - [Profile](docs/Profile.md)
  - [ProfileAge](docs/ProfileAge.md)
+ - [ProfileAllOf](docs/ProfileAllOf.md)
  - [ProfileAttributeFilterList](docs/ProfileAttributeFilterList.md)
  - [ProfileAttributeFilterListUpdate](docs/ProfileAttributeFilterListUpdate.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)

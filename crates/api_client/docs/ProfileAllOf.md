@@ -1,10 +1,9 @@
-# Profile
+# ProfileAllOf
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**version** | [**uuid::Uuid**](uuid::Uuid.md) |  | 
 **age** | **i64** |  | 
 **attributes** | [**Vec<crate::models::ProfileAttributeValue>**](ProfileAttributeValue.md) |  | 
 **name** | **String** |  | 

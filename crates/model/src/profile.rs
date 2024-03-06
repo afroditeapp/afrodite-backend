@@ -255,6 +255,8 @@ impl ProfileAttributeFilterValue {
     }
 }
 
+// TODO(prod): Remove profile_text?
+
 /// Prfile for HTTP GET
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Profile {
@@ -264,6 +266,7 @@ pub struct Profile {
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValue>,
     /// Version used for caching profile in client side.
+    #[serde(flatten)]
     pub version: ProfileVersion,
 }
 
