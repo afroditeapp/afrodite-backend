@@ -39,8 +39,10 @@ unit-test:
 update-manager-submodule:
 	git submodule update --remote --merge
 update-api-bindings:
+	cargo build --bin pihka-backend
+	./target/debug/pihka-backend open-api > ./target/pihka_api.json
 	openapi-generator-cli generate \
-	-i http://localhost:3000/api-doc/pihka_api.json \
+	-i ./target/pihka_api.json \
 	-g rust \
 	-o crates/api_client \
 	--package-name api_client
