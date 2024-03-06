@@ -19,6 +19,8 @@ ifdef CONTINUE_FROM
 TEST_QA_ARGS = --continue-from $(CONTINUE_FROM)
 endif
 
+TMP_FILE = ./target/tmp_file_for_makefile
+
 # Default rule
 run:
 	RUST_LOG=$${RUST_LOG:-info} cargo run --bin pihka-backend
@@ -40,17 +42,26 @@ update-manager-submodule:
 	git submodule update --remote --merge
 update-api-bindings:
 	cargo build --bin pihka-backend
-	./target/debug/pihka-backend open-api > ./target/pihka_api.json
+	./target/debug/pihka-backend open-api > $(TMP_FILE)
 	openapi-generator-cli generate \
-	-i ./target/pihka_api.json \
+	-i $(TMP_FILE) \
 	-g rust \
 	-o crates/api_client \
 	--package-name api_client
+# Workarounds for generator bugs
+# Command output is redirected as macOS sed doesn't support normal -i
+	sed 's/software_options: SoftwareOptions/software_options: crate::models::SoftwareOptions/g' crates/api_client/src/apis/common_admin_api.rs > $(TMP_FILE)
+	cp $(TMP_FILE) crates/api_client/src/apis/common_admin_api.rs
+	sed 's/queue: ModerationQueueType/queue: crate::models::ModerationQueueType/g' crates/api_client/src/apis/media_admin_api.rs > $(TMP_FILE)
+	cp $(TMP_FILE) crates/api_client/src/apis/media_admin_api.rs
+	sed 's/content_type: MediaContentType/content_type: crate::models::MediaContentType/g' crates/api_client/src/apis/media_api.rs > $(TMP_FILE)
+	cp $(TMP_FILE) crates/api_client/src/apis/media_api.rs
+
 validate-openapi:
 	cargo build --bin pihka-backend
-	./target/debug/pihka-backend open-api > ./target/pihka_api.json
+	./target/debug/pihka-backend open-api > $(TMP_FILE)
 	openapi-generator-cli validate \
-	-i ./target/pihka_api.json
+	-i $(TMP_FILE)
 
 migrations-run:
 	mkdir -p database/sqlite/current
