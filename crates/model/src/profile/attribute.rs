@@ -11,7 +11,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Profile, ProfileVisibility
+    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Profile, ProfileAttributesSyncVersion, ProfileVisibility
 };
 
 
@@ -535,35 +535,36 @@ impl AttributeMode {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum IconSrc {
+#[derive(Debug, Clone, Copy, ToSchema)]
+pub enum IconLocation {
+    /// Icon is located in the Material icon set.
     Material,
 }
 
-impl From<IconSrc> for &str {
-    fn from(src: IconSrc) -> Self {
+impl From<IconLocation> for &str {
+    fn from(src: IconLocation) -> Self {
         match src {
-            IconSrc::Material => "material",
+            IconLocation::Material => "material",
         }
     }
 }
 
-impl FromStr for IconSrc {
+impl FromStr for IconLocation {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "material" => Ok(IconSrc::Material),
-            _ => Err(format!("Unknown icon src {}", s)),
+            "material" => Ok(IconLocation::Material),
+            _ => Err(format!("Unknown icon location {}", s)),
         }
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 #[serde(try_from = "String")]
 #[serde(into = "String")]
 pub struct IconResource {
-    pub src: IconSrc,
+    pub location: IconLocation,
     pub identifier: String,
 }
 
@@ -571,18 +572,18 @@ impl TryFrom<String> for IconResource {
     type Error = String;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let (src, identifier) = value
+        let (location, identifier) = value
             .split_once(':')
             .ok_or(format!("Missing delimiter in {}", value))?;
-        let src = src.parse()?;
-        Ok(Self { src , identifier: identifier.to_string() })
+        let location = location.parse()?;
+        Ok(Self { location , identifier: identifier.to_string() })
     }
 }
 
 impl From<IconResource> for String {
     fn from(icon: IconResource) -> Self {
-        let src_str: &str = icon.src.into();
-        format!("{}:{}", src_str, icon.identifier)
+        let location: &str = icon.location.into();
+        format!("{}:{}", location, icon.identifier)
     }
 }
 
@@ -648,6 +649,7 @@ pub struct Attribute {
     #[schema(default = false)]
     pub required: bool,
     /// Icon for the attribute.
+    #[schema(value_type = String)]
     pub icon: IconResource,
     /// Numeric unique identifier for the attribute.
     pub id: u16,
@@ -663,6 +665,12 @@ pub struct Attribute {
     pub values: Vec<AttributeValue>,
     /// Translations for attribute name and attribute values.
     #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
-    #[schema(default = "Vec<Language>::new")]
+    #[schema(default = json!([]))]
     pub translations: Vec<Language>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AvailableProfileAttributes {
+    pub info: Option<ProfileAttributes>,
+    pub sync_version: ProfileAttributesSyncVersion,
 }

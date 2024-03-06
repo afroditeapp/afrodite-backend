@@ -30,6 +30,7 @@ use crate::api::{
         PROFILE_BENCHMARK_COUNTERS_LIST, PROFILE_DATA_COUNTERS_LIST,
         PROFILE_FAVORITE_COUNTERS_LIST, PROFILE_ITERATE_PROFILES_COUNTERS_LIST,
         PROFILE_LOCATION_COUNTERS_LIST,
+        PROFILE_ATTRIBUTES_COUNTERS_LIST,
     },
     profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
 };
@@ -66,6 +67,7 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
     // Media internal
     &CounterCategory::new("media_internal", MEDIA_INTERNAL_COUNTERS_LIST),
     // Profile
+    &CounterCategory::new("profile_attributes", PROFILE_ATTRIBUTES_COUNTERS_LIST),
     &CounterCategory::new("profile_iterate", PROFILE_ITERATE_PROFILES_COUNTERS_LIST),
     &CounterCategory::new("profile_location", PROFILE_LOCATION_COUNTERS_LIST),
     &CounterCategory::new("profile_favorite", PROFILE_FAVORITE_COUNTERS_LIST),
