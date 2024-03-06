@@ -256,6 +256,25 @@ sync_version_wrappers!(
     ProfileAttributesSyncVersion,
 );
 
+
+/// Subset of ProfileStateInternal which is cached in memory.
+#[derive(Debug, Clone, Copy)]
+pub struct ProfileStateCached {
+    pub search_age_range_min: ProfileAge,
+    pub search_age_range_max: ProfileAge,
+    pub search_group_flags: SearchGroupFlags,
+}
+
+impl From<ProfileStateInternal> for ProfileStateCached {
+    fn from(value: ProfileStateInternal) -> Self {
+        Self {
+            search_age_range_min: value.search_age_range_min,
+            search_age_range_max: value.search_age_range_max,
+            search_group_flags: value.search_group_flags,
+        }
+    }
+}
+
 /// Profile age value which is in inclusive range `[18, 99]`.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Integer)]
@@ -859,7 +878,7 @@ pub struct ProfileQueryMakerDetails {
 impl ProfileQueryMakerDetails {
     pub fn new(
         profile: &ProfileInternal,
-        state: &ProfileStateInternal,
+        state: &ProfileStateCached,
         attribute_filters: Vec<ProfileAttributeFilterValue>,
     ) -> Self {
         Self {
@@ -890,7 +909,7 @@ impl LocationIndexProfileData {
     pub fn new(
         id: AccountId,
         profile: &ProfileInternal,
-        state: &ProfileStateInternal,
+        state: &ProfileStateCached,
         attributes: SortedProfileAttributes,
     ) -> Self {
         Self {

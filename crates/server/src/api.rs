@@ -57,11 +57,13 @@ pub mod utils;
         profile::get_location,
         profile::get_favorite_profiles,
         profile::get_available_profile_attributes,
+        profile::get_search_groups,
         profile::post_get_next_profile_page,
         profile::post_profile,
         profile::post_profile_to_database_debug_mode_benchmark,
         profile::post_reset_profile_paging,
         profile::post_favorite_profile,
+        profile::post_search_groups,
         profile::put_location,
         profile::delete_favorite_profile,
         // Media
@@ -160,6 +162,7 @@ pub mod utils;
         model::profile::GroupValues,
         model::profile::IconResource,
         model::profile::IconLocation,
+        model::profile::SearchGroups,
         // Media
         model::media::ModerationRequest,
         model::media::ModerationRequestIdDb,

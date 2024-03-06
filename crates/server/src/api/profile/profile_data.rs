@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Extension, Router,
 };
-use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal};
+use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
@@ -128,6 +128,65 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
     db_write!(state, move |cmds| cmds.profile().profile(account_id, new))
 }
 
+
+pub const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";
+
+/// Get account's current search groups
+/// (gender and what gender user is looking for)
+#[utoipa::path(
+    get,
+    path = "/profile_api/search_groups",
+    responses(
+        (status = 200, description = "Successful.", body = SearchGroups),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_search_groups<
+    S: ReadData,
+>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<SearchGroups>, StatusCode> {
+    PROFILE.get_search_groups.incr();
+    let profile_state = state.read().profile().profile_state(account_id).await?;
+    Ok(Json(profile_state.search_group_flags.into()))
+}
+
+
+pub const PATH_POST_SEARCH_GROUPS: &str = "/profile_api/search_groups";
+
+/// Set account's current search groups
+/// (gender and what gender user is looking for)
+#[utoipa::path(
+    post,
+    path = "/profile_api/search_groups",
+    request_body = SearchGroups,
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_search_groups<
+    S: WriteData,
+>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(search_groups): Json<SearchGroups>,
+) -> Result<(), StatusCode> {
+    PROFILE.post_search_groups.incr();
+
+    let validated: ValidatedSearchGroups = search_groups
+        .try_into()
+        .into_error_string(DataError::NotAllowed)?;
+
+    db_write!(state, move |cmds| cmds.profile().update_search_groups(account_id, validated))
+}
+
+
 pub fn profile_data_router(s: crate::app::S) -> Router {
     use axum::routing::{get, post};
 
@@ -135,7 +194,9 @@ pub fn profile_data_router(s: crate::app::S) -> Router {
 
     Router::new()
         .route(PATH_GET_PROFILE, get(get_profile::<S>))
+        .route(PATH_GET_SEARCH_GROUPS, get(get_search_groups::<S>))
         .route(PATH_POST_PROFILE, post(post_profile::<S>))
+        .route(PATH_POST_SEARCH_GROUPS, post(post_search_groups::<S>))
         .with_state(s)
 }
 
@@ -144,5 +205,7 @@ create_counters!(
     PROFILE,
     PROFILE_DATA_COUNTERS_LIST,
     get_profile,
+    get_search_groups,
     post_profile,
+    post_search_groups,
 );

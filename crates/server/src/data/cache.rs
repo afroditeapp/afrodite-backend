@@ -4,7 +4,7 @@ use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
@@ -395,7 +395,7 @@ impl DatabaseCache {
 pub struct CachedProfile {
     pub account_id: AccountId,
     pub data: ProfileInternal,
-    pub state: ProfileStateInternal,
+    pub state: ProfileStateCached,
     pub location: LocationData,
     pub attributes: SortedProfileAttributes,
     pub filters: Vec<ProfileAttributeFilterValue>,
@@ -412,7 +412,7 @@ impl CachedProfile {
         Self {
             account_id,
             data,
-            state,
+            state: state.into(),
             location: LocationData {
                 current_position: LocationIndexKey::default(),
                 current_iterator: LocationIndexIteratorState::new(),

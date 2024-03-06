@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, Location, ProfileUpdateInternal};
+use model::{AccountIdInternal, Location, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups};
 
 use crate::{
     data::{
@@ -73,6 +73,42 @@ impl WriteCommandsProfile<'_> {
                 p.data.update_from(&data.new_data);
                 p.attributes.update_from(&data.new_data);
                 p.data.version_uuid = data.version;
+
+                Ok((
+                    p.location.current_position,
+                    p.location_index_profile_data(),
+                ))
+            })
+            .await
+            .into_data_error(id)?;
+
+        if account.profile_visibility().is_currently_public() {
+            self.location()
+                .update_profile_data(id.as_id(), profile_data, location)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    async fn modify_profile_state(
+        self,
+        id: AccountIdInternal,
+        action: impl FnOnce(&mut ProfileStateInternal),
+    ) -> Result<(), DataError> {
+        let mut s = self.db_read(move |mut cmd| cmd.profile().data().profile_state(id)).await?;
+        action(&mut s);
+        let s_cloned = s.clone();
+        let account = db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().profile_state(id, s_cloned)?;
+            cmds.read().common().account(id)
+        })?;
+
+        let (location, profile_data) = self.cache()
+            .write_cache(id.as_id(), |e| {
+                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+
+                p.state = s.into();
 
                 Ok((
                     p.location.current_position,
@@ -169,6 +205,16 @@ impl WriteCommandsProfile<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.profile().data().reset_profile_attributes_sync_version(id)
         })
+    }
+
+    pub async fn update_search_groups(
+        self,
+        id: AccountIdInternal,
+        search_groups: ValidatedSearchGroups,
+    ) -> Result<(), DataError> {
+        self.modify_profile_state(id, |s|
+            s.search_group_flags = search_groups.into()
+        ).await
     }
 
     pub async fn benchmark_update_profile_bypassing_cache(
