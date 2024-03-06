@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet}, sync::atomic::{AtomicBool, AtomicU16,
 
 use diesel::{prelude::*, sql_types::Binary, AsExpression, FromSqlRow, sql_types::BigInt};
 use nalgebra::DMatrix;
-use serde::{de::value, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_uuid_wrapper, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -143,6 +143,39 @@ impl SortedProfileAttributes {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileAttributeFilterListUpdate {
+    filters: Vec<ProfileAttributeFilterValueUpdate>,
+}
+
+impl ProfileAttributeFilterListUpdate {
+    pub fn validate(self, attribute_info: Option<&ProfileAttributes>) -> Result<ProfileAttributeFilterListUpdateValidated, String> {
+        let mut hash_set = HashSet::new();
+        for a in &self.filters {
+            if !hash_set.insert(a.id) {
+                return Err("Duplicate attribute ID".to_string());
+            }
+
+            if let Some(info) = attribute_info {
+                if info.attributes.get(a.id as usize).is_none() {
+                    return Err("Unknown attribute ID".to_string());
+                }
+            } else {
+                return Err("Profile attributes are disabled".to_string());
+            }
+        }
+
+        Ok(ProfileAttributeFilterListUpdateValidated {
+            filters: self.filters,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileAttributeFilterListUpdateValidated {
+    pub filters: Vec<ProfileAttributeFilterValueUpdate>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterValueUpdate {
     /// Attribute ID
     pub id: u16,
@@ -151,6 +184,11 @@ pub struct ProfileAttributeFilterValueUpdate {
     /// Sub level attribute value ID filter.
     pub filter_part2: Option<u16>,
     pub accept_missing_attribute: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+pub struct ProfileAttributeFilterList {
+    pub filters: Vec<ProfileAttributeFilterValue>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]

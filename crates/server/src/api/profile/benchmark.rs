@@ -56,7 +56,7 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
         let profile: Profile = state
             .read()
             .profile()
-            .read_profile_directly_from_database(requested_profile)
+            .benchmark_read_profile_directly_from_database(requested_profile)
             .await?
             .into();
         Ok(profile.into())

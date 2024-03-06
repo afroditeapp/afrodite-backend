@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, Location, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups};
+use model::{AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups};
 
 use crate::{
     data::{
@@ -123,6 +123,28 @@ impl WriteCommandsProfile<'_> {
                 .update_profile_data(id.as_id(), profile_data, location)
                 .await?;
         }
+
+        Ok(())
+    }
+
+    pub async fn update_profile_attribute_filters(
+        self,
+        id: AccountIdInternal,
+        filters: ProfileAttributeFilterListUpdateValidated,
+    ) -> Result<(), DataError> {
+        let new_filters = db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().upsert_profile_attribute_filters(id, filters.filters)?;
+            cmds.read().profile().data().profile_attribute_filters(id)
+        })?;
+
+        self.cache()
+            .write_cache(id.as_id(), |e| {
+                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+                p.filters = new_filters;
+                Ok(())
+            })
+            .await
+            .into_data_error(id)?;
 
         Ok(())
     }

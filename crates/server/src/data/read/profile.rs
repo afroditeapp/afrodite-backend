@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, Location, Profile, ProfileInternal, ProfileStateInternal};
+use model::{AccountIdInternal, Location, Profile, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal};
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
@@ -38,15 +38,6 @@ impl ReadCommandsProfile<'_> {
             .into_error()
     }
 
-    pub async fn read_profile_directly_from_database(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<Profile, DataError> {
-        self.db_read(move |mut cmds| cmds.profile().data().profile(id))
-            .await
-            .into_error()
-    }
-
     pub async fn favorite_profiles(
         &self,
         id: AccountIdInternal,
@@ -61,6 +52,27 @@ impl ReadCommandsProfile<'_> {
         id: AccountIdInternal,
     ) -> Result<ProfileStateInternal, DataError> {
         self.db_read(move |mut cmds| cmds.profile().data().profile_state(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn profile_attribute_filters(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileAttributeFilterList, DataError> {
+        self.db_read(move |mut cmds| {
+            let filters = cmds.profile().data().profile_attribute_filters(id)?;
+            Ok(ProfileAttributeFilterList { filters })
+        })
+            .await
+            .into_error()
+    }
+
+    pub async fn benchmark_read_profile_directly_from_database(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Profile, DataError> {
+        self.db_read(move |mut cmds| cmds.profile().data().profile(id))
             .await
             .into_error()
     }
