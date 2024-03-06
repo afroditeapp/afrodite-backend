@@ -325,8 +325,19 @@ diesel_i64_struct_try_from!(ProfileAge);
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileSearchAgeRange {
+    /// Min value for this field is 18.
     pub min: u8,
+    /// Max value for this field is 99.
     pub max: u8,
+}
+
+impl From<ProfileStateInternal> for ProfileSearchAgeRange {
+    fn from(value: ProfileStateInternal) -> Self {
+        Self {
+            min: value.search_age_range_min.value(),
+            max: value.search_age_range_max.value(),
+        }
+    }
 }
 
 /// Profile search age range which min and max are in
@@ -351,6 +362,14 @@ impl ProfileSearchAgeRangeValidated {
                 max: value1,
             }
         }
+    }
+
+    pub fn min(&self) -> ProfileAge {
+        self.min
+    }
+
+    pub fn max(&self) -> ProfileAge {
+        self.max
     }
 
     pub fn is_match(&self, age: ProfileAge) -> bool {

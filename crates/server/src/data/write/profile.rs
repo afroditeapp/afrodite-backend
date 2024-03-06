@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, Location, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups};
+use model::{AccountIdInternal, Location, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups};
 
 use crate::{
     data::{
@@ -215,6 +215,17 @@ impl WriteCommandsProfile<'_> {
         self.modify_profile_state(id, |s|
             s.search_group_flags = search_groups.into()
         ).await
+    }
+
+    pub async fn update_search_age_range(
+        self,
+        id: AccountIdInternal,
+        range: ProfileSearchAgeRangeValidated,
+    ) -> Result<(), DataError> {
+        self.modify_profile_state(id, |s| {
+            s.search_age_range_min = range.min();
+            s.search_age_range_max = range.max();
+        }).await
     }
 
     pub async fn benchmark_update_profile_bypassing_cache(

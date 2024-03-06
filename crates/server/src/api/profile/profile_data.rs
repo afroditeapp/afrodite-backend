@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Extension, Router,
 };
-use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups};
+use model::{AccountId, AccountIdInternal, Profile, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
@@ -187,6 +187,60 @@ pub async fn post_search_groups<
 }
 
 
+pub const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
+
+/// Get account's current search age range
+#[utoipa::path(
+    get,
+    path = "/profile_api/search_age_range",
+    responses(
+        (status = 200, description = "Successful.", body = ProfileSearchAgeRange),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_search_age_range<
+    S: ReadData,
+>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<ProfileSearchAgeRange>, StatusCode> {
+    PROFILE.get_search_age_range.incr();
+    let profile_state = state.read().profile().profile_state(account_id).await?;
+    Ok(Json(profile_state.into()))
+}
+
+pub const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
+
+/// Set account's current search age range
+#[utoipa::path(
+    post,
+    path = "/profile_api/search_age_range",
+    request_body = ProfileSearchAgeRange,
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_search_age_range<
+    S: WriteData,
+>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(search_age_range): Json<ProfileSearchAgeRange>,
+) -> Result<(), StatusCode> {
+    PROFILE.post_search_age_range.incr();
+
+    let validated: ProfileSearchAgeRangeValidated = search_age_range
+        .try_into()
+        .into_error_string(DataError::NotAllowed)?;
+
+    db_write!(state, move |cmds| cmds.profile().update_search_age_range(account_id, validated))
+}
+
 pub fn profile_data_router(s: crate::app::S) -> Router {
     use axum::routing::{get, post};
 
@@ -195,8 +249,10 @@ pub fn profile_data_router(s: crate::app::S) -> Router {
     Router::new()
         .route(PATH_GET_PROFILE, get(get_profile::<S>))
         .route(PATH_GET_SEARCH_GROUPS, get(get_search_groups::<S>))
+        .route(PATH_GET_SEARCH_AGE_RANGE, get(get_search_age_range::<S>))
         .route(PATH_POST_PROFILE, post(post_profile::<S>))
         .route(PATH_POST_SEARCH_GROUPS, post(post_search_groups::<S>))
+        .route(PATH_POST_SEARCH_AGE_RANGE, post(post_search_age_range::<S>))
         .with_state(s)
 }
 
@@ -206,6 +262,8 @@ create_counters!(
     PROFILE_DATA_COUNTERS_LIST,
     get_profile,
     get_search_groups,
+    get_search_age_range,
     post_profile,
     post_search_groups,
+    post_search_age_range,
 );
