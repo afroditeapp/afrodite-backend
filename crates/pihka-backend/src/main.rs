@@ -10,7 +10,7 @@ use std::process::exit;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
-use server::PihkaServer;
+use server::{api::ApiDoc, PihkaServer};
 use simple_backend_config::args::ImageProcessModeArgs;
 use test_mode::TestRunner;
 
@@ -19,6 +19,11 @@ fn main() {
 
     if let Some(AppMode::ImageProcess(settings)) = args.mode {
         handle_image_process_mode(settings);
+        return;
+    }
+
+    if let Some(AppMode::OpenApi) = args.mode {
+        println!("{}", ApiDoc::open_api_json_string().unwrap());
         return;
     }
 
@@ -32,7 +37,8 @@ fn main() {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     match config.current_mode() {
-        Some(config::args::AppMode::ImageProcess(_)) => unreachable!(),
+        Some(config::args::AppMode::ImageProcess(_)) |
+        Some(config::args::AppMode::OpenApi) => unreachable!(),
         Some(config::args::AppMode::Test(test_mode_config)) => {
             runtime.block_on(async { TestRunner::new(config, test_mode_config).run().await })
         }

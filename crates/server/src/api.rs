@@ -233,6 +233,12 @@ pub mod utils;
 )]
 pub struct ApiDoc;
 
+impl ApiDoc {
+    pub fn open_api_json_string() -> Result<String, serde_json::Error> {
+        Self::openapi().to_pretty_json()
+    }
+}
+
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.
 /// The macro "closure" should work like a real closure.

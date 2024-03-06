@@ -45,8 +45,10 @@ update-api-bindings:
 	-o crates/api_client \
 	--package-name api_client
 validate-openapi:
+	cargo build --bin pihka-backend
+	./target/debug/pihka-backend open-api > ./target/pihka_api.json
 	openapi-generator-cli validate \
-	-i http://localhost:3000/api-doc/pihka_api.json
+	-i ./target/pihka_api.json
 
 migrations-run:
 	mkdir -p database/sqlite/current

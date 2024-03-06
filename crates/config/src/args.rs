@@ -25,6 +25,8 @@ pub enum AppMode {
     Test(TestMode),
     /// Process received image
     ImageProcess(ImageProcessModeArgs),
+    /// Print API documentation JSON to stdout
+    OpenApi,
 }
 
 #[derive(Parser, Debug, Clone)]
