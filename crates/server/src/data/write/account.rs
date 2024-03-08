@@ -1,5 +1,5 @@
 use model::{
-    Account, AccountData, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, ProfileLink, ProfileVisibility, SharedStateRaw
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, ProfileLink, ProfileVisibility, SharedStateRaw
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
@@ -116,6 +116,16 @@ impl WriteCommandsAccount<'_> {
 
         db_transaction!(self, move |mut cmds| {
             cmds.account().data().account(id, &internal)
+        })
+    }
+
+    pub async fn insert_demo_mode_related_account_ids(
+        &self,
+        id: DemoModeId,
+        account_id: AccountId,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().demo_mode().insert_related_account_id(id, account_id)
         })
     }
 }

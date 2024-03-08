@@ -1,6 +1,7 @@
 use simple_backend_database::diesel_db::ConnectionProvider;
 
 mod data;
+mod demo;
 mod sign_in_with;
 mod token;
 
@@ -17,5 +18,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
 
     pub fn token(self) -> token::CurrentSyncWriteAccountToken<C> {
         token::CurrentSyncWriteAccountToken::new(self.cmds)
+    }
+
+    pub fn demo_mode(self) -> demo::CurrentSyncWriteAccountDemo<C> {
+        demo::CurrentSyncWriteAccountDemo::new(self.cmds)
     }
 }

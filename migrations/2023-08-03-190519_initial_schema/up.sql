@@ -137,6 +137,17 @@ CREATE TABLE IF NOT EXISTS account_setup(
             ON UPDATE CASCADE
 );
 
+-- Demo mode user created accounts
+CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
+    id               INTEGER PRIMARY KEY NOT NULL,
+    demo_mode_id     INTEGER             NOT NULL,
+    account_id_uuid  BLOB                NOT NULL,
+    FOREIGN KEY (account_id_uuid)
+        REFERENCES account_id (uuid)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 ---------- Tables for server component profile ----------
 
 -- Private profile related state for some account.

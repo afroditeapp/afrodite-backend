@@ -29,7 +29,7 @@ pub const PATH_LOGIN: &str = "/account_api/login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_login<S: GetAccessTokens + WriteData + GetAccounts>(
+pub async fn post_login<S: WriteData + GetAccounts>(
     State(state): State<S>,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {
@@ -37,7 +37,7 @@ pub async fn post_login<S: GetAccessTokens + WriteData + GetAccounts>(
     login_impl(id, state).await.map(|d| d.into())
 }
 
-async fn login_impl<S: GetAccessTokens + WriteData + GetAccounts>(
+pub async fn login_impl<S: WriteData + GetAccounts>(
     id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {

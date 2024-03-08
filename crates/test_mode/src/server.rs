@@ -198,6 +198,7 @@ fn new_config(
         queue_limits: None,
         bots: None,
         profile_attributes_file: None,
+        demo_mode: None,
     };
 
     let simple_backend_config = SimpleBackendConfigFile {

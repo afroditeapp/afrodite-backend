@@ -5,6 +5,9 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{schema::shared_state, schema_sqlite_types::Integer, AccessToken, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
 
+mod demo;
+pub use demo::*;
+
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {
     pub account: AuthPair,

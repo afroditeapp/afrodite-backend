@@ -3,6 +3,7 @@ use simple_backend_database::diesel_db::ConnectionProvider;
 define_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 
 mod data;
+mod demo;
 mod sign_in_with;
 mod token;
 
@@ -23,5 +24,9 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
 
     pub fn token(self) -> token::CurrentSyncReadAccountToken<C> {
         token::CurrentSyncReadAccountToken::new(self.cmds)
+    }
+
+    pub fn demo_mode(self) -> demo::CurrentSyncReadAccountDemo<C> {
+        demo::CurrentSyncReadAccountDemo::new(self.cmds)
     }
 }

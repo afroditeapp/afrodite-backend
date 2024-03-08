@@ -24,10 +24,7 @@ use super::{
     internal_api::{InternalApiClient},
 };
 use crate::{
-    api,
-    content_processing::ContentProcessingManagerData,
-    data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
-    event::EventManager,
+    api::{self, account::demo_mode_router}, content_processing::ContentProcessingManagerData, data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, demo::DemoModeManager, event::EventManager
 };
 
 pub mod routes_connected;
@@ -44,6 +41,7 @@ pub struct AppState {
     config: Arc<Config>,
     events: Arc<EventManager>,
     content_processing: Arc<ContentProcessingManagerData>,
+    demo_mode: DemoModeManager,
 }
 
 pub trait GetAccessTokens {
@@ -232,6 +230,16 @@ impl ContentProcessingProvider for S {
     }
 }
 
+pub trait DemoModeManagerProvider {
+    fn demo_mode(&self) -> &DemoModeManager;
+}
+
+impl DemoModeManagerProvider for S {
+    fn demo_mode(&self) -> &DemoModeManager {
+        &self.business_logic_state().demo_mode
+    }
+}
+
 // pub trait FileAccessProvider {
 //     fn file_access(&self) -> &FileDir;
 // }
@@ -254,6 +262,7 @@ impl App {
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
         content_processing: Arc<ContentProcessingManagerData>,
+        demo_mode: DemoModeManager,
     ) -> AppState {
         let database = Arc::new(database_handle);
         let events = EventManager::new(database.clone()).into();
@@ -264,6 +273,7 @@ impl App {
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
             events,
             content_processing,
+            demo_mode,
         };
 
         state
@@ -312,6 +322,12 @@ impl App {
                 post(api::account::post_sign_in_with_login::<S>),
             )
             .with_state(self.state());
+
+        let public = if self.state.config().demo_mode_config().is_some() {
+            public.merge(demo_mode_router(self.state.clone()))
+        } else {
+            public
+        };
 
         public.merge(ConnectedApp::new(self.state.clone()).private_account_server_router())
     }

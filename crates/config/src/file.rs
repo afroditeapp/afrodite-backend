@@ -4,6 +4,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+use model::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
 use url::Url;
@@ -77,6 +78,7 @@ pub struct ConfigFile {
     pub external_services: Option<ExternalServices>,
     pub internal_api: Option<InternalApiConfig>,
     pub queue_limits: Option<QueueLimitsConfig>,
+    pub demo_mode: Option<Vec<DemoModeConfig>>,
 }
 
 impl ConfigFile {
@@ -154,6 +156,8 @@ pub struct InternalApiConfig {
 pub struct QueueLimitsConfig {
     /// Simultaneous media content uploads. Processing of the media content
     /// will be done sequentially.
+    ///
+    /// Default: 10
     pub content_upload: usize,
 }
 
@@ -161,4 +165,28 @@ impl Default for QueueLimitsConfig {
     fn default() -> Self {
         Self { content_upload: 10 }
     }
+}
+
+/// Demo mode configuration.
+///
+/// Adding one or more demo mode configurations
+/// will enable demo mode HTTP routes.
+///
+/// WARNING: This gives access to all/specific accounts.
+#[derive(Debug, Deserialize, Default, Serialize, Clone)]
+pub struct DemoModeConfig {
+    pub database_id: DemoModeId,
+    /// First step password for getting demo mode access token.
+    pub password_stage0: String,
+    /// Second step password for getting demo mode access token.
+    /// If this is quessed wrong, these demo mode credentials will
+    /// be locked untill server restarts.
+    pub password_stage1: String,
+    /// If true then all accounts are accessible.
+    /// Overrides `accessible_accounts`.
+    #[serde(default)]
+    pub access_all_accounts: bool,
+    /// AccountIds for accounts that are accessible in demo mode.
+    #[serde(default)]
+    pub accessible_accounts: Vec<uuid::Uuid>,
 }

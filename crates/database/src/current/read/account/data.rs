@@ -39,6 +39,18 @@ impl CurrentReadAccountData<'_> {
 }
 
 impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
+    pub fn account_ids(
+        &mut self,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::account_id::dsl::*;
+
+        account_id
+            .select(uuid)
+            .load(self.conn())
+            .into_db_error(())
+    }
+
+
     pub fn account_setup(
         &mut self,
         id: AccountIdInternal,

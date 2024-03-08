@@ -125,6 +125,16 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    demo_mode_account_ids (id) {
+        id -> Integer,
+        demo_mode_id -> Integer,
+        account_id_uuid -> Binary,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     favorite_profile (account_id, favorite_account_id) {
         account_id -> Integer,
         favorite_account_id -> Integer,
@@ -372,6 +382,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_setup,
     chat_state,
     current_account_media,
+    demo_mode_account_ids,
     favorite_profile,
     history_account,
     history_account_setup,

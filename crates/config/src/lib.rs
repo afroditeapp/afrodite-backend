@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{Result, ResultExt};
-use file::{QueueLimitsConfig, StaticBotConfig};
+use file::{DemoModeConfig, QueueLimitsConfig, StaticBotConfig};
 use file_dynamic::ConfigFileDynamic;
 use model::{AttributesFileInternal, BotConfig, ProfileAttributes};
 use reqwest::Url;
@@ -126,6 +126,10 @@ impl Config {
 
     pub fn profile_attributes_sha256(&self) -> Option<&str> {
         self.profile_attributes_sha256.as_deref()
+    }
+
+    pub fn demo_mode_config(&self) -> Option<&Vec<DemoModeConfig>> {
+        self.file.demo_mode.as_ref()
     }
 
     pub fn simple_backend(&self) -> &SimpleBackendConfig {

@@ -64,6 +64,7 @@ enable_logging!(
     AccountIdInternal,
     AccountId,
     Option<AccountIdDb>,
+    DemoModeId,
     // Media
     ModerationRequestIdDb,
     ModerationRequestId, // TODO: combine with ModerationRequestIdDb

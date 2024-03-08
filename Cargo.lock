@@ -557,6 +557,7 @@ dependencies = [
  "toml 0.8.9",
  "toml_edit 0.21.1",
  "url",
+ "uuid",
 ]
 
 [[package]]

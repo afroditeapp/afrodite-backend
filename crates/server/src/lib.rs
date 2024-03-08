@@ -14,6 +14,7 @@ pub mod perf;
 pub mod result;
 pub mod utils;
 pub mod startup_tasks;
+pub mod demo;
 
 use std::sync::Arc;
 
@@ -25,6 +26,7 @@ use content_processing::{
     ContentProcessingManager, ContentProcessingManagerData, ContentProcessingManagerQuitHandle,
 };
 use data::write_commands::WriteCmdWatcher;
+use demo::DemoModeManager;
 use perf::ALL_COUNTERS;
 use simple_backend::{
     app::{SimpleBackendAppState, StateBuilder},
@@ -157,12 +159,15 @@ impl BusinessLogic for PihkaBusinessLogic {
         let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
         let content_processing = Arc::new(content_processing);
 
+        let demo_mode = DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
+            .expect("Demo mode manager init failed");
         let app_state = App::create_app_state(
             router_database_handle,
             router_database_write_handle,
             write_cmd_runner_handle,
             self.config.clone(),
             content_processing.clone(),
+            demo_mode,
         )
         .await;
 
