@@ -110,6 +110,8 @@ pub async fn get_connect_websocket<
         .await
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
+    info!("get_connect_websocket for '{}'", id.id.as_i64());
+
     Ok(websocket.on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager)))
 }
 
@@ -120,6 +122,7 @@ async fn handle_socket<S: WriteData + ReadData + GetConfig>(
     state: S,
     mut ws_manager: WebSocketManager,
 ) {
+    info!("handle_socket for '{}'", id.id.as_i64());
     let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await
     {
         quit_lock
@@ -129,6 +132,7 @@ async fn handle_socket<S: WriteData + ReadData + GetConfig>(
 
     tokio::select! {
         _ = ws_manager.server_quit_detected() => {
+            info!("Server quit detected, closing WebSocket connection for '{}'", id.id.as_i64());
             // TODO: Probably sessions should be ended when server quits?
             //       Test does this code path work with client.
             let result = state.write(move |cmds| async move {
@@ -138,12 +142,13 @@ async fn handle_socket<S: WriteData + ReadData + GetConfig>(
             }).await;
 
             if let Err(e) = result {
-                error!("server quit end_connection_session, {e:?}")
+                error!("server quit end_connection_session, {e:?}, for '{id}'");
             }
         },
         r = handle_socket_result(socket, address, id, &state) => {
             match r {
                 Ok(()) => {
+                    info!("handle_socket_result returned Ok for '{}'", id.id.as_i64());
                     let result = state.write(move |cmds| async move {
                         cmds.common()
                             .end_connection_session(id)
@@ -151,18 +156,18 @@ async fn handle_socket<S: WriteData + ReadData + GetConfig>(
                     }).await;
 
                     if let Err(e) = result {
-                        error!("end_connection_session, {e:?}")
+                        error!("end_connection_session, {e:?}, for '{id}'")
                     }
                 },
                 Err(e) => {
-                    error!("handle_socket_result: {e:?}");
+                    error!("handle_socket_result returned Err {e:?} for id: '{id}'");
 
                     let result = state.write(move |cmds| async move {
                         cmds.common().logout(id).await
                     }).await;
 
                     if let Err(e) = result {
-                        error!("logout, {e:?}")
+                        error!("logout, {e:?}, for '{id}'")
                     }
                 }
             }
@@ -226,6 +231,7 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
     id: AccountIdInternal,
     state: &S,
 ) -> Result<(), WebSocketError> {
+    info!("handle_socket_result for '{}'", id.id.as_i64());
 
     // Receive protocol version byte.
     let client_is_supported = match socket
@@ -347,6 +353,8 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
     self::data_sync::sync_data_with_client_if_needed(state, &mut socket, id, data_sync_versions).await?;
     self::data_sync::send_new_messages_event_if_needed(state, &mut socket, id).await?;
 
+    // TODO(prod): Remove extra logging from this file.
+
     loop {
         tokio::select! {
             result = socket.recv() => {
@@ -369,7 +377,11 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
                             .await
                             .change_context(WebSocketError::Send)?;
                     },
-                    None => (),
+                    None => {
+                        error!("Event receiver channel broken: id: {}, address: {}", id.id.as_i64(), address);
+                        // New connection created another event receiver.
+                        break;
+                    },
                 }
             }
         }
