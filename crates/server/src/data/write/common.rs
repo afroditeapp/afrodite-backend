@@ -70,18 +70,13 @@ impl WriteCommandsCommon<'_> {
         Ok(receiver)
     }
 
+    // TODO(prod): Logout route which removes current
+    //             tokens and connection address.
+
     /// Remove current connection address and access token.
     pub async fn end_connection_session(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        // TODO: Previous implementation didn't remove access token from cache.
-        //       Was that a bug?
-        let current_access_token = db_transaction!(self, move |mut cmds| {
-            let current_access_token = cmds.read().account().token().access_token(id);
-            cmds.account().token().access_token(id, None)?;
-            current_access_token
-        })?;
-
         self.cache()
-            .delete_connection_and_specific_access_token(id.as_id(), current_access_token)
+            .delete_connection_and_specific_access_token(id.as_id(), None)
             .await
             .into_data_error(id)?;
 
