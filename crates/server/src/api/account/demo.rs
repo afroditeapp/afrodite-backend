@@ -11,6 +11,11 @@ use crate::{
 
 use super::{login_impl, register_impl};
 
+// TODO(prod): Logout route for demo account?
+// TODO(prod): Use one route for login and change wording to user ID and
+//             password? Also info about locked account only if password
+//             is correct?
+
 pub const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 
 /// Access demo mode, which allows accessing all or specific accounts
@@ -56,14 +61,17 @@ pub async fn post_demo_mode_confirm_login<S: DemoModeManagerProvider>(
     Ok(result.into())
 }
 
-pub const PATH_GET_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
+pub const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
 
 // TODO: Return Unauthorized instead of internal server error on routes which
 // require DemoModeToken?
 
+/// Get demo account's available accounts.
+///
+/// This path is using HTTP POST because there is JSON in the request body.
 #[utoipa::path(
-    get,
-    path = PATH_GET_DEMO_MODE_ACCESSIBLE_ACCOUNTS,
+    post,
+    path = PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS,
     request_body = DemoModeToken,
     responses(
         (status = 200, description = "Successfull.", body = Vec<AccessibleAccount>),
@@ -71,11 +79,11 @@ pub const PATH_GET_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode
     ),
     security(),
 )]
-pub async fn get_demo_mode_accessible_accounts<S: DemoModeManagerProvider + ReadData + GetAccounts + GetConfig>(
+pub async fn post_demo_mode_accessible_accounts<S: DemoModeManagerProvider + ReadData + GetAccounts + GetConfig>(
     State(state): State<S>,
     Json(token): Json<DemoModeToken>,
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
-    ACCOUNT.get_demo_mode_accessible_accounts.incr();
+    ACCOUNT.post_demo_mode_accessible_accounts.incr();
     let result = state.demo_mode().accessible_accounts_if_token_valid(&token).await?;
     let result = result.with_extra_info(&state).await?;
     Ok(result.into())
@@ -141,7 +149,7 @@ pub fn demo_mode_router(s: crate::app::S) -> Router {
     use crate::app::S;
 
     Router::new()
-        .route(PATH_GET_DEMO_MODE_ACCESSIBLE_ACCOUNTS, get(get_demo_mode_accessible_accounts::<S>))
+        .route(PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS, post(post_demo_mode_accessible_accounts::<S>))
         .route(PATH_POST_DEMO_MODE_LOGIN, post(post_demo_mode_login::<S>))
         .route(PATH_POST_DEMO_MODE_CONFIRM_LOGIN, post(post_demo_mode_confirm_login::<S>))
         .route(PATH_POST_DEMO_MODE_REGISTER_ACCOUNT, post(post_demo_mode_register_account::<S>))
@@ -153,7 +161,7 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_DEMO_MODE_COUNTERS_LIST,
-    get_demo_mode_accessible_accounts,
+    post_demo_mode_accessible_accounts,
     post_demo_mode_login,
     post_demo_mode_confirm_login,
     post_demo_mode_register_account,

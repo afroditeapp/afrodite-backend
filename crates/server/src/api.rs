@@ -49,12 +49,12 @@ pub mod utils;
         account::post_demo_mode_confirm_login,
         account::post_demo_mode_register_account,
         account::post_demo_mode_login_to_account,
+        account::post_demo_mode_accessible_accounts,
         account::put_setting_profile_visiblity,
         account::get_account_state,
         account::get_account_setup,
         account::get_account_data,
         account::get_deletion_status,
-        account::get_demo_mode_accessible_accounts,
         account::delete_cancel_deletion,
         // Profile
         profile::get_profile,
