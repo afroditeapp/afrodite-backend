@@ -35,7 +35,8 @@ pub async fn post_demo_mode_login<S: DemoModeManagerProvider>(
     Json(password): Json<DemoModePassword>,
 ) -> Result<Json<DemoModeLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login.incr();
-    tokio::time::sleep(Duration::from_secs(5)).await;
+    // TODO(prod): Increase to 5 seconds
+    tokio::time::sleep(Duration::from_secs(1)).await;
     let result = state.demo_mode().stage0_login(password).await?;
     Ok(result.into())
 }

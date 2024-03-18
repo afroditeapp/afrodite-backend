@@ -8,6 +8,10 @@ use crate::{schema::shared_state, schema_sqlite_types::Integer, AccessToken, Acc
 mod demo;
 pub use demo::*;
 
+// TODO(prod): Add AccountId to login result?
+// TODO(prod): Add email to login result?
+// TODO(prod): Also add info what sign in with service is used?
+
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct LoginResult {
     pub account: AuthPair,
