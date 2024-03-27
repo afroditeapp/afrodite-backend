@@ -486,6 +486,7 @@ pub struct AttributeValue {
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     pub visible: bool,
+    #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
     /// Sub level values for this attribute value.
     pub group_values: Option<GroupValues>,
