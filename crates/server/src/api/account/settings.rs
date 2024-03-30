@@ -69,8 +69,7 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
 
 /// Update current or pending profile visiblity value.
 ///
-/// Requirements:
-/// - Account state must be `Normal`.
+/// NOTE: Client uses this in initial setup.
 #[utoipa::path(
     put,
     path = "/account_api/settings/profile_visibility",
@@ -87,14 +86,9 @@ pub async fn put_setting_profile_visiblity<
 >(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Extension(account_state): Extension<AccountState>,
     Json(new_value): Json<BooleanSetting>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_profile_visiblity.incr();
-
-    if account_state != AccountState::Normal {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
 
     let new_account = db_write_multiple!(state, move |cmds| {
         let new_account = cmds
