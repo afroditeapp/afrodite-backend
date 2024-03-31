@@ -1,5 +1,5 @@
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, SetProfileContent
+    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
@@ -25,6 +25,20 @@ impl WriteCommandsMedia<'_> {
             })
             .await?;
 
+        let account = self
+            .db_read(move |mut cmds| {
+                cmds.common()
+                    .account(account_id)
+            })
+            .await?;
+
+        let queue_num_type = match account.profile_visibility() {
+            ProfileVisibility::PendingPrivate | ProfileVisibility::PendingPublic =>
+                NextQueueNumberType::InitialMediaModeration,
+            ProfileVisibility::Private | ProfileVisibility::Public =>
+                NextQueueNumberType::MediaModeration,
+        };
+
         if let Some(current_request) = current_request {
             match current_request.state {
                 ModerationRequestState::Waiting => {
@@ -42,7 +56,7 @@ impl WriteCommandsMedia<'_> {
                     db_transaction!(self, move |mut cmds| {
                         cmds.media()
                             .moderation_request()
-                            .create_new_moderation_request(account_id, request)
+                            .create_new_moderation_request(account_id, request, queue_num_type)
                     })
                 }
             }
@@ -50,7 +64,7 @@ impl WriteCommandsMedia<'_> {
             db_transaction!(self, move |mut cmds| {
                 cmds.media()
                     .moderation_request()
-                    .create_new_moderation_request(account_id, request)
+                    .create_new_moderation_request(account_id, request, queue_num_type)
             })
         }
     }

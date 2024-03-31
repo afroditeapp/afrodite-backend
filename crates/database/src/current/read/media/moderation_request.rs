@@ -72,6 +72,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             request_creator.as_id(),
             state,
             data,
+            request.queue_number,
+            request.queue_number_type,
         )))
     }
 

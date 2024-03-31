@@ -373,6 +373,7 @@ CREATE TABLE IF NOT EXISTS media_moderation_request(
     account_id          INTEGER             NOT NULL  UNIQUE,
     -- Queue number which this media_moderation_request has.
     queue_number        INTEGER             NOT NULL,
+    queue_number_type   INTEGER             NOT NULL,
     content_id_0        BLOB                NOT NULL,
     content_id_1        BLOB,
     content_id_2        BLOB,

@@ -102,6 +102,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         &mut self,
         request_creator: AccountIdInternal,
         request: ModerationRequestContent,
+        queue_type: NextQueueNumberType,
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::media_moderation_request::dsl::*;
 
@@ -117,12 +118,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
             .cmds()
             .common()
             .queue_number()
-            .create_new_queue_entry(request_creator, NextQueueNumberType::InitialMediaModeration)?;
+            .create_new_queue_entry(request_creator, queue_type)?;
 
         insert_into(media_moderation_request)
             .values((
                 account_id.eq(request_creator.as_db_id()),
                 queue_number.eq(queue_number_new),
+                queue_number_type.eq(queue_type),
                 content_id_0.eq(request.content0),
                 content_id_1.eq(request.content1),
                 content_id_2.eq(request.content2),

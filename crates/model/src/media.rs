@@ -11,7 +11,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb};
+use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb, NextQueueNumberType};
 
 /// Y coordinate of slippy map tile.
 ///
@@ -243,6 +243,7 @@ pub struct MediaModerationRequestRaw {
     pub id: ModerationRequestIdDb,
     pub account_id: AccountIdDb,
     pub queue_number: ModerationQueueNumber,
+    pub queue_number_type: NextQueueNumberType,
     pub content_id_0: ContentId,
     pub content_id_1: Option<ContentId>,
     pub content_id_2: Option<ContentId>,
@@ -266,12 +267,14 @@ impl MediaModerationRequestRaw {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone)]
 pub struct ModerationRequestInternal {
     pub moderation_request_id: ModerationRequestIdDb,
     pub account_id: AccountId,
     pub state: ModerationRequestState,
     pub content: ModerationRequestContent,
+    pub queue_number: ModerationQueueNumber,
+    pub queue_type: NextQueueNumberType,
 }
 
 impl ModerationRequestInternal {
@@ -280,19 +283,16 @@ impl ModerationRequestInternal {
         account_id: AccountId,
         state: ModerationRequestState,
         content: ModerationRequestContent,
+        queue_number: ModerationQueueNumber,
+        queue_type: NextQueueNumberType,
     ) -> Self {
         Self {
             moderation_request_id,
             account_id,
             state,
             content,
-        }
-    }
-
-    pub fn into_request(self) -> ModerationRequest {
-        ModerationRequest {
-            content: self.content,
-            state: self.state,
+            queue_number,
+            queue_type,
         }
     }
 }
@@ -301,6 +301,18 @@ impl ModerationRequestInternal {
 pub struct ModerationRequest {
     pub state: ModerationRequestState,
     pub content: ModerationRequestContent,
+    // Waiting position in moderation queue if request state is Waiting.
+    pub waiting_position: Option<i64>,
+}
+
+impl ModerationRequest {
+    pub fn new(request: ModerationRequestInternal, waiting_position: Option<i64>) -> Self {
+        Self {
+            content: request.content,
+            state: request.state,
+            waiting_position,
+        }
+    }
 }
 
 #[derive(thiserror::Error, Debug)]

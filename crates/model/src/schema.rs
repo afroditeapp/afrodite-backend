@@ -219,6 +219,7 @@ diesel::table! {
         id -> Integer,
         account_id -> Integer,
         queue_number -> Integer,
+        queue_number_type -> Integer,
         content_id_0 -> Binary,
         content_id_1 -> Nullable<Binary>,
         content_id_2 -> Nullable<Binary>,

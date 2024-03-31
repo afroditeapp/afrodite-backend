@@ -1,6 +1,6 @@
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::ResultExt;
-use model::{AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest};
+use model::{AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest, ModerationRequestState};
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::IntoReportFromString;
 use tokio_util::io::ReaderStream;
@@ -165,14 +165,26 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, DataError> {
-        self.db_read(move |mut cmds| {
+        let request = self.db_read(move |mut cmds| {
             cmds.media()
                 .moderation_request()
                 .moderation_request(account_id)
         })
         .await
-        .map(|r| r.map(|request| request.into_request()))
-        .into_error()
+        .into_error()?;
+
+        if let Some(request) = request {
+            let smallest_number = self.db_read(move |mut cmds| cmds.common().queue_number().smallest_queue_number(request.queue_type)).await?;
+            let num = if let (Some(num), true) = (smallest_number, request.state == ModerationRequestState::Waiting) {
+                let queue_position = request.queue_number.0 - num;
+                Some(i64::max(queue_position, 0))
+            } else {
+                None
+            };
+            Ok(Some(ModerationRequest::new(request, num)))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn db_read<

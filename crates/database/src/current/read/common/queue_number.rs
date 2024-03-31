@@ -27,4 +27,22 @@ impl<C: ConnectionProvider> CurrentSyncReadCommonQueueNumber<C> {
 
         Ok(number)
     }
+
+    /// Smallest active queue number.
+    pub fn smallest_queue_number(
+        &mut self,
+        queue: NextQueueNumberType,
+    ) -> Result<Option<i64>, DieselDatabaseError> {
+        use crate::schema::queue_entry::dsl::*;
+
+        let number = queue_entry
+            .filter(queue_type_number.eq(queue))
+            .select(queue_number)
+            .order(queue_number.asc())
+            .first(self.conn())
+            .optional()
+            .into_db_error(queue)?;
+
+        Ok(number)
+    }
 }
