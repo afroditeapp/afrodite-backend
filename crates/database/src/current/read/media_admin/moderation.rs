@@ -23,22 +23,17 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
             AccountIdInternal,
         )> = {
             use crate::schema::{
-                account_id, media_moderation, media_moderation::dsl::*, media_moderation_request, queue_entry,
+                account_id, media_moderation, media_moderation::dsl::*, media_moderation_request,
             };
 
             let queue_type: NextQueueNumberType = queue.into();
             media_moderation::table
                 .inner_join(media_moderation_request::table)
                 .inner_join(account_id::table)
-                .inner_join(
-                    queue_entry::table.on(
-                        queue_entry::queue_number
-                            .eq(media_moderation_request::queue_number)
-                    )
-                )
                 .filter(account_id.eq(moderator_id.as_db_id()))
                 .filter(state_number.eq(ModerationRequestState::InProgress))
-                .filter(queue_entry::queue_type_number.eq(queue_type))
+                .filter(media_moderation_request::queue_number_type.eq(queue_type))
+                .order(media_moderation_request::queue_number.asc())
                 .select((
                     MediaModerationRequestRaw::as_select(),
                     AccountIdInternal::as_select(),
