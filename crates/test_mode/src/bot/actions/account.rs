@@ -230,21 +230,18 @@ impl BotAction for AssertAccountState {
 #[derive(Debug)]
 pub struct SetAccountSetup<'a> {
     pub email: Option<&'a str>,
-    pub name: Option<&'a str>,
 }
 
 impl SetAccountSetup<'static> {
     pub const fn new() -> Self {
         Self {
             email: None,
-            name: None,
         }
     }
 
     pub const fn admin() -> Self {
         Self {
             email: Some("admin@example.com"),
-            name: None,
         }
     }
 }
@@ -252,13 +249,7 @@ impl SetAccountSetup<'static> {
 #[async_trait]
 impl<'a> BotAction for SetAccountSetup<'a> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let name = self
-            .name
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| NameProvider::men_first_name().to_string());
         let setup = AccountSetup {
-            // TODO: Remove name related code?
-            // name: name.clone(),
             birthdate: "1.1.2000".to_string(),
         };
         post_account_setup(state.api.account(), setup)
@@ -268,7 +259,7 @@ impl<'a> BotAction for SetAccountSetup<'a> {
         let email = self
             .email
             .map(|email| email.to_string())
-            .unwrap_or(format!("{}@example.com", &name));
+            .unwrap_or(format!("default@example.com"));
 
         let account_data = AccountData { email };
 

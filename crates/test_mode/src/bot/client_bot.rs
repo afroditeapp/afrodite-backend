@@ -7,8 +7,8 @@ use std::{
 };
 
 use api_client::{
-    apis::{account_api::get_account_state, profile_api::post_profile},
-    models::{AccountState, ProfileUpdate},
+    apis::{account_api::get_account_state, profile_api::{post_profile, post_search_age_range, post_search_groups}},
+    models::{AccountState, ProfileSearchAgeRange, ProfileUpdate, SearchGroups},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -141,13 +141,11 @@ impl BotAction for DoInitialSetupIfNeeded {
             .change_context(TestError::ApiRequest)?;
 
         if account_state.state == AccountState::InitialSetup {
-            let name = format!("Bot {}", state.bot_id);
             let email = format!("bot{}@example.com", state.bot_id);
             if self.admin {
                 SetAccountSetup::admin()
             } else {
                 SetAccountSetup {
-                    name: Some(&name),
                     email: Some(&email),
                 }
             }
@@ -166,6 +164,7 @@ impl BotAction for DoInitialSetupIfNeeded {
                     content_0_slot_i: Some(1),
                 },
                 MakeModerationRequest { slot_0_secure_capture: true },
+                ChangeBotAgeAndOtherSettings,
                 CompleteAccountSetup,
                 AssertAccountState(AccountState::Normal),
             );
@@ -192,6 +191,60 @@ impl BotAction for ChangeBotProfileText {
         ChangeProfileText {
             mode: ProfileText::String(text),
         }.excecute_impl(state).await?;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct ChangeBotAgeAndOtherSettings;
+
+#[async_trait]
+impl BotAction for ChangeBotAgeAndOtherSettings {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let update = ProfileUpdate {
+            name: "B".to_string(),
+            age: 30,
+            ..Default::default()
+        };
+
+        post_profile(state.api.profile(), update)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        let age_range = ProfileSearchAgeRange {
+            min: 18,
+            max: 99,
+        };
+
+        post_search_age_range(state.api.profile(), age_range)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        let groups = match state.bot_id % 3 {
+            0 => SearchGroups {
+                man_for_man: Some(true),
+                man_for_woman: Some(true),
+                man_for_non_binary: Some(true),
+                ..Default::default()
+            },
+            1 => SearchGroups {
+                woman_for_man: Some(true),
+                woman_for_woman: Some(true),
+                woman_for_non_binary: Some(true),
+                ..Default::default()
+            },
+            _ => SearchGroups {
+                non_binary_for_man: Some(true),
+                non_binary_for_woman: Some(true),
+                non_binary_for_non_binary: Some(true),
+                ..Default::default()
+            },
+        };
+
+        post_search_groups(state.api.profile(), groups)
+            .await
+            .change_context(TestError::ApiRequest)?;
 
         Ok(())
     }
