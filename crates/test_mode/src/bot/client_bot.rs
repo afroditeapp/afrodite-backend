@@ -7,8 +7,8 @@ use std::{
 };
 
 use api_client::{
-    apis::{account_api::get_account_state, profile_api::{post_profile, post_search_age_range, post_search_groups}},
-    models::{AccountState, ProfileSearchAgeRange, ProfileUpdate, SearchGroups},
+    apis::{account_api::get_account_state, chat_api::{delete_pending_messages, get_pending_messages, get_received_likes, post_send_like, post_send_message}, profile_api::{post_profile, post_search_age_range, post_search_groups}},
+    models::{AccountState, PendingMessageDeleteList, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount},
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
@@ -97,6 +97,8 @@ impl ClientBot {
                 &RunActionsIf(action_array!(SetProfileVisibility(false)), || {
                     rand::random::<f32>() < 0.1
                 }),
+                &AcceptReceivedLikesAndSendMessage,
+                &AnswerReceivedMessages,
                 &ActionsAfterIteration,
             ];
             let iter = setup.into_iter().chain(action_loop.into_iter().cycle());
@@ -249,6 +251,82 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         Ok(())
     }
 }
+
+#[derive(Debug)]
+pub struct AcceptReceivedLikesAndSendMessage;
+
+#[async_trait]
+impl BotAction for AcceptReceivedLikesAndSendMessage {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let received_likes = get_received_likes(state.api.chat())
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        for like in received_likes.profiles {
+            post_send_like(state.api.chat(), like)
+                .await
+                .change_context(TestError::ApiRequest)?;
+
+            let new_msg = format!("Hello!");
+
+            let send_msg = SendMessageToAccount {
+                receiver: Box::new(like),
+                message: new_msg,
+            };
+
+            post_send_message(state.api.chat(), send_msg)
+                .await
+                .change_context(TestError::ApiRequest)?;
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct AnswerReceivedMessages;
+
+#[async_trait]
+impl BotAction for AnswerReceivedMessages {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let messages = get_pending_messages(state.api.chat())
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        if messages.messages.is_empty() {
+            return Ok(());
+        }
+
+        let messages_ids = messages.messages
+            .iter()
+            .map(|msg| msg.id.as_ref().clone())
+            .collect::<Vec<_>>();
+
+        let delete_list = PendingMessageDeleteList {
+            messages_ids,
+        };
+
+        delete_pending_messages(state.api.chat(), delete_list)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        for msg in messages.messages {
+            let new_msg = format!("Hello!");
+
+            let send_msg = SendMessageToAccount {
+                receiver: msg.id.account_id_sender,
+                message: new_msg,
+            };
+
+            post_send_message(state.api.chat(), send_msg)
+                .await
+                .change_context(TestError::ApiRequest)?;
+        }
+
+        Ok(())
+    }
+}
+
 
 #[derive(Debug)]
 struct ActionsBeforeIteration;

@@ -269,6 +269,7 @@ pub struct PendingMessageId {
     pub message_number: MessageNumber,
 }
 
+// TODO(prod): change messages_ids to message_ids
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct PendingMessageDeleteList {
     pub messages_ids: Vec<PendingMessageId>,
