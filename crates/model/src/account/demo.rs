@@ -96,6 +96,7 @@ impl DemoModeToken {
 pub struct AccessibleAccount {
     pub id: AccountId,
     pub name: Option<String>,
+    #[schema(value_type = Option<i64>)]
     pub age: Option<ProfileAge>,
 }
 
