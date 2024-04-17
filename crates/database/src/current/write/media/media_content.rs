@@ -282,6 +282,15 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .media_content()
             .current_account_media_raw(content_owner)?;
 
+        // TODO(prod): Handle case where user creates initial moderation request,
+        //             uploads new image, and then updates pending content
+        //             with the new image. The current code seems to allow
+        //             that case which means that not moderated image can be
+        //             set as current content.
+        //             Fix: Check current content states here and do not allow
+        //             non moderated content to be set as current content.
+        //             Make also test for this case.
+
         update(current_account_media.find(content_owner.as_db_id()))
             .set((
                 security_content_id.eq(c.pending_security_content_id),
