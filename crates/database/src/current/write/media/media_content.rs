@@ -291,6 +291,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         //             non moderated content to be set as current content.
         //             Make also test for this case.
 
+        // TODO(prod): Check also that required security and primary content really is
+        // set in pending content.
+
         update(current_account_media.find(content_owner.as_db_id()))
             .set((
                 security_content_id.eq(c.pending_security_content_id),
