@@ -108,6 +108,23 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             .queue_number()
             .delete_queue_entry(request_raw.queue_number, queue_type)?;
 
+        for c in content.iter() {
+            let content_info = self
+                .read()
+                .media()
+                .media_content()
+                .get_media_content_raw(c)?;
+            if content_info.content_state == ContentState::InSlot {
+                self.cmds()
+                    .media_admin()
+                    .media_content()
+                    .update_content_state(
+                        c,
+                        ContentState::InModeration,
+                    )?;
+            }
+        }
+
         let moderation = Moderation {
             request_creator_id: request_creator_id.into(),
             request_id: ModerationRequestId {
