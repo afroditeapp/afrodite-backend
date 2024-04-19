@@ -310,10 +310,6 @@ impl AccountId {
     pub fn as_uuid(&self) -> &uuid::Uuid {
         &self.account_id
     }
-
-    pub fn to_string(&self) -> String {
-        self.account_id.hyphenated().to_string()
-    }
 }
 
 impl From<AccountId> for uuid::Uuid {
@@ -326,7 +322,7 @@ diesel_uuid_wrapper!(AccountId);
 
 impl std::fmt::Display for AccountId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{}", self.account_id.hyphenated())
     }
 }
 
