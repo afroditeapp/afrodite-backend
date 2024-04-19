@@ -52,7 +52,7 @@ impl WriteCommandsMedia<'_> {
                     Err(DataError::NotAllowed.report())
                 }
                 ModerationRequestState::Accepted |
-                ModerationRequestState::Denied => {
+                ModerationRequestState::Rejected => {
                     db_transaction!(self, move |mut cmds| {
                         cmds.media()
                             .moderation_request()

@@ -102,7 +102,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     /// Update or delete pending profile content if possible
     ///
     /// Requirements:
-    ///  - The content must not be moderated as denied.
+    ///  - The content must not be moderated as rejected.
     ///  - The content must be of type JpegImage.
     ///  - The content must be in the account's media content.
     pub fn update_or_delete_pending_profile_content(
@@ -129,7 +129,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             Self::check_content_id(
                 content_id,
                 &all_content,
-                |c| c.state() != ContentState::ModeratedAsDenied
+                |c| c.state() != ContentState::ModeratedAsRejected
             )
         };
 
@@ -190,7 +190,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     /// Update or delete pending security content if possible
     ///
     /// Requirements:
-    /// - The content must not be moderated as denied.
+    /// - The content must not be moderated as rejected.
     /// - The content must be of type JpegImage.
     /// - The content must be in the account's media content.
     /// - The content must have secure capture flag enabled.
@@ -210,7 +210,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         let content_db_id = Self::check_content_id(
             content_id,
             &all_content,
-            |c| c.state() != ContentState::ModeratedAsDenied && c.secure_capture,
+            |c| c.state() != ContentState::ModeratedAsRejected && c.secure_capture,
         )?;
 
         update(current_account_media.find(content_owner.as_db_id()))
@@ -254,7 +254,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             // TODO(prod): Content not in use time tracking
             match c.state() {
                 ContentState::InSlot |
-                ContentState::ModeratedAsDenied |
+                ContentState::ModeratedAsRejected |
                 ContentState::ModeratedAsAccepted => {
                     use model::schema::media_content::dsl::*;
                     delete(media_content.filter(id.eq(c.content_row_id())))

@@ -51,14 +51,14 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
                 let accepted = moderations
                     .iter()
                     .find(|r| r.state_number == ModerationRequestState::Accepted);
-                let denied = moderations
+                let rejected = moderations
                     .iter()
-                    .find(|r| r.state_number == ModerationRequestState::Denied);
+                    .find(|r| r.state_number == ModerationRequestState::Rejected);
 
                 if accepted.is_some() {
                     ModerationRequestState::Accepted
-                } else if denied.is_some() {
-                    ModerationRequestState::Denied
+                } else if rejected.is_some() {
+                    ModerationRequestState::Rejected
                 } else {
                     ModerationRequestState::InProgress
                 }

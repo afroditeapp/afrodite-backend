@@ -298,6 +298,11 @@ impl ModerationRequestInternal {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct CurrentModerationRequest {
+    pub request: Option<ModerationRequest>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequest {
     pub state: ModerationRequestState,
     pub content: ModerationRequestContent,
@@ -339,7 +344,7 @@ pub enum ModerationRequestState {
     Waiting = 0,
     InProgress = 1,
     Accepted = 2,
-    Denied = 3,
+    Rejected = 3,
 }
 
 diesel_i64_try_from!(ModerationRequestState);
@@ -347,7 +352,7 @@ diesel_i64_try_from!(ModerationRequestState);
 impl ModerationRequestState {
     pub fn completed(&self) -> bool {
         match self {
-            Self::Accepted | Self::Denied => true,
+            Self::Accepted | Self::Rejected => true,
             _ => false,
         }
     }
@@ -360,7 +365,7 @@ impl TryFrom<i64> for ModerationRequestState {
             0 => Self::Waiting,
             1 => Self::InProgress,
             2 => Self::Accepted,
-            3 => Self::Denied,
+            3 => Self::Rejected,
             _ => return Err(EnumParsingError::ParsingError(value)),
         };
 
@@ -390,13 +395,13 @@ pub enum ContentState {
     /// Content is moderated as accepted. User can not remove the content until
     /// specific time elapses.
     ModeratedAsAccepted = 2,
-    /// Content is moderated as denied.
-    ModeratedAsDenied = 3,
+    /// Content is moderated as rejected.
+    ModeratedAsRejected = 3,
 }
 
 diesel_i64_try_from!(ContentState);
 
-// TODO: Remove content with state ModeratedAsDenied when new moderation request
+// TODO: Remove content with state ModeratedAsRejected when new moderation request
 // is created. Get content id from Moderation table.
 
 impl TryFrom<i64> for ContentState {
@@ -406,7 +411,7 @@ impl TryFrom<i64> for ContentState {
             0 => Self::InSlot,
             1 => Self::InModeration,
             2 => Self::ModeratedAsAccepted,
-            3 => Self::ModeratedAsDenied,
+            3 => Self::ModeratedAsRejected,
             _ => return Err(EnumParsingError::ParsingError(value)),
         };
 

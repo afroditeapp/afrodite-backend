@@ -169,13 +169,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         let state = if result.accept {
             ModerationRequestState::Accepted
         } else {
-            ModerationRequestState::Denied
+            ModerationRequestState::Rejected
         };
 
         let new_content_state = if result.accept {
             ContentState::ModeratedAsAccepted
         } else {
-            ContentState::ModeratedAsDenied
+            ContentState::ModeratedAsRejected
         };
 
         for c in content.iter() {

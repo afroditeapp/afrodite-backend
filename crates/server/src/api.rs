@@ -191,6 +191,7 @@ pub mod utils;
         model::media::ModerationRequestIdDb,
         model::media::ModerationRequestContent,
         model::media::ModerationRequestState,
+        model::media::CurrentModerationRequest,
         model::media::MediaContentType,
         model::media::SlotId,
         model::media::ContentId,

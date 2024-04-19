@@ -12,8 +12,6 @@ use crate::{
     app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
 };
 
-// TODO(prod): Would ModerationRequestState.denied be changed to ModerationRequestState.rejected?
-
 // TODO: Add moderation content moderation weight to account and use it when moderating.
 //       Moderation should have some value which keeps track how much moderation
 //       request has moderation weight added. Perhaps this should not be in MVP?

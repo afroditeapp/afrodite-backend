@@ -144,7 +144,7 @@ Updating the moderation request can change the contents of the request
 When admin starts handling the request the request is copied so that it is
 immutable. This prevents the user updating the request anymore.
 The Queue ID is removed from active Queue IDs table.
-After that the admin can mark the request as accepted or denied.
+After that the admin can mark the request as accepted or rejected.
 
 After these events the request still exists but it is handled. Only creating a
 new moderation request deletes the previous one.

@@ -349,7 +349,7 @@ CREATE TABLE IF NOT EXISTS media_content(
     -- InModeration = 1, Content is in moderation. User can not remove the content.
     -- ModeratedAsAccepted = 2, Content is moderated as accepted. User can not remove the content until
     --                          specific time elapses.
-    -- ModeratedAsDenied = 3, Content is moderated as denied. Content deleting
+    -- ModeratedAsRejected = 3, Content is moderated as rejected. Content deleting
     --                        is possible.
     content_state       INTEGER             NOT NULL,
     -- Client captured this media

@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, ModerationRequest, ModerationRequestContent};
+use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequest, ModerationRequestContent};
 use simple_backend::create_counters;
 
 use crate::{
@@ -18,8 +18,7 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     get,
     path = "/media_api/moderation/request",
     responses(
-        (status = 200, description = "Get moderation request was successfull.", body = ModerationRequest),
-        (status = 304, description = "No moderation request found."),
+        (status = 200, description = "Get moderation request was successfull.", body = CurrentModerationRequest),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -28,14 +27,17 @@ pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
 pub async fn get_moderation_request<S: ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ModerationRequest>, StatusCode> {
+) -> Result<Json<CurrentModerationRequest>, StatusCode> {
     MEDIA.get_moderation_request.incr();
 
     let request = state
         .read()
         .moderation_request(account_id)
-        .await?
-        .ok_or(StatusCode::NOT_MODIFIED)?;
+        .await?;
+
+    let request = CurrentModerationRequest {
+        request,
+    };
 
     Ok(request.into())
 }

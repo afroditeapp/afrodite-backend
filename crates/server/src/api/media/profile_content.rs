@@ -126,7 +126,7 @@ pub const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_c
 /// accepted.
 ///
 /// # Restrictions
-/// - All content must not be moderated as denied.
+/// - All content must not be moderated as rejected.
 /// - All content must be owned by the account.
 /// - All content must be images.
 #[utoipa::path(
