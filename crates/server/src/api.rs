@@ -93,6 +93,7 @@ pub mod utils;
         media::put_profile_content,
         media::put_pending_profile_content,
         media::delete_content,
+        media::delete_moderation_request,
         // Media admin
         media_admin::patch_moderation_request_list,
         media_admin::post_handle_moderation_request,
