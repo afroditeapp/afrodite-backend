@@ -3,6 +3,8 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+#![allow(clippy::collapsible_else_if)]
+
 //! Data types for API and database.
 
 pub mod account;

@@ -183,7 +183,10 @@ pub struct ProfileAttributeFilterValueUpdate {
     pub filter_part1: Option<u16>,
     /// Sub level attribute value ID filter.
     pub filter_part2: Option<u16>,
-    pub accept_missing_attribute: bool,
+    /// Should missing attribute be accepted.
+    ///
+    /// Setting this to `None` disables the filter.
+    pub accept_missing_attribute: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -196,14 +199,14 @@ pub struct ProfileAttributeFilterValue {
     /// Attribute ID
     id: u16,
     /// Bitflags value or top level attribute value ID filter.
-    filter_part1: u16,
+    filter_part1: Option<u16>,
     /// Sub level attribute value ID filter.
     filter_part2: Option<u16>,
     accept_missing_attribute: bool,
 }
 
 impl ProfileAttributeFilterValue {
-    pub fn new(id: u16, filter_part1: u16, filter_part2: Option<u16>, accept_missing_attribute: bool) -> Self {
+    pub fn new(id: u16, filter_part1: Option<u16>, filter_part2: Option<u16>, accept_missing_attribute: bool) -> Self {
         Self {
             id,
             filter_part1,
@@ -222,11 +225,11 @@ impl ProfileAttributeFilterValue {
 
     /// Bitflag filter value
     pub fn as_bitflags(&self) -> u16 {
-        self.filter_part1
+        self.filter_part1.unwrap_or(0)
     }
 
     /// ID number for top level AttributeValue ID.
-    pub fn as_top_level_id(&self) -> u16 {
+    pub fn as_top_level_id(&self) -> Option<u16> {
         self.filter_part1
     }
 
@@ -235,7 +238,7 @@ impl ProfileAttributeFilterValue {
         self.filter_part2
     }
 
-    pub fn is_match(&self, value: &ProfileAttributeValue, attribute_info: &Attribute) -> bool {
+    pub fn is_match_with_attribute_value(&self, value: &ProfileAttributeValue, attribute_info: &Attribute) -> bool {
         if self.id != value.id {
             return false;
         }
@@ -243,10 +246,14 @@ impl ProfileAttributeFilterValue {
         if attribute_info.mode.is_bitflag_mode() {
             self.as_bitflags() & value.as_bitflags() != 0
         } else {
-            if self.as_top_level_id() == value.as_top_level_id() {
-                match self.as_sub_level_id() {
-                    wanted @ Some(_) => wanted == value.as_sub_level_id(),
-                    None => true,
+            if let Some(top_level_id) = self.as_top_level_id() {
+                if top_level_id == value.as_top_level_id() {
+                    match self.as_sub_level_id() {
+                        wanted @ Some(_) => wanted == value.as_sub_level_id(),
+                        None => true,
+                    }
+                } else {
+                    false
                 }
             } else {
                 false
@@ -1017,7 +1024,7 @@ impl LocationIndexProfileData {
             };
 
             if let Some(value) = self.attributes.find_id(filter.id) {
-                if !filter.is_match(value, attribute_info) {
+                if !filter.is_match_with_attribute_value(value, attribute_info) {
                     return false;
                 }
             } else {

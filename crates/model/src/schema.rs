@@ -283,7 +283,7 @@ diesel::table! {
         attribute_value_part2 -> Nullable<Integer>,
         filter_value_part1 -> Nullable<Integer>,
         filter_value_part2 -> Nullable<Integer>,
-        filter_accept_missing_attribute -> Bool,
+        filter_accept_missing_attribute -> Nullable<Bool>,
     }
 }
 

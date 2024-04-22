@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS profile_attributes(
     filter_value_part1    INTEGER,
     -- Sub level attribute value
     filter_value_part2    INTEGER,
-    filter_accept_missing_attribute BOOLEAN       NOT NULL DEFAULT 0,
+    filter_accept_missing_attribute BOOLEAN,
     PRIMARY KEY (account_id, attribute_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)

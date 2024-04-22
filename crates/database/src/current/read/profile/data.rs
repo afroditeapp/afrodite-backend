@@ -108,13 +108,12 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
     ) -> Result<Vec<ProfileAttributeFilterValue>, DieselDatabaseError> {
         use crate::schema::profile_attributes::dsl::*;
 
-        let data: Vec<(i64, i64, Option<i64>, bool)> = profile_attributes
+        let data: Vec<(i64, Option<i64>, Option<i64>, bool)> = profile_attributes
             .filter(account_id.eq(id.as_db_id()))
-            .filter(filter_value_part1.is_not_null())
             .filter(filter_accept_missing_attribute.is_not_null())
             .select((
                 attribute_id,
-                filter_value_part1.assume_not_null(),
+                filter_value_part1,
                 filter_value_part2,
                 filter_accept_missing_attribute.assume_not_null(),
             ))
@@ -126,7 +125,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
             .map(|(id, part1, part2, accept_missing)| {
                 ProfileAttributeFilterValue::new(
                     id as u16,
-                    part1 as u16,
+                    part1.map(|v| v as u16),
                     part2.map(|v| v as u16),
                     accept_missing,
                 )
