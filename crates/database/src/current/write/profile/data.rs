@@ -47,6 +47,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         update(profile.find(id.as_db_id()))
             .set((
                 version_uuid.eq(data.version),
+                name.eq(&data.new_data.name),
+                age.eq(&data.new_data.age),
                 profile_text.eq(&data.new_data.profile_text),
             ))
             .execute(self.conn())
