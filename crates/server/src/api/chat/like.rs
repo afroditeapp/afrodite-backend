@@ -94,6 +94,8 @@ pub async fn get_sent_likes<S: ReadData>(
 
 // TODO(prod): Add profile last seen time to profiles.
 
+// TODO(prod): Store date and time when account was created.
+
 pub const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
 
 /// Get received likes.
