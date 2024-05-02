@@ -434,6 +434,12 @@ impl BotManager {
                     .swap_remove(remove_i)
                     .notify_task_bot_count_decreased(self.bots.len());
             }
+
+            if let Some(bot_mode_config) = self.config.bot_mode() {
+                if !bot_mode_config.no_sleep {
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                }
+            }
         }
     }
 

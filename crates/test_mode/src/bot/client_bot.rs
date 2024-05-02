@@ -334,10 +334,6 @@ struct ActionsBeforeIteration;
 #[async_trait]
 impl BotAction for ActionsBeforeIteration {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        if !state.config.no_sleep() {
-            sleep(Duration::from_millis(1000)).await;
-        }
-
         state.benchmark.action_duration = Instant::now();
 
         Ok(())
