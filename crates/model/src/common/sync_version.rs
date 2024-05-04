@@ -13,6 +13,7 @@ use crate::{
 };
 
 
+#[derive(Debug)]
 pub struct SyncDataVersionFromClient {
     pub data_type: SyncCheckDataType,
     pub version: SyncVersionFromClient,
