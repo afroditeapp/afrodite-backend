@@ -72,7 +72,7 @@ pub struct DemoModeLoginToken {
 }
 
 impl DemoModeLoginToken {
-    pub fn new() -> Self {
+    pub fn generate_new() -> Self {
         Self {
             token: RefreshToken::generate_new().into_string(),
         }
@@ -85,7 +85,7 @@ pub struct DemoModeToken {
 }
 
 impl DemoModeToken {
-    pub fn new() -> Self {
+    pub fn generate_new() -> Self {
         Self {
             token: RefreshToken::generate_new().into_string(),
         }

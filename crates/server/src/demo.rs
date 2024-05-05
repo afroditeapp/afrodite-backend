@@ -140,7 +140,7 @@ impl DemoModeManager {
         let mut w = self.state.write().await;
         // Make sure that token is unique.
         let token = loop {
-            let token = DemoModeLoginToken::new();
+            let token = DemoModeLoginToken::generate_new();
             if !w.states.iter().any(|s| s.stage1_token_equals_unchecked(&token)) {
                 break TokenState::new(token);
             }
@@ -235,7 +235,7 @@ impl DemoModeManager {
 
         // Make sure that token is unique.
         let token = loop {
-            let token = DemoModeToken::new();
+            let token = DemoModeToken::generate_new();
             if !w.states.iter().any(|s| s.token_equals_unchecked(&token)) {
                 break TokenState::new(token);
             }

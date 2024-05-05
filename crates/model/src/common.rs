@@ -336,7 +336,11 @@ pub struct AccessTokenRaw {
 
 /// AccessToken is used as a short lived token for API access.
 ///
-/// This is just a random string.
+/// The token is 256 bit random value which is Base64 encoded.
+/// The token lenght in characters is 44.
+///
+/// OWASP recommends at least 128 bit session IDs.
+/// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct AccessToken {
     /// API token which server generates.
@@ -345,8 +349,13 @@ pub struct AccessToken {
 
 impl AccessToken {
     pub fn generate_new() -> Self {
+        // Generate 256 bit token
+        let mut token = Vec::new();
+        for _ in 1..=2 {
+            token.extend(uuid::Uuid::new_v4().to_bytes_le())
+        }
         Self {
-            access_token: uuid::Uuid::new_v4().simple().to_string(),
+            access_token: base64::engine::general_purpose::STANDARD.encode(token),
         }
     }
 
@@ -370,9 +379,19 @@ pub struct RefreshTokenRaw {
     pub token: Option<Vec<u8>>,
 }
 
-/// This is just a really long random number which is Base64 encoded.
+/// Refresh token is long lived token used for getting new access tokens.
+///
+/// Refresh token is 3072 bit value which is Base64 encoded.
+/// The token lenght in characters is 512.
+///
+/// Why 3072 bits? Microsoft LinkedIn API uses about 500 character refresh
+/// tokens and 3072 bits is near that value.
+///
+/// https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens
+///
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct RefreshToken {
+    /// Base64 encoded random number.
     token: String,
 }
 
@@ -380,8 +399,7 @@ impl RefreshToken {
     pub fn generate_new_with_bytes() -> (Self, Vec<u8>) {
         let mut token = Vec::new();
 
-        // TODO: use longer refresh token
-        for _ in 1..=2 {
+        for _ in 1..=24 {
             token.extend(uuid::Uuid::new_v4().to_bytes_le())
         }
 
@@ -397,12 +415,6 @@ impl RefreshToken {
         Self {
             token: base64::engine::general_purpose::STANDARD.encode(data),
         }
-    }
-
-    /// String must be base64 encoded
-    /// TODO: add checks?
-    pub fn from_string(token: String) -> Self {
-        Self { token }
     }
 
     /// Base64 string
@@ -561,3 +573,46 @@ impl From<ModerationQueueNumber> for QueueNumber {
 }
 
 diesel_i64_wrapper!(QueueNumber);
+
+
+
+#[cfg(test)]
+mod tests {
+    use base64::Engine;
+
+    use crate::{AccessToken, RefreshToken};
+
+    #[test]
+    fn access_token_lenght_is_256_bits() {
+        let data_256_bit = [0u8; 256/8];
+        let wanted_len = base64::engine::general_purpose::STANDARD.encode(data_256_bit).len();
+        let token = AccessToken::generate_new();
+        assert_eq!(token.access_token.len(), wanted_len);
+        assert_eq!(token.access_token.len(), 44);
+    }
+
+    #[test]
+    fn access_token_contains_only_allowed_characters() {
+        let token = AccessToken::generate_new();
+        for c in token.access_token.chars() {
+            assert!(c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=');
+        }
+    }
+
+    #[test]
+    fn refresh_token_lenght_is_24_uuids() {
+        let data_24_uuid = [0u8; 128*24/8];
+        let wanted_len = base64::engine::general_purpose::STANDARD.encode(data_24_uuid).len();
+        let token = RefreshToken::generate_new();
+        assert_eq!(token.token.len(), wanted_len);
+        assert_eq!(token.token.len(), 512);
+    }
+
+    #[test]
+    fn refresh_token_contains_only_allowed_characters() {
+        let token = RefreshToken::generate_new();
+        for c in token.token.chars() {
+            assert!(c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=');
+        }
+    }
+}
