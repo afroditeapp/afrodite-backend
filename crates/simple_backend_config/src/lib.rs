@@ -182,6 +182,13 @@ pub fn get_config(
         file_config.data.dir.clone()
     };
 
+    if let Some(internal_api_socket) = file_config.socket.internal_api {
+        if !file_config.socket.internal_api_allow_non_localhost_ip && !internal_api_socket.ip().is_loopback() {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("By default, internal API socket config only allows an localhost address. Use config 'internal_api_allow_non_localhost_ip = true' to allow other addresses.");
+        }
+    }
+
     let public_api_tls_config = match file_config.tls.clone() {
         Some(tls_config) => Some(Arc::new(generate_server_config(
             tls_config.public_api_key.as_path(),

@@ -216,7 +216,8 @@ fn new_config(
         },
         socket: SocketConfig {
             public_api: public_api.into(),
-            internal_api: internal_api.into(),
+            internal_api: Some(internal_api.into()),
+            internal_api_allow_non_localhost_ip: false,
         },
         sign_in_with_google: None,
         manager: None,

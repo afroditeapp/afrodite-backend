@@ -1,6 +1,6 @@
 //! Bot client
 
-use std::{env, os::unix::process::CommandExt, process::Stdio};
+use std::{env, net::SocketAddr, os::unix::process::CommandExt, process::Stdio};
 
 use config::Config;
 use error_stack::{Result, ResultExt};
@@ -58,7 +58,7 @@ impl BotClient {
             .to_string();
 
         let start_cmd =
-            std::fs::canonicalize(&start_cmd).change_context(BotClientError::LaunchCommand)?;
+            std::fs::canonicalize(start_cmd).change_context(BotClientError::LaunchCommand)?;
 
         if !start_cmd.is_file() {
             return Err(BotClientError::LaunchCommand).attach_printable(format!(
@@ -66,6 +66,15 @@ impl BotClient {
                 start_cmd
             ));
         }
+
+        let internal_api_socket = if let Some(internal_api_socket) = config.simple_backend().socket().internal_api {
+            if !internal_api_socket.ip().is_loopback() {
+                return Err(BotClientError::LaunchCommand).attach_printable("Only localhost IP address is allowed for internal API");
+            }
+            internal_api_socket
+        } else {
+            return Err(BotClientError::LaunchCommand).attach_printable("Internal API must be enabled");
+        };
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
 
@@ -79,7 +88,7 @@ impl BotClient {
             .arg("--no-servers")
             // Urls
             .arg("--url-register")
-            .arg(Self::internal_api_url(config))
+            .arg(Self::internal_api_url(internal_api_socket))
             .arg("--url-account")
             .arg(Self::public_api_url(config))
             .arg("--url-profile")
@@ -205,13 +214,14 @@ impl BotClient {
         Ok(())
     }
 
-    fn internal_api_url(config: &Config) -> String {
-        let port = config.simple_backend().socket().internal_api.port();
-        format!("http://localhost:{}", port)
+    fn internal_api_url(internal_api_socket: SocketAddr) -> String {
+        format!("http://localhost:{}", internal_api_socket.port())
     }
 
     fn public_api_url(config: &Config) -> String {
-        let port = config.simple_backend().socket().public_api.port();
-        format!("http://localhost:{}", port)
+        format!(
+            "http://localhost:{}",
+            config.simple_backend().socket().public_api.port(),
+        )
     }
 }

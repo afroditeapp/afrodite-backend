@@ -190,9 +190,19 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let server_task = self
             .create_public_api_server_task(server_quit_watcher.resubscribe(), ws_manager, &state)
             .await;
-        let internal_server_task = self
-            .create_internal_api_server_task(server_quit_watcher.resubscribe(), &state)
-            .await;
+        let internal_server_task = if let Some(internal_api_addr) = self.config.socket().internal_api {
+            Some(
+                self
+                    .create_internal_api_server_task(
+                        server_quit_watcher.resubscribe(),
+                        &state,
+                        internal_api_addr
+                    )
+                    .await
+            )
+        } else {
+            None
+        };
 
         self.logic.on_after_server_start().await;
         // Use println to make sure that this message is visible in logs.
@@ -211,9 +221,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         server_task
             .await
             .expect("Public API server task panic detected");
-        internal_server_task
-            .await
-            .expect("Internal API server task panic detected");
+        if let Some(internal_server_task) = internal_server_task {
+            internal_server_task
+                .await
+                .expect("Internal API server task panic detected");
+        }
 
         ws_watcher.wait_for_quit().await;
 
@@ -414,6 +426,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         &self,
         quit_notification: ServerQuitWatcher,
         state: &SimpleBackendAppState<T::AppState>,
+        addr: SocketAddr,
     ) -> JoinHandle<()> {
         let router = self.logic.internal_api_router(state);
         let router = if self.config.debug_mode() {
@@ -426,7 +439,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             router
         };
 
-        let addr = self.config.socket().internal_api;
         info!("Internal API is available on {}", addr);
         if let Some(tls_config) = self.config.internal_api_tls_config() {
             self.create_server_task_with_tls(
@@ -580,7 +592,6 @@ impl SimpleBackendTlsConfig {
         }
     }
 }
-
 
 #[derive(Debug, Clone)]
 enum SimpleBackendTlsConfigAcmeTaskRunning {

@@ -203,7 +203,9 @@ impl From<SqliteDatabase> for DatabaseInfo {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SocketConfig {
     pub public_api: SocketAddr,
-    pub internal_api: SocketAddr,
+    pub internal_api: Option<SocketAddr>,
+    #[serde(default)]
+    pub internal_api_allow_non_localhost_ip: bool,
 }
 
 /// App manager config
