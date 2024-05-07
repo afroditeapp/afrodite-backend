@@ -149,6 +149,12 @@ CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS account_global_state(
+    -- 0 = account component global state
+    row_type              INTEGER PRIMARY KEY NOT NULL,
+    admin_access_granted_count INTEGER           NOT NULL DEFAULT 0
+);
+
 ---------- Tables for server component profile ----------
 
 -- Private profile related state for some account.

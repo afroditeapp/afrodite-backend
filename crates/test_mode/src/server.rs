@@ -6,8 +6,7 @@ use std::{
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        Components, ConfigFile, ExternalServices, InternalApiConfig, LocationConfig,
-        CONFIG_FILE_NAME,
+        Components, ConfigFile, ExternalServices, GrantAdminAccessConfig, InternalApiConfig, LocationConfig, CONFIG_FILE_NAME
     },
     Config,
 };
@@ -22,6 +21,8 @@ use tokio::{
     sync::Mutex,
     task::JoinHandle,
 };
+
+pub const TEST_ADMIN_ACCESS_EMAIL: &str = "admin@example.com";
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
 
@@ -185,7 +186,12 @@ fn new_config(
     external_services: Option<ExternalServices>,
 ) -> (ConfigFile, SimpleBackendConfigFile) {
     let config = ConfigFile {
-        admin_email: "admin@example.com".to_string(),
+        grant_admin_access: GrantAdminAccessConfig {
+            for_every_matching_new_account: false,
+            email: Some(TEST_ADMIN_ACCESS_EMAIL.to_string()),
+            google_account_id: None,
+        }
+        .into(),
         components,
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             DEFAULT_LOCATION_CONFIG_BENCHMARK

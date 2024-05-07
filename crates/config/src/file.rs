@@ -21,12 +21,15 @@ use url::Url;
 // latitude_bottom_right = 59.8
 // longitude_bottom_right = 31.58
 
+pub type GoogleAccountId = String;
+
 pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
-# Also google account ID is required if sign in with google is enabled.
-admin_email = "admin@example.com"
+[grant_admin_access]
+email = "admin@example.com"
+google_account_id = "TODO"
 
 [components]
 account = true
@@ -69,10 +72,10 @@ pub enum ConfigFileError {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
-    pub admin_email: String,
     pub profile_attributes_file: Option<PathBuf>,
 
     pub components: Components,
+    pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
     pub bots: Option<StaticBotConfig>,
     pub external_services: Option<ExternalServices>,
@@ -96,6 +99,18 @@ pub struct Components {
     pub profile: bool,
     pub media: bool,
     pub chat: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GrantAdminAccessConfig {
+    /// Grant admin access to every new account which matches with email and
+    /// Google account ID. If only either is set, then only that must match.
+    ///
+    /// By default admin access is granted for once only.
+    #[serde(default)]
+    pub for_every_matching_new_account: bool,
+    pub email: Option<String>,
+    pub google_account_id: Option<GoogleAccountId>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

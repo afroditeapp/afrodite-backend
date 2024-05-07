@@ -12,8 +12,6 @@ use url::Url;
 
 use crate::GetConfigError;
 
-pub type GoogleAccountId = String;
-
 pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
 
 // Optional configs not in default file for safety:
@@ -46,7 +44,6 @@ name = "history"
 # client_id_android = "id"
 # client_id_ios = "id"
 # client_id_server = "id"
-# admin_google_account_id = "TODO"
 
 # [tls]
 # public_api_cert = "server_config/public_api.cert"
@@ -227,7 +224,6 @@ pub struct SignInWithGoogleConfig {
     pub client_id_android: String,
     pub client_id_ios: String,
     pub client_id_server: String,
-    pub admin_google_account_id: GoogleAccountId,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -343,3 +343,13 @@ impl GoogleAccountId {
 }
 
 diesel_string_wrapper!(GoogleAccountId);
+
+pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
+
+/// Global state for account component
+#[derive(Debug, Default, Clone, PartialEq, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::account_global_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct AccountGlobalState {
+    pub admin_access_granted_count: i64,
+}

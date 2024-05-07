@@ -4,14 +4,12 @@ use model::{
     AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EventToClientInternal, SignInWithInfo
 };
 use simple_backend::create_counters;
-use tracing::error;
+use tracing::warn;
 
 use crate::{
     api::{
         db_write, db_write_multiple, utils::{Json, StatusCode}
-    },
-    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
-    internal_api,
+    }, app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData}, data::write::account::IncrementAdminAccessGrantedCount, internal_api
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
@@ -144,34 +142,53 @@ pub async fn post_complete_setup<
 
     let account_data = state.read().account().account_data(id).await?;
     let sign_in_with_info = state.read().account().account_sign_in_with_info(id).await?;
-    let enable_all_capabilities = if state.config().debug_mode() {
-        account_data.email == state.config().admin_email()
-    } else {
-        if let Some(sign_in_with_config) =
-            state.config().simple_backend().sign_in_with_google_config()
-        {
-            sign_in_with_info
-                .google_account_id_matches_with(
-                    &sign_in_with_config.admin_google_account_id
-                )
-                && account_data.email == state.config().admin_email()
+    let (matches_with_grant_admin_access_config, grant_admin_access_more_than_once) =
+        if let Some(grant_admin_access_config) = state.config().grant_admin_access_config() {
+            let matches = match (grant_admin_access_config.email.as_ref(), grant_admin_access_config.google_account_id.as_ref()) {
+                (Some(wanted_email), Some(wanted_google_account_id)) =>
+                    wanted_email == &account_data.email && sign_in_with_info
+                        .google_account_id_matches_with(wanted_google_account_id),
+                (Some(wanted_email), None) =>
+                    wanted_email == &account_data.email,
+                (None, Some(wanted_google_account_id)) =>
+                    sign_in_with_info
+                        .google_account_id_matches_with(wanted_google_account_id),
+                (None, None) => false,
+            };
+
+            (matches, grant_admin_access_config.for_every_matching_new_account)
         } else {
-            false
-        }
-    };
+            (false, false)
+        };
 
     let new_account = db_write_multiple!(state, move |cmds| {
+        let global_state = cmds.read().account().global_state().await?;
+        let enable_all_capabilities = if
+            matches_with_grant_admin_access_config &&
+            (global_state.admin_access_granted_count == 0 ||
+                grant_admin_access_more_than_once)
+        {
+            Some(IncrementAdminAccessGrantedCount)
+        } else {
+            None
+        };
+
         let new_account = cmds
             .account()
-            .update_syncable_account_data(id, move |state, capabilities, _| {
-                if *state == AccountState::InitialSetup {
-                    *state = AccountState::Normal;
-                    if enable_all_capabilities {
-                        *capabilities = Capabilities::all_enabled();
+            .update_syncable_account_data(
+                id,
+                enable_all_capabilities,
+                move |state, capabilities, _| {
+                    if *state == AccountState::InitialSetup {
+                        *state = AccountState::Normal;
+                        if enable_all_capabilities.is_some() {
+                            warn!("Account detected as admin account. Enabling all capabilities");
+                            *capabilities = Capabilities::all_enabled();
+                        }
                     }
+                    Ok(())
                 }
-                Ok(())
-            }).await?;
+            ).await?;
 
         cmds
             .events()

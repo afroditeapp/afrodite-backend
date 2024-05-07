@@ -41,6 +41,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    account_global_state (row_type) {
+        row_type -> Integer,
+        admin_access_granted_count -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     account_id (id) {
         id -> Integer,
         uuid -> Binary,
@@ -378,6 +387,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     access_token,
     account,
     account_capabilities,
+    account_global_state,
     account_id,
     account_interaction,
     account_interaction_index,

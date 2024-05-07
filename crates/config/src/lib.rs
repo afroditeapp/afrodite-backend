@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{Result, ResultExt};
-use file::{DemoModeConfig, QueueLimitsConfig, StaticBotConfig};
+use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig, StaticBotConfig};
 use file_dynamic::ConfigFileDynamic;
 use model::{AttributesFileInternal, BotConfig, ProfileAttributes};
 use reqwest::Url;
@@ -100,8 +100,8 @@ impl Config {
         self.mode.clone()
     }
 
-    pub fn admin_email(&self) -> &str {
-        &self.file.admin_email
+    pub fn grant_admin_access_config(&self) -> Option<&GrantAdminAccessConfig> {
+        self.file.grant_admin_access.as_ref()
     }
 
     pub fn internal_api_config(&self) -> InternalApiConfig {

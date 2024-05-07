@@ -2,8 +2,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use futures::Stream;
 use model::{
-    Account, AccountData, AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup,
-    Capabilities,
+    AccountData, AccountGlobalState, AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
 };
 use simple_backend_database::{
     diesel_db::{ConnectionProvider, DieselDatabaseError},
@@ -79,5 +78,19 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
         Ok(AccountData {
             email: account_internal.email,
         })
+    }
+
+    pub fn global_state(
+        &mut self,
+    ) -> Result<AccountGlobalState, DieselDatabaseError> {
+        use model::schema::account_global_state::dsl::*;
+
+        account_global_state
+            .filter(row_type.eq(ACCOUNT_GLOBAL_STATE_ROW_TYPE))
+            .select(AccountGlobalState::as_select())
+            .first(self.conn())
+            .optional()
+            .map(|v| v.unwrap_or_default())
+            .into_db_error(())
     }
 }

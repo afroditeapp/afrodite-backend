@@ -420,6 +420,7 @@ impl RouterDatabaseWriteHandle {
         SyncWriteHandle {
             config: self.config,
             root: self.root,
+            current_read_handle: self.current_write_handle.to_read_handle(),
             current_write_handle: self.current_write_handle,
             history_write_handle: self.history_write_handle,
             cache: self.cache,
@@ -435,6 +436,7 @@ pub struct SyncWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
     current_write_handle: CurrentWriteHandle,
+    current_read_handle: CurrentReadHandle,
     history_write_handle: HistoryWriteHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
@@ -451,6 +453,14 @@ impl SyncWriteHandle {
             &self.root.file_dir,
             &self.location,
             &self.media_backup,
+        )
+    }
+
+    pub fn read(&self) -> ReadCommands<'_> {
+        ReadCommands::new(
+            &self.current_read_handle,
+            &self.cache,
+            &self.root.file_dir
         )
     }
 
@@ -500,10 +510,10 @@ impl SyncWriteHandle {
 
     pub async fn register(
         &self,
-        id_light: AccountId,
+        id: AccountId,
         sign_in_with_info: SignInWithInfo,
     ) -> Result<AccountIdInternal, DataError> {
-        self.cmds().register(id_light, sign_in_with_info).await
+        self.cmds().register(id, sign_in_with_info).await
     }
 }
 

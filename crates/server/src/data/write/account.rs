@@ -8,6 +8,9 @@ use crate::{data::{cache::CacheError, DataError, IntoDataError}, result::Result}
 
 define_write_commands!(WriteCommandsAccount);
 
+#[derive(Debug, Clone, Copy)]
+pub struct IncrementAdminAccessGrantedCount;
+
 impl WriteCommandsAccount<'_> {
     pub async fn internal_handle_new_account_data_after_db_modification(
         &self,
@@ -41,12 +44,19 @@ impl WriteCommandsAccount<'_> {
     pub async fn update_syncable_account_data(
         &self,
         id: AccountIdInternal,
+        increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
         modify_action: impl FnOnce(&mut AccountState, &mut Capabilities, &mut ProfileVisibility) -> error_stack::Result<(), DieselDatabaseError> + Send + 'static,
     ) -> Result<Account, DataError> {
         let current_account = self.db_read(move |mut cmds| cmds.common().account(id)).await?;
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
-            cmds.common().state().update_syncable_account_data(id, a, modify_action)
+            let account = cmds.common().state().update_syncable_account_data(id, a, modify_action)?;
+
+            if increment_admin_access_granted.is_some() {
+                cmds.account().data().upsert_increment_admin_access_granted_count()?;
+            }
+
+            Ok(account)
         })?;
 
         self.internal_handle_new_account_data_after_db_modification(id, &current_account, &new_account).await?;

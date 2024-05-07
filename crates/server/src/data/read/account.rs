@@ -1,5 +1,5 @@
 use model::{
-    AccessToken, Account, AccountData, AccountId, AccountIdInternal, AccountSetup, DemoModeId, GoogleAccountId, RefreshToken, SignInWithInfo
+    AccessToken, Account, AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId, GoogleAccountId, RefreshToken, SignInWithInfo
 };
 use tokio_stream::StreamExt;
 
@@ -107,6 +107,14 @@ impl ReadCommandsAccount<'_> {
         id: DemoModeId,
     ) -> Result<Vec<AccountId>, DataError> {
         self.db_read(move |mut cmds| cmds.account().demo_mode().related_account_ids(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn global_state(
+        &self,
+    ) -> Result<AccountGlobalState, DataError> {
+        self.db_read(move |mut cmds| cmds.account().data().global_state())
             .await
             .into_error()
     }

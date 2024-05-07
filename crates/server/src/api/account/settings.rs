@@ -93,7 +93,7 @@ pub async fn put_setting_profile_visiblity<
     let new_account = db_write_multiple!(state, move |cmds| {
         let new_account = cmds
             .account()
-            .update_syncable_account_data(id, move |_, _, visiblity| {
+            .update_syncable_account_data(id, None, move |_, _, visiblity| {
                 *visiblity = if visiblity.is_pending() {
                     if new_value.value {
                         ProfileVisibility::PendingPublic

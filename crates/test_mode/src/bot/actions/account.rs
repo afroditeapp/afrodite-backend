@@ -17,9 +17,9 @@ use url::Url;
 use utils::api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT};
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
-use crate::bot::{
+use crate::{bot::{
     create_event_channel, utils::assert::bot_assert_eq, AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream
-};
+}, server::TEST_ADMIN_ACCESS_EMAIL};
 
 #[derive(Debug)]
 pub struct Register;
@@ -241,7 +241,7 @@ impl SetAccountSetup<'static> {
 
     pub const fn admin() -> Self {
         Self {
-            email: Some("admin@example.com"),
+            email: Some(TEST_ADMIN_ACCESS_EMAIL),
         }
     }
 }
@@ -259,7 +259,7 @@ impl<'a> BotAction for SetAccountSetup<'a> {
         let email = self
             .email
             .map(|email| email.to_string())
-            .unwrap_or(format!("default@example.com"));
+            .unwrap_or("default@example.com".to_string());
 
         let account_data = AccountData { email };
 
