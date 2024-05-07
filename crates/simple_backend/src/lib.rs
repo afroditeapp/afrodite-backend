@@ -3,6 +3,11 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+#![allow(
+    clippy::single_match,
+    clippy::while_let_loop,
+)]
+
 pub mod app;
 pub mod event;
 pub mod image;
@@ -20,22 +25,20 @@ use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sy
 use app::SimpleBackendAppState;
 use async_trait::async_trait;
 use axum::Router;
-use futures::future::poll_fn;
+use futures::{future::poll_fn, StreamExt};
 use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use media_backup::MediaBackupHandle;
 use perf::AllCounters;
-use simple_backend_config::SimpleBackendConfig;
+use rustls_acme::{caches::DirCache, is_tls_alpn_challenge, AcmeConfig};
+use simple_backend_config::{file::LetsEncryptConfig, SimpleBackendConfig};
 use tokio::{
-    net::TcpListener,
-    signal::{
+    io::AsyncWriteExt, net::TcpListener, signal::{
         self,
         unix::{Signal, SignalKind},
-    },
-    sync::{broadcast, mpsc},
-    task::JoinHandle,
+    }, sync::{broadcast, mpsc}, task::JoinHandle
 };
-use tokio_rustls::{rustls::ServerConfig, TlsAcceptor};
+use tokio_rustls::{rustls::{server::Acceptor, ServerConfig}, LazyConfigAcceptor, TlsAcceptor};
 use tower::Service;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
@@ -138,6 +141,12 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             warn!("Debug mode is enabled");
         }
 
+        if let Some(lets_encrypt) = self.config.lets_encrypt_config() {
+            if !lets_encrypt.production_servers {
+                warn!("Let's Encrypt is configured to use staging environment");
+            }
+        }
+
         let mut terminate_signal = signal::unix::signal(SignalKind::terminate()).unwrap();
 
         // let mut litestream = None;
@@ -236,7 +245,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     }
 
     /// Public API. This can have WAN access.
-    pub async fn create_public_api_server_task(
+    async fn create_public_api_server_task(
         &self,
         quit_notification: ServerQuitWatcher,
         web_socket_manager: WebSocketManager,
@@ -255,12 +264,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             } else {
                 router
             };
-            let router = if self.config.debug_mode() {
+            if self.config.debug_mode() {
                 router.route_layer(TraceLayer::new_for_http())
             } else {
                 router
-            };
-            router
+            }
         };
 
         let addr = self.config.socket().public_api;
@@ -270,7 +278,20 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         }
 
         if let Some(tls_config) = self.config.public_api_tls_config() {
-            self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification)
+            self.create_server_task_with_tls(
+                addr,
+                router,
+                SimpleBackendTlsConfig::ManualSertificates(tls_config.clone()),
+                quit_notification,
+            )
+                .await
+        } else if let Some(lets_encrypt) = self.config.lets_encrypt_config() {
+            self.create_server_task_with_tls(
+                addr,
+                router,
+                SimpleBackendTlsConfig::LetsEncrypt(lets_encrypt.clone()),
+                quit_notification,
+            )
                 .await
         } else {
             self.create_server_task_no_tls(router, addr, "Public API", quit_notification)
@@ -278,21 +299,26 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         }
     }
 
-    pub async fn create_server_task_with_tls(
+    async fn create_server_task_with_tls(
         &self,
         addr: SocketAddr,
         router: Router,
-        tls_config: Arc<ServerConfig>,
+        tls_config: SimpleBackendTlsConfig,
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
         let mut listener = TcpListener::bind(addr)
             .await
             .expect("Address not available");
-        let acceptor = TlsAcceptor::from(tls_config);
+
         let app_service = router.into_make_service_with_connect_info::<SocketAddr>();
 
         tokio::spawn(async move {
             let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
+
+            let tls_config = tls_config.start_acme_task_if_needed(
+                quit_notification.resubscribe(),
+                drop_after_connection.clone(),
+            );
 
             loop {
                 let next_addr_stream = poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
@@ -316,41 +342,19 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                     }
                 };
 
-                let acceptor = acceptor.clone();
-                let app_service_with_connect_info =
+                let config_clone = tls_config.clone();
+                let app_service_with_connect_info: axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>> =
                     unwrap_infallible_result(app_service.clone().call(addr).await);
 
-                let mut quit_notification = quit_notification.resubscribe();
+                let quit_notification = quit_notification.resubscribe();
                 let drop_on_quit = drop_after_connection.clone();
                 tokio::spawn(async move {
-                    tokio::select! {
-                        _ = quit_notification.recv() => {} // Graceful shutdown for connections?
-                        connection = acceptor.accept(tcp_stream) => {
-                            match connection {
-                                Ok(tls_connection) => {
-                                    let data_stream = TokioIo::new(tls_connection);
-
-                                    let hyper_service = hyper::service::service_fn(move |request: hyper::Request<Incoming>| {
-                                        app_service_with_connect_info.clone().call(request)
-                                    });
-
-                                    let connection_serving_result =
-                                        hyper_util::server::conn::auto::Builder::new(TokioExecutor::new())
-                                            .serve_connection_with_upgrades(data_stream, hyper_service)
-                                            .await;
-
-                                    match connection_serving_result {
-                                        Ok(()) => {},
-                                        Err(e) => {
-                                            // TODO: Remove to avoid log spam?
-                                            error!("Connection serving error: {}", e);
-                                        }
-                                    }
-                                }
-                                Err(_) => {}, // TLS handshake failed
-                            }
-                        }
-                    }
+                    handle_tls_related_tcp_stream(
+                        tcp_stream,
+                        config_clone,
+                        app_service_with_connect_info,
+                        quit_notification
+                    ).await;
 
                     drop(drop_on_quit);
                 });
@@ -367,7 +371,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         })
     }
 
-    pub async fn create_server_task_no_tls(
+    async fn create_server_task_no_tls(
         &self,
         router: Router,
         addr: SocketAddr,
@@ -406,7 +410,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     }
 
     // Internal server to server API. This must be only LAN accessible.
-    pub async fn create_internal_api_server_task(
+    async fn create_internal_api_server_task(
         &self,
         quit_notification: ServerQuitWatcher,
         state: &SimpleBackendAppState<T::AppState>,
@@ -425,11 +429,98 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let addr = self.config.socket().internal_api;
         info!("Internal API is available on {}", addr);
         if let Some(tls_config) = self.config.internal_api_tls_config() {
-            self.create_server_task_with_tls(addr, router, tls_config.clone(), quit_notification)
+            self.create_server_task_with_tls(
+                addr,
+                router,
+                SimpleBackendTlsConfig::ManualSertificates(tls_config.clone()),
+                quit_notification
+            )
                 .await
         } else {
             self.create_server_task_no_tls(router, addr, "Internal API", quit_notification)
                 .await
+        }
+    }
+}
+
+async fn handle_tls_related_tcp_stream(
+    tcp_stream: tokio::net::TcpStream,
+    config: SimpleBackendTlsConfigAcmeTaskRunning,
+    app_service_with_connect_info: axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>,
+    mut quit_notification: ServerQuitWatcher,
+) {
+    match config {
+        SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual) => {
+            let acceptor = TlsAcceptor::from(manual);
+            tokio::select! {
+                _ = quit_notification.recv() => {} // Graceful shutdown for connections?
+                connection = acceptor.accept(tcp_stream) => {
+                    match connection {
+                        Ok(tls_connection) =>
+                            handle_ready_tls_connection(tls_connection, app_service_with_connect_info).await,
+                        Err(_) => {}, // TLS handshake failed
+                    }
+                }
+            }
+        }
+        SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
+            challenge_config,
+            default_config,
+        } => {
+            let empty_acceptor: Acceptor = Default::default();
+            let start_handshake = match LazyConfigAcceptor::new(empty_acceptor, tcp_stream).await {
+                Ok(v) => v,
+                Err(e) => {
+                    error!("Start handshake failed: {}", e);
+                    return;
+                }
+            };
+
+            if is_tls_alpn_challenge(&start_handshake.client_hello()) {
+                info!("TLS-ALPN-01 challenge received");
+                match start_handshake.into_stream(challenge_config).await {
+                    Ok(mut v) => {
+                        match v.shutdown().await {
+                            Ok(()) => (),
+                            Err(e) =>
+                                error!("Challenge connection shutdown failed: {}", e)
+                        }
+                    }
+                    Err(e) =>
+                        error!("Challenge connection failed: {}", e),
+                }
+            } else {
+                match start_handshake.into_stream(default_config).await {
+                    Ok(v) =>
+                        handle_ready_tls_connection(v, app_service_with_connect_info).await,
+                    Err(e) =>
+                        error!("Normal connection failed: {}", e)
+                }
+            }
+        }
+    }
+}
+
+async fn handle_ready_tls_connection<T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Send + std::marker::Unpin + 'static>(
+    tls_connection: T,
+    app_service_with_connect_info: axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>
+) {
+    let data_stream = TokioIo::new(tls_connection);
+
+    let hyper_service = hyper::service::service_fn(move |request: hyper::Request<Incoming>| {
+        app_service_with_connect_info.clone().call(request)
+    });
+
+    let connection_serving_result =
+        hyper_util::server::conn::auto::Builder::new(TokioExecutor::new())
+            .serve_connection_with_upgrades(data_stream, hyper_service)
+            .await;
+
+    match connection_serving_result {
+        Ok(()) => {},
+        Err(e) => {
+            // TODO: Remove to avoid log spam?
+            error!("Ready TLS connection serving error: {}", e);
         }
     }
 }
@@ -439,4 +530,63 @@ fn unwrap_infallible_result<T>(r: Result<T, Infallible>) -> T {
         Ok(v) => v,
         Err(i) => match i {},
     }
+}
+
+#[derive(Debug, Clone)]
+enum SimpleBackendTlsConfig {
+    ManualSertificates(Arc<ServerConfig>),
+    LetsEncrypt(LetsEncryptConfig),
+}
+
+impl SimpleBackendTlsConfig {
+    fn start_acme_task_if_needed(
+        self,
+        mut quit_notification: ServerQuitWatcher,
+        drop_on_quit: mpsc::Sender<()>,
+    ) -> SimpleBackendTlsConfigAcmeTaskRunning {
+        match self {
+            SimpleBackendTlsConfig::ManualSertificates(manual) =>
+                SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual),
+            SimpleBackendTlsConfig::LetsEncrypt(lets_encrypt) => {
+                let mut state = AcmeConfig::new(lets_encrypt.domains)
+                    .contact([format!("mailto:{}", lets_encrypt.email)])
+                    .cache(DirCache::new(lets_encrypt.cache_dir))
+                    .directory_lets_encrypt(lets_encrypt.production_servers)
+                    .state();
+                let challenge_config = state.challenge_rustls_config();
+                let default_config = state.default_rustls_config();
+
+                tokio::spawn(async move {
+                    loop {
+                        tokio::select! {
+                            _ = quit_notification.recv() => break,
+                            next_state = state.next() => {
+                                match next_state {
+                                    None => break,
+                                    Some(Ok(value)) => info!("ACME state updated: {:?}", value),
+                                    Some(Err(e)) => error!("ACME state error: {}", e),
+                                }
+                            }
+                        }
+                    }
+                    drop(drop_on_quit);
+                });
+
+                SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
+                    challenge_config,
+                    default_config,
+                }
+            }
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+enum SimpleBackendTlsConfigAcmeTaskRunning {
+    ManualSertificates(Arc<ServerConfig>),
+    LetsEncrypt {
+        challenge_config: Arc<ServerConfig>,
+        default_config: Arc<ServerConfig>,
+    },
 }

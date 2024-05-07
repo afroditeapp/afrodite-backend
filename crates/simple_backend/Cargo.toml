@@ -32,6 +32,7 @@ utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 
 # Server TLS
 tokio-rustls = { workspace = true }
+rustls-acme = { workspace = true }
 
 thiserror = { workspace = true }
 error-stack = { workspace = true }

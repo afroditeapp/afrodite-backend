@@ -55,6 +55,12 @@ name = "history"
 # internal_api_key = "server_config/internal_api.key"
 # root_certificate = "server_config/root_certificate"
 
+# [lets_encrypt]
+# domains = ["example.com"]
+# email = "test@example.com"
+# production_servers = false
+# cache_dir = "lets_encrypt_cache"
+
 # [media_backup]
 # ssh_address = "user@192.168.64.1"
 # target_location = "/home/user/media_backup"
@@ -88,8 +94,9 @@ pub struct SimpleBackendConfigFile {
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<AppManagerConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
-    /// TLS is required if debug setting is false.
+    /// TLS sertificates or Let's Encrypt is required if debug setting is false.
     pub tls: Option<TlsConfig>,
+    pub lets_encrypt: Option<LetsEncryptConfig>,
 
     pub media_backup: Option<MediaBackupConfig>,
     pub litestream: Option<LitestreamConfig>,
@@ -228,6 +235,21 @@ pub struct TlsConfig {
     pub internal_api_cert: PathBuf,
     pub internal_api_key: PathBuf,
     pub root_certificate: PathBuf,
+}
+
+/// Let's Encrypt configuration for public API
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct LetsEncryptConfig {
+    pub domains: Vec<String>,
+    /// Email for receiving sertificate related notifications
+    /// from Let's Encrypt.
+    pub email: String,
+    /// Use Let's Encrypt's production servers for certificate generation.
+    pub production_servers: bool,
+    /// Cache dir for Let's Encrypt certificates.
+    ///
+    /// The directory is created automatically if it does not exist.
+    pub cache_dir: PathBuf,
 }
 
 /// Backup media files to remote server using SSH

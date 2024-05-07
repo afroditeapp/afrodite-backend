@@ -7,10 +7,7 @@ pub mod args;
 pub mod file;
 
 use std::{
-    io::BufReader,
-    path::{Path, PathBuf},
-    sync::{atomic::AtomicBool, Arc},
-    vec,
+    fs, io::BufReader, path::{Path, PathBuf}, sync::{atomic::AtomicBool, Arc}, vec
 };
 
 use error_stack::{Result, ResultExt};
@@ -23,6 +20,8 @@ use self::file::{
     AppManagerConfig, LitestreamConfig, MediaBackupConfig, SignInWithGoogleConfig,
     SimpleBackendConfigFile, SocketConfig,
 };
+
+const DEFAULT_HTTPS_PORT: u16 = 443;
 
 /// Config file debug mode status.
 ///
@@ -63,6 +62,8 @@ pub enum GetConfigError {
     SqliteInRamNotAllowed,
     #[error("Invalid configuration")]
     InvalidConfiguration,
+    #[error("Directory creation failed")]
+    DirCreationError,
 }
 
 #[derive(Debug, Clone)]
@@ -136,6 +137,10 @@ impl SimpleBackendConfig {
         self.internal_api_tls_config.as_ref()
     }
 
+    pub fn lets_encrypt_config(&self) -> Option<&file::LetsEncryptConfig> {
+        self.file.lets_encrypt.as_ref()
+    }
+
     pub fn root_certificate(&self) -> Option<&reqwest::Certificate> {
         self.root_certificate.as_ref()
     }
@@ -168,7 +173,7 @@ pub fn get_config(
     backend_semver_version: String,
 ) -> Result<SimpleBackendConfig, GetConfigError> {
     let current_dir = std::env::current_dir().change_context(GetConfigError::GetWorkingDir)?;
-    let file_config = file::SimpleBackendConfigFile::load(&current_dir)
+    let file_config = file::SimpleBackendConfigFile::load(current_dir)
         .change_context(GetConfigError::LoadFileError)?;
 
     let data_dir = if let Some(dir) = args_config.data_dir {
@@ -193,15 +198,52 @@ pub fn get_config(
         None => None,
     };
 
-    if public_api_tls_config.is_none() && !file_config.debug.unwrap_or_default() {
+    if public_api_tls_config.is_some() && file_config.lets_encrypt.is_some() {
         return Err(GetConfigError::TlsConfigMissing)
-            .attach_printable("TLS must be configured when debug mode is false");
+            .attach_printable("Only either public API TLS certificates or Let's Encrypt should be configured");
+    }
+
+    if public_api_tls_config.is_none() && file_config.lets_encrypt.is_none() && !file_config.debug.unwrap_or_default() {
+        return Err(GetConfigError::TlsConfigMissing)
+            .attach_printable("TLS certificates or Let's Encrypt must be configured when debug mode is false");
     }
 
     let root_certificate = match file_config.tls.clone() {
         Some(tls_config) => Some(load_root_certificate(&tls_config.root_certificate)?),
         None => None,
     };
+
+    if let Some(lets_encrypt_config) = file_config.lets_encrypt.as_ref() {
+        if !lets_encrypt_config.cache_dir.exists() {
+            fs::create_dir_all(&lets_encrypt_config.cache_dir)
+                .change_context(GetConfigError::DirCreationError)?
+        } else if !lets_encrypt_config.cache_dir.is_dir() {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("Let's Encrypt cache directory config does not point to a directory");
+        }
+
+        for d in &lets_encrypt_config.domains {
+            if d.trim().is_empty() {
+                return Err(GetConfigError::InvalidConfiguration)
+                    .attach_printable("Let's Encrypt domain list contains empty domain");
+            }
+        }
+
+        if lets_encrypt_config.email.trim().is_empty() {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("Let's Encrypt email is empty");
+        }
+
+        if lets_encrypt_config.cache_dir.to_string_lossy().trim().is_empty() {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("Let's Encrypt cache directory config is empty");
+        }
+
+        if file_config.socket.public_api.port() != DEFAULT_HTTPS_PORT {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable(format!("Let's Encrypt requires port {} for public API because ACME challenge requires that port. It should be possible to have the HTTP content on a different port if that is implemented.", DEFAULT_HTTPS_PORT));
+        }
+    }
 
     let sqlite_in_ram = if args_config.sqlite_in_ram {
         if file_config.debug.unwrap_or_default() {

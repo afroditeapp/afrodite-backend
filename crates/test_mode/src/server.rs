@@ -221,6 +221,7 @@ fn new_config(
         sign_in_with_google: None,
         manager: None,
         tls: None,
+        lets_encrypt: None,
         media_backup: None,
         litestream: None,
         tile_map: None,
