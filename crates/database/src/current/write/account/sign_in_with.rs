@@ -38,8 +38,24 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
 
         update(sign_in_with_info.find(id.as_db_id()))
             .set((
-                account_id.eq(id.as_db_id()),
                 google_account_id.eq(&data.google_account_id),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn set_is_bot_account(
+        &mut self,
+        id: AccountIdInternal,
+        value_for_is_bot_account: bool,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::sign_in_with_info::dsl::*;
+
+        update(sign_in_with_info.find(id.as_db_id()))
+            .set((
+                is_bot_account.eq(value_for_is_bot_account),
             ))
             .execute(self.conn())
             .into_db_error(id)?;

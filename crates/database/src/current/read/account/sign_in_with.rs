@@ -25,10 +25,10 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
             .into_db_error(google_id)
     }
 
-    pub fn sign_in_with_info(
+    pub fn sign_in_with_info_raw(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<SignInWithInfo, DieselDatabaseError> {
+    ) -> Result<SignInWithInfoRaw, DieselDatabaseError> {
         use crate::schema::sign_in_with_info::dsl::*;
 
         sign_in_with_info
@@ -36,6 +36,5 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
             .select(SignInWithInfoRaw::as_select())
             .first(self.conn())
             .into_db_error(id)
-            .map(Into::into)
     }
 }

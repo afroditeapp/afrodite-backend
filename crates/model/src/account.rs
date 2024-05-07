@@ -301,6 +301,7 @@ pub struct SignInWithLoginInfo {
 pub struct SignInWithInfoRaw {
     pub account_id: AccountIdDb,
     pub google_account_id: Option<GoogleAccountId>,
+    pub is_bot_account: bool,
 }
 
 impl From<SignInWithInfoRaw> for SignInWithInfo {

@@ -19,22 +19,16 @@ use crate::{
 pub async fn register_impl<S: WriteData + GetConfig>(
     state: &S,
     sign_in_with: SignInWithInfo,
-) -> Result<AccountId, StatusCode> {
+) -> Result<AccountIdInternal, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
     // to avoid database collisions.
     let id = AccountId::new(uuid::Uuid::new_v4());
 
     let result = state
         .write(move |cmds| async move { cmds.register(id, sign_in_with).await })
-        .await;
+        .await?;
 
-    match result {
-        Ok(id) => Ok(id.as_id().into()),
-        Err(e) => {
-            error!("Error: {e:?}");
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
+    Ok(result)
 }
 
 pub const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";

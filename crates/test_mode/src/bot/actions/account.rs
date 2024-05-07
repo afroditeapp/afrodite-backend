@@ -18,7 +18,7 @@ use utils::api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT};
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::{
-    create_event_channel, utils::{assert::bot_assert_eq, name::NameProvider}, AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream
+    create_event_channel, utils::assert::bot_assert_eq, AccountConnections, EventSender, EventSenderAndQuitWatcher, WsConnection, WsStream
 };
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ impl BotAction for Register {
             return Ok(());
         }
 
-        let id = post_register(state.api.account())
+        let id = post_register(state.api.register())
             .await
             .change_context(TestError::ApiRequest)?;
         state.id = Some(id);
@@ -48,7 +48,7 @@ impl BotAction for Login {
         if state.api.is_access_token_available() {
             return Ok(());
         }
-        let login_result = post_login(state.api.account(), state.account_id()?)
+        let login_result = post_login(state.api.register(), state.account_id()?)
             .await
             .change_context(TestError::ApiRequest)?;
 

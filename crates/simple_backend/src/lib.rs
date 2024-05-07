@@ -82,7 +82,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         Router::new()
     }
 
-    /// Swagger UI which added to enabled in public and internal API router
+    /// Swagger UI which added to enabled internal API router
     /// only if debug mode is enabled.
     fn create_swagger_ui(&self) -> Option<SwaggerUi> {
         None
@@ -265,17 +265,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     ) -> JoinHandle<()> {
         let router = {
             let router = self.logic.public_api_router(web_socket_manager, app_state);
-            let router = if self.config.debug_mode() {
-                let router = if let Some(swagger) = self.logic.create_swagger_ui() {
-                    router.merge(swagger)
-                } else {
-                    router
-                };
-
-                router.merge(self.logic.internal_api_router(app_state))
-            } else {
-                router
-            };
             if self.config.debug_mode() {
                 router.route_layer(TraceLayer::new_for_http())
             } else {
@@ -285,9 +274,6 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
         let addr = self.config.socket().public_api;
         info!("Public API is available on {}", addr);
-        if self.config.debug_mode() {
-            info!("Internal API is available on {}", addr);
-        }
 
         if let Some(tls_config) = self.config.public_api_tls_config() {
             self.create_server_task_with_tls(

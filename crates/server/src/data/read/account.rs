@@ -39,7 +39,16 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<SignInWithInfo, DataError> {
-        self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_info(id))
+        self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_info_raw(id).map(|v| v.into()))
+            .await
+            .into_error()
+    }
+
+    pub async fn is_bot_account(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_info_raw(id).map(|v| v.is_bot_account))
             .await
             .into_error()
     }

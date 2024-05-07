@@ -113,9 +113,9 @@ pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteD
     let id = register_impl(&state, SignInWithInfo::default())
         .await?;
 
-    db_write!(state, move |cmds| cmds.account().insert_demo_mode_related_account_ids(demo_mode_id, id))?;
+    db_write!(state, move |cmds| cmds.account().insert_demo_mode_related_account_ids(demo_mode_id, id.as_id()))?;
 
-    Ok(id.into())
+    Ok(id.as_id().into())
 }
 
 pub const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login_to_account";

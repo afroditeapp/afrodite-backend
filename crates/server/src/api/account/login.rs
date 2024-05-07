@@ -37,7 +37,7 @@ pub async fn login_impl<S: WriteData + GetAccounts>(
         profile: None,
         media: None,
     };
-    Ok(result.into())
+    Ok(result)
 }
 
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
@@ -85,7 +85,7 @@ pub async fn post_sign_in_with_login<
                 },
             )
             .await?;
-            login_impl(id, state).await.map(|d| d.into())
+            login_impl(id.as_id(), state).await.map(|d| d.into())
         }
     } else if let Some(apple) = tokens.apple_token {
         let _info = state
