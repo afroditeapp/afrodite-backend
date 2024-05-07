@@ -149,6 +149,9 @@ pub struct InternalApiConfig {
     /// Enable register and login HTTP routes for bots through internal API socket.
     /// Note that debug option with this makes no authentication logins possible.
     pub bot_login: bool,
+    /// Enable microservice mode related internal routes.
+    #[serde(default)]
+    pub microservice: bool,
 }
 
 /// Server queue limits

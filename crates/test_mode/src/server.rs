@@ -194,7 +194,13 @@ fn new_config(
         }
         .into(),
         external_services,
-        internal_api: Some(InternalApiConfig { bot_login: true }),
+        internal_api: InternalApiConfig {
+            bot_login: true,
+            // TODO(microservice): this should be enabled if microservice mode
+            // is enabled
+            microservice: false,
+        }
+        .into(),
         queue_limits: None,
         bots: None,
         profile_attributes_file: None,

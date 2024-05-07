@@ -49,12 +49,21 @@ impl InternalApp {
     }
 
     pub fn create_media_server_router(state: S) -> Router {
-        Router::new()
-            .route(
+        let mut router = Router::new();
+
+        if state
+            .business_logic_state()
+            .config
+            .internal_api_config()
+            .microservice
+        {
+            router = router.route(
                 api::media_internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
                 post(api::media_internal::internal_get_check_moderation_request_for_account::<S>),
-            )
-            .with_state(state)
+            );
+        }
+
+        router.with_state(state)
     }
 
     pub fn create_chat_server_router(_state: S) -> Router {
