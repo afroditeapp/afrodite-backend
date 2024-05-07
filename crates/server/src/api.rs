@@ -38,8 +38,6 @@ pub mod utils;
         common_admin::post_request_restart_or_reset_backend,
         common_admin::post_backend_config,
         // Account
-        account::post_register,
-        account::post_login,
         account::post_sign_in_with_login,
         account::post_account_setup,
         account::post_account_data,
@@ -56,6 +54,9 @@ pub mod utils;
         account::get_account_data,
         account::get_deletion_status,
         account::delete_cancel_deletion,
+        // Account internal
+        account_internal::post_register,
+        account_internal::post_login,
         // Profile
         profile::get_profile,
         profile::get_profile_from_database_debug_mode_benchmark,

@@ -31,12 +31,12 @@ impl InternalApp {
         {
             router = router
                 .route(
-                    api::account::PATH_REGISTER,
-                    post(api::account::post_register::<S>),
+                    api::account_internal::PATH_REGISTER,
+                    post(api::account_internal::post_register::<S>),
                 )
                 .route(
-                    api::account::PATH_LOGIN,
-                    post(api::account::post_login::<S>),
+                    api::account_internal::PATH_LOGIN,
+                    post(api::account_internal::post_login::<S>),
                 )
         }
 

@@ -16,30 +16,6 @@ use crate::{
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
-pub const PATH_REGISTER: &str = "/account_api/register";
-
-/// Register new account. Returns new account ID which is UUID.
-///
-/// Available only if server is running in debug mode and
-/// bot_login is enabled from config file.
-#[utoipa::path(
-    post,
-    path = "/account_api/register",
-    security(),
-    responses(
-        (status = 200, description = "New profile created.", body = AccountId),
-        (status = 500, description = "Internal server error."),
-    )
-)]
-pub async fn post_register<S: WriteData + GetConfig>(
-    State(state): State<S>,
-) -> Result<Json<AccountId>, StatusCode> {
-    ACCOUNT.post_register.incr();
-    register_impl(&state, SignInWithInfo::default())
-        .await
-        .map(|id| id.into())
-}
-
 pub async fn register_impl<S: WriteData + GetConfig>(
     state: &S,
     sign_in_with: SignInWithInfo,
@@ -253,7 +229,6 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_REGISTER_COUNTERS_LIST,
-    post_register,
     get_account_setup,
     post_account_setup,
     post_complete_setup,

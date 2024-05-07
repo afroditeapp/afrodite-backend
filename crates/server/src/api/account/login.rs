@@ -13,30 +13,6 @@ use crate::{
     app::{GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData},
 };
 
-pub const PATH_LOGIN: &str = "/account_api/login";
-
-/// Get new AccessToken.
-///
-/// Available only if server is running in debug mode and
-/// bot_login is enabled from config file.
-#[utoipa::path(
-    post,
-    path = "/account_api/login",
-    security(),
-    request_body = AccountId,
-    responses(
-        (status = 200, description = "Login successful.", body = LoginResult),
-        (status = 500, description = "Internal server error."),
-    ),
-)]
-pub async fn post_login<S: WriteData + GetAccounts>(
-    State(state): State<S>,
-    Json(id): Json<AccountId>,
-) -> Result<Json<LoginResult>, StatusCode> {
-    ACCOUNT.post_login.incr();
-    login_impl(id, state).await.map(|d| d.into())
-}
-
 pub async fn login_impl<S: WriteData + GetAccounts>(
     id: AccountId,
     state: S,
@@ -133,6 +109,5 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_LOGIN_COUNTERS_LIST,
-    post_login,
     post_sign_in_with_login,
 );
