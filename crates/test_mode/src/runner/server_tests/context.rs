@@ -1,7 +1,7 @@
 use std::{fmt::format, mem, sync::Arc};
 
 use api_client::{apis::{configuration::Configuration, media_admin_api, profile_api::{post_profile, post_search_age_range, post_search_groups}}, models::{AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate, SearchGroups}};
-use config::{args::TestMode, Config};
+use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
 use error_stack::{Result, ResultExt};
 use tokio::sync::Mutex;
 
@@ -184,6 +184,7 @@ impl Account {
             None,
             test_context.config.clone(),
             test_context.test_config.clone(),
+            Arc::new(BotConfigFile::default()),
             0,
             0,
             ApiClient::new(test_context.test_config.server.api_urls.clone()),

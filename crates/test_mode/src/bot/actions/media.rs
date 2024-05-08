@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, path::PathBuf};
 
 use api_client::{
     apis::media_api::{get_content_slot_state, put_moderation_request, put_pending_profile_content, put_pending_security_content_info},
@@ -6,6 +6,7 @@ use api_client::{
     models::{content_processing_state, ContentId, ContentProcessingStateType, EventToClient, EventType, MediaContentType, ModerationRequestContent, SetProfileContent},
 };
 use async_trait::async_trait;
+use config::bot_config_file::{BotConfigFile, BotInstanceConfig, Gender};
 use error_stack::{Result, ResultExt};
 
 use super::{super::super::client::TestError, BotAction, BotState};
@@ -28,7 +29,7 @@ impl MediaState {
 #[derive(Debug)]
 pub struct SendImageToSlot {
     pub slot: i32,
-    pub random: bool,
+    pub random_if_not_defined_in_config: bool,
     pub copy_to_slot: Option<i32>,
     /// Add mark to the image
     pub mark_copied_image: bool,
@@ -39,9 +40,25 @@ impl SendImageToSlot {
     pub const fn slot(slot: i32) -> Self {
         Self {
             slot,
-            random: false,
+            random_if_not_defined_in_config: false,
             copy_to_slot: None,
             mark_copied_image: false,
+        }
+    }
+}
+
+fn img_for_bot(bot: &BotInstanceConfig, config: &BotConfigFile) -> std::result::Result<Option<PathBuf>, std::io::Error> {
+    if let Some(image) = bot.get_img(config) {
+        Ok(Some(image))
+    } else {
+        let dir = match bot.gender {
+            Gender::Man => config.man_image_dir.clone(),
+            Gender::Woman => config.woman_image_dir.clone(),
+        };
+        if let Some(dir) = dir {
+            ImageProvider::random_image_from_directory(&dir)
+        } else {
+            Ok(None)
         }
     }
 }
@@ -49,27 +66,37 @@ impl SendImageToSlot {
 #[async_trait]
 impl BotAction for SendImageToSlot {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let img_data = if self.random {
-            if let Some(dir) = &state.config.images_man {
+        let img_data = if self.random_if_not_defined_in_config {
+            let img_path = if let Some(bot) = state.bot_config_file.bot.get(state.bot_id as usize) {
+                img_for_bot(bot, &state.bot_config_file)
+            } else if let Some(dir) = &state.bot_config_file.man_image_dir {
                 ImageProvider::random_image_from_directory(&dir)
-                    .unwrap_or_else(|e| {
-                        // Image loading failed
-                        tracing::error!("{e:?}");
-                        Some(ImageProvider::random_jpeg_image())
-                    })
-                    // No images available
-                    .unwrap_or(ImageProvider::random_jpeg_image())
             } else {
-                ImageProvider::random_jpeg_image()
+                Ok(None)
+            };
+
+            match img_path {
+                Ok(Some(img_path)) =>
+                    std::fs::read(img_path)
+                        .unwrap_or_else(|e| {
+                            tracing::error!("{e:?}");
+                            ImageProvider::random_jpeg_image()
+                        }),
+                Ok(None) =>
+                    ImageProvider::random_jpeg_image(),
+                Err(e) => {
+                    tracing::error!("{e:?}");
+                    ImageProvider::random_jpeg_image()
+                }
             }
         } else {
-            ImageProvider::jpeg_image()
+            ImageProvider::random_jpeg_image()
         };
 
         let _ = put_content_to_content_slot_fixed(
             state.api.media(),
             self.slot,
-            if self.slot == 0 { true } else { false }, // secure capture
+            self.slot == 0, // secure capture
             MediaContentType::JpegImage,
             img_data.clone(),
         )

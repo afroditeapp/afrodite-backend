@@ -6,12 +6,13 @@
 pub mod args;
 pub mod file;
 pub mod file_dynamic;
+pub mod bot_config_file;
 
-use std::sync::Arc;
+use std::{path::{Path, PathBuf}, sync::Arc};
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{Result, ResultExt};
-use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig, StaticBotConfig};
+use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig};
 use file_dynamic::ConfigFileDynamic;
 use model::{AttributesFileInternal, BotConfig, ProfileAttributes};
 use reqwest::Url;
@@ -112,8 +113,8 @@ impl Config {
         self.file_dynamic.backend_config.bots.as_ref()
     }
 
-    pub fn static_bot_config(&self) -> Option<&StaticBotConfig> {
-        self.file.bots.as_ref()
+    pub fn bot_config_file(&self) -> Option<&Path> {
+        self.file.bot_config_file.as_deref()
     }
 
     pub fn queue_limits(&self) -> QueueLimitsConfig {

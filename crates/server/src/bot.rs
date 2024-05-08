@@ -98,20 +98,11 @@ impl BotClient {
             .arg("--url-chat")
             .arg(Self::public_api_url(config));
 
-        if let Some(dir) = &config
-            .static_bot_config()
-            .and_then(|c| c.man_image_dir.as_ref())
+        if let Some(bot_config_file) = &config
+            .bot_config_file()
         {
-            let dir = std::fs::canonicalize(dir).change_context(BotClientError::LaunchCommand)?;
-            command.arg("--images-man").arg(dir);
-        }
-
-        if let Some(dir) = &config
-            .static_bot_config()
-            .and_then(|c| c.woman_image_dir.as_ref())
-        {
-            let dir = std::fs::canonicalize(dir).change_context(BotClientError::LaunchCommand)?;
-            command.arg("--images-woman").arg(dir);
+            let dir = std::fs::canonicalize(bot_config_file).change_context(BotClientError::LaunchCommand)?;
+            command.arg("--bot-config-file").arg(dir);
         }
 
         // Bot mode config

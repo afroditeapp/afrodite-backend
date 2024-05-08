@@ -208,7 +208,7 @@ fn new_config(
         }
         .into(),
         queue_limits: None,
-        bots: None,
+        bot_config_file: None,
         profile_attributes_file: None,
         demo_mode: None,
     };

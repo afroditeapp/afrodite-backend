@@ -2,7 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use config::{args::TestMode, Config};
+use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
 use tokio::{
     io::AsyncWriteExt,
     select, signal,
@@ -19,14 +19,20 @@ use crate::{
 
 pub struct BotTestRunner {
     config: Arc<Config>,
+    bot_config_file: Arc<BotConfigFile>,
     test_config: Arc<TestMode>,
 }
 
 impl BotTestRunner {
-    pub fn new(config: Arc<Config>, test_config: Arc<TestMode>) -> Self {
+    pub fn new(
+        config: Arc<Config>,
+        bot_config_file: Arc<BotConfigFile>,
+        test_config: Arc<TestMode>,
+    ) -> Self {
         Self {
-            config: config,
-            test_config: test_config,
+            config,
+            bot_config_file,
+            test_config,
         }
     }
 
@@ -82,6 +88,7 @@ impl BotTestRunner {
                     task_number,
                     self.config.clone(),
                     self.test_config.clone(),
+                    self.bot_config_file.clone(),
                     old_state.clone(),
                     bot_quit_receiver.clone(),
                     bot_running_handle.clone(),

@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use image::{codecs::jpeg::JpegEncoder, ImageBuffer, Rgb};
 use rand::seq::SliceRandom;
@@ -45,7 +45,7 @@ impl ImageProvider {
         data
     }
 
-    pub fn random_image_from_directory(dir: &Path) -> Result<Option<Vec<u8>>, std::io::Error> {
+    pub fn random_image_from_directory(dir: &Path) -> Result<Option<PathBuf>, std::io::Error> {
         let mut imgs = vec![];
         for entry in std::fs::read_dir(dir)? {
             let entry = entry?;
@@ -56,11 +56,10 @@ impl ImageProvider {
             }
         }
 
-        if let Some(img) = imgs.choose(&mut rand::thread_rng()) {
-            Ok(Some(std::fs::read(img)?))
-        } else {
-            Ok(None)
-        }
+        Ok(
+            imgs.choose(&mut rand::thread_rng())
+                .map(|path| path.to_owned())
+        )
     }
 
     pub fn mark_jpeg_image(jpeg_img: &[u8]) -> Result<Vec<u8>, std::io::Error> {

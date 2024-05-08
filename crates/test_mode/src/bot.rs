@@ -8,8 +8,7 @@ use std::{fmt::Debug, sync::Arc, vec};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
-    args::{SelectedBenchmark, TestMode, TestModeSubMode},
-    Config,
+    args::{SelectedBenchmark, TestMode, TestModeSubMode}, bot_config_file::{self, BotConfigFile}, Config
 };
 use error_stack::{Result, ResultExt};
 use tokio::{
@@ -173,6 +172,7 @@ pub struct BotState {
     pub id: Option<AccountId>,
     pub server_config: Arc<Config>,
     pub config: Arc<TestMode>,
+    pub bot_config_file: Arc<BotConfigFile>,
     pub task_id: u32,
     pub bot_id: u32,
     pub api: ApiClient,
@@ -190,6 +190,7 @@ impl BotState {
         id: Option<AccountId>,
         server_config: Arc<Config>,
         config: Arc<TestMode>,
+        bot_config_file: Arc<BotConfigFile>,
         task_id: u32,
         bot_id: u32,
         api: ApiClient,
@@ -198,6 +199,7 @@ impl BotState {
             id,
             server_config,
             config,
+            bot_config_file,
             task_id,
             bot_id,
             api,
@@ -244,6 +246,18 @@ impl BotState {
         } else {
             None
         }
+    }
+
+    /// Is current bot an admin bot.
+    ///
+    /// Admin bot is detected from bot ID. First `n` bots are user bots
+    /// and the rest are admin bots.
+    pub fn is_admin_bot(&self) -> bool {
+        self
+            .config
+            .bot_mode()
+            .map(|bot_config| self.bot_id < bot_config.admins)
+            .unwrap_or(false)
     }
 }
 
@@ -309,6 +323,7 @@ impl BotManager {
         task_id: u32,
         server_config: Arc<Config>,
         config: Arc<TestMode>,
+        bot_config_file: Arc<BotConfigFile>,
         old_state: Option<Arc<StateData>>,
         bot_quit_receiver: watch::Receiver<()>,
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
@@ -318,6 +333,7 @@ impl BotManager {
                 task_id,
                 old_state,
                 server_config,
+                bot_config_file,
                 config,
                 _bot_running_handle,
             ),
@@ -331,6 +347,7 @@ impl BotManager {
         task_id: u32,
         old_state: Option<Arc<StateData>>,
         server_config: Arc<Config>,
+        bot_config_file: Arc<BotConfigFile>,
         config: Arc<TestMode>,
         _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
@@ -346,6 +363,7 @@ impl BotManager {
                     .flatten(),
                 server_config.clone(),
                 config.clone(),
+                bot_config_file.clone(),
                 task_id,
                 bot_i,
                 ApiClient::new(config.server.api_urls.clone()),

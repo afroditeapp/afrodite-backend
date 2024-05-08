@@ -11,8 +11,8 @@ use api_client::{
     models::{AccountState, PendingMessageDeleteList, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount},
 };
 use async_trait::async_trait;
+use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
-use tokio::time::sleep;
 
 use super::{
     actions::{
@@ -45,13 +45,7 @@ impl Debug for ClientBot {
 
 impl ClientBot {
     pub fn new(state: BotState) -> Self {
-        let admin_bot = state
-            .config
-            .bot_mode()
-            .map(|bot_config| state.bot_id < bot_config.admins)
-            .unwrap_or(false);
-
-        let iter = if admin_bot {
+        let iter = if state.is_admin_bot() {
             // Admin bot
 
             let setup = [
@@ -157,7 +151,7 @@ impl BotAction for DoInitialSetupIfNeeded {
             const ACTIONS: ActionArray = action_array!(
                 SendImageToSlot {
                     slot: 1,
-                    random: true,
+                    random_if_not_defined_in_config: true,
                     copy_to_slot: Some(0),
                     mark_copied_image: true,
                 },
@@ -204,9 +198,53 @@ pub struct ChangeBotAgeAndOtherSettings;
 #[async_trait]
 impl BotAction for ChangeBotAgeAndOtherSettings {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let (age, groups) = if let Some(bot_config) = state.bot_config_file.bot.get(state.bot_id as usize) {
+            (
+                bot_config.age,
+                match bot_config.gender {
+                    Gender::Man => SearchGroups {
+                        man_for_man: Some(true),
+                        man_for_woman: Some(true),
+                        man_for_non_binary: Some(true),
+                        ..Default::default()
+                    },
+                    Gender::Woman => SearchGroups {
+                        woman_for_man: Some(true),
+                        woman_for_woman: Some(true),
+                        woman_for_non_binary: Some(true),
+                        ..Default::default()
+                    },
+                }
+            )
+        } else {
+            (
+                30,
+                match state.bot_id % 3 {
+                    0 => SearchGroups {
+                        man_for_man: Some(true),
+                        man_for_woman: Some(true),
+                        man_for_non_binary: Some(true),
+                        ..Default::default()
+                    },
+                    1 => SearchGroups {
+                        woman_for_man: Some(true),
+                        woman_for_woman: Some(true),
+                        woman_for_non_binary: Some(true),
+                        ..Default::default()
+                    },
+                    _ => SearchGroups {
+                        non_binary_for_man: Some(true),
+                        non_binary_for_woman: Some(true),
+                        non_binary_for_non_binary: Some(true),
+                        ..Default::default()
+                    },
+                }
+            )
+        };
+
         let update = ProfileUpdate {
             name: "B".to_string(),
-            age: 30,
+            age: age.into(),
             ..Default::default()
         };
 
@@ -222,27 +260,6 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         post_search_age_range(state.api.profile(), age_range)
             .await
             .change_context(TestError::ApiRequest)?;
-
-        let groups = match state.bot_id % 3 {
-            0 => SearchGroups {
-                man_for_man: Some(true),
-                man_for_woman: Some(true),
-                man_for_non_binary: Some(true),
-                ..Default::default()
-            },
-            1 => SearchGroups {
-                woman_for_man: Some(true),
-                woman_for_woman: Some(true),
-                woman_for_non_binary: Some(true),
-                ..Default::default()
-            },
-            _ => SearchGroups {
-                non_binary_for_man: Some(true),
-                non_binary_for_woman: Some(true),
-                non_binary_for_non_binary: Some(true),
-                ..Default::default()
-            },
-        };
 
         post_search_groups(state.api.profile(), groups)
             .await

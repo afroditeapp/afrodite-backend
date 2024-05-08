@@ -68,16 +68,19 @@ pub enum ConfigFileError {
     EditConfig,
     #[error("Saving edited config file failed")]
     SaveEditedConfig,
+
+    #[error("Invalid config")]
+    InvalidConfig,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigFile {
+    pub bot_config_file: Option<PathBuf>,
     pub profile_attributes_file: Option<PathBuf>,
 
     pub components: Components,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
-    pub bots: Option<StaticBotConfig>,
     pub external_services: Option<ExternalServices>,
     pub internal_api: Option<InternalApiConfig>,
     pub queue_limits: Option<QueueLimitsConfig>,
@@ -111,12 +114,6 @@ pub struct GrantAdminAccessConfig {
     pub for_every_matching_new_account: bool,
     pub email: Option<String>,
     pub google_account_id: Option<GoogleAccountId>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct StaticBotConfig {
-    pub man_image_dir: Option<PathBuf>,
-    pub woman_image_dir: Option<PathBuf>,
 }
 
 /// Base URLs for external services

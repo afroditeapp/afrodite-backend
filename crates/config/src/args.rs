@@ -57,13 +57,8 @@ pub struct TestMode {
     #[command(flatten)]
     pub server: ServerConfig,
 
-    /// Directory for random man images
-    #[arg(long, value_name = "DIR")]
-    pub images_man: Option<PathBuf>,
-
-    /// Directory for random woman images
-    #[arg(long, value_name = "DIR")]
-    pub images_woman: Option<PathBuf>,
+    #[arg(long, value_name = "FILE")]
+    pub bot_config_file: Option<PathBuf>,
 
     // Boolean flags
     /// Do not remove server instance database files
