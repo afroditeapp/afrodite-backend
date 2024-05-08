@@ -7,8 +7,8 @@ use std::{
 };
 
 use api_client::{
-    apis::{account_api::get_account_state, chat_api::{delete_pending_messages, get_pending_messages, get_received_likes, post_send_like, post_send_message}, profile_api::{post_profile, post_search_age_range, post_search_groups}},
-    models::{AccountState, PendingMessageDeleteList, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount},
+    apis::{account_api::get_account_state, chat_api::{delete_pending_messages, get_pending_messages, get_received_likes, post_send_like, post_send_message}, profile_api::{get_available_profile_attributes, post_profile, post_search_age_range, post_search_groups}},
+    models::{AccountState, AttributeMode, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount},
 };
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
@@ -241,9 +241,36 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             )
         };
 
+        let available_attributes = get_available_profile_attributes(state.api.profile())
+            .await
+            .change_context(TestError::ApiRequest)?
+            .info
+            .flatten()
+            .map(|v| v.attributes)
+            .unwrap_or_default();
+
+        let mut attributes: Vec<ProfileAttributeValueUpdate> = vec![];
+        for attribute in available_attributes {
+            if attribute.required.unwrap_or_default() && attribute.mode == AttributeMode::SelectMultipleFilterMultiple {
+                let mut select_all = 0;
+                for value in attribute.values {
+                    select_all |= value.id;
+                }
+
+                let update = ProfileAttributeValueUpdate {
+                    id: attribute.id,
+                    value_part1: Some(Some(select_all)),
+                    value_part2: None,
+                };
+
+                attributes.push(update);
+            }
+        }
+
         let update = ProfileUpdate {
             name: "B".to_string(),
             age: age.into(),
+            attributes,
             ..Default::default()
         };
 
