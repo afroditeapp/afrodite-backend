@@ -74,14 +74,13 @@ impl ClientBot {
                 &Login,
                 &DoInitialSetupIfNeeded { admin: false },
                 &UpdateLocationRandom(None),
-                &ChangeBotProfileText,
                 &SetProfileVisibility(true),
             ];
             let action_loop = [
                 &ActionsBeforeIteration as &dyn BotAction,
                 &GetProfile,
                 &RunActionsIf(
-                    action_array!(UpdateLocationRandom(None), ChangeBotProfileText,),
+                    action_array!(UpdateLocationRandom(None)),
                     || rand::random::<f32>() < 0.2,
                 ),
                 // TODO: Toggle the profile visiblity in the future?
