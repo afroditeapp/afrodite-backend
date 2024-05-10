@@ -325,13 +325,15 @@ fn generate_server_config(
     let mut key_reader = BufReader::new(
         std::fs::File::open(key_path).change_context(GetConfigError::CreateTlsConfig)?,
     );
-    let all_keys: Vec<_> = rsa_private_keys(&mut key_reader)
-        .map(|r| r.map(|c| c.clone_key()))
+    let all_keys: Vec<_> = rustls_pemfile::private_key(&mut key_reader)
+        .iter()
+        .flatten()
+        .map(|v| v.clone_key())
         .collect();
     let mut key_iter = all_keys.into_iter();
 
     let key = if let Some(key) = key_iter.next() {
-        key.change_context(GetConfigError::CreateTlsConfig)?
+        key
     } else {
         return Err(GetConfigError::CreateTlsConfig).attach_printable("No key found");
     };
@@ -359,7 +361,7 @@ fn generate_server_config(
 
     let config = ServerConfig::builder()
         .with_no_client_auth() // TODO: configure at some point
-        .with_single_cert(vec![cert], key.into())
+        .with_single_cert(vec![cert], key)
         .change_context(GetConfigError::CreateTlsConfig)?;
 
     Ok(config)
