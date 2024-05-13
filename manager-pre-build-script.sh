@@ -13,15 +13,15 @@ if ! command -v diesel &> /dev/null; then
     cargo install diesel_cli@2.1.0 --no-default-features --features sqlite
 fi
 
-DATABASE_FILE=database/current/current.db
+DATABASE_FILE=database/sqlite/current/current.db
 
-mkdir -p database/current
+mkdir -p database/sqlite/current
 
 if [ -f "$DATABASE_FILE" ]; then
     echo "Deleting previous database..."
     rm "$DATABASE_FILE"
 fi
 
-DATABASE_URL="database/current/current.db" diesel database reset
+DATABASE_URL="database/sqlite/current/current.db" diesel database reset
 
 echo "Script completed successfully!"
