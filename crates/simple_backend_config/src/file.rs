@@ -36,6 +36,7 @@ name = "history"
 # [manager]
 # address = "http://127.0.0.1:5000"
 # api_key = "TODO"
+# root_certificate = "server_config/root_certificate.crt"
 
 # [tile_map]
 # tile_dir = "/map_tiles"
@@ -46,11 +47,11 @@ name = "history"
 # client_id_server = "id"
 
 # [tls]
-# public_api_cert = "server_config/public_api.cert"
+# public_api_cert = "server_config/public_api.crt"
 # public_api_key = "server_config/public_api.key"
-# internal_api_cert = "server_config/internal_api.cert"
+# internal_api_cert = "server_config/internal_api.crt"
 # internal_api_key = "server_config/internal_api.key"
-# root_certificate = "server_config/root_certificate"
+# internal_api_root_certificate = "server_config/root_certificate.crt"
 
 # [lets_encrypt]
 # domains = ["example.com"]
@@ -210,6 +211,7 @@ pub struct SocketConfig {
 pub struct AppManagerConfig {
     pub address: Url,
     pub api_key: String,
+    pub root_certificate: Option<PathBuf>,
 }
 
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]
@@ -232,7 +234,7 @@ pub struct TlsConfig {
     pub public_api_key: PathBuf,
     pub internal_api_cert: PathBuf,
     pub internal_api_key: PathBuf,
-    pub root_certificate: PathBuf,
+    pub internal_api_root_certificate: PathBuf,
 }
 
 /// Let's Encrypt configuration for public API

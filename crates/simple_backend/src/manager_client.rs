@@ -32,7 +32,7 @@ pub struct ManagerApiClient {
 impl ManagerApiClient {
     pub fn new(config: &SimpleBackendConfig) -> Result<Self, ManagerClientError> {
         let mut client = reqwest::ClientBuilder::new().tls_built_in_root_certs(false);
-        if let Some(cert) = config.root_certificate() {
+        if let Some(cert) = config.manager_api_root_certificate() {
             client = client.add_root_certificate(cert.clone());
         }
         let client = client

@@ -84,7 +84,8 @@ pub struct SimpleBackendConfig {
     // TLS
     public_api_tls_config: Option<Arc<ServerConfig>>,
     internal_api_tls_config: Option<Arc<ServerConfig>>,
-    root_certificate: Option<reqwest::Certificate>,
+    internal_api_root_certificate: Option<reqwest::Certificate>,
+    manager_api_root_certificate: Option<reqwest::Certificate>,
 }
 
 impl SimpleBackendConfig {
@@ -140,8 +141,12 @@ impl SimpleBackendConfig {
         self.file.lets_encrypt.as_ref()
     }
 
-    pub fn root_certificate(&self) -> Option<&reqwest::Certificate> {
-        self.root_certificate.as_ref()
+    pub fn internal_api_root_certificate(&self) -> Option<&reqwest::Certificate> {
+        self.internal_api_root_certificate.as_ref()
+    }
+
+    pub fn manager_api_root_certificate(&self) -> Option<&reqwest::Certificate> {
+        self.manager_api_root_certificate.as_ref()
     }
 
     pub fn media_backup(&self) -> Option<&MediaBackupConfig> {
@@ -214,8 +219,13 @@ pub fn get_config(
             .attach_printable("TLS certificates or Let's Encrypt must be configured when debug mode is false");
     }
 
-    let root_certificate = match file_config.tls.clone() {
-        Some(tls_config) => Some(load_root_certificate(&tls_config.root_certificate)?),
+    let internal_api_root_certificate = match file_config.tls.clone() {
+        Some(tls_config) => Some(load_root_certificate(&tls_config.internal_api_root_certificate)?),
+        None => None,
+    };
+
+    let manager_api_root_certificate = match file_config.manager.as_ref().and_then(|v| v.root_certificate.as_ref()) {
+        Some(cert_path) => Some(load_root_certificate(cert_path)?),
         None => None,
     };
 
@@ -272,7 +282,8 @@ pub fn get_config(
         sign_in_with_urls: SignInWithUrls::new()?,
         public_api_tls_config,
         internal_api_tls_config,
-        root_certificate,
+        internal_api_root_certificate,
+        manager_api_root_certificate,
         backend_code_version,
         backend_semver_version,
     };
