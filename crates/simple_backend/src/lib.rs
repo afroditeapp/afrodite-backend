@@ -345,7 +345,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .map(|https_socket_listener| create_tls_listening_task(
                 https_socket_listener,
                 None,
-                tls_config.remove_challenge_config(),
+                tls_config,
                 drop_after_connection.clone(),
                 quit_notification.resubscribe(),
             ));
@@ -487,8 +487,9 @@ fn create_tls_listening_task(
                 if let Some(mut app_service) = app_service.clone() {
                     Some(unwrap_infallible_result(app_service.call(addr).await))
                 } else {
-                    let mut app_service = empty_page_router().into_make_service_with_connect_info::<SocketAddr>();
-                    Some(unwrap_infallible_result(app_service.call(addr).await))
+                    // let mut app_service = empty_page_router().into_make_service_with_connect_info::<SocketAddr>();
+                    // Some(unwrap_infallible_result(app_service.call(addr).await))
+                    None
                 };
 
             let mut quit_notification = quit_notification.resubscribe();
