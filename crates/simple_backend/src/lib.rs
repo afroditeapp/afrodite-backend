@@ -52,6 +52,7 @@ use crate::{
     perf::{PerfCounterManager, PerfCounterManagerData},
 };
 
+pub const HTTPS_DEFAULT_PORT: u16 = 443;
 pub const SERVER_START_MESSAGE: &str = "Server start complete";
 
 /// Drop this when quit starts
@@ -304,61 +305,69 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         tls_config: SimpleBackendTlsConfig,
         mut quit_notification: ServerQuitWatcher,
     ) -> JoinHandle<()> {
-        let mut listener = TcpListener::bind(addr)
+        let public_api_listener = TcpListener::bind(addr)
             .await
             .expect("Address not available");
 
-        let app_service = router.into_make_service_with_connect_info::<SocketAddr>();
+        let https_socket_listener = if addr.port() != HTTPS_DEFAULT_PORT && tls_config.is_lets_encrypt() {
+            info!("HTTPS socket for Let's Encrypt ACME challenge is available on {}", addr);
+            let mut https_addr = addr;
+            https_addr.set_port(HTTPS_DEFAULT_PORT);
+            Some(TcpListener::bind(https_addr)
+                .await
+                .expect("Address not available"))
+        } else {
+            None
+        };
+
+        let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
+
+        let tls_config = tls_config.start_acme_task_if_needed(
+            quit_notification.resubscribe(),
+            drop_after_connection.clone(),
+        );
+
+        let public_api_tls_config = if addr.port() != HTTPS_DEFAULT_PORT && tls_config.is_lets_encrypt() {
+            tls_config.clone().remove_challenge_config()
+        } else {
+            tls_config.clone()
+        };
+
+        let public_api_server = create_tls_listening_task(
+            public_api_listener,
+            Some(router),
+            public_api_tls_config,
+            drop_after_connection.clone(),
+            quit_notification.resubscribe(),
+        );
+
+        let https_socket_server = https_socket_listener
+            .map(|https_socket_listener| create_tls_listening_task(
+                https_socket_listener,
+                None,
+                tls_config.remove_challenge_config(),
+                drop_after_connection.clone(),
+                quit_notification.resubscribe(),
+            ));
 
         tokio::spawn(async move {
-            let (drop_after_connection, mut wait_all_connections) = mpsc::channel::<()>(1);
+            let _ = quit_notification.recv().await;
 
-            let tls_config = tls_config.start_acme_task_if_needed(
-                quit_notification.resubscribe(),
-                drop_after_connection.clone(),
-            );
-
-            loop {
-                let next_addr_stream = poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
-
-                let (tcp_stream, addr) = tokio::select! {
-                    _ = quit_notification.recv() => {
-                        break;
-                    }
-                    addr = next_addr_stream => {
-                        match addr {
-                            Ok(stream_and_addr) => {
-                                stream_and_addr
-                            }
-                            Err(e) => {
-                                // TODO: Can this happen if there is no more
-                                //       file descriptors available?
-                                error!("Address stream error {e}");
-                                return;
-                            }
-                        }
-                    }
-                };
-
-                let config_clone = tls_config.clone();
-                let app_service_with_connect_info: axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>> =
-                    unwrap_infallible_result(app_service.clone().call(addr).await);
-
-                let quit_notification = quit_notification.resubscribe();
-                let drop_on_quit = drop_after_connection.clone();
-                tokio::spawn(async move {
-                    handle_tls_related_tcp_stream(
-                        tcp_stream,
-                        config_clone,
-                        app_service_with_connect_info,
-                        quit_notification
-                    ).await;
-
-                    drop(drop_on_quit);
-                });
+            match public_api_server.await {
+                Ok(()) => (),
+                Err(e) => {
+                    error!("Public API server quit error: {}", e);
+                }
             }
-            drop(drop_after_connection);
-            drop(quit_notification);
+
+            if let Some(https_socket_server) = https_socket_server {
+                match https_socket_server.await {
+                    Ok(()) => (),
+                    Err(e) => {
+                        error!("HTTPS socket server quit error: {}", e);
+                    }
+                }
+            }
 
             loop {
                 match wait_all_connections.recv().await {
@@ -441,60 +450,134 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     }
 }
 
+fn create_tls_listening_task(
+    mut listener: TcpListener,
+    router: Option<Router>,
+    tls_config: SimpleBackendTlsConfigAcmeTaskRunning,
+    drop_after_connection: mpsc::Sender<()>,
+    mut quit_notification: ServerQuitWatcher,
+) -> JoinHandle<()> {
+    let app_service = router.map(|v| v.into_make_service_with_connect_info::<SocketAddr>());
+
+    tokio::spawn(async move {
+        loop {
+            let next_addr_stream = poll_fn(|cx| Pin::new(&mut listener).poll_accept(cx));
+
+            let (tcp_stream, addr) = tokio::select! {
+                _ = quit_notification.recv() => {
+                    break;
+                }
+                addr = next_addr_stream => {
+                    match addr {
+                        Ok(stream_and_addr) => {
+                            stream_and_addr
+                        }
+                        Err(e) => {
+                            // TODO: Can this happen if there is no more
+                            //       file descriptors available?
+                            error!("Address stream error {e}");
+                            return;
+                        }
+                    }
+                }
+            };
+
+            let config_clone = tls_config.clone();
+            let app_service_with_connect_info: Option<axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>> =
+                if let Some(mut app_service) = app_service.clone() {
+                    Some(unwrap_infallible_result(app_service.call(addr).await))
+                } else {
+                    None
+                };
+
+            let mut quit_notification = quit_notification.resubscribe();
+            let drop_on_quit = drop_after_connection.clone();
+            tokio::spawn(async move {
+                tokio::select! {
+                    _ = quit_notification.recv() => {} // Graceful shutdown for connections?
+                    _ = handle_tls_related_tcp_stream(
+                        tcp_stream,
+                        config_clone,
+                        app_service_with_connect_info,
+                    ) => (),
+                }
+
+                drop(drop_on_quit);
+            });
+        }
+        drop(drop_after_connection);
+    })
+}
+
 async fn handle_tls_related_tcp_stream(
     tcp_stream: tokio::net::TcpStream,
     config: SimpleBackendTlsConfigAcmeTaskRunning,
-    app_service_with_connect_info: axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>,
-    mut quit_notification: ServerQuitWatcher,
+    app_service_with_connect_info: Option<axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>>,
 ) {
     match config {
-        SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual) => {
-            let acceptor = TlsAcceptor::from(manual);
-            tokio::select! {
-                _ = quit_notification.recv() => {} // Graceful shutdown for connections?
-                connection = acceptor.accept(tcp_stream) => {
-                    match connection {
-                        Ok(tls_connection) =>
-                            handle_ready_tls_connection(tls_connection, app_service_with_connect_info).await,
-                        Err(_) => {}, // TLS handshake failed
-                    }
+        SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual) =>
+            if let Some(app_service_with_connect_info) = app_service_with_connect_info {
+                let acceptor = TlsAcceptor::from(manual);
+                let connection = acceptor.accept(tcp_stream).await;
+                match connection {
+                    Ok(tls_connection) =>
+                        handle_ready_tls_connection(tls_connection, app_service_with_connect_info).await,
+                    Err(_) => {}, // TLS handshake failed
                 }
             }
-        }
         SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
             challenge_config,
             default_config,
         } => {
-            let empty_acceptor: Acceptor = Default::default();
-            let start_handshake = match LazyConfigAcceptor::new(empty_acceptor, tcp_stream).await {
-                Ok(v) => v,
-                Err(e) => {
-                    error!("Start handshake failed: {}", e);
-                    return;
-                }
-            };
+            handle_lets_encrypt_related_tcp_stream(
+                tcp_stream,
+                challenge_config,
+                default_config,
+                app_service_with_connect_info,
+            ).await;
+        }
+    }
+}
 
-            if is_tls_alpn_challenge(&start_handshake.client_hello()) {
-                info!("TLS-ALPN-01 challenge received");
-                match start_handshake.into_stream(challenge_config).await {
-                    Ok(mut v) => {
-                        match v.shutdown().await {
-                            Ok(()) => (),
-                            Err(e) =>
-                                error!("Challenge connection shutdown failed: {}", e)
-                        }
+async fn handle_lets_encrypt_related_tcp_stream(
+    tcp_stream: tokio::net::TcpStream,
+    challenge_config: Option<Arc<ServerConfig>>,
+    default_config: Arc<ServerConfig>,
+    app_service_with_connect_info: Option<axum::middleware::AddExtension<Router, axum::extract::ConnectInfo<SocketAddr>>>,
+) {
+    let empty_acceptor: Acceptor = Default::default();
+    let start_handshake = match LazyConfigAcceptor::new(empty_acceptor, tcp_stream).await {
+        Ok(v) => v,
+        Err(e) => {
+            error!("Start handshake failed: {}", e);
+            return;
+        }
+    };
+
+    if let Some(challenge_config) = challenge_config {
+        if is_tls_alpn_challenge(&start_handshake.client_hello()) {
+            info!("TLS-ALPN-01 challenge received");
+            match start_handshake.into_stream(challenge_config).await {
+                Ok(mut v) => {
+                    match v.shutdown().await {
+                        Ok(()) => (),
+                        Err(e) =>
+                            error!("Challenge connection shutdown failed: {}", e)
                     }
-                    Err(e) =>
-                        error!("Challenge connection failed: {}", e),
                 }
-            } else {
-                match start_handshake.into_stream(default_config).await {
-                    Ok(v) =>
-                        handle_ready_tls_connection(v, app_service_with_connect_info).await,
-                    Err(e) =>
-                        error!("Normal connection failed: {}", e)
-                }
+                Err(e) =>
+                    error!("Challenge connection failed: {}", e),
             }
+            return
+        }
+    }
+
+    if let Some(app_service_with_connect_info) = app_service_with_connect_info {
+        match start_handshake.into_stream(default_config).await {
+            Ok(v) =>
+                handle_ready_tls_connection(v, app_service_with_connect_info).await,
+            Err(e) =>
+                error!("Normal connection failed: {}", e)
         }
     }
 }
@@ -537,6 +620,10 @@ enum SimpleBackendTlsConfig {
 }
 
 impl SimpleBackendTlsConfig {
+    fn is_lets_encrypt(&self) -> bool {
+        matches!(self, SimpleBackendTlsConfig::LetsEncrypt(_))
+    }
+
     fn start_acme_task_if_needed(
         self,
         mut quit_notification: ServerQuitWatcher,
@@ -571,7 +658,7 @@ impl SimpleBackendTlsConfig {
                 });
 
                 SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
-                    challenge_config,
+                    challenge_config: Some(challenge_config),
                     default_config,
                 }
             }
@@ -583,7 +670,28 @@ impl SimpleBackendTlsConfig {
 enum SimpleBackendTlsConfigAcmeTaskRunning {
     ManualSertificates(Arc<ServerConfig>),
     LetsEncrypt {
-        challenge_config: Arc<ServerConfig>,
+        challenge_config: Option<Arc<ServerConfig>>,
         default_config: Arc<ServerConfig>,
     },
+}
+
+impl SimpleBackendTlsConfigAcmeTaskRunning {
+    fn is_lets_encrypt(&self) -> bool {
+        matches!(self, SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt { .. })
+    }
+
+    fn remove_challenge_config(self) -> SimpleBackendTlsConfigAcmeTaskRunning {
+        match self {
+            SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual) =>
+                SimpleBackendTlsConfigAcmeTaskRunning::ManualSertificates(manual),
+            SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
+                challenge_config: _,
+                default_config,
+            } =>
+                SimpleBackendTlsConfigAcmeTaskRunning::LetsEncrypt {
+                    challenge_config: None,
+                    default_config,
+                },
+        }
+    }
 }

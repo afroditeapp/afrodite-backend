@@ -21,8 +21,6 @@ use self::file::{
     SimpleBackendConfigFile, SocketConfig,
 };
 
-const DEFAULT_HTTPS_PORT: u16 = 443;
-
 /// Config file debug mode status.
 ///
 /// Parse the config file before reading this value.
@@ -253,11 +251,6 @@ pub fn get_config(
         if lets_encrypt_config.cache_dir.to_string_lossy().trim().is_empty() {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("Let's Encrypt cache directory config is empty");
-        }
-
-        if file_config.socket.public_api.port() != DEFAULT_HTTPS_PORT {
-            return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable(format!("Let's Encrypt requires port {} for public API because ACME challenge requires that port. It should be possible to have the HTTP content on a different port if that is implemented.", DEFAULT_HTTPS_PORT));
         }
     }
 

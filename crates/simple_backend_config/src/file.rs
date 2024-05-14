@@ -53,6 +53,9 @@ name = "history"
 # internal_api_key = "server_config/internal_api.key"
 # internal_api_root_certificate = "server_config/root_certificate.crt"
 
+# Configuring Let's Encrypt will create socket public_api:443 if public API
+# is not on port 443.
+#
 # [lets_encrypt]
 # domains = ["example.com"]
 # email = "test@example.com"
@@ -237,7 +240,9 @@ pub struct TlsConfig {
     pub internal_api_root_certificate: PathBuf,
 }
 
-/// Let's Encrypt configuration for public API
+/// Let's Encrypt configuration for public API. If public API is not on
+/// port 443, then another socket is created on public_api:443 for Let's
+/// Encrypt ACME challenge.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LetsEncryptConfig {
     pub domains: Vec<String>,
