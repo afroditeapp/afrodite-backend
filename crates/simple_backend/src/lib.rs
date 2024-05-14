@@ -310,9 +310,9 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             .expect("Address not available");
 
         let https_socket_listener = if addr.port() != HTTPS_DEFAULT_PORT && tls_config.is_lets_encrypt() {
-            info!("HTTPS socket for Let's Encrypt ACME challenge is available on {}", addr);
             let mut https_addr = addr;
             https_addr.set_port(HTTPS_DEFAULT_PORT);
+            info!("HTTPS socket for Let's Encrypt ACME challenge is available on {}", https_addr);
             Some(TcpListener::bind(https_addr)
                 .await
                 .expect("Address not available"))
@@ -487,7 +487,8 @@ fn create_tls_listening_task(
                 if let Some(mut app_service) = app_service.clone() {
                     Some(unwrap_infallible_result(app_service.call(addr).await))
                 } else {
-                    None
+                    let mut app_service = empty_page_router().into_make_service_with_connect_info::<SocketAddr>();
+                    Some(unwrap_infallible_result(app_service.call(addr).await))
                 };
 
             let mut quit_notification = quit_notification.resubscribe();
@@ -694,4 +695,9 @@ impl SimpleBackendTlsConfigAcmeTaskRunning {
                 },
         }
     }
+}
+
+fn empty_page_router() -> Router {
+    axum::Router::new()
+        .route("/", axum::routing::get(()))
 }
