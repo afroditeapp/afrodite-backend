@@ -15,6 +15,7 @@ use tokio::{
 use tracing::{error, info};
 
 const BOT_DATA_DIR_NAME: &str = "bots";
+const LOCALHOST_HOSTNAME: &str = "localhost";
 
 #[derive(thiserror::Error, Debug)]
 pub enum BotClientError {
@@ -77,8 +78,6 @@ impl BotClient {
         };
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
-
-        // TODO: Bot client HTTPS support
 
         let mut command = std::process::Command::new(start_cmd);
         command
@@ -206,12 +205,31 @@ impl BotClient {
     }
 
     fn internal_api_url(internal_api_socket: SocketAddr) -> String {
-        format!("http://localhost:{}", internal_api_socket.port())
+        format!("http://{}:{}", LOCALHOST_HOSTNAME, internal_api_socket.port())
     }
 
     fn public_api_url(config: &Config) -> String {
+        // TODO: Custom TLS certificate support for bots.
+        //       One option is to disable certificate validation and use
+        //       localhost address.
+
+        let (protocol, hostname) = if let Some(lets_encrypt) = config.simple_backend().lets_encrypt_config()
+        {
+
+            (
+                "https",
+                lets_encrypt.domains
+                    .first()
+                    .map(|v| v.as_str())
+                    .unwrap_or(LOCALHOST_HOSTNAME)
+            )
+        } else {
+            ("http", LOCALHOST_HOSTNAME)
+        };
         format!(
-            "http://localhost:{}",
+            "{}://{}:{}",
+            protocol,
+            hostname,
             config.simple_backend().socket().public_api.port(),
         )
     }
