@@ -10,6 +10,7 @@ pub struct BotConfigFile {
     pub man_image_dir: Option<PathBuf>,
     pub woman_image_dir: Option<PathBuf>,
     /// Predefined user bots.
+    #[serde(default)]
     pub bot: Vec<BotInstanceConfig>,
 }
 
