@@ -38,7 +38,7 @@ base64 = { workspace = true }
 rand = { workspace = true }
 nix = { workspace = true, default-features = false, features = ["signal"] }
 image = { workspace = true, default-features = false, features = ["jpeg"] }
-tokio-tungstenite = { workspace = true }
+tokio-tungstenite = { workspace = true, features = ["rustls-tls-native-roots"] }
 inventory = { workspace = true }
 
 api_client = { path = "../api_client" }
