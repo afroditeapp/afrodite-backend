@@ -487,8 +487,6 @@ fn create_tls_listening_task(
                 if let Some(mut app_service) = app_service.clone() {
                     Some(unwrap_infallible_result(app_service.call(addr).await))
                 } else {
-                    // let mut app_service = empty_page_router().into_make_service_with_connect_info::<SocketAddr>();
-                    // Some(unwrap_infallible_result(app_service.call(addr).await))
                     None
                 };
 
@@ -696,9 +694,4 @@ impl SimpleBackendTlsConfigAcmeTaskRunning {
                 },
         }
     }
-}
-
-fn empty_page_router() -> Router {
-    axum::Router::new()
-        .route("/", axum::routing::get(()))
 }
