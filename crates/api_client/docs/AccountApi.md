@@ -13,8 +13,11 @@ Method | HTTP request | Description
 [**post_account_setup**](AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 [**post_complete_setup**](AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 [**post_delete**](AccountApi.md#post_delete) | **PUT** /account_api/delete | Delete account.
-[**post_login**](AccountApi.md#post_login) | **POST** /account_api/login | Get new AccessToken.
-[**post_register**](AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
+[**post_demo_mode_accessible_accounts**](AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /account_api/demo_mode_accessible_accounts | Get demo account's available accounts.
+[**post_demo_mode_confirm_login**](AccountApi.md#post_demo_mode_confirm_login) | **POST** /account_api/demo_mode_confirm_login | 
+[**post_demo_mode_login**](AccountApi.md#post_demo_mode_login) | **POST** /account_api/demo_mode_login | Access demo mode, which allows accessing all or specific accounts
+[**post_demo_mode_login_to_account**](AccountApi.md#post_demo_mode_login_to_account) | **POST** /account_api/demo_mode_login_to_account | 
+[**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /account_api/demo_mode_register_account | 
 [**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
 
@@ -269,19 +272,105 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## post_login
+## post_demo_mode_accessible_accounts
 
-> crate::models::LoginResult post_login(account_id)
-Get new AccessToken.
+> Vec<crate::models::AccessibleAccount> post_demo_mode_accessible_accounts(demo_mode_token)
+Get demo account's available accounts.
 
-Get new AccessToken.  Available only if server is running in debug mode and bot_login is enabled from config file.
+Get demo account's available accounts.  This path is using HTTP POST because there is JSON in the request body.
 
 ### Parameters
 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | [**AccountId**](AccountId.md) |  | [required] |
+**demo_mode_token** | [**DemoModeToken**](DemoModeToken.md) |  | [required] |
+
+### Return type
+
+[**Vec<crate::models::AccessibleAccount>**](AccessibleAccount.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_demo_mode_confirm_login
+
+> crate::models::DemoModeConfirmLoginResult post_demo_mode_confirm_login(demo_mode_confirm_login)
+
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**demo_mode_confirm_login** | [**DemoModeConfirmLogin**](DemoModeConfirmLogin.md) |  | [required] |
+
+### Return type
+
+[**crate::models::DemoModeConfirmLoginResult**](DemoModeConfirmLoginResult.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_demo_mode_login
+
+> crate::models::DemoModeLoginResult post_demo_mode_login(demo_mode_password)
+Access demo mode, which allows accessing all or specific accounts
+
+Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**demo_mode_password** | [**DemoModePassword**](DemoModePassword.md) |  | [required] |
+
+### Return type
+
+[**crate::models::DemoModeLoginResult**](DemoModeLoginResult.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_demo_mode_login_to_account
+
+> crate::models::LoginResult post_demo_mode_login_to_account(demo_mode_login_to_account)
+
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**demo_mode_login_to_account** | [**DemoModeLoginToAccount**](DemoModeLoginToAccount.md) |  | [required] |
 
 ### Return type
 
@@ -299,16 +388,17 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## post_register
+## post_demo_mode_register_account
 
-> crate::models::AccountId post_register()
-Register new account. Returns new account ID which is UUID.
+> crate::models::AccountId post_demo_mode_register_account(demo_mode_token)
 
-Register new account. Returns new account ID which is UUID.  Available only if server is running in debug mode and bot_login is enabled from config file.
 
 ### Parameters
 
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**demo_mode_token** | [**DemoModeToken**](DemoModeToken.md) |  | [required] |
 
 ### Return type
 
@@ -320,7 +410,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -361,7 +451,7 @@ No authorization required
 > put_setting_profile_visiblity(boolean_setting)
 Update current or pending profile visiblity value.
 
-Update current or pending profile visiblity value.  Requirements: - Account state must be `Normal`.
+Update current or pending profile visiblity value.  NOTE: Client uses this in initial setup.
 
 ### Parameters
 

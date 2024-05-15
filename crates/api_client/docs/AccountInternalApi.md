@@ -4,26 +4,28 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**check_access_token**](AccountInternalApi.md#check_access_token) | **GET** /internal/check_access_token | 
-[**internal_get_account_state**](AccountInternalApi.md#internal_get_account_state) | **GET** /internal/get_account_state/{account_id} | 
+[**post_login**](AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered
+[**post_register**](AccountInternalApi.md#post_register) | **POST** /account_api/register | Register new a new bot account. Returns new account ID which is UUID.
 
 
 
-## check_access_token
+## post_login
 
-> crate::models::AccountId check_access_token(access_token)
+> crate::models::LoginResult post_login(account_id)
+Get new AccessToken for a bot account. If the account is not registered
 
+Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
 
 ### Parameters
 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**access_token** | [**AccessToken**](AccessToken.md) |  | [required] |
+**account_id** | [**AccountId**](AccountId.md) |  | [required] |
 
 ### Return type
 
-[**crate::models::AccountId**](AccountId.md)
+[**crate::models::LoginResult**](LoginResult.md)
 
 ### Authorization
 
@@ -37,21 +39,20 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## internal_get_account_state
+## post_register
 
-> crate::models::Account internal_get_account_state(account_id)
+> crate::models::AccountId post_register()
+Register new a new bot account. Returns new account ID which is UUID.
 
+Register new a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
 
 ### Parameters
 
-
-Name | Type | Description  | Required | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::Account**](Account.md)
+[**crate::models::AccountId**](AccountId.md)
 
 ### Authorization
 

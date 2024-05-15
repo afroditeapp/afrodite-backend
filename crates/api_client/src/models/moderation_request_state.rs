@@ -18,8 +18,8 @@ pub enum ModerationRequestState {
     InProgress,
     #[serde(rename = "Accepted")]
     Accepted,
-    #[serde(rename = "Denied")]
-    Denied,
+    #[serde(rename = "Rejected")]
+    Rejected,
 
 }
 
@@ -29,7 +29,7 @@ impl ToString for ModerationRequestState {
             Self::Waiting => String::from("Waiting"),
             Self::InProgress => String::from("InProgress"),
             Self::Accepted => String::from("Accepted"),
-            Self::Denied => String::from("Denied"),
+            Self::Rejected => String::from("Rejected"),
         }
     }
 }

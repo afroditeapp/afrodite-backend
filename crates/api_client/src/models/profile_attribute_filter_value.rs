@@ -16,8 +16,8 @@ pub struct ProfileAttributeFilterValue {
     #[serde(rename = "accept_missing_attribute")]
     pub accept_missing_attribute: bool,
     /// Bitflags value or top level attribute value ID filter.
-    #[serde(rename = "filter_part1")]
-    pub filter_part1: i32,
+    #[serde(rename = "filter_part1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub filter_part1: Option<Option<i32>>,
     /// Sub level attribute value ID filter.
     #[serde(rename = "filter_part2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub filter_part2: Option<Option<i32>>,
@@ -27,10 +27,10 @@ pub struct ProfileAttributeFilterValue {
 }
 
 impl ProfileAttributeFilterValue {
-    pub fn new(accept_missing_attribute: bool, filter_part1: i32, id: i32) -> ProfileAttributeFilterValue {
+    pub fn new(accept_missing_attribute: bool, id: i32) -> ProfileAttributeFilterValue {
         ProfileAttributeFilterValue {
             accept_missing_attribute,
-            filter_part1,
+            filter_part1: None,
             filter_part2: None,
             id,
         }

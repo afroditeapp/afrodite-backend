@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **accept_missing_attribute** | **bool** |  | 
-**filter_part1** | **i32** | Bitflags value or top level attribute value ID filter. | 
+**filter_part1** | Option<**i32**> | Bitflags value or top level attribute value ID filter. | [optional]
 **filter_part2** | Option<**i32**> | Sub level attribute value ID filter. | [optional]
 **id** | **i32** | Attribute ID | 
 

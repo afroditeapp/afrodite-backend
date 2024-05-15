@@ -98,18 +98,42 @@ pub enum PostDeleteError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_login`]
+/// struct for typed errors of method [`post_demo_mode_accessible_accounts`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostLoginError {
+pub enum PostDemoModeAccessibleAccountsError {
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_register`]
+/// struct for typed errors of method [`post_demo_mode_confirm_login`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostRegisterError {
+pub enum PostDemoModeConfirmLoginError {
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_demo_mode_login`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostDemoModeLoginError {
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_demo_mode_login_to_account`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostDemoModeLoginToAccountError {
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_demo_mode_register_account`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostDemoModeRegisterAccountError {
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -458,19 +482,19 @@ pub async fn post_delete(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
-/// Get new AccessToken.  Available only if server is running in debug mode and bot_login is enabled from config file.
-pub async fn post_login(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<crate::models::LoginResult, Error<PostLoginError>> {
+/// Get demo account's available accounts.  This path is using HTTP POST because there is JSON in the request body.
+pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::Configuration, demo_mode_token: crate::models::DemoModeToken) -> Result<Vec<crate::models::AccessibleAccount>, Error<PostDemoModeAccessibleAccountsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/login", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/demo_mode_accessible_accounts", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    local_var_req_builder = local_var_req_builder.json(&account_id);
+    local_var_req_builder = local_var_req_builder.json(&demo_mode_token);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -481,24 +505,24 @@ pub async fn post_login(configuration: &configuration::Configuration, account_id
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostLoginError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostDemoModeAccessibleAccountsError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
 }
 
-/// Register new account. Returns new account ID which is UUID.  Available only if server is running in debug mode and bot_login is enabled from config file.
-pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountId, Error<PostRegisterError>> {
+pub async fn post_demo_mode_confirm_login(configuration: &configuration::Configuration, demo_mode_confirm_login: crate::models::DemoModeConfirmLogin) -> Result<crate::models::DemoModeConfirmLoginResult, Error<PostDemoModeConfirmLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/register", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/account_api/demo_mode_confirm_login", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
+    local_var_req_builder = local_var_req_builder.json(&demo_mode_confirm_login);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -509,7 +533,92 @@ pub async fn post_register(configuration: &configuration::Configuration, ) -> Re
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
-        let local_var_entity: Option<PostRegisterError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_entity: Option<PostDemoModeConfirmLoginError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
+pub async fn post_demo_mode_login(configuration: &configuration::Configuration, demo_mode_password: crate::models::DemoModePassword) -> Result<crate::models::DemoModeLoginResult, Error<PostDemoModeLoginError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/account_api/demo_mode_login", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    local_var_req_builder = local_var_req_builder.json(&demo_mode_password);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostDemoModeLoginError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+pub async fn post_demo_mode_login_to_account(configuration: &configuration::Configuration, demo_mode_login_to_account: crate::models::DemoModeLoginToAccount) -> Result<crate::models::LoginResult, Error<PostDemoModeLoginToAccountError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/account_api/demo_mode_login_to_account", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    local_var_req_builder = local_var_req_builder.json(&demo_mode_login_to_account);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostDemoModeLoginToAccountError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+pub async fn post_demo_mode_register_account(configuration: &configuration::Configuration, demo_mode_token: crate::models::DemoModeToken) -> Result<crate::models::AccountId, Error<PostDemoModeRegisterAccountError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/account_api/demo_mode_register_account", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    local_var_req_builder = local_var_req_builder.json(&demo_mode_token);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostDemoModeRegisterAccountError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -544,7 +653,7 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
     }
 }
 
-/// Update current or pending profile visiblity value.  Requirements: - Account state must be `Normal`.
+/// Update current or pending profile visiblity value.  NOTE: Client uses this in initial setup.
 pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: crate::models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
     let local_var_configuration = configuration;
 

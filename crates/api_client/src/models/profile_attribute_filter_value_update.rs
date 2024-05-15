@@ -13,8 +13,9 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProfileAttributeFilterValueUpdate {
-    #[serde(rename = "accept_missing_attribute")]
-    pub accept_missing_attribute: bool,
+    /// Should missing attribute be accepted.  Setting this to `None` disables the filter.
+    #[serde(rename = "accept_missing_attribute", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub accept_missing_attribute: Option<Option<bool>>,
     /// Bitflags value or top level attribute value ID filter.
     #[serde(rename = "filter_part1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub filter_part1: Option<Option<i32>>,
@@ -27,9 +28,9 @@ pub struct ProfileAttributeFilterValueUpdate {
 }
 
 impl ProfileAttributeFilterValueUpdate {
-    pub fn new(accept_missing_attribute: bool, id: i32) -> ProfileAttributeFilterValueUpdate {
+    pub fn new(id: i32) -> ProfileAttributeFilterValueUpdate {
         ProfileAttributeFilterValueUpdate {
-            accept_missing_attribute,
+            accept_missing_attribute: None,
             filter_part1: None,
             filter_part2: None,
             id,

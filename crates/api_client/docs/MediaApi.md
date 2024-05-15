@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**delete_content**](MediaApi.md#delete_content) | **DELETE** /media_api/content/{account_id}/{content_id} | Delete content data. Content can be removed after specific time has passed
+[**delete_moderation_request**](MediaApi.md#delete_moderation_request) | **DELETE** /media_api/moderation/request | Delete current moderation request which is not yet in moderation.
 [**delete_pending_security_content_info**](MediaApi.md#delete_pending_security_content_info) | **DELETE** /media_api/pending_security_content_info | Delete pending security content for current account.
 [**get_all_account_media_content**](MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{account_id} | Get list of all media content on the server for one account.
 [**get_content**](MediaApi.md#get_content) | **GET** /media_api/content/{account_id}/{content_id} | Get content data
@@ -38,6 +39,33 @@ Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
 **content_id** | **uuid::Uuid** |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## delete_moderation_request
+
+> delete_moderation_request()
+Delete current moderation request which is not yet in moderation.
+
+Delete current moderation request which is not yet in moderation.
+
+### Parameters
+
+This endpoint does not need any parameter.
 
 ### Return type
 
@@ -208,7 +236,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_moderation_request
 
-> crate::models::ModerationRequest get_moderation_request()
+> crate::models::CurrentModerationRequest get_moderation_request()
 Get current moderation request.
 
 Get current moderation request. 
@@ -219,7 +247,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::ModerationRequest**](ModerationRequest.md)
+[**crate::models::CurrentModerationRequest**](CurrentModerationRequest.md)
 
 ### Authorization
 
@@ -422,7 +450,7 @@ Name | Type | Description  | Required | Notes
 > put_pending_profile_content(set_profile_content)
 Set new pending profile content for current account.
 
-Set new pending profile content for current account. Server will switch to pending content when next moderation request is accepted.  # Restrictions - All content must not be moderated as denied. - All content must be owned by the account. - All content must be images.
+Set new pending profile content for current account. Server will switch to pending content when next moderation request is accepted.  # Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images.
 
 ### Parameters
 

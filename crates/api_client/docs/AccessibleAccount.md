@@ -1,10 +1,12 @@
-# RefreshToken
+# AccessibleAccount
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**token** | **String** | Base64 encoded random number. | 
+**age** | Option<**i64**> |  | [optional]
+**id** | [**crate::models::AccountId**](AccountId.md) |  | 
+**name** | Option<**String**> |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

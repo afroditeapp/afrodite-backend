@@ -17,6 +17,8 @@ pub struct ModerationRequest {
     pub content: Box<crate::models::ModerationRequestContent>,
     #[serde(rename = "state")]
     pub state: crate::models::ModerationRequestState,
+    #[serde(rename = "waiting_position", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub waiting_position: Option<Option<i64>>,
 }
 
 impl ModerationRequest {
@@ -24,6 +26,7 @@ impl ModerationRequest {
         ModerationRequest {
             content: Box::new(content),
             state,
+            waiting_position: None,
         }
     }
 }

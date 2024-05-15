@@ -18,8 +18,8 @@ pub enum ContentState {
     InModeration,
     #[serde(rename = "ModeratedAsAccepted")]
     ModeratedAsAccepted,
-    #[serde(rename = "ModeratedAsDenied")]
-    ModeratedAsDenied,
+    #[serde(rename = "ModeratedAsRejected")]
+    ModeratedAsRejected,
 
 }
 
@@ -29,7 +29,7 @@ impl ToString for ContentState {
             Self::InSlot => String::from("InSlot"),
             Self::InModeration => String::from("InModeration"),
             Self::ModeratedAsAccepted => String::from("ModeratedAsAccepted"),
-            Self::ModeratedAsDenied => String::from("ModeratedAsDenied"),
+            Self::ModeratedAsRejected => String::from("ModeratedAsRejected"),
         }
     }
 }

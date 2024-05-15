@@ -34,10 +34,15 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 *AccountApi* | [**post_delete**](docs/AccountApi.md#post_delete) | **PUT** /account_api/delete | Delete account.
-*AccountApi* | [**post_login**](docs/AccountApi.md#post_login) | **POST** /account_api/login | Get new AccessToken.
-*AccountApi* | [**post_register**](docs/AccountApi.md#post_register) | **POST** /account_api/register | Register new account. Returns new account ID which is UUID.
+*AccountApi* | [**post_demo_mode_accessible_accounts**](docs/AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /account_api/demo_mode_accessible_accounts | Get demo account's available accounts.
+*AccountApi* | [**post_demo_mode_confirm_login**](docs/AccountApi.md#post_demo_mode_confirm_login) | **POST** /account_api/demo_mode_confirm_login | 
+*AccountApi* | [**post_demo_mode_login**](docs/AccountApi.md#post_demo_mode_login) | **POST** /account_api/demo_mode_login | Access demo mode, which allows accessing all or specific accounts
+*AccountApi* | [**post_demo_mode_login_to_account**](docs/AccountApi.md#post_demo_mode_login_to_account) | **POST** /account_api/demo_mode_login_to_account | 
+*AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /account_api/demo_mode_register_account | 
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
+*AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered
+*AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register new a new bot account. Returns new account ID which is UUID.
 *ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
 *ChatApi* | [**delete_pending_messages**](docs/ChatApi.md#delete_pending_messages) | **DELETE** /chat_api/pending_messages | Delete list of pending messages
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
@@ -64,6 +69,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_request_restart_or_reset_backend**](docs/CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /common_api/request_restart_or_reset_backend | Request restarting or reseting backend through app-manager instance.
 *CommonAdminApi* | [**post_request_update_software**](docs/CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
 *MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /media_api/content/{account_id}/{content_id} | Delete content data. Content can be removed after specific time has passed
+*MediaApi* | [**delete_moderation_request**](docs/MediaApi.md#delete_moderation_request) | **DELETE** /media_api/moderation/request | Delete current moderation request which is not yet in moderation.
 *MediaApi* | [**delete_pending_security_content_info**](docs/MediaApi.md#delete_pending_security_content_info) | **DELETE** /media_api/pending_security_content_info | Delete pending security content for current account.
 *MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{account_id} | Get list of all media content on the server for one account.
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /media_api/content/{account_id}/{content_id} | Get content data
@@ -106,6 +112,7 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [AccessToken](docs/AccessToken.md)
+ - [AccessibleAccount](docs/AccessibleAccount.md)
  - [Account](docs/Account.md)
  - [AccountContent](docs/AccountContent.md)
  - [AccountData](docs/AccountData.md)
@@ -137,7 +144,15 @@ Class | Method | HTTP request | Description
  - [ContentProcessingStateType](docs/ContentProcessingStateType.md)
  - [ContentSlot](docs/ContentSlot.md)
  - [ContentState](docs/ContentState.md)
+ - [CurrentModerationRequest](docs/CurrentModerationRequest.md)
  - [DeleteStatus](docs/DeleteStatus.md)
+ - [DemoModeConfirmLogin](docs/DemoModeConfirmLogin.md)
+ - [DemoModeConfirmLoginResult](docs/DemoModeConfirmLoginResult.md)
+ - [DemoModeLoginResult](docs/DemoModeLoginResult.md)
+ - [DemoModeLoginToAccount](docs/DemoModeLoginToAccount.md)
+ - [DemoModeLoginToken](docs/DemoModeLoginToken.md)
+ - [DemoModePassword](docs/DemoModePassword.md)
+ - [DemoModeToken](docs/DemoModeToken.md)
  - [DownloadType](docs/DownloadType.md)
  - [DownloadTypeQueryParam](docs/DownloadTypeQueryParam.md)
  - [EventToClient](docs/EventToClient.md)

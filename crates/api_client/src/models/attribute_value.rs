@@ -18,7 +18,7 @@ pub struct AttributeValue {
     #[serde(rename = "group_values", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub group_values: Option<Option<Box<crate::models::GroupValues>>>,
     #[serde(rename = "icon", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub icon: Option<Option<Box<crate::models::IconResource>>>,
+    pub icon: Option<Option<String>>,
     /// Numeric unique identifier for the attribute value. Note that the value must only be unique within a group of values, so value in top level group A, sub level group C and sub level group B can have the same ID.
     #[serde(rename = "id")]
     pub id: i32,
