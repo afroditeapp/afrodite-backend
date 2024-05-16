@@ -70,7 +70,11 @@ impl BotAction for SendImageToSlot {
             let img_path = if let Some(bot) = state.bot_config_file.bot.get(state.bot_id as usize) {
                 img_for_bot(bot, &state.bot_config_file)
             } else if let Some(dir) = &state.bot_config_file.man_image_dir {
-                ImageProvider::random_image_from_directory(&dir)
+                if !state.bot_config_file.bot.iter().any(|v| v.image.is_some()) {
+                    ImageProvider::random_image_from_directory(dir)
+                } else {
+                    Ok(None)
+                }
             } else {
                 Ok(None)
             };
