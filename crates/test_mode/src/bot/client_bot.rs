@@ -191,16 +191,18 @@ impl BotAction for ChangeBotProfileText {
     }
 }
 
+const DEFAULT_AGE: u8 = 30;
+
 #[derive(Debug)]
 pub struct ChangeBotAgeAndOtherSettings;
 
 #[async_trait]
 impl BotAction for ChangeBotAgeAndOtherSettings {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let (age, groups) = if let Some(bot_config) = state.bot_config_file.bot.get(state.bot_id as usize) {
+        let (age, groups) = if let Some(bot_config) = state.get_bot_config() {
             (
-                bot_config.age,
-                match bot_config.gender {
+                bot_config.age.unwrap_or(DEFAULT_AGE),
+                match bot_config.img_dir_gender() {
                     Gender::Man => SearchGroups {
                         man_for_man: Some(true),
                         man_for_woman: Some(true),
@@ -217,7 +219,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             )
         } else {
             (
-                30,
+                DEFAULT_AGE,
                 match state.bot_id % 3 {
                     0 => SearchGroups {
                         man_for_man: Some(true),
@@ -266,9 +268,10 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                 attributes.push(update);
             }
         }
-
         let update = ProfileUpdate {
-            name: "B".to_string(),
+            name: state.get_bot_config()
+                .and_then(|v| v.name.clone())
+                .unwrap_or("B".to_string()),
             age: age.into(),
             attributes,
             ..Default::default()
@@ -310,7 +313,7 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
                 .await
                 .change_context(TestError::ApiRequest)?;
 
-            let new_msg = format!("Hello!");
+            let new_msg = "Hello!".to_string();
 
             let send_msg = SendMessageToAccount {
                 receiver: Box::new(like),
@@ -354,7 +357,7 @@ impl BotAction for AnswerReceivedMessages {
             .change_context(TestError::ApiRequest)?;
 
         for msg in messages.messages {
-            let new_msg = format!("Hello!");
+            let new_msg = "Hello!".to_string();
 
             let send_msg = SendMessageToAccount {
                 receiver: msg.id.account_id_sender,

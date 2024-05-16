@@ -8,7 +8,7 @@ use std::{fmt::Debug, sync::Arc, vec};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
-    args::{SelectedBenchmark, TestMode, TestModeSubMode}, bot_config_file::{self, BotConfigFile}, Config
+    args::{SelectedBenchmark, TestMode, TestModeSubMode}, bot_config_file::{self, BotConfigFile, BotInstanceConfig}, Config
 };
 use error_stack::{Result, ResultExt};
 use tokio::{
@@ -258,6 +258,10 @@ impl BotState {
             .bot_mode()
             .map(|bot_config| self.bot_id < bot_config.admins)
             .unwrap_or(false)
+    }
+
+    pub fn get_bot_config(&self) -> Option<&BotInstanceConfig> {
+        self.bot_config_file.bot.get(self.bot_id as usize)
     }
 }
 

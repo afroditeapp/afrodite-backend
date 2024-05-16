@@ -23,10 +23,12 @@ impl BotConfigFile {
 
         let mut ids = std::collections::HashSet::<u16>::new();
         for bot in &config.bot {
-            if bot.age < 18 || bot.age > 99 {
-                return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    format!("Bot ID {} age must be between 18 and 99", bot.id),
-                );
+            if let Some(age) = bot.age {
+                if age < 18 || age > 99 {
+                    return Err(ConfigFileError::InvalidConfig).attach_printable(
+                        format!("Bot ID {} age must be between 18 and 99", bot.id),
+                    );
+                }
             }
 
             if ids.contains(&bot.id) {
@@ -36,7 +38,7 @@ impl BotConfigFile {
             }
 
             if bot.image.is_some() {
-                match bot.gender {
+                match bot.img_dir_gender() {
                     Gender::Man => if config.man_image_dir.is_none() {
                         return Err(ConfigFileError::InvalidConfig)
                             .attach_printable(format!("Bot ID {} has image file name configured but man image directory is not configured", bot.id));
@@ -47,6 +49,8 @@ impl BotConfigFile {
                     }
                 }
             }
+
+            // TODO: Validate all fields?
 
             ids.insert(bot.id);
         }
@@ -65,7 +69,7 @@ impl BotConfigFile {
 
 fn check_imgs_exist(config: &BotConfigFile, img_dir: &Path, gender: Gender) -> Result<(), ConfigFileError> {
     for bot in &config.bot {
-        if bot.gender != gender {
+        if bot.img_dir_gender() != gender {
             continue;
         }
 
@@ -84,24 +88,35 @@ fn check_imgs_exist(config: &BotConfigFile, img_dir: &Path, gender: Gender) -> R
 
 #[derive(Debug, Deserialize)]
 pub struct BotInstanceConfig {
+    pub id: u16,
+    pub age: Option<u8>,
+    pub gender: Option<Gender>,
+    pub name: Option<String>,
     /// Image file name.
     ///
     /// The image is loaded from directory which matches gender config.
     pub image: Option<String>,
-    pub gender: Gender,
-    pub age: u8,
-    pub id: u16,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
 }
 
 impl BotInstanceConfig {
     pub fn get_img(&self, config: &BotConfigFile) -> Option<PathBuf> {
         if let Some(img) = self.image.as_ref() {
-            match self.gender {
+            match self.img_dir_gender() {
                 Gender::Man => config.man_image_dir.as_ref().map(|dir| dir.join(img)),
                 Gender::Woman => config.woman_image_dir.as_ref().map(|dir| dir.join(img)),
             }
         } else {
             None
+        }
+    }
+
+    pub fn img_dir_gender(&self) -> Gender {
+        match self.gender {
+            None | Some(Gender::Man) => Gender::Man,
+            Some(Gender::Woman) => Gender::Woman,
         }
     }
 }

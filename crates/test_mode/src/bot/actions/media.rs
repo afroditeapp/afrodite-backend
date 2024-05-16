@@ -51,7 +51,7 @@ fn img_for_bot(bot: &BotInstanceConfig, config: &BotConfigFile) -> std::result::
     if let Some(image) = bot.get_img(config) {
         Ok(Some(image))
     } else {
-        let dir = match bot.gender {
+        let dir = match bot.img_dir_gender() {
             Gender::Man => config.man_image_dir.clone(),
             Gender::Woman => config.woman_image_dir.clone(),
         };
@@ -67,7 +67,7 @@ fn img_for_bot(bot: &BotInstanceConfig, config: &BotConfigFile) -> std::result::
 impl BotAction for SendImageToSlot {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let img_data = if self.random_if_not_defined_in_config {
-            let img_path = if let Some(bot) = state.bot_config_file.bot.get(state.bot_id as usize) {
+            let img_path = if let Some(bot) = state.get_bot_config() {
                 img_for_bot(bot, &state.bot_config_file)
             } else if let Some(dir) = &state.bot_config_file.man_image_dir {
                 if !state.bot_config_file.bot.iter().any(|v| v.image.is_some()) {
@@ -226,16 +226,21 @@ pub struct SetPendingContent {
 impl BotAction for SetPendingContent {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(i) = self.security_content_slot_i {
-            let content_id = state.media.slots[i].clone().unwrap();
+            let content_id = state.media.slots[i].unwrap();
             put_pending_security_content_info(state.api.media(), content_id)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }
 
         if let Some(i) = self.content_0_slot_i {
-            let content_id = state.media.slots[i].clone().unwrap();
+            let content_id = state.media.slots[i].unwrap();
+            let bot_info = state.get_bot_config();
+
             let info = SetProfileContent {
                 content_id_0: content_id.into(),
+                grid_crop_size: bot_info.and_then(|v| v.grid_crop_size).into(),
+                grid_crop_x: bot_info.and_then(|v| v.grid_crop_x).into(),
+                grid_crop_y: bot_info.and_then(|v| v.grid_crop_y).into(),
                 ..SetProfileContent::default()
             };
             put_pending_profile_content(state.api.media(), info)
