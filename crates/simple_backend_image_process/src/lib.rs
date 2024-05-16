@@ -7,6 +7,8 @@ use error_stack::{report, Result, ResultExt};
 use image::{DynamicImage, EncodableLayout};
 use simple_backend_config::args::InputFileType;
 
+const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 512;
+
 #[derive(thiserror::Error, Debug)]
 pub enum ImageProcessError {
     #[error("Input reading failed")]
@@ -23,6 +25,9 @@ pub enum ImageProcessError {
 
     #[error("Exif reading failed")]
     ExifReadingFailed,
+
+    #[error("Source image width or height is less than {}", SOURCE_IMG_MIN_WIDTH_AND_HEIGHT)]
+    SourceImageTooSmall,
 }
 
 pub struct Settings {
@@ -42,10 +47,7 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
     };
 
     // Only JPEG images are supported
-    let rotation = match read_exif_rotation_info(&settings.input) {
-        Ok(rotation) => rotation,
-        Err(_) => 0,
-    };
+    let rotation = read_exif_rotation_info(&settings.input).unwrap_or(0);
 
     let img_file = std::fs::File::open(&settings.input)
         .change_context(ImageProcessError::InputReadingFailed)?;
@@ -53,6 +55,10 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
     let img = image::io::Reader::with_format(buffered_reader, format)
         .decode()
         .change_context(ImageProcessError::InputReadingFailed)?;
+
+    if img.width() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT || img.height() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT {
+        return Err(report!(ImageProcessError::SourceImageTooSmall));
+    }
 
     let img = resize_and_rotate_image(img, rotation);
 

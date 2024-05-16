@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use image::{codecs::jpeg::JpegEncoder, ImageBuffer, Rgb};
 use rand::seq::SliceRandom;
 
-const GENERATED_IMG_WIDTH: u32 = 1;
-const GENERATED_IMG_HEIGHT: u32 = 1;
+const GENERATED_IMG_WIDTH: u32 = 512;
+const GENERATED_IMG_HEIGHT: u32 = 512;
 
 pub struct ImageProvider {}
 

@@ -112,6 +112,9 @@ pub const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/:slo
 /// New upload might potentially delete the previous if processing of it is
 /// not complete.
 ///
+/// Content processing will fail if image content resolution width or height
+/// value is less than 512.
+///
 #[utoipa::path(
     put,
     path = "/media_api/content_slot/{slot_id}",
