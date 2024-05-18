@@ -200,3 +200,15 @@ cargo install --locked tokio-console
 make
 tokio-console
 ```
+
+# Sign in with Google
+
+If another Email is wanted to be visible in the Sign in with Google dialog, then
+Google Cloud project needs to have another Google Account added with
+permissions:
+
+```
+Access Context Manager Reader
+OAuth Config Editor
+Service Usage Viewer
+```
