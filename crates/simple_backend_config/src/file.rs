@@ -46,6 +46,10 @@ name = "history"
 # client_id_ios = "id"
 # client_id_server = "id"
 
+# [firebase_cloud_messaging]
+# service_account_key_path = "server_config/service_account_key.json"
+# token_cache_path = "firebase_token_cache.json"
+
 # [tls]
 # public_api_cert = "server_config/public_api.crt"
 # public_api_key = "server_config/public_api.key"
@@ -95,6 +99,7 @@ pub struct SimpleBackendConfigFile {
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<AppManagerConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
+    pub firebase_cloud_messaging: Option<FirebaseCloudMessagingConfig>,
     /// TLS sertificates or Let's Encrypt is required if debug setting is false.
     pub tls: Option<TlsConfig>,
     pub lets_encrypt: Option<LetsEncryptConfig>,
@@ -229,6 +234,14 @@ pub struct SignInWithGoogleConfig {
     pub client_id_android: String,
     pub client_id_ios: String,
     pub client_id_server: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct FirebaseCloudMessagingConfig {
+    /// Path to service account key JSON file.
+    pub service_account_key_path: PathBuf,
+    /// Path where cache Firebase token cache JSON file will be created.
+    pub token_cache_path: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

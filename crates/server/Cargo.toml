@@ -36,6 +36,9 @@ nalgebra = { workspace = true }
 num_cpus = { workspace = true }
 nix = { workspace = true, default-features = false, features = ["signal"] }
 
+# Firebase cloud messaging
+fcm = { workspace = true, default-features = false, features = ["native-tls", "yup-oauth2"] }
+
 manager_model = { path = "../app-manager/crates/manager_model" }
 
 utils = { path = "../utils" }

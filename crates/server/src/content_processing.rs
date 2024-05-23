@@ -18,7 +18,7 @@ use tracing::{error, warn};
 use crate::{
     app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData},
     data::file::utils::TmpContentFile,
-    event::EventManager,
+    event::EventManagerWithCacheReference,
     result::{Result, WrappedResultExt},
 };
 
@@ -163,7 +163,7 @@ impl ContentProcessingManagerData {
         self.new_processing_request.0.notify_one();
     }
 
-    pub async fn pop_from_queue(&self, events: &EventManager) -> Option<ProcessingState> {
+    pub async fn pop_from_queue(&self, events: EventManagerWithCacheReference<'_>) -> Option<ProcessingState> {
         let mut write = self.data.write().await;
         let (queue, processing_states) = write.split();
         let processing_id = queue.pop_front()?;
@@ -173,14 +173,14 @@ impl ContentProcessingManagerData {
             if let Some(state) = processing_states.get_mut(&processing_id_in_queue) {
                 if let Some(number) = state.processing_state.wait_queue_position.as_mut() {
                     *number = index as u64 + 1;
-                    notify_client(events, state).await;
+                    notify_client(&events, state).await;
                 }
             }
         }
 
         let state = processing_states.get_mut(&processing_id)?;
         state.processing_state.change_to_processing();
-        notify_client(events, state).await;
+        notify_client(&events, state).await;
 
         Some(state.clone())
     }
@@ -265,7 +265,7 @@ impl ContentProcessingManager {
                 }
             }
 
-            notify_client(self.state.event_manager(), state).await;
+            notify_client(&self.state.event_manager(), state).await;
         } else {
             warn!("Content processing state not found");
             match result {
@@ -309,7 +309,7 @@ impl ContentProcessingManager {
 
 // TODO: add extension method to EventManager?
 
-async fn notify_client(event_manager: &EventManager, state: &ProcessingState) {
+async fn notify_client(event_manager: &EventManagerWithCacheReference<'_>, state: &ProcessingState) {
     let state_change = ContentProcessingStateChanged {
         id: state.processing_id,
         new_state: state.processing_state.clone(),

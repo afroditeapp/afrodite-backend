@@ -1,3 +1,5 @@
+mod push_notifications;
+
 use database::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
 use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, SyncVersionUtils};
@@ -9,10 +11,17 @@ use crate::{
     result::Result,
 };
 
+use self::push_notifications::WriteCommandsChatPushNotifications;
+
 define_write_commands!(WriteCommandsChat);
 
-impl WriteCommandsChat<'_> {
+impl <'a> WriteCommandsChat<'a> {
+    pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<'a> {
+        WriteCommandsChatPushNotifications::new(self.cmds)
+    }
+}
 
+impl WriteCommandsChat<'_> {
     pub async fn modify_chat_state(
         &mut self,
         id: AccountIdInternal,

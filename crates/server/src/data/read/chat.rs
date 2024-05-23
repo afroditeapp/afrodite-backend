@@ -1,6 +1,10 @@
+mod push_notifications;
+
 use model::{
     AccountIdInternal, AccountInteractionState, ChatStateRaw, MatchesPage, MessageNumber, PendingMessagesPage, ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage
 };
+
+use self::push_notifications::ReadCommandsChatPushNotifications;
 
 use super::{
     super::{cache::DatabaseCache, file::utils::FileDir},
@@ -12,6 +16,12 @@ use crate::{
 };
 
 define_read_commands!(ReadCommandsChat);
+
+impl <'a> ReadCommandsChat<'a> {
+    pub fn push_notifications(self) -> ReadCommandsChatPushNotifications<'a> {
+        ReadCommandsChatPushNotifications::new(self.cmds)
+    }
+}
 
 impl ReadCommandsChat<'_> {
     pub async fn chat_state(

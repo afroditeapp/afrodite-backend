@@ -17,11 +17,11 @@ use crate::result::Result;
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
         pub struct $struct_name<'a> {
-            cmds: ReadCommands<'a>,
+            cmds: crate::data::read::ReadCommands<'a>,
         }
 
         impl<'a> $struct_name<'a> {
-            pub fn new(cmds: ReadCommands<'a>) -> Self {
+            pub fn new(cmds: crate::data::read::ReadCommands<'a>) -> Self {
                 Self { cmds }
             }
 
@@ -31,12 +31,12 @@ macro_rules! define_read_commands {
             }
 
             #[allow(dead_code)]
-            fn cache(&self) -> &DatabaseCache {
+            fn cache(&self) -> &crate::data::DatabaseCache {
                 &self.cmds.cache
             }
 
             #[allow(dead_code)]
-            fn files(&self) -> &FileDir {
+            fn files(&self) -> &crate::data::FileDir {
                 &self.cmds.files
             }
 

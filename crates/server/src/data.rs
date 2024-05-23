@@ -31,7 +31,7 @@ use self::{
     write_concurrent::WriteCommandsConcurrent,
 };
 use crate::{
-    event::EventManagerWithCacheReference, internal_api::InternalApiError, result::{Result, WrappedContextExt, WrappedReport}
+    event::EventManagerWithCacheReference, internal_api::InternalApiError, push_notifications::PushNotificationSender, result::{Result, WrappedContextExt, WrappedReport}
 };
 
 pub mod cache;
@@ -272,6 +272,7 @@ impl DatabaseManager {
         database_dir: T,
         config: Arc<Config>,
         media_backup: MediaBackupHandle,
+        push_notification_sender: PushNotificationSender,
     ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DataError> {
         info!("Creating DatabaseManager");
 
@@ -339,6 +340,7 @@ impl DatabaseManager {
             cache: cache.into(),
             location: index.into(),
             media_backup,
+            push_notification_sender,
         };
 
         let root = router_write_handle.root.clone();
@@ -381,6 +383,7 @@ pub struct RouterDatabaseWriteHandle {
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
+    push_notification_sender: PushNotificationSender,
 }
 
 impl RouterDatabaseWriteHandle {
@@ -393,6 +396,7 @@ impl RouterDatabaseWriteHandle {
             &self.root.file_dir,
             &self.location,
             &self.media_backup,
+            &self.push_notification_sender,
         )
     }
 
@@ -426,6 +430,7 @@ impl RouterDatabaseWriteHandle {
             cache: self.cache,
             location: self.location,
             media_backup: self.media_backup,
+            push_notification_sender: self.push_notification_sender,
         }
     }
 }
@@ -441,6 +446,7 @@ pub struct SyncWriteHandle {
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
+    push_notification_sender: PushNotificationSender,
 }
 
 impl SyncWriteHandle {
@@ -453,6 +459,7 @@ impl SyncWriteHandle {
             &self.root.file_dir,
             &self.location,
             &self.media_backup,
+            &self.push_notification_sender,
         )
     }
 
@@ -501,7 +508,10 @@ impl SyncWriteHandle {
     }
 
     pub fn events(&self) -> EventManagerWithCacheReference {
-        EventManagerWithCacheReference::new(&self.cache)
+        EventManagerWithCacheReference::new(
+            &self.cache,
+            &self.push_notification_sender,
+        )
     }
 
     pub fn config(&self) -> &Config {
@@ -545,7 +555,7 @@ impl RouterDatabaseReadHandle {
         AccountIdManager::new(&self.cache)
     }
 
-    pub fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
-        EventManagerWithCacheReference::new(&self.cache)
+    pub fn cache(&self) -> &DatabaseCache {
+        &self.cache
     }
 }

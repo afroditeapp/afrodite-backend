@@ -1,14 +1,11 @@
 //! Send events to connected or not connected clients.
 
-use std::sync::Arc;
-
 use database::current::write::chat::ChatStateChanges;
-use model::{AccountId, EventToClient, EventToClientInternal, NotificationEvent};
+use model::{AccountId, AccountIdInternal, EventToClient, EventToClientInternal, FcmDeviceToken, NotificationEvent};
 use tokio::sync::mpsc;
 
 use crate::{
-    data::{cache::DatabaseCache, DataError, IntoDataError, RouterDatabaseReadHandle},
-    result::{Result, WrappedResultExt},
+    data::{cache::DatabaseCache, DataError, IntoDataError}, push_notifications::PushNotificationSender, result::{Result, WrappedResultExt}
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -53,58 +50,35 @@ pub enum EventMode {
     Connected(EventSender),
 }
 
-// TODO: Remove EventManager complately and use EventManagerWithCacheReference
-//       instead?
-pub struct EventManager {
-    database: Arc<RouterDatabaseReadHandle>,
-}
-
-impl EventManager {
-    pub fn new(database: Arc<RouterDatabaseReadHandle>) -> Self {
-        Self { database }
-    }
-    /// Send only if the client is connected.
-    ///
-    /// Event will be skipped if event queue is full.
-    pub async fn send_connected_event(
-        &self,
-        account: impl Into<AccountId>,
-        event: EventToClientInternal,
-    ) -> Result<(), EventError> {
-        self.database.event_manager()
-            .send_connected_event(account, event).await
-            .change_context(EventError::EventModeAccessFailed)
-    }
-
-    /// Send event to connected client or if not connected
-    /// send using push notification.
-    pub async fn send_notification(
-        &self,
-        account: impl Into<AccountId>,
-        event: NotificationEvent,
-    ) -> Result<(), EventError> {
-        self.database.event_manager()
-            .send_notification(account, event).await
-            .change_context(EventError::EventModeAccessFailed)
-    }
-}
-
 pub struct EventManagerWithCacheReference<'a> {
     cache: &'a DatabaseCache,
+    push_notification_sender: &'a PushNotificationSender,
 }
 
 impl <'a> EventManagerWithCacheReference<'a> {
-    pub fn new(cache: &'a DatabaseCache) -> Self {
-        Self { cache }
+    pub fn new(
+        cache: &'a DatabaseCache,
+        push_notification_sender: &'a PushNotificationSender,
+    ) -> Self {
+        Self {
+            cache,
+            push_notification_sender,
+        }
     }
 
     async fn access_event_mode<T>(
         &self,
         id: AccountId,
-        action: impl FnOnce(&EventMode) -> T,
+        action: impl FnOnce(&EventMode, Option<&FcmDeviceToken>) -> T,
     ) -> Result<T, DataError> {
         self.cache
-            .read_cache(id, move |entry| action(&entry.current_event_connection))
+            .read_cache(
+                id,
+                move |entry| action(
+                    &entry.current_event_connection,
+                    entry.chat.as_ref().and_then(|v| v.device_token.as_ref())
+                )
+            )
             .await
             .into_data_error(id)
     }
@@ -117,9 +91,9 @@ impl <'a> EventManagerWithCacheReference<'a> {
         account: impl Into<AccountId>,
         event: EventToClientInternal,
     ) -> Result<(), DataError> {
-        self.access_event_mode(account.into(), move |mode| {
+        self.access_event_mode(account.into(), move |mode, _| {
                 if let EventMode::Connected(sender) = mode {
-                    let _ = sender.send(event.into());
+                    sender.send(event.into())
                 }
             })
             .await
@@ -130,19 +104,28 @@ impl <'a> EventManagerWithCacheReference<'a> {
     /// send using push notification.
     pub async fn send_notification(
         &self,
-        account: impl Into<AccountId>,
+        account: AccountIdInternal,
         event: NotificationEvent,
     ) -> Result<(), DataError> {
-        // TODO: Push notification support
-
-        self.access_event_mode(account.into(), move |mode| {
+        let send_push_notification =
+            self.access_event_mode(account.into(), move |mode, device_token| {
                 let event: EventToClientInternal = event.into();
                 if let EventMode::Connected(sender) = mode {
-                    let _ = sender.send(event.into());
+                    sender.send(event.into());
+                    false
+                } else {
+                    device_token.is_some()
                 }
             })
             .await
-            .change_context(DataError::EventModeAccessFailed)
+            .change_context(DataError::EventModeAccessFailed)?;
+
+        if send_push_notification {
+            self.push_notification_sender
+                .send(account)
+        }
+
+        Ok(())
     }
 
     pub async fn handle_chat_state_changes(

@@ -11,7 +11,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::{DatabaseInfo, TileMapConfig};
+use file::{DatabaseInfo, FirebaseCloudMessagingConfig, TileMapConfig};
 use reqwest::Url;
 use rustls_pemfile::{certs, rsa_private_keys};
 use tokio_rustls::rustls::ServerConfig;
@@ -123,6 +123,10 @@ impl SimpleBackendConfig {
         self.file.sign_in_with_google.as_ref()
     }
 
+    pub fn firebase_cloud_messaging_config(&self) -> Option<&FirebaseCloudMessagingConfig> {
+        self.file.firebase_cloud_messaging.as_ref()
+    }
+
     pub fn manager_config(&self) -> Option<&AppManagerConfig> {
         self.file.manager.as_ref()
     }
@@ -188,6 +192,13 @@ pub fn get_config(
         if !file_config.socket.internal_api_allow_non_localhost_ip && !internal_api_socket.ip().is_loopback() {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("By default, internal API socket config only allows an localhost address. Use config 'internal_api_allow_non_localhost_ip = true' to allow other addresses.");
+        }
+    }
+
+    if let Some(config) = file_config.firebase_cloud_messaging.as_ref() {
+        if !config.service_account_key_path.exists() {
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach_printable("Firebase Cloud Messaging service account key file does not exist");
         }
     }
 

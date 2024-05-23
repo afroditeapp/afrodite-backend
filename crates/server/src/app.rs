@@ -19,12 +19,12 @@ use super::{
         read::ReadCommands,
         utils::{AccessTokenManager, AccountIdManager},
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
-        DataError, RouterDatabaseReadHandle, RouterDatabaseWriteHandle,
+        DataError, RouterDatabaseReadHandle
     },
-    internal_api::{InternalApiClient},
+    internal_api::InternalApiClient,
 };
 use crate::{
-    api::{self, account::demo_mode_router}, content_processing::ContentProcessingManagerData, data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, demo::DemoModeManager, event::EventManager
+    api::{self, account::demo_mode_router}, content_processing::ContentProcessingManagerData, data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, demo::DemoModeManager, event::EventManagerWithCacheReference, push_notifications::PushNotificationSender,
 };
 
 pub mod routes_connected;
@@ -39,9 +39,9 @@ pub struct AppState {
     write_queue: Arc<WriteCommandRunnerHandle>,
     internal_api: Arc<InternalApiClient>,
     config: Arc<Config>,
-    events: Arc<EventManager>,
     content_processing: Arc<ContentProcessingManagerData>,
     demo_mode: DemoModeManager,
+    push_notification_sender: PushNotificationSender,
 }
 
 pub trait GetAccessTokens {
@@ -211,12 +211,15 @@ impl BackendVersionProvider for S {
 }
 
 pub trait EventManagerProvider {
-    fn event_manager(&self) -> &EventManager;
+    fn event_manager(&self) -> EventManagerWithCacheReference;
 }
 
 impl EventManagerProvider for S {
-    fn event_manager(&self) -> &EventManager {
-        &self.business_logic_state().events
+    fn event_manager(&self) -> EventManagerWithCacheReference {
+        EventManagerWithCacheReference::new(
+            self.business_logic_state().database.cache(),
+            &self.business_logic_state().push_notification_sender,
+        )
     }
 }
 
@@ -258,22 +261,21 @@ pub struct App {
 impl App {
     pub async fn create_app_state(
         database_handle: RouterDatabaseReadHandle,
-        _database_write_handle: RouterDatabaseWriteHandle,
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
         content_processing: Arc<ContentProcessingManagerData>,
         demo_mode: DemoModeManager,
+        push_notification_sender: PushNotificationSender,
     ) -> AppState {
         let database = Arc::new(database_handle);
-        let events = EventManager::new(database.clone()).into();
         let state = AppState {
             config: config.clone(),
             database: database.clone(),
             write_queue: Arc::new(write_queue),
             internal_api: InternalApiClient::new(config.external_service_urls().clone()).into(),
-            events,
             content_processing,
             demo_mode,
+            push_notification_sender,
         };
 
         state

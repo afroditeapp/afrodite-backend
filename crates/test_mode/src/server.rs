@@ -238,6 +238,7 @@ fn new_config(
         media_backup: None,
         litestream: None,
         tile_map: None,
+        firebase_cloud_messaging: None,
     };
 
     (config, simple_backend_config)

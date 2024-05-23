@@ -4,7 +4,7 @@ use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, FcmDeviceToken, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
@@ -446,9 +446,15 @@ pub struct LocationData {
     pub current_iterator: LocationIndexIteratorState,
 }
 
+#[derive(Debug, Clone)]
+pub struct CachedChatComponentData {
+    pub device_token: Option<FcmDeviceToken>,
+}
+
 #[derive(Debug)]
 pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
+    pub chat: Option<Box<CachedChatComponentData>>,
     pub capabilities: Capabilities,
     pub shared_state: SharedStateRaw,
     pub current_connection: Option<SocketAddr>,
@@ -459,12 +465,16 @@ impl CacheEntry {
     pub fn new() -> Self {
         Self {
             profile: None,
+            chat: None,
             capabilities: Capabilities::default(),
             shared_state: SharedStateRaw::default(),
             current_connection: None,
             current_event_connection: EventMode::None,
         }
     }
+    // TODO(refactor): Add helper functions to get data related do features
+    // that can be disabled. Those should return Result<Data, CacheError>.
+    // Also read_cache action closure might need or should to return Result.
 }
 
 async fn db_read<

@@ -15,6 +15,7 @@ pub mod result;
 pub mod utils;
 pub mod startup_tasks;
 pub mod demo;
+pub mod push_notifications;
 
 use std::sync::Arc;
 
@@ -28,6 +29,7 @@ use content_processing::{
 use data::write_commands::WriteCmdWatcher;
 use demo::DemoModeManager;
 use perf::ALL_COUNTERS;
+use push_notifications::{PushNotificationManager, PushNotificationManagerQuitHandle};
 use simple_backend::{
     app::{SimpleBackendAppState, StateBuilder},
     media_backup::MediaBackupHandle,
@@ -64,6 +66,7 @@ impl PihkaServer {
             write_cmd_waiter: None,
             database_manager: None,
             content_processing_quit_handle: None,
+            push_notifications_quit_handle: None,
         };
         let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
@@ -76,6 +79,7 @@ pub struct PihkaBusinessLogic {
     write_cmd_waiter: Option<WriteCmdWatcher>,
     database_manager: Option<DatabaseManager>,
     content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
+    push_notifications_quit_handle: Option<PushNotificationManagerQuitHandle>,
 }
 
 #[async_trait]
@@ -144,17 +148,19 @@ impl BusinessLogic for PihkaBusinessLogic {
         media_backup_handle: MediaBackupHandle,
         server_quit_watcher: ServerQuitWatcher,
     ) -> SimpleBackendAppState<Self::AppState> {
+        let (push_notification_sender, push_notification_receiver) = PushNotificationManager::channel();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
                 self.config.clone(),
                 media_backup_handle,
+                push_notification_sender.clone(),
             )
             .await
             .expect("Database init failed");
 
         let (write_cmd_runner_handle, write_cmd_waiter) =
-            WriteCommandRunnerHandle::new(router_database_write_handle.clone(), &self.config).await;
+            WriteCommandRunnerHandle::new(router_database_write_handle, &self.config).await;
 
         let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
         let content_processing = Arc::new(content_processing);
@@ -163,11 +169,11 @@ impl BusinessLogic for PihkaBusinessLogic {
             .expect("Demo mode manager init failed");
         let app_state = App::create_app_state(
             router_database_handle,
-            router_database_write_handle,
             write_cmd_runner_handle,
             self.config.clone(),
             content_processing.clone(),
             demo_mode,
+            push_notification_sender,
         )
         .await;
 
@@ -179,6 +185,13 @@ impl BusinessLogic for PihkaBusinessLogic {
             server_quit_watcher.resubscribe(),
         );
 
+        let push_notifications_quit_handle = PushNotificationManager::new_manager(
+            self.config.simple_backend(),
+            server_quit_watcher.resubscribe(),
+            state.clone(),
+            push_notification_receiver,
+        ).await;
+
         StartupTasks::new(state.clone())
             .run_and_wait_completion()
             .await
@@ -187,6 +200,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
+        self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
         state
     }
 
@@ -218,6 +232,10 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     async fn on_after_server_quit(self) {
+        self.push_notifications_quit_handle
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
         self.content_processing_quit_handle
             .expect("Not initialized")
             .wait_quit()

@@ -8,6 +8,9 @@ use crate::{AccountId, AccountIdDb, AccountIdInternal, SyncVersionUtils};
 mod sync_version;
 pub use sync_version::*;
 
+mod push_notifications;
+pub use push_notifications::*;
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]

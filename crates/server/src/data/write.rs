@@ -33,7 +33,7 @@ use super::{
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
     IntoDataError,
 };
-use crate::{data::DataError, result::Result};
+use crate::{data::DataError, push_notifications::PushNotificationSender, result::Result};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -63,7 +63,10 @@ macro_rules! define_write_commands {
 
             #[allow(dead_code)]
             fn events(&self) -> $crate::event::EventManagerWithCacheReference {
-                $crate::event::EventManagerWithCacheReference::new(&self.cmds.cache)
+                $crate::event::EventManagerWithCacheReference::new(
+                    &self.cmds.cache,
+                    &self.cmds.push_notification_sender,
+                )
             }
 
             #[allow(dead_code)]
@@ -194,6 +197,7 @@ pub struct WriteCommands<'a> {
     file_dir: &'a FileDir,
     location_index: &'a LocationIndexManager,
     media_backup: &'a MediaBackupHandle,
+    push_notification_sender: &'a PushNotificationSender,
 }
 
 impl<'a> WriteCommands<'a> {
@@ -205,6 +209,7 @@ impl<'a> WriteCommands<'a> {
         file_dir: &'a FileDir,
         location_index: &'a LocationIndexManager,
         media_backup: &'a MediaBackupHandle,
+        push_notification_sender: &'a PushNotificationSender,
     ) -> Self {
         Self {
             config,
@@ -214,6 +219,7 @@ impl<'a> WriteCommands<'a> {
             file_dir,
             location_index,
             media_backup,
+            push_notification_sender,
         }
     }
 
