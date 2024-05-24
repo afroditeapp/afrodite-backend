@@ -14,7 +14,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
     pub fn google_account_id_to_account_id(
         &mut self,
         google_id: GoogleAccountId,
-    ) -> Result<AccountIdInternal, DieselDatabaseError> {
+    ) -> Result<Option<AccountIdInternal>, DieselDatabaseError> {
         use crate::schema::{account_id, sign_in_with_info};
 
         sign_in_with_info::table
@@ -22,6 +22,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
             .filter(sign_in_with_info::google_account_id.eq(google_id.as_str()))
             .select(AccountIdInternal::as_select())
             .first(self.conn())
+            .optional()
             .into_db_error(google_id)
     }
 

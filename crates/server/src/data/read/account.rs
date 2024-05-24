@@ -98,7 +98,6 @@ impl ReadCommandsAccount<'_> {
                 .google_account_id_to_account_id(id)
         })
         .await
-        .map(Some)
         .into_error()
     }
 
