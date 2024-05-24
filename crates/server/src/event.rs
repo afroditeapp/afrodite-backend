@@ -76,7 +76,7 @@ impl <'a> EventManagerWithCacheReference<'a> {
                 id,
                 move |entry| action(
                     &entry.current_event_connection,
-                    entry.chat.as_ref().and_then(|v| v.device_token.as_ref())
+                    entry.chat.as_ref().and_then(|v| v.fcm_device_token.as_ref())
                 )
             )
             .await
@@ -122,7 +122,7 @@ impl <'a> EventManagerWithCacheReference<'a> {
 
         if send_push_notification {
             self.push_notification_sender
-                .send(account)
+                .send(account, event)
         }
 
         Ok(())

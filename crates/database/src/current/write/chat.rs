@@ -10,6 +10,7 @@ use crate::IntoDatabaseError;
 
 mod interaction;
 mod message;
+mod push_notifications;
 
 define_write_commands!(CurrentWriteChat, CurrentSyncWriteChat);
 
@@ -20,6 +21,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
 
     pub fn message(self) -> message::CurrentSyncWriteChatMessage<C> {
         message::CurrentSyncWriteChatMessage::new(self.cmds)
+    }
+
+    pub fn push_notifications(self) -> push_notifications::CurrentSyncWriteChatPushNotifications<C> {
+        push_notifications::CurrentSyncWriteChatPushNotifications::new(self.cmds)
     }
 
     pub fn insert_chat_state(

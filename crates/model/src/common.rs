@@ -201,19 +201,15 @@ impl From<EventToClientInternal> for EventToClient {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum NotificationEvent {
     NewMessageReceived,
-    ReceivedBlocksChanged,
 }
 
 impl From<NotificationEvent> for EventToClientInternal {
     fn from(event: NotificationEvent) -> Self {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
-            NotificationEvent::ReceivedBlocksChanged => {
-                EventToClientInternal::ReceivedBlocksChanged
-            }
         }
     }
 }

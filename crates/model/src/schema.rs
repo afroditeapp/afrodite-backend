@@ -100,6 +100,9 @@ diesel::table! {
         sent_blocks_sync_version -> Integer,
         sent_likes_sync_version -> Integer,
         matches_sync_version -> Integer,
+        pending_notification -> Integer,
+        fcm_notification_sent -> Bool,
+        fcm_device_token -> Nullable<Text>,
     }
 }
 

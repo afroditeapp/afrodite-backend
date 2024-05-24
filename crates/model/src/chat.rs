@@ -20,6 +20,9 @@ pub struct ChatStateRaw {
     pub sent_blocks_sync_version: SentBlocksSyncVersion,
     pub sent_likes_sync_version: SentLikesSyncVersion,
     pub matches_sync_version: MatchesSyncVersion,
+    pub pending_notification: PendingNotification,
+    pub fcm_notification_sent: bool,
+    pub fcm_device_token: Option<FcmDeviceToken>,
 }
 
 #[derive(Debug, Clone, Copy)]

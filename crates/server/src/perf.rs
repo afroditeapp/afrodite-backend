@@ -11,7 +11,7 @@ use crate::api::{
     account_internal::ACCOUNT_INTERNAL_COUNTERS_LIST,
     chat::{
         CHAT_BLOCK_COUNTERS_LIST, CHAT_LIKE_COUNTERS_LIST, CHAT_MATCH_COUNTERS_LIST,
-        CHAT_MESSAGE_COUNTERS_LIST,
+        CHAT_MESSAGE_COUNTERS_LIST, CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
     },
     common::COMMON_COUNTERS_LIST,
     common_admin::{
@@ -77,4 +77,5 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
     &CounterCategory::new("chat_block", CHAT_BLOCK_COUNTERS_LIST),
     &CounterCategory::new("chat_match", CHAT_MATCH_COUNTERS_LIST),
     &CounterCategory::new("chat_message", CHAT_MESSAGE_COUNTERS_LIST),
+    &CounterCategory::new("chat_push_notification", CHAT_PUSH_NOTIFICATION_COUNTERS_LIST),
 ];

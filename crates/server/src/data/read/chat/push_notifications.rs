@@ -21,9 +21,17 @@ impl ReadCommandsChatPushNotifications<'_> {
             let chat_state = cache.chat
                 .as_ref()
                 .ok_or(CacheError::FeatureNotEnabled)?;
-            error_stack::Result::<_, CacheError>::Ok(chat_state.device_token.clone())
+            error_stack::Result::<_, CacheError>::Ok(chat_state.fcm_device_token.clone())
         }).await??;
 
         Ok(token)
+    }
+
+    pub async fn push_notification_already_sent(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        let chat_state = self.db_read(move |mut cmds| cmds.chat().chat_state(id)).await?;
+        Ok(chat_state.fcm_notification_sent)
     }
 }

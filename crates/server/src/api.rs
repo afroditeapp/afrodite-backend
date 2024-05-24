@@ -115,6 +115,8 @@ pub mod utils;
         chat::delete_like,
         chat::delete_pending_messages,
         chat::post_message_number_of_latest_viewed_message,
+        chat::post_set_device_token,
+        chat::post_get_pending_notification,
     ),
     components(schemas(
         // Common
@@ -240,6 +242,8 @@ pub mod utils;
         model::chat::SentBlocksSyncVersion,
         model::chat::SentLikesSyncVersion,
         model::chat::MatchesSyncVersion,
+        model::chat::FcmDeviceToken,
+        model::chat::PendingNotification,
         // Manager
         manager_model::SystemInfoList,
         manager_model::SystemInfo,

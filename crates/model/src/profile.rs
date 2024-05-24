@@ -444,67 +444,6 @@ impl TryFrom<ProfileSearchAgeRange> for ProfileSearchAgeRangeValidated {
     }
 }
 
-/// What is the profile owner searching for currently.
-///
-/// The enum values are bitflag values to allow fast and easy profile filtering.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default, diesel::FromSqlRow, diesel::AsExpression)]
-#[diesel(sql_type = Integer)]
-#[repr(u8)]
-pub enum ProfileMood {
-    #[default]
-    Nothing = 0x1,
-    NotSureYet = 0x2,
-    Friend = 0x4,
-    Fun = 0x8,
-    IntimateRelationship = 0x10,
-}
-
-impl TryFrom<i64> for ProfileMood {
-    type Error = String;
-
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        match value {
-            0x1 => Ok(Self::Nothing),
-            0x2 => Ok(Self::NotSureYet),
-            0x4 => Ok(Self::Friend),
-            0x8 => Ok(Self::Fun),
-            0x10 => Ok(Self::IntimateRelationship),
-            _ => Err(format!("Unknown profile mood value {}", value)),
-        }
-    }
-}
-
-diesel_i64_try_from!(ProfileMood);
-
-bitflags::bitflags! {
-    /// Profile mood filter
-    #[derive(Clone, Copy, Debug, PartialEq)]
-    pub struct ProfileMoodFlags: u8 {
-        const NOTHING = ProfileMood::Nothing as u8;
-        const NOT_SURE_YET = ProfileMood::NotSureYet as u8;
-        const FRIEND = ProfileMood::Friend as u8;
-        const FUN = ProfileMood::Fun as u8;
-        const INTIMATE_RELATIONSHIP = ProfileMood::IntimateRelationship as u8;
-    }
-}
-
-impl TryFrom<i64> for ProfileMoodFlags {
-    type Error = String;
-
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        let value = TryInto::<u8>::try_into(value)
-            .map_err(|e| e.to_string())?;
-        Self::from_bits(value)
-            .ok_or_else(|| format!("Unknown profile mood value {}", value))
-    }
-}
-
-impl From<ProfileMoodFlags> for i64 {
-    fn from(value: ProfileMoodFlags) -> Self {
-        value.bits() as i64
-    }
-}
-
 /// My gender and what gender I'm searching for.
 ///
 /// Fileds should be read "I'm x and I'm searching for y".

@@ -4,7 +4,7 @@ use std::{sync::Arc, time::Duration};
 use fcm::{message::{Message, Notification, Target}, FcmClient, FcmResponseError, RecomendedAction, RecomendedWaitTime};
 
 use crate::{app::ReadData, result::{Result, WrappedResultExt}};
-use model::{AccountId, AccountIdInternal, FcmDeviceToken};
+use model::{AccountId, AccountIdInternal, FcmDeviceToken, NotificationEvent, PendingNotificationFlags};
 use serde_json::{error, json};
 use simple_backend::{app::SimpleBackendAppState, ServerQuitWatcher};
 use simple_backend_config::SimpleBackendConfig;
@@ -13,7 +13,6 @@ use tracing::{warn, error};
 
 use crate::app::{AppState, WriteData};
 
-// About 43 690 messages should fit in buffer
 const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 
 #[derive(thiserror::Error, Debug)]
@@ -22,8 +21,12 @@ pub enum PushNotificationError {
     CreateFcmClient,
     #[error("Reading device token failed")]
     ReadingDeviceTokenFailed,
+    #[error("Reading notification sent status failed")]
+    ReadingNotificationSentStatusFailed,
     #[error("Removing device token failed")]
     RemoveDeviceTokenFailed,
+    #[error("Setting push notification sent flag failed")]
+    SettingPushNotificationSentFlagFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -44,6 +47,7 @@ impl PushNotificationManagerQuitHandle {
 #[derive(Debug, Clone, Copy)]
 pub struct SendPushNotification {
     pub account_id: AccountIdInternal,
+    pub event: NotificationEvent,
 }
 
 #[derive(Debug, Clone)]
@@ -55,8 +59,12 @@ impl PushNotificationSender {
     pub fn send(
         &self,
         account_id: AccountIdInternal,
+        event: NotificationEvent,
     ) {
-        let notification = SendPushNotification { account_id };
+        let notification = SendPushNotification {
+            account_id,
+            event,
+        };
         match self.sender.try_send(notification) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {
@@ -161,8 +169,8 @@ impl PushNotificationManager {
     }
 
     pub async fn quit_logic(&mut self) {
-        // TODO: Save the current notification in sending to DB
-        // TODO: Read channel and save all pending notifications to DB
+        // TODO(prod): Save the current notification in sending to DB
+        // TODO(prod): Read channel and save all pending notifications to DB
     }
 
     pub async fn send_push_notification(
@@ -176,7 +184,24 @@ impl PushNotificationManager {
             return Ok(());
         };
 
-        // TODO: Check if push notification is already sent
+        let already_sent = self.state
+            .write(move |cmds| async move {
+                let flags: PendingNotificationFlags = send_push_notification.event.into();
+                cmds
+                    .chat()
+                    .push_notifications()
+                    .get_push_notification_already_sent_and_add_notification_value(
+                        send_push_notification.account_id,
+                        flags.into(),
+                    )
+                    .await
+            })
+            .await
+            .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
+
+        if already_sent {
+            return Ok(());
+        }
 
         let token = self.state
             .read()
@@ -194,7 +219,7 @@ impl PushNotificationManager {
             data: Some(json!({
                 "check_notifications": "",
             })),
-            target: Target::Token(token.0),
+            target: Target::Token(token.into_string()),
             android: None,
             apns: None,
             webpush: None,
@@ -203,7 +228,19 @@ impl PushNotificationManager {
         };
 
         match sending_logic.send_push_notification(message, fmc).await {
-            Ok(()) => Ok(()), // TODO: Save info that push notification is sent successfully
+            Ok(()) => {
+                self.state
+                    .write(move |cmds| async move {
+                        cmds
+                            .chat()
+                            .push_notifications()
+                            .enable_push_notification_sent_flag(send_push_notification.account_id)
+                            .await
+                    })
+                    .await
+                    .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
+                Ok(())
+            }
             Err(action) => {
                 match action {
                     UnusualAction::DisablePushNotificationSupport => {

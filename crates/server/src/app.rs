@@ -347,7 +347,8 @@ impl App {
     }
 
     pub fn create_chat_server_router(&self) -> Router {
-        let public = Router::new();
+        let public = Router::new()
+            .merge(api::chat::push_notifications::push_notification_router_public(self.state.clone()));
 
         public.merge(ConnectedApp::new(self.state.clone()).private_chat_server_router())
     }

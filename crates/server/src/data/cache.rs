@@ -208,6 +208,16 @@ impl DatabaseCache {
             entry.profile = Some(Box::new(profile_data));
         }
 
+        if config.components().chat {
+            let chat_state = db_read(current_db, move |mut cmds| {
+                cmds.chat().chat_state(account_id)
+            })
+            .await?;
+            entry.chat = Some(Box::new(CachedChatComponentData {
+                fcm_device_token: chat_state.fcm_device_token,
+            }));
+        }
+
         Ok(())
     }
 
@@ -448,7 +458,7 @@ pub struct LocationData {
 
 #[derive(Debug, Clone)]
 pub struct CachedChatComponentData {
-    pub device_token: Option<FcmDeviceToken>,
+    pub fcm_device_token: Option<FcmDeviceToken>,
 }
 
 #[derive(Debug)]

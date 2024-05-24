@@ -423,6 +423,10 @@ CREATE TABLE IF NOT EXISTS chat_state(
     sent_blocks_sync_version     INTEGER        NOT NULL DEFAULT 0,
     sent_likes_sync_version      INTEGER        NOT NULL DEFAULT 0,
     matches_sync_version         INTEGER        NOT NULL DEFAULT 0,
+    -- Bitflag value for pending notification
+    pending_notification         INTEGER        NOT NULL DEFAULT 0,
+    fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
+    fcm_device_token             TEXT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
