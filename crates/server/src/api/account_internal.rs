@@ -51,7 +51,7 @@ pub async fn post_login<S: WriteData + ReadData + GetAccounts>(
 
 pub const PATH_REGISTER: &str = "/account_api/register";
 
-/// Register new a new bot account. Returns new account ID which is UUID.
+/// Register a new bot account. Returns new account ID which is UUID.
 ///
 /// Available only if server internal API is enabled with
 /// bot_login from config file.
