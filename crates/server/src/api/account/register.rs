@@ -145,11 +145,11 @@ pub async fn post_complete_setup<
     let (matches_with_grant_admin_access_config, grant_admin_access_more_than_once) =
         if let Some(grant_admin_access_config) = state.config().grant_admin_access_config() {
             let matches = match (grant_admin_access_config.email.as_ref(), grant_admin_access_config.google_account_id.as_ref()) {
-                (Some(wanted_email), Some(wanted_google_account_id)) =>
-                    wanted_email == &account_data.email && sign_in_with_info
+                (wanted_email @ Some(_), Some(wanted_google_account_id)) =>
+                    wanted_email == account_data.email.as_ref() && sign_in_with_info
                         .google_account_id_matches_with(wanted_google_account_id),
-                (Some(wanted_email), None) =>
-                    wanted_email == &account_data.email,
+                (wanted_email @ Some(_), None) =>
+                    wanted_email == account_data.email.as_ref(),
                 (None, Some(wanted_google_account_id)) =>
                     sign_in_with_info
                         .google_account_id_matches_with(wanted_google_account_id),

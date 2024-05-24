@@ -4,10 +4,13 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use model::DemoModeId;
+use model::{DemoModeId, GoogleAccountId};
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
 use url::Url;
+
+// Re-export for test-mode crate
+pub use model::EmailAddress;
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
@@ -20,8 +23,6 @@ use url::Url;
 // Suomen eteläisin kärki (Hanko) ja Suomen itäisin piste
 // latitude_bottom_right = 59.8
 // longitude_bottom_right = 31.58
-
-pub type GoogleAccountId = String;
 
 pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
@@ -112,7 +113,7 @@ pub struct GrantAdminAccessConfig {
     /// By default admin access is granted for once only.
     #[serde(default)]
     pub for_every_matching_new_account: bool,
-    pub email: Option<String>,
+    pub email: Option<EmailAddress>,
     pub google_account_id: Option<GoogleAccountId>,
 }
 

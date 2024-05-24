@@ -13,11 +13,12 @@ use crate::{
     app::{GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData},
 };
 
-pub async fn login_impl<S: WriteData + GetAccounts>(
+pub async fn login_impl<S: ReadData + WriteData + GetAccounts>(
     id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
     let id = state.accounts().get_internal_id(id).await?;
+    let email = state.read().account().account_data(id).await?;
 
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
@@ -30,12 +31,14 @@ pub async fn login_impl<S: WriteData + GetAccounts>(
         None
     ))?;
 
-    // TODO: microservice support
+    // TODO(microservice): microservice support
 
     let result = LoginResult {
         account,
         profile: None,
         media: None,
+        account_id: id.as_id(),
+        email: email.email,
     };
     Ok(result)
 }

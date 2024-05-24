@@ -3,16 +3,16 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{schema::shared_state, schema_sqlite_types::Integer, AccessToken, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
+use crate::schema_sqlite_types::Text;
+
+use crate::{schema::shared_state, schema_sqlite_types::Integer, AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
 
 mod demo;
 pub use demo::*;
 
-// TODO(prod): Add AccountId to login result?
-// TODO(prod): Add email to login result?
 // TODO(prod): Also add info what sign in with service is used?
 
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct LoginResult {
     pub account: AuthPair,
 
@@ -21,6 +21,12 @@ pub struct LoginResult {
 
     /// If None media microservice is disabled.
     pub media: Option<AuthPair>,
+
+    /// Account ID of current account.
+    pub account_id: AccountId,
+
+    /// Current email of current account.
+    pub email: Option<EmailAddress>,
 }
 
 /// AccessToken and RefreshToken
@@ -40,15 +46,15 @@ impl AuthPair {
 #[diesel(table_name = crate::schema::account)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountInternal {
-    pub email: String,
+    pub email: Option<EmailAddress>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AccountData {
-    pub email: String,
+    pub email: Option<EmailAddress>,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Account {
     state: AccountState,
     capabilities: Capabilities,
@@ -318,18 +324,18 @@ pub struct SignInWithInfo {
 }
 
 impl SignInWithInfo {
-    pub fn google_account_id_matches_with(&self, id: &str) -> bool {
+    pub fn google_account_id_matches_with(&self, id: &GoogleAccountId) -> bool {
         if let Some(google_account_id) = &self.google_account_id {
-            google_account_id.as_str() == id
+            google_account_id == id
         } else {
             false
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, sqlx::Type, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Text)]
 #[serde(transparent)]
-#[sqlx(transparent)]
 pub struct GoogleAccountId(pub String);
 
 impl GoogleAccountId {
@@ -343,6 +349,39 @@ impl GoogleAccountId {
 }
 
 diesel_string_wrapper!(GoogleAccountId);
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, diesel::FromSqlRow, diesel::AsExpression, ToSchema)]
+#[diesel(sql_type = Text)]
+#[serde(try_from = "String")]
+pub struct EmailAddress(pub String);
+
+impl EmailAddress {
+    pub fn new(id: String) -> Self {
+        Self(id)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+diesel_string_wrapper!(EmailAddress);
+
+impl TryFrom<String> for EmailAddress {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value.trim() != value {
+            return Err("Email address contains leading or trailing whitespace".to_string());
+        }
+
+        if value.contains('@') {
+            Ok(Self(value))
+        } else {
+            Err("Email address does not have '@' character".to_string())
+        }
+    }
+}
 
 pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
 

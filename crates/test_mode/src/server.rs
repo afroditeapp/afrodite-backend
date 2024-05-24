@@ -6,7 +6,7 @@ use std::{
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        Components, ConfigFile, ExternalServices, GrantAdminAccessConfig, InternalApiConfig, LocationConfig, CONFIG_FILE_NAME
+        Components, ConfigFile, EmailAddress, ExternalServices, GrantAdminAccessConfig, InternalApiConfig, LocationConfig, CONFIG_FILE_NAME
     },
     Config,
 };
@@ -188,7 +188,7 @@ fn new_config(
     let config = ConfigFile {
         grant_admin_access: GrantAdminAccessConfig {
             for_every_matching_new_account: false,
-            email: Some(TEST_ADMIN_ACCESS_EMAIL.to_string()),
+            email: Some(EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string())),
             google_account_id: None,
         }
         .into(),

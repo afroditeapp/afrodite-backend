@@ -159,6 +159,7 @@ pub mod utils;
         model::account::DemoModeLoginToAccount,
         model::account::DemoModeConfirmLogin,
         model::account::DemoModeConfirmLoginResult,
+        model::account::EmailAddress,
         // Profile
         model::profile::Profile,
         model::profile::ProfilePage,

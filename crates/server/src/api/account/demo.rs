@@ -130,7 +130,7 @@ pub const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_l
     ),
     security(),
 )]
-pub async fn post_demo_mode_login_to_account<S: DemoModeManagerProvider + WriteData + GetAccounts>(
+pub async fn post_demo_mode_login_to_account<S: DemoModeManagerProvider + ReadData + WriteData + GetAccounts>(
     State(state): State<S>,
     Json(info): Json<DemoModeLoginToAccount>,
 ) -> Result<Json<LoginResult>, StatusCode> {

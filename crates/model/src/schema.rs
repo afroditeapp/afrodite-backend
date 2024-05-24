@@ -14,7 +14,7 @@ diesel::table! {
 
     account (account_id) {
         account_id -> Integer,
-        email -> Text,
+        email -> Nullable<Text>,
     }
 }
 

@@ -57,8 +57,11 @@ pub async fn post_account_data<S: GetAccessTokens + ReadData + WriteData>(
     ACCOUNT.post_account_data.incr();
     // TODO: API limits to prevent DoS attacks
 
-    // TODO: Manual email setting should be removed probably and just
+    // TODO(prod): Manual email setting should be removed probably and just
     // use the email from sign in with Google or Apple.
+    // Update: Perhaps create specific route for setting email and
+    // allow that only if account state is in initial setup and
+    // sign in with login is not used.
 
     db_write!(state, move |cmds| cmds
         .account()
