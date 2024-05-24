@@ -68,7 +68,7 @@ pub async fn post_register<S: WriteData + GetConfig>(
     State(state): State<S>,
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_INTERNAL.post_register.incr();
-    let new_account_id = register_impl(&state, SignInWithInfo::default())
+    let new_account_id = register_impl(&state, SignInWithInfo::default(), None)
         .await?;
 
     db_write!(state, move |cmds| {

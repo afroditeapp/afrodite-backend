@@ -11,7 +11,7 @@ use database::{
     HistoryReadHandle, HistoryWriteHandle,
 };
 use error_stack::Context;
-use model::{AccountId, AccountIdInternal, IsLoggingAllowed, SignInWithInfo};
+use model::{AccountId, AccountIdInternal, EmailAddress, IsLoggingAllowed, SignInWithInfo};
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
 use tracing::info;
@@ -410,16 +410,6 @@ impl RouterDatabaseWriteHandle {
         )
     }
 
-    pub async fn register(
-        &self,
-        id_light: AccountId,
-        sign_in_with_info: SignInWithInfo,
-    ) -> Result<AccountIdInternal, DataError> {
-        self.user_write_commands()
-            .register(id_light, sign_in_with_info)
-            .await
-    }
-
     pub fn into_sync_handle(self) -> SyncWriteHandle {
         SyncWriteHandle {
             config: self.config,
@@ -522,8 +512,9 @@ impl SyncWriteHandle {
         &self,
         id: AccountId,
         sign_in_with_info: SignInWithInfo,
+        email: Option<EmailAddress>,
     ) -> Result<AccountIdInternal, DataError> {
-        self.cmds().register(id, sign_in_with_info).await
+        self.cmds().register(id, sign_in_with_info, email).await
     }
 }
 

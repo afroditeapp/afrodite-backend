@@ -12,7 +12,7 @@ use database::{
     CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
 use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, Profile, SharedStateRaw, SignInWithInfo
+    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile, SharedStateRaw, SignInWithInfo
 };
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{
@@ -263,6 +263,7 @@ impl<'a> WriteCommands<'a> {
         &self,
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
+        email: Option<EmailAddress>,
     ) -> Result<AccountIdInternal, DataError> {
         let config = self.config.clone();
         let id: AccountIdInternal = self
@@ -271,6 +272,7 @@ impl<'a> WriteCommands<'a> {
                     config,
                     id_light,
                     sign_in_with_info,
+                    email,
                     transaction,
                     history_conn,
                 )
@@ -295,6 +297,7 @@ impl<'a> WriteCommands<'a> {
         config: Arc<Config>,
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
+        email: Option<EmailAddress>,
         transaction: TransactionConnection<'_>,
         history_conn: PoolObject,
     ) -> std::result::Result<AccountIdInternal, TransactionError<DieselDatabaseError>> {
@@ -339,6 +342,12 @@ impl<'a> WriteCommands<'a> {
                 .account()
                 .sign_in_with()
                 .insert_sign_in_with_info(id, &sign_in_with_info)?;
+            if let Some(email) = email {
+                current
+                    .account()
+                    .data()
+                    .update_account_email(id, &email)?;
+            }
 
             // Account history
             history.account().insert_account(id, &account)?;

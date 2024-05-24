@@ -1,5 +1,5 @@
 use model::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, ProfileLink, ProfileVisibility, SharedStateRaw
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, EmailAddress, ProfileLink, ProfileVisibility, SharedStateRaw
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
@@ -146,6 +146,16 @@ impl WriteCommandsAccount<'_> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().sign_in_with().set_is_bot_account(id, value)
+        })
+    }
+
+    pub async fn account_email(
+        &self,
+        id: AccountIdInternal,
+        email: EmailAddress,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().data().update_account_email(id, &email)
         })
     }
 }

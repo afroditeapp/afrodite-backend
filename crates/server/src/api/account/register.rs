@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension, Router};
 use database::current::read::account_admin;
 use model::{
-    AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EventToClientInternal, SignInWithInfo
+    AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailAddress, EventToClientInternal, SignInWithInfo
 };
 use simple_backend::create_counters;
 use tracing::warn;
@@ -14,19 +14,20 @@ use crate::{
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
-pub async fn register_impl<S: WriteData + GetConfig>(
+pub async fn register_impl<S: WriteData>(
     state: &S,
     sign_in_with: SignInWithInfo,
+    email: Option<EmailAddress>,
 ) -> Result<AccountIdInternal, StatusCode> {
     // New unique UUID is generated every time so no special handling needed
     // to avoid database collisions.
     let id = AccountId::new(uuid::Uuid::new_v4());
 
-    let result = state
-        .write(move |cmds| async move { cmds.register(id, sign_in_with).await })
+    let id = state
+        .write(move |cmds| async move { cmds.register(id, sign_in_with, email).await })
         .await?;
 
-    Ok(result)
+    Ok(id)
 }
 
 pub const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";

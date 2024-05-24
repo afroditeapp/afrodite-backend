@@ -1,7 +1,6 @@
 use axum::extract::State;
 use model::{
-    AccessToken, AccountId, AuthPair, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
-    SignInWithLoginInfo,
+    AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo, SignInWithLoginInfo
 };
 use simple_backend::{app::SignInWith, create_counters};
 
@@ -69,6 +68,10 @@ pub async fn post_sign_in_with_login<
             .sign_in_with_manager()
             .validate_google_token(google)
             .await?;
+
+        let email: EmailAddress = info.email.try_into()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
         let google_id = GoogleAccountId(info.id);
         let already_existing_account = state
             .read()
@@ -77,6 +80,11 @@ pub async fn post_sign_in_with_login<
             .await?;
 
         if let Some(already_existing_account) = already_existing_account {
+            db_write!(state, move |cmds| cmds.account().account_email(
+                already_existing_account,
+                email,
+            ))?;
+
             login_impl(already_existing_account.as_id(), state)
                 .await
                 .map(|d| d.into())
@@ -86,6 +94,7 @@ pub async fn post_sign_in_with_login<
                 SignInWithInfo {
                     google_account_id: Some(google_id),
                 },
+                Some(email),
             )
             .await?;
             login_impl(id.as_id(), state).await.map(|d| d.into())

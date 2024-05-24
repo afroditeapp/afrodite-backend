@@ -110,7 +110,7 @@ pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteD
 
     let demo_mode_id = state.demo_mode().demo_mode_token_exists(&token).await?;
 
-    let id = register_impl(&state, SignInWithInfo::default())
+    let id = register_impl(&state, SignInWithInfo::default(), None)
         .await?;
 
     db_write!(state, move |cmds| cmds.account().insert_demo_mode_related_account_ids(demo_mode_id, id.as_id()))?;

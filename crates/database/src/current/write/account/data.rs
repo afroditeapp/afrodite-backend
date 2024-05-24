@@ -1,6 +1,6 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE};
+use model::{AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, ACCOUNT_GLOBAL_STATE_ROW_TYPE};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
@@ -98,6 +98,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
             .set(admin_access_granted_count.eq(admin_access_granted_count + 1))
             .execute(self.conn())
             .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn update_account_email(
+        mut self,
+        id: AccountIdInternal,
+        email_address: &EmailAddress,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account::dsl::*;
+
+        update(account.find(id.as_db_id()))
+            .set(email.eq(email_address))
+            .execute(self.conn())
+            .into_db_error(id)?;
 
         Ok(())
     }
