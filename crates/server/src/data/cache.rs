@@ -209,13 +209,7 @@ impl DatabaseCache {
         }
 
         if config.components().chat {
-            let chat_state = db_read(current_db, move |mut cmds| {
-                cmds.chat().chat_state(account_id)
-            })
-            .await?;
-            entry.chat = Some(Box::new(CachedChatComponentData {
-                fcm_device_token: chat_state.fcm_device_token,
-            }));
+            // empty
         }
 
         Ok(())
@@ -458,7 +452,11 @@ pub struct LocationData {
 
 #[derive(Debug, Clone)]
 pub struct CachedChatComponentData {
-    pub fcm_device_token: Option<FcmDeviceToken>,
+    // This cached version of FcmDeviceToken is now disabled
+    // as some extra mapping other way aroud would be needed as
+    // same FcmDeviceToken might be used for different account if
+    // user logs out and logs in with different account.
+    // pub fcm_device_token: Option<FcmDeviceToken>,
 }
 
 #[derive(Debug)]

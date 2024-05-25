@@ -15,6 +15,15 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::chat_state::dsl::*;
 
+        // Remove the token from other accounts. It is possible that
+        // same device is used for multiple accounts.
+        update(chat_state.filter(fcm_device_token.eq(token.clone())))
+            .set((
+                fcm_device_token.eq(None::<FcmDeviceToken>),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
+
         update(chat_state.find(id.as_db_id()))
             .set((
                 fcm_device_token.eq(token),
@@ -81,11 +90,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
         Ok(())
     }
 
-    pub fn get_push_notification_already_sent_and_add_notification_value(
+    pub fn get_push_notification_state_info_and_add_notification_value(
         &mut self,
         id: AccountIdInternal,
         notification_to_be_added: PendingNotification,
-    ) -> Result<bool, DieselDatabaseError> {
+    ) -> Result<PushNotificationStateInfo, DieselDatabaseError> {
         use model::schema::chat_state::dsl::*;
 
         let notification: i64 = chat_state
@@ -96,14 +105,22 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
 
         let new_notification_value = notification | notification_to_be_added.value;
 
-        let notification_sent = update(chat_state.find(id.as_db_id()))
+        let (token, notification_sent) = update(chat_state.find(id.as_db_id()))
             .set((
                 pending_notification.eq(new_notification_value),
             ))
-            .returning(fcm_notification_sent)
+            .returning((fcm_device_token, fcm_notification_sent))
             .get_result(self.conn())
             .into_db_error(())?;
 
-        Ok(notification_sent)
+        Ok(PushNotificationStateInfo {
+            fcm_device_token: token,
+            fcm_notification_sent: notification_sent,
+        })
     }
+}
+
+pub struct PushNotificationStateInfo {
+    pub fcm_device_token: Option<FcmDeviceToken>,
+    pub fcm_notification_sent: bool,
 }

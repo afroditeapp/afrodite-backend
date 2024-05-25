@@ -19,8 +19,6 @@ const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 pub enum PushNotificationError {
     #[error("Creating FCM client failed")]
     CreateFcmClient,
-    #[error("Reading device token failed")]
-    ReadingDeviceTokenFailed,
     #[error("Reading notification sent status failed")]
     ReadingNotificationSentStatusFailed,
     #[error("Removing device token failed")]
@@ -184,13 +182,13 @@ impl PushNotificationManager {
             return Ok(());
         };
 
-        let already_sent = self.state
+        let info = self.state
             .write(move |cmds| async move {
                 let flags: PendingNotificationFlags = send_push_notification.event.into();
                 cmds
                     .chat()
                     .push_notifications()
-                    .get_push_notification_already_sent_and_add_notification_value(
+                    .get_push_notification_state_info_and_add_notification_value(
                         send_push_notification.account_id,
                         flags.into(),
                     )
@@ -199,18 +197,11 @@ impl PushNotificationManager {
             .await
             .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
 
-        if already_sent {
+        if info.fcm_notification_sent {
             return Ok(());
         }
 
-        let token = self.state
-            .read()
-            .chat()
-            .push_notifications()
-            .device_token(send_push_notification.account_id).await
-            .change_context(PushNotificationError::ReadingDeviceTokenFailed)?;
-
-        let token = match token {
+        let token = match info.fcm_device_token {
             Some(token) => token,
             None => return Ok(()),
         };

@@ -69,14 +69,13 @@ impl <'a> EventManagerWithCacheReference<'a> {
     async fn access_event_mode<T>(
         &self,
         id: AccountId,
-        action: impl FnOnce(&EventMode, Option<&FcmDeviceToken>) -> T,
+        action: impl FnOnce(&EventMode) -> T,
     ) -> Result<T, DataError> {
         self.cache
             .read_cache(
                 id,
                 move |entry| action(
                     &entry.current_event_connection,
-                    entry.chat.as_ref().and_then(|v| v.fcm_device_token.as_ref())
                 )
             )
             .await
@@ -91,7 +90,7 @@ impl <'a> EventManagerWithCacheReference<'a> {
         account: impl Into<AccountId>,
         event: EventToClientInternal,
     ) -> Result<(), DataError> {
-        self.access_event_mode(account.into(), move |mode, _| {
+        self.access_event_mode(account.into(), move |mode| {
                 if let EventMode::Connected(sender) = mode {
                     sender.send(event.into())
                 }
@@ -107,20 +106,20 @@ impl <'a> EventManagerWithCacheReference<'a> {
         account: AccountIdInternal,
         event: NotificationEvent,
     ) -> Result<(), DataError> {
-        let send_push_notification =
-            self.access_event_mode(account.into(), move |mode, device_token| {
+        let sent =
+            self.access_event_mode(account.into(), move |mode| {
                 let event: EventToClientInternal = event.into();
                 if let EventMode::Connected(sender) = mode {
                     sender.send(event.into());
-                    false
+                    true
                 } else {
-                    device_token.is_some()
+                    false
                 }
             })
             .await
             .change_context(DataError::EventModeAccessFailed)?;
 
-        if send_push_notification {
+        if !sent {
             self.push_notification_sender
                 .send(account, event)
         }

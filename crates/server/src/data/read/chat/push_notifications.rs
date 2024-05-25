@@ -13,20 +13,6 @@ define_read_commands!(ReadCommandsChatPushNotifications);
 
 
 impl ReadCommandsChatPushNotifications<'_> {
-    pub async fn device_token(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<Option<FcmDeviceToken>, DataError> {
-        let token = self.read_cache(id, |cache| {
-            let chat_state = cache.chat
-                .as_ref()
-                .ok_or(CacheError::FeatureNotEnabled)?;
-            error_stack::Result::<_, CacheError>::Ok(chat_state.fcm_device_token.clone())
-        }).await??;
-
-        Ok(token)
-    }
-
     pub async fn push_notification_already_sent(
         &mut self,
         id: AccountIdInternal,
