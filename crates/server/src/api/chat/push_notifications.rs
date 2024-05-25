@@ -57,7 +57,7 @@ pub async fn post_get_pending_notification<S: GetAccounts + WriteData>(
     CHAT.post_get_pending_notification.incr();
 
     let flags: PendingNotification = db_write!(state, move |cmds| {
-        cmds.chat().push_notifications().get_and_reset_pending_notification(token)
+        cmds.chat().push_notifications().get_and_reset_pending_notification_with_device_token(token)
     })
         .unwrap_or_default();
 

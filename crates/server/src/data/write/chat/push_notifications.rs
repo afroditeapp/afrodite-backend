@@ -39,12 +39,21 @@ impl WriteCommandsChatPushNotifications<'_> {
         Ok(())
     }
 
-    pub async fn get_and_reset_pending_notification(
+    pub async fn reset_pending_notification(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat().push_notifications().reset_pending_notification(id)
+        })
+    }
+
+    pub async fn get_and_reset_pending_notification_with_device_token(
         &mut self,
         token: FcmDeviceToken,
     ) -> Result<PendingNotification, DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat().push_notifications().get_and_reset_pending_notification(token)
+            cmds.chat().push_notifications().get_and_reset_pending_notification_with_device_token(token)
         })
     }
 

@@ -176,7 +176,7 @@ impl PushNotificationManager {
         send_push_notification: SendPushNotification,
         sending_logic: &mut FcmSendingLogic,
     ) -> Result<(), PushNotificationError> {
-        let fmc = if let Some(fcm) = &self.fcm {
+        let fcm = if let Some(fcm) = &self.fcm {
             fcm
         } else {
             return Ok(());
@@ -218,7 +218,7 @@ impl PushNotificationManager {
             notification: None,
         };
 
-        match sending_logic.send_push_notification(message, fmc).await {
+        match sending_logic.send_push_notification(message, fcm).await {
             Ok(()) => {
                 self.state
                     .write(move |cmds| async move {

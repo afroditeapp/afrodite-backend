@@ -211,6 +211,8 @@ pub enum WebSocketError {
     DatabaseProfileStateQuery,
     #[error("Database: Pending messages query failed")]
     DatabasePendingMessagesQuery,
+    #[error("Database: Pending notification reset failed")]
+    DatabasePendingNotificationReset,
 
     // Event errors
     #[error("Event channel creation failed")]
@@ -350,6 +352,7 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
         .await
         .change_context(WebSocketError::DatabaseSaveTokens)?;
 
+    reset_pending_notification(state, id).await?;
     self::data_sync::sync_data_with_client_if_needed(state, &mut socket, id, data_sync_versions).await?;
     self::data_sync::send_new_messages_event_if_needed(state, &mut socket, id).await?;
 
@@ -385,6 +388,25 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
                 }
             }
         }
+    }
+
+    Ok(())
+}
+
+pub async fn reset_pending_notification<S: WriteData + GetConfig>(
+    state: &S,
+    id: AccountIdInternal,
+) -> Result<(), WebSocketError> {
+    if state.config().components().chat {
+        state
+            .write(move |cmds| async move {
+                cmds.chat()
+                    .push_notifications()
+                    .reset_pending_notification(id)
+                    .await
+            })
+            .await
+            .change_context(WebSocketError::DatabasePendingNotificationReset)?;
     }
 
     Ok(())

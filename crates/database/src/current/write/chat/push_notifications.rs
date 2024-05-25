@@ -1,6 +1,6 @@
 use diesel::{prelude::*, select, update};
 use error_stack::Result;
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotification};
+use model::{AccountId, AccountIdInternal, FcmDeviceToken, PendingNotification};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
@@ -50,7 +50,24 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
         Ok(())
     }
 
-    pub fn get_and_reset_pending_notification(
+    pub fn reset_pending_notification(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::chat_state::dsl::*;
+
+        update(chat_state.find(id.as_db_id()))
+            .set((
+                pending_notification.eq(0),
+                fcm_notification_sent.eq(false),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn get_and_reset_pending_notification_with_device_token(
         &mut self,
         token: FcmDeviceToken,
     ) -> Result<PendingNotification, DieselDatabaseError> {
@@ -120,6 +137,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
     }
 }
 
+#[derive(Debug)]
 pub struct PushNotificationStateInfo {
     pub fcm_device_token: Option<FcmDeviceToken>,
     pub fcm_notification_sent: bool,
