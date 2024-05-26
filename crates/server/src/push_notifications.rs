@@ -9,7 +9,7 @@ use serde_json::{error, json};
 use simple_backend::{app::SimpleBackendAppState, ServerQuitWatcher};
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{sync::mpsc::{error::TrySendError, Receiver, Sender}, task::JoinHandle};
-use tracing::{warn, error};
+use tracing::{error, info, warn};
 
 use crate::app::{AppState, WriteData};
 
@@ -313,7 +313,11 @@ impl FcmSendingLogic {
                     error!("FCM error detected, response: {:#?}, action: {:#?}", response, action);
                 }
                 match action {
-                    None => NextAction::NextMessage, // No errors
+                    None => {
+                        // TODO(prod): Remove logging
+                        info!("FCM send successful");
+                        NextAction::NextMessage // No errors
+                    }
                     Some(
                         RecomendedAction::CheckIosAndWebCredentials |
                         RecomendedAction::CheckSenderIdEquality |
