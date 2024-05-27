@@ -1,7 +1,7 @@
 
 use std::{sync::Arc, time::Duration};
 
-use fcm::{message::{Message, Notification, Target}, FcmClient, FcmResponseError, RecomendedAction, RecomendedWaitTime};
+use fcm::{message::{Message, Notification, Target}, FcmClient, response::{RecomendedAction, RecomendedWaitTime}};
 
 use crate::{app::ReadData, result::{Result, WrappedResultExt}};
 use model::{AccountId, AccountIdInternal, FcmDeviceToken, NotificationEvent, PendingNotificationFlags};

@@ -1177,7 +1177,7 @@ checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 [[package]]
 name = "fcm"
 version = "1.0.0"
-source = "git+https://github.com/jutuon/fcm-rust?rev=d4676239fea150c5083a31297e50e17ebd80169f#d4676239fea150c5083a31297e50e17ebd80169f"
+source = "git+https://github.com/jutuon/fcm-rust?rev=bbbd91c5e7724dbc0c326052241dcebbe1b23884#bbbd91c5e7724dbc0c326052241dcebbe1b23884"
 dependencies = [
  "chrono",
  "dotenvy",

@@ -100,9 +100,7 @@ tokio-tungstenite = { version = "0.21.0", features = ["rustls-tls-native-roots"]
 # Firebase cloud messaging
 [workspace.dependencies.fcm]
 git = "https://github.com/jutuon/fcm-rust"
-rev = "d4676239fea150c5083a31297e50e17ebd80169f"
-default-features = false
-features = ["native-tls", "yup-oauth2"]
+rev = "bbbd91c5e7724dbc0c326052241dcebbe1b23884"
 
 # Make image processing faster for debug builds
 [profile.dev.package.image]
