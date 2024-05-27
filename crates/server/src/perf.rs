@@ -2,7 +2,7 @@
 //!
 //!
 
-use simple_backend::perf::CounterCategory;
+use simple_backend::{perf::CounterCategory, CONNECTION_COUNTERS_LIST};
 
 use crate::api::{
     account::{
@@ -78,4 +78,7 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
     &CounterCategory::new("chat_match", CHAT_MATCH_COUNTERS_LIST),
     &CounterCategory::new("chat_message", CHAT_MESSAGE_COUNTERS_LIST),
     &CounterCategory::new("chat_push_notification", CHAT_PUSH_NOTIFICATION_COUNTERS_LIST),
+
+    // Server info
+    &CounterCategory::new("server_info_connection", CONNECTION_COUNTERS_LIST),
 ];
