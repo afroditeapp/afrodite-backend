@@ -2,12 +2,16 @@ use axum::{
     extract::{Path, Query, State},
     Extension, Router,
 };
-use model::{AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueTypeParam};
+use model::{
+    AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest,
+    ModerationList, ModerationQueueTypeParam,
+};
 use simple_backend::create_counters;
 
 use crate::{
     api::{
-        db_write, db_write_multiple, utils::{Json, StatusCode}
+        db_write, db_write_multiple,
+        utils::{Json, StatusCode},
     },
     app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, WriteData},
 };
@@ -100,21 +104,21 @@ pub async fn post_handle_moderation_request<
         .await?;
 
     db_write_multiple!(state, move |cmds| {
-        let info = cmds.media_admin().update_moderation(
-            admin_account_id,
-            moderation_request_owner,
-            moderation_decision,
-        ).await?;
+        let info = cmds
+            .media_admin()
+            .update_moderation(
+                admin_account_id,
+                moderation_request_owner,
+                moderation_decision,
+            )
+            .await?;
 
         if cmds.config().components().account {
             if let Some(new_visibility) = info.new_visibility {
-                cmds
-                    .events()
+                cmds.events()
                     .send_connected_event(
                         moderation_request_owner,
-                        EventToClientInternal::ProfileVisibilityChanged(
-                            new_visibility,
-                        ),
+                        EventToClientInternal::ProfileVisibilityChanged(new_visibility),
                     )
                     .await?;
             }

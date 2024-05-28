@@ -2,10 +2,11 @@ use axum::{extract::State, Extension, Router};
 use model::{AccountId, AccountIdInternal, ReceivedLikesPage, SentLikesPage};
 use simple_backend::create_counters;
 
-use super::super::{
-    utils::{Json, StatusCode},
+use super::super::utils::{Json, StatusCode};
+use crate::{
+    api::db_write_multiple,
+    app::{GetAccounts, ReadData, WriteData},
 };
-use crate::{api::db_write_multiple, app::{GetAccounts, ReadData, WriteData}};
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
@@ -34,12 +35,18 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let changes = cmds.chat().like_or_match_profile(id, requested_profile).await?;
-        cmds.events().handle_chat_state_changes(changes.sender).await?;
-        cmds.events().handle_chat_state_changes(changes.receiver).await?;
+        let changes = cmds
+            .chat()
+            .like_or_match_profile(id, requested_profile)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.sender)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.receiver)
+            .await?;
         Ok(())
     })?;
-
 
     Ok(())
 }
@@ -148,9 +155,16 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let changes = cmds.chat().delete_like_or_block(id, requested_profile).await?;
-        cmds.events().handle_chat_state_changes(changes.sender).await?;
-        cmds.events().handle_chat_state_changes(changes.receiver).await?;
+        let changes = cmds
+            .chat()
+            .delete_like_or_block(id, requested_profile)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.sender)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.receiver)
+            .await?;
         Ok(())
     })?;
 

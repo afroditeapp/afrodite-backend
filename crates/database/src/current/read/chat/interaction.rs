@@ -1,6 +1,9 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, ProfileVisibility};
+use model::{
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
+    ProfileVisibility,
+};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;

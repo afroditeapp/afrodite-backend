@@ -5,7 +5,10 @@ use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError
 
 use crate::IntoDatabaseError;
 
-define_write_commands!(CurrentWriteChatPushNotifications, CurrentSyncWriteChatPushNotifications);
+define_write_commands!(
+    CurrentWriteChatPushNotifications,
+    CurrentSyncWriteChatPushNotifications
+);
 
 impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
     pub fn update_fcm_device_token(
@@ -18,17 +21,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
         // Remove the token from other accounts. It is possible that
         // same device is used for multiple accounts.
         update(chat_state.filter(fcm_device_token.eq(token.clone())))
-            .set((
-                fcm_device_token.eq(None::<FcmDeviceToken>),
-            ))
+            .set((fcm_device_token.eq(None::<FcmDeviceToken>),))
             .execute(self.conn())
             .into_db_error(())?;
 
         update(chat_state.find(id.as_db_id()))
-            .set((
-                fcm_device_token.eq(token),
-                fcm_notification_sent.eq(false),
-            ))
+            .set((fcm_device_token.eq(token), fcm_notification_sent.eq(false)))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -57,10 +55,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
         use model::schema::chat_state::dsl::*;
 
         update(chat_state.find(id.as_db_id()))
-            .set((
-                pending_notification.eq(0),
-                fcm_notification_sent.eq(false),
-            ))
+            .set((pending_notification.eq(0), fcm_notification_sent.eq(false)))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -81,10 +76,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
             .into_db_error(())?;
 
         update(chat_state.filter(fcm_device_token.eq(token)))
-            .set((
-                pending_notification.eq(0),
-                fcm_notification_sent.eq(false),
-            ))
+            .set((pending_notification.eq(0), fcm_notification_sent.eq(false)))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -98,9 +90,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
         use model::schema::chat_state::dsl::*;
 
         update(chat_state.find(id.as_db_id()))
-            .set((
-                fcm_notification_sent.eq(true),
-            ))
+            .set((fcm_notification_sent.eq(true),))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -123,9 +113,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
         let new_notification_value = notification | notification_to_be_added.value;
 
         let (token, notification_sent) = update(chat_state.find(id.as_db_id()))
-            .set((
-                pending_notification.eq(new_notification_value),
-            ))
+            .set((pending_notification.eq(new_notification_value),))
             .returning((fcm_device_token, fcm_notification_sent))
             .get_result(self.conn())
             .into_db_error(())?;

@@ -12,7 +12,8 @@ use database::{
     CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
 use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile, SharedStateRaw, SignInWithInfo
+    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile,
+    SharedStateRaw, SignInWithInfo,
 };
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{
@@ -333,10 +334,7 @@ impl<'a> WriteCommands<'a> {
                 .sign_in_with()
                 .insert_sign_in_with_info(id, &sign_in_with_info)?;
             if let Some(email) = email {
-                current
-                    .account()
-                    .data()
-                    .update_account_email(id, &email)?;
+                current.account().data().update_account_email(id, &email)?;
             }
 
             // Account history
@@ -349,15 +347,17 @@ impl<'a> WriteCommands<'a> {
             current.profile().data().insert_profile_state(id)?;
 
             // Profile history
-            let attributes = current.read().profile().data().profile_attribute_values(id)?;
+            let attributes = current
+                .read()
+                .profile()
+                .data()
+                .profile_attribute_values(id)?;
             let profile = Profile::new(profile, attributes);
             history.profile().insert_profile(id, &profile)?;
         }
 
         if config.components().media {
-            current
-                .media()
-                .insert_media_state(id)?;
+            current.media().insert_media_state(id)?;
 
             current
                 .media()
@@ -366,9 +366,7 @@ impl<'a> WriteCommands<'a> {
         }
 
         if config.components().chat {
-            current
-                .chat()
-                .insert_chat_state(id)?;
+            current.chat().insert_chat_state(id)?;
         }
 
         Ok(id.clone())

@@ -1,9 +1,15 @@
 use std::{fmt::Debug, path::PathBuf};
 
 use api_client::{
-    apis::media_api::{get_content_slot_state, put_moderation_request, put_pending_profile_content, put_pending_security_content_info},
+    apis::media_api::{
+        get_content_slot_state, put_moderation_request, put_pending_profile_content,
+        put_pending_security_content_info,
+    },
     manual_additions::put_content_to_content_slot_fixed,
-    models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent, SetProfileContent},
+    models::{
+        ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent,
+        SetProfileContent,
+    },
 };
 use async_trait::async_trait;
 use config::bot_config_file::{BotConfigFile, BotInstanceConfig, Gender};
@@ -47,7 +53,10 @@ impl SendImageToSlot {
     }
 }
 
-fn img_for_bot(bot: &BotInstanceConfig, config: &BotConfigFile) -> std::result::Result<Option<PathBuf>, std::io::Error> {
+fn img_for_bot(
+    bot: &BotInstanceConfig,
+    config: &BotConfigFile,
+) -> std::result::Result<Option<PathBuf>, std::io::Error> {
     if let Some(image) = bot.get_img(config) {
         Ok(Some(image))
     } else {
@@ -80,14 +89,11 @@ impl BotAction for SendImageToSlot {
             };
 
             match img_path {
-                Ok(Some(img_path)) =>
-                    std::fs::read(img_path)
-                        .unwrap_or_else(|e| {
-                            tracing::error!("{e:?}");
-                            ImageProvider::random_jpeg_image()
-                        }),
-                Ok(None) =>
-                    ImageProvider::random_jpeg_image(),
+                Ok(Some(img_path)) => std::fs::read(img_path).unwrap_or_else(|e| {
+                    tracing::error!("{e:?}");
+                    ImageProvider::random_jpeg_image()
+                }),
+                Ok(None) => ImageProvider::random_jpeg_image(),
                 Err(e) => {
                     tracing::error!("{e:?}");
                     ImageProvider::random_jpeg_image()
@@ -107,14 +113,19 @@ impl BotAction for SendImageToSlot {
         .await
         .change_context(TestError::ApiRequest)?;
 
-        async fn wait_for_content_id(slot: i32, state: &mut BotState) -> Result<ContentId, TestError> {
-            state.wait_event(|e|
-                match e.content_processing_state_changed.as_ref() {
-                    Some(Some(content_processing_state)) =>
-                        content_processing_state.new_state.state == ContentProcessingStateType::Completed,
+        async fn wait_for_content_id(
+            slot: i32,
+            state: &mut BotState,
+        ) -> Result<ContentId, TestError> {
+            state
+                .wait_event(|e| match e.content_processing_state_changed.as_ref() {
+                    Some(Some(content_processing_state)) => {
+                        content_processing_state.new_state.state
+                            == ContentProcessingStateType::Completed
+                    }
                     _ => false,
-                }
-            ).await?;
+                })
+                .await?;
 
             loop {
                 let slot_state = get_content_slot_state(state.api.media(), slot)
@@ -122,15 +133,19 @@ impl BotAction for SendImageToSlot {
                     .change_context(TestError::ApiRequest)?;
 
                 match slot_state.state {
-                    ContentProcessingStateType::Empty | ContentProcessingStateType::Failed =>
-                        return Err(TestError::ApiRequest.report()),
-                    ContentProcessingStateType::Processing | ContentProcessingStateType::InQueue =>
-                        tokio::time::sleep(std::time::Duration::from_millis(200)).await,
-                    ContentProcessingStateType::Completed =>
+                    ContentProcessingStateType::Empty | ContentProcessingStateType::Failed => {
+                        return Err(TestError::ApiRequest.report())
+                    }
+                    ContentProcessingStateType::Processing
+                    | ContentProcessingStateType::InQueue => {
+                        tokio::time::sleep(std::time::Duration::from_millis(200)).await
+                    }
+                    ContentProcessingStateType::Completed => {
                         return Ok(*slot_state
                             .content_id
                             .flatten()
-                            .expect("Content ID is missing")),
+                            .expect("Content ID is missing"))
+                    }
                 }
             }
         }
@@ -214,7 +229,6 @@ impl BotAction for MakeModerationRequest {
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 pub struct SetPendingContent {

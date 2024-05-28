@@ -1,14 +1,11 @@
-
-
-
-
-use crate::{app::{GetConfig, WriteData, S}, data::DataError};
-
-use crate::result::Result;
+use crate::{
+    app::{GetConfig, WriteData, S},
+    data::DataError,
+    result::Result,
+};
 pub struct StartupTasks {
     state: S,
 }
-
 
 impl StartupTasks {
     pub fn new(state: S) -> Self {
@@ -26,12 +23,12 @@ impl StartupTasks {
             return Ok(());
         };
 
-        state.write(move |cmds| async move {
-            cmds
-                .profile()
-                .update_profile_attributes_sha256_and_sync_versions(hash)
-                .await
-        })
+        state
+            .write(move |cmds| async move {
+                cmds.profile()
+                    .update_profile_attributes_sha256_and_sync_versions(hash)
+                    .await
+            })
             .await
     }
 }

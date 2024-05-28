@@ -2,10 +2,7 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-
-#![allow(
-    clippy::collapsible_else_if,
-)]
+#![allow(clippy::collapsible_else_if)]
 
 //! Run test suite and benchmarks
 
@@ -20,7 +17,9 @@ use std::{future::Future, sync::Arc};
 
 use client::TestError;
 use config::{
-    args::{TestMode, TestModeSubMode}, bot_config_file::BotConfigFile, Config
+    args::{TestMode, TestModeSubMode},
+    bot_config_file::BotConfigFile,
+    Config,
 };
 use runner::{bot::BotTestRunner, server_tests::QaTestRunner};
 
@@ -41,19 +40,22 @@ impl TestRunner {
         tracing_subscriber::fmt::init();
 
         if let TestModeSubMode::Qa(config) = self.test_config.mode.clone() {
-            QaTestRunner::new(self.config, self.test_config, config).run().await;
+            QaTestRunner::new(self.config, self.test_config, config)
+                .run()
+                .await;
         } else {
-            let bot_config_file = if let Some(bot_config_file_path) = &self.test_config.bot_config_file {
-                match BotConfigFile::load(bot_config_file_path) {
-                    Ok(bot_config_file) => bot_config_file,
-                    Err(e) => {
-                        eprintln!("Failed to load bot config file: {}", e);
-                        return;
+            let bot_config_file =
+                if let Some(bot_config_file_path) = &self.test_config.bot_config_file {
+                    match BotConfigFile::load(bot_config_file_path) {
+                        Ok(bot_config_file) => bot_config_file,
+                        Err(e) => {
+                            eprintln!("Failed to load bot config file: {}", e);
+                            return;
+                        }
                     }
-                }
-            } else {
-                BotConfigFile::default()
-            };
+                } else {
+                    BotConfigFile::default()
+                };
 
             BotTestRunner::new(self.config, bot_config_file.into(), self.test_config)
                 .run()

@@ -2,7 +2,10 @@
 
 use std::sync::Arc;
 
-use config::{args::{QaTestConfig, TestMode}, Config};
+use config::{
+    args::{QaTestConfig, TestMode},
+    Config,
+};
 use tokio::{select, signal};
 use tracing::{error, info};
 
@@ -22,11 +25,7 @@ pub struct QaTestRunner {
 }
 
 impl QaTestRunner {
-    pub fn new(
-        config: Arc<Config>,
-        test_config: Arc<TestMode>,
-        qa_config: QaTestConfig,
-    ) -> Self {
+    pub fn new(config: Arc<Config>, test_config: Arc<TestMode>, qa_config: QaTestConfig) -> Self {
         Self {
             config: config,
             test_config: test_config,
@@ -116,18 +115,25 @@ impl QaTestRunner {
         );
 
         if failed {
-            println!("\nTo continue from the failed test, run command\nmake test CONTINUE_FROM={}", current_test);
+            println!(
+                "\nTo continue from the failed test, run command\nmake test CONTINUE_FROM={}",
+                current_test
+            );
         }
     }
 }
 
 fn get_test_functions(test_config: &QaTestConfig) -> Result<Vec<&'static TestFunction>, ()> {
     let mut test_functions: Vec<&'static TestFunction> =
-    inventory::iter::<TestFunction>().collect();
+        inventory::iter::<TestFunction>().collect();
     test_functions.sort_by(|a, b| a.name().cmp(&b.name()));
 
     if let Some(continue_from) = &test_config.continue_from {
-        let matching_tests: Vec<&'static TestFunction> = (&test_functions).into_iter().map(|r| *r).filter(|t| t.name().contains(continue_from)).collect();
+        let matching_tests: Vec<&'static TestFunction> = (&test_functions)
+            .into_iter()
+            .map(|r| *r)
+            .filter(|t| t.name().contains(continue_from))
+            .collect();
         if matching_tests.is_empty() {
             println!("No tests found containing string: {}", continue_from);
             Err(())
@@ -139,7 +145,10 @@ fn get_test_functions(test_config: &QaTestConfig) -> Result<Vec<&'static TestFun
             Err(())
         } else {
             let matching_test = matching_tests[0];
-            let matching_test_index = test_functions.iter().position(|t| t.name() == matching_test.name()).unwrap();
+            let matching_test_index = test_functions
+                .iter()
+                .position(|t| t.name() == matching_test.name())
+                .unwrap();
             test_functions = test_functions.split_off(matching_test_index);
             println!("Continuing from test: {}\n", matching_test.name());
             Ok(test_functions)

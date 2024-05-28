@@ -1,12 +1,13 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
 use axum::extract::{Path, State};
-use model::{AccountId};
+use model::AccountId;
 use simple_backend::create_counters;
 
 use crate::{
-    api::utils::{StatusCode},
-    app::{GetAccounts, GetConfig, GetInternalApi, ReadData}, internal_api,
+    api::utils::StatusCode,
+    app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
+    internal_api,
 };
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
@@ -23,7 +24,9 @@ pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn internal_get_check_moderation_request_for_account<S: GetConfig + ReadData + GetAccounts + GetInternalApi>(
+pub async fn internal_get_check_moderation_request_for_account<
+    S: GetConfig + ReadData + GetAccounts + GetInternalApi,
+>(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
 ) -> Result<(), StatusCode> {

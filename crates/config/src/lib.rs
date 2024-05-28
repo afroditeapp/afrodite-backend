@@ -4,9 +4,9 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod args;
+pub mod bot_config_file;
 pub mod file;
 pub mod file_dynamic;
-pub mod bot_config_file;
 
 use std::{path::Path, sync::Arc};
 
@@ -181,18 +181,20 @@ pub fn get_config(
         );
     }
 
-    let (profile_attributes, profile_attributes_sha256) = if let Some(path) = &file_config.profile_attributes_file {
-        let attributes = std::fs::read_to_string(path)
-            .change_context(GetConfigError::LoadFileError)?;
-        let profile_attributes_sha256 = format!("{:x}", Sha256::digest(attributes.as_bytes()));
-        let attributes: AttributesFileInternal = toml::from_str(&attributes)
-            .change_context(GetConfigError::InvalidConfiguration)?;
-        let attributes = attributes.validate()
-            .into_error_string(GetConfigError::InvalidConfiguration)?;
-        (Some(attributes), Some(profile_attributes_sha256))
-    } else {
-        (None, None)
-    };
+    let (profile_attributes, profile_attributes_sha256) =
+        if let Some(path) = &file_config.profile_attributes_file {
+            let attributes =
+                std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
+            let profile_attributes_sha256 = format!("{:x}", Sha256::digest(attributes.as_bytes()));
+            let attributes: AttributesFileInternal =
+                toml::from_str(&attributes).change_context(GetConfigError::InvalidConfiguration)?;
+            let attributes = attributes
+                .validate()
+                .into_error_string(GetConfigError::InvalidConfiguration)?;
+            (Some(attributes), Some(profile_attributes_sha256))
+        } else {
+            (None, None)
+        };
 
     let config = Config {
         simple_backend_config: simple_backend_config.into(),

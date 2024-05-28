@@ -1,4 +1,4 @@
 //! Account API tests
 
-mod initial_setup;
 mod admin;
+mod initial_setup;

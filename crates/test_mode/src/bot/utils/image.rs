@@ -10,10 +10,8 @@ pub struct ImageProvider {}
 
 impl ImageProvider {
     pub fn jpeg_image() -> Vec<u8> {
-        let mut buffer: ImageBuffer<Rgb<u8>, _> = image::ImageBuffer::new(
-            GENERATED_IMG_WIDTH,
-            GENERATED_IMG_HEIGHT
-        );
+        let mut buffer: ImageBuffer<Rgb<u8>, _> =
+            image::ImageBuffer::new(GENERATED_IMG_WIDTH, GENERATED_IMG_HEIGHT);
 
         for pixel in buffer.pixels_mut() {
             pixel.0 = [255, 255, 255];
@@ -27,10 +25,8 @@ impl ImageProvider {
     }
 
     pub fn random_jpeg_image() -> Vec<u8> {
-        let mut buffer: ImageBuffer<Rgb<u8>, _> = image::ImageBuffer::new(
-            GENERATED_IMG_WIDTH,
-            GENERATED_IMG_HEIGHT
-        );
+        let mut buffer: ImageBuffer<Rgb<u8>, _> =
+            image::ImageBuffer::new(GENERATED_IMG_WIDTH, GENERATED_IMG_HEIGHT);
 
         let img_color = rand::random();
 
@@ -56,10 +52,9 @@ impl ImageProvider {
             }
         }
 
-        Ok(
-            imgs.choose(&mut rand::thread_rng())
-                .map(|path| path.to_owned())
-        )
+        Ok(imgs
+            .choose(&mut rand::thread_rng())
+            .map(|path| path.to_owned()))
     }
 
     pub fn mark_jpeg_image(jpeg_img: &[u8]) -> Result<Vec<u8>, std::io::Error> {

@@ -25,11 +25,7 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<Account>, StatusCode> {
     ACCOUNT.get_account_state.incr();
-    let account = state
-        .read()
-        .common()
-        .account(api_caller_account_id)
-        .await?;
+    let account = state.read().common().account(api_caller_account_id).await?;
     Ok(account.into())
 }
 

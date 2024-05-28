@@ -1,15 +1,11 @@
-use model::{
-    Account, AccountIdInternal,
-};
-use tracing::{warn};
+use model::{Account, AccountIdInternal};
+use tracing::warn;
 
+use super::InternalApiError;
 use crate::{
     app::{GetConfig, GetInternalApi},
     result::{Result, WrappedContextExt},
 };
-
-use super::InternalApiError;
-
 
 /// Sync new Account to possible other servers.
 /// Only account server can call this function.

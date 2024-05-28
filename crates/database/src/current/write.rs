@@ -1,11 +1,10 @@
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError};
+use simple_backend_database::diesel_db::{
+    ConnectionProvider, DieselConnection, DieselDatabaseError,
+};
 
 use self::{
-    account::CurrentSyncWriteAccount,
-    chat::CurrentSyncWriteChat,
-    common::CurrentSyncWriteCommon,
-    media::CurrentSyncWriteMedia,
-    media_admin::CurrentSyncWriteMediaAdmin,
+    account::CurrentSyncWriteAccount, chat::CurrentSyncWriteChat, common::CurrentSyncWriteCommon,
+    media::CurrentSyncWriteMedia, media_admin::CurrentSyncWriteMediaAdmin,
     profile::CurrentSyncWriteProfile,
 };
 use crate::TransactionError;
@@ -119,8 +118,8 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
 
     pub fn transaction<
         F: FnOnce(
-                &mut DieselConnection,
-            ) -> std::result::Result<T, TransactionError<DieselDatabaseError>>,
+            &mut DieselConnection,
+        ) -> std::result::Result<T, TransactionError<DieselDatabaseError>>,
         T,
     >(
         self,

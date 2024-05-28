@@ -1,6 +1,9 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{Account, AccountIdInternal, AccountState, AccountSyncVersion, Capabilities, ProfileVisibility, SharedStateRaw, SyncVersionUtils};
+use model::{
+    Account, AccountIdInternal, AccountState, AccountSyncVersion, Capabilities, ProfileVisibility,
+    SharedStateRaw, SyncVersionUtils,
+};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
@@ -18,10 +21,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         use model::schema::shared_state::dsl::*;
 
         insert_into(shared_state)
-            .values((
-                account_id.eq(id.as_db_id()),
-                data,
-            ))
+            .values((account_id.eq(id.as_db_id()), data))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -80,12 +80,19 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         &mut self,
         id: AccountIdInternal,
         account: Account,
-        modify_action: impl FnOnce(&mut AccountState, &mut Capabilities, &mut ProfileVisibility) -> error_stack::Result<(), DieselDatabaseError> + Send + 'static,
+        modify_action: impl FnOnce(
+                &mut AccountState,
+                &mut Capabilities,
+                &mut ProfileVisibility,
+            ) -> error_stack::Result<(), DieselDatabaseError>
+            + Send
+            + 'static,
     ) -> Result<Account, DieselDatabaseError> {
         let mut state = account.state();
         let mut capabilities = account.capablities();
         let mut profile_visibility = account.profile_visibility();
-        modify_action(&mut state, &mut capabilities, &mut profile_visibility).map_err(|_| DieselDatabaseError::NotAllowed.report())?;
+        modify_action(&mut state, &mut capabilities, &mut profile_visibility)
+            .map_err(|_| DieselDatabaseError::NotAllowed.report())?;
         let new_version = account.sync_version().increment_if_not_max_value();
         let new_account = Account::new_from(capabilities, state, profile_visibility, new_version);
 

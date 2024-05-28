@@ -3,7 +3,10 @@ use model::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
-use crate::{api::db_write_multiple, app::{GetAccounts, ReadData, WriteData}};
+use crate::{
+    api::db_write_multiple,
+    app::{GetAccounts, ReadData, WriteData},
+};
 
 pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
 
@@ -30,8 +33,12 @@ pub async fn post_block_profile<S: GetAccounts + WriteData>(
 
     db_write_multiple!(state, move |cmds| {
         let changes = cmds.chat().block_profile(id, requested_profile).await?;
-        cmds.events().handle_chat_state_changes(changes.sender).await?;
-        cmds.events().handle_chat_state_changes(changes.receiver).await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.sender)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.receiver)
+            .await?;
         Ok(())
     })?;
 
@@ -62,9 +69,16 @@ pub async fn post_unblock_profile<S: GetAccounts + WriteData>(
     let requested_profile = state.accounts().get_internal_id(requested_profile).await?;
 
     db_write_multiple!(state, move |cmds| {
-        let changes = cmds.chat().delete_like_or_block(id, requested_profile).await?;
-        cmds.events().handle_chat_state_changes(changes.sender).await?;
-        cmds.events().handle_chat_state_changes(changes.receiver).await?;
+        let changes = cmds
+            .chat()
+            .delete_like_or_block(id, requested_profile)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.sender)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.receiver)
+            .await?;
         Ok(())
     })?;
 

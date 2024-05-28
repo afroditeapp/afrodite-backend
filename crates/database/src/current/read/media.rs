@@ -1,9 +1,7 @@
+use diesel::prelude::*;
+use error_stack::Result;
 use model::{AccountIdInternal, MediaStateRaw};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
-
-use diesel::prelude::*;
-
-use error_stack::Result;
 
 use crate::IntoDatabaseError;
 
@@ -35,5 +33,4 @@ impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
             .first(self.conn())
             .into_db_error(id)
     }
-
 }

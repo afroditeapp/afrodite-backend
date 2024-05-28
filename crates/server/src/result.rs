@@ -5,7 +5,10 @@ use error_stack::{Context, Report};
 use model::IsLoggingAllowed;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::{data::{cache::CacheError, file::FileError, index::IndexError, DataError}, internal_api::InternalApiError};
+use crate::{
+    data::{cache::CacheError, file::FileError, index::IndexError, DataError},
+    internal_api::InternalApiError,
+};
 
 pub type Result<Ok, Err> = std::result::Result<Ok, WrappedReport<Report<Err>>>;
 
@@ -183,8 +186,7 @@ impl<Ok, InContext: Context, OutContext: Context>
     ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self.change_context(context) {
             Ok(ok) => Ok(ok),
-            Err(err) =>
-                Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable()))
+            Err(err) => Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable())),
         }
     }
 }
@@ -219,8 +221,7 @@ impl<Ok, InContext: Context, OutContext: Context>
     ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self.change_context(context) {
             Ok(ok) => Ok(ok),
-            Err(err) =>
-                Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable()))
+            Err(err) => Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable())),
         }
     }
 }
@@ -250,8 +251,7 @@ impl<Ok, InContext: Context, OutContext: Context>
     ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self.change_context(context) {
             Ok(ok) => Ok(ok),
-            Err(err) =>
-                Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable()))
+            Err(err) => Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable())),
         }
     }
 }

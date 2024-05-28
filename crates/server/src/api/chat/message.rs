@@ -10,7 +10,10 @@ use super::super::{
     db_write,
     utils::{Json, StatusCode},
 };
-use crate::{api::db_write_multiple, app::{GetAccounts, ReadData, WriteData}};
+use crate::{
+    api::db_write_multiple,
+    app::{GetAccounts, ReadData, WriteData},
+};
 
 pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
@@ -109,9 +112,7 @@ pub const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_message_number_of_latest_viewed_message<
-    S: GetAccounts + WriteData,
->(
+pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(update_info): Json<UpdateMessageViewStatus>,
@@ -123,14 +124,15 @@ pub async fn post_message_number_of_latest_viewed_message<
         .get_internal_id(update_info.account_id_sender)
         .await?;
     db_write_multiple!(state, move |cmds| {
-        cmds.chat().update_message_number_of_latest_viewed_message(
-            id,
-            message_sender,
-            update_info.message_number,
-        ).await?;
+        cmds.chat()
+            .update_message_number_of_latest_viewed_message(
+                id,
+                message_sender,
+                update_info.message_number,
+            )
+            .await?;
 
-        cmds
-            .events()
+        cmds.events()
             .send_connected_event(
                 message_sender,
                 EventToClientInternal::LatestViewedMessageChanged(LatestViewedMessageChanged {
@@ -173,10 +175,10 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
         .await?;
     db_write_multiple!(state, move |cmds| {
         cmds.chat()
-            .insert_pending_message_if_match(id, message_reciever, message_info.message).await?;
+            .insert_pending_message_if_match(id, message_reciever, message_info.message)
+            .await?;
 
-        cmds
-            .events()
+        cmds.events()
             .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
             .await?;
 

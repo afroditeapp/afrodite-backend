@@ -3,7 +3,10 @@ use model::{AccountIdInternal, FcmDeviceToken, PendingNotification};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
-use crate::{app::{GetAccounts, WriteData}, db_write};
+use crate::{
+    app::{GetAccounts, WriteData},
+    db_write,
+};
 
 // TODO(prod): Logout route should remove the device token
 // TODO(prod): Connecting with websocket should reset the pending notification
@@ -29,7 +32,9 @@ pub async fn post_set_device_token<S: WriteData>(
     CHAT.post_set_device_token.incr();
 
     db_write!(state, move |cmds| {
-        cmds.chat().push_notifications().set_device_token(id, device_token)
+        cmds.chat()
+            .push_notifications()
+            .set_device_token(id, device_token)
     })?;
 
     Ok(())
@@ -57,9 +62,11 @@ pub async fn post_get_pending_notification<S: GetAccounts + WriteData>(
     CHAT.post_get_pending_notification.incr();
 
     let flags: PendingNotification = db_write!(state, move |cmds| {
-        cmds.chat().push_notifications().get_and_reset_pending_notification_with_device_token(token)
+        cmds.chat()
+            .push_notifications()
+            .get_and_reset_pending_notification_with_device_token(token)
     })
-        .unwrap_or_default();
+    .unwrap_or_default();
 
     flags.into()
 }
@@ -80,7 +87,10 @@ pub fn push_notification_router_public(s: crate::app::S) -> Router {
     use crate::app::S;
 
     Router::new()
-        .route(PATH_POST_GET_PENDING_NOTIFICATION, post(post_get_pending_notification::<S>))
+        .route(
+            PATH_POST_GET_PENDING_NOTIFICATION,
+            post(post_get_pending_notification::<S>),
+        )
         .with_state(s)
 }
 

@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::profile_api::{self, get_location, get_profile, post_profile},
-    models::{Location, ProfileUpdate, ProfileAttributeValueUpdate},
+    models::{Location, ProfileAttributeValueUpdate, ProfileUpdate},
 };
 use async_trait::async_trait;
 use config::file::LocationConfig;
@@ -39,11 +39,15 @@ impl BotAction for ChangeProfileText {
             }
         };
         let update = ProfileUpdate {
-            attributes: current_profile.attributes.iter().map(|a| ProfileAttributeValueUpdate {
-                id: a.id.clone(),
-                value_part1: Some(Some(a.value_part1)),
-                value_part2: a.value_part2,
-            }).collect(),
+            attributes: current_profile
+                .attributes
+                .iter()
+                .map(|a| ProfileAttributeValueUpdate {
+                    id: a.id.clone(),
+                    value_part1: Some(Some(a.value_part1)),
+                    value_part2: a.value_part2,
+                })
+                .collect(),
             age: current_profile.age,
             name: current_profile.name,
             profile_text,

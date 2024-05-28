@@ -37,9 +37,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
         use model::schema::sign_in_with_info::dsl::*;
 
         update(sign_in_with_info.find(id.as_db_id()))
-            .set((
-                google_account_id.eq(&data.google_account_id),
-            ))
+            .set((google_account_id.eq(&data.google_account_id),))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -54,9 +52,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
         use model::schema::sign_in_with_info::dsl::*;
 
         update(sign_in_with_info.find(id.as_db_id()))
-            .set((
-                is_bot_account.eq(value_for_is_bot_account),
-            ))
+            .set((is_bot_account.eq(value_for_is_bot_account),))
             .execute(self.conn())
             .into_db_error(id)?;
 

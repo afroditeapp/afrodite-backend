@@ -1,5 +1,6 @@
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent
+    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState,
+    NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
@@ -26,17 +27,16 @@ impl WriteCommandsMedia<'_> {
             .await?;
 
         let account = self
-            .db_read(move |mut cmds| {
-                cmds.common()
-                    .account(account_id)
-            })
+            .db_read(move |mut cmds| cmds.common().account(account_id))
             .await?;
 
         let queue_num_type = match account.profile_visibility() {
-            ProfileVisibility::PendingPrivate | ProfileVisibility::PendingPublic =>
-                NextQueueNumberType::InitialMediaModeration,
-            ProfileVisibility::Private | ProfileVisibility::Public =>
-                NextQueueNumberType::MediaModeration,
+            ProfileVisibility::PendingPrivate | ProfileVisibility::PendingPublic => {
+                NextQueueNumberType::InitialMediaModeration
+            }
+            ProfileVisibility::Private | ProfileVisibility::Public => {
+                NextQueueNumberType::MediaModeration
+            }
         };
 
         if let Some(current_request) = current_request {
@@ -48,11 +48,8 @@ impl WriteCommandsMedia<'_> {
                             .update_moderation_request(account_id, request)
                     })
                 }
-                ModerationRequestState::InProgress => {
-                    Err(DataError::NotAllowed.report())
-                }
-                ModerationRequestState::Accepted |
-                ModerationRequestState::Rejected => {
+                ModerationRequestState::InProgress => Err(DataError::NotAllowed.report()),
+                ModerationRequestState::Accepted | ModerationRequestState::Rejected => {
                     db_transaction!(self, move |mut cmds| {
                         cmds.media()
                             .moderation_request()
@@ -136,9 +133,7 @@ impl WriteCommandsMedia<'_> {
         new: SetProfileContent,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.media()
-                .media_content()
-                .update_profile_content(id, new)
+            cmds.media().media_content().update_profile_content(id, new)
         })
     }
 

@@ -1,7 +1,8 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ContentState, ModerationRequestContent, ModerationRequestInternal, ModerationRequestState, NewContentParams, NextQueueNumberType
+    AccountIdInternal, ContentId, ContentSlot, ContentState, ModerationRequestContent,
+    ModerationRequestInternal, ModerationRequestState, NewContentParams, NextQueueNumberType,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -165,7 +166,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
             .moderation_request(request_owner_account_id)?;
 
         match current_request {
-            Some(ModerationRequestInternal { state: ModerationRequestState::Waiting, ..}) => {
+            Some(ModerationRequestInternal {
+                state: ModerationRequestState::Waiting,
+                ..
+            }) => {
                 update(media_moderation_request.find(request_owner_account_id.as_db_id()))
                     .set((
                         content_id_0.eq(new_request.content0),
@@ -180,7 +184,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                     .change_context(DieselDatabaseError::Execute)?;
                 Ok(())
             }
-            _ => Err(DieselDatabaseError::NotAllowed.report())
+            _ => Err(DieselDatabaseError::NotAllowed.report()),
         }
     }
 
@@ -194,7 +198,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
             .moderation_request()
             .moderation_request(request_owner)?;
 
-        if let Some(ModerationRequestInternal { state: ModerationRequestState::Waiting, .. }) = current_request {
+        if let Some(ModerationRequestInternal {
+            state: ModerationRequestState::Waiting,
+            ..
+        }) = current_request
+        {
             self.delete_moderation_request(request_owner)
         } else {
             Err(DieselDatabaseError::NotAllowed.report())

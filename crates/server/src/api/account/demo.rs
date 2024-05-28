@@ -1,15 +1,19 @@
 use std::time::Duration;
 
 use axum::{extract::State, Router};
-use model::{AccessibleAccount, AccountId, DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult, SignInWithInfo};
+use model::{
+    AccessibleAccount, AccountId, DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId,
+    DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult,
+    SignInWithInfo,
+};
 use simple_backend::create_counters;
 
+use super::{login_impl, register_impl};
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, WriteData}, db_write,
+    app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, WriteData},
+    db_write,
 };
-
-use super::{login_impl, register_impl};
 
 // TODO(prod): Logout route for demo account?
 // TODO(prod): Use one route for login and change wording to user ID and
@@ -58,11 +62,15 @@ pub async fn post_demo_mode_confirm_login<S: DemoModeManagerProvider>(
     Json(info): Json<DemoModeConfirmLogin>,
 ) -> Result<Json<DemoModeConfirmLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_confirm_login.incr();
-    let result = state.demo_mode().stage1_login(info.password, info.token).await?;
+    let result = state
+        .demo_mode()
+        .stage1_login(info.password, info.token)
+        .await?;
     Ok(result.into())
 }
 
-pub const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mode_accessible_accounts";
+pub const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str =
+    "/account_api/demo_mode_accessible_accounts";
 
 // TODO: Return Unauthorized instead of internal server error on routes which
 // require DemoModeToken?
@@ -80,12 +88,17 @@ pub const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str = "/account_api/demo_mod
     ),
     security(),
 )]
-pub async fn post_demo_mode_accessible_accounts<S: DemoModeManagerProvider + ReadData + GetAccounts + GetConfig>(
+pub async fn post_demo_mode_accessible_accounts<
+    S: DemoModeManagerProvider + ReadData + GetAccounts + GetConfig,
+>(
     State(state): State<S>,
     Json(token): Json<DemoModeToken>,
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
     ACCOUNT.post_demo_mode_accessible_accounts.incr();
-    let result = state.demo_mode().accessible_accounts_if_token_valid(&token).await?;
+    let result = state
+        .demo_mode()
+        .accessible_accounts_if_token_valid(&token)
+        .await?;
     let result = result.with_extra_info(&state).await?;
     Ok(result.into())
 }
@@ -110,10 +123,11 @@ pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteD
 
     let demo_mode_id = state.demo_mode().demo_mode_token_exists(&token).await?;
 
-    let id = register_impl(&state, SignInWithInfo::default(), None)
-        .await?;
+    let id = register_impl(&state, SignInWithInfo::default(), None).await?;
 
-    db_write!(state, move |cmds| cmds.account().insert_demo_mode_related_account_ids(demo_mode_id, id.as_id()))?;
+    db_write!(state, move |cmds| cmds
+        .account()
+        .insert_demo_mode_related_account_ids(demo_mode_id, id.as_id()))?;
 
     Ok(id.as_id().into())
 }
@@ -130,16 +144,20 @@ pub const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_l
     ),
     security(),
 )]
-pub async fn post_demo_mode_login_to_account<S: DemoModeManagerProvider + ReadData + WriteData + GetAccounts>(
+pub async fn post_demo_mode_login_to_account<
+    S: DemoModeManagerProvider + ReadData + WriteData + GetAccounts,
+>(
     State(state): State<S>,
     Json(info): Json<DemoModeLoginToAccount>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login_to_account.incr();
 
-    let _demo_mode_id: DemoModeId = state.demo_mode().demo_mode_token_exists(&info.token).await?;
-
-    let result = login_impl(info.account_id, state)
+    let _demo_mode_id: DemoModeId = state
+        .demo_mode()
+        .demo_mode_token_exists(&info.token)
         .await?;
+
+    let result = login_impl(info.account_id, state).await?;
 
     Ok(result.into())
 }
@@ -150,11 +168,23 @@ pub fn demo_mode_router(s: crate::app::S) -> Router {
     use crate::app::S;
 
     Router::new()
-        .route(PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS, post(post_demo_mode_accessible_accounts::<S>))
+        .route(
+            PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS,
+            post(post_demo_mode_accessible_accounts::<S>),
+        )
         .route(PATH_POST_DEMO_MODE_LOGIN, post(post_demo_mode_login::<S>))
-        .route(PATH_POST_DEMO_MODE_CONFIRM_LOGIN, post(post_demo_mode_confirm_login::<S>))
-        .route(PATH_POST_DEMO_MODE_REGISTER_ACCOUNT, post(post_demo_mode_register_account::<S>))
-        .route(PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT, post(post_demo_mode_login_to_account::<S>))
+        .route(
+            PATH_POST_DEMO_MODE_CONFIRM_LOGIN,
+            post(post_demo_mode_confirm_login::<S>),
+        )
+        .route(
+            PATH_POST_DEMO_MODE_REGISTER_ACCOUNT,
+            post(post_demo_mode_register_account::<S>),
+        )
+        .route(
+            PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT,
+            post(post_demo_mode_login_to_account::<S>),
+        )
         .with_state(s)
 }
 

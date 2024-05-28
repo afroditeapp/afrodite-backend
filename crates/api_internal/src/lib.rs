@@ -10,8 +10,7 @@ use api_client::apis::media_internal_api::{self};
 pub use api_client::apis::{configuration::Configuration, Error};
 use model::AccountId;
 
-pub use crate::
-    media_internal_api::InternalGetCheckModerationRequestForAccountError;
+pub use crate::media_internal_api::InternalGetCheckModerationRequestForAccountError;
 
 /// Wrapper for server internal API with correct model types.
 pub struct InternalApi;

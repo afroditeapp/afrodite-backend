@@ -1,6 +1,4 @@
-use api_client::{
-    apis::account_api::{get_account_state},
-};
+use api_client::apis::account_api::get_account_state;
 use test_mode_macro::server_test;
 
 use crate::{
@@ -9,7 +7,9 @@ use crate::{
 };
 
 #[server_test]
-async fn admin_rights_granting_only_grants_rights_once_by_default(context: TestContext) -> TestResult {
+async fn admin_rights_granting_only_grants_rights_once_by_default(
+    context: TestContext,
+) -> TestResult {
     let account1 = context.new_admin().await?;
     assert(
         get_account_state(account1.account().account_api())

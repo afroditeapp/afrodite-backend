@@ -1,16 +1,33 @@
 use std::{mem, sync::Arc};
 
-use api_client::{apis::{configuration::Configuration, media_admin_api, profile_api::{post_profile, post_search_age_range, post_search_groups}}, models::{AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate, SearchGroups}};
+use api_client::{
+    apis::{
+        configuration::Configuration,
+        media_admin_api,
+        profile_api::{post_profile, post_search_age_range, post_search_groups},
+    },
+    models::{
+        AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate,
+        SearchGroups,
+    },
+};
 use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
 use error_stack::{Result, ResultExt};
 use tokio::sync::Mutex;
 
 use crate::{
-    action_array, bot::{
+    action_array,
+    bot::{
         actions::{
-            account::{CompleteAccountSetup, Login, Register, SetAccountSetup}, admin::ModerateMediaModerationRequest, media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, BotAction
-        }, AccountConnections, BotState
-    }, client::ApiClient, TestError
+            account::{CompleteAccountSetup, Login, Register, SetAccountSetup},
+            admin::ModerateMediaModerationRequest,
+            media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
+            BotAction,
+        },
+        AccountConnections, BotState,
+    },
+    client::ApiClient,
+    TestError,
 };
 
 #[derive(Debug)]
@@ -62,7 +79,9 @@ impl TestContext {
                     security_content_slot_i: Some(0),
                     content_0_slot_i: Some(1),
                 },
-                MakeModerationRequest { slot_0_secure_capture: true },
+                MakeModerationRequest {
+                    slot_0_secure_capture: true
+                },
                 CompleteAccountSetup,
             ])
             .await?;
@@ -84,7 +103,8 @@ impl TestContext {
             name: name.to_string(),
             profile_text: format!(""),
         };
-        post_profile(account.profile_api(), update).await
+        post_profile(account.profile_api(), update)
+            .await
             .change_context(TestError::ApiRequest)?;
 
         let range = ProfileSearchAgeRange {
@@ -111,8 +131,9 @@ impl TestContext {
             SearchGroups {
                 man_for_woman: Some(true),
                 ..SearchGroups::default()
-            }
-        ).await
+            },
+        )
+        .await
     }
 
     pub async fn new_man_4_man_18_years(&self) -> Result<Account, TestError> {
@@ -124,8 +145,9 @@ impl TestContext {
             SearchGroups {
                 man_for_man: Some(true),
                 ..SearchGroups::default()
-            }
-        ).await
+            },
+        )
+        .await
     }
 
     pub async fn new_woman_18_years(&self) -> Result<Account, TestError> {
@@ -137,8 +159,9 @@ impl TestContext {
             SearchGroups {
                 woman_for_man: Some(true),
                 ..SearchGroups::default()
-            }
-        ).await
+            },
+        )
+        .await
     }
 
     /// Admin account with Normal state.
@@ -153,7 +176,9 @@ impl TestContext {
                     security_content_slot_i: Some(0),
                     content_0_slot_i: Some(1),
                 },
-                MakeModerationRequest { slot_0_secure_capture: true },
+                MakeModerationRequest {
+                    slot_0_secure_capture: true
+                },
                 CompleteAccountSetup,
             ])
             .await?;
@@ -250,11 +275,13 @@ impl Account {
     }
 
     /// Wait event if event sending enabled or timeout after 5 seconds
-    pub async fn wait_event(&mut self, check: impl Fn(&EventToClient) -> bool) -> Result<(), TestError> {
+    pub async fn wait_event(
+        &mut self,
+        check: impl Fn(&EventToClient) -> bool,
+    ) -> Result<(), TestError> {
         self.bot_state.wait_event(check).await
     }
 }
-
 
 pub struct Admin {
     account: Account,
@@ -270,19 +297,23 @@ impl Admin {
     }
 
     pub async fn accept_initial_content_moderation_requests(&mut self) -> Result<(), TestError> {
-        self.accept_content_moderation_requests(ModerationQueueType::InitialMediaModeration).await
+        self.accept_content_moderation_requests(ModerationQueueType::InitialMediaModeration)
+            .await
     }
 
-    pub async fn accept_content_moderation_requests(&mut self, queue: ModerationQueueType) -> Result<(), TestError> {
+    pub async fn accept_content_moderation_requests(
+        &mut self,
+        queue: ModerationQueueType,
+    ) -> Result<(), TestError> {
         loop {
-            self.account.run(ModerateMediaModerationRequest::from_queue(queue)).await?;
+            self.account
+                .run(ModerateMediaModerationRequest::from_queue(queue))
+                .await?;
 
-            let list = media_admin_api::patch_moderation_request_list(
-                self.account.media_api(),
-                queue,
-            )
-                .await
-                .change_context(TestError::ApiRequest)?;
+            let list =
+                media_admin_api::patch_moderation_request_list(self.account.media_api(), queue)
+                    .await
+                    .change_context(TestError::ApiRequest)?;
 
             if list.list.is_empty() {
                 break;

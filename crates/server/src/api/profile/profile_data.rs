@@ -2,7 +2,10 @@ use axum::{
     extract::{Path, State},
     Extension, Router,
 };
-use model::{AccountId, AccountIdInternal, Profile, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups};
+use model::{
+    AccountId, AccountIdInternal, Profile, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated,
+    ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups,
+};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
@@ -10,7 +13,9 @@ use crate::{
     api::{
         db_write,
         utils::{Json, StatusCode},
-    }, app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, data::DataError
+    },
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
+    data::DataError,
 };
 
 // TODO: Add timeout for database commands
@@ -70,7 +75,13 @@ pub async fn get_profile<
             .map(|p| p.into());
     }
 
-    let visibility = state.read().common().account(requested_profile).await?.profile_visibility().is_currently_public();
+    let visibility = state
+        .read()
+        .common()
+        .account(requested_profile)
+        .await?
+        .profile_visibility()
+        .is_currently_public();
 
     if visibility {
         state
@@ -128,7 +139,6 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
     db_write!(state, move |cmds| cmds.profile().profile(account_id, new))
 }
 
-
 pub const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";
 
 /// Get account's current search groups
@@ -143,9 +153,7 @@ pub const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_search_groups<
-    S: ReadData,
->(
+pub async fn get_search_groups<S: ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<SearchGroups>, StatusCode> {
@@ -153,7 +161,6 @@ pub async fn get_search_groups<
     let profile_state = state.read().profile().profile_state(account_id).await?;
     Ok(Json(profile_state.search_group_flags.into()))
 }
-
 
 pub const PATH_POST_SEARCH_GROUPS: &str = "/profile_api/search_groups";
 
@@ -170,9 +177,7 @@ pub const PATH_POST_SEARCH_GROUPS: &str = "/profile_api/search_groups";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_search_groups<
-    S: WriteData,
->(
+pub async fn post_search_groups<S: WriteData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(search_groups): Json<SearchGroups>,
@@ -183,9 +188,10 @@ pub async fn post_search_groups<
         .try_into()
         .into_error_string(DataError::NotAllowed)?;
 
-    db_write!(state, move |cmds| cmds.profile().update_search_groups(account_id, validated))
+    db_write!(state, move |cmds| cmds
+        .profile()
+        .update_search_groups(account_id, validated))
 }
-
 
 pub const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 
@@ -200,9 +206,7 @@ pub const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_search_age_range<
-    S: ReadData,
->(
+pub async fn get_search_age_range<S: ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ProfileSearchAgeRange>, StatusCode> {
@@ -225,9 +229,7 @@ pub const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_search_age_range<
-    S: WriteData,
->(
+pub async fn post_search_age_range<S: WriteData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(search_age_range): Json<ProfileSearchAgeRange>,
@@ -238,7 +240,9 @@ pub async fn post_search_age_range<
         .try_into()
         .into_error_string(DataError::NotAllowed)?;
 
-    db_write!(state, move |cmds| cmds.profile().update_search_age_range(account_id, validated))
+    db_write!(state, move |cmds| cmds
+        .profile()
+        .update_search_age_range(account_id, validated))
 }
 
 pub fn profile_data_router(s: crate::app::S) -> Router {

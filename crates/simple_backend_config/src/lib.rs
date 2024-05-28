@@ -7,13 +7,17 @@ pub mod args;
 pub mod file;
 
 use std::{
-    fs, io::BufReader, path::{Path, PathBuf}, sync::{atomic::AtomicBool, Arc}, vec
+    fs,
+    io::BufReader,
+    path::{Path, PathBuf},
+    sync::{atomic::AtomicBool, Arc},
+    vec,
 };
 
 use error_stack::{Result, ResultExt};
 use file::{DatabaseInfo, FirebaseCloudMessagingConfig, TileMapConfig};
 use reqwest::Url;
-use rustls_pemfile::{certs};
+use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{
@@ -189,7 +193,9 @@ pub fn get_config(
     };
 
     if let Some(internal_api_socket) = file_config.socket.internal_api {
-        if !file_config.socket.internal_api_allow_non_localhost_ip && !internal_api_socket.ip().is_loopback() {
+        if !file_config.socket.internal_api_allow_non_localhost_ip
+            && !internal_api_socket.ip().is_loopback()
+        {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("By default, internal API socket config only allows an localhost address. Use config 'internal_api_allow_non_localhost_ip = true' to allow other addresses.");
         }
@@ -197,8 +203,9 @@ pub fn get_config(
 
     if let Some(config) = file_config.firebase_cloud_messaging.as_ref() {
         if !config.service_account_key_path.exists() {
-            return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("Firebase Cloud Messaging service account key file does not exist");
+            return Err(GetConfigError::InvalidConfiguration).attach_printable(
+                "Firebase Cloud Messaging service account key file does not exist",
+            );
         }
     }
 
@@ -219,21 +226,32 @@ pub fn get_config(
     };
 
     if public_api_tls_config.is_some() && file_config.lets_encrypt.is_some() {
-        return Err(GetConfigError::TlsConfigMissing)
-            .attach_printable("Only either public API TLS certificates or Let's Encrypt should be configured");
+        return Err(GetConfigError::TlsConfigMissing).attach_printable(
+            "Only either public API TLS certificates or Let's Encrypt should be configured",
+        );
     }
 
-    if public_api_tls_config.is_none() && file_config.lets_encrypt.is_none() && !file_config.debug.unwrap_or_default() {
-        return Err(GetConfigError::TlsConfigMissing)
-            .attach_printable("TLS certificates or Let's Encrypt must be configured when debug mode is false");
+    if public_api_tls_config.is_none()
+        && file_config.lets_encrypt.is_none()
+        && !file_config.debug.unwrap_or_default()
+    {
+        return Err(GetConfigError::TlsConfigMissing).attach_printable(
+            "TLS certificates or Let's Encrypt must be configured when debug mode is false",
+        );
     }
 
     let internal_api_root_certificate = match file_config.tls.clone() {
-        Some(tls_config) => Some(load_root_certificate(&tls_config.internal_api_root_certificate)?),
+        Some(tls_config) => Some(load_root_certificate(
+            &tls_config.internal_api_root_certificate,
+        )?),
         None => None,
     };
 
-    let manager_api_root_certificate = match file_config.manager.as_ref().and_then(|v| v.root_certificate.as_ref()) {
+    let manager_api_root_certificate = match file_config
+        .manager
+        .as_ref()
+        .and_then(|v| v.root_certificate.as_ref())
+    {
         Some(cert_path) => Some(load_root_certificate(cert_path)?),
         None => None,
     };
@@ -243,8 +261,9 @@ pub fn get_config(
             fs::create_dir_all(&lets_encrypt_config.cache_dir)
                 .change_context(GetConfigError::DirCreationError)?
         } else if !lets_encrypt_config.cache_dir.is_dir() {
-            return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("Let's Encrypt cache directory config does not point to a directory");
+            return Err(GetConfigError::InvalidConfiguration).attach_printable(
+                "Let's Encrypt cache directory config does not point to a directory",
+            );
         }
 
         for d in &lets_encrypt_config.domains {
@@ -259,7 +278,12 @@ pub fn get_config(
                 .attach_printable("Let's Encrypt email is empty");
         }
 
-        if lets_encrypt_config.cache_dir.to_string_lossy().trim().is_empty() {
+        if lets_encrypt_config
+            .cache_dir
+            .to_string_lossy()
+            .trim()
+            .is_empty()
+        {
             return Err(GetConfigError::InvalidConfiguration)
                 .attach_printable("Let's Encrypt cache directory config is empty");
         }

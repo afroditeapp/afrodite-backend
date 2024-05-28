@@ -1,7 +1,8 @@
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId, ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType
+    AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId,
+    ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
@@ -95,8 +96,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 .into_db_error((target_id, moderator_id))?;
         }
 
-        let media_state =
-            self.read().media().get_media_state(request_creator_id)?;
+        let media_state = self.read().media().get_media_state(request_creator_id)?;
 
         let queue_type = if media_state.current_moderation_request_is_initial() {
             NextQueueNumberType::InitialMediaModeration
@@ -118,10 +118,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 self.cmds()
                     .media_admin()
                     .media_content()
-                    .update_content_state(
-                        c,
-                        ContentState::InModeration,
-                    )?;
+                    .update_content_state(c, ContentState::InModeration)?;
             }
         }
 
@@ -191,10 +188,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 self.cmds()
                     .media_admin()
                     .media_content()
-                    .update_content_state(
-                        c,
-                        new_content_state,
-                    )?;
+                    .update_content_state(c, new_content_state)?;
             }
         }
 
@@ -209,14 +203,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         }
 
         if new_content_state == ContentState::ModeratedAsAccepted {
-            let mut media_state =
-                self.read().media().get_media_state(moderation_request_owner)?;
+            let mut media_state = self
+                .read()
+                .media()
+                .get_media_state(moderation_request_owner)?;
             if media_state.current_moderation_request_is_initial() {
                 media_state.initial_moderation_request_accepted = true;
-                self.cmds().media().update_media_state(moderation_request_owner, media_state)?;
+                self.cmds()
+                    .media()
+                    .update_media_state(moderation_request_owner, media_state)?;
 
                 // Move pending content to current content.
-                self.cmds().media().media_content().move_pending_content_to_current_content(moderation_request_owner)?;
+                self.cmds()
+                    .media()
+                    .media_content()
+                    .move_pending_content_to_current_content(moderation_request_owner)?;
 
                 return Ok(Some(InitialModerationRequestIsNowAccepted));
             }

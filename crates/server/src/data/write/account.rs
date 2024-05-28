@@ -1,10 +1,14 @@
 use model::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, EmailAddress, ProfileVisibility
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup,
+    AccountState, Capabilities, DemoModeId, EmailAddress, ProfileVisibility,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::db_transaction;
-use crate::{data::{cache::CacheError, DataError, IntoDataError}, result::Result};
+use crate::{
+    data::{cache::CacheError, DataError, IntoDataError},
+    result::Result,
+};
 
 define_write_commands!(WriteCommandsAccount);
 
@@ -28,9 +32,15 @@ impl WriteCommandsAccount<'_> {
 
         // Other related state updating
 
-        if self.config().components().profile &&
-            current_account.profile_visibility().is_currently_public() != new_account.profile_visibility().is_currently_public() {
-            self.profile_update_location_index_visibility(id, new_account.profile_visibility().is_currently_public()).await?;
+        if self.config().components().profile
+            && current_account.profile_visibility().is_currently_public()
+                != new_account.profile_visibility().is_currently_public()
+        {
+            self.profile_update_location_index_visibility(
+                id,
+                new_account.profile_visibility().is_currently_public(),
+            )
+            .await?;
         }
 
         Ok(())
@@ -45,21 +55,39 @@ impl WriteCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
         increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
-        modify_action: impl FnOnce(&mut AccountState, &mut Capabilities, &mut ProfileVisibility) -> error_stack::Result<(), DieselDatabaseError> + Send + 'static,
+        modify_action: impl FnOnce(
+                &mut AccountState,
+                &mut Capabilities,
+                &mut ProfileVisibility,
+            ) -> error_stack::Result<(), DieselDatabaseError>
+            + Send
+            + 'static,
     ) -> Result<Account, DataError> {
-        let current_account = self.db_read(move |mut cmds| cmds.common().account(id)).await?;
+        let current_account = self
+            .db_read(move |mut cmds| cmds.common().account(id))
+            .await?;
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
-            let account = cmds.common().state().update_syncable_account_data(id, a, modify_action)?;
+            let account =
+                cmds.common()
+                    .state()
+                    .update_syncable_account_data(id, a, modify_action)?;
 
             if increment_admin_access_granted.is_some() {
-                cmds.account().data().upsert_increment_admin_access_granted_count()?;
+                cmds.account()
+                    .data()
+                    .upsert_increment_admin_access_granted_count()?;
             }
 
             Ok(account)
         })?;
 
-        self.internal_handle_new_account_data_after_db_modification(id, &current_account, &new_account).await?;
+        self.internal_handle_new_account_data_after_db_modification(
+            id,
+            &current_account,
+            &new_account,
+        )
+        .await?;
 
         Ok(new_account)
     }
@@ -84,10 +112,7 @@ impl WriteCommandsAccount<'_> {
             .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
-                Ok((
-                    p.location.current_position,
-                    p.location_index_profile_data(),
-                ))
+                Ok((p.location.current_position, p.location_index_profile_data()))
             })
             .await
             .into_data_error(id)?;
@@ -135,7 +160,9 @@ impl WriteCommandsAccount<'_> {
         account_id: AccountId,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.account().demo_mode().insert_related_account_id(id, account_id)
+            cmds.account()
+                .demo_mode()
+                .insert_related_account_id(id, account_id)
         })
     }
 

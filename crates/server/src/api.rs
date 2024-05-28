@@ -319,9 +319,8 @@ pub use db_write;
 macro_rules! db_write_multiple {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
-            let r: $crate::result::Result<_, $crate::data::DataError> = $state
-                .write(move |$cmds| async move { ($commands) })
-                .await;
+            let r: $crate::result::Result<_, $crate::data::DataError> =
+                $state.write(move |$cmds| async move { ($commands) }).await;
             r
         }
         .await;

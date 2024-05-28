@@ -1,5 +1,8 @@
 use database::current::write::media_admin::InitialModerationRequestIsNowAccepted;
-use model::{Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType, ProfileVisibility};
+use model::{
+    Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType,
+    ProfileVisibility,
+};
 
 use super::db_transaction;
 use crate::{data::DataError, result::Result};
@@ -45,11 +48,10 @@ impl WriteCommandsMediaAdmin<'_> {
     ) -> Result<UpdateModerationInfo, DataError> {
         let account_component_enabled = self.config().components().account;
         let info = db_transaction!(self, move |mut cmds| {
-            let initial_request_accepted_status = cmds.media_admin().moderation().update_moderation(
-                moderator_id,
-                moderation_request_owner,
-                result,
-            )?;
+            let initial_request_accepted_status = cmds
+                .media_admin()
+                .moderation()
+                .update_moderation(moderator_id, moderation_request_owner, result)?;
 
             // If needed, do profile visibility update here to avoid broken
             // state if server crashes right after current transaction.
@@ -63,10 +65,14 @@ impl WriteCommandsMediaAdmin<'_> {
                     ProfileVisibility::PendingPublic => ProfileVisibility::Public,
                     ProfileVisibility::PendingPrivate => ProfileVisibility::Private,
                 };
-                let new_account = cmds.common().state().update_syncable_account_data(moderation_request_owner, current_account.clone(), move |_, _, visibility| {
-                    *visibility = new_visibility;
-                    Ok(())
-                })?;
+                let new_account = cmds.common().state().update_syncable_account_data(
+                    moderation_request_owner,
+                    current_account.clone(),
+                    move |_, _, visibility| {
+                        *visibility = new_visibility;
+                        Ok(())
+                    },
+                )?;
 
                 Ok(UpdateModerationInfo {
                     new_visibility: Some(new_visibility),
@@ -74,7 +80,7 @@ impl WriteCommandsMediaAdmin<'_> {
                     cache_should_be_updated: Some(CurrentAndNewAccount {
                         id: moderation_request_owner,
                         current: current_account.clone(),
-                        new: new_account
+                        new: new_account,
                     }),
                 })
             } else {
@@ -87,11 +93,14 @@ impl WriteCommandsMediaAdmin<'_> {
         })?;
 
         if let Some(accounts) = &info.cache_should_be_updated {
-            self.cmds.account().internal_handle_new_account_data_after_db_modification(
-                accounts.id,
-                &accounts.current,
-                &accounts.new
-            ).await?;
+            self.cmds
+                .account()
+                .internal_handle_new_account_data_after_db_modification(
+                    accounts.id,
+                    &accounts.current,
+                    &accounts.new,
+                )
+                .await?;
         }
 
         Ok(info)

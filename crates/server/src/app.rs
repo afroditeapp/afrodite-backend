@@ -19,12 +19,17 @@ use super::{
         read::ReadCommands,
         utils::{AccessTokenManager, AccountIdManager},
         write_commands::{WriteCmds, WriteCommandRunnerHandle},
-        DataError, RouterDatabaseReadHandle
+        DataError, RouterDatabaseReadHandle,
     },
     internal_api::InternalApiClient,
 };
 use crate::{
-    api::{self, account::demo_mode_router}, content_processing::ContentProcessingManagerData, data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, demo::DemoModeManager, event::EventManagerWithCacheReference, push_notifications::PushNotificationSender,
+    api::{self, account::demo_mode_router},
+    content_processing::ContentProcessingManagerData,
+    data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+    demo::DemoModeManager,
+    event::EventManagerWithCacheReference,
+    push_notifications::PushNotificationSender,
 };
 
 pub mod routes_connected;
@@ -347,8 +352,9 @@ impl App {
     }
 
     pub fn create_chat_server_router(&self) -> Router {
-        let public = Router::new()
-            .merge(api::chat::push_notifications::push_notification_router_public(self.state.clone()));
+        let public = Router::new().merge(
+            api::chat::push_notifications::push_notification_router_public(self.state.clone()),
+        );
 
         public.merge(ConnectedApp::new(self.state.clone()).private_chat_server_router())
     }

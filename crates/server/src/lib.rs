@@ -8,14 +8,14 @@ pub mod app;
 pub mod bot;
 pub mod content_processing;
 pub mod data;
+pub mod demo;
 pub mod event;
 pub mod internal_api;
 pub mod perf;
-pub mod result;
-pub mod utils;
-pub mod startup_tasks;
-pub mod demo;
 pub mod push_notifications;
+pub mod result;
+pub mod startup_tasks;
+pub mod utils;
 
 use std::sync::Arc;
 
@@ -148,7 +148,8 @@ impl BusinessLogic for PihkaBusinessLogic {
         media_backup_handle: MediaBackupHandle,
         server_quit_watcher: ServerQuitWatcher,
     ) -> SimpleBackendAppState<Self::AppState> {
-        let (push_notification_sender, push_notification_receiver) = PushNotificationManager::channel();
+        let (push_notification_sender, push_notification_receiver) =
+            PushNotificationManager::channel();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
@@ -165,8 +166,9 @@ impl BusinessLogic for PihkaBusinessLogic {
         let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
         let content_processing = Arc::new(content_processing);
 
-        let demo_mode = DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
-            .expect("Demo mode manager init failed");
+        let demo_mode =
+            DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
+                .expect("Demo mode manager init failed");
         let app_state = App::create_app_state(
             router_database_handle,
             write_cmd_runner_handle,
@@ -190,7 +192,8 @@ impl BusinessLogic for PihkaBusinessLogic {
             server_quit_watcher.resubscribe(),
             state.clone(),
             push_notification_receiver,
-        ).await;
+        )
+        .await;
 
         StartupTasks::new(state.clone())
             .run_and_wait_completion()

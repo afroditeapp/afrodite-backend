@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use error_stack::{Result};
+use error_stack::Result;
 use model::{AccountIdInternal, Capabilities, SharedStateRaw};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 

@@ -6,7 +6,8 @@ use std::{
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        Components, ConfigFile, EmailAddress, ExternalServices, GrantAdminAccessConfig, InternalApiConfig, LocationConfig, CONFIG_FILE_NAME
+        Components, ConfigFile, EmailAddress, ExternalServices, GrantAdminAccessConfig,
+        InternalApiConfig, LocationConfig, CONFIG_FILE_NAME,
     },
     Config,
 };
@@ -105,13 +106,16 @@ impl ServerManager {
             },
             external_services.clone(),
         );
-        let mut servers = vec![ServerInstance::new(
-            dir.clone(),
-            &all_config,
-            account_config,
-            &config,
-            settings.clone(),
-        ).await];
+        let mut servers = vec![
+            ServerInstance::new(
+                dir.clone(),
+                &all_config,
+                account_config,
+                &config,
+                settings.clone(),
+            )
+            .await,
+        ];
 
         if config.server.microservice_media {
             let server_config = new_config(
@@ -124,13 +128,16 @@ impl ServerManager {
                 },
                 external_services.clone(),
             );
-            servers.push(ServerInstance::new(
-                dir.clone(),
-                &all_config,
-                server_config,
-                &config,
-                settings.clone(),
-            ).await);
+            servers.push(
+                ServerInstance::new(
+                    dir.clone(),
+                    &all_config,
+                    server_config,
+                    &config,
+                    settings.clone(),
+                )
+                .await,
+            );
         }
 
         if config.server.microservice_profile {
@@ -144,13 +151,16 @@ impl ServerManager {
                 },
                 external_services,
             );
-            servers.push(ServerInstance::new(
-                dir.clone(),
-                &all_config,
-                server_config,
-                &config,
-                settings.clone(),
-            ).await);
+            servers.push(
+                ServerInstance::new(
+                    dir.clone(),
+                    &all_config,
+                    server_config,
+                    &config,
+                    settings.clone(),
+                )
+                .await,
+            );
         }
 
         // TODO: Chat microservice
@@ -304,9 +314,7 @@ impl ServerInstance {
 
         let mut tokio_command: tokio::process::Command = command.into();
 
-        tokio_command
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
+        tokio_command.stdout(Stdio::piped()).stderr(Stdio::piped());
 
         let mut server = tokio_command.kill_on_drop(true).spawn().unwrap();
 
@@ -327,12 +335,9 @@ impl ServerInstance {
                 let mut line_stream = tokio::io::BufReader::new(stream).lines();
                 loop {
                     let (line, stream_ended) = match line_stream.next_line().await {
-                        Ok(Some(line)) =>
-                            (line, false),
-                        Ok(None) =>
-                            (format!("Server {stream_name} closed"), true),
-                        Err(e) =>
-                            (format!("Server {stream_name} error: {e:?}"), true),
+                        Ok(Some(line)) => (line, false),
+                        Ok(None) => (format!("Server {stream_name} closed"), true),
+                        Err(e) => (format!("Server {stream_name} error: {e:?}"), true),
                     };
 
                     if let Some(sender) = start_sender.take() {
@@ -363,13 +368,8 @@ impl ServerInstance {
             settings.log_to_memory,
             Some(start_sender),
         );
-        let stderr_task = create_read_lines_task(
-            stderr,
-            "stderr",
-            logs.clone(),
-            settings.log_to_memory,
-            None,
-        );
+        let stderr_task =
+            create_read_lines_task(stderr, "stderr", logs.clone(), settings.log_to_memory, None);
 
         tokio::select! {
             _ = start_receiver => (),

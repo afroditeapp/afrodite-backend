@@ -1,4 +1,7 @@
-use model::{AccountIdInternal, Location, Profile, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal};
+use model::{
+    AccountIdInternal, Location, Profile, ProfileAttributeFilterList, ProfileInternal,
+    ProfileStateInternal,
+};
 
 use crate::{
     data::{DataError, IntoDataError},
@@ -8,7 +11,10 @@ use crate::{
 define_read_commands!(ReadCommandsProfile);
 
 impl ReadCommandsProfile<'_> {
-    pub async fn profile_internal(&self, id: AccountIdInternal) -> Result<ProfileInternal, DataError> {
+    pub async fn profile_internal(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ProfileInternal, DataError> {
         self.read_cache(id, move |cache| {
             cache.profile.as_ref().map(|data| data.data.clone())
         })
@@ -18,11 +24,10 @@ impl ReadCommandsProfile<'_> {
 
     pub async fn profile(&self, id: AccountIdInternal) -> Result<Profile, DataError> {
         self.read_cache(id, move |cache| {
-            cache.profile
+            cache
+                .profile
                 .as_ref()
-                .map(|data|
-                    Profile::new(data.data.clone(), data.attributes.attributes().clone())
-                )
+                .map(|data| Profile::new(data.data.clone(), data.attributes.attributes().clone()))
         })
         .await?
         .ok_or(DataError::NotFound.report())
@@ -60,8 +65,8 @@ impl ReadCommandsProfile<'_> {
             let filters = cmds.profile().data().profile_attribute_filters(id)?;
             Ok(ProfileAttributeFilterList { filters })
         })
-            .await
-            .into_error()
+        .await
+        .into_error()
     }
 
     pub async fn benchmark_read_profile_directly_from_database(

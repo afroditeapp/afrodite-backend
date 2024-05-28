@@ -390,7 +390,9 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
         security_content_slot_i: Some(0),
         content_0_slot_i: Some(1),
     },
-    MakeModerationRequest { slot_0_secure_capture: true },
+    MakeModerationRequest {
+        slot_0_secure_capture: true
+    },
     CompleteAccountSetup,
     AssertAccountState(AccountState::Normal),
 ];

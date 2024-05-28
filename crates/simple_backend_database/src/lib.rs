@@ -11,7 +11,6 @@ use std::fmt::Debug;
 use diesel_db::{
     DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle, DieselWriteHandle,
 };
-
 use diesel_migrations::EmbeddedMigrations;
 use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
@@ -107,12 +106,8 @@ impl DatabaseHandleCreator {
                 .await
                 .change_context(DataError::Diesel)?;
 
-        let read = DbReadHandle {
-            diesel_read,
-        };
-        let close = DbReadCloseHandle {
-            diesel_read_close,
-        };
+        let read = DbReadHandle { diesel_read };
+        let close = DbReadCloseHandle { diesel_read_close };
 
         Ok((read, close))
     }
@@ -143,12 +138,8 @@ impl DatabaseHandleCreator {
                 .await
                 .change_context(DataError::Diesel)?;
 
-        let write = DbWriteHandle {
-            diesel_write,
-        };
-        let close = DbWriteCloseHandle {
-            diesel_write_close,
-        };
+        let write = DbWriteHandle { diesel_write };
+        let close = DbWriteCloseHandle { diesel_write_close };
 
         Ok((write, close))
     }

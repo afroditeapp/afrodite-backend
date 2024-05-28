@@ -16,36 +16,40 @@ pub struct BotConfigFile {
 
 impl BotConfigFile {
     pub fn load(file: impl AsRef<Path>) -> Result<BotConfigFile, ConfigFileError> {
-        let config_content = std::fs::read_to_string(file)
-            .change_context(ConfigFileError::LoadConfig)?;
-        let config: BotConfigFile = toml::from_str(&config_content)
-            .change_context(ConfigFileError::LoadConfig)?;
+        let config_content =
+            std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
+        let config: BotConfigFile =
+            toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
         let mut ids = std::collections::HashSet::<u16>::new();
         for bot in &config.bot {
             if let Some(age) = bot.age {
                 if age < 18 || age > 99 {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(
-                        format!("Bot ID {} age must be between 18 and 99", bot.id),
-                    );
+                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                        "Bot ID {} age must be between 18 and 99",
+                        bot.id
+                    ));
                 }
             }
 
             if ids.contains(&bot.id) {
-                return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    format!("Bot ID {} is defined more than once", bot.id),
-                );
+                return Err(ConfigFileError::InvalidConfig)
+                    .attach_printable(format!("Bot ID {} is defined more than once", bot.id));
             }
 
             if bot.image.is_some() {
                 match bot.img_dir_gender() {
-                    Gender::Man => if config.man_image_dir.is_none() {
-                        return Err(ConfigFileError::InvalidConfig)
+                    Gender::Man => {
+                        if config.man_image_dir.is_none() {
+                            return Err(ConfigFileError::InvalidConfig)
                             .attach_printable(format!("Bot ID {} has image file name configured but man image directory is not configured", bot.id));
+                        }
                     }
-                    Gender::Woman => if config.woman_image_dir.is_none() {
-                        return Err(ConfigFileError::InvalidConfig)
+                    Gender::Woman => {
+                        if config.woman_image_dir.is_none() {
+                            return Err(ConfigFileError::InvalidConfig)
                             .attach_printable(format!("Bot ID {} has image file name configured but woman image directory is not configured", bot.id));
+                        }
                     }
                 }
             }
@@ -67,7 +71,11 @@ impl BotConfigFile {
     }
 }
 
-fn check_imgs_exist(config: &BotConfigFile, img_dir: &Path, gender: Gender) -> Result<(), ConfigFileError> {
+fn check_imgs_exist(
+    config: &BotConfigFile,
+    img_dir: &Path,
+    gender: Gender,
+) -> Result<(), ConfigFileError> {
     for bot in &config.bot {
         if bot.img_dir_gender() != gender {
             continue;
@@ -76,9 +84,8 @@ fn check_imgs_exist(config: &BotConfigFile, img_dir: &Path, gender: Gender) -> R
         if let Some(img) = &bot.image {
             let img_path = img_dir.join(img);
             if !img_path.is_file() {
-                return Err(ConfigFileError::InvalidConfig).attach_printable(
-                    format!("Image file {:?} does not exist", img_path),
-                );
+                return Err(ConfigFileError::InvalidConfig)
+                    .attach_printable(format!("Image file {:?} does not exist", img_path));
             }
         }
     }

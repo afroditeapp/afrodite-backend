@@ -1,12 +1,16 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility};
+use model::{
+    AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
+};
 use simple_backend::create_counters;
 
 use crate::{
     api::{
-        db_write, db_write_multiple, utils::{Json, StatusCode}
+        db_write, db_write_multiple,
+        utils::{Json, StatusCode},
     },
-    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
+    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
+    internal_api,
 };
 
 pub const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
@@ -84,9 +88,7 @@ pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_setting_profile_visiblity<
-    S: GetInternalApi + GetConfig + WriteData,
->(
+pub async fn put_setting_profile_visiblity<S: GetInternalApi + GetConfig + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(new_value): Json<BooleanSetting>,
@@ -111,14 +113,12 @@ pub async fn put_setting_profile_visiblity<
                     }
                 };
                 Ok(())
-            }).await?;
-        cmds
-            .events()
+            })
+            .await?;
+        cmds.events()
             .send_connected_event(
                 id.uuid,
-                EventToClientInternal::ProfileVisibilityChanged(
-                    new_account.profile_visibility()
-                ),
+                EventToClientInternal::ProfileVisibilityChanged(new_account.profile_visibility()),
             )
             .await?;
         Ok(new_account)

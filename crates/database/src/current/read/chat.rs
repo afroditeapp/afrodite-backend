@@ -1,9 +1,8 @@
-use diesel::SelectableHelper;
+use diesel::{prelude::*, SelectableHelper};
+use error_stack::Result;
 use model::{AccountIdInternal, ChatStateRaw};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
-use error_stack::Result;
-use diesel::prelude::*;
 use crate::IntoDatabaseError;
 
 mod interaction;

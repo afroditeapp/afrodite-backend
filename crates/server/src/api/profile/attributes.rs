@@ -1,5 +1,8 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, AvailableProfileAttributes, ProfileAttributeFilterList, ProfileAttributeFilterListUpdate};
+use model::{
+    AccountIdInternal, AvailableProfileAttributes, ProfileAttributeFilterList,
+    ProfileAttributeFilterListUpdate,
+};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
@@ -8,7 +11,8 @@ use crate::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{GetConfig, ReadData, WriteData}, data::DataError,
+    app::{GetConfig, ReadData, WriteData},
+    data::DataError,
 };
 
 pub const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_profile_attributes";
@@ -55,7 +59,11 @@ pub async fn get_profile_attribute_filters<S: ReadData>(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ProfileAttributeFilterList>, StatusCode> {
     PROFILE.get_profile_attribute_filters.incr();
-    let filters = state.read().profile().profile_attribute_filters(account_id).await?;
+    let filters = state
+        .read()
+        .profile()
+        .profile_attribute_filters(account_id)
+        .await?;
     Ok(filters.into())
 }
 
@@ -79,9 +87,12 @@ pub async fn post_profile_attribute_filters<S: WriteData + GetConfig>(
     Json(data): Json<ProfileAttributeFilterListUpdate>,
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_attributes_filters.incr();
-    let validated = data.validate(state.config().profile_attributes())
+    let validated = data
+        .validate(state.config().profile_attributes())
         .into_error_string(DataError::NotAllowed)?;
-    db_write!(state, move |cmds| cmds.profile().update_profile_attribute_filters(account_id, validated))
+    db_write!(state, move |cmds| cmds
+        .profile()
+        .update_profile_attribute_filters(account_id, validated))
 }
 
 pub fn attributes_router(s: crate::app::S) -> Router {
@@ -90,9 +101,18 @@ pub fn attributes_router(s: crate::app::S) -> Router {
     use crate::app::S;
 
     Router::new()
-        .route(PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES, get(get_available_profile_attributes::<S>))
-        .route(PATH_GET_PROFILE_ATTRIBUTE_FILTERS, get(get_profile_attribute_filters::<S>))
-        .route(PATH_POST_PROFILE_ATTRIBUTE_FILTERS, post(post_profile_attribute_filters::<S>))
+        .route(
+            PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES,
+            get(get_available_profile_attributes::<S>),
+        )
+        .route(
+            PATH_GET_PROFILE_ATTRIBUTE_FILTERS,
+            get(get_profile_attribute_filters::<S>),
+        )
+        .route(
+            PATH_POST_PROFILE_ATTRIBUTE_FILTERS,
+            post(post_profile_attribute_filters::<S>),
+        )
         .with_state(s)
 }
 

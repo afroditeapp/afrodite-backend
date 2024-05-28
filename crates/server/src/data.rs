@@ -7,8 +7,7 @@ use std::{
 
 use config::Config;
 use database::{
-    CurrentReadHandle, CurrentWriteHandle, ErrorContext,
-    HistoryReadHandle, HistoryWriteHandle,
+    CurrentReadHandle, CurrentWriteHandle, ErrorContext, HistoryReadHandle, HistoryWriteHandle,
 };
 use error_stack::Context;
 use model::{AccountId, AccountIdInternal, EmailAddress, IsLoggingAllowed, SignInWithInfo};
@@ -31,7 +30,10 @@ use self::{
     write_concurrent::WriteCommandsConcurrent,
 };
 use crate::{
-    event::EventManagerWithCacheReference, internal_api::InternalApiError, push_notifications::PushNotificationSender, result::{Result, WrappedReport}
+    event::EventManagerWithCacheReference,
+    internal_api::InternalApiError,
+    push_notifications::PushNotificationSender,
+    result::{Result, WrappedReport},
 };
 
 pub mod cache;
@@ -444,11 +446,7 @@ impl SyncWriteHandle {
     }
 
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(
-            &self.current_read_handle,
-            &self.cache,
-            &self.root.file_dir
-        )
+        ReadCommands::new(&self.current_read_handle, &self.cache, &self.root.file_dir)
     }
 
     pub fn common(&self) -> WriteCommandsCommon {
@@ -488,10 +486,7 @@ impl SyncWriteHandle {
     }
 
     pub fn events(&self) -> EventManagerWithCacheReference {
-        EventManagerWithCacheReference::new(
-            &self.cache,
-            &self.push_notification_sender,
-        )
+        EventManagerWithCacheReference::new(&self.cache, &self.push_notification_sender)
     }
 
     pub fn config(&self) -> &Config {

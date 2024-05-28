@@ -59,7 +59,7 @@ impl<T, Ok> ErrorContext<T, Ok> {
     }
 }
 
-impl <T: IsLoggingAllowed + std::fmt::Debug, Ok> ErrorContext<T, Ok> {
+impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> ErrorContext<T, Ok> {
     pub fn printable(&self) -> String {
         format!("{:#?}", self)
     }

@@ -1,6 +1,9 @@
 use diesel::{insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion};
+use model::{
+    AccountIdInternal, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate,
+    ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion,
+};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::ConnectionProvider;
@@ -153,7 +156,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         id: AccountIdInternal,
         data: Vec<ProfileAttributeValueUpdate>,
     ) -> Result<(), DieselDatabaseError> {
-
         use model::schema::profile_attributes::dsl::*;
 
         // Using for loop here because this:
@@ -188,7 +190,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         id: AccountIdInternal,
         data: Vec<ProfileAttributeFilterValueUpdate>,
     ) -> Result<(), DieselDatabaseError> {
-
         use model::schema::profile_attributes::dsl::*;
 
         // Using for loop here because this:

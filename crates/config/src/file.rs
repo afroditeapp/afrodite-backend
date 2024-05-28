@@ -4,13 +4,12 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
+// Re-export for test-mode crate
+pub use model::EmailAddress;
 use model::{DemoModeId, GoogleAccountId};
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
 use url::Url;
-
-// Re-export for test-mode crate
-pub use model::EmailAddress;
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1

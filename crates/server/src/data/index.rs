@@ -2,7 +2,10 @@ use std::{collections::HashMap, mem::size_of, num::NonZeroU8, sync::Arc};
 
 use config::Config;
 use error_stack::ResultExt;
-use model::{AccountId, CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink, ProfileQueryMakerDetails};
+use model::{
+    AccountId, CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
+    ProfileQueryMakerDetails,
+};
 use tokio::sync::RwLock;
 use tracing::info;
 
@@ -81,9 +84,7 @@ fn format_size_in_bytes(size: usize) -> String {
 enum IteratorResultInternal {
     NoProfiles,
     TryAgain,
-    MatchingProfilesFound {
-        profiles: Vec<ProfileLink>,
-    }
+    MatchingProfilesFound { profiles: Vec<ProfileLink> },
 }
 
 #[derive(Debug)]
@@ -137,8 +138,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         &self,
         previous_iterator_state: LocationIndexIteratorState,
         query_maker_details: &ProfileQueryMakerDetails,
-    ) -> error_stack::Result<(LocationIndexIteratorState, IteratorResultInternal), IndexError>
-    {
+    ) -> error_stack::Result<(LocationIndexIteratorState, IteratorResultInternal), IndexError> {
         let index = self.index.clone();
         let (iterator, key) = tokio::task::spawn_blocking(move || {
             let mut iterator = previous_iterator_state.to_iterator(index);
@@ -157,17 +157,18 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                 // sent to client, which might cause issues if everyone will
                 // set profile to same location.
                 Some(profiles) => {
-                    let matches: Vec<ProfileLink> = profiles.profiles
+                    let matches: Vec<ProfileLink> = profiles
+                        .profiles
                         .values()
-                        .filter(|p| p.is_match(&query_maker_details, self.config.profile_attributes()))
+                        .filter(|p| {
+                            p.is_match(&query_maker_details, self.config.profile_attributes())
+                        })
                         .map(|p| p.into())
                         .collect();
                     if matches.len() == 0 {
                         IteratorResultInternal::TryAgain
                     } else {
-                        IteratorResultInternal::MatchingProfilesFound {
-                            profiles: matches,
-                        }
+                        IteratorResultInternal::MatchingProfilesFound { profiles: matches }
                     }
                 }
             },

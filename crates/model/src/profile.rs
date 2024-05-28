@@ -1,12 +1,22 @@
-use std::{collections::{HashMap, HashSet}, sync::atomic::{AtomicBool, AtomicU16, Ordering}};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::atomic::{AtomicBool, AtomicU16, Ordering},
+};
 
-use diesel::{prelude::*, sql_types::Binary, AsExpression, FromSqlRow, sql_types::BigInt};
+use diesel::{
+    prelude::*,
+    sql_types::{BigInt, Binary},
+    AsExpression, FromSqlRow,
+};
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_uuid_wrapper, diesel_i64_wrapper};
+use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils};
+use crate::{
+    schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, SyncVersion,
+    SyncVersionUtils,
+};
 
 mod attribute;
 
@@ -95,11 +105,7 @@ impl TryFrom<ProfileAttributeValueUpdate> for ProfileAttributeValue {
 
     fn try_from(value: ProfileAttributeValueUpdate) -> Result<ProfileAttributeValue, Self::Error> {
         match value.value_part1 {
-            Some(part1) => Ok(Self::new(
-                value.id,
-                part1,
-                value.value_part2,
-            )),
+            Some(part1) => Ok(Self::new(value.id, part1, value.value_part2)),
             None => Err("Value part1 missing".to_string()),
         }
     }
@@ -122,7 +128,8 @@ impl SortedProfileAttributes {
     }
 
     pub fn find_id(&self, id: u16) -> Option<&ProfileAttributeValue> {
-        self.attributes.binary_search_by(|a| a.id.cmp(&id))
+        self.attributes
+            .binary_search_by(|a| a.id.cmp(&id))
             .ok()
             .map(|i| self.attributes.get(i))
             .flatten()
@@ -132,9 +139,7 @@ impl SortedProfileAttributes {
         let mut attributes = update
             .attributes
             .iter()
-            .filter_map(|v|
-                TryInto::<ProfileAttributeValue>::try_into(*v).ok()
-            )
+            .filter_map(|v| TryInto::<ProfileAttributeValue>::try_into(*v).ok())
             .collect::<Vec<_>>();
         attributes.sort_by(|a, b| a.id.cmp(&b.id));
         self.attributes = attributes;
@@ -147,7 +152,10 @@ pub struct ProfileAttributeFilterListUpdate {
 }
 
 impl ProfileAttributeFilterListUpdate {
-    pub fn validate(self, attribute_info: Option<&ProfileAttributes>) -> Result<ProfileAttributeFilterListUpdateValidated, String> {
+    pub fn validate(
+        self,
+        attribute_info: Option<&ProfileAttributes>,
+    ) -> Result<ProfileAttributeFilterListUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &self.filters {
             if !hash_set.insert(a.id) {
@@ -205,7 +213,12 @@ pub struct ProfileAttributeFilterValue {
 }
 
 impl ProfileAttributeFilterValue {
-    pub fn new(id: u16, filter_part1: Option<u16>, filter_part2: Option<u16>, accept_missing_attribute: bool) -> Self {
+    pub fn new(
+        id: u16,
+        filter_part1: Option<u16>,
+        filter_part2: Option<u16>,
+        accept_missing_attribute: bool,
+    ) -> Self {
         Self {
             id,
             filter_part1,
@@ -237,7 +250,11 @@ impl ProfileAttributeFilterValue {
         self.filter_part2
     }
 
-    pub fn is_match_with_attribute_value(&self, value: &ProfileAttributeValue, attribute_info: &Attribute) -> bool {
+    pub fn is_match_with_attribute_value(
+        &self,
+        value: &ProfileAttributeValue,
+        attribute_info: &Attribute,
+    ) -> bool {
         if self.id != value.id {
             return false;
         }
@@ -300,10 +317,7 @@ pub struct ProfileStateInternal {
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
 }
 
-sync_version_wrappers!(
-    ProfileAttributesSyncVersion,
-);
-
+sync_version_wrappers!(ProfileAttributesSyncVersion,);
 
 /// Subset of ProfileStateInternal which is cached in memory.
 #[derive(Debug, Clone, Copy)]
@@ -324,7 +338,18 @@ impl From<ProfileStateInternal> for ProfileStateCached {
 }
 
 /// Profile age value which is in inclusive range `[18, 99]`.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Integer)]
 #[serde(try_from = "i64")]
 #[serde(into = "i64")]
@@ -348,7 +373,9 @@ impl ProfileAge {
 
 impl Default for ProfileAge {
     fn default() -> Self {
-        Self { value: Self::MIN_AGE }
+        Self {
+            value: Self::MIN_AGE,
+        }
     }
 }
 
@@ -357,7 +384,11 @@ impl TryFrom<i64> for ProfileAge {
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         if value < Self::MIN_AGE as i64 || value > Self::MAX_AGE as i64 {
-            Err(format!("Profile age must be in range [{}, {}]", Self::MIN_AGE, Self::MAX_AGE))
+            Err(format!(
+                "Profile age must be in range [{}, {}]",
+                Self::MIN_AGE,
+                Self::MAX_AGE
+            ))
         } else {
             Ok(Self { value: value as u8 })
         }
@@ -435,10 +466,7 @@ impl TryFrom<ProfileSearchAgeRange> for ProfileSearchAgeRangeValidated {
         } else {
             let min = (value.min as i64).try_into()?;
             let max = (value.max as i64).try_into()?;
-            Ok(Self {
-                min,
-                max,
-            })
+            Ok(Self { min, max })
         }
     }
 }
@@ -538,12 +566,16 @@ impl TryFrom<SearchGroups> for ValidatedSearchGroups {
     type Error = &'static str;
 
     fn try_from(value: SearchGroups) -> Result<Self, Self::Error> {
-        match (value.to_validated_man(), value.to_validated_woman(), value.to_validated_non_binary()) {
+        match (
+            value.to_validated_man(),
+            value.to_validated_woman(),
+            value.to_validated_non_binary(),
+        ) {
             (Some(v), None, None) => Ok(v),
             (None, Some(v), None) => Ok(v),
             (None, None, Some(v)) => Ok(v),
             (None, None, None) => Err("Gender not set"),
-            _ => Err("Unambiguous gender")
+            _ => Err("Unambiguous gender"),
         }
     }
 }
@@ -589,7 +621,11 @@ impl From<ValidatedSearchGroups> for SearchGroupFlags {
     fn from(value: ValidatedSearchGroups) -> Self {
         let mut flags: SearchGroupFlags = Self::empty();
         match value {
-            ValidatedSearchGroups::ManFor { woman, man, non_binary } => {
+            ValidatedSearchGroups::ManFor {
+                woman,
+                man,
+                non_binary,
+            } => {
                 if woman {
                     flags |= Self::MAN_FOR_WOMAN;
                 }
@@ -600,7 +636,11 @@ impl From<ValidatedSearchGroups> for SearchGroupFlags {
                     flags |= Self::MAN_FOR_NON_BINARY;
                 }
             }
-            ValidatedSearchGroups::WomanFor { man, woman, non_binary } => {
+            ValidatedSearchGroups::WomanFor {
+                man,
+                woman,
+                non_binary,
+            } => {
                 if man {
                     flags |= Self::WOMAN_FOR_MAN;
                 }
@@ -611,7 +651,11 @@ impl From<ValidatedSearchGroups> for SearchGroupFlags {
                     flags |= Self::WOMAN_FOR_NON_BINARY;
                 }
             }
-            ValidatedSearchGroups::NonBinaryFor { man, woman, non_binary } => {
+            ValidatedSearchGroups::NonBinaryFor {
+                man,
+                woman,
+                non_binary,
+            } => {
                 if man {
                     flags |= Self::NON_BINARY_FOR_MAN;
                 }
@@ -702,7 +746,10 @@ pub struct ProfileUpdate {
 }
 
 impl ProfileUpdate {
-    pub fn validate(self, attribute_info: Option<&ProfileAttributes>) -> Result<ProfileUpdateValidated, String> {
+    pub fn validate(
+        self,
+        attribute_info: Option<&ProfileAttributes>,
+    ) -> Result<ProfileUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &self.attributes {
             if !hash_set.insert(a.id) {
@@ -737,16 +784,14 @@ pub struct ProfileUpdateValidated {
 
 impl ProfileUpdateValidated {
     pub fn equals_with(&self, other: &Profile) -> bool {
-        let basic = self.name == other.name &&
-            self.profile_text == other.profile_text &&
-            self.age == other.age;
+        let basic = self.name == other.name
+            && self.profile_text == other.profile_text
+            && self.age == other.age;
         if basic {
-            let a1: HashMap::<u16, ProfileAttributeValueUpdate> = HashMap::from_iter(
-                self.attributes.iter().map(|v| (v.id, *v))
-            );
-            let a2: HashMap::<u16, ProfileAttributeValueUpdate> = HashMap::from_iter(
-                other.attributes.iter().map(|v| (v.id, (*v).into()))
-            );
+            let a1: HashMap<u16, ProfileAttributeValueUpdate> =
+                HashMap::from_iter(self.attributes.iter().map(|v| (v.id, *v)));
+            let a2: HashMap<u16, ProfileAttributeValueUpdate> =
+                HashMap::from_iter(other.attributes.iter().map(|v| (v.id, (*v).into())));
 
             a1 == a2
         } else {
@@ -799,7 +844,6 @@ impl ProfileUpdateInternal {
 //     }
 // }
 
-
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
 #[serde(try_from = "f64")]
 #[serde(into = "f64")]
@@ -828,7 +872,17 @@ impl From<FiniteDouble> for f64 {
 /// Location in latitude and longitude.
 /// The values are not NaN, infinity or negative infinity.
 #[derive(
-    Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable, AsChangeset
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Default,
+    Queryable,
+    Selectable,
+    AsChangeset,
 )]
 #[diesel(table_name = crate::schema::profile_state)]
 #[diesel(check_for_backend(crate::Db))]
@@ -938,9 +992,11 @@ impl LocationIndexProfileData {
         query_maker_details: &ProfileQueryMakerDetails,
         attribute_info: Option<&ProfileAttributes>,
     ) -> bool {
-        let mut is_match = self.search_age_range.is_match(query_maker_details.age) &&
-            query_maker_details.search_age_range.is_match(self.age) &&
-            query_maker_details.search_groups_filter.is_match(self.search_groups);
+        let mut is_match = self.search_age_range.is_match(query_maker_details.age)
+            && query_maker_details.search_age_range.is_match(self.age)
+            && query_maker_details
+                .search_groups_filter
+                .is_match(self.search_groups);
 
         if let Some(attribute_info) = attribute_info {
             is_match &= self.attribute_filters_match(query_maker_details, attribute_info);
@@ -955,11 +1011,12 @@ impl LocationIndexProfileData {
         attribute_info: &ProfileAttributes,
     ) -> bool {
         for filter in &query_maker_details.attribute_filters {
-            let attribute_info = if let Some(info) = attribute_info.attributes.get(filter.id as usize) {
-                info
-            } else {
-                return false;
-            };
+            let attribute_info =
+                if let Some(info) = attribute_info.attributes.get(filter.id as usize) {
+                    info
+                } else {
+                    return false;
+                };
 
             if let Some(value) = self.attributes.find_id(filter.id) {
                 if !filter.is_match_with_attribute_value(value, attribute_info) {

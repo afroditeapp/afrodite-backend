@@ -6,16 +6,15 @@ use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, Sy
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
+use self::push_notifications::WriteCommandsChatPushNotifications;
 use crate::{
     data::{write::db_transaction, DataError},
     result::Result,
 };
 
-use self::push_notifications::WriteCommandsChatPushNotifications;
-
 define_write_commands!(WriteCommandsChat);
 
-impl <'a> WriteCommandsChat<'a> {
+impl<'a> WriteCommandsChat<'a> {
     pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<'a> {
         WriteCommandsChatPushNotifications::new(self.cmds)
     }
@@ -82,16 +81,14 @@ impl WriteCommandsChat<'_> {
 
             let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
                 if interaction.is_empty() {
-                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                    s.received_likes_sync_version
+                        .increment_if_not_max_value_mut();
                 } else if interaction.is_like() {
                     s.matches_sync_version.increment_if_not_max_value_mut();
                 }
             })?;
 
-            Ok(SenderAndReceiverStateChanges {
-                sender,
-                receiver,
-            })
+            Ok(SenderAndReceiverStateChanges { sender, receiver })
         })
     }
 
@@ -133,16 +130,15 @@ impl WriteCommandsChat<'_> {
 
             let receiver = cmds.chat().modify_chat_state(id_receiver, |s| {
                 if interaction.is_like() {
-                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                    s.received_likes_sync_version
+                        .increment_if_not_max_value_mut();
                 } else if interaction.is_blocked() {
-                    s.received_blocks_sync_version.increment_if_not_max_value_mut();
+                    s.received_blocks_sync_version
+                        .increment_if_not_max_value_mut();
                 }
             })?;
 
-            Ok(SenderAndReceiverStateChanges {
-                sender,
-                receiver,
-            })
+            Ok(SenderAndReceiverStateChanges { sender, receiver })
         })
     }
 
@@ -175,26 +171,26 @@ impl WriteCommandsChat<'_> {
                 s.sent_blocks_sync_version.increment_if_not_max_value_mut();
                 if interaction.is_like() {
                     s.sent_likes_sync_version.increment_if_not_max_value_mut();
-                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                    s.received_likes_sync_version
+                        .increment_if_not_max_value_mut();
                 } else if interaction.is_match() {
                     s.matches_sync_version.increment_if_not_max_value_mut();
                 }
             })?;
 
             let receiver = cmds.chat().modify_chat_state(id_block_receiver, |s| {
-                s.received_blocks_sync_version.increment_if_not_max_value_mut();
+                s.received_blocks_sync_version
+                    .increment_if_not_max_value_mut();
                 if interaction.is_like() {
                     s.sent_likes_sync_version.increment_if_not_max_value_mut();
-                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                    s.received_likes_sync_version
+                        .increment_if_not_max_value_mut();
                 } else if interaction.is_match() {
                     s.matches_sync_version.increment_if_not_max_value_mut();
                 }
             })?;
 
-            Ok(SenderAndReceiverStateChanges {
-                sender,
-                receiver,
-            })
+            Ok(SenderAndReceiverStateChanges { sender, receiver })
         })
     }
 
@@ -270,7 +266,6 @@ impl WriteCommandsChat<'_> {
         })
     }
 }
-
 
 pub struct SenderAndReceiverStateChanges {
     pub sender: ChatStateChanges,

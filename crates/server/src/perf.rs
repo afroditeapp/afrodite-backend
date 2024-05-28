@@ -6,7 +6,9 @@ use simple_backend::{perf::CounterCategory, CONNECTION_COUNTERS_LIST};
 
 use crate::api::{
     account::{
-        ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_MODE_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST, ACCOUNT_REGISTER_COUNTERS_LIST, ACCOUNT_SETTINGS_COUNTERS_LIST, ACCOUNT_STATE_COUNTERS_LIST
+        ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_MODE_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST,
+        ACCOUNT_REGISTER_COUNTERS_LIST, ACCOUNT_SETTINGS_COUNTERS_LIST,
+        ACCOUNT_STATE_COUNTERS_LIST,
     },
     account_internal::ACCOUNT_INTERNAL_COUNTERS_LIST,
     chat::{
@@ -26,7 +28,9 @@ use crate::api::{
     media_admin::MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
     media_internal::MEDIA_INTERNAL_COUNTERS_LIST,
     profile::{
-        PROFILE_ATTRIBUTES_COUNTERS_LIST, PROFILE_BENCHMARK_COUNTERS_LIST, PROFILE_DATA_COUNTERS_LIST, PROFILE_FAVORITE_COUNTERS_LIST, PROFILE_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_LOCATION_COUNTERS_LIST
+        PROFILE_ATTRIBUTES_COUNTERS_LIST, PROFILE_BENCHMARK_COUNTERS_LIST,
+        PROFILE_DATA_COUNTERS_LIST, PROFILE_FAVORITE_COUNTERS_LIST,
+        PROFILE_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_LOCATION_COUNTERS_LIST,
     },
     profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
 };
@@ -50,7 +54,10 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
     // Media
     &CounterCategory::new("media_content", MEDIA_CONTENT_COUNTERS_LIST),
     &CounterCategory::new("media_profile_content", MEDIA_PROFILE_CONTENT_COUNTERS_LIST),
-    &CounterCategory::new("media_security_content", MEDIA_SECURITY_CONTENT_COUNTERS_LIST),
+    &CounterCategory::new(
+        "media_security_content",
+        MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
+    ),
     &CounterCategory::new(
         "media_moderation_request",
         MEDIA_MODERATION_REQUEST_COUNTERS_LIST,
@@ -77,8 +84,10 @@ pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
     &CounterCategory::new("chat_block", CHAT_BLOCK_COUNTERS_LIST),
     &CounterCategory::new("chat_match", CHAT_MATCH_COUNTERS_LIST),
     &CounterCategory::new("chat_message", CHAT_MESSAGE_COUNTERS_LIST),
-    &CounterCategory::new("chat_push_notification", CHAT_PUSH_NOTIFICATION_COUNTERS_LIST),
-
+    &CounterCategory::new(
+        "chat_push_notification",
+        CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
+    ),
     // Server info
     &CounterCategory::new("server_info_connection", CONNECTION_COUNTERS_LIST),
 ];

@@ -1,12 +1,11 @@
-
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
 use utoipa::ToSchema;
 
-use crate::schema_sqlite_types::Text;
-
-use crate::NotificationEvent;
-use crate::schema_sqlite_types::Integer;
+use crate::{
+    schema_sqlite_types::{Integer, Text},
+    NotificationEvent,
+};
 
 /// Pending notification (or multiple notifications which each have
 /// different type) not yet received notifications which push notification
@@ -16,7 +15,19 @@ use crate::schema_sqlite_types::Integer;
 ///
 /// - const NEW_MESSAGE = 0x1;
 ///
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    Default,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Integer)]
 pub struct PendingNotification {
     pub value: i64,
@@ -28,7 +39,7 @@ impl PendingNotification {
     }
 
     pub fn as_i64(&self) -> &i64 {
-       &self.value
+        &self.value
     }
 }
 
@@ -70,12 +81,23 @@ impl From<PendingNotificationFlags> for i64 {
 
 impl From<PendingNotificationFlags> for PendingNotification {
     fn from(value: PendingNotificationFlags) -> Self {
-        PendingNotification { value: value.bits() }
+        PendingNotification {
+            value: value.bits(),
+        }
     }
 }
 
 /// Firebase Cloud Messaging device token.
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, ToSchema, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    PartialEq,
+    ToSchema,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Text)]
 pub struct FcmDeviceToken {
     value: String,

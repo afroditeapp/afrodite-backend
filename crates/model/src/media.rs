@@ -1,4 +1,3 @@
-
 use diesel::{
     prelude::*,
     sql_types::{BigInt, Binary},
@@ -854,16 +853,7 @@ impl ModerationRequestIdDb {
 diesel_i64_wrapper!(ModerationRequestIdDb);
 
 #[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    FromSqlRow,
-    AsExpression,
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
@@ -882,16 +872,7 @@ impl ModerationQueueNumber {
 diesel_i64_wrapper!(ModerationQueueNumber);
 
 #[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    FromSqlRow,
-    AsExpression,
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
@@ -908,7 +889,6 @@ impl ContentIdDb {
 }
 
 diesel_i64_wrapper!(ContentIdDb);
-
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_state)]

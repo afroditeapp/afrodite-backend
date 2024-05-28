@@ -1,10 +1,9 @@
-use diesel::SelectableHelper;
+use diesel::{prelude::*, SelectableHelper};
+use error_stack::Result;
 use model::{Account, AccountIdInternal, Capabilities};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
-use diesel::prelude::*;
 use crate::IntoDatabaseError;
-use error_stack::Result;
 
 mod queue_number;
 mod state;
@@ -33,9 +32,6 @@ impl<C: ConnectionProvider> CurrentSyncReadCommon<C> {
             .first(self.conn())
             .into_db_error(id)?;
 
-        Ok(Account::new_from_internal_types(
-            capabilities,
-            shared_state,
-        ))
+        Ok(Account::new_from_internal_types(capabilities, shared_state))
     }
 }

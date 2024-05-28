@@ -4,7 +4,10 @@ use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey,
+    LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal,
+    ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw,
+    SortedProfileAttributes,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
@@ -18,7 +21,10 @@ use super::{
     },
     WithInfo,
 };
-use crate::{data::{index::LocationIndexWriteHandle, read::DbReader}, event::EventMode};
+use crate::{
+    data::{index::LocationIndexWriteHandle, read::DbReader},
+    event::EventMode,
+};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
@@ -83,9 +89,8 @@ impl DatabaseCache {
         info!("Starting to load data from database to memory");
 
         let db_reader = DbReader::new(current_db);
-        let accounts = db_reader.db_read(move |mut cmd| {
-            cmd.account().data().account_ids_internal()
-        })
+        let accounts = db_reader
+            .db_read(move |mut cmd| cmd.account().data().account_ids_internal())
             .await
             .change_context(CacheError::Init)?;
 
@@ -177,13 +182,8 @@ impl DatabaseCache {
             })
             .await?;
 
-            let mut profile_data = CachedProfile::new(
-                account_id.uuid,
-                profile,
-                state,
-                attributes,
-                filters,
-            );
+            let mut profile_data =
+                CachedProfile::new(account_id.uuid, profile, state, attributes, filters);
 
             let location_key = index_writer.coordinates_to_key(&profile_location);
             profile_data.location.current_position = location_key;
@@ -312,7 +312,11 @@ impl DatabaseCache {
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
             if r.current_connection.map(|a| a.ip()) == Some(connection.ip()) {
-                Some((entry.account_id_internal, r.capabilities.clone(), r.shared_state.account_state_number))
+                Some((
+                    entry.account_id_internal,
+                    r.capabilities.clone(),
+                    r.shared_state.account_state_number,
+                ))
             } else {
                 None
             }
@@ -431,16 +435,12 @@ impl CachedProfile {
             self.account_id,
             &self.data,
             &self.state,
-            self.attributes.clone()
+            self.attributes.clone(),
         )
     }
 
     pub fn filters(&self) -> ProfileQueryMakerDetails {
-        ProfileQueryMakerDetails::new(
-            &self.data,
-            &self.state,
-            self.filters.clone(),
-        )
+        ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone())
     }
 }
 

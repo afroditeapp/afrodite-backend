@@ -1,4 +1,3 @@
-
 use diesel::{delete, insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountIdInternal, NextQueueNumberType, QueueNumber};

@@ -1,16 +1,10 @@
-use simple_backend_database::
-    diesel_db::{ConnectionProvider, DieselConnection};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselConnection};
 
 use self::{
-    account::CurrentSyncReadAccount,
-    account_admin::CurrentSyncReadAccountAdmin,
-    chat::CurrentSyncReadChat,
-    chat_admin::CurrentSyncReadChatAdmin,
-    common::CurrentSyncReadCommon,
-    media::CurrentSyncReadMedia,
-    media_admin::CurrentSyncReadMediaAdmin,
-    profile::CurrentSyncReadProfile,
-    profile_admin::CurrentSyncReadProfileAdmin,
+    account::CurrentSyncReadAccount, account_admin::CurrentSyncReadAccountAdmin,
+    chat::CurrentSyncReadChat, chat_admin::CurrentSyncReadChatAdmin, common::CurrentSyncReadCommon,
+    media::CurrentSyncReadMedia, media_admin::CurrentSyncReadMediaAdmin,
+    profile::CurrentSyncReadProfile, profile_admin::CurrentSyncReadProfileAdmin,
 };
 
 macro_rules! define_read_commands {

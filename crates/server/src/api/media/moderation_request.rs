@@ -30,14 +30,9 @@ pub async fn get_moderation_request<S: ReadData>(
 ) -> Result<Json<CurrentModerationRequest>, StatusCode> {
     MEDIA.get_moderation_request.incr();
 
-    let request = state
-        .read()
-        .moderation_request(account_id)
-        .await?;
+    let request = state.read().moderation_request(account_id).await?;
 
-    let request = CurrentModerationRequest {
-        request,
-    };
+    let request = CurrentModerationRequest { request };
 
     Ok(request.into())
 }

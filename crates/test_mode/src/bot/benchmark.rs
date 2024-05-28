@@ -11,7 +11,7 @@ use api_client::{
         get_profile, get_profile_from_database_debug_mode_benchmark,
         post_profile_to_database_debug_mode_benchmark,
     },
-    models::{ProfileUpdate},
+    models::ProfileUpdate,
 };
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};

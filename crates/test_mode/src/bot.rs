@@ -8,13 +8,16 @@ use std::{fmt::Debug, sync::Arc, vec};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
-    args::{SelectedBenchmark, TestMode, TestModeSubMode}, bot_config_file::{BotConfigFile, BotInstanceConfig}, Config
+    args::{SelectedBenchmark, TestMode, TestModeSubMode},
+    bot_config_file::{BotConfigFile, BotInstanceConfig},
+    Config,
 };
 use error_stack::{Result, ResultExt};
 use tokio::{
     net::TcpStream,
     select,
-    sync::{broadcast, mpsc, watch}, task::JoinHandle,
+    sync::{broadcast, mpsc, watch},
+    task::JoinHandle,
 };
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tracing::{error, info};
@@ -32,7 +35,13 @@ use super::{
 #[derive(Debug, Default)]
 pub struct TaskState;
 
-pub fn create_event_channel(enable_event_sending: bool) -> (EventSenderAndQuitWatcher, EventReceiver, broadcast::Sender<()>) {
+pub fn create_event_channel(
+    enable_event_sending: bool,
+) -> (
+    EventSenderAndQuitWatcher,
+    EventReceiver,
+    broadcast::Sender<()>,
+) {
     let (event_sender, event_receiver) = mpsc::unbounded_channel();
     let (quit_handle, quit_watcher) = broadcast::channel(1);
     (
@@ -137,11 +146,16 @@ pub struct BotConnections {
 
 impl BotConnections {
     pub fn unwrap_account_connections(&mut self) -> AccountConnections {
-        self.connections.take().expect("Account connections are missing")
+        self.connections
+            .take()
+            .expect("Account connections are missing")
     }
 
     /// Wait event if event sending is enabled or timeout after 5 seconds
-    pub async fn wait_event(&mut self, check: impl Fn(&EventToClient) -> bool) -> Result<(), TestError> {
+    pub async fn wait_event(
+        &mut self,
+        check: impl Fn(&EventToClient) -> bool,
+    ) -> Result<(), TestError> {
         if !self.enable_event_sending {
             return Ok(());
         }
@@ -158,9 +172,15 @@ impl BotConnections {
     }
 }
 
-async fn wait_until_specific_event(check: impl Fn(&EventToClient) -> bool, events: &mut EventReceiver) -> Result<(), TestError> {
+async fn wait_until_specific_event(
+    check: impl Fn(&EventToClient) -> bool,
+    events: &mut EventReceiver,
+) -> Result<(), TestError> {
     loop {
-        let event = events.recv().await.ok_or(TestError::EventChannelClosed.report())?;
+        let event = events
+            .recv()
+            .await
+            .ok_or(TestError::EventChannelClosed.report())?;
         if check(&event) {
             return Ok(());
         }
@@ -214,7 +234,10 @@ impl BotState {
     }
 
     /// Wait event if event sending enabled or timeout after 5 seconds
-    pub async fn wait_event(&mut self, check: impl Fn(&EventToClient) -> bool) -> Result<(), TestError> {
+    pub async fn wait_event(
+        &mut self,
+        check: impl Fn(&EventToClient) -> bool,
+    ) -> Result<(), TestError> {
         self.connections.wait_event(check).await
     }
 
@@ -253,8 +276,7 @@ impl BotState {
     /// Admin bot is detected from bot ID. First `n` bots are user bots
     /// and the rest are admin bots.
     pub fn is_admin_bot(&self) -> bool {
-        self
-            .config
+        self.config
             .bot_mode()
             .map(|bot_config| self.bot_id < bot_config.admins)
             .unwrap_or(false)

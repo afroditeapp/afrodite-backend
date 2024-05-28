@@ -1,14 +1,23 @@
 //! Bots for fake clients
 
-use std::{
-    fmt::Debug,
-    iter::Peekable,
-    time::{Instant},
-};
+use std::{fmt::Debug, iter::Peekable, time::Instant};
 
 use api_client::{
-    apis::{account_api::get_account_state, chat_api::{delete_pending_messages, get_pending_messages, get_received_likes, post_send_like, post_send_message}, profile_api::{get_available_profile_attributes, post_profile, post_search_age_range, post_search_groups}},
-    models::{AccountState, AttributeMode, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount},
+    apis::{
+        account_api::get_account_state,
+        chat_api::{
+            delete_pending_messages, get_pending_messages, get_received_likes, post_send_like,
+            post_send_message,
+        },
+        profile_api::{
+            get_available_profile_attributes, post_profile, post_search_age_range,
+            post_search_groups,
+        },
+    },
+    models::{
+        AccountState, AttributeMode, PendingMessageDeleteList, ProfileAttributeValueUpdate,
+        ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount,
+    },
 };
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
@@ -26,8 +35,10 @@ use super::{
 use crate::{
     action_array,
     bot::actions::{
-        account::CompleteAccountSetup, admin::ModerateMediaModerationRequest,
-        media::{MakeModerationRequest, SetPendingContent}, ActionArray,
+        account::CompleteAccountSetup,
+        admin::ModerateMediaModerationRequest,
+        media::{MakeModerationRequest, SetPendingContent},
+        ActionArray,
     },
     client::TestError,
 };
@@ -79,10 +90,9 @@ impl ClientBot {
             let action_loop = [
                 &ActionsBeforeIteration as &dyn BotAction,
                 &GetProfile,
-                &RunActionsIf(
-                    action_array!(UpdateLocationRandom(None)),
-                    || rand::random::<f32>() < 0.2,
-                ),
+                &RunActionsIf(action_array!(UpdateLocationRandom(None)), || {
+                    rand::random::<f32>() < 0.2
+                }),
                 // TODO: Toggle the profile visiblity in the future?
                 &RunActionsIf(action_array!(SetProfileVisibility(true)), || {
                     rand::random::<f32>() < 0.5
@@ -158,7 +168,9 @@ impl BotAction for DoInitialSetupIfNeeded {
                     security_content_slot_i: Some(0),
                     content_0_slot_i: Some(1),
                 },
-                MakeModerationRequest { slot_0_secure_capture: true },
+                MakeModerationRequest {
+                    slot_0_secure_capture: true
+                },
                 ChangeBotAgeAndOtherSettings,
                 CompleteAccountSetup,
                 AssertAccountState(AccountState::Normal),
@@ -185,7 +197,9 @@ impl BotAction for ChangeBotProfileText {
 
         ChangeProfileText {
             mode: ProfileText::String(text),
-        }.excecute_impl(state).await?;
+        }
+        .excecute_impl(state)
+        .await?;
 
         Ok(())
     }
@@ -215,7 +229,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                         woman_for_non_binary: Some(true),
                         ..Default::default()
                     },
-                }
+                },
             )
         } else {
             (
@@ -239,7 +253,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                         non_binary_for_non_binary: Some(true),
                         ..Default::default()
                     },
-                }
+                },
             )
         };
 
@@ -253,7 +267,9 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
 
         let mut attributes: Vec<ProfileAttributeValueUpdate> = vec![];
         for attribute in available_attributes {
-            if attribute.required.unwrap_or_default() && attribute.mode == AttributeMode::SelectMultipleFilterMultiple {
+            if attribute.required.unwrap_or_default()
+                && attribute.mode == AttributeMode::SelectMultipleFilterMultiple
+            {
                 let mut select_all = 0;
                 for value in attribute.values {
                     select_all |= value.id;
@@ -269,7 +285,8 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             }
         }
         let update = ProfileUpdate {
-            name: state.get_bot_config()
+            name: state
+                .get_bot_config()
                 .and_then(|v| v.name.clone())
                 .unwrap_or("B".to_string()),
             age: age.into(),
@@ -281,10 +298,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        let age_range = ProfileSearchAgeRange {
-            min: 18,
-            max: 99,
-        };
+        let age_range = ProfileSearchAgeRange { min: 18, max: 99 };
 
         post_search_age_range(state.api.profile(), age_range)
             .await
@@ -343,14 +357,13 @@ impl BotAction for AnswerReceivedMessages {
             return Ok(());
         }
 
-        let messages_ids = messages.messages
+        let messages_ids = messages
+            .messages
             .iter()
             .map(|msg| msg.id.as_ref().clone())
             .collect::<Vec<_>>();
 
-        let delete_list = PendingMessageDeleteList {
-            messages_ids,
-        };
+        let delete_list = PendingMessageDeleteList { messages_ids };
 
         delete_pending_messages(state.api.chat(), delete_list)
             .await
@@ -372,7 +385,6 @@ impl BotAction for AnswerReceivedMessages {
         Ok(())
     }
 }
-
 
 #[derive(Debug)]
 struct ActionsBeforeIteration;

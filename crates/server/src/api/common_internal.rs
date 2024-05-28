@@ -1,10 +1,7 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-
-
 // TODO(microservice): Add route for handling login from account server
 // TODO(microservice): Add route for receiving state updates from account server
-
 
 // pub const PATH_INTERNAL_POST_UPDATE_PROFILE_VISIBLITY: &str =
 //     "/internal/profile_api/visibility/:account_id/:value";

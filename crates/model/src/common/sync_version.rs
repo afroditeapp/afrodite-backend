@@ -1,12 +1,7 @@
-use diesel::{
-    sql_types::{BigInt},
-    AsExpression, FromSqlRow,
-};
+use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper};
-use utoipa::{ToSchema};
-
-
+use simple_backend_model::diesel_i64_wrapper;
+use utoipa::ToSchema;
 
 #[derive(Debug)]
 pub struct SyncDataVersionFromClient {
@@ -31,12 +26,7 @@ impl SyncDataVersionFromClient {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum SyncCheckDataType {
     Account = 0,
@@ -65,12 +55,7 @@ impl TryFrom<u8> for SyncCheckDataType {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SyncCheckResult {
     /// Reset version number to 0 and then sync data and version number to client.
     ResetVersionAndSync,
@@ -80,16 +65,10 @@ pub enum SyncCheckResult {
     DoNothing,
 }
 
-
 /// Sync version can range from [0, 255]. If server receives the value 255 from
 /// client, the server does number wrapping and sets the version value to 0.
 /// After that the server does full sync for the related data to client.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SyncVersionFromClient(u8);
 
 impl SyncVersionFromClient {
@@ -98,27 +77,19 @@ impl SyncVersionFromClient {
     }
 }
 
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    ToSchema,
-)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, ToSchema)]
 /// Sync version stored on the server. The value has range of [0, 255].
 pub struct SyncVersion {
-    version: i64
+    version: i64,
 }
 
 impl SyncVersion {
     pub const MAX_VALUE: i64 = u8::MAX as i64;
 
     pub(crate) fn new(id: i64) -> Self {
-        Self { version: id.clamp(0, Self::MAX_VALUE) }
+        Self {
+            version: id.clamp(0, Self::MAX_VALUE),
+        }
     }
 
     pub(crate) fn as_i64(&self) -> &i64 {
@@ -137,9 +108,13 @@ impl SyncVersion {
 
     fn increment_if_not_max_value(&self) -> Self {
         if self.version >= Self::MAX_VALUE {
-            Self { version: Self::MAX_VALUE }
+            Self {
+                version: Self::MAX_VALUE,
+            }
         } else {
-            Self { version: self.version + 1 }
+            Self {
+                version: self.version + 1,
+            }
         }
     }
 }
@@ -226,6 +201,4 @@ macro_rules! sync_version_wrappers {
 
 pub(crate) use sync_version_wrappers;
 
-sync_version_wrappers!(
-    AccountSyncVersion,
-);
+sync_version_wrappers!(AccountSyncVersion,);

@@ -11,8 +11,10 @@ use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
-    cache::{CacheError, DatabaseCache}, file::utils::FileDir, index::LocationIndexIteratorHandle, IntoDataError,
-    RouterDatabaseWriteHandle,
+    cache::{CacheError, DatabaseCache},
+    file::utils::FileDir,
+    index::LocationIndexIteratorHandle,
+    IntoDataError, RouterDatabaseWriteHandle,
 };
 use crate::{
     content_processing::NewContentInfo,
@@ -289,10 +291,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .cache
             .read_cache(id.as_id(), |e| {
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
-                error_stack::Result::<_, CacheError>::Ok((
-                    p.location.clone(),
-                    p.filters(),
-                ))
+                error_stack::Result::<_, CacheError>::Ok((p.location.clone(), p.filters()))
             })
             .await
             .into_data_error(id)??;

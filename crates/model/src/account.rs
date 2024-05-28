@@ -3,9 +3,11 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::schema_sqlite_types::Text;
-
-use crate::{schema_sqlite_types::Integer, AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
+use crate::{
+    schema_sqlite_types::{Integer, Text},
+    AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken,
+    SharedStateRaw,
+};
 
 mod demo;
 pub use demo::*;
@@ -130,7 +132,18 @@ impl std::fmt::Display for AccountStateError {
 }
 impl std::error::Error for AccountStateError {}
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Integer)]
 pub enum AccountState {
     InitialSetup = 0,
@@ -161,8 +174,18 @@ impl Default for AccountState {
     }
 }
 
-
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
 #[diesel(sql_type = Integer)]
 pub enum ProfileVisibility {
     /// Profile is currently private and its visibility is not
@@ -333,7 +356,9 @@ impl SignInWithInfo {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug, Serialize, Deserialize, Clone, PartialEq, diesel::FromSqlRow, diesel::AsExpression,
+)]
 #[diesel(sql_type = Text)]
 #[serde(transparent)]
 pub struct GoogleAccountId(pub String);
@@ -350,7 +375,16 @@ impl GoogleAccountId {
 
 diesel_string_wrapper!(GoogleAccountId);
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, diesel::FromSqlRow, diesel::AsExpression, ToSchema)]
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    Clone,
+    PartialEq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+    ToSchema,
+)]
 #[diesel(sql_type = Text)]
 #[serde(try_from = "String")]
 pub struct EmailAddress(pub String);

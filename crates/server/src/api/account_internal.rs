@@ -1,11 +1,10 @@
 //! Account related internal API routes
 
 use axum::extract::State;
-use model::{
-    AccountId, LoginResult, SignInWithInfo,
-};
-use simple_backend::{create_counters};
+use model::{AccountId, LoginResult, SignInWithInfo};
+use simple_backend::create_counters;
 
+use super::account::{login_impl, register_impl};
 use crate::{
     api::{
         db_write,
@@ -13,8 +12,6 @@ use crate::{
     },
     app::{GetAccounts, GetConfig, ReadData, WriteData},
 };
-
-use super::account::{login_impl, register_impl};
 
 pub const PATH_LOGIN: &str = "/account_api/login";
 
@@ -67,8 +64,7 @@ pub async fn post_register<S: WriteData + GetConfig>(
     State(state): State<S>,
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_INTERNAL.post_register.incr();
-    let new_account_id = register_impl(&state, SignInWithInfo::default(), None)
-        .await?;
+    let new_account_id = register_impl(&state, SignInWithInfo::default(), None).await?;
 
     db_write!(state, move |cmds| {
         cmds.account().set_is_bot_account(new_account_id, true)

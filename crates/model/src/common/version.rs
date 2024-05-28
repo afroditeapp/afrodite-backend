@@ -1,17 +1,4 @@
-
-
-
-
-
-
-
-
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum ClientTypeNumber {
     Android = 0,
@@ -34,8 +21,6 @@ impl TryFrom<u8> for ClientTypeNumber {
     }
 }
 
-
-
 /// Parsed info from first WebSocket Binary message from client without
 /// the protocol version byte.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -54,7 +39,12 @@ impl WebSocketClientInfo {
                 let major_version = u16::from_le_bytes([*major0, *major1]);
                 let minor_version = u16::from_le_bytes([*minor0, *minor1]);
                 let patch_version = u16::from_le_bytes([*patch0, *patch1]);
-                Ok(Self { client_type, major_version, minor_version, patch_version })
+                Ok(Self {
+                    client_type,
+                    major_version,
+                    minor_version,
+                    patch_version,
+                })
             }
             _ => Err(format!("Invalid input byte count {}", bytes.len())),
         }

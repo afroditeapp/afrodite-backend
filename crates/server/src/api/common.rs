@@ -12,7 +12,8 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use model::{
-    AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, SyncDataVersionFromClient
+    AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken,
+    SyncDataVersionFromClient,
 };
 use simple_backend::{create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
@@ -23,7 +24,10 @@ use super::{
     super::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
     utils::{AccessTokenHeader, Json, StatusCode},
 };
-use crate::{app::GetConfig, result::{Result, WrappedContextExt, WrappedResultExt}};
+use crate::{
+    app::GetConfig,
+    result::{Result, WrappedContextExt, WrappedResultExt},
+};
 
 pub mod data_sync;
 
@@ -241,24 +245,24 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
         .await
         .ok_or(WebSocketError::Receive.report())?
         .change_context(WebSocketError::Receive)?
-        {
-            Message::Binary(version) => {
-                match version.as_slice() {
-                    [0, info_bytes @ ..] => {
-                        let info = model::WebSocketClientInfo::parse(info_bytes)
-                            .into_error_string(WebSocketError::ProtocolError)?;
-                        // TODO: remove after client is tested to work with the
-                        // new protocol
-                        info!("{:#?}", info);
-                        // In the future there is possibility to blacklist some
-                        // old client versions.
-                        true
-                    }
-                    _ => return Err(WebSocketError::ProtocolError.report()),
+    {
+        Message::Binary(version) => {
+            match version.as_slice() {
+                [0, info_bytes @ ..] => {
+                    let info = model::WebSocketClientInfo::parse(info_bytes)
+                        .into_error_string(WebSocketError::ProtocolError)?;
+                    // TODO: remove after client is tested to work with the
+                    // new protocol
+                    info!("{:#?}", info);
+                    // In the future there is possibility to blacklist some
+                    // old client versions.
+                    true
                 }
+                _ => return Err(WebSocketError::ProtocolError.report()),
             }
-            _ => return Err(WebSocketError::ProtocolError.report()),
-        };
+        }
+        _ => return Err(WebSocketError::ProtocolError.report()),
+    };
 
     let current_refresh_token = state
         .read()
@@ -293,9 +297,7 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
             .send(Message::Text(String::new()))
             .await
             .change_context(WebSocketError::Send)?;
-        socket.close()
-            .await
-            .change_context(WebSocketError::Close)?;
+        socket.close().await.change_context(WebSocketError::Close)?;
         return Err(WebSocketError::ClientVersionUnsupported.report());
     }
 
@@ -337,13 +339,13 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
         .await
         .ok_or(WebSocketError::Receive.report())?
         .change_context(WebSocketError::Receive)?
-        {
-            Message::Binary(sync_data_version_list) => {
-                SyncDataVersionFromClient::parse_sync_data_list(&sync_data_version_list)
-                    .into_error_string(WebSocketError::ProtocolError)?
-            }
-            _ => return Err(WebSocketError::ProtocolError.report()),
-        };
+    {
+        Message::Binary(sync_data_version_list) => {
+            SyncDataVersionFromClient::parse_sync_data_list(&sync_data_version_list)
+                .into_error_string(WebSocketError::ProtocolError)?
+        }
+        _ => return Err(WebSocketError::ProtocolError.report()),
+    };
 
     let mut event_receiver = state
         .write(
@@ -353,7 +355,8 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
         .change_context(WebSocketError::DatabaseSaveTokens)?;
 
     reset_pending_notification(state, id).await?;
-    self::data_sync::sync_data_with_client_if_needed(state, &mut socket, id, data_sync_versions).await?;
+    self::data_sync::sync_data_with_client_if_needed(state, &mut socket, id, data_sync_versions)
+        .await?;
     self::data_sync::send_new_messages_event_if_needed(state, &mut socket, id).await?;
 
     // TODO(prod): Remove extra logging from this file.

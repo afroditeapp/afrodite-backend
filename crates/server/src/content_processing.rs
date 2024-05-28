@@ -163,7 +163,10 @@ impl ContentProcessingManagerData {
         self.new_processing_request.0.notify_one();
     }
 
-    pub async fn pop_from_queue(&self, events: EventManagerWithCacheReference<'_>) -> Option<ProcessingState> {
+    pub async fn pop_from_queue(
+        &self,
+        events: EventManagerWithCacheReference<'_>,
+    ) -> Option<ProcessingState> {
         let mut write = self.data.write().await;
         let (queue, processing_states) = write.split();
         let processing_id = queue.pop_front()?;
@@ -309,7 +312,10 @@ impl ContentProcessingManager {
 
 // TODO: add extension method to EventManager?
 
-async fn notify_client(event_manager: &EventManagerWithCacheReference<'_>, state: &ProcessingState) {
+async fn notify_client(
+    event_manager: &EventManagerWithCacheReference<'_>,
+    state: &ProcessingState,
+) {
     let state_change = ContentProcessingStateChanged {
         id: state.processing_id,
         new_state: state.processing_state.clone(),

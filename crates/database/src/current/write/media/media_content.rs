@@ -1,7 +1,8 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType, SetProfileContent, SetProfileContentInternal
+    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType,
+    SetProfileContent, SetProfileContentInternal,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -74,11 +75,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .media_content()
             .get_account_media_content(id)?;
         let convert = |content_id: Option<ContentId>| {
-            Self::check_content_id(
-                content_id,
-                &all_content,
-                |c| c.state() == ContentState::ModeratedAsAccepted
-            )
+            Self::check_content_id(content_id, &all_content, |c| {
+                c.state() == ContentState::ModeratedAsAccepted
+            })
         };
 
         update(current_account_media.find(id.as_db_id()))
@@ -126,11 +125,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .media_content()
             .get_account_media_content(id)?;
         let convert = |content_id: Option<ContentId>| {
-            Self::check_content_id(
-                content_id,
-                &all_content,
-                |c| c.state() != ContentState::ModeratedAsRejected
-            )
+            Self::check_content_id(content_id, &all_content, |c| {
+                c.state() != ContentState::ModeratedAsRejected
+            })
         };
 
         update(current_account_media.find(id.as_db_id()))
@@ -171,16 +168,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .media_content()
             .get_account_media_content(content_owner)?;
 
-        let content_db_id = Self::check_content_id(
-            Some(content_id),
-            &all_content,
-            |c| c.state() == ContentState::ModeratedAsAccepted && c.secure_capture,
-        )?;
+        let content_db_id = Self::check_content_id(Some(content_id), &all_content, |c| {
+            c.state() == ContentState::ModeratedAsAccepted && c.secure_capture
+        })?;
 
         update(current_account_media.find(content_owner.as_db_id()))
-            .set((
-                security_content_id.eq(content_db_id),
-            ))
+            .set((security_content_id.eq(content_db_id),))
             .execute(self.conn())
             .into_db_error((content_owner, content_id))?;
 
@@ -207,16 +200,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .media_content()
             .get_account_media_content(content_owner)?;
 
-        let content_db_id = Self::check_content_id(
-            content_id,
-            &all_content,
-            |c| c.state() != ContentState::ModeratedAsRejected && c.secure_capture,
-        )?;
+        let content_db_id = Self::check_content_id(content_id, &all_content, |c| {
+            c.state() != ContentState::ModeratedAsRejected && c.secure_capture
+        })?;
 
         update(current_account_media.find(content_owner.as_db_id()))
-            .set((
-                pending_security_content_id.eq(content_db_id),
-            ))
+            .set((pending_security_content_id.eq(content_db_id),))
             .execute(self.conn())
             .into_db_error((content_owner, content_id))?;
 
@@ -235,7 +224,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         content_owner: AccountIdInternal,
         content_id: ContentId,
     ) -> Result<(), DieselDatabaseError> {
-        let selected_content = self.read().media().media_content().current_account_media(content_owner)?;
+        let selected_content = self
+            .read()
+            .media()
+            .media_content()
+            .current_account_media(content_owner)?;
         let selected_content = selected_content
             .iter_all_content()
             .find(|c| c.content_id() == content_id);
@@ -253,18 +246,16 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         if let Some(c) = found_content {
             // TODO(prod): Content not in use time tracking
             match c.state() {
-                ContentState::InSlot |
-                ContentState::ModeratedAsRejected |
-                ContentState::ModeratedAsAccepted => {
+                ContentState::InSlot
+                | ContentState::ModeratedAsRejected
+                | ContentState::ModeratedAsAccepted => {
                     use model::schema::media_content::dsl::*;
                     delete(media_content.filter(id.eq(c.content_row_id())))
                         .execute(self.conn())
                         .into_db_error((content_owner, content_id))?;
                     Ok(())
                 }
-                ContentState::InModeration => {
-                    Err(DieselDatabaseError::ContentIsInUse.report())
-                }
+                ContentState::InModeration => Err(DieselDatabaseError::ContentIsInUse.report()),
             }
         } else {
             Err(DieselDatabaseError::NotAllowed.report())

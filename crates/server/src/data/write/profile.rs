@@ -1,4 +1,9 @@
-use model::{AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups};
+use model::{
+    AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated,
+    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal,
+    ValidatedSearchGroups,
+};
+use tracing::info;
 
 use crate::{
     data::{
@@ -7,9 +12,6 @@ use crate::{
     },
     result::{Result, WrappedContextExt},
 };
-
-use tracing::info;
-
 
 define_write_commands!(WriteCommandsProfile);
 
@@ -62,11 +64,14 @@ impl WriteCommandsProfile<'_> {
         let profile_data = data.clone();
         let account = db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile(id, &profile_data)?;
-            cmds.profile().data().upsert_profile_attributes(id, profile_data.new_data.attributes)?;
+            cmds.profile()
+                .data()
+                .upsert_profile_attributes(id, profile_data.new_data.attributes)?;
             cmds.read().common().account(id)
         })?;
 
-        let (location, profile_data) = self.cache()
+        let (location, profile_data) = self
+            .cache()
             .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
@@ -74,10 +79,7 @@ impl WriteCommandsProfile<'_> {
                 p.attributes.update_from(&data.new_data);
                 p.data.version_uuid = data.version;
 
-                Ok((
-                    p.location.current_position,
-                    p.location_index_profile_data(),
-                ))
+                Ok((p.location.current_position, p.location_index_profile_data()))
             })
             .await
             .into_data_error(id)?;
@@ -96,7 +98,9 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         action: impl FnOnce(&mut ProfileStateInternal),
     ) -> Result<(), DataError> {
-        let mut s = self.db_read(move |mut cmd| cmd.profile().data().profile_state(id)).await?;
+        let mut s = self
+            .db_read(move |mut cmd| cmd.profile().data().profile_state(id))
+            .await?;
         action(&mut s);
         let s_cloned = s.clone();
         let account = db_transaction!(self, move |mut cmds| {
@@ -104,16 +108,14 @@ impl WriteCommandsProfile<'_> {
             cmds.read().common().account(id)
         })?;
 
-        let (location, profile_data) = self.cache()
+        let (location, profile_data) = self
+            .cache()
             .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
 
                 p.state = s.into();
 
-                Ok((
-                    p.location.current_position,
-                    p.location_index_profile_data(),
-                ))
+                Ok((p.location.current_position, p.location_index_profile_data()))
             })
             .await
             .into_data_error(id)?;
@@ -133,7 +135,9 @@ impl WriteCommandsProfile<'_> {
         filters: ProfileAttributeFilterListUpdateValidated,
     ) -> Result<(), DataError> {
         let new_filters = db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().upsert_profile_attribute_filters(id, filters.filters)?;
+            cmds.profile()
+                .data()
+                .upsert_profile_attribute_filters(id, filters.filters)?;
             cmds.read().profile().data().profile_attribute_filters(id)
         })?;
 
@@ -203,7 +207,8 @@ impl WriteCommandsProfile<'_> {
             if current_hash.as_deref() != Some(&sha256) {
                 info!(
                     "Profile attributes file hash changed from {:?} to {:?}",
-                    current_hash, Some(&sha256)
+                    current_hash,
+                    Some(&sha256)
                 );
 
                 cmds.profile()
@@ -225,7 +230,9 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.profile().data().reset_profile_attributes_sync_version(id)
+            cmds.profile()
+                .data()
+                .reset_profile_attributes_sync_version(id)
         })
     }
 
@@ -234,9 +241,8 @@ impl WriteCommandsProfile<'_> {
         id: AccountIdInternal,
         search_groups: ValidatedSearchGroups,
     ) -> Result<(), DataError> {
-        self.modify_profile_state(id, |s|
-            s.search_group_flags = search_groups.into()
-        ).await
+        self.modify_profile_state(id, |s| s.search_group_flags = search_groups.into())
+            .await
     }
 
     pub async fn update_search_age_range(
@@ -247,7 +253,8 @@ impl WriteCommandsProfile<'_> {
         self.modify_profile_state(id, |s| {
             s.search_age_range_min = range.min();
             s.search_age_range_max = range.max();
-        }).await
+        })
+        .await
     }
 
     pub async fn benchmark_update_profile_bypassing_cache(

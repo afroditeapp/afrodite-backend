@@ -37,8 +37,9 @@ fn main() {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     match config.current_mode() {
-        Some(config::args::AppMode::ImageProcess(_)) |
-        Some(config::args::AppMode::OpenApi) => unreachable!(),
+        Some(config::args::AppMode::ImageProcess(_)) | Some(config::args::AppMode::OpenApi) => {
+            unreachable!()
+        }
         Some(config::args::AppMode::Test(test_mode_config)) => {
             runtime.block_on(async { TestRunner::new(config, test_mode_config).run().await })
         }

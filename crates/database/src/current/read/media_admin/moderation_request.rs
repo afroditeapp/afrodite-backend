@@ -11,7 +11,6 @@ define_read_commands!(
 );
 
 impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModerationRequest<C> {
-
     /// Get the next active moderation request from the initial moderation
     /// request queue or the moderation request queue.
     pub fn get_next_active_moderation_request(

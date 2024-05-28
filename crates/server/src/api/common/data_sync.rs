@@ -1,22 +1,16 @@
-
-
-
-use axum::{
-    extract::{
-        ws::{Message, WebSocket},
-    },
-};
+use axum::extract::ws::{Message, WebSocket};
 use model::{
-    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SpecialEventToClient, SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils
+    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SpecialEventToClient,
+    SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
+    SyncVersionUtils,
 };
 pub use utils::api::PATH_CONNECT;
 
-use crate::{
-    app::{ReadData, WriteData},
-};
-use crate::{app::GetConfig, result::{Result, WrappedResultExt}};
-
 use super::WebSocketError;
+use crate::{
+    app::{GetConfig, ReadData, WriteData},
+    result::{Result, WrappedResultExt},
+};
 
 pub async fn send_new_messages_event_if_needed<S: WriteData + ReadData + GetConfig>(
     state: &S,
@@ -32,10 +26,7 @@ pub async fn send_new_messages_event_if_needed<S: WriteData + ReadData + GetConf
             .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
 
         if !pending_messages.messages.is_empty() {
-            send_event(
-                socket,
-                EventToClientInternal::NewMessageReceived
-            ).await?;
+            send_event(socket, EventToClientInternal::NewMessageReceived).await?;
         }
     }
 
@@ -57,16 +48,12 @@ pub async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig
 
     for version in sync_versions {
         match version.data_type {
-            SyncCheckDataType::Account =>
+            SyncCheckDataType::Account => {
                 if state.config().components().account {
-                    handle_account_data_sync(
-                        state,
-                        socket,
-                        id,
-                        version.version,
-                    ).await?;
+                    handle_account_data_sync(state, socket, id, version.version).await?;
                 }
-            SyncCheckDataType::ReveivedBlocks =>
+            }
+            SyncCheckDataType::ReveivedBlocks => {
                 if state.config().components().chat {
                     handle_chat_state_version_check(
                         state,
@@ -76,9 +63,11 @@ pub async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig
                         chat_state.clone(),
                         |s| &mut s.received_blocks_sync_version,
                         EventToClientInternal::ReceivedBlocksChanged,
-                    ).await?;
+                    )
+                    .await?;
                 }
-            SyncCheckDataType::ReveivedLikes =>
+            }
+            SyncCheckDataType::ReveivedLikes => {
                 if state.config().components().chat {
                     handle_chat_state_version_check(
                         state,
@@ -88,9 +77,11 @@ pub async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig
                         chat_state.clone(),
                         |s| &mut s.received_likes_sync_version,
                         EventToClientInternal::ReceivedLikesChanged,
-                    ).await?;
+                    )
+                    .await?;
                 }
-            SyncCheckDataType::SentBlocks =>
+            }
+            SyncCheckDataType::SentBlocks => {
                 if state.config().components().chat {
                     handle_chat_state_version_check(
                         state,
@@ -100,9 +91,11 @@ pub async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig
                         chat_state.clone(),
                         |s| &mut s.sent_blocks_sync_version,
                         EventToClientInternal::SentBlocksChanged,
-                    ).await?;
+                    )
+                    .await?;
                 }
-            SyncCheckDataType::SentLikes =>
+            }
+            SyncCheckDataType::SentLikes => {
                 if state.config().components().chat {
                     handle_chat_state_version_check(
                         state,
@@ -112,9 +105,11 @@ pub async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig
                         chat_state.clone(),
                         |s| &mut s.sent_likes_sync_version,
                         EventToClientInternal::SentLikesChanged,
-                    ).await?;
+                    )
+                    .await?;
                 }
-            SyncCheckDataType::Matches =>
+            }
+            SyncCheckDataType::Matches => {
                 if state.config().components().chat {
                     handle_chat_state_version_check(
                         state,
@@ -124,17 +119,21 @@ pub async fn sync_data_with_client_if_needed<S: WriteData + ReadData + GetConfig
                         chat_state.clone(),
                         |s| &mut s.matches_sync_version,
                         EventToClientInternal::MatchesChanged,
-                    ).await?;
+                    )
+                    .await?;
                 }
-            SyncCheckDataType::AvailableProfileAttributes =>
+            }
+            SyncCheckDataType::AvailableProfileAttributes => {
                 if state.config().components().profile {
                     handle_profile_attributes_sync_version_check(
                         state,
                         socket,
                         id,
                         version.version,
-                    ).await?;
+                    )
+                    .await?;
                 }
+            }
         }
     }
 
@@ -157,11 +156,10 @@ async fn handle_account_data_sync<S: WriteData + ReadData>(
     let account = match account.sync_version().check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => {
-            state.write(
-                move |cmds| async move {
+            state
+                .write(move |cmds| async move {
                     cmds.account().reset_syncable_account_data_version(id).await
-                },
-            )
+                })
                 .await
                 .change_context(WebSocketError::AccountDataVersionResetFailed)?;
 
@@ -177,33 +175,29 @@ async fn handle_account_data_sync<S: WriteData + ReadData>(
 
     send_event(
         socket,
-        EventToClientInternal::AccountStateChanged(
-            account.state()
-        )
-    ).await?;
+        EventToClientInternal::AccountStateChanged(account.state()),
+    )
+    .await?;
 
     send_event(
         socket,
-        EventToClientInternal::AccountCapabilitiesChanged(
-            account.capablities().clone()
-        )
-    ).await?;
+        EventToClientInternal::AccountCapabilitiesChanged(account.capablities().clone()),
+    )
+    .await?;
 
     send_event(
         socket,
-        EventToClientInternal::ProfileVisibilityChanged(
-            account.profile_visibility()
-        )
-    ).await?;
+        EventToClientInternal::ProfileVisibilityChanged(account.profile_visibility()),
+    )
+    .await?;
 
     // This must be the last to make sure that client has
     // reveived all sync data.
     send_event(
         socket,
-        SpecialEventToClient::AccountSyncVersionChanged(
-            account.sync_version()
-        )
-    ).await?;
+        SpecialEventToClient::AccountSyncVersionChanged(account.sync_version()),
+    )
+    .await?;
 
     Ok(())
 }
@@ -221,14 +215,15 @@ async fn handle_chat_state_version_check<S: WriteData + ReadData, T: SyncVersion
     match check_this_version.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => {
-            state.write(
-                move |cmds| async move {
-                    cmds.chat().modify_chat_state(id, move |s| {
-                        let version_to_be_reseted = getter(s);
-                        *version_to_be_reseted = Default::default();
-                    }).await
-                },
-            )
+            state
+                .write(move |cmds| async move {
+                    cmds.chat()
+                        .modify_chat_state(id, move |s| {
+                            let version_to_be_reseted = getter(s);
+                            *version_to_be_reseted = Default::default();
+                        })
+                        .await
+                })
                 .await
                 .change_context(WebSocketError::ChatDataVersionResetFailed)?;
         }
@@ -256,18 +251,23 @@ async fn handle_profile_attributes_sync_version_check<S: WriteData + ReadData>(
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => {
-            state.write(
-                move |cmds| async move {
-                    cmds.profile().reset_profile_attributes_sync_version(id).await
-                },
-            )
+            state
+                .write(move |cmds| async move {
+                    cmds.profile()
+                        .reset_profile_attributes_sync_version(id)
+                        .await
+                })
                 .await
                 .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?;
         }
         SyncCheckResult::Sync => (),
     };
 
-    send_event(socket, EventToClientInternal::AvailableProfileAttributesChanged).await?;
+    send_event(
+        socket,
+        EventToClientInternal::AvailableProfileAttributesChanged,
+    )
+    .await?;
 
     Ok(())
 }

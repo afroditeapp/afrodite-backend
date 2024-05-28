@@ -2,13 +2,11 @@
 //! feature (server component) is located on the current server, then
 //! request is not made.
 
-use api_internal::{Configuration};
-use config::{InternalApiUrls};
+use api_internal::Configuration;
+use config::InternalApiUrls;
 use tracing::{error, info};
 
-use crate::{
-    result::{Result, WrappedContextExt},
-};
+use crate::result::{Result, WrappedContextExt};
 
 pub mod common;
 pub mod media;

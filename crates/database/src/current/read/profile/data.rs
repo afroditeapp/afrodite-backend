@@ -1,7 +1,9 @@
-
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal};
+use model::{
+    AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue,
+    ProfileInternal, ProfileStateInternal,
+};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 define_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);
@@ -20,10 +22,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
             .change_context(DieselDatabaseError::Execute)
     }
 
-    pub fn profile(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<Profile, DieselDatabaseError> {
+    pub fn profile(&mut self, id: AccountIdInternal) -> Result<Profile, DieselDatabaseError> {
         let profile = self.profile_internal(id)?;
         let attributes = self.profile_attribute_values(id)?;
         Ok(Profile::new(profile, attributes))
@@ -55,9 +54,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
             .change_context(DieselDatabaseError::Execute)
     }
 
-    pub fn attribute_file_hash(
-        &mut self,
-    ) -> Result<Option<String>, DieselDatabaseError> {
+    pub fn attribute_file_hash(&mut self) -> Result<Option<String>, DieselDatabaseError> {
         use crate::schema::profile_attributes_file_hash::dsl::*;
 
         profile_attributes_file_hash
@@ -89,11 +86,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         let data = data
             .into_iter()
             .map(|(id, part1, part2)| {
-                ProfileAttributeValue::new(
-                    id as u16,
-                    part1 as u16,
-                    part2.map(|v| v as u16),
-                )
+                ProfileAttributeValue::new(id as u16, part1 as u16, part2.map(|v| v as u16))
             })
             .collect();
 

@@ -2,9 +2,7 @@ use test_mode_macro::server_test;
 
 use crate::{
     action_array,
-    bot::actions::{
-        media::{SendImageToSlot}, AssertFailure,
-    },
+    bot::actions::{media::SendImageToSlot, AssertFailure},
     TestContext, TestResult,
 };
 

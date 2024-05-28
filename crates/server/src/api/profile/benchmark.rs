@@ -11,7 +11,8 @@ use crate::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, data::DataError,
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData},
+    data::DataError,
 };
 
 // ------------------- Benchmark routes ----------------------------

@@ -1,9 +1,10 @@
 use model::{
-    AccessToken, AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId, GoogleAccountId, RefreshToken, SignInWithInfo
+    AccessToken, AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
+    DemoModeId, GoogleAccountId, RefreshToken, SignInWithInfo,
 };
 use tokio_stream::StreamExt;
 
-use super::super::{DataError};
+use super::super::DataError;
 use crate::{data::IntoDataError, result::Result};
 
 define_read_commands!(ReadCommandsAccount);
@@ -36,18 +37,25 @@ impl ReadCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
     ) -> Result<SignInWithInfo, DataError> {
-        self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_info_raw(id).map(|v| v.into()))
-            .await
-            .into_error()
+        self.db_read(move |mut cmds| {
+            cmds.account()
+                .sign_in_with()
+                .sign_in_with_info_raw(id)
+                .map(|v| v.into())
+        })
+        .await
+        .into_error()
     }
 
-    pub async fn is_bot_account(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<bool, DataError> {
-        self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_info_raw(id).map(|v| v.is_bot_account))
-            .await
-            .into_error()
+    pub async fn is_bot_account(&self, id: AccountIdInternal) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.account()
+                .sign_in_with()
+                .sign_in_with_info_raw(id)
+                .map(|v| v.is_bot_account)
+        })
+        .await
+        .into_error()
     }
 
     pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
@@ -62,9 +70,7 @@ impl ReadCommandsAccount<'_> {
             .into_error()
     }
 
-    pub async fn account_ids_vec(
-        &self,
-    ) -> Result<Vec<AccountId>, DataError> {
+    pub async fn account_ids_vec(&self) -> Result<Vec<AccountId>, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_ids())
             .await
             .into_error()
@@ -92,9 +98,7 @@ impl ReadCommandsAccount<'_> {
             .into_error()
     }
 
-    pub async fn global_state(
-        &self,
-    ) -> Result<AccountGlobalState, DataError> {
+    pub async fn global_state(&self) -> Result<AccountGlobalState, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().global_state())
             .await
             .into_error()

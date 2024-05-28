@@ -1,6 +1,9 @@
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::ResultExt;
-use model::{AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest, ModerationRequestState};
+use model::{
+    AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest,
+    ModerationRequestState,
+};
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::IntoReportFromString;
 use tokio_util::io::ReaderStream;
@@ -160,17 +163,27 @@ impl<'a> ReadCommands<'a> {
         &self,
         account_id: AccountIdInternal,
     ) -> Result<Option<ModerationRequest>, DataError> {
-        let request = self.db_read(move |mut cmds| {
-            cmds.media()
-                .moderation_request()
-                .moderation_request(account_id)
-        })
-        .await
-        .into_error()?;
+        let request = self
+            .db_read(move |mut cmds| {
+                cmds.media()
+                    .moderation_request()
+                    .moderation_request(account_id)
+            })
+            .await
+            .into_error()?;
 
         if let Some(request) = request {
-            let smallest_number = self.db_read(move |mut cmds| cmds.common().queue_number().smallest_queue_number(request.queue_type)).await?;
-            let num = if let (Some(num), true) = (smallest_number, request.state == ModerationRequestState::Waiting) {
+            let smallest_number = self
+                .db_read(move |mut cmds| {
+                    cmds.common()
+                        .queue_number()
+                        .smallest_queue_number(request.queue_type)
+                })
+                .await?;
+            let num = if let (Some(num), true) = (
+                smallest_number,
+                request.state == ModerationRequestState::Waiting,
+            ) {
                 let queue_position = request.queue_number.0 - num;
                 Some(i64::max(queue_position, 0))
             } else {
@@ -193,9 +206,7 @@ impl<'a> ReadCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReader {
-            db: self.db,
-        }.db_read(cmd).await
+        DbReader { db: self.db }.db_read(cmd).await
     }
 }
 
@@ -203,7 +214,7 @@ pub struct DbReader<'a> {
     db: &'a CurrentReadHandle,
 }
 
-impl <'a> DbReader<'a> {
+impl<'a> DbReader<'a> {
     pub fn new(db: &'a CurrentReadHandle) -> Self {
         Self { db }
     }

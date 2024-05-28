@@ -1,17 +1,24 @@
+use std::time::Duration;
 
-use std::{time::Duration};
-
-use fcm::{message::{Message, Target}, FcmClient, response::{RecomendedAction, RecomendedWaitTime}};
-
-use crate::{result::{Result, WrappedResultExt}};
+use fcm::{
+    message::{Message, Target},
+    response::{RecomendedAction, RecomendedWaitTime},
+    FcmClient,
+};
 use model::{AccountIdInternal, NotificationEvent, PendingNotificationFlags};
-use serde_json::{json};
+use serde_json::json;
 use simple_backend::{app::SimpleBackendAppState, ServerQuitWatcher};
 use simple_backend_config::SimpleBackendConfig;
-use tokio::{sync::mpsc::{error::TrySendError, Receiver, Sender}, task::JoinHandle};
+use tokio::{
+    sync::mpsc::{error::TrySendError, Receiver, Sender},
+    task::JoinHandle,
+};
 use tracing::{error, info, warn};
 
-use crate::app::{AppState, WriteData};
+use crate::{
+    app::{AppState, WriteData},
+    result::{Result, WrappedResultExt},
+};
 
 const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 
@@ -36,7 +43,10 @@ impl PushNotificationManagerQuitHandle {
         match self.task.await {
             Ok(()) => (),
             Err(e) => {
-                warn!("PushNotificationManagerQuitHandle quit failed. Error: {:?}", e);
+                warn!(
+                    "PushNotificationManagerQuitHandle quit failed. Error: {:?}",
+                    e
+                );
             }
         }
     }
@@ -54,15 +64,8 @@ pub struct PushNotificationSender {
 }
 
 impl PushNotificationSender {
-    pub fn send(
-        &self,
-        account_id: AccountIdInternal,
-        event: NotificationEvent,
-    ) {
-        let notification = SendPushNotification {
-            account_id,
-            event,
-        };
+    pub fn send(&self, account_id: AccountIdInternal, event: NotificationEvent) {
+        let notification = SendPushNotification { account_id, event };
         match self.sender.try_send(notification) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {
@@ -151,7 +154,9 @@ impl PushNotificationManager {
             match notification {
                 Some(notification) => {
                     self.current_push_notification_in_sending = Some(notification);
-                    let result = self.send_push_notification(notification, &mut sending_logic).await;
+                    let result = self
+                        .send_push_notification(notification, &mut sending_logic)
+                        .await;
                     if let Err(e) = result {
                         error!("Sending push notification failed: {:?}", e);
                         // TODO: Save notification?
@@ -161,7 +166,7 @@ impl PushNotificationManager {
                 None => {
                     warn!("Push notification channel is broken");
                     break;
-                },
+                }
             }
         }
     }
@@ -182,11 +187,11 @@ impl PushNotificationManager {
             return Ok(());
         };
 
-        let info = self.state
+        let info = self
+            .state
             .write(move |cmds| async move {
                 let flags: PendingNotificationFlags = send_push_notification.event.into();
-                cmds
-                    .chat()
+                cmds.chat()
                     .push_notifications()
                     .get_push_notification_state_info_and_add_notification_value(
                         send_push_notification.account_id,
@@ -222,8 +227,7 @@ impl PushNotificationManager {
             Ok(()) => {
                 self.state
                     .write(move |cmds| async move {
-                        cmds
-                            .chat()
+                        cmds.chat()
                             .push_notifications()
                             .enable_push_notification_sent_flag(send_push_notification.account_id)
                             .await
@@ -232,23 +236,22 @@ impl PushNotificationManager {
                     .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
                 Ok(())
             }
-            Err(action) => {
-                match action {
-                    UnusualAction::DisablePushNotificationSupport => {
-                        self.fcm = None;
-                        Ok(())
-                    }
-                    UnusualAction::RemoveDeviceToken =>
-                        self.state
-                            .write(move |cmds| async move {
-                                cmds.chat().push_notifications()
-                                    .remove_device_token(send_push_notification.account_id)
-                                    .await
-                            })
-                            .await
-                            .change_context(PushNotificationError::RemoveDeviceTokenFailed)
+            Err(action) => match action {
+                UnusualAction::DisablePushNotificationSupport => {
+                    self.fcm = None;
+                    Ok(())
                 }
-            }
+                UnusualAction::RemoveDeviceToken => self
+                    .state
+                    .write(move |cmds| async move {
+                        cmds.chat()
+                            .push_notifications()
+                            .remove_device_token(send_push_notification.account_id)
+                            .await
+                    })
+                    .await
+                    .change_context(PushNotificationError::RemoveDeviceTokenFailed),
+            },
         }
     }
 }
@@ -285,24 +288,22 @@ impl FcmSendingLogic {
         }
     }
 
-    async fn retry_sending(
-        &mut self,
-        message: &Message,
-        fcm: &FcmClient,
-    ) -> NextAction {
+    async fn retry_sending(&mut self, message: &Message, fcm: &FcmClient) -> NextAction {
         match (self.forced_wait_time.take(), self.exponential_backoff) {
             (None, None) =>
-                // First time trying to send this message.
-                // Basic rate limiting might be good, so wait some time.
-                tokio::time::sleep(Duration::from_millis(self.initial_send_rate_limit_millis)).await,
-            (Some(forced_wait_time), _) =>
-                tokio::time::sleep(forced_wait_time).await,
+            // First time trying to send this message.
+            // Basic rate limiting might be good, so wait some time.
+            {
+                tokio::time::sleep(Duration::from_millis(self.initial_send_rate_limit_millis)).await
+            }
+            (Some(forced_wait_time), _) => tokio::time::sleep(forced_wait_time).await,
             (_, Some(exponential_backoff)) => {
                 // TODO: Add some jitter time?
                 let next_exponential_backoff =
                     exponential_backoff.as_millis() * exponential_backoff.as_millis();
                 tokio::time::sleep(exponential_backoff).await;
-                self.exponential_backoff = Some(Duration::from_millis(next_exponential_backoff as u64));
+                self.exponential_backoff =
+                    Some(Duration::from_millis(next_exponential_backoff as u64));
             }
         }
 
@@ -310,7 +311,10 @@ impl FcmSendingLogic {
             Ok(response) => {
                 let action = response.recommended_error_handling_action();
                 if let Some(action) = &action {
-                    error!("FCM error detected, response: {:#?}, action: {:#?}", response, action);
+                    error!(
+                        "FCM error detected, response: {:#?}, action: {:#?}",
+                        response, action
+                    );
                 }
                 match action {
                     None => {
@@ -319,21 +323,22 @@ impl FcmSendingLogic {
                         NextAction::NextMessage // No errors
                     }
                     Some(
-                        RecomendedAction::CheckIosAndWebCredentials |
-                        RecomendedAction::CheckSenderIdEquality |
-                        RecomendedAction::FixMessageContent
+                        RecomendedAction::CheckIosAndWebCredentials
+                        | RecomendedAction::CheckSenderIdEquality
+                        | RecomendedAction::FixMessageContent,
                     ) => NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport),
-                    Some(RecomendedAction::RemoveFcmAppToken) =>
-                        NextAction::UnusualAction(UnusualAction::RemoveDeviceToken),
+                    Some(RecomendedAction::RemoveFcmAppToken) => {
+                        NextAction::UnusualAction(UnusualAction::RemoveDeviceToken)
+                    }
                     Some(RecomendedAction::ReduceMessageRateAndRetry(wait_time)) => {
                         self.initial_send_rate_limit_millis *= 2;
                         self.handle_recommended_wait_time(wait_time);
                         NextAction::Retry
-                    },
+                    }
                     Some(RecomendedAction::Retry(wait_time)) => {
                         self.handle_recommended_wait_time(wait_time);
                         NextAction::Retry
-                    },
+                    }
                     Some(RecomendedAction::HandleUnknownError) => {
                         // Just set forced wait time and hope for the best...
                         self.forced_wait_time = Some(Duration::from_secs(60));
@@ -356,13 +361,15 @@ impl FcmSendingLogic {
 
     fn handle_recommended_wait_time(&mut self, recommendation: RecomendedWaitTime) {
         match recommendation {
-            RecomendedWaitTime::InitialWaitTime(wait_time) =>
+            RecomendedWaitTime::InitialWaitTime(wait_time) => {
                 if self.exponential_backoff.is_none() {
                     // Set initial time for exponential back-off
                     self.exponential_backoff = Some(wait_time);
                 }
-            RecomendedWaitTime::SpecificWaitTime(retry_after) =>
-                self.forced_wait_time = Some(retry_after.wait_time()),
+            }
+            RecomendedWaitTime::SpecificWaitTime(retry_after) => {
+                self.forced_wait_time = Some(retry_after.wait_time())
+            }
         }
     }
 }

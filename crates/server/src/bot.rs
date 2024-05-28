@@ -68,14 +68,17 @@ impl BotClient {
             ));
         }
 
-        let internal_api_socket = if let Some(internal_api_socket) = config.simple_backend().socket().internal_api {
-            if !internal_api_socket.ip().is_loopback() {
-                return Err(BotClientError::LaunchCommand).attach_printable("Only localhost IP address is allowed for internal API");
-            }
-            internal_api_socket
-        } else {
-            return Err(BotClientError::LaunchCommand).attach_printable("Internal API must be enabled");
-        };
+        let internal_api_socket =
+            if let Some(internal_api_socket) = config.simple_backend().socket().internal_api {
+                if !internal_api_socket.ip().is_loopback() {
+                    return Err(BotClientError::LaunchCommand)
+                        .attach_printable("Only localhost IP address is allowed for internal API");
+                }
+                internal_api_socket
+            } else {
+                return Err(BotClientError::LaunchCommand)
+                    .attach_printable("Internal API must be enabled");
+            };
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);
 
@@ -97,10 +100,9 @@ impl BotClient {
             .arg("--url-chat")
             .arg(Self::public_api_url(config));
 
-        if let Some(bot_config_file) = &config
-            .bot_config_file()
-        {
-            let dir = std::fs::canonicalize(bot_config_file).change_context(BotClientError::LaunchCommand)?;
+        if let Some(bot_config_file) = &config.bot_config_file() {
+            let dir = std::fs::canonicalize(bot_config_file)
+                .change_context(BotClientError::LaunchCommand)?;
             command.arg("--bot-config-file").arg(dir);
         }
 
@@ -205,7 +207,11 @@ impl BotClient {
     }
 
     fn internal_api_url(internal_api_socket: SocketAddr) -> String {
-        format!("http://{}:{}", LOCALHOST_HOSTNAME, internal_api_socket.port())
+        format!(
+            "http://{}:{}",
+            LOCALHOST_HOSTNAME,
+            internal_api_socket.port()
+        )
     }
 
     fn public_api_url(config: &Config) -> String {
@@ -213,19 +219,19 @@ impl BotClient {
         //       One option is to disable certificate validation and use
         //       localhost address.
 
-        let (protocol, hostname) = if let Some(lets_encrypt) = config.simple_backend().lets_encrypt_config()
-        {
-
-            (
-                "https",
-                lets_encrypt.domains
-                    .first()
-                    .map(|v| v.as_str())
-                    .unwrap_or(LOCALHOST_HOSTNAME)
-            )
-        } else {
-            ("http", LOCALHOST_HOSTNAME)
-        };
+        let (protocol, hostname) =
+            if let Some(lets_encrypt) = config.simple_backend().lets_encrypt_config() {
+                (
+                    "https",
+                    lets_encrypt
+                        .domains
+                        .first()
+                        .map(|v| v.as_str())
+                        .unwrap_or(LOCALHOST_HOSTNAME),
+                )
+            } else {
+                ("http", LOCALHOST_HOSTNAME)
+            };
         format!(
             "{}://{}:{}",
             protocol,

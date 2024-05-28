@@ -9,14 +9,16 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, ProfileVisibility
+    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId,
+    ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType,
+    ProfileVisibility,
 };
 
 pub mod sync_version;
 pub mod version;
 
-pub use version::*;
 pub use sync_version::*;
+pub use version::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {
@@ -188,13 +190,13 @@ impl From<EventToClientInternal> for EventToClient {
             ProfileVisibilityChanged(v) => value.visibility = Some(v),
             LatestViewedMessageChanged(v) => value.latest_viewed_message_changed = Some(v),
             ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),
-            NewMessageReceived |
-            ReceivedLikesChanged |
-            ReceivedBlocksChanged |
-            SentLikesChanged |
-            SentBlocksChanged |
-            MatchesChanged |
-            AvailableProfileAttributesChanged => (),
+            NewMessageReceived
+            | ReceivedLikesChanged
+            | ReceivedBlocksChanged
+            | SentLikesChanged
+            | SentBlocksChanged
+            | MatchesChanged
+            | AvailableProfileAttributesChanged => (),
         }
 
         value
@@ -429,16 +431,7 @@ impl RefreshToken {
 }
 
 #[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    FromSqlRow,
-    AsExpression,
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
@@ -455,7 +448,6 @@ impl AccountIdDb {
 }
 
 diesel_i64_wrapper!(AccountIdDb);
-
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, Insertable, AsChangeset)]
 #[diesel(table_name = crate::schema::shared_state)]
@@ -533,16 +525,7 @@ pub struct QueueEntryRaw {
 }
 
 #[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    FromSqlRow,
-    AsExpression,
+    Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
@@ -566,8 +549,6 @@ impl From<ModerationQueueNumber> for QueueNumber {
 
 diesel_i64_wrapper!(QueueNumber);
 
-
-
 #[cfg(test)]
 mod tests {
     use base64::Engine;
@@ -576,8 +557,10 @@ mod tests {
 
     #[test]
     fn access_token_lenght_is_256_bits() {
-        let data_256_bit = [0u8; 256/8];
-        let wanted_len = base64::engine::general_purpose::STANDARD.encode(data_256_bit).len();
+        let data_256_bit = [0u8; 256 / 8];
+        let wanted_len = base64::engine::general_purpose::STANDARD
+            .encode(data_256_bit)
+            .len();
         let token = AccessToken::generate_new();
         assert_eq!(token.access_token.len(), wanted_len);
         assert_eq!(token.access_token.len(), 44);
@@ -593,8 +576,10 @@ mod tests {
 
     #[test]
     fn refresh_token_lenght_is_24_uuids() {
-        let data_24_uuid = [0u8; 128*24/8];
-        let wanted_len = base64::engine::general_purpose::STANDARD.encode(data_24_uuid).len();
+        let data_24_uuid = [0u8; 128 * 24 / 8];
+        let wanted_len = base64::engine::general_purpose::STANDARD
+            .encode(data_24_uuid)
+            .len();
         let token = RefreshToken::generate_new();
         assert_eq!(token.token.len(), wanted_len);
         assert_eq!(token.token.len(), 512);

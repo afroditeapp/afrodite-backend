@@ -1,7 +1,9 @@
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, MediaModerationRaw, MediaModerationRequestRaw, Moderation, ModerationId, ModerationQueueType, ModerationRequestContent, ModerationRequestId, ModerationRequestState, NextQueueNumberType
+    AccountId, AccountIdInternal, MediaModerationRaw, MediaModerationRequestRaw, Moderation,
+    ModerationId, ModerationQueueType, ModerationRequestContent, ModerationRequestId,
+    ModerationRequestState, NextQueueNumberType,
 };
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
@@ -18,40 +20,35 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
         moderator_id: AccountIdInternal,
         queue: ModerationQueueType,
     ) -> Result<Vec<Moderation>, DieselDatabaseError> {
-        let data: Vec<(
-            MediaModerationRequestRaw,
-            AccountId,
-        )> = {
-            use crate::schema::{
-                account_id, media_moderation, media_moderation_request,
-            };
+        let data: Vec<(MediaModerationRequestRaw, AccountId)> = {
+            use crate::schema::{account_id, media_moderation, media_moderation_request};
 
             let queue_type: NextQueueNumberType = queue.into();
             media_moderation::table
                 .inner_join(media_moderation_request::table)
-                .inner_join(account_id::table.on(media_moderation_request::account_id.eq(account_id::id)))
+                .inner_join(
+                    account_id::table.on(media_moderation_request::account_id.eq(account_id::id)),
+                )
                 .filter(media_moderation::account_id.eq(moderator_id.as_db_id()))
                 .filter(media_moderation::state_number.eq(ModerationRequestState::InProgress))
                 .filter(media_moderation_request::queue_number_type.eq(queue_type))
                 .order(media_moderation_request::queue_number.asc())
-                .select((
-                    MediaModerationRequestRaw::as_select(),
-                    account_id::uuid,
-                ))
+                .select((MediaModerationRequestRaw::as_select(), account_id::uuid))
                 .load(self.conn())
                 .into_db_error(moderator_id)?
         };
 
-        let new_data = data.into_iter().map(|(moderation_request, account)| {
-            Moderation {
+        let new_data = data
+            .into_iter()
+            .map(|(moderation_request, account)| Moderation {
                 request_creator_id: account,
                 moderator_id: moderator_id.as_id(),
                 request_id: ModerationRequestId {
                     request_row_id: moderation_request.id,
                 },
                 content: moderation_request.to_moderation_request_content(),
-            }
-        }).collect();
+            })
+            .collect();
 
         Ok(new_data)
     }

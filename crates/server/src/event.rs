@@ -1,11 +1,15 @@
 //! Send events to connected or not connected clients.
 
 use database::current::write::chat::ChatStateChanges;
-use model::{AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent};
+use model::{
+    AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent,
+};
 use tokio::sync::mpsc;
 
 use crate::{
-    data::{cache::DatabaseCache, DataError, IntoDataError}, push_notifications::PushNotificationSender, result::{Result, WrappedResultExt}
+    data::{cache::DatabaseCache, DataError, IntoDataError},
+    push_notifications::PushNotificationSender,
+    result::{Result, WrappedResultExt},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -55,7 +59,7 @@ pub struct EventManagerWithCacheReference<'a> {
     push_notification_sender: &'a PushNotificationSender,
 }
 
-impl <'a> EventManagerWithCacheReference<'a> {
+impl<'a> EventManagerWithCacheReference<'a> {
     pub fn new(
         cache: &'a DatabaseCache,
         push_notification_sender: &'a PushNotificationSender,
@@ -72,12 +76,7 @@ impl <'a> EventManagerWithCacheReference<'a> {
         action: impl FnOnce(&EventMode) -> T,
     ) -> Result<T, DataError> {
         self.cache
-            .read_cache(
-                id,
-                move |entry| action(
-                    &entry.current_event_connection,
-                )
-            )
+            .read_cache(id, move |entry| action(&entry.current_event_connection))
             .await
             .into_data_error(id)
     }
@@ -91,12 +90,12 @@ impl <'a> EventManagerWithCacheReference<'a> {
         event: EventToClientInternal,
     ) -> Result<(), DataError> {
         self.access_event_mode(account.into(), move |mode| {
-                if let EventMode::Connected(sender) = mode {
-                    sender.send(event.into())
-                }
-            })
-            .await
-            .change_context(DataError::EventModeAccessFailed)
+            if let EventMode::Connected(sender) = mode {
+                sender.send(event.into())
+            }
+        })
+        .await
+        .change_context(DataError::EventModeAccessFailed)
     }
 
     /// Send event to connected client or if not connected
@@ -106,8 +105,8 @@ impl <'a> EventManagerWithCacheReference<'a> {
         account: AccountIdInternal,
         event: NotificationEvent,
     ) -> Result<(), DataError> {
-        let sent =
-            self.access_event_mode(account.into(), move |mode| {
+        let sent = self
+            .access_event_mode(account.into(), move |mode| {
                 let event: EventToClientInternal = event.into();
                 if let EventMode::Connected(sender) = mode {
                     sender.send(event.into());
@@ -120,17 +119,13 @@ impl <'a> EventManagerWithCacheReference<'a> {
             .change_context(DataError::EventModeAccessFailed)?;
 
         if !sent {
-            self.push_notification_sender
-                .send(account, event)
+            self.push_notification_sender.send(account, event)
         }
 
         Ok(())
     }
 
-    pub async fn handle_chat_state_changes(
-        &self,
-        c: ChatStateChanges,
-    ) -> Result<(), DataError> {
+    pub async fn handle_chat_state_changes(&self, c: ChatStateChanges) -> Result<(), DataError> {
         if c.received_blocks_sync_version.is_some() {
             self.send_connected_event(c.id, EventToClientInternal::ReceivedBlocksChanged)
                 .await?;

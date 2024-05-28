@@ -1,15 +1,10 @@
 use std::{collections::HashSet, str::FromStr};
 
-use diesel::{
-    prelude::*,
-};
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema};
+use utoipa::ToSchema;
 
-use crate::{
-    ProfileAttributesSyncVersion
-};
-
+use crate::ProfileAttributesSyncVersion;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {
@@ -18,7 +13,9 @@ pub struct AttributesFileInternal {
 }
 
 impl AttributesFileInternal {
-    fn validate_attributes(mut self) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
+    fn validate_attributes(
+        mut self,
+    ) -> Result<(AttributeOrderMode, Vec<AttributeInternal>), String> {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
@@ -135,8 +132,8 @@ impl ModeAndIdSequenceNumber {
                 Self::validate_integer_id(id)?;
                 self.current_id = Some(id);
             }
-            AttributeMode::SelectSingleFilterMultiple |
-            AttributeMode::SelectMultipleFilterMultiple => {
+            AttributeMode::SelectSingleFilterMultiple
+            | AttributeMode::SelectMultipleFilterMultiple => {
                 Self::validate_bitflag_id(id)?;
                 self.current_id = Some(id);
             }
@@ -159,7 +156,11 @@ impl ModeAndIdSequenceNumber {
         }
 
         if id < Self::FIRST_BITFLAG_ID {
-            return Err(format!("Invalid ID {}, id < {}", id, Self::FIRST_BITFLAG_ID));
+            return Err(format!(
+                "Invalid ID {}, id < {}",
+                id,
+                Self::FIRST_BITFLAG_ID
+            ));
         }
 
         if id > Self::LAST_BITFLAG_ID {
@@ -182,8 +183,8 @@ impl ModeAndIdSequenceNumber {
                 self.current_id = Some(tmp);
                 Ok(tmp)
             }
-            AttributeMode::SelectSingleFilterMultiple |
-            AttributeMode::SelectMultipleFilterMultiple => {
+            AttributeMode::SelectSingleFilterMultiple
+            | AttributeMode::SelectMultipleFilterMultiple => {
                 let tmp = if let Some(current_id) = self.current_id {
                     current_id << 1
                 } else {
@@ -242,7 +243,7 @@ impl AttributeInternal {
 
                     let order_number = match value.order_number {
                         Some(order_number) => order_number_state.set_value(order_number)?,
-                        None => order_number_state.increment_value()?
+                        None => order_number_state.increment_value()?,
                     };
                     if all_order_numbers.contains(&order_number) {
                         return Err(format!("Duplicate order number {}", order_number));
@@ -303,24 +304,22 @@ impl AttributeInternal {
         let mut current_top_level_count_number = ModeAndIdSequenceNumber::new_increment_only_mode();
         let mut values = Vec::new();
 
-        for v in  self
-            .values
-            .clone()
-            {
-                values.push(
-                    handle_attribute_value(
-                        v,
-                        &mut top_level_ids,
-                        &mut top_level_order_numbers,
-                        &mut keys,
-                        &mut current_top_level_id,
-                        &mut current_top_level_count_number,
-                    )?
-                );
-            }
+        for v in self.values.clone() {
+            values.push(handle_attribute_value(
+                v,
+                &mut top_level_ids,
+                &mut top_level_order_numbers,
+                &mut keys,
+                &mut current_top_level_id,
+                &mut current_top_level_count_number,
+            )?);
+        }
 
         if values.is_empty() {
-            return Err(format!("Attribute {} must have at least one value", self.key));
+            return Err(format!(
+                "Attribute {} must have at least one value",
+                self.key
+            ));
         }
 
         // Check that correct IDs are used.
@@ -354,56 +353,56 @@ impl AttributeInternal {
 
         let mut group_values = Vec::new();
 
-        for g in self
-            .group_values
-            .clone() {
-                if !keys.contains(&g.key) {
-                    return Err(format!("Missing attribute value definition for key {}", g.key));
-                }
+        for g in self.group_values.clone() {
+            if !keys.contains(&g.key) {
+                return Err(format!(
+                    "Missing attribute value definition for key {}",
+                    g.key
+                ));
+            }
 
-                let mut sub_level_ids = HashSet::new();
-                let mut sub_level_order_numbers = HashSet::new();
-                let mut current_sub_level_id = ModeAndIdSequenceNumber::new(self.mode);
-                let mut current_sub_level_count_number = ModeAndIdSequenceNumber::new_increment_only_mode();
-                let mut values = Vec::new();
+            let mut sub_level_ids = HashSet::new();
+            let mut sub_level_order_numbers = HashSet::new();
+            let mut current_sub_level_id = ModeAndIdSequenceNumber::new(self.mode);
+            let mut current_sub_level_count_number =
+                ModeAndIdSequenceNumber::new_increment_only_mode();
+            let mut values = Vec::new();
 
-                for v in g.values {
-                    let value = handle_attribute_value(
-                        v,
-                        &mut sub_level_ids,
-                        &mut sub_level_order_numbers,
-                        &mut keys,
-                        &mut current_sub_level_id,
-                        &mut current_sub_level_count_number,
-                    )?;
-                    values.push(value);
-                }
+            for v in g.values {
+                let value = handle_attribute_value(
+                    v,
+                    &mut sub_level_ids,
+                    &mut sub_level_order_numbers,
+                    &mut keys,
+                    &mut current_sub_level_id,
+                    &mut current_sub_level_count_number,
+                )?;
+                values.push(value);
+            }
 
-                if values.is_empty() {
-                    return Err(format!("Value group {} must have at least one value", g.key));
-                }
+            if values.is_empty() {
+                return Err(format!(
+                    "Value group {} must have at least one value",
+                    g.key
+                ));
+            }
 
-                // Check that correct IDs are used.
-                for i in 0..values.len() {
-                    let i = i as u16;
-                    if sub_level_ids.get(&i).is_none() {
-                        return Err(format!(
+            // Check that correct IDs are used.
+            for i in 0..values.len() {
+                let i = i as u16;
+                if sub_level_ids.get(&i).is_none() {
+                    return Err(format!(
                             "ID {} is missing from value IDs for value group {}, all numbers between 0 and {} should be used",
                             i,
                             g.key,
                             values.len() - 1
                         ));
-                    }
                 }
-                values.sort_by(|a, b| a.id.cmp(&b.id));
-
-                group_values.push(
-                    GroupValues {
-                        key: g.key,
-                        values,
-                    }
-                );
             }
+            values.sort_by(|a, b| a.id.cmp(&b.id));
+
+            group_values.push(GroupValues { key: g.key, values });
+        }
 
         if self.mode.is_bitflag_mode() && !group_values.is_empty() {
             return Err("Bitflag mode cannot have group values".to_string());
@@ -415,15 +414,16 @@ impl AttributeInternal {
             }
         }
 
-        for t in self
-            .translations
-            .clone() {
-                for l in t.values {
-                    if !keys.contains(&l.key) {
-                        return Err(format!("Missing attribute value definition for key {}", l.key));
-                    }
+        for t in self.translations.clone() {
+            for l in t.values {
+                if !keys.contains(&l.key) {
+                    return Err(format!(
+                        "Missing attribute value definition for key {}",
+                        l.key
+                    ));
                 }
             }
+        }
 
         Ok(AttributeInfoValidated {
             values,
@@ -526,8 +526,8 @@ impl AttributeMode {
     pub fn is_bitflag_mode(&self) -> bool {
         match self {
             AttributeMode::SelectSingleFilterSingle => false,
-            AttributeMode::SelectSingleFilterMultiple |
-            AttributeMode::SelectMultipleFilterMultiple => true,
+            AttributeMode::SelectSingleFilterMultiple
+            | AttributeMode::SelectMultipleFilterMultiple => true,
         }
     }
 }
@@ -573,7 +573,10 @@ impl TryFrom<String> for IconResource {
             .split_once(':')
             .ok_or(format!("Missing delimiter in {}", value))?;
         let location = location.parse()?;
-        Ok(Self { location , identifier: identifier.to_string() })
+        Ok(Self {
+            location,
+            identifier: identifier.to_string(),
+        })
     }
 }
 
@@ -583,7 +586,6 @@ impl From<IconResource> for String {
         format!("{}:{}", location, icon.identifier)
     }
 }
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ProfileAttributes {

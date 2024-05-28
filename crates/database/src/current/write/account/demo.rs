@@ -5,10 +5,7 @@ use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError
 
 use crate::IntoDatabaseError;
 
-define_write_commands!(
-    CurrentWriteAccountDemo,
-    CurrentSyncWriteAccountDemo
-);
+define_write_commands!(CurrentWriteAccountDemo, CurrentSyncWriteAccountDemo);
 
 impl<C: ConnectionProvider> CurrentSyncWriteAccountDemo<C> {
     pub fn insert_related_account_id(

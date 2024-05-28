@@ -3,12 +3,11 @@ use std::collections::HashSet;
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ContentState,
-    MediaContentRaw, MediaModerationRaw, MediaModerationRequestRaw,
-    ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
-    ModerationRequestState,
+    AccountIdInternal, ContentId, ContentSlot, ContentState, MediaContentRaw, MediaModerationRaw,
+    MediaModerationRequestRaw, ModerationRequestContent, ModerationRequestId,
+    ModerationRequestInternal, ModerationRequestState,
 };
-use simple_backend_database::{diesel_db::{ConnectionProvider, DieselDatabaseError}};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::{IntoDatabaseError, IntoDatabaseErrorExt};
 
@@ -133,7 +132,8 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             if data
                 .iter()
                 .find(|c| c.secure_capture && c.uuid == *content)
-                .is_some() {
+                .is_some()
+            {
                 secure_capture_found_from_request = true;
                 break;
             }
@@ -153,8 +153,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
     pub fn get_moderation_request_content(
         &mut self,
         request_owner_id: ModerationRequestId,
-    ) -> Result<(MediaModerationRequestRaw, AccountIdInternal), DieselDatabaseError>
-    {
+    ) -> Result<(MediaModerationRequestRaw, AccountIdInternal), DieselDatabaseError> {
         use crate::schema::{
             account_id, media_moderation_request, media_moderation_request::dsl::*,
         };
@@ -169,10 +168,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
             .first(self.conn())
             .into_db_error(request_owner_id)?;
 
-        Ok((
-            request,
-            request_owner_account_id,
-        ))
+        Ok((request, request_owner_account_id))
     }
 }
 

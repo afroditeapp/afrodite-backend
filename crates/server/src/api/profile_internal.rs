@@ -2,8 +2,6 @@
 
 use simple_backend::create_counters;
 
-
-
 create_counters!(
     ProfileInternalCounters,
     PROFILE_INTERNAL,

@@ -5,10 +5,7 @@ use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError
 
 use crate::IntoDatabaseError;
 
-define_read_commands!(
-    CurrentReadAccountDemo,
-    CurrentSyncReadAccountDemo
-);
+define_read_commands!(CurrentReadAccountDemo, CurrentSyncReadAccountDemo);
 
 impl<C: ConnectionProvider> CurrentSyncReadAccountDemo<C> {
     pub fn related_account_ids(

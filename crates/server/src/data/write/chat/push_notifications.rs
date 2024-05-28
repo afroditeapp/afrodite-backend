@@ -1,7 +1,4 @@
-
-
-
-use database::current::write::chat::{PushNotificationStateInfo};
+use database::current::write::chat::PushNotificationStateInfo;
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification};
 
 use crate::{
@@ -12,12 +9,11 @@ use crate::{
 define_write_commands!(WriteCommandsChatPushNotifications);
 
 impl WriteCommandsChatPushNotifications<'_> {
-    pub async fn remove_device_token(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    pub async fn remove_device_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat().push_notifications().update_fcm_device_token(id, None)
+            cmds.chat()
+                .push_notifications()
+                .update_fcm_device_token(id, None)
         })?;
 
         Ok(())
@@ -30,7 +26,9 @@ impl WriteCommandsChatPushNotifications<'_> {
     ) -> Result<(), DataError> {
         let token_clone = token.clone();
         db_transaction!(self, move |mut cmds| {
-            cmds.chat().push_notifications().update_fcm_device_token(id, Some(token_clone))
+            cmds.chat()
+                .push_notifications()
+                .update_fcm_device_token(id, Some(token_clone))
         })?;
 
         Ok(())
@@ -41,7 +39,9 @@ impl WriteCommandsChatPushNotifications<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat().push_notifications().reset_pending_notification(id)
+            cmds.chat()
+                .push_notifications()
+                .reset_pending_notification(id)
         })
     }
 
@@ -50,7 +50,9 @@ impl WriteCommandsChatPushNotifications<'_> {
         token: FcmDeviceToken,
     ) -> Result<PendingNotification, DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat().push_notifications().get_and_reset_pending_notification_with_device_token(token)
+            cmds.chat()
+                .push_notifications()
+                .get_and_reset_pending_notification_with_device_token(token)
         })
     }
 
@@ -59,7 +61,9 @@ impl WriteCommandsChatPushNotifications<'_> {
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat().push_notifications().enable_push_notification_sent_flag(id)
+            cmds.chat()
+                .push_notifications()
+                .enable_push_notification_sent_flag(id)
         })
     }
 
@@ -69,7 +73,9 @@ impl WriteCommandsChatPushNotifications<'_> {
         notification: PendingNotification,
     ) -> Result<PushNotificationStateInfo, DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.chat().push_notifications().get_push_notification_state_info_and_add_notification_value(id, notification)
+            cmds.chat()
+                .push_notifications()
+                .get_push_notification_state_info_and_add_notification_value(id, notification)
         })
     }
 }

@@ -1,11 +1,10 @@
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError};
+use simple_backend_database::diesel_db::{
+    ConnectionProvider, DieselConnection, DieselDatabaseError,
+};
 
 use self::{
-    account::HistorySyncWriteAccount,
-    chat::HistorySyncWriteChat,
-    media::HistorySyncWriteMedia,
-    media_admin::HistorySyncWriteMediaAdmin,
-    profile::HistorySyncWriteProfile,
+    account::HistorySyncWriteAccount, chat::HistorySyncWriteChat, media::HistorySyncWriteMedia,
+    media_admin::HistorySyncWriteMediaAdmin, profile::HistorySyncWriteProfile,
 };
 use crate::TransactionError;
 

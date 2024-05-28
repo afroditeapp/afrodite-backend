@@ -1,16 +1,10 @@
-
-
-
 use api_client::{
-    apis::{profile_api::{get_profile, post_profile}},
-    models::{ProfileUpdate},
+    apis::profile_api::{get_profile, post_profile},
+    models::ProfileUpdate,
 };
 use test_mode_macro::server_test;
 
-use crate::{
-    runner::server_tests::assert::{assert_eq},
-    TestContext, TestResult,
-};
+use crate::{runner::server_tests::assert::assert_eq, TestContext, TestResult};
 
 #[server_test]
 async fn updating_profile_works(context: TestContext) -> TestResult {
@@ -21,10 +15,11 @@ async fn updating_profile_works(context: TestContext) -> TestResult {
         name: format!(""),
         profile_text: format!("test"),
     };
-    post_profile(account.account_api(), profile)
-        .await?;
+    post_profile(account.account_api(), profile).await?;
     assert_eq(
         "test",
-        &get_profile(account.account_api(), &account.account_id_string()).await?.profile_text
+        &get_profile(account.account_api(), &account.account_id_string())
+            .await?
+            .profile_text,
     )
 }

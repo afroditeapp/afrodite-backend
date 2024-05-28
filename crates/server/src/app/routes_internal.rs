@@ -1,9 +1,6 @@
 //! Routes for server to server connections
 
-use axum::{
-    routing::{post},
-    Router,
-};
+use axum::{routing::post, Router};
 use simple_backend::app::SimpleBackendAppState;
 
 use crate::{
@@ -44,8 +41,7 @@ impl InternalApp {
     }
 
     pub fn create_profile_server_router(state: S) -> Router {
-        Router::new()
-            .with_state(state)
+        Router::new().with_state(state)
     }
 
     pub fn create_media_server_router(state: S) -> Router {

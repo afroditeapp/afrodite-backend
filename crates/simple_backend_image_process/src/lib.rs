@@ -26,7 +26,10 @@ pub enum ImageProcessError {
     #[error("Exif reading failed")]
     ExifReadingFailed,
 
-    #[error("Source image width or height is less than {}", SOURCE_IMG_MIN_WIDTH_AND_HEIGHT)]
+    #[error(
+        "Source image width or height is less than {}",
+        SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
+    )]
     SourceImageTooSmall,
 }
 
@@ -56,7 +59,9 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
         .decode()
         .change_context(ImageProcessError::InputReadingFailed)?;
 
-    if img.width() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT || img.height() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT {
+    if img.width() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
+        || img.height() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
+    {
         return Err(report!(ImageProcessError::SourceImageTooSmall));
     }
 
