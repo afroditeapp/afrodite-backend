@@ -1,4 +1,9 @@
-#![allow(clippy::derive_partial_eq_without_eq)]
+#![allow(
+    clippy::derive_partial_eq_without_eq,
+    clippy::empty_docs,
+    clippy::to_string_trait_impl,
+    clippy::too_many_arguments,
+)]
 
 #[macro_use]
 extern crate serde_derive;

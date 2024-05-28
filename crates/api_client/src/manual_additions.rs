@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{
     apis::{
         configuration, media_api::{GetContentError, PutContentToContentSlotError}, Error, ResponseContent
@@ -7,23 +9,23 @@ use crate::{
 
 impl Copy for AccountId {}
 
-impl AccountId {
-    pub fn to_string(&self) -> String {
-        self.account_id.hyphenated().to_string()
+impl fmt::Display for AccountId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.account_id.hyphenated())
     }
 }
 
 impl Copy for ContentId {}
 
-impl ContentId {
-    pub fn to_string(&self) -> String {
-        self.content_id.hyphenated().to_string()
+impl fmt::Display for ContentId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.content_id.hyphenated())
     }
 }
 
-impl UnixTime {
-    pub fn to_string(&self) -> String {
-        self.unix_time.to_string()
+impl fmt::Display for UnixTime {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.unix_time)
     }
 }
 
