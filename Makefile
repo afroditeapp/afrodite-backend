@@ -84,6 +84,9 @@ code-stats:
 	crates/database \
 	crates/model \
 	crates/server \
+	crates/server_common \
+	crates/server_api \
+	crates/server_data \
 	crates/test_mode \
 	crates/test_mode_macro \
 	crates/utils \
