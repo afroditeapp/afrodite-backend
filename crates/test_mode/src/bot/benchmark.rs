@@ -235,7 +235,7 @@ impl BotAction for PostProfileToDatabase {
         let profile = ProfileUpdate {
             attributes: vec![],
             age: 18,
-            name: format!(""),
+            name: String::new(),
             profile_text: format!("{}", profile),
         };
         post_profile_to_database_debug_mode_benchmark(state.api.profile(), profile)

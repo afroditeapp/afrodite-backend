@@ -2,7 +2,6 @@ use model::{
     AccessToken, AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
     DemoModeId, GoogleAccountId, RefreshToken, SignInWithInfo,
 };
-use tokio_stream::StreamExt;
 
 use super::super::DataError;
 use crate::{data::IntoDataError, result::Result};

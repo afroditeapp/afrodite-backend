@@ -135,7 +135,7 @@ impl ConfigFileUtils {
         }
         let mut file_path = dir.as_ref().to_path_buf();
         file_path.push(file_name);
-        return Ok(file_path);
+        Ok(file_path)
     }
 
     pub fn load_string(

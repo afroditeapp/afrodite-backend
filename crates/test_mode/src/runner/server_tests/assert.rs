@@ -40,7 +40,7 @@ pub fn assert_failure<Ok, Err>(result: Result<Ok, Err>) -> TestResult {
     if result.is_err() {
         Ok(())
     } else {
-        let error = TestError::AssertError(format!("expected: Err, actual: Ok"));
+        let error = TestError::AssertError("expected: Err, actual: Ok".to_string());
         Err(ServerTestError::new(error.report()))
     }
 }

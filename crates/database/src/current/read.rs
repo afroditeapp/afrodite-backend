@@ -129,9 +129,3 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
         CurrentSyncReadCommon::new(self.conn())
     }
 }
-
-trait ReadFromConn: ConnectionProvider {
-    fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
-        crate::current::read::CurrentSyncReadCommands::new(self.conn())
-    }
-}

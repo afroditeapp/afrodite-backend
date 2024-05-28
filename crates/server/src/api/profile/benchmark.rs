@@ -58,8 +58,7 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
             .read()
             .profile()
             .benchmark_read_profile_directly_from_database(requested_profile)
-            .await?
-            .into();
+            .await?;
         Ok(profile.into())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)

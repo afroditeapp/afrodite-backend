@@ -1,6 +1,6 @@
 //! Config given as command line arguments
 
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 use clap::{arg, command, Args, Parser, ValueEnum};
 use reqwest::Url;
@@ -133,8 +133,8 @@ impl TestMode {
     /// Test name which does not have whitespace
     pub fn test_name(&self) -> String {
         match &self.mode {
-            TestModeSubMode::Bot(_) => format!("bot"),
-            TestModeSubMode::Qa(_) => format!("qa"),
+            TestModeSubMode::Bot(_) => "bot".to_string(),
+            TestModeSubMode::Qa(_) => "qa".to_string(),
             TestModeSubMode::Benchmark(c) => format!("benchmark_{:?}", c.benchmark),
         }
     }
@@ -234,8 +234,8 @@ pub enum SelectedBenchmark {
     PostProfileToDatabase,
 }
 
-impl SelectedBenchmark {
-    pub fn to_string(&self) -> String {
-        format!("{:?}", self)
+impl fmt::Display for SelectedBenchmark {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }

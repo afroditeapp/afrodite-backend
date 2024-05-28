@@ -114,19 +114,6 @@ trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
 
 trait IntoDatabaseErrorExt<Err: Context>: ResultExt + Sized {
     #[track_caller]
-    fn into_db_error_with_new_context<T: Debug + IsLoggingAllowed>(
-        self,
-        e: Err,
-        request_context: T,
-    ) -> Result<Self::Ok, Err> {
-        self.change_context(e).attach_printable_lazy(move || {
-            let context = ErrorContext::<T, Self::Ok>::new(request_context);
-
-            format!("{:#?}", context)
-        })
-    }
-
-    #[track_caller]
     fn with_info<T: Debug + IsLoggingAllowed>(
         self,
         request_context: T,

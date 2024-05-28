@@ -109,7 +109,7 @@ impl ServerManager {
         let mut servers = vec![
             ServerInstance::new(
                 dir.clone(),
-                &all_config,
+                all_config,
                 account_config,
                 &config,
                 settings.clone(),
@@ -131,7 +131,7 @@ impl ServerManager {
             servers.push(
                 ServerInstance::new(
                     dir.clone(),
-                    &all_config,
+                    all_config,
                     server_config,
                     &config,
                     settings.clone(),
@@ -154,7 +154,7 @@ impl ServerManager {
             servers.push(
                 ServerInstance::new(
                     dir.clone(),
-                    &all_config,
+                    all_config,
                     server_config,
                     &config,
                     settings.clone(),

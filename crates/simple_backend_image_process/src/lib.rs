@@ -108,7 +108,7 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
     }
     .change_context(ImageProcessError::EncodingError)?;
 
-    std::fs::write(&settings.output, &data).change_context(ImageProcessError::FileWriting)?;
+    std::fs::write(&settings.output, data).change_context(ImageProcessError::FileWriting)?;
 
     Ok(())
 }

@@ -350,7 +350,7 @@ impl ModerationRequestState {
     pub fn completed(&self) -> bool {
         match self {
             Self::Accepted | Self::Rejected => true,
-            _ => false,
+            Self::InProgress | Self::Waiting => false,
         }
     }
 }
@@ -490,7 +490,7 @@ impl ContentId {
     }
 
     pub fn not_in(&self, mut iter: impl Iterator<Item = ContentId>) -> bool {
-        iter.find(|c| *c == *self).is_none()
+        !iter.any(|c| c == *self)
     }
 }
 

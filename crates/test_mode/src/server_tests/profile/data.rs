@@ -12,8 +12,8 @@ async fn updating_profile_works(context: TestContext) -> TestResult {
     let profile = ProfileUpdate {
         attributes: vec![],
         age: 18,
-        name: format!(""),
-        profile_text: format!("test"),
+        name: String::new(),
+        profile_text: "test".to_string(),
     };
     post_profile(account.account_api(), profile).await?;
     assert_eq(

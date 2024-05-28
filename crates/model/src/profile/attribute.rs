@@ -1,6 +1,5 @@
 use std::{collections::HashSet, str::FromStr};
 
-use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -40,7 +39,7 @@ impl AttributesFileInternal {
         // Check that correct IDs are used.
         for i in 0..self.attribute.len() {
             let i = i as u16;
-            if ids.get(&i).is_none() {
+            if !ids.contains(&i) {
                 return Err(format!(
                     "ID {} is missing from attribute ID values, all numbers between 0 and {} should be used",
                     i,
@@ -101,7 +100,7 @@ fn value_empty_vec<T>() -> Vec<T> {
     vec![]
 }
 
-fn value_is_empty<T>(v: &Vec<T>) -> bool {
+fn value_is_empty<T>(v: &[T]) -> bool {
     v.is_empty()
 }
 
@@ -204,7 +203,7 @@ struct AttributeInfoValidated {
 }
 
 fn english_text_to_key(s: &str) -> String {
-    s.to_lowercase().replace(" ", "_")
+    s.to_lowercase().replace(' ', "_")
 }
 
 impl AttributeInternal {
@@ -291,7 +290,7 @@ impl AttributeInternal {
 
                     Ok(value)
                 }
-                _ => return Err(format!("Invalid value type: {:?}", v)),
+                _ => Err(format!("Invalid value type: {:?}", v)),
             }
         }
 
@@ -326,7 +325,7 @@ impl AttributeInternal {
         if self.mode.is_bitflag_mode() {
             let mut current = 1;
             for _ in 0..values.len() {
-                if top_level_ids.get(&current).is_none() {
+                if !top_level_ids.contains(&current) {
                     return Err(format!(
                         "ID {} is missing from attribute value IDs for attribute {}, all bitflags between 0 and {} should be used",
                         current,
@@ -339,7 +338,7 @@ impl AttributeInternal {
         } else {
             for i in 0..self.values.len() {
                 let i = i as u16;
-                if top_level_ids.get(&i).is_none() {
+                if !top_level_ids.contains(&i) {
                     return Err(format!(
                         "ID {} is missing from attribute value IDs for attribute {}, all numbers between 0 and {} should be used",
                         i,
@@ -390,7 +389,7 @@ impl AttributeInternal {
             // Check that correct IDs are used.
             for i in 0..values.len() {
                 let i = i as u16;
-                if sub_level_ids.get(&i).is_none() {
+                if !sub_level_ids.contains(&i) {
                     return Err(format!(
                             "ID {} is missing from value IDs for value group {}, all numbers between 0 and {} should be used",
                             i,

@@ -175,7 +175,7 @@ impl SignInWithGoogleManager {
                 } else {
                     let jwk = keys
                         .keys
-                        .find(&wanted_kid)
+                        .find(wanted_kid)
                         .ok_or(SignInWithGoogleError::JwkNotFound)?
                         .clone();
                     Ok(KeyStatus::Found(jwk))
@@ -223,7 +223,7 @@ impl SignInWithGoogleManager {
         });
 
         let jwk = jwk_set
-            .find(&wanted_kid)
+            .find(wanted_kid)
             .ok_or(SignInWithGoogleError::JwkNotFound)?
             .clone();
         Ok(jwk)

@@ -36,8 +36,8 @@ pub struct ProfileInternal {
 
 impl ProfileInternal {
     pub fn update_from(&mut self, update: &ProfileUpdateValidated) {
-        self.name = update.name.clone();
-        self.profile_text = update.profile_text.clone();
+        self.name.clone_from(&update.name);
+        self.profile_text.clone_from(&update.profile_text);
         self.age = update.age;
     }
 }
@@ -131,8 +131,7 @@ impl SortedProfileAttributes {
         self.attributes
             .binary_search_by(|a| a.id.cmp(&id))
             .ok()
-            .map(|i| self.attributes.get(i))
-            .flatten()
+            .and_then(|i| self.attributes.get(i))
     }
 
     pub fn update_from(&mut self, update: &ProfileUpdateValidated) {
@@ -299,7 +298,7 @@ impl Profile {
             name: value.name,
             profile_text: value.profile_text,
             age: value.age,
-            attributes: attributes,
+            attributes,
             version: value.version_uuid,
         }
     }
@@ -506,7 +505,7 @@ pub struct SearchGroups {
 }
 
 impl SearchGroups {
-    fn to_validated_man(&self) -> Option<ValidatedSearchGroups> {
+    fn to_validated_man(self) -> Option<ValidatedSearchGroups> {
         if self.man_for_woman || self.man_for_man || self.man_for_non_binary {
             Some(ValidatedSearchGroups::ManFor {
                 woman: self.man_for_woman,
@@ -518,7 +517,7 @@ impl SearchGroups {
         }
     }
 
-    fn to_validated_woman(&self) -> Option<ValidatedSearchGroups> {
+    fn to_validated_woman(self) -> Option<ValidatedSearchGroups> {
         if self.woman_for_man || self.woman_for_woman || self.woman_for_non_binary {
             Some(ValidatedSearchGroups::WomanFor {
                 man: self.woman_for_man,
@@ -530,7 +529,7 @@ impl SearchGroups {
         }
     }
 
-    fn to_validated_non_binary(&self) -> Option<ValidatedSearchGroups> {
+    fn to_validated_non_binary(self) -> Option<ValidatedSearchGroups> {
         if self.non_binary_for_man || self.non_binary_for_woman || self.non_binary_for_non_binary {
             Some(ValidatedSearchGroups::NonBinaryFor {
                 man: self.non_binary_for_man,
@@ -607,7 +606,7 @@ impl TryFrom<i64> for SearchGroupFlags {
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         let value = TryInto::<u16>::try_into(value).map_err(|e| e.to_string())?;
-        Ok(Self::from_bits(value).ok_or_else(|| "Unknown bitflag".to_string())?)
+        Self::from_bits(value).ok_or_else(|| "Unknown bitflag".to_string())
     }
 }
 

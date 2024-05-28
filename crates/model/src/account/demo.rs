@@ -1,4 +1,4 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};

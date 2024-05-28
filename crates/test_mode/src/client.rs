@@ -154,5 +154,5 @@ impl ApiClient {
 pub fn get_api_url(url: &Option<Url>) -> Result<Url, TestError> {
     url.as_ref()
         .ok_or(TestError::ApiUrlNotConfigured.report())
-        .map(Clone::clone)
+        .cloned()
 }

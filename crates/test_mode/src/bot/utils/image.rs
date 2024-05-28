@@ -58,7 +58,7 @@ impl ImageProvider {
     }
 
     pub fn mark_jpeg_image(jpeg_img: &[u8]) -> Result<Vec<u8>, std::io::Error> {
-        image::load_from_memory_with_format(&jpeg_img, image::ImageFormat::Jpeg)
+        image::load_from_memory_with_format(jpeg_img, image::ImageFormat::Jpeg)
             .and_then(|img| {
                 let mut img = img.into_rgb8();
                 let mark_height = ((img.height() as f64) * 0.1) as usize;

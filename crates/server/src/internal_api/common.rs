@@ -11,8 +11,8 @@ use crate::{
 /// Only account server can call this function.
 pub async fn sync_account_state<S: GetConfig + GetInternalApi>(
     state: &S,
-    account_id: AccountIdInternal,
-    account: Account,
+    _account_id: AccountIdInternal,
+    _account: Account,
 ) -> Result<(), InternalApiError> {
     if !state.config().components().account {
         warn!("Account component not enabled, cannot send new Account to other servers");

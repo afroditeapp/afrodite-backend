@@ -27,8 +27,8 @@ pub struct QaTestRunner {
 impl QaTestRunner {
     pub fn new(config: Arc<Config>, test_config: Arc<TestMode>, qa_config: QaTestConfig) -> Self {
         Self {
-            config: config,
-            test_config: test_config,
+            config,
+            test_config,
             qa_config,
         }
     }
@@ -64,7 +64,7 @@ impl QaTestRunner {
         let mut passed_number = 0;
         let start_time = std::time::Instant::now();
 
-        print!("Running tests...\n");
+        println!("Running tests...");
 
         let mut current_test = String::new();
         for test_function in test_functions.iter() {

@@ -173,7 +173,7 @@ impl ContentProcessingManagerData {
 
         // Update queue position numbers
         for (index, processing_id_in_queue) in queue.iter_mut().enumerate() {
-            if let Some(state) = processing_states.get_mut(&processing_id_in_queue) {
+            if let Some(state) = processing_states.get_mut(processing_id_in_queue) {
                 if let Some(number) = state.processing_state.wait_queue_position.as_mut() {
                     *number = index as u64 + 1;
                     notify_client(&events, state).await;
@@ -289,9 +289,7 @@ impl ContentProcessingManager {
         result: Result<(), ContentProcessingError>,
         state: &mut ProcessingState,
     ) -> Result<(), ContentProcessingError> {
-        if let Err(e) = result {
-            return Err(e);
-        }
+        let () = result?;
 
         let state_copy = state.clone();
         self.state

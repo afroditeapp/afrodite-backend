@@ -392,7 +392,7 @@ impl RouterDatabaseWriteHandle {
         )
     }
 
-    pub fn user_write_commands_account<'b>(&'b self) -> WriteCommandsConcurrent<'b> {
+    pub fn user_write_commands_account(&self) -> WriteCommandsConcurrent {
         WriteCommandsConcurrent::new(
             &self.current_write_handle,
             &self.history_write_handle,

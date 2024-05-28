@@ -291,7 +291,7 @@ impl MediaBackupManager {
         );
 
         let mut sftp_commands = SftpCommands::new();
-        sftp_commands.add_cd(&media_config.target_location.to_string_lossy().to_string());
+        sftp_commands.add_cd(media_config.target_location.to_string_lossy().as_ref());
 
         let component_count = image.components().count();
         for (i, component) in image.components().enumerate() {
@@ -299,7 +299,7 @@ impl MediaBackupManager {
                 let dir_or_img = dir_or_img.to_string_lossy().to_string();
                 if i + 1 == component_count {
                     // Last component is image file name.
-                    sftp_commands.add_put(&abs_src_file.to_string_lossy().to_string(), &dir_or_img)
+                    sftp_commands.add_put(abs_src_file.to_string_lossy().as_ref(), &dir_or_img)
                 } else {
                     // Create and change directory on remote machine.
                     sftp_commands.add_mkdir(&dir_or_img);

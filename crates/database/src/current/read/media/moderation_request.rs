@@ -131,8 +131,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
         for content in requested_content_set.iter() {
             if data
                 .iter()
-                .find(|c| c.secure_capture && c.uuid == *content)
-                .is_some()
+                .any(|c| c.secure_capture && c.uuid == *content)
             {
                 secure_capture_found_from_request = true;
                 break;

@@ -12,7 +12,6 @@ use model::{
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};
 use tokio::sync::RwLock;
-use tokio_stream::StreamExt;
 use tracing::info;
 
 use super::{
@@ -98,8 +97,8 @@ impl DatabaseCache {
             cache
                 .load_account_from_db(
                     id,
-                    &config,
-                    &current_db,
+                    config,
+                    current_db,
                     LocationIndexIteratorHandle::new(location_index),
                     LocationIndexWriteHandle::new(location_index),
                 )
@@ -364,7 +363,7 @@ impl DatabaseCache {
             .cache
             .write()
             .await;
-        Ok(cache_operation(&mut cache_entry)?)
+        cache_operation(&mut cache_entry)
     }
 
     // pub async fn account(&self, id: AccountId) -> Result<Account, CacheError> {

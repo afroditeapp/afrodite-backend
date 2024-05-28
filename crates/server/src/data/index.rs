@@ -103,7 +103,6 @@ impl<'a> LocationIndexIteratorHandle<'a> {
             profiles: &manager.profiles,
             coordinates: &manager.coordinates,
         }
-        .into()
     }
 
     pub async fn next_profiles(
@@ -161,11 +160,11 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                         .profiles
                         .values()
                         .filter(|p| {
-                            p.is_match(&query_maker_details, self.config.profile_attributes())
+                            p.is_match(query_maker_details, self.config.profile_attributes())
                         })
                         .map(|p| p.into())
                         .collect();
-                    if matches.len() == 0 {
+                    if matches.is_empty() {
                         IteratorResultInternal::TryAgain
                     } else {
                         IteratorResultInternal::MatchingProfilesFound { profiles: matches }
@@ -201,7 +200,6 @@ impl<'a> LocationIndexWriteHandle<'a> {
             profiles: &manager.profiles,
             coordinates: &manager.coordinates,
         }
-        .into()
     }
 
     pub fn coordinates_to_key(&self, location: &Location) -> LocationIndexKey {

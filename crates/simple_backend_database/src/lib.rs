@@ -102,7 +102,7 @@ impl DatabaseHandleCreator {
         let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, &info)?;
 
         let (diesel_read, diesel_read_close) =
-            DieselReadHandle::new(&config, &info, db_file_path.clone())
+            DieselReadHandle::new(config, &info, db_file_path.clone())
                 .await
                 .change_context(DataError::Diesel)?;
 
@@ -134,7 +134,7 @@ impl DatabaseHandleCreator {
         let db_file_path = data::create_dirs_and_get_sqlite_database_file_path(config, &info)?;
 
         let (diesel_write, diesel_write_close) =
-            DieselWriteHandle::new(&config, &info, db_file_path.clone(), migrations)
+            DieselWriteHandle::new(config, &info, db_file_path.clone(), migrations)
                 .await
                 .change_context(DataError::Diesel)?;
 

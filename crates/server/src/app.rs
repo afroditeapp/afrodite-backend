@@ -187,7 +187,7 @@ pub trait ReadDynamicConfig {
 impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
         let config =
-            tokio::task::spawn_blocking(move || ConfigFileDynamic::load_from_current_dir())
+            tokio::task::spawn_blocking(ConfigFileDynamic::load_from_current_dir)
                 .await
                 .change_context(ConfigFileError::LoadConfig)??;
 

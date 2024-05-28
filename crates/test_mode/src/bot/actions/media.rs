@@ -166,7 +166,7 @@ impl BotAction for SendImageToSlot {
             let _ = put_content_to_content_slot_fixed(
                 state.api.media(),
                 slot,
-                if slot == 0 { true } else { false }, // secure capture
+                slot == 0, // slot 0 is for secure capture
                 MediaContentType::JpegImage,
                 img_data,
             )

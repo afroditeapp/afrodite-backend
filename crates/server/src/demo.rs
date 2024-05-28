@@ -33,7 +33,7 @@ impl<T: PartialEq + Clone> TokenState<T> {
 
     pub fn get_checked(&self) -> Result<T, DataError> {
         if self.created.elapsed().as_secs() > HOUR_IN_SECONDS {
-            Err(format!("Token expired")).into_error_string(DataError::NotAllowed)
+            Err("Token expired".to_string()).into_error_string(DataError::NotAllowed)
         } else {
             Ok(self.token.clone())
         }
@@ -192,7 +192,7 @@ impl DemoModeManager {
         &self,
         token: &DemoModeLoginToken,
     ) -> Result<Option<IndexOrLocked>, DataError> {
-        self.get_index_or_locked(|s| Ok(s.stage1_token_equals(token)?))
+        self.get_index_or_locked(|s| s.stage1_token_equals(token))
             .await
     }
 
@@ -201,7 +201,7 @@ impl DemoModeManager {
         token: &DemoModeToken,
     ) -> Result<DemoModeId, DataError> {
         let result = self
-            .get_index_or_locked(|s| Ok(s.token_equals(token)?))
+            .get_index_or_locked(|s| s.token_equals(token))
             .await?;
         let token_index = match result {
             Some(IndexOrLocked::Index(i)) => i,
@@ -225,7 +225,7 @@ impl DemoModeManager {
             r.states
                 .iter()
                 .enumerate()
-                .find(|(i, state)| match state.token_equals(token) {
+                .find(|(_, state)| match state.token_equals(token) {
                     Ok(true) => true,
                     Ok(false) | Err(_) => false,
                 });

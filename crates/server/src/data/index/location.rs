@@ -657,7 +657,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((9, 0)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     #[test]
@@ -674,7 +674,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((9, 0)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     #[test]
@@ -691,7 +691,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((0, 4)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     #[test]
@@ -708,7 +708,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((0, 4)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     #[test]
@@ -724,7 +724,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((4, 9)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     #[test]
@@ -741,7 +741,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((0, 0)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     #[test]
@@ -758,7 +758,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((0, 0)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     #[test]
@@ -775,7 +775,7 @@ mod tests {
         let n = iter.next_raw();
         assert!(n == Some((4, 9)), "was: {n:?}");
         let n = iter.next_raw();
-        assert!(n == None, "was: {n:?}");
+        assert!(n.is_none(), "was: {n:?}");
     }
 
     // IndexUpdater

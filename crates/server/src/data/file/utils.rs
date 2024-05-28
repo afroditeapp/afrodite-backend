@@ -183,11 +183,11 @@ impl ContentFile {
     }
 
     pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
-        self.path.read_stream().await.map_err(|e| e.into())
+        self.path.read_stream().await
     }
 
     pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
-        self.path.read_all().await.map_err(|e| e.into())
+        self.path.read_all().await
     }
 }
 

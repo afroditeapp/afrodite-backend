@@ -273,10 +273,10 @@ impl<'a> WriteCommands<'a> {
         self.cache
             .load_account_from_db(
                 id,
-                &self.config,
+                self.config,
                 &self.current_write_handle.to_read_handle(),
-                LocationIndexIteratorHandle::new(&self.location_index),
-                LocationIndexWriteHandle::new(&self.location_index),
+                LocationIndexIteratorHandle::new(self.location_index),
+                LocationIndexWriteHandle::new(self.location_index),
             )
             .await
             .into_data_error(id)?;
@@ -435,9 +435,9 @@ impl<'a> WriteCommands<'a> {
         match result {
             Ok(result) => match result {
                 Ok(result) => Ok(result),
-                Err(err) => Err(err.into()),
+                Err(err) => Err(err),
             },
-            Err(err) => Err(err.into()),
+            Err(err) => Err(err),
         }
     }
 

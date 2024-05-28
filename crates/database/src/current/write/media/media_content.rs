@@ -36,7 +36,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     /// - The provided check function must return true for the content.
     fn check_content_id(
         id: Option<ContentId>,
-        available: &Vec<MediaContentRaw>,
+        available: &[MediaContentRaw],
         validate_state: impl Fn(&MediaContentRaw) -> bool,
     ) -> Result<Option<ContentIdDb>, DieselDatabaseError> {
         if let Some(content_id) = id {

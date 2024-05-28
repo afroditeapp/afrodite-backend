@@ -134,7 +134,7 @@ impl DieselWriteHandle {
 
         let pool = Pool::builder(manager)
             .max_size(1)
-            .post_create(sqlite_setup_hook(&config));
+            .post_create(sqlite_setup_hook(config));
 
         let pool = if config.sqlite_in_ram() {
             // Prevent all in RAM database from being dropped
@@ -272,7 +272,7 @@ impl DieselReadHandle {
         let manager = create_manager(config, database_info, db_path)?;
         let pool = Pool::builder(manager)
             .max_size(num_cpus::get())
-            .post_create(sqlite_setup_hook(&config));
+            .post_create(sqlite_setup_hook(config));
 
         let pool = if config.sqlite_in_ram() {
             // Prevent all in RAM database from being dropped

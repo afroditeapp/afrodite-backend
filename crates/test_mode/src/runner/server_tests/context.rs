@@ -99,9 +99,9 @@ impl TestContext {
         let account = self.new_account().await?;
         let update = ProfileUpdate {
             attributes: vec![],
-            age: age,
+            age,
             name: name.to_string(),
-            profile_text: format!(""),
+            profile_text: String::new(),
         };
         post_profile(account.profile_api(), update)
             .await

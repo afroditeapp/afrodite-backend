@@ -20,7 +20,7 @@ impl ConnectedApp {
     }
 
     pub fn private_common_router(&self) -> Router {
-        let private = Router::new()
+        Router::new()
             .merge(api::common_admin::manager_router(self.state.clone()))
             .merge(api::common_admin::config_router(self.state.clone()))
             .merge(api::common_admin::perf_router(self.state.clone()))
@@ -29,9 +29,7 @@ impl ConnectedApp {
                     self.state(),
                     api::utils::authenticate_with_access_token::<S>,
                 )
-            });
-
-        private
+            })
     }
 
     pub fn private_account_server_router(&self) -> Router {
@@ -47,18 +45,16 @@ impl ConnectedApp {
             private
         };
 
-        let private = private.route_layer({
+        private.route_layer({
             middleware::from_fn_with_state(
                 self.state(),
                 api::utils::authenticate_with_access_token::<S>,
             )
-        });
-
-        private
+        })
     }
 
     pub fn private_profile_server_router(&self) -> Router {
-        let private = Router::new()
+        Router::new()
             .merge(api::profile::attributes_router(self.state.clone()))
             .merge(api::profile::profile_data_router(self.state.clone()))
             .merge(api::profile::location_router(self.state.clone()))
@@ -69,13 +65,11 @@ impl ConnectedApp {
                     self.state(),
                     api::utils::authenticate_with_access_token::<S>,
                 )
-            });
-
-        private
+            })
     }
 
     pub fn private_media_server_router(&self) -> Router {
-        let private = Router::new()
+        Router::new()
             // Media
             .merge(api::media::profile_content_router(self.state.clone()))
             .merge(api::media::security_content_router(self.state.clone()))
@@ -91,13 +85,11 @@ impl ConnectedApp {
                     self.state.clone(),
                     api::utils::authenticate_with_access_token::<S>,
                 )
-            });
-
-        private
+            })
     }
 
     pub fn private_chat_server_router(&self) -> Router {
-        let private = Router::new()
+        Router::new()
             // Chat
             .merge(api::chat::like::like_router(self.state.clone()))
             .merge(api::chat::block::block_router(self.state.clone()))
@@ -111,8 +103,6 @@ impl ConnectedApp {
                     self.state.clone(),
                     api::utils::authenticate_with_access_token::<S>,
                 )
-            });
-
-        private
+            })
     }
 }

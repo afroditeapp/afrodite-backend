@@ -457,7 +457,7 @@ impl BotManager {
 
     async fn run_bot(&mut self) {
         let mut errors = false;
-        let mut task_state: TaskState = TaskState::default();
+        let mut task_state: TaskState = TaskState;
         loop {
             if self.config.early_quit && errors {
                 error!("Error occurred.");
