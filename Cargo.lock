@@ -114,7 +114,6 @@ version = "0.1.0"
 dependencies = [
  "api_client",
  "model",
- "serde_json",
 ]
 
 [[package]]
@@ -823,14 +822,11 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "error-stack",
- "futures",
  "model",
  "serde_json",
  "simple_backend_config",
  "simple_backend_database",
  "simple_backend_utils",
- "tokio-stream",
- "uuid",
 ]
 
 [[package]]
