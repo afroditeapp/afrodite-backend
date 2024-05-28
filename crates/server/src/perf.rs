@@ -35,7 +35,7 @@ use crate::api::{
     profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
 };
 
-pub static ALL_COUNTERS: &'static [&'static CounterCategory] = &[
+pub static ALL_COUNTERS: &[&CounterCategory] = &[
     // Common
     &CounterCategory::new("common", COMMON_COUNTERS_LIST),
     // Common admin

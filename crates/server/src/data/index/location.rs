@@ -154,6 +154,12 @@ impl LocationIndexIteratorState {
     }
 }
 
+impl Default for LocationIndexIteratorState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl From<LocationIndexIterator> for LocationIndexIteratorState {
     fn from(mut value: LocationIndexIterator) -> Self {
         (&mut value).into()
@@ -218,13 +224,6 @@ impl LocationIndexIterator {
         self.direction = Direction::Down;
         self.completed = false;
         self.visited_max_corners = VisitedMaxCorners::default();
-    }
-
-    /// Get next cell where are profiles.
-    ///
-    /// If None then there is not any more cells with profiles.
-    pub fn next(&mut self) -> Option<LocationIndexKey> {
-        self.next_raw().map(|(y, x)| LocationIndexKey { y, x })
     }
 
     /// Get next cell where are profiles.
@@ -375,7 +374,7 @@ impl LocationIndexIterator {
                     // Normal: inside matrix area and not the left column.
                     self.x = self
                         .current_cell()
-                        .map_or(0 as isize, |c| c.next_left() as isize)
+                        .map_or(0, |c| c.next_left() as isize)
                         .max(self.current_left_max_index())
                 }
             }
@@ -452,6 +451,17 @@ impl LocationIndexIterator {
         if self.y >= self.index.height() as isize && self.x >= self.index.width() as isize {
             self.visited_max_corners.bottom_right = true;
         }
+    }
+}
+
+impl Iterator for LocationIndexIterator {
+    type Item = LocationIndexKey;
+
+    /// Get next cell where are profiles.
+    ///
+    /// If None then there is not any more cells with profiles.
+    fn next(&mut self) -> Option<LocationIndexKey> {
+        self.next_raw().map(|(y, x)| LocationIndexKey { y, x })
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
+use std::{collections::{hash_map::Entry, HashMap}, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
@@ -134,10 +134,11 @@ impl DatabaseCache {
 
         if let Some(key) = access_token {
             let mut access_tokens = self.access_tokens.write().await;
-            if access_tokens.contains_key(&key) {
-                return Err(CacheError::AlreadyExists.report());
-            } else {
-                access_tokens.insert(key, account_entry.clone());
+            match access_tokens.entry(key) {
+                Entry::Vacant(e) => {
+                    e.insert(account_entry.clone());
+                }
+                Entry::Occupied(_) => return Err(CacheError::AlreadyExists.report()),
             }
         }
 
@@ -293,11 +294,9 @@ impl DatabaseCache {
 
     pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
         let tokens = self.access_tokens.read().await;
-        if let Some(entry) = tokens.get(token) {
-            Some(entry.account_id_internal)
-        } else {
-            None
-        }
+        tokens
+            .get(token)
+            .map(|entry| entry.account_id_internal)
     }
 
     /// Checks that connection comes from the same IP address. WebSocket is
@@ -507,4 +506,10 @@ async fn db_read<
         .into_error_string(DieselDatabaseError::Execute)
         .change_context(CacheError::Init)?
         .change_context(CacheError::Init)
+}
+
+impl Default for CacheEntry {
+    fn default() -> Self {
+        Self::new()
+    }
 }

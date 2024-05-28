@@ -105,12 +105,10 @@ pub async fn put_setting_profile_visiblity<S: GetInternalApi + GetConfig + Write
                     } else {
                         ProfileVisibility::PendingPrivate
                     }
+                } else if new_value.value {
+                    ProfileVisibility::Public
                 } else {
-                    if new_value.value {
-                        ProfileVisibility::Public
-                    } else {
-                        ProfileVisibility::Private
-                    }
+                    ProfileVisibility::Private
                 };
                 Ok(())
             })

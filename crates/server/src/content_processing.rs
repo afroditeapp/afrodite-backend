@@ -208,7 +208,7 @@ pub struct ContentProcessingManager {
 }
 
 impl ContentProcessingManager {
-    pub fn new(
+    pub fn new_manager(
         notifier: ContentProcessingNotify,
         state: SimpleBackendAppState<AppState>,
         quit_notification: ServerQuitWatcher,
@@ -217,9 +217,7 @@ impl ContentProcessingManager {
 
         let task = tokio::spawn(manager.run(notifier, quit_notification));
 
-        let quit_handle = ContentProcessingManagerQuitHandle { task };
-
-        quit_handle
+        ContentProcessingManagerQuitHandle { task }
     }
 
     pub async fn run(

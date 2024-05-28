@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     fs,
-    path::{Path, PathBuf},
+    path::Path,
     sync::Arc,
 };
 
@@ -17,7 +17,7 @@ use tracing::info;
 
 use self::{
     cache::{CacheError, DatabaseCache},
-    file::{read::FileReadCommands, utils::FileDir, FileError},
+    file::{utils::FileDir, FileError},
     index::{LocationIndexIteratorHandle, LocationIndexManager},
     read::ReadCommands,
     utils::{AccessTokenManager, AccountIdManager},
@@ -232,7 +232,6 @@ impl<Ok> IntoDataError<Ok, DataError>
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
 pub struct DatabaseRoot {
-    root: PathBuf,
     file_dir: FileDir,
 }
 
@@ -249,7 +248,7 @@ impl DatabaseRoot {
         }
         let file_dir = FileDir::new(file_dir);
 
-        Ok(Self { root, file_dir })
+        Ok(Self { file_dir })
     }
 
     pub fn file_dir(&self) -> &FileDir {
@@ -324,9 +323,7 @@ impl DatabaseManager {
 
         let router_write_handle = RouterDatabaseWriteHandle {
             config: config.clone(),
-            current_read_handle: current_read_handle.clone(),
             current_write_handle: current_write_handle.clone(),
-            history_read_handle: history_read_handle.clone(),
             history_write_handle: history_write_handle.clone(),
             root: root.into(),
             cache: cache.into(),
@@ -339,7 +336,7 @@ impl DatabaseManager {
         let cache = router_write_handle.cache.clone();
         let router_read_handle = RouterDatabaseReadHandle {
             current_read_handle: current_read_handle.clone(),
-            history_read_handle: history_read_handle.clone(),
+            _history_read_handle: history_read_handle.clone(),
             root,
             cache,
         };
@@ -368,9 +365,7 @@ impl DatabaseManager {
 pub struct RouterDatabaseWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
-    current_read_handle: CurrentReadHandle,
     current_write_handle: CurrentWriteHandle,
-    history_read_handle: HistoryReadHandle,
     history_write_handle: HistoryWriteHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
@@ -394,8 +389,6 @@ impl RouterDatabaseWriteHandle {
 
     pub fn user_write_commands_account(&self) -> WriteCommandsConcurrent {
         WriteCommandsConcurrent::new(
-            &self.current_write_handle,
-            &self.history_write_handle,
             &self.cache,
             &self.root.file_dir,
             LocationIndexIteratorHandle::new(&self.location),
@@ -506,17 +499,14 @@ impl SyncWriteHandle {
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
     current_read_handle: CurrentReadHandle,
-    history_read_handle: HistoryReadHandle,
+    // TODO(prod): Remove if not used
+    _history_read_handle: HistoryReadHandle,
     cache: Arc<DatabaseCache>,
 }
 
 impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
         ReadCommands::new(&self.current_read_handle, &self.cache, &self.root.file_dir)
-    }
-
-    pub fn read_files(&self) -> FileReadCommands<'_> {
-        FileReadCommands::new(&self.root.file_dir)
     }
 
     pub fn access_token_manager(&self) -> AccessTokenManager<'_> {

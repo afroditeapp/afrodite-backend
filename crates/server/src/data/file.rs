@@ -5,10 +5,10 @@
 use simple_backend_utils::ComponentError;
 use tokio::sync::mpsc;
 
-pub mod file;
-pub mod read;
+// TODO: Set max limit for IP
+// address changes or something (limit IP address history size)?
+
 pub mod utils;
-pub mod write;
 
 impl ComponentError for FileError {
     const COMPONENT_NAME: &'static str = "File";

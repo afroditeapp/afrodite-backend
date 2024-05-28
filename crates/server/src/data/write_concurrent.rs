@@ -5,7 +5,6 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
 use axum::body::BodyDataStream;
 use config::Config;
-use database::{CurrentWriteHandle, HistoryWriteHandle};
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
@@ -229,8 +228,6 @@ impl ConcurrentWriteProfileHandle {
 /// It possible to run this and normal write command concurrently for
 /// one account.
 pub struct WriteCommandsConcurrent<'a> {
-    current_write_handle: &'a CurrentWriteHandle,
-    history_write_handle: &'a HistoryWriteHandle,
     cache: &'a DatabaseCache,
     file_dir: &'a FileDir,
     location: LocationIndexIteratorHandle<'a>,
@@ -238,15 +235,11 @@ pub struct WriteCommandsConcurrent<'a> {
 
 impl<'a> WriteCommandsConcurrent<'a> {
     pub fn new(
-        current_write_handle: &'a CurrentWriteHandle,
-        history_write_handle: &'a HistoryWriteHandle,
         cache: &'a DatabaseCache,
         file_dir: &'a FileDir,
         location: LocationIndexIteratorHandle<'a>,
     ) -> Self {
         Self {
-            current_write_handle,
-            history_write_handle,
             cache,
             file_dir,
             location,
@@ -302,9 +295,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .await?;
         self.cache
             .write_cache(id.as_id(), |e| {
-                e.profile
-                    .as_mut()
-                    .map(move |p| p.location.current_iterator = next_state);
+                if let Some(p) = e.profile.as_mut() {
+                    p.location.current_iterator = next_state;
+                }
                 Ok(())
             })
             .await
@@ -328,9 +321,9 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .reset_iterator(location.current_iterator, location.current_position);
         self.cache
             .write_cache(id.as_id(), |e| {
-                e.profile
-                    .as_mut()
-                    .map(move |p| p.location.current_iterator = next_state);
+                if let Some(p) = e.profile.as_mut() {
+                    p.location.current_iterator = next_state;
+                }
                 Ok(())
             })
             .await

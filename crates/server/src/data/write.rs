@@ -192,6 +192,7 @@ pub struct WriteCommands<'a> {
 }
 
 impl<'a> WriteCommands<'a> {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         config: &'a Arc<Config>,
         current_write_handle: &'a CurrentWriteHandle,
@@ -369,7 +370,7 @@ impl<'a> WriteCommands<'a> {
             current.chat().insert_chat_state(id)?;
         }
 
-        Ok(id.clone())
+        Ok(id)
     }
 
     pub async fn db_write<

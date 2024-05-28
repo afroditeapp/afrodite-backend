@@ -3,6 +3,8 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+#![allow(clippy::while_let_loop)]
+
 pub mod api;
 pub mod app;
 pub mod bot;
@@ -181,7 +183,7 @@ impl BusinessLogic for PihkaBusinessLogic {
 
         let state = state_builder.build(app_state.clone());
 
-        let content_processing_quit_handle = ContentProcessingManager::new(
+        let content_processing_quit_handle = ContentProcessingManager::new_manager(
             content_processing_receiver,
             state.clone(),
             server_quit_watcher.resubscribe(),

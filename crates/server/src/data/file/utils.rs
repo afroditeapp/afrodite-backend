@@ -63,16 +63,13 @@ pub struct AccountDir {
 }
 
 impl AccountDir {
-    fn path(&self) -> &PathBuf {
-        &self.dir
-    }
-
     fn tmp_dir(mut self) -> TmpDir {
         self.dir.push(TMP_DIR_NAME);
         TmpDir { dir: self.dir }
     }
 
-    fn export_dir(mut self) -> ExportDir {
+    // TODO(prod): Remove if not used
+    fn _export_dir(mut self) -> ExportDir {
         self.dir.push(EXPORT_DIR_NAME);
         ExportDir { dir: self.dir }
     }

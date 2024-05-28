@@ -92,7 +92,6 @@ pub struct LocationIndexIteratorHandle<'a> {
     config: &'a Config,
     index: &'a Arc<LocationIndex>,
     profiles: &'a RwLock<HashMap<LocationIndexKey, ProfilesAtLocation>>,
-    coordinates: &'a CoordinateManager,
 }
 
 impl<'a> LocationIndexIteratorHandle<'a> {
@@ -101,7 +100,6 @@ impl<'a> LocationIndexIteratorHandle<'a> {
             config: &manager.config,
             index: &manager.index,
             profiles: &manager.profiles,
-            coordinates: &manager.coordinates,
         }
     }
 
@@ -235,7 +233,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
             if let Some(profile) = current_profile {
                 match profiles.get_mut(&new_key) {
                     Some(some_other_profiles_also) => {
-                        let update_index = some_other_profiles_also.profiles.len() == 0;
+                        let update_index = some_other_profiles_also.profiles.is_empty();
                         some_other_profiles_also
                             .profiles
                             .insert(account_id, profile);
@@ -287,7 +285,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
-                let update_index = some_other_profiles_also.profiles.len() == 0;
+                let update_index = some_other_profiles_also.profiles.is_empty();
                 some_other_profiles_also
                     .profiles
                     .insert(account_id, profile_data);
@@ -318,23 +316,19 @@ impl<'a> LocationIndexWriteHandle<'a> {
         key: LocationIndexKey,
     ) -> error_stack::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
-        match profiles.get_mut(&key) {
-            Some(some_other_profiles_also) => {
-                if some_other_profiles_also
-                    .profiles
-                    .remove(&account_id)
-                    .is_some()
-                    && some_other_profiles_also.profiles.len() == 0
-                {
-                    profiles.remove(&key);
-                    drop(profiles);
-                    let mut updater = IndexUpdater::new(self.index.clone());
-                    tokio::task::spawn_blocking(move || updater.remove_profile_flag_from_cell(key))
-                        .await
-                        .change_context(IndexError::ProfileIndex)?;
-                }
+        if let Some(some_other_profiles_also) = profiles.get_mut(&key) {
+            let removed = some_other_profiles_also
+                .profiles
+                .remove(&account_id);
+
+            if removed.is_some() && some_other_profiles_also.profiles.is_empty() {
+                profiles.remove(&key);
+                drop(profiles);
+                let mut updater = IndexUpdater::new(self.index.clone());
+                tokio::task::spawn_blocking(move || updater.remove_profile_flag_from_cell(key))
+                    .await
+                    .change_context(IndexError::ProfileIndex)?;
             }
-            None => (),
         }
         Ok(())
     }
