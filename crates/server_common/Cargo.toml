@@ -14,8 +14,6 @@ tracing = { workspace = true }
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 
-async-trait = { workspace = true }
-
 # Firebase cloud messaging
 fcm = { workspace = true }
 

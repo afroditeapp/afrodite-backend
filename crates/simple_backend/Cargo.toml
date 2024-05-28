@@ -18,7 +18,6 @@ time = { workspace = true }
 
 tokio = { workspace = true, features = ["full"] }
 futures = { workspace = true }
-async-trait = { workspace = true }
 
 hyper = { workspace = true, features = ["full"] }
 hyper-util = { workspace = true, features = ["full"] }

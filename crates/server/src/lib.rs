@@ -14,7 +14,6 @@ pub mod utils;
 use std::sync::Arc;
 
 use app::AppState;
-use async_trait::async_trait;
 use axum::Router;
 use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
@@ -75,7 +74,6 @@ pub struct PihkaBusinessLogic {
     push_notifications_quit_handle: Option<PushNotificationManagerQuitHandle>,
 }
 
-#[async_trait]
 impl BusinessLogic for PihkaBusinessLogic {
     type AppState = AppState;
 

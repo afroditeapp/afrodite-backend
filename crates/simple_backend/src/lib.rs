@@ -26,7 +26,6 @@ use app::{
     GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
     SimpleBackendAppState,
 };
-use async_trait::async_trait;
 use axum::Router;
 use futures::{future::poll_fn, StreamExt};
 use hyper::body::Incoming;
@@ -70,7 +69,6 @@ pub type ServerQuitHandle = broadcast::Sender<()>;
 /// Use resubscribe() for cloning.
 pub type ServerQuitWatcher = broadcast::Receiver<()>;
 
-#[async_trait]
 pub trait BusinessLogic: Sized + Send + Sync + 'static {
     type AppState: SignInWith
         + GetManagerApi
@@ -109,23 +107,23 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     /// Callback for doing something before server start
     ///
     /// For example databases can be opened here.
-    async fn on_before_server_start(
+    fn on_before_server_start(
         &mut self,
         simple_state: SimpleBackendAppState,
         media_backup_handle: MediaBackupHandle,
         quit_notification: ServerQuitWatcher,
-    ) -> Self::AppState;
+    ) -> impl std::future::Future<Output = Self::AppState> + Send;
 
     /// Callback for doing something after server has been started
-    async fn on_after_server_start(&mut self) {}
+    fn on_after_server_start(&mut self) -> impl std::future::Future<Output = ()> + Send { async {} }
 
     /// Callback for doing something before server quit starts
-    async fn on_before_server_quit(&mut self) {}
+    fn on_before_server_quit(&mut self) -> impl std::future::Future<Output = ()> + Send { async {} }
 
     /// Callback for doing something after server has quit
     ///
     /// For example databases can be closed here.
-    async fn on_after_server_quit(self) {}
+    fn on_after_server_quit(self) -> impl std::future::Future<Output = ()> + Send { async {} }
 }
 
 pub struct SimpleBackend<T: BusinessLogic> {

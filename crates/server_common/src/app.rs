@@ -8,15 +8,13 @@ pub trait GetConfig {
     fn config(&self) -> &Config;
 }
 
-#[async_trait::async_trait]
 pub trait WriteDynamicConfig {
-    async fn write_config(&self, config: BackendConfig)
-        -> error_stack::Result<(), ConfigFileError>;
+    fn write_config(&self, config: BackendConfig)
+        -> impl std::future::Future<Output = error_stack::Result<(), ConfigFileError>> + Send;
 }
 
-#[async_trait::async_trait]
 pub trait ReadDynamicConfig {
-    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError>;
+    fn read_config(&self) -> impl std::future::Future<Output = error_stack::Result<BackendConfig, ConfigFileError>> + Send;
 }
 
 pub trait BackendVersionProvider {

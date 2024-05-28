@@ -76,7 +76,6 @@ impl GetAccounts for S {
     }
 }
 
-#[async_trait::async_trait]
 impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
         let config = tokio::task::spawn_blocking(ConfigFileDynamic::load_from_current_dir)
@@ -109,7 +108,6 @@ impl GetConfig for S {
     }
 }
 
-#[async_trait::async_trait]
 impl WriteDynamicConfig for S {
     async fn write_config(
         &self,
@@ -182,7 +180,6 @@ impl PushNotificationStateProvider for S {
 
 // Server data
 
-#[async_trait::async_trait]
 impl WriteData for S {
     async fn write<
         CmdResult: Send + 'static,

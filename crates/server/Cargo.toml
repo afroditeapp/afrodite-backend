@@ -17,8 +17,6 @@ utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 
-async-trait = { workspace = true }
-
 nix = { workspace = true, default-features = false, features = ["signal"] }
 
 config = { path = "../config" }

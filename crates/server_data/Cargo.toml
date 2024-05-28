@@ -16,8 +16,6 @@ tracing = { workspace = true }
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 
-async-trait = { workspace = true }
-
 nalgebra = { workspace = true }
 
 num_cpus = { workspace = true }

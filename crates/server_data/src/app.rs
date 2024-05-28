@@ -11,18 +11,17 @@ use crate::{
     DataError,
 };
 
-#[async_trait::async_trait]
 pub trait WriteData {
-    async fn write<
+    fn write<
         CmdResult: Send + 'static,
         Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send + 'static,
         GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
     >(
         &self,
         cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError>;
+    ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
 
-    async fn write_concurrent<
+    fn write_concurrent<
         CmdResult: Send + 'static,
         Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
         GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
@@ -30,7 +29,7 @@ pub trait WriteData {
         &self,
         account: AccountId,
         cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError>;
+    ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
 }
 
 pub trait ReadData {
