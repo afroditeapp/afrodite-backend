@@ -138,9 +138,10 @@ impl<T: BusinessLogic> SimpleBackend<T> {
 
     pub async fn run(mut self) {
         if cfg!(debug_assertions) {
-            let layer = console_subscriber::spawn();
+            // tokio-console is disabled currently
+            //let layer = console_subscriber::spawn();
             tracing_subscriber::registry()
-                .with(layer)
+                // .with(layer)
                 .with(tracing_subscriber::fmt::layer().with_filter(EnvFilter::from_default_env()))
                 .init();
         } else {

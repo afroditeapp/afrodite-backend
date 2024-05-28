@@ -74,7 +74,7 @@ reset-database:
 	DATABASE_URL="database/sqlite/current/current.db" diesel database reset
 
 profile-build:
-	RUSTFLAGS=-Zself-profile=target/profile-build cargo +nightly build --bin pihka-backend
+	RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zself-profile=target/profile-build cargo build --bin pihka-backend
 
 code-stats:
 	@/bin/echo -n "Lines:"
