@@ -3,6 +3,8 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+#![allow(clippy::while_let_loop)]
+
 use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;

@@ -110,6 +110,7 @@ impl ContentProcessingManagerData {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct Data {
     queue: VecDeque<ProcessingKey>,
     processing_states: HashMap<ProcessingKey, ProcessingState>,
@@ -117,10 +118,7 @@ pub struct Data {
 
 impl Data {
     pub fn new() -> Self {
-        Self {
-            queue: VecDeque::new(),
-            processing_states: HashMap::new(),
-        }
+        Self::default()
     }
 
     pub fn split(
