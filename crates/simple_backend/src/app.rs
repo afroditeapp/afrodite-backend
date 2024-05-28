@@ -94,15 +94,13 @@ impl StateBuilder {
     }
 
     pub fn build<T: Clone>(self, business_logic_state: T) -> SimpleBackendAppState<T> {
-        let state = SimpleBackendAppState {
+        SimpleBackendAppState {
             config: self.config.clone(),
             manager_api: self.manager_api,
             tile_map: TileMapManager::new(&self.config).into(),
             sign_in_with: SignInWithManager::new(self.config).into(),
             perf_data: self.perf_data,
             business_logic_data: Arc::new(business_logic_state),
-        };
-
-        state
+        }
     }
 }

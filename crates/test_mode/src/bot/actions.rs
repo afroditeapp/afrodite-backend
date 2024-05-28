@@ -19,7 +19,7 @@ use super::{super::client::TestError, BotState, TaskState};
 #[macro_export]
 macro_rules! action_array {
     [ $( $actions:expr ),* $(,)? ] => {
-        &[   $( &($actions) as &dyn crate::bot::actions::BotAction, )*    ]
+        &[   $( &($actions) as &dyn $crate::bot::actions::BotAction, )*    ]
     };
 }
 
@@ -61,7 +61,7 @@ impl PreviousValue {
 
     pub fn location(&self) -> Location {
         if let PreviousValue::Location(location) = self {
-            location.clone()
+            *location
         } else {
             Location::default()
         }

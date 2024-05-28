@@ -194,7 +194,7 @@ impl BotAction for MakeModerationRequest {
 
         if self.slot_0_secure_capture {
             content_ids.push(
-                Box::new(state.media.slots[0].clone().unwrap_or(ContentId {
+                Box::new(state.media.slots[0].unwrap_or(ContentId {
                     content_id: uuid::Uuid::new_v4(),
                 }))
                 .into(),
@@ -203,15 +203,14 @@ impl BotAction for MakeModerationRequest {
 
         content_ids.push(
             state.media.slots[1]
-                .clone()
-                .map(|id| Box::new(id))
+                .map(Box::new)
                 .unwrap_or(Box::new(ContentId {
                     content_id: uuid::Uuid::new_v4(),
                 }))
                 .into(),
         );
 
-        content_ids.push(state.media.slots[2].clone().map(|id| Box::new(id)));
+        content_ids.push(state.media.slots[2].map(Box::new));
 
         let new = ModerationRequestContent {
             content0: content_ids[0].clone().expect("Content ID is missing"),

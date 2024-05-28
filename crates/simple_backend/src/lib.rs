@@ -2,7 +2,12 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-#![allow(clippy::single_match, clippy::while_let_loop)]
+
+#![allow(
+    clippy::single_match,
+    clippy::while_let_loop,
+    clippy::large_enum_variant,
+)]
 
 pub mod app;
 pub mod event;
@@ -167,12 +172,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         let (server_quit_handle, server_quit_watcher) = broadcast::channel(1);
 
         let (media_backup_quit, media_backup_handle) =
-            MediaBackupManager::new(self.config.clone(), server_quit_watcher.resubscribe());
+            MediaBackupManager::new_manager(self.config.clone(), server_quit_watcher.resubscribe());
 
         let perf_data = Arc::new(PerfCounterManagerData::new(self.logic.all_counters()));
-        let perf_manager_quit_handle = PerfCounterManager::new(
+        let perf_manager_quit_handle = PerfCounterManager::new_manager(
             perf_data.clone(),
-            self.config.clone(),
             server_quit_watcher.resubscribe(),
         );
 

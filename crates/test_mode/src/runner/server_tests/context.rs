@@ -199,7 +199,6 @@ impl TestContext {
 }
 
 pub struct Account {
-    test_context: TestContext,
     bot_state: BotState,
 }
 
@@ -223,7 +222,6 @@ impl Account {
         test_context.add_account_connections(connections).await;
 
         Ok(Self {
-            test_context,
             bot_state: state,
         })
     }

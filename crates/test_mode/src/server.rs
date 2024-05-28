@@ -387,10 +387,6 @@ impl ServerInstance {
         }
     }
 
-    fn running(&mut self) -> bool {
-        self.server.try_wait().unwrap().is_none()
-    }
-
     async fn close_and_maeby_remove_data(mut self, remove: bool) {
         let id = self.server.id().unwrap();
         nix::sys::signal::kill(Pid::from_raw(id.try_into().unwrap()), Signal::SIGINT).unwrap(); // CTRL-C

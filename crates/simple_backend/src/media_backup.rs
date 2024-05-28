@@ -108,7 +108,7 @@ pub struct MediaBackupManager {
 }
 
 impl MediaBackupManager {
-    pub fn new(
+    pub fn new_manager(
         config: Arc<SimpleBackendConfig>,
         quit_notification: ServerQuitWatcher,
     ) -> (MediaBackupQuitHandle, MediaBackupHandle) {
@@ -225,7 +225,7 @@ impl MediaBackupManager {
         };
 
         let mut files_dir_string = self.file_dir()?.to_string_lossy().to_string();
-        if !files_dir_string.ends_with("/") {
+        if !files_dir_string.ends_with('/') {
             files_dir_string = format!("{}/", files_dir_string);
         }
 
@@ -456,5 +456,11 @@ impl SftpCommands {
 
     pub fn commands(&self) -> &str {
         &self.commands
+    }
+}
+
+impl Default for SftpCommands {
+    fn default() -> Self {
+        Self::new()
     }
 }

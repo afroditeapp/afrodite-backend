@@ -9,12 +9,12 @@ const GENERATED_IMG_HEIGHT: u32 = 512;
 pub struct ImageProvider {}
 
 impl ImageProvider {
-    pub fn jpeg_image() -> Vec<u8> {
+    pub fn jpeg_image_with_color(color: [u8; 3]) -> Vec<u8> {
         let mut buffer: ImageBuffer<Rgb<u8>, _> =
             image::ImageBuffer::new(GENERATED_IMG_WIDTH, GENERATED_IMG_HEIGHT);
 
         for pixel in buffer.pixels_mut() {
-            pixel.0 = [255, 255, 255];
+            pixel.0 = color;
         }
 
         let mut data = vec![];
@@ -25,20 +25,8 @@ impl ImageProvider {
     }
 
     pub fn random_jpeg_image() -> Vec<u8> {
-        let mut buffer: ImageBuffer<Rgb<u8>, _> =
-            image::ImageBuffer::new(GENERATED_IMG_WIDTH, GENERATED_IMG_HEIGHT);
-
         let img_color = rand::random();
-
-        for pixel in buffer.pixels_mut() {
-            pixel.0 = img_color;
-        }
-
-        let mut data = vec![];
-        let mut encoder = JpegEncoder::new(&mut data);
-        encoder.encode_image(&buffer).unwrap();
-
-        data
+        Self::jpeg_image_with_color(img_color)
     }
 
     pub fn random_image_from_directory(dir: &Path) -> Result<Option<PathBuf>, std::io::Error> {

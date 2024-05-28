@@ -259,6 +259,12 @@ impl SetAccountSetup<'static> {
     }
 }
 
+impl Default for SetAccountSetup<'static> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait]
 impl<'a> BotAction for SetAccountSetup<'a> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {

@@ -14,16 +14,14 @@ pub enum SignInWithAppleError {
     InvalidToken,
 }
 
-pub struct AppleAccountId(String);
+pub struct AppleAccountId;
 
-pub struct SignInWithAppleManager {
-    client: reqwest::Client,
-    config: Arc<SimpleBackendConfig>,
-}
+pub struct SignInWithAppleManager;
 
 impl SignInWithAppleManager {
-    pub fn new(config: Arc<SimpleBackendConfig>, client: reqwest::Client) -> Self {
-        Self { client, config }
+    pub fn new(_config: Arc<SimpleBackendConfig>, _client: reqwest::Client) -> Self {
+        // TODO(prod): Implement Sign in with Apple support
+        Self
     }
     pub async fn validate_apple_token(
         &self,

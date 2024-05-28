@@ -51,6 +51,12 @@ impl BenchmarkState {
     }
 }
 
+impl Default for BenchmarkState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct Benchmark {
     state: BotState,
     actions: Peekable<Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>>,

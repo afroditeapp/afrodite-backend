@@ -43,7 +43,7 @@ impl BotAction for ChangeProfileText {
                 .attributes
                 .iter()
                 .map(|a| ProfileAttributeValueUpdate {
-                    id: a.id.clone(),
+                    id: a.id,
                     value_part1: Some(Some(a.value_part1)),
                     value_part2: a.value_part2,
                 })
@@ -124,7 +124,7 @@ impl BotAction for UpdateLocationRandom {
             .clone()
             .unwrap_or(state.server_config.location().clone());
         let location = config.generate_random_location();
-        profile_api::put_location(state.api.profile(), location.clone())
+        profile_api::put_location(state.api.profile(), location)
             .await
             .change_context(TestError::ApiRequest)?;
         state.previous_value = PreviousValue::Location(location);

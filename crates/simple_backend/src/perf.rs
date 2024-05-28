@@ -11,7 +11,6 @@ use std::{
     time::Duration,
 };
 
-use simple_backend_config::SimpleBackendConfig;
 use simple_backend_model::{
     PerfHistoryQueryResult, PerfHistoryValue, PerfValueArea, TimeGranularity, UnixTime,
 };
@@ -31,10 +30,6 @@ impl PerfCounter {
             name,
             value: AtomicU32::new(0),
         }
-    }
-
-    fn reset(&self) {
-        self.value.store(0, Ordering::Relaxed);
     }
 
     /// Increment counter
@@ -307,22 +302,18 @@ impl PerfCounterManagerData {
 
 pub struct PerfCounterManager {
     data: Arc<PerfCounterManagerData>,
-    config: Arc<SimpleBackendConfig>,
 }
 
 impl PerfCounterManager {
-    pub fn new(
+    pub fn new_manager(
         data: Arc<PerfCounterManagerData>,
-        config: Arc<SimpleBackendConfig>,
         quit_notification: ServerQuitWatcher,
     ) -> PerfCounterManagerQuitHandle {
-        let manager = Self { data, config };
+        let manager = Self { data };
 
         let task = tokio::spawn(manager.run(quit_notification));
 
-        let quit_handle = PerfCounterManagerQuitHandle { task };
-
-        quit_handle
+        PerfCounterManagerQuitHandle { task }
     }
 
     pub async fn run(self, mut quit_notification: ServerQuitWatcher) {

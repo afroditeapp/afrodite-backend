@@ -126,12 +126,12 @@ impl QaTestRunner {
 fn get_test_functions(test_config: &QaTestConfig) -> Result<Vec<&'static TestFunction>, ()> {
     let mut test_functions: Vec<&'static TestFunction> =
         inventory::iter::<TestFunction>().collect();
-    test_functions.sort_by(|a, b| a.name().cmp(&b.name()));
+    test_functions.sort_by_key(|a| a.name());
 
     if let Some(continue_from) = &test_config.continue_from {
-        let matching_tests: Vec<&'static TestFunction> = (&test_functions)
-            .into_iter()
-            .map(|r| *r)
+        let matching_tests: Vec<&'static TestFunction> = test_functions
+            .iter()
+            .copied()
             .filter(|t| t.name().contains(continue_from))
             .collect();
         if matching_tests.is_empty() {

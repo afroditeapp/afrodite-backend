@@ -44,7 +44,7 @@ impl BotTestRunner {
         info!("Path to server binary: {:?}", &start_cmd);
 
         let old_state = if self.test_config.save_state() {
-            self.load_state_data().await.map(|d| Arc::new(d))
+            self.load_state_data().await.map(Arc::new)
         } else {
             None
         };

@@ -131,15 +131,16 @@ impl SignInWithGoogleManager {
         let data = jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &v)
             .change_context(SignInWithGoogleError::InvalidToken)?;
 
-        let azp_invalid = [
+        let valid_client_ids = [
             google_config.client_id_android.as_str(),
             google_config.client_id_ios.as_str(),
-        ]
-        .into_iter()
-        .find(|id| *id == data.claims.azp)
-        .is_none();
+        ];
 
-        if azp_invalid || !data.claims.email_verified {
+        let azp_valid = valid_client_ids
+            .into_iter()
+            .any(|id| id == data.claims.azp);
+
+        if !azp_valid || !data.claims.email_verified {
             return Err(SignInWithGoogleError::InvalidToken.report());
         }
 
