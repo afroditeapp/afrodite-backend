@@ -145,7 +145,7 @@ pub async fn post_demo_mode_login_to_account<S: DemoModeManagerProvider + ReadDa
 }
 
 pub fn demo_mode_router(s: crate::app::S) -> Router {
-    use axum::routing::{post};
+    use axum::routing::post;
 
     use crate::app::S;
 

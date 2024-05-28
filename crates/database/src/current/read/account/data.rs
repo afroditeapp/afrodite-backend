@@ -5,9 +5,8 @@ use model::{
 };
 use simple_backend_database::
     diesel_db::{ConnectionProvider, DieselDatabaseError};
-use tokio_stream::StreamExt;
 
-use crate::{IntoDatabaseError};
+use crate::IntoDatabaseError;
 
 define_read_commands!(CurrentReadAccountData, CurrentSyncReadAccountData);
 

@@ -2,7 +2,7 @@
 
 
 use api_client::{
-    apis::{account_api::{get_account_state}, profile_api::{post_get_next_profile_page, post_reset_profile_paging}},
+    apis::{account_api::get_account_state, profile_api::{post_get_next_profile_page, post_reset_profile_paging}},
     models::{ProfileVisibility},
 };
 use test_mode_macro::server_test;
@@ -11,7 +11,7 @@ use crate::{
     bot::actions::{
         account::{SetProfileVisibility}, AssertFailure
     },
-    runner::server_tests::assert::{assert_eq},
+    runner::server_tests::assert::assert_eq,
     TestContext, TestResult,
 };
 

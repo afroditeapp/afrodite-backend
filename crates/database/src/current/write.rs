@@ -1,6 +1,4 @@
-use simple_backend_database::{
-    diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError},
-};
+use simple_backend_database::diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError};
 
 use self::{
     account::CurrentSyncWriteAccount,
@@ -10,7 +8,7 @@ use self::{
     media_admin::CurrentSyncWriteMediaAdmin,
     profile::CurrentSyncWriteProfile,
 };
-use crate::{TransactionError};
+use crate::TransactionError;
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {

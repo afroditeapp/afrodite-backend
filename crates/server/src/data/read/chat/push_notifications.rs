@@ -3,7 +3,7 @@ use model::{
 };
 
 use crate::{
-    data::{DataError},
+    data::DataError,
     result::Result,
 };
 

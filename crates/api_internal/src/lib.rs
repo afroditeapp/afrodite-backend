@@ -6,17 +6,12 @@
 //! This crate provides a wrapper for the internal API of the server.
 //! Prevents exposing api_client crate model types to server code.
 
-use api_client::apis::{
-    media_internal_api::{self},
-};
+use api_client::apis::media_internal_api::{self};
 pub use api_client::apis::{configuration::Configuration, Error};
-use model::{
-    AccountId,
-};
+use model::AccountId;
 
-pub use crate::{
-    media_internal_api::InternalGetCheckModerationRequestForAccountError,
-};
+pub use crate::
+    media_internal_api::InternalGetCheckModerationRequestForAccountError;
 
 /// Wrapper for server internal API with correct model types.
 pub struct InternalApi;

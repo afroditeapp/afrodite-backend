@@ -1,12 +1,12 @@
 
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
-use utoipa::{ToSchema};
+use utoipa::ToSchema;
 
 use crate::schema_sqlite_types::Text;
 
 use crate::NotificationEvent;
-use crate::{schema_sqlite_types::Integer};
+use crate::schema_sqlite_types::Integer;
 
 /// Pending notification (or multiple notifications which each have
 /// different type) not yet received notifications which push notification
