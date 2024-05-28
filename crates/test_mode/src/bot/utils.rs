@@ -1,7 +1,6 @@
 pub mod assert;
 pub mod image;
 pub mod location;
-pub mod name;
 
 use std::{
     fmt::Debug,
@@ -51,46 +50,5 @@ impl Timer {
         } else {
             false
         }
-    }
-}
-
-pub struct AvgTime {
-    previous: Instant,
-    total: u64,
-    counter: u64,
-    calculate_avg_when_couter: u64,
-    current_avg: Duration,
-}
-
-impl AvgTime {
-    pub fn new(calculate_avg_when_couter: u64) -> Self {
-        Self {
-            previous: Instant::now(),
-            total: 0,
-            counter: 0,
-            calculate_avg_when_couter,
-            current_avg: Duration::from_micros(0),
-        }
-    }
-
-    pub fn track(&mut self) {
-        self.previous = Instant::now();
-    }
-
-    pub fn complete(&mut self) {
-        let time = self.previous.elapsed();
-        self.total += time.as_micros() as u64;
-        self.counter += 1;
-
-        if self.counter >= self.calculate_avg_when_couter {
-            self.current_avg = Duration::from_micros(self.total / self.counter);
-
-            self.counter = 0;
-            self.total = 0;
-        }
-    }
-
-    pub fn current_avg(&self) -> Duration {
-        self.current_avg
     }
 }
