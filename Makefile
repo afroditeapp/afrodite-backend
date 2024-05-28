@@ -4,6 +4,9 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p database \
 					-p model \
 					-p server \
+					-p server_common \
+					-p server_api \
+					-p server_data \
 					-p test_mode \
 					-p test_mode_macro \
 					-p utils \
