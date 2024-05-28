@@ -1,7 +1,6 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{Account, AccountIdInternal, AccountState, AccountSyncVersion, Capabilities, ProfileVisibility, SharedStateRaw, SyncVersionUtils};
-use serde_json::error;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 

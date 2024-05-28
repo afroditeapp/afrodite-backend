@@ -1,12 +1,11 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-use api_internal::InternalApi;
 use axum::extract::{Path, State};
-use model::{AccountId, BooleanSetting, Profile};
+use model::{AccountId};
 use simple_backend::create_counters;
 
 use crate::{
-    api::utils::{Json, StatusCode},
+    api::utils::{StatusCode},
     app::{GetAccounts, GetConfig, GetInternalApi, ReadData}, internal_api,
 };
 

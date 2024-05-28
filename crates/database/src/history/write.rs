@@ -9,7 +9,7 @@ use self::{
     media_admin::HistorySyncWriteMediaAdmin,
     profile::HistorySyncWriteProfile,
 };
-use crate::{HistoryWriteHandle, TransactionError};
+use crate::{TransactionError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {

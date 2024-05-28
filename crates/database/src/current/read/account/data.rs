@@ -1,14 +1,13 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use futures::Stream;
 use model::{
-    AccountData, AccountGlobalState, AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
+    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountInternal, AccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
 };
 use simple_backend_database::
     diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
-use crate::{IntoDatabaseError, IntoDatabaseErrorExt};
+use crate::{IntoDatabaseError};
 
 define_read_commands!(CurrentReadAccountData, CurrentSyncReadAccountData);
 

@@ -1,9 +1,8 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, NotificationEvent, ReceivedLikesPage, SentLikesPage};
+use model::{AccountId, AccountIdInternal, ReceivedLikesPage, SentLikesPage};
 use simple_backend::create_counters;
 
 use super::super::{
-    db_write,
     utils::{Json, StatusCode},
 };
 use crate::{api::db_write_multiple, app::{GetAccounts, ReadData, WriteData}};

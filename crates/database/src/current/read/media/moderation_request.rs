@@ -3,12 +3,12 @@ use std::collections::HashSet;
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentSlot, ContentState,
-    MediaContentRaw, MediaModerationRaw, MediaModerationRequestRaw, ModerationQueueNumber,
+    AccountIdInternal, ContentId, ContentSlot, ContentState,
+    MediaContentRaw, MediaModerationRaw, MediaModerationRequestRaw,
     ModerationRequestContent, ModerationRequestId, ModerationRequestInternal,
     ModerationRequestState,
 };
-use simple_backend_database::{data, diesel_db::{ConnectionProvider, DieselDatabaseError}};
+use simple_backend_database::{diesel_db::{ConnectionProvider, DieselDatabaseError}};
 
 use crate::{IntoDatabaseError, IntoDatabaseErrorExt};
 

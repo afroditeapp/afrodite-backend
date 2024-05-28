@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, MediaContentRaw, MediaStateRaw};
+use model::{AccountIdInternal, MediaStateRaw};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use diesel::prelude::*;

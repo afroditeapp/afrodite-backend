@@ -10,7 +10,7 @@ use crate::{
     api::{
         db_write,
         utils::{Json, StatusCode},
-    }, app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, data::DataError, internal_api
+    }, app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, data::DataError
 };
 
 // TODO: Add timeout for database commands

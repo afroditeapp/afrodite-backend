@@ -2,14 +2,14 @@ use axum::{
     extract::{Path, Query, State},
     Extension, Router,
 };
-use model::{AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueType, ModerationQueueTypeParam};
+use model::{AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueTypeParam};
 use simple_backend::create_counters;
 
 use crate::{
     api::{
-        db_write, db_write_multiple, media::moderation_request, utils::{Json, StatusCode}
+        db_write, db_write_multiple, utils::{Json, StatusCode}
     },
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, WriteData}, internal_api,
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, WriteData},
 };
 
 // TODO: Add moderation content moderation weight to account and use it when moderating.

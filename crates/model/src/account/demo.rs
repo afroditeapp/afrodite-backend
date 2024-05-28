@@ -1,12 +1,12 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, Associations};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_string_wrapper};
+use simple_backend_model::{diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::schema_sqlite_types::BigInt;
 
 use crate::{AccountId, ProfileAge};
-use crate::{schema::shared_state, schema_sqlite_types::Integer, AccessToken, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
+use crate::{RefreshToken};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct DemoModePassword {

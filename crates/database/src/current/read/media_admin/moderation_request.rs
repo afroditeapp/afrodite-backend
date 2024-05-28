@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, MediaModerationRequestRaw, ModerationQueueNumber, ModerationQueueType, ModerationRequestId, NextQueueNumberType};
+use model::{AccountIdInternal, ModerationQueueType, ModerationRequestId, NextQueueNumberType};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;

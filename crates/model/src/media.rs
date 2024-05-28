@@ -1,4 +1,3 @@
-use std::ops::Not;
 
 use diesel::{
     prelude::*,
@@ -6,7 +5,6 @@ use diesel::{
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::map::IntoIter;
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;

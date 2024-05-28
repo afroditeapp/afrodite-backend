@@ -1,8 +1,7 @@
-use std::vec;
 
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{account, AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal};
+use model::{AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 define_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);

@@ -3,7 +3,7 @@
 use std::{
     fmt::Debug,
     iter::Peekable,
-    time::{Duration, Instant},
+    time::{Instant},
 };
 
 use api_client::{

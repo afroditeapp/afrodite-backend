@@ -13,7 +13,7 @@ use std::{
 use error_stack::{Result, ResultExt};
 use file::{DatabaseInfo, FirebaseCloudMessagingConfig, TileMapConfig};
 use reqwest::Url;
-use rustls_pemfile::{certs, rsa_private_keys};
+use rustls_pemfile::{certs};
 use tokio_rustls::rustls::ServerConfig;
 
 use self::file::{

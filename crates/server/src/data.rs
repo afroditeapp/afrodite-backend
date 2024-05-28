@@ -31,7 +31,7 @@ use self::{
     write_concurrent::WriteCommandsConcurrent,
 };
 use crate::{
-    event::EventManagerWithCacheReference, internal_api::InternalApiError, push_notifications::PushNotificationSender, result::{Result, WrappedContextExt, WrappedReport}
+    event::EventManagerWithCacheReference, internal_api::InternalApiError, push_notifications::PushNotificationSender, result::{Result, WrappedReport}
 };
 
 pub mod cache;

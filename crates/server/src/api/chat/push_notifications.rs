@@ -1,9 +1,9 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, FcmDeviceToken, PendingNotification};
-use simple_backend::{app::GetSimpleBackendConfig, create_counters};
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotification};
+use simple_backend::{create_counters};
 
 use super::super::utils::{Json, StatusCode};
-use crate::{api::db_write_multiple, app::{GetAccounts, WriteData}, db_write};
+use crate::{app::{GetAccounts, WriteData}, db_write};
 
 // TODO(prod): Logout route should remove the device token
 // TODO(prod): Connecting with websocket should reset the pending notification

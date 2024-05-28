@@ -1,6 +1,6 @@
-use diesel::{prelude::*, select, update};
+use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, FcmDeviceToken, PendingNotification};
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotification};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;

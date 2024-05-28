@@ -1,4 +1,4 @@
-use std::{fmt::format, mem, sync::Arc};
+use std::{mem, sync::Arc};
 
 use api_client::{apis::{configuration::Configuration, media_admin_api, profile_api::{post_profile, post_search_age_range, post_search_groups}}, models::{AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate, SearchGroups}};
 use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
@@ -10,7 +10,7 @@ use crate::{
         actions::{
             account::{CompleteAccountSetup, Login, Register, SetAccountSetup}, admin::ModerateMediaModerationRequest, media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, BotAction
         }, AccountConnections, BotState
-    }, client::ApiClient, TestError, TestResult
+    }, client::ApiClient, TestError
 };
 
 #[derive(Debug)]

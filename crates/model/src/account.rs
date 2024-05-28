@@ -5,7 +5,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::schema_sqlite_types::Text;
 
-use crate::{schema::shared_state, schema_sqlite_types::Integer, AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
+use crate::{schema_sqlite_types::Integer, AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken, SharedStateRaw};
 
 mod demo;
 pub use demo::*;

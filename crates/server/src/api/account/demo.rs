@@ -1,12 +1,12 @@
 use std::time::Duration;
 
-use axum::{extract::State, Extension, Router};
-use model::{AccessibleAccount, Account, AccountId, AccountIdInternal, DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult, SignInWithInfo};
+use axum::{extract::State, Router};
+use model::{AccessibleAccount, AccountId, DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult, SignInWithInfo};
 use simple_backend::create_counters;
 
 use crate::{
     api::utils::{Json, StatusCode},
-    app::{DemoModeManagerProvider, GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData}, db_write,
+    app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, WriteData}, db_write,
 };
 
 use super::{login_impl, register_impl};
@@ -145,7 +145,7 @@ pub async fn post_demo_mode_login_to_account<S: DemoModeManagerProvider + ReadDa
 }
 
 pub fn demo_mode_router(s: crate::app::S) -> Router {
-    use axum::routing::{get, post};
+    use axum::routing::{post};
 
     use crate::app::S;
 

@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, AvailableProfileAttributes, FavoriteProfilesPage, ProfileAttributeFilterList, ProfileAttributeFilterListUpdate};
+use model::{AccountIdInternal, AvailableProfileAttributes, ProfileAttributeFilterList, ProfileAttributeFilterListUpdate};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
@@ -8,7 +8,7 @@ use crate::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{GetAccounts, GetConfig, ReadData, WriteData}, data::DataError,
+    app::{GetConfig, ReadData, WriteData}, data::DataError,
 };
 
 pub const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_profile_attributes";
@@ -85,7 +85,7 @@ pub async fn post_profile_attribute_filters<S: WriteData + GetConfig>(
 }
 
 pub fn attributes_router(s: crate::app::S) -> Router {
-    use axum::routing::{delete, get, post};
+    use axum::routing::{get, post};
 
     use crate::app::S;
 

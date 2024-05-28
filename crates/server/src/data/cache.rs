@@ -4,7 +4,7 @@ use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, FcmDeviceToken, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileLink, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw, SortedProfileAttributes
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::{ComponentError, IntoReportFromString};

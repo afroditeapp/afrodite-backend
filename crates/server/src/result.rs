@@ -4,7 +4,6 @@ use database::ErrorContext;
 use error_stack::{Context, Report};
 use model::IsLoggingAllowed;
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use tracing::info_span;
 
 use crate::{data::{cache::CacheError, file::FileError, index::IndexError, DataError}, internal_api::InternalApiError};
 

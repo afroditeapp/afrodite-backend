@@ -8,7 +8,7 @@ use std::{fmt::Debug, sync::Arc, vec};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
-    args::{SelectedBenchmark, TestMode, TestModeSubMode}, bot_config_file::{self, BotConfigFile, BotInstanceConfig}, Config
+    args::{SelectedBenchmark, TestMode, TestModeSubMode}, bot_config_file::{BotConfigFile, BotInstanceConfig}, Config
 };
 use error_stack::{Result, ResultExt};
 use tokio::{
@@ -17,7 +17,7 @@ use tokio::{
     sync::{broadcast, mpsc, watch}, task::JoinHandle,
 };
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
-use tracing::{error, info, log::warn};
+use tracing::{error, info};
 
 use self::{
     actions::{media::MediaState, BotAction, DoNothing, PreviousValue},

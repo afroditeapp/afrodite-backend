@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequest, ModerationRequestContent};
+use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent};
 use simple_backend::create_counters;
 
 use crate::{

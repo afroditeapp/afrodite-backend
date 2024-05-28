@@ -1,13 +1,6 @@
 //! Handlers for internal from Server to Server state transfers and messages
 
-use axum::extract::{Path, State};
-use model::{AccessToken, Account, AccountId};
-use simple_backend::create_counters;
 
-use crate::{
-    api::utils::{Json, StatusCode},
-    app::{GetAccessTokens, GetAccounts, ReadData},
-};
 
 // TODO(microservice): Add route for handling login from account server
 // TODO(microservice): Add route for receiving state updates from account server

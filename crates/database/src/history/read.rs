@@ -6,7 +6,6 @@ use self::{
     media_admin::HistorySyncReadMediaAdmin, profile::HistorySyncReadProfile,
     profile_admin::HistorySyncReadProfileAdmin,
 };
-use crate::HistoryReadHandle;
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {

@@ -1,17 +1,11 @@
-use api_internal::{Configuration, InternalApi};
-use config::{Config, InternalApiUrls};
-use hyper::StatusCode;
 use model::{
-    AccessToken, Account, AccountIdInternal, AccountState, BooleanSetting, Capabilities, Profile,
-    ProfileInternal,
+    Account, AccountIdInternal,
 };
-use tracing::{error, info, warn};
+use tracing::{warn};
 
-use crate::{data::{read::ReadCommands, utils::AccessTokenManager}};
 use crate::{
-    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, WriteData},
-    data::WrappedWithInfo,
-    result::{Result, WrappedContextExt, WrappedResultExt},
+    app::{GetConfig, GetInternalApi},
+    result::{Result, WrappedContextExt},
 };
 
 use super::InternalApiError;

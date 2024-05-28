@@ -2,17 +2,16 @@
 
 use axum::extract::State;
 use model::{
-    AccessToken, AccountId, AuthPair, GoogleAccountId, LoginResult, RefreshToken, SignInWithInfo,
-    SignInWithLoginInfo,
+    AccountId, LoginResult, SignInWithInfo,
 };
-use simple_backend::{app::SignInWith, create_counters};
+use simple_backend::{create_counters};
 
 use crate::{
     api::{
         db_write,
         utils::{Json, StatusCode},
     },
-    app::{GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData},
+    app::{GetAccounts, GetConfig, ReadData, WriteData},
 };
 
 use super::account::{login_impl, register_impl};

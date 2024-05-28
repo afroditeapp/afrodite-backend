@@ -1,4 +1,3 @@
-use std::fmt::Debug;
 
 use diesel::{delete, insert_into, prelude::*};
 use error_stack::Result;

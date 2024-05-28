@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::ToSchema;
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal, SyncVersionUtils};
+use crate::{AccountId, AccountIdDb, AccountIdInternal};
 
 mod sync_version;
 pub use sync_version::*;

@@ -11,8 +11,7 @@ use api_client::apis::{
 };
 pub use api_client::apis::{configuration::Configuration, Error};
 use model::{
-    AccessToken, Account, AccountId, AccountIdInternal, AccountState, BooleanSetting, Capabilities,
-    Profile,
+    AccountId,
 };
 
 pub use crate::{

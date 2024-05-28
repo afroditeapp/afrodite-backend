@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountData, AccountIdInternal, AccountState, BooleanSetting, Capabilities, EventToClientInternal, ProfileVisibility};
+use model::{AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility};
 use simple_backend::create_counters;
 
 use crate::{

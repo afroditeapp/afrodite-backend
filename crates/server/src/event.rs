@@ -1,7 +1,7 @@
 //! Send events to connected or not connected clients.
 
 use database::current::write::chat::ChatStateChanges;
-use model::{AccountId, AccountIdInternal, EventToClient, EventToClientInternal, FcmDeviceToken, NotificationEvent};
+use model::{AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent};
 use tokio::sync::mpsc;
 
 use crate::{

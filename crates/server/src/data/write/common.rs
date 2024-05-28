@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use model::{AccountId, AccountIdInternal, AuthPair, SharedStateRaw};
+use model::{AccountId, AccountIdInternal, AuthPair};
 
 use crate::{
     data::{write::db_transaction, DataError, IntoDataError},

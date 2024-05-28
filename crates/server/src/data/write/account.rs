@@ -1,5 +1,5 @@
 use model::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, EmailAddress, ProfileLink, ProfileVisibility, SharedStateRaw
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, EmailAddress, ProfileVisibility
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 

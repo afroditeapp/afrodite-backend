@@ -2,17 +2,16 @@
 
 
 use api_client::{
-    apis::{account_api::{get_account_state, post_complete_setup}, profile_api::{get_location, post_get_next_profile_page, post_reset_profile_paging}},
-    models::{account, AccountState, Location, ProfileVisibility},
+    apis::{account_api::{get_account_state}, profile_api::{post_get_next_profile_page, post_reset_profile_paging}},
+    models::{ProfileVisibility},
 };
 use test_mode_macro::server_test;
 
 use crate::{
-    action_array,
     bot::actions::{
-        account::{SetAccountSetup, SetProfileVisibility}, media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, profile::UpdateLocation, AssertFailure
+        account::{SetProfileVisibility}, AssertFailure
     },
-    runner::server_tests::assert::{assert_eq, assert_failure},
+    runner::server_tests::assert::{assert_eq},
     TestContext, TestResult,
 };
 

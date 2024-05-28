@@ -1,28 +1,20 @@
 
 
-use std::net::SocketAddr;
 
 use axum::{
     extract::{
         ws::{Message, WebSocket},
-        ConnectInfo, State, WebSocketUpgrade,
     },
-    response::IntoResponse,
 };
-use axum_extra::TypedHeader;
 use model::{
-    AccessToken, AccountIdInternal, AccountSyncVersion, AuthPair, BackendVersion, ChatStateRaw, EventToClient, EventToClientInternal, RefreshToken, SpecialEventToClient, SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils
+    AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SpecialEventToClient, SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient, SyncVersionUtils
 };
-use simple_backend::{create_counters, event, web_socket::WebSocketManager};
-use simple_backend_utils::IntoReportFromString;
-use tracing::{error, info};
 pub use utils::api::PATH_CONNECT;
 
 use crate::{
-    app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData},
-    api::utils::{AccessTokenHeader, Json, StatusCode},
+    app::{ReadData, WriteData},
 };
-use crate::{app::GetConfig, db_write, result::{Result, WrappedContextExt, WrappedResultExt}};
+use crate::{app::GetConfig, result::{Result, WrappedResultExt}};
 
 use super::WebSocketError;
 

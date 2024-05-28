@@ -1,16 +1,10 @@
 use api_client::{
-    apis::account_api::{get_account_state, post_complete_setup},
-    models::AccountState,
+    apis::account_api::{get_account_state},
 };
 use test_mode_macro::server_test;
 
 use crate::{
-    action_array,
-    bot::actions::{
-        account::SetAccountSetup,
-        media::{MakeModerationRequest, SendImageToSlot, SetPendingContent}, AssertFailure,
-    },
-    runner::server_tests::assert::{assert, assert_eq, assert_failure},
+    runner::server_tests::assert::{assert, assert_eq},
     TestContext, TestResult,
 };
 

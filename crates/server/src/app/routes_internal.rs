@@ -1,7 +1,7 @@
 //! Routes for server to server connections
 
 use axum::{
-    routing::{get, post},
+    routing::{post},
     Router,
 };
 use simple_backend::app::SimpleBackendAppState;

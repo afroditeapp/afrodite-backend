@@ -8,7 +8,7 @@ pub mod file;
 pub mod file_dynamic;
 pub mod bot_config_file;
 
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::{path::{Path}, sync::Arc};
 
 use args::{AppMode, ArgsConfig};
 use error_stack::{Result, ResultExt};

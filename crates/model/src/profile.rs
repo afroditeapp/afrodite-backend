@@ -3,9 +3,8 @@ use std::{collections::{HashMap, HashSet}, sync::atomic::{AtomicBool, AtomicU16,
 use diesel::{prelude::*, sql_types::Binary, AsExpression, FromSqlRow, sql_types::BigInt};
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_try_from, diesel_uuid_wrapper, diesel_i64_wrapper};
+use simple_backend_model::{diesel_i64_struct_try_from, diesel_uuid_wrapper, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
-use uuid::Uuid;
 
 use crate::{schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils};
 

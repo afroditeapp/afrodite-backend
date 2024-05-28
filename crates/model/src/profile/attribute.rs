@@ -1,17 +1,13 @@
-use std::{collections::HashSet, fmt::format, str::FromStr};
+use std::{collections::HashSet, str::FromStr};
 
-use base64::Engine;
 use diesel::{
     prelude::*,
-    sql_types::{BigInt, Binary},
-    AsExpression, FromSqlRow,
 };
-use serde::{Deserialize, Serialize, Serializer};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
-use utoipa::{IntoParams, ToSchema};
+use serde::{Deserialize, Serialize};
+use utoipa::{ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId, ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType, Profile, ProfileAttributesSyncVersion, ProfileVisibility
+    ProfileAttributesSyncVersion
 };
 
 

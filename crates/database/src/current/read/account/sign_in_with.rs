@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, GoogleAccountId, SignInWithInfo, SignInWithInfoRaw};
+use model::{AccountIdInternal, GoogleAccountId, SignInWithInfoRaw};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;

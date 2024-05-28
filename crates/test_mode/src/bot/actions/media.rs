@@ -3,7 +3,7 @@ use std::{fmt::Debug, path::PathBuf};
 use api_client::{
     apis::media_api::{get_content_slot_state, put_moderation_request, put_pending_profile_content, put_pending_security_content_info},
     manual_additions::put_content_to_content_slot_fixed,
-    models::{content_processing_state, ContentId, ContentProcessingStateType, EventToClient, EventType, MediaContentType, ModerationRequestContent, SetProfileContent},
+    models::{ContentId, ContentProcessingStateType, MediaContentType, ModerationRequestContent, SetProfileContent},
 };
 use async_trait::async_trait;
 use config::bot_config_file::{BotConfigFile, BotInstanceConfig, Gender};

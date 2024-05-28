@@ -10,7 +10,7 @@ use self::{
     media_admin::CurrentSyncWriteMediaAdmin,
     profile::CurrentSyncWriteProfile,
 };
-use crate::{CurrentWriteHandle, TransactionError};
+use crate::{TransactionError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {

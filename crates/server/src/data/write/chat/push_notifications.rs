@@ -1,14 +1,11 @@
 
 
 
-use database::current::write::chat::{ChatStateChanges, PushNotificationStateInfo};
-use error_stack::ResultExt;
-use model::{AccountId, AccountIdInternal, ChatStateRaw, FcmDeviceToken, MessageNumber, PendingMessageId, PendingNotification, SyncVersionUtils};
-use simple_backend_database::diesel_db::DieselDatabaseError;
-use simple_backend_utils::ContextExt;
+use database::current::write::chat::{PushNotificationStateInfo};
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotification};
 
 use crate::{
-    data::{cache::CacheError, write::db_transaction, DataError},
+    data::{write::db_transaction, DataError},
     result::Result,
 };
 

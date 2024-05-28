@@ -1,11 +1,11 @@
 
-use std::{sync::Arc, time::Duration};
+use std::{time::Duration};
 
-use fcm::{message::{Message, Notification, Target}, FcmClient, response::{RecomendedAction, RecomendedWaitTime}};
+use fcm::{message::{Message, Target}, FcmClient, response::{RecomendedAction, RecomendedWaitTime}};
 
-use crate::{app::ReadData, result::{Result, WrappedResultExt}};
-use model::{AccountId, AccountIdInternal, FcmDeviceToken, NotificationEvent, PendingNotificationFlags};
-use serde_json::{error, json};
+use crate::{result::{Result, WrappedResultExt}};
+use model::{AccountIdInternal, NotificationEvent, PendingNotificationFlags};
+use serde_json::{json};
 use simple_backend::{app::SimpleBackendAppState, ServerQuitWatcher};
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{sync::mpsc::{error::TrySendError, Receiver, Sender}, task::JoinHandle};
