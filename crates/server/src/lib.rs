@@ -5,17 +5,10 @@
 
 #![allow(clippy::while_let_loop)]
 
-pub mod api;
 pub mod app;
 pub mod bot;
 pub mod content_processing;
-pub mod data;
-pub mod demo;
-pub mod event;
-pub mod internal_api;
 pub mod perf;
-pub mod push_notifications;
-pub mod result;
 pub mod startup_tasks;
 pub mod utils;
 
@@ -26,14 +19,14 @@ use async_trait::async_trait;
 use axum::Router;
 use config::Config;
 use content_processing::{
-    ContentProcessingManager, ContentProcessingManagerData, ContentProcessingManagerQuitHandle,
+    ContentProcessingManager, ContentProcessingManagerQuitHandle,
 };
-use data::write_commands::WriteCmdWatcher;
-use demo::DemoModeManager;
+
 use perf::ALL_COUNTERS;
-use push_notifications::{PushNotificationManager, PushNotificationManagerQuitHandle};
+use server_api::ApiDoc;
+use server_common::push_notifications::{self, PushNotificationManager, PushNotificationManagerQuitHandle};
 use simple_backend::{
-    app::{SimpleBackendAppState, StateBuilder},
+    app::{SimpleBackendAppState},
     media_backup::MediaBackupHandle,
     perf::AllCounters,
     web_socket::WebSocketManager,
@@ -41,14 +34,15 @@ use simple_backend::{
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
+
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::{
     app::{routes_internal::InternalApp, App},
-    data::{write_commands::WriteCommandRunnerHandle, DatabaseManager},
 };
-use crate::{api::ApiDoc, bot::BotClient};
+use server_data::{content_processing::ContentProcessingManagerData, demo::DemoModeManager, write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle}, DatabaseManager};
+use crate::{bot::BotClient};
 
 pub struct PihkaServer {
     config: Arc<Config>,
@@ -95,7 +89,7 @@ impl BusinessLogic for PihkaBusinessLogic {
     fn public_api_router(
         &self,
         web_socket_manager: WebSocketManager,
-        state: &SimpleBackendAppState<Self::AppState>,
+        state: &Self::AppState,
     ) -> Router {
         let mut app = App::new(state.clone(), web_socket_manager);
         let mut router = app.create_common_server_router();
@@ -119,7 +113,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         router
     }
 
-    fn internal_api_router(&self, state: &SimpleBackendAppState<Self::AppState>) -> Router {
+    fn internal_api_router(&self, state: &Self::AppState) -> Router {
         let mut router = Router::new();
         if self.config.components().account {
             router = router.merge(InternalApp::create_account_server_router(state.clone()))
@@ -146,12 +140,12 @@ impl BusinessLogic for PihkaBusinessLogic {
 
     async fn on_before_server_start(
         &mut self,
-        state_builder: StateBuilder,
+        simple_state: SimpleBackendAppState,
         media_backup_handle: MediaBackupHandle,
         server_quit_watcher: ServerQuitWatcher,
-    ) -> SimpleBackendAppState<Self::AppState> {
+    ) -> Self::AppState {
         let (push_notification_sender, push_notification_receiver) =
-            PushNotificationManager::channel();
+            push_notifications::channel();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
@@ -178,26 +172,25 @@ impl BusinessLogic for PihkaBusinessLogic {
             content_processing.clone(),
             demo_mode,
             push_notification_sender,
+            simple_state,
         )
         .await;
 
-        let state = state_builder.build(app_state.clone());
-
         let content_processing_quit_handle = ContentProcessingManager::new_manager(
             content_processing_receiver,
-            state.clone(),
+            app_state.clone(),
             server_quit_watcher.resubscribe(),
         );
 
         let push_notifications_quit_handle = PushNotificationManager::new_manager(
             self.config.simple_backend(),
             server_quit_watcher.resubscribe(),
-            state.clone(),
+            app_state.clone(),
             push_notification_receiver,
         )
         .await;
 
-        StartupTasks::new(state.clone())
+        StartupTasks::new(app_state.clone())
             .run_and_wait_completion()
             .await
             .expect("Startup tasks failed");
@@ -206,7 +199,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         self.write_cmd_waiter = Some(write_cmd_waiter);
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
         self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
-        state
+        app_state
     }
 
     async fn on_after_server_start(&mut self) {

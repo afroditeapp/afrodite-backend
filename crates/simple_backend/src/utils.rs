@@ -1,5 +1,5 @@
 use error_stack::{Context, Report, Result};
-use simple_backend_database::DataError;
+use simple_backend_database::SimpleDatabaseError;
 use tokio::sync::oneshot;
 
 /// Sender only used for quit request message sending.
@@ -17,8 +17,8 @@ pub trait AppendErr: Sized {
     fn into_result(self) -> Result<(), Self::E>;
 }
 
-impl AppendErr for ErrorContainer<DataError> {
-    type E = DataError;
+impl AppendErr for ErrorContainer<SimpleDatabaseError> {
+    type E = SimpleDatabaseError;
 
     fn append(&mut self, e: Report<Self::E>) {
         if let Some(error) = self.as_mut() {

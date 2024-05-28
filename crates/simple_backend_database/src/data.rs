@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use error_stack::{Result, ResultExt};
 use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
 
-use crate::DataError;
+use crate::SimpleDatabaseError;
 
 pub const FILE_DIR_NAME: &str = "files";
 pub const SQLITE_DIR_NAME: &str = "sqlite";
@@ -11,20 +11,20 @@ pub const SQLITE_DIR_NAME: &str = "sqlite";
 pub fn create_dirs_and_get_sqlite_database_file_path(
     config: &SimpleBackendConfig,
     database_info: &SqliteDatabase,
-) -> Result<PathBuf, DataError> {
+) -> Result<PathBuf, SimpleDatabaseError> {
     let root = config.data_dir().to_path_buf();
     if !root.exists() {
-        fs::create_dir(&root).change_context(DataError::FilePathCreationFailed)?;
+        fs::create_dir(&root).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
     let sqlite = root.join(SQLITE_DIR_NAME);
     if !sqlite.exists() {
-        fs::create_dir(&sqlite).change_context(DataError::FilePathCreationFailed)?;
+        fs::create_dir(&sqlite).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
     let db_dir = sqlite.join(database_info.name.clone());
     if !db_dir.exists() {
-        fs::create_dir(&db_dir).change_context(DataError::FilePathCreationFailed)?;
+        fs::create_dir(&db_dir).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
     let db_file = db_dir.join(format!("{}.db", database_info.name));
@@ -34,15 +34,15 @@ pub fn create_dirs_and_get_sqlite_database_file_path(
 
 pub fn create_dirs_and_get_files_dir_path(
     config: &SimpleBackendConfig,
-) -> Result<PathBuf, DataError> {
+) -> Result<PathBuf, SimpleDatabaseError> {
     let root = config.data_dir().to_path_buf();
     if !root.exists() {
-        fs::create_dir(&root).change_context(DataError::FilePathCreationFailed)?;
+        fs::create_dir(&root).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
     let dir = root.join(FILE_DIR_NAME);
     if !dir.exists() {
-        fs::create_dir(&dir).change_context(DataError::FilePathCreationFailed)?;
+        fs::create_dir(&dir).change_context(SimpleDatabaseError::FilePathCreationFailed)?;
     }
 
     Ok(dir)

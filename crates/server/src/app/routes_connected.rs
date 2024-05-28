@@ -1,7 +1,8 @@
 use axum::{middleware, Router};
 
+use server_api as api;
+
 use crate::{
-    api::{self},
     app::S,
 };
 
@@ -39,7 +40,7 @@ impl ConnectedApp {
             .merge(api::account::settings_router(self.state.clone()))
             .merge(api::account::state_router(self.state.clone()));
 
-        let private = if self.state.business_logic_state().config.debug_mode() {
+        let private = if self.state.config.debug_mode() {
             private.merge(api::profile::benchmark_router(self.state.clone()))
         } else {
             private

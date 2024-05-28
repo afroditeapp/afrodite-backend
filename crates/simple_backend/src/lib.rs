@@ -23,7 +23,7 @@ pub mod web_socket;
 
 use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sync::Arc};
 
-use app::SimpleBackendAppState;
+use app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith, SimpleBackendAppState};
 use async_trait::async_trait;
 use axum::Router;
 use futures::{future::poll_fn, StreamExt};
@@ -55,7 +55,6 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use self::web_socket::WebSocketManager;
 use crate::{
-    app::StateBuilder,
     media_backup::MediaBackupManager,
     perf::{PerfCounterManager, PerfCounterManagerData},
 };
@@ -71,7 +70,7 @@ pub type ServerQuitWatcher = broadcast::Receiver<()>;
 
 #[async_trait]
 pub trait BusinessLogic: Sized + Send + Sync + 'static {
-    type AppState: Clone;
+    type AppState: SignInWith + GetManagerApi + GetSimpleBackendConfig + GetTileMap + PerfCounterDataProvider + Send + Sync + Clone + 'static;
 
     /// Access prerformance counter list
     fn all_counters(&self) -> AllCounters {
@@ -82,12 +81,12 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     fn public_api_router(
         &self,
         _web_socket_manager: WebSocketManager,
-        _state: &SimpleBackendAppState<Self::AppState>,
+        _state: &Self::AppState,
     ) -> Router {
         Router::new()
     }
     /// Create router for internal API
-    fn internal_api_router(&self, _state: &SimpleBackendAppState<Self::AppState>) -> Router {
+    fn internal_api_router(&self, _state: &Self::AppState) -> Router {
         Router::new()
     }
 
@@ -102,10 +101,10 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     /// For example databases can be opened here.
     async fn on_before_server_start(
         &mut self,
-        state_builder: StateBuilder,
+        simple_state: SimpleBackendAppState,
         media_backup_handle: MediaBackupHandle,
         quit_notification: ServerQuitWatcher,
-    ) -> SimpleBackendAppState<Self::AppState>;
+    ) -> Self::AppState;
 
     /// Callback for doing something after server has been started
     async fn on_after_server_start(&mut self) {}
@@ -180,13 +179,13 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             server_quit_watcher.resubscribe(),
         );
 
-        let state_builder =
-            StateBuilder::new(self.config.clone(), perf_data).expect("State builder init failed");
+        let simple_state =
+            SimpleBackendAppState::new(self.config.clone(), perf_data).expect("State builder init failed");
 
         let state = self
             .logic
             .on_before_server_start(
-                state_builder,
+                simple_state,
                 media_backup_handle,
                 server_quit_watcher.resubscribe(),
             )
@@ -269,7 +268,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         &self,
         quit_notification: ServerQuitWatcher,
         web_socket_manager: WebSocketManager,
-        app_state: &SimpleBackendAppState<T::AppState>,
+        app_state: &T::AppState,
     ) -> JoinHandle<()> {
         let router = {
             let router = self.logic.public_api_router(web_socket_manager, app_state);
@@ -435,7 +434,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     async fn create_internal_api_server_task(
         &self,
         quit_notification: ServerQuitWatcher,
-        state: &SimpleBackendAppState<T::AppState>,
+        state: &T::AppState,
         addr: SocketAddr,
     ) -> JoinHandle<()> {
         let router = self.logic.internal_api_router(state);

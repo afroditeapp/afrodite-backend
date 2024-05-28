@@ -1,42 +1,36 @@
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     routing::{get, post},
     Router,
 };
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
+use database::current::write::chat::PushNotificationStateInfo;
 use error_stack::{Result, ResultExt};
+
 use futures::Future;
-use model::{AccountId, BackendConfig, BackendVersion};
+use model::{AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, PendingNotificationFlags};
+use server_api::{account::demo_mode_router, internal_api::InternalApiClient};
+use server_common::push_notifications::{PushNotificationError, PushNotificationSender, PushNotificationStateProvider};
 use simple_backend::{
-    app::{GetSimpleBackendConfig, SimpleBackendAppState},
-    web_socket::WebSocketManager,
+    app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith, SimpleBackendAppState}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager, web_socket::WebSocketManager
 };
+use simple_backend_config::SimpleBackendConfig;
 
 use self::routes_connected::ConnectedApp;
-use super::{
-    data::{
-        read::ReadCommands,
-        utils::{AccessTokenManager, AccountIdManager},
-        write_commands::{WriteCmds, WriteCommandRunnerHandle},
-        DataError, RouterDatabaseReadHandle,
-    },
-    internal_api::InternalApiClient,
+use server_data::{
+    content_processing::ContentProcessingManagerData, demo::DemoModeManager, read::ReadCommands, utils::{AccessTokenManager, AccountIdManager}, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError, RouterDatabaseReadHandle,
+    event::{EventManagerWithCacheReference},
 };
-use crate::{
-    api::{self, account::demo_mode_router},
-    content_processing::ContentProcessingManagerData,
-    data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
-    demo::DemoModeManager,
-    event::EventManagerWithCacheReference,
-    push_notifications::PushNotificationSender,
-};
+
+pub use server_api::app::*;
+
 
 pub mod routes_connected;
 pub mod routes_internal;
 
 /// State type for route handlers.
-pub type S = SimpleBackendAppState<AppState>;
+pub type S = AppState;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -47,115 +41,64 @@ pub struct AppState {
     content_processing: Arc<ContentProcessingManagerData>,
     demo_mode: DemoModeManager,
     push_notification_sender: PushNotificationSender,
+    simple_backend_state: SimpleBackendAppState,
 }
+// Server common
 
-pub trait GetAccessTokens {
-    /// Users which are logged in.
-    fn access_tokens(&self) -> AccessTokenManager<'_>;
-}
-
-impl GetAccessTokens for S {
-    fn access_tokens(&self) -> AccessTokenManager<'_> {
-        self.business_logic_state().database.access_token_manager()
+impl EventManagerProvider for S {
+    fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
+        EventManagerWithCacheReference::new(
+            self.database.cache(),
+            &self.push_notification_sender,
+        )
     }
-}
-
-pub trait GetAccounts {
-    /// All accounts registered in the service.
-    fn accounts(&self) -> AccountIdManager<'_>;
 }
 
 impl GetAccounts for S {
-    fn accounts(&self) -> AccountIdManager<'_> {
-        self.business_logic_state().database.account_id_manager()
-    }
-}
-
-#[async_trait::async_trait]
-pub trait WriteData {
-    async fn write<
-        CmdResult: Send + 'static,
-        Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send + 'static,
-        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
-    >(
+    async fn get_internal_id(
         &self,
-        cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError>;
-
-    async fn write_concurrent<
-        CmdResult: Send + 'static,
-        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
-        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
-    >(
-        &self,
-        account: AccountId,
-        cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError>;
-}
-
-#[async_trait::async_trait]
-impl WriteData for S {
-    async fn write<
-        CmdResult: Send + 'static,
-        Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send + 'static,
-        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
-    >(
-        &self,
-        cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError> {
-        self.business_logic_state().write_queue.write(cmd).await
-    }
-
-    async fn write_concurrent<
-        CmdResult: Send + 'static,
-        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
-        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
-    >(
-        &self,
-        account: AccountId,
-        cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError> {
-        self.business_logic_state()
-            .write_queue
-            .concurrent_write(account, cmd)
+        id: AccountId
+    ) -> Result<AccountIdInternal, DataError> {
+        self.database
+            .account_id_manager()
+            .get_internal_id(id)
             .await
+            .map_err(|e| e.into_report())
     }
 }
 
-pub trait ReadData {
-    fn read(&self) -> ReadCommands<'_>;
-}
+#[async_trait::async_trait]
+impl ReadDynamicConfig for S {
+    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
+        let config =
+            tokio::task::spawn_blocking(ConfigFileDynamic::load_from_current_dir)
+                .await
+                .change_context(ConfigFileError::LoadConfig)??;
 
-impl ReadData for S {
-    fn read(&self) -> ReadCommands<'_> {
-        self.business_logic_state().database.read()
+        Ok(config.backend_config)
     }
 }
 
-pub trait GetInternalApi {
-    fn internal_api_client(&self) -> &InternalApiClient;
-}
-
-impl GetInternalApi for S {
-    fn internal_api_client(&self) -> &InternalApiClient {
-        &self.business_logic_state().internal_api
+impl BackendVersionProvider for S {
+    fn backend_version(&self) -> BackendVersion {
+        BackendVersion {
+            backend_code_version: self
+                .simple_backend_config()
+                .backend_code_version()
+                .to_string(),
+            backend_version: self
+                .simple_backend_config()
+                .backend_semver_version()
+                .to_string(),
+            protocol_version: "1.0.0".to_string(),
+        }
     }
-}
-
-pub trait GetConfig {
-    fn config(&self) -> &Config;
 }
 
 impl GetConfig for S {
     fn config(&self) -> &Config {
-        &self.business_logic_state().config
+        &self.config
     }
-}
-
-#[async_trait::async_trait]
-pub trait WriteDynamicConfig {
-    async fn write_config(&self, config: BackendConfig)
-        -> error_stack::Result<(), ConfigFileError>;
 }
 
 #[async_trait::async_trait]
@@ -178,85 +121,164 @@ impl WriteDynamicConfig for S {
     }
 }
 
+impl PushNotificationStateProvider for S {
+    async fn get_push_notification_state_info_and_add_notification_value(
+        &self,
+        account_id: AccountIdInternal,
+        flags: PendingNotificationFlags,
+    ) -> Result<PushNotificationStateInfo, PushNotificationError> {
+        self
+            .write(move |cmds| async move {
+                cmds.chat()
+                    .push_notifications()
+                    .get_push_notification_state_info_and_add_notification_value(
+                        account_id,
+                        flags.into(),
+                    )
+                    .await
+            })
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
+    }
+
+    async fn enable_push_notification_sent_flag(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<(), PushNotificationError> {
+        self
+            .write(move |cmds| async move {
+                cmds.chat()
+                    .push_notifications()
+                    .enable_push_notification_sent_flag(account_id)
+                    .await
+            })
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
+    }
+
+    async fn remove_device_token(
+        &self,
+        account_id: AccountIdInternal
+    ) -> Result<(), PushNotificationError> {
+        self
+            .write(move |cmds| async move {
+                cmds.chat()
+                    .push_notifications()
+                    .remove_device_token(account_id)
+                    .await
+            })
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::RemoveDeviceTokenFailed)
+    }
+}
+
+// Server data
+
 #[async_trait::async_trait]
-pub trait ReadDynamicConfig {
-    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError>;
-}
+impl WriteData for S {
+    async fn write<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = server_common::result::Result<CmdResult, DataError>> + Send + 'static,
+        GetCmd: FnOnce(WriteCmds) -> Cmd + Send + 'static,
+    >(
+        &self,
+        cmd: GetCmd,
+    ) -> server_common::result::Result<CmdResult, DataError> {
+        self.write_queue.write(cmd).await
+    }
 
-#[async_trait::async_trait]
-impl ReadDynamicConfig for S {
-    async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
-        let config =
-            tokio::task::spawn_blocking(ConfigFileDynamic::load_from_current_dir)
-                .await
-                .change_context(ConfigFileError::LoadConfig)??;
-
-        Ok(config.backend_config)
+    async fn write_concurrent<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
+        GetCmd: FnOnce(ConcurrentWriteSelectorHandle) -> Cmd + Send + 'static,
+    >(
+        &self,
+        account: AccountId,
+        cmd: GetCmd,
+    ) -> server_common::result::Result<CmdResult, DataError> {
+        self
+            .write_queue
+            .concurrent_write(account, cmd)
+            .await
     }
 }
 
-pub trait BackendVersionProvider {
-    fn backend_version(&self) -> BackendVersion;
-}
-
-impl BackendVersionProvider for S {
-    fn backend_version(&self) -> BackendVersion {
-        BackendVersion {
-            backend_code_version: self
-                .simple_backend_config()
-                .backend_code_version()
-                .to_string(),
-            backend_version: self
-                .simple_backend_config()
-                .backend_semver_version()
-                .to_string(),
-            protocol_version: "1.0.0".to_string(),
-        }
+impl ReadData for S {
+    fn read(&self) -> ReadCommands<'_> {
+        self.database.read()
     }
 }
 
-pub trait EventManagerProvider {
-    fn event_manager(&self) -> EventManagerWithCacheReference;
-}
+// Server API
 
-impl EventManagerProvider for S {
-    fn event_manager(&self) -> EventManagerWithCacheReference {
-        EventManagerWithCacheReference::new(
-            self.business_logic_state().database.cache(),
-            &self.business_logic_state().push_notification_sender,
-        )
+impl StateBase for AppState {}
+
+impl GetInternalApi for S {
+    fn internal_api_client(&self) -> &InternalApiClient {
+        &self.internal_api
     }
 }
 
-pub trait ContentProcessingProvider {
-    fn content_processing(&self) -> &ContentProcessingManagerData;
+impl GetAccessTokens for S {
+    async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
+        self.database.access_token_manager().access_token_exists(token).await
+    }
+
+    async fn access_token_and_connection_exists(
+        &self,
+        token: &AccessToken,
+        connection: SocketAddr,
+    ) -> Option<(AccountIdInternal, Capabilities, AccountState)> {
+        self.database.access_token_manager().access_token_and_connection_exists(token, connection).await
+    }
 }
 
 impl ContentProcessingProvider for S {
     fn content_processing(&self) -> &ContentProcessingManagerData {
-        &self.business_logic_state().content_processing
+        &self.content_processing
     }
-}
-
-pub trait DemoModeManagerProvider {
-    fn demo_mode(&self) -> &DemoModeManager;
 }
 
 impl DemoModeManagerProvider for S {
     fn demo_mode(&self) -> &DemoModeManager {
-        &self.business_logic_state().demo_mode
+        &self.demo_mode
     }
 }
 
-// pub trait FileAccessProvider {
-//     fn file_access(&self) -> &FileDir;
-// }
+// Simple backend
 
-// impl FileAccessProvider for S {
-//     fn file_access(&self) -> &FileDir {
-//         &self.business_logic_state().
-//     }
-// }
+impl SignInWith for S {
+    fn sign_in_with_manager(&self) -> &SignInWithManager {
+        &self.simple_backend_state.sign_in_with
+    }
+}
+
+impl GetManagerApi for S {
+    fn manager_api(&self) -> ManagerApiManager {
+        ManagerApiManager::new(&self.simple_backend_state.manager_api)
+    }
+}
+
+impl GetSimpleBackendConfig for S {
+    fn simple_backend_config(&self) -> &SimpleBackendConfig {
+        &self.simple_backend_state.config
+    }
+}
+
+impl GetTileMap for S {
+    fn tile_map(&self) -> &TileMapManager {
+        &self.simple_backend_state.tile_map
+    }
+}
+
+impl PerfCounterDataProvider for S {
+    fn perf_counter_data(&self) -> &PerfCounterManagerData {
+        &self.simple_backend_state.perf_data
+    }
+}
 
 pub struct App {
     state: S,
@@ -271,6 +293,7 @@ impl App {
         content_processing: Arc<ContentProcessingManagerData>,
         demo_mode: DemoModeManager,
         push_notification_sender: PushNotificationSender,
+        simple_backend_state: SimpleBackendAppState,
     ) -> AppState {
         let database = Arc::new(database_handle);
         let state = AppState {
@@ -281,6 +304,7 @@ impl App {
             content_processing,
             demo_mode,
             push_notification_sender,
+            simple_backend_state
         };
 
         state
@@ -300,22 +324,22 @@ impl App {
     pub fn create_common_server_router(&mut self) -> Router {
         let public = Router::new()
             .route(
-                api::common::PATH_CONNECT, // This route checks the access token by itself.
+                server_api::common::PATH_CONNECT, // This route checks the access token by itself.
                 get({
                     let ws_manager = self
                         .web_socket_manager
                         .take()
                         .expect("This should be called only once");
                     move |state, param1, param2, param3| {
-                        api::common::get_connect_websocket::<S>(
+                        server_api::common::get_connect_websocket::<S>(
                             state, param1, param2, param3, ws_manager,
                         )
                     }
                 }),
             )
             .route(
-                api::common::PATH_GET_VERSION,
-                get(api::common::get_version::<S>),
+                server_api::common::PATH_GET_VERSION,
+                get(server_api::common::get_version::<S>),
             )
             .with_state(self.state());
 
@@ -325,8 +349,8 @@ impl App {
     pub fn create_account_server_router(&self) -> Router {
         let public = Router::new()
             .route(
-                api::account::PATH_SIGN_IN_WITH_LOGIN,
-                post(api::account::post_sign_in_with_login::<S>),
+                server_api::account::PATH_SIGN_IN_WITH_LOGIN,
+                post(server_api::account::post_sign_in_with_login::<S>),
             )
             .with_state(self.state());
 
@@ -353,7 +377,7 @@ impl App {
 
     pub fn create_chat_server_router(&self) -> Router {
         let public = Router::new().merge(
-            api::chat::push_notifications::push_notification_router_public(self.state.clone()),
+            server_api::chat::push_notifications::push_notification_router_public(self.state.clone()),
         );
 
         public.merge(ConnectedApp::new(self.state.clone()).private_chat_server_router())

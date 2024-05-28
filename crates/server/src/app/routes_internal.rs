@@ -3,15 +3,16 @@
 use axum::{routing::post, Router};
 use simple_backend::app::SimpleBackendAppState;
 
+use server_api as api;
+
 use crate::{
-    api::{self},
     app::AppState,
 };
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
 
-type S = SimpleBackendAppState<AppState>;
+type S = AppState;
 
 /// Internal route handlers for server to server communication.
 pub struct InternalApp;
@@ -21,7 +22,6 @@ impl InternalApp {
         let mut router = Router::new();
 
         if state
-            .business_logic_state()
             .config
             .internal_api_config()
             .bot_login
@@ -48,7 +48,6 @@ impl InternalApp {
         let mut router = Router::new();
 
         if state
-            .business_logic_state()
             .config
             .internal_api_config()
             .microservice

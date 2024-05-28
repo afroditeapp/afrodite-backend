@@ -1,8 +1,8 @@
 use crate::{
     app::{GetConfig, WriteData, S},
-    data::DataError,
-    result::Result,
 };
+use server_common::data::DataError;
+use server_common::result::Result;
 pub struct StartupTasks {
     state: S,
 }

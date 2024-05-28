@@ -47,6 +47,10 @@ database = { path = "../database" }
 model = { path = "../model" }
 api_internal = { path = "../api_internal" }
 
+server_common = { path = "../server_common" }
+server_api = { path = "../server_api" }
+server_data = { path = "../server_data" }
+
 simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_config = { path = "../simple_backend_config" }
