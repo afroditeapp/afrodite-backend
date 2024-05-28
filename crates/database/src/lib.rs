@@ -13,9 +13,17 @@ use error_stack::{Context, Result, ResultExt};
 pub use model::schema;
 use model::IsLoggingAllowed;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
-use simple_backend_database::{diesel_db::DieselDatabaseError, DbReadHandle, DbWriteHandle};
+use simple_backend_database::{DbReadHandle, DbWriteHandle};
 
 pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
+pub use simple_backend_database::{
+    DatabaseHandleCreator,
+    DbReadCloseHandle,
+    DbWriteCloseHandle,
+    diesel_db::{DieselDatabaseError, DieselConnection},
+    PoolObject,
+};
 
 /// Write handle for current database.
 #[derive(Clone, Debug)]

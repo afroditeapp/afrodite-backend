@@ -3,7 +3,7 @@ mod push_notifications;
 use database::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
 use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, SyncVersionUtils};
-use simple_backend_database::diesel_db::DieselDatabaseError;
+use database::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
 use self::push_notifications::WriteCommandsChatPushNotifications;

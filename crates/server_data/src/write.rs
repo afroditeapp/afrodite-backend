@@ -7,9 +7,7 @@ use database::{
     current::{
         read::CurrentSyncReadCommands,
         write::{CurrentSyncWriteCommands, TransactionConnection},
-    },
-    history::write::HistorySyncWriteCommands,
-    CurrentWriteHandle, HistoryWriteHandle, TransactionError,
+    }, history::write::HistorySyncWriteCommands, CurrentWriteHandle, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
 };
 use model::{
     Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile,
@@ -17,10 +15,6 @@ use model::{
 };
 use server_common::push_notifications::PushNotificationSender;
 use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_database::{
-    diesel_db::{DieselConnection, DieselDatabaseError},
-    PoolObject,
-};
 use simple_backend_utils::IntoReportFromString;
 
 use self::{
@@ -99,18 +93,18 @@ macro_rules! define_write_commands {
             pub async fn db_write<
                 T: FnOnce(
                         database::current::write::CurrentSyncWriteCommands<
-                            &mut simple_backend_database::diesel_db::DieselConnection,
+                            &mut database::DieselConnection,
                         >,
                     ) -> error_stack::Result<
                         R,
-                        simple_backend_database::diesel_db::DieselDatabaseError,
+                        database::DieselDatabaseError,
                     > + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
                 self.cmds.db_write(cmd).await
             }
@@ -118,18 +112,18 @@ macro_rules! define_write_commands {
             pub async fn db_transaction<
                 T: FnOnce(
                         database::current::write::CurrentSyncWriteCommands<
-                            &mut simple_backend_database::diesel_db::DieselConnection,
+                            &mut database::DieselConnection,
                         >,
                     ) -> error_stack::Result<
                         R,
-                        simple_backend_database::diesel_db::DieselDatabaseError,
+                        database::DieselDatabaseError,
                     > + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
                 self.cmds.db_transaction(cmd).await
             }
@@ -137,18 +131,18 @@ macro_rules! define_write_commands {
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<
-                            &mut simple_backend_database::diesel_db::DieselConnection,
+                            &mut database::DieselConnection,
                         >,
                     ) -> error_stack::Result<
                         R,
-                        simple_backend_database::diesel_db::DieselDatabaseError,
+                        database::DieselDatabaseError,
                     > + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
                 self.cmds.db_read(cmd).await
             }
@@ -403,7 +397,7 @@ impl<'a> WriteCommands<'a> {
     pub async fn db_transaction<
         T: FnOnce(
                 database::current::write::CurrentSyncWriteCommands<
-                    &mut simple_backend_database::diesel_db::DieselConnection,
+                    &mut database::DieselConnection,
                 >,
             ) -> error_stack::Result<R, DieselDatabaseError>
             + Send

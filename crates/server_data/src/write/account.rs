@@ -3,7 +3,7 @@ use model::{
     AccountState, Capabilities, DemoModeId, EmailAddress, ProfileVisibility,
 };
 use server_common::data::IntoDataError;
-use simple_backend_database::diesel_db::DieselDatabaseError;
+use database::DieselDatabaseError;
 
 use super::db_transaction;
 use crate::{cache::CacheError, result::Result, DataError};

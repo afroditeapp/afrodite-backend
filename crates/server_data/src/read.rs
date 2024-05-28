@@ -1,11 +1,10 @@
-use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
+use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle, DieselConnection, DieselDatabaseError};
 use error_stack::ResultExt;
 use model::{
     AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest,
     ModerationRequestState,
 };
 use server_common::data::DataError;
-use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
 use simple_backend_utils::IntoReportFromString;
 use tokio_util::io::ReaderStream;
 
@@ -42,18 +41,18 @@ macro_rules! define_read_commands {
             pub async fn db_read<
                 T: FnOnce(
                         database::current::read::CurrentSyncReadCommands<
-                            &mut simple_backend_database::diesel_db::DieselConnection,
+                            &mut database::DieselConnection,
                         >,
                     ) -> error_stack::Result<
                         R,
-                        simple_backend_database::diesel_db::DieselDatabaseError,
+                        database::DieselDatabaseError,
                     > + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, simple_backend_database::diesel_db::DieselDatabaseError>
+            ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
                 self.cmds.db_read(cmd).await
             }

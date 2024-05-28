@@ -8,7 +8,7 @@
 use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
-use database::{CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle};
+use database::{CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle, HistoryReadHandle, HistoryWriteHandle};
 use event::EventManagerWithCacheReference;
 use model::{AccountId, AccountIdInternal, EmailAddress, SignInWithInfo};
 pub use server_common::{
@@ -17,7 +17,6 @@ pub use server_common::{
 };
 use server_common::{push_notifications::PushNotificationSender, result::Result};
 use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
 use tracing::info;
 
 use self::{

@@ -2,7 +2,7 @@ use model::{
     AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState,
     NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent,
 };
-use simple_backend_database::diesel_db::DieselDatabaseError;
+use database::DieselDatabaseError;
 
 use super::db_transaction;
 use crate::{
