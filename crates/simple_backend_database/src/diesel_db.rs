@@ -79,6 +79,9 @@ pub enum DieselDatabaseError {
 
     #[error("Diesel error")]
     DieselError,
+
+    #[error("Transaction error")]
+    FromStdErrorToTransactionError,
 }
 
 pub struct DieselWriteCloseHandle {

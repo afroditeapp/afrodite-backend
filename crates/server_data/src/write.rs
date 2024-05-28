@@ -292,7 +292,7 @@ impl<'a> WriteCommands<'a> {
         email: Option<EmailAddress>,
         transaction: TransactionConnection<'_>,
         history_conn: PoolObject,
-    ) -> std::result::Result<AccountIdInternal, TransactionError<DieselDatabaseError>> {
+    ) -> std::result::Result<AccountIdInternal, TransactionError> {
         let account = Account::default();
         let account_setup = AccountSetup::default();
 
@@ -450,7 +450,7 @@ impl<'a> WriteCommands<'a> {
         T: FnOnce(
                 TransactionConnection<'_>,
                 PoolObject,
-            ) -> std::result::Result<R, TransactionError<DieselDatabaseError>>
+            ) -> std::result::Result<R, TransactionError>
             + Send
             + 'static,
     {

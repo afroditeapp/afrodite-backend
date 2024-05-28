@@ -111,7 +111,7 @@ impl HistorySyncWriteCommands<&mut DieselConnection> {
     pub fn transaction<
         F: FnOnce(
                 &mut DieselConnection,
-            ) -> std::result::Result<T, TransactionError<DieselDatabaseError>>
+            ) -> std::result::Result<T, TransactionError>
             + 'static,
         T,
     >(
@@ -119,6 +119,7 @@ impl HistorySyncWriteCommands<&mut DieselConnection> {
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        Ok(self.conn.transaction(transaction_actions)?)
+        self.conn.transaction(transaction_actions)
+            .map_err(|e| e.into_report())
     }
 }

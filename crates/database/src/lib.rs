@@ -150,25 +150,25 @@ impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
 
 // Workaround because it is not possible to implement From<diesel::result::Error>
 // to error_stack::Report from here.
-pub struct TransactionError<E>(error_stack::Report<E>);
+pub struct TransactionError(error_stack::Report<DieselDatabaseError>);
 
-impl<E> From<error_stack::Report<E>> for TransactionError<E> {
-    fn from(value: error_stack::Report<E>) -> Self {
-        Self(value)
+impl TransactionError {
+    pub fn into_report(self) -> error_stack::Report<DieselDatabaseError> {
+        self.0
     }
 }
 
-impl From<::diesel::result::Error> for TransactionError<DieselDatabaseError> {
+impl <E: std::error::Error> From<error_stack::Report<E>> for TransactionError {
+    fn from(value: error_stack::Report<E>) -> Self {
+        Self(value.change_context(DieselDatabaseError::FromStdErrorToTransactionError))
+    }
+}
+
+impl From<::diesel::result::Error> for TransactionError {
     fn from(value: ::diesel::result::Error) -> Self {
         TransactionError(
             error_stack::report!(value)
                 .change_context(DieselDatabaseError::FromDieselErrorToTransactionError),
         )
-    }
-}
-
-impl<E> From<TransactionError<E>> for error_stack::Report<E> {
-    fn from(value: TransactionError<E>) -> Self {
-        value.0
     }
 }
