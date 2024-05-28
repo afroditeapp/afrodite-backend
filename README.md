@@ -4,14 +4,8 @@ Dating app backend
 
 ## Running
 
-Initial build needs the database.
 ```
-mkdir -p database/current
-sqlx database setup
-```
-
-```
-RUST_LOG=debug cargo run
+make run
 ```
 
 Add `debug = true` to config file and restart server.
@@ -22,7 +16,6 @@ Add `debug = true` to config file and restart server.
 
 ```
 sudo apt install libssl-dev
-cargo install sqlx-cli
 cargo install diesel_cli --no-default-features --features sqlite
 ```
 
@@ -34,7 +27,6 @@ brew install openssl@1.1
 ```
 
 ```
-cargo install sqlx-cli
 cargo install diesel_cli --no-default-features --features sqlite
 ```
 
@@ -54,7 +46,7 @@ openapi-generator-cli generate -i http://localhost:3000/api-doc/pihka_api.json -
 ## Reset database
 
 ```
-sqlx database drop && sqlx database create && sqlx migrate run
+make reset-database
 ```
 
 ## Manual database modifications

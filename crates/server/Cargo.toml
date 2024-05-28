@@ -14,7 +14,7 @@ serde_json = { workspace = true }
 
 futures = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true, features = ["sync"] }
+tokio-stream = { workspace = true, features = ["sync", "fs"] }
 tokio-util = { workspace = true, features = ["io"]}
 hyper = { workspace = true, features = ["full"] }
 axum = { workspace = true, features = ["ws", "macros"] }

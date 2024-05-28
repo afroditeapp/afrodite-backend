@@ -497,51 +497,6 @@ impl ContentId {
     }
 }
 
-impl sqlx::Type<sqlx::Sqlite> for ContentId {
-    fn type_info() -> <sqlx::Sqlite as sqlx::Database>::TypeInfo {
-        <Uuid as sqlx::Type<sqlx::Sqlite>>::type_info()
-    }
-
-    fn compatible(ty: &<sqlx::Sqlite as sqlx::Database>::TypeInfo) -> bool {
-        <Uuid as sqlx::Type<sqlx::Sqlite>>::compatible(ty)
-    }
-}
-
-impl<'a> sqlx::Encode<'a, sqlx::Sqlite> for ContentId {
-    fn encode_by_ref<'q>(
-        &self,
-        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
-        self.content_id.encode_by_ref(buf)
-    }
-
-    fn encode<'q>(
-        self,
-        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
-    ) -> sqlx::encode::IsNull
-    where
-        Self: Sized,
-    {
-        self.content_id.encode_by_ref(buf)
-    }
-
-    fn produces(&self) -> Option<<sqlx::Sqlite as sqlx::Database>::TypeInfo> {
-        <Uuid as sqlx::Encode<'a, sqlx::Sqlite>>::produces(&self.content_id)
-    }
-
-    fn size_hint(&self) -> usize {
-        self.content_id.size_hint()
-    }
-}
-
-impl sqlx::Decode<'_, sqlx::Sqlite> for ContentId {
-    fn decode(
-        value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef,
-    ) -> Result<Self, sqlx::error::BoxDynError> {
-        <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value).map(|id| ContentId::new(id))
-    }
-}
-
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::media_content)]
 #[diesel(check_for_backend(crate::Db))]
@@ -877,7 +832,6 @@ pub struct AccountContent {
     Deserialize,
     Clone,
     Copy,
-    sqlx::Type,
     PartialEq,
     Eq,
     Hash,
@@ -887,7 +841,6 @@ pub struct AccountContent {
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
-#[sqlx(transparent)]
 pub struct ModerationRequestIdDb(pub i64);
 
 impl ModerationRequestIdDb {
@@ -908,7 +861,6 @@ diesel_i64_wrapper!(ModerationRequestIdDb);
     Deserialize,
     Clone,
     Copy,
-    sqlx::Type,
     PartialEq,
     Eq,
     Hash,
@@ -917,7 +869,6 @@ diesel_i64_wrapper!(ModerationRequestIdDb);
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
-#[sqlx(transparent)]
 pub struct ModerationQueueNumber(pub i64);
 
 impl ModerationQueueNumber {
@@ -938,7 +889,6 @@ diesel_i64_wrapper!(ModerationQueueNumber);
     Deserialize,
     Clone,
     Copy,
-    sqlx::Type,
     PartialEq,
     Eq,
     Hash,
@@ -947,7 +897,6 @@ diesel_i64_wrapper!(ModerationQueueNumber);
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
-#[sqlx(transparent)]
 pub struct ContentIdDb(pub i64);
 
 impl ContentIdDb {

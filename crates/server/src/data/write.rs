@@ -8,7 +8,7 @@ use database::{
         read::CurrentSyncReadCommands,
         write::{CurrentSyncWriteCommands, TransactionConnection},
     },
-    history::write::{HistorySyncWriteCommands, HistoryWriteCommands},
+    history::write::HistorySyncWriteCommands,
     CurrentWriteHandle, HistoryWriteHandle, TransactionError,
 };
 use model::{
@@ -92,16 +92,6 @@ macro_rules! define_write_commands {
             #[allow(dead_code)]
             fn media_backup(&self) -> &simple_backend::media_backup::MediaBackupHandle {
                 &self.cmds.media_backup
-            }
-
-            #[allow(dead_code)]
-            fn current(&self) -> database::current::write::CurrentWriteCommands {
-                database::current::write::CurrentWriteCommands::new(self.current_write())
-            }
-
-            #[allow(dead_code)]
-            fn history(&self) -> $crate::data::write::HistoryWriteCommands {
-                $crate::data::write::HistoryWriteCommands::new(&self.history_write())
             }
 
             pub async fn db_write<

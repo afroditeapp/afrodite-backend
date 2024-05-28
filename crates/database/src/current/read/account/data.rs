@@ -4,40 +4,26 @@ use futures::Stream;
 use model::{
     AccountData, AccountGlobalState, AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
 };
-use simple_backend_database::{
-    diesel_db::{ConnectionProvider, DieselDatabaseError},
-    sqlx_db::SqliteDatabaseError,
-};
+use simple_backend_database::
+    diesel_db::{ConnectionProvider, DieselDatabaseError};
 use tokio_stream::StreamExt;
 
 use crate::{IntoDatabaseError, IntoDatabaseErrorExt};
 
 define_read_commands!(CurrentReadAccountData, CurrentSyncReadAccountData);
 
-impl CurrentReadAccountData<'_> {
-    pub fn account_ids_stream(
-        &self,
-    ) -> impl Stream<Item = Result<AccountIdInternal, SqliteDatabaseError>> + '_ {
-        sqlx::query!(
-            r#"
-            SELECT id, uuid as "account_id: uuid::Uuid"
-            FROM account_id
-            "#,
-        )
-        .fetch(self.pool())
-        .map(|result| {
-            result
-                .map(|data| {
-                    let id = AccountIdDb::new(data.id);
-                    let account_id = AccountId::new(data.account_id);
-                    AccountIdInternal::new(id, account_id)
-                })
-                .into_db_error_with_new_context(SqliteDatabaseError::Fetch, ())
-        })
-    }
-}
-
 impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
+    pub fn account_ids_internal(
+        &mut self,
+    ) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
+        use crate::schema::account_id::dsl::*;
+
+        account_id
+            .select(AccountIdInternal::as_select())
+            .load(self.conn())
+            .into_db_error(())
+    }
+
     pub fn account_ids(
         &mut self,
     ) -> Result<Vec<AccountId>, DieselDatabaseError> {
@@ -48,7 +34,6 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
             .load(self.conn())
             .into_db_error(())
     }
-
 
     pub fn account_setup(
         &mut self,

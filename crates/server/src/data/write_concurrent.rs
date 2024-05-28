@@ -5,7 +5,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 
 use axum::body::BodyDataStream;
 use config::Config;
-use database::{history::write::HistoryWriteCommands, CurrentWriteHandle, HistoryWriteHandle};
+use database::{CurrentWriteHandle, HistoryWriteHandle};
 use futures::Future;
 use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
@@ -337,9 +337,5 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .await
             .into_data_error(id)?;
         Ok(())
-    }
-
-    fn history(&self) -> HistoryWriteCommands {
-        self.history_write_handle.sqlx_cmds()
     }
 }

@@ -291,7 +291,6 @@ pub struct PendingMessageDeleteList {
     ToSchema,
     PartialEq,
     Default,
-    sqlx::Type,
     FromSqlRow,
     AsExpression,
 )]

@@ -26,11 +26,6 @@ macro_rules! define_read_commands {
             }
 
             #[allow(dead_code)]
-            fn db(&self) -> database::current::read::CurrentReadCommands<'_> {
-                self.cmds.db.sqlx_cmds()
-            }
-
-            #[allow(dead_code)]
             fn cache(&self) -> &crate::data::DatabaseCache {
                 &self.cmds.cache
             }
@@ -185,6 +180,32 @@ impl<'a> ReadCommands<'a> {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn db_read<
+        T: FnOnce(
+                CurrentSyncReadCommands<&mut DieselConnection>,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReader {
+            db: self.db,
+        }.db_read(cmd).await
+    }
+}
+
+pub struct DbReader<'a> {
+    db: &'a CurrentReadHandle,
+}
+
+impl <'a> DbReader<'a> {
+    pub fn new(db: &'a CurrentReadHandle) -> Self {
+        Self { db }
     }
 
     pub async fn db_read<

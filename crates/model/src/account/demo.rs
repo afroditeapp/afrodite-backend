@@ -116,7 +116,6 @@ pub struct DemoModeLoginToAccount {
     IntoParams,
     PartialEq,
     Default,
-    sqlx::Type,
     FromSqlRow,
     AsExpression,
 )]

@@ -18,7 +18,7 @@ toml = { workspace = true }
 
 futures = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true, features = ["sync"] }
+tokio-stream = { workspace = true, features = ["sync", "fs"] }
 hyper = { workspace = true, features = ["full"] }
 headers = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }

@@ -12,7 +12,6 @@ serde_json = { workspace = true }
 toml = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
-sqlx = { workspace = true, features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
 diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 
 nalgebra = { workspace = true }

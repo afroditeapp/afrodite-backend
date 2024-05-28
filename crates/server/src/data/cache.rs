@@ -18,7 +18,7 @@ use super::{
     },
     WithInfo,
 };
-use crate::{data::index::LocationIndexWriteHandle, event::EventMode};
+use crate::{data::{index::LocationIndexWriteHandle, read::DbReader}, event::EventMode};
 
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
@@ -74,8 +74,6 @@ impl DatabaseCache {
         location_index: &LocationIndexManager,
         config: &Config,
     ) -> Result<Self, CacheError> {
-        let read = current_db.sqlx_cmds();
-
         let cache = Self {
             access_tokens: RwLock::new(HashMap::new()),
             accounts: RwLock::new(HashMap::new()),
@@ -84,12 +82,14 @@ impl DatabaseCache {
         // Load data from database to memory.
         info!("Starting to load data from database to memory");
 
-        let account = read.account();
-        let data = account.data();
-        let mut accounts = data.account_ids_stream();
-        while let Some(r) = accounts.next().await {
-            let id = r.change_context(CacheError::Init)?;
-            // Diesel connection used here so no deadlock
+        let db_reader = DbReader::new(current_db);
+        let accounts = db_reader.db_read(move |mut cmd| {
+            cmd.account().data().account_ids_internal()
+        })
+            .await
+            .change_context(CacheError::Init)?;
+
+        for id in accounts {
             cache
                 .load_account_from_db(
                     id,

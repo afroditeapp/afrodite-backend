@@ -1,38 +1,21 @@
-use simple_backend_database::{
-    diesel_db::{ConnectionProvider, DieselConnection},
-    sqlx_db::SqlxReadHandle,
-};
+use simple_backend_database::
+    diesel_db::{ConnectionProvider, DieselConnection};
 
 use self::{
-    account::{CurrentReadAccount, CurrentSyncReadAccount},
+    account::CurrentSyncReadAccount,
     account_admin::CurrentSyncReadAccountAdmin,
-    chat::{CurrentReadChat, CurrentSyncReadChat},
+    chat::CurrentSyncReadChat,
     chat_admin::CurrentSyncReadChatAdmin,
     common::CurrentSyncReadCommon,
-    media::{CurrentReadMedia, CurrentSyncReadMedia},
+    media::CurrentSyncReadMedia,
     media_admin::CurrentSyncReadMediaAdmin,
-    profile::{CurrentReadProfile, CurrentSyncReadProfile},
+    profile::CurrentSyncReadProfile,
     profile_admin::CurrentSyncReadProfileAdmin,
 };
-use crate::CurrentReadHandle;
 
 macro_rules! define_read_commands {
     ($struct_name:ident, $sync_name:ident) => {
-        pub struct $struct_name<'a> {
-            cmds: &'a crate::current::read::CurrentReadCommands<'a>,
-        }
-
-        impl<'a> $struct_name<'a> {
-            #[allow(dead_code)]
-            pub fn new(cmds: &'a crate::current::read::CurrentReadCommands<'a>) -> Self {
-                Self { cmds }
-            }
-
-            #[allow(dead_code)]
-            pub fn pool(&self) -> &'a sqlx::SqlitePool {
-                self.cmds.handle.pool()
-            }
-        }
+        // TODO: Remove struct_name
 
         pub struct $sync_name<C: simple_backend_database::diesel_db::ConnectionProvider> {
             cmds: C,
@@ -68,38 +51,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
-pub struct CurrentReadCommands<'a> {
-    pub handle: &'a SqlxReadHandle,
-}
-
-impl<'a> CurrentReadCommands<'a> {
-    pub fn new(handle: &'a CurrentReadHandle) -> Self {
-        Self {
-            handle: handle.0.sqlx(),
-        }
-    }
-
-    pub fn account(&self) -> CurrentReadAccount<'_> {
-        CurrentReadAccount::new(self)
-    }
-
-    pub fn media(&self) -> CurrentReadMedia<'_> {
-        CurrentReadMedia::new(self)
-    }
-
-    pub fn profile(&self) -> CurrentReadProfile<'_> {
-        CurrentReadProfile::new(self)
-    }
-
-    pub fn chat(&self) -> CurrentReadChat<'_> {
-        CurrentReadChat::new(self)
-    }
-
-    pub fn pool(&self) -> &'a sqlx::SqlitePool {
-        self.handle.pool()
-    }
-}
 
 pub struct CurrentSyncReadCommands<C: ConnectionProvider> {
     conn: C,

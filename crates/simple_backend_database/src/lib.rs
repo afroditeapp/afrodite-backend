@@ -5,7 +5,6 @@
 
 pub mod data;
 pub mod diesel_db;
-pub mod sqlx_db;
 
 use std::fmt::Debug;
 
@@ -17,7 +16,6 @@ use diesel_migrations::EmbeddedMigrations;
 use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
-use sqlx_db::{SqlxReadCloseHandle, SqlxReadHandle, SqlxWriteCloseHandle, SqlxWriteHandle};
 
 pub type PoolObject = deadpool_diesel::sqlite::Connection;
 
@@ -25,8 +23,6 @@ pub type PoolObject = deadpool_diesel::sqlite::Connection;
 pub enum DataError {
     #[error("Diesel error")]
     Diesel,
-    #[error("Sqlx error")]
-    Sqlx,
     #[error("Matching database not found from config")]
     MatchingDatabaseNotFoundFromConfig,
     #[error("File path creation failed")]
@@ -35,43 +31,31 @@ pub enum DataError {
 
 #[derive(Clone, Debug)]
 pub struct DbReadHandle {
-    sqlx_read: SqlxReadHandle,
     diesel_read: DieselReadHandle,
 }
 
 impl DbReadHandle {
-    pub fn sqlx(&self) -> &SqlxReadHandle {
-        &self.sqlx_read
-    }
-
     pub fn diesel(&self) -> &DieselReadHandle {
         &self.diesel_read
     }
 }
 
 pub struct DbReadCloseHandle {
-    sqlx_read_close: SqlxReadCloseHandle,
     diesel_read_close: DieselReadCloseHandle,
 }
 
 #[derive(Clone, Debug)]
 pub struct DbWriteHandle {
-    sqlx_write: SqlxWriteHandle,
     diesel_write: DieselWriteHandle,
 }
 
 impl DbWriteHandle {
-    pub fn sqlx(&self) -> &SqlxWriteHandle {
-        &self.sqlx_write
-    }
-
     pub fn diesel(&self) -> &DieselWriteHandle {
         &self.diesel_write
     }
 
     pub fn to_read_handle(&self) -> DbReadHandle {
         DbReadHandle {
-            sqlx_read: self.sqlx_write.to_read_handle(),
             diesel_read: self.diesel_write.to_read_handle(),
         }
     }
@@ -80,20 +64,17 @@ impl DbWriteHandle {
 impl DbReadCloseHandle {
     /// Call this before closing the server.
     pub async fn close(self) {
-        self.sqlx_read_close.close().await;
         self.diesel_read_close.close().await
     }
 }
 
 pub struct DbWriteCloseHandle {
-    sqlx_write_close: SqlxWriteCloseHandle,
     diesel_write_close: DieselWriteCloseHandle,
 }
 
 impl DbWriteCloseHandle {
     /// Call this before closing the server.
     pub async fn close(self) {
-        self.sqlx_write_close.close().await;
         self.diesel_write_close.close().await
     }
 }
@@ -126,16 +107,10 @@ impl DatabaseHandleCreator {
                 .await
                 .change_context(DataError::Diesel)?;
 
-        let (sqlx_read, sqlx_read_close) = SqlxReadHandle::new(&config, &info, db_file_path)
-            .await
-            .change_context(DataError::Sqlx)?;
-
         let read = DbReadHandle {
-            sqlx_read,
             diesel_read,
         };
         let close = DbReadCloseHandle {
-            sqlx_read_close,
             diesel_read_close,
         };
 
@@ -168,16 +143,10 @@ impl DatabaseHandleCreator {
                 .await
                 .change_context(DataError::Diesel)?;
 
-        let (sqlx_write, sqlx_write_close) = SqlxWriteHandle::new(&config, &info, db_file_path)
-            .await
-            .change_context(DataError::Sqlx)?;
-
         let write = DbWriteHandle {
-            sqlx_write,
             diesel_write,
         };
         let close = DbWriteCloseHandle {
-            sqlx_write_close,
             diesel_write_close,
         };
 

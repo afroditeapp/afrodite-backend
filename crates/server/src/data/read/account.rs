@@ -65,21 +65,6 @@ impl ReadCommandsAccount<'_> {
             .into_error()
     }
 
-    pub async fn account_ids<T: FnMut(AccountIdInternal)>(
-        &self,
-        mut handler: T,
-    ) -> Result<(), DataError> {
-        let db = self.db();
-        let account = db.account();
-        let data = account.data();
-        let mut users = data.account_ids_stream();
-        while let Some(user_id) = users.try_next().await? {
-            handler(user_id)
-        }
-
-        Ok(())
-    }
-
     pub async fn account_ids_vec(
         &self,
     ) -> Result<Vec<AccountId>, DataError> {

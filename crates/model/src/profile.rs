@@ -1017,52 +1017,6 @@ impl ProfileVersion {
     }
 }
 
-impl sqlx::Type<sqlx::Sqlite> for ProfileVersion {
-    fn type_info() -> <sqlx::Sqlite as sqlx::Database>::TypeInfo {
-        <Uuid as sqlx::Type<sqlx::Sqlite>>::type_info()
-    }
-
-    fn compatible(ty: &<sqlx::Sqlite as sqlx::Database>::TypeInfo) -> bool {
-        <Uuid as sqlx::Type<sqlx::Sqlite>>::compatible(ty)
-    }
-}
-
-impl<'a> sqlx::Encode<'a, sqlx::Sqlite> for ProfileVersion {
-    fn encode_by_ref<'q>(
-        &self,
-        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
-        self.version.encode_by_ref(buf)
-    }
-
-    fn encode<'q>(
-        self,
-        buf: &mut <sqlx::Sqlite as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
-    ) -> sqlx::encode::IsNull
-    where
-        Self: Sized,
-    {
-        self.version.encode_by_ref(buf)
-    }
-
-    fn produces(&self) -> Option<<sqlx::Sqlite as sqlx::Database>::TypeInfo> {
-        <Uuid as sqlx::Encode<'a, sqlx::Sqlite>>::produces(&self.version)
-    }
-
-    fn size_hint(&self) -> usize {
-        self.version.size_hint()
-    }
-}
-
-impl sqlx::Decode<'_, sqlx::Sqlite> for ProfileVersion {
-    fn decode(
-        value: <sqlx::Sqlite as sqlx::database::HasValueRef<'_>>::ValueRef,
-    ) -> Result<Self, sqlx::error::BoxDynError> {
-        <Uuid as sqlx::Decode<'_, sqlx::Sqlite>>::decode(value)
-            .map(|id| ProfileVersion { version: id })
-    }
-}
-
 diesel_uuid_wrapper!(ProfileVersion);
 
 // impl<DB: Backend> FromSql<Binary, DB> for ProfileVersion

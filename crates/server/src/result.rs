@@ -102,17 +102,6 @@ impl From<Report<simple_backend_database::DataError>> for WrappedReport<Report<D
     }
 }
 
-impl From<Report<simple_backend_database::sqlx_db::SqliteDatabaseError>>
-    for WrappedReport<Report<DataError>>
-{
-    #[track_caller]
-    fn from(error: Report<simple_backend_database::sqlx_db::SqliteDatabaseError>) -> Self {
-        Self {
-            report: error.change_context(DataError::Sqlite),
-        }
-    }
-}
-
 impl From<std::io::Error> for WrappedReport<Report<DataError>> {
     #[track_caller]
     fn from(error: std::io::Error) -> Self {

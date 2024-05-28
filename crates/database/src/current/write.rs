@@ -1,36 +1,20 @@
 use simple_backend_database::{
     diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError},
-    sqlx_db::SqlxWriteHandle,
 };
-use sqlx::SqlitePool;
 
 use self::{
-    account::{CurrentSyncWriteAccount, CurrentWriteAccount},
-    chat::{CurrentSyncWriteChat, CurrentWriteChat},
+    account::CurrentSyncWriteAccount,
+    chat::CurrentSyncWriteChat,
     common::CurrentSyncWriteCommon,
-    media::{CurrentSyncWriteMedia, CurrentWriteMedia},
-    media_admin::{CurrentSyncWriteMediaAdmin, CurrentWriteMediaAdmin},
-    profile::{CurrentSyncWriteProfile, CurrentWriteProfile},
+    media::CurrentSyncWriteMedia,
+    media_admin::CurrentSyncWriteMediaAdmin,
+    profile::CurrentSyncWriteProfile,
 };
 use crate::{CurrentWriteHandle, TransactionError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
-        pub struct $struct_name<'a> {
-            cmds: &'a crate::current::write::CurrentWriteCommands<'a>,
-        }
-
-        impl<'a> $struct_name<'a> {
-            #[allow(dead_code)]
-            pub fn new(cmds: &'a crate::current::write::CurrentWriteCommands<'a>) -> Self {
-                Self { cmds }
-            }
-
-            #[allow(dead_code)]
-            pub fn pool(&self) -> &'a sqlx::SqlitePool {
-                self.cmds.handle.pool()
-            }
-        }
+        // TODO: Remove struct_name
 
         pub struct $sync_name<C: simple_backend_database::diesel_db::ConnectionProvider> {
             cmds: C,
@@ -85,43 +69,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
-#[derive(Clone, Debug)]
-pub struct CurrentWriteCommands<'a> {
-    handle: &'a SqlxWriteHandle,
-}
-
-impl<'a> CurrentWriteCommands<'a> {
-    pub fn new(handle: &'a CurrentWriteHandle) -> Self {
-        Self {
-            handle: handle.0.sqlx(),
-        }
-    }
-
-    pub fn account(&'a self) -> CurrentWriteAccount<'a> {
-        CurrentWriteAccount::new(self)
-    }
-
-    pub fn media(&'a self) -> CurrentWriteMedia<'a> {
-        CurrentWriteMedia::new(self)
-    }
-
-    pub fn media_admin(&'a self) -> CurrentWriteMediaAdmin<'a> {
-        CurrentWriteMediaAdmin::new(self)
-    }
-
-    pub fn profile(&'a self) -> CurrentWriteProfile<'a> {
-        CurrentWriteProfile::new(self)
-    }
-
-    pub fn chat(&'a self) -> CurrentWriteChat<'a> {
-        CurrentWriteChat::new(self)
-    }
-
-    pub fn pool(&'a self) -> &SqlitePool {
-        self.handle.pool()
-    }
-}
 
 pub struct CurrentSyncWriteCommands<C: ConnectionProvider> {
     conn: C,

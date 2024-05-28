@@ -1,38 +1,19 @@
 use simple_backend_database::{
     diesel_db::{ConnectionProvider, DieselConnection, DieselDatabaseError},
-    sqlx_db::SqlxWriteHandle,
 };
-use sqlx::SqlitePool;
 
-// use sqlx::SqlitePool;
 use self::{
-    account::{HistorySyncWriteAccount, HistoryWriteAccount},
-    chat::{HistorySyncWriteChat, HistoryWriteChat},
-    media::{HistorySyncWriteMedia, HistoryWriteMedia},
-    media_admin::{HistorySyncWriteMediaAdmin, HistoryWriteMediaAdmin},
-    profile::{HistorySyncWriteProfile, HistoryWriteProfile},
+    account::HistorySyncWriteAccount,
+    chat::HistorySyncWriteChat,
+    media::HistorySyncWriteMedia,
+    media_admin::HistorySyncWriteMediaAdmin,
+    profile::HistorySyncWriteProfile,
 };
 use crate::{HistoryWriteHandle, TransactionError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident, $sync_name:ident) => {
-        pub struct $struct_name<'a> {
-            cmds: &'a crate::history::write::HistoryWriteCommands<'a>,
-        }
-
-        impl<'a> $struct_name<'a> {
-            pub fn new(cmds: &'a crate::history::write::HistoryWriteCommands<'a>) -> Self {
-                Self { cmds }
-            }
-
-            // pub fn read(&self) -> crate::history::read::HistoryReadCommands<'a> {
-            //     self.cmds.handle.read()
-            // }
-
-            pub fn pool(&self) -> &'a sqlx::SqlitePool {
-                self.cmds.handle.pool()
-            }
-        }
+        // TODO: Remove struct_name
 
         pub struct $sync_name<C: simple_backend_database::diesel_db::ConnectionProvider> {
             cmds: C,
@@ -70,43 +51,6 @@ pub mod media;
 pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
-
-#[derive(Clone, Debug)]
-pub struct HistoryWriteCommands<'a> {
-    handle: &'a SqlxWriteHandle,
-}
-
-impl<'a> HistoryWriteCommands<'a> {
-    pub fn new(handle: &'a HistoryWriteHandle) -> Self {
-        Self {
-            handle: handle.0.sqlx(),
-        }
-    }
-
-    pub fn account(&'a self) -> HistoryWriteAccount<'a> {
-        HistoryWriteAccount::new(self)
-    }
-
-    pub fn media(&'a self) -> HistoryWriteMedia<'a> {
-        HistoryWriteMedia::new(self)
-    }
-
-    pub fn media_admin(&'a self) -> HistoryWriteMediaAdmin<'a> {
-        HistoryWriteMediaAdmin::new(self)
-    }
-
-    pub fn profile(&'a self) -> HistoryWriteProfile<'a> {
-        HistoryWriteProfile::new(self)
-    }
-
-    pub fn chat(&'a self) -> HistoryWriteChat<'a> {
-        HistoryWriteChat::new(self)
-    }
-
-    pub fn pool(&'a self) -> &SqlitePool {
-        self.handle.pool()
-    }
-}
 
 pub struct HistorySyncWriteCommands<C: ConnectionProvider> {
     conn: C,

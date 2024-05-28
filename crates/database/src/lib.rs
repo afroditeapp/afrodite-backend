@@ -8,10 +8,8 @@ pub mod history;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use current::{read::CurrentReadCommands, write::CurrentWriteCommands};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use error_stack::{Context, Result, ResultExt};
-use history::{read::HistoryReadCommands, write::HistoryWriteCommands};
 pub use model::schema;
 use model::IsLoggingAllowed;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
@@ -24,10 +22,6 @@ pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 pub struct CurrentWriteHandle(pub DbWriteHandle);
 
 impl CurrentWriteHandle {
-    pub fn sqlx_cmds(&self) -> CurrentWriteCommands {
-        CurrentWriteCommands::new(self)
-    }
-
     pub fn to_read_handle(&self) -> CurrentReadHandle {
         CurrentReadHandle(self.0.to_read_handle())
     }
@@ -37,31 +31,13 @@ impl CurrentWriteHandle {
 #[derive(Debug, Clone)]
 pub struct CurrentReadHandle(pub DbReadHandle);
 
-impl CurrentReadHandle {
-    pub fn sqlx_cmds(&self) -> CurrentReadCommands {
-        CurrentReadCommands::new(self)
-    }
-}
-
 /// Write handle for current database.
 #[derive(Clone, Debug)]
 pub struct HistoryWriteHandle(pub DbWriteHandle);
 
-impl HistoryWriteHandle {
-    pub fn sqlx_cmds(&self) -> HistoryWriteCommands {
-        HistoryWriteCommands::new(self)
-    }
-}
-
 /// Read handle for current database.
 #[derive(Clone, Debug)]
 pub struct HistoryReadHandle(pub DbReadHandle);
-
-impl HistoryReadHandle {
-    pub fn sqlx_cmds(&self) -> HistoryReadCommands {
-        HistoryReadCommands::new(self)
-    }
-}
 
 pub struct ErrorContext<T, Ok> {
     pub force_debug_print: bool,
@@ -182,11 +158,6 @@ impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
 
 impl<Ok> IntoDatabaseErrorExt<DieselDatabaseError>
     for std::result::Result<Ok, model::account::AccountStateError>
-{
-}
-
-impl<Ok> IntoDatabaseErrorExt<simple_backend_database::sqlx_db::SqliteDatabaseError>
-    for std::result::Result<Ok, ::sqlx::Error>
 {
 }
 

@@ -7,7 +7,7 @@ use std::{
 
 use config::Config;
 use database::{
-    history::read::HistoryReadCommands, CurrentReadHandle, CurrentWriteHandle, ErrorContext,
+    CurrentReadHandle, CurrentWriteHandle, ErrorContext,
     HistoryReadHandle, HistoryWriteHandle,
 };
 use error_stack::Context;
@@ -92,9 +92,6 @@ pub enum DataError {
 
     #[error("Command runner quit too early")]
     CommandRunnerQuit,
-
-    #[error("Different SQLite versions detected between diesel and sqlx")]
-    SqliteVersionMismatch,
 
     #[error("Event mode access failed")]
     EventModeAccessFailed,
@@ -290,13 +287,6 @@ impl DatabaseManager {
 
         let diesel_sqlite = current_write.diesel().sqlite_version().await?;
         info!("Diesel SQLite version: {}", diesel_sqlite);
-
-        let sqlx_sqlite = current_write.sqlx().sqlite_version().await?;
-        info!("Sqlx SQLite version: {}", sqlx_sqlite);
-
-        if diesel_sqlite != sqlx_sqlite {
-            return Err(DataError::SqliteVersionMismatch.report());
-        }
 
         let (history_write, history_write_close) =
             DatabaseHandleCreator::create_write_handle_from_config(
@@ -528,10 +518,6 @@ pub struct RouterDatabaseReadHandle {
 impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
         ReadCommands::new(&self.current_read_handle, &self.cache, &self.root.file_dir)
-    }
-
-    pub fn history(&self) -> HistoryReadCommands<'_> {
-        HistoryReadCommands::new(&self.history_read_handle)
     }
 
     pub fn read_files(&self) -> FileReadCommands<'_> {

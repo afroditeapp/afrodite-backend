@@ -434,7 +434,6 @@ impl RefreshToken {
     Deserialize,
     Clone,
     Copy,
-    sqlx::Type,
     PartialEq,
     Eq,
     Hash,
@@ -443,7 +442,6 @@ impl RefreshToken {
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
-#[sqlx(transparent)]
 pub struct AccountIdDb(pub i64);
 
 impl AccountIdDb {
@@ -540,7 +538,6 @@ pub struct QueueEntryRaw {
     Deserialize,
     Clone,
     Copy,
-    sqlx::Type,
     PartialEq,
     Eq,
     Hash,
@@ -549,7 +546,6 @@ pub struct QueueEntryRaw {
 )]
 #[diesel(sql_type = BigInt)]
 #[serde(transparent)]
-#[sqlx(transparent)]
 pub struct QueueNumber(pub i64);
 
 impl QueueNumber {

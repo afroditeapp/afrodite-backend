@@ -13,7 +13,6 @@ num_cpus = { workspace = true }
 
 tracing = { workspace = true }
 
-sqlx = { workspace = true, features = [ "runtime-tokio-rustls", "sqlite", "uuid" ] }
 diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 diesel_migrations = { workspace = true }
 deadpool = { workspace = true }
