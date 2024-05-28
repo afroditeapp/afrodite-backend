@@ -14,3 +14,9 @@ pub use time::*;
 mod markers;
 
 mod macros;
+
+#[cfg(test)]
+mod tests {
+    // Ignore unused dependency warning. Unit tests need this dependency.
+    use uuid as _;
+}

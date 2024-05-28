@@ -3101,6 +3101,7 @@ dependencies = [
  "serde",
  "simple_backend_utils",
  "utoipa",
+ "uuid",
 ]
 
 [[package]]

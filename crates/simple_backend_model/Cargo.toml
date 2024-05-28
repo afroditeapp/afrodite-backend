@@ -12,3 +12,6 @@ utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
 diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 
 simple_backend_utils = { path = "../simple_backend_utils"}
+
+[dev-dependencies]
+uuid = { workspace = true, features = ["v4", "serde"] }
