@@ -293,9 +293,9 @@ impl ApiDoc {
 /// Example usage:
 ///
 /// ```
-/// use server::api::db_write;
-/// use server::api::utils::StatusCode;
-/// use server::app::WriteData;
+/// use server_api::db_write;
+/// use server_api::utils::StatusCode;
+/// use server_api::app::WriteData;
 /// pub async fn axum_route_handler<S: WriteData>(
 ///     state: S,
 /// ) -> std::result::Result<(), StatusCode> {
