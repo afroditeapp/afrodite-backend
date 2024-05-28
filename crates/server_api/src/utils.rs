@@ -11,8 +11,7 @@ use headers::{Header, HeaderValue};
 use hyper::{header, Request};
 use model::AccessToken;
 use serde::Serialize;
-use server_common::{internal_api::InternalApiError};
-use server_common::data::cache::CacheError;
+use server_common::{data::cache::CacheError, internal_api::InternalApiError};
 use server_data::event::EventError;
 use simple_backend::{
     manager_client::ManagerClientError,
@@ -59,9 +58,8 @@ pub async fn authenticate_with_access_token<S: GetAccessTokens + ReadData>(
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = AccessToken::new(key_str.to_string());
 
-    if let Some((id, capabilities, account_state)) = state
-        .access_token_and_connection_exists(&key, addr)
-        .await
+    if let Some((id, capabilities, account_state)) =
+        state.access_token_and_connection_exists(&key, addr).await
     {
         req.extensions_mut().insert(id);
         req.extensions_mut().insert(capabilities);
@@ -232,9 +230,8 @@ enum RequestError {
 ///
 pub trait ConvertDataErrorToStatusCode<Ok> {
     #[track_caller]
-    fn convert_data_error_to_status_code(
-        self,
-    ) -> std::result::Result<Ok, crate::utils::StatusCode>;
+    fn convert_data_error_to_status_code(self)
+        -> std::result::Result<Ok, crate::utils::StatusCode>;
 }
 
 macro_rules! impl_error_to_status_code {

@@ -1,18 +1,20 @@
 use std::net::SocketAddr;
 
-use crate::internal_api::InternalApiClient;
-
 use model::{AccessToken, AccountIdInternal, AccountState, Capabilities};
 pub use server_data::app::*;
 use server_data::{content_processing::ContentProcessingManagerData, demo::DemoModeManager};
+
+use crate::internal_api::InternalApiClient;
 
 pub trait GetInternalApi {
     fn internal_api_client(&self) -> &InternalApiClient;
 }
 
-
 pub trait GetAccessTokens {
-    fn access_token_exists(&self, token: &AccessToken) -> impl std::future::Future<Output = Option<AccountIdInternal>> + Send;
+    fn access_token_exists(
+        &self,
+        token: &AccessToken,
+    ) -> impl std::future::Future<Output = Option<AccountIdInternal>> + Send;
 
     /// Check that token and current connection IP and port matches
     /// with WebSocket connection.

@@ -35,7 +35,7 @@ use super::{
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
     IntoDataError,
 };
-use crate::{DataError, result::Result};
+use crate::{result::Result, DataError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -158,8 +158,7 @@ macro_rules! define_write_commands {
                 id: Id,
                 cache_operation: impl FnOnce(
                     &mut $crate::cache::CacheEntry,
-                )
-                    -> error_stack::Result<T, $crate::CacheError>,
+                ) -> error_stack::Result<T, $crate::CacheError>,
             ) -> error_stack::Result<T, $crate::CacheError> {
                 self.cache().write_cache(id, cache_operation).await
             }
@@ -535,9 +534,7 @@ impl<'a> WriteCommands<'a> {
 /// ```
 macro_rules! db_transaction {
     ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
-        $crate::IntoDataError::into_error(
-            $state.db_transaction(move |mut $cmds| ($commands)).await,
-        )
+        $crate::IntoDataError::into_error($state.db_transaction(move |mut $cmds| ($commands)).await)
     }};
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         $crate::data::IntoDataError::into_error(

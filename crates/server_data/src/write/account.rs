@@ -6,10 +6,7 @@ use server_common::data::IntoDataError;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::db_transaction;
-use crate::{
-    cache::CacheError, DataError,
-    result::Result,
-};
+use crate::{cache::CacheError, result::Result, DataError};
 
 define_write_commands!(WriteCommandsAccount);
 

@@ -5,7 +5,9 @@ use model::{
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData}, db_write, db_write_multiple, internal_api, utils::{Json, StatusCode}
+    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData},
+    db_write, db_write_multiple, internal_api,
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
@@ -122,7 +124,11 @@ pub async fn put_setting_profile_visiblity<S: GetInternalApi + GetConfig + Write
     Ok(())
 }
 
-pub fn settings_router<S: StateBase + GetInternalApi + GetConfig + WriteData + ReadData + GetAccessTokens>(s: S) -> Router {
+pub fn settings_router<
+    S: StateBase + GetInternalApi + GetConfig + WriteData + ReadData + GetAccessTokens,
+>(
+    s: S,
+) -> Router {
     use axum::routing::{get, post, put};
 
     Router::new()

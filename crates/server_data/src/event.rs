@@ -8,7 +8,9 @@ use server_common::{data::IntoDataError, push_notifications::PushNotificationSen
 use tokio::sync::mpsc;
 
 use crate::{
-    cache::DatabaseCache, result::{Result, WrappedResultExt}, DataError
+    cache::DatabaseCache,
+    result::{Result, WrappedResultExt},
+    DataError,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -58,7 +60,7 @@ pub struct EventManagerWithCacheReference<'a> {
     push_notification_sender: &'a PushNotificationSender,
 }
 
-impl <'a> EventManagerWithCacheReference<'a> {
+impl<'a> EventManagerWithCacheReference<'a> {
     pub fn new(
         cache: &'a DatabaseCache,
         push_notification_sender: &'a PushNotificationSender,

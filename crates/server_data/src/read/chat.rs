@@ -6,10 +6,7 @@ use model::{
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
-use crate::{
-    DataError, IntoDataError,
-    result::Result,
-};
+use crate::{result::Result, DataError, IntoDataError};
 
 define_read_commands!(ReadCommandsChat);
 

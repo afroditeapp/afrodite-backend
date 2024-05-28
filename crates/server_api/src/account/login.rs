@@ -6,9 +6,9 @@ use model::{
 use simple_backend::{app::SignInWith, create_counters};
 
 use crate::{
+    app::{GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
-    app::{GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData},
 };
 
 pub async fn login_impl<S: ReadData + WriteData + GetAccounts>(

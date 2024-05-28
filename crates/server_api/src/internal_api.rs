@@ -5,7 +5,7 @@
 use api_internal::Configuration;
 use config::InternalApiUrls;
 use server_common::internal_api::InternalApiError;
-use tracing::{info};
+use tracing::info;
 
 use crate::result::{Result, WrappedContextExt};
 
@@ -15,7 +15,6 @@ pub mod profile;
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
-
 
 // TOOD: What is PrintWarningsTriggersAtomics?
 pub struct PrintWarningsTriggersAtomics {}

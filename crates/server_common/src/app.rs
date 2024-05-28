@@ -1,12 +1,8 @@
-
 use config::{file::ConfigFileError, Config};
-use error_stack::{Result};
+use error_stack::Result;
 use model::{AccountId, AccountIdInternal, BackendConfig, BackendVersion};
 
-
-use crate::{
-    data::DataError
-};
+use crate::data::DataError;
 
 pub trait GetConfig {
     fn config(&self) -> &Config;
@@ -31,7 +27,7 @@ pub trait BackendVersionProvider {
 pub trait GetAccounts {
     fn get_internal_id(
         &self,
-        id: AccountId
+        id: AccountId,
     ) -> impl std::future::Future<Output = Result<AccountIdInternal, DataError>> + Send;
 }
 

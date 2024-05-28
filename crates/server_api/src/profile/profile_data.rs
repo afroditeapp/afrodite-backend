@@ -2,7 +2,6 @@ use axum::{
     extract::{Path, State},
     Extension, Router,
 };
-
 use model::{
     AccountId, AccountIdInternal, Profile, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated,
     ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups,
@@ -11,7 +10,12 @@ use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}, DataError,
+    app::{
+        GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, StateBase, WriteData,
+    },
+    db_write,
+    utils::{Json, StatusCode},
+    DataError,
 };
 
 // TODO: Add timeout for database commands
@@ -241,7 +245,11 @@ pub async fn post_search_age_range<S: WriteData>(
         .update_search_age_range(account_id, validated))
 }
 
-pub fn profile_data_router<S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig>(s: S) -> Router {
+pub fn profile_data_router<
+    S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
+>(
+    s: S,
+) -> Router {
     use axum::routing::{get, post};
 
     Router::new()

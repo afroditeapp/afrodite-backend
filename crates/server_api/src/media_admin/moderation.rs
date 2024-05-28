@@ -9,7 +9,9 @@ use model::{
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, StateBase, WriteData}, db_write, db_write_multiple, utils::{Json, StatusCode}
+    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, StateBase, WriteData},
+    db_write, db_write_multiple,
+    utils::{Json, StatusCode},
 };
 
 // TODO: Add moderation content moderation weight to account and use it when moderating.
@@ -128,7 +130,11 @@ pub async fn post_handle_moderation_request<
     Ok(())
 }
 
-pub fn admin_moderation_router<S: StateBase + GetInternalApi + WriteData + GetAccounts + GetConfig + GetAccessTokens>(s: S) -> Router {
+pub fn admin_moderation_router<
+    S: StateBase + GetInternalApi + WriteData + GetAccounts + GetConfig + GetAccessTokens,
+>(
+    s: S,
+) -> Router {
     use axum::routing::{patch, post};
 
     Router::new()

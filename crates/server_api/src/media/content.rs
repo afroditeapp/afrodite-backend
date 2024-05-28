@@ -9,15 +9,16 @@ use model::{
     AccountContent, AccountId, AccountIdInternal, ContentAccessCheck, ContentId,
     ContentProcessingId, ContentProcessingState, ContentSlot, NewContentParams, SlotId,
 };
-use simple_backend::create_counters;
-
-use crate::{
-    app::{ContentProcessingProvider, GetAccounts, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
-};
-
 use server_data::{
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
     DataError,
+};
+use simple_backend::create_counters;
+
+use crate::{
+    app::{ContentProcessingProvider, GetAccounts, ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_GET_CONTENT: &str = "/media_api/content/:account_id/:content_id";
@@ -227,7 +228,11 @@ pub async fn delete_content<S: WriteData + GetAccounts>(
         .delete_content(internal_id, content_id))
 }
 
-pub fn content_router<S: StateBase + WriteData + GetAccounts + ReadData + ContentProcessingProvider>(s: S) -> Router {
+pub fn content_router<
+    S: StateBase + WriteData + GetAccounts + ReadData + ContentProcessingProvider,
+>(
+    s: S,
+) -> Router {
     use axum::routing::{delete, get, put};
 
     Router::new()

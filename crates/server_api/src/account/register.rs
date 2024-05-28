@@ -3,13 +3,15 @@ use model::{
     AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailAddress,
     EventToClientInternal, SignInWithInfo,
 };
+use server_data::write::account::IncrementAdminAccessGrantedCount;
 use simple_backend::create_counters;
 use tracing::warn;
 
 use crate::{
-    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData}, db_write, db_write_multiple, internal_api, utils::{Json, StatusCode}
+    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData},
+    db_write, db_write_multiple, internal_api,
+    utils::{Json, StatusCode},
 };
-use server_data::write::account::IncrementAdminAccessGrantedCount;
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
@@ -213,7 +215,11 @@ pub async fn post_complete_setup<S: ReadData + WriteData + GetInternalApi + GetC
 }
 
 /// Contains only routes which require authentication.
-pub fn register_router<S: StateBase + ReadData + WriteData + GetInternalApi + GetConfig + GetAccessTokens>(s: S) -> Router {
+pub fn register_router<
+    S: StateBase + ReadData + WriteData + GetInternalApi + GetConfig + GetAccessTokens,
+>(
+    s: S,
+) -> Router {
     use axum::routing::{get, post};
 
     Router::new()

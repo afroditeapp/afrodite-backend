@@ -16,7 +16,9 @@ use super::{
     IntoDataError, RouterDatabaseWriteHandle,
 };
 use crate::{
-    content_processing::NewContentInfo, result::{Result, WrappedContextExt}, DataError
+    content_processing::NewContentInfo,
+    result::{Result, WrappedContextExt},
+    DataError,
 };
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;

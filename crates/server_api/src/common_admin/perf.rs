@@ -6,7 +6,10 @@ use model::Capabilities;
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
 
-use crate::{app::StateBase, utils::{Json, StatusCode}};
+use crate::{
+    app::StateBase,
+    utils::{Json, StatusCode},
+};
 
 pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 

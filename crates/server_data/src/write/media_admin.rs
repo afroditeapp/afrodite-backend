@@ -5,7 +5,7 @@ use model::{
 };
 
 use super::db_transaction;
-use crate::{DataError, result::Result};
+use crate::{result::Result, DataError};
 
 define_write_commands!(WriteCommandsMediaAdmin);
 

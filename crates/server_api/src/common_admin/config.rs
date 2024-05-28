@@ -4,7 +4,8 @@ use simple_backend::create_counters;
 use tracing::info;
 
 use crate::{
-    app::{ReadData, ReadDynamicConfig, StateBase, WriteDynamicConfig}, utils::{Json, StatusCode}
+    app::{ReadData, ReadDynamicConfig, StateBase, WriteDynamicConfig},
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
@@ -78,7 +79,9 @@ pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
     }
 }
 
-pub fn config_router<S: StateBase + ReadData + WriteDynamicConfig + ReadDynamicConfig>(s: S) -> Router {
+pub fn config_router<S: StateBase + ReadData + WriteDynamicConfig + ReadDynamicConfig>(
+    s: S,
+) -> Router {
     use axum::routing::{get, post};
 
     Router::new()

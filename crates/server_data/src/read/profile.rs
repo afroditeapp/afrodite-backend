@@ -4,8 +4,8 @@ use model::{
 };
 
 use crate::{
-    DataError, IntoDataError,
     result::{Result, WrappedContextExt},
+    DataError, IntoDataError,
 };
 
 define_read_commands!(ReadCommandsProfile);

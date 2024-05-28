@@ -1,7 +1,6 @@
 use error_stack::{Context, Report, Result};
-use tokio::sync::oneshot;
-
 use server_common::data::DataError;
+use tokio::sync::oneshot;
 
 /// Sender only used for quit request message sending.
 pub type QuitSender = oneshot::Sender<()>;

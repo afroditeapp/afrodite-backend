@@ -17,8 +17,8 @@ use super::{
     RouterDatabaseWriteHandle, SyncWriteHandle,
 };
 use crate::{
-    DataError,
     result::{WrappedContextExt, WrappedResultExt},
+    DataError,
 };
 
 pub type WriteCmds = Cmds;

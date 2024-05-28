@@ -1,13 +1,12 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, ProfileLink, ProfilePage};
+use server_data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle};
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccessTokens, ReadData, StateBase, WriteData}, utils::{Json, StatusCode}, DataError
-};
-
-use server_data::{
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle}
+    app::{GetAccessTokens, ReadData, StateBase, WriteData},
+    utils::{Json, StatusCode},
+    DataError,
 };
 
 pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
@@ -78,7 +77,9 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     Ok(())
 }
 
-pub fn iterate_profiles_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(s: S) -> Router {
+pub fn iterate_profiles_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(
+    s: S,
+) -> Router {
     use axum::routing::post;
 
     Router::new()

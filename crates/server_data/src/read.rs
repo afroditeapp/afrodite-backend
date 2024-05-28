@@ -1,5 +1,5 @@
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
-
+use error_stack::ResultExt;
 use model::{
     AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest,
     ModerationRequestState,
@@ -17,7 +17,6 @@ use self::{
 };
 use super::{cache::DatabaseCache, file::utils::FileDir, IntoDataError};
 use crate::result::Result;
-use error_stack::ResultExt;
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {

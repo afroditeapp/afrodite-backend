@@ -10,7 +10,7 @@ use std::process::exit;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
-use server::{PihkaServer};
+use server::PihkaServer;
 use server_api::ApiDoc;
 use simple_backend_config::args::ImageProcessModeArgs;
 use test_mode::TestRunner;

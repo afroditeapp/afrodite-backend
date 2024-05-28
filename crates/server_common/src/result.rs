@@ -20,7 +20,7 @@ pub struct WrappedReport<E> {
 
 impl<E> WrappedReport<Report<E>> {
     pub fn new(report: Report<E>) -> Self {
-        Self {report}
+        Self { report }
     }
 
     #[track_caller]
@@ -99,7 +99,9 @@ impl From<Report<IndexError>> for WrappedReport<Report<DataError>> {
     }
 }
 
-impl From<Report<simple_backend_database::SimpleDatabaseError>> for WrappedReport<Report<DataError>> {
+impl From<Report<simple_backend_database::SimpleDatabaseError>>
+    for WrappedReport<Report<DataError>>
+{
     #[track_caller]
     fn from(error: Report<simple_backend_database::SimpleDatabaseError>) -> Self {
         Self {

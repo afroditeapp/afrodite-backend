@@ -3,7 +3,9 @@ use model::{AccountId, AccountIdInternal, FavoriteProfilesPage};
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
+    app::{GetAccounts, ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";

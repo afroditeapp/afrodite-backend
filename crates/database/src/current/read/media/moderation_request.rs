@@ -129,10 +129,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaModerationRequest<C> {
 
         let mut secure_capture_found_from_request = false;
         for content in requested_content_set.iter() {
-            if data
-                .iter()
-                .any(|c| c.secure_capture && c.uuid == *content)
-            {
+            if data.iter().any(|c| c.secure_capture && c.uuid == *content) {
                 secure_capture_found_from_request = true;
                 break;
             }

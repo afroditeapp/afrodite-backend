@@ -10,7 +10,9 @@ use simple_backend::create_counters;
 
 use super::{login_impl, register_impl};
 use crate::{
-    app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
+    app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
 
 // TODO(prod): Logout route for demo account?
@@ -160,7 +162,11 @@ pub async fn post_demo_mode_login_to_account<
     Ok(result.into())
 }
 
-pub fn demo_mode_router<S: StateBase + DemoModeManagerProvider + ReadData + WriteData + GetAccounts + GetConfig>(s: S) -> Router {
+pub fn demo_mode_router<
+    S: StateBase + DemoModeManagerProvider + ReadData + WriteData + GetAccounts + GetConfig,
+>(
+    s: S,
+) -> Router {
     use axum::routing::post;
 
     Router::new()

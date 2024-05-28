@@ -3,7 +3,10 @@ use std::sync::Arc;
 use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::{ManagerApiClient, ManagerApiManager};
-use crate::{manager_client::ManagerClientError, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager};
+use crate::{
+    manager_client::ManagerClientError, map::TileMapManager, perf::PerfCounterManagerData,
+    sign_in_with::SignInWithManager,
+};
 
 #[derive(Clone)]
 pub struct SimpleBackendAppState {

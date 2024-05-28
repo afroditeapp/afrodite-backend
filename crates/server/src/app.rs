@@ -7,24 +7,39 @@ use axum::{
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use database::current::write::chat::PushNotificationStateInfo;
 use error_stack::{Result, ResultExt};
-
 use futures::Future;
-use model::{AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, PendingNotificationFlags};
+use model::{
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
+    Capabilities, PendingNotificationFlags,
+};
+pub use server_api::app::*;
 use server_api::{account::demo_mode_router, internal_api::InternalApiClient};
-use server_common::push_notifications::{PushNotificationError, PushNotificationSender, PushNotificationStateProvider};
+use server_common::push_notifications::{
+    PushNotificationError, PushNotificationSender, PushNotificationStateProvider,
+};
+use server_data::{
+    content_processing::ContentProcessingManagerData,
+    demo::DemoModeManager,
+    event::EventManagerWithCacheReference,
+    read::ReadCommands,
+    write_commands::{WriteCmds, WriteCommandRunnerHandle},
+    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+    DataError, RouterDatabaseReadHandle,
+};
 use simple_backend::{
-    app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith, SimpleBackendAppState}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager, web_socket::WebSocketManager
+    app::{
+        GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
+        SimpleBackendAppState,
+    },
+    manager_client::ManagerApiManager,
+    map::TileMapManager,
+    perf::PerfCounterManagerData,
+    sign_in_with::SignInWithManager,
+    web_socket::WebSocketManager,
 };
 use simple_backend_config::SimpleBackendConfig;
 
 use self::routes_connected::ConnectedApp;
-use server_data::{
-    content_processing::ContentProcessingManagerData, demo::DemoModeManager, read::ReadCommands, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError, RouterDatabaseReadHandle,
-    event::{EventManagerWithCacheReference},
-};
-
-pub use server_api::app::*;
-
 
 pub mod routes_connected;
 pub mod routes_internal;
@@ -47,18 +62,12 @@ pub struct AppState {
 
 impl EventManagerProvider for S {
     fn event_manager(&self) -> EventManagerWithCacheReference<'_> {
-        EventManagerWithCacheReference::new(
-            self.database.cache(),
-            &self.push_notification_sender,
-        )
+        EventManagerWithCacheReference::new(self.database.cache(), &self.push_notification_sender)
     }
 }
 
 impl GetAccounts for S {
-    async fn get_internal_id(
-        &self,
-        id: AccountId
-    ) -> Result<AccountIdInternal, DataError> {
+    async fn get_internal_id(&self, id: AccountId) -> Result<AccountIdInternal, DataError> {
         self.database
             .account_id_manager()
             .get_internal_id(id)
@@ -70,10 +79,9 @@ impl GetAccounts for S {
 #[async_trait::async_trait]
 impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BackendConfig, ConfigFileError> {
-        let config =
-            tokio::task::spawn_blocking(ConfigFileDynamic::load_from_current_dir)
-                .await
-                .change_context(ConfigFileError::LoadConfig)??;
+        let config = tokio::task::spawn_blocking(ConfigFileDynamic::load_from_current_dir)
+            .await
+            .change_context(ConfigFileError::LoadConfig)??;
 
         Ok(config.backend_config)
     }
@@ -127,51 +135,48 @@ impl PushNotificationStateProvider for S {
         account_id: AccountIdInternal,
         flags: PendingNotificationFlags,
     ) -> Result<PushNotificationStateInfo, PushNotificationError> {
-        self
-            .write(move |cmds| async move {
-                cmds.chat()
-                    .push_notifications()
-                    .get_push_notification_state_info_and_add_notification_value(
-                        account_id,
-                        flags.into(),
-                    )
-                    .await
-            })
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
+        self.write(move |cmds| async move {
+            cmds.chat()
+                .push_notifications()
+                .get_push_notification_state_info_and_add_notification_value(
+                    account_id,
+                    flags.into(),
+                )
+                .await
+        })
+        .await
+        .map_err(|e| e.into_report())
+        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
     }
 
     async fn enable_push_notification_sent_flag(
         &self,
         account_id: AccountIdInternal,
     ) -> Result<(), PushNotificationError> {
-        self
-            .write(move |cmds| async move {
-                cmds.chat()
-                    .push_notifications()
-                    .enable_push_notification_sent_flag(account_id)
-                    .await
-            })
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
+        self.write(move |cmds| async move {
+            cmds.chat()
+                .push_notifications()
+                .enable_push_notification_sent_flag(account_id)
+                .await
+        })
+        .await
+        .map_err(|e| e.into_report())
+        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
     }
 
     async fn remove_device_token(
         &self,
-        account_id: AccountIdInternal
+        account_id: AccountIdInternal,
     ) -> Result<(), PushNotificationError> {
-        self
-            .write(move |cmds| async move {
-                cmds.chat()
-                    .push_notifications()
-                    .remove_device_token(account_id)
-                    .await
-            })
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(PushNotificationError::RemoveDeviceTokenFailed)
+        self.write(move |cmds| async move {
+            cmds.chat()
+                .push_notifications()
+                .remove_device_token(account_id)
+                .await
+        })
+        .await
+        .map_err(|e| e.into_report())
+        .change_context(PushNotificationError::RemoveDeviceTokenFailed)
     }
 }
 
@@ -199,10 +204,7 @@ impl WriteData for S {
         account: AccountId,
         cmd: GetCmd,
     ) -> server_common::result::Result<CmdResult, DataError> {
-        self
-            .write_queue
-            .concurrent_write(account, cmd)
-            .await
+        self.write_queue.concurrent_write(account, cmd).await
     }
 }
 
@@ -224,7 +226,10 @@ impl GetInternalApi for S {
 
 impl GetAccessTokens for S {
     async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
-        self.database.access_token_manager().access_token_exists(token).await
+        self.database
+            .access_token_manager()
+            .access_token_exists(token)
+            .await
     }
 
     async fn access_token_and_connection_exists(
@@ -232,7 +237,10 @@ impl GetAccessTokens for S {
         token: &AccessToken,
         connection: SocketAddr,
     ) -> Option<(AccountIdInternal, Capabilities, AccountState)> {
-        self.database.access_token_manager().access_token_and_connection_exists(token, connection).await
+        self.database
+            .access_token_manager()
+            .access_token_and_connection_exists(token, connection)
+            .await
     }
 }
 
@@ -304,7 +312,7 @@ impl App {
             content_processing,
             demo_mode,
             push_notification_sender,
-            simple_backend_state
+            simple_backend_state,
         };
 
         state
@@ -377,7 +385,9 @@ impl App {
 
     pub fn create_chat_server_router(&self) -> Router {
         let public = Router::new().merge(
-            server_api::chat::push_notifications::push_notification_router_public(self.state.clone()),
+            server_api::chat::push_notifications::push_notification_router_public(
+                self.state.clone(),
+            ),
         );
 
         public.merge(ConnectedApp::new(self.state.clone()).private_chat_server_router())

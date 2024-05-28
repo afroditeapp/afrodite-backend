@@ -14,7 +14,6 @@ use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 
 pub mod location;
 
-
 #[derive(Debug)]
 pub struct LocationIndexManager {
     config: Arc<Config>,
@@ -312,9 +311,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
     ) -> error_stack::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
         if let Some(some_other_profiles_also) = profiles.get_mut(&key) {
-            let removed = some_other_profiles_also
-                .profiles
-                .remove(&account_id);
+            let removed = some_other_profiles_also.profiles.remove(&account_id);
 
             if removed.is_some() && some_other_profiles_also.profiles.is_empty() {
                 profiles.remove(&key);

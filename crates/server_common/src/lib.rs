@@ -3,8 +3,8 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+pub mod app;
+pub mod data;
+pub mod internal_api;
 pub mod push_notifications;
 pub mod result;
-pub mod data;
-pub mod app;
-pub mod internal_api;

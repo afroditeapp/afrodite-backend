@@ -26,8 +26,7 @@ pub mod app;
 pub mod internal_api;
 pub mod utils;
 
-pub use server_common::result;
-pub use server_common::data::DataError;
+pub use server_common::{data::DataError, result};
 
 // API docs
 

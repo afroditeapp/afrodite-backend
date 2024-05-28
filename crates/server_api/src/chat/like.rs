@@ -4,7 +4,8 @@ use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData}, db_write_multiple
+    app::{GetAccounts, ReadData, StateBase, WriteData},
+    db_write_multiple,
 };
 
 pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";

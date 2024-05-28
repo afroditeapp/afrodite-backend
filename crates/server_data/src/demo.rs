@@ -1,5 +1,3 @@
-
-
 use std::{collections::HashSet, sync::Arc};
 
 use config::file::DemoModeConfig;
@@ -202,9 +200,7 @@ impl DemoModeManager {
         &self,
         token: &DemoModeToken,
     ) -> Result<DemoModeId, DataError> {
-        let result = self
-            .get_index_or_locked(|s| s.token_equals(token))
-            .await?;
+        let result = self.get_index_or_locked(|s| s.token_equals(token)).await?;
         let token_index = match result {
             Some(IndexOrLocked::Index(i)) => i,
             Some(IndexOrLocked::Locked) => return Err(DataError::NotAllowed.report()),
@@ -352,7 +348,6 @@ pub enum AccessibleAccountsInfo {
         demo_mode_id: DemoModeId,
     },
 }
-
 
 impl AccessibleAccountsInfo {
     pub async fn into_accounts<S: ReadData>(

@@ -20,10 +20,9 @@ use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
 pub use utils::api::PATH_CONNECT;
 
-use crate::app::{BackendVersionProvider, GetAccessTokens, ReadData, WriteData};
 use super::utils::{AccessTokenHeader, Json, StatusCode};
 use crate::{
-    app::GetConfig,
+    app::{BackendVersionProvider, GetAccessTokens, GetConfig, ReadData, WriteData},
     result::{Result, WrappedContextExt, WrappedResultExt},
 };
 

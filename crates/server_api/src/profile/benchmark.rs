@@ -7,7 +7,12 @@ use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}, DataError
+    app::{
+        GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, StateBase, WriteData,
+    },
+    db_write,
+    utils::{Json, StatusCode},
+    DataError,
 };
 
 // ------------------- Benchmark routes ----------------------------
@@ -106,7 +111,11 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 
 // ------------------- Benchmark routes end ----------------------------
 
-pub fn benchmark_router<S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig>(s: S) -> Router {
+pub fn benchmark_router<
+    S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
+>(
+    s: S,
+) -> Router {
     use axum::routing::{get, post};
 
     Router::new()

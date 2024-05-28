@@ -260,12 +260,11 @@ impl BotState {
     }
 
     pub fn persistent_state(&self) -> Option<BotPersistentState> {
-        self.id
-            .map(|id| BotPersistentState {
-                account_id: id.account_id,
-                task: self.task_id,
-                bot: self.bot_id,
-            })
+        self.id.map(|id| BotPersistentState {
+            account_id: id.account_id,
+            task: self.task_id,
+            bot: self.bot_id,
+        })
     }
 
     /// Is current bot an admin bot.
@@ -377,12 +376,10 @@ impl BotManager {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
         for bot_i in 0..config.bots() {
             let state = BotState::new(
-                old_state
-                    .as_ref()
-                    .and_then(|d| {
-                        d.find_matching(task_id, bot_i)
-                            .map(|s| AccountId::new(s.account_id))
-                    }),
+                old_state.as_ref().and_then(|d| {
+                    d.find_matching(task_id, bot_i)
+                        .map(|s| AccountId::new(s.account_id))
+                }),
                 server_config.clone(),
                 config.clone(),
                 bot_config_file.clone(),

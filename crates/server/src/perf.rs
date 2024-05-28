@@ -2,8 +2,6 @@
 //!
 //!
 
-use simple_backend::{perf::CounterCategory, CONNECTION_COUNTERS_LIST};
-
 use server_api::{
     account::{
         ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_MODE_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST,
@@ -34,6 +32,7 @@ use server_api::{
     },
     profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
 };
+use simple_backend::{perf::CounterCategory, CONNECTION_COUNTERS_LIST};
 
 pub static ALL_COUNTERS: &[&CounterCategory] = &[
     // Common

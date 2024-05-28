@@ -6,11 +6,11 @@ use model::{
 use tracing::info;
 
 use crate::{
-
-        cache::CacheError, index::location::LocationIndexIteratorState, write::db_transaction,
-        DataError, IntoDataError,
-
+    cache::CacheError,
+    index::location::LocationIndexIteratorState,
     result::{Result, WrappedContextExt},
+    write::db_transaction,
+    DataError, IntoDataError,
 };
 
 define_write_commands!(WriteCommandsProfile);

@@ -5,9 +5,9 @@ use model::AccountId;
 use simple_backend::create_counters;
 
 use crate::{
-    utils::StatusCode,
     app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
     internal_api,
+    utils::StatusCode,
 };
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =

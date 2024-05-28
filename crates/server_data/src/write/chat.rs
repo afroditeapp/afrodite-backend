@@ -7,10 +7,7 @@ use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
 use self::push_notifications::WriteCommandsChatPushNotifications;
-use crate::{
-    write::db_transaction, DataError,
-    result::Result,
-};
+use crate::{result::Result, write::db_transaction, DataError};
 
 define_write_commands!(WriteCommandsChat);
 

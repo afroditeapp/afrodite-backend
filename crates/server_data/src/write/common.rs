@@ -3,11 +3,11 @@ use std::net::SocketAddr;
 use model::{AccountId, AccountIdInternal, AuthPair};
 
 use crate::{
-    write::db_transaction, DataError, IntoDataError,
+    event::{event_channel, EventMode, EventReceiver},
     result::Result,
+    write::db_transaction,
+    DataError, IntoDataError,
 };
-
-use crate::event::{event_channel, EventMode, EventReceiver};
 
 define_write_commands!(WriteCommandsCommon);
 

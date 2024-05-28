@@ -1,4 +1,9 @@
-use std::{collections::{hash_map::Entry, HashMap}, fmt::Debug, net::SocketAddr, sync::Arc};
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    fmt::Debug,
+    net::SocketAddr,
+    sync::Arc,
+};
 
 use config::Config;
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
@@ -9,20 +14,17 @@ use model::{
     ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw,
     SortedProfileAttributes,
 };
+pub use server_common::data::cache::CacheError;
+use server_common::data::WithInfo;
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
-use simple_backend_utils::{IntoReportFromString};
+use simple_backend_utils::IntoReportFromString;
 use tokio::sync::RwLock;
 use tracing::info;
 
-use super::{
-    index::{
-        location::LocationIndexIteratorState, LocationIndexIteratorHandle, LocationIndexManager,
-    },
+use super::index::{
+    location::LocationIndexIteratorState, LocationIndexIteratorHandle, LocationIndexManager,
 };
 use crate::{event::EventMode, index::LocationIndexWriteHandle, read::DbReader};
-use server_common::{data::WithInfo};
-
-pub use server_common::data::cache::CacheError;
 
 #[derive(Debug)]
 pub struct AccountEntry {
@@ -259,9 +261,7 @@ impl DatabaseCache {
 
     pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
         let tokens = self.access_tokens.read().await;
-        tokens
-            .get(token)
-            .map(|entry| entry.account_id_internal)
+        tokens.get(token).map(|entry| entry.account_id_internal)
     }
 
     /// Checks that connection comes from the same IP address. WebSocket is

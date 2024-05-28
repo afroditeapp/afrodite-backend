@@ -1,8 +1,7 @@
 use model::{AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal};
 
 use super::super::DataError;
-use crate::IntoDataError;
-use crate::result::Result;
+use crate::{result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsMedia);
 

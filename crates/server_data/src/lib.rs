@@ -3,19 +3,17 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-use std::{
-    fmt::Debug,
-    fs,
-    path::Path,
-    sync::Arc,
-};
+use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
-use database::{
-    CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle,
-};
+use database::{CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle};
 use event::EventManagerWithCacheReference;
 use model::{AccountId, AccountIdInternal, EmailAddress, SignInWithInfo};
+pub use server_common::{
+    data::{DataError, IntoDataError},
+    result,
+};
+use server_common::{push_notifications::PushNotificationSender, result::Result};
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
 use tracing::info;
@@ -34,14 +32,12 @@ use self::{
     },
     write_concurrent::WriteCommandsConcurrent,
 };
-use server_common::{
-    push_notifications::PushNotificationSender,
-    result::{Result},
-};
 
-pub use server_common::{result, data::{DataError, IntoDataError}};
-
+pub mod app;
 pub mod cache;
+pub mod content_processing;
+pub mod demo;
+pub mod event;
 pub mod file;
 pub mod index;
 pub mod read;
@@ -49,15 +45,10 @@ pub mod utils;
 pub mod write;
 pub mod write_commands;
 pub mod write_concurrent;
-pub mod app;
-pub mod event;
-pub mod content_processing;
-pub mod demo;
 
 pub const DB_FILE_DIR_NAME: &str = "files";
 
 pub type DatabeseEntryId = String;
-
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]

@@ -4,7 +4,7 @@ use model::{
 };
 
 use super::super::DataError;
-use crate::{IntoDataError, result::Result};
+use crate::{result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsAccount);
 

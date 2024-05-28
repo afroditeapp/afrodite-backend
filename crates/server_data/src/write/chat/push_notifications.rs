@@ -1,10 +1,7 @@
 use database::current::write::chat::PushNotificationStateInfo;
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification};
 
-use crate::{
-    write::db_transaction, DataError,
-    result::Result,
-};
+use crate::{result::Result, write::db_transaction, DataError};
 
 define_write_commands!(WriteCommandsChatPushNotifications);
 

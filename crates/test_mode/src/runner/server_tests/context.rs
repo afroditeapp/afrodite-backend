@@ -221,9 +221,7 @@ impl Account {
         let connections = state.connections.unwrap_account_connections();
         test_context.add_account_connections(connections).await;
 
-        Ok(Self {
-            bot_state: state,
-        })
+        Ok(Self { bot_state: state })
     }
 
     pub fn register_api(&self) -> &Configuration {

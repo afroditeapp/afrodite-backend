@@ -1,7 +1,3 @@
-
-
-
-
 #[derive(thiserror::Error, Debug)]
 pub enum InternalApiError {
     #[error("API request failed")]

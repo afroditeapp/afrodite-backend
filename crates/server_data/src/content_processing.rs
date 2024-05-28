@@ -1,4 +1,3 @@
-
 use std::{
     collections::{HashMap, VecDeque},
     sync::Arc,
@@ -8,15 +7,10 @@ use model::{
     AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
     ContentProcessingStateChanged, ContentSlot, NewContentParams,
 };
-use crate::event::{EventManagerWithCacheReference};
-use tokio::{
-    sync::{Notify, RwLock},
-};
-use tracing::{warn};
+use tokio::sync::{Notify, RwLock};
+use tracing::warn;
 
-
-use crate::file::utils::TmpContentFile;
-
+use crate::{event::EventManagerWithCacheReference, file::utils::TmpContentFile};
 
 #[derive(Debug, Clone)]
 pub struct ContentProcessingNotify(pub Arc<Notify>);
@@ -200,7 +194,6 @@ pub async fn notify_client(
         warn!("Event sending failed {}", e);
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct NewContentInfo {

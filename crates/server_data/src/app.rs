@@ -1,11 +1,15 @@
-
 use std::future::Future;
 
 use model::AccountId;
-
-use crate::{event::EventManagerWithCacheReference, read::ReadCommands, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError};
-
 pub use server_common::app::*;
+
+use crate::{
+    event::EventManagerWithCacheReference,
+    read::ReadCommands,
+    write_commands::WriteCmds,
+    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+    DataError,
+};
 
 #[async_trait::async_trait]
 pub trait WriteData {

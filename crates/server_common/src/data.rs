@@ -1,20 +1,13 @@
+use std::fmt::Debug;
 
-use std::{
-    fmt::Debug,
-};
-
-use database::{
-    ErrorContext,
-};
+use database::ErrorContext;
 use error_stack::Context;
-use model::{IsLoggingAllowed};
+use model::IsLoggingAllowed;
 
 use crate::{internal_api::InternalApiError, result::WrappedReport};
 
-
-
-pub mod file;
 pub mod cache;
+pub mod file;
 pub mod index;
 
 #[derive(thiserror::Error, Debug)]
@@ -66,8 +59,6 @@ pub enum DataError {
     #[error("Event mode access failed")]
     EventModeAccessFailed,
 }
-
-
 
 /// Attach more info to current error
 ///
@@ -161,7 +152,10 @@ impl<Ok> IntoDataError<Ok, simple_backend_database::SimpleDatabaseError>
     #[track_caller]
     fn into_data_error_without_context(
         self,
-    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<simple_backend_database::SimpleDatabaseError>>> {
+    ) -> std::result::Result<
+        Ok,
+        WrappedReport<error_stack::Report<simple_backend_database::SimpleDatabaseError>>,
+    > {
         let value = self?;
         Ok(value)
     }

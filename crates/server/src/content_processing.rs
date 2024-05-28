@@ -1,19 +1,12 @@
-
-use model::{
-    MediaContentType,
-};
+use model::MediaContentType;
+use server_common::result::{Result, WrappedResultExt};
 use server_data::content_processing::{notify_client, ContentProcessingNotify, ProcessingState};
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
 use simple_backend_config::args::InputFileType;
-use tokio::{
-    task::JoinHandle,
-};
+use tokio::task::JoinHandle;
 use tracing::{error, warn};
 
-use crate::{
-    app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData},
-};
-use server_common::result::{Result, WrappedResultExt};
+use crate::app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ContentProcessingError {

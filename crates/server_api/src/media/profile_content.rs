@@ -9,7 +9,9 @@ use model::{
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
+    app::{GetAccounts, ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/:account_id";

@@ -136,9 +136,7 @@ impl SignInWithGoogleManager {
             google_config.client_id_ios.as_str(),
         ];
 
-        let azp_valid = valid_client_ids
-            .into_iter()
-            .any(|id| id == data.claims.azp);
+        let azp_valid = valid_client_ids.into_iter().any(|id| id == data.claims.azp);
 
         if !azp_valid || !data.claims.email_verified {
             return Err(SignInWithGoogleError::InvalidToken.report());

@@ -2,7 +2,6 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-
 #![allow(clippy::while_let_loop)]
 
 pub mod app;
@@ -18,31 +17,29 @@ use app::AppState;
 use async_trait::async_trait;
 use axum::Router;
 use config::Config;
-use content_processing::{
-    ContentProcessingManager, ContentProcessingManagerQuitHandle,
-};
-
+use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
 use perf::ALL_COUNTERS;
 use server_api::ApiDoc;
-use server_common::push_notifications::{self, PushNotificationManager, PushNotificationManagerQuitHandle};
+use server_common::push_notifications::{
+    self, PushNotificationManager, PushNotificationManagerQuitHandle,
+};
+use server_data::{
+    content_processing::ContentProcessingManagerData,
+    demo::DemoModeManager,
+    write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
+    DatabaseManager,
+};
 use simple_backend::{
-    app::{SimpleBackendAppState},
-    media_backup::MediaBackupHandle,
-    perf::AllCounters,
-    web_socket::WebSocketManager,
-    BusinessLogic, ServerQuitWatcher,
+    app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::AllCounters,
+    web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher,
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
-
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use self::{
-    app::{routes_internal::InternalApp, App},
-};
-use server_data::{content_processing::ContentProcessingManagerData, demo::DemoModeManager, write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle}, DatabaseManager};
-use crate::{bot::BotClient};
+use self::app::{routes_internal::InternalApp, App};
+use crate::bot::BotClient;
 
 pub struct PihkaServer {
     config: Arc<Config>,
@@ -144,8 +141,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         media_backup_handle: MediaBackupHandle,
         server_quit_watcher: ServerQuitWatcher,
     ) -> Self::AppState {
-        let (push_notification_sender, push_notification_receiver) =
-            push_notifications::channel();
+        let (push_notification_sender, push_notification_receiver) = push_notifications::channel();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),

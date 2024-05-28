@@ -1,10 +1,6 @@
-
-use std::{
-    fmt::Debug,
-};
+use std::fmt::Debug;
 
 use simple_backend_utils::ComponentError;
-
 
 impl ComponentError for FileError {
     const COMPONENT_NAME: &'static str = "File";

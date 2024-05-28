@@ -3,14 +3,15 @@ use model::{
     AccountIdInternal, AvailableProfileAttributes, ProfileAttributeFilterList,
     ProfileAttributeFilterListUpdate,
 };
+use server_data::DataError;
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
-    app::{GetConfig, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
+    app::{GetConfig, ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
-
-use server_data::DataError;
 
 pub const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_profile_attributes";
 

@@ -2,11 +2,7 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-
-#![allow(
-    clippy::large_enum_variant,
-    clippy::manual_range_contains,
-)]
+#![allow(clippy::large_enum_variant, clippy::manual_range_contains)]
 
 pub mod args;
 pub mod bot_config_file;

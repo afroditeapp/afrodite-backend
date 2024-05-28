@@ -6,9 +6,9 @@ use simple_backend::create_counters;
 
 use super::account::{login_impl, register_impl};
 use crate::{
+    app::{GetAccounts, GetConfig, ReadData, WriteData},
     db_write,
     utils::{Json, StatusCode},
-    app::{GetAccounts, GetConfig, ReadData, WriteData},
 };
 
 pub const PATH_LOGIN: &str = "/account_api/login";

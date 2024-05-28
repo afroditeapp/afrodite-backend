@@ -2,11 +2,10 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-
 #![allow(
     clippy::single_match,
     clippy::while_let_loop,
-    clippy::large_enum_variant,
+    clippy::large_enum_variant
 )]
 
 pub mod app;
@@ -23,7 +22,10 @@ pub mod web_socket;
 
 use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sync::Arc};
 
-use app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith, SimpleBackendAppState};
+use app::{
+    GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
+    SimpleBackendAppState,
+};
 use async_trait::async_trait;
 use axum::Router;
 use futures::{future::poll_fn, StreamExt};
@@ -70,7 +72,15 @@ pub type ServerQuitWatcher = broadcast::Receiver<()>;
 
 #[async_trait]
 pub trait BusinessLogic: Sized + Send + Sync + 'static {
-    type AppState: SignInWith + GetManagerApi + GetSimpleBackendConfig + GetTileMap + PerfCounterDataProvider + Send + Sync + Clone + 'static;
+    type AppState: SignInWith
+        + GetManagerApi
+        + GetSimpleBackendConfig
+        + GetTileMap
+        + PerfCounterDataProvider
+        + Send
+        + Sync
+        + Clone
+        + 'static;
 
     /// Access prerformance counter list
     fn all_counters(&self) -> AllCounters {
@@ -174,13 +184,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             MediaBackupManager::new_manager(self.config.clone(), server_quit_watcher.resubscribe());
 
         let perf_data = Arc::new(PerfCounterManagerData::new(self.logic.all_counters()));
-        let perf_manager_quit_handle = PerfCounterManager::new_manager(
-            perf_data.clone(),
-            server_quit_watcher.resubscribe(),
-        );
+        let perf_manager_quit_handle =
+            PerfCounterManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
 
-        let simple_state =
-            SimpleBackendAppState::new(self.config.clone(), perf_data).expect("State builder init failed");
+        let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data)
+            .expect("State builder init failed");
 
         let state = self
             .logic

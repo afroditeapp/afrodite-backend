@@ -10,7 +10,10 @@ use model::{AccountIdInternal, Capabilities};
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
 
-use crate::{app::StateBase, utils::{Json, StatusCode}};
+use crate::{
+    app::StateBase,
+    utils::{Json, StatusCode},
+};
 
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 

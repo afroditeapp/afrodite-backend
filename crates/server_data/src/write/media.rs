@@ -6,8 +6,8 @@ use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use super::db_transaction;
 use crate::{
-    DataError,
     result::{Result, WrappedContextExt, WrappedResultExt},
+    DataError,
 };
 
 define_write_commands!(WriteCommandsMedia);

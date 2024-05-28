@@ -3,7 +3,8 @@ use model::DeleteStatus;
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccessTokens, ReadData, StateBase}, utils::{Json, StatusCode}
+    app::{GetAccessTokens, ReadData, StateBase},
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_POST_DELETE: &str = "/account_api/delete";

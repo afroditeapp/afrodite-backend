@@ -1,7 +1,5 @@
 use simple_backend_utils::ComponentError;
 
-
-
 impl ComponentError for CacheError {
     const COMPONENT_NAME: &'static str = "Cache";
 }
@@ -23,7 +21,6 @@ pub enum CacheError {
     #[error("Cache operation failed because of server feature was not enabled")]
     FeatureNotEnabled,
 }
-
 
 impl CacheError {
     #[track_caller]

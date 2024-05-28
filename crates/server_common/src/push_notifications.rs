@@ -1,7 +1,7 @@
-use std::time::Duration;
-use std::future::Future;
+use std::{future::Future, time::Duration};
 
 use database::current::write::chat::PushNotificationStateInfo;
+use error_stack::{Result, ResultExt};
 use fcm::{
     message::{Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
@@ -16,8 +16,6 @@ use tokio::{
     task::JoinHandle,
 };
 use tracing::{error, info, warn};
-
-use error_stack::{ResultExt, Result};
 
 const PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 
@@ -82,17 +80,17 @@ pub trait PushNotificationStateProvider {
         &self,
         account_id: AccountIdInternal,
         flags: PendingNotificationFlags,
-    ) -> impl Future<Output=Result<PushNotificationStateInfo, PushNotificationError>> + Send;
+    ) -> impl Future<Output = Result<PushNotificationStateInfo, PushNotificationError>> + Send;
 
     fn enable_push_notification_sent_flag(
         &self,
         account_id: AccountIdInternal,
-    ) -> impl Future<Output=Result<(), PushNotificationError>> + Send;
+    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 
     fn remove_device_token(
         &self,
-        account_id: AccountIdInternal
-    ) -> impl Future<Output=Result<(), PushNotificationError>> + Send;
+        account_id: AccountIdInternal,
+    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
@@ -114,8 +112,7 @@ pub struct PushNotificationManager<T> {
     current_push_notification_in_sending: Option<SendPushNotification>,
 }
 
-impl <T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<T> {
-
+impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<T> {
     pub async fn new_manager(
         config: &SimpleBackendConfig,
         quit_notification: ServerQuitWatcher,
@@ -205,7 +202,8 @@ impl <T: PushNotificationStateProvider + Send + 'static> PushNotificationManager
             return Ok(());
         };
 
-        let info = self.state
+        let info = self
+            .state
             .get_push_notification_state_info_and_add_notification_value(
                 send_push_notification.account_id,
                 send_push_notification.event.into(),
@@ -247,9 +245,8 @@ impl <T: PushNotificationStateProvider + Send + 'static> PushNotificationManager
                     self.fcm = None;
                     Ok(())
                 }
-                UnusualAction::RemoveDeviceToken =>
-
-                self.state
+                UnusualAction::RemoveDeviceToken => self
+                    .state
                     .remove_device_token(send_push_notification.account_id)
                     .await
                     .change_context(PushNotificationError::RemoveDeviceTokenFailed),

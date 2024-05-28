@@ -11,7 +11,8 @@ use super::super::{
     utils::{Json, StatusCode},
 };
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData}, db_write_multiple
+    app::{GetAccounts, ReadData, StateBase, WriteData},
+    db_write_multiple,
 };
 
 pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
@@ -118,9 +119,7 @@ pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + Write
 ) -> Result<(), StatusCode> {
     CHAT.post_message_number_of_latest_viewed_message.incr();
 
-    let message_sender = state
-        .get_internal_id(update_info.account_id_sender)
-        .await?;
+    let message_sender = state.get_internal_id(update_info.account_id_sender).await?;
     db_write_multiple!(state, move |cmds| {
         cmds.chat()
             .update_message_number_of_latest_viewed_message(
@@ -167,9 +166,7 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
 ) -> Result<(), StatusCode> {
     CHAT.post_send_message.incr();
 
-    let message_reciever = state
-        .get_internal_id(message_info.receiver)
-        .await?;
+    let message_reciever = state.get_internal_id(message_info.receiver).await?;
     db_write_multiple!(state, move |cmds| {
         cmds.chat()
             .insert_pending_message_if_match(id, message_reciever, message_info.message)

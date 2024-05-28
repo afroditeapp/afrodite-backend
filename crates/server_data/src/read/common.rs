@@ -1,8 +1,7 @@
 use model::{Account, AccountId, AccountIdInternal};
-use crate::event::EventMode;
 
 use super::super::DataError;
-use crate::{IntoDataError, result::Result};
+use crate::{event::EventMode, result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsCommon);
 

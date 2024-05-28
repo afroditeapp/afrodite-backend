@@ -1,6 +1,6 @@
 use model::AccountIdInternal;
 
-use crate::{DataError, result::Result};
+use crate::{result::Result, DataError};
 
 define_read_commands!(ReadCommandsChatPushNotifications);
 

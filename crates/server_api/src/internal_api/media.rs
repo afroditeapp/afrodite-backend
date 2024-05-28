@@ -1,13 +1,12 @@
 use api_internal::InternalApi;
 use model::AccountIdInternal;
+use server_common::data::WrappedWithInfo;
 
 use super::InternalApiError;
 use crate::{
     app::{GetConfig, GetInternalApi, ReadData},
     result::{Result, WrappedResultExt},
 };
-
-use server_common::data::WrappedWithInfo;
 
 /// Check that media server has correct state for completing initial setup.
 ///

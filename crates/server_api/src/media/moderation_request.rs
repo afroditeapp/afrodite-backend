@@ -3,7 +3,9 @@ use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestConten
 use simple_backend::create_counters;
 
 use crate::{
-    app::{ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
+    app::{ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";

@@ -6,7 +6,9 @@ use model::{AccountId, AccountIdInternal, ContentId, PendingSecurityContent, Sec
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
+    app::{GetAccounts, ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/:account_id";
@@ -32,9 +34,7 @@ pub async fn get_security_content_info<S: ReadData + GetAccounts>(
 
     // TODO: access restrictions
 
-    let internal_id = state
-        .get_internal_id(requested_account_id)
-        .await?;
+    let internal_id = state.get_internal_id(requested_account_id).await?;
 
     let internal_current_media = state
         .read()
@@ -102,9 +102,7 @@ pub async fn get_pending_security_content_info<S: ReadData + GetAccounts>(
 
     // TODO: access restrictions
 
-    let internal_id = state
-        .get_internal_id(requested_account_id)
-        .await?;
+    let internal_id = state.get_internal_id(requested_account_id).await?;
 
     let internal_current_media = state
         .read()

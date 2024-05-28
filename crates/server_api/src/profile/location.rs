@@ -3,7 +3,9 @@ use model::{AccountIdInternal, Location};
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccessTokens, ReadData, StateBase, WriteData}, db_write, utils::{Json, StatusCode}
+    app::{GetAccessTokens, ReadData, StateBase, WriteData},
+    db_write,
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_GET_LOCATION: &str = "/profile_api/location";

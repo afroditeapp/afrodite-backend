@@ -1,10 +1,10 @@
 use axum::{extract::State, Extension, Router};
-
 use model::{Account, AccountIdInternal};
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccessTokens, ReadData, StateBase}, utils::{Json, StatusCode}
+    app::{GetAccessTokens, ReadData, StateBase},
+    utils::{Json, StatusCode},
 };
 
 pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
