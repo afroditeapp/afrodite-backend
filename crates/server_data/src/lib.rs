@@ -12,11 +12,10 @@ use std::{
 
 use config::Config;
 use database::{
-    CurrentReadHandle, CurrentWriteHandle, ErrorContext, HistoryReadHandle, HistoryWriteHandle,
+    CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle,
 };
-use error_stack::Context;
 use event::EventManagerWithCacheReference;
-use model::{AccountId, AccountIdInternal, EmailAddress, IsLoggingAllowed, SignInWithInfo};
+use model::{AccountId, AccountIdInternal, EmailAddress, SignInWithInfo};
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
 use tracing::info;
@@ -36,9 +35,8 @@ use self::{
     write_concurrent::WriteCommandsConcurrent,
 };
 use server_common::{
-    internal_api::InternalApiError,
     push_notifications::PushNotificationSender,
-    result::{Result, WrappedReport},
+    result::{Result},
 };
 
 pub use server_common::{result, data::{DataError, IntoDataError}};

@@ -1,21 +1,13 @@
 
 use std::{
     fmt::Debug,
-    fs,
-    path::Path,
-    sync::Arc,
 };
 
-use config::Config;
 use database::{
-    CurrentReadHandle, CurrentWriteHandle, ErrorContext, HistoryReadHandle, HistoryWriteHandle,
+    ErrorContext,
 };
 use error_stack::Context;
-use model::{AccountId, AccountIdInternal, EmailAddress, IsLoggingAllowed, SignInWithInfo};
-use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_database::{DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle};
-use simple_backend_utils::ComponentError;
-use tracing::info;
+use model::{IsLoggingAllowed};
 
 use crate::{internal_api::InternalApiError, result::WrappedReport};
 

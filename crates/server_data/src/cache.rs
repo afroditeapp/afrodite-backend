@@ -10,7 +10,7 @@ use model::{
     SortedProfileAttributes,
 };
 use simple_backend_database::diesel_db::{DieselConnection, DieselDatabaseError};
-use simple_backend_utils::{ComponentError, IntoReportFromString};
+use simple_backend_utils::{IntoReportFromString};
 use tokio::sync::RwLock;
 use tracing::info;
 

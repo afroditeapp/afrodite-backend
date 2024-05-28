@@ -1,17 +1,11 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::Arc,
-};
 
 use model::{
-    AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
-    ContentProcessingStateChanged, ContentSlot, MediaContentType, NewContentParams,
+    MediaContentType,
 };
 use server_data::content_processing::{notify_client, ContentProcessingNotify, ProcessingState};
-use simple_backend::{app::SimpleBackendAppState, image::ImageProcess, ServerQuitWatcher};
+use simple_backend::{image::ImageProcess, ServerQuitWatcher};
 use simple_backend_config::args::InputFileType;
 use tokio::{
-    sync::{Notify, RwLock},
     task::JoinHandle,
 };
 use tracing::{error, warn};
@@ -19,8 +13,6 @@ use tracing::{error, warn};
 use crate::{
     app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData},
 };
-use server_data::file::utils::TmpContentFile;
-use server_data::event::EventManagerWithCacheReference;
 use server_common::result::{Result, WrappedResultExt};
 
 #[derive(thiserror::Error, Debug)]

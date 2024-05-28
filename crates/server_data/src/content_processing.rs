@@ -6,21 +6,14 @@ use std::{
 
 use model::{
     AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
-    ContentProcessingStateChanged, ContentSlot, MediaContentType, NewContentParams,
+    ContentProcessingStateChanged, ContentSlot, NewContentParams,
 };
-use simple_backend_database::data;
 use crate::event::{EventManagerWithCacheReference};
-use simple_backend::{app::SimpleBackendAppState, image::ImageProcess, ServerQuitWatcher};
-use simple_backend_config::args::InputFileType;
 use tokio::{
     sync::{Notify, RwLock},
-    task::JoinHandle,
 };
-use tracing::{error, warn};
+use tracing::{warn};
 
-use crate::{
-    result::{Result, WrappedResultExt},
-};
 
 use crate::file::utils::TmpContentFile;
 

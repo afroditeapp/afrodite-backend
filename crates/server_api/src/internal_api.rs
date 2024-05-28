@@ -5,7 +5,7 @@
 use api_internal::Configuration;
 use config::InternalApiUrls;
 use server_common::internal_api::InternalApiError;
-use tracing::{error, info};
+use tracing::{info};
 
 use crate::result::{Result, WrappedContextExt};
 

@@ -1,21 +1,11 @@
-use std::sync::Arc;
 
-use axum::{
-    routing::{get, post},
-    Router,
-};
-use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
-use error_stack::{Result, ResultExt};
-use futures::Future;
+use config::{file::ConfigFileError, Config};
+use error_stack::{Result};
 use model::{AccountId, AccountIdInternal, BackendConfig, BackendVersion};
-use simple_backend::{
-    app::{GetSimpleBackendConfig, SimpleBackendAppState},
-    web_socket::WebSocketManager,
-};
 
 
 use crate::{
-    data::DataError, push_notifications::PushNotificationSender
+    data::DataError
 };
 
 pub trait GetConfig {
