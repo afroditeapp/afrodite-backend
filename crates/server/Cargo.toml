@@ -6,22 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-uuid = { workspace = true, features = ["v4", "serde"] }
-
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-
 futures = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true, features = ["sync", "fs"] }
-tokio-util = { workspace = true, features = ["io"]}
-hyper = { workspace = true, features = ["full"] }
 axum = { workspace = true, features = ["ws", "macros"] }
-axum-extra = { workspace = true, features = ["typed-header"] }
 tracing = { workspace = true }
-headers = { workspace = true }
-reqwest = { workspace = true, features = ["json"] }
 
 utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
@@ -31,21 +19,11 @@ error-stack = { workspace = true }
 
 async-trait = { workspace = true }
 
-nalgebra = { workspace = true }
-
-num_cpus = { workspace = true }
 nix = { workspace = true, default-features = false, features = ["signal"] }
 
-# Firebase cloud messaging
-fcm = { workspace = true }
-
-manager_model = { path = "../app-manager/crates/manager_model" }
-
-utils = { path = "../utils" }
 config = { path = "../config" }
 database = { path = "../database" }
 model = { path = "../model" }
-api_internal = { path = "../api_internal" }
 
 server_common = { path = "../server_common" }
 server_api = { path = "../server_api" }
@@ -54,5 +32,3 @@ server_data = { path = "../server_data" }
 simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_config = { path = "../simple_backend_config" }
-simple_backend_model = { path = "../simple_backend_model" }
-simple_backend_database = { path = "../simple_backend_database" }
