@@ -1,11 +1,9 @@
-use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle, DieselConnection, DieselDatabaseError};
-use error_stack::ResultExt;
+use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader, DieselConnection, DieselDatabaseError};
 use model::{
     AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest,
     ModerationRequestState,
 };
 use server_common::data::DataError;
-use simple_backend_utils::IntoReportFromString;
 use tokio_util::io::ReaderStream;
 
 use self::{
@@ -206,41 +204,6 @@ impl<'a> ReadCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReader { db: self.db }.db_read(cmd).await
-    }
-}
-
-pub struct DbReader<'a> {
-    db: &'a CurrentReadHandle,
-}
-
-impl<'a> DbReader<'a> {
-    pub fn new(db: &'a CurrentReadHandle) -> Self {
-        Self { db }
-    }
-
-    pub async fn db_read<
-        T: FnOnce(
-                CurrentSyncReadCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
-        let conn = self
-            .db
-            .0
-            .diesel()
-            .pool()
-            .get()
-            .await
-            .change_context(DieselDatabaseError::GetConnection)?;
-
-        conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
+        DbReader::new(self.db).db_read(cmd).await
     }
 }

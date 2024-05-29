@@ -310,9 +310,6 @@ impl DieselReadHandle {
 
 pub trait ConnectionProvider {
     fn conn(&mut self) -> &mut DieselConnection;
-    // fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
-    //     crate::current::read::CurrentSyncReadCommands::new(self.conn())
-    // }
 }
 
 impl ConnectionProvider for &mut DieselConnection {

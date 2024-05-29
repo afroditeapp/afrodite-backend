@@ -6,7 +6,7 @@ use std::{
 };
 
 use config::Config;
-use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle};
+use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader};
 use error_stack::{Result, ResultExt};
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey,
@@ -17,14 +17,13 @@ use model::{
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
 use database::{DieselConnection, DieselDatabaseError};
-use simple_backend_utils::IntoReportFromString;
 use tokio::sync::RwLock;
 use tracing::info;
 
 use super::index::{
     location::LocationIndexIteratorState, LocationIndexIteratorHandle, LocationIndexManager,
 };
-use crate::{event::EventMode, index::LocationIndexWriteHandle, read::DbReader};
+use crate::{event::EventMode, index::LocationIndexWriteHandle};
 
 #[derive(Debug)]
 pub struct AccountEntry {
@@ -457,19 +456,9 @@ async fn db_read<
     read: &CurrentReadHandle,
     cmd: T,
 ) -> Result<R, CacheError> {
-    let conn = read
-        .0
-        .diesel()
-        .pool()
-        .get()
+    DbReader::new(read)
+        .db_read(cmd)
         .await
-        .change_context(DieselDatabaseError::GetConnection)
-        .change_context(CacheError::Init)?;
-
-    conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
-        .await
-        .into_error_string(DieselDatabaseError::Execute)
-        .change_context(CacheError::Init)?
         .change_context(CacheError::Init)
 }
 

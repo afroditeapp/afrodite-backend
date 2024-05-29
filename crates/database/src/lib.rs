@@ -8,6 +8,7 @@ pub mod history;
 
 use std::{fmt::Debug, marker::PhantomData};
 
+use current::read::CurrentSyncReadCommands;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use error_stack::{Context, Result, ResultExt};
 pub use model::schema;
@@ -24,6 +25,7 @@ pub use simple_backend_database::{
     diesel_db::{DieselDatabaseError, DieselConnection},
     PoolObject,
 };
+use simple_backend_utils::IntoReportFromString;
 
 /// Write handle for current database.
 #[derive(Clone, Debug)]
@@ -178,5 +180,40 @@ impl From<::diesel::result::Error> for TransactionError {
             error_stack::report!(value)
                 .change_context(DieselDatabaseError::FromDieselErrorToTransactionError),
         )
+    }
+}
+
+pub struct DbReader<'a> {
+    db: &'a CurrentReadHandle,
+}
+
+impl<'a> DbReader<'a> {
+    pub fn new(db: &'a CurrentReadHandle) -> Self {
+        Self { db }
+    }
+
+    pub async fn db_read<
+        T: FnOnce(
+                CurrentSyncReadCommands<&mut DieselConnection>,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        let conn = self
+            .db
+            .0
+            .diesel()
+            .pool()
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+
+        conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
+            .await
+            .into_error_string(DieselDatabaseError::Execute)?
     }
 }
