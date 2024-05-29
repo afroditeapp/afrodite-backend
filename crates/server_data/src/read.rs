@@ -14,23 +14,23 @@ use crate::result::Result;
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {
-        pub struct $struct_name<'a> {
-            cmds: crate::read::ReadCommands<'a>,
+        pub struct $struct_name<C: $crate::read::ReadCommandsProvider> {
+            cmds: C,
         }
 
-        impl<'a> $struct_name<'a> {
-            pub fn new(cmds: crate::read::ReadCommands<'a>) -> Self {
+        impl<C: $crate::read::ReadCommandsProvider> $struct_name<C> {
+            pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
             #[allow(dead_code)]
             fn cache(&self) -> &crate::DatabaseCache {
-                &self.cmds.cache
+                &self.cmds.read_cmds().cache
             }
 
             #[allow(dead_code)]
             fn files(&self) -> &crate::FileDir {
-                &self.cmds.files
+                &self.cmds.read_cmds().files
             }
 
             pub async fn db_read<
@@ -49,7 +49,7 @@ macro_rules! define_read_commands {
                 cmd: T,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
-                self.cmds.db_read(cmd).await
+                self.cmds.read_cmds().db_read(cmd).await
             }
 
             // TODO: change cache operation to return Result?
@@ -85,8 +85,8 @@ impl<'a> ReadCommands<'a> {
         }
     }
 
-    pub fn common(self) -> ReadCommandsCommon<'a> {
-        ReadCommandsCommon::new(self)
+    pub fn common(self) -> ReadCommandsCommon<ReadCommandsContainer<'a>> {
+        ReadCommandsCommon::new(ReadCommandsContainer::new(self))
     }
 
     pub async fn db_read<
@@ -119,34 +119,26 @@ impl<'a> ReadCommands<'a> {
 }
 
 
-// pub fn account(self) -> ReadCommandsAccount<'a> {
-//     ReadCommandsAccount::new(self)
-// }
+pub struct ReadCommandsContainer<'a> {
+    pub cmds: ReadCommands<'a>,
+}
 
-// pub fn account_admin(self) -> ReadCommandsAccountAdmin<'a> {
-//     ReadCommandsAccountAdmin::new(self)
-// }
+impl<'a> ReadCommandsContainer<'a> {
+    pub fn new(
+        cmds: ReadCommands<'a>,
+    ) -> Self {
+        Self {
+            cmds,
+        }
+    }
+}
 
-// pub fn media(self) -> ReadCommandsMedia<'a> {
-//     ReadCommandsMedia::new(self)
-// }
+pub trait ReadCommandsProvider {
+    fn read_cmds(&self) -> &ReadCommands;
+}
 
-// pub fn media_admin(self) -> ReadCommandsMediaAdmin<'a> {
-//     ReadCommandsMediaAdmin::new(self)
-// }
-
-// pub fn profile(self) -> ReadCommandsProfile<'a> {
-//     ReadCommandsProfile::new(self)
-// }
-
-// pub fn profile_admin(self) -> ReadCommandsProfileAdmin<'a> {
-//     ReadCommandsProfileAdmin::new(self)
-// }
-
-// pub fn chat(self) -> ReadCommandsChat<'a> {
-//     ReadCommandsChat::new(self)
-// }
-
-// pub fn chat_admin(self) -> ReadCommandsChatAdmin<'a> {
-//     ReadCommandsChatAdmin::new(self)
-// }
+impl <'a> ReadCommandsProvider for ReadCommandsContainer<'a> {
+    fn read_cmds(&self) -> &ReadCommands {
+        &self.cmds
+    }
+}

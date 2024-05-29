@@ -2,23 +2,23 @@
 #[macro_export]
 macro_rules! define_server_data_read_commands {
     ($struct_name:ident) => {
-        pub struct $struct_name<'a> {
-            cmds: $crate::read::ReadCommands<'a>,
+        pub struct $struct_name<C: $crate::read::ReadCommandsProvider> {
+            cmds: C,
         }
 
-        impl<'a> $struct_name<'a> {
-            pub fn new(cmds: $crate::read::ReadCommands<'a>) -> Self {
+        impl<C: $crate::read::ReadCommandsProvider> $struct_name<C> {
+            pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
             #[allow(dead_code)]
             fn cache(&self) -> &$crate::cache::DatabaseCache {
-                &self.cmds.cache
+                &self.cmds.read_cmds().cache
             }
 
             #[allow(dead_code)]
             fn files(&self) -> &$crate::file::utils::FileDir {
-                &self.cmds.files
+                &self.cmds.read_cmds().files
             }
 
             pub async fn db_read_raw<
@@ -35,7 +35,7 @@ macro_rules! define_server_data_read_commands {
                 cmd: T,
             ) -> error_stack::Result<R, $crate::DieselDatabaseError>
             {
-                self.cmds.db_read_raw(cmd).await
+                self.cmds.read_cmds().db_read_raw(cmd).await
             }
 
             pub async fn db_read_common<
@@ -54,7 +54,7 @@ macro_rules! define_server_data_read_commands {
                 cmd: T,
             ) -> error_stack::Result<R, $crate::DieselDatabaseError>
             {
-                self.cmds.db_read(cmd).await
+                self.cmds.read_cmds().db_read(cmd).await
             }
 
             // TODO: change cache operation to return Result?
@@ -72,56 +72,56 @@ macro_rules! define_server_data_read_commands {
 #[macro_export]
 macro_rules! define_server_data_write_commands {
     ($struct_name:ident) => {
-        pub struct $struct_name<'a> {
-            cmds: $crate::write::WriteCommands<'a>,
+        pub struct $struct_name<C: $crate::write::WriteCommandsProvider> {
+            cmds: C,
         }
 
-        impl<'a> $struct_name<'a> {
-            pub fn new(cmds: $crate::write::WriteCommands<'a>) -> Self {
+        impl<C: $crate::write::WriteCommandsProvider> $struct_name<C> {
+            pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
             #[allow(dead_code)]
             fn cache(&self) -> &$crate::cache::DatabaseCache {
-                &self.cmds.cache
+                &self.cmds.write_cmds().cache
             }
 
             #[allow(dead_code)]
             fn events(&self) -> $crate::event::EventManagerWithCacheReference<'_> {
                 $crate::event::EventManagerWithCacheReference::new(
-                    &self.cmds.cache,
-                    &self.cmds.push_notification_sender,
+                    &self.cmds.write_cmds().cache,
+                    &self.cmds.write_cmds().push_notification_sender,
                 )
             }
 
             #[allow(dead_code)]
             fn config(&self) -> &config::Config {
-                &self.cmds.config
+                &self.cmds.write_cmds().config
             }
 
             #[allow(dead_code)]
             fn file_dir(&self) -> &$crate::file::utils::FileDir {
-                &self.cmds.file_dir
+                &self.cmds.write_cmds().file_dir
             }
 
             #[allow(dead_code)]
-            fn location(&self) -> $crate::index::LocationIndexWriteHandle<'a> {
-                $crate::index::LocationIndexWriteHandle::new(&self.cmds.location_index)
+            fn location(&self) -> $crate::index::LocationIndexWriteHandle<'_> {
+                $crate::index::LocationIndexWriteHandle::new(&self.cmds.write_cmds().location_index)
             }
 
             #[allow(dead_code)]
-            fn location_iterator(&self) -> $crate::index::LocationIndexIteratorHandle<'a> {
-                $crate::index::LocationIndexIteratorHandle::new(&self.cmds.location_index)
+            fn location_iterator(&self) -> $crate::index::LocationIndexIteratorHandle<'_> {
+                $crate::index::LocationIndexIteratorHandle::new(&self.cmds.write_cmds().location_index)
             }
 
             #[allow(dead_code)]
             fn media_backup(&self) -> &simple_backend::media_backup::MediaBackupHandle {
-                &self.cmds.media_backup
+                &self.cmds.write_cmds().media_backup
             }
 
             #[allow(dead_code)]
-            fn common(&self) -> $crate::write::common::WriteCommandsCommon<'a> {
-                $crate::write::common::WriteCommandsCommon::new(self.cmds.clone())
+            fn common(&self) -> $crate::write::common::WriteCommandsCommon<&$crate::write::WriteCommands> {
+                $crate::write::common::WriteCommandsCommon::new(self.cmds.write_cmds())
             }
 
             pub async fn db_transaction_common<
@@ -140,7 +140,7 @@ macro_rules! define_server_data_write_commands {
                 cmd: T,
             ) -> error_stack::Result<R, $crate::DieselDatabaseError>
             {
-                self.cmds.db_transaction_common(cmd).await
+                self.cmds.write_cmds().db_transaction_common(cmd).await
             }
 
             pub async fn db_read_raw<
@@ -157,7 +157,7 @@ macro_rules! define_server_data_write_commands {
                 cmd: T,
             ) -> error_stack::Result<R, $crate::DieselDatabaseError>
             {
-                self.cmds.db_read_raw(cmd).await
+                self.cmds.write_cmds().db_read_raw(cmd).await
             }
 
             pub async fn db_read_common<
@@ -176,7 +176,7 @@ macro_rules! define_server_data_write_commands {
                 cmd: T,
             ) -> error_stack::Result<R, $crate::DieselDatabaseError>
             {
-                self.cmds.db_read(cmd).await
+                self.cmds.write_cmds().db_read(cmd).await
             }
 
             pub async fn write_cache<T, Id: Into<model::AccountId>>(

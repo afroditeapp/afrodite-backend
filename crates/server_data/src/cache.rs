@@ -44,6 +44,14 @@ impl DatabaseCache {
         Self::default()
     }
 
+    pub fn accounts(&self) -> &RwLock<HashMap<AccountId, Arc<AccountEntry>>> {
+        &self.accounts
+    }
+
+    pub fn access_tokens(&self) -> &RwLock<HashMap<AccessToken, Arc<AccountEntry>>> {
+        &self.access_tokens
+    }
+
     pub async fn insert_account_if_not_exists(
         &self,
         id: AccountIdInternal,
@@ -308,21 +316,6 @@ impl CacheEntry {
     // TODO(refactor): Add helper functions to get data related do features
     // that can be disabled. Those should return Result<Data, CacheError>.
     // Also read_cache action closure might need or should to return Result.
-}
-
-async fn db_read<
-    T: FnOnce(CurrentSyncReadCommands<&mut DieselConnection>) -> Result<R, DieselDatabaseError>
-        + Send
-        + 'static,
-    R: Send + 'static,
->(
-    read: &CurrentReadHandle,
-    cmd: T,
-) -> Result<R, CacheError> {
-    DbReader::new(read)
-        .db_read(cmd)
-        .await
-        .change_context(CacheError::Init)
 }
 
 impl Default for CacheEntry {

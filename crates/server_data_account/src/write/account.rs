@@ -8,13 +8,12 @@ use server_data::define_server_data_write_commands;
 use server_data::{cache::CacheError, result::Result, DataError, DieselDatabaseError};
 
 define_server_data_write_commands!(WriteCommandsAccount);
-define_db_read_command!(WriteCommandsAccount);
 define_db_transaction_command!(WriteCommandsAccount);
 
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
 
-impl WriteCommandsAccount<'_> {
+impl <C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
     /// The only method which can modify AccountState, Capabilities and
     /// ProfileVisibility. This also updates profile index if profile component
     /// is enabled and the visibility changed.

@@ -1,11 +1,11 @@
 use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken};
 
-use super::super::DataError;
+use super::{super::DataError, ReadCommandsProvider};
 use crate::{define_server_data_read_commands, event::EventMode, result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsCommon);
 
-impl ReadCommandsCommon<'_> {
+impl <C: ReadCommandsProvider> ReadCommandsCommon<C> {
     pub async fn account_access_token(
         &self,
         id: AccountId,

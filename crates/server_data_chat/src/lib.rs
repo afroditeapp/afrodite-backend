@@ -6,7 +6,7 @@
 
 macro_rules! define_db_read_command {
     ($struct_name:ident) => {
-        impl<'a> $struct_name<'a> {
+        impl<C: server_data::read::ReadCommandsProvider> $struct_name<C> {
             pub async fn db_read<
                 T: FnOnce(
                         database_chat::current::read::CurrentSyncReadCommands<
@@ -31,7 +31,7 @@ macro_rules! define_db_read_command {
 
 macro_rules! define_db_transaction_command {
     ($struct_name:ident) => {
-        impl<'a> $struct_name<'a> {
+        impl<C: server_data::write::WriteCommandsProvider> $struct_name<C> {
             pub async fn db_transaction<
                 T: FnOnce(
                         database_chat::current::write::CurrentSyncWriteCommands<
@@ -48,7 +48,7 @@ macro_rules! define_db_transaction_command {
                 cmd: T,
             ) -> error_stack::Result<R, server_data::DieselDatabaseError>
             {
-                self.cmds.db_transaction_raw(|conn| cmd(database_chat::current::write::CurrentSyncWriteCommands::new(conn))).await
+                self.cmds.write_cmds().db_transaction_raw(|conn| cmd(database_chat::current::write::CurrentSyncWriteCommands::new(conn))).await
             }
         }
     };

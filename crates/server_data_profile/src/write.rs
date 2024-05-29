@@ -2,22 +2,22 @@
 
 use profile::WriteCommandsProfile;
 use profile_admin::WriteCommandsProfileAdmin;
-use server_data::write::WriteCommands;
+use server_data::write::{WriteCommands, WriteCommandsProvider};
 
 pub mod profile;
 pub mod profile_admin;
 
-pub trait GetWriteCommandsProfile<'a>: Sized {
-    fn profile(self) -> WriteCommandsProfile<'a>;
-    fn profile_admin(self) -> WriteCommandsProfileAdmin<'a>;
+pub trait GetWriteCommandsProfile<C: WriteCommandsProvider> {
+    fn profile(self) -> WriteCommandsProfile<C>;
+    fn profile_admin(self) -> WriteCommandsProfileAdmin<C>;
 }
 
-impl <'a> GetWriteCommandsProfile<'a> for WriteCommands<'a> {
-    fn profile(self) -> WriteCommandsProfile<'a> {
+impl <C: WriteCommandsProvider> GetWriteCommandsProfile<C> for C {
+    fn profile(self) -> WriteCommandsProfile<C> {
         WriteCommandsProfile::new(self)
     }
 
-    fn profile_admin(self) -> WriteCommandsProfileAdmin<'a> {
+    fn profile_admin(self) -> WriteCommandsProfileAdmin<C> {
         WriteCommandsProfileAdmin::new(self)
     }
 }

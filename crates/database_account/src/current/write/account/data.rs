@@ -12,24 +12,6 @@ use crate::IntoDatabaseError;
 define_current_write_commands!(CurrentWriteAccountData, CurrentSyncWriteAccountData);
 
 impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
-    pub fn insert_account_id(
-        mut self,
-        account_uuid: AccountId,
-    ) -> Result<AccountIdInternal, DieselDatabaseError> {
-        use model::schema::account_id::dsl::*;
-
-        let db_id: AccountIdDb = insert_into(account_id)
-            .values(uuid.eq(account_uuid))
-            .returning(id)
-            .get_result(self.conn())
-            .into_db_error(account_uuid)?;
-
-        Ok(AccountIdInternal {
-            uuid: account_uuid,
-            id: db_id,
-        })
-    }
-
     pub fn insert_account(
         &mut self,
         id: AccountIdInternal,

@@ -3,7 +3,7 @@ use model::{
     Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType,
     ProfileVisibility,
 };
-use server_data::define_server_data_write_commands;
+use server_data::{define_server_data_write_commands, write::WriteCommandsProvider};
 
 use server_common::{result::Result, data::DataError, data::IntoDataError};
 
@@ -26,7 +26,7 @@ pub struct CurrentAndNewAccount {
     pub new: Account,
 }
 
-impl WriteCommandsMediaAdmin<'_> {
+impl <C: WriteCommandsProvider> WriteCommandsMediaAdmin<C> {
     pub async fn moderation_get_list_and_create_new_if_necessary(
         self,
         account_id: AccountIdInternal,
@@ -95,6 +95,7 @@ impl WriteCommandsMediaAdmin<'_> {
 
         if let Some(accounts) = &info.cache_should_be_updated {
             self.cmds
+                .write_cmds()
                 .common()
                 .internal_handle_new_account_data_after_db_modification(
                     accounts.id,

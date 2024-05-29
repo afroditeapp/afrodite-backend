@@ -3,6 +3,7 @@ use std::{ops::DerefMut, sync::Arc};
 
 use config::Config;
 use database::{
+    ConnectionProvider,
     current::{
         read::CurrentSyncReadCommands,
         write::TransactionConnection,
@@ -16,29 +17,27 @@ use server_common::push_notifications::PushNotificationSender;
 use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_utils::IntoReportFromString;
 
-use self::{
-    common::WriteCommandsCommon,
+use crate::load::DbDataToCacheLoader;
+
+use server_data::{
+    cache::DatabaseCache, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, write::WriteCommands, IntoDataError
 };
-use super::{
-    cache::DatabaseCache,
-    file::utils::FileDir,
-    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
-    IntoDataError,
-};
-use crate::{result::Result, DataError};
+use server_data::{result::Result, DataError};
 
 
-pub struct RegisterAccount;
+pub struct RegisterAccount<'a> {
+    cmds: WriteCommands<'a>,
+}
 
-impl RegisterAccount {
+impl RegisterAccount<'_> {
     pub async fn register(
         &self,
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> Result<AccountIdInternal, DataError> {
-        let config = self.config.clone();
-        let id: AccountIdInternal = self
+        let config = self.cmds.config.clone();
+        let id: AccountIdInternal = self.cmds
             .db_transaction_with_history(move |transaction, history_conn| {
                 Self::register_db_action(
                     config,
@@ -51,13 +50,13 @@ impl RegisterAccount {
             })
             .await?;
 
-        self.cache
-            .load_account_from_db(
+            DbDataToCacheLoader::load_account_from_db(
+                self.cmds.cache,
                 id,
-                self.config,
-                &self.current_write_handle.to_read_handle(),
-                LocationIndexIteratorHandle::new(self.location_index),
-                LocationIndexWriteHandle::new(self.location_index),
+                self.cmds.config,
+                &self.cmds.current_write_handle.to_read_handle(),
+                LocationIndexIteratorHandle::new(self.cmds.location_index),
+                LocationIndexWriteHandle::new(self.cmds.location_index),
             )
             .await
             .into_data_error(id)?;
@@ -70,25 +69,26 @@ impl RegisterAccount {
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
-        transaction: TransactionConnection<'_>,
+        mut transaction: TransactionConnection<'_>,
         history_conn: PoolObject,
     ) -> std::result::Result<AccountIdInternal, TransactionError> {
         let account = Account::default();
         let account_setup = AccountSetup::default();
 
-        let mut current = transaction.into_cmds();
+        let mut conn = &mut transaction;
 
         // No transaction for history as it does not matter if some default
         // data will be left there if there is some error.
         let mut history_conn = history_conn
             .lock()
             .into_error_string(DieselDatabaseError::LockConnectionFailed)?;
-        let mut history = HistorySyncWriteCommands::new(history_conn.deref_mut());
+        let mut history = database_account::history::write::HistorySyncWriteCommands::new(history_conn.deref_mut());
 
         // Common
-        let id = current.account().data().insert_account_id(id_light)?;
-        current.account().token().insert_access_token(id, None)?;
-        current.account().token().insert_refresh_token(id, None)?;
+        let mut current = database::current::write::CurrentSyncWriteCommands::new(conn.conn());
+        let id = current.common().insert_account_id(id_light)?;
+        current.common().token().insert_access_token(id, None)?;
+        current.common().token().insert_refresh_token(id, None)?;
         current
             .common()
             .state()
@@ -102,6 +102,7 @@ impl RegisterAccount {
         history.account().insert_account_id(id)?;
 
         if config.components().account {
+            let mut current = database_account::current::write::CurrentSyncWriteCommands::new(conn.conn());
             current
                 .account()
                 .data()
@@ -124,6 +125,8 @@ impl RegisterAccount {
         }
 
         if config.components().profile {
+            let mut current = database_profile::current::write::CurrentSyncWriteCommands::new(conn.conn());
+            let mut history = database_profile::history::write::HistorySyncWriteCommands::new(history_conn.deref_mut());
             let profile = current.profile().data().insert_profile(id)?;
             current.profile().data().insert_profile_state(id)?;
 
@@ -138,6 +141,7 @@ impl RegisterAccount {
         }
 
         if config.components().media {
+            let mut current = database_media::current::write::CurrentSyncWriteCommands::new(conn.conn());
             current.media().insert_media_state(id)?;
 
             current
@@ -147,6 +151,7 @@ impl RegisterAccount {
         }
 
         if config.components().chat {
+            let mut current = database_chat::current::write::CurrentSyncWriteCommands::new(conn.conn());
             current.chat().insert_chat_state(id)?;
         }
 

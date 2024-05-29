@@ -3,7 +3,7 @@ mod push_notifications;
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
 use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, SyncVersionUtils};
-use server_data::define_server_data_write_commands;
+use server_data::{define_server_data_write_commands, write::WriteCommandsProvider};
 use simple_backend_utils::ContextExt;
 
 use self::push_notifications::WriteCommandsChatPushNotifications;
@@ -12,13 +12,13 @@ use server_data::{result::Result, DataError, DieselDatabaseError};
 define_server_data_write_commands!(WriteCommandsChat);
 define_db_transaction_command!(WriteCommandsChat);
 
-impl<'a> WriteCommandsChat<'a> {
-    pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<'a> {
+impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
+    pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<C> {
         WriteCommandsChatPushNotifications::new(self.cmds)
     }
 }
 
-impl WriteCommandsChat<'_> {
+impl <C: WriteCommandsProvider> WriteCommandsChat<C> {
     pub async fn modify_chat_state(
         &mut self,
         id: AccountIdInternal,

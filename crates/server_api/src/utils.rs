@@ -45,7 +45,7 @@ pub static ACCESS_TOKEN_HEADER: header::HeaderName =
 /// Adds `AccountState` extension to request, so that adding
 /// "Extension(api_caller_account_state): Extension<AccountState>"
 /// to handlers is possible.
-pub async fn authenticate_with_access_token<S: GetAccessTokens + ReadData>(
+pub async fn authenticate_with_access_token<S: GetAccessTokens>(
     State(state): State<S>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     mut req: Request<Body>,

@@ -4,7 +4,7 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle, HistoryReadHandle, HistoryWriteHandle};
-use crate::event::EventManagerWithCacheReference;
+use crate::{event::EventManagerWithCacheReference, write::WriteCommandsContainer};
 use model::{AccountId, AccountIdInternal, EmailAddress, SignInWithInfo};
 pub use server_common::{
     data::{DataError, IntoDataError},
@@ -246,8 +246,8 @@ impl SyncWriteHandle {
         ReadCommands::new(&self.current_read_handle, &self.cache, &self.root.file_dir)
     }
 
-    pub fn common(&self) -> WriteCommandsCommon {
-        self.cmds().common()
+    pub fn common(&self) -> WriteCommandsCommon<WriteCommandsContainer<'_>> {
+        self.cmds().into_common()
     }
 
     pub fn events(&self) -> EventManagerWithCacheReference<'_> {

@@ -1,21 +1,21 @@
 use profile::ReadCommandsProfile;
 use profile_admin::ReadCommandsProfileAdmin;
-use server_data::read::ReadCommands;
+use server_data::read::{ReadCommands, ReadCommandsProvider};
 
 pub mod profile;
 pub mod profile_admin;
 
-pub trait GetReadProfileCommands<'a>: Sized {
-    fn profile(self) -> ReadCommandsProfile<'a>;
-    fn profile_admin(self) -> ReadCommandsProfileAdmin<'a>;
+pub trait GetReadProfileCommands<C: ReadCommandsProvider> {
+    fn profile(self) -> ReadCommandsProfile<C>;
+    fn profile_admin(self) -> ReadCommandsProfileAdmin<C>;
 }
 
-impl <'a> GetReadProfileCommands<'a> for ReadCommands<'a> {
-    fn profile(self) -> ReadCommandsProfile<'a> {
+impl <C: ReadCommandsProvider> GetReadProfileCommands<C> for C {
+    fn profile(self) -> ReadCommandsProfile<C> {
         ReadCommandsProfile::new(self)
     }
 
-    fn profile_admin(self) -> ReadCommandsProfileAdmin<'a> {
+    fn profile_admin(self) -> ReadCommandsProfileAdmin<C> {
         ReadCommandsProfileAdmin::new(self)
     }
 }

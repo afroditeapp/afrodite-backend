@@ -1,4 +1,4 @@
-use server_data::{read::ReadCommands};
+use server_data::read::{ReadCommands, ReadCommandsProvider};
 use self::{
     account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin
 };
@@ -6,17 +6,17 @@ use self::{
 pub mod account;
 pub mod account_admin;
 
-pub trait GetReadCommandsAccount<'a>: Sized {
-    fn account(self) -> ReadCommandsAccount<'a>;
-    fn account_admin(self) -> ReadCommandsAccountAdmin<'a>;
+pub trait GetReadCommandsAccount<C: ReadCommandsProvider> {
+    fn account(self) -> ReadCommandsAccount<C>;
+    fn account_admin(self) -> ReadCommandsAccountAdmin<C>;
 }
 
-impl <'a> GetReadCommandsAccount<'a> for ReadCommands<'a> {
-    fn account(self) -> ReadCommandsAccount<'a> {
+impl <C: ReadCommandsProvider> GetReadCommandsAccount<C> for C {
+    fn account(self) -> ReadCommandsAccount<C> {
         ReadCommandsAccount::new(self)
     }
 
-    fn account_admin(self) -> ReadCommandsAccountAdmin<'a> {
+    fn account_admin(self) -> ReadCommandsAccountAdmin<C> {
         ReadCommandsAccountAdmin::new(self)
     }
 }

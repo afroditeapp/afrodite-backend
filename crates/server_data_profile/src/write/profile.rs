@@ -3,7 +3,7 @@ use model::{
     ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal,
     ValidatedSearchGroups,
 };
-use server_data::define_server_data_write_commands;
+use server_data::{define_server_data_write_commands, write::WriteCommandsProvider};
 use tracing::info;
 
 use server_data::{
@@ -14,10 +14,10 @@ use server_data::{
 };
 
 define_server_data_write_commands!(WriteCommandsProfile);
-define_db_read_command!(WriteCommandsProfile);
+define_db_read_command_for_write!(WriteCommandsProfile);
 define_db_transaction_command!(WriteCommandsProfile);
 
-impl WriteCommandsProfile<'_> {
+impl <C: WriteCommandsProvider> WriteCommandsProfile<C> {
     pub async fn profile_update_location(
         self,
         id: AccountIdInternal,

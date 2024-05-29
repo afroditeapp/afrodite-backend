@@ -30,61 +30,51 @@ use crate::{result::Result, DataError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
-        pub struct $struct_name<'a> {
-            cmds: $crate::write::WriteCommands<'a>,
+        pub struct $struct_name<C: $crate::write::WriteCommandsProvider> {
+            cmds: C,
         }
 
-        impl<'a> $struct_name<'a> {
-            pub fn new(cmds: $crate::write::WriteCommands<'a>) -> Self {
+        impl<C: $crate::write::WriteCommandsProvider> $struct_name<C> {
+            pub fn new(cmds: C) -> Self {
                 Self { cmds }
             }
 
             #[allow(dead_code)]
-            fn current_write(&self) -> &database::CurrentWriteHandle {
-                &self.cmds.current_write_handle
-            }
-
-            #[allow(dead_code)]
-            fn history_write(&self) -> &database::HistoryWriteHandle {
-                &self.cmds.history_write_handle
-            }
-
-            #[allow(dead_code)]
             fn cache(&self) -> &$crate::cache::DatabaseCache {
-                &self.cmds.cache
+                &self.cmds.write_cmds().cache
             }
 
             #[allow(dead_code)]
             fn events(&self) -> $crate::event::EventManagerWithCacheReference<'_> {
                 $crate::event::EventManagerWithCacheReference::new(
-                    &self.cmds.cache,
-                    &self.cmds.push_notification_sender,
+                    &self.cmds.write_cmds().cache,
+                    &self.cmds.write_cmds().push_notification_sender,
                 )
             }
 
             #[allow(dead_code)]
             fn config(&self) -> &config::Config {
-                &self.cmds.config
+                &self.cmds.write_cmds().config
             }
 
             #[allow(dead_code)]
             fn file_dir(&self) -> &$crate::FileDir {
-                &self.cmds.file_dir
+                &self.cmds.write_cmds().file_dir
             }
 
             #[allow(dead_code)]
-            fn location(&self) -> $crate::index::LocationIndexWriteHandle<'a> {
-                $crate::index::LocationIndexWriteHandle::new(&self.cmds.location_index)
+            fn location(&self) -> $crate::index::LocationIndexWriteHandle<'_> {
+                $crate::index::LocationIndexWriteHandle::new(self.cmds.write_cmds().location_index)
             }
 
             #[allow(dead_code)]
-            fn location_iterator(&self) -> $crate::index::LocationIndexIteratorHandle<'a> {
-                $crate::index::LocationIndexIteratorHandle::new(&self.cmds.location_index)
+            fn location_iterator(&self) -> $crate::index::LocationIndexIteratorHandle<'_> {
+                $crate::index::LocationIndexIteratorHandle::new(&self.cmds.write_cmds().location_index)
             }
 
             #[allow(dead_code)]
             fn media_backup(&self) -> &simple_backend::media_backup::MediaBackupHandle {
-                &self.cmds.media_backup
+                &self.cmds.write_cmds().media_backup
             }
 
             pub async fn db_transaction<
@@ -103,7 +93,7 @@ macro_rules! define_write_commands {
                 cmd: T,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
-                self.cmds.db_transaction_common(cmd).await
+                self.cmds.write_cmds().db_transaction_common(cmd).await
             }
 
             pub async fn db_read<
@@ -122,7 +112,7 @@ macro_rules! define_write_commands {
                 cmd: T,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
-                self.cmds.db_read(cmd).await
+                self.cmds.write_cmds().db_read(cmd).await
             }
 
             pub async fn write_cache<T, Id: Into<model::AccountId>>(
@@ -148,7 +138,6 @@ pub struct AccountWriteLock;
 // be needed.
 
 /// Globally synchronous write commands.
-#[derive(Clone)]
 pub struct WriteCommands<'a> {
     pub config: &'a Arc<Config>,
     pub current_write_handle: &'a CurrentWriteHandle,
@@ -184,8 +173,12 @@ impl<'a> WriteCommands<'a> {
         }
     }
 
-    pub fn common(self) -> WriteCommandsCommon<'a> {
+    pub fn common(&self) -> WriteCommandsCommon<&WriteCommands<'_>> {
         WriteCommandsCommon::new(self)
+    }
+
+    pub fn into_common(self) -> WriteCommandsCommon<WriteCommandsContainer<'a>> {
+        WriteCommandsCommon::new(WriteCommandsContainer::new(self))
     }
 
     pub async fn db_transaction_common<
@@ -300,37 +293,32 @@ macro_rules! db_transaction {
 
 // Make db_transaction available in all modules
 pub(crate) use db_transaction;
+pub struct WriteCommandsContainer<'a> {
+    pub cmds: WriteCommands<'a>,
+}
 
+impl<'a> WriteCommandsContainer<'a> {
+    pub fn new(
+        cmds: WriteCommands<'a>,
+    ) -> Self {
+        Self {
+            cmds,
+        }
+    }
+}
 
+pub trait WriteCommandsProvider {
+    fn write_cmds(&self) -> &WriteCommands;
+}
 
-// pub fn account(self) -> WriteCommandsAccount<'a> {
-//     WriteCommandsAccount::new(self)
-// }
+impl <'a> WriteCommandsProvider for WriteCommandsContainer<'a> {
+    fn write_cmds(&self) -> &WriteCommands {
+        &self.cmds
+    }
+}
 
-// pub fn account_admin(self) -> WriteCommandsAccountAdmin<'a> {
-//     WriteCommandsAccountAdmin::new(self)
-// }
-
-// pub fn media(self) -> WriteCommandsMedia<'a> {
-//     WriteCommandsMedia::new(self)
-// }
-
-// pub fn media_admin(self) -> WriteCommandsMediaAdmin<'a> {
-//     WriteCommandsMediaAdmin::new(self)
-// }
-
-// pub fn profile(self) -> WriteCommandsProfile<'a> {
-//     WriteCommandsProfile::new(self)
-// }
-
-// pub fn profile_admin(self) -> WriteCommandsProfileAdmin<'a> {
-//     WriteCommandsProfileAdmin::new(self)
-// }
-
-// pub fn chat(self) -> WriteCommandsChat<'a> {
-//     WriteCommandsChat::new(self)
-// }
-
-// pub fn chat_admin(self) -> WriteCommandsChatAdmin<'a> {
-//     WriteCommandsChatAdmin::new(self)
-// }
+impl <'a> WriteCommandsProvider for &WriteCommands<'a> {
+    fn write_cmds(&self) -> &WriteCommands {
+        self
+    }
+}

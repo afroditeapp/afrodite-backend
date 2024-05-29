@@ -2,22 +2,22 @@
 
 use account::WriteCommandsAccount;
 use account_admin::WriteCommandsAccountAdmin;
-use server_data::write::WriteCommands;
+use server_data::{read::ReadCommandsProvider, write::{WriteCommands, WriteCommandsProvider}};
 
 pub mod account;
 pub mod account_admin;
 
-pub trait GetWriteCommandsAccount<'a>: Sized {
-    fn account(self) -> WriteCommandsAccount<'a>;
-    fn account_admin(self) -> WriteCommandsAccountAdmin<'a>;
+pub trait GetWriteCommandsAccount<C: WriteCommandsProvider> {
+    fn account(self) -> WriteCommandsAccount<C>;
+    fn account_admin(self) -> WriteCommandsAccountAdmin<C>;
 }
 
-impl <'a> GetWriteCommandsAccount<'a> for WriteCommands<'a> {
-    fn account(self) -> WriteCommandsAccount<'a> {
+impl <C: WriteCommandsProvider> GetWriteCommandsAccount<C> for C {
+    fn account(self) -> WriteCommandsAccount<C> {
         WriteCommandsAccount::new(self)
     }
 
-    fn account_admin(self) -> WriteCommandsAccountAdmin<'a> {
+    fn account_admin(self) -> WriteCommandsAccountAdmin<C> {
         WriteCommandsAccountAdmin::new(self)
     }
 }

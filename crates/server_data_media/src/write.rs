@@ -3,23 +3,23 @@
 
 use media::WriteCommandsMedia;
 use media_admin::WriteCommandsMediaAdmin;
-use server_data::write::WriteCommands;
+use server_data::write::{WriteCommands, WriteCommandsProvider};
 
 pub mod media;
 pub mod media_admin;
 
 
-pub trait GetWriteCommandsMedia<'a>: Sized {
-    fn media(self) -> WriteCommandsMedia<'a>;
-    fn media_admin(self) -> WriteCommandsMediaAdmin<'a>;
+pub trait GetWriteCommandsMedia<C: WriteCommandsProvider> {
+    fn media(self) -> WriteCommandsMedia<C>;
+    fn media_admin(self) -> WriteCommandsMediaAdmin<C>;
 }
 
-impl <'a> GetWriteCommandsMedia<'a> for WriteCommands<'a> {
-    fn media(self) -> WriteCommandsMedia<'a> {
+impl <C: WriteCommandsProvider> GetWriteCommandsMedia<C> for C {
+    fn media(self) -> WriteCommandsMedia<C> {
         WriteCommandsMedia::new(self)
     }
 
-    fn media_admin(self) -> WriteCommandsMediaAdmin<'a> {
+    fn media_admin(self) -> WriteCommandsMediaAdmin<C> {
         WriteCommandsMediaAdmin::new(self)
     }
 }

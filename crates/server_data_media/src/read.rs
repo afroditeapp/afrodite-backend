@@ -1,22 +1,22 @@
 
 use media::ReadCommandsMedia;
 use media_admin::ReadCommandsMediaAdmin;
-use server_data::{read::ReadCommands};
+use server_data::read::{ReadCommands, ReadCommandsProvider};
 
 pub mod media;
 pub mod media_admin;
 
-pub trait GetReadMediaCommands<'a>: Sized {
-    fn media(self) -> ReadCommandsMedia<'a>;
-    fn media_admin(self) -> ReadCommandsMediaAdmin<'a>;
+pub trait GetReadMediaCommands<C: ReadCommandsProvider> {
+    fn media(self) -> ReadCommandsMedia<C>;
+    fn media_admin(self) -> ReadCommandsMediaAdmin<C>;
 }
 
-impl <'a> GetReadMediaCommands<'a> for ReadCommands<'a> {
-    fn media(self) -> ReadCommandsMedia<'a> {
+impl <C: ReadCommandsProvider> GetReadMediaCommands<C> for C {
+    fn media(self) -> ReadCommandsMedia<C> {
         ReadCommandsMedia::new(self)
     }
 
-    fn media_admin(self) -> ReadCommandsMediaAdmin<'a> {
+    fn media_admin(self) -> ReadCommandsMediaAdmin<C> {
         ReadCommandsMediaAdmin::new(self)
     }
 }

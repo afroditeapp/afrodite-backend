@@ -4,6 +4,7 @@ use model::{
 };
 use server_data::define_server_data_read_commands;
 
+use server_data::read::ReadCommandsProvider;
 use server_data::{
     result::{Result, WrappedContextExt},
     DataError, IntoDataError,
@@ -12,7 +13,7 @@ use server_data::{
 define_server_data_read_commands!(ReadCommandsProfile);
 define_db_read_command!(ReadCommandsProfile);
 
-impl ReadCommandsProfile<'_> {
+impl <C: ReadCommandsProvider> ReadCommandsProfile<C> {
     pub async fn profile_internal(
         &self,
         id: AccountIdInternal,

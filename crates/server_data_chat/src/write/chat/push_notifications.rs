@@ -1,12 +1,13 @@
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PushNotificationStateInfo};
 use server_data::define_server_data_write_commands;
 
+use server_data::write::WriteCommandsProvider;
 use server_data::{result::Result, DataError};
 
 define_server_data_write_commands!(WriteCommandsChatPushNotifications);
 define_db_transaction_command!(WriteCommandsChatPushNotifications);
 
-impl WriteCommandsChatPushNotifications<'_> {
+impl <C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
     pub async fn remove_device_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()

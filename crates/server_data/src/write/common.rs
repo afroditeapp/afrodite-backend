@@ -10,9 +10,11 @@ use crate::{
     DataError, IntoDataError,
 };
 
+use super::WriteCommandsProvider;
+
 define_write_commands!(WriteCommandsCommon);
 
-impl WriteCommandsCommon<'_> {
+impl <C: WriteCommandsProvider> WriteCommandsCommon<C> {
     pub async fn set_new_auth_pair(
         &self,
         id: AccountIdInternal,

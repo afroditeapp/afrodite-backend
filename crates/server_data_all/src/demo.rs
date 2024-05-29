@@ -6,13 +6,16 @@ use model::{
     AccessibleAccount, AccountId, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
     DemoModeLoginToken, DemoModePassword, DemoModeToken,
 };
+use server_data::{app::ReadData, read::ReadCommandsProvider, write::WriteCommandsProvider};
+use server_data_account::read::GetReadCommandsAccount;
+use server_data_profile::read::GetReadProfileCommands;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::sync::RwLock;
 use tracing::error;
 
-use crate::{
-    app::{GetAccounts, GetConfig, ReadData},
-    DataError,
+use server_common::{
+    app::{GetAccounts, GetConfig},
+    data::DataError,
 };
 
 const HOUR_IN_SECONDS: u64 = 60 * 60;
@@ -350,10 +353,10 @@ pub enum AccessibleAccountsInfo {
 }
 
 impl AccessibleAccountsInfo {
-    pub async fn into_accounts<S: ReadData>(
+    pub async fn into_accounts<S: ReadData<R>, R: GetReadCommandsAccount<C>, C: ReadCommandsProvider>(
         self,
         state: &S,
-    ) -> crate::result::Result<Vec<AccountId>, DataError> {
+    ) -> server_common::result::Result<Vec<AccountId>, DataError> {
         let (accounts, demo_mode_id) = match self {
             AccessibleAccountsInfo::All => {
                 let all_accounts = state.read().account().account_ids_vec().await?;
@@ -377,10 +380,10 @@ impl AccessibleAccountsInfo {
             .collect())
     }
 
-    pub async fn with_extra_info<S: ReadData + GetConfig + GetAccounts>(
+    pub async fn with_extra_info<S: GetConfig + GetAccounts + ReadData<R>, R: GetReadCommandsAccount<C> + GetReadProfileCommands<C>, C: ReadCommandsProvider>(
         self,
         state: &S,
-    ) -> crate::result::Result<Vec<AccessibleAccount>, DataError> {
+    ) -> server_common::result::Result<Vec<AccessibleAccount>, DataError> {
         let accounts = self.into_accounts(state).await?;
 
         let mut accessible_accounts = vec![];
@@ -406,11 +409,11 @@ impl AccessibleAccountsInfo {
         Ok(accessible_accounts)
     }
 
-    pub async fn contains<S: ReadData>(
+    pub async fn contains<S: ReadData<R>, R: GetReadCommandsAccount<C>, C: ReadCommandsProvider>(
         &self,
         account: AccountId,
         state: &S,
-    ) -> crate::result::Result<(), DataError> {
+    ) -> server_common::result::Result<(), DataError> {
         let (accounts, demo_mode_id) = match self {
             AccessibleAccountsInfo::All => return Ok(()),
             AccessibleAccountsInfo::Specific {

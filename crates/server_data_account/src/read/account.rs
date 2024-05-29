@@ -9,7 +9,7 @@ use server_data::{result::Result, IntoDataError};
 define_server_data_read_commands!(ReadCommandsAccount);
 define_db_read_command!(ReadCommandsAccount);
 
-impl ReadCommandsAccount<'_> {
+impl <C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
     pub async fn account_sign_in_with_info(
         &self,
         id: AccountIdInternal,

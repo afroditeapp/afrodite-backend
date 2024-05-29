@@ -1,0 +1,43 @@
+[package]
+name = "server_api_profile"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+uuid = { workspace = true, features = ["v4", "serde"] }
+
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+tokio = { workspace = true, features = ["full"] }
+hyper = { workspace = true, features = ["full"] }
+axum = { workspace = true, features = ["ws", "macros"] }
+axum-extra = { workspace = true, features = ["typed-header"] }
+tracing = { workspace = true }
+headers = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+
+utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
+
+thiserror = { workspace = true }
+error-stack = { workspace = true }
+
+manager_model = { path = "../app-manager/crates/manager_model" }
+
+utils = { path = "../utils" }
+config = { path = "../config" }
+model = { path = "../model" }
+api_internal = { path = "../api_internal" }
+
+server_common = { path = "../server_common" }
+server_data = { path = "../server_data" }
+server_api = { path = "../server_api" }
+
+server_data_profile = { path = "../server_data_profile" }
+
+simple_backend = { path = "../simple_backend" }
+simple_backend_utils = { path = "../simple_backend_utils" }
+simple_backend_config = { path = "../simple_backend_config" }
+simple_backend_model = { path = "../simple_backend_model" }

@@ -32,8 +32,8 @@ pub trait WriteData {
     ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
 }
 
-pub trait ReadData {
-    fn read(&self) -> ReadCommands<'_>;
+pub trait ReadData<T> {
+    fn read(&self) -> T;
 }
 
 pub trait EventManagerProvider {
