@@ -44,6 +44,10 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
         CurrentSyncWriteMediaAdmin::new(self.write())
     }
 
+    pub fn common(&mut self) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
+        database::current::write::common::CurrentSyncWriteCommon::new(self.write())
+    }
+
     pub fn transaction<
         F: FnOnce(
             &mut DieselConnection,

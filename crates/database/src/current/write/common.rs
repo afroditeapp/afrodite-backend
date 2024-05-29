@@ -2,6 +2,7 @@ use super::ConnectionProvider;
 
 mod queue_number;
 mod state;
+mod token;
 
 define_write_commands!(CurrentWriteAccount, CurrentSyncWriteCommon);
 
@@ -12,5 +13,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommon<C> {
 
     pub fn state(self) -> state::CurrentSyncWriteCommonState<C> {
         state::CurrentSyncWriteCommonState::new(self.cmds)
+    }
+
+    pub fn token(self) -> token::CurrentSyncWriteAccountToken<C> {
+        token::CurrentSyncWriteAccountToken::new(self.cmds)
     }
 }

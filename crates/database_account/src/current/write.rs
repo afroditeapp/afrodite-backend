@@ -38,18 +38,8 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
         CurrentSyncWriteAccount::new(self.write())
     }
 
-    pub fn transaction<
-        F: FnOnce(
-            &mut DieselConnection,
-        ) -> std::result::Result<T, database::TransactionError>,
-        T,
-    >(
-        self,
-        transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
-        use diesel::prelude::*;
-        self.conn.transaction(transaction_actions)
-            .map_err(|e| e.into_report())
+    pub fn common(&mut self) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
+        database::current::write::common::CurrentSyncWriteCommon::new(self.write())
     }
 }
 

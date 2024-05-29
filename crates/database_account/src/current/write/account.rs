@@ -4,7 +4,6 @@ use database::ConnectionProvider;
 mod data;
 mod demo;
 mod sign_in_with;
-mod token;
 
 define_current_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 
@@ -15,10 +14,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
 
     pub fn sign_in_with(self) -> sign_in_with::CurrentSyncWriteAccountSignInWith<C> {
         sign_in_with::CurrentSyncWriteAccountSignInWith::new(self.cmds)
-    }
-
-    pub fn token(self) -> token::CurrentSyncWriteAccountToken<C> {
-        token::CurrentSyncWriteAccountToken::new(self.cmds)
     }
 
     pub fn demo_mode(self) -> demo::CurrentSyncWriteAccountDemo<C> {

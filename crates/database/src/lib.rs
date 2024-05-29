@@ -220,6 +220,40 @@ impl<'a> DbReader<'a> {
     }
 }
 
+pub struct DbReaderRaw<'a> {
+    db: &'a CurrentReadHandle,
+}
+
+impl<'a> DbReaderRaw<'a> {
+    pub fn new(db: &'a CurrentReadHandle) -> Self {
+        Self { db }
+    }
+
+    pub async fn db_read<
+        T: FnOnce(
+                &mut DieselConnection,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        let conn = self
+            .db
+            .0
+            .diesel()
+            .pool()
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+
+        conn.interact(move |conn| cmd(conn))
+            .await
+            .into_error_string(DieselDatabaseError::Execute)?
+    }
+}
 
 pub struct DbReaderUsingWriteHandle<'a> {
     db: &'a CurrentWriteHandle,
@@ -256,6 +290,40 @@ impl<'a> DbReaderUsingWriteHandle<'a> {
     }
 }
 
+pub struct DbReaderRawUsingWriteHandle<'a> {
+    db: &'a CurrentWriteHandle,
+}
+
+impl<'a> DbReaderRawUsingWriteHandle<'a> {
+    pub fn new(db: &'a CurrentWriteHandle) -> Self {
+        Self { db }
+    }
+
+    pub async fn db_read<
+        T: FnOnce(
+                &mut DieselConnection,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        let conn = self
+            .db
+            .0
+            .diesel()
+            .pool()
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+
+        conn.interact(move |conn| cmd(conn))
+            .await
+            .into_error_string(DieselDatabaseError::Execute)?
+    }
+}
 
 pub struct DbWriter<'a> {
     db: &'a CurrentWriteHandle,
@@ -266,11 +334,23 @@ impl <'a> DbWriter<'a> {
         Self { db }
     }
 
-    pub async fn db_transaction<
+    fn transaction<
+        F: FnOnce(
+            &mut DieselConnection,
+        ) -> std::result::Result<T, TransactionError>,
+        T,
+    >(
+        conn: &mut DieselConnection,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
+        use diesel::prelude::*;
+        conn.transaction(transaction_actions)
+            .map_err(|e| e.into_report())
+    }
+
+    pub async fn db_transaction_raw<
         T: FnOnce(
-                CurrentSyncWriteCommands<
-                    &mut DieselConnection,
-                >,
+                &mut DieselConnection,
             ) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
@@ -290,8 +370,8 @@ impl <'a> DbWriter<'a> {
 
         let result = conn
             .interact(move |conn| {
-                CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-                    cmd(CurrentSyncWriteCommands::new(conn)).map_err(|err| err.into())
+                Self::transaction(conn, move |conn| {
+                    cmd(conn).map_err(|err| err.into())
                 })
             })
             .await
@@ -304,6 +384,22 @@ impl <'a> DbWriter<'a> {
             },
             Err(err) => Err(err),
         }
+    }
+
+    pub async fn db_transaction<
+        T: FnOnce(
+                CurrentSyncWriteCommands<
+                    &mut DieselConnection,
+                >,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        self.db_transaction_raw(|conn| cmd(CurrentSyncWriteCommands::new(conn))).await
     }
 }
 

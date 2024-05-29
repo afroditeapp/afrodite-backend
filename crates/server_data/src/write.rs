@@ -7,7 +7,7 @@ use database::{
     current::{
         read::CurrentSyncReadCommands,
         write::TransactionConnection,
-    }, history::write::HistorySyncWriteCommands, CurrentWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
+    }, history::write::HistorySyncWriteCommands, CurrentWriteHandle, DbReaderRaw, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
 };
 use model::{
     Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile,
@@ -18,10 +18,7 @@ use simple_backend::media_backup::MediaBackupHandle;
 use simple_backend_utils::IntoReportFromString;
 
 use self::{
-    account::WriteCommandsAccount, account_admin::WriteCommandsAccountAdmin,
-    chat::WriteCommandsChat, chat_admin::WriteCommandsChatAdmin, common::WriteCommandsCommon,
-    media::WriteCommandsMedia, media_admin::WriteCommandsMediaAdmin, profile::WriteCommandsProfile,
-    profile_admin::WriteCommandsProfileAdmin,
+    common::WriteCommandsCommon,
 };
 use super::{
     cache::DatabaseCache,
@@ -106,7 +103,7 @@ macro_rules! define_write_commands {
                 cmd: T,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             {
-                self.cmds.db_transaction(cmd).await
+                self.cmds.db_transaction_common(cmd).await
             }
 
             pub async fn db_read<
@@ -141,29 +138,26 @@ macro_rules! define_write_commands {
     };
 }
 
-pub mod account;
-pub mod account_admin;
-pub mod chat;
-pub mod chat_admin;
 pub mod common;
-pub mod media;
-pub mod media_admin;
-pub mod profile;
-pub mod profile_admin;
 
 /// One Account can do only one write command at a time.
 pub struct AccountWriteLock;
 
+// TODO: Perhaps in the future server_data crates could use
+// database style accessor structs so #[derive(Clone)] would not
+// be needed.
+
 /// Globally synchronous write commands.
+#[derive(Clone)]
 pub struct WriteCommands<'a> {
-    config: &'a Arc<Config>,
-    current_write_handle: &'a CurrentWriteHandle,
-    history_write_handle: &'a HistoryWriteHandle,
-    cache: &'a DatabaseCache,
-    file_dir: &'a FileDir,
-    location_index: &'a LocationIndexManager,
-    media_backup: &'a MediaBackupHandle,
-    push_notification_sender: &'a PushNotificationSender,
+    pub config: &'a Arc<Config>,
+    pub current_write_handle: &'a CurrentWriteHandle,
+    pub history_write_handle: &'a HistoryWriteHandle,
+    pub cache: &'a DatabaseCache,
+    pub file_dir: &'a FileDir,
+    pub location_index: &'a LocationIndexManager,
+    pub media_backup: &'a MediaBackupHandle,
+    pub push_notification_sender: &'a PushNotificationSender,
 }
 
 impl<'a> WriteCommands<'a> {
@@ -194,161 +188,7 @@ impl<'a> WriteCommands<'a> {
         WriteCommandsCommon::new(self)
     }
 
-    pub fn account(self) -> WriteCommandsAccount<'a> {
-        WriteCommandsAccount::new(self)
-    }
-
-    pub fn account_admin(self) -> WriteCommandsAccountAdmin<'a> {
-        WriteCommandsAccountAdmin::new(self)
-    }
-
-    pub fn media(self) -> WriteCommandsMedia<'a> {
-        WriteCommandsMedia::new(self)
-    }
-
-    pub fn media_admin(self) -> WriteCommandsMediaAdmin<'a> {
-        WriteCommandsMediaAdmin::new(self)
-    }
-
-    pub fn profile(self) -> WriteCommandsProfile<'a> {
-        WriteCommandsProfile::new(self)
-    }
-
-    pub fn profile_admin(self) -> WriteCommandsProfileAdmin<'a> {
-        WriteCommandsProfileAdmin::new(self)
-    }
-
-    pub fn chat(self) -> WriteCommandsChat<'a> {
-        WriteCommandsChat::new(self)
-    }
-
-    pub fn chat_admin(self) -> WriteCommandsChatAdmin<'a> {
-        WriteCommandsChatAdmin::new(self)
-    }
-
-    pub async fn register(
-        &self,
-        id_light: AccountId,
-        sign_in_with_info: SignInWithInfo,
-        email: Option<EmailAddress>,
-    ) -> Result<AccountIdInternal, DataError> {
-        let config = self.config.clone();
-        let id: AccountIdInternal = self
-            .db_transaction_with_history(move |transaction, history_conn| {
-                Self::register_db_action(
-                    config,
-                    id_light,
-                    sign_in_with_info,
-                    email,
-                    transaction,
-                    history_conn,
-                )
-            })
-            .await?;
-
-        self.cache
-            .load_account_from_db(
-                id,
-                self.config,
-                &self.current_write_handle.to_read_handle(),
-                LocationIndexIteratorHandle::new(self.location_index),
-                LocationIndexWriteHandle::new(self.location_index),
-            )
-            .await
-            .into_data_error(id)?;
-
-        Ok(id)
-    }
-
-    pub fn register_db_action(
-        config: Arc<Config>,
-        id_light: AccountId,
-        sign_in_with_info: SignInWithInfo,
-        email: Option<EmailAddress>,
-        transaction: TransactionConnection<'_>,
-        history_conn: PoolObject,
-    ) -> std::result::Result<AccountIdInternal, TransactionError> {
-        let account = Account::default();
-        let account_setup = AccountSetup::default();
-
-        let mut current = transaction.into_cmds();
-
-        // No transaction for history as it does not matter if some default
-        // data will be left there if there is some error.
-        let mut history_conn = history_conn
-            .lock()
-            .into_error_string(DieselDatabaseError::LockConnectionFailed)?;
-        let mut history = HistorySyncWriteCommands::new(history_conn.deref_mut());
-
-        // Common
-        let id = current.account().data().insert_account_id(id_light)?;
-        current.account().token().insert_access_token(id, None)?;
-        current.account().token().insert_refresh_token(id, None)?;
-        current
-            .common()
-            .state()
-            .insert_default_account_capabilities(id)?;
-        current
-            .common()
-            .state()
-            .insert_shared_state(id, SharedStateRaw::default())?;
-
-        // Common history
-        history.account().insert_account_id(id)?;
-
-        if config.components().account {
-            current
-                .account()
-                .data()
-                .insert_account(id, AccountInternal::default())?;
-            current
-                .account()
-                .data()
-                .insert_account_setup(id, &account_setup)?;
-            current
-                .account()
-                .sign_in_with()
-                .insert_sign_in_with_info(id, &sign_in_with_info)?;
-            if let Some(email) = email {
-                current.account().data().update_account_email(id, &email)?;
-            }
-
-            // Account history
-            history.account().insert_account(id, &account)?;
-            history.account().insert_account_setup(id, &account_setup)?;
-        }
-
-        if config.components().profile {
-            let profile = current.profile().data().insert_profile(id)?;
-            current.profile().data().insert_profile_state(id)?;
-
-            // Profile history
-            let attributes = current
-                .read()
-                .profile()
-                .data()
-                .profile_attribute_values(id)?;
-            let profile = Profile::new(profile, attributes);
-            history.profile().insert_profile(id, &profile)?;
-        }
-
-        if config.components().media {
-            current.media().insert_media_state(id)?;
-
-            current
-                .media()
-                .media_content()
-                .insert_current_account_media(id)?;
-        }
-
-        if config.components().chat {
-            current.chat().insert_chat_state(id)?;
-        }
-
-        Ok(id)
-    }
-
-    pub async fn db_transaction<
+    pub async fn db_transaction_common<
         T: FnOnce(
                 database::current::write::CurrentSyncWriteCommands<
                     &mut database::DieselConnection,
@@ -362,6 +202,20 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
         DbWriter::new(self.current_write_handle).db_transaction(cmd).await
+    }
+
+    pub async fn db_transaction_raw<
+        T: FnOnce(
+                &mut database::DieselConnection,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbWriter::new(self.current_write_handle).db_transaction_raw(cmd).await
     }
 
     pub async fn db_transaction_with_history<T, R: Send + 'static>(
@@ -396,6 +250,20 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
         DbReaderUsingWriteHandle::new(self.current_write_handle).db_read(cmd).await
+    }
+
+    pub async fn db_read_raw<
+        T: FnOnce(
+                &mut DieselConnection,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReaderRawUsingWriteHandle::new(self.current_write_handle).db_read(cmd).await
     }
 }
 
@@ -432,3 +300,37 @@ macro_rules! db_transaction {
 
 // Make db_transaction available in all modules
 pub(crate) use db_transaction;
+
+
+
+// pub fn account(self) -> WriteCommandsAccount<'a> {
+//     WriteCommandsAccount::new(self)
+// }
+
+// pub fn account_admin(self) -> WriteCommandsAccountAdmin<'a> {
+//     WriteCommandsAccountAdmin::new(self)
+// }
+
+// pub fn media(self) -> WriteCommandsMedia<'a> {
+//     WriteCommandsMedia::new(self)
+// }
+
+// pub fn media_admin(self) -> WriteCommandsMediaAdmin<'a> {
+//     WriteCommandsMediaAdmin::new(self)
+// }
+
+// pub fn profile(self) -> WriteCommandsProfile<'a> {
+//     WriteCommandsProfile::new(self)
+// }
+
+// pub fn profile_admin(self) -> WriteCommandsProfileAdmin<'a> {
+//     WriteCommandsProfileAdmin::new(self)
+// }
+
+// pub fn chat(self) -> WriteCommandsChat<'a> {
+//     WriteCommandsChat::new(self)
+// }
+
+// pub fn chat_admin(self) -> WriteCommandsChatAdmin<'a> {
+//     WriteCommandsChatAdmin::new(self)
+// }

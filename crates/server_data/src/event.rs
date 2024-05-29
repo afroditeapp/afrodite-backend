@@ -1,6 +1,6 @@
 //! Send events to connected or not connected clients.
 
-use database::current::write::chat::ChatStateChanges;
+use database_chat::current::write::chat::ChatStateChanges;
 use model::{
     AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent,
 };

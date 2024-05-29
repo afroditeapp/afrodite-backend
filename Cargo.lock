@@ -2880,6 +2880,98 @@ dependencies = [
 ]
 
 [[package]]
+name = "server_data_account"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "database_account",
+ "error-stack",
+ "futures",
+ "model",
+ "nalgebra",
+ "num_cpus",
+ "server_common",
+ "server_data",
+ "simple_backend",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "server_data_chat"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "database_chat",
+ "error-stack",
+ "futures",
+ "model",
+ "nalgebra",
+ "num_cpus",
+ "server_common",
+ "server_data",
+ "simple_backend",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "server_data_media"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "database_media",
+ "error-stack",
+ "futures",
+ "model",
+ "nalgebra",
+ "num_cpus",
+ "server_common",
+ "server_data",
+ "simple_backend",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "server_data_profile"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "database_profile",
+ "error-stack",
+ "futures",
+ "model",
+ "nalgebra",
+ "num_cpus",
+ "server_common",
+ "server_data",
+ "simple_backend",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

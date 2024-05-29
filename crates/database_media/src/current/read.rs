@@ -37,4 +37,8 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
     pub fn media_admin(&mut self) -> CurrentSyncReadMediaAdmin<&mut DieselConnection> {
         CurrentSyncReadMediaAdmin::new(self.conn())
     }
+
+    pub fn common(&mut self) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
+        database::current::read::common::CurrentSyncReadCommon::new(self.conn())
+    }
 }

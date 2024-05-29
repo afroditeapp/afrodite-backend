@@ -1,11 +1,34 @@
-use model::{Account, AccountId, AccountIdInternal};
+use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken};
 
 use super::super::DataError;
-use crate::{event::EventMode, result::Result, IntoDataError};
+use crate::{define_server_data_read_commands, event::EventMode, result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsCommon);
 
 impl ReadCommandsCommon<'_> {
+    pub async fn account_access_token(
+        &self,
+        id: AccountId,
+    ) -> Result<Option<AccessToken>, DataError> {
+        let id = self
+            .cache()
+            .to_account_id_internal(id)
+            .await
+            .into_data_error(id)?;
+        self.db_read(move |mut cmds| cmds.common().token().access_token(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn account_refresh_token(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<RefreshToken>, DataError> {
+        self.db_read(move |mut cmds| cmds.common().token().refresh_token(id))
+            .await
+            .into_error()
+    }
+
     pub async fn access_event_mode<T>(
         &self,
         id: AccountId,

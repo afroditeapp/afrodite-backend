@@ -14,7 +14,7 @@ use super::{
     write_concurrent::{
         ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
     },
-    RouterDatabaseWriteHandle, SyncWriteHandle,
+    db_manager::{RouterDatabaseWriteHandle, SyncWriteHandle},
 };
 use crate::{
     result::{WrappedContextExt, WrappedResultExt},

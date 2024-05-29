@@ -13,12 +13,10 @@ use super::{
     cache::{CacheError, DatabaseCache},
     file::utils::FileDir,
     index::LocationIndexIteratorHandle,
-    IntoDataError, RouterDatabaseWriteHandle,
+    IntoDataError,
 };
 use crate::{
-    content_processing::NewContentInfo,
-    result::{Result, WrappedContextExt},
-    DataError,
+    content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::{Result, WrappedContextExt}, DataError
 };
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;

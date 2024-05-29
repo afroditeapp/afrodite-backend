@@ -7,6 +7,7 @@ use crate::IntoDatabaseError;
 
 mod queue_number;
 mod state;
+mod token;
 
 define_read_commands!(CurrentReadAccount, CurrentSyncReadCommon);
 
@@ -17,6 +18,10 @@ impl<C: ConnectionProvider> CurrentSyncReadCommon<C> {
 
     pub fn queue_number(self) -> queue_number::CurrentSyncReadCommonQueueNumber<C> {
         queue_number::CurrentSyncReadCommonQueueNumber::new(self.cmds)
+    }
+
+    pub fn token(self) -> token::CurrentSyncReadAccountToken<C> {
+        token::CurrentSyncReadAccountToken::new(self.cmds)
     }
 
     /// This data is available on all servers as if microservice mode is
