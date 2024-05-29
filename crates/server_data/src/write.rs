@@ -6,8 +6,8 @@ use config::Config;
 use database::{
     current::{
         read::CurrentSyncReadCommands,
-        write::{CurrentSyncWriteCommands, TransactionConnection},
-    }, history::write::HistorySyncWriteCommands, CurrentWriteHandle, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
+        write::TransactionConnection,
+    }, history::write::HistorySyncWriteCommands, CurrentWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
 };
 use model::{
     Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile,
@@ -88,25 +88,6 @@ macro_rules! define_write_commands {
             #[allow(dead_code)]
             fn media_backup(&self) -> &simple_backend::media_backup::MediaBackupHandle {
                 &self.cmds.media_backup
-            }
-
-            pub async fn db_write<
-                T: FnOnce(
-                        database::current::write::CurrentSyncWriteCommands<
-                            &mut database::DieselConnection,
-                        >,
-                    ) -> error_stack::Result<
-                        R,
-                        database::DieselDatabaseError,
-                    > + Send
-                    + 'static,
-                R: Send + 'static,
-            >(
-                &self,
-                cmd: T,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
-            {
-                self.cmds.db_write(cmd).await
             }
 
             pub async fn db_transaction<
@@ -367,33 +348,6 @@ impl<'a> WriteCommands<'a> {
         Ok(id)
     }
 
-    pub async fn db_write<
-        T: FnOnce(
-                CurrentSyncWriteCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
-        use error_stack::ResultExt;
-
-        let conn = self
-            .current_write_handle
-            .0
-            .diesel()
-            .pool()
-            .get()
-            .await
-            .change_context(DieselDatabaseError::GetConnection)?;
-
-        conn.interact(move |conn| cmd(CurrentSyncWriteCommands::new(conn)))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
-    }
-
     pub async fn db_transaction<
         T: FnOnce(
                 database::current::write::CurrentSyncWriteCommands<
@@ -407,33 +361,7 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        use error_stack::ResultExt;
-
-        let conn = self
-            .current_write_handle
-            .0
-            .diesel()
-            .pool()
-            .get()
-            .await
-            .change_context(DieselDatabaseError::GetConnection)?;
-
-        let result = conn
-            .interact(move |conn| {
-                CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-                    cmd(CurrentSyncWriteCommands::new(conn)).map_err(|err| err.into())
-                })
-            })
-            .await
-            .into_error_string(DieselDatabaseError::Execute);
-
-        match result {
-            Ok(result) => match result {
-                Ok(result) => Ok(result),
-                Err(err) => Err(err),
-            },
-            Err(err) => Err(err),
-        }
+        DbWriter::new(self.current_write_handle).db_transaction(cmd).await
     }
 
     pub async fn db_transaction_with_history<T, R: Send + 'static>(
@@ -448,34 +376,12 @@ impl<'a> WriteCommands<'a> {
             + Send
             + 'static,
     {
-        use error_stack::ResultExt;
-
-        let conn = self
-            .current_write_handle
-            .0
-            .diesel()
-            .pool()
-            .get()
+        DbWriterWithHistory::new(
+            self.current_write_handle,
+            self.history_write_handle
+        )
+            .db_transaction_with_history(cmd)
             .await
-            .change_context(DieselDatabaseError::GetConnection)?;
-
-        let conn_history = self
-            .history_write_handle
-            .0
-            .diesel()
-            .pool()
-            .get()
-            .await
-            .change_context(DieselDatabaseError::GetConnection)?;
-
-        conn.interact(move |conn| {
-            CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-                let transaction_connection = TransactionConnection::new(conn);
-                cmd(transaction_connection, conn_history)
-            })
-        })
-        .await
-        .into_error_string(DieselDatabaseError::Execute)?
     }
 
     pub async fn db_read<
@@ -489,20 +395,7 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        use error_stack::ResultExt;
-
-        let conn = self
-            .current_write_handle
-            .0
-            .diesel()
-            .pool()
-            .get()
-            .await
-            .change_context(DieselDatabaseError::GetConnection)?;
-
-        conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
+        DbReaderUsingWriteHandle::new(self.current_write_handle).db_read(cmd).await
     }
 }
 

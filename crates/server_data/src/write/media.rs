@@ -88,7 +88,7 @@ impl WriteCommandsMedia<'_> {
             path.remove_if_exists()
                 .await
                 .change_context(DataError::File)?;
-            self.db_write(move |mut cmds| {
+            self.db_transaction(move |mut cmds| {
                 cmds.media()
                     .moderation_request()
                     .delete_content_from_slot(id, slot)
