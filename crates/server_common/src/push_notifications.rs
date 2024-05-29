@@ -1,6 +1,6 @@
 use std::{future::Future, time::Duration};
 
-use database::current::write::chat::PushNotificationStateInfo;
+use model::chat::PushNotificationStateInfo;
 use error_stack::{Result, ResultExt};
 use fcm::{
     message::{Message, Target},

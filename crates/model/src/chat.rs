@@ -5,6 +5,9 @@ use utoipa::ToSchema;
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal};
 
+mod db_only;
+pub use db_only::*;
+
 mod sync_version;
 pub use sync_version::*;
 

@@ -5,6 +5,7 @@
 
 pub mod current;
 pub mod history;
+pub mod db_macros;
 
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -22,7 +23,7 @@ pub use simple_backend_database::{
     DatabaseHandleCreator,
     DbReadCloseHandle,
     DbWriteCloseHandle,
-    diesel_db::{DieselDatabaseError, DieselConnection},
+    diesel_db::{DieselDatabaseError, DieselConnection, ConnectionProvider},
     PoolObject,
 };
 
@@ -105,7 +106,7 @@ impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> std::fmt::Debug for ErrorContext
     }
 }
 
-trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
+pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
     const DEFAULT_NEW_ERROR: Self::NewError;
     type NewError: Context;
 
@@ -123,7 +124,7 @@ trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
     }
 }
 
-trait IntoDatabaseErrorExt<Err: Context>: ResultExt + Sized {
+pub trait IntoDatabaseErrorExt<Err: Context>: ResultExt + Sized {
     #[track_caller]
     fn with_info<T: Debug + IsLoggingAllowed>(
         self,

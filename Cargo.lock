@@ -717,6 +717,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "database_account"
+version = "0.0.0"
+dependencies = [
+ "database",
+ "diesel",
+ "error-stack",
+ "model",
+ "serde_json",
+ "simple_backend_config",
+ "simple_backend_utils",
+]
+
+[[package]]
+name = "database_chat"
+version = "0.0.0"
+dependencies = [
+ "database",
+ "diesel",
+ "error-stack",
+ "model",
+ "serde_json",
+ "simple_backend_config",
+ "simple_backend_utils",
+]
+
+[[package]]
+name = "database_media"
+version = "0.0.0"
+dependencies = [
+ "database",
+ "diesel",
+ "error-stack",
+ "model",
+ "serde_json",
+ "simple_backend_config",
+ "simple_backend_utils",
+]
+
+[[package]]
+name = "database_profile"
+version = "0.0.0"
+dependencies = [
+ "database",
+ "diesel",
+ "error-stack",
+ "model",
+ "serde_json",
+ "simple_backend_config",
+ "simple_backend_utils",
+]
+
+[[package]]
 name = "deadpool"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2808,6 +2860,10 @@ dependencies = [
  "axum",
  "config",
  "database",
+ "database_account",
+ "database_chat",
+ "database_media",
+ "database_profile",
  "error-stack",
  "futures",
  "model",

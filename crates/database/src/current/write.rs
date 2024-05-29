@@ -3,9 +3,7 @@ use simple_backend_database::diesel_db::{
 };
 
 use self::{
-    account::CurrentSyncWriteAccount, chat::CurrentSyncWriteChat, common::CurrentSyncWriteCommon,
-    media::CurrentSyncWriteMedia, media_admin::CurrentSyncWriteMediaAdmin,
-    profile::CurrentSyncWriteProfile,
+    common::CurrentSyncWriteCommon,
 };
 use crate::TransactionError;
 
@@ -57,15 +55,7 @@ macro_rules! define_write_commands {
     };
 }
 
-pub mod account;
-pub mod account_admin;
-pub mod chat;
-pub mod chat_admin;
 pub mod common;
-pub mod media;
-pub mod media_admin;
-pub mod profile;
-pub mod profile_admin;
 
 pub struct CurrentSyncWriteCommands<C: ConnectionProvider> {
     conn: C,
@@ -92,28 +82,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
 /// Write commands for current database. All commands must be run in
 /// a database transaction.
 impl CurrentSyncWriteCommands<&mut DieselConnection> {
-    pub fn account(&mut self) -> CurrentSyncWriteAccount<&mut DieselConnection> {
-        CurrentSyncWriteAccount::new(self.write())
-    }
-
     pub fn common(&mut self) -> CurrentSyncWriteCommon<&mut DieselConnection> {
         CurrentSyncWriteCommon::new(self.write())
-    }
-
-    pub fn chat(&mut self) -> CurrentSyncWriteChat<&mut DieselConnection> {
-        CurrentSyncWriteChat::new(self.write())
-    }
-
-    pub fn media(&mut self) -> CurrentSyncWriteMedia<&mut DieselConnection> {
-        CurrentSyncWriteMedia::new(self.write())
-    }
-
-    pub fn media_admin(&mut self) -> CurrentSyncWriteMediaAdmin<&mut DieselConnection> {
-        CurrentSyncWriteMediaAdmin::new(self.write())
-    }
-
-    pub fn profile(&mut self) -> CurrentSyncWriteProfile<&mut DieselConnection> {
-        CurrentSyncWriteProfile::new(self.write())
     }
 
     pub fn transaction<

@@ -1,1 +1,0 @@
-define_read_commands!(HistoryReadProfileAdmin, HistorySyncReadProfileAdmin);
