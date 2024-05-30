@@ -4,6 +4,11 @@ use model::{
     SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
     SyncVersionUtils,
 };
+use server_api::db_write_raw;
+use server_data::read::GetReadCommandsCommon;
+use server_data_account::write::GetWriteCommandsAccount;
+use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
+use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 pub use utils::api::PATH_CONNECT;
 
 use super::WebSocketError;
@@ -156,10 +161,9 @@ async fn handle_account_data_sync<S: WriteData + ReadData>(
     let account = match account.sync_version().check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
         SyncCheckResult::ResetVersionAndSync => {
-            state
-                .write(move |cmds| async move {
-                    cmds.account().reset_syncable_account_data_version(id).await
-                })
+            db_write_raw!(state, move |cmds| {
+                cmds.account().reset_syncable_account_data_version(id).await
+            })
                 .await
                 .change_context(WebSocketError::AccountDataVersionResetFailed)?;
 
@@ -214,19 +218,17 @@ async fn handle_chat_state_version_check<S: WriteData + ReadData, T: SyncVersion
     let check_this_version = getter(&mut chat_state);
     match check_this_version.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
-        SyncCheckResult::ResetVersionAndSync => {
-            state
-                .write(move |cmds| async move {
-                    cmds.chat()
-                        .modify_chat_state(id, move |s| {
-                            let version_to_be_reseted = getter(s);
-                            *version_to_be_reseted = Default::default();
-                        })
-                        .await
+        SyncCheckResult::ResetVersionAndSync =>
+        db_write_raw!(state, move |cmds| {
+            cmds.chat()
+                .modify_chat_state(id, move |s| {
+                    let version_to_be_reseted = getter(s);
+                    *version_to_be_reseted = Default::default();
                 })
                 .await
-                .change_context(WebSocketError::ChatDataVersionResetFailed)?;
-        }
+        })
+            .await
+            .change_context(WebSocketError::ChatDataVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 
@@ -250,16 +252,14 @@ async fn handle_profile_attributes_sync_version_check<S: WriteData + ReadData>(
         .profile_attributes_sync_version;
     match current.check_is_sync_required(sync_version) {
         SyncCheckResult::DoNothing => return Ok(()),
-        SyncCheckResult::ResetVersionAndSync => {
-            state
-                .write(move |cmds| async move {
-                    cmds.profile()
-                        .reset_profile_attributes_sync_version(id)
-                        .await
-                })
-                .await
-                .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?;
-        }
+        SyncCheckResult::ResetVersionAndSync =>
+            db_write_raw!(state, move |cmds| {
+                cmds.profile()
+                    .reset_profile_attributes_sync_version(id)
+                    .await
+            })
+            .await
+            .change_context(WebSocketError::ProfileAttributesSyncVersionResetFailed)?,
         SyncCheckResult::Sync => (),
     };
 

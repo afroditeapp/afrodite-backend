@@ -3,6 +3,7 @@ use axum::{
     Extension, Router,
 };
 use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal};
+use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
 

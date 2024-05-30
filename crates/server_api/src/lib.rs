@@ -78,7 +78,7 @@ pub use server_common::{data::DataError, result};
     //     version = "0.1.0"
     // )
 )]
-pub struct ApiDoc;
+pub struct ApiDocCommon;
 
 // impl ApiDoc {
 //     pub fn open_api_json_string() -> Result<String, serde_json::Error> {
@@ -147,5 +147,21 @@ macro_rules! db_write_multiple {
 
         use $crate::utils::ConvertDataErrorToStatusCode;
         r.convert_data_error_to_status_code()
+    }};
+}
+
+/// This is should be used outside axum route handlers.
+#[macro_export]
+macro_rules! db_write_raw {
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        async {
+            let r: $crate::result::Result<_, $crate::DataError> =
+                $state.write(move |$cmds| async move {
+                    let $cmds = $cmds.to_ref_handle();
+                    let $cmds = $cmds.to_ref_handle();
+                    ($commands)
+                }).await;
+            r
+        }
     }};
 }

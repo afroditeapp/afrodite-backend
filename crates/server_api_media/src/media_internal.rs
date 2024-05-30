@@ -2,6 +2,7 @@
 
 use axum::extract::{Path, State};
 use model::AccountId;
+use server_api::app::ValidateModerationRequest;
 use simple_backend::create_counters;
 
 use crate::{
@@ -25,7 +26,7 @@ pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     ),
 )]
 pub async fn internal_get_check_moderation_request_for_account<
-    S: GetConfig + ReadData + GetAccounts + GetInternalApi,
+    S: GetConfig + ReadData + GetAccounts + GetInternalApi + ValidateModerationRequest,
 >(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
@@ -37,7 +38,7 @@ pub async fn internal_get_check_moderation_request_for_account<
     let account_id = state.get_internal_id(account_id).await?;
 
     if state.config().components().media {
-        internal_api::media::media_check_moderation_request_for_account(&state, account_id).await?;
+        state.media_check_moderation_request_for_account(&state, account_id).await?;
         Ok(())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)

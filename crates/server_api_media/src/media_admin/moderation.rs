@@ -6,6 +6,7 @@ use model::{
     AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest,
     ModerationList, ModerationQueueTypeParam,
 };
+use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 
 use crate::{

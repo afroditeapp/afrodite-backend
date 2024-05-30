@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent};
+use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
 use crate::{
@@ -28,7 +29,7 @@ pub async fn get_moderation_request<S: ReadData>(
 ) -> Result<Json<CurrentModerationRequest>, StatusCode> {
     MEDIA.get_moderation_request.incr();
 
-    let request = state.read().moderation_request(account_id).await?;
+    let request = state.read().media().moderation_request(account_id).await?;
 
     let request = CurrentModerationRequest { request };
 

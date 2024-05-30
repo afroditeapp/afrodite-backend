@@ -291,6 +291,10 @@ impl <'a> SyncWriteHandleRef<'a> {
         ReadCommands::new(&self.current_read_handle, &self.write_cmds.cache, &self.write_cmds.file_dir)
     }
 
+    pub fn config(&self) -> &Config {
+        &self.write_cmds.config
+    }
+
     pub fn to_ref_handle(&self) -> SyncWriteHandleRefRef<'_> {
         SyncWriteHandleRefRef {
             handle: self,
@@ -306,6 +310,10 @@ pub struct SyncWriteHandleRefRef<'a> {
 impl SyncWriteHandleRefRef<'_> {
     pub fn events(&self) -> EventManagerWithCacheReference {
         self.handle.events()
+    }
+
+    pub fn config(&self) -> &Config {
+        self.handle.config()
     }
 
     pub fn read(&self) -> ReadCommands<'_> {

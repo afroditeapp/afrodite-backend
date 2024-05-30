@@ -20,24 +20,28 @@ use simple_backend_utils::IntoReportFromString;
 use crate::load::DbDataToCacheLoader;
 
 use server_data::{
-    cache::DatabaseCache, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, write::WriteCommands, IntoDataError
+    cache::DatabaseCache, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, write::{WriteCommands, WriteCommandsProvider}, IntoDataError
 };
 use server_data::{result::Result, DataError};
 
 
-pub struct RegisterAccount<'a> {
-    cmds: WriteCommands<'a>,
+pub struct RegisterAccount<C: WriteCommandsProvider> {
+    cmds: C,
 }
 
-impl RegisterAccount<'_> {
+impl <C: WriteCommandsProvider> RegisterAccount<C> {
+    pub fn new(cmds: C) -> Self {
+        Self { cmds }
+    }
+
     pub async fn register(
         &self,
         id_light: AccountId,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> Result<AccountIdInternal, DataError> {
-        let config = self.cmds.config.clone();
-        let id: AccountIdInternal = self.cmds
+        let config = self.cmds.write_cmds().config.clone();
+        let id: AccountIdInternal = self.cmds.write_cmds()
             .db_transaction_with_history(move |transaction, history_conn| {
                 Self::register_db_action(
                     config,
@@ -51,12 +55,12 @@ impl RegisterAccount<'_> {
             .await?;
 
             DbDataToCacheLoader::load_account_from_db(
-                self.cmds.cache,
+                self.cmds.write_cmds().cache,
                 id,
-                self.cmds.config,
-                &self.cmds.current_write_handle.to_read_handle(),
-                LocationIndexIteratorHandle::new(self.cmds.location_index),
-                LocationIndexWriteHandle::new(self.cmds.location_index),
+                self.cmds.write_cmds().config,
+                &self.cmds.write_cmds().current_write_handle.to_read_handle(),
+                LocationIndexIteratorHandle::new(self.cmds.write_cmds().location_index),
+                LocationIndexWriteHandle::new(self.cmds.write_cmds().location_index),
             )
             .await
             .into_data_error(id)?;

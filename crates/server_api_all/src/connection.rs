@@ -15,6 +15,9 @@ use model::{
     AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken,
     SyncDataVersionFromClient,
 };
+use server_data::read::GetReadCommandsCommon;
+use server_data_account::read::GetReadCommandsAccount;
+use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::{create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
@@ -262,7 +265,7 @@ async fn handle_socket_result<S: WriteData + ReadData + GetConfig>(
 
     let current_refresh_token = state
         .read()
-        .account()
+        .common()
         .account_refresh_token(id)
         .await
         .change_context(WebSocketError::DatabaseNoRefreshToken)?
@@ -399,7 +402,8 @@ pub async fn reset_pending_notification<S: WriteData + GetConfig>(
     if state.config().components().chat {
         state
             .write(move |cmds| async move {
-                cmds.chat()
+                cmds.cmds()
+                    .chat()
                     .push_notifications()
                     .reset_pending_notification(id)
                     .await
