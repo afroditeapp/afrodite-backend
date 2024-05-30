@@ -1,8 +1,8 @@
 use api_internal::InternalApi;
 use model::AccountIdInternal;
-use server_common::data::WrappedWithInfo;
+use server_common::{data::WrappedWithInfo, internal_api::InternalApiError};
+use server_data_media::read::GetReadMediaCommands;
 
-use super::InternalApiError;
 use crate::{
     app::{GetConfig, GetInternalApi, ReadData},
     result::{Result, WrappedResultExt},
@@ -18,7 +18,7 @@ use crate::{
 ///
 /// TODO(prod): Make sure that moderation request is not removed when admin
 ///             interacts with it.
-async fn media_check_moderation_request_for_account<
+pub async fn media_check_moderation_request_for_account<
     S: GetConfig + ReadData + GetInternalApi,
 >(
     state: &S,
@@ -27,6 +27,7 @@ async fn media_check_moderation_request_for_account<
     if state.config().components().media {
         let request = state
             .read()
+            .media()
             .moderation_request(account_id)
             .await
             .change_context_with_info(InternalApiError::DataError, account_id)?

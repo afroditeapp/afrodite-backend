@@ -13,9 +13,9 @@ use self::utils::SecurityApiAccessTokenDefault;
 pub mod media;
 pub mod media_admin;
 pub mod media_internal;
+pub mod internal_api;
 
 pub use server_api::app;
-pub use server_api::internal_api;
 pub use server_api::utils;
 
 pub use server_common::{data::DataError, result};
@@ -87,12 +87,7 @@ pub use server_common::{data::DataError, result};
         model::media_admin::ModerationQueueTypeParam,
         model::media_admin::HandleModerationRequest,
     )),
-    // modifiers(&SecurityApiAccessTokenDefault),
-    // info(
-    //     title = "pihka-backend",
-    //     description = "Pihka backend API",
-    //     version = "0.1.0"
-    // )
+    modifiers(&SecurityApiAccessTokenDefault),
 )]
 pub struct ApiDocMedia;
 

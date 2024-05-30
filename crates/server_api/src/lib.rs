@@ -7,7 +7,7 @@
 
 use utoipa::OpenApi;
 
-// use self::utils::SecurityApiAccessTokenDefault;
+use self::utils::SecurityApiAccessTokenDefault;
 
 // Routes
 pub mod common;
@@ -71,20 +71,11 @@ pub use server_common::{data::DataError, result};
         manager_model::DownloadTypeQueryParam,
         manager_model::SoftwareOptions,
     )),
-    // modifiers(&SecurityApiAccessTokenDefault),
-    // info(
-    //     title = "pihka-backend",
-    //     description = "Pihka backend API",
-    //     version = "0.1.0"
-    // )
+    modifiers(&SecurityApiAccessTokenDefault),
 )]
 pub struct ApiDocCommon;
 
-// impl ApiDoc {
-//     pub fn open_api_json_string() -> Result<String, serde_json::Error> {
-//         Self::openapi().to_pretty_json()
-//     }
-// }
+
 
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.

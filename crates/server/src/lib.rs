@@ -10,31 +10,30 @@ pub mod content_processing;
 pub mod perf;
 pub mod startup_tasks;
 pub mod utils;
+pub mod api;
+pub mod api_doc;
 
 use std::sync::Arc;
 
+use api_doc::ApiDoc;
 use app::AppState;
 use axum::Router;
 use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
 use perf::ALL_COUNTERS;
-use server_api::ApiDoc;
 use server_common::push_notifications::{
     self, PushNotificationManager, PushNotificationManagerQuitHandle,
 };
 use server_data::{
-    content_processing::ContentProcessingManagerData,
-    demo::DemoModeManager,
-    write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
-    DatabaseManager,
+    content_processing::ContentProcessingManagerData, db_manager::DatabaseManager, write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle}
 };
+use server_data_all::demo::DemoModeManager;
 use simple_backend::{
     app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::AllCounters,
     web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher,
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
-use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use self::app::{routes_internal::InternalApp, App};
@@ -130,7 +129,7 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     fn create_swagger_ui(&self) -> Option<SwaggerUi> {
-        Some(SwaggerUi::new("/swagger-ui").url("/api-doc/pihka_api.json", ApiDoc::openapi()))
+        Some(SwaggerUi::new("/swagger-ui").url("/api-doc/pihka_api.json", ApiDoc::all()))
     }
 
     async fn on_before_server_start(

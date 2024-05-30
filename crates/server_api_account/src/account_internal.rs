@@ -63,7 +63,7 @@ pub async fn post_register<S: WriteData + GetConfig + RegisteringCmd>(
     State(state): State<S>,
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_INTERNAL.post_register.incr();
-    let new_account_id = state.register_impl(&state, SignInWithInfo::default(), None).await?;
+    let new_account_id = state.register_impl(SignInWithInfo::default(), None).await?;
 
     db_write!(state, move |cmds| {
         cmds.account().set_is_bot_account(new_account_id, true)

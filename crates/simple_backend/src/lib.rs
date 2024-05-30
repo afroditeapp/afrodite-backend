@@ -581,7 +581,7 @@ async fn handle_lets_encrypt_related_tcp_stream(
         Err(_) => {
             // This error seems to be quite frequent when this port is on
             // public internet so do not log anything.
-            CONNECTION.lets_encrypt_port_start_handshake_failed.incr();
+            SIMPLE_CONNECTION.lets_encrypt_port_start_handshake_failed.incr();
             return;
         }
     };
@@ -732,8 +732,8 @@ impl SimpleBackendTlsConfigAcmeTaskRunning {
 }
 
 create_counters!(
-    ConnectionCounters,
-    CONNECTION,
-    CONNECTION_COUNTERS_LIST,
+    SimpleConnectionCounters,
+    SIMPLE_CONNECTION,
+    SIMPLE_CONNECTION_COUNTERS_LIST,
     lets_encrypt_port_start_handshake_failed,
 );

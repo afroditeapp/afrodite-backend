@@ -120,7 +120,7 @@ pub async fn post_complete_setup<S: ReadData + WriteData + GetInternalApi + GetC
     // Moderation request creation also validates that the initial request
     // contains security content, so there is no possibility that user
     // changes the request to be invalid just after this check.
-    state.media_check_moderation_request_for_account(&state, id).await?;
+    state.media_check_moderation_request_for_account(id).await?;
 
     let account_data = state.read().account().account_data(id).await?;
     let sign_in_with_info = state.read().account().account_sign_in_with_info(id).await?;

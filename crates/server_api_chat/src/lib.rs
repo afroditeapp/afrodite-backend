@@ -63,12 +63,7 @@ pub use server_common::{data::DataError, result};
         model::chat::FcmDeviceToken,
         model::chat::PendingNotification,
     )),
-    // modifiers(&SecurityApiAccessTokenDefault),
-    // info(
-    //     title = "pihka-backend",
-    //     description = "Pihka backend API",
-    //     version = "0.1.0"
-    // )
+    modifiers(&SecurityApiAccessTokenDefault),
 )]
 pub struct ApiDocChat;
 

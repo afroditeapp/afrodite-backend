@@ -31,24 +31,6 @@ use crate::{
 
 pub mod data_sync;
 
-pub const PATH_GET_VERSION: &str = "/common_api/version";
-
-/// Get backend version.
-#[utoipa::path(
-    get,
-    path = "/common_api/version",
-    security(),
-    responses(
-        (status = 200, description = "Version information.", body = BackendVersion),
-    )
-)]
-pub async fn get_version<S: BackendVersionProvider>(
-    State(state): State<S>,
-) -> Json<BackendVersion> {
-    COMMON.get_version.incr();
-    state.backend_version().into()
-}
-
 // TODO(prod): Check access and refresh key lenghts.
 
 // ------------------------- WebSocket -------------------------
@@ -103,7 +85,7 @@ pub async fn get_connect_websocket<
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     ws_manager: WebSocketManager,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
-    COMMON.get_connect_websocket.incr();
+    CONNECTION.get_connect_websocket.incr();
 
     // NOTE: This handler does not have authentication layer enabled, so
     // authentication must be done manually.
@@ -416,9 +398,8 @@ pub async fn reset_pending_notification<S: WriteData + GetConfig>(
 }
 
 create_counters!(
-    CommonCounters,
-    COMMON,
-    COMMON_COUNTERS_LIST,
-    get_version,
+    ConnectionCounters,
+    CONNECTION,
+    CONNECTION_COUNTERS_LIST,
     get_connect_websocket,
 );

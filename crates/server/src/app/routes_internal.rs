@@ -1,14 +1,12 @@
 //! Routes for server to server connections
 
 use axum::{routing::post, Router};
-use server_api as api;
+use crate::api as api;
 
-use crate::app::AppState;
+use crate::app::S;
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.
-
-type S = AppState;
 
 /// Internal route handlers for server to server communication.
 pub struct InternalApp;

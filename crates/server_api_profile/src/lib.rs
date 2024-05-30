@@ -76,12 +76,7 @@ pub use server_common::{data::DataError, result};
         model::profile::IconLocation,
         model::profile::SearchGroups,
     )),
-    // modifiers(&SecurityApiAccessTokenDefault),
-    // info(
-    //     title = "pihka-backend",
-    //     description = "Pihka backend API",
-    //     version = "0.1.0"
-    // )
+    modifiers(&SecurityApiAccessTokenDefault),
 )]
 pub struct ApiDocProfile;
 

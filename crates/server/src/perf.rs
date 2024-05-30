@@ -2,7 +2,7 @@
 //!
 //!
 
-use server_api::{
+use crate::api::{
     account::{
         ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_MODE_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST,
         ACCOUNT_REGISTER_COUNTERS_LIST, ACCOUNT_SETTINGS_COUNTERS_LIST,
@@ -14,6 +14,7 @@ use server_api::{
         CHAT_MESSAGE_COUNTERS_LIST, CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
     },
     common::COMMON_COUNTERS_LIST,
+    connection::CONNECTION_COUNTERS_LIST,
     common_admin::{
         COMMON_ADMIN_CONFIG_COUNTERS_LIST, COMMON_ADMIN_MANAGER_COUNTERS_LIST,
         COMMON_ADMIN_PERF_COUNTERS_LIST,
@@ -32,9 +33,11 @@ use server_api::{
     },
     profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
 };
-use simple_backend::{perf::CounterCategory, CONNECTION_COUNTERS_LIST};
+use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
 
 pub static ALL_COUNTERS: &[&CounterCategory] = &[
+    // Connection
+    &CounterCategory::new("connection", CONNECTION_COUNTERS_LIST),
     // Common
     &CounterCategory::new("common", COMMON_COUNTERS_LIST),
     // Common admin
@@ -88,5 +91,5 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
         CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
     ),
     // Server info
-    &CounterCategory::new("server_info_connection", CONNECTION_COUNTERS_LIST),
+    &CounterCategory::new("server_info_connection", SIMPLE_CONNECTION_COUNTERS_LIST),
 ];

@@ -1,9 +1,9 @@
 use model::{AccountId, AccountIdInternal, EmailAddress, SignInWithInfo};
-use server_api::{app::WriteData, db_write_raw, utils::StatusCode};
+use server_api::{app::{StateBase, WriteData}, db_write_raw, utils::StatusCode};
 use server_data::write::WriteCommandsProvider;
 use server_data_all::register::RegisterAccount;
 
-pub async fn register_impl<S: WriteData>(
+pub async fn register_impl<S: StateBase + WriteData>(
     state: &S,
     sign_in_with: SignInWithInfo,
     email: Option<EmailAddress>,

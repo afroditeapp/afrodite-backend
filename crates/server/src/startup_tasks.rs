@@ -1,4 +1,6 @@
+use server_api::db_write_raw;
 use server_common::{data::DataError, result::Result};
+use server_data_profile::write::GetWriteCommandsProfile;
 
 use crate::app::{GetConfig, WriteData, S};
 pub struct StartupTasks {
@@ -21,12 +23,11 @@ impl StartupTasks {
             return Ok(());
         };
 
-        state
-            .write(move |cmds| async move {
-                cmds.profile()
-                    .update_profile_attributes_sha256_and_sync_versions(hash)
-                    .await
-            })
-            .await
+        db_write_raw!(state, move |cmds| {
+            cmds.profile()
+                .update_profile_attributes_sha256_and_sync_versions(hash)
+                .await
+        })
+        .await
     }
 }

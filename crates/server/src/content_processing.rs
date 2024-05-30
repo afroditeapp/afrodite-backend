@@ -1,6 +1,8 @@
 use model::MediaContentType;
+use server_api::db_write_raw;
 use server_common::result::{Result, WrappedResultExt};
 use server_data::content_processing::{notify_client, ContentProcessingNotify, ProcessingState};
+use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
 use simple_backend_config::args::InputFileType;
 use tokio::task::JoinHandle;
@@ -120,18 +122,17 @@ impl ContentProcessingManager {
         let () = result?;
 
         let state_copy = state.clone();
-        self.state
-            .write(move |cmds| async move {
-                cmds.media()
-                    .save_to_slot(
-                        state_copy.content_owner,
-                        state_copy.processing_id.to_content_id(),
-                        state_copy.slot,
-                        state_copy.new_content_params,
-                    )
-                    .await
-            })
-            .await
-            .change_context(ContentProcessingError::DatabaseError)
+        db_write_raw!(self.state, move |cmds| {
+            cmds.media()
+                .save_to_slot(
+                    state_copy.content_owner,
+                    state_copy.processing_id.to_content_id(),
+                    state_copy.slot,
+                    state_copy.new_content_params,
+                )
+                .await
+        })
+        .await
+        .change_context(ContentProcessingError::DatabaseError)
     }
 }

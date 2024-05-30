@@ -92,7 +92,6 @@ pub async fn post_sign_in_with_login<
                 .map(|d| d.into())
         } else {
             let id = state.register_impl(
-                &state,
                 SignInWithInfo {
                     google_account_id: Some(google_id),
                 },
