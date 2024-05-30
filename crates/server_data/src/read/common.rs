@@ -1,7 +1,7 @@
 use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken};
 
 use super::{super::DataError, ReadCommandsProvider};
-use crate::{define_server_data_read_commands, event::EventMode, result::Result, IntoDataError};
+use crate::{event::EventMode, result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsCommon);
 

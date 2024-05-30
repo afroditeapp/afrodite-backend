@@ -3,7 +3,7 @@
 
 use media::WriteCommandsMedia;
 use media_admin::WriteCommandsMediaAdmin;
-use server_data::write::{WriteCommands, WriteCommandsProvider};
+use server_data::write::{WriteCommandsProvider};
 
 pub mod media;
 pub mod media_admin;

@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailAddress,
-    EventToClientInternal, SignInWithInfo,
+    AccountIdInternal, AccountSetup, AccountState, Capabilities,
+    EventToClientInternal,
 };
 use server_api::app::ValidateModerationRequest;
 use server_data::read::GetReadCommandsCommon;

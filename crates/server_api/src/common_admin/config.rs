@@ -4,7 +4,7 @@ use simple_backend::create_counters;
 use tracing::info;
 
 use crate::{
-    app::{ReadData, ReadDynamicConfig, StateBase, WriteDynamicConfig},
+    app::{ReadDynamicConfig, StateBase, WriteDynamicConfig},
     utils::{Json, StatusCode},
 };
 

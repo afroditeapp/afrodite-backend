@@ -7,7 +7,6 @@ use simple_backend::create_counters;
 
 use crate::{
     app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
-    internal_api,
     utils::StatusCode,
 };
 

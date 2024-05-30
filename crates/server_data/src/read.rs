@@ -1,16 +1,9 @@
 use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader, DbReaderRaw, DieselConnection, DieselDatabaseError};
-use model::{
-    AccountId, AccountIdInternal, ContentId, MediaContentRaw, ModerationRequest,
-    ModerationRequestState,
-};
-use server_common::data::DataError;
-use tokio_util::io::ReaderStream;
 
 use self::{
     common::ReadCommandsCommon,
 };
-use super::{cache::DatabaseCache, file::utils::FileDir, IntoDataError};
-use crate::result::Result;
+use super::{cache::DatabaseCache, file::utils::FileDir};
 
 macro_rules! define_read_commands {
     ($struct_name:ident) => {

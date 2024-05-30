@@ -5,7 +5,6 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 use config::Config;
 use database::{CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle, HistoryReadHandle, HistoryWriteHandle};
 use crate::{event::EventManagerWithCacheReference, write::WriteCommandsContainer};
-use model::{AccountId, AccountIdInternal, EmailAddress, SignInWithInfo};
 pub use server_common::{
     data::{DataError, IntoDataError},
     result,
@@ -15,8 +14,8 @@ use simple_backend::media_backup::MediaBackupHandle;
 use tracing::info;
 
 use crate::{
-    cache::{CacheError, DatabaseCache},
-    file::{utils::FileDir, FileError},
+    cache::{DatabaseCache},
+    file::{utils::FileDir},
     index::{LocationIndexIteratorHandle, LocationIndexManager},
     read::ReadCommands,
     utils::{AccessTokenManager, AccountIdManager},

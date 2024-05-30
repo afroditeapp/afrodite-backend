@@ -9,4 +9,3 @@ pub mod history;
 pub use model::schema;
 pub use database::IntoDatabaseError;
 
-use model::FcmDeviceToken;

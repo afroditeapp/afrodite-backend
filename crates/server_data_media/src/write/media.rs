@@ -1,14 +1,13 @@
 use model::{
-    AccountId, AccountIdInternal, ContentId, ContentSlot, MediaContentRaw, ModerationRequest, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent
+    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent
 };
 use server_data::write::WriteCommandsProvider;
-use server_data::{define_server_data_write_commands, DieselDatabaseError, IntoDataError};
+use server_data::{define_server_data_write_commands, DieselDatabaseError};
 
 use server_data::{
     result::{Result, WrappedContextExt, WrappedResultExt},
     DataError,
 };
-use tokio_util::io::ReaderStream;
 
 define_server_data_write_commands!(WriteCommandsMedia);
 define_db_read_command_for_write!(WriteCommandsMedia);

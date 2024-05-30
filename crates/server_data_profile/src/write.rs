@@ -2,7 +2,7 @@
 
 use profile::WriteCommandsProfile;
 use profile_admin::WriteCommandsProfileAdmin;
-use server_data::write::{WriteCommands, WriteCommandsProvider};
+use server_data::write::{WriteCommandsProvider};
 
 pub mod profile;
 pub mod profile_admin;

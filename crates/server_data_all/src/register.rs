@@ -5,22 +5,18 @@ use config::Config;
 use database::{
     ConnectionProvider,
     current::{
-        read::CurrentSyncReadCommands,
         write::TransactionConnection,
-    }, history::write::HistorySyncWriteCommands, CurrentWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
+    }, PoolObject, TransactionError
 };
 use model::{
     Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile,
     SharedStateRaw, SignInWithInfo,
 };
-use server_common::push_notifications::PushNotificationSender;
-use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_utils::IntoReportFromString;
 
 use crate::load::DbDataToCacheLoader;
 
 use server_data::{
-    cache::DatabaseCache, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, write::{WriteCommands, WriteCommandsProvider}, IntoDataError
+    index::{LocationIndexIteratorHandle, LocationIndexWriteHandle}, write::{WriteCommandsProvider}, IntoDataError
 };
 use server_data::{result::Result, DataError};
 

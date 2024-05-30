@@ -1,29 +1,21 @@
 //! Common routes to all microservices
 //!
 
-use std::net::SocketAddr;
 
 use axum::{
     extract::{
-        ws::{Message, WebSocket},
-        ConnectInfo, State, WebSocketUpgrade,
+        State,
     },
-    response::IntoResponse,
 };
-use axum_extra::TypedHeader;
 use model::{
-    AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken,
-    SyncDataVersionFromClient,
+    BackendVersion,
 };
-use simple_backend::{create_counters, web_socket::WebSocketManager};
-use simple_backend_utils::IntoReportFromString;
-use tracing::{error, info};
+use simple_backend::{create_counters};
 pub use utils::api::PATH_CONNECT;
 
-use super::utils::{AccessTokenHeader, Json, StatusCode};
+use super::utils::{Json};
 use crate::{
-    app::{BackendVersionProvider, GetAccessTokens, GetConfig, ReadData, WriteData},
-    result::{Result, WrappedContextExt, WrappedResultExt},
+    app::{BackendVersionProvider},
 };
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";

@@ -1,21 +1,16 @@
 //! Synchronous write commands combining cache and database operations.
 
-use std::{ops::DerefMut, sync::Arc};
+use std::{sync::Arc};
 
 use config::Config;
 use database::{
     current::{
         read::CurrentSyncReadCommands,
         write::TransactionConnection,
-    }, history::write::HistorySyncWriteCommands, CurrentWriteHandle, DbReaderRaw, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
-};
-use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile,
-    SharedStateRaw, SignInWithInfo,
+    }, CurrentWriteHandle, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
 };
 use server_common::push_notifications::PushNotificationSender;
 use simple_backend::media_backup::MediaBackupHandle;
-use simple_backend_utils::IntoReportFromString;
 
 use self::{
     common::WriteCommandsCommon,
@@ -23,10 +18,9 @@ use self::{
 use super::{
     cache::DatabaseCache,
     file::utils::FileDir,
-    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
-    IntoDataError,
+    index::{LocationIndexManager},
 };
-use crate::{db_manager::{SyncWriteHandle, SyncWriteHandleRef, SyncWriteHandleRefRef}, result::Result, DataError};
+use crate::{db_manager::{SyncWriteHandleRef, SyncWriteHandleRefRef}};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {

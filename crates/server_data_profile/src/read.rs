@@ -1,6 +1,6 @@
 use profile::ReadCommandsProfile;
 use profile_admin::ReadCommandsProfileAdmin;
-use server_data::read::{ReadCommands, ReadCommandsProvider};
+use server_data::read::{ReadCommandsProvider};
 
 pub mod profile;
 pub mod profile_admin;

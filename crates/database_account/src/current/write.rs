@@ -1,5 +1,5 @@
 use database::{
-    ConnectionProvider, DieselConnection, DieselDatabaseError,
+    ConnectionProvider, DieselConnection,
 };
 
 use self::{

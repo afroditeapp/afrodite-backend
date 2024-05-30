@@ -12,20 +12,19 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use model::{
-    AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken,
+    AccessToken, AccountIdInternal, AuthPair, RefreshToken,
     SyncDataVersionFromClient,
 };
 use server_data::read::GetReadCommandsCommon;
-use server_data_account::read::GetReadCommandsAccount;
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::{create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
 pub use utils::api::PATH_CONNECT;
 
-use super::utils::{AccessTokenHeader, Json, StatusCode};
+use super::utils::{AccessTokenHeader, StatusCode};
 use crate::{
-    app::{BackendVersionProvider, GetAccessTokens, GetConfig, ReadData, WriteData},
+    app::{GetAccessTokens, GetConfig, ReadData, WriteData},
     result::{Result, WrappedContextExt, WrappedResultExt},
 };
 

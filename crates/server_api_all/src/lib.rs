@@ -7,7 +7,6 @@
 
 use utoipa::OpenApi;
 
-use self::utils::SecurityApiAccessTokenDefault;
 
 // Routes
 pub mod connection;

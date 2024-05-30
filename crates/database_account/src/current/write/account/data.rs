@@ -2,7 +2,7 @@ use database::define_current_write_commands;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdDb, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress,
+    AccountIdInternal, AccountInternal, AccountSetup, EmailAddress,
     ACCOUNT_GLOBAL_STATE_ROW_TYPE,
 };
 use database::{ConnectionProvider, DieselDatabaseError};

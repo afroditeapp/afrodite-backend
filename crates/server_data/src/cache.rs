@@ -1,13 +1,11 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::{HashMap},
     fmt::Debug,
     net::SocketAddr,
     sync::Arc,
 };
 
-use config::Config;
-use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader};
-use error_stack::{Result, ResultExt};
+use error_stack::{Result};
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey,
     LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal,
@@ -15,10 +13,7 @@ use model::{
     SortedProfileAttributes,
 };
 pub use server_common::data::cache::CacheError;
-use server_common::data::WithInfo;
-use database::{DieselConnection, DieselDatabaseError};
 use tokio::sync::RwLock;
-use tracing::info;
 
 use super::index::{
     location::LocationIndexIteratorState,

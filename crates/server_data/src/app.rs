@@ -4,7 +4,7 @@ use model::AccountId;
 pub use server_common::app::*;
 
 use crate::{
-    db_manager::SyncWriteHandleRef, event::EventManagerWithCacheReference, read::{ReadCommands, ReadCommandsContainer}, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
+    event::EventManagerWithCacheReference, read::{ReadCommandsContainer}, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
 
 pub trait WriteData {

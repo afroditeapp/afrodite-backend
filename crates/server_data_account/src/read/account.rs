@@ -1,6 +1,6 @@
 use model::{
-    AccessToken, AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
-    DemoModeId, GoogleAccountId, RefreshToken, SignInWithInfo,
+    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
+    DemoModeId, GoogleAccountId, SignInWithInfo,
 };
 use server_data::{define_server_data_read_commands, DataError};
 

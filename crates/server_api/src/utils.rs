@@ -25,7 +25,7 @@ use utoipa::{
 };
 
 use crate::{
-    app::{GetAccessTokens, ReadData},
+    app::{GetAccessTokens},
     DataError,
 };
 

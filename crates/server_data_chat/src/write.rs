@@ -2,7 +2,7 @@
 
 use chat::WriteCommandsChat;
 use chat_admin::WriteCommandsChatAdmin;
-use server_data::write::{WriteCommands, WriteCommandsProvider};
+use server_data::write::{WriteCommandsProvider};
 
 pub mod chat;
 pub mod chat_admin;

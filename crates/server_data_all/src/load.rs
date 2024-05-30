@@ -1,27 +1,19 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
-    fmt::Debug,
-    net::SocketAddr,
-    sync::Arc,
+    collections::{hash_map::Entry},
 };
 
 use config::Config;
-use database::{CurrentReadHandle, DbReader, DbReaderRaw};
+use database::{CurrentReadHandle, DbReaderRaw};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey,
-    LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal,
-    ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw,
-    SortedProfileAttributes,
+    AccountIdInternal,
 };
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
 use database::{DieselConnection, DieselDatabaseError};
-use tokio::sync::RwLock;
 use tracing::info;
 
-use server_data::{cache::{CachedProfile, DatabaseCache}, index::{location::LocationIndexIteratorState, LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}};
-use server_data::{event::EventMode};
+use server_data::{cache::{CachedProfile, DatabaseCache}, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}};
 
 
 pub struct DbDataToCacheLoader;

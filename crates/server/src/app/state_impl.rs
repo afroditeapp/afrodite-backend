@@ -1,9 +1,5 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr};
 
-use axum::{
-    routing::{get, post},
-    Router,
-};
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::{Result, ResultExt};
 use futures::Future;
@@ -13,28 +9,24 @@ use model::{
 pub use server_api::app::*;
 use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
 use server_common::push_notifications::{
-    PushNotificationError, PushNotificationSender, PushNotificationStateProvider,
+    PushNotificationError, PushNotificationStateProvider,
 };
 use server_data::{
-    content_processing::ContentProcessingManagerData, db_manager::{RouterDatabaseReadHandle, SyncWriteHandleRef}, event::EventManagerWithCacheReference, read::{ReadCommands, ReadCommandsContainer}, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
+    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{ReadCommandsContainer}, write_commands::{WriteCmds}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_chat::write::GetWriteCommandsChat;
-use server_data_all::demo::DemoModeManager;
 use simple_backend::{
     app::{
         GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
-        SimpleBackendAppState,
     },
     manager_client::ManagerApiManager,
     map::TileMapManager,
     perf::PerfCounterManagerData,
     sign_in_with::SignInWithManager,
-    web_socket::WebSocketManager,
 };
 use simple_backend_config::SimpleBackendConfig;
-use tokio::sync::broadcast::error;
 
-use super::{AppState, S};
+use super::{S};
 
 // Server common
 
