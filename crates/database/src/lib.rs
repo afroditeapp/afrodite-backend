@@ -15,7 +15,7 @@ use error_stack::{Context, Result, ResultExt};
 pub use model::schema;
 use model::IsLoggingAllowed;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
-use simple_backend_database::{DbReadHandle, DbWriteHandle};
+use simple_backend_database::{diesel_db::ObjectExtensions, DbReadHandle, DbWriteHandle};
 
 pub const DIESEL_MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
@@ -26,8 +26,6 @@ pub use simple_backend_database::{
     diesel_db::{DieselDatabaseError, DieselConnection, ConnectionProvider},
     PoolObject,
 };
-
-use simple_backend_utils::IntoReportFromString;
 
 /// Write handle for current database.
 #[derive(Clone, Debug)]
@@ -215,8 +213,7 @@ impl<'a> DbReader<'a> {
             .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
+            .await?
     }
 }
 
@@ -250,8 +247,7 @@ impl<'a> DbReaderRaw<'a> {
             .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| cmd(conn))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
+            .await?
     }
 }
 
@@ -285,8 +281,7 @@ impl<'a> DbReaderUsingWriteHandle<'a> {
             .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| cmd(CurrentSyncReadCommands::new(conn)))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
+            .await?
     }
 }
 
@@ -320,8 +315,7 @@ impl<'a> DbReaderRawUsingWriteHandle<'a> {
             .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| cmd(conn))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
+            .await?
     }
 }
 
@@ -368,22 +362,13 @@ impl <'a> DbWriter<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        let result = conn
+        conn
             .interact(move |conn| {
                 Self::transaction(conn, move |conn| {
                     cmd(conn).map_err(|err| err.into())
                 })
             })
-            .await
-            .into_error_string(DieselDatabaseError::Execute);
-
-        match result {
-            Ok(result) => match result {
-                Ok(result) => Ok(result),
-                Err(err) => Err(err),
-            },
-            Err(err) => Err(err),
-        }
+            .await?
     }
 
     pub async fn db_transaction<
@@ -451,7 +436,6 @@ impl <'a> DbWriterWithHistory<'a> {
                 cmd(transaction_connection, conn_history)
             })
         })
-        .await
-        .into_error_string(DieselDatabaseError::Execute)?
+        .await?
     }
 }

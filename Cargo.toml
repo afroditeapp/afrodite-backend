@@ -78,7 +78,6 @@ toml_edit = "0.21.1"
 diesel = { version = "2.1.4", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 diesel_migrations = "2.1.0"
 deadpool = { version = "0.10.0" }
-deadpool-diesel = { version = "0.5.0", features = ["sqlite"] }
 
 futures = "0.3.30"
 tokio = { version = "1.36.0", features = ["full"] }

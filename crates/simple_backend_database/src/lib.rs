@@ -16,7 +16,7 @@ use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 
-pub type PoolObject = deadpool_diesel::sqlite::Connection;
+pub type PoolObject = diesel_db::PoolObject;
 
 #[derive(thiserror::Error, Debug)]
 pub enum SimpleDatabaseError {

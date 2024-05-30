@@ -1,17 +1,15 @@
 use std::{fmt, path::PathBuf};
 
-use deadpool_diesel::sqlite::{Hook, Manager, Pool};
-use diesel::RunQueryDsl;
+use diesel::{Connection, RunQueryDsl, SqliteConnection};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
 use error_stack::{Result, ResultExt};
 use simple_backend_config::{file::SqliteDatabase, SimpleBackendConfig};
 use simple_backend_utils::{ComponentError, ContextExt, IntoReportFromString};
 use tracing::log::error;
 
-pub type HookError = deadpool::managed::HookError<deadpool_diesel::Error>;
-
 pub type DieselConnection = diesel::SqliteConnection;
-pub type DieselPool = deadpool_diesel::sqlite::Pool;
+pub type DieselPool = deadpool::unmanaged::Pool<DieselConnection>;
+pub type PoolObject = deadpool::unmanaged::Object<DieselConnection>;
 
 mod sqlite_version {
     use diesel::sql_function;
@@ -26,11 +24,17 @@ impl ComponentError for DieselDatabaseError {
 pub enum DieselDatabaseError {
     #[error("Connecting to SQLite database failed")]
     Connect,
+    #[error("SQLite connection setup failed")]
+    Setup,
     #[error("Executing SQL query failed")]
     Execute,
     #[error("Running diesel database migrations failed")]
     Migrate,
 
+    #[error("Running an action failed")]
+    RunAction,
+    #[error("Add connection to pool failed")]
+    AddConnection,
     #[error("Connection get failed from connection pool")]
     GetConnection,
     #[error("Interaction with database connection failed")]
@@ -71,9 +75,6 @@ pub enum DieselDatabaseError {
     #[error("Transaction failed")]
     FromDieselErrorToTransactionError,
 
-    #[error("Connection pool locking error")]
-    LockConnectionFailed,
-
     #[error("File operation failed")]
     File,
 
@@ -84,13 +85,27 @@ pub enum DieselDatabaseError {
     FromStdErrorToTransactionError,
 }
 
+async fn close_connections(pool: &DieselPool, connections: usize) {
+    for _ in 0..connections {
+        let result = pool
+            .remove()
+            .await;
+        match result {
+            Ok(conn) => drop(conn),
+            Err(_) => error!("Failed to remove connection from pool"),
+        }
+    }
+}
+
 pub struct DieselWriteCloseHandle {
     pool: DieselPool,
+    connections: usize,
 }
 
 impl DieselWriteCloseHandle {
     /// Call this before closing the server.
     pub async fn close(self) {
+        close_connections(&self.pool, self.connections).await;
         self.pool.close()
     }
 }
@@ -101,21 +116,60 @@ impl fmt::Debug for DieselWriteHandle {
     }
 }
 
-fn create_manager(
+pub trait ObjectExtensions<T>: Sized {
+    fn interact<
+        F: FnOnce(&mut SqliteConnection) -> R + Send + 'static,
+        R: Send + 'static,
+    >(
+        self,
+        action: F
+    ) -> impl std::future::Future<Output = Result<R, DieselDatabaseError>> + Send;
+}
+
+impl ObjectExtensions<SqliteConnection> for PoolObject {
+    async fn interact<
+        F: FnOnce(&mut SqliteConnection) -> R + Send + 'static,
+        R: Send + 'static,
+    >(
+        mut self,
+        action: F,
+    ) -> Result<R, DieselDatabaseError> {
+        let handle = tokio::task::spawn_blocking(move || {
+            let mut conn = self.as_mut();
+            action(&mut conn)
+        });
+        match handle.await {
+            Ok(value) => Ok(value),
+            Err(e) => Err(e.report()).change_context(DieselDatabaseError::RunAction),
+        }
+    }
+}
+
+async fn create_pool(
     config: &SimpleBackendConfig,
     database_info: &SqliteDatabase,
     db_path: PathBuf,
-) -> Result<Manager, DieselDatabaseError> {
-    let manager = if config.sqlite_in_ram() {
+    connection_count: usize,
+) -> Result<DieselPool, DieselDatabaseError> {
+    let db_str = if config.sqlite_in_ram() {
         // TODO: validate name?
-        let ram_str = format!("file:{}?mode=memory&cache=shared", database_info.name);
-
-        Manager::new(ram_str, deadpool_diesel::Runtime::Tokio1)
+        format!("file:{}?mode=memory&cache=shared", database_info.name)
     } else {
-        Manager::new(db_path.to_string_lossy(), deadpool_diesel::Runtime::Tokio1)
+        db_path.to_string_lossy().to_string()
     };
 
-    Ok(manager)
+    let pool = deadpool::unmanaged::Pool::new(connection_count);
+    for _ in 0..connection_count {
+        let mut conn = SqliteConnection::establish(&db_str)
+            .change_context(DieselDatabaseError::Connect)?;
+        sqlite_setup_connection(config, &mut conn)?;
+        pool.add(conn)
+            .await
+            .map_err(|(_, e)| e)
+            .change_context(DieselDatabaseError::AddConnection)?;
+    }
+
+    Ok(pool)
 }
 
 #[derive(Clone)]
@@ -133,43 +187,33 @@ impl DieselWriteHandle {
         db_path: PathBuf,
         migrations: EmbeddedMigrations,
     ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
-        let manager = create_manager(config, database_info, db_path)?;
-
-        let pool = Pool::builder(manager)
-            .max_size(1)
-            .post_create(sqlite_setup_hook(config));
-
-        let pool = if config.sqlite_in_ram() {
-            // Prevent all in RAM database from being dropped
-
-            pool.runtime(deadpool::Runtime::Tokio1)
-                .recycle_timeout(Some(std::time::Duration::MAX))
-        } else {
-            pool
-        };
-
-        let pool = pool.build().change_context(DieselDatabaseError::Connect)?;
+        let connections = 1;
+        let pool = create_pool(
+            config,
+            database_info,
+            db_path,
+            connections,
+        ).await?;
 
         let conn = pool
             .get()
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
         conn.interact(|conn| conn.run_pending_migrations(migrations).map(|_| ()))
-            .await
-            .into_error_string(DieselDatabaseError::InteractionError)?
+            .await?
             .into_error_string(DieselDatabaseError::Migrate)?;
 
         // let pool_clone = pool.clone();
-        // tokio::spawn( async move {
+        // std::thread::spawn(move || {
         //     loop {
-        //         sleep(Duration::from_secs(5)).await;
-        //         info!("{:?}", pool_clone.status());
+        //         std::thread::sleep(std::time::Duration::from_secs(5));
+        //         tracing::info!("write pool: {:?}", pool_clone.status());
         //     }
         // });
 
         let write_handle = DieselWriteHandle { pool: pool.clone() };
 
-        let close_handle = DieselWriteCloseHandle { pool: pool.clone() };
+        let close_handle = DieselWriteCloseHandle { pool: pool.clone(), connections };
 
         Ok((write_handle, close_handle))
     }
@@ -187,8 +231,7 @@ impl DieselWriteHandle {
 
         let sqlite_version: Vec<String> = conn
             .interact(move |conn| diesel::select(sqlite_version::sqlite_version()).load(conn))
-            .await
-            .into_error_string(DieselDatabaseError::Execute)?
+            .await?
             .into_error_string(DieselDatabaseError::Execute)?;
 
         sqlite_version
@@ -206,16 +249,18 @@ impl DieselWriteHandle {
 
 pub struct DieselReadCloseHandle {
     pool: DieselPool,
+    connections: usize,
 }
 
 impl DieselReadCloseHandle {
     /// Call this before closing the server.
     pub async fn close(self) {
+        close_connections(&self.pool, self.connections).await;
         self.pool.close()
     }
 }
 
-pub fn sqlite_setup_hook(config: &SimpleBackendConfig) -> Hook {
+pub fn sqlite_setup_connection(config: &SimpleBackendConfig, conn: &mut SqliteConnection) -> Result<(), DieselDatabaseError> {
     let pragmas = &[
         "PRAGMA journal_mode=WAL;",
         "PRAGMA synchronous=NORMAL;",
@@ -233,26 +278,12 @@ pub fn sqlite_setup_hook(config: &SimpleBackendConfig) -> Hook {
         [].as_slice()
     };
 
-    Hook::async_fn(move |pool, _| {
-        Box::pin(async move {
-            pool.interact(move |connection| {
-                for pragma_str in pragmas.iter().chain(litestram_pragmas) {
-                    diesel::sql_query(*pragma_str).execute(connection)?;
-                }
+    for pragma_str in pragmas.iter().chain(litestram_pragmas) {
+        diesel::sql_query(*pragma_str).execute(conn)
+            .change_context(DieselDatabaseError::Setup)?;
+    }
 
-                Ok(())
-            })
-            .await
-            .map_err(|e| {
-                error!("Error: {}", e);
-                HookError::Message(e.to_string())
-            })?
-            .map_err(|e: diesel::result::Error| {
-                error!("Error: {}", e);
-                HookError::Backend(e.into())
-            })
-        })
-    })
+    Ok(())
 }
 
 #[derive(Clone)]
@@ -272,33 +303,25 @@ impl DieselReadHandle {
         database_info: &SqliteDatabase,
         db_path: PathBuf,
     ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
-        let manager = create_manager(config, database_info, db_path)?;
-        let pool = Pool::builder(manager)
-            .max_size(num_cpus::get())
-            .post_create(sqlite_setup_hook(config));
-
-        let pool = if config.sqlite_in_ram() {
-            // Prevent all in RAM database from being dropped
-
-            pool.runtime(deadpool::Runtime::Tokio1)
-                .recycle_timeout(Some(std::time::Duration::MAX))
-        } else {
-            pool
-        };
-
-        let pool = pool.build().change_context(DieselDatabaseError::Connect)?;
+        let connections = num_cpus::get();
+        let pool = create_pool(
+            config,
+            database_info,
+            db_path,
+            connections,
+        ).await?;
 
         // let pool_clone = pool.clone();
-        // tokio::spawn(async move {
+        // std::thread::spawn(move || {
         //     loop {
-        //         sleep(Duration::from_secs(5)).await;
-        //         info!("{:?}", pool_clone.status());
+        //         std::thread::sleep(std::time::Duration::from_secs(5));
+        //         tracing::info!("read pool: {:?}", pool_clone.status());
         //     }
         // });
 
         let handle = DieselReadHandle { pool: pool.clone() };
 
-        let close_handle = DieselReadCloseHandle { pool };
+        let close_handle = DieselReadCloseHandle { pool, connections };
 
         Ok((handle, close_handle))
     }

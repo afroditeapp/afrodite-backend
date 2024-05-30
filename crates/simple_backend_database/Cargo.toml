@@ -13,10 +13,11 @@ num_cpus = { workspace = true }
 
 tracing = { workspace = true }
 
+tokio = { version = "1.36.0", features = ["full"] }
+
 diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 diesel_migrations = { workspace = true }
 deadpool = { workspace = true }
-deadpool-diesel = { workspace = true, features = ["sqlite"] }
 
 simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_config = { path = "../simple_backend_config" }

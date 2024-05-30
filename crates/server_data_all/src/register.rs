@@ -74,7 +74,7 @@ impl <C: WriteCommandsProvider> RegisterAccount<C> {
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
         mut transaction: TransactionConnection<'_>,
-        history_conn: PoolObject,
+        mut history_conn: PoolObject,
     ) -> std::result::Result<AccountIdInternal, TransactionError> {
         let account = Account::default();
         let account_setup = AccountSetup::default();
@@ -83,10 +83,7 @@ impl <C: WriteCommandsProvider> RegisterAccount<C> {
 
         // No transaction for history as it does not matter if some default
         // data will be left there if there is some error.
-        let mut history_conn = history_conn
-            .lock()
-            .into_error_string(DieselDatabaseError::LockConnectionFailed)?;
-        let mut history = database_account::history::write::HistorySyncWriteCommands::new(history_conn.deref_mut());
+        let mut history = database_account::history::write::HistorySyncWriteCommands::new(history_conn.as_mut());
 
         // Common
         let mut current = database::current::write::CurrentSyncWriteCommands::new(conn.conn());
