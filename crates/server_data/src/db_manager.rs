@@ -212,6 +212,10 @@ impl RouterDatabaseWriteHandle {
             push_notification_sender: self.push_notification_sender,
         }
     }
+
+    pub fn location_raw(&self) -> &LocationIndexManager {
+        &self.location
+    }
 }
 
 /// Handle for writing synchronous write commands.
@@ -344,6 +348,10 @@ impl RouterDatabaseReadHandle {
 
     pub fn cache(&self) -> &DatabaseCache {
         &self.cache
+    }
+
+    pub fn read_handle_raw(&self) -> &CurrentReadHandle {
+        &self.current_read_handle
     }
 }
 

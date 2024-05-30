@@ -27,7 +27,7 @@ use server_common::push_notifications::{
 use server_data::{
     content_processing::ContentProcessingManagerData, db_manager::DatabaseManager, write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle}
 };
-use server_data_all::demo::DemoModeManager;
+use server_data_all::{demo::DemoModeManager, load::DbDataToCacheLoader};
 use simple_backend::{
     app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::AllCounters,
     web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher,
@@ -148,6 +148,15 @@ impl BusinessLogic for PihkaBusinessLogic {
             )
             .await
             .expect("Database init failed");
+
+        DbDataToCacheLoader::load_to_cache(
+            &router_database_handle.cache(),
+            router_database_handle.read_handle_raw(),
+            router_database_write_handle.location_raw(),
+            &self.config,
+        )
+            .await
+            .expect("Loading data from database to cache failed");
 
         let (write_cmd_runner_handle, write_cmd_waiter) =
             WriteCommandRunnerHandle::new(router_database_write_handle, &self.config).await;
