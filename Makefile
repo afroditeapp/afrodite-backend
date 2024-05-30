@@ -2,11 +2,25 @@
 CARGO_CRATE_ARGS = 	-p api_internal \
 					-p config \
 					-p database \
+					-p database_account \
+					-p database_profile \
+					-p database_media \
+					-p database_chat \
 					-p model \
 					-p server \
 					-p server_common \
 					-p server_api \
+					-p server_api_all \
+					-p server_api_account \
+					-p server_api_profile \
+					-p server_api_media \
+					-p server_api_chat \
 					-p server_data \
+					-p server_data_all \
+					-p server_data_account \
+					-p server_data_profile \
+					-p server_data_media \
+					-p server_data_chat \
 					-p test_mode \
 					-p test_mode_macro \
 					-p utils \
@@ -82,11 +96,25 @@ code-stats:
 	crates/api_internal \
 	crates/config \
 	crates/database \
+	crates/database_account \
+	crates/database_profile \
+	crates/database_media \
+	crates/database_chat \
 	crates/model \
 	crates/server \
 	crates/server_common \
 	crates/server_api \
+	crates/server_api_all \
+	crates/server_api_account \
+	crates/server_api_profile \
+	crates/server_api_media \
+	crates/server_api_chat \
 	crates/server_data \
+	crates/server_data_all \
+	crates/server_data_account \
+	crates/server_data_profile \
+	crates/server_data_media \
+	crates/server_data_chat \
 	crates/test_mode \
 	crates/test_mode_macro \
 	crates/utils \
