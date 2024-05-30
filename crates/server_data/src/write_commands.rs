@@ -11,13 +11,15 @@ use model::AccountId;
 use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 
 use super::{
+    db_manager::{RouterDatabaseWriteHandle, SyncWriteHandle},
     write_concurrent::{
         ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
     },
-    db_manager::{RouterDatabaseWriteHandle, SyncWriteHandle},
 };
 use crate::{
-    db_manager::SyncWriteHandleRef, result::{WrappedContextExt, WrappedResultExt}, DataError
+    db_manager::SyncWriteHandleRef,
+    result::{WrappedContextExt, WrappedResultExt},
+    DataError,
 };
 
 pub type WriteCmds = Cmds;
@@ -109,13 +111,15 @@ impl WriteCommandRunnerHandle {
     >(
         &self,
         write_cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError> where GetCmd: FnOnce(SyncWriteHandleRef<'_>) -> Cmd + Send + 'static,  {
-        self.write(|cmds| {
-            async move {
-                let ref_handle = cmds.to_ref_handle();
-                write_cmd(ref_handle).await
-            }
-        }).await
+    ) -> crate::result::Result<CmdResult, DataError>
+    where
+        GetCmd: FnOnce(SyncWriteHandleRef<'_>) -> Cmd + Send + 'static,
+    {
+        self.write(|cmds| async move {
+            let ref_handle = cmds.to_ref_handle();
+            write_cmd(ref_handle).await
+        })
+        .await
     }
 
     // pub async fn test(&self) {

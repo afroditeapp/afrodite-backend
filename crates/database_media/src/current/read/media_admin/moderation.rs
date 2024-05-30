@@ -1,4 +1,4 @@
-use database::define_current_read_commands;
+use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
@@ -6,7 +6,6 @@ use model::{
     ModerationId, ModerationQueueType, ModerationRequestContent, ModerationRequestId,
     ModerationRequestState, NextQueueNumberType,
 };
-use database::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 

@@ -1,8 +1,7 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::{AccountId, DemoModeId};
-use database::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 

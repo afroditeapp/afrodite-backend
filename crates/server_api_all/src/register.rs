@@ -1,5 +1,9 @@
 use model::{AccountId, AccountIdInternal, EmailAddress, SignInWithInfo};
-use server_api::{app::{StateBase, WriteData}, db_write_raw, utils::StatusCode};
+use server_api::{
+    app::{StateBase, WriteData},
+    db_write_raw,
+    utils::StatusCode,
+};
 use server_data::write::WriteCommandsProvider;
 use server_data_all::register::RegisterAccount;
 
@@ -14,7 +18,8 @@ pub async fn register_impl<S: StateBase + WriteData>(
 
     let id = db_write_raw!(state, move |cmds| {
         RegisterAccount::new(cmds.write_cmds())
-            .register(id, sign_in_with, email).await
+            .register(id, sign_in_with, email)
+            .await
     })
     .await?;
 

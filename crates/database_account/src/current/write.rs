@@ -1,10 +1,6 @@
-use database::{
-    ConnectionProvider, DieselConnection,
-};
+use database::{ConnectionProvider, DieselConnection};
 
-use self::{
-    account::CurrentSyncWriteAccount,
-};
+use self::account::CurrentSyncWriteAccount;
 
 pub mod account;
 pub mod account_admin;
@@ -38,7 +34,9 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
         CurrentSyncWriteAccount::new(self.write())
     }
 
-    pub fn common(&mut self) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
+    pub fn common(
+        &mut self,
+    ) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
         database::current::write::common::CurrentSyncWriteCommon::new(self.write())
     }
 }

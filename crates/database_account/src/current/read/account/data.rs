@@ -1,11 +1,10 @@
-use database::define_current_read_commands;
+use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountInternal, AccountSetup,
     ACCOUNT_GLOBAL_STATE_ROW_TYPE,
 };
-use database::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 

@@ -13,10 +13,7 @@ use self::utils::SecurityApiAccessTokenDefault;
 pub mod account;
 pub mod account_internal;
 
-pub use server_api::app;
-pub use server_api::internal_api;
-pub use server_api::utils;
-
+pub use server_api::{app, internal_api, utils};
 pub use server_common::{data::DataError, result};
 
 // API docs

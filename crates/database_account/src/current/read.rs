@@ -1,8 +1,6 @@
 use database::{ConnectionProvider, DieselConnection};
 
-use self::{
-    account::CurrentSyncReadAccount, account_admin::CurrentSyncReadAccountAdmin,
-};
+use self::{account::CurrentSyncReadAccount, account_admin::CurrentSyncReadAccountAdmin};
 
 pub mod account;
 pub mod account_admin;

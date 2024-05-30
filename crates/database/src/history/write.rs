@@ -36,7 +36,6 @@ use crate::TransactionError;
 //     };
 // }
 
-
 pub struct HistorySyncWriteCommands<C: ConnectionProvider> {
     conn: C,
 }
@@ -61,17 +60,15 @@ impl<C: ConnectionProvider> HistorySyncWriteCommands<C> {
 
 impl HistorySyncWriteCommands<&mut DieselConnection> {
     pub fn transaction<
-        F: FnOnce(
-                &mut DieselConnection,
-            ) -> std::result::Result<T, TransactionError>
-            + 'static,
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError> + 'static,
         T,
     >(
         self,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        self.conn.transaction(transaction_actions)
+        self.conn
+            .transaction(transaction_actions)
             .map_err(|e| e.into_report())
     }
 }

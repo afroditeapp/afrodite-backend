@@ -1,8 +1,6 @@
 use database::{ConnectionProvider, DieselConnection};
 
-use self::{
-    media::CurrentSyncReadMedia, media_admin::CurrentSyncReadMediaAdmin,
-};
+use self::{media::CurrentSyncReadMedia, media_admin::CurrentSyncReadMediaAdmin};
 
 pub mod media;
 pub mod media_admin;
@@ -38,7 +36,9 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
         CurrentSyncReadMediaAdmin::new(self.conn())
     }
 
-    pub fn common(&mut self) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
+    pub fn common(
+        &mut self,
+    ) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
         database::current::read::common::CurrentSyncReadCommon::new(self.conn())
     }
 }

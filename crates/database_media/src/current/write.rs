@@ -1,12 +1,6 @@
-use database::{
-    ConnectionProvider, DieselConnection, DieselDatabaseError,
-};
+use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
 
-use self::{
-    media::CurrentSyncWriteMedia, media_admin::CurrentSyncWriteMediaAdmin,
-};
-use database::TransactionError;
-
+use self::{media::CurrentSyncWriteMedia, media_admin::CurrentSyncWriteMediaAdmin};
 
 pub mod media;
 pub mod media_admin;
@@ -44,21 +38,22 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
         CurrentSyncWriteMediaAdmin::new(self.write())
     }
 
-    pub fn common(&mut self) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
+    pub fn common(
+        &mut self,
+    ) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
         database::current::write::common::CurrentSyncWriteCommon::new(self.write())
     }
 
     pub fn transaction<
-        F: FnOnce(
-            &mut DieselConnection,
-        ) -> std::result::Result<T, TransactionError>,
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
         T,
     >(
         self,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        self.conn.transaction(transaction_actions)
+        self.conn
+            .transaction(transaction_actions)
             .map_err(|e| e.into_report())
     }
 }

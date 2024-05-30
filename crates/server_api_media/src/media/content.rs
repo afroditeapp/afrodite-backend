@@ -85,7 +85,11 @@ pub async fn get_all_account_media_content<S: ReadData + GetAccounts>(
 
     let internal_id = state.get_internal_id(account_id).await?;
 
-    let internal_current_media = state.read().media().all_account_media_content(internal_id).await?;
+    let internal_current_media = state
+        .read()
+        .media()
+        .all_account_media_content(internal_id)
+        .await?;
 
     let data = internal_current_media
         .into_iter()

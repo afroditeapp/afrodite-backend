@@ -1,33 +1,26 @@
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     routing::{get, post},
     Router,
 };
-use config::{Config};
+use config::Config;
 pub use server_api::app::*;
-use server_api::{internal_api::InternalApiClient};
-use server_common::push_notifications::{
-    PushNotificationSender,
-};
+use server_api::internal_api::InternalApiClient;
+use server_common::push_notifications::PushNotificationSender;
 use server_data::{
-    content_processing::ContentProcessingManagerData, db_manager::{RouterDatabaseReadHandle}, write_commands::{WriteCommandRunnerHandle}
+    content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle,
+    write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::demo::DemoModeManager;
-use simple_backend::{
-    app::{
-        SimpleBackendAppState,
-    },
-    web_socket::WebSocketManager,
-};
+use simple_backend::{app::SimpleBackendAppState, web_socket::WebSocketManager};
 
 use self::routes_connected::ConnectedApp;
-
 use crate::api;
 
-pub mod state_impl;
 pub mod routes_connected;
 pub mod routes_internal;
+pub mod state_impl;
 
 /// State type for route handlers.
 pub type S = AppState;
@@ -141,9 +134,7 @@ impl App {
 
     pub fn create_chat_server_router(&self) -> Router {
         let public = Router::new().merge(
-            api::chat::push_notifications::push_notification_router_public(
-                self.state.clone(),
-            ),
+            api::chat::push_notifications::push_notification_router_public(self.state.clone()),
         );
 
         public.merge(ConnectedApp::new(self.state.clone()).private_chat_server_router())

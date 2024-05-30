@@ -2,7 +2,7 @@
 
 use account::WriteCommandsAccount;
 use account_admin::WriteCommandsAccountAdmin;
-use server_data::{write::{WriteCommandsProvider}};
+use server_data::write::WriteCommandsProvider;
 
 pub mod account;
 pub mod account_admin;
@@ -12,7 +12,7 @@ pub trait GetWriteCommandsAccount<C: WriteCommandsProvider> {
     fn account_admin(self) -> WriteCommandsAccountAdmin<C>;
 }
 
-impl <C: WriteCommandsProvider> GetWriteCommandsAccount<C> for C {
+impl<C: WriteCommandsProvider> GetWriteCommandsAccount<C> for C {
     fn account(self) -> WriteCommandsAccount<C> {
         WriteCommandsAccount::new(self)
     }

@@ -1,10 +1,8 @@
-
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{AccessToken, AccessTokenRaw, AccountIdInternal, RefreshToken, RefreshTokenRaw};
-use crate::{ConnectionProvider, DieselDatabaseError};
 
-use crate::IntoDatabaseError;
+use crate::{ConnectionProvider, DieselDatabaseError, IntoDatabaseError};
 
 define_read_commands!(CurrentReadAccountToken, CurrentSyncReadAccountToken);
 

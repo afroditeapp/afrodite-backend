@@ -1,11 +1,11 @@
 use axum::{extract::State, Extension, Router};
-use model::{
-    AccountIdInternal, AccountSetup, AccountState, Capabilities,
-    EventToClientInternal,
-};
+use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EventToClientInternal};
 use server_api::app::ValidateModerationRequest;
 use server_data::read::GetReadCommandsCommon;
-use server_data_account::{read::GetReadCommandsAccount, write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount}};
+use server_data_account::{
+    read::GetReadCommandsAccount,
+    write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount},
+};
 use simple_backend::create_counters;
 use tracing::warn;
 
@@ -100,7 +100,9 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_complete_setup<S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest>(
+pub async fn post_complete_setup<
+    S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest,
+>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -202,7 +204,13 @@ pub async fn post_complete_setup<S: ReadData + WriteData + GetInternalApi + GetC
 
 /// Contains only routes which require authentication.
 pub fn register_router<
-    S: StateBase + ReadData + WriteData + GetInternalApi + GetConfig + GetAccessTokens + ValidateModerationRequest,
+    S: StateBase
+        + ReadData
+        + WriteData
+        + GetInternalApi
+        + GetConfig
+        + GetAccessTokens
+        + ValidateModerationRequest,
 >(
     s: S,
 ) -> Router {

@@ -3,7 +3,6 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-
 macro_rules! define_db_read_command {
     ($struct_name:ident) => {
         impl<C: server_data::read::ReadCommandsProvider> $struct_name<C> {
@@ -12,18 +11,20 @@ macro_rules! define_db_read_command {
                         database_media::current::read::CurrentSyncReadCommands<
                             &mut server_data::DieselConnection,
                         >,
-                    ) -> error_stack::Result<
-                        R,
-                        server_data::DieselDatabaseError,
-                    > + Send
+                    ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError>
-            {
-                self.db_read_raw(|conn| cmd(database_media::current::read::CurrentSyncReadCommands::new(conn))).await
+            ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
+                self.db_read_raw(|conn| {
+                    cmd(database_media::current::read::CurrentSyncReadCommands::new(
+                        conn,
+                    ))
+                })
+                .await
             }
         }
     };
@@ -37,18 +38,20 @@ macro_rules! define_db_read_command_for_write {
                         database_media::current::read::CurrentSyncReadCommands<
                             &mut server_data::DieselConnection,
                         >,
-                    ) -> error_stack::Result<
-                        R,
-                        server_data::DieselDatabaseError,
-                    > + Send
+                    ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError>
-            {
-                self.db_read_raw(|conn| cmd(database_media::current::read::CurrentSyncReadCommands::new(conn))).await
+            ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
+                self.db_read_raw(|conn| {
+                    cmd(database_media::current::read::CurrentSyncReadCommands::new(
+                        conn,
+                    ))
+                })
+                .await
             }
         }
     };
@@ -62,18 +65,20 @@ macro_rules! define_db_transaction_command {
                         database_media::current::write::CurrentSyncWriteCommands<
                             &mut server_data::DieselConnection,
                         >,
-                    ) -> error_stack::Result<
-                        R,
-                        server_data::DieselDatabaseError,
-                    > + Send
+                    ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError>
-            {
-                self.cmds.write_cmds().db_transaction_raw(|conn| cmd(database_media::current::write::CurrentSyncWriteCommands::new(conn))).await
+            ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
+                self.cmds
+                    .write_cmds()
+                    .db_transaction_raw(|conn| {
+                        cmd(database_media::current::write::CurrentSyncWriteCommands::new(conn))
+                    })
+                    .await
             }
         }
     };
@@ -81,7 +86,9 @@ macro_rules! define_db_transaction_command {
 
 macro_rules! db_transaction {
     ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
-        server_common::data::IntoDataError::into_error($state.db_transaction(move |mut $cmds| ($commands)).await)
+        server_common::data::IntoDataError::into_error(
+            $state.db_transaction(move |mut $cmds| ($commands)).await,
+        )
     }};
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         $crate::data::IntoDataError::into_error(

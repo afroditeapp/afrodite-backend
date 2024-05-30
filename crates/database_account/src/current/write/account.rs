@@ -1,5 +1,4 @@
-use database::define_current_write_commands;
-use database::ConnectionProvider;
+use database::{define_current_write_commands, ConnectionProvider};
 
 mod data;
 mod demo;

@@ -2,7 +2,7 @@
 
 use chat::WriteCommandsChat;
 use chat_admin::WriteCommandsChatAdmin;
-use server_data::write::{WriteCommandsProvider};
+use server_data::write::WriteCommandsProvider;
 
 pub mod chat;
 pub mod chat_admin;
@@ -12,7 +12,7 @@ pub trait GetWriteCommandsChat<C: WriteCommandsProvider> {
     fn chat_admin(self) -> WriteCommandsChatAdmin<C>;
 }
 
-impl <C: WriteCommandsProvider> GetWriteCommandsChat<C> for C {
+impl<C: WriteCommandsProvider> GetWriteCommandsChat<C> for C {
     fn chat(self) -> WriteCommandsChat<C> {
         WriteCommandsChat::new(self)
     }

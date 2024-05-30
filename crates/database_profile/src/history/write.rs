@@ -1,11 +1,6 @@
-use database::{
-    ConnectionProvider, DieselConnection, DieselDatabaseError,
-};
+use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
 
-use self::{
-    profile::HistorySyncWriteProfile,
-};
-use database::TransactionError;
+use self::profile::HistorySyncWriteProfile;
 
 pub mod profile;
 pub mod profile_admin;
@@ -42,17 +37,15 @@ impl HistorySyncWriteCommands<&mut DieselConnection> {
     }
 
     pub fn transaction<
-        F: FnOnce(
-                &mut DieselConnection,
-            ) -> std::result::Result<T, TransactionError>
-            + 'static,
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError> + 'static,
         T,
     >(
         self,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        self.conn.transaction(transaction_actions)
+        self.conn
+            .transaction(transaction_actions)
             .map_err(|e| e.into_report())
     }
 }

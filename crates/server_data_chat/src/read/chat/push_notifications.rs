@@ -1,11 +1,12 @@
 use model::AccountIdInternal;
-
-use server_data::{define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError};
+use server_data::{
+    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError,
+};
 
 define_server_data_read_commands!(ReadCommandsChatPushNotifications);
 define_db_read_command!(ReadCommandsChatPushNotifications);
 
-impl <C: ReadCommandsProvider> ReadCommandsChatPushNotifications<C> {
+impl<C: ReadCommandsProvider> ReadCommandsChatPushNotifications<C> {
     pub async fn push_notification_already_sent(
         &mut self,
         id: AccountIdInternal,

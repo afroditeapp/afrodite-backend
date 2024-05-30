@@ -11,10 +11,7 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use model::{
-    AccessToken, AccountIdInternal, AuthPair, RefreshToken,
-    SyncDataVersionFromClient,
-};
+use model::{AccessToken, AccountIdInternal, AuthPair, RefreshToken, SyncDataVersionFromClient};
 use server_data::read::GetReadCommandsCommon;
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::{create_counters, web_socket::WebSocketManager};

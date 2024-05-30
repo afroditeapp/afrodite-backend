@@ -1,8 +1,7 @@
-use database::define_history_write_commands;
+use database::{define_history_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::{Result, ResultExt};
 use model::{Account, AccountIdInternal, AccountSetup};
-use database::{ConnectionProvider, DieselDatabaseError};
 use simple_backend_utils::current_unix_time;
 
 use crate::IntoDatabaseError;

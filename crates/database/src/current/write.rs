@@ -2,9 +2,7 @@ use simple_backend_database::diesel_db::{
     ConnectionProvider, DieselConnection, DieselDatabaseError,
 };
 
-use self::{
-    common::CurrentSyncWriteCommon,
-};
+use self::common::CurrentSyncWriteCommon;
 use crate::TransactionError;
 
 macro_rules! define_write_commands {
@@ -87,16 +85,15 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
     }
 
     pub fn transaction<
-        F: FnOnce(
-            &mut DieselConnection,
-        ) -> std::result::Result<T, TransactionError>,
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
         T,
     >(
         self,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        self.conn.transaction(transaction_actions)
+        self.conn
+            .transaction(transaction_actions)
             .map_err(|e| e.into_report())
     }
 }

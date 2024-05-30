@@ -1,11 +1,13 @@
 use std::net::SocketAddr;
 
-use model::{AccessToken, AccountIdInternal, AccountState, Capabilities, EmailAddress, SignInWithInfo};
-use model::{AccessibleAccount, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken};
+use model::{
+    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, Capabilities,
+    DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken,
+    DemoModePassword, DemoModeToken, EmailAddress, SignInWithInfo,
+};
 use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;
-use server_data::content_processing::ContentProcessingManagerData;
-use server_data::DataError;
+use server_data::{content_processing::ContentProcessingManagerData, DataError};
 
 use crate::{internal_api::InternalApiClient, utils::StatusCode};
 
@@ -59,7 +61,8 @@ pub trait DemoModeManagerProvider: StateBase {
         &self,
         password: DemoModePassword,
         token: DemoModeLoginToken,
-    ) -> impl std::future::Future<Output = error_stack::Result<DemoModeConfirmLoginResult, DataError>> + Send;
+    ) -> impl std::future::Future<Output = error_stack::Result<DemoModeConfirmLoginResult, DataError>>
+           + Send;
 
     fn demo_mode_token_exists(
         &self,
@@ -70,5 +73,7 @@ pub trait DemoModeManagerProvider: StateBase {
         &self,
         state: &S,
         token: &DemoModeToken,
-    ) -> impl std::future::Future<Output = server_common::result::Result<Vec<AccessibleAccount>, DataError>> + Send;
+    ) -> impl std::future::Future<
+        Output = server_common::result::Result<Vec<AccessibleAccount>, DataError>,
+    > + Send;
 }

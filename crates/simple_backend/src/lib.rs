@@ -115,15 +115,21 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
     ) -> impl std::future::Future<Output = Self::AppState> + Send;
 
     /// Callback for doing something after server has been started
-    fn on_after_server_start(&mut self) -> impl std::future::Future<Output = ()> + Send { async {} }
+    fn on_after_server_start(&mut self) -> impl std::future::Future<Output = ()> + Send {
+        async {}
+    }
 
     /// Callback for doing something before server quit starts
-    fn on_before_server_quit(&mut self) -> impl std::future::Future<Output = ()> + Send { async {} }
+    fn on_before_server_quit(&mut self) -> impl std::future::Future<Output = ()> + Send {
+        async {}
+    }
 
     /// Callback for doing something after server has quit
     ///
     /// For example databases can be closed here.
-    fn on_after_server_quit(self) -> impl std::future::Future<Output = ()> + Send { async {} }
+    fn on_after_server_quit(self) -> impl std::future::Future<Output = ()> + Send {
+        async {}
+    }
 }
 
 pub struct SimpleBackend<T: BusinessLogic> {
@@ -581,7 +587,9 @@ async fn handle_lets_encrypt_related_tcp_stream(
         Err(_) => {
             // This error seems to be quite frequent when this port is on
             // public internet so do not log anything.
-            SIMPLE_CONNECTION.lets_encrypt_port_start_handshake_failed.incr();
+            SIMPLE_CONNECTION
+                .lets_encrypt_port_start_handshake_failed
+                .incr();
             return;
         }
     };

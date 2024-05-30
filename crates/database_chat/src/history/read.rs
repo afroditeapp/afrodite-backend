@@ -1,8 +1,6 @@
 use database::ConnectionProvider;
 
-use self::{
-    chat::HistorySyncReadChat, chat_admin::HistorySyncReadChatAdmin,
-};
+use self::{chat::HistorySyncReadChat, chat_admin::HistorySyncReadChatAdmin};
 
 pub mod chat;
 pub mod chat_admin;

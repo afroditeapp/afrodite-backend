@@ -1,4 +1,3 @@
-
 #[macro_export]
 #[allow(clippy::crate_in_macro_def)]
 macro_rules! define_current_read_commands {
@@ -18,12 +17,10 @@ macro_rules! define_current_read_commands {
                 self.cmds.conn()
             }
 
-
             pub fn read(
                 &mut self,
-            ) -> crate::current::read::CurrentSyncReadCommands<
-                &mut database::DieselConnection,
-            > {
+            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            {
                 crate::current::read::CurrentSyncReadCommands::new(self.conn())
             }
         }
@@ -55,39 +52,34 @@ macro_rules! define_current_write_commands {
 
             pub fn read(
                 &mut self,
-            ) -> crate::current::read::CurrentSyncReadCommands<
-                &mut database::DieselConnection,
-            > {
+            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            {
                 crate::current::read::CurrentSyncReadCommands::new(self.conn())
             }
 
             pub fn cmds(
                 &mut self,
-            ) -> crate::current::write::CurrentSyncWriteCommands<
-                &mut database::DieselConnection,
-            > {
+            ) -> crate::current::write::CurrentSyncWriteCommands<&mut database::DieselConnection>
+            {
                 crate::current::write::CurrentSyncWriteCommands::new(self.conn())
             }
 
             pub fn common_read_access(
                 &mut self,
-            ) -> $crate::current::read::CurrentSyncReadCommands<
-                &mut database::DieselConnection,
-            > {
+            ) -> $crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            {
                 $crate::current::read::CurrentSyncReadCommands::new(self.conn())
             }
 
             pub fn common_write_access(
                 &mut self,
-            ) -> $crate::current::write::CurrentSyncWriteCommands<
-                &mut database::DieselConnection,
-            > {
+            ) -> $crate::current::write::CurrentSyncWriteCommands<&mut database::DieselConnection>
+            {
                 $crate::current::write::CurrentSyncWriteCommands::new(self.conn())
             }
         }
     };
 }
-
 
 #[macro_export]
 #[allow(clippy::crate_in_macro_def)]
@@ -110,9 +102,8 @@ macro_rules! define_history_read_commands {
 
             pub fn read(
                 conn: &mut database::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<
-                &mut database::DieselConnection,
-            > {
+            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            {
                 crate::current::read::CurrentSyncReadCommands::new(conn)
             }
         }
@@ -144,9 +135,8 @@ macro_rules! define_history_write_commands {
 
             pub fn read(
                 conn: &mut database::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<
-                &mut database::DieselConnection,
-            > {
+            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            {
                 crate::current::read::CurrentSyncReadCommands::new(conn)
             }
         }

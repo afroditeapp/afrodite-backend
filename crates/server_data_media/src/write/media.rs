@@ -1,19 +1,19 @@
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent
+    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState,
+    NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent,
 };
-use server_data::write::WriteCommandsProvider;
-use server_data::{define_server_data_write_commands, DieselDatabaseError};
-
 use server_data::{
+    define_server_data_write_commands,
     result::{Result, WrappedContextExt, WrappedResultExt},
-    DataError,
+    write::WriteCommandsProvider,
+    DataError, DieselDatabaseError,
 };
 
 define_server_data_write_commands!(WriteCommandsMedia);
 define_db_read_command_for_write!(WriteCommandsMedia);
 define_db_transaction_command!(WriteCommandsMedia);
 
-impl <C: WriteCommandsProvider> WriteCommandsMedia<C> {
+impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
     pub async fn create_or_update_moderation_request(
         &self,
         account_id: AccountIdInternal,

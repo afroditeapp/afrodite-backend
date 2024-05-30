@@ -1,13 +1,11 @@
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
-#[openapi(
-    info(
-        title = "pihka-backend",
-        description = "Pihka backend API",
-        version = "0.1.0"
-    )
-)]
+#[openapi(info(
+    title = "pihka-backend",
+    description = "Pihka backend API",
+    version = "0.1.0"
+))]
 pub struct ApiDoc;
 
 impl ApiDoc {

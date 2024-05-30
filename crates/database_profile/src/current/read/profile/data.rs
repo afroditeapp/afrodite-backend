@@ -1,11 +1,10 @@
-use database::define_current_read_commands;
+use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue,
     ProfileInternal, ProfileStateInternal,
 };
-use database::{ConnectionProvider, DieselDatabaseError};
 
 define_current_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);
 

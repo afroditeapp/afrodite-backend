@@ -1,10 +1,10 @@
 use diesel::{insert_into, ExpressionMethods, RunQueryDsl};
+use error_stack::Result;
 use model::{AccountId, AccountIdDb, AccountIdInternal};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use error_stack::Result;
-use crate::IntoDatabaseError;
 
 use super::ConnectionProvider;
+use crate::IntoDatabaseError;
 
 mod queue_number;
 mod state;

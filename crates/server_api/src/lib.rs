@@ -75,8 +75,6 @@ pub use server_common::{data::DataError, result};
 )]
 pub struct ApiDocCommon;
 
-
-
 /// Macro for writing data with different code style.
 /// Makes "async move" and "await" keywords unnecessary.
 /// The macro "closure" should work like a real closure.
@@ -126,12 +124,13 @@ macro_rules! db_write {
 macro_rules! db_write_multiple {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
-            let r: $crate::result::Result<_, $crate::DataError> =
-                $state.write(move |$cmds| async move {
+            let r: $crate::result::Result<_, $crate::DataError> = $state
+                .write(move |$cmds| async move {
                     let $cmds = $cmds.to_ref_handle();
                     let $cmds = $cmds.to_ref_handle();
                     ($commands)
-                }).await;
+                })
+                .await;
             r
         }
         .await;
@@ -146,12 +145,13 @@ macro_rules! db_write_multiple {
 macro_rules! db_write_raw {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         async {
-            let r: $crate::result::Result<_, $crate::DataError> =
-                $state.write(move |$cmds| async move {
+            let r: $crate::result::Result<_, $crate::DataError> = $state
+                .write(move |$cmds| async move {
                     let $cmds = $cmds.to_ref_handle();
                     let $cmds = $cmds.to_ref_handle();
                     ($commands)
-                }).await;
+                })
+                .await;
             r
         }
     }};

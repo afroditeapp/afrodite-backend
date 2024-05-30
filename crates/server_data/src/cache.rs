@@ -1,11 +1,6 @@
-use std::{
-    collections::{HashMap},
-    fmt::Debug,
-    net::SocketAddr,
-    sync::Arc,
-};
+use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
-use error_stack::{Result};
+use error_stack::Result;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey,
     LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal,
@@ -15,10 +10,8 @@ use model::{
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
 
-use super::index::{
-    location::LocationIndexIteratorState,
-};
-use crate::{event::EventMode};
+use super::index::location::LocationIndexIteratorState;
+use crate::event::EventMode;
 
 #[derive(Debug)]
 pub struct AccountEntry {

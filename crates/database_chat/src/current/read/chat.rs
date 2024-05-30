@@ -1,8 +1,7 @@
-use database::define_current_read_commands;
+use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
 use model::{AccountIdInternal, ChatStateRaw};
-use database::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 

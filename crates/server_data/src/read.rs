@@ -1,8 +1,9 @@
-use database::{current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader, DbReaderRaw, DieselConnection, DieselDatabaseError};
-
-use self::{
-    common::ReadCommandsCommon,
+use database::{
+    current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader, DbReaderRaw,
+    DieselConnection, DieselDatabaseError,
 };
+
+use self::common::ReadCommandsCommon;
 use super::{cache::DatabaseCache, file::utils::FileDir};
 
 macro_rules! define_read_commands {
@@ -31,17 +32,14 @@ macro_rules! define_read_commands {
                         database::current::read::CurrentSyncReadCommands<
                             &mut database::DieselConnection,
                         >,
-                    ) -> error_stack::Result<
-                        R,
-                        database::DieselDatabaseError,
-                    > + Send
+                    ) -> error_stack::Result<R, database::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
-            {
+            ) -> error_stack::Result<R, database::DieselDatabaseError> {
                 self.cmds.read_cmds().db_read(cmd).await
             }
 
@@ -97,9 +95,7 @@ impl<'a> ReadCommands<'a> {
     }
 
     pub async fn db_read_raw<
-        T: FnOnce(
-                &mut DieselConnection,
-            ) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -111,18 +107,13 @@ impl<'a> ReadCommands<'a> {
     }
 }
 
-
 pub struct ReadCommandsContainer<'a> {
     pub cmds: ReadCommands<'a>,
 }
 
 impl<'a> ReadCommandsContainer<'a> {
-    pub fn new(
-        cmds: ReadCommands<'a>,
-    ) -> Self {
-        Self {
-            cmds,
-        }
+    pub fn new(cmds: ReadCommands<'a>) -> Self {
+        Self { cmds }
     }
 }
 
@@ -130,13 +121,13 @@ pub trait ReadCommandsProvider {
     fn read_cmds(&self) -> &ReadCommands;
 }
 
-impl <'a> ReadCommandsProvider for ReadCommandsContainer<'a> {
+impl<'a> ReadCommandsProvider for ReadCommandsContainer<'a> {
     fn read_cmds(&self) -> &ReadCommands {
         &self.cmds
     }
 }
 
-impl <'a> ReadCommandsProvider for ReadCommands<'a> {
+impl<'a> ReadCommandsProvider for ReadCommands<'a> {
     fn read_cmds(&self) -> &ReadCommands {
         self
     }
@@ -146,7 +137,7 @@ pub trait GetReadCommandsCommon<C: ReadCommandsProvider> {
     fn common(self) -> ReadCommandsCommon<C>;
 }
 
-impl <C: ReadCommandsProvider> GetReadCommandsCommon<C> for C {
+impl<C: ReadCommandsProvider> GetReadCommandsCommon<C> for C {
     fn common(self) -> ReadCommandsCommon<C> {
         ReadCommandsCommon::new(self)
     }

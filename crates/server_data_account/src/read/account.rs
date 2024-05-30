@@ -1,15 +1,13 @@
 use model::{
-    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
-    DemoModeId, GoogleAccountId, SignInWithInfo,
+    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId,
+    GoogleAccountId, SignInWithInfo,
 };
-use server_data::{define_server_data_read_commands, DataError};
-
-use server_data::{result::Result, IntoDataError};
+use server_data::{define_server_data_read_commands, result::Result, DataError, IntoDataError};
 
 define_server_data_read_commands!(ReadCommandsAccount);
 define_db_read_command!(ReadCommandsAccount);
 
-impl <C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
+impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
     pub async fn account_sign_in_with_info(
         &self,
         id: AccountIdInternal,

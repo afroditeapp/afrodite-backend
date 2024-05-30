@@ -1,11 +1,10 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
     AccountIdInternal, ChatStateRaw, MatchesSyncVersion, ReceivedBlocksSyncVersion,
     ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SyncVersionUtils,
 };
-use database::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 

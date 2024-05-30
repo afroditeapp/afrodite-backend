@@ -1,6 +1,6 @@
 use profile::ReadCommandsProfile;
 use profile_admin::ReadCommandsProfileAdmin;
-use server_data::read::{ReadCommandsProvider};
+use server_data::read::ReadCommandsProvider;
 
 pub mod profile;
 pub mod profile_admin;
@@ -10,7 +10,7 @@ pub trait GetReadProfileCommands<C: ReadCommandsProvider> {
     fn profile_admin(self) -> ReadCommandsProfileAdmin<C>;
 }
 
-impl <C: ReadCommandsProvider> GetReadProfileCommands<C> for C {
+impl<C: ReadCommandsProvider> GetReadProfileCommands<C> for C {
     fn profile(self) -> ReadCommandsProfile<C> {
         ReadCommandsProfile::new(self)
     }

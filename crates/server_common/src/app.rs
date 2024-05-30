@@ -9,12 +9,16 @@ pub trait GetConfig {
 }
 
 pub trait WriteDynamicConfig {
-    fn write_config(&self, config: BackendConfig)
-        -> impl std::future::Future<Output = error_stack::Result<(), ConfigFileError>> + Send;
+    fn write_config(
+        &self,
+        config: BackendConfig,
+    ) -> impl std::future::Future<Output = error_stack::Result<(), ConfigFileError>> + Send;
 }
 
 pub trait ReadDynamicConfig {
-    fn read_config(&self) -> impl std::future::Future<Output = error_stack::Result<BackendConfig, ConfigFileError>> + Send;
+    fn read_config(
+        &self,
+    ) -> impl std::future::Future<Output = error_stack::Result<BackendConfig, ConfigFileError>> + Send;
 }
 
 pub trait BackendVersionProvider {

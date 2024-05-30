@@ -2,10 +2,9 @@ use model::{
     AccountIdInternal, Location, Profile, ProfileAttributeFilterList, ProfileInternal,
     ProfileStateInternal,
 };
-use server_data::define_server_data_read_commands;
-
-use server_data::read::ReadCommandsProvider;
 use server_data::{
+    define_server_data_read_commands,
+    read::ReadCommandsProvider,
     result::{Result, WrappedContextExt},
     DataError, IntoDataError,
 };
@@ -13,7 +12,7 @@ use server_data::{
 define_server_data_read_commands!(ReadCommandsProfile);
 define_db_read_command!(ReadCommandsProfile);
 
-impl <C: ReadCommandsProvider> ReadCommandsProfile<C> {
+impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
     pub async fn profile_internal(
         &self,
         id: AccountIdInternal,

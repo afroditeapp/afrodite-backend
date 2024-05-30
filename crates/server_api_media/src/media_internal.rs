@@ -37,7 +37,9 @@ pub async fn internal_get_check_moderation_request_for_account<
     let account_id = state.get_internal_id(account_id).await?;
 
     if state.config().components().media {
-        state.media_check_moderation_request_for_account(account_id).await?;
+        state
+            .media_check_moderation_request_for_account(account_id)
+            .await?;
         Ok(())
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)

@@ -3,9 +3,8 @@ use model::{
     Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType,
     ProfileVisibility,
 };
+use server_common::{data::DataError, result::Result};
 use server_data::{define_server_data_write_commands, write::WriteCommandsProvider};
-
-use server_common::{result::Result, data::DataError};
 
 define_server_data_write_commands!(WriteCommandsMediaAdmin);
 define_db_transaction_command!(WriteCommandsMediaAdmin);
@@ -26,7 +25,7 @@ pub struct CurrentAndNewAccount {
     pub new: Account,
 }
 
-impl <C: WriteCommandsProvider> WriteCommandsMediaAdmin<C> {
+impl<C: WriteCommandsProvider> WriteCommandsMediaAdmin<C> {
     pub async fn moderation_get_list_and_create_new_if_necessary(
         self,
         account_id: AccountIdInternal,

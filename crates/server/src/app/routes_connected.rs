@@ -1,7 +1,6 @@
 use axum::{middleware, Router};
-use crate::api as api;
 
-use crate::app::S;
+use crate::{api, app::S};
 
 /// Private routes only accessible when WebSocket is connected.
 pub struct ConnectedApp {

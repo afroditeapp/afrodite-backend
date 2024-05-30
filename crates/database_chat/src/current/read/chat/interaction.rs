@@ -1,4 +1,4 @@
-use database::define_current_read_commands;
+use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 // use crate::define_current_read_commands;
 use diesel::prelude::*;
 use error_stack::Result;
@@ -6,7 +6,6 @@ use model::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
     ProfileVisibility,
 };
-use database::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 

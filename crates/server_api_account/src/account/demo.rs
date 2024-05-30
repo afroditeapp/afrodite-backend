@@ -10,7 +10,7 @@ use server_api::{app::RegisteringCmd, db_write};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
-use super::{login_impl};
+use super::login_impl;
 use crate::{
     app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, StateBase, WriteData},
     utils::{Json, StatusCode},
@@ -63,9 +63,7 @@ pub async fn post_demo_mode_confirm_login<S: DemoModeManagerProvider>(
     Json(info): Json<DemoModeConfirmLogin>,
 ) -> Result<Json<DemoModeConfirmLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_confirm_login.incr();
-    let result = state
-        .stage1_login(info.password, info.token)
-        .await?;
+    let result = state.stage1_login(info.password, info.token).await?;
     Ok(result.into())
 }
 
@@ -113,7 +111,9 @@ pub const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_r
     ),
     security(),
 )]
-pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteData + GetConfig + RegisteringCmd>(
+pub async fn post_demo_mode_register_account<
+    S: DemoModeManagerProvider + WriteData + GetConfig + RegisteringCmd,
+>(
     State(state): State<S>,
     Json(token): Json<DemoModeToken>,
 ) -> Result<Json<AccountId>, StatusCode> {
@@ -150,9 +150,7 @@ pub async fn post_demo_mode_login_to_account<
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_login_to_account.incr();
 
-    let _demo_mode_id: DemoModeId = state
-        .demo_mode_token_exists(&info.token)
-        .await?;
+    let _demo_mode_id: DemoModeId = state.demo_mode_token_exists(&info.token).await?;
 
     let result = login_impl(info.account_id, state).await?;
 
@@ -160,7 +158,13 @@ pub async fn post_demo_mode_login_to_account<
 }
 
 pub fn demo_mode_router<
-    S: StateBase + DemoModeManagerProvider + ReadData + WriteData + GetAccounts + GetConfig + RegisteringCmd,
+    S: StateBase
+        + DemoModeManagerProvider
+        + ReadData
+        + WriteData
+        + GetAccounts
+        + GetConfig
+        + RegisteringCmd,
 >(
     s: S,
 ) -> Router {

@@ -1,11 +1,6 @@
-use database::{
-    ConnectionProvider, DieselConnection, DieselDatabaseError,
-};
+use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
 
-use self::{
-    profile::CurrentSyncWriteProfile,
-};
-use database::TransactionError;
+use self::profile::CurrentSyncWriteProfile;
 
 pub mod profile;
 pub mod profile_admin;
@@ -39,21 +34,22 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
         CurrentSyncWriteProfile::new(self.write())
     }
 
-    pub fn common(&mut self) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
+    pub fn common(
+        &mut self,
+    ) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
         database::current::write::common::CurrentSyncWriteCommon::new(self.write())
     }
 
     pub fn transaction<
-        F: FnOnce(
-            &mut DieselConnection,
-        ) -> std::result::Result<T, TransactionError>,
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
         T,
     >(
         self,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        self.conn.transaction(transaction_actions)
+        self.conn
+            .transaction(transaction_actions)
             .map_err(|e| e.into_report())
     }
 }

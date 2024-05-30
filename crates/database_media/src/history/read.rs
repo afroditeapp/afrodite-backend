@@ -1,9 +1,6 @@
 use database::ConnectionProvider;
 
-use self::{
-    media::HistorySyncReadMedia,
-    media_admin::HistorySyncReadMediaAdmin,
-};
+use self::{media::HistorySyncReadMedia, media_admin::HistorySyncReadMediaAdmin};
 
 pub mod media;
 pub mod media_admin;

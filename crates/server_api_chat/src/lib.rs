@@ -12,10 +12,7 @@ use self::utils::SecurityApiAccessTokenDefault;
 // Routes
 pub mod chat;
 
-pub use server_api::app;
-pub use server_api::internal_api;
-pub use server_api::utils;
-
+pub use server_api::{app, internal_api, utils};
 pub use server_common::{data::DataError, result};
 
 // API docs
@@ -66,7 +63,5 @@ pub use server_common::{data::DataError, result};
     modifiers(&SecurityApiAccessTokenDefault),
 )]
 pub struct ApiDocChat;
-
-
 
 pub use server_api::{db_write, db_write_multiple};

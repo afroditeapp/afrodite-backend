@@ -1,9 +1,6 @@
 use database::ConnectionProvider;
 
-use self::{
-    profile::HistorySyncReadProfile,
-    profile_admin::HistorySyncReadProfileAdmin,
-};
+use self::{profile::HistorySyncReadProfile, profile_admin::HistorySyncReadProfileAdmin};
 
 pub mod profile;
 pub mod profile_admin;
@@ -24,5 +21,4 @@ impl<C: ConnectionProvider> HistorySyncReadCommands<C> {
     pub fn into_profile_admin(self) -> HistorySyncReadProfileAdmin<C> {
         HistorySyncReadProfileAdmin::new(self.conn)
     }
-
 }

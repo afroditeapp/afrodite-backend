@@ -79,9 +79,7 @@ pub async fn post_backend_config<S: WriteDynamicConfig>(
     }
 }
 
-pub fn config_router<S: StateBase + WriteDynamicConfig + ReadDynamicConfig>(
-    s: S,
-) -> Router {
+pub fn config_router<S: StateBase + WriteDynamicConfig + ReadDynamicConfig>(s: S) -> Router {
     use axum::routing::{get, post};
 
     Router::new()

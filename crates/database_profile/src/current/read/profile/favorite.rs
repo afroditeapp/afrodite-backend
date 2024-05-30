@@ -1,8 +1,7 @@
-use database::define_current_read_commands;
+use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
-use database::{ConnectionProvider, DieselDatabaseError};
 
 define_current_read_commands!(CurrentReadProfileFavorite, CurrentSyncReadProfileFavorite);
 

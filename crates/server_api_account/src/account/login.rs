@@ -91,13 +91,14 @@ pub async fn post_sign_in_with_login<
                 .await
                 .map(|d| d.into())
         } else {
-            let id = state.register_impl(
-                SignInWithInfo {
-                    google_account_id: Some(google_id),
-                },
-                Some(email),
-            )
-            .await?;
+            let id = state
+                .register_impl(
+                    SignInWithInfo {
+                        google_account_id: Some(google_id),
+                    },
+                    Some(email),
+                )
+                .await?;
             login_impl(id.as_id(), state).await.map(|d| d.into())
         }
     } else if let Some(apple) = tokens.apple_token {

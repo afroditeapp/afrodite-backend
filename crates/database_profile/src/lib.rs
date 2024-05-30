@@ -6,5 +6,5 @@
 pub mod current;
 pub mod history;
 
-pub use model::schema;
 pub use database::IntoDatabaseError;
+pub use model::schema;

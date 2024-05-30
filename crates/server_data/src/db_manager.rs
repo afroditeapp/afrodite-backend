@@ -1,10 +1,10 @@
-
-
 use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
-use database::{CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbWriteCloseHandle, HistoryReadHandle, HistoryWriteHandle};
-use crate::{event::EventManagerWithCacheReference, write::WriteCommandsContainer};
+use database::{
+    CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle,
+    DbWriteCloseHandle, HistoryReadHandle, HistoryWriteHandle,
+};
 pub use server_common::{
     data::{DataError, IntoDataError},
     result,
@@ -14,21 +14,17 @@ use simple_backend::media_backup::MediaBackupHandle;
 use tracing::info;
 
 use crate::{
-    cache::{DatabaseCache},
-    file::{utils::FileDir},
+    cache::DatabaseCache,
+    event::EventManagerWithCacheReference,
+    file::utils::FileDir,
     index::{LocationIndexIteratorHandle, LocationIndexManager},
     read::ReadCommands,
     utils::{AccessTokenManager, AccountIdManager},
-    write::{
-        common::WriteCommandsCommon,
-        WriteCommands,
-    },
+    write::{common::WriteCommandsCommon, WriteCommands, WriteCommandsContainer},
     write_concurrent::WriteCommandsConcurrent,
 };
 
-
 pub const DB_FILE_DIR_NAME: &str = "files";
-
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
@@ -285,13 +281,17 @@ pub struct SyncWriteHandleRef<'a> {
     push_notification_sender: &'a PushNotificationSender,
 }
 
-impl <'a> SyncWriteHandleRef<'a> {
+impl<'a> SyncWriteHandleRef<'a> {
     pub fn events(&self) -> EventManagerWithCacheReference {
         EventManagerWithCacheReference::new(&self.write_cmds.cache, &self.push_notification_sender)
     }
 
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(&self.current_read_handle, &self.write_cmds.cache, &self.write_cmds.file_dir)
+        ReadCommands::new(
+            &self.current_read_handle,
+            &self.write_cmds.cache,
+            &self.write_cmds.file_dir,
+        )
     }
 
     pub fn config(&self) -> &Config {
@@ -299,9 +299,7 @@ impl <'a> SyncWriteHandleRef<'a> {
     }
 
     pub fn to_ref_handle(&self) -> SyncWriteHandleRefRef<'_> {
-        SyncWriteHandleRefRef {
-            handle: self,
-        }
+        SyncWriteHandleRefRef { handle: self }
     }
 }
 
@@ -353,7 +351,6 @@ impl RouterDatabaseReadHandle {
         &self.current_read_handle
     }
 }
-
 
 // pub fn account(&self) -> WriteCommandsAccount {
 //     self.cmds().account()

@@ -1,8 +1,5 @@
 use chat::CurrentSyncWriteChat;
-use database::{TransactionError};
-use database::{
-    ConnectionProvider, DieselConnection, DieselDatabaseError,
-};
+use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
 
 pub mod chat;
 pub mod chat_admin;
@@ -37,16 +34,15 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
     }
 
     pub fn transaction<
-        F: FnOnce(
-            &mut DieselConnection,
-        ) -> std::result::Result<T, TransactionError>,
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
         T,
     >(
         self,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        self.conn.transaction(transaction_actions)
+        self.conn
+            .transaction(transaction_actions)
             .map_err(|e| e.into_report())
     }
 }

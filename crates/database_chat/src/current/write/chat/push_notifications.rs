@@ -1,10 +1,9 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PushNotificationStateInfo};
-use database::{ConnectionProvider, DieselDatabaseError};
 
-use crate::{IntoDatabaseError};
+use crate::IntoDatabaseError;
 
 define_current_write_commands!(
     CurrentWriteChatPushNotifications,

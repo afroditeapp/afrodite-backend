@@ -1,13 +1,18 @@
-use model::{AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw, ModerationRequest, ModerationRequestState};
+use model::{
+    AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw,
+    ModerationRequest, ModerationRequestState,
+};
+use server_common::{
+    data::{DataError, IntoDataError},
+    result::Result,
+};
 use server_data::{define_server_data_read_commands, read::ReadCommandsProvider};
-
-use server_common::{result::Result, data::IntoDataError, data::DataError};
 use tokio_util::io::ReaderStream;
 
 define_server_data_read_commands!(ReadCommandsMedia);
 define_db_read_command!(ReadCommandsMedia);
 
-impl <C: ReadCommandsProvider> ReadCommandsMedia<C> {
+impl<C: ReadCommandsProvider> ReadCommandsMedia<C> {
     pub async fn content_data(
         &self,
         account_id: AccountId,

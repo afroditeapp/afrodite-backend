@@ -1,11 +1,10 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType,
     SetProfileContent, SetProfileContentInternal,
 };
-use database::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
 use super::ConnectionProvider;

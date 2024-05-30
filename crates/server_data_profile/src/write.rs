@@ -2,7 +2,7 @@
 
 use profile::WriteCommandsProfile;
 use profile_admin::WriteCommandsProfileAdmin;
-use server_data::write::{WriteCommandsProvider};
+use server_data::write::WriteCommandsProvider;
 
 pub mod profile;
 pub mod profile_admin;
@@ -12,7 +12,7 @@ pub trait GetWriteCommandsProfile<C: WriteCommandsProvider> {
     fn profile_admin(self) -> WriteCommandsProfileAdmin<C>;
 }
 
-impl <C: WriteCommandsProvider> GetWriteCommandsProfile<C> for C {
+impl<C: WriteCommandsProvider> GetWriteCommandsProfile<C> for C {
     fn profile(self) -> WriteCommandsProfile<C> {
         WriteCommandsProfile::new(self)
     }

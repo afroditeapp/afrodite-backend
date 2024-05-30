@@ -1,11 +1,10 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
     AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId,
     ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType,
 };
-use database::DieselDatabaseError;
 
 use super::{ConnectionProvider, InitialModerationRequestIsNowAccepted};
 use crate::IntoDatabaseError;
@@ -104,8 +103,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         } else {
             NextQueueNumberType::MediaModeration
         };
-        self
-            .common_write_access()
+        self.common_write_access()
             .common()
             .queue_number()
             .delete_queue_entry(request_raw.queue_number, queue_type)?;

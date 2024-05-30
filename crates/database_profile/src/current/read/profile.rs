@@ -1,5 +1,4 @@
-use database::define_current_read_commands;
-use database::ConnectionProvider;
+use database::{define_current_read_commands, ConnectionProvider};
 
 mod data;
 mod favorite;

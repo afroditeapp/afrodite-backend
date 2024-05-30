@@ -1,11 +1,10 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate,
     ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion,
 };
-use database::DieselDatabaseError;
 
 use super::ConnectionProvider;
 use crate::IntoDatabaseError;

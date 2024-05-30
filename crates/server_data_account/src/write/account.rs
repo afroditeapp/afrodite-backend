@@ -2,9 +2,9 @@ use model::{
     Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup,
     AccountState, Capabilities, DemoModeId, EmailAddress, ProfileVisibility,
 };
-use server_data::define_server_data_write_commands;
-
-use server_data::{result::Result, DataError, DieselDatabaseError};
+use server_data::{
+    define_server_data_write_commands, result::Result, DataError, DieselDatabaseError,
+};
 
 define_server_data_write_commands!(WriteCommandsAccount);
 define_db_transaction_command!(WriteCommandsAccount);
@@ -12,7 +12,7 @@ define_db_transaction_command!(WriteCommandsAccount);
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
 
-impl <C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
+impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
     /// The only method which can modify AccountState, Capabilities and
     /// ProfileVisibility. This also updates profile index if profile component
     /// is enabled and the visibility changed.
@@ -49,12 +49,13 @@ impl <C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
             Ok(account)
         })?;
 
-        self.common().internal_handle_new_account_data_after_db_modification(
-            id,
-            &current_account,
-            &new_account,
-        )
-        .await?;
+        self.common()
+            .internal_handle_new_account_data_after_db_modification(
+                id,
+                &current_account,
+                &new_account,
+            )
+            .await?;
 
         Ok(new_account)
     }

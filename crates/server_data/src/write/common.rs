@@ -3,6 +3,7 @@ use std::net::SocketAddr;
 use model::{Account, AccountId, AccountIdInternal, AuthPair};
 use server_common::data::cache::CacheError;
 
+use super::WriteCommandsProvider;
 use crate::{
     event::{event_channel, EventMode, EventReceiver},
     result::Result,
@@ -10,11 +11,9 @@ use crate::{
     DataError, IntoDataError,
 };
 
-use super::WriteCommandsProvider;
-
 define_write_commands!(WriteCommandsCommon);
 
-impl <C: WriteCommandsProvider> WriteCommandsCommon<C> {
+impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
     pub async fn set_new_auth_pair(
         &self,
         id: AccountIdInternal,

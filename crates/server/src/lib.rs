@@ -4,14 +4,14 @@
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::while_let_loop)]
 
+pub mod api;
+pub mod api_doc;
 pub mod app;
 pub mod bot;
 pub mod content_processing;
 pub mod perf;
 pub mod startup_tasks;
 pub mod utils;
-pub mod api;
-pub mod api_doc;
 
 use std::sync::Arc;
 
@@ -25,7 +25,9 @@ use server_common::push_notifications::{
     self, PushNotificationManager, PushNotificationManagerQuitHandle,
 };
 use server_data::{
-    content_processing::ContentProcessingManagerData, db_manager::DatabaseManager, write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle}
+    content_processing::ContentProcessingManagerData,
+    db_manager::DatabaseManager,
+    write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
 use server_data_all::{demo::DemoModeManager, load::DbDataToCacheLoader};
 use simple_backend::{
@@ -155,8 +157,8 @@ impl BusinessLogic for PihkaBusinessLogic {
             router_database_write_handle.location_raw(),
             &self.config,
         )
-            .await
-            .expect("Loading data from database to cache failed");
+        .await
+        .expect("Loading data from database to cache failed");
 
         let (write_cmd_runner_handle, write_cmd_waiter) =
             WriteCommandRunnerHandle::new(router_database_write_handle, &self.config).await;

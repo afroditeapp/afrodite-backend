@@ -4,10 +4,12 @@ use model::{
     AccountIdInternal, AccountInteractionState, ChatStateRaw, MatchesPage, MessageNumber,
     PendingMessagesPage, ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage,
 };
-use server_data::{define_server_data_read_commands, read::ReadCommandsProvider};
+use server_data::{
+    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError,
+    IntoDataError,
+};
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
-use server_data::{result::Result, DataError, IntoDataError};
 
 define_server_data_read_commands!(ReadCommandsChat);
 define_db_read_command!(ReadCommandsChat);
@@ -18,7 +20,7 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
     }
 }
 
-impl <C: ReadCommandsProvider> ReadCommandsChat<C> {
+impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
     pub async fn chat_state(&self, id: AccountIdInternal) -> Result<ChatStateRaw, DataError> {
         self.db_read(move |mut cmds| cmds.chat().chat_state(id))
             .await

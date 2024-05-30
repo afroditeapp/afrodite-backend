@@ -10,14 +10,12 @@ use utoipa::OpenApi;
 use self::utils::SecurityApiAccessTokenDefault;
 
 // Routes
+pub mod internal_api;
 pub mod media;
 pub mod media_admin;
 pub mod media_internal;
-pub mod internal_api;
 
-pub use server_api::app;
-pub use server_api::utils;
-
+pub use server_api::{app, utils};
 pub use server_common::{data::DataError, result};
 
 // API docs

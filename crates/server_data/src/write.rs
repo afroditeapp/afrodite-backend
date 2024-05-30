@@ -1,26 +1,20 @@
 //! Synchronous write commands combining cache and database operations.
 
-use std::{sync::Arc};
+use std::sync::Arc;
 
 use config::Config;
 use database::{
-    current::{
-        read::CurrentSyncReadCommands,
-        write::TransactionConnection,
-    }, CurrentWriteHandle, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
+    current::{read::CurrentSyncReadCommands, write::TransactionConnection},
+    CurrentWriteHandle, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter,
+    DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject,
+    TransactionError,
 };
 use server_common::push_notifications::PushNotificationSender;
 use simple_backend::media_backup::MediaBackupHandle;
 
-use self::{
-    common::WriteCommandsCommon,
-};
-use super::{
-    cache::DatabaseCache,
-    file::utils::FileDir,
-    index::{LocationIndexManager},
-};
-use crate::{db_manager::{SyncWriteHandleRef, SyncWriteHandleRefRef}};
+use self::common::WriteCommandsCommon;
+use super::{cache::DatabaseCache, file::utils::FileDir, index::LocationIndexManager};
+use crate::db_manager::{SyncWriteHandleRef, SyncWriteHandleRefRef};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -63,7 +57,9 @@ macro_rules! define_write_commands {
 
             #[allow(dead_code)]
             fn location_iterator(&self) -> $crate::index::LocationIndexIteratorHandle<'_> {
-                $crate::index::LocationIndexIteratorHandle::new(&self.cmds.write_cmds().location_index)
+                $crate::index::LocationIndexIteratorHandle::new(
+                    &self.cmds.write_cmds().location_index,
+                )
             }
 
             #[allow(dead_code)]
@@ -76,17 +72,14 @@ macro_rules! define_write_commands {
                         database::current::write::CurrentSyncWriteCommands<
                             &mut database::DieselConnection,
                         >,
-                    ) -> error_stack::Result<
-                        R,
-                        database::DieselDatabaseError,
-                    > + Send
+                    ) -> error_stack::Result<R, database::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
-            {
+            ) -> error_stack::Result<R, database::DieselDatabaseError> {
                 self.cmds.write_cmds().db_transaction_common(cmd).await
             }
 
@@ -95,17 +88,14 @@ macro_rules! define_write_commands {
                         database::current::read::CurrentSyncReadCommands<
                             &mut database::DieselConnection,
                         >,
-                    ) -> error_stack::Result<
-                        R,
-                        database::DieselDatabaseError,
-                    > + Send
+                    ) -> error_stack::Result<R, database::DieselDatabaseError>
+                    + Send
                     + 'static,
                 R: Send + 'static,
             >(
                 &self,
                 cmd: T,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
-            {
+            ) -> error_stack::Result<R, database::DieselDatabaseError> {
                 self.cmds.write_cmds().db_read(cmd).await
             }
 
@@ -177,9 +167,7 @@ impl<'a> WriteCommands<'a> {
 
     pub async fn db_transaction_common<
         T: FnOnce(
-                database::current::write::CurrentSyncWriteCommands<
-                    &mut database::DieselConnection,
-                >,
+                database::current::write::CurrentSyncWriteCommands<&mut database::DieselConnection>,
             ) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
@@ -188,13 +176,13 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbWriter::new(self.current_write_handle).db_transaction(cmd).await
+        DbWriter::new(self.current_write_handle)
+            .db_transaction(cmd)
+            .await
     }
 
     pub async fn db_transaction_raw<
-        T: FnOnce(
-                &mut database::DieselConnection,
-            ) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(&mut database::DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -202,7 +190,9 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbWriter::new(self.current_write_handle).db_transaction_raw(cmd).await
+        DbWriter::new(self.current_write_handle)
+            .db_transaction_raw(cmd)
+            .await
     }
 
     pub async fn db_transaction_with_history<T, R: Send + 'static>(
@@ -217,10 +207,7 @@ impl<'a> WriteCommands<'a> {
             + Send
             + 'static,
     {
-        DbWriterWithHistory::new(
-            self.current_write_handle,
-            self.history_write_handle
-        )
+        DbWriterWithHistory::new(self.current_write_handle, self.history_write_handle)
             .db_transaction_with_history(cmd)
             .await
     }
@@ -236,13 +223,13 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReaderUsingWriteHandle::new(self.current_write_handle).db_read(cmd).await
+        DbReaderUsingWriteHandle::new(self.current_write_handle)
+            .db_read(cmd)
+            .await
     }
 
     pub async fn db_read_raw<
-        T: FnOnce(
-                &mut DieselConnection,
-            ) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -250,7 +237,9 @@ impl<'a> WriteCommands<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReaderRawUsingWriteHandle::new(self.current_write_handle).db_read(cmd).await
+        DbReaderRawUsingWriteHandle::new(self.current_write_handle)
+            .db_read(cmd)
+            .await
     }
 }
 
@@ -292,12 +281,8 @@ pub struct WriteCommandsContainer<'a> {
 }
 
 impl<'a> WriteCommandsContainer<'a> {
-    pub fn new(
-        cmds: WriteCommands<'a>,
-    ) -> Self {
-        Self {
-            cmds,
-        }
+    pub fn new(cmds: WriteCommands<'a>) -> Self {
+        Self { cmds }
     }
 }
 
@@ -305,13 +290,13 @@ pub trait WriteCommandsProvider {
     fn write_cmds(&self) -> &WriteCommands;
 }
 
-impl <'a> WriteCommandsProvider for WriteCommandsContainer<'a> {
+impl<'a> WriteCommandsProvider for WriteCommandsContainer<'a> {
     fn write_cmds(&self) -> &WriteCommands {
         &self.cmds
     }
 }
 
-impl <'a> WriteCommandsProvider for &WriteCommands<'a> {
+impl<'a> WriteCommandsProvider for &WriteCommands<'a> {
     fn write_cmds(&self) -> &WriteCommands {
         self
     }
@@ -321,7 +306,7 @@ pub trait GetWriteCommandsCommon<C: WriteCommandsProvider> {
     fn common(self) -> WriteCommandsCommon<C>;
 }
 
-impl <C: WriteCommandsProvider> GetWriteCommandsCommon<C> for C {
+impl<C: WriteCommandsProvider> GetWriteCommandsCommon<C> for C {
     fn common(self) -> WriteCommandsCommon<C> {
         WriteCommandsCommon::new(self)
     }

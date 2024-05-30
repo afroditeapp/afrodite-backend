@@ -5,7 +5,7 @@ use crate::{event::EventMode, result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsCommon);
 
-impl <C: ReadCommandsProvider> ReadCommandsCommon<C> {
+impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
     pub async fn account_access_token(
         &self,
         id: AccountId,

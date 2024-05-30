@@ -1,13 +1,14 @@
 use std::{future::Future, time::Duration};
 
-use model::chat::PushNotificationStateInfo;
 use error_stack::{Result, ResultExt};
 use fcm::{
     message::{Message, Target},
     response::{RecomendedAction, RecomendedWaitTime},
     FcmClient,
 };
-use model::{AccountIdInternal, NotificationEvent, PendingNotificationFlags};
+use model::{
+    chat::PushNotificationStateInfo, AccountIdInternal, NotificationEvent, PendingNotificationFlags,
+};
 use serde_json::json;
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;

@@ -1,10 +1,8 @@
-
 use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{AccessToken, AccountIdInternal, RefreshToken};
-use crate::{ConnectionProvider, DieselDatabaseError};
 
-use crate::IntoDatabaseError;
+use crate::{ConnectionProvider, DieselDatabaseError, IntoDatabaseError};
 
 define_write_commands!(CurrentWriteAccountToken, CurrentSyncWriteAccountToken);
 

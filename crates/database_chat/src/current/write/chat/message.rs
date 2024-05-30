@@ -1,8 +1,7 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, AccountInteractionState, PendingMessageId};
-use database::{ConnectionProvider, DieselDatabaseError};
 use simple_backend_utils::current_unix_time;
 
 use crate::IntoDatabaseError;

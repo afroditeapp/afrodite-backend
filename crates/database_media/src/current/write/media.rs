@@ -1,8 +1,7 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, MediaStateRaw};
-use database::DieselDatabaseError;
 
 use super::ConnectionProvider;
 use crate::IntoDatabaseError;

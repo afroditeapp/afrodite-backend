@@ -2,6 +2,8 @@
 //!
 //!
 
+use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
+
 use crate::api::{
     account::{
         ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_MODE_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST,
@@ -14,11 +16,11 @@ use crate::api::{
         CHAT_MESSAGE_COUNTERS_LIST, CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
     },
     common::COMMON_COUNTERS_LIST,
-    connection::CONNECTION_COUNTERS_LIST,
     common_admin::{
         COMMON_ADMIN_CONFIG_COUNTERS_LIST, COMMON_ADMIN_MANAGER_COUNTERS_LIST,
         COMMON_ADMIN_PERF_COUNTERS_LIST,
     },
+    connection::CONNECTION_COUNTERS_LIST,
     media::{
         MEDIA_CONTENT_COUNTERS_LIST, MEDIA_MODERATION_REQUEST_COUNTERS_LIST,
         MEDIA_PROFILE_CONTENT_COUNTERS_LIST, MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
@@ -33,7 +35,6 @@ use crate::api::{
     },
     profile_internal::PROFILE_INTERNAL_COUNTERS_LIST,
 };
-use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
 
 pub static ALL_COUNTERS: &[&CounterCategory] = &[
     // Connection

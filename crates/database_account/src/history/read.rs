@@ -1,8 +1,6 @@
 use database::ConnectionProvider;
 
-use self::{
-    account::HistorySyncReadAccount, account_admin::HistorySyncReadAccountAdmin,
-};
+use self::{account::HistorySyncReadAccount, account_admin::HistorySyncReadAccountAdmin};
 
 pub mod account;
 pub mod account_admin;

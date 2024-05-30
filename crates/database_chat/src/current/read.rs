@@ -1,8 +1,6 @@
 use database::{ConnectionProvider, DieselConnection};
 
-use self::{
-    chat::CurrentSyncReadChat, chat_admin::CurrentSyncReadChatAdmin,
-};
+use self::{chat::CurrentSyncReadChat, chat_admin::CurrentSyncReadChatAdmin};
 pub mod chat;
 pub mod chat_admin;
 

@@ -87,9 +87,7 @@ pub enum DieselDatabaseError {
 
 async fn close_connections(pool: &DieselPool, connections: usize) {
     for _ in 0..connections {
-        let result = pool
-            .remove()
-            .await;
+        let result = pool.remove().await;
         match result {
             Ok(conn) => drop(conn),
             Err(_) => error!("Failed to remove connection from pool"),
@@ -117,20 +115,14 @@ impl fmt::Debug for DieselWriteHandle {
 }
 
 pub trait ObjectExtensions<T>: Sized {
-    fn interact<
-        F: FnOnce(&mut SqliteConnection) -> R + Send + 'static,
-        R: Send + 'static,
-    >(
+    fn interact<F: FnOnce(&mut SqliteConnection) -> R + Send + 'static, R: Send + 'static>(
         self,
-        action: F
+        action: F,
     ) -> impl std::future::Future<Output = Result<R, DieselDatabaseError>> + Send;
 }
 
 impl ObjectExtensions<SqliteConnection> for PoolObject {
-    async fn interact<
-        F: FnOnce(&mut SqliteConnection) -> R + Send + 'static,
-        R: Send + 'static,
-    >(
+    async fn interact<F: FnOnce(&mut SqliteConnection) -> R + Send + 'static, R: Send + 'static>(
         mut self,
         action: F,
     ) -> Result<R, DieselDatabaseError> {
@@ -160,8 +152,8 @@ async fn create_pool(
 
     let pool = deadpool::unmanaged::Pool::new(connection_count);
     for _ in 0..connection_count {
-        let mut conn = SqliteConnection::establish(&db_str)
-            .change_context(DieselDatabaseError::Connect)?;
+        let mut conn =
+            SqliteConnection::establish(&db_str).change_context(DieselDatabaseError::Connect)?;
         sqlite_setup_connection(config, &mut conn)?;
         pool.add(conn)
             .await
@@ -188,12 +180,7 @@ impl DieselWriteHandle {
         migrations: EmbeddedMigrations,
     ) -> Result<(Self, DieselWriteCloseHandle), DieselDatabaseError> {
         let connections = 1;
-        let pool = create_pool(
-            config,
-            database_info,
-            db_path,
-            connections,
-        ).await?;
+        let pool = create_pool(config, database_info, db_path, connections).await?;
 
         let conn = pool
             .get()
@@ -213,7 +200,10 @@ impl DieselWriteHandle {
 
         let write_handle = DieselWriteHandle { pool: pool.clone() };
 
-        let close_handle = DieselWriteCloseHandle { pool: pool.clone(), connections };
+        let close_handle = DieselWriteCloseHandle {
+            pool: pool.clone(),
+            connections,
+        };
 
         Ok((write_handle, close_handle))
     }
@@ -260,7 +250,10 @@ impl DieselReadCloseHandle {
     }
 }
 
-pub fn sqlite_setup_connection(config: &SimpleBackendConfig, conn: &mut SqliteConnection) -> Result<(), DieselDatabaseError> {
+pub fn sqlite_setup_connection(
+    config: &SimpleBackendConfig,
+    conn: &mut SqliteConnection,
+) -> Result<(), DieselDatabaseError> {
     let pragmas = &[
         "PRAGMA journal_mode=WAL;",
         "PRAGMA synchronous=NORMAL;",
@@ -279,7 +272,8 @@ pub fn sqlite_setup_connection(config: &SimpleBackendConfig, conn: &mut SqliteCo
     };
 
     for pragma_str in pragmas.iter().chain(litestram_pragmas) {
-        diesel::sql_query(*pragma_str).execute(conn)
+        diesel::sql_query(*pragma_str)
+            .execute(conn)
             .change_context(DieselDatabaseError::Setup)?;
     }
 
@@ -304,12 +298,7 @@ impl DieselReadHandle {
         db_path: PathBuf,
     ) -> Result<(Self, DieselReadCloseHandle), DieselDatabaseError> {
         let connections = num_cpus::get();
-        let pool = create_pool(
-            config,
-            database_info,
-            db_path,
-            connections,
-        ).await?;
+        let pool = create_pool(config, database_info, db_path, connections).await?;
 
         // let pool_clone = pool.clone();
         // std::thread::spawn(move || {

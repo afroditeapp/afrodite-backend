@@ -24,10 +24,7 @@ use utoipa::{
     Modify,
 };
 
-use crate::{
-    app::{GetAccessTokens},
-    DataError,
-};
+use crate::{app::GetAccessTokens, DataError};
 
 pub static ACCESS_TOKEN_HEADER: header::HeaderName =
     header::HeaderName::from_static(ACCESS_TOKEN_HEADER_STR);

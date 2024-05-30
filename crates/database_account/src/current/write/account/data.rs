@@ -1,11 +1,9 @@
-use database::define_current_write_commands;
+use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, AccountInternal, AccountSetup, EmailAddress,
-    ACCOUNT_GLOBAL_STATE_ROW_TYPE,
+    AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, ACCOUNT_GLOBAL_STATE_ROW_TYPE,
 };
-use database::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
 

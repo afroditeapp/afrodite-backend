@@ -1,20 +1,16 @@
-use std::{
-    collections::{hash_map::Entry},
-};
+use std::collections::hash_map::Entry;
 
 use config::Config;
-use database::{CurrentReadHandle, DbReaderRaw};
+use database::{CurrentReadHandle, DbReaderRaw, DieselConnection, DieselDatabaseError};
 use error_stack::{Result, ResultExt};
-use model::{
-    AccountIdInternal,
-};
+use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
-use database::{DieselConnection, DieselDatabaseError};
+use server_data::{
+    cache::{CachedProfile, DatabaseCache},
+    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
+};
 use tracing::info;
-
-use server_data::{cache::{CachedProfile, DatabaseCache}, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}};
-
 
 pub struct DbDataToCacheLoader;
 
@@ -36,21 +32,20 @@ impl DbDataToCacheLoader {
 
         for id in accounts {
             Self::load_account_from_db(
-                    cache,
-                    id,
-                    config,
-                    current_db,
-                    LocationIndexIteratorHandle::new(location_index),
-                    LocationIndexWriteHandle::new(location_index),
-                )
-                .await
-                .change_context(CacheError::Init)?;
+                cache,
+                id,
+                config,
+                current_db,
+                LocationIndexIteratorHandle::new(location_index),
+                LocationIndexWriteHandle::new(location_index),
+            )
+            .await
+            .change_context(CacheError::Init)?;
         }
 
         info!("Loading to memory complete");
         Ok(())
     }
-
 
     pub async fn load_account_from_db(
         cache: &DatabaseCache,
@@ -60,7 +55,8 @@ impl DbDataToCacheLoader {
         index_iterator: LocationIndexIteratorHandle<'_>,
         index_writer: LocationIndexWriteHandle<'_>,
     ) -> Result<(), CacheError> {
-        cache.insert_account_if_not_exists(account_id)
+        cache
+            .insert_account_if_not_exists(account_id)
             .await
             .with_info(account_id)?;
 
@@ -70,10 +66,9 @@ impl DbDataToCacheLoader {
             .ok_or(CacheError::KeyNotExists.report())?;
 
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
-        let access_token = db.db_read_common(move |mut cmds| {
-            cmds.common().token().access_token(account_id)
-        })
-        .await?;
+        let access_token = db
+            .db_read_common(move |mut cmds| cmds.common().token().access_token(account_id))
+            .await?;
 
         if let Some(key) = access_token {
             let mut access_tokens = cache.access_tokens().write().await;
@@ -88,15 +83,13 @@ impl DbDataToCacheLoader {
         let mut entry = account_entry.cache.write().await;
 
         // Common
-        let capabilities = db.db_read_common(move |mut cmds| {
-            cmds.common().state().account_capabilities(account_id)
-        })
-        .await?;
+        let capabilities = db
+            .db_read_common(move |mut cmds| cmds.common().state().account_capabilities(account_id))
+            .await?;
         entry.capabilities = capabilities;
-        let state = db.db_read_common(move |mut cmds| {
-            cmds.common().state().shared_state(account_id)
-        })
-        .await?;
+        let state = db
+            .db_read_common(move |mut cmds| cmds.common().state().shared_state(account_id))
+            .await?;
         entry.shared_state = state;
 
         if config.components().account {
@@ -104,26 +97,25 @@ impl DbDataToCacheLoader {
         }
 
         if config.components().profile {
-            let profile = db.db_read_profile(move |mut cmds| {
-                cmds.profile().data().profile_internal(account_id)
-            })
-            .await?;
-            let state = db.db_read_profile(move |mut cmds| {
-                cmds.profile().data().profile_state(account_id)
-            })
-            .await?;
-            let profile_location = db.db_read_profile(move |mut cmds| {
-                cmds.profile().data().profile_location(account_id)
-            })
-            .await?;
-            let attributes = db.db_read_profile(move |mut cmds| {
-                cmds.profile().data().profile_attribute_values(account_id)
-            })
-            .await?;
-            let filters = db.db_read_profile(move |mut cmds| {
-                cmds.profile().data().profile_attribute_filters(account_id)
-            })
-            .await?;
+            let profile = db
+                .db_read_profile(move |mut cmds| cmds.profile().data().profile_internal(account_id))
+                .await?;
+            let state = db
+                .db_read_profile(move |mut cmds| cmds.profile().data().profile_state(account_id))
+                .await?;
+            let profile_location = db
+                .db_read_profile(move |mut cmds| cmds.profile().data().profile_location(account_id))
+                .await?;
+            let attributes = db
+                .db_read_profile(move |mut cmds| {
+                    cmds.profile().data().profile_attribute_values(account_id)
+                })
+                .await?;
+            let filters = db
+                .db_read_profile(move |mut cmds| {
+                    cmds.profile().data().profile_attribute_filters(account_id)
+                })
+                .await?;
 
             let mut profile_data =
                 CachedProfile::new(account_id.uuid, profile, state, attributes, filters);
@@ -133,10 +125,9 @@ impl DbDataToCacheLoader {
             profile_data.location.current_iterator =
                 index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
 
-            let account = db.db_read_common(move |mut cmds| {
-                cmds.common().account(account_id)
-            })
-            .await?;
+            let account = db
+                .db_read_common(move |mut cmds| cmds.common().account(account_id))
+                .await?;
             if account.profile_visibility().is_currently_public() {
                 index_writer
                     .update_profile_data(
@@ -157,14 +148,13 @@ impl DbDataToCacheLoader {
 
         Ok(())
     }
-
 }
 
 pub struct DbReaderAll<'a> {
     db_reader: DbReaderRaw<'a>,
 }
 
-impl <'a> DbReaderAll<'a> {
+impl<'a> DbReaderAll<'a> {
     fn new(db_reader: DbReaderRaw<'a>) -> Self {
         Self { db_reader }
     }
@@ -180,7 +170,12 @@ impl <'a> DbReaderAll<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, CacheError> {
-        self.db_reader.db_read(|conn| cmd(database_account::current::read::CurrentSyncReadCommands::new(conn))).await.change_context(CacheError::Init)
+        self.db_reader
+            .db_read(|conn| {
+                cmd(database_account::current::read::CurrentSyncReadCommands::new(conn))
+            })
+            .await
+            .change_context(CacheError::Init)
     }
 
     pub async fn db_read_profile<
@@ -194,7 +189,12 @@ impl <'a> DbReaderAll<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, CacheError> {
-        self.db_reader.db_read(|conn| cmd(database_profile::current::read::CurrentSyncReadCommands::new(conn))).await.change_context(CacheError::Init)
+        self.db_reader
+            .db_read(|conn| {
+                cmd(database_profile::current::read::CurrentSyncReadCommands::new(conn))
+            })
+            .await
+            .change_context(CacheError::Init)
     }
 
     pub async fn db_read_common<
@@ -208,6 +208,9 @@ impl <'a> DbReaderAll<'a> {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, CacheError> {
-        self.db_reader.db_read(|conn| cmd(database::current::read::CurrentSyncReadCommands::new(conn))).await.change_context(CacheError::Init)
+        self.db_reader
+            .db_read(|conn| cmd(database::current::read::CurrentSyncReadCommands::new(conn)))
+            .await
+            .change_context(CacheError::Init)
     }
 }

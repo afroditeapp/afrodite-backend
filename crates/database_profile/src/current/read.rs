@@ -1,8 +1,6 @@
 use database::{ConnectionProvider, DieselConnection};
 
-use self::{
-    profile::CurrentSyncReadProfile, profile_admin::CurrentSyncReadProfileAdmin,
-};
+use self::{profile::CurrentSyncReadProfile, profile_admin::CurrentSyncReadProfileAdmin};
 pub mod profile;
 pub mod profile_admin;
 
@@ -23,13 +21,13 @@ impl<C: ConnectionProvider> CurrentSyncReadCommands<C> {
         CurrentSyncReadProfileAdmin::new(self.conn)
     }
 
-   pub fn conn(&mut self) -> &mut C {
+    pub fn conn(&mut self) -> &mut C {
         &mut self.conn
     }
 }
 
 impl CurrentSyncReadCommands<&mut DieselConnection> {
-   pub fn profile(&mut self) -> CurrentSyncReadProfile<&mut DieselConnection> {
+    pub fn profile(&mut self) -> CurrentSyncReadProfile<&mut DieselConnection> {
         CurrentSyncReadProfile::new(self.conn())
     }
 
@@ -37,7 +35,9 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
         CurrentSyncReadProfileAdmin::new(self.conn())
     }
 
-    pub fn common(&mut self) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
+    pub fn common(
+        &mut self,
+    ) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
         database::current::read::common::CurrentSyncReadCommon::new(self.conn())
     }
 }

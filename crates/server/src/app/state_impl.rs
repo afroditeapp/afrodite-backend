@@ -1,24 +1,27 @@
-use std::{net::SocketAddr};
+use std::net::SocketAddr;
 
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, PendingNotificationFlags, PushNotificationStateInfo, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
+    Capabilities, EmailAddress, PendingNotificationFlags, PushNotificationStateInfo,
+    SignInWithInfo,
 };
 pub use server_api::app::*;
 use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
-use server_common::push_notifications::{
-    PushNotificationError, PushNotificationStateProvider,
-};
+use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
-    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{ReadCommandsContainer}, write_commands::{WriteCmds}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
+    content_processing::ContentProcessingManagerData,
+    event::EventManagerWithCacheReference,
+    read::ReadCommandsContainer,
+    write_commands::WriteCmds,
+    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+    DataError,
 };
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::{
-    app::{
-        GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith,
-    },
+    app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith},
     manager_client::ManagerApiManager,
     map::TileMapManager,
     perf::PerfCounterManagerData,
@@ -26,7 +29,7 @@ use simple_backend::{
 };
 use simple_backend_config::SimpleBackendConfig;
 
-use super::{S};
+use super::S;
 
 // Server common
 
@@ -251,12 +254,17 @@ impl DemoModeManagerProvider for S {
         self.demo_mode.demo_mode_token_exists(token).await
     }
 
-    async fn accessible_accounts_if_token_valid<S: StateBase + GetConfig + GetAccounts + ReadData>(
+    async fn accessible_accounts_if_token_valid<
+        S: StateBase + GetConfig + GetAccounts + ReadData,
+    >(
         &self,
         state: &S,
         token: &model::DemoModeToken,
     ) -> server_common::result::Result<Vec<model::AccessibleAccount>, DataError> {
-        let info = self.demo_mode.accessible_accounts_if_token_valid(token).await?;
+        let info = self
+            .demo_mode
+            .accessible_accounts_if_token_valid(token)
+            .await?;
         info.with_extra_info(state).await
     }
 }
@@ -276,7 +284,8 @@ impl ValidateModerationRequest for S {
         &self,
         account_id: AccountIdInternal,
     ) -> server_common::result::Result<(), server_common::internal_api::InternalApiError> {
-        server_api_media::internal_api::media_check_moderation_request_for_account(self, account_id).await
+        server_api_media::internal_api::media_check_moderation_request_for_account(self, account_id)
+            .await
     }
 }
 
