@@ -18,13 +18,7 @@ use server_common::push_notifications::{
     PushNotificationError, PushNotificationSender, PushNotificationStateProvider,
 };
 use server_data::{
-    content_processing::ContentProcessingManagerData,
-    demo::DemoModeManager,
-    event::EventManagerWithCacheReference,
-    read::ReadCommands,
-    write_commands::{WriteCmds, WriteCommandRunnerHandle},
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
-    DataError, RouterDatabaseReadHandle,
+    content_processing::ContentProcessingManagerData, db_manager::SyncWriteHandleRef, demo::DemoModeManager, event::EventManagerWithCacheReference, read::{ReadCommands, ReadCommandsContainer}, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError, RouterDatabaseReadHandle
 };
 use simple_backend::{
     app::{
@@ -192,6 +186,17 @@ impl WriteData for S {
         self.write_queue.write(cmd).await
     }
 
+    // async fn write<
+    //     CmdResult: Send + 'static,
+    //     Cmd: Future<Output = server_common::result::Result<CmdResult, DataError>> + Send,
+    //     GetCmd,
+    // >(
+    //     &self,
+    //     write_cmd: GetCmd,
+    // ) -> server_common::result::Result<CmdResult, DataError> where GetCmd: FnOnce(SyncWriteHandleRef<'_>) -> Cmd + Send + 'static,  {
+    //     self.write_queue.write_with_ref_handle(write_cmd).await
+    // }
+
     async fn write_concurrent<
         CmdResult: Send + 'static,
         Cmd: Future<Output = ConcurrentWriteAction<CmdResult>> + Send + 'static,
@@ -206,7 +211,7 @@ impl WriteData for S {
 }
 
 impl ReadData for S {
-    fn read(&self) -> ReadCommands<'_> {
+    fn read(&self) -> ReadCommandsContainer {
         self.database.read()
     }
 }

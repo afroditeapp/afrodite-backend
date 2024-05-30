@@ -3,7 +3,9 @@ use model::{
     AccountId, AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailAddress,
     EventToClientInternal, SignInWithInfo,
 };
-use server_api::app::ValidataModerationRequest;
+use server_api::app::ValidateModerationRequest;
+use server_data::read::GetReadCommandsCommon;
+use server_data_account::{read::GetReadCommandsAccount, write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount}};
 use simple_backend::create_counters;
 use tracing::warn;
 
@@ -14,22 +16,6 @@ use crate::{
 };
 
 // TODO: Update register and login to support Apple and Google single sign on.
-
-pub async fn register_impl<S: WriteData>(
-    state: &S,
-    sign_in_with: SignInWithInfo,
-    email: Option<EmailAddress>,
-) -> Result<AccountIdInternal, StatusCode> {
-    // New unique UUID is generated every time so no special handling needed
-    // to avoid database collisions.
-    let id = AccountId::new(uuid::Uuid::new_v4());
-
-    let id = state
-        .write(move |cmds| async move { cmds.register(id, sign_in_with, email).await })
-        .await?;
-
-    Ok(id)
-}
 
 pub const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
@@ -114,7 +100,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_complete_setup<S: ReadData + WriteData + GetInternalApi + GetConfig + ValidataModerationRequest>(
+pub async fn post_complete_setup<S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -216,7 +202,7 @@ pub async fn post_complete_setup<S: ReadData + WriteData + GetInternalApi + GetC
 
 /// Contains only routes which require authentication.
 pub fn register_router<
-    S: StateBase + ReadData + WriteData + GetInternalApi + GetConfig + GetAccessTokens,
+    S: StateBase + ReadData + WriteData + GetInternalApi + GetConfig + GetAccessTokens + ValidateModerationRequest,
 >(
     s: S,
 ) -> Router {

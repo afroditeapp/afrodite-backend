@@ -3,8 +3,9 @@ use model::{
     AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
     SignInWithInfo, SignInWithLoginInfo,
 };
-use server_api::db_write;
-use server_data_account::read::GetReadCommandsAccount;
+use server_api::{app::RegisteringCmd, db_write};
+use server_data::write::GetWriteCommandsCommon;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
 
 use crate::{
@@ -57,7 +58,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
     ),
 )]
 pub async fn post_sign_in_with_login<
-    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig,
+    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig + RegisteringCmd,
 >(
     State(state): State<S>,
     Json(tokens): Json<SignInWithLoginInfo>,
@@ -90,7 +91,7 @@ pub async fn post_sign_in_with_login<
                 .await
                 .map(|d| d.into())
         } else {
-            let id = super::register_impl(
+            let id = state.register_impl(
                 &state,
                 SignInWithInfo {
                     google_account_id: Some(google_id),

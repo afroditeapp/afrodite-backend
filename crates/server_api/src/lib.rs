@@ -114,7 +114,11 @@ macro_rules! db_write {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
             let r: $crate::result::Result<_, server_data::DataError> = $state
-                .write(move |$cmds| async move { ($commands).await })
+                .write(move |$cmds| async move {
+                    let $cmds = $cmds.to_ref_handle();
+                    let $cmds = $cmds.to_ref_handle();
+                    ($commands).await
+                })
                 .await;
             r
         }
@@ -132,7 +136,11 @@ macro_rules! db_write_multiple {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         let r = async {
             let r: $crate::result::Result<_, $crate::DataError> =
-                $state.write(move |$cmds| async move { ($commands) }).await;
+                $state.write(move |$cmds| async move {
+                    let $cmds = $cmds.to_ref_handle();
+                    let $cmds = $cmds.to_ref_handle();
+                    ($commands)
+                }).await;
             r
         }
         .await;

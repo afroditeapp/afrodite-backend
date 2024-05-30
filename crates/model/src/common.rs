@@ -309,6 +309,12 @@ impl AccountId {
     pub fn as_uuid(&self) -> &uuid::Uuid {
         &self.account_id
     }
+
+    pub fn for_debugging_only_zero() -> Self {
+        Self {
+            account_id: uuid::Uuid::nil(),
+        }
+    }
 }
 
 impl From<AccountId> for uuid::Uuid {

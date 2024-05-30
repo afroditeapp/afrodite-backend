@@ -17,8 +17,7 @@ use super::{
     db_manager::{RouterDatabaseWriteHandle, SyncWriteHandle},
 };
 use crate::{
-    result::{WrappedContextExt, WrappedResultExt},
-    DataError,
+    db_manager::SyncWriteHandleRef, result::{WrappedContextExt, WrappedResultExt}, DataError
 };
 
 pub type WriteCmds = Cmds;
@@ -44,6 +43,18 @@ impl std::ops::Deref for Cmds {
         &self.write
     }
 }
+
+// pub struct Cmds<'a> {
+//     pub write: SyncWriteHandleRef<'a>,
+// }
+
+// impl <'a> std::ops::Deref for Cmds<'a> {
+//     type Target = SyncWriteHandleRef<'a>;
+
+//     fn deref(&self) -> &Self::Target {
+//         &self.write
+//     }
+// }
 
 #[derive(Debug)]
 pub struct WriteCommandRunnerHandle {
@@ -90,6 +101,28 @@ impl WriteCommandRunnerHandle {
             .await
             .change_context(DataError::CommandResultReceivingFailed)?
     }
+
+    pub async fn write_with_ref_handle<
+        CmdResult: Send + 'static,
+        Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send,
+        GetCmd,
+    >(
+        &self,
+        write_cmd: GetCmd,
+    ) -> crate::result::Result<CmdResult, DataError> where GetCmd: FnOnce(SyncWriteHandleRef<'_>) -> Cmd + Send + 'static,  {
+        self.write(|cmds| {
+            async move {
+                let ref_handle = cmds.to_ref_handle();
+                write_cmd(ref_handle).await
+            }
+        }).await
+    }
+
+    // pub async fn test(&self) {
+    //     self.write_with_ref_handle(move|cmds| async move {
+    //         cmds.read().common().account_access_token(AccountId::for_debugging_only_zero()).await
+    //     }).await.unwrap();
+    // }
 
     pub async fn concurrent_write<
         CmdResult: Send + 'static,

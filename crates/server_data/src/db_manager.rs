@@ -220,7 +220,7 @@ pub struct SyncWriteHandle {
     config: Arc<Config>,
     root: Arc<DatabaseRoot>,
     current_write_handle: CurrentWriteHandle,
-    current_read_handle: CurrentReadHandle,
+    current_read_handle: CurrentReadHandle, // This is actually the write handle
     history_write_handle: HistoryWriteHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
@@ -258,6 +258,14 @@ impl SyncWriteHandle {
         &self.config
     }
 
+    pub fn to_ref_handle(&self) -> SyncWriteHandleRef<'_> {
+        SyncWriteHandleRef {
+            write_cmds: self.cmds(),
+            current_read_handle: &self.current_read_handle,
+            push_notification_sender: &self.push_notification_sender,
+        }
+    }
+
     // pub async fn register(
     //     &self,
     //     id: AccountId,
@@ -266,6 +274,43 @@ impl SyncWriteHandle {
     // ) -> Result<AccountIdInternal, DataError> {
     //     self.cmds().register(id, sign_in_with_info, email).await
     // }
+}
+
+pub struct SyncWriteHandleRef<'a> {
+    pub(crate) write_cmds: WriteCommands<'a>,
+    current_read_handle: &'a CurrentReadHandle, // This is actually the write handle
+    push_notification_sender: &'a PushNotificationSender,
+}
+
+impl <'a> SyncWriteHandleRef<'a> {
+    pub fn events(&self) -> EventManagerWithCacheReference {
+        EventManagerWithCacheReference::new(&self.write_cmds.cache, &self.push_notification_sender)
+    }
+
+    pub fn read(&self) -> ReadCommands<'_> {
+        ReadCommands::new(&self.current_read_handle, &self.write_cmds.cache, &self.write_cmds.file_dir)
+    }
+
+    pub fn to_ref_handle(&self) -> SyncWriteHandleRefRef<'_> {
+        SyncWriteHandleRefRef {
+            handle: self,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct SyncWriteHandleRefRef<'a> {
+    pub(crate) handle: &'a SyncWriteHandleRef<'a>,
+}
+
+impl SyncWriteHandleRefRef<'_> {
+    pub fn events(&self) -> EventManagerWithCacheReference {
+        self.handle.events()
+    }
+
+    pub fn read(&self) -> ReadCommands<'_> {
+        self.handle.read()
+    }
 }
 
 pub struct RouterDatabaseReadHandle {

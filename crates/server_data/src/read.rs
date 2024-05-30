@@ -143,6 +143,12 @@ impl <'a> ReadCommandsProvider for ReadCommandsContainer<'a> {
     }
 }
 
+impl <'a> ReadCommandsProvider for ReadCommands<'a> {
+    fn read_cmds(&self) -> &ReadCommands {
+        self
+    }
+}
+
 pub trait GetReadCommandsCommon<C: ReadCommandsProvider> {
     fn common(self) -> ReadCommandsCommon<C>;
 }

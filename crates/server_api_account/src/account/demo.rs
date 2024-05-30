@@ -6,10 +6,11 @@ use model::{
     DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult,
     SignInWithInfo,
 };
-use server_api::db_write;
+use server_api::{app::RegisteringCmd, db_write};
+use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
-use super::{login_impl, register_impl};
+use super::{login_impl};
 use crate::{
     app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, StateBase, WriteData},
     utils::{Json, StatusCode},
@@ -112,7 +113,7 @@ pub const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_r
     ),
     security(),
 )]
-pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteData + GetConfig>(
+pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteData + GetConfig + RegisteringCmd>(
     State(state): State<S>,
     Json(token): Json<DemoModeToken>,
 ) -> Result<Json<AccountId>, StatusCode> {
@@ -120,7 +121,7 @@ pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteD
 
     let demo_mode_id = state.demo_mode_token_exists(&token).await?;
 
-    let id = register_impl(&state, SignInWithInfo::default(), None).await?;
+    let id = state.register_impl(&state, SignInWithInfo::default(), None).await?;
 
     db_write!(state, move |cmds| cmds
         .account()
@@ -150,7 +151,6 @@ pub async fn post_demo_mode_login_to_account<
     ACCOUNT.post_demo_mode_login_to_account.incr();
 
     let _demo_mode_id: DemoModeId = state
-        .demo_mode()
         .demo_mode_token_exists(&info.token)
         .await?;
 
@@ -160,7 +160,7 @@ pub async fn post_demo_mode_login_to_account<
 }
 
 pub fn demo_mode_router<
-    S: StateBase + DemoModeManagerProvider + ReadData + WriteData + GetAccounts + GetConfig,
+    S: StateBase + DemoModeManagerProvider + ReadData + WriteData + GetAccounts + GetConfig + RegisteringCmd,
 >(
     s: S,
 ) -> Router {

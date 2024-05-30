@@ -26,7 +26,7 @@ use super::{
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
     IntoDataError,
 };
-use crate::{db_manager::SyncWriteHandle, result::Result, DataError};
+use crate::{db_manager::{SyncWriteHandle, SyncWriteHandleRef, SyncWriteHandleRefRef}, result::Result, DataError};
 
 macro_rules! define_write_commands {
     ($struct_name:ident) => {
@@ -330,5 +330,17 @@ pub trait GetWriteCommandsCommon<C: WriteCommandsProvider> {
 impl <C: WriteCommandsProvider> GetWriteCommandsCommon<C> for C {
     fn common(self) -> WriteCommandsCommon<C> {
         WriteCommandsCommon::new(self)
+    }
+}
+
+impl WriteCommandsProvider for SyncWriteHandleRef<'_> {
+    fn write_cmds(&self) -> &WriteCommands {
+        &self.write_cmds
+    }
+}
+
+impl WriteCommandsProvider for SyncWriteHandleRefRef<'_> {
+    fn write_cmds(&self) -> &WriteCommands {
+        &self.handle.write_cmds()
     }
 }

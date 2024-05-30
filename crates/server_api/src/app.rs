@@ -1,11 +1,13 @@
 use std::net::SocketAddr;
 
-use model::{AccessToken, AccountIdInternal, AccountState, Capabilities};
+use model::{AccessToken, AccountIdInternal, AccountState, Capabilities, EmailAddress, SignInWithInfo};
+use model::{AccessibleAccount, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken};
 use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;
 use server_data::content_processing::ContentProcessingManagerData;
+use server_data::DataError;
 
-use crate::internal_api::InternalApiClient;
+use crate::{internal_api::InternalApiClient, utils::StatusCode};
 
 pub trait GetInternalApi {
     fn internal_api_client(&self) -> &InternalApiClient;
@@ -33,12 +35,45 @@ pub trait ContentProcessingProvider {
 pub trait StateBase: Send + Sync + Clone + 'static {}
 
 
-pub trait ValidataModerationRequest {
+pub trait ValidateModerationRequest {
     fn media_check_moderation_request_for_account<
         S: GetConfig + ReadData + GetInternalApi,
     >(
         &self,
         state: &S,
         account_id: AccountIdInternal,
-    ) -> impl std::future::Future<Output = Result<(), InternalApiError>> + Send;
+    ) -> impl std::future::Future<Output = server_common::result::Result<(), InternalApiError>> + Send;
+}
+
+pub trait RegisteringCmd {
+    fn register_impl<S: WriteData>(
+        &self,
+        state: &S,
+        sign_in_with: SignInWithInfo,
+        email: Option<EmailAddress>,
+    ) -> impl std::future::Future<Output = Result<AccountIdInternal, StatusCode>> + Send;
+}
+
+pub trait DemoModeManagerProvider {
+    fn stage0_login(
+        &self,
+        password: DemoModePassword,
+    ) -> impl std::future::Future<Output = server_common::result::Result<DemoModeLoginResult, DataError>> + Send;
+
+    fn stage1_login(
+        &self,
+        password: DemoModePassword,
+        token: DemoModeLoginToken,
+    ) -> impl std::future::Future<Output = server_common::result::Result<DemoModeConfirmLoginResult, DataError>> + Send;
+
+    fn demo_mode_token_exists(
+        &self,
+        token: &DemoModeToken,
+    ) -> impl std::future::Future<Output = server_common::result::Result<DemoModeId, DataError>> + Send;
+
+    fn accessible_accounts_if_token_valid<S: GetConfig + GetAccounts + ReadData>(
+        &self,
+        state: &S,
+        token: &DemoModeToken,
+    ) -> impl std::future::Future<Output = server_common::result::Result<Vec<AccessibleAccount>, DataError>> + Send;
 }

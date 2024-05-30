@@ -4,11 +4,7 @@ use model::AccountId;
 pub use server_common::app::*;
 
 use crate::{
-    event::EventManagerWithCacheReference,
-    read::{ReadCommands, ReadCommandsContainer},
-    write_commands::WriteCmds,
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
-    DataError,
+    db_manager::SyncWriteHandleRef, event::EventManagerWithCacheReference, read::{ReadCommands, ReadCommandsContainer}, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
 
 pub trait WriteData {
@@ -20,6 +16,15 @@ pub trait WriteData {
         &self,
         cmd: GetCmd,
     ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
+
+    // fn write<
+    //     CmdResult: Send + 'static,
+    //     Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send,
+    //     GetCmd,
+    // >(
+    //     &self,
+    //     write_cmd: GetCmd,
+    // ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send where GetCmd: FnOnce(SyncWriteHandleRef<'_>) -> Cmd + Send + 'static;
 
     fn write_concurrent<
         CmdResult: Send + 'static,
