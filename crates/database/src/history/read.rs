@@ -21,11 +21,11 @@ use simple_backend_database::diesel_db::ConnectionProvider;
 // }
 
 pub struct HistorySyncReadCommands<C: ConnectionProvider> {
-    conn: C,
+    _conn: C,
 }
 
 impl<C: ConnectionProvider> HistorySyncReadCommands<C> {
     pub fn new(conn: C) -> Self {
-        Self { conn }
+        Self { _conn: conn }
     }
 }

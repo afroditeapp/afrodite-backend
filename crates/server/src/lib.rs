@@ -152,7 +152,7 @@ impl BusinessLogic for PihkaBusinessLogic {
             .expect("Database init failed");
 
         DbDataToCacheLoader::load_to_cache(
-            &router_database_handle.cache(),
+            router_database_handle.cache(),
             router_database_handle.read_handle_raw(),
             router_database_write_handle.location_raw(),
             &self.config,

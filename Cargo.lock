@@ -725,7 +725,6 @@ dependencies = [
  "error-stack",
  "model",
  "serde_json",
- "simple_backend_config",
  "simple_backend_utils",
 ]
 
@@ -737,8 +736,6 @@ dependencies = [
  "diesel",
  "error-stack",
  "model",
- "serde_json",
- "simple_backend_config",
  "simple_backend_utils",
 ]
 
@@ -750,8 +747,6 @@ dependencies = [
  "diesel",
  "error-stack",
  "model",
- "serde_json",
- "simple_backend_config",
  "simple_backend_utils",
 ]
 
@@ -764,7 +759,6 @@ dependencies = [
  "error-stack",
  "model",
  "serde_json",
- "simple_backend_config",
  "simple_backend_utils",
 ]
 
@@ -2131,7 +2125,6 @@ dependencies = [
  "clap",
  "config",
  "server",
- "server_api",
  "simple_backend_config",
  "simple_backend_image_process",
  "test_mode",
@@ -2763,7 +2756,6 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "config",
- "database",
  "error-stack",
  "futures",
  "model",
@@ -2797,7 +2789,6 @@ version = "0.0.0"
 dependencies = [
  "api_internal",
  "axum",
- "axum-extra",
  "config",
  "error-stack",
  "headers 0.4.0",
@@ -2812,62 +2803,35 @@ dependencies = [
  "simple_backend",
  "simple_backend_config",
  "simple_backend_model",
- "simple_backend_utils",
  "thiserror",
- "tokio",
  "tracing",
  "utils",
  "utoipa",
- "uuid",
 ]
 
 [[package]]
 name = "server_api_account"
 version = "0.0.0"
 dependencies = [
- "api_internal",
  "axum",
- "axum-extra",
- "config",
- "error-stack",
- "headers 0.4.0",
- "hyper 1.1.0",
- "manager_model",
  "model",
- "reqwest",
- "serde",
- "serde_json",
  "server_api",
  "server_common",
  "server_data",
  "server_data_account",
  "simple_backend",
- "simple_backend_config",
- "simple_backend_model",
- "simple_backend_utils",
- "thiserror",
  "tokio",
  "tracing",
- "utils",
  "utoipa",
- "uuid",
 ]
 
 [[package]]
 name = "server_api_all"
 version = "0.0.0"
 dependencies = [
- "api_internal",
  "axum",
  "axum-extra",
- "config",
- "error-stack",
- "headers 0.4.0",
- "hyper 1.1.0",
- "manager_model",
  "model",
- "reqwest",
- "serde",
  "serde_json",
  "server_api",
  "server_common",
@@ -2875,11 +2839,8 @@ dependencies = [
  "server_data_account",
  "server_data_all",
  "server_data_chat",
- "server_data_media",
  "server_data_profile",
  "simple_backend",
- "simple_backend_config",
- "simple_backend_model",
  "simple_backend_utils",
  "thiserror",
  "tokio",
@@ -2893,32 +2854,14 @@ dependencies = [
 name = "server_api_chat"
 version = "0.0.0"
 dependencies = [
- "api_internal",
  "axum",
- "axum-extra",
- "config",
- "error-stack",
- "headers 0.4.0",
- "hyper 1.1.0",
- "manager_model",
  "model",
- "reqwest",
- "serde",
- "serde_json",
  "server_api",
  "server_common",
  "server_data",
  "server_data_chat",
  "simple_backend",
- "simple_backend_config",
- "simple_backend_model",
- "simple_backend_utils",
- "thiserror",
- "tokio",
- "tracing",
- "utils",
  "utoipa",
- "uuid",
 ]
 
 [[package]]
@@ -2928,61 +2871,30 @@ dependencies = [
  "api_internal",
  "axum",
  "axum-extra",
- "config",
- "error-stack",
  "headers 0.4.0",
- "hyper 1.1.0",
- "manager_model",
  "model",
- "reqwest",
- "serde",
- "serde_json",
  "server_api",
  "server_common",
  "server_data",
  "server_data_media",
  "simple_backend",
- "simple_backend_config",
- "simple_backend_model",
- "simple_backend_utils",
- "thiserror",
- "tokio",
  "tracing",
- "utils",
  "utoipa",
- "uuid",
 ]
 
 [[package]]
 name = "server_api_profile"
 version = "0.0.0"
 dependencies = [
- "api_internal",
  "axum",
- "axum-extra",
- "config",
- "error-stack",
- "headers 0.4.0",
- "hyper 1.1.0",
- "manager_model",
  "model",
- "reqwest",
- "serde",
- "serde_json",
  "server_api",
  "server_common",
  "server_data",
  "server_data_profile",
  "simple_backend",
- "simple_backend_config",
- "simple_backend_model",
  "simple_backend_utils",
- "thiserror",
- "tokio",
- "tracing",
- "utils",
  "utoipa",
- "uuid",
 ]
 
 [[package]]
@@ -3011,10 +2923,7 @@ dependencies = [
  "axum",
  "config",
  "database",
- "database_account",
  "database_chat",
- "database_media",
- "database_profile",
  "error-stack",
  "futures",
  "model",
@@ -3034,30 +2943,19 @@ dependencies = [
 name = "server_data_account"
 version = "0.0.0"
 dependencies = [
- "axum",
  "config",
  "database_account",
  "error-stack",
- "futures",
  "model",
- "nalgebra",
- "num_cpus",
  "server_common",
  "server_data",
  "simple_backend",
- "simple_backend_utils",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
 ]
 
 [[package]]
 name = "server_data_all"
 version = "0.0.0"
 dependencies = [
- "axum",
  "config",
  "database",
  "database_account",
@@ -3065,22 +2963,13 @@ dependencies = [
  "database_media",
  "database_profile",
  "error-stack",
- "futures",
  "model",
- "nalgebra",
- "num_cpus",
  "server_common",
  "server_data",
  "server_data_account",
- "server_data_chat",
- "server_data_media",
  "server_data_profile",
- "simple_backend",
  "simple_backend_utils",
- "thiserror",
  "tokio",
- "tokio-stream",
- "tokio-util",
  "tracing",
 ]
 
@@ -3088,68 +2977,42 @@ dependencies = [
 name = "server_data_chat"
 version = "0.0.0"
 dependencies = [
- "axum",
  "config",
  "database_chat",
  "error-stack",
- "futures",
  "model",
- "nalgebra",
- "num_cpus",
  "server_common",
  "server_data",
  "simple_backend",
  "simple_backend_utils",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tracing",
 ]
 
 [[package]]
 name = "server_data_media"
 version = "0.0.0"
 dependencies = [
- "axum",
  "config",
  "database_media",
  "error-stack",
- "futures",
  "model",
- "nalgebra",
- "num_cpus",
  "server_common",
  "server_data",
  "simple_backend",
- "simple_backend_utils",
- "thiserror",
  "tokio",
- "tokio-stream",
  "tokio-util",
- "tracing",
 ]
 
 [[package]]
 name = "server_data_profile"
 version = "0.0.0"
 dependencies = [
- "axum",
  "config",
  "database_profile",
  "error-stack",
- "futures",
  "model",
- "nalgebra",
- "num_cpus",
  "server_common",
  "server_data",
  "simple_backend",
- "simple_backend_utils",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tokio-util",
  "tracing",
 ]
 

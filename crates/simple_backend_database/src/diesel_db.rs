@@ -127,8 +127,8 @@ impl ObjectExtensions<SqliteConnection> for PoolObject {
         action: F,
     ) -> Result<R, DieselDatabaseError> {
         let handle = tokio::task::spawn_blocking(move || {
-            let mut conn = self.as_mut();
-            action(&mut conn)
+            let conn = self.as_mut();
+            action(conn)
         });
         match handle.await {
             Ok(value) => Ok(value),

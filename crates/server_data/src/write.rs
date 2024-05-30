@@ -320,6 +320,6 @@ impl WriteCommandsProvider for SyncWriteHandleRef<'_> {
 
 impl WriteCommandsProvider for SyncWriteHandleRefRef<'_> {
     fn write_cmds(&self) -> &WriteCommands {
-        &self.handle.write_cmds()
+        self.handle.write_cmds()
     }
 }

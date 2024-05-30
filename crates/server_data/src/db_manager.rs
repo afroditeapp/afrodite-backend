@@ -283,19 +283,19 @@ pub struct SyncWriteHandleRef<'a> {
 
 impl<'a> SyncWriteHandleRef<'a> {
     pub fn events(&self) -> EventManagerWithCacheReference {
-        EventManagerWithCacheReference::new(&self.write_cmds.cache, &self.push_notification_sender)
+        EventManagerWithCacheReference::new(self.write_cmds.cache, self.push_notification_sender)
     }
 
     pub fn read(&self) -> ReadCommands<'_> {
         ReadCommands::new(
-            &self.current_read_handle,
-            &self.write_cmds.cache,
-            &self.write_cmds.file_dir,
+            self.current_read_handle,
+            self.write_cmds.cache,
+            self.write_cmds.file_dir,
         )
     }
 
     pub fn config(&self) -> &Config {
-        &self.write_cmds.config
+        self.write_cmds.config
     }
 
     pub fn to_ref_handle(&self) -> SyncWriteHandleRefRef<'_> {

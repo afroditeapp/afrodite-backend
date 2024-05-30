@@ -6,19 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true, features = ["sync", "fs"] }
-tokio-util = { workspace = true, features = ["io"]}
-axum = { workspace = true, features = ["ws", "macros"] }
 tracing = { workspace = true }
 
-thiserror = { workspace = true }
 error-stack = { workspace = true }
-
-nalgebra = { workspace = true }
-
-num_cpus = { workspace = true }
 
 config = { path = "../config" }
 model = { path = "../model" }
@@ -27,8 +18,6 @@ server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }
 server_data_account = { path = "../server_data_account" }
 server_data_profile = { path = "../server_data_profile" }
-server_data_media = { path = "../server_data_media" }
-server_data_chat = { path = "../server_data_chat" }
 
 database = { path = "../database" }
 database_account = { path = "../database_account" }
@@ -36,5 +25,4 @@ database_profile = { path = "../database_profile" }
 database_media = { path = "../database_media" }
 database_chat = { path = "../database_chat" }
 
-simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }
