@@ -229,7 +229,7 @@ pub struct SyncWriteHandle {
 }
 
 impl SyncWriteHandle {
-    fn cmds(&self) -> WriteCommands {
+    pub fn cmds(&self) -> WriteCommands {
         WriteCommands::new(
             &self.config,
             &self.current_write_handle,

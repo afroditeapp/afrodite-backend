@@ -57,7 +57,7 @@ pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
+pub async fn post_backend_config<S: WriteDynamicConfig>(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_capabilities): Extension<Capabilities>,
@@ -79,7 +79,7 @@ pub async fn post_backend_config<S: ReadData + WriteDynamicConfig>(
     }
 }
 
-pub fn config_router<S: StateBase + ReadData + WriteDynamicConfig + ReadDynamicConfig>(
+pub fn config_router<S: StateBase + WriteDynamicConfig + ReadDynamicConfig>(
     s: S,
 ) -> Router {
     use axum::routing::{get, post};

@@ -18,7 +18,7 @@ use crate::{
 ///
 /// TODO(prod): Make sure that moderation request is not removed when admin
 ///             interacts with it.
-pub async fn media_check_moderation_request_for_account<
+async fn media_check_moderation_request_for_account<
     S: GetConfig + ReadData + GetInternalApi,
 >(
     state: &S,

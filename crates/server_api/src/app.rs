@@ -1,8 +1,9 @@
 use std::net::SocketAddr;
 
 use model::{AccessToken, AccountIdInternal, AccountState, Capabilities};
+use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;
-use server_data::{content_processing::ContentProcessingManagerData, demo::DemoModeManager};
+use server_data::content_processing::ContentProcessingManagerData;
 
 use crate::internal_api::InternalApiClient;
 
@@ -29,8 +30,15 @@ pub trait ContentProcessingProvider {
     fn content_processing(&self) -> &ContentProcessingManagerData;
 }
 
-pub trait DemoModeManagerProvider {
-    fn demo_mode(&self) -> &DemoModeManager;
-}
-
 pub trait StateBase: Send + Sync + Clone + 'static {}
+
+
+pub trait ValidataModerationRequest {
+    fn media_check_moderation_request_for_account<
+        S: GetConfig + ReadData + GetInternalApi,
+    >(
+        &self,
+        state: &S,
+        account_id: AccountIdInternal,
+    ) -> impl std::future::Future<Output = Result<(), InternalApiError>> + Send;
+}

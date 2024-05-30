@@ -6,7 +6,7 @@ use model::{
     AccessibleAccount, AccountId, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
     DemoModeLoginToken, DemoModePassword, DemoModeToken,
 };
-use server_data::{app::ReadData, read::ReadCommandsProvider, write::WriteCommandsProvider};
+use server_data::{app::ReadData};
 use server_data_account::read::GetReadCommandsAccount;
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
@@ -353,7 +353,7 @@ pub enum AccessibleAccountsInfo {
 }
 
 impl AccessibleAccountsInfo {
-    pub async fn into_accounts<S: ReadData<R>, R: GetReadCommandsAccount<C>, C: ReadCommandsProvider>(
+    pub async fn into_accounts<S: ReadData>(
         self,
         state: &S,
     ) -> server_common::result::Result<Vec<AccountId>, DataError> {
@@ -380,7 +380,7 @@ impl AccessibleAccountsInfo {
             .collect())
     }
 
-    pub async fn with_extra_info<S: GetConfig + GetAccounts + ReadData<R>, R: GetReadCommandsAccount<C> + GetReadProfileCommands<C>, C: ReadCommandsProvider>(
+    pub async fn with_extra_info<S: GetConfig + GetAccounts + ReadData>(
         self,
         state: &S,
     ) -> server_common::result::Result<Vec<AccessibleAccount>, DataError> {
@@ -409,7 +409,7 @@ impl AccessibleAccountsInfo {
         Ok(accessible_accounts)
     }
 
-    pub async fn contains<S: ReadData<R>, R: GetReadCommandsAccount<C>, C: ReadCommandsProvider>(
+    pub async fn contains<S: ReadData>(
         &self,
         account: AccountId,
         state: &S,

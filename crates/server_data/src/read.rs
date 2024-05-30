@@ -142,3 +142,13 @@ impl <'a> ReadCommandsProvider for ReadCommandsContainer<'a> {
         &self.cmds
     }
 }
+
+pub trait GetReadCommandsCommon<C: ReadCommandsProvider> {
+    fn common(self) -> ReadCommandsCommon<C>;
+}
+
+impl <C: ReadCommandsProvider> GetReadCommandsCommon<C> for C {
+    fn common(self) -> ReadCommandsCommon<C> {
+        ReadCommandsCommon::new(self)
+    }
+}

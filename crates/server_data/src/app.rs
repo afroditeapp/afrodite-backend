@@ -5,7 +5,7 @@ pub use server_common::app::*;
 
 use crate::{
     event::EventManagerWithCacheReference,
-    read::ReadCommands,
+    read::{ReadCommands, ReadCommandsContainer},
     write_commands::WriteCmds,
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
     DataError,
@@ -32,8 +32,8 @@ pub trait WriteData {
     ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
 }
 
-pub trait ReadData<T> {
-    fn read(&self) -> T;
+pub trait ReadData {
+    fn read(&self) -> ReadCommandsContainer;
 }
 
 pub trait EventManagerProvider {

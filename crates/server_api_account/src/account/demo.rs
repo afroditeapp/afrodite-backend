@@ -6,12 +6,12 @@ use model::{
     DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult,
     SignInWithInfo,
 };
+use server_api::db_write;
 use simple_backend::create_counters;
 
 use super::{login_impl, register_impl};
 use crate::{
     app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, StateBase, WriteData},
-    db_write,
     utils::{Json, StatusCode},
 };
 
@@ -41,7 +41,7 @@ pub async fn post_demo_mode_login<S: DemoModeManagerProvider>(
     ACCOUNT.post_demo_mode_login.incr();
     // TODO(prod): Increase to 5 seconds
     tokio::time::sleep(Duration::from_secs(1)).await;
-    let result = state.demo_mode().stage0_login(password).await?;
+    let result = state.stage0_login(password).await?;
     Ok(result.into())
 }
 
@@ -63,7 +63,6 @@ pub async fn post_demo_mode_confirm_login<S: DemoModeManagerProvider>(
 ) -> Result<Json<DemoModeConfirmLoginResult>, StatusCode> {
     ACCOUNT.post_demo_mode_confirm_login.incr();
     let result = state
-        .demo_mode()
         .stage1_login(info.password, info.token)
         .await?;
     Ok(result.into())
@@ -96,10 +95,8 @@ pub async fn post_demo_mode_accessible_accounts<
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
     ACCOUNT.post_demo_mode_accessible_accounts.incr();
     let result = state
-        .demo_mode()
-        .accessible_accounts_if_token_valid(&token)
+        .accessible_accounts_if_token_valid(&state, &token)
         .await?;
-    let result = result.with_extra_info(&state).await?;
     Ok(result.into())
 }
 
@@ -121,7 +118,7 @@ pub async fn post_demo_mode_register_account<S: DemoModeManagerProvider + WriteD
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT.post_demo_mode_register_account.incr();
 
-    let demo_mode_id = state.demo_mode().demo_mode_token_exists(&token).await?;
+    let demo_mode_id = state.demo_mode_token_exists(&token).await?;
 
     let id = register_impl(&state, SignInWithInfo::default(), None).await?;
 
