@@ -64,7 +64,7 @@ pub fn server_test(_attr: TokenStream, input: TokenStream) -> TokenStream {
         mod #hidden_mod_name {
             pub fn #hidden_fn_name(
                 test_context: crate::TestContext,
-            ) -> Box<dyn std::future::Future<Output = crate::TestResult>> {
+            ) -> Box<dyn std::future::Future<Output = crate::TestResult> + Send> {
                 Box::new(super::#test_fn_name(test_context))
             }
         }

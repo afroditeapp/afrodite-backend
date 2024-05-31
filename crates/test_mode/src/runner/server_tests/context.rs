@@ -2,9 +2,7 @@ use std::{mem, sync::Arc};
 
 use api_client::{
     apis::{
-        configuration::Configuration,
-        media_admin_api,
-        profile_api::{post_profile, post_search_age_range, post_search_groups},
+        configuration::Configuration, media_admin_api, profile_api::{post_profile, post_search_age_range, post_search_groups}
     },
     models::{
         AccountId, EventToClient, ModerationQueueType, ProfileSearchAgeRange, ProfileUpdate,
@@ -40,16 +38,25 @@ pub struct TestContext {
     config: Arc<Config>,
     test_config: Arc<TestMode>,
     state: Arc<Mutex<State>>,
+    account_server_public_api_port: Option<u16>,
+    account_server_internal_api_port: Option<u16>,
 }
 
 impl TestContext {
-    pub fn new(config: Arc<Config>, test_config: Arc<TestMode>) -> Self {
+    pub fn new(
+        config: Arc<Config>,
+        test_config: Arc<TestMode>,
+        account_server_public_api_port: Option<u16>,
+        account_server_internal_api_port: Option<u16>,
+    ) -> Self {
         Self {
             state: Arc::new(Mutex::new(State {
                 connections: vec![],
             })),
             config,
             test_config,
+            account_server_public_api_port,
+            account_server_internal_api_port,
         }
     }
 
@@ -204,6 +211,11 @@ pub struct Account {
 
 impl Account {
     pub async fn register_and_login(mut test_context: TestContext) -> Result<Self, TestError> {
+        let urls = test_context.test_config.server.api_urls.clone().change_ports(
+            test_context.account_server_internal_api_port,
+            test_context.account_server_public_api_port,
+        ).map_err(|_| TestError::ApiUrlPortConfigFailed.report())?;
+
         let mut state = BotState::new(
             None,
             test_context.config.clone(),
@@ -211,7 +223,8 @@ impl Account {
             Arc::new(BotConfigFile::default()),
             0,
             0,
-            ApiClient::new(test_context.test_config.server.api_urls.clone()),
+            ApiClient::new(urls.clone()),
+            urls,
         );
         state.connections.enable_event_sending = true;
 

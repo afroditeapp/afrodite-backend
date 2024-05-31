@@ -29,6 +29,7 @@ error-stack = { workspace = true }
 
 async-trait = { workspace = true }
 
+num_cpus = { workspace = true }
 
 time = { workspace = true }
 

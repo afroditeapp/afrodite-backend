@@ -52,6 +52,26 @@ pub struct PublicApiUrls {
     pub url_chat: Url,
 }
 
+impl PublicApiUrls {
+    #[allow(clippy::result_unit_err)]
+    pub fn change_ports(
+        mut self,
+        register_api_port: Option<u16>,
+        other_ports: Option<u16>,
+    ) -> Result<Self, ()> {
+        if let Some(register_api_port) = register_api_port {
+            self.url_register.set_port(Some(register_api_port))?;
+        }
+        if let Some(other_ports) = other_ports {
+            self.url_account.set_port(Some(other_ports))?;
+            self.url_profile.set_port(Some(other_ports))?;
+            self.url_media.set_port(Some(other_ports))?;
+            self.url_chat.set_port(Some(other_ports))?;
+        }
+        Ok(self)
+    }
+}
+
 #[derive(Args, Debug, Clone)]
 pub struct TestMode {
     #[command(flatten)]
@@ -204,6 +224,10 @@ pub struct QaTestConfig {
     /// Try to continue from test which name contains this text
     #[arg(long)]
     pub continue_from: Option<String>,
+
+    /// Task count. Default value is logical CPU count.
+    #[arg(short, long, value_name = "COUNT")]
+    pub tasks: Option<usize>,
 }
 
 #[derive(Args, Debug, Clone)]

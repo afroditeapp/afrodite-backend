@@ -36,6 +36,9 @@ pub enum TestError {
     #[error("API URL not configured")]
     ApiUrlNotConfigured,
 
+    #[error("API URL port configuration failed")]
+    ApiUrlPortConfigFailed,
+
     #[error("Wrong status code")]
     StatusCode,
 

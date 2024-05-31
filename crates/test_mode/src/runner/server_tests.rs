@@ -6,17 +6,16 @@ use config::{
     args::{QaTestConfig, TestMode},
     Config,
 };
+use manager::{ManagerEvent, ManagerEventReceiver, TestManager};
 use tokio::{select, signal};
 use tracing::{error, info};
 
 use crate::{
-    client::ApiClient,
-    server::{AdditionalSettings, ServerManager},
-    TestContext, TestFunction, TestResult,
-};
+    client::ApiClient, ServerTestError, TestFunction};
 
 pub mod assert;
 pub mod context;
+mod manager;
 
 pub struct QaTestRunner {
     config: Arc<Config>,
@@ -53,73 +52,23 @@ impl QaTestRunner {
         let api_client = ApiClient::new(self.test_config.server.api_urls.clone());
         api_client.print_to_log();
 
-        let mut test_context = TestContext::new(self.config.clone(), self.test_config.clone());
-
         let test_functions: Vec<&'static TestFunction> = match get_test_functions(&self.qa_config) {
             Ok(test_functions) => test_functions,
             Err(()) => return,
         };
 
-        let mut failed = false;
-        let mut passed_number = 0;
-        let start_time = std::time::Instant::now();
-
-        println!("Running tests...");
-
-        let mut current_test = String::new();
-        for test_function in test_functions.iter() {
-            current_test = test_function.name();
-            print!("test {} ... ", &current_test);
-            let manager = ServerManager::new(
-                &self.config,
-                self.test_config.clone(),
-                Some(AdditionalSettings {
-                    log_to_memory: true,
-                }),
-            )
-            .await;
-
-            let test_future = (test_function.function)(test_context.clone());
-            let test_future =
-                Box::<dyn futures::Future<Output = TestResult>>::into_pin(test_future);
-
-            match test_future.await {
-                Ok(()) => println!("ok"),
-                Err(e) => {
-                    failed = true;
-                    println!("FAILED\n");
-                    println!("Test failed: {:?}\n", e.error);
-                    println!("{}", manager.logs_string().await);
-                }
-            }
-
-            test_context.close_websocket_connections().await;
-            manager.close().await;
-
-            if failed {
-                break;
-            } else {
-                passed_number += 1;
-            }
-        }
-
-        let result = if failed { "FAILED" } else { "ok" };
-
-        println!(
-            "\ntest result: {}. {} passed; {} failed; {} tests; finished in {:.2?}",
-            result,
-            passed_number,
-            if failed { 1 } else { 0 },
-            test_functions.len(),
-            start_time.elapsed()
+        let (manager_event_receiver, manager_quit_handle) = TestManager::new_manager(
+            self.config.clone(),
+            self.test_config.clone(),
+            test_functions.clone()
         );
 
-        if failed {
-            println!(
-                "\nTo continue from the failed test, run command\nmake test CONTINUE_FROM={}",
-                current_test
-            );
-        }
+        RunnerUi::new(
+            test_functions,
+            manager_event_receiver,
+        ).run().await;
+
+        manager_quit_handle.wait_quit().await;
     }
 }
 
@@ -156,4 +105,118 @@ fn get_test_functions(test_config: &QaTestConfig) -> Result<Vec<&'static TestFun
     } else {
         Ok(test_functions)
     }
+}
+
+pub struct RunnerUi {
+    test_functions: Vec<&'static TestFunction>,
+    manager_event_receiver: ManagerEventReceiver,
+}
+
+impl RunnerUi {
+    pub fn new(
+        test_functions: Vec<&'static TestFunction>,
+        manager_event_receiver: ManagerEventReceiver,
+    ) -> Self {
+        Self {
+            test_functions,
+            manager_event_receiver,
+        }
+    }
+
+    pub async fn run(mut self) {
+        let mut failed = false;
+        let mut passed_number = 0;
+        let start_time = std::time::Instant::now();
+
+        println!("Running tests...");
+
+        let mut pending_events = vec![];
+        let mut current_test = String::new();
+        for test_function in self.test_functions.iter() {
+            current_test = test_function.name();
+            print!("test {} ... ", &current_test);
+
+            let result = wait_that_correct_test_event_is_received(
+                &mut self.manager_event_receiver,
+                &current_test,
+                &mut pending_events,
+            ).await;
+
+            match result {
+                Ok(()) => println!("ok"),
+                Err(e) => {
+                    failed = true;
+                    println!("FAILED\n");
+                    println!("Test failed: {:?}\n", e.error.error);
+                    println!("{}", e.logs);
+                }
+            }
+
+            if failed {
+                break;
+            } else {
+                passed_number += 1;
+            }
+        }
+
+        let result = if failed { "FAILED" } else { "ok" };
+
+        println!(
+            "\ntest result: {}. {} passed; {} failed; {} tests; finished in {:.2?}",
+            result,
+            passed_number,
+            if failed { 1 } else { 0 },
+            self.test_functions.len(),
+            start_time.elapsed()
+        );
+
+        if failed {
+            println!(
+                "\nTo continue from the failed test, run command\nmake test CONTINUE_FROM={}",
+                current_test
+            );
+        }
+    }
+}
+
+async fn wait_that_correct_test_event_is_received(
+    receiver: &mut ManagerEventReceiver,
+    test_name: &str,
+    pending: &mut Vec<ManagerEvent>,
+) -> Result<(), ErrorInfo> {
+    for (i, pending_event) in pending.iter().enumerate() {
+        if pending_event.test().name() == test_name {
+            let event = pending.remove(i);
+            return handle_event(event);
+        }
+    }
+
+    loop {
+        match receiver.receiver.recv().await {
+            Some(e) => {
+                if e.test().name() == test_name {
+                    return handle_event(e);
+                } else {
+                    pending.push(e);
+                }
+            }
+            None => panic!("ManagerEventReceiver closed"),
+        }
+    }
+}
+
+fn handle_event(e: ManagerEvent) -> Result<(), ErrorInfo> {
+    match e {
+        ManagerEvent::Success { .. } => {
+            Ok(())
+        }
+        ManagerEvent::Fail { error, logs, .. } => {
+            Err(ErrorInfo { error, logs })
+        }
+    }
+}
+
+struct ErrorInfo {
+    error: ServerTestError,
+    logs: String,
 }

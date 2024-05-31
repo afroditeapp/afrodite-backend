@@ -47,6 +47,8 @@ pub const DEFAULT_LOCATION_CONFIG_BENCHMARK: LocationConfig = LocationConfig {
 pub struct AdditionalSettings {
     /// Store logs in RAM instead of using standard output or error.
     pub log_to_memory: bool,
+    pub account_server_public_api_port: Option<u16>,
+    pub account_server_internal_api_port: Option<u16>,
 }
 
 pub struct ServerManager {
@@ -94,10 +96,16 @@ impl ServerManager {
 
         let localhost_ip = "127.0.0.1".parse().unwrap();
 
+        let account_public_api_port = settings
+            .account_server_public_api_port
+            .unwrap_or(account_port);
+        let account_internal_api_port = settings
+            .account_server_internal_api_port
+            .unwrap_or(account_port + 1);
         let account_config = new_config(
             &config,
-            SocketAddrV4::new(localhost_ip, account_port),
-            SocketAddrV4::new(localhost_ip, account_port + 1),
+            SocketAddrV4::new(localhost_ip, account_public_api_port),
+            SocketAddrV4::new(localhost_ip, account_internal_api_port),
             Components {
                 account: true,
                 profile: !config.server.microservice_profile,

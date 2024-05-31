@@ -66,8 +66,6 @@ impl BotAction for Login {
         state.connections.events = Some(event_receiver);
 
         let url = state
-            .config
-            .server
             .api_urls
             .url_account
             .join(PATH_CONNECT)
@@ -79,8 +77,6 @@ impl BotAction for Login {
 
         let media = if let Some(media) = login_result.media.flatten() {
             let url = state
-                .config
-                .server
                 .api_urls
                 .url_media
                 .join(PATH_CONNECT)
@@ -94,8 +90,6 @@ impl BotAction for Login {
 
         let profile = if let Some(profile) = login_result.profile.flatten() {
             let url = state
-                .config
-                .server
                 .api_urls
                 .url_profile
                 .join(PATH_CONNECT)

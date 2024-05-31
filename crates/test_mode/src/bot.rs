@@ -8,7 +8,7 @@ use std::{fmt::Debug, sync::Arc, vec};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
-    args::{SelectedBenchmark, TestMode, TestModeSubMode},
+    args::{PublicApiUrls, SelectedBenchmark, TestMode, TestModeSubMode},
     bot_config_file::{BotConfigFile, BotInstanceConfig},
     Config,
 };
@@ -196,6 +196,7 @@ pub struct BotState {
     pub task_id: u32,
     pub bot_id: u32,
     pub api: ApiClient,
+    pub api_urls: PublicApiUrls,
     pub previous_action: &'static dyn BotAction,
     pub previous_value: PreviousValue,
     pub action_history: Vec<&'static dyn BotAction>,
@@ -206,6 +207,7 @@ pub struct BotState {
 }
 
 impl BotState {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: Option<AccountId>,
         server_config: Arc<Config>,
@@ -214,6 +216,7 @@ impl BotState {
         task_id: u32,
         bot_id: u32,
         api: ApiClient,
+        api_urls: PublicApiUrls,
     ) -> Self {
         Self {
             id,
@@ -223,6 +226,7 @@ impl BotState {
             task_id,
             bot_id,
             api,
+            api_urls,
             benchmark: BenchmarkState::new(),
             previous_action: &DoNothing,
             previous_value: PreviousValue::Empty,
@@ -386,6 +390,7 @@ impl BotManager {
                 task_id,
                 bot_i,
                 ApiClient::new(config.server.api_urls.clone()),
+                config.server.api_urls.clone(),
             );
 
             match (config.selected_benchmark(), config.bot_mode()) {

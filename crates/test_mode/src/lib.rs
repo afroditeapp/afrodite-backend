@@ -67,7 +67,7 @@ impl TestRunner {
 pub struct TestFunction {
     pub name: &'static str,
     pub module_path: &'static str,
-    pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult>>,
+    pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult> + Send>,
 }
 
 impl TestFunction {

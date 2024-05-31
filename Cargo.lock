@@ -3352,6 +3352,7 @@ dependencies = [
  "image",
  "inventory",
  "nix",
+ "num_cpus",
  "rand",
  "reqwest",
  "serde",
