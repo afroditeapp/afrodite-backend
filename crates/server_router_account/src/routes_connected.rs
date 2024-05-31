@@ -4,7 +4,6 @@ use crate::{api};
 
 use server_state::S;
 
-use server_common::app::GetConfig;
 
 /// Private routes only accessible when WebSocket is connected.
 pub struct ConnectedApp {

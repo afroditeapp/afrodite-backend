@@ -5,10 +5,6 @@
 
 use std::sync::Arc;
 
-use axum::{
-    routing::{get, post},
-    Router,
-};
 use config::Config;
 use server_api::internal_api::InternalApiClient;
 use server_common::push_notifications::PushNotificationSender;
@@ -17,7 +13,7 @@ use server_data::{
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::demo::DemoModeManager;
-use simple_backend::{app::SimpleBackendAppState, web_socket::WebSocketManager};
+use simple_backend::{app::SimpleBackendAppState};
 
 
 pub mod state_impl;

@@ -4,16 +4,12 @@
 #![warn(unused_crate_dependencies)]
 
 
-use std::sync::Arc;
 
 use axum::{
-    routing::{get, post},
+    routing::{get},
     Router,
 };
-use config::Config;
-use server_api::internal_api::InternalApiClient;
-use server_common::push_notifications::PushNotificationSender;
-use simple_backend::{app::SimpleBackendAppState, web_socket::WebSocketManager};
+use simple_backend::{web_socket::WebSocketManager};
 
 use server_state::S;
 
