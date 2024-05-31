@@ -143,16 +143,30 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     }
 
     pub async fn run(mut self) {
-        if cfg!(debug_assertions) {
-            // tokio-console is disabled currently
-            //let layer = console_subscriber::spawn();
-            tracing_subscriber::registry()
-                // .with(layer)
-                .with(tracing_subscriber::fmt::layer().with_filter(EnvFilter::from_default_env()))
-                .init();
+        let log_with_timestamp_layer = if self.config.log_timestamp() {
+            Some(tracing_subscriber::fmt::layer().with_filter(EnvFilter::from_default_env()))
         } else {
-            tracing_subscriber::fmt::init();
-        }
+            None
+        };
+
+        let log_without_timestamp_layer = if self.config.log_timestamp() {
+            None
+        } else {
+            Some(tracing_subscriber::fmt::layer().without_time().with_filter(EnvFilter::from_default_env()))
+        };
+
+        // tokio-console is disabled currently
+        // let tokio_console_layer = if cfg!(debug_assertions) {
+        //     Some(console_subscriber::spawn())
+        // } else {
+        //     None
+        // }
+
+        tracing_subscriber::registry()
+            // .with(tokio_console_layer)
+            .with(log_with_timestamp_layer)
+            .with(log_without_timestamp_layer)
+            .init();
 
         info!(
             "Backend version: {}-{}",

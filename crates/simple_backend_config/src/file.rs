@@ -20,6 +20,8 @@ pub const CONFIG_FILE_NAME: &str = "simple_backend_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
+# log_timestamp = true
+
 [socket]
 public_api = "127.0.0.1:3000"
 internal_api = "127.0.0.1:3001"
@@ -94,6 +96,8 @@ pub enum ConfigFileError {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SimpleBackendConfigFile {
     pub debug: Option<bool>,
+    /// Write timestamp to log messages. Enabled by default.
+    pub log_timestamp: Option<bool>,
     pub data: DataConfig,
     pub socket: SocketConfig,
     pub tile_map: Option<TileMapConfig>,

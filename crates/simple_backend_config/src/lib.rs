@@ -174,6 +174,10 @@ impl SimpleBackendConfig {
     pub fn tile_map(&self) -> Option<&TileMapConfig> {
         self.file.tile_map.as_ref()
     }
+
+    pub fn log_timestamp(&self) -> bool {
+        self.file.log_timestamp.unwrap_or(true)
+    }
 }
 
 /// Read config file from current directory.
