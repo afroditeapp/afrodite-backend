@@ -3,22 +3,13 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-
-
-use axum::{
-    routing::{get},
-    Router,
-};
-use simple_backend::{web_socket::WebSocketManager};
-
+use axum::{routing::get, Router};
 use server_state::S;
+use simple_backend::web_socket::WebSocketManager;
 
 mod api;
 
-pub fn create_connect_router(
-    state: S,
-    ws_manager: WebSocketManager,
-) -> Router {
+pub fn create_connect_router(state: S, ws_manager: WebSocketManager) -> Router {
     Router::new()
         .route(
             api::common::PATH_CONNECT, // This route checks the access token by itself.

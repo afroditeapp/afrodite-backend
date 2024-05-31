@@ -1,9 +1,7 @@
-use server_api::db_write_raw;
-use server_common::{data::DataError, result::Result, app::{GetConfig}};
+use server_api::{app::WriteData, db_write_raw};
+use server_common::{app::GetConfig, data::DataError, result::Result};
 use server_data_profile::write::GetWriteCommandsProfile;
 use server_state::S;
-
-use server_api::app::WriteData;
 
 pub struct StartupTasks {
     state: S,

@@ -85,19 +85,26 @@ impl BusinessLogic for PihkaBusinessLogic {
         web_socket_manager: WebSocketManager,
         state: &Self::AppState,
     ) -> Router {
-        let mut router = server_router_account::create_common_server_router(state.clone())
-            .merge(server_router_all::create_connect_router(state.clone(), web_socket_manager));
+        let mut router = server_router_account::create_common_server_router(state.clone()).merge(
+            server_router_all::create_connect_router(state.clone(), web_socket_manager),
+        );
 
         if self.config.components().account {
-            router = router.merge(server_router_account::create_account_server_router(state.clone()))
+            router = router.merge(server_router_account::create_account_server_router(
+                state.clone(),
+            ))
         }
 
         if self.config.components().profile {
-            router = router.merge(server_router_profile::create_profile_server_router(state.clone()))
+            router = router.merge(server_router_profile::create_profile_server_router(
+                state.clone(),
+            ))
         }
 
         if self.config.components().media {
-            router = router.merge(server_router_media::create_media_server_router(state.clone()))
+            router = router.merge(server_router_media::create_media_server_router(
+                state.clone(),
+            ))
         }
 
         if self.config.components().chat {
@@ -110,11 +117,14 @@ impl BusinessLogic for PihkaBusinessLogic {
     fn internal_api_router(&self, state: &Self::AppState) -> Router {
         let mut router = Router::new();
         if self.config.components().account {
-            router = router.merge(server_router_account::InternalApp::create_account_server_router(state.clone()))
+            router = router.merge(
+                server_router_account::InternalApp::create_account_server_router(state.clone()),
+            )
         }
 
         if self.config.components().media {
-            router = router.merge(server_router_media::InternalApp::create_media_server_router(state.clone()))
+            router = router
+                .merge(server_router_media::InternalApp::create_media_server_router(state.clone()))
         }
 
         router

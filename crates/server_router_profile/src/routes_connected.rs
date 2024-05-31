@@ -1,10 +1,8 @@
 use axum::{middleware, Router};
-
+use server_common::app::GetConfig;
 use server_state::S;
 
-use crate::{api};
-
-use server_common::app::GetConfig;
+use crate::api;
 
 /// Private routes only accessible when WebSocket is connected.
 pub struct ConnectedApp {
@@ -27,7 +25,6 @@ impl ConnectedApp {
             .merge(api::profile::location_router(self.state.clone()))
             .merge(api::profile::favorite_router(self.state.clone()))
             .merge(api::profile::iterate_profiles_router(self.state.clone()));
-
 
         let private = if self.state.config().debug_mode() {
             private.merge(api::profile::benchmark_router(self.state.clone()))

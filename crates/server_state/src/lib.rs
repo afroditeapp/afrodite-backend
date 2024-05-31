@@ -13,8 +13,7 @@ use server_data::{
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::demo::DemoModeManager;
-use simple_backend::{app::SimpleBackendAppState};
-
+use simple_backend::app::SimpleBackendAppState;
 
 pub mod state_impl;
 
