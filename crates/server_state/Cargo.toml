@@ -6,20 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde_json = { workspace = true }
-
 futures = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-axum = { workspace = true, features = ["ws", "macros"] }
-tracing = { workspace = true }
 
-utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
-utoipa-swagger-ui = { workspace = true, features = ["axum"] }
-
-thiserror = { workspace = true }
 error-stack = { workspace = true }
-
-nix = { workspace = true, default-features = false, features = ["signal"] }
 
 config = { path = "../config" }
 model = { path = "../model" }
@@ -35,5 +25,4 @@ server_api_all = { path = "../server_api_all" }
 server_api_media = { path = "../server_api_media" }
 
 simple_backend = { path = "../simple_backend" }
-simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_config = { path = "../simple_backend_config" }

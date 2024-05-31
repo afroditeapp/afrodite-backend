@@ -1,7 +1,7 @@
 //! Routes for server to server connections
 
 use axum::{routing::post, Router};
-use server_common::app::GetConfig;
+use server_api::app::GetConfig;
 use server_state::S;
 
 use crate::api;

@@ -1,5 +1,5 @@
 use axum::{middleware, Router};
-use server_common::app::GetConfig;
+use server_api::app::GetConfig;
 use server_state::S;
 
 use crate::api;
