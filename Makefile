@@ -8,6 +8,12 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p database_chat \
 					-p model \
 					-p server \
+					-p server_state \
+					-p server_router_all \
+					-p server_router_account \
+					-p server_router_profile \
+					-p server_router_media \
+					-p server_router_chat \
 					-p server_common \
 					-p server_api \
 					-p server_api_all \
@@ -102,7 +108,12 @@ code-stats:
 	crates/database_chat \
 	crates/model \
 	crates/server \
-	crates/server_common \
+	crates/server_state \
+	crates/server_router_all \
+	crates/server_router_account \
+	crates/server_router_profile \
+	crates/server_router_media \
+	crates/server_common_chat \
 	crates/server_api \
 	crates/server_api_all \
 	crates/server_api_account \
