@@ -3,12 +3,15 @@ use server_api::db_write_raw;
 use server_common::result::{Result, WrappedResultExt};
 use server_data::content_processing::{notify_client, ContentProcessingNotify, ProcessingState};
 use server_data_media::write::GetWriteCommandsMedia;
+use server_state::S;
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
 use simple_backend_config::args::InputFileType;
 use tokio::task::JoinHandle;
 use tracing::{error, warn};
 
-use crate::app::{AppState, ContentProcessingProvider, EventManagerProvider, WriteData};
+use server_api::app::ContentProcessingProvider;
+use server_api::app::EventManagerProvider;
+use server_api::app::WriteData;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ContentProcessingError {
@@ -36,13 +39,13 @@ impl ContentProcessingManagerQuitHandle {
 }
 
 pub struct ContentProcessingManager {
-    state: AppState,
+    state: S,
 }
 
 impl ContentProcessingManager {
     pub fn new_manager(
         notifier: ContentProcessingNotify,
-        state: AppState,
+        state: S,
         quit_notification: ServerQuitWatcher,
     ) -> ContentProcessingManagerQuitHandle {
         let manager = Self { state };

@@ -6,7 +6,6 @@
 
 pub mod api;
 pub mod api_doc;
-pub mod app;
 pub mod bot;
 pub mod content_processing;
 pub mod perf;
@@ -16,7 +15,6 @@ pub mod utils;
 use std::sync::Arc;
 
 use api_doc::ApiDoc;
-use app::AppState;
 use axum::Router;
 use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
@@ -30,6 +28,7 @@ use server_data::{
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
 use server_data_all::{demo::DemoModeManager, load::DbDataToCacheLoader};
+use server_state::AppState;
 use simple_backend::{
     app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::AllCounters,
     web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher,
@@ -38,7 +37,6 @@ use startup_tasks::StartupTasks;
 use tracing::{error, warn};
 use utoipa_swagger_ui::SwaggerUi;
 
-use self::app::{routes_internal::InternalApp, App};
 use crate::bot::BotClient;
 
 pub struct PihkaServer {
@@ -87,23 +85,23 @@ impl BusinessLogic for PihkaBusinessLogic {
         web_socket_manager: WebSocketManager,
         state: &Self::AppState,
     ) -> Router {
-        let mut app = App::new(state.clone(), web_socket_manager);
-        let mut router = app.create_common_server_router();
+        let mut router = server_router_account::create_common_server_router(state.clone())
+            .merge(server_router_all::create_connect_router(state.clone(), web_socket_manager));
 
         if self.config.components().account {
-            router = router.merge(app.create_account_server_router())
+            router = router.merge(server_router_account::create_account_server_router(state.clone()))
         }
 
         if self.config.components().profile {
-            router = router.merge(app.create_profile_server_router())
+            router = router.merge(server_router_profile::create_profile_server_router(state.clone()))
         }
 
         if self.config.components().media {
-            router = router.merge(app.create_media_server_router())
+            router = router.merge(server_router_media::create_media_server_router(state.clone()))
         }
 
         if self.config.components().chat {
-            router = router.merge(app.create_chat_server_router())
+            router = router.merge(server_router_chat::create_chat_server_router(state.clone()))
         }
 
         router
@@ -112,19 +110,11 @@ impl BusinessLogic for PihkaBusinessLogic {
     fn internal_api_router(&self, state: &Self::AppState) -> Router {
         let mut router = Router::new();
         if self.config.components().account {
-            router = router.merge(InternalApp::create_account_server_router(state.clone()))
-        }
-
-        if self.config.components().profile {
-            router = router.merge(InternalApp::create_profile_server_router(state.clone()))
+            router = router.merge(server_router_account::InternalApp::create_account_server_router(state.clone()))
         }
 
         if self.config.components().media {
-            router = router.merge(InternalApp::create_media_server_router(state.clone()))
-        }
-
-        if self.config.components().chat {
-            router = router.merge(InternalApp::create_chat_server_router(state.clone()))
+            router = router.merge(server_router_media::InternalApp::create_media_server_router(state.clone()))
         }
 
         router
@@ -169,7 +159,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         let demo_mode =
             DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
                 .expect("Demo mode manager init failed");
-        let app_state = App::create_app_state(
+        let app_state = AppState::create_app_state(
             router_database_handle,
             write_cmd_runner_handle,
             self.config.clone(),

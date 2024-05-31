@@ -1,5 +1,5 @@
 [package]
-name = "server"
+name = "server_router_all"
 version = "0.0.0"
 edition = "2021"
 
@@ -26,26 +26,10 @@ model = { path = "../model" }
 
 server_common = { path = "../server_common" }
 
-server_data = { path = "../server_data" }
-server_data_all = { path = "../server_data_all" }
-server_data_chat = { path = "../server_data_chat" }
-server_data_profile = { path = "../server_data_profile" }
-server_data_media = { path = "../server_data_media" }
-
 server_api = { path = "../server_api" }
 server_api_all = { path = "../server_api_all" }
-server_api_account = { path = "../server_api_account" }
-server_api_profile = { path = "../server_api_profile" }
-server_api_media = { path = "../server_api_media" }
-server_api_chat = { path = "../server_api_chat" }
 
 server_state = { path = "../server_state" }
-
-server_router_all = { path = "../server_router_all" }
-server_router_account = { path = "../server_router_account" }
-server_router_profile = { path = "../server_router_profile" }
-server_router_media = { path = "../server_router_media" }
-server_router_chat = { path = "../server_router_chat" }
 
 simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }

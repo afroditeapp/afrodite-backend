@@ -2773,6 +2773,12 @@ dependencies = [
  "server_data_chat",
  "server_data_media",
  "server_data_profile",
+ "server_router_account",
+ "server_router_all",
+ "server_router_chat",
+ "server_router_media",
+ "server_router_profile",
+ "server_state",
  "simple_backend",
  "simple_backend_config",
  "simple_backend_utils",
@@ -3014,6 +3020,159 @@ dependencies = [
  "server_data",
  "simple_backend",
  "tracing",
+]
+
+[[package]]
+name = "server_router_account"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "error-stack",
+ "futures",
+ "model",
+ "nix",
+ "serde_json",
+ "server_api",
+ "server_api_account",
+ "server_common",
+ "server_state",
+ "simple_backend",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "server_router_all"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "error-stack",
+ "futures",
+ "model",
+ "nix",
+ "serde_json",
+ "server_api",
+ "server_api_all",
+ "server_common",
+ "server_state",
+ "simple_backend",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "server_router_chat"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "error-stack",
+ "futures",
+ "model",
+ "nix",
+ "serde_json",
+ "server_api",
+ "server_api_chat",
+ "server_common",
+ "server_state",
+ "simple_backend",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "server_router_media"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "error-stack",
+ "futures",
+ "model",
+ "nix",
+ "serde_json",
+ "server_api",
+ "server_api_media",
+ "server_common",
+ "server_state",
+ "simple_backend",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "server_router_profile"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "error-stack",
+ "futures",
+ "model",
+ "nix",
+ "serde_json",
+ "server_api",
+ "server_api_profile",
+ "server_common",
+ "server_state",
+ "simple_backend",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "server_state"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "config",
+ "error-stack",
+ "futures",
+ "model",
+ "nix",
+ "serde_json",
+ "server_api",
+ "server_api_all",
+ "server_api_media",
+ "server_common",
+ "server_data",
+ "server_data_all",
+ "server_data_chat",
+ "simple_backend",
+ "simple_backend_config",
+ "simple_backend_utils",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "utoipa-swagger-ui",
 ]
 
 [[package]]

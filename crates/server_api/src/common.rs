@@ -4,11 +4,11 @@
 use axum::extract::State;
 use model::BackendVersion;
 use simple_backend::create_counters;
-pub use utils::api::PATH_CONNECT;
 
 use super::utils::Json;
 use crate::app::BackendVersionProvider;
 
+pub use utils::api::PATH_CONNECT;
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
 /// Get backend version.
