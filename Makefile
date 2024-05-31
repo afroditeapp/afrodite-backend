@@ -110,7 +110,7 @@ code-stats:
 	crates/server_router_account \
 	crates/server_router_profile \
 	crates/server_router_media \
-	crates/server_common_chat \
+	crates/server_router_chat \
 	crates/server_api \
 	crates/server_api_account \
 	crates/server_api_profile \
