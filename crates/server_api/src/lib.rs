@@ -27,6 +27,7 @@ pub use server_common::{data::DataError, result};
     paths(
         // Common
         common::get_version,
+        common::get_connect_websocket,
         // Common admin
         common_admin::get_system_info,
         common_admin::get_software_info,

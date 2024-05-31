@@ -12,13 +12,9 @@ pub use server_api::app::*;
 use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
-    content_processing::ContentProcessingManagerData,
-    event::EventManagerWithCacheReference,
-    read::ReadCommandsContainer,
-    write_commands::WriteCmds,
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
-    DataError,
+    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::ReadCommandsContainer, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
+use server_data_all::register::RegisterAccount;
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::{
     app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith},
@@ -275,7 +271,18 @@ impl RegisteringCmd for S {
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> std::result::Result<AccountIdInternal, StatusCode> {
-        server_api_all::register::register_impl(self, sign_in_with, email).await
+        // New unique UUID is generated every time so no special handling needed
+        // to avoid database collisions.
+        let id = AccountId::new(uuid::Uuid::new_v4());
+
+        let id = db_write_raw!(self, move |cmds| {
+            RegisterAccount::new(cmds.write_cmds())
+                .register(id, sign_in_with, email)
+                .await
+        })
+        .await?;
+
+        Ok(id)
     }
 }
 
@@ -288,6 +295,7 @@ impl ValidateModerationRequest for S {
             .await
     }
 }
+
 
 // Simple backend
 

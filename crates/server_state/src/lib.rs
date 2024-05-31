@@ -16,6 +16,7 @@ use server_data_all::demo::DemoModeManager;
 use simple_backend::app::SimpleBackendAppState;
 
 pub mod state_impl;
+pub mod connection_tools_impl;
 
 /// State type for route handlers.
 pub type S = AppState;

@@ -85,9 +85,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         web_socket_manager: WebSocketManager,
         state: &Self::AppState,
     ) -> Router {
-        let mut router = server_router_account::create_common_server_router(state.clone()).merge(
-            server_router_all::create_connect_router(state.clone(), web_socket_manager),
-        );
+        let mut router = server_router_account::create_common_server_router(state.clone(), web_socket_manager);
 
         if self.config.components().account {
             router = router.merge(server_router_account::create_account_server_router(

@@ -20,7 +20,6 @@ use crate::api::{
         COMMON_ADMIN_CONFIG_COUNTERS_LIST, COMMON_ADMIN_MANAGER_COUNTERS_LIST,
         COMMON_ADMIN_PERF_COUNTERS_LIST,
     },
-    connection::CONNECTION_COUNTERS_LIST,
     media::{
         MEDIA_CONTENT_COUNTERS_LIST, MEDIA_MODERATION_REQUEST_COUNTERS_LIST,
         MEDIA_PROFILE_CONTENT_COUNTERS_LIST, MEDIA_SECURITY_CONTENT_COUNTERS_LIST,
@@ -37,8 +36,6 @@ use crate::api::{
 };
 
 pub static ALL_COUNTERS: &[&CounterCategory] = &[
-    // Connection
-    &CounterCategory::new("connection", CONNECTION_COUNTERS_LIST),
     // Common
     &CounterCategory::new("common", COMMON_COUNTERS_LIST),
     // Common admin

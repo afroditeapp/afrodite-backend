@@ -2762,7 +2762,6 @@ dependencies = [
  "serde_json",
  "server_api",
  "server_api_account",
- "server_api_all",
  "server_api_chat",
  "server_api_media",
  "server_api_profile",
@@ -2772,7 +2771,6 @@ dependencies = [
  "server_data_media",
  "server_data_profile",
  "server_router_account",
- "server_router_all",
  "server_router_chat",
  "server_router_media",
  "server_router_profile",
@@ -2793,6 +2791,7 @@ version = "0.0.0"
 dependencies = [
  "api_internal",
  "axum",
+ "axum-extra",
  "config",
  "error-stack",
  "headers 0.4.0",
@@ -2807,7 +2806,9 @@ dependencies = [
  "simple_backend",
  "simple_backend_config",
  "simple_backend_model",
+ "simple_backend_utils",
  "thiserror",
+ "tokio",
  "tracing",
  "utils",
  "utoipa",
@@ -2827,31 +2828,6 @@ dependencies = [
  "tokio",
  "tracing",
  "utoipa",
-]
-
-[[package]]
-name = "server_api_all"
-version = "0.0.0"
-dependencies = [
- "axum",
- "axum-extra",
- "model",
- "serde_json",
- "server_api",
- "server_common",
- "server_data",
- "server_data_account",
- "server_data_all",
- "server_data_chat",
- "server_data_profile",
- "simple_backend",
- "simple_backend_utils",
- "thiserror",
- "tokio",
- "tracing",
- "utils",
- "utoipa",
- "uuid",
 ]
 
 [[package]]
@@ -3028,16 +3004,6 @@ dependencies = [
  "server_api",
  "server_api_account",
  "server_state",
-]
-
-[[package]]
-name = "server_router_all"
-version = "0.0.0"
-dependencies = [
- "axum",
- "server_api",
- "server_api_all",
- "server_state",
  "simple_backend",
 ]
 
@@ -3075,20 +3041,24 @@ dependencies = [
 name = "server_state"
 version = "0.0.0"
 dependencies = [
+ "axum",
  "config",
  "error-stack",
  "futures",
  "model",
+ "serde_json",
  "server_api",
- "server_api_all",
  "server_api_media",
  "server_common",
  "server_data",
+ "server_data_account",
  "server_data_all",
  "server_data_chat",
+ "server_data_profile",
  "simple_backend",
  "simple_backend_config",
  "tokio",
+ "uuid",
 ]
 
 [[package]]

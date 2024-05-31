@@ -12,7 +12,6 @@ impl ApiDoc {
     pub fn all() -> utoipa::openapi::OpenApi {
         let mut doc = ApiDoc::openapi();
         doc.merge(server_api::ApiDocCommon::openapi());
-        doc.merge(server_api_all::ApiDocConnection::openapi());
         doc.merge(server_api_account::ApiDocAccount::openapi());
         doc.merge(server_api_media::ApiDocMedia::openapi());
         doc.merge(server_api_profile::ApiDocProfile::openapi());

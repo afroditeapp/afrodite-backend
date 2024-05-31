@@ -12,3 +12,5 @@ server_api = { path = "../server_api" }
 server_api_account = { path = "../server_api_account" }
 
 server_state = { path = "../server_state" }
+
+simple_backend = { path = "../simple_backend" }

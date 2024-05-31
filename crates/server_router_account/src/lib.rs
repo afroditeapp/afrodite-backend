@@ -16,12 +16,23 @@ mod routes_connected;
 mod routes_internal;
 
 pub use routes_internal::InternalApp;
+use simple_backend::web_socket::WebSocketManager;
 
-pub fn create_common_server_router(state: S) -> Router {
+pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Router {
     let public = Router::new()
         .route(
-            api::common::PATH_GET_VERSION,
+            api::common::PATH_GET_VERSION, // TODO(prod): Make private?
             get(server_api::common::get_version::<S>),
+        )
+        .route(
+            api::common::PATH_CONNECT, // This route checks the access token by itself.
+            get({
+                move |state, param1, param2, param3| {
+                    api::common::get_connect_websocket::<S>(
+                        state, param1, param2, param3, ws_manager,
+                    )
+                }
+            }),
         )
         .with_state(state.clone());
 

@@ -31,7 +31,6 @@ server_data_profile = { path = "../server_data_profile" }
 server_data_media = { path = "../server_data_media" }
 
 server_api = { path = "../server_api" }
-server_api_all = { path = "../server_api_all" }
 server_api_account = { path = "../server_api_account" }
 server_api_profile = { path = "../server_api_profile" }
 server_api_media = { path = "../server_api_media" }
@@ -39,7 +38,6 @@ server_api_chat = { path = "../server_api_chat" }
 
 server_state = { path = "../server_state" }
 
-server_router_all = { path = "../server_router_all" }
 server_router_account = { path = "../server_router_account" }
 server_router_profile = { path = "../server_router_profile" }
 server_router_media = { path = "../server_router_media" }
