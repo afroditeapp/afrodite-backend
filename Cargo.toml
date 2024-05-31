@@ -126,10 +126,6 @@ rev = "bbbd91c5e7724dbc0c326052241dcebbe1b23884"
 [profile.dev.package.image]
 opt-level = 3
 
-# TODO(prod): Remove this before production?
-[profile.release]
-debug = true
-
 # Improve build time
 [profile.dev]
 debug = 0
