@@ -99,19 +99,21 @@ impl From<PendingNotificationFlags> for PendingNotification {
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
-pub struct FcmDeviceToken(String);
+pub struct FcmDeviceToken {
+    token: String,
+}
 
 impl FcmDeviceToken {
     pub fn into_string(self) -> String {
-        self.0
+        self.token
     }
 
-    pub fn new(value: String) -> Self {
-        Self(value)
+    pub fn new(token: String) -> Self {
+        Self { token }
     }
 
     pub fn as_str(&self) -> &str {
-        &self.0
+        &self.token
     }
 }
 
@@ -135,7 +137,9 @@ pub struct PendingNotificationTokenRaw {
 /// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = Text)]
-pub struct PendingNotificationToken(String);
+pub struct PendingNotificationToken {
+    token: String,
+}
 
 impl PendingNotificationToken {
     pub fn generate_new() -> Self {
@@ -144,21 +148,23 @@ impl PendingNotificationToken {
         for _ in 1..=2 {
             token.extend(uuid::Uuid::new_v4().to_bytes_le())
         }
-        Self(
-            base64::engine::general_purpose::STANDARD.encode(token)
-        )
+        Self {
+            token: base64::engine::general_purpose::STANDARD.encode(token)
+        }
     }
 
-    pub fn new(pending_notification_token: String) -> Self {
-        Self(pending_notification_token)
+    pub fn new(token: String) -> Self {
+        Self {
+            token
+        }
     }
 
     pub fn into_string(self) -> String {
-        self.0
+        self.token
     }
 
     pub fn as_str(&self) -> &str {
-        &self.0
+        &self.token
     }
 }
 

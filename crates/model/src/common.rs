@@ -14,9 +14,6 @@ use crate::{
     ProfileVisibility,
 };
 
-// TODO(prod): Change one item structs to tuple structs to avoid unnecessary
-// JSON ojects.
-
 pub mod sync_version;
 pub mod version;
 
