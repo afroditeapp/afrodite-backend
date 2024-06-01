@@ -1,8 +1,7 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountState, AccountSyncVersion, Capabilities, ProfileVisibility,
-    SharedStateRaw, SyncVersionUtils,
+    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion, Capabilities, ProfileVisibility, SharedStateRaw, SyncVersionUtils
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -28,10 +27,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
-    fn shared_state(
+    fn update_account_related_shared_state(
         &mut self,
         id: AccountIdInternal,
-        data: SharedStateRaw,
+        data: AccountStateRelatedSharedState,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::shared_state::dsl::*;
 
@@ -97,7 +96,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         let new_account = Account::new_from(capabilities, state, profile_visibility, new_version);
 
         self.account_capabilities(id, new_account.capablities())?;
-        self.shared_state(id, new_account.clone().into())?;
+        self.update_account_related_shared_state(id, new_account.clone().into())?;
 
         Ok(new_account)
     }
@@ -109,9 +108,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        let mut shared_state: SharedStateRaw = self.read().common().account(id)?.into();
+        let mut shared_state: AccountStateRelatedSharedState = self.read().common().account(id)?.into();
         shared_state.sync_version = AccountSyncVersion::default();
-        self.shared_state(id, shared_state)?;
+        self.update_account_related_shared_state(id, shared_state)?;
         Ok(())
     }
 }

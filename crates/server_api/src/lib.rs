@@ -47,6 +47,7 @@ pub use server_common::{data::DataError, result};
         model::common::AccountId,
         model::common::AccessToken,
         model::common::RefreshToken,
+        model::common::PublicAccountId,
         model::common::LatestViewedMessageChanged,
         model::common::ContentProcessingStateChanged,
         model::common::sync_version::SyncVersion,

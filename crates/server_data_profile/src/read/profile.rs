@@ -29,7 +29,7 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
             cache
                 .profile
                 .as_ref()
-                .map(|data| Profile::new(data.data.clone(), data.attributes.attributes().clone()))
+                .map(|data| Profile::new(data.data.clone(), data.attributes.attributes().clone(), cache.public_id))
         })
         .await?
         .ok_or(DataError::NotFound.report())

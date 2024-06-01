@@ -1,10 +1,12 @@
+use base64::Engine;
+use diesel::{deserialize::Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
 use utoipa::ToSchema;
 
 use crate::{
     schema_sqlite_types::{Integer, Text},
-    NotificationEvent,
+    NotificationEvent, PublicAccountId,
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -29,17 +31,15 @@ use crate::{
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Integer)]
-pub struct PendingNotification {
-    pub value: i64,
-}
+pub struct PendingNotification(i64);
 
 impl PendingNotification {
     pub fn new(value: i64) -> Self {
-        Self { value }
+        Self(value)
     }
 
     pub fn as_i64(&self) -> &i64 {
-        &self.value
+        &self.0
     }
 }
 
@@ -55,7 +55,7 @@ bitflags::bitflags! {
 
 impl From<PendingNotification> for PendingNotificationFlags {
     fn from(value: PendingNotification) -> Self {
-        value.value.into()
+        value.0.into()
     }
 }
 
@@ -81,9 +81,9 @@ impl From<PendingNotificationFlags> for i64 {
 
 impl From<PendingNotificationFlags> for PendingNotification {
     fn from(value: PendingNotificationFlags) -> Self {
-        PendingNotification {
-            value: value.bits(),
-        }
+        PendingNotification(
+            value.bits()
+        )
     }
 }
 
@@ -99,22 +99,85 @@ impl From<PendingNotificationFlags> for PendingNotification {
     diesel::AsExpression,
 )]
 #[diesel(sql_type = Text)]
-pub struct FcmDeviceToken {
-    value: String,
-}
+pub struct FcmDeviceToken(String);
 
 impl FcmDeviceToken {
     pub fn into_string(self) -> String {
-        self.value
+        self.0
     }
 
     pub fn new(value: String) -> Self {
-        Self { value }
+        Self(value)
     }
 
     pub fn as_str(&self) -> &str {
-        &self.value
+        &self.0
     }
 }
 
 diesel_string_wrapper!(FcmDeviceToken);
+
+
+#[derive(Debug, Selectable, Queryable)]
+#[diesel(table_name = crate::schema::chat_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct PendingNotificationTokenRaw {
+    pub pending_notification_token: Option<PendingNotificationToken>,
+}
+
+/// PendingNotificationToken is used as a token for pending notification
+/// API access.
+///
+/// The token is 256 bit random value which is Base64 encoded.
+/// The token lenght in characters is 44.
+///
+/// OWASP recommends at least 128 bit session IDs.
+/// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Text)]
+pub struct PendingNotificationToken(String);
+
+impl PendingNotificationToken {
+    pub fn generate_new() -> Self {
+        // Generate 256 bit token
+        let mut token = Vec::new();
+        for _ in 1..=2 {
+            token.extend(uuid::Uuid::new_v4().to_bytes_le())
+        }
+        Self(
+            base64::engine::general_purpose::STANDARD.encode(token)
+        )
+    }
+
+    pub fn new(pending_notification_token: String) -> Self {
+        Self(pending_notification_token)
+    }
+
+    pub fn into_string(self) -> String {
+        self.0
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+diesel_string_wrapper!(PendingNotificationToken);
+
+/// Pending notification with notification data.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+)]
+pub struct PendingNotificationWithData {
+    pub value: PendingNotification,
+    /// Data for NEW_MESSAGE notification.
+    ///
+    /// List of public account IDs which have sent a new message.
+    pub new_message_received_from: Option<Vec<PublicAccountId>>,
+}

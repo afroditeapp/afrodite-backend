@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PushNotificationStateInfo};
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
 
 use crate::IntoDatabaseError;
 
@@ -11,11 +11,11 @@ define_current_write_commands!(
 );
 
 impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
-    pub fn update_fcm_device_token(
+    pub fn update_fcm_device_token_and_generate_new_notification_token(
         &mut self,
         id: AccountIdInternal,
         token: Option<FcmDeviceToken>,
-    ) -> Result<(), DieselDatabaseError> {
+    ) -> Result<PendingNotificationToken, DieselDatabaseError> {
         use model::schema::chat_state::dsl::*;
 
         // Remove the token from other accounts. It is possible that
@@ -25,12 +25,18 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
             .execute(self.conn())
             .into_db_error(())?;
 
+        let notification_token = PendingNotificationToken::generate_new();
+
         update(chat_state.find(id.as_db_id()))
-            .set((fcm_device_token.eq(token), fcm_notification_sent.eq(false)))
+            .set((
+                fcm_device_token.eq(token),
+                fcm_notification_sent.eq(false),
+                pending_notification_token.eq(notification_token.clone()),
+            ))
             .execute(self.conn())
             .into_db_error(id)?;
 
-        Ok(())
+        Ok(notification_token)
     }
 
     pub fn update_fcm_notification_sent_value(
@@ -62,25 +68,26 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
         Ok(())
     }
 
-    pub fn get_and_reset_pending_notification_with_device_token(
+    pub fn get_and_reset_pending_notification_with_notification_token(
         &mut self,
-        token: FcmDeviceToken,
-    ) -> Result<PendingNotification, DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        token: PendingNotificationToken,
+    ) -> Result<(AccountIdInternal, PendingNotification), DieselDatabaseError> {
+        use model::schema::{chat_state, account_id};
 
         let token_clone = token.clone();
-        let notification = chat_state
-            .filter(fcm_device_token.eq(token_clone))
-            .select(pending_notification)
+        let (id, notification) = chat_state::table
+            .inner_join(account_id::table)
+            .filter(chat_state::pending_notification_token.eq(token_clone))
+            .select((AccountIdInternal::as_select(), chat_state::pending_notification))
             .first(self.conn())
             .into_db_error(())?;
 
-        update(chat_state.filter(fcm_device_token.eq(token)))
-            .set((pending_notification.eq(0), fcm_notification_sent.eq(false)))
+        update(chat_state::table.filter(chat_state::pending_notification_token.eq(token)))
+            .set((chat_state::pending_notification.eq(0), chat_state::fcm_notification_sent.eq(false)))
             .execute(self.conn())
             .into_db_error(())?;
 
-        Ok(notification)
+        Ok((id, notification))
     }
 
     pub fn enable_push_notification_sent_flag(
@@ -110,7 +117,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
             .first(self.conn())
             .into_db_error(())?;
 
-        let new_notification_value = notification | notification_to_be_added.value;
+        let new_notification_value = notification | *notification_to_be_added.as_i64();
 
         let (token, notification_sent) = update(chat_state.find(id.as_db_id()))
             .set((pending_notification.eq(new_notification_value),))

@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PushNotificationStateInfo};
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
 use server_data::{
     define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError,
 };
@@ -11,7 +11,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
-                .update_fcm_device_token(id, None)
+                .update_fcm_device_token_and_generate_new_notification_token(id, None)
         })?;
 
         Ok(())
@@ -21,15 +21,15 @@ impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
         &mut self,
         id: AccountIdInternal,
         token: FcmDeviceToken,
-    ) -> Result<(), DataError> {
+    ) -> Result<PendingNotificationToken, DataError> {
         let token_clone = token.clone();
-        db_transaction!(self, move |mut cmds| {
+        let token = db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
-                .update_fcm_device_token(id, Some(token_clone))
+                .update_fcm_device_token_and_generate_new_notification_token(id, Some(token_clone))
         })?;
 
-        Ok(())
+        Ok(token)
     }
 
     pub async fn reset_pending_notification(
@@ -43,14 +43,14 @@ impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
         })
     }
 
-    pub async fn get_and_reset_pending_notification_with_device_token(
+    pub async fn get_and_reset_pending_notification_with_notification_token(
         &mut self,
-        token: FcmDeviceToken,
-    ) -> Result<PendingNotification, DataError> {
+        token: PendingNotificationToken,
+    ) -> Result<(AccountIdInternal, PendingNotification), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
-                .get_and_reset_pending_notification_with_device_token(token)
+                .get_and_reset_pending_notification_with_notification_token(token)
         })
     }
 

@@ -47,7 +47,7 @@ impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
             .read_cache(id, |cache| {
                 Account::new_from_internal_types(
                     cache.capabilities.clone(),
-                    cache.shared_state.clone(),
+                    cache.account_state_related_shared_state.clone(),
                 )
             })
             .await?;

@@ -55,8 +55,13 @@ impl DbDataToCacheLoader {
         index_iterator: LocationIndexIteratorHandle<'_>,
         index_writer: LocationIndexWriteHandle<'_>,
     ) -> Result<(), CacheError> {
+        let db = DbReaderAll::new(DbReaderRaw::new(current_db));
+        let public_id = db
+            .db_read_common(move |mut cmds| cmds.common().state().public_id(account_id))
+            .await?;
+
         cache
-            .insert_account_if_not_exists(account_id)
+            .insert_account_if_not_exists(account_id, public_id)
             .await
             .with_info(account_id)?;
 
@@ -65,11 +70,9 @@ impl DbDataToCacheLoader {
             .get(&account_id.as_id())
             .ok_or(CacheError::KeyNotExists.report())?;
 
-        let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let access_token = db
             .db_read_common(move |mut cmds| cmds.common().token().access_token(account_id))
             .await?;
-
         if let Some(key) = access_token {
             let mut access_tokens = cache.access_tokens().write().await;
             match access_tokens.entry(key) {
@@ -88,9 +91,9 @@ impl DbDataToCacheLoader {
             .await?;
         entry.capabilities = capabilities;
         let state = db
-            .db_read_common(move |mut cmds| cmds.common().state().shared_state(account_id))
+            .db_read_common(move |mut cmds| cmds.common().state().account_state_related_shared_state(account_id))
             .await?;
-        entry.shared_state = state;
+        entry.account_state_related_shared_state = state;
 
         if config.components().account {
             // empty

@@ -95,7 +95,7 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
         let new_account_clone = new_account.clone();
         self.write_cache(id, |cache| {
             cache.capabilities = new_account_clone.capablities();
-            cache.shared_state = new_account_clone.into();
+            cache.account_state_related_shared_state = new_account_clone.into();
             Ok(())
         })
         .await?;

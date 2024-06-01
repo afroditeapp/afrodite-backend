@@ -5,6 +5,10 @@
 -- UUID for account
 CREATE TABLE IF NOT EXISTS account_id(
     id    INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    -- Main UUID for account.
+    -- This is used internally in the server, client and API level.
+    -- Also this should be not used as somekind of secret as it
+    -- can be seen from filesystem.
     uuid  BLOB                              NOT NULL  UNIQUE
 );
 
@@ -70,6 +74,10 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- Used in receiving end to avoid saving old state in case of
     -- concurrent updates.
     sync_version              INTEGER              NOT NULL DEFAULT 0,
+    -- Public UUID for account which can be shown directly to the user or
+    -- another users if wanted.
+    -- Assume also that this can reset if needed.
+    public_uuid  BLOB                       NOT NULL  UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -425,8 +433,10 @@ CREATE TABLE IF NOT EXISTS chat_state(
     matches_sync_version         INTEGER        NOT NULL DEFAULT 0,
     -- Bitflag value for pending notification
     pending_notification         INTEGER        NOT NULL DEFAULT 0,
+    -- Access token for getting pending notifications from server.
+    pending_notification_token   TEXT           UNIQUE,
     fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
-    fcm_device_token             TEXT,
+    fcm_device_token             TEXT           UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

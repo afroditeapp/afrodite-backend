@@ -101,6 +101,7 @@ diesel::table! {
         sent_likes_sync_version -> Integer,
         matches_sync_version -> Integer,
         pending_notification -> Integer,
+        pending_notification_token -> Nullable<Text>,
         fcm_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
     }
@@ -349,6 +350,7 @@ diesel::table! {
         account_state_number -> Integer,
         profile_visibility_state_number -> Integer,
         sync_version -> Integer,
+        public_uuid -> Binary,
     }
 }
 

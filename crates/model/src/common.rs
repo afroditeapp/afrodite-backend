@@ -14,6 +14,9 @@ use crate::{
     ProfileVisibility,
 };
 
+// TODO(prod): Change one item structs to tuple structs to avoid unnecessary
+// JSON ojects.
+
 pub mod sync_version;
 pub mod version;
 
@@ -331,6 +334,40 @@ impl std::fmt::Display for AccountId {
     }
 }
 
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    Copy,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = Binary)]
+pub struct PublicAccountId(uuid::Uuid);
+
+impl PublicAccountId {
+    pub fn new(public_id: uuid::Uuid) -> Self {
+        Self(public_id)
+    }
+
+    pub fn as_uuid(&self) -> &uuid::Uuid {
+        &self.0
+    }
+}
+
+impl From<PublicAccountId> for uuid::Uuid {
+    fn from(value: PublicAccountId) -> Self {
+        value.0
+    }
+}
+
+diesel_uuid_wrapper!(PublicAccountId);
+
 #[derive(Debug, Selectable, Queryable)]
 #[diesel(table_name = crate::schema::access_token)]
 #[diesel(check_for_backend(crate::Db))]
@@ -455,22 +492,43 @@ impl AccountIdDb {
 
 diesel_i64_wrapper!(AccountIdDb);
 
-#[derive(Debug, Clone, Default, Queryable, Selectable, Insertable, AsChangeset)]
+#[derive(Debug, Clone, Queryable, Selectable, Insertable, AsChangeset)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct SharedStateRaw {
     pub profile_visibility_state_number: ProfileVisibility,
     pub account_state_number: AccountState,
     pub sync_version: AccountSyncVersion,
+    pub public_uuid: PublicAccountId,
 }
 
 impl SharedStateRaw {
+    pub fn default_and_specific_public_id(public_uuid: PublicAccountId) -> Self {
+        Self {
+            profile_visibility_state_number: ProfileVisibility::default(),
+            account_state_number: AccountState::default(),
+            sync_version: AccountSyncVersion::default(),
+            public_uuid,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[diesel(table_name = crate::schema::shared_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct AccountStateRelatedSharedState {
+    pub profile_visibility_state_number: ProfileVisibility,
+    pub account_state_number: AccountState,
+    pub sync_version: AccountSyncVersion,
+}
+
+impl AccountStateRelatedSharedState {
     pub fn profile_visibility(&self) -> ProfileVisibility {
         self.profile_visibility_state_number
     }
 }
 
-impl From<Account> for SharedStateRaw {
+impl From<Account> for AccountStateRelatedSharedState {
     fn from(account: Account) -> Self {
         Self {
             profile_visibility_state_number: account.profile_visibility(),

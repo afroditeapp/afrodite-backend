@@ -59,6 +59,8 @@ pub use server_common::{data::DataError, result};
         model::chat::MatchesSyncVersion,
         model::chat::FcmDeviceToken,
         model::chat::PendingNotification,
+        model::chat::PendingNotificationWithData,
+        model::chat::PendingNotificationToken,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

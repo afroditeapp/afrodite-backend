@@ -4,9 +4,7 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion,
-    Capabilities, EmailAddress, PendingNotificationFlags, PushNotificationStateInfo,
-    SignInWithInfo,
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, PendingNotificationFlags, PublicAccountId, PushNotificationStateInfo, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
@@ -274,10 +272,11 @@ impl RegisteringCmd for S {
         // New unique UUID is generated every time so no special handling needed
         // to avoid database collisions.
         let id = AccountId::new(uuid::Uuid::new_v4());
+        let public_id = PublicAccountId::new(uuid::Uuid::new_v4());
 
         let id = db_write_raw!(self, move |cmds| {
             RegisterAccount::new(cmds.write_cmds())
-                .register(id, sign_in_with, email)
+                .register(id, public_id, sign_in_with, email)
                 .await
         })
         .await?;

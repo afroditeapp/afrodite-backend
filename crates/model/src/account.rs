@@ -4,9 +4,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::{Integer, Text},
-    AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountSyncVersion, RefreshToken,
-    SharedStateRaw,
+    schema_sqlite_types::{Integer, Text}, AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountStateRelatedSharedState, AccountSyncVersion, RefreshToken
 };
 
 mod demo;
@@ -71,7 +69,7 @@ impl Account {
 
     pub fn new_from_internal_types(
         capabilities: Capabilities,
-        shared_state: SharedStateRaw,
+        shared_state: AccountStateRelatedSharedState,
     ) -> Self {
         Self {
             state: shared_state.account_state_number,

@@ -2,10 +2,7 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use error_stack::Result;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, Capabilities, LocationIndexKey,
-    LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal,
-    ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SharedStateRaw,
-    SortedProfileAttributes,
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, PublicAccountId, SortedProfileAttributes
 };
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -43,10 +40,11 @@ impl DatabaseCache {
     pub async fn insert_account_if_not_exists(
         &self,
         id: AccountIdInternal,
+        public_id: PublicAccountId,
     ) -> Result<(), CacheError> {
         let mut data = self.accounts.write().await;
         if data.get(&id.as_id()).is_none() {
-            let value = RwLock::new(CacheEntry::new());
+            let value = RwLock::new(CacheEntry::new(public_id));
             data.insert(
                 id.as_id(),
                 AccountEntry {
@@ -136,7 +134,7 @@ impl DatabaseCache {
                 Some((
                     entry.account_id_internal,
                     r.capabilities.clone(),
-                    r.shared_state.account_state_number,
+                    r.account_state_related_shared_state.account_state_number,
                 ))
             } else {
                 None
@@ -285,18 +283,20 @@ pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
     pub chat: Option<Box<CachedChatComponentData>>,
     pub capabilities: Capabilities,
-    pub shared_state: SharedStateRaw,
+    pub account_state_related_shared_state: AccountStateRelatedSharedState,
+    pub public_id: PublicAccountId,
     pub current_connection: Option<SocketAddr>,
     pub current_event_connection: EventMode,
 }
 
 impl CacheEntry {
-    pub fn new() -> Self {
+    pub fn new(public_id: PublicAccountId) -> Self {
         Self {
             profile: None,
             chat: None,
             capabilities: Capabilities::default(),
-            shared_state: SharedStateRaw::default(),
+            account_state_related_shared_state: AccountStateRelatedSharedState::default(),
+            public_id,
             current_connection: None,
             current_event_connection: EventMode::None,
         }
@@ -304,10 +304,4 @@ impl CacheEntry {
     // TODO(refactor): Add helper functions to get data related do features
     // that can be disabled. Those should return Result<Data, CacheError>.
     // Also read_cache action closure might need or should to return Result.
-}
-
-impl Default for CacheEntry {
-    fn default() -> Self {
-        Self::new()
-    }
 }
