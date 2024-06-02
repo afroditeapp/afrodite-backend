@@ -46,13 +46,18 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
     ) -> Result<Vec<AccountId>, DieselDatabaseError> {
         use crate::schema::{account_id, pending_messages::dsl::*};
 
-        pending_messages
+        let mut account_id_vec: Vec<AccountId> = pending_messages
             .inner_join(
                 account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
             )
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
             .select(account_id::uuid)
+            .order_by(account_id::id)
             .load(self.conn())
-            .into_db_error(())
+            .into_db_error(())?;
+
+        account_id_vec.dedup();
+
+        Ok(account_id_vec)
     }
 }
