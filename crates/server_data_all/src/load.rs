@@ -55,13 +55,8 @@ impl DbDataToCacheLoader {
         index_iterator: LocationIndexIteratorHandle<'_>,
         index_writer: LocationIndexWriteHandle<'_>,
     ) -> Result<(), CacheError> {
-        let db = DbReaderAll::new(DbReaderRaw::new(current_db));
-        let public_id = db
-            .db_read_common(move |mut cmds| cmds.common().state().public_id(account_id))
-            .await?;
-
         cache
-            .insert_account_if_not_exists(account_id, public_id)
+            .insert_account_if_not_exists(account_id)
             .await
             .with_info(account_id)?;
 
@@ -70,6 +65,7 @@ impl DbDataToCacheLoader {
             .get(&account_id.as_id())
             .ok_or(CacheError::KeyNotExists.report())?;
 
+        let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let access_token = db
             .db_read_common(move |mut cmds| cmds.common().token().access_token(account_id))
             .await?;

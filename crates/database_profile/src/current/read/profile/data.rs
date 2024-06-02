@@ -24,9 +24,8 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
 
     pub fn profile(&mut self, id: AccountIdInternal) -> Result<Profile, DieselDatabaseError> {
         let profile = self.profile_internal(id)?;
-        let public_id = self.read().common().state().public_id(id)?;
         let attributes = self.profile_attribute_values(id)?;
-        Ok(Profile::new(profile, attributes, public_id))
+        Ok(Profile::new(profile, attributes))
     }
 
     pub fn profile_location(

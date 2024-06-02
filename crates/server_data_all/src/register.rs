@@ -5,7 +5,7 @@ use database::{
     current::write::TransactionConnection, ConnectionProvider, PoolObject, TransactionError,
 };
 use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile, PublicAccountId, SharedStateRaw, SignInWithInfo
+    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile, SharedStateRaw, SignInWithInfo
 };
 use server_data::{
     index::{LocationIndexIteratorHandle, LocationIndexWriteHandle},
@@ -28,7 +28,6 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
     pub async fn register(
         &self,
         account_id: AccountId,
-        public_id: PublicAccountId,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> Result<AccountIdInternal, DataError> {
@@ -40,7 +39,6 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
                 Self::register_db_action(
                     config,
                     account_id,
-                    public_id,
                     sign_in_with_info,
                     email,
                     transaction,
@@ -66,7 +64,6 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
     pub fn register_db_action(
         config: Arc<Config>,
         account_id: AccountId,
-        public_id: PublicAccountId,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
         mut transaction: TransactionConnection<'_>,
@@ -94,7 +91,7 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
         current
             .common()
             .state()
-            .insert_shared_state(id, SharedStateRaw::default_and_specific_public_id(public_id))?;
+            .insert_shared_state(id, SharedStateRaw::default())?;
 
         // Common history
         history.account().insert_account_id(id)?;
@@ -138,7 +135,7 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
                 .profile()
                 .data()
                 .profile_attribute_values(id)?;
-            let profile = Profile::new(profile, attributes, public_id);
+            let profile = Profile::new(profile, attributes);
             history.profile().insert_profile(id, &profile)?;
         }
 

@@ -78,7 +78,7 @@ pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData
 
     let flags = PendingNotificationFlags::from(notification_value);
     let sender_info = if flags == PendingNotificationFlags::NEW_MESSAGE {
-        state.read().chat().all_pending_message_sender_public_ids(id).await.ok()
+        state.read().chat().all_pending_message_sender_account_ids(id).await.ok()
     }   else {
         None
     };

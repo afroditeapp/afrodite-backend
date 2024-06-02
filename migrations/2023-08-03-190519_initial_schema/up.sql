@@ -74,10 +74,6 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- Used in receiving end to avoid saving old state in case of
     -- concurrent updates.
     sync_version              INTEGER              NOT NULL DEFAULT 0,
-    -- Public UUID for account which can be shown directly to the user or
-    -- another users if wanted.
-    -- Assume also that this can reset if needed.
-    public_uuid  BLOB                       NOT NULL  UNIQUE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

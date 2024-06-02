@@ -5,8 +5,7 @@ use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text},
-    NotificationEvent, PublicAccountId,
+    schema_sqlite_types::{Integer, Text}, AccountId, NotificationEvent
 };
 
 /// Pending notification (or multiple notifications which each have
@@ -184,6 +183,6 @@ pub struct PendingNotificationWithData {
     pub value: PendingNotification,
     /// Data for NEW_MESSAGE notification.
     ///
-    /// List of public account IDs which have sent a new message.
-    pub new_message_received_from: Option<Vec<PublicAccountId>>,
+    /// List of account IDs which have sent a new message.
+    pub new_message_received_from: Option<Vec<AccountId>>,
 }

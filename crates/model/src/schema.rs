@@ -320,6 +320,7 @@ diesel::table! {
         latitude -> Double,
         longitude -> Double,
         profile_attributes_sync_version -> Integer,
+        public_uuid -> Binary,
     }
 }
 
@@ -350,7 +351,6 @@ diesel::table! {
         account_state_number -> Integer,
         profile_visibility_state_number -> Integer,
         sync_version -> Integer,
-        public_uuid -> Binary,
     }
 }
 

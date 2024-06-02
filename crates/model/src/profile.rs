@@ -14,7 +14,7 @@ use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diese
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, PublicAccountId, SyncVersion, SyncVersionUtils
+    schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils
 };
 
 mod attribute;
@@ -289,14 +289,12 @@ pub struct Profile {
     /// Version used for caching profile in client side.
     #[serde(flatten)]
     pub version: ProfileVersion,
-    pub public_id: PublicAccountId,
 }
 
 impl Profile {
     pub fn new(
         value: ProfileInternal,
         attributes: Vec<ProfileAttributeValue>,
-        public_id: PublicAccountId,
     ) -> Self {
         Self {
             name: value.name,
@@ -304,7 +302,6 @@ impl Profile {
             age: value.age,
             attributes,
             version: value.version_uuid,
-            public_id,
         }
     }
 }
