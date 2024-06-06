@@ -136,12 +136,24 @@ impl PushNotificationStateProvider for S {
         db_write_raw!(self, move |cmds| {
             cmds.chat()
                 .push_notifications()
-                .remove_device_token(account_id)
+                .remove_fcm_device_token(account_id)
                 .await
         })
         .await
         .map_err(|e| e.into_report())
         .change_context(PushNotificationError::RemoveDeviceTokenFailed)
+    }
+}
+
+impl ResetPushNotificationTokens for S {
+    async fn reset_push_notification_tokens(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> server_common::result::Result<(), DataError> {
+        db_write_raw!(self, move |cmds| {
+            cmds.chat().push_notifications().remove_fcm_device_token_and_pending_notification_token(account_id).await
+        })
+        .await
     }
 }
 

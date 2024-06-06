@@ -3,7 +3,7 @@ use model::{
     AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
     SignInWithInfo, SignInWithLoginInfo,
 };
-use server_api::{app::RegisteringCmd, db_write};
+use server_api::{app::{RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
@@ -13,7 +13,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub async fn login_impl<S: ReadData + WriteData + GetAccounts>(
+pub async fn login_impl<S: ReadData + WriteData + GetAccounts + ResetPushNotificationTokens>(
     id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
@@ -24,6 +24,8 @@ pub async fn login_impl<S: ReadData + WriteData + GetAccounts>(
     let refresh = RefreshToken::generate_new();
     let account = AuthPair { access, refresh };
     let account_clone = account.clone();
+
+    state.reset_push_notification_tokens(id).await?;
 
     db_write!(state, move |cmds| cmds.common().set_new_auth_pair(
         id,
@@ -58,7 +60,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
     ),
 )]
 pub async fn post_sign_in_with_login<
-    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig + RegisteringCmd,
+    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig + RegisteringCmd + ResetPushNotificationTokens,
 >(
     State(state): State<S>,
     Json(tokens): Json<SignInWithLoginInfo>,

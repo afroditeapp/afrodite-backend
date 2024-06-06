@@ -7,11 +7,21 @@ define_server_data_write_commands!(WriteCommandsChatPushNotifications);
 define_db_transaction_command!(WriteCommandsChatPushNotifications);
 
 impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
-    pub async fn remove_device_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub async fn remove_fcm_device_token_and_pending_notification_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
-                .update_fcm_device_token_and_generate_new_notification_token(id, None)
+                .remove_fcm_device_token_and_pending_notification_token(id)
+        })?;
+
+        Ok(())
+    }
+
+    pub async fn remove_fcm_device_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .push_notifications()
+                .remove_fcm_device_token(id)
         })?;
 
         Ok(())
@@ -26,7 +36,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
         let token = db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
-                .update_fcm_device_token_and_generate_new_notification_token(id, Some(token_clone))
+                .update_fcm_device_token_and_generate_new_notification_token(id, token_clone)
         })?;
 
         Ok(token)

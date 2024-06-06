@@ -98,3 +98,10 @@ pub trait ConnectionTools: StateBase + WriteData + ReadData + GetConfig {
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> impl std::future::Future<Output = server_common::result::Result<(), WebSocketError>> + Send;
 }
+
+pub trait ResetPushNotificationTokens: StateBase + WriteData {
+    fn reset_push_notification_tokens(
+        &self,
+        id: AccountIdInternal,
+    ) -> impl std::future::Future<Output = server_common::result::Result<(), DataError>> + Send;
+}
