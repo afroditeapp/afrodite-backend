@@ -126,7 +126,11 @@ pub use utils::api::PATH_CONNECT;
 ///
 ///    Available data types:
 ///    - 0: Account
-/// 6. Server starts to send JSON events as Text messages.
+/// 6. Server starts to send JSON events as Text messages and empty binary
+///    messages to test connection to the client. Client can ignore the empty
+///    binary messages.
+/// 7. If needed, the client sends empty binary messages to test connection to
+///    the server.
 ///
 /// The new access token is valid until this WebSocket is closed.
 ///
@@ -357,17 +361,31 @@ async fn handle_socket_result<S: ConnectionTools>(
 
     // TODO(prod): Remove extra logging from this file.
 
+    const HOUR_IN_SECONDS: u64 = 60 * 60;
+    let mut connection_check_timer = tokio::time::interval(std::time::Duration::from_secs(HOUR_IN_SECONDS));
+    connection_check_timer.tick().await; // skip the first tick
+
     loop {
         tokio::select! {
             result = socket.recv() => {
                 match result {
                     Some(Err(_)) | None => break,
-                    Some(Ok(value)) => {
-                        // TODO: Fix possible CPU usage bug here.
-                        // Replace continue with break?
-                        error!("Unexpected value: {:?}, from: {}", value, address);
-                        continue;
-                    },
+                    Some(Ok(value)) =>
+                        match value {
+                            Message::Binary(data) if data.is_empty() => continue,
+                            Message::Ping(_) | Message::Pong(_) => continue,
+                            // TODO(prod): Consider flagging the account for
+                            // suspicious activity.
+                            Message::Binary(data) => {
+                                error!("Client sent unexpected binary message: {:?}, from: {}", data, address);
+                                continue;
+                            }
+                            Message::Text(text) => {
+                                error!("Client sent unexpected text message: {:?}, from: {}", text, address);
+                                continue;
+                            }
+                            Message::Close(_) => break,
+                        }
                 }
             }
             event = event_receiver.recv() => {
@@ -385,6 +403,11 @@ async fn handle_socket_result<S: ConnectionTools>(
                         break;
                     },
                 }
+            }
+            _ = connection_check_timer.tick() => {
+                socket.send(Message::Binary(Vec::new()))
+                    .await
+                    .change_context(WebSocketError::Send)?;
             }
         }
     }
