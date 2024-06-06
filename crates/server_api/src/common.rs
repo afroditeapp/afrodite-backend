@@ -190,7 +190,7 @@ async fn handle_socket<S: ConnectionTools>(
             //       Test does this code path work with client.
             let result = state.write(move |cmds| async move {
                 cmds.common()
-                    .end_connection_session(id)
+                    .end_connection_session(id, address)
                     .await
             }).await;
 
@@ -204,7 +204,7 @@ async fn handle_socket<S: ConnectionTools>(
                     info!("handle_socket_result returned Ok for '{}'", id.id.as_i64());
                     let result = state.write(move |cmds| async move {
                         cmds.common()
-                            .end_connection_session(id)
+                            .end_connection_session(id, address)
                             .await
                     }).await;
 

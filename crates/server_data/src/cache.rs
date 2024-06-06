@@ -89,10 +89,12 @@ impl DatabaseCache {
         }
     }
 
-    /// Delete connection. Also delete access token if it is Some.
+    /// Delete current connection or specific connection.
+    /// Also delete access token if it is Some.
     pub async fn delete_connection_and_specific_access_token(
         &self,
         id: AccountId,
+        connection: Option<SocketAddr>,
         token: Option<AccessToken>,
     ) -> Result<(), CacheError> {
         let cache_entry = self
@@ -103,8 +105,14 @@ impl DatabaseCache {
             .ok_or(CacheError::KeyNotExists)?
             .clone();
 
-        cache_entry.cache.write().await.current_connection = None;
-        cache_entry.cache.write().await.current_event_connection = EventMode::None;
+        {
+            let mut cache_entry_write = cache_entry.cache.write().await;
+            if connection.is_none() ||
+                (connection.is_some() && cache_entry_write.current_connection == connection) {
+                cache_entry_write.current_connection = None;
+                cache_entry_write.current_event_connection = EventMode::None;
+            }
+        }
 
         if let Some(token) = token {
             let mut tokens = self.access_tokens.write().await;

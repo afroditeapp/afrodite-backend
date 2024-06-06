@@ -51,7 +51,7 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
         })?;
 
         self.cache()
-            .delete_connection_and_specific_access_token(id.as_id(), current_access_token)
+            .delete_connection_and_specific_access_token(id.as_id(), None, current_access_token)
             .await
             .into_data_error(id)?;
 
@@ -76,10 +76,14 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
     // TODO(prod): Logout route which removes current
     //             tokens and connection address.
 
-    /// Remove current connection address and access token.
-    pub async fn end_connection_session(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    /// Remove specific connection session.
+    pub async fn end_connection_session(
+        &self,
+        id: AccountIdInternal,
+        session_address: SocketAddr,
+    ) -> Result<(), DataError> {
         self.cache()
-            .delete_connection_and_specific_access_token(id.as_id(), None)
+            .delete_connection_and_specific_access_token(id.as_id(), Some(session_address), None)
             .await
             .into_data_error(id)?;
 
