@@ -22,7 +22,7 @@ use syn::parse_macro_input;
 /// pub struct TestFunction {
 ///     pub name: &'static str,
 ///     pub module_path: &'static str,
-///     pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult>>,
+///     pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult> + Send>,
 /// }
 ///
 /// inventory::collect!(TestFunction);
