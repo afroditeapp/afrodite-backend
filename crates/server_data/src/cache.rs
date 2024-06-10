@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use error_stack::Result;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, ProfileContentVersion, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -286,8 +286,27 @@ pub struct CachedChatComponentData {
 }
 
 #[derive(Debug)]
+pub struct CachedMedia {
+    pub account_id: AccountId,
+    pub profile_content_version: ProfileContentVersion,
+}
+
+impl CachedMedia {
+    pub fn new(
+        account_id: AccountId,
+        profile_content_version: ProfileContentVersion
+    ) -> Self {
+        Self {
+            account_id,
+            profile_content_version,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
+    pub media: Option<Box<CachedMedia>>,
     pub chat: Option<Box<CachedChatComponentData>>,
     pub capabilities: Capabilities,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
@@ -300,6 +319,7 @@ impl CacheEntry {
     pub fn new() -> Self {
         Self {
             profile: None,
+            media: None,
             chat: None,
             capabilities: Capabilities::default(),
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),

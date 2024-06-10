@@ -2,8 +2,7 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType,
-    SetProfileContent, SetProfileContentInternal,
+    AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType, ProfileContentVersion, SetProfileContent, SetProfileContentInternal
 };
 use simple_backend_utils::ContextExt;
 
@@ -19,8 +18,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
 
+        let version = ProfileContentVersion::new_random();
+
         insert_into(current_account_media)
-            .values(account_id.eq(id.as_db_id()))
+            .values(
+                (
+                    account_id.eq(id.as_db_id()),
+                    profile_content_version_uuid.eq(version),
+                ))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -66,6 +71,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         &mut self,
         id: AccountIdInternal,
         new: SetProfileContent,
+        new_version: ProfileContentVersion,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
 
@@ -82,6 +88,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
 
         update(current_account_media.find(id.as_db_id()))
             .set((
+                profile_content_version_uuid.eq(new_version),
                 profile_content_id_0.eq(convert(Some(new.content_id_0))?),
                 profile_content_id_1.eq(convert(new.content_id_1)?),
                 profile_content_id_2.eq(convert(new.content_id_2)?),
@@ -265,6 +272,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     pub fn move_pending_content_to_current_content(
         &mut self,
         content_owner: AccountIdInternal,
+        new_version: ProfileContentVersion,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
         let c = self
@@ -288,6 +296,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         update(current_account_media.find(content_owner.as_db_id()))
             .set((
                 security_content_id.eq(c.pending_security_content_id),
+                profile_content_version_uuid.eq(new_version),
                 profile_content_id_0.eq(c.pending_profile_content_id_0),
                 profile_content_id_1.eq(c.pending_profile_content_id_1),
                 profile_content_id_2.eq(c.pending_profile_content_id_2),

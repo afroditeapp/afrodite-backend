@@ -1,12 +1,9 @@
+use error_stack::ResultExt;
 use model::{
-    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState,
-    NewContentParams, NextQueueNumberType, ProfileVisibility, SetProfileContent,
+    AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileContentVersion, ProfileVisibility, SetProfileContent
 };
 use server_data::{
-    define_server_data_write_commands,
-    result::{Result, WrappedContextExt, WrappedResultExt},
-    write::WriteCommandsProvider,
-    DataError, DieselDatabaseError,
+    cache::CacheError, define_server_data_write_commands, result::{Result, WrappedContextExt}, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
 
 define_server_data_write_commands!(WriteCommandsMedia);
@@ -133,9 +130,19 @@ impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
         id: AccountIdInternal,
         new: SetProfileContent,
     ) -> Result<(), DataError> {
+        let new_profile_content_version = ProfileContentVersion::new_random();
         db_transaction!(self, move |mut cmds| {
-            cmds.media().media_content().update_profile_content(id, new)
-        })
+            cmds.media().media_content().update_profile_content(id, new, new_profile_content_version)
+        })?;
+
+        self.cache()
+            .write_cache(id.as_id(), |e| {
+                let p = e.media.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+                p.profile_content_version = new_profile_content_version;
+                Ok(())
+            })
+            .await?;
+        Ok(())
     }
 
     pub async fn update_or_delete_pending_profile_content(

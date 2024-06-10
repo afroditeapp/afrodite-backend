@@ -262,14 +262,15 @@ CREATE TABLE IF NOT EXISTS media_state(
 -- Currently selected images for account.
 -- Contains profile editing related pending profile image info.
 CREATE TABLE IF NOT EXISTS current_account_media(
-    account_id           INTEGER PRIMARY KEY NOT NULL,
-    security_content_id  INTEGER,
-    profile_content_id_0 INTEGER,
-    profile_content_id_1 INTEGER,
-    profile_content_id_2 INTEGER,
-    profile_content_id_3 INTEGER,
-    profile_content_id_4 INTEGER,
-    profile_content_id_5 INTEGER,
+    account_id                   INTEGER PRIMARY KEY NOT NULL,
+    security_content_id          INTEGER,
+    profile_content_version_uuid BLOB                NOT NULL,
+    profile_content_id_0         INTEGER,
+    profile_content_id_1         INTEGER,
+    profile_content_id_2         INTEGER,
+    profile_content_id_3         INTEGER,
+    profile_content_id_4         INTEGER,
+    profile_content_id_5         INTEGER,
     -- Image's max square size multipler.
     -- Value 1.0 is the max size and the size of the original image.
     grid_crop_size       DOUBLE,

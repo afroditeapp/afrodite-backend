@@ -113,6 +113,7 @@ diesel::table! {
     current_account_media (account_id) {
         account_id -> Integer,
         security_content_id -> Nullable<Integer>,
+        profile_content_version_uuid -> Binary,
         profile_content_id_0 -> Nullable<Integer>,
         profile_content_id_1 -> Nullable<Integer>,
         profile_content_id_2 -> Nullable<Integer>,
@@ -320,7 +321,6 @@ diesel::table! {
         latitude -> Double,
         longitude -> Double,
         profile_attributes_sync_version -> Integer,
-        public_uuid -> Binary,
     }
 }
 

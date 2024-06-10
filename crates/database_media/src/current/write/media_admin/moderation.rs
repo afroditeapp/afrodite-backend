@@ -3,7 +3,7 @@ use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{
     AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId,
-    ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType,
+    ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType, ProfileContentVersion,
 };
 
 use super::{ConnectionProvider, InitialModerationRequestIsNowAccepted};
@@ -213,13 +213,17 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                     .media()
                     .update_media_state(moderation_request_owner, media_state)?;
 
+                let new_profile_content_version = ProfileContentVersion::new_random();
+
                 // Move pending content to current content.
                 self.cmds()
                     .media()
                     .media_content()
-                    .move_pending_content_to_current_content(moderation_request_owner)?;
+                    .move_pending_content_to_current_content(moderation_request_owner, new_profile_content_version)?;
 
-                return Ok(Some(InitialModerationRequestIsNowAccepted));
+                return Ok(Some(InitialModerationRequestIsNowAccepted {
+                    new_profile_content_version,
+                }));
             }
         }
 

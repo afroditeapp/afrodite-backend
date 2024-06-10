@@ -812,9 +812,7 @@ impl ProfileUpdateInternal {
     pub fn new(new_data: ProfileUpdateValidated) -> Self {
         Self {
             new_data,
-            version: ProfileVersion {
-                version: uuid::Uuid::new_v4(),
-            },
+            version: ProfileVersion::new_random(),
         }
     }
 }
@@ -1060,7 +1058,7 @@ pub struct ProfileVersion {
 }
 
 impl ProfileVersion {
-    pub fn new(version: uuid::Uuid) -> Self {
+    pub(crate) fn new(version: uuid::Uuid) -> Self {
         Self { version }
     }
 
@@ -1075,31 +1073,6 @@ impl ProfileVersion {
 }
 
 diesel_uuid_wrapper!(ProfileVersion);
-
-// impl<DB: Backend> FromSql<Binary, DB> for ProfileVersion
-// where
-//     Vec<u8>: FromSql<Binary, DB>,
-// {
-//     fn from_sql(
-//         bytes: <DB as diesel::backend::Backend>::RawValue<'_>,
-//     ) -> diesel::deserialize::Result<Self> {
-//         let bytes = Vec::<u8>::from_sql(bytes)?;
-//         let uuid = uuid::Uuid::from_slice(&bytes)?;
-//         Ok(ProfileVersion::new(uuid))
-//     }
-// }
-
-// impl<DB: Backend> ToSql<Binary, DB> for ProfileVersion
-// where
-//     [u8]: ToSql<Binary, DB>,
-// {
-//     fn to_sql<'b>(
-//         &'b self,
-//         out: &mut diesel::serialize::Output<'b, '_, DB>,
-//     ) -> diesel::serialize::Result {
-//         self.as_uuid().as_bytes().to_sql(out)
-//     }
-// }
 
 #[derive(Debug, Hash, PartialEq, Clone, Copy, Default, Eq)]
 pub struct LocationIndexKey {

@@ -566,6 +566,7 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
 pub struct CurrentAccountMediaRaw {
     pub account_id: AccountIdDb,
     pub security_content_id: Option<ContentIdDb>,
+    pub profile_content_version_uuid: ProfileContentVersion,
     pub profile_content_id_0: Option<ContentIdDb>,
     pub profile_content_id_1: Option<ContentIdDb>,
     pub profile_content_id_2: Option<ContentIdDb>,
@@ -902,3 +903,39 @@ impl MediaStateRaw {
         !self.initial_moderation_request_accepted
     }
 }
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Eq,
+    Hash,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = Binary)]
+pub struct ProfileContentVersion {
+    version: uuid::Uuid,
+}
+
+impl ProfileContentVersion {
+    pub(crate) fn new(version: uuid::Uuid) -> Self {
+        Self { version }
+    }
+
+    pub fn new_random() -> Self {
+        let version = uuid::Uuid::new_v4();
+        Self { version }
+    }
+
+    pub fn as_uuid(&self) -> &uuid::Uuid {
+        &self.version
+    }
+}
+
+diesel_uuid_wrapper!(ProfileContentVersion);

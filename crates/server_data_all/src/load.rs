@@ -7,7 +7,7 @@ use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
 use server_data::{
-    cache::{CachedProfile, DatabaseCache},
+    cache::{CachedMedia, CachedProfile, DatabaseCache},
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
 use tracing::info;
@@ -141,6 +141,14 @@ impl DbDataToCacheLoader {
             entry.profile = Some(Box::new(profile_data));
         }
 
+        if config.components().media {
+            let media_content = db
+                .db_read_media(move |mut cmds| cmds.media().media_content().current_account_media_raw(account_id))
+                .await?;
+            let media_data = CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid);
+            entry.media = Some(Box::new(media_data));
+        }
+
         if config.components().chat {
             // empty
         }
@@ -195,6 +203,26 @@ impl<'a> DbReaderAll<'a> {
             .await
             .change_context(CacheError::Init)
     }
+
+    pub async fn db_read_media<
+        T: FnOnce(
+                database_media::current::read::CurrentSyncReadCommands<&mut DieselConnection>,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, CacheError> {
+        self.db_reader
+            .db_read(|conn| {
+                cmd(database_media::current::read::CurrentSyncReadCommands::new(conn))
+            })
+            .await
+            .change_context(CacheError::Init)
+    }
+
 
     pub async fn db_read_common<
         T: FnOnce(

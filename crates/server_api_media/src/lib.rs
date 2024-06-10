@@ -63,6 +63,7 @@ pub use server_common::{data::DataError, result};
         model::media::ContentProcessingStateType,
         model::media::NewContentParams,
         model::media::ProfileContent,
+        model::media::ProfileContentVersion,
         model::media::SetProfileContent,
         model::media::PendingProfileContent,
         model::media::SecurityContent,
