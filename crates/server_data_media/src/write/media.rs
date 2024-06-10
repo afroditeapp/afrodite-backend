@@ -131,17 +131,29 @@ impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
         new: SetProfileContent,
     ) -> Result<(), DataError> {
         let new_profile_content_version = ProfileContentVersion::new_random();
-        db_transaction!(self, move |mut cmds| {
-            cmds.media().media_content().update_profile_content(id, new, new_profile_content_version)
+
+        let account = db_transaction!(self, move |mut cmds| {
+            cmds.media().media_content().update_profile_content(id, new, new_profile_content_version)?;
+            cmds.read().common().account(id)
         })?;
 
-        self.cache()
+        let (location, profile_data) = self.cache()
             .write_cache(id.as_id(), |e| {
-                let p = e.media.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
-                p.profile_content_version = new_profile_content_version;
-                Ok(())
+                let m = e.media.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+                m.profile_content_version = new_profile_content_version;
+                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+
+
+                Ok((p.location.current_position, e.location_index_profile_data()?))
             })
             .await?;
+
+        if account.profile_visibility().is_currently_public() {
+            self.location()
+                .update_profile_data(id.as_id(), profile_data, location)
+                .await?;
+        }
+
         Ok(())
     }
 

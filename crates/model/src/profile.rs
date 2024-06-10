@@ -14,7 +14,7 @@ use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diese
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils
+    schema_sqlite_types::Integer, sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils, ProfileContentVersion,
 };
 
 mod attribute;
@@ -918,13 +918,20 @@ pub struct ProfilePage {
 pub struct ProfileLink {
     id: AccountId,
     version: ProfileVersion,
+    /// This is optional because media component owns it.
+    content_version: Option<ProfileContentVersion>,
 }
 
 impl ProfileLink {
-    pub fn new(id: AccountId, profile: &ProfileInternal) -> Self {
+    pub(crate) fn new(
+        id: AccountId,
+        profile: &ProfileInternal,
+        content_version: Option<ProfileContentVersion>,
+    ) -> Self {
         Self {
             id,
             version: profile.version_uuid,
+            content_version,
         }
     }
 }
@@ -973,9 +980,10 @@ impl LocationIndexProfileData {
         profile: &ProfileInternal,
         state: &ProfileStateCached,
         attributes: SortedProfileAttributes,
+        profile_content_version: Option<ProfileContentVersion>,
     ) -> Self {
         Self {
-            profile_link: ProfileLink::new(id, profile),
+            profile_link: ProfileLink::new(id, profile, profile_content_version),
             age: profile.age,
             search_age_range: ProfileSearchAgeRangeValidated::new(
                 state.search_age_range_min,

@@ -81,7 +81,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
                 p.attributes.update_from(&data.new_data);
                 p.data.version_uuid = data.version;
 
-                Ok((p.location.current_position, p.location_index_profile_data()))
+                Ok((p.location.current_position, e.location_index_profile_data()?))
             })
             .await
             .into_data_error(id)?;
@@ -117,7 +117,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
 
                 p.state = s.into();
 
-                Ok((p.location.current_position, p.location_index_profile_data()))
+                Ok((p.location.current_position, e.location_index_profile_data()?))
             })
             .await
             .into_data_error(id)?;

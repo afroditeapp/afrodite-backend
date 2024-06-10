@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use error_stack::Result;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, ProfileContentVersion, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -256,15 +256,6 @@ impl CachedProfile {
         }
     }
 
-    pub fn location_index_profile_data(&self) -> LocationIndexProfileData {
-        LocationIndexProfileData::new(
-            self.account_id,
-            &self.data,
-            &self.state,
-            self.attributes.clone(),
-        )
-    }
-
     pub fn filters(&self) -> ProfileQueryMakerDetails {
         ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone())
     }
@@ -331,6 +322,18 @@ impl CacheEntry {
     // TODO(refactor): Add helper functions to get data related do features
     // that can be disabled. Those should return Result<Data, CacheError>.
     // Also read_cache action closure might need or should to return Result.
+
+    pub fn location_index_profile_data(&self) -> Result<LocationIndexProfileData, CacheError> {
+        let profile = self.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
+
+        Ok(LocationIndexProfileData::new(
+            profile.account_id,
+            &profile.data,
+            &profile.state,
+            profile.attributes.clone(),
+            self.media.as_ref().map(|m| m.profile_content_version),
+        ))
+    }
 }
 
 impl Default for CacheEntry {

@@ -127,13 +127,14 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
     ) -> Result<(), DataError> {
         let (location, profile_data) = self
             .cache()
-            .write_cache(id.as_id(), |e| {
-                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+            .read_cache(id.as_id(), |e| {
+                let index_data = e.location_index_profile_data()?;
+                let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled.report())?;
 
-                Ok((p.location.current_position, p.location_index_profile_data()))
+                Ok::<(model::LocationIndexKey, model::LocationIndexProfileData), error_stack::Report<CacheError>>((p.location.current_position, index_data))
             })
             .await
-            .into_data_error(id)?;
+            .into_data_error(id)??;
 
         if visibility {
             self.location()

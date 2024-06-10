@@ -95,6 +95,14 @@ impl DbDataToCacheLoader {
             // empty
         }
 
+        if config.components().media {
+            let media_content = db
+                .db_read_media(move |mut cmds| cmds.media().media_content().current_account_media_raw(account_id))
+                .await?;
+            let media_data = CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid);
+            entry.media = Some(Box::new(media_data));
+        }
+
         if config.components().profile {
             let profile = db
                 .db_read_profile(move |mut cmds| cmds.profile().data().profile_internal(account_id))
@@ -131,7 +139,7 @@ impl DbDataToCacheLoader {
                 index_writer
                     .update_profile_data(
                         account_id.uuid,
-                        profile_data.location_index_profile_data(),
+                        entry.location_index_profile_data()?,
                         location_key,
                     )
                     .await
@@ -139,14 +147,6 @@ impl DbDataToCacheLoader {
             }
 
             entry.profile = Some(Box::new(profile_data));
-        }
-
-        if config.components().media {
-            let media_content = db
-                .db_read_media(move |mut cmds| cmds.media().media_content().current_account_media_raw(account_id))
-                .await?;
-            let media_data = CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid);
-            entry.media = Some(Box::new(media_data));
         }
 
         if config.components().chat {
