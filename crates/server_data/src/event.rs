@@ -2,10 +2,11 @@
 
 use database_chat::current::write::chat::ChatStateChanges;
 use model::{
-    AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent,
+    AccountId, AccountIdInternal, EventToClient, EventToClientInternal, NotificationEvent, PendingNotificationFlags
 };
 use server_common::{data::IntoDataError, push_notifications::PushNotificationSender};
-use tokio::sync::mpsc;
+use tokio::sync::mpsc::{self, error::TrySendError};
+use tracing::error;
 
 use crate::{
     cache::DatabaseCache,
@@ -26,25 +27,36 @@ pub fn event_channel() -> (EventSender, EventReceiver) {
     (sender, receiver)
 }
 
-#[derive(Debug)]
-pub struct EventSender {
-    sender: mpsc::Sender<EventToClient>,
+#[derive(Debug, Clone)]
+pub enum InternalEventType {
+    NormalEvent(EventToClientInternal),
+    Notification(NotificationEvent),
 }
 
-impl EventSender {
-    /// Skips the event if the receiver is full.
-    pub fn send(&self, event: EventToClient) {
-        let _ = self.sender.try_send(event);
+impl InternalEventType {
+    pub fn to_client_event(&self) -> EventToClient {
+        match self.clone() {
+            InternalEventType::NormalEvent(event) => event.into(),
+            InternalEventType::Notification(event) => {
+                let event: EventToClientInternal = event.into();
+                event.into()
+            }
+        }
     }
 }
 
+#[derive(Debug)]
+pub struct EventSender {
+    sender: mpsc::Sender<InternalEventType>,
+}
+
 pub struct EventReceiver {
-    receiver: mpsc::Receiver<EventToClient>,
+    receiver: mpsc::Receiver<InternalEventType>,
 }
 
 impl EventReceiver {
     /// Returns None if channel is closed.
-    pub async fn recv(&mut self) -> Option<EventToClient> {
+    pub async fn recv(&mut self) -> Option<InternalEventType> {
         self.receiver.recv().await
     }
 }
@@ -92,7 +104,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
     ) -> Result<(), DataError> {
         self.access_event_mode(account.into(), move |mode| {
             if let EventMode::Connected(sender) = mode {
-                sender.send(event.into())
+                // Ignore errors
+                let _ = sender.sender.try_send(InternalEventType::NormalEvent(event));
             }
         })
         .await
@@ -106,12 +119,21 @@ impl<'a> EventManagerWithCacheReference<'a> {
         account: AccountIdInternal,
         event: NotificationEvent,
     ) -> Result<(), DataError> {
+        self.cache
+            .write_cache(account, move |entry| {
+                entry.pending_notification_flags |= event.into();
+                Ok(())
+            })
+            .await
+            .into_data_error(account)?;
+
         let sent = self
             .access_event_mode(account.into(), move |mode| {
-                let event: EventToClientInternal = event.into();
                 if let EventMode::Connected(sender) = mode {
-                    sender.send(event.into());
-                    true
+                    match sender.sender.try_send(InternalEventType::Notification(event)) {
+                        Ok(()) => true,
+                        Err(TrySendError::Closed(_) | TrySendError::Full(_)) => false,
+                    }
                 } else {
                     false
                 }
@@ -120,10 +142,48 @@ impl<'a> EventManagerWithCacheReference<'a> {
             .change_context(DataError::EventModeAccessFailed)?;
 
         if !sent {
-            self.push_notification_sender.send(account, event)
+            self.push_notification_sender.send(account)
         }
 
         Ok(())
+    }
+
+    pub async fn trigger_push_notification_sending_check_if_needed(
+        &'a self,
+        account: AccountIdInternal,
+    ) {
+        let flags_result = self.cache
+            .read_cache(account, move |entry| {
+                entry.pending_notification_flags
+            })
+            .await
+            .into_data_error(account);
+
+        match flags_result {
+            Ok(flags) => if !flags.is_empty() {
+                self.push_notification_sender.send(account);
+            }
+            Err(e) => error!("Failed to read pending notification flags: {:?}", e),
+        }
+    }
+
+    pub async fn remove_specific_pending_notification_flags_from_cache(
+        &'a self,
+        account: AccountIdInternal,
+        flags: PendingNotificationFlags,
+    ) {
+        let edit_result = self.cache
+            .write_cache(account, move |entry| {
+                entry.pending_notification_flags -= flags;
+                Ok(())
+            })
+            .await
+            .into_data_error(account);
+
+        match edit_result {
+            Ok(()) => (),
+            Err(e) => error!("Failed to edit pending notification flags: {:?}", e),
+        }
     }
 
     pub async fn handle_chat_state_changes(&'a self, c: ChatStateChanges) -> Result<(), DataError> {

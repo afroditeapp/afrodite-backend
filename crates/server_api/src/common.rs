@@ -11,10 +11,10 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, SyncDataVersionFromClient};
+use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, RefreshToken, SyncDataVersionFromClient};
 use tokio::time::Instant;
 use crate::{app::ConnectionTools, utils::Json};
-use server_data::{app::BackendVersionProvider, read::GetReadCommandsCommon};
+use server_data::{app::{BackendVersionProvider, EventManagerProvider}, read::GetReadCommandsCommon};
 use simple_backend::{create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
@@ -149,7 +149,7 @@ pub use utils::api::PATH_CONNECT;
     security(("access_token" = [])),
 )]
 pub async fn get_connect_websocket<
-    S: ConnectionTools + GetAccessTokens,
+    S: ConnectionTools + GetAccessTokens + EventManagerProvider,
 >(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
@@ -172,7 +172,7 @@ pub async fn get_connect_websocket<
     Ok(websocket.on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager)))
 }
 
-async fn handle_socket<S: ConnectionTools>(
+async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
     socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
@@ -231,11 +231,13 @@ async fn handle_socket<S: ConnectionTools>(
         }
     }
 
+    state.event_manager().trigger_push_notification_sending_check_if_needed(id).await;
+
     drop(quit_lock);
 }
 
 
-async fn handle_socket_result<S: ConnectionTools>(
+async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
     mut socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
@@ -374,7 +376,12 @@ async fn handle_socket_result<S: ConnectionTools>(
                     Some(Err(_)) | None => break,
                     Some(Ok(value)) =>
                         match value {
-                            Message::Binary(data) if data.is_empty() => (),
+                            Message::Binary(data) if data.is_empty() => {
+                                // Client sent a ping message.
+                                // Reset connection timeout to prevent server
+                                // disconnecting this connection.
+                                timeout_timer.reset().await;
+                            },
                             Message::Ping(_) => {
                                 // Client sent a ping message.
                                 // Reset connection timeout to prevent server
@@ -396,12 +403,17 @@ async fn handle_socket_result<S: ConnectionTools>(
             }
             event = event_receiver.recv() => {
                 match event {
-                    Some(event) => {
+                    Some(internal_event) => {
+                        let event: EventToClient = internal_event.to_client_event();
                         let event = serde_json::to_string(&event)
                             .change_context(WebSocketError::Serialize)?;
                         socket.send(Message::Text(event))
                             .await
                             .change_context(WebSocketError::Send)?;
+                        // If event is pending notification related, the cached
+                        // pending notification flags are removed in the related
+                        // HTTP route handlers using event manager assuming
+                        // that client has received the event.
                     },
                     None => {
                         error!("Event receiver channel broken: id: {}, address: {}", id.id.as_i64(), address);

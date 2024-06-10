@@ -131,7 +131,7 @@ impl From<SpecialEventToClient> for EventToClient {
 /// If data is not included in the event it might be too large to send
 /// over WebSocket as it might block more important events for some time
 /// depending on network connection speed.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum EventToClientInternal {
     /// New account state for client
     AccountStateChanged(AccountState),

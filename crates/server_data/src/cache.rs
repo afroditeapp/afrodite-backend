@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use error_stack::Result;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LocationIndexKey, LocationIndexProfileData, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -293,6 +293,7 @@ pub struct CacheEntry {
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
     pub current_connection: Option<SocketAddr>,
     pub current_event_connection: EventMode,
+    pub pending_notification_flags: PendingNotificationFlags,
 }
 
 impl CacheEntry {
@@ -304,6 +305,7 @@ impl CacheEntry {
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
             current_connection: None,
             current_event_connection: EventMode::None,
+            pending_notification_flags: PendingNotificationFlags::empty(),
         }
     }
     // TODO(refactor): Add helper functions to get data related do features

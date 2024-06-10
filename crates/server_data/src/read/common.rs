@@ -1,4 +1,4 @@
-use model::{AccessToken, Account, AccountId, AccountIdInternal, RefreshToken};
+use model::{AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken};
 
 use super::{super::DataError, ReadCommandsProvider};
 use crate::{event::EventMode, result::Result, IntoDataError};
@@ -52,5 +52,14 @@ impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
             })
             .await?;
         Ok(account)
+    }
+
+    pub async fn cached_pending_notification_flags(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<PendingNotificationFlags, DataError> {
+        let flags = self.read_cache(id, |cache| cache.pending_notification_flags)
+            .await?;
+        Ok(flags)
     }
 }

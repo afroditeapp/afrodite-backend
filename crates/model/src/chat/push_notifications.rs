@@ -45,7 +45,9 @@ impl PendingNotification {
 diesel_i64_wrapper!(PendingNotification);
 
 bitflags::bitflags! {
-    /// Profile mood filter
+    /// If you add anything here, remember to remove the flag from the
+    /// cache so that websocket code do not send push notification when it
+    /// is not needed.
     #[derive(Clone, Copy, Debug, PartialEq)]
     pub struct PendingNotificationFlags: i64 {
         const NEW_MESSAGE = 0x1;

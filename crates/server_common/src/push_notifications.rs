@@ -7,7 +7,7 @@ use fcm::{
     FcmClient,
 };
 use model::{
-    chat::PushNotificationStateInfo, AccountIdInternal, NotificationEvent, PendingNotificationFlags,
+    AccountIdInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags,
 };
 use serde_json::json;
 use simple_backend::ServerQuitWatcher;
@@ -30,6 +30,10 @@ pub enum PushNotificationError {
     RemoveDeviceTokenFailed,
     #[error("Setting push notification sent flag failed")]
     SettingPushNotificationSentFlagFailed,
+    #[error("Removing specific notification flags from cache failed")]
+    RemoveSpecificNotificationFlagsFromCacheFailed,
+    #[error("Reading notification flags from cache failed")]
+    ReadingNotificationFlagsFromCacheFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -50,10 +54,10 @@ impl PushNotificationManagerQuitHandle {
     }
 }
 
+/// New [PendingNotificationFlags] available in the cache.
 #[derive(Debug, Clone, Copy)]
 pub struct SendPushNotification {
     pub account_id: AccountIdInternal,
-    pub event: NotificationEvent,
 }
 
 #[derive(Debug, Clone)]
@@ -62,8 +66,8 @@ pub struct PushNotificationSender {
 }
 
 impl PushNotificationSender {
-    pub fn send(&self, account_id: AccountIdInternal, event: NotificationEvent) {
-        let notification = SendPushNotification { account_id, event };
+    pub fn send(&self, account_id: AccountIdInternal) {
+        let notification = SendPushNotification { account_id };
         match self.sender.try_send(notification) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {
@@ -80,8 +84,7 @@ pub trait PushNotificationStateProvider {
     fn get_push_notification_state_info_and_add_notification_value(
         &self,
         account_id: AccountIdInternal,
-        flags: PendingNotificationFlags,
-    ) -> impl Future<Output = Result<PushNotificationStateInfo, PushNotificationError>> + Send;
+    ) -> impl Future<Output = Result<PushNotificationStateInfoWithFlags, PushNotificationError>> + Send;
 
     fn enable_push_notification_sent_flag(
         &self,
@@ -91,6 +94,13 @@ pub trait PushNotificationStateProvider {
     fn remove_device_token(
         &self,
         account_id: AccountIdInternal,
+    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
+
+    /// Avoid saving the cached notification to DB when server closes.
+    fn remove_specific_notification_flags_from_cache(
+        &self,
+        account_id: AccountIdInternal,
+        flags: PendingNotificationFlags,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 }
 
@@ -110,7 +120,6 @@ pub struct PushNotificationManager<T> {
     fcm: Option<FcmClient>,
     receiver: PushNotificationReceiver,
     state: T,
-    current_push_notification_in_sending: Option<SendPushNotification>,
 }
 
 impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<T> {
@@ -142,7 +151,6 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             fcm,
             receiver,
             state,
-            current_push_notification_in_sending: None,
         };
 
         PushNotificationManagerQuitHandle {
@@ -169,15 +177,15 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             let notification = self.receiver.receiver.recv().await;
             match notification {
                 Some(notification) => {
-                    self.current_push_notification_in_sending = Some(notification);
                     let result = self
                         .send_push_notification(notification, &mut sending_logic)
                         .await;
-                    if let Err(e) = result {
-                        error!("Sending push notification failed: {:?}", e);
-                        // TODO: Save notification?
+                    match result {
+                        Ok(()) => (),
+                        Err(e) => {
+                            error!("Sending push notification failed: {:?}", e);
+                        }
                     }
-                    self.current_push_notification_in_sending = None;
                 }
                 None => {
                     warn!("Push notification channel is broken");
@@ -189,7 +197,11 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
 
     pub async fn quit_logic(&mut self) {
         // TODO(prod): Save the current notification in sending to DB
-        // TODO(prod): Read channel and save all pending notifications to DB
+        // TODO(prod): Read cache and save all pending notifications to DB.
+        //             Skip cached notification if FCM is not enabled.
+        // TODO(prod): Load the all not sent pending notifications from DB
+        //             to cache and send event SendPushNotification
+        //             multiple times.
     }
 
     pub async fn send_push_notification(
@@ -207,18 +219,32 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
             .state
             .get_push_notification_state_info_and_add_notification_value(
                 send_push_notification.account_id,
-                send_push_notification.event.into(),
             )
             .await
             .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
 
+        let (info, flags) = match info {
+            PushNotificationStateInfoWithFlags::EmptyFlags => return Ok(()),
+            PushNotificationStateInfoWithFlags::WithFlags { info, flags } => (info, flags),
+        };
+
         if info.fcm_notification_sent {
+            self.state
+                .remove_specific_notification_flags_from_cache(send_push_notification.account_id, flags)
+                .await
+                .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)?;
             return Ok(());
         }
 
         let token = match info.fcm_device_token {
             Some(token) => token,
-            None => return Ok(()),
+            None => {
+                self.state
+                    .remove_specific_notification_flags_from_cache(send_push_notification.account_id, flags)
+                    .await
+                    .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)?;
+                return Ok(());
+            },
         };
 
         let message = Message {
@@ -239,6 +265,10 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
                     .enable_push_notification_sent_flag(send_push_notification.account_id)
                     .await
                     .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
+                self.state
+                    .remove_specific_notification_flags_from_cache(send_push_notification.account_id, flags)
+                    .await
+                    .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)?;
                 Ok(())
             }
             Err(action) => match action {

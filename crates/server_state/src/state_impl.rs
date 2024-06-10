@@ -4,13 +4,13 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::{Result, ResultExt};
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, PendingNotificationFlags, PushNotificationStateInfo, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, PendingNotificationFlags, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
-    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::ReadCommandsContainer, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
+    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_all::register::RegisterAccount;
 use server_data_chat::write::GetWriteCommandsChat;
@@ -98,9 +98,20 @@ impl PushNotificationStateProvider for S {
     async fn get_push_notification_state_info_and_add_notification_value(
         &self,
         account_id: AccountIdInternal,
-        flags: PendingNotificationFlags,
-    ) -> Result<PushNotificationStateInfo, PushNotificationError> {
-        db_write_raw!(self, move |cmds| {
+    ) -> Result<PushNotificationStateInfoWithFlags, PushNotificationError> {
+        let flags = self
+            .read()
+            .common()
+            .cached_pending_notification_flags(account_id)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::ReadingNotificationFlagsFromCacheFailed)?;
+
+        if flags.is_empty() {
+            return Ok(PushNotificationStateInfoWithFlags::EmptyFlags);
+        }
+
+        let info = db_write_raw!(self, move |cmds| {
             cmds.chat()
                 .push_notifications()
                 .get_push_notification_state_info_and_add_notification_value(
@@ -111,7 +122,12 @@ impl PushNotificationStateProvider for S {
         })
         .await
         .map_err(|e| e.into_report())
-        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
+        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
+
+        Ok(PushNotificationStateInfoWithFlags::WithFlags {
+            info,
+            flags,
+        })
     }
 
     async fn enable_push_notification_sent_flag(
@@ -126,7 +142,9 @@ impl PushNotificationStateProvider for S {
         })
         .await
         .map_err(|e| e.into_report())
-        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)
+        .change_context(PushNotificationError::SettingPushNotificationSentFlagFailed)?;
+
+        Ok(())
     }
 
     async fn remove_device_token(
@@ -142,6 +160,20 @@ impl PushNotificationStateProvider for S {
         .await
         .map_err(|e| e.into_report())
         .change_context(PushNotificationError::RemoveDeviceTokenFailed)
+    }
+
+    async fn remove_specific_notification_flags_from_cache(
+        &self,
+        account_id: AccountIdInternal,
+        flags: PendingNotificationFlags,
+    ) -> Result<(), PushNotificationError> {
+        self.database.cache().write_cache(account_id, move |entry| {
+            entry.pending_notification_flags -= flags;
+            Ok(())
+        })
+        .await
+        .map_err(|e| e.into_error())
+        .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)
     }
 }
 

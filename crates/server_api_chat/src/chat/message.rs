@@ -1,9 +1,8 @@
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber,
-    NotificationEvent, PendingMessageDeleteList, PendingMessagesPage, SendMessageToAccount,
-    UpdateMessageViewStatus,
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage, PendingNotificationFlags, SendMessageToAccount, UpdateMessageViewStatus
 };
+use server_api::app::EventManagerProvider;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -29,12 +28,15 @@ pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_pending_messages<S: ReadData>(
+pub async fn get_pending_messages<S: ReadData + EventManagerProvider>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<PendingMessagesPage>, StatusCode> {
     CHAT.get_pending_messages.incr();
-
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::NEW_MESSAGE)
+        .await;
     let page = state.read().chat().all_pending_messages(id).await?;
     Ok(page.into())
 }
@@ -183,7 +185,7 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
     Ok(())
 }
 
-pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
+pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> Router {
     use axum::routing::{delete, get, post};
 
     Router::new()
