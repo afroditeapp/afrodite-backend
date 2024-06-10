@@ -1,7 +1,7 @@
 //! Common routes to all microservices
 //!
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Duration};
 
 use axum::{
     extract::{
@@ -12,6 +12,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, RefreshToken, SyncDataVersionFromClient};
+use tokio::time::Instant;
 use crate::{app::ConnectionTools, utils::Json};
 use server_data::{app::BackendVersionProvider, read::GetReadCommandsCommon};
 use simple_backend::{create_counters, web_socket::WebSocketManager};
@@ -132,7 +133,10 @@ pub use utils::api::PATH_CONNECT;
 /// 7. If needed, the client sends empty binary messages to test connection to
 ///    the server.
 ///
-/// The new access token is valid until this WebSocket is closed.
+/// The new access token is valid until this WebSocket is closed or the
+/// server detects a timeout. To prevent the timeout the client must
+/// send a WebScoket ping message before 6 minutes elapses from connection
+/// establishment or previous ping message.
 ///
 #[utoipa::path(
     get,
@@ -361,9 +365,7 @@ async fn handle_socket_result<S: ConnectionTools>(
 
     // TODO(prod): Remove extra logging from this file.
 
-    const HOUR_IN_SECONDS: u64 = 60 * 60;
-    let mut connection_check_timer = tokio::time::interval(std::time::Duration::from_secs(HOUR_IN_SECONDS));
-    connection_check_timer.tick().await; // skip the first tick
+    let mut timeout_timer = ConnectionPingTracker::new();
 
     loop {
         tokio::select! {
@@ -372,17 +374,21 @@ async fn handle_socket_result<S: ConnectionTools>(
                     Some(Err(_)) | None => break,
                     Some(Ok(value)) =>
                         match value {
-                            Message::Binary(data) if data.is_empty() => continue,
-                            Message::Ping(_) | Message::Pong(_) => continue,
+                            Message::Binary(data) if data.is_empty() => (),
+                            Message::Ping(_) => {
+                                // Client sent a ping message.
+                                // Reset connection timeout to prevent server
+                                // disconnecting this connection.
+                                timeout_timer.reset().await;
+                            },
+                            Message::Pong(_) => (),
                             // TODO(prod): Consider flagging the account for
                             // suspicious activity.
                             Message::Binary(data) => {
                                 error!("Client sent unexpected binary message: {:?}, from: {}", data, address);
-                                continue;
                             }
                             Message::Text(text) => {
                                 error!("Client sent unexpected text message: {:?}, from: {}", text, address);
-                                continue;
                             }
                             Message::Close(_) => break,
                         }
@@ -404,15 +410,38 @@ async fn handle_socket_result<S: ConnectionTools>(
                     },
                 }
             }
-            _ = connection_check_timer.tick() => {
-                socket.send(Message::Binary(Vec::new()))
-                    .await
-                    .change_context(WebSocketError::Send)?;
+            _ = timeout_timer.wait_timeout() => {
+                // Connection timeout
+                info!("Connection timeout for '{}'", id.id.as_i64());
+                break;
             }
         }
     }
 
     Ok(())
+}
+
+struct ConnectionPingTracker {
+    timer: tokio::time::Interval,
+}
+
+impl ConnectionPingTracker {
+    const TIMEOUT_IN_SECONDS: u64 = 60 * 6;
+
+    pub fn new() -> Self {
+        let first_tick = Instant::now() + Duration::from_secs(Self::TIMEOUT_IN_SECONDS);
+        Self {
+            timer: tokio::time::interval_at(first_tick, Duration::from_secs(Self::TIMEOUT_IN_SECONDS)),
+        }
+    }
+
+    pub async fn wait_timeout(&mut self) {
+        self.timer.tick().await;
+    }
+
+    pub async fn reset(&mut self) {
+        self.timer.reset();
+    }
 }
 
 create_counters!(CommonCounters, COMMON, COMMON_COUNTERS_LIST, get_version, get_connect_websocket,);

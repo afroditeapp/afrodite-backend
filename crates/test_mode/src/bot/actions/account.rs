@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, time::Duration};
 
 use api_client::{
     apis::{
@@ -190,16 +190,28 @@ async fn connect_websocket(
 
     let task = tokio::spawn(async move {
         let mut events = events;
-        tokio::select! {
-            _ = events.quit_watcher.recv() => (),
-            _ = handle_connection(stream, &events.event_sender) => ()
+        let mut ping_timer = tokio::time::interval(Duration::from_secs(60));
+        ping_timer.tick().await; // skip the initial tick
+        loop {
+            tokio::select! {
+                _ = events.quit_watcher.recv() => break,
+                _ = handle_connection(&mut stream, &events.event_sender) => (),
+                _ = ping_timer.tick() => {
+                    match stream
+                        .send(Message::Ping(vec![]))
+                        .await {
+                            Ok(_) => (),
+                            Err(e) => panic!("Sending ping message to websocket failed, error: {}", e),
+                        }
+                }
+            }
         }
     });
 
     Ok(WsConnection { task })
 }
 
-async fn handle_connection(mut stream: WsStream, sender: &EventSender) {
+async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {
     loop {
         match stream.next().await {
             Some(event) => match event {
@@ -210,6 +222,7 @@ async fn handle_connection(mut stream: WsStream, sender: &EventSender) {
                 }
                 // Connection test message, which does not need a response
                 Ok(Message::Binary(data)) if data.is_empty() => (),
+                Ok(Message::Pong(_)) => (),
                 Ok(_) => {
                     panic!("Unexpected WebSocket message type");
                 }
