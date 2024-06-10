@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, SyncVersionUtils};
 use server_data::{
     define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError,
     DieselDatabaseError,
@@ -202,11 +202,22 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
     ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
+        let pending_messages = db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
-                .delete_pending_message_list(message_receiver, messages)
-        })
+                .delete_pending_message_list(message_receiver, messages)?;
+
+            cmds.read().chat().message().all_pending_message_sender_account_ids(message_receiver)
+        })?;
+
+        if pending_messages.is_empty() {
+            self
+                .events()
+                .remove_specific_pending_notification_flags_from_cache(message_receiver, PendingNotificationFlags::NEW_MESSAGE)
+                .await;
+        }
+
+        Ok(())
     }
 
     /// Update message number which my account has viewed from the sender
