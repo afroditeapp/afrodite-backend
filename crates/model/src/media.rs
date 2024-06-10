@@ -904,6 +904,7 @@ impl MediaStateRaw {
     }
 }
 
+/// Version UUID for public profile content.
 #[derive(
     Debug,
     Clone,
