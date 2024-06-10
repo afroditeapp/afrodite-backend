@@ -208,6 +208,8 @@ async fn handle_connection(mut stream: WsStream, sender: &EventSender) {
                         serde_json::from_str(&event).expect("Failed to parse WebSocket event");
                     sender.send_if_sending_enabled(event).await;
                 }
+                // Connection test message, which does not need a response
+                Ok(Message::Binary(data)) if data.is_empty() => (),
                 Ok(_) => {
                     panic!("Unexpected WebSocket message type");
                 }
