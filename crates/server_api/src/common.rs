@@ -11,7 +11,7 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, RefreshToken, SyncDataVersionFromClient};
+use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
 use tokio::time::Instant;
 use crate::{app::ConnectionTools, utils::Json};
 use server_data::{app::{BackendVersionProvider, EventManagerProvider}, read::GetReadCommandsCommon};
@@ -355,7 +355,13 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
 
     let mut event_receiver = state
         .write(
-            move |cmds| async move { cmds.common().init_connection_session_events(id.uuid).await },
+            move |cmds| async move {
+                // Prevent sending push notification if this connection
+                // replaced the old connection.
+                cmds.events().remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::all()).await;
+                // Create new event channel, so old one will break
+                cmds.common().init_connection_session_events(id.uuid).await
+            },
         )
         .await
         .change_context(WebSocketError::DatabaseSaveTokens)?;
