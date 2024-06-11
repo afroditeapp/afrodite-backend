@@ -48,7 +48,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         // does not have that message already viewed.
         let new_message_number = interaction.message_counter + 1;
 
-        if interaction.state_number != AccountInteractionState::Match as i64 {
+        if interaction.state_number != AccountInteractionState::Match {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 

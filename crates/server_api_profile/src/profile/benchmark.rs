@@ -98,7 +98,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
         .into_error_string(DataError::NotAllowed)?;
     let old_profile = state.read().profile().profile(account_id).await?;
 
-    if profile.equals_with(&old_profile) {
+    if profile.equals_with(&old_profile.profile) {
         return Ok(());
     }
 

@@ -95,6 +95,8 @@ impl DbDataToCacheLoader {
             // empty
         }
 
+        // Media must be before profile because ProfileLink can
+        // can contain ProfileContentVersion.
         if config.components().media {
             let media_content = db
                 .db_read_media(move |mut cmds| cmds.media().media_content().current_account_media_raw(account_id))

@@ -166,4 +166,23 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
             .unwrap_or_default();
         Ok(number)
     }
+
+    pub async fn is_match(
+        &self,
+        account0: AccountIdInternal,
+        account1: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        let is_match = self
+            .db_read(move |mut cmds| {
+                cmds.chat()
+                    .interaction()
+                    .account_interaction(account0, account1)
+            })
+            .await?
+            .map(|interaction| {
+                interaction.is_match()
+            })
+            .unwrap_or_default();
+        Ok(is_match)
+    }
 }

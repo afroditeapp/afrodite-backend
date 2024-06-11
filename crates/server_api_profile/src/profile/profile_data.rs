@@ -1,11 +1,11 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Extension, Router,
 };
 use model::{
-    AccountId, AccountIdInternal, Profile, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated,
-    ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups,
+    AccountId, AccountIdInternal, AccountState, Capabilities, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
+use server_api::app::IsMatch;
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -24,16 +24,24 @@ use crate::{
 
 pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 
-// TODO: Add possibility to get profile if it is private and match wants it.
-
 /// Get account's current profile.
 ///
-/// Profile can include version UUID which can be used for caching.
+/// Response includes version UUID which can be used for caching.
 ///
 /// # Access
-/// Public profile access requires `view_public_profiles` capability.
-/// Public and private profile access requires `admin_view_all_profiles`
-/// capablility.
+///
+/// ## Own profile
+/// Unrestricted access.
+///
+/// ## Public other profiles
+/// Normal account state required.
+///
+/// ## Private other profiles
+/// If the profile is a match, then the profile can be accessed if query
+/// parameter `is_match` is set to `true`.
+///
+/// If the profile is not a match, then capability `admin_view_all_profiles`
+/// is required.
 ///
 /// # Microservice notes
 /// If account feature is set as external service then cached capability
@@ -41,40 +49,50 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 #[utoipa::path(
     get,
     path = "/profile_api/profile/{account_id}",
-    params(AccountId),
+    params(AccountId, GetProfileQueryParam),
     responses(
-        (status = 200, description = "Get current profile.", body = Profile),
-        (status = 401, description = "Unauthorized."),
+        (status = 200, description = "Get current profile", body = GetProfileResult),
+        (status = 401, description = "Unauthorized"),
         (
             status = 500,
-            description = "Profile does not exist, is private or other server error.",
+            description = "Internal server error",
         ),
     ),
     security(("access_token" = [])),
 )]
 pub async fn get_profile<
-    S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
+    S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig + IsMatch,
 >(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
+    Extension(capabilities): Extension<Capabilities>,
     Path(requested_profile): Path<AccountId>,
-) -> Result<Json<Profile>, StatusCode> {
+    Query(params): Query<GetProfileQueryParam>,
+) -> Result<Json<GetProfileResult>, StatusCode> {
     PROFILE.get_profile.incr();
-
-    // TODO: Change return type to GetProfileResult, because
-    //       current style spams errors to logs.
-    // TODO: check capablities so that admin can view all profiles
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    if account_id.as_id() == requested_profile.as_id() {
-        return state
+    let read_profile_action = || async {
+        let profile_info = state
             .read()
             .profile()
             .profile(requested_profile)
-            .await
-            .map_err(Into::into)
-            .map(|p| p.into());
+            .await?;
+        match params.profile_version() {
+            Some(param_version) if param_version == profile_info.version =>
+                Ok(GetProfileResult::current_version_latest_response(profile_info.version).into()),
+            _ => Ok(GetProfileResult::profile_with_version_response(profile_info).into()),
+        }
+    };
+
+    if account_id.as_id() == requested_profile.as_id() {
+        return read_profile_action().await;
+    }
+
+    if account_state != AccountState::Normal {
+        return Ok(GetProfileResult::empty().into());
     }
 
     let visibility = state
@@ -85,16 +103,13 @@ pub async fn get_profile<
         .profile_visibility()
         .is_currently_public();
 
-    if visibility {
-        state
-            .read()
-            .profile()
-            .profile(requested_profile)
-            .await
-            .map_err(Into::into)
-            .map(|p| p.into())
+    if visibility ||
+        capabilities.admin_view_all_profiles ||
+        (params.allow_get_profile_if_match() && state.is_match(account_id, requested_profile).await?)
+    {
+        read_profile_action().await
     } else {
-        Err(StatusCode::INTERNAL_SERVER_ERROR)
+        Ok(GetProfileResult::empty().into())
     }
 }
 
@@ -132,7 +147,7 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
         .into_error_string(DataError::NotAllowed)?;
     let old_profile = state.read().profile().profile(account_id).await?;
 
-    if profile.equals_with(&old_profile) {
+    if profile.equals_with(&old_profile.profile) {
         return Ok(());
     }
 
@@ -248,7 +263,7 @@ pub async fn post_search_age_range<S: WriteData>(
 }
 
 pub fn profile_data_router<
-    S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
+    S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig + IsMatch,
 >(
     s: S,
 ) -> Router {

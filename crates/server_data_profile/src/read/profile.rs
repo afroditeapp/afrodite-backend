@@ -1,6 +1,5 @@
 use model::{
-    AccountIdInternal, Location, Profile, ProfileAttributeFilterList, ProfileInternal,
-    ProfileStateInternal,
+    AccountIdInternal, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal
 };
 use server_data::{
     define_server_data_read_commands,
@@ -24,12 +23,17 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
         .ok_or(DataError::NotFound.report())
     }
 
-    pub async fn profile(&self, id: AccountIdInternal) -> Result<Profile, DataError> {
+    pub async fn profile(&self, id: AccountIdInternal) -> Result<ProfileAndProfileVersion, DataError> {
         self.read_cache(id, move |cache| {
             cache
                 .profile
                 .as_ref()
-                .map(|data| Profile::new(data.data.clone(), data.attributes.attributes().clone()))
+                .map(|data|
+                    ProfileAndProfileVersion {
+                        profile: Profile::new(data.data.clone(), data.attributes.attributes().clone()),
+                        version: data.data.version_uuid,
+                    }
+                )
         })
         .await?
         .ok_or(DataError::NotFound.report())

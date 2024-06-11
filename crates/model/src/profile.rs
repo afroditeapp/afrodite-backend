@@ -276,19 +276,15 @@ impl ProfileAttributeFilterValue {
     }
 }
 
-// TODO(prod): Remove profile_text?
-
-/// Prfile for HTTP GET
+/// Public profile info
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Profile {
     pub name: String,
+    /// Profile text support is disabled for now.
     pub profile_text: String,
     #[schema(value_type = i64)]
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValue>,
-    /// Version used for caching profile in client side.
-    #[serde(flatten)]
-    pub version: ProfileVersion,
 }
 
 impl Profile {
@@ -301,9 +297,13 @@ impl Profile {
             profile_text: value.profile_text,
             age: value.age,
             attributes,
-            version: value.version_uuid,
         }
     }
+}
+
+pub struct ProfileAndProfileVersion {
+    pub profile: Profile,
+    pub version: ProfileVersion,
 }
 
 /// Private profile related database data
@@ -739,6 +739,7 @@ impl SearchGroupFlagsFilter {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {
+    /// This must be empty because profile text support is disabled.
     pub profile_text: String,
     pub name: String,
     #[schema(value_type = i64)]
@@ -764,6 +765,10 @@ impl ProfileUpdate {
             } else {
                 return Err("Profile attributes are disabled".to_string());
             }
+        }
+
+        if !self.profile_text.is_empty() {
+            return Err("Profile text is not empty".to_string());
         }
 
         Ok(ProfileUpdateValidated {
@@ -1081,6 +1086,58 @@ impl ProfileVersion {
 }
 
 diesel_uuid_wrapper!(ProfileVersion);
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct GetProfileQueryParam {
+    /// Profile version UUID
+    version: Option<uuid::Uuid>,
+    /// If requested profile is not public, allow getting the profile
+    /// data if the requested profile is a match.
+    #[serde(default)]
+    is_match: bool,
+}
+
+impl GetProfileQueryParam {
+    pub fn profile_version(self) -> Option<ProfileVersion> {
+        self.version.map(ProfileVersion::new)
+    }
+
+    pub fn allow_get_profile_if_match(self) -> bool {
+        self.is_match
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct GetProfileResult {
+    /// Profile data if it is newer than the version in the query.
+    pub profile: Option<Profile>,
+    /// If empty then profile does not exist or current account does
+    /// not have access to the profile.
+    pub version: Option<ProfileVersion>,
+}
+
+impl GetProfileResult {
+    pub fn profile_with_version_response(info: ProfileAndProfileVersion) -> Self {
+        Self {
+            profile: Some(info.profile),
+            version: Some(info.version),
+        }
+    }
+
+    pub fn current_version_latest_response(version: ProfileVersion) -> Self {
+        Self {
+            profile: None,
+            version: Some(version),
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            profile: None,
+            version: None,
+        }
+    }
+}
 
 #[derive(Debug, Hash, PartialEq, Clone, Copy, Default, Eq)]
 pub struct LocationIndexKey {

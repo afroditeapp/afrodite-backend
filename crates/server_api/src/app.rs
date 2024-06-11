@@ -105,3 +105,11 @@ pub trait ResetPushNotificationTokens: StateBase + WriteData {
         id: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<(), DataError>> + Send;
 }
+
+pub trait IsMatch: StateBase + ReadData {
+    fn is_match(
+        &self,
+        account0: AccountIdInternal,
+        account1: AccountIdInternal,
+    ) -> impl std::future::Future<Output = server_common::result::Result<bool, DataError>> + Send;
+}

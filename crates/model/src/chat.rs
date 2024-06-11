@@ -1,6 +1,6 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, UnixTime};
+use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, UnixTime};
 use utoipa::ToSchema;
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal};
@@ -67,7 +67,7 @@ impl std::error::Error for AccountInteractionStateError {}
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountInteractionInternal {
     pub id: i64,
-    pub state_number: i64,
+    pub state_number: AccountInteractionState,
     pub account_id_sender: Option<AccountIdDb>,
     pub account_id_receiver: Option<AccountIdDb>,
     /// Message counter is incrementing for each message sent.
@@ -85,10 +85,10 @@ impl AccountInteractionInternal {
         id_like_receiver: AccountIdInternal,
     ) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Like;
-        let state = AccountInteractionState::try_from(self.state_number)?;
+        let state = self.state_number;
         match state {
             AccountInteractionState::Empty => Ok(Self {
-                state_number: target as i64,
+                state_number: target,
                 account_id_sender: Some(id_like_sender.into_db_id()),
                 account_id_receiver: Some(id_like_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
@@ -104,10 +104,10 @@ impl AccountInteractionInternal {
 
     pub fn try_into_match(self) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Match;
-        let state = AccountInteractionState::try_from(self.state_number)?;
+        let state = self.state_number;
         match state {
             AccountInteractionState::Like => Ok(Self {
-                state_number: target as i64,
+                state_number: target,
                 sender_latest_viewed_message: Some(MessageNumber::default()),
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
                 ..self
@@ -124,12 +124,12 @@ impl AccountInteractionInternal {
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> Result<Self, AccountInteractionStateError> {
-        let state = AccountInteractionState::try_from(self.state_number)?;
+        let state = self.state_number;
         match state {
             AccountInteractionState::Empty
             | AccountInteractionState::Like
             | AccountInteractionState::Match => Ok(Self {
-                state_number: AccountInteractionState::Block as i64,
+                state_number: AccountInteractionState::Block,
                 account_id_sender: Some(id_block_sender.into_db_id()),
                 account_id_receiver: Some(id_block_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
@@ -142,10 +142,10 @@ impl AccountInteractionInternal {
 
     pub fn try_into_empty(self) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Empty;
-        let state = AccountInteractionState::try_from(self.state_number)?;
+        let state = self.state_number;
         match state {
             AccountInteractionState::Block | AccountInteractionState::Like => Ok(Self {
-                state_number: target as i64,
+                state_number: target,
                 account_id_sender: None,
                 account_id_receiver: None,
                 sender_latest_viewed_message: None,
@@ -160,19 +160,19 @@ impl AccountInteractionInternal {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.state_number == AccountInteractionState::Empty as i64
+        self.state_number == AccountInteractionState::Empty
     }
 
     pub fn is_like(&self) -> bool {
-        self.state_number == AccountInteractionState::Like as i64
+        self.state_number == AccountInteractionState::Like
     }
 
     pub fn is_match(&self) -> bool {
-        self.state_number == AccountInteractionState::Match as i64
+        self.state_number == AccountInteractionState::Match
     }
 
     pub fn is_blocked(&self) -> bool {
-        self.state_number == AccountInteractionState::Block as i64
+        self.state_number == AccountInteractionState::Block
     }
 }
 
@@ -184,7 +184,15 @@ impl AccountInteractionInternal {
 /// - Empty -> Block
 /// - Block -> Empty
 /// - Like -> Empty
-#[derive(Debug, Clone, Copy)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
 pub enum AccountInteractionState {
     Empty = 0,
     Like = 1,
@@ -205,6 +213,8 @@ impl TryFrom<i64> for AccountInteractionState {
         }
     }
 }
+
+diesel_i64_try_from!(AccountInteractionState);
 
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::pending_messages)]

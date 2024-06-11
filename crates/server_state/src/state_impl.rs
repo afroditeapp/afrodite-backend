@@ -13,7 +13,7 @@ use server_data::{
     content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_all::register::RegisterAccount;
-use server_data_chat::write::GetWriteCommandsChat;
+use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::{
     app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith},
     manager_client::ManagerApiManager,
@@ -338,6 +338,15 @@ impl ValidateModerationRequest for S {
     }
 }
 
+impl IsMatch for S {
+    async fn is_match(
+        &self,
+        account0: AccountIdInternal,
+        account1: AccountIdInternal,
+    ) -> server_common::result::Result<bool, DataError> {
+        self.read().chat().is_match(account0, account1).await
+    }
+}
 
 // Simple backend
 
