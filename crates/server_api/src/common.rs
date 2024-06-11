@@ -179,6 +179,8 @@ async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
     state: S,
     mut ws_manager: WebSocketManager,
 ) {
+    // TODO(prod): Remove account details printing before 1.0
+
     info!("handle_socket for '{}'", id.id.as_i64());
     let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await
     {
