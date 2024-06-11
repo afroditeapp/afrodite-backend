@@ -14,7 +14,7 @@ Method | HTTP request | Description
 [**get_moderation_request**](MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 [**get_pending_profile_content_info**](MediaApi.md#get_pending_profile_content_info) | **GET** /media_api/pending_profile_content_info/{account_id} | Get pending profile content for selected profile
 [**get_pending_security_content_info**](MediaApi.md#get_pending_security_content_info) | **GET** /media_api/pending_security_content_info/{account_id} | Get pending security content for selected profile.
-[**get_profile_content_info**](MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile
+[**get_profile_content_info**](MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile.
 [**get_security_content_info**](MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{account_id} | Get current security content for selected profile.
 [**put_content_to_content_slot**](MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Set content to content processing slot.
 [**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
@@ -145,7 +145,7 @@ Name | Type | Description  | Required | Notes
 > std::path::PathBuf get_content(account_id, content_id, is_match)
 Get content data
 
-Get content data
+Get content data  # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required. 
 
 ### Parameters
 
@@ -154,7 +154,7 @@ Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
 **content_id** | **uuid::Uuid** |  | [required] |
-**is_match** | **bool** | If false media content access is allowed when profile is set as public. If true media content access is allowed when users are a match. | [required] |
+**is_match** | Option<**bool**> | If false media content access is allowed when profile is set as public. If true media content access is allowed when users are a match. |  |
 
 ### Return type
 
@@ -323,10 +323,10 @@ Name | Type | Description  | Required | Notes
 
 ## get_profile_content_info
 
-> crate::models::ProfileContent get_profile_content_info(account_id, is_match)
-Get current profile content for selected profile
+> crate::models::GetProfileContentResult get_profile_content_info(account_id, version, is_match)
+Get current profile content for selected profile.
 
-Get current profile content for selected profile
+Get current profile content for selected profile.  # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.
 
 ### Parameters
 
@@ -334,11 +334,12 @@ Get current profile content for selected profile
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
-**is_match** | **bool** | If false media content access is allowed when profile is set as public. If true media content access is allowed when users are a match. | [required] |
+**version** | Option<**uuid::Uuid**> |  |  |
+**is_match** | Option<**bool**> | If false profile content access is allowed when profile is set as public. If true profile content access is allowed when users are a match. |  |
 
 ### Return type
 
-[**crate::models::ProfileContent**](ProfileContent.md)
+[**crate::models::GetProfileContentResult**](GetProfileContentResult.md)
 
 ### Authorization
 

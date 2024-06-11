@@ -80,7 +80,7 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_moderation_request**](docs/MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
 *MediaApi* | [**get_pending_profile_content_info**](docs/MediaApi.md#get_pending_profile_content_info) | **GET** /media_api/pending_profile_content_info/{account_id} | Get pending profile content for selected profile
 *MediaApi* | [**get_pending_security_content_info**](docs/MediaApi.md#get_pending_security_content_info) | **GET** /media_api/pending_security_content_info/{account_id} | Get pending security content for selected profile.
-*MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile
+*MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile.
 *MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{account_id} | Get current security content for selected profile.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Set content to content processing slot.
 *MediaApi* | [**put_moderation_request**](docs/MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
@@ -136,7 +136,6 @@ Class | Method | HTTP request | Description
  - [BuildInfo](docs/BuildInfo.md)
  - [Capabilities](docs/Capabilities.md)
  - [CommandOutput](docs/CommandOutput.md)
- - [ContentAccessCheck](docs/ContentAccessCheck.md)
  - [ContentId](docs/ContentId.md)
  - [ContentInfo](docs/ContentInfo.md)
  - [ContentInfoDetailed](docs/ContentInfoDetailed.md)
@@ -161,6 +160,9 @@ Class | Method | HTTP request | Description
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
+ - [GetContentQueryParams](docs/GetContentQueryParams.md)
+ - [GetProfileContentQueryParams](docs/GetProfileContentQueryParams.md)
+ - [GetProfileContentResult](docs/GetProfileContentResult.md)
  - [GetProfileQueryParam](docs/GetProfileQueryParam.md)
  - [GetProfileResult](docs/GetProfileResult.md)
  - [GroupValues](docs/GroupValues.md)

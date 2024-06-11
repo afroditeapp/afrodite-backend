@@ -324,8 +324,8 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// Get content data
-pub async fn get_content(configuration: &configuration::Configuration, account_id: &str, content_id: &str, is_match: bool) -> Result<std::path::PathBuf, Error<GetContentError>> {
+/// Get content data  # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required. 
+pub async fn get_content(configuration: &configuration::Configuration, account_id: &str, content_id: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -333,7 +333,9 @@ pub async fn get_content(configuration: &configuration::Configuration, account_i
     let local_var_uri_str = format!("{}/media_api/content/{account_id}/{content_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), content_id=crate::apis::urlencode(content_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
-    local_var_req_builder = local_var_req_builder.query(&[("is_match", &is_match.to_string())]);
+    if let Some(ref local_var_str) = is_match {
+        local_var_req_builder = local_var_req_builder.query(&[("is_match", &local_var_str.to_string())]);
+    }
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -541,8 +543,8 @@ pub async fn get_pending_security_content_info(configuration: &configuration::Co
     }
 }
 
-/// Get current profile content for selected profile
-pub async fn get_profile_content_info(configuration: &configuration::Configuration, account_id: &str, is_match: bool) -> Result<crate::models::ProfileContent, Error<GetProfileContentInfoError>> {
+/// Get current profile content for selected profile.  # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.
+pub async fn get_profile_content_info(configuration: &configuration::Configuration, account_id: &str, version: Option<&str>, is_match: Option<bool>) -> Result<crate::models::GetProfileContentResult, Error<GetProfileContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -550,7 +552,12 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
     let local_var_uri_str = format!("{}/media_api/profile_content_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
-    local_var_req_builder = local_var_req_builder.query(&[("is_match", &is_match.to_string())]);
+    if let Some(ref local_var_str) = version {
+        local_var_req_builder = local_var_req_builder.query(&[("version", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = is_match {
+        local_var_req_builder = local_var_req_builder.query(&[("is_match", &local_var_str.to_string())]);
+    }
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }

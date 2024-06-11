@@ -30,7 +30,6 @@ docs/ChatApi.md
 docs/CommandOutput.md
 docs/CommonAdminApi.md
 docs/CommonApi.md
-docs/ContentAccessCheck.md
 docs/ContentId.md
 docs/ContentInfo.md
 docs/ContentInfoDetailed.md
@@ -55,6 +54,9 @@ docs/EventToClient.md
 docs/EventType.md
 docs/FavoriteProfilesPage.md
 docs/FcmDeviceToken.md
+docs/GetContentQueryParams.md
+docs/GetProfileContentQueryParams.md
+docs/GetProfileContentResult.md
 docs/GetProfileQueryParam.md
 docs/GetProfileResult.md
 docs/GroupValues.md
@@ -176,7 +178,6 @@ src/models/bot_config.rs
 src/models/build_info.rs
 src/models/capabilities.rs
 src/models/command_output.rs
-src/models/content_access_check.rs
 src/models/content_id.rs
 src/models/content_info.rs
 src/models/content_info_detailed.rs
@@ -201,6 +202,9 @@ src/models/event_to_client.rs
 src/models/event_type.rs
 src/models/favorite_profiles_page.rs
 src/models/fcm_device_token.rs
+src/models/get_content_query_params.rs
+src/models/get_profile_content_query_params.rs
+src/models/get_profile_content_result.rs
 src/models/get_profile_query_param.rs
 src/models/get_profile_result.rs
 src/models/group_values.rs
