@@ -614,7 +614,7 @@ pub async fn get_security_content_info(configuration: &configuration::Configurat
     }
 }
 
-/// Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete. 
+/// Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512. 
 pub async fn put_content_to_content_slot(configuration: &configuration::Configuration, slot_id: i32, secure_capture: bool, content_type: crate::models::MediaContentType, body: std::path::PathBuf) -> Result<crate::models::ContentProcessingId, Error<PutContentToContentSlotError>> {
     let local_var_configuration = configuration;
 

@@ -27,9 +27,14 @@ pub struct ChangeProfileText {
 impl BotAction for ChangeProfileText {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let id = state.account_id_string()?;
-        let current_profile = get_profile(state.api.profile(), &id)
+        let current_profile = get_profile(state.api.profile(), &id, None, None)
             .await
-            .change_context(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?
+            .profile
+            .flatten()
+            .ok_or(TestError::MissingValue.report())?
+            .as_ref()
+            .clone();
 
         let profile_text = match &self.mode {
             ProfileText::Static(text) => text.to_string(),
@@ -65,9 +70,14 @@ pub struct GetProfile;
 #[async_trait]
 impl BotAction for GetProfile {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = get_profile(state.api.profile(), &state.account_id_string()?)
+        let profile = get_profile(state.api.profile(), &state.account_id_string()?, None, None)
             .await
-            .change_context(TestError::ApiRequest)?;
+            .change_context(TestError::ApiRequest)?
+            .profile
+            .flatten()
+            .ok_or(TestError::MissingValue.report())?
+            .as_ref()
+            .clone();
         state.previous_value = PreviousValue::Profile(profile);
         Ok(())
     }

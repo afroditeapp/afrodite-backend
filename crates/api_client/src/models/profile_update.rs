@@ -19,6 +19,7 @@ pub struct ProfileUpdate {
     pub attributes: Vec<crate::models::ProfileAttributeValueUpdate>,
     #[serde(rename = "name")]
     pub name: String,
+    /// This must be empty because profile text support is disabled.
     #[serde(rename = "profile_text")]
     pub profile_text: String,
 }

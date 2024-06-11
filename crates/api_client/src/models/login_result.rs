@@ -15,6 +15,10 @@
 pub struct LoginResult {
     #[serde(rename = "account")]
     pub account: Box<crate::models::AuthPair>,
+    #[serde(rename = "account_id")]
+    pub account_id: Box<crate::models::AccountId>,
+    #[serde(rename = "email", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub email: Option<Option<Box<String>>>,
     #[serde(rename = "media", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub media: Option<Option<Box<crate::models::AuthPair>>>,
     #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -22,9 +26,11 @@ pub struct LoginResult {
 }
 
 impl LoginResult {
-    pub fn new(account: crate::models::AuthPair) -> LoginResult {
+    pub fn new(account: crate::models::AuthPair, account_id: crate::models::AccountId) -> LoginResult {
         LoginResult {
             account: Box::new(account),
+            account_id: Box::new(account_id),
+            email: None,
             media: None,
             profile: None,
         }

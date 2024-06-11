@@ -323,8 +323,8 @@ pub async fn get_location(configuration: &configuration::Configuration, ) -> Res
     }
 }
 
-/// Get account's current profile.  Profile can include version UUID which can be used for caching.  # Access Public profile access requires `view_public_profiles` capability. Public and private profile access requires `admin_view_all_profiles` capablility.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
-pub async fn get_profile(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::Profile, Error<GetProfileError>> {
+/// Get account's current profile.  Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
+pub async fn get_profile(configuration: &configuration::Configuration, account_id: &str, version: Option<&str>, is_match: Option<bool>) -> Result<crate::models::GetProfileResult, Error<GetProfileError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -332,6 +332,12 @@ pub async fn get_profile(configuration: &configuration::Configuration, account_i
     let local_var_uri_str = format!("{}/profile_api/profile/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
+    if let Some(ref local_var_str) = version {
+        local_var_req_builder = local_var_req_builder.query(&[("version", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = is_match {
+        local_var_req_builder = local_var_req_builder.query(&[("is_match", &local_var_str.to_string())]);
+    }
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }

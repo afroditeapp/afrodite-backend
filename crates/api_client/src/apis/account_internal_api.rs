@@ -61,7 +61,7 @@ pub async fn post_login(configuration: &configuration::Configuration, account_id
     }
 }
 
-/// Register new a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
+/// Register a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
 pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountId, Error<PostRegisterError>> {
     let local_var_configuration = configuration;
 

@@ -42,7 +42,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
 *AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered
-*AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register new a new bot account. Returns new account ID which is UUID.
+*AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
 *ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
 *ChatApi* | [**delete_pending_messages**](docs/ChatApi.md#delete_pending_messages) | **DELETE** /chat_api/pending_messages | Delete list of pending messages
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
@@ -53,9 +53,11 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
 *ChatApi* | [**get_sent_likes**](docs/ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
+*ChatApi* | [**post_get_pending_notification**](docs/ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
 *ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match
+*ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
@@ -158,6 +160,9 @@ Class | Method | HTTP request | Description
  - [EventToClient](docs/EventToClient.md)
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
+ - [FcmDeviceToken](docs/FcmDeviceToken.md)
+ - [GetProfileQueryParam](docs/GetProfileQueryParam.md)
+ - [GetProfileResult](docs/GetProfileResult.md)
  - [GroupValues](docs/GroupValues.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [IconLocation](docs/IconLocation.md)
@@ -186,6 +191,8 @@ Class | Method | HTTP request | Description
  - [PendingMessageDeleteList](docs/PendingMessageDeleteList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PendingMessagesPage](docs/PendingMessagesPage.md)
+ - [PendingNotificationToken](docs/PendingNotificationToken.md)
+ - [PendingNotificationWithData](docs/PendingNotificationWithData.md)
  - [PendingProfileContent](docs/PendingProfileContent.md)
  - [PendingSecurityContent](docs/PendingSecurityContent.md)
  - [PerfHistoryQuery](docs/PerfHistoryQuery.md)
@@ -194,7 +201,6 @@ Class | Method | HTTP request | Description
  - [PerfValueArea](docs/PerfValueArea.md)
  - [Profile](docs/Profile.md)
  - [ProfileAge](docs/ProfileAge.md)
- - [ProfileAllOf](docs/ProfileAllOf.md)
  - [ProfileAttributeFilterList](docs/ProfileAttributeFilterList.md)
  - [ProfileAttributeFilterListUpdate](docs/ProfileAttributeFilterListUpdate.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)
@@ -204,6 +210,7 @@ Class | Method | HTTP request | Description
  - [ProfileAttributes](docs/ProfileAttributes.md)
  - [ProfileAttributesSyncVersion](docs/ProfileAttributesSyncVersion.md)
  - [ProfileContent](docs/ProfileContent.md)
+ - [ProfileContentVersion](docs/ProfileContentVersion.md)
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileSearchAgeRange](docs/ProfileSearchAgeRange.md)

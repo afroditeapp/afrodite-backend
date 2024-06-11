@@ -13,14 +13,14 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct AccountData {
-    #[serde(rename = "email")]
-    pub email: String,
+    #[serde(rename = "email", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub email: Option<Option<Box<String>>>,
 }
 
 impl AccountData {
-    pub fn new(email: String) -> AccountData {
+    pub fn new() -> AccountData {
         AccountData {
-            email,
+            email: None,
         }
     }
 }

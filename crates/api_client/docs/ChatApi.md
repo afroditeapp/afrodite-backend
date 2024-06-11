@@ -14,9 +14,11 @@ Method | HTTP request | Description
 [**get_sent_blocks**](ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
 [**get_sent_likes**](ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
 [**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
+[**post_get_pending_notification**](ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
 [**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
 [**post_send_like**](ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
 [**post_send_message**](ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match
+[**post_set_device_token**](ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 [**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 
 
@@ -303,6 +305,36 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## post_get_pending_notification
+
+> crate::models::PendingNotificationWithData post_get_pending_notification(pending_notification_token)
+Get pending notification and reset pending notification.
+
+Get pending notification and reset pending notification.  Requesting this route is always valid to avoid figuring out device token values more easily.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**pending_notification_token** | [**PendingNotificationToken**](PendingNotificationToken.md) |  | [required] |
+
+### Return type
+
+[**crate::models::PendingNotificationWithData**](PendingNotificationWithData.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_message_number_of_latest_viewed_message
 
 > post_message_number_of_latest_viewed_message(update_message_view_status)
@@ -389,6 +421,34 @@ Name | Type | Description  | Required | Notes
 
 - **Content-Type**: application/json
 - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_set_device_token
+
+> crate::models::PendingNotificationToken post_set_device_token(fcm_device_token)
+
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**fcm_device_token** | [**FcmDeviceToken**](FcmDeviceToken.md) |  | [required] |
+
+### Return type
+
+[**crate::models::PendingNotificationToken**](PendingNotificationToken.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

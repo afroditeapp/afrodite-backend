@@ -13,6 +13,8 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProfileLink {
+    #[serde(rename = "content_version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub content_version: Option<Option<Box<crate::models::ProfileContentVersion>>>,
     #[serde(rename = "id")]
     pub id: Box<crate::models::AccountId>,
     #[serde(rename = "version")]
@@ -22,6 +24,7 @@ pub struct ProfileLink {
 impl ProfileLink {
     pub fn new(id: crate::models::AccountId, version: crate::models::ProfileVersion) -> ProfileLink {
         ProfileLink {
+            content_version: None,
             id: Box::new(id),
             version: Box::new(version),
         }

@@ -1,12 +1,10 @@
-# ProfileLink
+# PendingNotificationToken
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**content_version** | Option<[**crate::models::ProfileContentVersion**](ProfileContentVersion.md)> |  | [optional]
-**id** | [**crate::models::AccountId**](AccountId.md) |  | 
-**version** | [**crate::models::ProfileVersion**](ProfileVersion.md) |  | 
+**token** | **String** |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

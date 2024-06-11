@@ -5,7 +5,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**post_login**](AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered
-[**post_register**](AccountInternalApi.md#post_register) | **POST** /account_api/register | Register new a new bot account. Returns new account ID which is UUID.
+[**post_register**](AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
 
 
 
@@ -42,9 +42,9 @@ No authorization required
 ## post_register
 
 > crate::models::AccountId post_register()
-Register new a new bot account. Returns new account ID which is UUID.
+Register a new bot account. Returns new account ID which is UUID.
 
-Register new a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
+Register a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
 
 ### Parameters
 

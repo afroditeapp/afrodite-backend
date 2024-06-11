@@ -1,12 +1,11 @@
-# ProfileLink
+# GetProfileResult
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**content_version** | Option<[**crate::models::ProfileContentVersion**](ProfileContentVersion.md)> |  | [optional]
-**id** | [**crate::models::AccountId**](AccountId.md) |  | 
-**version** | [**crate::models::ProfileVersion**](ProfileVersion.md) |  | 
+**profile** | Option<[**crate::models::Profile**](Profile.md)> |  | [optional]
+**version** | Option<[**crate::models::ProfileVersion**](ProfileVersion.md)> |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

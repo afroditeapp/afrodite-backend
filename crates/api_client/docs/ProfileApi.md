@@ -138,10 +138,10 @@ This endpoint does not need any parameter.
 
 ## get_profile
 
-> crate::models::Profile get_profile(account_id)
+> crate::models::GetProfileResult get_profile(account_id, version, is_match)
 Get account's current profile.
 
-Get account's current profile.  Profile can include version UUID which can be used for caching.  # Access Public profile access requires `view_public_profiles` capability. Public and private profile access requires `admin_view_all_profiles` capablility.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
+Get account's current profile.  Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
 
 ### Parameters
 
@@ -149,10 +149,12 @@ Get account's current profile.  Profile can include version UUID which can be us
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
+**version** | Option<**uuid::Uuid**> | Profile version UUID |  |
+**is_match** | Option<**bool**> | If requested profile is not public, allow getting the profile data if the requested profile is a match. |  |
 
 ### Return type
 
-[**crate::models::Profile**](Profile.md)
+[**crate::models::GetProfileResult**](GetProfileResult.md)
 
 ### Authorization
 

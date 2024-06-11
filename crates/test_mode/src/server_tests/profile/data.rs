@@ -4,7 +4,7 @@ use api_client::{
 };
 use test_mode_macro::server_test;
 
-use crate::{runner::server_tests::assert::assert_eq, TestContext, TestResult};
+use crate::{client::TestError, runner::server_tests::assert::assert_eq, TestContext, TestResult};
 
 #[server_test]
 async fn updating_profile_works(context: TestContext) -> TestResult {
@@ -12,14 +12,17 @@ async fn updating_profile_works(context: TestContext) -> TestResult {
     let profile = ProfileUpdate {
         attributes: vec![],
         age: 18,
-        name: String::new(),
-        profile_text: "test".to_string(),
+        name: "A".to_string(),
+        profile_text: "".to_string(),
     };
     post_profile(account.account_api(), profile).await?;
     assert_eq(
-        "test",
-        &get_profile(account.account_api(), &account.account_id_string())
+        "A",
+        &get_profile(account.account_api(), &account.account_id_string(), None, None)
             .await?
-            .profile_text,
+            .profile
+            .flatten()
+            .ok_or(TestError::MissingValue.report())?
+            .name,
     )
 }

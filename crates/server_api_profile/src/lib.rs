@@ -50,6 +50,8 @@ pub use server_common::{data::DataError, result};
         model::profile::ProfileUpdate,
         model::profile::ProfileAge,
         model::profile::ProfileSearchAgeRange,
+        model::profile::GetProfileResult,
+        model::profile::GetProfileQueryParam,
         model::profile::Location,
         model::profile::FavoriteProfilesPage,
         model::profile::AvailableProfileAttributes,

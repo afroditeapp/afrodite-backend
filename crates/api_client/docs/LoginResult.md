@@ -5,6 +5,8 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **account** | [**crate::models::AuthPair**](AuthPair.md) |  | 
+**account_id** | [**crate::models::AccountId**](AccountId.md) |  | 
+**email** | Option<**String**> |  | [optional]
 **media** | Option<[**crate::models::AuthPair**](AuthPair.md)> |  | [optional]
 **profile** | Option<[**crate::models::AuthPair**](AuthPair.md)> |  | [optional]
 
