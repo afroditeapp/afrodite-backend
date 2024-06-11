@@ -134,6 +134,8 @@ impl DbDataToCacheLoader {
             profile_data.location.current_iterator =
                 index_iterator.reset_iterator(profile_data.location.current_iterator, location_key);
 
+            entry.profile = Some(Box::new(profile_data));
+
             let account = db
                 .db_read_common(move |mut cmds| cmds.common().account(account_id))
                 .await?;
@@ -147,8 +149,6 @@ impl DbDataToCacheLoader {
                     .await
                     .change_context(CacheError::Init)?;
             }
-
-            entry.profile = Some(Box::new(profile_data));
         }
 
         if config.components().chat {
