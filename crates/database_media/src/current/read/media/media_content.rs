@@ -89,6 +89,7 @@ impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
             pending_grid_crop_size: raw.pending_grid_crop_size,
             pending_grid_crop_x: raw.pending_grid_crop_x,
             pending_grid_crop_y: raw.pending_grid_crop_y,
+            profile_content_version_uuid: raw.profile_content_version_uuid,
             security_content_id,
             pending_security_content_id,
             profile_content_id_0,

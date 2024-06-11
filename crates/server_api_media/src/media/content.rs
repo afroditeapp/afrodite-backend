@@ -1,17 +1,14 @@
 use axum::{
-    body::Body,
-    extract::{Path, Query, State},
-    Extension, Router,
+    body::Body, extract::{Path, Query, State}, Extension, Router
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{
-    AccountContent, AccountId, AccountIdInternal, ContentAccessCheck, ContentId,
-    ContentProcessingId, ContentProcessingState, ContentSlot, NewContentParams, SlotId,
+    AccountContent, AccountId, AccountIdInternal, AccountState, Capabilities, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
 };
+use server_api::app::IsMatch;
 use server_data::{
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
-    DataError,
+    read::GetReadCommandsCommon, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle}, DataError
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -25,10 +22,27 @@ use crate::{
 pub const PATH_GET_CONTENT: &str = "/media_api/content/:account_id/:content_id";
 
 /// Get content data
+///
+/// # Access
+///
+/// ## Own content
+/// Unrestricted access.
+///
+/// ## Public other content
+/// Normal account state required.
+///
+/// ## Private other content
+/// If owner of the requested content is a match and the requested content
+/// is in current profile content, then the requested content can be accessed
+/// if query parameter `is_match` is set to `true`.
+///
+/// If the previous is not true, then capability `admin_view_all_profiles` or
+/// `admin_moderate_images` is required.
+///
 #[utoipa::path(
     get,
     path = "/media_api/content/{account_id}/{content_id}",
-    params(AccountId, ContentId, ContentAccessCheck),
+    params(AccountId, ContentId, GetContentQueryParams),
     responses(
         (status = 200, description = "Get content file.", body = Vec<u8>, content_type = "application/octet-stream"),
         (status = 401, description = "Unauthorized."),
@@ -36,27 +50,72 @@ pub const PATH_GET_CONTENT: &str = "/media_api/content/:account_id/:content_id";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_content<S: ReadData>(
+pub async fn get_content<S: ReadData + GetAccounts + IsMatch>(
     State(state): State<S>,
-    Path(account_id): Path<AccountId>,
-    Path(content_id): Path<ContentId>,
-    Query(_access_check): Query<ContentAccessCheck>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
+    Extension(capabilities): Extension<Capabilities>,
+    Path(requested_profile): Path<AccountId>,
+    Path(requested_content_id): Path<ContentId>,
+    Query(params): Query<GetContentQueryParams>,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
     MEDIA.get_content.incr();
 
-    // TODO: Add access restrictions.
+    let send_content = || async {
+        // TODO: Change to use stream when error handling is improved in future axum
+        // version. Or check will the connection be closed if there is an error. And
+        // set content lenght? Or use ServeFile service from tower middleware.
 
-    // TODO: Change to use stream when error handling is improved in future axum
-    // version. Or check will the connection be closed if there is an error. And
-    // set content lenght? Or use ServeFile service from tower middleware.
+        let data = state
+            .read()
+            .media()
+            .content_data(requested_profile, requested_content_id)
+            .await?;
 
-    let data = state
+        Ok((TypedHeader(ContentType::octet_stream()), data))
+    };
+
+    if account_id.as_id() == requested_profile {
+        return send_content().await;
+    }
+
+    if account_state != AccountState::Normal {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let requested_profile_internal_id = state.get_internal_id(requested_profile).await?;
+
+    let visibility = state
+        .read()
+        .common()
+        .account(requested_profile_internal_id)
+        .await?
+        .profile_visibility()
+        .is_currently_public();
+
+    let internal = state
         .read()
         .media()
-        .content_data(account_id, content_id)
+        .current_account_media(requested_profile_internal_id)
         .await?;
 
-    Ok((TypedHeader(ContentType::octet_stream()), data))
+    let requested_content_is_profile_content = internal
+        .iter_current_profile_content()
+        .any(|c| c.content_id() == requested_content_id);
+
+    if (visibility && requested_content_is_profile_content) ||
+        capabilities.admin_view_all_profiles ||
+        capabilities.admin_moderate_images ||
+        (
+            params.is_match &&
+            requested_content_is_profile_content &&
+            state.is_match(account_id, requested_profile_internal_id).await?
+        )
+    {
+        send_content().await
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
 }
 
 pub const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str =
@@ -234,7 +293,7 @@ pub async fn delete_content<S: WriteData + GetAccounts>(
 }
 
 pub fn content_router<
-    S: StateBase + WriteData + GetAccounts + ReadData + ContentProcessingProvider,
+    S: StateBase + WriteData + GetAccounts + ReadData + ContentProcessingProvider + IsMatch,
 >(
     s: S,
 ) -> Router {

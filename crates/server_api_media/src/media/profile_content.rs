@@ -3,9 +3,10 @@ use axum::{
     Extension, Router,
 };
 use model::{
-    AccountId, AccountIdInternal, ContentAccessCheck, PendingProfileContent, ProfileContent,
-    SetProfileContent,
+    AccountId, AccountIdInternal, AccountState, Capabilities, GetProfileContentQueryParams, GetProfileContentResult, PendingProfileContent, ProfileContent, SetProfileContent
 };
+use server_api::app::IsMatch;
+use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -17,38 +18,85 @@ use crate::{
 
 pub const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/:account_id";
 
-/// Get current profile content for selected profile
+/// Get current profile content for selected profile.
+///
+/// # Access
+///
+/// ## Own profile
+/// Unrestricted access.
+///
+/// ## Other profiles
+/// Normal account state required.
+///
+/// ## Private other profiles
+/// If the profile is a match, then the profile can be accessed if query
+/// parameter `is_match` is set to `true`.
+///
+/// If the profile is not a match, then capability `admin_view_all_profiles`
+/// is required.
 #[utoipa::path(
     get,
     path = "/media_api/profile_content_info/{account_id}",
-    params(AccountId, ContentAccessCheck),
+    params(AccountId, GetProfileContentQueryParams),
     responses(
-        (status = 200, description = "Get profile content info.", body = ProfileContent),
+        (status = 200, description = "Get profile content info.", body = GetProfileContentResult),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_content_info<S: ReadData + GetAccounts>(
+pub async fn get_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
     State(state): State<S>,
-    Path(account_id): Path<AccountId>,
-    Query(_access_check): Query<ContentAccessCheck>,
-    Extension(_api_caller_account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ProfileContent>, StatusCode> {
+    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
+    Extension(capabilities): Extension<Capabilities>,
+    Path(requested_profile): Path<AccountId>,
+    Query(params): Query<GetProfileContentQueryParams>,
+) -> Result<Json<GetProfileContentResult>, StatusCode> {
     MEDIA.get_profile_content_info.incr();
 
-    // TODO: access restrictions
+    let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    let internal_id = state.get_internal_id(account_id).await?;
+    let read_profile_action = || async {
+        let internal = state
+            .read()
+            .media()
+            .current_account_media(requested_profile)
+            .await?;
 
-    let internal_current_media = state
+        let info: ProfileContent = internal.clone().into();
+
+        match params.version() {
+            Some(param_version) if param_version == internal.profile_content_version_uuid =>
+                Ok(GetProfileContentResult::current_version_latest_response(internal.profile_content_version_uuid).into()),
+            _ => Ok(GetProfileContentResult::content_with_version(info, internal.profile_content_version_uuid).into()),
+        }
+    };
+
+    if account_id.as_id() == requested_profile.as_id() {
+        return read_profile_action().await;
+    }
+
+    if account_state != AccountState::Normal {
+        return Ok(GetProfileContentResult::empty().into());
+    }
+
+    let visibility = state
         .read()
-        .media()
-        .current_account_media(internal_id)
-        .await?;
+        .common()
+        .account(requested_profile)
+        .await?
+        .profile_visibility()
+        .is_currently_public();
 
-    let info: ProfileContent = internal_current_media.into();
-    Ok(info.into())
+    if visibility ||
+        capabilities.admin_view_all_profiles ||
+        (params.allow_get_content_if_match() && state.is_match(account_id, requested_profile).await?)
+    {
+        read_profile_action().await
+    } else {
+        Ok(GetProfileContentResult::empty().into())
+    }
 }
 
 pub const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
@@ -183,7 +231,7 @@ pub async fn delete_pending_profile_content<S: WriteData>(
         ))
 }
 
-pub fn profile_content_router<S: StateBase + WriteData + ReadData + GetAccounts>(s: S) -> Router {
+pub fn profile_content_router<S: StateBase + WriteData + ReadData + GetAccounts + IsMatch>(s: S) -> Router {
     use axum::routing::{delete, get, put};
 
     Router::new()

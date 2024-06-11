@@ -591,6 +591,7 @@ pub struct CurrentAccountMediaRaw {
 #[derive(Debug, Clone)]
 pub struct CurrentAccountMediaInternal {
     pub security_content_id: Option<MediaContentRaw>,
+    pub profile_content_version_uuid: ProfileContentVersion,
     pub profile_content_id_0: Option<MediaContentRaw>,
     pub profile_content_id_1: Option<MediaContentRaw>,
     pub profile_content_id_2: Option<MediaContentRaw>,
@@ -620,7 +621,7 @@ impl CurrentAccountMediaInternal {
             .chain(self.pending_security_content_id.iter())
     }
 
-    fn iter_current_profile_content(&self) -> impl Iterator<Item = &MediaContentRaw> {
+    pub fn iter_current_profile_content(&self) -> impl Iterator<Item = &MediaContentRaw> {
         [
             &self.profile_content_id_0,
             &self.profile_content_id_1,
@@ -813,10 +814,59 @@ impl From<CurrentAccountMediaInternal> for PendingSecurityContent {
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct ContentAccessCheck {
+pub struct GetContentQueryParams {
     /// If false media content access is allowed when profile is set as public.
     /// If true media content access is allowed when users are a match.
+    #[serde(default)]
     pub is_match: bool,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct GetProfileContentQueryParams {
+    version: Option<uuid::Uuid>,
+    /// If false profile content access is allowed when profile is set as public.
+    /// If true profile content access is allowed when users are a match.
+    #[serde(default)]
+    is_match: bool,
+}
+
+impl GetProfileContentQueryParams {
+    pub fn version(&self) -> Option<ProfileContentVersion> {
+        self.version.map(ProfileContentVersion::new)
+    }
+
+    pub fn allow_get_content_if_match(&self) -> bool {
+        self.is_match
+    }
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+pub struct GetProfileContentResult {
+    pub content: Option<ProfileContent>,
+    pub version: Option<ProfileContentVersion>,
+}
+
+impl GetProfileContentResult {
+    pub fn current_version_latest_response(version: ProfileContentVersion) -> Self {
+        Self {
+            content: None,
+            version: Some(version),
+        }
+    }
+
+    pub fn content_with_version(content: ProfileContent, version: ProfileContentVersion) -> Self {
+        Self {
+            content: Some(content),
+            version: Some(version),
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            content: None,
+            version: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
