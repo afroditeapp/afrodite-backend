@@ -1,11 +1,11 @@
 use std::net::SocketAddr;
 
-use model::{Account, AccountId, AccountIdInternal, AuthPair};
+use model::{Account, AccountIdInternal, AuthPair};
 use server_common::data::cache::CacheError;
 
 use super::WriteCommandsProvider;
 use crate::{
-    event::{event_channel, EventMode, EventReceiver},
+    event::EventReceiver,
     result::Result,
     write::db_transaction,
     DataError, IntoDataError,
@@ -14,12 +14,13 @@ use crate::{
 define_write_commands!(WriteCommandsCommon);
 
 impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
+    /// Creates new event channel if address is Some.
     pub async fn set_new_auth_pair(
         &self,
         id: AccountIdInternal,
         pair: AuthPair,
         address: Option<SocketAddr>,
-    ) -> Result<(), DataError> {
+    ) -> Result<Option<EventReceiver>, DataError> {
         let access = pair.access.clone();
         let current_access_token = db_transaction!(self, move |mut cmds| {
             let current_access_token = cmds.read().common().token().access_token(id)?;
@@ -56,21 +57,6 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
             .into_data_error(id)?;
 
         Ok(())
-    }
-
-    /// Init event channel for connection session.
-    pub async fn init_connection_session_events(
-        &self,
-        id: AccountId,
-    ) -> Result<EventReceiver, DataError> {
-        let (sender, receiver) = event_channel();
-        self.write_cache(id, move |entry| {
-            entry.current_event_connection = EventMode::Connected(sender);
-            Ok(())
-        })
-        .await?;
-
-        Ok(receiver)
     }
 
     // TODO(prod): Logout route which removes current

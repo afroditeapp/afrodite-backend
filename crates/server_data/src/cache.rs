@@ -8,7 +8,7 @@ pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
 
 use super::index::location::LocationIndexIteratorState;
-use crate::event::EventMode;
+use crate::event::{event_channel, EventReceiver, EventSender};
 
 #[derive(Debug)]
 pub struct AccountEntry {
@@ -58,13 +58,14 @@ impl DatabaseCache {
         }
     }
 
+    /// Creates new event channel if address is Some.
     pub async fn update_access_token_and_connection(
         &self,
         id: AccountId,
         current_access_token: Option<AccessToken>,
         new_access_token: AccessToken,
         address: Option<SocketAddr>,
-    ) -> Result<(), CacheError> {
+    ) -> Result<Option<EventReceiver>, CacheError> {
         let cache_entry = self
             .accounts
             .read()
@@ -81,9 +82,20 @@ impl DatabaseCache {
 
         // Avoid collisions.
         if tokens.get(&new_access_token).is_none() {
-            cache_entry.cache.write().await.current_connection = address;
+            let event_receiver = if let Some(address) = address {
+                let (sender, receiver) = event_channel();
+                cache_entry.cache.write().await.current_connection = Some(ConnectionInfo {
+                    connection: address,
+                    event_sender: sender,
+                });
+                Ok(Some(receiver))
+            } else {
+                Ok(None)
+            };
+
             tokens.insert(new_access_token, cache_entry);
-            Ok(())
+
+            event_receiver
         } else {
             Err(CacheError::AlreadyExists.report())
         }
@@ -108,9 +120,14 @@ impl DatabaseCache {
         {
             let mut cache_entry_write = cache_entry.cache.write().await;
             if connection.is_none() ||
-                (connection.is_some() && cache_entry_write.current_connection == connection) {
+                (
+                    connection.is_some() &&
+                    cache_entry_write.current_connection
+                        .as_ref()
+                        .map(|info| info.connection) == connection
+                )
+            {
                 cache_entry_write.current_connection = None;
-                cache_entry_write.current_event_connection = EventMode::None;
             }
         }
 
@@ -137,7 +154,7 @@ impl DatabaseCache {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
-            if r.current_connection.map(|a| a.ip()) == Some(connection.ip()) {
+            if r.current_connection.as_ref().map(|a| a.connection.ip()) == Some(connection.ip()) {
                 Some((
                     entry.account_id_internal,
                     r.capabilities.clone(),
@@ -295,14 +312,19 @@ impl CachedMedia {
 }
 
 #[derive(Debug)]
+pub struct ConnectionInfo {
+    pub connection: SocketAddr,
+    pub event_sender: EventSender,
+}
+
+#[derive(Debug)]
 pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
     pub media: Option<Box<CachedMedia>>,
     pub chat: Option<Box<CachedChatComponentData>>,
     pub capabilities: Capabilities,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
-    pub current_connection: Option<SocketAddr>,
-    pub current_event_connection: EventMode,
+    pub current_connection: Option<ConnectionInfo>,
     pub pending_notification_flags: PendingNotificationFlags,
 }
 
@@ -315,7 +337,6 @@ impl CacheEntry {
             capabilities: Capabilities::default(),
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
             current_connection: None,
-            current_event_connection: EventMode::None,
             pending_notification_flags: PendingNotificationFlags::empty(),
         }
     }

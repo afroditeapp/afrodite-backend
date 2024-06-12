@@ -43,9 +43,6 @@ pub async fn get_version<S: BackendVersionProvider>(
     state.backend_version().into()
 }
 
-// TODO(prod): Check access and refresh key lenghts.
-
-
 #[derive(thiserror::Error, Debug)]
 pub enum WebSocketError {
     #[error("Receive error")]
@@ -70,8 +67,8 @@ pub enum WebSocketError {
     InvalidRefreshTokenInDatabase,
     #[error("Database: account logout failed")]
     DatabaseLogoutFailed,
-    #[error("Database: saving new tokens failed")]
-    DatabaseSaveTokens,
+    #[error("Database: saving new tokens failed or other error")]
+    DatabaseSaveTokensOrOtherError,
     #[error("Database: Account state query failed")]
     DatabaseAccountStateQuery,
     #[error("Database: Chat state query failed")]
@@ -181,7 +178,7 @@ async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
 ) {
     // TODO(prod): Remove account details printing before 1.0
 
-    info!("handle_socket for '{}'", id.id.as_i64());
+    info!("handle_socket for '{}', address: {}", id.id.as_i64(), address);
     let quit_lock = if let Some(quit_lock) = ws_manager.get_ongoing_ws_connection_quit_lock().await
     {
         quit_lock
@@ -191,7 +188,7 @@ async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
 
     tokio::select! {
         _ = ws_manager.server_quit_detected() => {
-            info!("Server quit detected, closing WebSocket connection for '{}'", id.id.as_i64());
+            info!("Server quit detected, closing WebSocket connection for '{}', address: {}", id.id.as_i64(), address);
             // TODO: Probably sessions should be ended when server quits?
             //       Test does this code path work with client.
             let result = state.write(move |cmds| async move {
@@ -201,13 +198,13 @@ async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
             }).await;
 
             if let Err(e) = result {
-                error!("server quit end_connection_session, {e:?}, for '{id}'");
+                error!("server quit end_connection_session, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
             }
         },
         r = handle_socket_result(socket, address, id, &state) => {
             match r {
                 Ok(()) => {
-                    info!("handle_socket_result returned Ok for '{}'", id.id.as_i64());
+                    info!("handle_socket_result returned Ok for '{}', address: {}", id.id.as_i64(), address);
                     let result = state.write(move |cmds| async move {
                         cmds.common()
                             .end_connection_session(id, address)
@@ -215,18 +212,18 @@ async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
                     }).await;
 
                     if let Err(e) = result {
-                        error!("end_connection_session, {e:?}, for '{id}'")
+                        error!("end_connection_session, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
                     }
                 },
                 Err(e) => {
-                    error!("handle_socket_result returned Err {e:?} for id: '{id}'");
+                    error!("handle_socket_result returned Err {e:?} for '{}', address: {}", id.id.as_i64(), address);
 
                     let result = state.write(move |cmds| async move {
                         cmds.common().logout(id).await
                     }).await;
 
                     if let Err(e) = result {
-                        error!("logout, {e:?}, for '{id}'")
+                        error!("logout, {e:?}, for '{}', address: {}", id.id.as_i64(), address);
                     }
                 }
             }
@@ -236,6 +233,8 @@ async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
     state.event_manager().trigger_push_notification_sending_check_if_needed(id).await;
 
     drop(quit_lock);
+
+    info!("Connection for '{}' closed, address: {}", id.id.as_i64(), address);
 }
 
 
@@ -245,7 +244,7 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
     id: AccountIdInternal,
     state: &S,
 ) -> Result<(), WebSocketError> {
-    info!("handle_socket_result for '{}'", id.id.as_i64());
+    info!("handle_socket_result for '{}', address: {}", id.id.as_i64(), address);
 
     // Receive protocol version byte.
     let client_is_supported = match socket
@@ -261,7 +260,7 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
                         .into_error_string(WebSocketError::ProtocolError)?;
                     // TODO: remove after client is tested to work with the
                     // new protocol
-                    info!("{:#?}", info);
+                    info!("{:#?}, for '{}', address: {}", info, id.id.as_i64(), address);
                     // In the future there is possibility to blacklist some
                     // old client versions.
                     true
@@ -320,8 +319,13 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
         .change_context(WebSocketError::Send)?;
 
     let new_access_token_cloned = new_access_token.clone();
-    state
+    let mut event_receiver = state
         .write(move |cmds| async move {
+            // Prevent sending push notification if this connection
+            // replaces the old connection.
+            cmds.events().remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::all()).await;
+            // Create new event channel, so old one will break.
+            // Also update tokens.
             cmds.common()
                 .set_new_auth_pair(
                     id,
@@ -334,7 +338,8 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
                 .await
         })
         .await
-        .change_context(WebSocketError::DatabaseSaveTokens)?;
+        .change_context(WebSocketError::DatabaseSaveTokensOrOtherError)?
+        .ok_or(WebSocketError::EventChannelCreationFailed.report())?;
 
     socket
         .send(Message::Text(new_access_token.into_string()))
@@ -354,19 +359,6 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
         }
         _ => return Err(WebSocketError::ProtocolError.report()),
     };
-
-    let mut event_receiver = state
-        .write(
-            move |cmds| async move {
-                // Prevent sending push notification if this connection
-                // replaced the old connection.
-                cmds.events().remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::all()).await;
-                // Create new event channel, so old one will break
-                cmds.common().init_connection_session_events(id.uuid).await
-            },
-        )
-        .await
-        .change_context(WebSocketError::DatabaseSaveTokens)?;
 
     state.reset_pending_notification(id).await?;
     state.sync_data_with_client_if_needed(&mut socket, id, data_sync_versions)
@@ -400,10 +392,10 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
                             // TODO(prod): Consider flagging the account for
                             // suspicious activity.
                             Message::Binary(data) => {
-                                error!("Client sent unexpected binary message: {:?}, from: {}", data, address);
+                                error!("Client sent unexpected binary message: {:?}, address: {}", data, address);
                             }
                             Message::Text(text) => {
-                                error!("Client sent unexpected text message: {:?}, from: {}", text, address);
+                                error!("Client sent unexpected text message: {:?}, address: {}", text, address);
                             }
                             Message::Close(_) => break,
                         }
@@ -432,7 +424,7 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
             }
             _ = timeout_timer.wait_timeout() => {
                 // Connection timeout
-                info!("Connection timeout for '{}'", id.id.as_i64());
+                info!("Connection timeout for '{}', address: {}", id.id.as_i64(), address);
                 break;
             }
         }

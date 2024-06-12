@@ -1,7 +1,7 @@
 use model::{AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken};
 
 use super::{super::DataError, ReadCommandsProvider};
-use crate::{event::EventMode, result::Result, IntoDataError};
+use crate::{result::Result, IntoDataError};
 
 define_read_commands!(ReadCommandsCommon);
 
@@ -27,17 +27,6 @@ impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
         self.db_read(move |mut cmds| cmds.common().token().refresh_token(id))
             .await
             .into_error()
-    }
-
-    pub async fn access_event_mode<T>(
-        &self,
-        id: AccountId,
-        action: impl FnOnce(&EventMode) -> T,
-    ) -> Result<T, DataError> {
-        self.cache()
-            .read_cache(id, move |entry| action(&entry.current_event_connection))
-            .await
-            .into_data_error(id)
     }
 
     /// Account is available on all servers as account server will sync it to

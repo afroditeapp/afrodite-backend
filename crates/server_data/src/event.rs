@@ -61,12 +61,6 @@ impl EventReceiver {
     }
 }
 
-#[derive(Debug)]
-pub enum EventMode {
-    None,
-    Connected(EventSender),
-}
-
 pub struct EventManagerWithCacheReference<'a> {
     cache: &'a DatabaseCache,
     push_notification_sender: &'a PushNotificationSender,
@@ -83,13 +77,13 @@ impl<'a> EventManagerWithCacheReference<'a> {
         }
     }
 
-    async fn access_event_mode<T: Send + 'static>(
+    async fn access_connection_event_sender<T: Send + 'static>(
         &'a self,
         id: model::AccountId,
-        action: impl FnOnce(&EventMode) -> T + Send,
+        action: impl FnOnce(Option<&EventSender>) -> T + Send,
     ) -> Result<T, DataError> {
         self.cache
-            .read_cache(id, move |entry| action(&entry.current_event_connection))
+            .read_cache(id, move |entry| action(entry.current_connection.as_ref().map(|info| &info.event_sender)))
             .await
             .into_data_error(id)
     }
@@ -102,8 +96,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
         account: impl Into<AccountId>,
         event: EventToClientInternal,
     ) -> Result<(), DataError> {
-        self.access_event_mode(account.into(), move |mode| {
-            if let EventMode::Connected(sender) = mode {
+        self.access_connection_event_sender(account.into(), move |sender| {
+            if let Some(sender) = sender {
                 // Ignore errors
                 let _ = sender.sender.try_send(InternalEventType::NormalEvent(event));
             }
@@ -128,8 +122,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
             .into_data_error(account)?;
 
         let sent = self
-            .access_event_mode(account.into(), move |mode| {
-                if let EventMode::Connected(sender) = mode {
+            .access_connection_event_sender(account.into(), move |sender| {
+                if let Some(sender) = sender {
                     match sender.sender.try_send(InternalEventType::Notification(event)) {
                         Ok(()) => true,
                         Err(TrySendError::Closed(_) | TrySendError::Full(_)) => false,
