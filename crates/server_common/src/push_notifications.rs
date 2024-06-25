@@ -420,3 +420,13 @@ pub enum UnusualAction {
     DisablePushNotificationSupport,
     RemoveDeviceToken,
 }
+
+
+// TODO(prod): Limit push notification sending rate.
+//             Only one push notification should be sent
+//             per conversation until user opens the app.
+//             Same for other types of notifications.
+//             At least likes.
+//             Or is limiting pending message count enough
+//             for message push notifications?
+// TODO(prod): Push notifications for likes and image moderation updates
