@@ -93,7 +93,7 @@ values = [
         level values are possible to set. Max value count for top and sub
         level are u16::MAX.
     - `SelectSingleFilterMultiple` - multiple values in select filter.
-        Only top level values are possible to set. Max value count is 7.
+        Only top level values are possible to set. Max value count is 16.
     - `SelectMultipleFilterMultiple` - same as `SelectSingleFilterMultiple`
         but selecting multiple bitflags are possible.
 - `order_number` - Unique order number for the attribute.
@@ -121,7 +121,7 @@ values = [
             Max value is i16::MAX.
         - Behavior for `SelectSingleFilterMultiple` - Default value starts
             from 0x1 and default value for next list item is the
-            previous << 1. Max value is 0x40 so 7 values are possible
+            previous << 1. Last value is 0x8000 so 16 values are possible
             to define.
         The field is optional.
     - `icon` - Icon to be used for the attribute.

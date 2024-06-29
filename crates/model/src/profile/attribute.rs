@@ -112,7 +112,7 @@ struct ModeAndIdSequenceNumber {
 impl ModeAndIdSequenceNumber {
     const LAST_INTEGER_ID: u16 = i16::MAX as u16;
     const FIRST_BITFLAG_ID: u16 = 1;
-    const LAST_BITFLAG_ID: u16 = 0x40;
+    const LAST_BITFLAG_ID: u32 = 0x8000;
 
     fn new(mode: AttributeMode) -> Self {
         Self {
@@ -162,7 +162,8 @@ impl ModeAndIdSequenceNumber {
             ));
         }
 
-        if id > Self::LAST_BITFLAG_ID {
+        let id_u32: u32 = id.into();
+        if id_u32 > Self::LAST_BITFLAG_ID {
             return Err(format!("Invalid ID {}, id > {}", id, Self::LAST_BITFLAG_ID));
         }
 
