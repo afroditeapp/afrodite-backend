@@ -1,7 +1,5 @@
 use model::{
-    AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated,
-    ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal,
-    ValidatedSearchGroups,
+    AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
 };
 use server_data::{
     cache::CacheError,
@@ -64,11 +62,12 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
+        let config = self.config_arc().clone();
         let account = db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile(id, &profile_data)?;
             cmds.profile()
                 .data()
-                .upsert_profile_attributes(id, profile_data.new_data.attributes)?;
+                .upsert_profile_attributes(id, profile_data.new_data.attributes, config.profile_attributes())?;
             cmds.read().common().account(id)
         })?;
 
@@ -136,10 +135,11 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
         id: AccountIdInternal,
         filters: ProfileAttributeFilterListUpdateValidated,
     ) -> Result<(), DataError> {
+        let config = self.config_arc().clone();
         let new_filters = db_transaction!(self, move |mut cmds| {
             cmds.profile()
                 .data()
-                .upsert_profile_attribute_filters(id, filters.filters)?;
+                .upsert_profile_attribute_filters(id, filters.filters, config.profile_attributes())?;
             cmds.read().profile().data().profile_attribute_filters(id)
         })?;
 

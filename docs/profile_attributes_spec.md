@@ -96,6 +96,10 @@ values = [
         Only top level values are possible to set. Max value count is 16.
     - `SelectMultipleFilterMultiple` - same as `SelectSingleFilterMultiple`
         but selecting multiple bitflags are possible.
+    - `SelectMultipleFilterMultipleNumberList` - Similar as
+        `SelectMultipleFilterMultiple`, but implemented with list of u16 values.
+        Only top level values are possible to set.
+        It is possible to select and filter max 8 values.
 - `order_number` - Unique order number for the attribute.
         0 is the first attribute.
 - `value_order` - Display order mode for the attribute values.

@@ -127,7 +127,7 @@ impl DbDataToCacheLoader {
                 .await?;
 
             let mut profile_data =
-                CachedProfile::new(account_id.uuid, profile, state, attributes, filters);
+                CachedProfile::new(account_id.uuid, profile, state, attributes, filters, config);
 
             let location_key = index_writer.coordinates_to_key(&profile_location);
             profile_data.location.current_position = location_key;

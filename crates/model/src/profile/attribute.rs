@@ -127,7 +127,8 @@ impl ModeAndIdSequenceNumber {
 
     fn set_value(&mut self, id: u16) -> Result<u16, String> {
         match self.mode {
-            AttributeMode::SelectSingleFilterSingle => {
+            AttributeMode::SelectSingleFilterSingle |
+            AttributeMode::SelectMultipleFilterMultipleNumberList => {
                 Self::validate_integer_id(id)?;
                 self.current_id = Some(id);
             }
@@ -173,7 +174,8 @@ impl ModeAndIdSequenceNumber {
     /// Increment the current ID and return the updated current ID.
     fn increment_value(&mut self) -> Result<u16, String> {
         match self.mode {
-            AttributeMode::SelectSingleFilterSingle => {
+            AttributeMode::SelectSingleFilterSingle |
+            AttributeMode::SelectMultipleFilterMultipleNumberList => {
                 let tmp = if let Some(current_id) = self.current_id {
                     current_id + 1
                 } else {
@@ -408,6 +410,10 @@ impl AttributeInternal {
             return Err("Bitflag mode cannot have group values".to_string());
         }
 
+        if self.mode.is_number_list() && !group_values.is_empty() {
+            return Err("Number list mode cannot have group values".to_string());
+        }
+
         for g in group_values.into_iter() {
             if let Some(v) = values.iter_mut().find(|v| v.key == g.key) {
                 v.group_values = Some(g);
@@ -508,6 +514,7 @@ pub enum AttributeMode {
     SelectSingleFilterSingle,
     SelectSingleFilterMultiple,
     SelectMultipleFilterMultiple,
+    SelectMultipleFilterMultipleNumberList,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
@@ -525,9 +532,19 @@ pub enum AttributeValueOrderMode {
 impl AttributeMode {
     pub fn is_bitflag_mode(&self) -> bool {
         match self {
-            AttributeMode::SelectSingleFilterSingle => false,
+            AttributeMode::SelectSingleFilterSingle |
+            AttributeMode::SelectMultipleFilterMultipleNumberList => false,
             AttributeMode::SelectSingleFilterMultiple
             | AttributeMode::SelectMultipleFilterMultiple => true,
+        }
+    }
+
+    pub fn is_number_list(&self) -> bool {
+        match self {
+            AttributeMode::SelectSingleFilterSingle |
+            AttributeMode::SelectSingleFilterMultiple |
+            AttributeMode::SelectMultipleFilterMultiple => false,
+            AttributeMode::SelectMultipleFilterMultipleNumberList => true,
         }
     }
 }
@@ -598,6 +615,9 @@ pub struct ProfileAttributes {
 }
 
 impl ProfileAttributes {
+    // TODO: Add method for indexing the attribute list with other
+    // types. Add wrapper type for the ID?
+
     pub fn from_file(file: AttributesFileInternal) -> Result<Self, String> {
         let (attribute_order, internal_attributes) = file.validate_attributes()?;
 

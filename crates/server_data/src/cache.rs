@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
+use config::Config;
 use error_stack::Result;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
@@ -259,6 +260,7 @@ impl CachedProfile {
         state: ProfileStateInternal,
         attributes: Vec<ProfileAttributeValue>,
         filters: Vec<ProfileAttributeFilterValue>,
+        config: &Config,
     ) -> Self {
         Self {
             account_id,
@@ -268,7 +270,7 @@ impl CachedProfile {
                 current_position: LocationIndexKey::default(),
                 current_iterator: LocationIndexIteratorState::new(),
             },
-            attributes: SortedProfileAttributes::new(attributes),
+            attributes: SortedProfileAttributes::new(attributes, config.profile_attributes()),
             filters,
         }
     }

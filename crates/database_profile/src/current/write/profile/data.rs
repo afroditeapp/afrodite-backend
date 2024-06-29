@@ -1,9 +1,8 @@
 use database::{define_current_write_commands, DieselDatabaseError};
-use diesel::{insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
+use diesel::{delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate,
-    ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion,
+    AccountIdInternal, Attribute, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion
 };
 
 use super::ConnectionProvider;
@@ -155,8 +154,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         &mut self,
         id: AccountIdInternal,
         data: Vec<ProfileAttributeValueUpdate>,
+        attributes: Option<&ProfileAttributes>,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_attributes::dsl::*;
 
         // Using for loop here because this:
         // https://github.com/diesel-rs/diesel/discussions/3115
@@ -165,21 +164,53 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         //  to NULL)
 
         for a in data {
-            insert_into(profile_attributes)
-                .values((
-                    account_id.eq(id.as_db_id()),
-                    attribute_id.eq(a.id as i64),
-                    attribute_value_part1.eq(a.value_part1.map(|v| v as i64)),
-                    attribute_value_part2.eq(a.value_part2.map(|v| v as i64)),
-                ))
-                .on_conflict((account_id, attribute_id))
-                .do_update()
-                .set((
-                    attribute_value_part1.eq(excluded(attribute_value_part1)),
-                    attribute_value_part2.eq(excluded(attribute_value_part2)),
-                ))
-                .execute(self.conn())
-                .into_db_error(())?;
+            let id_usize: usize = a.id.into();
+            let is_number_list = attributes
+                .and_then(|attributes| attributes.attributes.get(id_usize))
+                .map(|attribute: &Attribute| attribute.mode.is_number_list())
+                .unwrap_or_default();
+
+            if is_number_list {
+                use model::schema::profile_attributes_number_list::dsl::*;
+
+                delete(profile_attributes_number_list)
+                    .filter(account_id.eq(id.as_db_id()))
+                    .filter(attribute_id.eq(a.id as i64))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+
+                let values: Vec<_> = a.values.into_iter().map(|value| {
+                    (
+                        account_id.eq(id.as_db_id()),
+                        attribute_id.eq(a.id as i64),
+                        attribute_value.eq(value as i64),
+                    )
+                })
+                .collect();
+
+                insert_into(profile_attributes_number_list)
+                    .values(values)
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            } else {
+                use model::schema::profile_attributes::dsl::*;
+
+                insert_into(profile_attributes)
+                    .values((
+                        account_id.eq(id.as_db_id()),
+                        attribute_id.eq(a.id as i64),
+                        attribute_value_part1.eq(a.values.first().copied().map(|v| v as i64)),
+                        attribute_value_part2.eq(a.values.get(1).copied().map(|v| v as i64)),
+                    ))
+                    .on_conflict((account_id, attribute_id))
+                    .do_update()
+                    .set((
+                        attribute_value_part1.eq(excluded(attribute_value_part1)),
+                        attribute_value_part2.eq(excluded(attribute_value_part2)),
+                    ))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
         }
 
         Ok(())
@@ -189,8 +220,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         &mut self,
         id: AccountIdInternal,
         data: Vec<ProfileAttributeFilterValueUpdate>,
+        attributes: Option<&ProfileAttributes>,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::profile_attributes::dsl::*;
 
         // Using for loop here because this:
         // https://github.com/diesel-rs/diesel/discussions/3115
@@ -199,23 +230,64 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         //  to NULL)
 
         for a in data {
-            insert_into(profile_attributes)
-                .values((
-                    account_id.eq(id.as_db_id()),
-                    attribute_id.eq(a.id as i64),
-                    filter_value_part1.eq(a.filter_part1.map(|v| v as i64)),
-                    filter_value_part2.eq(a.filter_part2.map(|v| v as i64)),
-                    filter_accept_missing_attribute.eq(a.accept_missing_attribute),
-                ))
-                .on_conflict((account_id, attribute_id))
-                .do_update()
-                .set((
-                    filter_value_part1.eq(excluded(filter_value_part1)),
-                    filter_value_part2.eq(excluded(filter_value_part2)),
-                    filter_accept_missing_attribute.eq(excluded(filter_accept_missing_attribute)),
-                ))
-                .execute(self.conn())
-                .into_db_error(())?;
+            let id_usize: usize = a.id.into();
+            let is_number_list = attributes
+                .and_then(|attributes| attributes.attributes.get(id_usize))
+                .map(|attribute: &Attribute| attribute.mode.is_number_list())
+                .unwrap_or_default();
+
+            let (part1, part2) = if is_number_list {
+                use model::schema::profile_attributes_number_list_filters::dsl::*;
+
+                delete(profile_attributes_number_list_filters)
+                    .filter(account_id.eq(id.as_db_id()))
+                    .filter(attribute_id.eq(a.id as i64))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+
+                let values: Vec<_> = a.filter_values.into_iter().map(|value| {
+                    (
+                        account_id.eq(id.as_db_id()),
+                        attribute_id.eq(a.id as i64),
+                        filter_value.eq(value as i64),
+                    )
+                })
+                .collect();
+
+                insert_into(profile_attributes_number_list_filters)
+                    .values(values)
+                    .execute(self.conn())
+                    .into_db_error(())?;
+
+                (None, None)
+            } else {
+                (
+                    a.filter_values.first().copied().map(|v| v as i64),
+                    a.filter_values.get(1).copied().map(|v| v as i64),
+                )
+            };
+
+            {
+                use model::schema::profile_attributes::dsl::*;
+
+                insert_into(profile_attributes)
+                    .values((
+                        account_id.eq(id.as_db_id()),
+                        attribute_id.eq(a.id as i64),
+                        filter_value_part1.eq(part1),
+                        filter_value_part2.eq(part2),
+                        filter_accept_missing_attribute.eq(a.accept_missing_attribute),
+                    ))
+                    .on_conflict((account_id, attribute_id))
+                    .do_update()
+                    .set((
+                        filter_value_part1.eq(excluded(filter_value_part1)),
+                        filter_value_part2.eq(excluded(filter_value_part2)),
+                        filter_accept_missing_attribute.eq(excluded(filter_accept_missing_attribute)),
+                    ))
+                    .execute(self.conn())
+                    .into_db_error(())?;
+            }
         }
 
         Ok(())

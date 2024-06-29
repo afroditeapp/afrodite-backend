@@ -91,6 +91,11 @@ macro_rules! define_server_data_write_commands {
             }
 
             #[allow(dead_code)]
+            fn config_arc(&self) -> &std::sync::Arc<config::Config> {
+                &self.cmds.write_cmds().config
+            }
+
+            #[allow(dead_code)]
             fn file_dir(&self) -> &$crate::file::utils::FileDir {
                 &self.cmds.write_cmds().file_dir
             }

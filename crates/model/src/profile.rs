@@ -21,6 +21,8 @@ mod attribute;
 
 pub use attribute::*;
 
+const NUMBER_LIST_ATTRIBUTE_MAX_VALUES: usize = 8;
+
 /// Profile's database data
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::profile)]
@@ -41,33 +43,52 @@ impl ProfileInternal {
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValueUpdate {
     /// Attribute ID
     pub id: u16,
-    /// Bitflags value or top level attribute value ID.
-    pub value_part1: Option<u16>,
-    /// Sub level attribute value ID.
-    pub value_part2: Option<u16>,
+    /// Empty list removes the attribute.
+    ///
+    /// - First value is bitflags value or top level attribute value ID or first number list value.
+    /// - Second value is sub level attribute value ID or second number list value.
+    /// - Third and rest are number list values.
+    pub values: Vec<u16>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeValue {
     /// Attribute ID
     id: u16,
-    /// Bitflags value or top level attribute value ID.
-    value_part1: u16,
-    /// Sub level attribute value ID.
-    value_part2: Option<u16>,
+    /// - First value is bitflags value or top level attribute value ID or first number list value.
+    /// - Second value is sub level attribute value ID or second number list value.
+    /// - Third and rest are number list values.
+    ///
+    /// The number list values are in ascending order.
+    values: Vec<u16>,
 }
 
 impl ProfileAttributeValue {
-    pub fn new(id: u16, value_part1: u16, value_part2: Option<u16>) -> Self {
-        Self {
-            id,
-            value_part1,
-            value_part2,
+    pub fn try_from_update_and_sort(mut value: ProfileAttributeValueUpdate, attribute: &Attribute) -> Result<Self, String> {
+        if attribute.mode.is_number_list() {
+            value.values.sort();
         }
+        Self::try_from_update(value)
+    }
+
+    pub fn try_from_update(value: ProfileAttributeValueUpdate) -> Result<Self, String> {
+        match value.values.first() {
+            Some(_) => Ok(Self { id: value.id, values: value.values }),
+            None => Err("Value part1 missing".to_string()),
+        }
+    }
+
+    pub fn new_not_number_list(id: u16, values: Vec<u16>) -> Self {
+        Self { id, values }
+    }
+
+    pub fn new_number_list(id: u16, mut values: Vec<u16>) -> Self {
+        values.sort();
+        Self { id, values }
     }
 
     pub fn id(&self) -> u16 {
@@ -75,17 +96,21 @@ impl ProfileAttributeValue {
     }
 
     pub fn as_bitflags(&self) -> u16 {
-        self.value_part1
+        self.values.first().copied().unwrap_or(0)
     }
 
     /// ID number for top level AttributeValue ID.
     pub fn as_top_level_id(&self) -> u16 {
-        self.value_part1
+        self.values.first().copied().unwrap_or(0)
     }
 
     /// ID number for sub level AttributeValue ID.
     pub fn as_sub_level_id(&self) -> Option<u16> {
-        self.value_part2
+        self.values.get(1).copied()
+    }
+
+    pub fn as_number_list(&self) -> &[u16] {
+        &self.values
     }
 }
 
@@ -93,32 +118,31 @@ impl From<ProfileAttributeValue> for ProfileAttributeValueUpdate {
     fn from(value: ProfileAttributeValue) -> Self {
         Self {
             id: value.id,
-            value_part1: Some(value.value_part1),
-            value_part2: value.value_part2,
+            values: value.values,
         }
     }
 }
 
-impl TryFrom<ProfileAttributeValueUpdate> for ProfileAttributeValue {
-    type Error = String;
-
-    fn try_from(value: ProfileAttributeValueUpdate) -> Result<ProfileAttributeValue, Self::Error> {
-        match value.value_part1 {
-            Some(part1) => Ok(Self::new(value.id, part1, value.value_part2)),
-            None => Err("Value part1 missing".to_string()),
-        }
-    }
-}
-
+/// The profile attributes and possible number list values are sorted.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SortedProfileAttributes {
     attributes: Vec<ProfileAttributeValue>,
 }
 
 impl SortedProfileAttributes {
-    pub fn new(attributes: Vec<ProfileAttributeValue>) -> Self {
+    pub fn new(attributes: Vec<ProfileAttributeValue>, all_attributes: Option<&ProfileAttributes>) -> Self {
         let mut attributes = attributes;
         attributes.sort_by(|a, b| a.id.cmp(&b.id));
+
+        for a in &mut attributes {
+            let id_usize: usize = a.id.into();
+            if let Some(info) = all_attributes.and_then(|attributes| attributes.attributes.get(id_usize)) {
+                if info.mode.is_number_list() {
+                    a.values.sort();
+                }
+            }
+        }
+
         Self { attributes }
     }
 
@@ -137,7 +161,7 @@ impl SortedProfileAttributes {
         let mut attributes = update
             .attributes
             .iter()
-            .filter_map(|v| TryInto::<ProfileAttributeValue>::try_into(*v).ok())
+            .filter_map(|v| ProfileAttributeValue::try_from_update(v.clone()).ok())
             .collect::<Vec<_>>();
         attributes.sort_by(|a, b| a.id.cmp(&b.id));
         self.attributes = attributes;
@@ -161,8 +185,14 @@ impl ProfileAttributeFilterListUpdate {
             }
 
             if let Some(info) = attribute_info {
-                if info.attributes.get(a.id as usize).is_none() {
-                    return Err("Unknown attribute ID".to_string());
+                let attribute_info = info.attributes.get(a.id as usize);
+                match attribute_info {
+                    None => return Err("Unknown attribute ID".to_string()),
+                    Some(info) => {
+                        if info.mode.is_number_list() && a.filter_values.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES {
+                            return Err(format!("Number list attribute supports max {} filters", NUMBER_LIST_ATTRIBUTE_MAX_VALUES));
+                        }
+                    }
                 }
             } else {
                 return Err("Profile attributes are disabled".to_string());
@@ -184,11 +214,11 @@ pub struct ProfileAttributeFilterListUpdateValidated {
 pub struct ProfileAttributeFilterValueUpdate {
     /// Attribute ID
     pub id: u16,
-    /// Bitflags value or top level attribute value ID filter.
-    pub filter_part1: Option<u16>,
-    /// Sub level attribute value ID filter.
-    pub filter_part2: Option<u16>,
-    /// Should missing attribute be accepted.
+    /// - First value is bitflags value or top level attribute value ID or first number list value.
+    /// - Second value is sub level attribute value ID or second number list value.
+    /// - Third and rest are number list values.
+    pub filter_values: Vec<u16>,
+    /// Defines should missing attribute be accepted.
     ///
     /// Setting this to `None` disables the filter.
     pub accept_missing_attribute: Option<bool>,
@@ -203,24 +233,24 @@ pub struct ProfileAttributeFilterList {
 pub struct ProfileAttributeFilterValue {
     /// Attribute ID
     id: u16,
-    /// Bitflags value or top level attribute value ID filter.
-    filter_part1: Option<u16>,
-    /// Sub level attribute value ID filter.
-    filter_part2: Option<u16>,
+    /// - First value is bitflags value or top level attribute value ID or first number list value.
+    /// - Second value is sub level attribute value ID or second number list value.
+    /// - Third and rest are number list values.
+    ///
+    /// The number list values are in ascending order.
+    filter_values: Vec<u16>,
     accept_missing_attribute: bool,
 }
 
 impl ProfileAttributeFilterValue {
-    pub fn new(
+    pub fn new_not_number_list(
         id: u16,
-        filter_part1: Option<u16>,
-        filter_part2: Option<u16>,
+        filter_values: Vec<u16>,
         accept_missing_attribute: bool,
     ) -> Self {
         Self {
             id,
-            filter_part1,
-            filter_part2,
+            filter_values,
             accept_missing_attribute,
         }
     }
@@ -235,19 +265,29 @@ impl ProfileAttributeFilterValue {
 
     /// Bitflag filter value
     pub fn as_bitflags(&self) -> u16 {
-        self.filter_part1.unwrap_or(0)
+        self.filter_values.first().copied().unwrap_or(0)
     }
 
     /// ID number for top level AttributeValue ID.
     pub fn as_top_level_id(&self) -> Option<u16> {
-        self.filter_part1
+        self.filter_values.first().copied()
     }
 
     /// ID number for sub level AttributeValue ID.
     pub fn as_sub_level_id(&self) -> Option<u16> {
-        self.filter_part2
+        self.filter_values.get(1).copied()
     }
 
+    pub fn as_number_list(&self) -> &[u16] {
+        &self.filter_values
+    }
+
+    pub fn set_number_list_filter_value(&mut self, mut values: Vec<u16>) {
+        values.sort();
+        self.filter_values = values;
+    }
+
+    #[allow(clippy::comparison_chain)]
     pub fn is_match_with_attribute_value(
         &self,
         value: &ProfileAttributeValue,
@@ -259,6 +299,36 @@ impl ProfileAttributeFilterValue {
 
         if attribute_info.mode.is_bitflag_mode() {
             self.as_bitflags() & value.as_bitflags() != 0
+        } else if attribute_info.mode.is_number_list() {
+            // Assume that both number lists are sorted
+            let mut value_iter = value.as_number_list().iter();
+            let mut found = true;
+
+            for filter_number in self.as_number_list() {
+                while found {
+                    match value_iter.next() {
+                        Some(value_number) => {
+                            if value_number < filter_number {
+                                // Can be found still
+                                continue;
+                            } else if value_number == filter_number {
+                                // Found
+                                break;
+                            } else {
+                                // Not found
+                                found = false;
+                                break;
+                            }
+                        }
+                        None => {
+                            found = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            found
         } else {
             if let Some(top_level_id) = self.as_top_level_id() {
                 if top_level_id == value.as_top_level_id() {
@@ -749,18 +819,28 @@ pub struct ProfileUpdate {
 
 impl ProfileUpdate {
     pub fn validate(
-        self,
+        mut self,
         attribute_info: Option<&ProfileAttributes>,
     ) -> Result<ProfileUpdateValidated, String> {
         let mut hash_set = HashSet::new();
-        for a in &self.attributes {
+        for a in &mut self.attributes {
             if !hash_set.insert(a.id) {
                 return Err("Duplicate attribute ID".to_string());
             }
 
             if let Some(info) = attribute_info {
-                if info.attributes.get(a.id as usize).is_none() {
-                    return Err("Unknown attribute ID".to_string());
+                let attribute_info = info.attributes.get(a.id as usize);
+                match attribute_info {
+                    None => return Err("Unknown attribute ID".to_string()),
+                    Some(info) => {
+                        if info.mode.is_number_list() && a.values.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES {
+                            return Err(format!("Number list attribute supports max {} values", NUMBER_LIST_ATTRIBUTE_MAX_VALUES));
+                        }
+
+                        if info.mode.is_number_list() {
+                            a.values.sort();
+                        }
+                    }
                 }
             } else {
                 return Err("Profile attributes are disabled".to_string());
@@ -780,6 +860,7 @@ impl ProfileUpdate {
     }
 }
 
+/// Makes sure that the number list attributes are sorted.
 #[derive(Debug, Clone, Default)]
 pub struct ProfileUpdateValidated {
     pub profile_text: String,
@@ -795,9 +876,9 @@ impl ProfileUpdateValidated {
             && self.age == other.age;
         if basic {
             let a1: HashMap<u16, ProfileAttributeValueUpdate> =
-                HashMap::from_iter(self.attributes.iter().map(|v| (v.id, *v)));
+                HashMap::from_iter(self.attributes.iter().map(|v| (v.id, v.clone())));
             let a2: HashMap<u16, ProfileAttributeValueUpdate> =
-                HashMap::from_iter(other.attributes.iter().map(|v| (v.id, (*v).into())));
+                HashMap::from_iter(other.attributes.iter().map(|v| (v.id, v.clone().into())));
 
             a1 == a2
         } else {

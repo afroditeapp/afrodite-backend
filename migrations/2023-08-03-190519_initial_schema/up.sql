@@ -218,6 +218,30 @@ CREATE TABLE IF NOT EXISTS profile_attributes(
             ON UPDATE CASCADE
 );
 
+-- Store profile attribute number list values which config file defines.
+CREATE TABLE IF NOT EXISTS profile_attributes_number_list(
+    account_id      INTEGER             NOT NULL,
+    attribute_id    INTEGER             NOT NULL,
+    attribute_value INTEGER             NOT NULL,
+    PRIMARY KEY (account_id, attribute_id, attribute_value),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Store profile attribute number list filter values which config file defines.
+CREATE TABLE IF NOT EXISTS profile_attributes_number_list_filters(
+    account_id      INTEGER             NOT NULL,
+    attribute_id    INTEGER             NOT NULL,
+    filter_value    INTEGER             NOT NULL,
+    PRIMARY KEY (account_id, attribute_id, filter_value),
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Store profile attributes file hash, so that changes to it can be detected
 -- when server starts.
 CREATE TABLE IF NOT EXISTS profile_attributes_file_hash(

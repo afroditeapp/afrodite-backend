@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
@@ -70,25 +72,59 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeValue>, DieselDatabaseError> {
-        use crate::schema::profile_attributes::dsl::*;
+        let data: Vec<(i64, i64, Option<i64>)> = {
+            use crate::schema::profile_attributes::dsl::*;
+            profile_attributes
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(attribute_value_part1.is_not_null())
+                .select((
+                    attribute_id,
+                    attribute_value_part1.assume_not_null(),
+                    attribute_value_part2,
+                ))
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?
+        };
 
-        let data: Vec<(i64, i64, Option<i64>)> = profile_attributes
-            .filter(account_id.eq(id.as_db_id()))
-            .filter(attribute_value_part1.is_not_null())
-            .select((
-                attribute_id,
-                attribute_value_part1.assume_not_null(),
-                attribute_value_part2,
-            ))
-            .load(self.conn())
-            .change_context(DieselDatabaseError::Execute)?;
-
-        let data = data
+        let mut data: Vec<ProfileAttributeValue> = data
             .into_iter()
             .map(|(id, part1, part2)| {
-                ProfileAttributeValue::new(id as u16, part1 as u16, part2.map(|v| v as u16))
+                ProfileAttributeValue::new_not_number_list(
+                    id as u16,
+                    Some(part1 as u16)
+                        .into_iter()
+                        .chain(part2.map(|v| v as u16))
+                        .collect()
+                    )
             })
             .collect();
+
+        let number_list_data: Vec<(i64, i64)> = {
+            use crate::schema::profile_attributes_number_list::dsl::*;
+
+            profile_attributes_number_list
+                .filter(account_id.eq(id.as_db_id()))
+                .select((
+                    attribute_id,
+                    attribute_value,
+                ))
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?
+        };
+
+        let mut number_list_attributes = HashMap::<u16, Vec<u16>>::new();
+        for (id, value) in number_list_data {
+            let values = number_list_attributes
+                .entry(id as u16)
+                .or_default();
+            values.push(value as u16);
+        }
+        for (id, number_list) in number_list_attributes {
+            data.push(ProfileAttributeValue::new_number_list(
+                id,
+                number_list
+            ));
+        }
 
         Ok(data)
     }
@@ -98,31 +134,63 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileAttributeFilterValue>, DieselDatabaseError> {
-        use crate::schema::profile_attributes::dsl::*;
+        let data: Vec<(i64, Option<i64>, Option<i64>, bool)> = {
+            use crate::schema::profile_attributes::dsl::*;
 
-        let data: Vec<(i64, Option<i64>, Option<i64>, bool)> = profile_attributes
-            .filter(account_id.eq(id.as_db_id()))
-            .filter(filter_accept_missing_attribute.is_not_null())
-            .select((
-                attribute_id,
-                filter_value_part1,
-                filter_value_part2,
-                filter_accept_missing_attribute.assume_not_null(),
-            ))
-            .load(self.conn())
-            .change_context(DieselDatabaseError::Execute)?;
+            profile_attributes
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(filter_accept_missing_attribute.is_not_null())
+                .select((
+                    attribute_id,
+                    filter_value_part1,
+                    filter_value_part2,
+                    filter_accept_missing_attribute.assume_not_null(),
+                ))
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?
+        };
 
-        let data = data
+        let mut data: Vec<ProfileAttributeFilterValue> = data
             .into_iter()
             .map(|(id, part1, part2, accept_missing)| {
-                ProfileAttributeFilterValue::new(
+                ProfileAttributeFilterValue::new_not_number_list(
                     id as u16,
-                    part1.map(|v| v as u16),
-                    part2.map(|v| v as u16),
+                    part1.map(|v| v as u16)
+                        .into_iter()
+                        .chain(part2.map(|v| v as u16))
+                        .collect(),
+
                     accept_missing,
                 )
             })
             .collect();
+
+        let number_list_filters: Vec<(i64, i64)> = {
+            use crate::schema::profile_attributes_number_list_filters::dsl::*;
+
+            profile_attributes_number_list_filters
+                .filter(account_id.eq(id.as_db_id()))
+                .select((
+                    attribute_id,
+                    filter_value,
+                ))
+                .load(self.conn())
+                .change_context(DieselDatabaseError::Execute)?
+        };
+        let mut number_list_attribute_filters = HashMap::<u16, Vec<u16>>::new();
+        for (id, filter_value) in number_list_filters {
+            let values = number_list_attribute_filters
+                .entry(id as u16)
+                .or_default();
+            values.push(filter_value as u16);
+        }
+        for filter_value in &mut data {
+            for (id, number_list) in &number_list_attribute_filters {
+                if filter_value.id() == *id {
+                    filter_value.set_number_list_filter_value(number_list.clone());
+                }
+            }
+        }
 
         Ok(data)
     }
