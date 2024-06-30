@@ -302,7 +302,7 @@ impl ProfileAttributeFilterValue {
         } else if attribute_info.mode.is_number_list() {
             // Assume that both number lists are sorted
             let mut value_iter = value.as_number_list().iter();
-            let mut found = true;
+            let mut found = !self.as_number_list().is_empty();
 
             for filter_number in self.as_number_list() {
                 while found {
