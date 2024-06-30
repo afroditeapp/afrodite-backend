@@ -277,8 +277,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
 
                 let update = ProfileAttributeValueUpdate {
                     id: attribute.id,
-                    value_part1: Some(Some(select_all)),
-                    value_part2: None,
+                    values: vec![select_all],
                 };
 
                 attributes.push(update);

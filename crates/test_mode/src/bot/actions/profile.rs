@@ -49,8 +49,7 @@ impl BotAction for ChangeProfileText {
                 .iter()
                 .map(|a| ProfileAttributeValueUpdate {
                     id: a.id,
-                    value_part1: Some(Some(a.value_part1)),
-                    value_part2: a.value_part2,
+                    values: a.values.clone(),
                 })
                 .collect(),
             age: current_profile.age,

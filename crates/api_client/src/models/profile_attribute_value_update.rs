@@ -16,20 +16,16 @@ pub struct ProfileAttributeValueUpdate {
     /// Attribute ID
     #[serde(rename = "id")]
     pub id: i32,
-    /// Bitflags value or top level attribute value ID.
-    #[serde(rename = "value_part1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub value_part1: Option<Option<i32>>,
-    /// Sub level attribute value ID.
-    #[serde(rename = "value_part2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub value_part2: Option<Option<i32>>,
+    /// Empty list removes the attribute.  - First value is bitflags value or top level attribute value ID or first number list value. - Second value is sub level attribute value ID or second number list value. - Third and rest are number list values.
+    #[serde(rename = "values")]
+    pub values: Vec<i32>,
 }
 
 impl ProfileAttributeValueUpdate {
-    pub fn new(id: i32) -> ProfileAttributeValueUpdate {
+    pub fn new(id: i32, values: Vec<i32>) -> ProfileAttributeValueUpdate {
         ProfileAttributeValueUpdate {
             id,
-            value_part1: None,
-            value_part2: None,
+            values,
         }
     }
 }

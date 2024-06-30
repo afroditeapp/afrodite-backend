@@ -18,6 +18,8 @@ pub enum AttributeMode {
     SelectSingleFilterMultiple,
     #[serde(rename = "SelectMultipleFilterMultiple")]
     SelectMultipleFilterMultiple,
+    #[serde(rename = "SelectMultipleFilterMultipleNumberList")]
+    SelectMultipleFilterMultipleNumberList,
 
 }
 
@@ -27,6 +29,7 @@ impl ToString for AttributeMode {
             Self::SelectSingleFilterSingle => String::from("SelectSingleFilterSingle"),
             Self::SelectSingleFilterMultiple => String::from("SelectSingleFilterMultiple"),
             Self::SelectMultipleFilterMultiple => String::from("SelectMultipleFilterMultiple"),
+            Self::SelectMultipleFilterMultipleNumberList => String::from("SelectMultipleFilterMultipleNumberList"),
         }
     }
 }

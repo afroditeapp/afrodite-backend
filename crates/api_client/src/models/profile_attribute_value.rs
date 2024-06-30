@@ -16,20 +16,16 @@ pub struct ProfileAttributeValue {
     /// Attribute ID
     #[serde(rename = "id")]
     pub id: i32,
-    /// Bitflags value or top level attribute value ID.
-    #[serde(rename = "value_part1")]
-    pub value_part1: i32,
-    /// Sub level attribute value ID.
-    #[serde(rename = "value_part2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub value_part2: Option<Option<i32>>,
+    /// - First value is bitflags value or top level attribute value ID or first number list value. - Second value is sub level attribute value ID or second number list value. - Third and rest are number list values.  The number list values are in ascending order.
+    #[serde(rename = "values")]
+    pub values: Vec<i32>,
 }
 
 impl ProfileAttributeValue {
-    pub fn new(id: i32, value_part1: i32) -> ProfileAttributeValue {
+    pub fn new(id: i32, values: Vec<i32>) -> ProfileAttributeValue {
         ProfileAttributeValue {
             id,
-            value_part1,
-            value_part2: None,
+            values,
         }
     }
 }
