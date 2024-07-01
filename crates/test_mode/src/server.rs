@@ -258,6 +258,7 @@ fn new_config(
         litestream: None,
         tile_map: None,
         firebase_cloud_messaging: None,
+        email_sending: None,
     };
 
     (config, simple_backend_config)

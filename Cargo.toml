@@ -104,6 +104,9 @@ axum-extra = { version = "0.9.2", features = ["typed-header"] }
 tower = "0.4.13"
 tower-http = { version = "0.5.1", features = ["trace"] }
 
+# Email sending
+lettre = { version = "0.11.7", features = ["tokio1", "tokio1-native-tls"] }
+
 # Server TLS
 tokio-rustls = "0.25.0"
 rustls-pemfile = "2.0.0"

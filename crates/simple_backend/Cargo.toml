@@ -29,6 +29,9 @@ reqwest_headers = { workspace = true }
 
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 
+# Email sending
+lettre = { workspace = true }
+
 # Server TLS
 tokio-rustls = { workspace = true }
 rustls-acme = { workspace = true }

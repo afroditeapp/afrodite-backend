@@ -4,8 +4,7 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::{ManagerApiClient, ManagerApiManager};
 use crate::{
-    manager_client::ManagerClientError, map::TileMapManager, perf::PerfCounterManagerData,
-    sign_in_with::SignInWithManager,
+    email::EmailSender, manager_client::ManagerClientError, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
 
 #[derive(Clone)]
@@ -51,4 +50,8 @@ pub trait GetTileMap {
 
 pub trait PerfCounterDataProvider {
     fn perf_counter_data(&self) -> &PerfCounterManagerData;
+}
+
+pub trait EmailSenderProvider<R, M> {
+    fn email_sender(&self) -> &EmailSender<R, M>;
 }

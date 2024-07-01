@@ -1,10 +1,10 @@
 use std::net::SocketAddr;
 
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, PendingNotificationFlags, PushNotificationStateInfoWithFlags, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, PendingNotificationFlags, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
@@ -12,14 +12,11 @@ use server_common::push_notifications::{PushNotificationError, PushNotificationS
 use server_data::{
     content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
+use server_data_account::read::GetReadCommandsAccount;
 use server_data_all::register::RegisterAccount;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::{
-    app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith},
-    manager_client::ManagerApiManager,
-    map::TileMapManager,
-    perf::PerfCounterManagerData,
-    sign_in_with::SignInWithManager,
+    app::{EmailSenderProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
 use simple_backend_config::SimpleBackendConfig;
 
@@ -34,7 +31,7 @@ impl EventManagerProvider for S {
 }
 
 impl GetAccounts for S {
-    async fn get_internal_id(&self, id: AccountId) -> Result<AccountIdInternal, DataError> {
+    async fn get_internal_id(&self, id: AccountId) -> error_stack::Result<AccountIdInternal, DataError> {
         self.database
             .account_id_manager()
             .get_internal_id(id)
@@ -85,7 +82,7 @@ impl WriteDynamicConfig for S {
                 ConfigFileDynamic::edit_bot_config_from_current_dir(bots)?
             }
 
-            Result::<(), ConfigFileError>::Ok(())
+            error_stack::Result::<(), ConfigFileError>::Ok(())
         })
         .await
         .change_context(ConfigFileError::LoadConfig)??;
@@ -98,7 +95,7 @@ impl PushNotificationStateProvider for S {
     async fn get_push_notification_state_info_and_add_notification_value(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<PushNotificationStateInfoWithFlags, PushNotificationError> {
+    ) -> error_stack::Result<PushNotificationStateInfoWithFlags, PushNotificationError> {
         let flags = self
             .read()
             .common()
@@ -133,7 +130,7 @@ impl PushNotificationStateProvider for S {
     async fn enable_push_notification_sent_flag(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<(), PushNotificationError> {
+    ) -> error_stack::Result<(), PushNotificationError> {
         db_write_raw!(self, move |cmds| {
             cmds.chat()
                 .push_notifications()
@@ -150,7 +147,7 @@ impl PushNotificationStateProvider for S {
     async fn remove_device_token(
         &self,
         account_id: AccountIdInternal,
-    ) -> Result<(), PushNotificationError> {
+    ) -> error_stack::Result<(), PushNotificationError> {
         db_write_raw!(self, move |cmds| {
             cmds.chat()
                 .push_notifications()
@@ -166,7 +163,7 @@ impl PushNotificationStateProvider for S {
         &self,
         account_id: AccountIdInternal,
         flags: PendingNotificationFlags,
-    ) -> Result<(), PushNotificationError> {
+    ) -> error_stack::Result<(), PushNotificationError> {
         self.database.cache().write_cache(account_id, move |entry| {
             entry.pending_notification_flags -= flags;
             Ok(())
@@ -377,5 +374,49 @@ impl GetTileMap for S {
 impl PerfCounterDataProvider for S {
     fn perf_counter_data(&self) -> &PerfCounterManagerData {
         &self.simple_backend_state.perf_data
+    }
+}
+
+impl EmailSenderProvider<AccountIdInternal, EmailMessages> for S {
+    fn email_sender(&self) -> &simple_backend::email::EmailSender<AccountIdInternal, EmailMessages> {
+        &self.email_sender
+    }
+}
+
+impl EmailDataProvider<AccountIdInternal, EmailMessages> for S {
+    async fn get_email_data(
+        &self,
+        receiver: AccountIdInternal,
+        message: EmailMessages,
+    ) -> error_stack::Result<Option<EmailData>, simple_backend::email::EmailError> {
+        let data = self
+            .read()
+            .account()
+            .account_data(receiver)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(EmailError::GettingEmailDataFailed)?;
+
+        if data.email.is_none() {
+            return Ok(None);
+        }
+
+        let email = if let Some(email) = data.email {
+            if email.0.ends_with("example.com") {
+                return Ok(None);
+            }
+
+            email.0
+        } else {
+            return Ok(None)
+        };
+
+        let email_data = EmailData {
+            email_address: email,
+            subject: "TODO".to_string(),
+            body: "TODO".to_string(),
+        };
+
+        Ok(Some(email_data))
     }
 }

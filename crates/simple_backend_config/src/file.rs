@@ -1,8 +1,5 @@
 use std::{
-    collections::HashMap,
-    io::Write,
-    net::SocketAddr,
-    path::{Path, PathBuf},
+    collections::HashMap, io::Write, net::SocketAddr, num::NonZeroU32, path::{Path, PathBuf}, str::FromStr
 };
 
 use error_stack::{Report, Result, ResultExt};
@@ -51,6 +48,15 @@ name = "history"
 # [firebase_cloud_messaging]
 # service_account_key_path = "server_config/service_account_key.json"
 # token_cache_path = "firebase_token_cache.json"
+
+# [email_sending]
+# smtp_server_address = "smtp.example.com"
+# use_starttls_instead_of_smtps = false # optional
+# username = "username"
+# password = "password"
+# email_from_header = "Example <no-reply@example.com>"
+# send_limit_per_minute = 1, # optional, by default no limit
+# send_limit_per_day = 10,   # optional, by default no limit
 
 # [tls]
 # public_api_cert = "server_config/public_api.crt"
@@ -104,6 +110,7 @@ pub struct SimpleBackendConfigFile {
     pub manager: Option<AppManagerConfig>,
     pub sign_in_with_google: Option<SignInWithGoogleConfig>,
     pub firebase_cloud_messaging: Option<FirebaseCloudMessagingConfig>,
+    pub email_sending: Option<EmailSendingConfig>,
     /// TLS sertificates or Let's Encrypt is required if debug setting is false.
     pub tls: Option<TlsConfig>,
     pub lets_encrypt: Option<LetsEncryptConfig>,
@@ -246,6 +253,42 @@ pub struct FirebaseCloudMessagingConfig {
     pub service_account_key_path: PathBuf,
     /// Path where cache Firebase token cache JSON file will be created.
     pub token_cache_path: PathBuf,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct EmailSendingConfig {
+    /// The SMTP server must have port 465 open for sending emails using
+    /// implicit TLS.
+    pub smtp_server_address: String,
+    /// Use STARTTLS to start TLS connection on port 587 instead of implicit
+    /// TLS.
+    #[serde(default)]
+    pub use_starttls_instead_of_smtps: bool,
+    pub username: String,
+    pub password: String,
+    /// Email `From` header, for example `Example <no-reply@example.com>`
+    pub email_from_header: EmailFromHeader,
+    pub send_limit_per_minute: Option<NonZeroU32>,
+    pub send_limit_per_day: Option<NonZeroU32>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(into = "String")]
+#[serde(try_from = "String")]
+pub struct EmailFromHeader(pub lettre::message::Mailbox);
+
+impl From<EmailFromHeader> for String {
+    fn from(value: EmailFromHeader) -> Self {
+        value.0.to_string()
+    }
+}
+
+impl std::convert::TryFrom<String> for EmailFromHeader {
+    type Error = lettre::address::AddressError;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let mailbox = lettre::message::Mailbox::from_str(&value)?;
+        Ok(Self(mailbox))
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

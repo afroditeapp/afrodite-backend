@@ -424,3 +424,10 @@ pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
 pub struct AccountGlobalState {
     pub admin_access_granted_count: i64,
 }
+
+
+
+#[derive(Debug, Clone, Copy)]
+pub enum EmailMessages {
+    AccountRegistered,
+}

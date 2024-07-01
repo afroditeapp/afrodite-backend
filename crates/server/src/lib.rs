@@ -18,6 +18,7 @@ use api_doc::ApiDoc;
 use axum::Router;
 use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
+use model::{AccountIdInternal, EmailMessages};
 use perf::ALL_COUNTERS;
 use server_common::push_notifications::{
     self, PushNotificationManager, PushNotificationManagerQuitHandle,
@@ -30,8 +31,7 @@ use server_data::{
 use server_data_all::{demo::DemoModeManager, load::DbDataToCacheLoader};
 use server_state::AppState;
 use simple_backend::{
-    app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::AllCounters,
-    web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher,
+    app::SimpleBackendAppState, email::{self, EmailManager, EmailManagerQuitHandle}, media_backup::MediaBackupHandle, perf::AllCounters, web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
@@ -58,6 +58,7 @@ impl PihkaServer {
             database_manager: None,
             content_processing_quit_handle: None,
             push_notifications_quit_handle: None,
+            email_manager_quit_handle: None,
         };
         let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
@@ -71,6 +72,7 @@ pub struct PihkaBusinessLogic {
     database_manager: Option<DatabaseManager>,
     content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
     push_notifications_quit_handle: Option<PushNotificationManagerQuitHandle>,
+    email_manager_quit_handle: Option<EmailManagerQuitHandle>,
 }
 
 impl BusinessLogic for PihkaBusinessLogic {
@@ -167,6 +169,8 @@ impl BusinessLogic for PihkaBusinessLogic {
         let demo_mode =
             DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
                 .expect("Demo mode manager init failed");
+        let (email_sender, email_receiver) = email::channel::<AccountIdInternal, EmailMessages>();
+
         let app_state = AppState::create_app_state(
             router_database_handle,
             write_cmd_runner_handle,
@@ -174,6 +178,7 @@ impl BusinessLogic for PihkaBusinessLogic {
             content_processing.clone(),
             demo_mode,
             push_notification_sender,
+            email_sender,
             simple_state,
         )
         .await;
@@ -192,6 +197,13 @@ impl BusinessLogic for PihkaBusinessLogic {
         )
         .await;
 
+        let email_manager_quit_handle = EmailManager::new_manager(
+            self.config.simple_backend(),
+            server_quit_watcher.resubscribe(),
+            app_state.clone(),
+            email_receiver,
+        );
+
         StartupTasks::new(app_state.clone())
             .run_and_wait_completion()
             .await
@@ -201,6 +213,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         self.write_cmd_waiter = Some(write_cmd_waiter);
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
         self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
+        self.email_manager_quit_handle = Some(email_manager_quit_handle);
         app_state
     }
 
@@ -232,6 +245,10 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     async fn on_after_server_quit(self) {
+        self.email_manager_quit_handle
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
         self.push_notifications_quit_handle
             .expect("Not initialized")
             .wait_quit()

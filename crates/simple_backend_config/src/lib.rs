@@ -178,6 +178,10 @@ impl SimpleBackendConfig {
     pub fn log_timestamp(&self) -> bool {
         self.file.log_timestamp.unwrap_or(true)
     }
+
+    pub fn email_sending(&self) -> Option<&file::EmailSendingConfig> {
+        self.file.email_sending.as_ref()
+    }
 }
 
 /// Read config file from current directory.

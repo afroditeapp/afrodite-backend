@@ -19,6 +19,7 @@ pub mod perf;
 pub mod sign_in_with;
 pub mod utils;
 pub mod web_socket;
+pub mod email;
 
 use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sync::Arc};
 
