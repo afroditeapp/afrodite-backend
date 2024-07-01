@@ -1,6 +1,7 @@
 use config::{file::ConfigFileError, Config};
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, BackendConfig, BackendVersion};
+use model::{AccountId, AccountIdInternal, BackendConfig, BackendVersion, EmailMessages};
+use simple_backend::app::EmailSenderProvider;
 
 use crate::data::DataError;
 
@@ -42,3 +43,7 @@ pub trait GetAccounts {
 //         &self.business_logic_state().
 //     }
 // }
+
+/// Non generic version of EmailSenderProvider.
+pub trait GetEmailSender: EmailSenderProvider<AccountIdInternal, EmailMessages> {}
+impl <T: EmailSenderProvider<AccountIdInternal, EmailMessages>> GetEmailSender for T {}

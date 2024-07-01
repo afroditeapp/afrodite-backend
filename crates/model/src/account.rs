@@ -352,6 +352,10 @@ impl SignInWithInfo {
             false
         }
     }
+
+    pub fn some_sign_in_with_method_is_set(&self) -> bool {
+        self.google_account_id.is_some()
+    }
 }
 
 #[derive(
@@ -427,7 +431,13 @@ pub struct AccountGlobalState {
 
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
 pub enum EmailMessages {
     AccountRegistered,
+}
+
+impl EmailMessages {
+    pub const VARIANTS: &'static [EmailMessages] = &[
+        EmailMessages::AccountRegistered,
+    ];
 }

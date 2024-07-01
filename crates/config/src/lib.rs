@@ -8,6 +8,7 @@ pub mod args;
 pub mod bot_config_file;
 pub mod file;
 pub mod file_dynamic;
+pub mod file_email_content;
 
 use std::{path::Path, sync::Arc};
 
@@ -15,6 +16,7 @@ use args::{AppMode, ArgsConfig};
 use error_stack::{Result, ResultExt};
 use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig};
 use file_dynamic::ConfigFileDynamic;
+use file_email_content::EmailContentFile;
 use model::{AttributesFileInternal, BotConfig, ProfileAttributes};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
@@ -63,6 +65,7 @@ pub struct Config {
     mode: Option<AppMode>,
     profile_attributes: Option<ProfileAttributes>,
     profile_attributes_sha256: Option<String>,
+    email_content: Option<EmailContentFile>,
 }
 
 impl Config {
@@ -128,6 +131,10 @@ impl Config {
 
     pub fn profile_attributes_sha256(&self) -> Option<&str> {
         self.profile_attributes_sha256.as_deref()
+    }
+
+    pub fn email_content(&self) -> Option<&EmailContentFile> {
+        self.email_content.as_ref()
     }
 
     pub fn demo_mode_config(&self) -> Option<&Vec<DemoModeConfig>> {
@@ -197,6 +204,20 @@ pub fn get_config(
             (None, None)
         };
 
+    let email_content = if let Some(path) = &file_config.email_content_file {
+        let email_content = EmailContentFile::load(path)
+            .change_context(GetConfigError::LoadFileError)?;
+        Some(email_content)
+    } else {
+        None
+    };
+
+    if simple_backend_config.email_sending().is_some() && email_content.is_none() {
+        return Err(GetConfigError::InvalidConfiguration).attach_printable(
+            "When email sending is enabled, the email content config must exists",
+        );
+    }
+
     let config = Config {
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
@@ -206,6 +227,7 @@ pub fn get_config(
         mode: args_config.mode.clone(),
         profile_attributes,
         profile_attributes_sha256,
+        email_content,
     };
 
     Ok(config)

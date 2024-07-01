@@ -228,6 +228,7 @@ fn new_config(
         queue_limits: None,
         bot_config_file: None,
         profile_attributes_file: None,
+        email_content_file: None,
         demo_mode: None,
     };
 

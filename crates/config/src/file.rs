@@ -27,6 +27,10 @@ pub const CONFIG_FILE_NAME: &str = "server_config.toml";
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
+# profile_attributes_file = "server_config_profile_attributes.toml"
+# bot_config_file = "server_config_bots.toml"
+# email_content_file = "server_config_email_content.toml"
+
 [grant_admin_access]
 email = "admin@example.com"
 google_account_id = "TODO"
@@ -77,6 +81,7 @@ pub enum ConfigFileError {
 pub struct ConfigFile {
     pub bot_config_file: Option<PathBuf>,
     pub profile_attributes_file: Option<PathBuf>,
+    pub email_content_file: Option<PathBuf>,
 
     pub components: Components,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,

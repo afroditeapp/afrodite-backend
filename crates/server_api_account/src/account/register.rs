@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EventToClientInternal};
-use server_api::app::ValidateModerationRequest;
+use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailMessages, EventToClientInternal};
+use server_api::app::{GetEmailSender, ValidateModerationRequest};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::{
     read::GetReadCommandsAccount,
@@ -101,7 +101,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("access_token" = [])),
 )]
 pub async fn post_complete_setup<
-    S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest,
+    S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest + GetEmailSender,
 >(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
@@ -152,6 +152,8 @@ pub async fn post_complete_setup<
             (false, false)
         };
 
+    let is_bot_account = state.read().account().is_bot_account(id).await?;
+
     let new_account = db_write_multiple!(state, move |cmds| {
         let global_state = cmds.read().account().global_state().await?;
         let enable_all_capabilities = if matches_with_grant_admin_access_config
@@ -197,6 +199,12 @@ pub async fn post_complete_setup<
         Ok(new_account)
     })?;
 
+    if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
+        // Account registered email is not yet sent if email address
+        // was provided manually and not from some sign in with method.
+        state.email_sender().send(id, EmailMessages::AccountRegistered);
+    }
+
     internal_api::common::sync_account_state(&state, id, new_account).await?;
 
     Ok(())
@@ -210,7 +218,8 @@ pub fn register_router<
         + GetInternalApi
         + GetConfig
         + GetAccessTokens
-        + ValidateModerationRequest,
+        + ValidateModerationRequest
+        + GetEmailSender,
 >(
     s: S,
 ) -> Router {

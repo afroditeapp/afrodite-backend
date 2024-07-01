@@ -314,12 +314,17 @@ impl RegisteringCmd for S {
         // to avoid database collisions.
         let id = AccountId::new(uuid::Uuid::new_v4());
 
+        let email_clone = email.clone();
         let id = db_write_raw!(self, move |cmds| {
             RegisterAccount::new(cmds.write_cmds())
-                .register(id, sign_in_with, email)
+                .register(id, sign_in_with, email_clone)
                 .await
         })
         .await?;
+
+        if email.is_some() {
+            self.email_sender.send(id, EmailMessages::AccountRegistered);
+        }
 
         Ok(id)
     }
@@ -411,10 +416,22 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for S {
             return Ok(None)
         };
 
+        let email_content = self
+            .config()
+            .email_content()
+            .ok_or(EmailError::GettingEmailDataFailed)
+            .attach_printable("Email content not configured")?;
+
+        let email_content = email_content.email
+            .iter()
+            .find(|e| e.message_type == message)
+            .ok_or(EmailError::GettingEmailDataFailed)
+            .attach_printable(format!("Email content for {:?} is not configured", message))?;
+
         let email_data = EmailData {
             email_address: email,
-            subject: "TODO".to_string(),
-            body: "TODO".to_string(),
+            subject: email_content.subject.clone(),
+            body: email_content.body.clone(),
         };
 
         Ok(Some(email_data))
