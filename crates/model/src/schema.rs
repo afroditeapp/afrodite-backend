@@ -41,6 +41,15 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    account_email_sending_state (account_id) {
+        account_id -> Integer,
+        account_registered_state_number -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     account_global_state (row_type) {
         row_type -> Integer,
         admin_access_granted_count -> Integer,
@@ -387,6 +396,7 @@ diesel::table! {
 diesel::joinable!(access_token -> account_id (account_id));
 diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_capabilities -> account_id (account_id));
+diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(chat_state -> account_id (account_id));
@@ -414,6 +424,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     access_token,
     account,
     account_capabilities,
+    account_email_sending_state,
     account_global_state,
     account_id,
     account_interaction,

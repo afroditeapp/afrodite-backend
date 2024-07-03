@@ -142,6 +142,20 @@ CREATE TABLE IF NOT EXISTS account_setup(
             ON UPDATE CASCADE
 );
 
+-- Account related email sending state
+-- State numbers have these values
+-- 0 - Not sent
+-- 1 - Sending requested
+-- 2 - Sent successfully
+CREATE TABLE IF NOT EXISTS account_email_sending_state(
+    account_id                      INTEGER PRIMARY KEY NOT NULL,
+    account_registered_state_number INTEGER             NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Demo mode user created accounts
 CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
     id               INTEGER PRIMARY KEY NOT NULL,

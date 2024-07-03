@@ -1,0 +1,78 @@
+
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use simple_backend_model::diesel_i64_try_from;
+use crate::{
+    schema_sqlite_types::Integer, EnumParsingError
+};
+
+
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
+pub enum EmailMessages {
+    AccountRegistered,
+}
+
+impl EmailMessages {
+    pub const VARIANTS: &'static [EmailMessages] = &[
+        EmailMessages::AccountRegistered,
+    ];
+}
+
+#[derive(
+    Debug,
+    Deserialize,
+    Serialize,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = Integer)]
+#[repr(i64)]
+pub enum EmailSendingState {
+    /// Backend has not yet tried to send the email.
+    NotSent = 0,
+    /// Backend moved the email to send queue.
+    SendRequested = 1,
+    /// SMTP server returned a positive response.
+    SentSuccessfully = 2,
+}
+
+diesel_i64_try_from!(EmailSendingState);
+
+impl TryFrom<i64> for EmailSendingState {
+    type Error = EnumParsingError;
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        let value = match value {
+            0 => Self::NotSent,
+            1 => Self::SendRequested,
+            2 => Self::SentSuccessfully,
+            _ => return Err(EnumParsingError::ParsingError(value)),
+        };
+
+        Ok(value)
+    }
+}
+
+impl Default for EmailSendingState {
+    fn default() -> Self {
+        Self::NotSent
+    }
+}
+
+#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset, Insertable)]
+#[diesel(table_name = crate::schema::account_email_sending_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct AccountEmailSendingStateRaw {
+    pub account_registered_state_number: EmailSendingState,
+}
+
+impl AccountEmailSendingStateRaw {
+    pub fn get_ref_mut_to(&mut self, message: EmailMessages) -> &mut EmailSendingState {
+        match message {
+            EmailMessages::AccountRegistered => &mut self.account_registered_state_number,
+        }
+    }
+}

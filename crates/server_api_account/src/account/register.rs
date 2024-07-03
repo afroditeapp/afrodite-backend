@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailMessages, EventToClientInternal};
-use server_api::app::{GetEmailSender, ValidateModerationRequest};
+use server_api::app::ValidateModerationRequest;
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::{
     read::GetReadCommandsAccount,
@@ -101,7 +101,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("access_token" = [])),
 )]
 pub async fn post_complete_setup<
-    S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest + GetEmailSender,
+    S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest,
 >(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
@@ -182,6 +182,12 @@ pub async fn post_complete_setup<
             )
             .await?;
 
+        if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
+            // Account registered email is not yet sent if email address
+            // was provided manually and not from some sign in with method.
+            cmds.account().email().send_email_if_not_already_sent(id, EmailMessages::AccountRegistered).await?;
+        }
+
         cmds.events()
             .send_connected_event(
                 id.uuid,
@@ -199,12 +205,6 @@ pub async fn post_complete_setup<
         Ok(new_account)
     })?;
 
-    if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
-        // Account registered email is not yet sent if email address
-        // was provided manually and not from some sign in with method.
-        state.email_sender().send(id, EmailMessages::AccountRegistered);
-    }
-
     internal_api::common::sync_account_state(&state, id, new_account).await?;
 
     Ok(())
@@ -218,8 +218,7 @@ pub fn register_router<
         + GetInternalApi
         + GetConfig
         + GetAccessTokens
-        + ValidateModerationRequest
-        + GetEmailSender,
+        + ValidateModerationRequest,
 >(
     s: S,
 ) -> Router {

@@ -10,6 +10,9 @@ use crate::{
 mod demo;
 pub use demo::*;
 
+mod email;
+pub use email::*;
+
 // TODO(prod): Also add info what sign in with service is used?
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
@@ -427,17 +430,4 @@ pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountGlobalState {
     pub admin_access_granted_count: i64,
-}
-
-
-
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
-pub enum EmailMessages {
-    AccountRegistered,
-}
-
-impl EmailMessages {
-    pub const VARIANTS: &'static [EmailMessages] = &[
-        EmailMessages::AccountRegistered,
-    ];
 }

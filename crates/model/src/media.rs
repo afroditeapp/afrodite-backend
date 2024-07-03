@@ -8,7 +8,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb, NextQueueNumberType};
+use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb, EnumParsingError, NextQueueNumberType};
 
 /// Y coordinate of slippy map tile.
 ///
@@ -315,12 +315,6 @@ impl ModerationRequest {
             waiting_position,
         }
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum EnumParsingError {
-    #[error("ParsingFailed, value: {0}")]
-    ParsingError(i64),
 }
 
 #[derive(

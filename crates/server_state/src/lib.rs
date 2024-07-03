@@ -6,7 +6,6 @@
 use std::sync::Arc;
 
 use config::Config;
-use model::{AccountIdInternal, EmailMessages};
 use server_api::internal_api::InternalApiClient;
 use server_common::push_notifications::PushNotificationSender;
 use server_data::{
@@ -14,7 +13,7 @@ use server_data::{
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::demo::DemoModeManager;
-use simple_backend::{app::SimpleBackendAppState, email::EmailSender};
+use simple_backend::app::SimpleBackendAppState;
 
 pub mod state_impl;
 pub mod connection_tools_impl;
@@ -31,7 +30,6 @@ pub struct AppState {
     content_processing: Arc<ContentProcessingManagerData>,
     demo_mode: DemoModeManager,
     push_notification_sender: PushNotificationSender,
-    email_sender: EmailSender<AccountIdInternal, EmailMessages>,
     simple_backend_state: SimpleBackendAppState,
 }
 
@@ -44,7 +42,6 @@ impl AppState {
         content_processing: Arc<ContentProcessingManagerData>,
         demo_mode: DemoModeManager,
         push_notification_sender: PushNotificationSender,
-        email_sender: EmailSender<AccountIdInternal, EmailMessages>,
         simple_backend_state: SimpleBackendAppState,
     ) -> AppState {
         let database = Arc::new(database_handle);
@@ -56,7 +53,6 @@ impl AppState {
             content_processing,
             demo_mode,
             push_notification_sender,
-            email_sender,
             simple_backend_state,
         };
 

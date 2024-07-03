@@ -86,6 +86,11 @@ macro_rules! define_server_data_write_commands {
             }
 
             #[allow(dead_code)]
+            fn email_sender(&self) -> &server_common::app::EmailSenderImpl {
+                &self.cmds.write_cmds().email_sender
+            }
+
+            #[allow(dead_code)]
             fn config(&self) -> &config::Config {
                 &self.cmds.write_cmds().config
             }

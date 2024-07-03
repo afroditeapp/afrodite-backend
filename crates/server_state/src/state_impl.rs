@@ -12,11 +12,11 @@ use server_common::push_notifications::{PushNotificationError, PushNotificationS
 use server_data::{
     content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
-use server_data_account::read::GetReadCommandsAccount;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_all::register::RegisterAccount;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::{
-    app::{EmailSenderProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
+    app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
 use simple_backend_config::SimpleBackendConfig;
 
@@ -314,17 +314,21 @@ impl RegisteringCmd for S {
         // to avoid database collisions.
         let id = AccountId::new(uuid::Uuid::new_v4());
 
-        let email_clone = email.clone();
         let id = db_write_raw!(self, move |cmds| {
-            RegisterAccount::new(cmds.write_cmds())
-                .register(id, sign_in_with, email_clone)
-                .await
+            let id = RegisterAccount::new(cmds.write_cmds())
+                .register(id, sign_in_with, email.clone())
+                .await?;
+
+            if email.is_some() {
+                cmds.account().email().send_email_if_not_already_sent(
+                    id,
+                    EmailMessages::AccountRegistered
+                ).await?;
+            }
+
+            Ok(id)
         })
         .await?;
-
-        if email.is_some() {
-            self.email_sender.send(id, EmailMessages::AccountRegistered);
-        }
 
         Ok(id)
     }
@@ -382,12 +386,6 @@ impl PerfCounterDataProvider for S {
     }
 }
 
-impl EmailSenderProvider<AccountIdInternal, EmailMessages> for S {
-    fn email_sender(&self) -> &simple_backend::email::EmailSender<AccountIdInternal, EmailMessages> {
-        &self.email_sender
-    }
-}
-
 impl EmailDataProvider<AccountIdInternal, EmailMessages> for S {
     async fn get_email_data(
         &self,
@@ -435,5 +433,19 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for S {
         };
 
         Ok(Some(email_data))
+    }
+
+    async fn mark_as_sent(
+        &self,
+        receiver: AccountIdInternal,
+        message: EmailMessages,
+    ) -> error_stack::Result<(), simple_backend::email::EmailError> {
+        db_write_raw!(self, move |cmds| {
+            cmds.account().email().mark_email_as_sent(receiver, message).await
+        })
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(EmailError::MarkAsSentFailed)
+
     }
 }

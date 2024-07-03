@@ -1,10 +1,12 @@
+use email::WriteCommandsAccountEmail;
 use model::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup,
-    AccountState, Capabilities, DemoModeId, EmailAddress, ProfileVisibility,
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, ProfileVisibility
 };
 use server_data::{
     define_server_data_write_commands, result::Result, DataError, DieselDatabaseError,
 };
+
+pub mod email;
 
 define_server_data_write_commands!(WriteCommandsAccount);
 define_db_transaction_command!(WriteCommandsAccount);
@@ -13,6 +15,10 @@ define_db_transaction_command!(WriteCommandsAccount);
 pub struct IncrementAdminAccessGrantedCount;
 
 impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
+    pub fn email(self) -> WriteCommandsAccountEmail<C> {
+        WriteCommandsAccountEmail::new(self.cmds)
+    }
+
     /// The only method which can modify AccountState, Capabilities and
     /// ProfileVisibility. This also updates profile index if profile component
     /// is enabled and the visibility changed.
@@ -113,16 +119,6 @@ impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().sign_in_with().set_is_bot_account(id, value)
-        })
-    }
-
-    pub async fn account_email(
-        &self,
-        id: AccountIdInternal,
-        email: EmailAddress,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.account().data().update_account_email(id, &email)
         })
     }
 }

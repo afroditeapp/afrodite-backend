@@ -141,12 +141,14 @@ impl BusinessLogic for PihkaBusinessLogic {
         server_quit_watcher: ServerQuitWatcher,
     ) -> Self::AppState {
         let (push_notification_sender, push_notification_receiver) = push_notifications::channel();
+        let (email_sender, email_receiver) = email::channel::<AccountIdInternal, EmailMessages>();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
                 self.config.clone(),
                 media_backup_handle,
                 push_notification_sender.clone(),
+                email_sender,
             )
             .await
             .expect("Database init failed");
@@ -169,7 +171,6 @@ impl BusinessLogic for PihkaBusinessLogic {
         let demo_mode =
             DemoModeManager::new(self.config.demo_mode_config().cloned().unwrap_or_default())
                 .expect("Demo mode manager init failed");
-        let (email_sender, email_receiver) = email::channel::<AccountIdInternal, EmailMessages>();
 
         let app_state = AppState::create_app_state(
             router_database_handle,
@@ -178,7 +179,6 @@ impl BusinessLogic for PihkaBusinessLogic {
             content_processing.clone(),
             demo_mode,
             push_notification_sender,
-            email_sender,
             simple_state,
         )
         .await;

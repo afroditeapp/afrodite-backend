@@ -5,6 +5,7 @@ define_current_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
 mod data;
 mod demo;
 mod sign_in_with;
+mod email;
 
 impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
     pub fn data(self) -> data::CurrentSyncReadAccountData<C> {
@@ -17,5 +18,9 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
 
     pub fn demo_mode(self) -> demo::CurrentSyncReadAccountDemo<C> {
         demo::CurrentSyncReadAccountDemo::new(self.cmds)
+    }
+
+    pub fn email(self) -> email::CurrentSyncReadAccountEmail<C> {
+        email::CurrentSyncReadAccountEmail::new(self.cmds)
     }
 }

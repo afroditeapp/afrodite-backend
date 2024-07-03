@@ -9,7 +9,7 @@ pub use server_common::{
     data::{DataError, IntoDataError},
     result,
 };
-use server_common::{push_notifications::PushNotificationSender, result::Result};
+use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender, result::Result};
 use simple_backend::media_backup::MediaBackupHandle;
 use tracing::info;
 
@@ -68,6 +68,7 @@ impl DatabaseManager {
         config: Arc<Config>,
         media_backup: MediaBackupHandle,
         push_notification_sender: PushNotificationSender,
+        email_sender: EmailSenderImpl,
     ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DataError> {
         info!("Creating DatabaseManager");
 
@@ -129,6 +130,7 @@ impl DatabaseManager {
             location: index.into(),
             media_backup,
             push_notification_sender,
+            email_sender,
         };
 
         let root = router_write_handle.root.clone();
@@ -170,6 +172,7 @@ pub struct RouterDatabaseWriteHandle {
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
     push_notification_sender: PushNotificationSender,
+    email_sender: EmailSenderImpl,
 }
 
 impl RouterDatabaseWriteHandle {
@@ -183,6 +186,7 @@ impl RouterDatabaseWriteHandle {
             &self.location,
             &self.media_backup,
             &self.push_notification_sender,
+            &self.email_sender,
         )
     }
 
@@ -205,6 +209,7 @@ impl RouterDatabaseWriteHandle {
             location: self.location,
             media_backup: self.media_backup,
             push_notification_sender: self.push_notification_sender,
+            email_sender: self.email_sender,
         }
     }
 
@@ -225,6 +230,7 @@ pub struct SyncWriteHandle {
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
     push_notification_sender: PushNotificationSender,
+    email_sender: EmailSenderImpl,
 }
 
 impl SyncWriteHandle {
@@ -238,6 +244,7 @@ impl SyncWriteHandle {
             &self.location,
             &self.media_backup,
             &self.push_notification_sender,
+            &self.email_sender,
         )
     }
 

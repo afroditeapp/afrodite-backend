@@ -87,7 +87,8 @@ pub async fn post_sign_in_with_login<
         if let Some(already_existing_account) = already_existing_account {
             db_write!(state, move |cmds| cmds
                 .account()
-                .account_email(already_existing_account, email,))?;
+                .email()
+                .account_email(already_existing_account, email))?;
 
             login_impl(already_existing_account.as_id(), state)
                 .await

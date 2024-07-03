@@ -30,6 +30,8 @@ pub enum EmailError {
     AccountEmailAddressParsingFailed,
     #[error("Message building failed")]
     MessageBuildingFailed,
+    #[error("Mark as sent failed")]
+    MarkAsSentFailed,
 }
 
 pub struct EmailManagerQuitHandle {
@@ -90,6 +92,12 @@ pub trait EmailDataProvider<R, M> {
         receiver: R,
         message: M,
     ) -> impl Future<Output = Result<Option<EmailData>, EmailError>> + Send;
+
+    fn mark_as_sent(
+        &self,
+        receiver: R,
+        message: M,
+    ) -> impl Future<Output = Result<(), EmailError>> + Send;
 }
 
 pub fn channel<R, M>() -> (EmailSender<R, M>, EmailReceiver<R, M>) {
@@ -115,7 +123,7 @@ pub struct EmailManager<T, R, M> {
     state: T,
 }
 
-impl<T: EmailDataProvider<R, M> + Send + 'static, R: Send + 'static, M: Send + 'static> EmailManager<T, R, M> {
+impl<T: EmailDataProvider<R, M> + Send + 'static, R: Clone + Send + 'static, M: Clone + Send + 'static> EmailManager<T, R, M> {
     pub fn new_manager(
         config: &SimpleBackendConfig,
         quit_notification: ServerQuitWatcher,
@@ -217,8 +225,8 @@ impl<T: EmailDataProvider<R, M> + Send + 'static, R: Send + 'static, M: Send + '
         let info = self
             .state
             .get_email_data(
-                send_cmd.receiver,
-                send_cmd.message,
+                send_cmd.receiver.clone(),
+                send_cmd.message.clone(),
             )
             .await
             .change_context(EmailError::GettingEmailDataFailed)?;
@@ -240,7 +248,15 @@ impl<T: EmailDataProvider<R, M> + Send + 'static, R: Send + 'static, M: Send + '
             .body(info.body)
             .change_context(EmailError::MessageBuildingFailed)?;
 
-        sending_logic.send_email(message, email_sender).await
+        match sending_logic.send_email(message, email_sender).await {
+            Ok(()) => {
+                self.state.mark_as_sent(
+                    send_cmd.receiver,
+                    send_cmd.message,
+                ).await
+            }
+            e => e,
+        }
     }
 }
 

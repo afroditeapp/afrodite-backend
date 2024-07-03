@@ -32,3 +32,10 @@ pub use media_admin::*;
 pub use profile::*;
 
 pub type Db = diesel::sqlite::Sqlite;
+
+
+#[derive(thiserror::Error, Debug)]
+pub enum EnumParsingError {
+    #[error("ParsingFailed, value: {0}")]
+    ParsingError(i64),
+}

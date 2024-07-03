@@ -9,7 +9,7 @@ use database::{
     DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject,
     TransactionError,
 };
-use server_common::push_notifications::PushNotificationSender;
+use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender};
 use simple_backend::media_backup::MediaBackupHandle;
 
 use self::common::WriteCommandsCommon;
@@ -38,6 +38,11 @@ macro_rules! define_write_commands {
                     &self.cmds.write_cmds().cache,
                     &self.cmds.write_cmds().push_notification_sender,
                 )
+            }
+
+            #[allow(dead_code)]
+            fn email(&self) -> &server_common::app::EmailSenderImpl {
+                &self.cmds.write_cmds().email_sender
             }
 
             #[allow(dead_code)]
@@ -131,6 +136,7 @@ pub struct WriteCommands<'a> {
     pub location_index: &'a LocationIndexManager,
     pub media_backup: &'a MediaBackupHandle,
     pub push_notification_sender: &'a PushNotificationSender,
+    pub email_sender: &'a EmailSenderImpl,
 }
 
 impl<'a> WriteCommands<'a> {
@@ -144,6 +150,7 @@ impl<'a> WriteCommands<'a> {
         location_index: &'a LocationIndexManager,
         media_backup: &'a MediaBackupHandle,
         push_notification_sender: &'a PushNotificationSender,
+        email_sender: &'a EmailSenderImpl,
     ) -> Self {
         Self {
             config,
@@ -154,6 +161,7 @@ impl<'a> WriteCommands<'a> {
             location_index,
             media_backup,
             push_notification_sender,
+            email_sender,
         }
     }
 
