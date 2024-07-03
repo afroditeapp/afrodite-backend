@@ -86,4 +86,25 @@ impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
                 .get_push_notification_state_info_and_add_notification_value(id, notification)
         })
     }
+
+    pub async fn save_current_non_empty_notification_flags_from_cache_to_database(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        let flags = self.cache().read_cache(id, move |entry| {
+            entry.pending_notification_flags
+        })
+        .await?;
+
+        if flags.is_empty() {
+            return Ok(());
+        }
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .push_notifications()
+                .get_push_notification_state_info_and_add_notification_value(id, flags.into())
+        })
+        .map(|_| ())
+    }
 }

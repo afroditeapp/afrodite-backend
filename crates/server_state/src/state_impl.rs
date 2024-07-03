@@ -172,6 +172,31 @@ impl PushNotificationStateProvider for S {
         .map_err(|e| e.into_error())
         .change_context(PushNotificationError::RemoveSpecificNotificationFlagsFromCacheFailed)
     }
+
+    async fn save_current_non_empty_notification_flags_from_cache_to_database(
+        &self,
+    ) -> error_stack::Result<(), PushNotificationError> {
+        let account_ids = self.read()
+            .account()
+            .account_ids_internal_vec()
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::SaveToDatabaseFailed)?;
+
+        for account_id in account_ids {
+            db_write_raw!(self, move |cmds| {
+                cmds.chat()
+                    .push_notifications()
+                    .save_current_non_empty_notification_flags_from_cache_to_database(account_id)
+                    .await
+            })
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(PushNotificationError::SaveToDatabaseFailed)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl ResetPushNotificationTokens for S {

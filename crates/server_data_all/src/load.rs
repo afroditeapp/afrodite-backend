@@ -152,7 +152,13 @@ impl DbDataToCacheLoader {
         }
 
         if config.components().chat {
-            // empty
+            let chat_state = db
+                .db_read_chat(move |mut cmds| cmds.chat().chat_state(account_id))
+                .await?;
+            // Try retry sending of not already sent notifications
+            if !chat_state.fcm_notification_sent {
+                entry.pending_notification_flags = chat_state.pending_notification.into();
+            }
         }
 
         Ok(())
@@ -225,6 +231,24 @@ impl<'a> DbReaderAll<'a> {
             .change_context(CacheError::Init)
     }
 
+    pub async fn db_read_chat<
+        T: FnOnce(
+                database_chat::current::read::CurrentSyncReadCommands<&mut DieselConnection>,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, CacheError> {
+        self.db_reader
+            .db_read(|conn| {
+                cmd(database_chat::current::read::CurrentSyncReadCommands::new(conn))
+            })
+            .await
+            .change_context(CacheError::Init)
+    }
 
     pub async fn db_read_common<
         T: FnOnce(

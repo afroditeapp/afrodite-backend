@@ -10,7 +10,6 @@ pub struct StartupTasks {
 }
 
 // TODO(prod): Remove tmp image files
-// TODO(prod): Trigger FCM message sending
 
 impl StartupTasks {
     pub fn new(state: S) -> Self {
@@ -22,7 +21,7 @@ impl StartupTasks {
         email_sender: EmailSenderImpl,
     ) -> Result<(), DataError> {
         Self::handle_profile_attribute_file_changes(&self.state).await?;
-        Self::retry_email_sending(&self.state, email_sender).await
+        Self::retry_email_and_fcm_message_sending(&self.state, email_sender).await
     }
 
     async fn handle_profile_attribute_file_changes(state: &S) -> Result<(), DataError> {
@@ -40,10 +39,11 @@ impl StartupTasks {
         .await
     }
 
-    async fn retry_email_sending(state: &S, email_sender: EmailSenderImpl) -> Result<(), DataError> {
+    async fn retry_email_and_fcm_message_sending(state: &S, email_sender: EmailSenderImpl) -> Result<(), DataError> {
         let ids = state.read().account().account_ids_internal_vec().await?;
 
         for id in ids {
+            // Email
             let email_state = state.read().account().email().email_state(id).await?;
             let send_if_needed = |
                 state: &EmailSendingState,
@@ -53,8 +53,18 @@ impl StartupTasks {
                     email_sender.send(id, message)
                 }
             };
-
             send_if_needed(&email_state.account_registered_state_number, EmailMessages::AccountRegistered);
+
+            // FCM
+            // The pending notification flags are already loaded from database
+            // to cache.
+            db_write_raw!(state, move |cmds| {
+                cmds.events()
+                    .trigger_push_notification_sending_check_if_needed(id)
+                    .await;
+                Ok(())
+            })
+            .await?;
         }
 
         Ok(())

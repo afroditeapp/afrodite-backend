@@ -34,6 +34,8 @@ pub enum PushNotificationError {
     RemoveSpecificNotificationFlagsFromCacheFailed,
     #[error("Reading notification flags from cache failed")]
     ReadingNotificationFlagsFromCacheFailed,
+    #[error("Saving pending notifications to database failed")]
+    SaveToDatabaseFailed,
 }
 
 pub struct PushNotificationManagerQuitHandle {
@@ -102,6 +104,10 @@ pub trait PushNotificationStateProvider {
         account_id: AccountIdInternal,
         flags: PendingNotificationFlags,
     ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
+
+    fn save_current_non_empty_notification_flags_from_cache_to_database(
+        &self,
+    ) -> impl Future<Output = Result<(), PushNotificationError>> + Send;
 }
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
@@ -117,6 +123,7 @@ pub struct PushNotificationReceiver {
 }
 
 pub struct PushNotificationManager<T> {
+    started_with_fcm_enabled: bool,
     fcm: Option<FcmClient>,
     receiver: PushNotificationReceiver,
     state: T,
@@ -148,6 +155,7 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
         };
 
         let manager = PushNotificationManager {
+            started_with_fcm_enabled: fcm.is_some(),
             fcm,
             receiver,
             state,
@@ -196,12 +204,15 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
     }
 
     pub async fn quit_logic(&mut self) {
-        // TODO(prod): Save the current notification in sending to DB
-        // TODO(prod): Read cache and save all pending notifications to DB.
-        //             Skip cached notification if FCM is not enabled.
-        // TODO(prod): Load the all not sent pending notifications from DB
-        //             to cache and send event SendPushNotification
-        //             multiple times.
+        if self.started_with_fcm_enabled {
+            // There might be unhandled or failed notifications, so save those
+            // from cache to database.
+            match self.state.save_current_non_empty_notification_flags_from_cache_to_database().await {
+                Ok(()) => (),
+                Err(e) =>
+                    error!("Saving pending push notifications to database failed: {:?}", e),
+            }
+        }
     }
 
     pub async fn send_push_notification(

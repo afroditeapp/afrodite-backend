@@ -327,6 +327,9 @@ pub struct CacheEntry {
     pub capabilities: Capabilities,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
     pub current_connection: Option<ConnectionInfo>,
+    /// The cached pending notification flags indicates not yet handled
+    /// notification which PushNotificationManager will handle as soon as
+    /// possible.
     pub pending_notification_flags: PendingNotificationFlags,
 }
 
