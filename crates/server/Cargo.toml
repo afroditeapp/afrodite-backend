@@ -27,6 +27,7 @@ server_common = { path = "../server_common" }
 
 server_data = { path = "../server_data" }
 server_data_all = { path = "../server_data_all" }
+server_data_account = { path = "../server_data_account" }
 server_data_profile = { path = "../server_data_profile" }
 server_data_media = { path = "../server_data_media" }
 

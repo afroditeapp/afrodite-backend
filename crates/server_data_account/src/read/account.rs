@@ -4,10 +4,16 @@ use model::{
 };
 use server_data::{define_server_data_read_commands, result::Result, DataError, IntoDataError};
 
+pub mod email;
+
 define_server_data_read_commands!(ReadCommandsAccount);
 define_db_read_command!(ReadCommandsAccount);
 
 impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
+    pub fn email(self) -> email::ReadCommandsAccountEmail<C> {
+        email::ReadCommandsAccountEmail::new(self.cmds)
+    }
+
     pub async fn account_sign_in_with_info(
         &self,
         id: AccountIdInternal,
@@ -47,6 +53,12 @@ impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
 
     pub async fn account_ids_vec(&self) -> Result<Vec<AccountId>, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_ids())
+            .await
+            .into_error()
+    }
+
+    pub async fn account_ids_internal_vec(&self) -> Result<Vec<AccountIdInternal>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().data().account_ids_internal())
             .await
             .into_error()
     }

@@ -148,7 +148,7 @@ impl BusinessLogic for PihkaBusinessLogic {
                 self.config.clone(),
                 media_backup_handle,
                 push_notification_sender.clone(),
-                email_sender,
+                email_sender.clone(),
             )
             .await
             .expect("Database init failed");
@@ -205,7 +205,9 @@ impl BusinessLogic for PihkaBusinessLogic {
         );
 
         StartupTasks::new(app_state.clone())
-            .run_and_wait_completion()
+            .run_and_wait_completion(
+                email_sender,
+            )
             .await
             .expect("Startup tasks failed");
 
