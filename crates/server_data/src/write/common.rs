@@ -134,4 +134,15 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
 
         Ok(())
     }
+
+    pub async fn remove_tmp_files(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.files()
+            .tmp_dir(id.into())
+            .remove_contents_if_exists()
+            .await
+            .into_data_error(id)
+    }
 }

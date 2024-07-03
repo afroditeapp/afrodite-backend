@@ -51,7 +51,7 @@ macro_rules! define_write_commands {
             }
 
             #[allow(dead_code)]
-            fn file_dir(&self) -> &$crate::FileDir {
+            fn files(&self) -> &$crate::FileDir {
                 &self.cmds.write_cmds().file_dir
             }
 
