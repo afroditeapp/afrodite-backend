@@ -7,6 +7,9 @@ pub struct StartupTasks {
     state: S,
 }
 
+// TODO(prod): Remove tmp image files
+// TODO(prod): Trigger FCM message sending
+
 impl StartupTasks {
     pub fn new(state: S) -> Self {
         Self { state }
