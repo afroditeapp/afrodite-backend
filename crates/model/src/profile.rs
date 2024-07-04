@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    sync::atomic::{AtomicBool, AtomicU16, Ordering},
+    sync::atomic::{AtomicBool, AtomicI64, AtomicU16, Ordering},
 };
 
 use diesel::{
@@ -10,7 +10,7 @@ use diesel::{
 };
 use nalgebra::DMatrix;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
+use simple_backend_model::{diesel_i64_struct_try_from, diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -374,6 +374,7 @@ impl Profile {
 pub struct ProfileAndProfileVersion {
     pub profile: Profile,
     pub version: ProfileVersion,
+    pub last_seen_time: Option<LastSeenTime>,
 }
 
 /// Private profile related database data
@@ -1006,6 +1007,9 @@ pub struct ProfileLink {
     version: ProfileVersion,
     /// This is optional because media component owns it.
     content_version: Option<ProfileContentVersion>,
+    /// If the last seen time is not None, then it is Unix timestamp or -1 if
+    /// the profile is currently online.
+    last_seen_time: Option<LastSeenTime>,
 }
 
 impl ProfileLink {
@@ -1013,12 +1017,32 @@ impl ProfileLink {
         id: AccountId,
         profile: &ProfileInternal,
         content_version: Option<ProfileContentVersion>,
+        last_seen_time: Option<LastSeenTime>,
     ) -> Self {
         Self {
             id,
             version: profile.version_uuid,
             content_version,
+            last_seen_time,
         }
+    }
+}
+
+/// Account's most recent disconnect time.
+///
+/// If the last seen time is not None, then it is Unix timestamp or -1 if
+/// the profile is currently online.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct LastSeenTime(i64);
+
+impl LastSeenTime {
+    pub const ONLINE: Self = Self(-1);
+    const MIN_VALUE: i64 = Self::ONLINE.0;
+}
+
+impl From<UnixTime> for LastSeenTime {
+    fn from(value: UnixTime) -> Self {
+        Self(value.unix_time)
     }
 }
 
@@ -1050,7 +1074,7 @@ impl ProfileQueryMakerDetails {
 
 /// All data which location index needs for returning filtered profiles when
 /// user queries new profiles.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug)]
 pub struct LocationIndexProfileData {
     /// Simple profile information for client.
     profile_link: ProfileLink,
@@ -1058,6 +1082,11 @@ pub struct LocationIndexProfileData {
     search_age_range: ProfileSearchAgeRangeValidated,
     search_groups: SearchGroupFlags,
     attributes: SortedProfileAttributes,
+    /// Possible values:
+    /// - Unix timestamp
+    /// - Value -1 is currently online
+    /// - i64::MIN is None
+    last_seen_time: AtomicI64,
 }
 
 impl LocationIndexProfileData {
@@ -1067,9 +1096,10 @@ impl LocationIndexProfileData {
         state: &ProfileStateCached,
         attributes: SortedProfileAttributes,
         profile_content_version: Option<ProfileContentVersion>,
+        last_seen_value: Option<LastSeenTime>,
     ) -> Self {
         Self {
-            profile_link: ProfileLink::new(id, profile, profile_content_version),
+            profile_link: ProfileLink::new(id, profile, profile_content_version, None),
             age: profile.age,
             search_age_range: ProfileSearchAgeRangeValidated::new(
                 state.search_age_range_min,
@@ -1077,7 +1107,25 @@ impl LocationIndexProfileData {
             ),
             search_groups: state.search_group_flags,
             attributes,
+            last_seen_time: if let Some(last_seen_time) = last_seen_value {
+                AtomicI64::new(last_seen_time.0)
+            } else {
+                AtomicI64::new(i64::MIN)
+            },
         }
+    }
+
+    pub fn to_profile_link_value(&self) -> ProfileLink {
+        let mut profile_link = self.profile_link;
+        let last_seen_value = self.last_seen_time.load(Ordering::Relaxed);
+        if last_seen_value >= LastSeenTime::MIN_VALUE {
+            profile_link.last_seen_time = Some(LastSeenTime(last_seen_value));
+        }
+        profile_link
+    }
+
+    pub fn update_last_seen_value(&self, value: LastSeenTime) {
+        self.last_seen_time.store(value.0, Ordering::Relaxed);
     }
 
     pub fn is_match(
@@ -1123,12 +1171,6 @@ impl LocationIndexProfileData {
         }
 
         true
-    }
-}
-
-impl From<&LocationIndexProfileData> for ProfileLink {
-    fn from(value: &LocationIndexProfileData) -> Self {
-        value.profile_link
     }
 }
 
@@ -1195,20 +1237,28 @@ pub struct GetProfileResult {
     /// If empty then profile does not exist or current account does
     /// not have access to the profile.
     pub version: Option<ProfileVersion>,
+    last_seen_time: Option<LastSeenTime>,
 }
 
 impl GetProfileResult {
-    pub fn profile_with_version_response(info: ProfileAndProfileVersion) -> Self {
+    pub fn profile_with_version_response(
+        info: ProfileAndProfileVersion,
+    ) -> Self {
         Self {
             profile: Some(info.profile),
             version: Some(info.version),
+            last_seen_time: info.last_seen_time,
         }
     }
 
-    pub fn current_version_latest_response(version: ProfileVersion) -> Self {
+    pub fn current_version_latest_response(
+        version: ProfileVersion,
+        last_seen_time: Option<LastSeenTime>,
+    ) -> Self {
         Self {
             profile: None,
             version: Some(version),
+            last_seen_time,
         }
     }
 
@@ -1216,6 +1266,7 @@ impl GetProfileResult {
         Self {
             profile: None,
             version: None,
+            last_seen_time: None,
         }
     }
 }

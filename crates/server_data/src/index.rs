@@ -10,6 +10,8 @@ use server_common::data::index::IndexError;
 use tokio::sync::RwLock;
 use tracing::info;
 
+use crate::cache::LastSeenTimeUpdated;
+
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 
 pub mod location;
@@ -154,7 +156,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                         .filter(|p| {
                             p.is_match(query_maker_details, self.config.profile_attributes())
                         })
-                        .map(|p| p.into())
+                        .map(|p| p.to_profile_link_value())
                         .collect();
                     if matches.is_empty() {
                         IteratorResultInternal::TryAgain
@@ -269,6 +271,20 @@ impl<'a> LocationIndexWriteHandle<'a> {
         Ok(())
     }
 
+    pub async fn update_last_seen_time(
+        &self,
+        account_id: AccountId,
+        info: LastSeenTimeUpdated,
+    ) {
+        // TODO(perf): This is currently called also when profile does not exist
+        // in location index. Most likely profile visibility check can be done
+        // before creating LastSeenTimeUpdated.
+        let profiles = self.profiles.read().await;
+        profiles.get(&info.current_position)
+            .and_then(|v| v.profiles.get(&account_id))
+            .inspect(|data| data.update_last_seen_value(info.last_seen_time));
+    }
+
     /// Set LocationIndexProfileData to specific index location
     pub async fn update_profile_data(
         &self,
@@ -326,7 +342,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ProfilesAtLocation {
     profiles: HashMap<AccountId, LocationIndexProfileData>,
 }

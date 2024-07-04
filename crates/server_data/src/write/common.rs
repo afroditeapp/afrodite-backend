@@ -31,7 +31,7 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
             Ok(current_access_token)
         })?;
 
-        self.cache()
+        let option = self.cache()
             .update_access_token_and_connection(
                 id.as_id(),
                 current_access_token,
@@ -39,7 +39,13 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
                 address,
             )
             .await
-            .into_data_error(id)
+            .into_data_error(id)?;
+
+        if let Some(last_seen_time_update) = option.as_ref().and_then(|v| v.1) {
+            self.location().update_last_seen_time(id.uuid, last_seen_time_update).await;
+        }
+
+        Ok(option.map(|v| v.0))
     }
 
     /// Remove current connection address, access and refresh tokens.
@@ -51,10 +57,14 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
             current_access_token
         })?;
 
-        self.cache()
+        let last_seen_time_update = self.cache()
             .delete_connection_and_specific_access_token(id.as_id(), None, current_access_token)
             .await
             .into_data_error(id)?;
+
+        if let Some(last_seen_time_update) = last_seen_time_update {
+            self.location().update_last_seen_time(id.uuid, last_seen_time_update).await;
+        }
 
         Ok(())
     }
@@ -68,10 +78,14 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
         id: AccountIdInternal,
         session_address: SocketAddr,
     ) -> Result<(), DataError> {
-        self.cache()
+        let last_seen_time_update = self.cache()
             .delete_connection_and_specific_access_token(id.as_id(), Some(session_address), None)
             .await
             .into_data_error(id)?;
+
+        if let Some(last_seen_time_update) = last_seen_time_update {
+            self.location().update_last_seen_time(id.uuid, last_seen_time_update).await;
+        }
 
         Ok(())
     }

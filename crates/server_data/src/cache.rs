@@ -3,13 +3,22 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 use config::Config;
 use error_stack::Result;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LastSeenTime, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
+use simple_backend_model::UnixTime;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
 
 use super::index::location::LocationIndexIteratorState;
 use crate::event::{event_channel, EventReceiver, EventSender};
+
+/// If this exists update last seen time atomic variable in location
+/// index.
+#[derive(Debug, Clone, Copy)]
+pub struct LastSeenTimeUpdated {
+    pub current_position: LocationIndexKey,
+    pub last_seen_time: LastSeenTime,
+}
 
 #[derive(Debug)]
 pub struct AccountEntry {
@@ -66,7 +75,7 @@ impl DatabaseCache {
         current_access_token: Option<AccessToken>,
         new_access_token: AccessToken,
         address: Option<SocketAddr>,
-    ) -> Result<Option<EventReceiver>, CacheError> {
+    ) -> Result<Option<(EventReceiver, Option<LastSeenTimeUpdated>)>, CacheError> {
         let cache_entry = self
             .accounts
             .read()
@@ -85,11 +94,19 @@ impl DatabaseCache {
         if tokens.get(&new_access_token).is_none() {
             let event_receiver = if let Some(address) = address {
                 let (sender, receiver) = event_channel();
-                cache_entry.cache.write().await.current_connection = Some(ConnectionInfo {
+                let mut write = cache_entry.cache.write().await;
+                write.current_connection = Some(ConnectionInfo {
                     connection: address,
                     event_sender: sender,
                 });
-                Ok(Some(receiver))
+                let last_seen_time_update = write
+                    .profile
+                    .as_ref()
+                    .map(|v| LastSeenTimeUpdated {
+                        last_seen_time: LastSeenTime::ONLINE,
+                        current_position: v.location.current_position
+                    });
+                Ok(Some((receiver, last_seen_time_update)))
             } else {
                 Ok(None)
             };
@@ -109,7 +126,7 @@ impl DatabaseCache {
         id: AccountId,
         connection: Option<SocketAddr>,
         token: Option<AccessToken>,
-    ) -> Result<(), CacheError> {
+    ) -> Result<Option<LastSeenTimeUpdated>, CacheError> {
         let cache_entry = self
             .accounts
             .read()
@@ -117,6 +134,8 @@ impl DatabaseCache {
             .get(&id)
             .ok_or(CacheError::KeyNotExists)?
             .clone();
+
+        let mut last_seen_time_updated = None;
 
         {
             let mut cache_entry_write = cache_entry.cache.write().await;
@@ -129,6 +148,15 @@ impl DatabaseCache {
                 )
             {
                 cache_entry_write.current_connection = None;
+                let last_seen_time = UnixTime::current_time();
+                cache_entry_write.last_seen_time = Some(last_seen_time);
+                last_seen_time_updated = cache_entry_write
+                    .profile
+                    .as_ref()
+                    .map(|v| LastSeenTimeUpdated {
+                        last_seen_time: last_seen_time.into(),
+                        current_position: v.location.current_position
+                    });
             }
         }
 
@@ -137,7 +165,7 @@ impl DatabaseCache {
             let _account = tokens.remove(&token).ok_or(CacheError::KeyNotExists)?;
         }
 
-        Ok(())
+        Ok(last_seen_time_updated)
     }
 
     pub async fn access_token_exists(&self, token: &AccessToken) -> Option<AccountIdInternal> {
@@ -326,7 +354,8 @@ pub struct CacheEntry {
     pub chat: Option<Box<CachedChatComponentData>>,
     pub capabilities: Capabilities,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
-    pub current_connection: Option<ConnectionInfo>,
+    current_connection: Option<ConnectionInfo>,
+    last_seen_time: Option<UnixTime>,
     /// The cached pending notification flags indicates not yet handled
     /// notification which PushNotificationManager will handle as soon as
     /// possible.
@@ -342,6 +371,7 @@ impl CacheEntry {
             capabilities: Capabilities::default(),
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
             current_connection: None,
+            last_seen_time: None,
             pending_notification_flags: PendingNotificationFlags::empty(),
         }
     }
@@ -358,7 +388,20 @@ impl CacheEntry {
             &profile.state,
             profile.attributes.clone(),
             self.media.as_ref().map(|m| m.profile_content_version),
+            self.last_seen_time(),
         ))
+    }
+
+    pub fn last_seen_time(&self) -> Option<LastSeenTime> {
+        if self.current_connection.is_some() {
+            Some(LastSeenTime::ONLINE)
+        } else {
+            self.last_seen_time.map(|v| v.into())
+        }
+    }
+
+    pub fn connection_event_sender(&self) -> Option<&EventSender> {
+        self.current_connection.as_ref().map(|info| &info.event_sender)
     }
 }
 

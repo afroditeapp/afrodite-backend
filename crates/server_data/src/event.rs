@@ -83,7 +83,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
         action: impl FnOnce(Option<&EventSender>) -> T + Send,
     ) -> Result<T, DataError> {
         self.cache
-            .read_cache(id, move |entry| action(entry.current_connection.as_ref().map(|info| &info.event_sender)))
+            .read_cache(id, move |entry| action(entry.connection_event_sender()))
             .await
             .into_data_error(id)
     }

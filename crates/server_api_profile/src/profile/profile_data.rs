@@ -82,8 +82,13 @@ pub async fn get_profile<
             .await?;
         match params.profile_version() {
             Some(param_version) if param_version == profile_info.version =>
-                Ok(GetProfileResult::current_version_latest_response(profile_info.version).into()),
-            _ => Ok(GetProfileResult::profile_with_version_response(profile_info).into()),
+                Ok(GetProfileResult::current_version_latest_response(
+                    profile_info.version,
+                    profile_info.last_seen_time,
+                ).into()),
+            _ => Ok(GetProfileResult::profile_with_version_response(
+                profile_info,
+            ).into()),
         }
     };
 

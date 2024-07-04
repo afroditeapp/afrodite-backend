@@ -32,6 +32,7 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
                     ProfileAndProfileVersion {
                         profile: Profile::new(data.data.clone(), data.attributes.attributes().clone()),
                         version: data.data.version_uuid,
+                        last_seen_time: cache.last_seen_time(),
                     }
                 )
         })

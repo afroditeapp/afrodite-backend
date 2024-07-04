@@ -3020,6 +3020,7 @@ dependencies = [
  "num_cpus",
  "server_common",
  "simple_backend",
+ "simple_backend_model",
  "simple_backend_utils",
  "thiserror",
  "tokio",
