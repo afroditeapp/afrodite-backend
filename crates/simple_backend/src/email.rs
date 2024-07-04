@@ -4,6 +4,7 @@
 
 use std::{future::Future, num::NonZeroU32, str::FromStr, time::{Duration, Instant}};
 
+use data::EmailLimitStateStorage;
 use error_stack::{Result, ResultExt};
 use lettre::{message::Mailbox, transport::smtp::{authentication::Credentials, PoolConfig}, Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use simple_backend_config::{file::EmailSendingConfig, SimpleBackendConfig};
@@ -15,6 +16,8 @@ use tokio::{
 use tracing::{error, warn};
 
 use crate::ServerQuitWatcher;
+
+mod data;
 
 const EMAIL_SENDING_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
 
@@ -32,6 +35,14 @@ pub enum EmailError {
     MessageBuildingFailed,
     #[error("Mark as sent failed")]
     MarkAsSentFailed,
+
+    // State saving and loading
+    #[error("Loading saved state failed")]
+    LoadSavedStateFailed,
+    #[error("Removing saved state failed")]
+    RemovingSavedStateFailed,
+    #[error("Saving state failed")]
+    SavingStateFailed,
 }
 
 pub struct EmailManagerQuitHandle {
@@ -115,6 +126,8 @@ pub struct EmailReceiver<R, M> {
 struct EmailSenderData {
     sender: AsyncSmtpTransport<Tokio1Executor>,
     config: EmailSendingConfig,
+    simple_backend_config: SimpleBackendConfig,
+    previous_state: EmailLimitStateStorage,
 }
 
 pub struct EmailManager<T, R, M> {
@@ -123,14 +136,14 @@ pub struct EmailManager<T, R, M> {
     state: T,
 }
 
-impl<T: EmailDataProvider<R, M> + Send + 'static, R: Clone + Send + 'static, M: Clone + Send + 'static> EmailManager<T, R, M> {
-    pub fn new_manager(
-        config: &SimpleBackendConfig,
+impl<T: EmailDataProvider<R, M> + Send + Sync + 'static, R: Clone + Send + 'static, M: Clone + Send + 'static> EmailManager<T, R, M> {
+    pub async fn new_manager(
+        simple_backend_config: &SimpleBackendConfig,
         quit_notification: ServerQuitWatcher,
         state: T,
         receiver: EmailReceiver<R, M>,
     ) -> EmailManagerQuitHandle {
-        let email_sender = if let Some(config) = config.email_sending() {
+        let email_sender = if let Some(config) = simple_backend_config.email_sending() {
             let email_sender = if config.use_starttls_instead_of_smtps {
                 AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&config.smtp_server_address)
             } else {
@@ -151,10 +164,20 @@ impl<T: EmailDataProvider<R, M> + Send + 'static, R: Clone + Send + 'static, M: 
                     .build()
             });
 
+            let previous_state = match EmailLimitStateStorage::load_and_remove(simple_backend_config).await {
+                Ok(state) => state,
+                Err(e) => {
+                    error!("Loading previous state failed, error: {:?}", e);
+                    EmailLimitStateStorage::default()
+                }
+            };
+
             match email_sender {
                 Ok(email_sender) => Some(EmailSenderData {
                     sender: email_sender,
                     config: config.clone(),
+                    simple_backend_config: simple_backend_config.clone(),
+                    previous_state,
                 }),
                 Err(e) => {
                     error!("Email sender creating failed: {}", e);
@@ -177,24 +200,46 @@ impl<T: EmailDataProvider<R, M> + Send + 'static, R: Clone + Send + 'static, M: 
     }
 
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
+        let mut sending_logic = EmailSendingLogic::new();
+        if let Some(sender_data) = &self.email_sender {
+            sending_logic.send_count_per_minute.count = sender_data.previous_state.emails_sent_per_minute;
+            sending_logic.send_count_per_day.count = sender_data.previous_state.emails_sent_per_day;
+        }
+
         tokio::select! {
             _ = quit_notification.recv() => (),
-            _ = self.logic() => (),
+            _ = self.logic(&mut sending_logic) => (),
         }
 
         // Make sure that quit started (closed channel also
         // breaks the logic loop, but that should not happen)
         let _ = quit_notification.recv().await;
+
+        self.before_quit(&sending_logic).await;
     }
 
-    pub async fn logic(&mut self) {
-        let mut sending_logic = EmailSendingLogic::new();
+    async fn before_quit(&self, sending_logic: &EmailSendingLogic) {
+        let current_state = EmailLimitStateStorage {
+            emails_sent_per_minute: sending_logic.send_count_per_minute.count,
+            emails_sent_per_day: sending_logic.send_count_per_day.count,
+        };
+        if let Some(sender_data) = &self.email_sender {
+            match current_state.save(&sender_data.simple_backend_config).await {
+                Ok(()) => (),
+                Err(e) => {
+                    error!("Email sender state saving failed, error: {:?}", e);
+                }
+            }
+        }
+    }
+
+    pub async fn logic(&mut self, sending_logic: &mut EmailSendingLogic) {
         loop {
             let send_cmd = self.receiver.receiver.recv().await;
             match send_cmd {
                 Some(send_cmd) => {
                     let result = self
-                        .send_email(send_cmd, &mut sending_logic)
+                        .send_email(send_cmd, sending_logic)
                         .await;
                     match result {
                         Ok(()) => (),

@@ -202,7 +202,8 @@ impl BusinessLogic for PihkaBusinessLogic {
             server_quit_watcher.resubscribe(),
             app_state.clone(),
             email_receiver,
-        );
+        )
+        .await;
 
         StartupTasks::new(app_state.clone())
             .run_and_wait_completion(
