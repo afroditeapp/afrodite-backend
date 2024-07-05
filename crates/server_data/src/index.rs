@@ -4,7 +4,7 @@ use config::Config;
 use error_stack::ResultExt;
 use model::{
     AccountId, CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
-    ProfileQueryMakerDetails,
+    ProfileQueryMakerDetails, UnixTime,
 };
 use server_common::data::index::IndexError;
 use tokio::sync::RwLock;
@@ -105,10 +105,15 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         query_maker_details: ProfileQueryMakerDetails,
     ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), IndexError>
     {
+        let current_time = UnixTime::current_time();
         let mut iterator_state = previous_iterator_state;
         loop {
             let (new_state, result) = self
-                .next_profiles_internal(iterator_state, &query_maker_details)
+                .next_profiles_internal(
+                    iterator_state,
+                    &query_maker_details,
+                    &current_time,
+                )
                 .await?;
             iterator_state = new_state;
             match result {
@@ -131,6 +136,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         &self,
         previous_iterator_state: LocationIndexIteratorState,
         query_maker_details: &ProfileQueryMakerDetails,
+        current_time: &UnixTime,
     ) -> error_stack::Result<(LocationIndexIteratorState, IteratorResultInternal), IndexError> {
         let index = self.index.clone();
         let (iterator, key) = tokio::task::spawn_blocking(move || {
@@ -154,7 +160,11 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                         .profiles
                         .values()
                         .filter(|p| {
-                            p.is_match(query_maker_details, self.config.profile_attributes())
+                            p.is_match(
+                                query_maker_details,
+                                self.config.profile_attributes(),
+                                current_time,
+                            )
                         })
                         .map(|p| p.to_profile_link_value())
                         .collect();

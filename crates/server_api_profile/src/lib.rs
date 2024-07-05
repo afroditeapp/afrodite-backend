@@ -75,6 +75,7 @@ pub use server_common::{data::DataError, result};
         model::profile::IconLocation,
         model::profile::SearchGroups,
         model::profile::LastSeenTime,
+        model::profile::LastSeenTimeFilter,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

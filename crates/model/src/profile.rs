@@ -171,6 +171,7 @@ impl SortedProfileAttributes {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterListUpdate {
     filters: Vec<ProfileAttributeFilterValueUpdate>,
+    last_seen_time_filter: Option<LastSeenTimeFilter>,
 }
 
 impl ProfileAttributeFilterListUpdate {
@@ -199,8 +200,15 @@ impl ProfileAttributeFilterListUpdate {
             }
         }
 
+        if let Some(value) = self.last_seen_time_filter {
+            if value.value < LastSeenTimeFilter::MIN_VALUE {
+                return Err("Invalid LastSeenTimeFilter value".to_string());
+            }
+        }
+
         Ok(ProfileAttributeFilterListUpdateValidated {
             filters: self.filters,
+            last_seen_time_filter: self.last_seen_time_filter,
         })
     }
 }
@@ -208,6 +216,7 @@ impl ProfileAttributeFilterListUpdate {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterListUpdateValidated {
     pub filters: Vec<ProfileAttributeFilterValueUpdate>,
+    pub last_seen_time_filter: Option<LastSeenTimeFilter>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -227,6 +236,7 @@ pub struct ProfileAttributeFilterValueUpdate {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
 pub struct ProfileAttributeFilterList {
     pub filters: Vec<ProfileAttributeFilterValue>,
+    pub last_seen_time_filter: Option<LastSeenTimeFilter>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -386,6 +396,7 @@ pub struct ProfileStateInternal {
     pub search_age_range_max: ProfileAge,
     #[diesel(deserialize_as = i64, serialize_as = i64)]
     pub search_group_flags: SearchGroupFlags,
+    pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
 }
 
@@ -397,6 +408,7 @@ pub struct ProfileStateCached {
     pub search_age_range_min: ProfileAge,
     pub search_age_range_max: ProfileAge,
     pub search_group_flags: SearchGroupFlags,
+    pub last_seen_time_filter: Option<LastSeenTimeFilter>,
 }
 
 impl From<ProfileStateInternal> for ProfileStateCached {
@@ -405,6 +417,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_age_range_min: value.search_age_range_min,
             search_age_range_max: value.search_age_range_max,
             search_group_flags: value.search_group_flags,
+            last_seen_time_filter: value.last_seen_time_filter,
         }
     }
 }
@@ -1046,12 +1059,69 @@ impl From<UnixTime> for LastSeenTime {
     }
 }
 
+/// Filter value for last seen time.
+///
+/// Possible values:
+/// - Value -1 is show only profiles which are online.
+/// - Zero and positive values are max seconds since the profile has been online.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Eq,
+    Default,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+#[serde(transparent)]
+pub struct LastSeenTimeFilter {
+    pub value: i64,
+}
+
+impl LastSeenTimeFilter {
+    const ONLINE: Self = Self { value: -1 };
+    const MIN_VALUE: i64 = -1;
+
+    pub fn new(value: i64) -> Self {
+        Self { value }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.value
+    }
+
+    pub fn is_match(
+        &self,
+        last_seen_time: LastSeenTime,
+        current_time: &UnixTime,
+    ) -> bool {
+        if *self == Self::ONLINE {
+            last_seen_time == LastSeenTime::ONLINE
+        } else if last_seen_time.0 <= current_time.unix_time {
+            let seconds_since_last_seen = last_seen_time.0.abs_diff(current_time.unix_time);
+            let max_seconds_since = self.value as u64;
+            seconds_since_last_seen <= max_seconds_since
+        } else {
+            false
+        }
+    }
+}
+
+diesel_i64_wrapper!(LastSeenTimeFilter);
+
 #[derive(Debug)]
 pub struct ProfileQueryMakerDetails {
     pub age: ProfileAge,
     pub search_age_range: ProfileSearchAgeRangeValidated,
     pub search_groups_filter: SearchGroupFlagsFilter,
     pub attribute_filters: Vec<ProfileAttributeFilterValue>,
+    pub last_seen_time_filter: Option<LastSeenTimeFilter>,
 }
 
 impl ProfileQueryMakerDetails {
@@ -1068,6 +1138,7 @@ impl ProfileQueryMakerDetails {
             ),
             search_groups_filter: state.search_group_flags.to_filter(),
             attribute_filters,
+            last_seen_time_filter: state.last_seen_time_filter,
         }
     }
 }
@@ -1132,6 +1203,7 @@ impl LocationIndexProfileData {
         &self,
         query_maker_details: &ProfileQueryMakerDetails,
         attribute_info: Option<&ProfileAttributes>,
+        current_time: &UnixTime,
     ) -> bool {
         let mut is_match = self.search_age_range.is_match(query_maker_details.age)
             && query_maker_details.search_age_range.is_match(self.age)
@@ -1139,11 +1211,34 @@ impl LocationIndexProfileData {
                 .search_groups_filter
                 .is_match(self.search_groups);
 
-        if let Some(attribute_info) = attribute_info {
-            is_match &= self.attribute_filters_match(query_maker_details, attribute_info);
+        if is_match {
+            if let Some(last_seen_time_filter) = query_maker_details.last_seen_time_filter {
+                is_match &= self.last_seen_time_match(last_seen_time_filter, current_time);
+            }
+        }
+
+        if is_match {
+            if let Some(attribute_info) = attribute_info {
+                is_match &= self.attribute_filters_match(query_maker_details, attribute_info);
+            }
         }
 
         is_match
+    }
+
+    fn last_seen_time_match(
+        &self,
+        last_seen_time_filter: LastSeenTimeFilter,
+        current_time: &UnixTime,
+    ) -> bool {
+        let current_last_seen_time = self.last_seen_time.load(Ordering::Relaxed);
+        let current_last_seen_time = if current_last_seen_time < -1 {
+            return false;
+        } else {
+            LastSeenTime(current_last_seen_time)
+        };
+
+        last_seen_time_filter.is_match(current_last_seen_time, current_time)
     }
 
     fn attribute_filters_match(

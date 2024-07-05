@@ -70,7 +70,11 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
     ) -> Result<ProfileAttributeFilterList, DataError> {
         self.db_read(move |mut cmds| {
             let filters = cmds.profile().data().profile_attribute_filters(id)?;
-            Ok(ProfileAttributeFilterList { filters })
+            let state = cmds.profile().data().profile_state(id)?;
+            Ok(ProfileAttributeFilterList {
+                filters,
+                last_seen_time_filter: state.last_seen_time_filter,
+            })
         })
         .await
         .into_error()

@@ -177,20 +177,22 @@ CREATE TABLE IF NOT EXISTS account_global_state(
 
 -- Private profile related state for some account.
 CREATE TABLE IF NOT EXISTS profile_state(
-    account_id           INTEGER PRIMARY KEY  NOT NULL,
+    account_id                 INTEGER PRIMARY KEY  NOT NULL,
     -- Min age in years and inside inclusive range of [18,99] for
     -- searching profiles.
-    search_age_range_min INTEGER              NOT NULL    DEFAULT 18,
+    search_age_range_min       INTEGER              NOT NULL    DEFAULT 18,
     -- Max age in years and inside inclusive range of [18,99] for
     -- searching profiles.
-    search_age_range_max INTEGER              NOT NULL    DEFAULT 18,
+    search_age_range_max       INTEGER              NOT NULL    DEFAULT 18,
     -- Bitflags value containing gender and genders that
     -- the profile owner searches for.
-    search_group_flags   INTEGER              NOT NULL    DEFAULT 0,
-    latitude             DOUBLE               NOT NULL    DEFAULT 0.0,
-    longitude            DOUBLE               NOT NULL    DEFAULT 0.0,
+    search_group_flags         INTEGER              NOT NULL    DEFAULT 0,
+    -- Filter setting for last seen time.
+    last_seen_time_filter      INTEGER,
+    latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
+    longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile attributes config file.
-    profile_attributes_sync_version INTEGER   NOT NULL    DEFAULT 0,
+    profile_attributes_sync_version INTEGER         NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

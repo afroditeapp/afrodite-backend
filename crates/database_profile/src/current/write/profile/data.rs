@@ -2,7 +2,7 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, Attribute, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
+    AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
 };
 
 use super::ConnectionProvider;
@@ -159,6 +159,22 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         update(profile_state)
             .filter(account_id.eq(id.as_db_id()))
             .set(profile_attributes_sync_version.eq(0))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn update_last_seen_time_filter(
+        &mut self,
+        id: AccountIdInternal,
+        last_seen_time_filter_value: Option<LastSeenTimeFilter>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_state::dsl::*;
+
+        update(profile_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .set(last_seen_time_filter.eq(last_seen_time_filter_value))
             .execute(self.conn())
             .into_db_error(())?;
 

@@ -140,6 +140,9 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.profile()
                 .data()
                 .upsert_profile_attribute_filters(id, filters.filters, config.profile_attributes())?;
+            cmds.profile()
+                .data()
+                .update_last_seen_time_filter(id, filters.last_seen_time_filter)?;
             cmds.read().profile().data().profile_attribute_filters(id)
         })?;
 
@@ -147,6 +150,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             .write_cache(id.as_id(), |e| {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
                 p.filters = new_filters;
+                p.state.last_seen_time_filter = filters.last_seen_time_filter;
                 Ok(())
             })
             .await
