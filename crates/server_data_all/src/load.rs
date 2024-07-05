@@ -125,9 +125,14 @@ impl DbDataToCacheLoader {
                     cmds.profile().data().profile_attribute_filters(account_id)
                 })
                 .await?;
+            let last_seen_unix_time = db
+                .db_read_profile(move |mut cmds| {
+                    cmds.profile().data().profile_last_seen_time(account_id)
+                })
+                .await?;
 
             let mut profile_data =
-                CachedProfile::new(account_id.uuid, profile, state, attributes, filters, config);
+                CachedProfile::new(account_id.uuid, profile, state, attributes, filters, config, last_seen_unix_time);
 
             let location_key = index_writer.coordinates_to_key(&profile_location);
             profile_data.location.current_position = location_key;

@@ -2,7 +2,7 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, Attribute, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion
+    AccountIdInternal, Attribute, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
 };
 
 use super::ConnectionProvider;
@@ -53,6 +53,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
                 age.eq(&data.new_data.age),
                 profile_text.eq(&data.new_data.profile_text),
             ))
+            .execute(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub fn profile_last_seen_time(
+        &mut self,
+        id: AccountIdInternal,
+        data: Option<UnixTime>,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::profile::dsl::*;
+
+        update(profile.find(id.as_db_id()))
+            .set(last_seen_unix_time.eq(data))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 

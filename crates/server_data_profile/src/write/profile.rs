@@ -268,4 +268,17 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.profile().data().profile(id, &data)
         })
     }
+
+    pub async fn update_last_seen_time_from_cache_to_database(
+        self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        let last_seen_time = self.cache()
+            .read_cache(id, |e| e.last_seen_time_for_db())
+            .await?;
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().profile_last_seen_time(id, last_seen_time)
+        })
+    }
 }

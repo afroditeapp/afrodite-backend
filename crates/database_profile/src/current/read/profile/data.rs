@@ -4,8 +4,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue,
-    ProfileInternal, ProfileStateInternal,
+    AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
 };
 
 define_current_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);
@@ -52,6 +51,19 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         profile_state
             .filter(account_id.eq(id.as_db_id()))
             .select(ProfileStateInternal::as_select())
+            .first(self.conn())
+            .change_context(DieselDatabaseError::Execute)
+    }
+
+    pub fn profile_last_seen_time(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DieselDatabaseError> {
+        use crate::schema::profile::dsl::*;
+
+        profile
+            .filter(account_id.eq(id.as_db_id()))
+            .select(last_seen_unix_time)
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)
     }

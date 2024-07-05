@@ -6,6 +6,8 @@
 
 //! Data types for API and database.
 
+pub use simple_backend_model::UnixTime;
+
 pub mod account;
 pub mod account_admin;
 pub mod chat;

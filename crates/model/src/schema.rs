@@ -293,6 +293,7 @@ diesel::table! {
         name -> Text,
         profile_text -> Text,
         age -> Integer,
+        last_seen_unix_time -> Nullable<Integer>,
     }
 }
 

@@ -149,7 +149,9 @@ impl DatabaseCache {
             {
                 cache_entry_write.current_connection = None;
                 let last_seen_time = UnixTime::current_time();
-                cache_entry_write.last_seen_time = Some(last_seen_time);
+                if let Some(profile_entry) = cache_entry_write.profile.as_mut() {
+                    profile_entry.last_seen_time = Some(last_seen_time);
+                }
                 last_seen_time_updated = cache_entry_write
                     .profile
                     .as_ref()
@@ -279,6 +281,7 @@ pub struct CachedProfile {
     pub location: LocationData,
     pub attributes: SortedProfileAttributes,
     pub filters: Vec<ProfileAttributeFilterValue>,
+    last_seen_time: Option<UnixTime>,
 }
 
 impl CachedProfile {
@@ -289,6 +292,7 @@ impl CachedProfile {
         attributes: Vec<ProfileAttributeValue>,
         filters: Vec<ProfileAttributeFilterValue>,
         config: &Config,
+        last_seen_time: Option<UnixTime>,
     ) -> Self {
         Self {
             account_id,
@@ -300,6 +304,7 @@ impl CachedProfile {
             },
             attributes: SortedProfileAttributes::new(attributes, config.profile_attributes()),
             filters,
+            last_seen_time,
         }
     }
 
@@ -355,7 +360,6 @@ pub struct CacheEntry {
     pub capabilities: Capabilities,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
     current_connection: Option<ConnectionInfo>,
-    last_seen_time: Option<UnixTime>,
     /// The cached pending notification flags indicates not yet handled
     /// notification which PushNotificationManager will handle as soon as
     /// possible.
@@ -371,7 +375,6 @@ impl CacheEntry {
             capabilities: Capabilities::default(),
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
             current_connection: None,
-            last_seen_time: None,
             pending_notification_flags: PendingNotificationFlags::empty(),
         }
     }
@@ -392,12 +395,22 @@ impl CacheEntry {
         ))
     }
 
+    /// Available only if profile component is enabled.
     pub fn last_seen_time(&self) -> Option<LastSeenTime> {
-        if self.current_connection.is_some() {
-            Some(LastSeenTime::ONLINE)
-        } else {
-            self.last_seen_time.map(|v| v.into())
-        }
+        self.profile.as_ref().and_then(|v| {
+            if self.current_connection.is_some() {
+                Some(LastSeenTime::ONLINE)
+            } else {
+                v.last_seen_time.map(|v| v.into())
+            }
+        })
+    }
+
+    /// Available only if profile component is enabled.
+    pub fn last_seen_time_for_db(&self) -> Option<UnixTime> {
+        self.profile.as_ref().and_then(|v| {
+            v.last_seen_time
+        })
     }
 
     pub fn connection_event_sender(&self) -> Option<&EventSender> {

@@ -1,5 +1,5 @@
 use model::{
-    AccountIdInternal, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal
+    AccountIdInternal, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
 };
 use server_data::{
     define_server_data_read_commands,
@@ -81,6 +81,15 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
         id: AccountIdInternal,
     ) -> Result<Profile, DataError> {
         self.db_read(move |mut cmds| cmds.profile().data().profile(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn last_seen_unix_time_in_database(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DataError> {
+        self.db_read(move |mut cmds| cmds.profile().data().profile_last_seen_time(id))
             .await
             .into_error()
     }

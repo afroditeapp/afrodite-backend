@@ -10,6 +10,7 @@ pub mod bot;
 pub mod content_processing;
 pub mod perf;
 pub mod startup_tasks;
+pub mod shutdown_tasks;
 pub mod utils;
 
 use std::sync::Arc;
@@ -30,6 +31,7 @@ use server_data::{
 };
 use server_data_all::{demo::DemoModeManager, load::DbDataToCacheLoader};
 use server_state::AppState;
+use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
     app::SimpleBackendAppState, email::{self, EmailManager, EmailManagerQuitHandle}, media_backup::MediaBackupHandle, perf::AllCounters, web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher
 };
@@ -59,6 +61,7 @@ impl PihkaServer {
             content_processing_quit_handle: None,
             push_notifications_quit_handle: None,
             email_manager_quit_handle: None,
+            shutdown_tasks: None,
         };
         let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
@@ -73,6 +76,7 @@ pub struct PihkaBusinessLogic {
     content_processing_quit_handle: Option<ContentProcessingManagerQuitHandle>,
     push_notifications_quit_handle: Option<PushNotificationManagerQuitHandle>,
     email_manager_quit_handle: Option<EmailManagerQuitHandle>,
+    shutdown_tasks: Option<ShutdownTasks>,
 }
 
 impl BusinessLogic for PihkaBusinessLogic {
@@ -217,6 +221,7 @@ impl BusinessLogic for PihkaBusinessLogic {
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
         self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
         self.email_manager_quit_handle = Some(email_manager_quit_handle);
+        self.shutdown_tasks = Some(ShutdownTasks::new(app_state.clone()));
         app_state
     }
 
@@ -248,6 +253,8 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     async fn on_after_server_quit(self) {
+        // Email and push notifications have internal shutdown tasks.
+        // Wait those to finish first.
         self.email_manager_quit_handle
             .expect("Not initialized")
             .wait_quit()
@@ -256,6 +263,15 @@ impl BusinessLogic for PihkaBusinessLogic {
             .expect("Not initialized")
             .wait_quit()
             .await;
+
+        let result = self.shutdown_tasks
+            .expect("Not initialized")
+            .run_and_wait_completion()
+            .await;
+        if let Err(e) = result {
+            error!("Running shutdown tasks failed: {:?}", e);
+        }
+
         self.content_processing_quit_handle
             .expect("Not initialized")
             .wait_quit()
