@@ -14,6 +14,7 @@ pub struct ProfileQueryMakerDetails {
     pub search_groups_filter: SearchGroupFlagsFilter,
     pub attribute_filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
+    pub unlimited_likes_filter: Option<bool>,
 }
 
 impl ProfileQueryMakerDetails {
@@ -31,6 +32,7 @@ impl ProfileQueryMakerDetails {
             search_groups_filter: state.search_group_flags.to_filter(),
             attribute_filters,
             last_seen_time_filter: state.last_seen_time_filter,
+            unlimited_likes_filter: state.unlimited_likes_filter,
         }
     }
 }
@@ -109,6 +111,12 @@ impl LocationIndexProfileData {
         if is_match {
             if let Some(last_seen_time_filter) = query_maker_details.last_seen_time_filter {
                 is_match &= self.last_seen_time_match(last_seen_time_filter, current_time);
+            }
+        }
+
+        if is_match {
+            if let Some(unlimited_likes_filter) = query_maker_details.unlimited_likes_filter {
+                is_match &= unlimited_likes_filter == self.unlimited_likes;
             }
         }
 

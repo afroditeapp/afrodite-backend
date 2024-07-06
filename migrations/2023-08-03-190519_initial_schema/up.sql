@@ -190,6 +190,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     search_group_flags         INTEGER              NOT NULL    DEFAULT 0,
     -- Filter setting for last seen time.
     last_seen_time_filter      INTEGER,
+    -- Filter setting for unlimited likes.
+    unlimited_likes_filter     BOOLEAN,
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile attributes config file.

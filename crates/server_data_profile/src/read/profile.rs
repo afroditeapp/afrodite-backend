@@ -78,6 +78,7 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
             Ok(ProfileAttributeFilterList {
                 filters,
                 last_seen_time_filter: state.last_seen_time_filter,
+                unlimited_likes_filter: state.unlimited_likes_filter,
             })
         })
         .await

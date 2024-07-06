@@ -14,6 +14,7 @@ use super::NUMBER_LIST_ATTRIBUTE_MAX_VALUES;
 pub struct ProfileAttributeFilterListUpdate {
     filters: Vec<ProfileAttributeFilterValueUpdate>,
     last_seen_time_filter: Option<LastSeenTimeFilter>,
+    unlimited_likes_filter: Option<bool>,
 }
 
 impl ProfileAttributeFilterListUpdate {
@@ -51,6 +52,7 @@ impl ProfileAttributeFilterListUpdate {
         Ok(ProfileAttributeFilterListUpdateValidated {
             filters: self.filters,
             last_seen_time_filter: self.last_seen_time_filter,
+            unlimited_likes_filter: self.unlimited_likes_filter,
         })
     }
 }
@@ -59,6 +61,7 @@ impl ProfileAttributeFilterListUpdate {
 pub struct ProfileAttributeFilterListUpdateValidated {
     pub filters: Vec<ProfileAttributeFilterValueUpdate>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
+    pub unlimited_likes_filter: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -79,6 +82,7 @@ pub struct ProfileAttributeFilterValueUpdate {
 pub struct ProfileAttributeFilterList {
     pub filters: Vec<ProfileAttributeFilterValue>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
+    pub unlimited_likes_filter: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]

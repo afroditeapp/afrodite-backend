@@ -105,6 +105,7 @@ pub struct ProfileStateInternal {
     #[diesel(deserialize_as = i64, serialize_as = i64)]
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
+    pub unlimited_likes_filter: Option<bool>,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
 }
 
@@ -117,6 +118,7 @@ pub struct ProfileStateCached {
     pub search_age_range_max: ProfileAge,
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
+    pub unlimited_likes_filter: Option<bool>,
 }
 
 impl From<ProfileStateInternal> for ProfileStateCached {
@@ -126,6 +128,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_age_range_max: value.search_age_range_max,
             search_group_flags: value.search_group_flags,
             last_seen_time_filter: value.last_seen_time_filter,
+            unlimited_likes_filter: value.unlimited_likes_filter,
         }
     }
 }

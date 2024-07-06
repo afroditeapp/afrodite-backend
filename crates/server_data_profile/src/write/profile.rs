@@ -143,6 +143,9 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.profile()
                 .data()
                 .update_last_seen_time_filter(id, filters.last_seen_time_filter)?;
+            cmds.profile()
+                .data()
+                .update_unlimited_likes_filter(id, filters.unlimited_likes_filter)?;
             cmds.read().profile().data().profile_attribute_filters(id)
         })?;
 
@@ -151,6 +154,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
                 let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
                 p.filters = new_filters;
                 p.state.last_seen_time_filter = filters.last_seen_time_filter;
+                p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
                 Ok(())
             })
             .await

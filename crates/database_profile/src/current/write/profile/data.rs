@@ -196,6 +196,22 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         Ok(())
     }
 
+    pub fn update_unlimited_likes_filter(
+        &mut self,
+        id: AccountIdInternal,
+        value: Option<bool>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_state::dsl::*;
+
+        update(profile_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .set(unlimited_likes_filter.eq(value))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
     pub fn upsert_profile_attributes(
         &mut self,
         id: AccountIdInternal,
