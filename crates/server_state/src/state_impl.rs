@@ -13,7 +13,7 @@ use server_data::{
     content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
-use server_data_all::register::RegisterAccount;
+use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::{
     app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
@@ -376,6 +376,21 @@ impl IsMatch for S {
         account1: AccountIdInternal,
     ) -> server_common::result::Result<bool, DataError> {
         self.read().chat().is_match(account0, account1).await
+    }
+}
+
+impl UpdateUnlimitedLikes for S {
+    async fn update_unlimited_likes(
+        &self,
+        id: AccountIdInternal,
+        unlimited_likes: bool,
+    ) -> server_common::result::Result<(), DataError> {
+        db_write_raw!(self, move |cmds| {
+            UnlimitedLikesUpdate::new(cmds)
+                .update_unlimited_likes_value(id, unlimited_likes)
+                .await
+        })
+        .await
     }
 }
 

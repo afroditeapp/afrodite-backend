@@ -59,6 +59,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         Ok(())
     }
 
+    pub fn only_profile_version(
+        &mut self,
+        id: AccountIdInternal,
+        data: ProfileVersion,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::profile::dsl::*;
+
+        update(profile.find(id.as_db_id()))
+            .set(version_uuid.eq(data))
+            .execute(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
     pub fn profile_last_seen_time(
         &mut self,
         id: AccountIdInternal,

@@ -30,7 +30,11 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
                 .as_ref()
                 .map(|data|
                     ProfileAndProfileVersion {
-                        profile: Profile::new(data.data.clone(), data.attributes.attributes().clone()),
+                        profile: Profile::new(
+                            data.data.clone(),
+                            data.attributes.attributes().clone(),
+                            cache.other_shared_state.unlimited_likes,
+                        ),
                         version: data.data.version_uuid,
                         last_seen_time: cache.last_seen_time(),
                     }

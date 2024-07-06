@@ -1,7 +1,7 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion, Capabilities, ProfileVisibility, SharedStateRaw, SyncVersionUtils
+    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion, Capabilities, OtherSharedState, ProfileVisibility, SharedStateRaw, SyncVersionUtils
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -31,6 +31,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         &mut self,
         id: AccountIdInternal,
         data: AccountStateRelatedSharedState,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::shared_state::dsl::*;
+
+        update(shared_state.find(id.as_db_id()))
+            .set(data)
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn update_other_shared_state(
+        &mut self,
+        id: AccountIdInternal,
+        data: OtherSharedState,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::shared_state::dsl::*;
 

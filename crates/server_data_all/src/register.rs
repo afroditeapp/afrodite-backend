@@ -5,7 +5,7 @@ use database::{
     current::write::TransactionConnection, ConnectionProvider, PoolObject, TransactionError,
 };
 use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, Profile, SharedStateRaw, SignInWithInfo
+    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, SharedStateRaw, SignInWithInfo
 };
 use server_data::{
     index::{LocationIndexIteratorHandle, LocationIndexWriteHandle},
@@ -123,20 +123,20 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
         if config.components().profile {
             let mut current =
                 database_profile::current::write::CurrentSyncWriteCommands::new(conn.conn());
-            let mut history = database_profile::history::write::HistorySyncWriteCommands::new(
+            let _history = database_profile::history::write::HistorySyncWriteCommands::new(
                 history_conn.deref_mut(),
             );
-            let profile = current.profile().data().insert_profile(id)?;
+            let _profile = current.profile().data().insert_profile(id)?;
             current.profile().data().insert_profile_state(id)?;
 
-            // Profile history
-            let attributes = current
-                .read()
-                .profile()
-                .data()
-                .profile_attribute_values(id)?;
-            let profile = Profile::new(profile, attributes);
-            history.profile().insert_profile(id, &profile)?;
+            // // Profile history
+            // let attributes = current
+            //     .read()
+            //     .profile()
+            //     .data()
+            //     .profile_attribute_values(id)?;
+            // let profile = Profile::new(profile, attributes);
+            // history.profile().insert_profile(id, &profile)?;
         }
 
         if config.components().media {

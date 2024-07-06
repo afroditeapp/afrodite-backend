@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 use config::Config;
 use error_stack::Result;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LastSeenTime, LocationIndexKey, LocationIndexProfileData, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
 use simple_backend_model::UnixTime;
 pub use server_common::data::cache::CacheError;
@@ -359,6 +359,7 @@ pub struct CacheEntry {
     pub chat: Option<Box<CachedChatComponentData>>,
     pub capabilities: Capabilities,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
+    pub other_shared_state: OtherSharedState,
     current_connection: Option<ConnectionInfo>,
     /// The cached pending notification flags indicates not yet handled
     /// notification which PushNotificationManager will handle as soon as
@@ -374,6 +375,7 @@ impl CacheEntry {
             chat: None,
             capabilities: Capabilities::default(),
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
+            other_shared_state: OtherSharedState::default(),
             current_connection: None,
             pending_notification_flags: PendingNotificationFlags::empty(),
         }
@@ -391,6 +393,7 @@ impl CacheEntry {
             &profile.state,
             profile.attributes.clone(),
             self.media.as_ref().map(|m| m.profile_content_version),
+            self.other_shared_state.unlimited_likes,
             self.last_seen_time(),
         ))
     }

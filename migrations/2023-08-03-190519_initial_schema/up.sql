@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- Used in receiving end to avoid saving old state in case of
     -- concurrent updates.
     sync_version              INTEGER              NOT NULL DEFAULT 0,
+    unlimited_likes           BOOLEAN              NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

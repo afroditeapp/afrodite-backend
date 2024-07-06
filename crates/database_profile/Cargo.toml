@@ -7,8 +7,6 @@ edition = "2021"
 
 [dependencies]
 
-serde_json = { workspace = true }
-
 diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 
 error-stack = { workspace = true }

@@ -33,6 +33,7 @@ pub use server_common::{data::DataError, result};
         account::post_demo_mode_login_to_account,
         account::post_demo_mode_accessible_accounts,
         account::put_setting_profile_visiblity,
+        account::put_setting_unlimited_likes,
         account::get_account_state,
         account::get_account_setup,
         account::get_account_data,

@@ -382,6 +382,7 @@ diesel::table! {
         account_state_number -> Integer,
         profile_visibility_state_number -> Integer,
         sync_version -> Integer,
+        unlimited_likes -> Bool,
     }
 }
 

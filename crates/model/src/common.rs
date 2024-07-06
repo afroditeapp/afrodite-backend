@@ -462,6 +462,7 @@ pub struct SharedStateRaw {
     pub profile_visibility_state_number: ProfileVisibility,
     pub account_state_number: AccountState,
     pub sync_version: AccountSyncVersion,
+    pub unlimited_likes: bool,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
@@ -471,6 +472,13 @@ pub struct AccountStateRelatedSharedState {
     pub profile_visibility_state_number: ProfileVisibility,
     pub account_state_number: AccountState,
     pub sync_version: AccountSyncVersion,
+}
+
+#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[diesel(table_name = crate::schema::shared_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct OtherSharedState {
+    pub unlimited_likes: bool,
 }
 
 impl AccountStateRelatedSharedState {

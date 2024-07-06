@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, AccountStateRelatedSharedState, Capabilities};
+use model::{AccountIdInternal, AccountStateRelatedSharedState, Capabilities, OtherSharedState};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
@@ -17,6 +17,19 @@ impl<C: ConnectionProvider> CurrentSyncReadCommonState<C> {
         shared_state
             .filter(account_id.eq(id.as_db_id()))
             .select(AccountStateRelatedSharedState::as_select())
+            .first(self.conn())
+            .into_db_error(id)
+    }
+
+    pub fn other_shared_state(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<OtherSharedState, DieselDatabaseError> {
+        use crate::schema::shared_state::dsl::*;
+
+        shared_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(OtherSharedState::as_select())
             .first(self.conn())
             .into_db_error(id)
     }

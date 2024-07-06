@@ -365,18 +365,23 @@ pub struct Profile {
     #[schema(value_type = i64)]
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValue>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    unlimited_likes: bool,
 }
 
 impl Profile {
     pub fn new(
         value: ProfileInternal,
         attributes: Vec<ProfileAttributeValue>,
+        unlimited_likes: bool,
     ) -> Self {
         Self {
             name: value.name,
             profile_text: value.profile_text,
             age: value.age,
             attributes,
+            unlimited_likes,
         }
     }
 }
@@ -1153,6 +1158,7 @@ pub struct LocationIndexProfileData {
     search_age_range: ProfileSearchAgeRangeValidated,
     search_groups: SearchGroupFlags,
     attributes: SortedProfileAttributes,
+    unlimited_likes: bool,
     /// Possible values:
     /// - Unix timestamp
     /// - Value -1 is currently online
@@ -1167,6 +1173,7 @@ impl LocationIndexProfileData {
         state: &ProfileStateCached,
         attributes: SortedProfileAttributes,
         profile_content_version: Option<ProfileContentVersion>,
+        unlimited_likes: bool,
         last_seen_value: Option<LastSeenTime>,
     ) -> Self {
         Self {
@@ -1178,6 +1185,7 @@ impl LocationIndexProfileData {
             ),
             search_groups: state.search_group_flags,
             attributes,
+            unlimited_likes,
             last_seen_time: if let Some(last_seen_time) = last_seen_value {
                 AtomicI64::new(last_seen_time.0)
             } else {

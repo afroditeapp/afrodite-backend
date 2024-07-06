@@ -113,3 +113,11 @@ pub trait IsMatch: StateBase + ReadData {
         account1: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<bool, DataError>> + Send;
 }
+
+pub trait UpdateUnlimitedLikes: StateBase + WriteData {
+    fn update_unlimited_likes(
+        &self,
+        id: AccountIdInternal,
+        unlimited_likes: bool,
+    ) -> impl std::future::Future<Output = server_common::result::Result<(), DataError>> + Send;
+}

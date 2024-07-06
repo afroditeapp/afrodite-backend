@@ -90,6 +90,10 @@ impl DbDataToCacheLoader {
             .db_read_common(move |mut cmds| cmds.common().state().account_state_related_shared_state(account_id))
             .await?;
         entry.account_state_related_shared_state = state;
+        let other_state = db
+            .db_read_common(move |mut cmds| cmds.common().state().other_shared_state(account_id))
+            .await?;
+        entry.other_shared_state = other_state;
 
         if config.components().account {
             // empty

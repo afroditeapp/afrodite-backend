@@ -2,7 +2,7 @@ use axum::{extract::State, Extension, Router};
 use model::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
-use server_api::{db_write, db_write_multiple};
+use server_api::{app::UpdateUnlimitedLikes, db_write, db_write_multiple};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -126,8 +126,35 @@ pub async fn put_setting_profile_visiblity<S: GetInternalApi + GetConfig + Write
     Ok(())
 }
 
+pub const PATH_SETTING_UNLIMITED_LIKES: &str = "/account_api/settings/unlimited_likes";
+
+#[utoipa::path(
+    put,
+    path = PATH_SETTING_UNLIMITED_LIKES,
+    request_body(content = BooleanSetting),
+    responses(
+        (status = 200, description = "Update successfull."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn put_setting_unlimited_likes<S: GetInternalApi + GetConfig + UpdateUnlimitedLikes>(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Json(new_value): Json<BooleanSetting>,
+) -> Result<(), StatusCode> {
+    ACCOUNT.put_setting_unlimited_likes.incr();
+
+    state.update_unlimited_likes(id, new_value.value).await?;
+
+    internal_api::common::sync_other_shared_state(&state, id).await?;
+
+    Ok(())
+}
+
 pub fn settings_router<
-    S: StateBase + GetInternalApi + GetConfig + WriteData + ReadData + GetAccessTokens,
+    S: StateBase + GetInternalApi + GetConfig + WriteData + ReadData + GetAccessTokens + UpdateUnlimitedLikes,
 >(
     s: S,
 ) -> Router {
@@ -140,6 +167,10 @@ pub fn settings_router<
             PATH_SETTING_PROFILE_VISIBILITY,
             put(put_setting_profile_visiblity::<S>),
         )
+        .route(
+            PATH_SETTING_UNLIMITED_LIKES,
+            put(put_setting_unlimited_likes::<S>),
+        )
         .with_state(s)
 }
 
@@ -150,4 +181,5 @@ create_counters!(
     get_account_data,
     post_account_data,
     put_setting_profile_visiblity,
+    put_setting_unlimited_likes,
 );
