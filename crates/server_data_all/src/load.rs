@@ -7,7 +7,7 @@ use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
 use server_data::{
-    cache::{CachedMedia, CachedProfile, DatabaseCache},
+    cache::{CachedChatComponentData, CachedMedia, CachedProfile, DatabaseCache},
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
 use tracing::info;
@@ -168,6 +168,8 @@ impl DbDataToCacheLoader {
             if !chat_state.fcm_notification_sent {
                 entry.pending_notification_flags = chat_state.pending_notification.into();
             }
+
+            entry.chat = Some(CachedChatComponentData::default().into());
         }
 
         Ok(())

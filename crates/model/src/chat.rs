@@ -338,3 +338,18 @@ pub struct SendMessageToAccount {
     pub receiver: AccountId,
     pub message: String,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct LimitedActionResult {
+    pub status: LimitedActionStatus,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub enum LimitedActionStatus {
+    /// Action completed successfully.
+    Success,
+    /// Action completed successfully but the action limit was reached.
+    SuccessAndLimitReached,
+    /// Action failed because the action limit is already reached.
+    FailureLimitAlreadyReached,
+}

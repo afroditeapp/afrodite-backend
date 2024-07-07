@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use config::Config;
 use error_stack::Result;
+use limit::ChatLimits;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
@@ -11,6 +12,8 @@ use tokio::sync::RwLock;
 
 use super::index::location::LocationIndexIteratorState;
 use crate::event::{event_channel, EventReceiver, EventSender};
+
+pub mod limit;
 
 /// If this exists update last seen time atomic variable in location
 /// index.
@@ -319,8 +322,9 @@ pub struct LocationData {
     pub current_iterator: LocationIndexIteratorState,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default)]
 pub struct CachedChatComponentData {
+    pub limits: ChatLimits,
     // This cached version of FcmDeviceToken is now disabled
     // as some extra mapping other way aroud would be needed as
     // same FcmDeviceToken might be used for different account if
@@ -383,6 +387,20 @@ impl CacheEntry {
     // TODO(refactor): Add helper functions to get data related do features
     // that can be disabled. Those should return Result<Data, CacheError>.
     // Also read_cache action closure might need or should to return Result.
+
+    pub fn chat_data(&self) -> Result<&CachedChatComponentData, CacheError> {
+        self.chat
+            .as_ref()
+            .map(|v| v.as_ref())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
+
+    pub fn chat_data_mut(&mut self) -> Result<&mut CachedChatComponentData, CacheError> {
+        self.chat
+            .as_mut()
+            .map(|v| v.as_mut())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
 
     pub fn location_index_profile_data(&self) -> Result<LocationIndexProfileData, CacheError> {
         let profile = self.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;

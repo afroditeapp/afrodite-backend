@@ -61,6 +61,8 @@ pub use server_common::{data::DataError, result};
         model::chat::PendingNotification,
         model::chat::PendingNotificationWithData,
         model::chat::PendingNotificationToken,
+        model::chat::LimitedActionResult,
+        model::chat::LimitedActionStatus,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

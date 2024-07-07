@@ -4,8 +4,7 @@ use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
 use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, SyncVersionUtils};
 use server_data::{
-    define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError,
-    DieselDatabaseError,
+    cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
 use simple_backend_utils::ContextExt;
 
@@ -21,6 +20,20 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
 }
 
 impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
+    pub async fn modify_chat_limits<T>(
+        &mut self,
+        id: AccountIdInternal,
+        mut action: impl FnMut(&mut ChatLimits) -> T + Send + 'static,
+    ) -> Result<T, DataError> {
+        let value = self.cache().write_cache(id, move |entry| {
+            let chat = entry.chat_data_mut()?;
+            Ok(action(&mut chat.limits))
+        })
+            .await?;
+
+        Ok(value)
+    }
+
     pub async fn modify_chat_state(
         &mut self,
         id: AccountIdInternal,

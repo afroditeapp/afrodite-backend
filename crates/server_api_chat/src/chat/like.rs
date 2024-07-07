@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, ReceivedLikesPage, SentLikesPage};
+use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, ReceivedLikesPage, SentLikesPage};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -18,7 +18,7 @@ pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
     path = "/chat_api/send_like",
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Success."),
+        (status = 200, description = "Success.", body = LimitedActionResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -28,28 +28,55 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<LimitedActionResult>, StatusCode> {
     CHAT.post_send_like.incr();
 
-    // TODO: Check is profile public and is age ok.
+    // TODO(prod): Check is profile public and is age ok.
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    db_write_multiple!(state, move |cmds| {
-        let changes = cmds
+    let action_status = db_write_multiple!(state, move |cmds| {
+        let unlimited_likes_enabled_for_both = cmds
+            .read()
             .chat()
-            .like_or_match_profile(id, requested_profile)
+            .unlimited_likes_are_enabled_for_both(id, requested_profile)
             .await?;
-        cmds.events()
-            .handle_chat_state_changes(changes.sender)
-            .await?;
-        cmds.events()
-            .handle_chat_state_changes(changes.receiver)
-            .await?;
-        Ok(())
+
+        let allow_action = if unlimited_likes_enabled_for_both {
+            true
+        } else {
+            cmds
+                .chat()
+                .modify_chat_limits(id, |limits| limits.like_limit.is_limit_not_reached())
+                .await??
+        };
+
+        if allow_action {
+            let changes = cmds
+                .chat()
+                .like_or_match_profile(id, requested_profile)
+                .await?;
+            cmds.events()
+                .handle_chat_state_changes(changes.sender)
+                .await?;
+            cmds.events()
+                .handle_chat_state_changes(changes.receiver)
+                .await?;
+        }
+
+        if unlimited_likes_enabled_for_both {
+            Ok(LimitedActionStatus::Success)
+        } else {
+            let status = cmds
+                .chat()
+                .modify_chat_limits(id, |limits| limits.like_limit.increment_if_possible())
+                .await??
+                .to_action_status();
+            Ok(status)
+        }
     })?;
 
-    Ok(())
+    Ok(LimitedActionResult { status: action_status }.into())
 }
 
 pub const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
@@ -140,7 +167,7 @@ pub const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
     path = "/chat_api/delete_like",
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Success."),
+        (status = 200, description = "Success.", body = LimitedActionResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -150,26 +177,39 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<LimitedActionResult>, StatusCode> {
     CHAT.delete_like.incr();
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    db_write_multiple!(state, move |cmds| {
-        let changes = cmds
+    let action_status = db_write_multiple!(state, move |cmds| {
+        let allow_action = cmds
             .chat()
-            .delete_like_or_block(id, requested_profile)
-            .await?;
-        cmds.events()
-            .handle_chat_state_changes(changes.sender)
-            .await?;
-        cmds.events()
-            .handle_chat_state_changes(changes.receiver)
-            .await?;
-        Ok(())
+            .modify_chat_limits(id, |limits| limits.delete_like_limit.is_limit_not_reached())
+            .await??;
+
+        if allow_action {
+            let changes = cmds
+                .chat()
+                .delete_like_or_block(id, requested_profile)
+                .await?;
+            cmds.events()
+                .handle_chat_state_changes(changes.sender)
+                .await?;
+            cmds.events()
+                .handle_chat_state_changes(changes.receiver)
+                .await?;
+        }
+
+        let status = cmds
+            .chat()
+            .modify_chat_limits(id, |limits| limits.delete_like_limit.increment_if_possible())
+            .await??
+            .to_action_status();
+        Ok(status)
     })?;
 
-    Ok(())
+    Ok(LimitedActionResult { status: action_status }.into())
 }
 
 pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {

@@ -4,8 +4,7 @@ use model::{
     AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, MatchesPage, MessageNumber, PendingMessagesPage, ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage
 };
 use server_data::{
-    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError,
-    IntoDataError,
+ define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
@@ -184,5 +183,21 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
             })
             .unwrap_or_default();
         Ok(is_match)
+    }
+
+    pub async fn unlimited_likes_are_enabled_for_both(
+        &self,
+        account0: AccountIdInternal,
+        account1: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        let unlimited_likes_a0 = self.read_cache(account0, |entry| {
+            entry.other_shared_state.unlimited_likes
+        }).await?;
+
+        let unlimited_likes_a1 = self.read_cache(account1, |entry| {
+            entry.other_shared_state.unlimited_likes
+        }).await?;
+
+        Ok(unlimited_likes_a0 == unlimited_likes_a1)
     }
 }
