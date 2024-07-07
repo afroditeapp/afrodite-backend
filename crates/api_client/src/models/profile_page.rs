@@ -13,6 +13,8 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProfilePage {
+    #[serde(rename = "error_invalid_iterator_session_id", skip_serializing_if = "Option::is_none")]
+    pub error_invalid_iterator_session_id: Option<bool>,
     #[serde(rename = "profiles")]
     pub profiles: Vec<crate::models::ProfileLink>,
 }
@@ -20,6 +22,7 @@ pub struct ProfilePage {
 impl ProfilePage {
     pub fn new(profiles: Vec<crate::models::ProfileLink>) -> ProfilePage {
         ProfilePage {
+            error_invalid_iterator_session_id: None,
             profiles,
         }
     }

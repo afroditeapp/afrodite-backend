@@ -547,7 +547,7 @@ pub async fn post_favorite_profile(configuration: &configuration::Configuration,
 }
 
 /// Post (updates iterator) to get next page of profile list.
-pub async fn post_get_next_profile_page(configuration: &configuration::Configuration, ) -> Result<crate::models::ProfilePage, Error<PostGetNextProfilePageError>> {
+pub async fn post_get_next_profile_page(configuration: &configuration::Configuration, iterator_session_id: crate::models::IteratorSessionId) -> Result<crate::models::ProfilePage, Error<PostGetNextProfilePageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -566,6 +566,7 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
+    local_var_req_builder = local_var_req_builder.json(&iterator_session_id);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -694,7 +695,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &confi
 }
 
 /// Reset profile paging.  After this request getting next profiles will continue from the nearest profiles.
-pub async fn post_reset_profile_paging(configuration: &configuration::Configuration, ) -> Result<(), Error<PostResetProfilePagingError>> {
+pub async fn post_reset_profile_paging(configuration: &configuration::Configuration, ) -> Result<crate::models::IteratorSessionId, Error<PostResetProfilePagingError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -721,7 +722,7 @@ pub async fn post_reset_profile_paging(configuration: &configuration::Configurat
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
+        serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PostResetProfilePagingError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };

@@ -155,6 +155,15 @@ pub enum PutSettingProfileVisiblityError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`put_setting_unlimited_likes`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PutSettingUnlimitedLikesError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 
 /// Cancel account deletion.  Account state will move to previous state.
 pub async fn delete_cancel_deletion(configuration: &configuration::Configuration, ) -> Result<(), Error<DeleteCancelDeletionError>> {
@@ -685,6 +694,42 @@ pub async fn put_setting_profile_visiblity(configuration: &configuration::Config
         Ok(())
     } else {
         let local_var_entity: Option<PutSettingProfileVisiblityError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+pub async fn put_setting_unlimited_likes(configuration: &configuration::Configuration, boolean_setting: crate::models::BooleanSetting) -> Result<(), Error<PutSettingUnlimitedLikesError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/account_api/settings/unlimited_likes", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+    local_var_req_builder = local_var_req_builder.json(&boolean_setting);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PutSettingUnlimitedLikesError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

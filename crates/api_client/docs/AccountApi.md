@@ -20,6 +20,7 @@ Method | HTTP request | Description
 [**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /account_api/demo_mode_register_account | 
 [**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
+[**put_setting_unlimited_likes**](AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
 
 
 
@@ -452,6 +453,34 @@ No authorization required
 Update current or pending profile visiblity value.
 
 Update current or pending profile visiblity value.  NOTE: Client uses this in initial setup.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**boolean_setting** | [**BooleanSetting**](BooleanSetting.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## put_setting_unlimited_likes
+
+> put_setting_unlimited_likes(boolean_setting)
+
 
 ### Parameters
 

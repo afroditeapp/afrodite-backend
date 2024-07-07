@@ -23,6 +23,8 @@ pub struct Profile {
     /// Profile text support is disabled for now.
     #[serde(rename = "profile_text")]
     pub profile_text: String,
+    #[serde(rename = "unlimited_likes", skip_serializing_if = "Option::is_none")]
+    pub unlimited_likes: Option<bool>,
 }
 
 impl Profile {
@@ -33,6 +35,7 @@ impl Profile {
             attributes,
             name,
             profile_text,
+            unlimited_likes: None,
         }
     }
 }

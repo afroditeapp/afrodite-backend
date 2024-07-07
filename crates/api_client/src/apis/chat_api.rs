@@ -159,7 +159,7 @@ pub enum PostUnblockProfileError {
 
 
 /// Delete sent like.  Delete will not work if profile is a match.
-pub async fn delete_like(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<(), Error<DeleteLikeError>> {
+pub async fn delete_like(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<crate::models::LimitedActionResult, Error<DeleteLikeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -187,7 +187,7 @@ pub async fn delete_like(configuration: &configuration::Configuration, account_i
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
+        serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<DeleteLikeError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
@@ -589,7 +589,7 @@ pub async fn post_message_number_of_latest_viewed_message(configuration: &config
 }
 
 /// Send a like to some account. If both will like each other, then the accounts will be a match.
-pub async fn post_send_like(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<(), Error<PostSendLikeError>> {
+pub async fn post_send_like(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<crate::models::LimitedActionResult, Error<PostSendLikeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -617,7 +617,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
+        serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PostSendLikeError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };

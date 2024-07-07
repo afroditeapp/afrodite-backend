@@ -17,6 +17,8 @@ pub struct ProfileLink {
     pub content_version: Option<Option<Box<crate::models::ProfileContentVersion>>>,
     #[serde(rename = "id")]
     pub id: Box<crate::models::AccountId>,
+    #[serde(rename = "last_seen_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub last_seen_time: Option<Option<Box<i64>>>,
     #[serde(rename = "version")]
     pub version: Box<crate::models::ProfileVersion>,
 }
@@ -26,6 +28,7 @@ impl ProfileLink {
         ProfileLink {
             content_version: None,
             id: Box::new(id),
+            last_seen_time: None,
             version: Box::new(version),
         }
     }

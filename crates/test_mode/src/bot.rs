@@ -5,6 +5,7 @@ mod utils;
 
 use std::{fmt::Debug, sync::Arc, vec};
 
+use actions::profile::ProfileState;
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
@@ -202,6 +203,7 @@ pub struct BotState {
     pub action_history: Vec<&'static dyn BotAction>,
     pub benchmark: BenchmarkState,
     pub media: MediaState,
+    pub profile: ProfileState,
     pub connections: BotConnections,
     pub refresh_token: Option<Vec<u8>>,
 }
@@ -232,6 +234,7 @@ impl BotState {
             previous_value: PreviousValue::Empty,
             action_history: vec![],
             media: MediaState::new(),
+            profile: ProfileState::new(),
             connections: BotConnections::default(),
             refresh_token: None,
         }

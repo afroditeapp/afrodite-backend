@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::profile_api::{self, get_location, get_profile, post_profile},
-    models::{Location, ProfileAttributeValueUpdate, ProfileUpdate},
+    models::{IteratorSessionId, Location, ProfileAttributeValueUpdate, ProfileUpdate},
 };
 use async_trait::async_trait;
 use config::file::LocationConfig;
@@ -10,6 +10,17 @@ use error_stack::{Result, ResultExt};
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::bot::utils::location::LocationConfigUtils;
+
+#[derive(Debug, Default)]
+pub struct ProfileState {
+    profile_iterator_session_id: Option<IteratorSessionId>,
+}
+
+impl ProfileState {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
 
 #[derive(Debug)]
 pub enum ProfileText {
@@ -151,9 +162,10 @@ pub struct ResetProfileIterator;
 #[async_trait]
 impl BotAction for ResetProfileIterator {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        profile_api::post_reset_profile_paging(state.api.profile())
+        let iterator_session_id = profile_api::post_reset_profile_paging(state.api.profile())
             .await
             .change_context(TestError::ApiRequest)?;
+        state.profile.profile_iterator_session_id = Some(iterator_session_id);
         Ok(())
     }
 }
@@ -164,7 +176,13 @@ pub struct GetProfileList;
 #[async_trait]
 impl BotAction for GetProfileList {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let data = profile_api::post_get_next_profile_page(state.api.profile())
+        let iterator_session_id = state
+            .profile
+            .profile_iterator_session_id
+            .as_ref()
+            .ok_or(TestError::MissingValue)?
+            .clone();
+        let data = profile_api::post_get_next_profile_page(state.api.profile(), iterator_session_id)
             .await
             .change_context(TestError::ApiRequest)?;
         let value =

@@ -13,6 +13,8 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct GetProfileResult {
+    #[serde(rename = "last_seen_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub last_seen_time: Option<Option<Box<i64>>>,
     #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile: Option<Option<Box<crate::models::Profile>>>,
     #[serde(rename = "version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -22,6 +24,7 @@ pub struct GetProfileResult {
 impl GetProfileResult {
     pub fn new() -> GetProfileResult {
         GetProfileResult {
+            last_seen_time: None,
             profile: None,
             version: None,
         }

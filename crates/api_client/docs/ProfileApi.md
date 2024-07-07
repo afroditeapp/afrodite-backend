@@ -311,14 +311,17 @@ Name | Type | Description  | Required | Notes
 
 ## post_get_next_profile_page
 
-> crate::models::ProfilePage post_get_next_profile_page()
+> crate::models::ProfilePage post_get_next_profile_page(iterator_session_id)
 Post (updates iterator) to get next page of profile list.
 
 Post (updates iterator) to get next page of profile list.
 
 ### Parameters
 
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**iterator_session_id** | [**IteratorSessionId**](IteratorSessionId.md) |  | [required] |
 
 ### Return type
 
@@ -330,7 +333,7 @@ This endpoint does not need any parameter.
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -428,7 +431,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_reset_profile_paging
 
-> post_reset_profile_paging()
+> crate::models::IteratorSessionId post_reset_profile_paging()
 Reset profile paging.
 
 Reset profile paging.  After this request getting next profiles will continue from the nearest profiles.
@@ -439,7 +442,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
- (empty response body)
+[**crate::models::IteratorSessionId**](IteratorSessionId.md)
 
 ### Authorization
 
@@ -448,7 +451,7 @@ This endpoint does not need any parameter.
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

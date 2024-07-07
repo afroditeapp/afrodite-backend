@@ -15,12 +15,18 @@
 pub struct ProfileAttributeFilterList {
     #[serde(rename = "filters")]
     pub filters: Vec<crate::models::ProfileAttributeFilterValue>,
+    #[serde(rename = "last_seen_time_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub last_seen_time_filter: Option<Option<Box<crate::models::LastSeenTimeFilter>>>,
+    #[serde(rename = "unlimited_likes_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub unlimited_likes_filter: Option<Option<bool>>,
 }
 
 impl ProfileAttributeFilterList {
     pub fn new(filters: Vec<crate::models::ProfileAttributeFilterValue>) -> ProfileAttributeFilterList {
         ProfileAttributeFilterList {
             filters,
+            last_seen_time_filter: None,
+            unlimited_likes_filter: None,
         }
     }
 }

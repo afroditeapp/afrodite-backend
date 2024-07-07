@@ -63,8 +63,12 @@ docs/GroupValues.md
 docs/HandleModerationRequest.md
 docs/IconLocation.md
 docs/IconResource.md
+docs/IteratorSessionId.md
 docs/Language.md
+docs/LastSeenTimeFilter.md
 docs/LatestViewedMessageChanged.md
+docs/LimitedActionResult.md
+docs/LimitedActionStatus.md
 docs/Location.md
 docs/LoginResult.md
 docs/MapTileX.md
@@ -211,8 +215,12 @@ src/models/group_values.rs
 src/models/handle_moderation_request.rs
 src/models/icon_location.rs
 src/models/icon_resource.rs
+src/models/iterator_session_id.rs
 src/models/language.rs
+src/models/last_seen_time_filter.rs
 src/models/latest_viewed_message_changed.rs
+src/models/limited_action_result.rs
+src/models/limited_action_status.rs
 src/models/location.rs
 src/models/login_result.rs
 src/models/map_tile_x.rs

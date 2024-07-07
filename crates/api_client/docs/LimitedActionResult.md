@@ -1,12 +1,10 @@
-# GetProfileResult
+# LimitedActionResult
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**last_seen_time** | Option<**i64**> |  | [optional]
-**profile** | Option<[**crate::models::Profile**](Profile.md)> |  | [optional]
-**version** | Option<[**crate::models::ProfileVersion**](ProfileVersion.md)> |  | [optional]
+**status** | [**crate::models::LimitedActionStatus**](LimitedActionStatus.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
