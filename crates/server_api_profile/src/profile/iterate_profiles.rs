@@ -1,6 +1,8 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, ProfileLink, ProfilePage};
+use model::{AccountIdInternal, IteratorSessionId, ProfileLink, ProfilePage};
+use server_api::db_write;
 use server_data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle};
+use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
 use crate::{
@@ -15,6 +17,7 @@ pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 #[utoipa::path(
     post,
     path = "/profile_api/page/next",
+    request_body(content = IteratorSessionId),
     responses(
         (status = 200, description = "Update successfull.", body = ProfilePage),
         (status = 401, description = "Unauthorized."),
@@ -22,15 +25,24 @@ pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
+pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
+    Json(iterator_session_id): Json<IteratorSessionId>,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     PROFILE.post_get_next_profile_page.incr();
 
-    let data = state
-        .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<crate::result::Result<Vec<ProfileLink>, DataError>> =
+    let current_iterator_session_id: Option<IteratorSessionId> = state
+        .read()
+        .profile()
+        .profile_iterator_session_id(account_id)
+        .await?
+        .map(|v| v.into());
+
+    if current_iterator_session_id == Some(iterator_session_id) {
+        let data = state
+            .write_concurrent(account_id.as_id(), move |cmds| async move {
+                let out: ConcurrentWriteAction<crate::result::Result<Vec<ProfileLink>, DataError>> =
                 cmds.accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
                     Box::new(async move { cmds.next_profiles(account_id).await })
                 })
@@ -39,7 +51,16 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData>(
         })
         .await??;
 
-    Ok(ProfilePage { profiles: data }.into())
+        Ok(ProfilePage {
+            profiles: data,
+            error_invalid_iterator_session_id: false,
+        }.into())
+    } else {
+        Ok(ProfilePage {
+            profiles: vec![],
+            error_invalid_iterator_session_id: true,
+        }.into())
+    }
 }
 
 pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
@@ -52,7 +73,7 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     post,
     path = "/profile_api/page/reset",
     responses(
-        (status = 200, description = "Update successfull."),
+        (status = 200, description = "Update successfull.", body = IteratorSessionId),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -61,7 +82,7 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<IteratorSessionId>, StatusCode> {
     PROFILE.post_reset_profile_paging.incr();
     state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
@@ -74,7 +95,11 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
         })
         .await??;
 
-    Ok(())
+    let iterator_session_id: IteratorSessionId = db_write!(state, move |cmds|
+        cmds.profile().update_profile_iterator_session_id(account_id)
+    )?.into();
+
+    Ok(iterator_session_id.into())
 }
 
 pub fn iterate_profiles_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(

@@ -1,5 +1,5 @@
 use model::{
-    AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
+    AccountIdInternal, IteratorSessionIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
 };
 use server_data::{
     cache::CacheError,
@@ -288,5 +288,20 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
         db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile_last_seen_time(id, last_seen_time)
         })
+    }
+
+    pub async fn update_profile_iterator_session_id(
+        self,
+        id: AccountIdInternal,
+    ) -> Result<IteratorSessionIdInternal, DataError> {
+        self.cache()
+            .write_cache(id, |e| {
+                let p = e.profile_data_mut()?;
+                let new_id = IteratorSessionIdInternal::create_random();
+                p.profile_iterator_session_id = Some(new_id);
+                Ok(new_id)
+            })
+            .await
+            .into_error()
     }
 }

@@ -4,7 +4,7 @@ use config::Config;
 use error_stack::Result;
 use limit::ChatLimits;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, IteratorSessionIdInternal, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
 use simple_backend_model::UnixTime;
 pub use server_common::data::cache::CacheError;
@@ -285,6 +285,7 @@ pub struct CachedProfile {
     pub attributes: SortedProfileAttributes,
     pub filters: Vec<ProfileAttributeFilterValue>,
     last_seen_time: Option<UnixTime>,
+    pub profile_iterator_session_id: Option<IteratorSessionIdInternal>,
 }
 
 impl CachedProfile {
@@ -308,6 +309,7 @@ impl CachedProfile {
             attributes: SortedProfileAttributes::new(attributes, config.profile_attributes()),
             filters,
             last_seen_time,
+            profile_iterator_session_id: None,
         }
     }
 
@@ -397,6 +399,20 @@ impl CacheEntry {
 
     pub fn chat_data_mut(&mut self) -> Result<&mut CachedChatComponentData, CacheError> {
         self.chat
+            .as_mut()
+            .map(|v| v.as_mut())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
+
+    pub fn profile_data(&self) -> Result<&CachedProfile, CacheError> {
+        self.profile
+            .as_ref()
+            .map(|v| v.as_ref())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
+
+    pub fn profile_data_mut(&mut self) -> Result<&mut CachedProfile, CacheError> {
+        self.profile
             .as_mut()
             .map(|v| v.as_mut())
             .ok_or(CacheError::FeatureNotEnabled.report())
