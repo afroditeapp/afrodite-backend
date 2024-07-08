@@ -47,7 +47,6 @@ impl From<UnixTime> for LastSeenTime {
     AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
-#[serde(transparent)]
 pub struct LastSeenTimeFilter {
     pub value: i64,
 }
@@ -74,6 +73,7 @@ impl LastSeenTimeFilter {
         } else if last_seen_time.0 <= current_time.unix_time {
             let seconds_since_last_seen = last_seen_time.0.abs_diff(current_time.unix_time);
             let max_seconds_since = self.value as u64;
+            last_seen_time == LastSeenTime::ONLINE ||
             seconds_since_last_seen <= max_seconds_since
         } else {
             false
