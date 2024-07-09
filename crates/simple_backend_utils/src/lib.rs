@@ -40,7 +40,7 @@ pub trait ContextExt: Context + Sized {
 impl<E: Context + Sized> ContextExt for E {}
 
 pub fn current_unix_time() -> i64 {
-    time::OffsetDateTime::now_utc().unix_timestamp()
+    chrono::Utc::now().timestamp()
 }
 
 pub trait ComponentError: Context {

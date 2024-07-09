@@ -16,7 +16,7 @@ tracing = { workspace = true }
 thiserror = { workspace = true }
 error-stack = { workspace = true }
 
-time = { workspace = true }
+chrono = { workspace = true }
 
 nalgebra = { workspace = true }
 

@@ -285,7 +285,7 @@ impl ServerInstance {
         let dir = dir.join(format!(
             "{}{}_{}",
             SERVER_INSTANCE_DIR_START,
-            time::OffsetDateTime::now_utc(),
+            chrono::Utc::now(),
             id.hyphenated()
         ));
         std::fs::create_dir(&dir).unwrap();

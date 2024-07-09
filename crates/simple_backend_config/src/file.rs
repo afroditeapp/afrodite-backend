@@ -366,9 +366,17 @@ impl TryFrom<String> for TimeValue {
                 let hours: u8 = hours
                     .parse()
                     .map_err(|e: std::num::ParseIntError| e.to_string())?;
+                const MAX_HOURS: u8 = 23;
+                if hours > MAX_HOURS {
+                    return Err(format!("Max value for hours is {MAX_HOURS}, current value: {hours}"));
+                }
                 let minutes: u8 = minutes
                     .parse()
                     .map_err(|e: std::num::ParseIntError| e.to_string())?;
+                const MAX_MINUTES: u8 = 59;
+                if minutes > MAX_MINUTES {
+                    return Err(format!("Max value for minutes is {MAX_MINUTES}, current value: {minutes}"));
+                }
                 Ok(TimeValue { hours, minutes })
             }
             _ => Err(format!("Unknown values: {:?}", values)),

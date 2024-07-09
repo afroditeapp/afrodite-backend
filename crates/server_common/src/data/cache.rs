@@ -20,9 +20,6 @@ pub enum CacheError {
 
     #[error("Cache operation failed because of server feature was not enabled")]
     FeatureNotEnabled,
-
-    #[error("Limit checking failed")]
-    LimitCheckingFailed,
 }
 
 impl CacheError {

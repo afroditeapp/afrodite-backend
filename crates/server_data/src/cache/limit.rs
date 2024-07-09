@@ -1,8 +1,8 @@
+use chrono::Datelike;
 use model::LimitedActionStatus;
 use server_common::data::cache::CacheError;
-use time::OffsetDateTime;
 
-use error_stack::{Result, ResultExt};
+use error_stack::Result;
 
 const MAX_VALUE_1: u8 = 1;
 
@@ -75,9 +75,8 @@ pub struct DailyLimit {
 
 impl ResetLogic for DailyLimit {
     fn reset_can_be_done(&mut self) -> Result<bool, CacheError> {
-        let local_time = OffsetDateTime::now_local()
-            .change_context(CacheError::LimitCheckingFailed)?;
-        let current_day = local_time.day();
+        let local_time = chrono::Local::now();
+        let current_day = local_time.day() as u8;
         let reset_can_be_done = if let Some(previous_reset_day) = self.previous_reset_day {
             previous_reset_day != current_day
         } else {

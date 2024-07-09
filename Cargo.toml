@@ -54,7 +54,7 @@ error-stack = "0.4.1"
 thiserror = "1.0.56"
 
 rand = "0.8.5"
-time = { version = "0.3.34", features = ["local-offset"] }
+chrono = "0.4.38"
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 base64 = "0.21.7"
 nalgebra = "0.32.3"

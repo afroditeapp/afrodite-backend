@@ -31,7 +31,7 @@ async-trait = { workspace = true }
 
 num_cpus = { workspace = true }
 
-time = { workspace = true }
+chrono = { workspace = true }
 
 base64 = { workspace = true }
 

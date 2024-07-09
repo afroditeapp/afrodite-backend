@@ -15,7 +15,7 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 serde = { workspace = true, features = ["derive"] }
 toml = { workspace = true }
-time = { workspace = true }
+chrono = { workspace = true }
 
 tokio = { workspace = true, features = ["full"] }
 futures = { workspace = true }

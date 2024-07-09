@@ -5,11 +5,11 @@ use std::{
     time::Duration,
 };
 
+use chrono::{DateTime, Local, NaiveTime};
 use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_database::data::create_dirs_and_get_files_dir_path;
 use simple_backend_utils::ContextExt;
-use time::{OffsetDateTime, Time, UtcOffset};
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
 
@@ -355,70 +355,37 @@ impl MediaBackupManager {
     }
 
     pub async fn sleep_until(config: &SimpleBackendConfig) -> Result<(), MediaBackupError> {
-        let now = Self::get_local_time().await?;
+        let now = Self::get_local_time();
 
         let target_time = if let Some(config) = config.media_backup() {
-            Time::from_hms(config.rsync_time.hours, config.rsync_time.minutes, 0)
-                .change_context(MediaBackupError::TimeError)?
+            NaiveTime::from_hms_opt(config.rsync_time.hours.into(), config.rsync_time.minutes.into(), 0)
+                .ok_or(MediaBackupError::TimeError.report())?
         } else {
             futures::future::pending::<()>().await;
             return Err(MediaBackupError::ConfigError.report());
         };
 
-        let target_date_time = now.replace_time(target_time);
+        let target_date_time = now.with_time(target_time)
+            .single()
+            .ok_or(MediaBackupError::TimeError.report())?;
 
         let duration = if target_date_time > now {
             target_date_time - now
         } else {
             let tomorrow = now + Duration::from_secs(24 * 60 * 60);
-            let tomorrow_target_date_time = tomorrow.replace_time(target_time);
+            let tomorrow_target_date_time = tomorrow.with_time(target_time)
+                .single()
+                .ok_or(MediaBackupError::TimeError.report())?;
             tomorrow_target_date_time - now
         };
-
-        sleep(duration.unsigned_abs()).await;
+        let duration_seconds = Duration::from_secs(duration.abs().num_seconds() as u64);
+        sleep(duration_seconds).await;
 
         Ok(())
     }
 
-    pub async fn get_local_time() -> Result<OffsetDateTime, MediaBackupError> {
-        let now: OffsetDateTime = OffsetDateTime::now_utc();
-        let offset = Self::get_utc_offset_hours().await?;
-        let now = now.to_offset(
-            UtcOffset::from_hms(offset, 0, 0).change_context(MediaBackupError::TimeError)?,
-        );
-        Ok(now)
-    }
-
-    pub async fn get_utc_offset_hours() -> Result<i8, MediaBackupError> {
-        let output = Command::new("date")
-            .arg("+%z")
-            .output()
-            .await
-            .change_context(MediaBackupError::ProcessWait)?;
-
-        if !output.status.success() {
-            tracing::error!("date command failed");
-            return Err(MediaBackupError::CommandFailed(output.status).report());
-        }
-
-        let offset =
-            std::str::from_utf8(&output.stdout).change_context(MediaBackupError::InvalidOutput)?;
-
-        let multiplier = match offset.chars().nth(0) {
-            Some('-') => -1,
-            _ => 1,
-        };
-
-        let hours = offset
-            .chars()
-            .skip(1)
-            .take(2)
-            .collect::<String>()
-            .trim_start_matches('0')
-            .parse::<i8>()
-            .change_context(MediaBackupError::InvalidOutput)?;
-
-        Ok(hours * multiplier)
+    pub fn get_local_time() -> DateTime<Local> {
+        Local::now()
     }
 }
 
