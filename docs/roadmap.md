@@ -6,7 +6,7 @@ If item does not have client/server specified then work for both is needed.
 ## Internal release 0.2
 
 ### Generic
-- [ ] Server: email sending
+- [x] Server: email sending
 - [ ] Missing push notifications and events
       (likes and image moderation status updates)
 - [ ] Server: CPU, RAM, disk and i-node usage to perf history
@@ -39,14 +39,17 @@ If item does not have client/server specified then work for both is needed.
 - [ ] Client: Unread messages support (with count?)
 - [ ] Server: Limit pending messages count
 - [ ] Server: Limit message size
+- [ ] Change like removing and blocking so that one account can do that once
+      per another account to prevent spamming. Perhaps the daily remove like
+      limit can be removed after that?
 
 ### Profile
 - [ ] Profile age change only to the valid age
-- [ ] Account last seen value
-- [ ] Limit likes to one per day (API which has limits for client?)
+- [x] Account last seen value
+- [x] Limit likes to one per day
 - [ ] Unlimited likes club
-- [ ] Limit like undos to one per day
-- [ ] Client: Favorite action should display snackbar
+- [x] Limit like undos to one per day
+- [x] Client: Favorite action should display snackbar
 - [ ] Admin view all profiles
 
 ### Media
