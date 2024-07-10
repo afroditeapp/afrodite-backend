@@ -67,3 +67,7 @@ If item does not have client/server specified then work for both is needed.
 - [ ] Client: Long press message for message details
 - [ ] Whitelist for profile first names and if no name whitelisted
       then fallback to name initials (2 letters)
+
+# Feature requests from TechBBS forum discussion
+
+- Profile attribute for intimate relationship type
