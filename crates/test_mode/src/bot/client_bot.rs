@@ -25,7 +25,7 @@ use error_stack::{Result, ResultExt};
 
 use super::{
     actions::{
-        account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility},
+        account::{AssertAccountState, Login, Register, SetAccountSetup, SetProfileVisibility, DEFAULT_AGE},
         media::SendImageToSlot,
         profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandom},
         BotAction, RunActions, RunActionsIf,
@@ -204,8 +204,6 @@ impl BotAction for ChangeBotProfileText {
         Ok(())
     }
 }
-
-const DEFAULT_AGE: u8 = 30;
 
 #[derive(Debug)]
 pub struct ChangeBotAgeAndOtherSettings;
