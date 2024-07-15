@@ -66,6 +66,7 @@ docs/IconResource.md
 docs/IteratorSessionId.md
 docs/Language.md
 docs/LastSeenTimeFilter.md
+docs/LatestBirthdate.md
 docs/LatestViewedMessageChanged.md
 docs/LimitedActionResult.md
 docs/LimitedActionStatus.md
@@ -135,6 +136,7 @@ docs/SentBlocksPage.md
 docs/SentBlocksSyncVersion.md
 docs/SentLikesPage.md
 docs/SentLikesSyncVersion.md
+docs/SetAccountSetup.md
 docs/SetProfileContent.md
 docs/SignInWithLoginInfo.md
 docs/SlotId.md
@@ -218,6 +220,7 @@ src/models/icon_resource.rs
 src/models/iterator_session_id.rs
 src/models/language.rs
 src/models/last_seen_time_filter.rs
+src/models/latest_birthdate.rs
 src/models/latest_viewed_message_changed.rs
 src/models/limited_action_result.rs
 src/models/limited_action_status.rs
@@ -284,6 +287,7 @@ src/models/sent_blocks_page.rs
 src/models/sent_blocks_sync_version.rs
 src/models/sent_likes_page.rs
 src/models/sent_likes_sync_version.rs
+src/models/set_account_setup.rs
 src/models/set_profile_content.rs
 src/models/sign_in_with_login_info.rs
 src/models/slot_id.rs

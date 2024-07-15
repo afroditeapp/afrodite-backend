@@ -9,6 +9,7 @@ Method | HTTP request | Description
 [**get_account_setup**](AccountApi.md#get_account_setup) | **GET** /account_api/account_setup | Get non-changeable user information to account.
 [**get_account_state**](AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
 [**get_deletion_status**](AccountApi.md#get_deletion_status) | **GET** /account_api/delete | Get deletion status.
+[**get_latest_birthdate**](AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
 [**post_account_data**](AccountApi.md#post_account_data) | **POST** /account_api/account_data | Set changeable user information to account.
 [**post_account_setup**](AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 [**post_complete_setup**](AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
@@ -159,6 +160,31 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## get_latest_birthdate
+
+> crate::models::LatestBirthdate get_latest_birthdate()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**crate::models::LatestBirthdate**](LatestBirthdate.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_account_data
 
 > post_account_data(account_data)
@@ -191,7 +217,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_account_setup
 
-> post_account_setup(account_setup)
+> post_account_setup(set_account_setup)
 Setup non-changeable user information during `initial setup` state.
 
 Setup non-changeable user information during `initial setup` state.
@@ -201,7 +227,7 @@ Setup non-changeable user information during `initial setup` state.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_setup** | [**AccountSetup**](AccountSetup.md) |  | [required] |
+**set_account_setup** | [**SetAccountSetup**](SetAccountSetup.md) |  | [required] |
 
 ### Return type
 

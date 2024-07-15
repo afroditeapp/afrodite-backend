@@ -30,6 +30,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /account_api/account_setup | Get non-changeable user information to account.
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
 *AccountApi* | [**get_deletion_status**](docs/AccountApi.md#get_deletion_status) | **GET** /account_api/delete | Get deletion status.
+*AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
 *AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /account_api/account_data | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
@@ -173,6 +174,7 @@ Class | Method | HTTP request | Description
  - [IteratorSessionId](docs/IteratorSessionId.md)
  - [Language](docs/Language.md)
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
+ - [LatestBirthdate](docs/LatestBirthdate.md)
  - [LatestViewedMessageChanged](docs/LatestViewedMessageChanged.md)
  - [LimitedActionResult](docs/LimitedActionResult.md)
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
@@ -238,6 +240,7 @@ Class | Method | HTTP request | Description
  - [SentBlocksSyncVersion](docs/SentBlocksSyncVersion.md)
  - [SentLikesPage](docs/SentLikesPage.md)
  - [SentLikesSyncVersion](docs/SentLikesSyncVersion.md)
+ - [SetAccountSetup](docs/SetAccountSetup.md)
  - [SetProfileContent](docs/SetProfileContent.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SlotId](docs/SlotId.md)

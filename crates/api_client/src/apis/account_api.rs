@@ -60,6 +60,15 @@ pub enum GetDeletionStatusError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_latest_birthdate`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetLatestBirthdateError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_account_data`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -345,6 +354,41 @@ pub async fn get_deletion_status(configuration: &configuration::Configuration, )
     }
 }
 
+pub async fn get_latest_birthdate(configuration: &configuration::Configuration, ) -> Result<crate::models::LatestBirthdate, Error<GetLatestBirthdateError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/account_api/latest_birthdate", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetLatestBirthdateError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 /// Set changeable user information to account.
 pub async fn post_account_data(configuration: &configuration::Configuration, account_data: crate::models::AccountData) -> Result<(), Error<PostAccountDataError>> {
     let local_var_configuration = configuration;
@@ -383,7 +427,7 @@ pub async fn post_account_data(configuration: &configuration::Configuration, acc
 }
 
 /// Setup non-changeable user information during `initial setup` state.
-pub async fn post_account_setup(configuration: &configuration::Configuration, account_setup: crate::models::AccountSetup) -> Result<(), Error<PostAccountSetupError>> {
+pub async fn post_account_setup(configuration: &configuration::Configuration, set_account_setup: crate::models::SetAccountSetup) -> Result<(), Error<PostAccountSetupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -402,7 +446,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, ac
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&account_setup);
+    local_var_req_builder = local_var_req_builder.json(&set_account_setup);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

@@ -5,7 +5,7 @@ use api_client::{
         account_api::{self, get_account_state, post_account_setup, post_complete_setup},
         account_internal_api::{post_login, post_register},
     },
-    models::{auth_pair, AccountData, AccountSetup, AccountState, BooleanSetting, EventToClient},
+    models::{auth_pair, AccountData, AccountState, BooleanSetting, EventToClient},
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -277,8 +277,8 @@ impl Default for SetAccountSetup<'static> {
 #[async_trait]
 impl<'a> BotAction for SetAccountSetup<'a> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let setup = AccountSetup {
-            birthdate: "1.1.2000".to_string(),
+        let setup = api_client::models::SetAccountSetup {
+            birthdate: "2000-01-01".to_string(),
         };
         post_account_setup(state.api.account(), setup)
             .await

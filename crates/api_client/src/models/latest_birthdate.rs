@@ -12,14 +12,14 @@
 
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
-pub struct AccountSetup {
+pub struct LatestBirthdate {
     #[serde(rename = "birthdate", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub birthdate: Option<Option<String>>,
 }
 
-impl AccountSetup {
-    pub fn new() -> AccountSetup {
-        AccountSetup {
+impl LatestBirthdate {
+    pub fn new() -> LatestBirthdate {
+        LatestBirthdate {
             birthdate: None,
         }
     }

@@ -583,7 +583,7 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
     }
 }
 
-/// Update profile information.  Writes the profile to the database only if it is changed.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+/// Update profile information.  Writes the profile to the database only if it is changed.  # Requirements - Profile attributes must be valid - Profile text must be empty - Profile age must be same as currently or same as the current age calculated from birthdate  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 pub async fn post_profile(configuration: &configuration::Configuration, profile_update: crate::models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 
