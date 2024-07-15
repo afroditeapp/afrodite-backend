@@ -148,7 +148,7 @@ pub async fn put_setting_unlimited_likes<S: GetInternalApi + GetConfig + UpdateU
 
     state.update_unlimited_likes(id, new_value.value).await?;
 
-    internal_api::common::sync_other_shared_state(&state, id).await?;
+    internal_api::common::sync_unlimited_likes(&state, id).await?;
 
     Ok(())
 }

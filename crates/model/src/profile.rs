@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use chrono::NaiveDate;
 use diesel::{
     prelude::*,
     sql_types::{BigInt, Binary},
@@ -36,9 +37,6 @@ pub use location::*;
 
 mod search_group;
 pub use search_group::*;
-
-mod setup;
-pub use setup::*;
 
 mod last_seen_time;
 pub use last_seen_time::*;
@@ -154,7 +152,7 @@ impl ProfileUpdate {
         mut self,
         attribute_info: Option<&ProfileAttributes>,
         current_profile: &Profile,
-        current_setup: &ProfileSetup,
+        birthdate: &Option<NaiveDate>,
     ) -> Result<ProfileUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &mut self.attributes {

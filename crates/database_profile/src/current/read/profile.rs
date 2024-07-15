@@ -2,7 +2,6 @@ use database::{define_current_read_commands, ConnectionProvider};
 
 mod data;
 mod favorite;
-mod setup;
 
 define_current_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
 
@@ -12,8 +11,5 @@ impl<C: ConnectionProvider> CurrentSyncReadProfile<C> {
     }
     pub fn favorite(self) -> favorite::CurrentSyncReadProfileFavorite<C> {
         favorite::CurrentSyncReadProfileFavorite::new(self.cmds)
-    }
-    pub fn setup(self) -> setup::CurrentSyncReadProfileSetup<C> {
-        setup::CurrentSyncReadProfileSetup::new(self.cmds)
     }
 }

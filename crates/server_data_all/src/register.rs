@@ -126,7 +126,6 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
             );
             let _profile = current.profile().data().insert_profile(id)?;
             current.profile().data().insert_profile_state(id)?;
-            current.profile().setup().insert_default_profile_setup(id)?;
 
             // // Profile history
             // let attributes = current

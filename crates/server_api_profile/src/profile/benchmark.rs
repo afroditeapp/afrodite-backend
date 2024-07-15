@@ -3,6 +3,7 @@ use axum::{
     Extension, Router,
 };
 use model::{AccountId, AccountIdInternal, Profile, ProfileUpdate, ProfileUpdateInternal};
+use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
@@ -93,9 +94,9 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_to_database_debug_mode_benchmark.incr();
     let old_profile = state.read().profile().profile(account_id).await?;
-    let profile_setup = state.read().profile().profile_setup(account_id).await?;
+    let birthdate = state.read().common().latest_birthdate(account_id).await?;
     let profile = profile
-        .validate(state.config().profile_attributes(), &old_profile.profile, &profile_setup)
+        .validate(state.config().profile_attributes(), &old_profile.profile, &birthdate)
         .into_error_string(DataError::NotAllowed)?;
 
     if profile.equals_with(&old_profile.profile) {

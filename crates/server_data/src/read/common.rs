@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use model::{AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken};
 
 use super::{super::DataError, ReadCommandsProvider};
@@ -50,5 +51,15 @@ impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
         let flags = self.read_cache(id, |cache| cache.pending_notification_flags)
             .await?;
         Ok(flags)
+    }
+
+    pub async fn latest_birthdate(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<NaiveDate>, DataError> {
+        self.db_read(move |mut cmds| cmds.common().state().other_shared_state(id))
+            .await
+            .into_error()
+            .map(|v| v.birthdate)
     }
 }

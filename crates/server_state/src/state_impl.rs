@@ -4,16 +4,16 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, PendingNotificationFlags, PushNotificationStateInfoWithFlags, SetAccountSetup, SetProfileSetup, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, PendingNotificationFlags, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
-use server_api::{db_write_raw, internal_api::InternalApiClient, result::WrappedContextExt, utils::StatusCode};
+use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
     content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
-use server_data_all::{register::RegisterAccount, setup::SetSetupDataCmd, unlimited_likes::UnlimitedLikesUpdate};
+use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::{
     app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
@@ -389,28 +389,6 @@ impl UpdateUnlimitedLikes for S {
             UnlimitedLikesUpdate::new(cmds)
                 .update_unlimited_likes_value(id, unlimited_likes)
                 .await
-        })
-        .await
-    }
-}
-
-impl SetSetupData for S {
-    async fn set_account_and_profile_setup_if_state_initial_setup(
-        &self,
-        id: AccountIdInternal,
-        account_setup: SetAccountSetup,
-        profile_setup: SetProfileSetup,
-    ) -> server_common::result::Result<(), DataError> {
-        db_write_raw!(self, move |cmds| {
-            let account = cmds.read().common().account(id).await?;
-            if account.state() != AccountState::InitialSetup {
-                return Err(DataError::NotAllowed.report())
-            }
-
-            SetSetupDataCmd::new(cmds)
-                .set_account_and_profile_setup_data(id, account_setup, profile_setup).await?;
-
-            Ok(())
         })
         .await
     }

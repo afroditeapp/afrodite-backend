@@ -327,6 +327,20 @@ impl AccountSetup {
     }
 }
 
+#[derive(
+    Debug,
+    Clone,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    Default,
+    PartialEq,
+    Eq,
+)]
+pub struct LatestBirthdate {
+    pub birthdate: Option<NaiveDate>,
+}
+
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
 pub struct BooleanSetting {
     pub value: bool,

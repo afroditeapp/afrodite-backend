@@ -1,4 +1,5 @@
 use base64::Engine;
+use chrono::NaiveDate;
 use diesel::{
     prelude::*,
     sql_types::{BigInt, Binary},
@@ -479,6 +480,7 @@ pub struct AccountStateRelatedSharedState {
 #[diesel(check_for_backend(crate::Db))]
 pub struct OtherSharedState {
     pub unlimited_likes: bool,
+    pub birthdate: Option<NaiveDate>,
 }
 
 impl AccountStateRelatedSharedState {

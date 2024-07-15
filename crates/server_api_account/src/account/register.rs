@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailMessages, EventToClientInternal, SetAccountSetup, SetProfileSetup};
-use server_api::{app::{SetSetupData, ValidateModerationRequest}, result::WrappedContextExt, DataError};
+use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailMessages, EventToClientInternal, SetAccountSetup};
+use server_api::{app::ValidateModerationRequest, result::WrappedContextExt, DataError};
 use server_data_account::{
     read::GetReadCommandsAccount,
     write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount},
@@ -59,7 +59,7 @@ pub const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_account_setup<S: SetSetupData + GetConfig + GetInternalApi>(
+pub async fn post_account_setup<S: GetConfig + GetInternalApi + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -72,11 +72,12 @@ pub async fn post_account_setup<S: SetSetupData + GetConfig + GetInternalApi>(
             return Err(StatusCode::NOT_ACCEPTABLE);
         }
 
-        let profile_setup: SetProfileSetup = data.clone().into();
-        if !state.config().components().profile {
-            internal_api::profile::set_profile_setup_using_internal_api_call(&state, id, profile_setup.clone()).await?;
-        }
-        state.set_account_and_profile_setup_if_state_initial_setup(id, data, profile_setup).await?;
+        // TODO(microservice): Add mutex to avoid data races
+        internal_api::common::sync_birthdate(&state, id).await?;
+
+        db_write_multiple!(state, move |cmds| {
+            cmds.account().account_setup(id, data).await
+        })?;
 
         Ok(())
     } else {
@@ -233,8 +234,7 @@ pub fn register_router<
         + GetInternalApi
         + GetConfig
         + GetAccessTokens
-        + ValidateModerationRequest
-        + SetSetupData,
+        + ValidateModerationRequest,
 >(
     s: S,
 ) -> Router {

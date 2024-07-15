@@ -61,6 +61,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_setup::dsl::*;
 
+        self.common_write_access().common().state().update_birthdate(id, data.birthdate)?;
+
         update(account_setup.find(id.as_db_id()))
             .set(birthdate.eq(Some(data.birthdate)))
             .execute(self.conn())

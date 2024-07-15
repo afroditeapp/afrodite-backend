@@ -45,10 +45,18 @@ pub async fn sync_account_state<S: GetConfig + GetInternalApi>(
     Ok(())
 }
 
-pub async fn sync_other_shared_state<S: GetConfig + GetInternalApi>(
+pub async fn sync_unlimited_likes<S: GetConfig + GetInternalApi>(
     _state: &S,
     _account_id: AccountIdInternal,
 ) -> Result<(), InternalApiError> {
     // TODO(microservice): sync unlimited likes
+    Ok(())
+}
+
+pub async fn sync_birthdate<S: GetConfig + GetInternalApi>(
+    _state: &S,
+    _account_id: AccountIdInternal,
+) -> Result<(), InternalApiError> {
+    // TODO(microservice): birthdate
     Ok(())
 }

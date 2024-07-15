@@ -154,9 +154,9 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
     PROFILE.post_profile.incr();
 
     let old_profile = state.read().profile().profile(account_id).await?;
-    let profile_setup = state.read().profile().profile_setup(account_id).await?;
+    let birthdate = state.read().common().latest_birthdate(account_id).await?;
     let profile = profile
-        .validate(state.config().profile_attributes(), &old_profile.profile, &profile_setup)
+        .validate(state.config().profile_attributes(), &old_profile.profile, &birthdate)
         .into_error_string(DataError::NotAllowed)?;
 
     if profile.equals_with(&old_profile.profile) {

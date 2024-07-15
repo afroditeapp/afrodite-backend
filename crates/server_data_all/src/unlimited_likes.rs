@@ -1,6 +1,6 @@
 
 use model::{
-    AccountIdInternal, OtherSharedState, ProfileVersion,
+    AccountIdInternal, ProfileVersion,
 };
 use server_data::{
     define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, IntoDataError
@@ -26,9 +26,9 @@ impl<C: WriteCommandsProvider> UnlimitedLikesUpdate<C> {
             if is_profile_component_enabled {
                 cmds.profile().data().only_profile_version(id, new_profile_version)?;
             }
-            cmds.common().state().update_other_shared_state(
+            cmds.common().state().update_unlimited_likes(
                 id,
-                OtherSharedState { unlimited_likes: unlimited_likes_value }
+                unlimited_likes_value,
             )?;
             cmds.read().common().account(id)
         })?;

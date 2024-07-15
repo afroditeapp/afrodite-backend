@@ -12,6 +12,7 @@ serde_json = { workspace = true }
 diesel = { workspace = true }
 diesel_migrations = { workspace = true }
 
+chrono = { workspace = true }
 error-stack = { workspace = true }
 
 model = { path = "../model" }

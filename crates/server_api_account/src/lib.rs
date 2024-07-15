@@ -37,6 +37,7 @@ pub use server_common::{data::DataError, result};
         account::get_account_state,
         account::get_account_setup,
         account::get_account_data,
+        account::get_latest_birthdate,
         account::get_deletion_status,
         account::delete_cancel_deletion,
         // Account internal
@@ -66,6 +67,7 @@ pub use server_common::{data::DataError, result};
         model::account::DemoModeConfirmLogin,
         model::account::DemoModeConfirmLoginResult,
         model::account::EmailAddress,
+        model::account::LatestBirthdate,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

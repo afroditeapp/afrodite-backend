@@ -342,15 +342,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    profile_setup (account_id) {
-        account_id -> Integer,
-        birthdate -> Nullable<Date>,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     profile_state (account_id) {
         account_id -> Integer,
         search_age_range_min -> Integer,
@@ -392,6 +383,7 @@ diesel::table! {
         profile_visibility_state_number -> Integer,
         sync_version -> Integer,
         unlimited_likes -> Bool,
+        birthdate -> Nullable<Date>,
     }
 }
 
@@ -426,7 +418,6 @@ diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list_filters -> account_id (account_id));
-diesel::joinable!(profile_setup -> account_id (account_id));
 diesel::joinable!(profile_state -> account_id (account_id));
 diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
@@ -462,7 +453,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_file_hash,
     profile_attributes_number_list,
     profile_attributes_number_list_filters,
-    profile_setup,
     profile_state,
     queue_entry,
     refresh_token,

@@ -35,4 +35,10 @@ impl CurrentSyncReadCommands<&mut DieselConnection> {
     pub fn account_admin(&mut self) -> CurrentSyncReadAccountAdmin<&mut DieselConnection> {
         CurrentSyncReadAccountAdmin::new(self.conn())
     }
+
+    pub fn common(
+        &mut self,
+    ) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
+        database::current::read::common::CurrentSyncReadCommon::new(self.conn())
+    }
 }
