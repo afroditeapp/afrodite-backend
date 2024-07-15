@@ -2,7 +2,10 @@
 #![deny(unused_must_use)]
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
-#![allow(clippy::collapsible_else_if)]
+#![allow(
+    clippy::collapsible_else_if,
+    clippy::manual_range_contains,
+)]
 
 //! Data types for API and database.
 

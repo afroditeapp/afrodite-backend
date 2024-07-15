@@ -2,6 +2,7 @@ use chrono::NaiveDate;
 use diesel::{prelude::*, Associations};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
+use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -297,7 +298,8 @@ pub struct SetAccountSetup {
 
 impl SetAccountSetup {
     pub fn is_invalid(&self) -> bool {
-        false
+        let age = age_in_years_from_birthdate(self.birthdate);
+        age < 18 || age > 150
     }
 }
 

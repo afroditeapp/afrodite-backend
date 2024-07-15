@@ -8,6 +8,7 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper};
+use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -181,6 +182,18 @@ impl ProfileUpdate {
 
         if !self.profile_text.is_empty() {
             return Err("Profile text is not empty".to_string());
+        }
+
+        if self.age != current_profile.age {
+            if let Some(birthdate) = birthdate {
+                let birthdate_age = age_in_years_from_birthdate(*birthdate);
+                let new_profile_age: i32 = self.age.value().into();
+                if birthdate_age <= ProfileAge::MAX_AGE.into() && birthdate_age != new_profile_age {
+                    return Err("The new age is not the same as the age from birthdate".to_string());
+                }
+            } else {
+                return Err("Birthdate is not set".to_string());
+            }
         }
 
         Ok(ProfileUpdateValidated {
