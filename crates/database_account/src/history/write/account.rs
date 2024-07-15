@@ -1,7 +1,7 @@
 use database::{define_history_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::{Result, ResultExt};
-use model::{Account, AccountIdInternal, AccountSetup};
+use model::{Account, AccountIdInternal};
 use simple_backend_utils::current_unix_time;
 
 use crate::IntoDatabaseError;
@@ -47,27 +47,27 @@ impl<C: ConnectionProvider> HistorySyncWriteAccount<C> {
         Ok(())
     }
 
-    pub fn insert_account_setup(
-        &mut self,
-        account_id_internal: AccountIdInternal,
-        account: &AccountSetup,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::history_account_setup::dsl::*;
+    // pub fn insert_account_setup(
+    //     &mut self,
+    //     account_id_internal: AccountIdInternal,
+    //     account: &AccountSetup,
+    // ) -> Result<(), DieselDatabaseError> {
+    //     use model::schema::history_account_setup::dsl::*;
 
-        let text =
-            serde_json::to_string(account).change_context(DieselDatabaseError::SerdeSerialize)?;
-        let time = current_unix_time();
+    //     let text =
+    //         serde_json::to_string(account).change_context(DieselDatabaseError::SerdeSerialize)?;
+    //     let time = current_unix_time();
 
-        insert_into(history_account_setup)
-            .values((
-                account_id.eq(account_id_internal.as_db_id()),
-                unix_time.eq(time),
-                json_text.eq(text),
-            ))
-            .execute(self.conn())
-            .into_db_error((account_id_internal, account_id_internal))?;
-        Ok(())
-    }
+    //     insert_into(history_account_setup)
+    //         .values((
+    //             account_id.eq(account_id_internal.as_db_id()),
+    //             unix_time.eq(time),
+    //             json_text.eq(text),
+    //         ))
+    //         .execute(self.conn())
+    //         .into_db_error((account_id_internal, account_id_internal))?;
+    //     Ok(())
+    // }
 
     // pub fn refresh_token(
     //     &mut self,

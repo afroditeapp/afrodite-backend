@@ -1,6 +1,6 @@
 use email::WriteCommandsAccountEmail;
 use model::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountSetup, AccountState, Capabilities, DemoModeId, ProfileVisibility
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Capabilities, DemoModeId, ProfileVisibility
 };
 use server_data::{
     define_server_data_write_commands, result::Result, DataError, DieselDatabaseError,
@@ -73,16 +73,6 @@ impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common().state().reset_account_data_version_number(id)
-        })
-    }
-
-    pub async fn account_setup(
-        &self,
-        id: AccountIdInternal,
-        account_setup: AccountSetup,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.account().data().account_setup(id, &account_setup)
         })
     }
 

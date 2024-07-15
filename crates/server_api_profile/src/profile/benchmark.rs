@@ -92,11 +92,11 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
     Json(profile): Json<ProfileUpdate>,
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile_to_database_debug_mode_benchmark.incr();
-
-    let profile = profile
-        .validate(state.config().profile_attributes())
-        .into_error_string(DataError::NotAllowed)?;
     let old_profile = state.read().profile().profile(account_id).await?;
+    let profile_setup = state.read().profile().profile_setup(account_id).await?;
+    let profile = profile
+        .validate(state.config().profile_attributes(), &old_profile.profile, &profile_setup)
+        .into_error_string(DataError::NotAllowed)?;
 
     if profile.equals_with(&old_profile.profile) {
         return Ok(());

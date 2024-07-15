@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use diesel::{prelude::*, Associations};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
@@ -289,6 +290,26 @@ define_capablities!(
     Default,
     PartialEq,
     Eq,
+)]
+pub struct SetAccountSetup {
+    pub birthdate: NaiveDate,
+}
+
+impl SetAccountSetup {
+    pub fn is_invalid(&self) -> bool {
+        false
+    }
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    Default,
+    PartialEq,
+    Eq,
     Queryable,
     Selectable,
     Insertable,
@@ -297,16 +318,14 @@ define_capablities!(
 #[diesel(table_name = crate::schema::account_setup)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {
-    birthdate: String,
+    birthdate: Option<NaiveDate>,
 }
 
 impl AccountSetup {
     pub fn is_invalid(&self) -> bool {
-        self.birthdate.is_empty()
+        self.birthdate.is_none()
     }
 }
-
-// TODO(prod): Birthdate validation
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
 pub struct BooleanSetting {

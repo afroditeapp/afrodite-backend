@@ -12,7 +12,7 @@ tokio = { workspace = true, features = ["full"] }
 axum = { workspace = true, features = ["ws", "macros"] }
 tracing = { workspace = true }
 
-utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
+utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 
 thiserror = { workspace = true }

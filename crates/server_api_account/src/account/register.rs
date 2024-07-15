@@ -1,7 +1,6 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailMessages, EventToClientInternal};
-use server_api::app::ValidateModerationRequest;
-use server_data::read::GetReadCommandsCommon;
+use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailMessages, EventToClientInternal, SetAccountSetup, SetProfileSetup};
+use server_api::{app::{SetSetupData, ValidateModerationRequest}, result::WrappedContextExt, DataError};
 use server_data_account::{
     read::GetReadCommandsAccount,
     write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount},
@@ -11,7 +10,7 @@ use tracing::warn;
 
 use crate::{
     app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData},
-    db_write, db_write_multiple, internal_api,
+    db_write_multiple, internal_api,
     utils::{Json, StatusCode},
 };
 
@@ -49,10 +48,10 @@ pub const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 #[utoipa::path(
     post,
     path = "/account_api/account_setup",
-    request_body(content = AccountSetup),
+    request_body(content = SetAccountSetup),
     responses(
         (status = 200, description = "Request successfull."),
-        (status = 406, description = "Current state is not initial setup."),
+        (status = 406, description = "Current state is not initial setup or setup data is invalid"),
         (status = 401, description = "Unauthorized."),
         (
             status = 500,
@@ -60,18 +59,26 @@ pub const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_account_setup<S: GetAccessTokens + ReadData + WriteData>(
+pub async fn post_account_setup<S: SetSetupData + GetConfig + GetInternalApi>(
     State(state): State<S>,
-    Extension(api_caller_account_id): Extension<AccountIdInternal>,
-    Json(data): Json<AccountSetup>,
+    Extension(id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
+    Json(data): Json<SetAccountSetup>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_account_setup.incr();
-    let account = state.read().common().account(api_caller_account_id).await?;
 
-    if account.state() == AccountState::InitialSetup {
-        db_write!(state, move |cmds| cmds
-            .account()
-            .account_setup(api_caller_account_id, data))
+    if account_state == AccountState::InitialSetup {
+        if data.is_invalid() {
+            return Err(StatusCode::NOT_ACCEPTABLE);
+        }
+
+        let profile_setup: SetProfileSetup = data.clone().into();
+        if !state.config().components().profile {
+            internal_api::profile::set_profile_setup_using_internal_api_call(&state, id, profile_setup.clone()).await?;
+        }
+        state.set_account_and_profile_setup_if_state_initial_setup(id, data, profile_setup).await?;
+
+        Ok(())
     } else {
         Err(StatusCode::NOT_ACCEPTABLE)
     }
@@ -109,12 +116,8 @@ pub async fn post_complete_setup<
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_complete_setup.incr();
 
+    // Initial account state check
     if account_state != AccountState::InitialSetup {
-        return Err(StatusCode::NOT_ACCEPTABLE);
-    }
-
-    let account_setup = state.read().account().account_setup(id).await?;
-    if account_setup.is_invalid() {
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
@@ -155,6 +158,18 @@ pub async fn post_complete_setup<
     let is_bot_account = state.read().account().is_bot_account(id).await?;
 
     let new_account = db_write_multiple!(state, move |cmds| {
+        // Second account state check as db_write quarantees synchronous
+        // access.
+        let account_state = cmds.read().common().account(id).await?.state();
+        if account_state != AccountState::InitialSetup {
+            return Err(DataError::NotAllowed.report());
+        }
+
+        let account_setup = cmds.read().account().account_setup(id).await?;
+        if account_setup.is_invalid() {
+            return Err(DataError::NotAllowed.report());
+        }
+
         let global_state = cmds.read().account().global_state().await?;
         let enable_all_capabilities = if matches_with_grant_admin_access_config
             && (global_state.admin_access_granted_count == 0 || grant_admin_access_more_than_once)
@@ -218,7 +233,8 @@ pub fn register_router<
         + GetInternalApi
         + GetConfig
         + GetAccessTokens
-        + ValidateModerationRequest,
+        + ValidateModerationRequest
+        + SetSetupData,
 >(
     s: S,
 ) -> Router {

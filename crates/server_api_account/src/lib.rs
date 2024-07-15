@@ -48,6 +48,7 @@ pub use server_common::{data::DataError, result};
         model::account::Account,
         model::account::AccountState,
         model::account::AccountSetup,
+        model::account::SetAccountSetup,
         model::account::AccountData,
         model::account::Capabilities,
         model::account::BooleanSetting,

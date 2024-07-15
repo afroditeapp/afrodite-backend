@@ -145,3 +145,4 @@ pub mod demo;
 pub mod load;
 pub mod register;
 pub mod unlimited_likes;
+pub mod setup;

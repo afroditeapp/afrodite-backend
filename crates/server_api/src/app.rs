@@ -2,9 +2,7 @@ use std::net::SocketAddr;
 
 use axum::extract::ws::WebSocket;
 use model::{
-    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, Capabilities,
-    DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken,
-    DemoModePassword, DemoModeToken, EmailAddress, SignInWithInfo, SyncDataVersionFromClient,
+    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, Capabilities, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, SetAccountSetup, SetProfileSetup, SignInWithInfo, SyncDataVersionFromClient
 };
 use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;
@@ -119,5 +117,14 @@ pub trait UpdateUnlimitedLikes: StateBase + WriteData {
         &self,
         id: AccountIdInternal,
         unlimited_likes: bool,
+    ) -> impl std::future::Future<Output = server_common::result::Result<(), DataError>> + Send;
+}
+
+pub trait SetSetupData: StateBase + ReadData {
+    fn set_account_and_profile_setup_if_state_initial_setup(
+        &self,
+        id: AccountIdInternal,
+        account_setup: SetAccountSetup,
+        profile_setup: SetProfileSetup,
     ) -> impl std::future::Future<Output = server_common::result::Result<(), DataError>> + Send;
 }

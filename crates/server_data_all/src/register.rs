@@ -5,7 +5,7 @@ use database::{
     current::write::TransactionConnection, ConnectionProvider, PoolObject, TransactionError,
 };
 use model::{
-    Account, AccountId, AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, SharedStateRaw, SignInWithInfo
+    Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo
 };
 use server_data::{
     index::{LocationIndexIteratorHandle, LocationIndexWriteHandle},
@@ -70,7 +70,6 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
         mut history_conn: PoolObject,
     ) -> std::result::Result<AccountIdInternal, TransactionError> {
         let account = Account::default();
-        let account_setup = AccountSetup::default();
 
         let mut conn = &mut transaction;
 
@@ -106,7 +105,7 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
             current
                 .account()
                 .data()
-                .insert_account_setup(id, &account_setup)?;
+                .insert_default_account_setup(id)?;
             current
                 .account()
                 .sign_in_with()
@@ -117,7 +116,6 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
 
             // Account history
             history.account().insert_account(id, &account)?;
-            history.account().insert_account_setup(id, &account_setup)?;
         }
 
         if config.components().profile {
@@ -128,6 +126,7 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
             );
             let _profile = current.profile().data().insert_profile(id)?;
             current.profile().data().insert_profile_state(id)?;
+            current.profile().setup().insert_default_profile_setup(id)?;
 
             // // Profile history
             // let attributes = current

@@ -124,6 +124,12 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 ///
 /// Writes the profile to the database only if it is changed.
 ///
+/// # Requirements
+/// - Profile attributes must be valid
+/// - Profile text must be empty
+/// - Profile age must be same as currently or same as the current
+///   age calculated from birthdate
+///
 /// TODO: string lenght validation, limit saving new profiles
 /// TODO: return the new proifle. Edit: is this really needed?
 #[utoipa::path(
@@ -147,10 +153,11 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile.incr();
 
-    let profile = profile
-        .validate(state.config().profile_attributes())
-        .into_error_string(DataError::NotAllowed)?;
     let old_profile = state.read().profile().profile(account_id).await?;
+    let profile_setup = state.read().profile().profile_setup(account_id).await?;
+    let profile = profile
+        .validate(state.config().profile_attributes(), &old_profile.profile, &profile_setup)
+        .into_error_string(DataError::NotAllowed)?;
 
     if profile.equals_with(&old_profile.profile) {
         return Ok(());

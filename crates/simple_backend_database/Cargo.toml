@@ -15,7 +15,7 @@ tracing = { workspace = true }
 
 tokio = { version = "1.36.0", features = ["full"] }
 
-diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+diesel = { workspace = true }
 diesel_migrations = { workspace = true }
 deadpool = { workspace = true }
 

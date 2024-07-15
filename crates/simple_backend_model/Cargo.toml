@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 
 serde = { workspace = true, features = ["derive"] }
-utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
-diesel = { workspace = true, features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+utoipa = { workspace = true }
+diesel = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils"}
 

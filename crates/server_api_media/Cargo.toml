@@ -11,7 +11,7 @@ axum-extra = { workspace = true, features = ["typed-header"] }
 tracing = { workspace = true }
 headers = { workspace = true }
 
-utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
+utoipa = { workspace = true }
 
 model = { path = "../model" }
 api_internal = { path = "../api_internal" }

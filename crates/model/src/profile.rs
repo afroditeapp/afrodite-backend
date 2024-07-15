@@ -37,6 +37,9 @@ pub use location::*;
 mod search_group;
 pub use search_group::*;
 
+mod setup;
+pub use setup::*;
+
 mod last_seen_time;
 pub use last_seen_time::*;
 
@@ -150,6 +153,8 @@ impl ProfileUpdate {
     pub fn validate(
         mut self,
         attribute_info: Option<&ProfileAttributes>,
+        current_profile: &Profile,
+        current_setup: &ProfileSetup,
     ) -> Result<ProfileUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &mut self.attributes {

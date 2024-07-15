@@ -132,11 +132,11 @@ CREATE TABLE IF NOT EXISTS account(
             ON UPDATE CASCADE
 );
 
--- Account information which can not change after account initial setup completes
+-- Information which can not change after account initial setup completes
 CREATE TABLE IF NOT EXISTS account_setup(
     account_id  INTEGER PRIMARY KEY NOT NULL,
-    name        TEXT                NOT NULL  DEFAULT '',
-    birthdate   TEXT                NOT NULL  DEFAULT '',
+    -- Birthdate has YYYY-MM-DD format
+    birthdate   DATE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -196,6 +196,18 @@ CREATE TABLE IF NOT EXISTS profile_state(
     longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile attributes config file.
     profile_attributes_sync_version INTEGER         NOT NULL    DEFAULT 0,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Profile related information which can not
+-- change after account initial setup completes
+CREATE TABLE IF NOT EXISTS profile_setup(
+    account_id  INTEGER PRIMARY KEY NOT NULL,
+    -- Birthdate has YYYY-MM-DD format
+    birthdate   DATE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

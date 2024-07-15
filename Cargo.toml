@@ -54,7 +54,7 @@ error-stack = "0.4.1"
 thiserror = "1.0.56"
 
 rand = "0.8.5"
-chrono = "0.4.38"
+chrono = { version = "0.4.38", features = ["serde"] }
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 base64 = "0.21.7"
 nalgebra = "0.32.3"
@@ -79,7 +79,7 @@ serde_json = "1.0.113"
 toml = "0.8.9"
 toml_edit = "0.21.1"
 
-diesel = { version = "2.1.4", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+diesel = { version = "2.1.4", features = ["sqlite", "returning_clauses_for_sqlite_3_35", "chrono"] }
 diesel_migrations = "2.1.0"
 deadpool = { version = "0.10.0" }
 
@@ -91,7 +91,7 @@ async-trait = "0.1.77"
 
 reqwest = { version = "0.11.24", features = ["json"] }
 reqwest_headers = { package = "headers", version = "0.3.9" }
-utoipa = { version = "4.2.0", features = ["axum_extras", "uuid"] }
+utoipa = { version = "4.2.0", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
 url = { version = "2.5.0", features = ["serde"] }
 http = "1.0.0"

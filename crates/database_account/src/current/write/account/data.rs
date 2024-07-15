@@ -2,7 +2,7 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, AccountInternal, AccountSetup, EmailAddress, ACCOUNT_GLOBAL_STATE_ROW_TYPE,
+    AccountIdInternal, AccountInternal, EmailAddress, SetAccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
 };
 
 use crate::IntoDatabaseError;
@@ -40,15 +40,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         Ok(())
     }
 
-    pub fn insert_account_setup(
+    pub fn insert_default_account_setup(
         &mut self,
         id: AccountIdInternal,
-        account_data: &AccountSetup,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_setup::dsl::*;
 
         insert_into(account_setup)
-            .values((account_id.eq(id.as_db_id()), account_data))
+            .values(account_id.eq(id.as_db_id()))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -58,12 +57,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
     pub fn account_setup(
         &mut self,
         id: AccountIdInternal,
-        account_data: &AccountSetup,
+        data: &SetAccountSetup,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_setup::dsl::*;
 
         update(account_setup.find(id.as_db_id()))
-            .set(account_data)
+            .set(birthdate.eq(Some(data.birthdate)))
             .execute(self.conn())
             .into_db_error(id)?;
 
