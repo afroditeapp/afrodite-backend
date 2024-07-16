@@ -293,6 +293,7 @@ define_capablities!(
     Eq,
 )]
 pub struct SetAccountSetup {
+    #[schema(value_type = String)]
     pub birthdate: NaiveDate,
 }
 
@@ -320,6 +321,7 @@ impl SetAccountSetup {
 #[diesel(table_name = crate::schema::account_setup)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {
+    #[schema(value_type = Option<String>)]
     birthdate: Option<NaiveDate>,
 }
 
@@ -340,6 +342,7 @@ impl AccountSetup {
     Eq,
 )]
 pub struct LatestBirthdate {
+    #[schema(value_type = Option<String>)]
     pub birthdate: Option<NaiveDate>,
 }
 
