@@ -1,7 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, IteratorSessionId, ProfilePage};
-use server_api::db_write;
-use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
+use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
 
 use crate::{
@@ -80,18 +79,15 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<IteratorSessionId>, StatusCode> {
     PROFILE.post_reset_profile_paging.incr();
-    state
+    let iterator_session_id: IteratorSessionId = state
         .concurrent_write_profile_blocking(
             account_id.as_id(),
             move |cmds| {
                 cmds.reset_profile_iterator(account_id)
             }
         )
-        .await??;
-
-    let iterator_session_id: IteratorSessionId = db_write!(state, move |cmds|
-        cmds.profile().update_profile_iterator_session_id(account_id)
-    )?.into();
+        .await??
+        .into();
 
     Ok(iterator_session_id.into())
 }

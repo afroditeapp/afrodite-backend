@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileLink};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionIdInternal, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -202,7 +202,7 @@ impl ConcurrentWriteProfileHandleBlocking {
             .next_profiles(id)
     }
 
-    pub fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<IteratorSessionIdInternal, DataError> {
         self.write
             .user_write_commands_account()
             .reset_profile_iterator(id)
@@ -311,7 +311,10 @@ impl<'a> WriteCommandsConcurrent<'a> {
         Ok(profiles.unwrap_or(Vec::new()))
     }
 
-    pub fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub fn reset_profile_iterator(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<IteratorSessionIdInternal, DataError> {
         let location = self
             .cache
             .read_cache_blocking(id.as_id(), |e| {
@@ -323,14 +326,16 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let next_state = self
             .location
             .reset_iterator(location.current_iterator, location.current_position);
+
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
+                let new_id = IteratorSessionIdInternal::create_random();
                 if let Some(p) = e.profile.as_mut() {
                     p.location.current_iterator = next_state;
+                    p.profile_iterator_session_id = Some(new_id);
                 }
-                Ok(())
+                Ok(new_id)
             })
-            .into_data_error(id)?;
-        Ok(())
+            .into_data_error(id)
     }
 }
