@@ -22,6 +22,8 @@ use crate::{
     DataError,
 };
 
+const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
+
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;
 
 pub enum ConcurrentWriteAction<R> {
@@ -280,7 +282,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
 
         let (next_state, profiles) = if let Some(mut profiles) = profiles {
             loop {
-                if profiles.len() >= 25 {
+                if profiles.len() >= PROFILE_ITERATOR_PAGE_SIZE {
                     break (next_state, Some(profiles));
                 } else {
                     let (new_next_state, new_profiles) = self
