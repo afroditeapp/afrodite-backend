@@ -1,30 +1,37 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::Arc,
-};
+use std::collections::{HashMap, VecDeque};
 
 use model::{
     AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
     ContentProcessingStateChanged, ContentSlot, NewContentParams,
 };
-use tokio::sync::{Notify, RwLock};
+use server_common::result::WrappedResultExt;
+use tokio::sync::{mpsc::{self, UnboundedReceiver, UnboundedSender}, RwLock};
 use tracing::warn;
 
 use crate::{event::EventManagerWithCacheReference, file::utils::TmpContentFile};
 
-#[derive(Debug, Clone)]
-pub struct ContentProcessingNotify(pub Arc<Notify>);
+use crate::result::Result;
+
+#[derive(thiserror::Error, Debug)]
+pub enum ContentProcessingError {
+    #[error("Event sending failed")]
+    EventSendingFailed,
+}
+
+#[derive(Debug)]
+pub struct ContentProcessingReceiver(pub UnboundedReceiver<ProcessingKey>);
 
 pub struct ContentProcessingManagerData {
-    new_processing_request: ContentProcessingNotify,
+    event_queue: UnboundedSender<ProcessingKey>,
     data: RwLock<Data>,
 }
 
 impl ContentProcessingManagerData {
-    pub fn new() -> (Self, ContentProcessingNotify) {
-        let notifier = ContentProcessingNotify(Arc::new(Notify::new()));
+    pub fn new() -> (Self, ContentProcessingReceiver) {
+        let (sender, receiver) = mpsc::unbounded_channel();
+        let notifier = ContentProcessingReceiver(receiver);
         let data = Self {
-            new_processing_request: notifier.clone(),
+            event_queue: sender,
             data: RwLock::new(Data::new()),
         };
         (data, notifier)
@@ -41,7 +48,7 @@ impl ContentProcessingManagerData {
         slot: ContentSlot,
         content_info: NewContentInfo,
         new_content_params: NewContentParams,
-    ) {
+    ) -> Result<(), ContentProcessingError> {
         let mut write = self.data.write().await;
         let (queue, processing_states) = write.split();
         let processing_id = content_info.processing_id;
@@ -64,19 +71,31 @@ impl ContentProcessingManagerData {
             tmp_img: content_info.tmp_img,
             tmp_raw_img: content_info.tmp_raw_img,
             new_content_params,
+            in_event_queue: true,
         };
-        processing_states.insert(key, state);
+        let was_already_in_event_queue = processing_states.insert(key, state)
+            .map(|v| v.in_event_queue)
+            .unwrap_or_default();
+
+        if !was_already_in_event_queue {
+            self.event_queue.send(key)
+                .change_context(ContentProcessingError::EventSendingFailed)?
+        }
+
         drop(write);
-        self.new_processing_request.0.notify_one();
+
+        Ok(())
     }
 
     pub async fn pop_from_queue(
         &self,
         events: EventManagerWithCacheReference<'_>,
+        processing_id: ProcessingKey,
     ) -> Option<ProcessingState> {
         let mut write = self.data.write().await;
         let (queue, processing_states) = write.split();
-        let processing_id = queue.pop_front()?;
+        let processing_id_index = queue.iter().enumerate().find(|v| v.1 == &processing_id)?.0;
+        queue.remove(processing_id_index);
 
         // Update queue position numbers
         for (index, processing_id_in_queue) in queue.iter_mut().enumerate() {
@@ -90,6 +109,7 @@ impl ContentProcessingManagerData {
 
         let state = processing_states.get_mut(&processing_id)?;
         state.processing_state.change_to_processing();
+        state.in_event_queue = false;
         notify_client(&events, state).await;
 
         Some(state.clone())
@@ -113,6 +133,8 @@ impl ContentProcessingManagerData {
 #[derive(Debug, Default)]
 pub struct Data {
     queue: VecDeque<ProcessingKey>,
+    /// Nothing is removed from here as content slots limit
+    /// memory usage enough.
     processing_states: HashMap<ProcessingKey, ProcessingState>,
 }
 
@@ -148,6 +170,7 @@ pub struct ProcessingState {
     pub tmp_raw_img: TmpContentFile,
     pub tmp_img: TmpContentFile,
     pub new_content_params: NewContentParams,
+    pub in_event_queue: bool,
 }
 
 impl ProcessingState {

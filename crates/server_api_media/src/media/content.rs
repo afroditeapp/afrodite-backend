@@ -218,7 +218,7 @@ pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvide
     state
         .content_processing()
         .queue_new_content(account_id, slot, content_info.clone(), new_content_params)
-        .await;
+        .await?;
 
     Ok(content_info.processing_id.into())
 }

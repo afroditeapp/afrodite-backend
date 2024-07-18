@@ -4,7 +4,7 @@ use server_api::{
     db_write_raw,
 };
 use server_common::result::{Result, WrappedResultExt};
-use server_data::content_processing::{notify_client, ContentProcessingNotify, ProcessingState};
+use server_data::content_processing::{notify_client, ContentProcessingReceiver, ProcessingState};
 use server_data_media::write::GetWriteCommandsMedia;
 use server_state::S;
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
@@ -43,28 +43,36 @@ pub struct ContentProcessingManager {
 
 impl ContentProcessingManager {
     pub fn new_manager(
-        notifier: ContentProcessingNotify,
+        receiver: ContentProcessingReceiver,
         state: S,
         quit_notification: ServerQuitWatcher,
     ) -> ContentProcessingManagerQuitHandle {
         let manager = Self { state };
 
-        let task = tokio::spawn(manager.run(notifier, quit_notification));
+        let task = tokio::spawn(manager.run(receiver, quit_notification));
 
         ContentProcessingManagerQuitHandle { task }
     }
 
     pub async fn run(
         self,
-        notifier: ContentProcessingNotify,
+        mut receiver: ContentProcessingReceiver,
         mut quit_notification: ServerQuitWatcher,
     ) {
         loop {
             tokio::select! {
-                _ = notifier.0.notified() => {
-                    let new_content = self.state.content_processing().pop_from_queue(self.state.event_manager()).await;
-                    if let Some(content) = new_content {
-                        self.handle_content(content).await;
+                item = receiver.0.recv() => {
+                    match item {
+                        Some(item) => {
+                            let new_content = self.state.content_processing().pop_from_queue(self.state.event_manager(), item).await;
+                            if let Some(content) = new_content {
+                                self.handle_content(content).await;
+                            }
+                        }
+                        None => {
+                            error!("Content processing event channel is broken");
+                            return;
+                        },
                     }
                 }
                 _ = quit_notification.recv() => {

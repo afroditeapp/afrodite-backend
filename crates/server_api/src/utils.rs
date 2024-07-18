@@ -12,7 +12,7 @@ use hyper::{header, Request};
 use model::AccessToken;
 use serde::Serialize;
 use server_common::{data::cache::CacheError, internal_api::InternalApiError};
-use server_data::event::EventError;
+use server_data::{content_processing::ContentProcessingError, event::EventError};
 use simple_backend::{
     manager_client::ManagerClientError,
     sign_in_with::{apple::SignInWithAppleError, google::SignInWithGoogleError},
@@ -218,6 +218,8 @@ enum RequestError {
     ConfigFileError,
     #[error("Event error")]
     EventError,
+    #[error("Content processing error")]
+    ContentProcessingError,
 }
 
 /// Convert error to status code. This is workaround for track_caller seems
@@ -278,3 +280,4 @@ impl_error_to_status_code!(InternalApiError, RequestError::InternalApiError);
 impl_error_to_status_code!(ManagerClientError, RequestError::ManagerClientError);
 impl_error_to_status_code!(ConfigFileError, RequestError::ConfigFileError);
 impl_error_to_status_code!(EventError, RequestError::EventError);
+impl_error_to_status_code!(ContentProcessingError, RequestError::ContentProcessingError);
