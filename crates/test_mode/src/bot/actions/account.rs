@@ -5,7 +5,7 @@ use api_client::{
         account_api::{self, get_account_state, post_account_setup, post_complete_setup},
         account_internal_api::{post_login, post_register},
     },
-    models::{auth_pair, AccountData, AccountState, BooleanSetting, EventToClient},
+    models::{auth_pair, AccountData, AccountState, BooleanSetting, EventToClient, ProfileVisibility},
 };
 use async_trait::async_trait;
 use base64::Engine;
@@ -241,7 +241,29 @@ async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {
 }
 
 #[derive(Debug)]
-pub struct AssertAccountState(pub AccountState);
+pub struct AssertAccountState {
+    pub account: AccountState,
+    pub visibility: Option<ProfileVisibility>,
+}
+
+impl AssertAccountState {
+    pub const fn account(wanted: AccountState) -> Self {
+        Self {
+            account: wanted,
+            visibility: None,
+        }
+    }
+
+    pub const fn account_and_visibility(
+        wanted: AccountState,
+        wanted_visibility: ProfileVisibility,
+    ) -> Self {
+        Self {
+            account: wanted,
+            visibility: Some(wanted_visibility),
+        }
+    }
+}
 
 #[async_trait]
 impl BotAction for AssertAccountState {
@@ -250,7 +272,11 @@ impl BotAction for AssertAccountState {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        bot_assert_eq(state.state, self.0)
+        if let Some(wanted_visibility) = self.visibility {
+            bot_assert_eq(state.visibility, wanted_visibility)?;
+        }
+
+        bot_assert_eq(state.state, self.account)
     }
 }
 

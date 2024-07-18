@@ -393,5 +393,21 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
         slots_to_request: &[0],
     },
     CompleteAccountSetup,
-    AssertAccountState(AccountState::Normal),
+    AssertAccountState::account(AccountState::Normal),
+];
+
+pub const TO_ADMIN_NORMAL_STATE: ActionArray = action_array![
+    Register,
+    Login,
+    SetAccountSetup::admin(),
+    SendImageToSlot::slot(0),
+    SetPendingContent {
+        security_content_slot_i: Some(0),
+        content_0_slot_i: Some(0),
+    },
+    MakeModerationRequest {
+        slots_to_request: &[0],
+    },
+    CompleteAccountSetup,
+    AssertAccountState::account(AccountState::Normal),
 ];

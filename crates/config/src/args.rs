@@ -110,7 +110,7 @@ impl TestMode {
         match &self.mode {
             TestModeSubMode::Benchmark(c) =>
                 match c.benchmark {
-                    SelectedBenchmark::GetProfileList => c.tasks + 1,
+                    SelectedBenchmark::GetProfileList => c.tasks + 2,
                     _ => c.tasks,
                 },
             _ => 1,
@@ -258,7 +258,8 @@ pub enum SelectedBenchmark {
     GetProfile,
     GetProfileFromDatabase,
     /// This benchmark uses one extra task for filling the location index
-    /// with profiles. Bot count controls how many bots are created just
+    /// with profiles and another for admin bot.
+    /// Bot count controls how many bots are created just
     /// for that.
     GetProfileList,
     PostProfile,

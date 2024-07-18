@@ -415,7 +415,10 @@ impl BotManager {
                     )),
                     SelectedBenchmark::GetProfileList => {
                         let benchmark = if task_id == config.tasks() - 1 {
-                            // Last task is bot task
+                            // Last task is admin bot task
+                            Benchmark::benchmark_get_profile_list_admin_bot(state)
+                        } else if task_id == config.tasks() - 2 {
+                            // Second last task is bot task
                             Benchmark::benchmark_get_profile_list_bot(state)
                         } else if bot_i == 0 {
                             // Create bot for benchmark task

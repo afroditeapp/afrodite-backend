@@ -59,55 +59,48 @@ impl ClientBot {
         let iter = if state.is_admin_bot() {
             // Admin bot
 
-            let setup = [
-                &Register as &dyn BotAction,
-                &Login,
-                &DoInitialSetupIfNeeded { admin: true },
+            const SETUP: ActionArray = action_array![
+                Register,
+                Login,
+                DoInitialSetupIfNeeded { admin: true },
             ];
-            const MODERATE_INITIAL: ModerateMediaModerationRequest =
-                ModerateMediaModerationRequest::moderate_initial_content();
-            const MODERATE_ADDITIONAL: ModerateMediaModerationRequest =
-                ModerateMediaModerationRequest::moderate_additional_content();
-            let action_loop = [
-                &ActionsBeforeIteration as &dyn BotAction,
-                &MODERATE_INITIAL,
-                &MODERATE_ADDITIONAL,
-                &ActionsAfterIteration,
+            const ACTION_LOOP: ActionArray = action_array![
+                ActionsBeforeIteration,
+                ModerateMediaModerationRequest::moderate_initial_content(),
+                ModerateMediaModerationRequest::moderate_additional_content(),
+                ActionsAfterIteration,
             ];
-            let iter = setup.into_iter().chain(action_loop.into_iter().cycle());
+            let iter = SETUP.iter().copied().chain(ACTION_LOOP.iter().copied().cycle());
 
             Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
         } else {
             // User bot
 
-            const UPDATE_LOCATION_RANDOM: UpdateLocationRandom =
-                UpdateLocationRandom::new(None);
-
-            let setup = [
-                &Register as &dyn BotAction,
-                &Login,
-                &DoInitialSetupIfNeeded { admin: false },
-                &UPDATE_LOCATION_RANDOM,
-                &SetProfileVisibility(true),
+            const SETUP: ActionArray = action_array![
+                Register,
+                Login,
+                DoInitialSetupIfNeeded { admin: false },
+                UpdateLocationRandom::new(None),
+                SetProfileVisibility(true),
             ];
-            let action_loop = [
-                &ActionsBeforeIteration as &dyn BotAction,
-                &GetProfile,
-                &RunActionsIf(action_array!(UPDATE_LOCATION_RANDOM), || {
+            const ACTION_LOOP: ActionArray = action_array![
+                ActionsBeforeIteration,
+                GetProfile,
+                RunActionsIf(action_array!(UpdateLocationRandom::new(None)), || {
                     rand::random::<f32>() < 0.2
                 }),
                 // TODO: Toggle the profile visiblity in the future?
-                &RunActionsIf(action_array!(SetProfileVisibility(true)), || {
+                RunActionsIf(action_array!(SetProfileVisibility(true)), || {
                     rand::random::<f32>() < 0.5
                 }),
-                &RunActionsIf(action_array!(SetProfileVisibility(false)), || {
+                RunActionsIf(action_array!(SetProfileVisibility(false)), || {
                     rand::random::<f32>() < 0.1
                 }),
-                &AcceptReceivedLikesAndSendMessage,
-                &AnswerReceivedMessages,
-                &ActionsAfterIteration,
+                AcceptReceivedLikesAndSendMessage,
+                AnswerReceivedMessages,
+                ActionsAfterIteration,
             ];
-            let iter = setup.into_iter().chain(action_loop.into_iter().cycle());
+            let iter = SETUP.iter().copied().chain(ACTION_LOOP.iter().copied().cycle());
 
             Box::new(iter) as Box<dyn Iterator<Item = &'static dyn BotAction> + Send + Sync>
         };
@@ -176,7 +169,7 @@ impl BotAction for DoInitialSetupIfNeeded {
                 },
                 ChangeBotAgeAndOtherSettings,
                 CompleteAccountSetup,
-                AssertAccountState(AccountState::Normal),
+                AssertAccountState::account(AccountState::Normal),
             );
             RunActions(ACTIONS)
                 .excecute_impl_task_state(state, task_state)
