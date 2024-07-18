@@ -3,7 +3,7 @@ mod benchmark;
 mod client_bot;
 mod utils;
 
-use std::{fmt::Debug, sync::Arc, vec};
+use std::{fmt::Debug, sync::{atomic::{AtomicBool, Ordering}, Arc}, vec};
 
 use actions::profile::ProfileState;
 use api_client::models::{AccountId, EventToClient};
@@ -39,7 +39,7 @@ use super::{
 pub struct TaskState;
 
 pub fn create_event_channel(
-    enable_event_sending: bool,
+    enable_event_sending: Arc<AtomicBool>,
 ) -> (
     EventSenderAndQuitWatcher,
     EventReceiver,
@@ -62,13 +62,13 @@ pub fn create_event_channel(
 
 #[derive(Debug, Clone)]
 pub struct EventSender {
-    enable_event_sending: bool,
+    enable_event_sending: Arc<AtomicBool>,
     event_sender: mpsc::UnboundedSender<EventToClient>,
 }
 
 impl EventSender {
     pub async fn send_if_sending_enabled(&self, event: EventToClient) {
-        if self.enable_event_sending {
+        if self.enable_event_sending.load(Ordering::Relaxed) {
             let _ = self.event_sender.send(event);
         }
     }
@@ -140,9 +140,9 @@ impl AccountConnections {
 
 #[derive(Debug, Default)]
 pub struct BotConnections {
-    /// If this true before `Login` action is exceuted, the connection
-    /// events will be sent to event channel.
-    pub enable_event_sending: bool,
+    /// Setting this true will enable sending the connection
+    /// events to event channel.
+    pub enable_event_sending: Arc<AtomicBool>,
     connections: Option<AccountConnections>,
     events: Option<EventReceiver>,
 }
@@ -159,7 +159,7 @@ impl BotConnections {
         &mut self,
         check: impl Fn(&EventToClient) -> bool,
     ) -> Result<(), TestError> {
-        if !self.enable_event_sending {
+        if !self.enable_event_sending.load(Ordering::Relaxed) {
             return Ok(());
         }
 
@@ -255,6 +255,18 @@ impl BotState {
         check: impl Fn(&EventToClient) -> bool,
     ) -> Result<(), TestError> {
         self.connections.wait_event(check).await
+    }
+
+    pub fn are_events_enabled(&self) -> bool {
+        self.connections.enable_event_sending.load(Ordering::Relaxed)
+    }
+
+    pub fn enable_events(&self) {
+        self.connections.enable_event_sending.store(true, Ordering::Relaxed);
+    }
+
+    pub fn disable_events(&self) {
+        self.connections.enable_event_sending.store(true, Ordering::Relaxed);
     }
 
     pub fn account_id(&self) -> Result<AccountId, TestError> {

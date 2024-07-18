@@ -224,7 +224,7 @@ impl Account {
             ApiClient::new(urls.clone()),
             urls,
         );
-        state.connections.enable_event_sending = true;
+        state.enable_events();
 
         Register.excecute_impl(&mut state).await?;
         Login.excecute_impl(&mut state).await?;

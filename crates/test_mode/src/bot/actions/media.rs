@@ -51,30 +51,8 @@ impl SendImageToSlot {
             mark_copied_image: false,
         }
     }
-}
 
-fn img_for_bot(
-    bot: &BotInstanceConfig,
-    config: &BotConfigFile,
-) -> std::result::Result<Option<PathBuf>, std::io::Error> {
-    if let Some(image) = bot.get_img(config) {
-        Ok(Some(image))
-    } else {
-        let dir = match bot.img_dir_gender() {
-            Gender::Man => config.man_image_dir.clone(),
-            Gender::Woman => config.woman_image_dir.clone(),
-        };
-        if let Some(dir) = dir {
-            ImageProvider::random_image_from_directory(&dir)
-        } else {
-            Ok(None)
-        }
-    }
-}
-
-#[async_trait]
-impl BotAction for SendImageToSlot {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn send_to_slot(&self, state: &mut BotState) -> Result<(), TestError> {
         let img_data = if self.random_if_not_defined_in_config {
             let img_path = if let Some(bot) = state.get_bot_config() {
                 img_for_bot(bot, &state.bot_config_file)
@@ -117,7 +95,7 @@ impl BotAction for SendImageToSlot {
             slot: i32,
             state: &mut BotState,
         ) -> Result<ContentId, TestError> {
-            state
+            let event_waiting_result = state
                 .wait_event(|e| match e.content_processing_state_changed.as_ref() {
                     Some(Some(content_processing_state)) => {
                         content_processing_state.new_state.state
@@ -125,7 +103,13 @@ impl BotAction for SendImageToSlot {
                     }
                     _ => false,
                 })
-                .await?;
+                .await;
+
+            match event_waiting_result {
+                Ok(()) => (),
+                Err(e) if e.current_context() == &TestError::EventReceivingTimeout => (),
+                Err(e) => return Err(e),
+            }
 
             loop {
                 let slot_state = get_content_slot_state(state.api.media(), slot)
@@ -178,6 +162,40 @@ impl BotAction for SendImageToSlot {
         }
 
         Ok(())
+    }
+}
+
+fn img_for_bot(
+    bot: &BotInstanceConfig,
+    config: &BotConfigFile,
+) -> std::result::Result<Option<PathBuf>, std::io::Error> {
+    if let Some(image) = bot.get_img(config) {
+        Ok(Some(image))
+    } else {
+        let dir = match bot.img_dir_gender() {
+            Gender::Man => config.man_image_dir.clone(),
+            Gender::Woman => config.woman_image_dir.clone(),
+        };
+        if let Some(dir) = dir {
+            ImageProvider::random_image_from_directory(&dir)
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+#[async_trait]
+impl BotAction for SendImageToSlot {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let events_enabled = state.are_events_enabled();
+        if !events_enabled {
+            state.enable_events();
+        }
+        let result = self.send_to_slot(state).await;
+        if !events_enabled {
+            state.disable_events();
+        }
+        result
     }
 }
 
