@@ -162,17 +162,17 @@ impl BotAction for DoInitialSetupIfNeeded {
 
             const ACTIONS: ActionArray = action_array!(
                 SendImageToSlot {
-                    slot: 1,
+                    slot: 0,
                     random_if_not_defined_in_config: true,
-                    copy_to_slot: Some(0),
-                    mark_copied_image: true,
+                    copy_to_slot: None,
+                    mark_copied_image: false,
                 },
                 SetPendingContent {
                     security_content_slot_i: Some(0),
-                    content_0_slot_i: Some(1),
+                    content_0_slot_i: Some(0),
                 },
                 MakeModerationRequest {
-                    slot_0_secure_capture: true
+                    slots_to_request: &[0],
                 },
                 ChangeBotAgeAndOtherSettings,
                 CompleteAccountSetup,

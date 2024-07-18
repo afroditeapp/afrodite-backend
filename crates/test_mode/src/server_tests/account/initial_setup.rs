@@ -34,7 +34,7 @@ async fn complete_setup_fails_if_no_setup_info_is_set(context: TestContext) -> T
                 content_0_slot_i: Some(1),
             },
             MakeModerationRequest {
-                slot_0_secure_capture: true
+                slots_to_request: &[0, 1],
             },
         ])
         .await?;
@@ -82,7 +82,7 @@ async fn complete_setup_fails_if_image_request_does_not_contain_secure_capture_c
                 content_0_slot_i: Some(1),
             },
             AssertFailure(MakeModerationRequest {
-                slot_0_secure_capture: false
+                slots_to_request: &[1],
             }),
         ])
         .await?;
@@ -103,7 +103,7 @@ async fn complete_setup_fails_if_no_pending_content_set(context: TestContext) ->
             SendImageToSlot::slot(0),
             SendImageToSlot::slot(1),
             MakeModerationRequest {
-                slot_0_secure_capture: true
+                slots_to_request: &[0, 1],
             },
         ])
         .await?;
@@ -128,7 +128,7 @@ async fn initial_setup_successful(context: TestContext) -> TestResult {
                 content_0_slot_i: Some(1),
             },
             MakeModerationRequest {
-                slot_0_secure_capture: true
+                slots_to_request: &[0, 1],
             },
         ])
         .await?;

@@ -183,8 +183,7 @@ impl BotAction for SendImageToSlot {
 
 #[derive(Debug)]
 pub struct MakeModerationRequest {
-    /// Use the first slot as secure capture slot
-    pub slot_0_secure_capture: bool,
+    pub slots_to_request: &'static [usize],
 }
 
 #[async_trait]
@@ -192,25 +191,19 @@ impl BotAction for MakeModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let mut content_ids: Vec<Option<Box<ContentId>>> = vec![];
 
-        if self.slot_0_secure_capture {
+        for i in self.slots_to_request {
             content_ids.push(
-                Box::new(state.media.slots[0].unwrap_or(ContentId {
-                    content_id: uuid::Uuid::new_v4(),
-                }))
+                match state.media.slots[*i] {
+                    Some(content_id) => Box::new(content_id),
+                    None => return Err(
+                        TestError::MissingValue
+                            .report()
+                            .attach_printable(format!("Content ID is not set to index {i}"))
+                    )
+                }
                 .into(),
             );
         }
-
-        content_ids.push(
-            state.media.slots[1]
-                .map(Box::new)
-                .unwrap_or(Box::new(ContentId {
-                    content_id: uuid::Uuid::new_v4(),
-                }))
-                .into(),
-        );
-
-        content_ids.push(state.media.slots[2].map(Box::new));
 
         let new = ModerationRequestContent {
             content0: content_ids[0].clone().expect("Content ID is missing"),
