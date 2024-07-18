@@ -102,7 +102,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
     pub async fn next_profiles(
         &self,
         previous_iterator_state: LocationIndexIteratorState,
-        query_maker_details: ProfileQueryMakerDetails,
+        query_maker_details: &ProfileQueryMakerDetails,
     ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), IndexError>
     {
         let current_time = UnixTime::current_time();
@@ -111,7 +111,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
             let (new_state, result) = self
                 .next_profiles_internal(
                     iterator_state,
-                    &query_maker_details,
+                    query_maker_details,
                     &current_time,
                 )
                 .await?;

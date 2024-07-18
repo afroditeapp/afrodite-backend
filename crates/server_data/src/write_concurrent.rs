@@ -290,10 +290,33 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .await
             .into_data_error(id)??;
 
-        let (next_state, profiles) = self
+        let (mut next_state, profiles) = self
             .location
-            .next_profiles(location.current_iterator, query_maker_filters)
+            .next_profiles(location.current_iterator, &query_maker_filters)
             .await?;
+
+        let (next_state, profiles) = if let Some(mut profiles) = profiles {
+            loop {
+                if profiles.len() >= 10 {
+                    break (next_state, Some(profiles));
+                } else {
+                    let (new_next_state, new_profiles) = self
+                        .location
+                        .next_profiles(next_state, &query_maker_filters)
+                        .await?;
+                    next_state = new_next_state;
+
+                    if let Some(new_profiles) = new_profiles {
+                        profiles.extend(new_profiles);
+                    } else {
+                        break (next_state, Some(profiles));
+                    }
+                }
+            }
+        } else {
+            (next_state, None)
+        };
+
         self.cache
             .write_cache(id.as_id(), |e| {
                 if let Some(p) = e.profile.as_mut() {
