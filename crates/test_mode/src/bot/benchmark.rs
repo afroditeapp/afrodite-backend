@@ -1,9 +1,7 @@
 //! Bots for benchmarking
 
 use std::{
-    fmt::Debug,
-    iter::Peekable,
-    time::{Duration, Instant},
+    fmt::Debug, iter::Peekable, sync::atomic::{AtomicU32, Ordering}, time::{Duration, Instant}
 };
 
 use api_client::{
@@ -30,7 +28,7 @@ use super::{
     utils::{Counters, Timer},
     BotState, BotStruct, TaskState,
 };
-use crate::{action_array, bot::actions::{admin::ModerateMediaModerationRequest, ActionArray, TO_ADMIN_NORMAL_STATE}, client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK};
+use crate::{action_array, bot::actions::{admin::ModerateMediaModerationRequest, ActionArray, RepeatUntilFnSimple, RunFn, SleepMillis, TO_ADMIN_NORMAL_STATE}, client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK};
 
 static COUNTERS: Counters = Counters::new();
 
@@ -102,14 +100,24 @@ impl Benchmark {
     }
 
     pub fn benchmark_get_profile_list(state: BotState) -> Self {
-        let setup = [&RunActions(TO_NORMAL_STATE) as &dyn BotAction];
-        let benchmark = [
-            &ActionsBeforeIteration as &dyn BotAction,
-            &ResetProfileIterator,
-            &RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileList),
-            &ActionsAfterIteration,
+        static READY_COUNT: AtomicU32 = AtomicU32::new(0);
+
+        const SETUP: ActionArray = action_array![
+            RunActions(TO_NORMAL_STATE),
+            RunFn(|_| { READY_COUNT.fetch_add(1, Ordering::Relaxed); }),
+            RepeatUntilFnSimple(
+                |s| READY_COUNT.load(Ordering::Relaxed) == s.config.tasks() - 2,
+                true,
+                &SleepMillis(1)
+            ),
         ];
-        let iter = setup.into_iter().chain(benchmark.into_iter().cycle());
+        const BENCHMARK: ActionArray = action_array![
+            ActionsBeforeIteration,
+            ResetProfileIterator,
+            RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileList),
+            ActionsAfterIteration,
+        ];
+        let iter = SETUP.iter().copied().chain(BENCHMARK.iter().copied().cycle());
         Self {
             state,
             actions: (Box::new(iter)

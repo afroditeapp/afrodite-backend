@@ -343,6 +343,61 @@ impl<T: PartialEq + Send + Sync + 'static + Debug> BotAction for RepeatUntilFn<T
     }
 }
 
+pub struct RepeatUntilFnSimple<T: PartialEq>(
+    pub fn(&BotState) -> T,
+    pub T,
+    pub &'static dyn BotAction,
+);
+
+impl<T: PartialEq> Debug for RepeatUntilFnSimple<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("RepeatUntilFnSimple for action {:?}", self.2))
+    }
+}
+
+#[async_trait]
+impl<T: PartialEq + Send + Sync + 'static + Debug> BotAction for RepeatUntilFnSimple<T> {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
+        loop {
+            self.2.excecute(state, task_state).await?;
+
+            let value = self.0(state);
+            if value == self.1 {
+                break;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+pub struct RunFn(
+    pub fn(&BotState),
+);
+
+impl Debug for RunFn {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("RunFn"))
+    }
+}
+
+#[async_trait]
+impl BotAction for RunFn {
+    async fn excecute_impl_task_state(
+        &self,
+        state: &mut BotState,
+        _task_state: &mut TaskState,
+    ) -> Result<(), TestError> {
+        self.0(state);
+        Ok(())
+    }
+}
+
+
 #[derive(Debug)]
 pub struct RunActions(pub ActionArray);
 
