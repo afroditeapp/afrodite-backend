@@ -280,7 +280,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
 
         let (next_state, profiles) = if let Some(mut profiles) = profiles {
             loop {
-                if profiles.len() >= 10 {
+                if profiles.len() >= 25 {
                     break (next_state, Some(profiles));
                 } else {
                     let (new_next_state, new_profiles) = self
