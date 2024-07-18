@@ -74,7 +74,7 @@ impl BotTestRunner {
         let (bot_running_handle, mut wait_all_bots) = mpsc::channel::<Vec<BotPersistentState>>(1);
         let (quit_handle, bot_quit_receiver) = watch::channel(());
 
-        let mut task_number = 0;
+        let mut task_number = self.test_config.tasks();
 
         if !quit_now {
             info!(
@@ -83,9 +83,9 @@ impl BotTestRunner {
                 self.test_config.bots(),
             );
 
-            while task_number < self.test_config.tasks() {
+            while task_number > 0 {
                 BotManager::spawn(
-                    task_number,
+                    task_number - 1,
                     self.config.clone(),
                     self.test_config.clone(),
                     self.bot_config_file.clone(),
@@ -93,7 +93,25 @@ impl BotTestRunner {
                     bot_quit_receiver.clone(),
                     bot_running_handle.clone(),
                 );
-                task_number += 1;
+
+                // Special case for profile iterator benchmark:
+                // wait until profile index bot profiles are creates and
+                // then wait that images for those profiles are moderated.
+                if self.test_config.selected_benchmark() == Some(&config::args::SelectedBenchmark::GetProfileList)
+                    && task_number >= self.test_config.tasks() - 1 {
+                    select! {
+                        result = signal::ctrl_c() => {
+                            match result {
+                                Ok(()) => (),
+                                Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
+                            }
+                            break
+                        }
+                        _ = wait_all_bots.recv() => (),
+                    }
+                }
+
+                task_number -= 1;
             }
 
             info!("Bot tasks are now created",);
