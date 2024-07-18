@@ -54,7 +54,14 @@ impl BotAction for ModerateMediaModerationRequest {
                     false,
                 )
                 .await
-                .change_context(TestError::ApiRequest)?;
+                .change_context(TestError::ApiRequest)
+                // This logging exists because this request failed
+                // when GetProfileList benchmark was running.
+                .attach_printable_lazy(|| format!(
+                    "Request creator: {}, Content ID: {}",
+                    request.request_creator_id,
+                    content_id,
+                ))?;
             }
             media_admin_api::post_handle_moderation_request(
                 state.api.media(),
