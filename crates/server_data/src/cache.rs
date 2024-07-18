@@ -229,6 +229,20 @@ impl DatabaseCache {
         Ok(cache_operation(&cache_entry))
     }
 
+    pub fn read_cache_blocking<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&CacheEntry) -> T,
+    ) -> Result<T, CacheError> {
+        let guard = self.accounts.blocking_read();
+        let cache_entry = guard
+            .get(&id.into())
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .blocking_read();
+        Ok(cache_operation(&cache_entry))
+    }
+
     pub async fn write_cache<T, Id: Into<AccountId>>(
         &self,
         id: Id,
@@ -241,6 +255,20 @@ impl DatabaseCache {
             .cache
             .write()
             .await;
+        cache_operation(&mut cache_entry)
+    }
+
+    pub fn write_cache_blocking<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&mut CacheEntry) -> Result<T, CacheError>,
+    ) -> Result<T, CacheError> {
+        let guard = self.accounts.blocking_read();
+        let mut cache_entry = guard
+            .get(&id.into())
+            .ok_or(CacheError::KeyNotExists)?
+            .cache
+            .blocking_write();
         cache_operation(&mut cache_entry)
     }
 

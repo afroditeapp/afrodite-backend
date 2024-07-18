@@ -166,6 +166,15 @@ impl ConcurrentWriteSelectorHandle {
             action: Box::new(action),
         }
     }
+
+    pub fn profile_blocking(
+        self,
+    ) -> ConcurrentWriteProfileHandleBlocking {
+        ConcurrentWriteProfileHandleBlocking {
+            write: self.write,
+            _account_write_lock: self._account_write_lock,
+        }
+    }
 }
 
 pub struct ConcurrentWriteContentHandle {
@@ -206,21 +215,34 @@ impl fmt::Debug for ConcurrentWriteProfileHandle {
 }
 
 impl ConcurrentWriteProfileHandle {
-    pub async fn next_profiles(
+    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
+        self.write
+            .user_write_commands_account()
+            .reset_profile_iterator(id)
+            .await
+    }
+}
+
+
+pub struct ConcurrentWriteProfileHandleBlocking {
+    write: Arc<RouterDatabaseWriteHandle>,
+    _account_write_lock: OwnedMutexGuard<AccountHandle>,
+}
+
+impl fmt::Debug for ConcurrentWriteProfileHandleBlocking {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ConcurrentWriteProfileHandle").finish()
+    }
+}
+
+impl ConcurrentWriteProfileHandleBlocking {
+    pub fn next_profiles(
         &self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileLink>, DataError> {
         self.write
             .user_write_commands_account()
             .next_profiles(id)
-            .await
-    }
-
-    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        self.write
-            .user_write_commands_account()
-            .reset_profile_iterator(id)
-            .await
     }
 }
 
@@ -277,23 +299,21 @@ impl<'a> WriteCommandsConcurrent<'a> {
         })
     }
 
-    pub async fn next_profiles(
+    pub fn next_profiles(
         &self,
         id: AccountIdInternal,
     ) -> Result<Vec<ProfileLink>, DataError> {
         let (location, query_maker_filters) = self
             .cache
-            .read_cache(id.as_id(), |e| {
+            .read_cache_blocking(id.as_id(), |e| {
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
                 error_stack::Result::<_, CacheError>::Ok((p.location.clone(), p.filters()))
             })
-            .await
             .into_data_error(id)??;
 
         let (mut next_state, profiles) = self
             .location
-            .next_profiles(location.current_iterator, &query_maker_filters)
-            .await?;
+            .next_profiles(location.current_iterator, &query_maker_filters);
 
         let (next_state, profiles) = if let Some(mut profiles) = profiles {
             loop {
@@ -302,8 +322,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
                 } else {
                     let (new_next_state, new_profiles) = self
                         .location
-                        .next_profiles(next_state, &query_maker_filters)
-                        .await?;
+                        .next_profiles(next_state, &query_maker_filters);
                     next_state = new_next_state;
 
                     if let Some(new_profiles) = new_profiles {
@@ -318,13 +337,12 @@ impl<'a> WriteCommandsConcurrent<'a> {
         };
 
         self.cache
-            .write_cache(id.as_id(), |e| {
+            .write_cache_blocking(id.as_id(), |e| {
                 if let Some(p) = e.profile.as_mut() {
                     p.location.current_iterator = next_state;
                 }
                 Ok(())
             })
-            .await
             .into_data_error(id)?;
 
         Ok(profiles.unwrap_or(Vec::new()))

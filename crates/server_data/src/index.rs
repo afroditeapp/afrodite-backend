@@ -99,11 +99,11 @@ impl<'a> LocationIndexIteratorHandle<'a> {
         }
     }
 
-    pub async fn next_profiles(
+    pub fn next_profiles(
         &self,
         previous_iterator_state: LocationIndexIteratorState,
         query_maker_details: &ProfileQueryMakerDetails,
-    ) -> error_stack::Result<(LocationIndexIteratorState, Option<Vec<ProfileLink>>), IndexError>
+    ) -> (LocationIndexIteratorState, Option<Vec<ProfileLink>>)
     {
         let current_time = UnixTime::current_time();
         let mut iterator_state = previous_iterator_state;
@@ -113,15 +113,14 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                     iterator_state,
                     query_maker_details,
                     &current_time,
-                )
-                .await?;
+                );
             iterator_state = new_state;
             match result {
                 IteratorResultInternal::NoProfiles => {
-                    return Ok((iterator_state, None));
+                    return (iterator_state, None);
                 }
                 IteratorResultInternal::MatchingProfilesFound { profiles } => {
-                    return Ok((iterator_state, Some(profiles)));
+                    return (iterator_state, Some(profiles));
                 }
                 IteratorResultInternal::TryAgain => {
                     continue;
@@ -132,23 +131,21 @@ impl<'a> LocationIndexIteratorHandle<'a> {
 
     /// Iterate to next index cell which has profiles and get all matching
     /// profiles.
-    async fn next_profiles_internal(
+    fn next_profiles_internal(
         &self,
         previous_iterator_state: LocationIndexIteratorState,
         query_maker_details: &ProfileQueryMakerDetails,
         current_time: &UnixTime,
-    ) -> error_stack::Result<(LocationIndexIteratorState, IteratorResultInternal), IndexError> {
+    ) -> (LocationIndexIteratorState, IteratorResultInternal) {
         let index = self.index.clone();
-        let (iterator, key) = tokio::task::spawn_blocking(move || {
+        let (iterator, key) = {
             let mut iterator = previous_iterator_state.to_iterator(index);
             let key = iterator.next();
             (iterator, key)
-        })
-        .await
-        .change_context(IndexError::ProfileIndex)?;
+        };
         let result = match key {
             None => IteratorResultInternal::NoProfiles,
-            Some(key) => match self.profiles.read().await.get(&key) {
+            Some(key) => match self.profiles.blocking_read().get(&key) {
                 // Possible data race occurred where profile was removed
                 // from the data storage when iterating the index.
                 None => IteratorResultInternal::TryAgain,
@@ -176,7 +173,7 @@ impl<'a> LocationIndexIteratorHandle<'a> {
                 }
             },
         };
-        Ok((iterator.into(), result))
+        (iterator.into(), result)
     }
 
     pub fn reset_iterator(

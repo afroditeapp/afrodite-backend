@@ -161,6 +161,34 @@ impl WriteCommandRunnerHandle {
             .await
             .change_context(DataError::CommandResultReceivingFailed)
     }
+
+
+    pub async fn concurrent_write_blocking<
+        CmdResult: Send + 'static,
+        WriteCmd: FnOnce(ConcurrentWriteSelectorHandle) -> CmdResult + Send + 'static,
+    >(
+        &self,
+        account: AccountId,
+        write_cmd: WriteCmd,
+    ) -> crate::result::Result<CmdResult, DataError> {
+        let quit_lock_storage = get_quit_lock().lock().await;
+        let quit_lock = quit_lock_storage
+            .clone()
+            .ok_or(DataError::ServerClosingInProgress.report())?;
+        drop(quit_lock_storage);
+
+        let lock = self.concurrent_write.accquire(account).await;
+
+        let handle = tokio::task::spawn_blocking(move || {
+            let result = write_cmd(lock);
+            drop(quit_lock); // Write completed, so release the quit lock.
+            result
+        });
+
+        handle
+            .await
+            .change_context(DataError::CommandResultReceivingFailed)
+    }
 }
 
 pub struct WriteCmdWatcher {

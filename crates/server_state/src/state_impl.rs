@@ -247,6 +247,17 @@ impl WriteData for S {
     ) -> server_common::result::Result<CmdResult, DataError> {
         self.write_queue.concurrent_write(account, cmd).await
     }
+
+    async fn concurrent_write_blocking<
+        CmdResult: Send + 'static,
+        WriteCmd: FnOnce(ConcurrentWriteSelectorHandle) -> CmdResult + Send + 'static,
+    >(
+        &self,
+        account: AccountId,
+        write_cmd: WriteCmd,
+    ) -> server_common::result::Result<CmdResult, DataError> {
+        self.write_queue.concurrent_write_blocking(account, write_cmd).await
+    }
 }
 
 impl ReadData for S {

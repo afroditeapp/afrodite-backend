@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, IteratorSessionId, ProfileLink, ProfilePage};
+use model::{AccountIdInternal, IteratorSessionId, ProfilePage};
 use server_api::db_write;
 use server_data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
@@ -41,15 +41,13 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData + ReadDat
 
     if current_iterator_session_id == Some(iterator_session_id) {
         let data = state
-            .write_concurrent(account_id.as_id(), move |cmds| async move {
-                let out: ConcurrentWriteAction<crate::result::Result<Vec<ProfileLink>, DataError>> =
-                cmds.accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
-                    Box::new(async move { cmds.next_profiles(account_id).await })
-                })
-                .await;
-            out
-        })
-        .await??;
+            .concurrent_write_blocking(
+                account_id.as_id(),
+                move |cmds| {
+                    cmds.profile_blocking().next_profiles(account_id)
+                }
+            )
+            .await??;
 
         Ok(ProfilePage {
             profiles: data,

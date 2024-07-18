@@ -39,6 +39,15 @@ pub trait WriteData {
         account: AccountId,
         cmd: GetCmd,
     ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
+
+    fn concurrent_write_blocking<
+        CmdResult: Send + 'static,
+        WriteCmd: FnOnce(ConcurrentWriteSelectorHandle) -> CmdResult + Send + 'static,
+    >(
+        &self,
+        account: AccountId,
+        write_cmd: WriteCmd,
+    ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
 }
 
 pub trait ReadData {
