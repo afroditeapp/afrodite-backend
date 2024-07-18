@@ -1,14 +1,12 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, IteratorSessionId, ProfilePage};
 use server_api::db_write;
-use server_data::write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandle};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
 use crate::{
     app::{GetAccessTokens, ReadData, StateBase, WriteData},
     utils::{Json, StatusCode},
-    DataError,
 };
 
 pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
@@ -41,10 +39,10 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData + ReadDat
 
     if current_iterator_session_id == Some(iterator_session_id) {
         let data = state
-            .concurrent_write_blocking(
+            .concurrent_write_profile_blocking(
                 account_id.as_id(),
                 move |cmds| {
-                    cmds.profile_blocking().next_profiles(account_id)
+                    cmds.next_profiles(account_id)
                 }
             )
             .await??;
@@ -83,14 +81,12 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
 ) -> Result<Json<IteratorSessionId>, StatusCode> {
     PROFILE.post_reset_profile_paging.incr();
     state
-        .write_concurrent(account_id.as_id(), move |cmds| async move {
-            let out: ConcurrentWriteAction<crate::result::Result<_, DataError>> = cmds
-                .accquire_profile(move |cmds: ConcurrentWriteProfileHandle| {
-                    Box::new(async move { cmds.reset_profile_iterator(account_id).await })
-                })
-                .await;
-            out
-        })
+        .concurrent_write_profile_blocking(
+            account_id.as_id(),
+            move |cmds| {
+                cmds.reset_profile_iterator(account_id)
+            }
+        )
         .await??;
 
     let iterator_session_id: IteratorSessionId = db_write!(state, move |cmds|

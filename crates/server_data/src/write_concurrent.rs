@@ -29,10 +29,6 @@ pub enum ConcurrentWriteAction<R> {
         handle: ConcurrentWriteContentHandle,
         action: Box<dyn FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + 'static>,
     },
-    Profile {
-        handle: ConcurrentWriteProfileHandle,
-        action: Box<dyn FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + 'static>,
-    },
 }
 
 pub struct AccountHandle;
@@ -139,13 +135,9 @@ impl ConcurrentWriteSelectorHandle {
         }
     }
 
-    pub async fn accquire_profile<
-        R,
-        A: FnOnce(ConcurrentWriteProfileHandle) -> OutputFuture<R> + Send + Sync + 'static,
-    >(
+    pub async fn profile_blocking(
         self,
-        action: A,
-    ) -> ConcurrentWriteAction<R> {
+    ) -> ConcurrentWriteProfileHandleBlocking {
         let permit = self
             .profile_index_queue
             .clone()
@@ -155,23 +147,9 @@ impl ConcurrentWriteSelectorHandle {
             // panic.
             .expect("Semaphore was closed. This should not happen.");
 
-        let handle = ConcurrentWriteProfileHandle {
-            write: self.write,
-            _permit: permit,
-            _account_write_lock: self._account_write_lock,
-        };
-
-        ConcurrentWriteAction::Profile {
-            handle,
-            action: Box::new(action),
-        }
-    }
-
-    pub fn profile_blocking(
-        self,
-    ) -> ConcurrentWriteProfileHandleBlocking {
         ConcurrentWriteProfileHandleBlocking {
             write: self.write,
+            _permit: permit,
             _account_write_lock: self._account_write_lock,
         }
     }
@@ -202,36 +180,15 @@ impl ConcurrentWriteContentHandle {
     }
 }
 
-pub struct ConcurrentWriteProfileHandle {
+pub struct ConcurrentWriteProfileHandleBlocking {
     write: Arc<RouterDatabaseWriteHandle>,
     _permit: tokio::sync::OwnedSemaphorePermit,
     _account_write_lock: OwnedMutexGuard<AccountHandle>,
 }
 
-impl fmt::Debug for ConcurrentWriteProfileHandle {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ConcurrentWriteProfileHandle").finish()
-    }
-}
-
-impl ConcurrentWriteProfileHandle {
-    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        self.write
-            .user_write_commands_account()
-            .reset_profile_iterator(id)
-            .await
-    }
-}
-
-
-pub struct ConcurrentWriteProfileHandleBlocking {
-    write: Arc<RouterDatabaseWriteHandle>,
-    _account_write_lock: OwnedMutexGuard<AccountHandle>,
-}
-
 impl fmt::Debug for ConcurrentWriteProfileHandleBlocking {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ConcurrentWriteProfileHandle").finish()
+        f.debug_struct("ConcurrentWriteProfileHandleBlocking").finish()
     }
 }
 
@@ -243,6 +200,12 @@ impl ConcurrentWriteProfileHandleBlocking {
         self.write
             .user_write_commands_account()
             .next_profiles(id)
+    }
+
+    pub fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
+        self.write
+            .user_write_commands_account()
+            .reset_profile_iterator(id)
     }
 }
 
@@ -348,13 +311,12 @@ impl<'a> WriteCommandsConcurrent<'a> {
         Ok(profiles.unwrap_or(Vec::new()))
     }
 
-    pub async fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<(), DataError> {
         let location = self
             .cache
-            .read_cache(id.as_id(), |e| {
+            .read_cache_blocking(id.as_id(), |e| {
                 e.profile.as_ref().map(|p| p.location.clone())
             })
-            .await
             .into_data_error(id)?
             .ok_or(DataError::FeatureDisabled.report())?;
 
@@ -362,13 +324,12 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .location
             .reset_iterator(location.current_iterator, location.current_position);
         self.cache
-            .write_cache(id.as_id(), |e| {
+            .write_cache_blocking(id.as_id(), |e| {
                 if let Some(p) = e.profile.as_mut() {
                     p.location.current_iterator = next_state;
                 }
                 Ok(())
             })
-            .await
             .into_data_error(id)?;
         Ok(())
     }

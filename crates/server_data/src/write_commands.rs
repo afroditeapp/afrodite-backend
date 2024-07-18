@@ -17,9 +17,7 @@ use super::{
     },
 };
 use crate::{
-    db_manager::SyncWriteHandleRef,
-    result::{WrappedContextExt, WrappedResultExt},
-    DataError,
+    db_manager::SyncWriteHandleRef, result::{WrappedContextExt, WrappedResultExt}, write_concurrent::ConcurrentWriteProfileHandleBlocking, DataError
 };
 
 pub type WriteCmds = Cmds;
@@ -149,7 +147,6 @@ impl WriteCommandRunnerHandle {
         let handle = tokio::spawn(async move {
             let action_future = match action {
                 ConcurrentWriteAction::Image { handle, action } => action(handle),
-                ConcurrentWriteAction::Profile { handle, action } => action(handle),
             };
 
             let result = Box::into_pin(action_future).await;
@@ -162,10 +159,9 @@ impl WriteCommandRunnerHandle {
             .change_context(DataError::CommandResultReceivingFailed)
     }
 
-
-    pub async fn concurrent_write_blocking<
+    pub async fn concurrent_write_profile_blocking<
         CmdResult: Send + 'static,
-        WriteCmd: FnOnce(ConcurrentWriteSelectorHandle) -> CmdResult + Send + 'static,
+        WriteCmd: FnOnce(ConcurrentWriteProfileHandleBlocking) -> CmdResult + Send + 'static,
     >(
         &self,
         account: AccountId,
@@ -177,8 +173,11 @@ impl WriteCommandRunnerHandle {
             .ok_or(DataError::ServerClosingInProgress.report())?;
         drop(quit_lock_storage);
 
-        let lock = self.concurrent_write.accquire(account).await;
-
+        let lock = self.concurrent_write
+            .accquire(account)
+            .await
+            .profile_blocking()
+            .await;
         let handle = tokio::task::spawn_blocking(move || {
             let result = write_cmd(lock);
             drop(quit_lock); // Write completed, so release the quit lock.

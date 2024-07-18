@@ -7,7 +7,7 @@ use crate::{
     event::EventManagerWithCacheReference,
     read::ReadCommandsContainer,
     write_commands::WriteCmds,
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle},
+    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle},
     DataError,
 };
 
@@ -40,9 +40,9 @@ pub trait WriteData {
         cmd: GetCmd,
     ) -> impl std::future::Future<Output = crate::result::Result<CmdResult, DataError>> + Send;
 
-    fn concurrent_write_blocking<
+    fn concurrent_write_profile_blocking<
         CmdResult: Send + 'static,
-        WriteCmd: FnOnce(ConcurrentWriteSelectorHandle) -> CmdResult + Send + 'static,
+        WriteCmd: FnOnce(ConcurrentWriteProfileHandleBlocking) -> CmdResult + Send + 'static,
     >(
         &self,
         account: AccountId,

@@ -10,7 +10,7 @@ pub use server_api::app::*;
 use server_api::{db_write_raw, internal_api::InternalApiClient, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
-    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteSelectorHandle}, DataError
+    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
@@ -248,15 +248,15 @@ impl WriteData for S {
         self.write_queue.concurrent_write(account, cmd).await
     }
 
-    async fn concurrent_write_blocking<
+    async fn concurrent_write_profile_blocking<
         CmdResult: Send + 'static,
-        WriteCmd: FnOnce(ConcurrentWriteSelectorHandle) -> CmdResult + Send + 'static,
+        WriteCmd: FnOnce(ConcurrentWriteProfileHandleBlocking) -> CmdResult + Send + 'static,
     >(
         &self,
         account: AccountId,
         write_cmd: WriteCmd,
     ) -> server_common::result::Result<CmdResult, DataError> {
-        self.write_queue.concurrent_write_blocking(account, write_cmd).await
+        self.write_queue.concurrent_write_profile_blocking(account, write_cmd).await
     }
 }
 
