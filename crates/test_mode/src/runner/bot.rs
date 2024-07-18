@@ -102,24 +102,32 @@ impl BotTestRunner {
         drop(bot_running_handle);
         drop(bot_quit_receiver);
 
-        select! {
-            result = signal::ctrl_c() => {
-                match result {
-                    Ok(()) => (),
-                    Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
+        let mut bot_states = vec![];
+        loop {
+            select! {
+                result = signal::ctrl_c() => {
+                    match result {
+                        Ok(()) => (),
+                        Err(e) => error!("Failed to listen CTRL+C. Error: {}", e),
+                    }
+                    break
+                }
+                value = wait_all_bots.recv() => {
+                    match value {
+                        None => break,
+                        Some(states) => bot_states.extend(states),
+                    }
                 }
             }
-            _ = wait_all_bots.recv() => ()
         }
 
         drop(quit_handle); // Singnal quit to bots.
 
         // Wait that all bot_running_handles are dropped.
-        let mut bot_states = vec![];
         loop {
             match wait_all_bots.recv().await {
                 None => break,
-                Some(data) => bot_states.extend(data),
+                Some(states) => bot_states.extend(states),
             }
         }
 

@@ -108,7 +108,11 @@ impl TestMode {
 
     pub fn tasks(&self) -> u32 {
         match &self.mode {
-            TestModeSubMode::Benchmark(c) => c.tasks,
+            TestModeSubMode::Benchmark(c) =>
+                match c.benchmark {
+                    SelectedBenchmark::GetProfileList => c.tasks + 1,
+                    _ => c.tasks,
+                },
             _ => 1,
         }
     }
@@ -253,6 +257,9 @@ pub struct BotModeConfig {
 pub enum SelectedBenchmark {
     GetProfile,
     GetProfileFromDatabase,
+    /// This benchmark uses one extra task for filling the location index
+    /// with profiles. Bot count controls how many bots are created just
+    /// for that.
     GetProfileList,
     PostProfile,
     PostProfileToDatabase,

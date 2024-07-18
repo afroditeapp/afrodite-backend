@@ -80,17 +80,20 @@ impl ClientBot {
         } else {
             // User bot
 
+            const UPDATE_LOCATION_RANDOM: UpdateLocationRandom =
+                UpdateLocationRandom::new(None);
+
             let setup = [
                 &Register as &dyn BotAction,
                 &Login,
                 &DoInitialSetupIfNeeded { admin: false },
-                &UpdateLocationRandom(None),
+                &UPDATE_LOCATION_RANDOM,
                 &SetProfileVisibility(true),
             ];
             let action_loop = [
                 &ActionsBeforeIteration as &dyn BotAction,
                 &GetProfile,
-                &RunActionsIf(action_array!(UpdateLocationRandom(None)), || {
+                &RunActionsIf(action_array!(UPDATE_LOCATION_RANDOM), || {
                     rand::random::<f32>() < 0.2
                 }),
                 // TODO: Toggle the profile visiblity in the future?

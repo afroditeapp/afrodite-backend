@@ -119,9 +119,12 @@ impl Benchmark {
     }
 
     pub fn benchmark_get_profile_list_bot(state: BotState) -> Self {
+        const UPDATE_LOCATION_RANDOM: UpdateLocationRandom =
+            UpdateLocationRandom::new_deterministic(Some(DEFAULT_LOCATION_CONFIG_BENCHMARK));
+
         let benchmark = [
             &RunActions(TO_NORMAL_STATE) as &dyn BotAction,
-            &UpdateLocationRandom(Some(DEFAULT_LOCATION_CONFIG_BENCHMARK)),
+            &UPDATE_LOCATION_RANDOM,
             &SetProfileVisibility(true),
         ];
         let iter = benchmark.into_iter();

@@ -134,16 +134,41 @@ impl BotAction for GetLocation {
 ///
 /// Updates PreviousValue to a new location.
 #[derive(Debug)]
-pub struct UpdateLocationRandom(pub Option<LocationConfig>);
+pub struct UpdateLocationRandom {
+    pub config: Option<LocationConfig>,
+    pub deterministic: bool,
+}
+
+impl UpdateLocationRandom {
+    pub const fn new(config: Option<LocationConfig>) -> Self {
+        Self {
+            config,
+            deterministic: false,
+        }
+    }
+
+    pub const fn new_deterministic(config: Option<LocationConfig>) -> Self {
+        Self {
+            config,
+            deterministic: true,
+        }
+    }
+}
 
 #[async_trait]
 impl BotAction for UpdateLocationRandom {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let config = self
-            .0
+            .config
             .clone()
             .unwrap_or(state.server_config.location().clone());
-        let location = config.generate_random_location();
+        let location = config.generate_random_location(
+            if self.deterministic {
+                Some(&mut state.deterministic_rng)
+            } else {
+                None
+            }
+        );
         profile_api::put_location(state.api.profile(), location)
             .await
             .change_context(TestError::ApiRequest)?;

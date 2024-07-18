@@ -54,6 +54,7 @@ error-stack = "0.4.1"
 thiserror = "1.0.56"
 
 rand = "0.8.5"
+rand_xoshiro = "0.6.0"
 chrono = { version = "0.4.38", features = ["serde"] }
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 base64 = "0.21.7"

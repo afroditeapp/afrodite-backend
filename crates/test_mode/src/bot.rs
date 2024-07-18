@@ -14,6 +14,8 @@ use config::{
     Config,
 };
 use error_stack::{Result, ResultExt};
+use rand::SeedableRng;
+use rand_xoshiro::Xoshiro256PlusPlus;
 use tokio::{
     net::TcpStream,
     select,
@@ -206,6 +208,7 @@ pub struct BotState {
     pub profile: ProfileState,
     pub connections: BotConnections,
     pub refresh_token: Option<Vec<u8>>,
+    pub deterministic_rng: Xoshiro256PlusPlus,
 }
 
 impl BotState {
@@ -237,6 +240,12 @@ impl BotState {
             profile: ProfileState::new(),
             connections: BotConnections::default(),
             refresh_token: None,
+            deterministic_rng: {
+                let task_i_u64: u64 = task_id.into();
+                let task_i_shifted = task_i_u64 << 32;
+                let bot_i_u64: u64 = bot_id.into();
+                Xoshiro256PlusPlus::seed_from_u64(task_i_shifted + bot_i_u64)
+            }
         }
     }
 
@@ -342,7 +351,7 @@ pub trait BotStruct: Debug + Send + 'static {
 
 pub struct BotManager {
     bots: Vec<Box<dyn BotStruct>>,
-    _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+    bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     task_id: u32,
     config: Arc<TestMode>,
 }
@@ -355,7 +364,7 @@ impl BotManager {
         bot_config_file: Arc<BotConfigFile>,
         old_state: Option<Arc<StateData>>,
         bot_quit_receiver: watch::Receiver<()>,
-        _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+        bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) {
         let bot = match config.mode {
             TestModeSubMode::Benchmark(_) | TestModeSubMode::Bot(_) => Self::benchmark_or_bot(
@@ -364,7 +373,7 @@ impl BotManager {
                 server_config,
                 bot_config_file,
                 config,
-                _bot_running_handle,
+                bot_running_handle,
             ),
             TestModeSubMode::Qa(_) => panic!("Server tests use different test runner"),
         };
@@ -378,7 +387,7 @@ impl BotManager {
         server_config: Arc<Config>,
         bot_config_file: Arc<BotConfigFile>,
         config: Arc<TestMode>,
-        _bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
+        bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
         for bot_i in 0..config.bots() {
@@ -405,9 +414,15 @@ impl BotManager {
                         Benchmark::benchmark_get_profile_from_database(state),
                     )),
                     SelectedBenchmark::GetProfileList => {
-                        let benchmark = match bot_i {
-                            0 => Benchmark::benchmark_get_profile_list(state),
-                            _ => Benchmark::benchmark_get_profile_list_bot(state),
+                        let benchmark = if task_id == config.tasks() - 1 {
+                            // Last task is bot task
+                            Benchmark::benchmark_get_profile_list_bot(state)
+                        } else if bot_i == 0 {
+                            // Create bot for benchmark task
+                            Benchmark::benchmark_get_profile_list(state)
+                        } else {
+                            // Create only one benchmark bot per benchmark task.
+                            continue
                         };
                         bots.push(Box::new(benchmark))
                     }
@@ -425,7 +440,7 @@ impl BotManager {
 
         Self {
             bots,
-            _bot_running_handle,
+            bot_running_handle,
             task_id,
             config,
         }
@@ -446,7 +461,7 @@ impl BotManager {
         }
 
         let data = self.iter_persistent_state();
-        self._bot_running_handle.send(data).await.unwrap();
+        self.bot_running_handle.send(data).await.unwrap();
     }
 
     fn iter_persistent_state(&self) -> Vec<BotPersistentState> {
@@ -461,15 +476,15 @@ impl BotManager {
         let mut task_state: TaskState = TaskState;
         loop {
             if self.config.early_quit && errors {
-                error!("Error occurred.");
+                error!("Error occurred in task {}", self.task_id);
                 return;
             }
 
             if self.bots.is_empty() {
                 if errors {
-                    error!("All bots closed. Errors occurred.");
+                    error!("All bots closed from task {}. Errors occurred.", self.task_id);
                 } else {
-                    info!("All bots closed. No errors.");
+                    info!("All bots closed from task {}. No errors.", self.task_id);
                 }
                 return;
             }
