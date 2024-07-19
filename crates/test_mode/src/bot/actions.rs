@@ -14,7 +14,7 @@ use self::{
     account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
     media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
 };
-use super::{super::client::TestError, BotState, TaskState};
+use super::{super::client::TestError, client_bot::ChangeBotAgeAndOtherSettings, BotState, TaskState};
 
 #[macro_export]
 macro_rules! action_array {
@@ -447,6 +447,7 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
     MakeModerationRequest {
         slots_to_request: &[0],
     },
+    ChangeBotAgeAndOtherSettings,
     CompleteAccountSetup,
     AssertAccountState::account(AccountState::Normal),
 ];
@@ -463,6 +464,7 @@ pub const TO_ADMIN_NORMAL_STATE: ActionArray = action_array![
     MakeModerationRequest {
         slots_to_request: &[0],
     },
+    ChangeBotAgeAndOtherSettings,
     CompleteAccountSetup,
     AssertAccountState::account(AccountState::Normal),
 ];
