@@ -38,7 +38,11 @@ fn main() -> ExitCode {
     .unwrap();
 
     if index_info {
-        println!("{}", LocationIndexInfoCreator::new(config.into()).create_all());
+        println!(
+            "{}",
+            LocationIndexInfoCreator::new(config.location().clone())
+                .create_all()
+        );
         return ExitCode::SUCCESS;
     }
 

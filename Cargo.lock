@@ -3500,6 +3500,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "server_data",
  "simple_backend",
  "simple_backend_config",
  "test_mode_macro",

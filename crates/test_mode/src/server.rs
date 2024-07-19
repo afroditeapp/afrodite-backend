@@ -13,6 +13,7 @@ use config::{
 };
 use nix::{sys::signal::Signal, unistd::Pid};
 use reqwest::Url;
+use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::file::{
     DataConfig, SimpleBackendConfigFile, SocketConfig, SqliteDatabase,
 };
@@ -22,6 +23,7 @@ use tokio::{
     sync::Mutex,
     task::JoinHandle,
 };
+use tracing::info;
 
 pub const TEST_ADMIN_ACCESS_EMAIL: &str = "admin@example.com";
 
@@ -216,6 +218,11 @@ fn new_config(
             if let Some(index_cell_size) = config.overridden_index_cell_size() {
                 location.index_cell_square_km = index_cell_size;
             }
+            info!(
+                "{}",
+                LocationIndexInfoCreator::new(location.clone())
+                    .create_one(location.index_cell_square_km)
+            );
             location
         } else {
             DEFAULT_LOCATION_CONFIG

@@ -17,19 +17,30 @@ use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 pub mod location;
 
 pub struct LocationIndexInfoCreator {
-    config: Arc<Config>,
+    config: LocationConfig,
 }
 
 impl LocationIndexInfoCreator {
-    pub fn new(config: Arc<Config>) -> Self {
+    pub fn new(config: LocationConfig) -> Self {
         Self {
             config,
         }
     }
 
+    pub fn create_one(
+        &self,
+        index_cell_square_km: NonZeroU8,
+    ) -> String {
+        self.create_one_internal(index_cell_square_km, false)
+    }
+
     #[allow(clippy::format_in_format_args)]
-    pub fn create_one(&self, index_cell_square_km: NonZeroU8) -> String {
-        let mut location = self.config.clone().location().clone();
+    fn create_one_internal(
+        &self,
+        index_cell_square_km: NonZeroU8,
+        whitespace_padding: bool,
+    ) -> String {
+        let mut location = self.config.clone();
         location.index_cell_square_km = index_cell_square_km;
         let coordinates = CoordinateManager::new(location);
         let (width, height): (NonZeroU16, NonZeroU16) = (
@@ -37,13 +48,28 @@ impl LocationIndexInfoCreator {
             coordinates.height().try_into().unwrap(),
         );
         let byte_count = width.get() as usize * height.get() as usize * size_of::<CellData>();
-        format!(
-            "{:<35}{:<20}{:<10}{}",
-            format!("Location index size: {}x{}, ", width, height),
-            format!("bytes: {}, ", format_size_in_bytes(byte_count)),
-            format!("zoom: {}, ", coordinates.zoom_level()),
-            format!("tile side length: {:.2} km", coordinates.tile_side_length_km()),
-        )
+        let size = format!("Location index size: {}x{}, ", width, height);
+        let bytes = format!("bytes: {}, ", format_size_in_bytes(byte_count));
+        let zoom = format!("zoom: {}, ", coordinates.zoom_level());
+        let len = format!("tile side length: {:.2} km", coordinates.tile_side_length_km());
+        if whitespace_padding {
+            format!(
+                "{:<35}{:<20}{:<10}{}",
+                size,
+                bytes,
+                zoom,
+                len,
+            )
+        } else {
+            format!(
+                "{}{}{}{}",
+                size,
+                bytes,
+                zoom,
+                len,
+            )
+        }
+
     }
 
     pub fn create_all(&self) -> String {
@@ -54,7 +80,7 @@ impl LocationIndexInfoCreator {
                 .and_then(TryInto::<NonZeroU8>::try_into);
             match converted {
                 Ok(lenght) => {
-                    info.push_str(&self.create_one(lenght));
+                    info.push_str(&self.create_one_internal(lenght, true));
                     info.push('\n');
                 }
                 Err(_) => continue,
@@ -91,7 +117,7 @@ impl LocationIndexManager {
 
         info!(
             "{}",
-            LocationIndexInfoCreator::new(config.clone())
+            LocationIndexInfoCreator::new(config.location().clone())
                 .create_one(config.location().index_cell_square_km),
         );
 

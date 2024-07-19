@@ -51,3 +51,4 @@ utils = { path = "../utils" }
 config = { path = "../config" }
 simple_backend = { path = "../simple_backend" }
 simple_backend_config = { path = "../simple_backend_config" }
+server_data = { path = "../server_data" }
