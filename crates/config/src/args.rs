@@ -1,6 +1,6 @@
 //! Config given as command line arguments
 
-use std::{fmt, path::PathBuf};
+use std::{fmt, num::NonZeroU8, path::PathBuf};
 
 use clap::{arg, command, Args, Parser, ValueEnum};
 use reqwest::Url;
@@ -159,6 +159,13 @@ impl TestMode {
         }
     }
 
+    pub fn overridden_index_cell_size(&self) -> Option<NonZeroU8> {
+        match &self.mode {
+            TestModeSubMode::Benchmark(c) => c.index_cell_square_km,
+            _ => None,
+        }
+    }
+
     /// Test name which does not have whitespace
     pub fn test_name(&self) -> String {
         match &self.mode {
@@ -226,6 +233,10 @@ pub struct BenchmarkConfig {
     /// Save and load state
     #[arg(long)]
     pub save_state: bool,
+
+    /// Override index cell size value
+    #[arg(long)]
+    pub index_cell_square_km: Option<NonZeroU8>,
 }
 
 #[derive(Args, Debug, Clone)]

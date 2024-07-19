@@ -212,7 +212,11 @@ fn new_config(
         .into(),
         components,
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
-            DEFAULT_LOCATION_CONFIG_BENCHMARK
+            let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;
+            if let Some(index_cell_size) = config.overridden_index_cell_size() {
+                location.index_cell_square_km = index_cell_size;
+            }
+            location
         } else {
             DEFAULT_LOCATION_CONFIG
         }
