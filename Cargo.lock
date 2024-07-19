@@ -2221,6 +2221,7 @@ dependencies = [
  "clap",
  "config",
  "server",
+ "server_data",
  "simple_backend_config",
  "simple_backend_image_process",
  "test_mode",

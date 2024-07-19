@@ -12,6 +12,11 @@ pub struct ArgsConfig {
     #[arg(short, long)]
     pub build_info: bool,
 
+    /// Print available profile index sizes using
+    /// dimensions from config file and quit.
+    #[arg(short, long)]
+    pub index_info: bool,
+
     #[command(flatten)]
     pub server: ServerModeArgs,
 

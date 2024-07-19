@@ -1,6 +1,6 @@
-use std::{collections::HashMap, mem::size_of, num::NonZeroU8, sync::Arc};
+use std::{collections::HashMap, mem::size_of, num::{NonZeroU16, NonZeroU8}, sync::Arc};
 
-use config::Config;
+use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
 use model::{
     AccountId, CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
@@ -16,6 +16,58 @@ use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 
 pub mod location;
 
+pub struct LocationIndexInfoCreator {
+    config: Arc<Config>,
+}
+
+impl LocationIndexInfoCreator {
+    pub fn new(config: Arc<Config>) -> Self {
+        Self {
+            config,
+        }
+    }
+
+    #[allow(clippy::format_in_format_args)]
+    pub fn create_one(&self, index_cell_square_km: NonZeroU8) -> String {
+        let mut location = self.config.clone().location().clone();
+        location.index_cell_square_km = index_cell_square_km;
+        let coordinates = CoordinateManager::new(location);
+        let (width, height): (NonZeroU16, NonZeroU16) = (
+            coordinates.width().try_into().unwrap(),
+            coordinates.height().try_into().unwrap(),
+        );
+        let byte_count = width.get() as usize * height.get() as usize * size_of::<CellData>();
+        format!(
+            "{:<35}{:<20}{:<10}{}",
+            format!("Location index size: {}x{}, ", width, height),
+            format!("bytes: {}, ", format_size_in_bytes(byte_count)),
+            format!("zoom: {}, ", coordinates.zoom_level()),
+            format!("tile side length: {:.2} km", coordinates.tile_side_length_km()),
+        )
+    }
+
+    pub fn create_all(&self) -> String {
+        let mut info = String::new();
+        for (_, tile_lenght) in ZOOM_LEVEL_AND_TILE_LENGHT {
+            let tile_lenght_u64 = *tile_lenght as u64;
+            let converted = TryInto::<u8>::try_into(tile_lenght_u64)
+                .and_then(TryInto::<NonZeroU8>::try_into);
+            match converted {
+                Ok(lenght) => {
+                    info.push_str(&self.create_one(lenght));
+                    info.push('\n');
+                }
+                Err(_) => continue,
+            }
+        }
+
+        // Pop final newline
+        info.pop();
+
+        info
+    }
+}
+
 #[derive(Debug)]
 pub struct LocationIndexManager {
     config: Arc<Config>,
@@ -26,7 +78,7 @@ pub struct LocationIndexManager {
 
 impl LocationIndexManager {
     pub fn new(config: Arc<Config>) -> Self {
-        let coordinates = CoordinateManager::new(config.clone());
+        let coordinates = CoordinateManager::new(config.location().clone());
         // Create index also if profile features are disabled.
         // This way accidential index access will not crash the server.
         // The default index should not consume memory that much.
@@ -37,14 +89,10 @@ impl LocationIndexManager {
 
         let index = LocationIndex::new(width, height).into();
 
-        let byte_count = width.get() as usize * height.get() as usize * size_of::<CellData>();
         info!(
-            "Location index size: {}x{}, bytes: {}, zoom: {}, tile side length: {:.2} km",
-            width,
-            height,
-            format_size_in_bytes(byte_count),
-            coordinates.zoom_level(),
-            coordinates.tile_side_length_km()
+            "{}",
+            LocationIndexInfoCreator::new(config.clone())
+                .create_one(config.location().index_cell_square_km),
         );
 
         Self {
@@ -428,16 +476,16 @@ fn calculate_tile_y(latitude_deg: f64, zoom_level: u8) -> u32 {
 
 #[derive(Debug)]
 pub struct CoordinateManager {
-    pub config: Arc<Config>,
+    pub config: LocationConfig,
     pub longitude_one_km_in_degrees: f64,
     pub zoom_level: u8,
     pub tile_side_length_km: f64,
 }
 
 impl CoordinateManager {
-    fn new(config: Arc<Config>) -> Self {
+    fn new(config: LocationConfig) -> Self {
         let (zoom_level, tile_side_length_km) =
-            find_nearest_zoom_level(config.location().index_cell_square_km);
+            find_nearest_zoom_level(config.index_cell_square_km);
         Self {
             zoom_level,
             tile_side_length_km,
@@ -457,7 +505,7 @@ impl CoordinateManager {
     // Max y tile number of the index area.
     fn y_max_tile(&self) -> u32 {
         calculate_tile_y(
-            self.config.location().latitude_bottom_right,
+            self.config.latitude_bottom_right,
             self.zoom_level,
         )
     }
@@ -465,18 +513,18 @@ impl CoordinateManager {
     // Max x tile number of the index area.
     fn x_max_tile(&self) -> u32 {
         calculate_tile_x(
-            self.config.location().longitude_bottom_right,
+            self.config.longitude_bottom_right,
             self.zoom_level,
         )
     }
 
     fn height(&self) -> u16 {
-        let y_start = calculate_tile_y(self.config.location().latitude_top_left, self.zoom_level);
+        let y_start = calculate_tile_y(self.config.latitude_top_left, self.zoom_level);
         u32::max(1, self.y_max_tile() - y_start) as u16
     }
 
     fn width(&self) -> u16 {
-        let x_start = calculate_tile_x(self.config.location().longitude_top_left, self.zoom_level);
+        let x_start = calculate_tile_x(self.config.longitude_top_left, self.zoom_level);
         u32::max(1, self.x_max_tile() - x_start) as u16
     }
 
@@ -510,19 +558,19 @@ impl CoordinateManager {
     }
 
     fn longitude_min(&self) -> f64 {
-        self.config.location().longitude_top_left
+        self.config.longitude_top_left
     }
 
     fn longitude_max(&self) -> f64 {
-        self.config.location().longitude_bottom_right
+        self.config.longitude_bottom_right
     }
 
     fn latitude_min(&self) -> f64 {
-        self.config.location().latitude_bottom_right
+        self.config.latitude_bottom_right
     }
 
     fn latitude_max(&self) -> f64 {
-        self.config.location().latitude_top_left
+        self.config.latitude_top_left
     }
 }
 

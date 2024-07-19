@@ -11,6 +11,7 @@ use std::process::exit;
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
 use server::{api_doc::ApiDoc, PihkaServer};
+use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::args::ImageProcessModeArgs;
 use test_mode::TestRunner;
 
@@ -26,13 +27,18 @@ fn main() {
         println!("{}", ApiDoc::open_api_json_string().unwrap());
         return;
     }
-
+    let index_info = args.index_info;
     let config = get_config(
         args,
         BUILD_INFO_GIT_DESCRIBE.to_string(),
         BUILD_INFO_CARGO_PKG_VERSION.to_string(),
     )
     .unwrap();
+
+    if index_info {
+        println!("{}", LocationIndexInfoCreator::new(config.into()).create_all());
+        return;
+    }
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
