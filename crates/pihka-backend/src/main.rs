@@ -6,7 +6,7 @@
 pub mod args;
 pub mod build_info;
 
-use std::process::exit;
+use std::process::ExitCode;
 
 use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
@@ -15,17 +15,19 @@ use server_data::index::LocationIndexInfoCreator;
 use simple_backend_config::args::ImageProcessModeArgs;
 use test_mode::TestRunner;
 
-fn main() {
-    let args = args::get_config();
+fn main() -> ExitCode {
+    let args = match args::get_config() {
+        Ok(args) => args,
+        Err(e) => return e,
+    };
 
     if let Some(AppMode::ImageProcess(settings)) = args.mode {
-        handle_image_process_mode(settings);
-        return;
+        return handle_image_process_mode(settings);
     }
 
     if let Some(AppMode::OpenApi) = args.mode {
         println!("{}", ApiDoc::open_api_json_string().unwrap());
-        return;
+        return ExitCode::SUCCESS;
     }
     let index_info = args.index_info;
     let config = get_config(
@@ -37,7 +39,7 @@ fn main() {
 
     if index_info {
         println!("{}", LocationIndexInfoCreator::new(config.into()).create_all());
-        return;
+        return ExitCode::SUCCESS;
     }
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
@@ -51,9 +53,11 @@ fn main() {
         }
         None => runtime.block_on(async { PihkaServer::new(config).run().await }),
     }
+
+    ExitCode::SUCCESS
 }
 
-fn handle_image_process_mode(settings: ImageProcessModeArgs) {
+fn handle_image_process_mode(settings: ImageProcessModeArgs) -> ExitCode {
     let settings = simple_backend_image_process::Settings {
         input: settings.input,
         input_file_type: settings.input_file_type,
@@ -62,10 +66,10 @@ fn handle_image_process_mode(settings: ImageProcessModeArgs) {
     };
 
     match simple_backend_image_process::handle_image(settings) {
-        Ok(()) => exit(0),
+        Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("{:?}", e);
-            exit(1);
+            ExitCode::FAILURE
         }
     }
 }

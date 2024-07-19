@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::process::ExitCode;
 
 use clap::Parser;
 use config::args::ArgsConfig;
@@ -16,13 +16,13 @@ pub struct Cli {
     pub args: ArgsConfig,
 }
 
-pub fn get_config() -> ArgsConfig {
+pub fn get_config() -> Result<ArgsConfig, ExitCode> {
     let matches = Cli::parse();
 
     if matches.args.build_info {
         println!("{}", build_info());
-        exit(0)
+        Err(ExitCode::SUCCESS)
+    } else {
+        Ok(matches.args)
     }
-
-    matches.args
 }
