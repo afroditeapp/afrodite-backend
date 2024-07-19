@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionIdInternal, ProfileLink};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -18,7 +18,7 @@ use super::{
 use crate::{
     content_processing::NewContentInfo,
     db_manager::RouterDatabaseWriteHandle,
-    result::{Result, WrappedContextExt},
+    result::Result,
     DataError,
 };
 
@@ -198,10 +198,11 @@ impl ConcurrentWriteProfileHandleBlocking {
     pub fn next_profiles(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Vec<ProfileLink>, DataError> {
+        iterator_id: IteratorSessionId,
+    ) -> Result<Option<Vec<ProfileLink>>, DataError> {
         self.write
             .user_write_commands_account()
-            .next_profiles(id)
+            .next_profiles(id, iterator_id)
     }
 
     pub fn reset_profile_iterator(&self, id: AccountIdInternal) -> Result<IteratorSessionIdInternal, DataError> {
@@ -264,17 +265,26 @@ impl<'a> WriteCommandsConcurrent<'a> {
         })
     }
 
+    /// Returns None if profile iterator session ID is
+    /// invalid.
     pub fn next_profiles(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Vec<ProfileLink>, DataError> {
-        let (location, query_maker_filters) = self
+        iterator_id_from_client: IteratorSessionId,
+    ) -> Result<Option<Vec<ProfileLink>>, DataError> {
+        let (location, query_maker_filters, iterator_id_current) = self
             .cache
             .read_cache_blocking(id.as_id(), |e| {
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
-                error_stack::Result::<_, CacheError>::Ok((p.location.clone(), p.filters()))
+                error_stack::Result::<_, CacheError>::Ok((p.location.clone(), p.filters(), p.profile_iterator_session_id))
             })
             .into_data_error(id)??;
+
+        let iterator_id_current: Option<IteratorSessionId> =
+            iterator_id_current.map(|v| v.into());
+        if iterator_id_current != Some(iterator_id_from_client) {
+            return Ok(None);
+        }
 
         let (mut next_state, profiles) = self
             .location
@@ -283,7 +293,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let (next_state, profiles) = if let Some(mut profiles) = profiles {
             loop {
                 if profiles.len() >= PROFILE_ITERATOR_PAGE_SIZE {
-                    break (next_state, Some(profiles));
+                    break (next_state, profiles);
                 } else {
                     let (new_next_state, new_profiles) = self
                         .location
@@ -293,12 +303,12 @@ impl<'a> WriteCommandsConcurrent<'a> {
                     if let Some(new_profiles) = new_profiles {
                         profiles.extend(new_profiles);
                     } else {
-                        break (next_state, Some(profiles));
+                        break (next_state, profiles);
                     }
                 }
             }
         } else {
-            (next_state, None)
+            (next_state, vec![])
         };
 
         self.cache
@@ -310,29 +320,20 @@ impl<'a> WriteCommandsConcurrent<'a> {
             })
             .into_data_error(id)?;
 
-        Ok(profiles.unwrap_or(Vec::new()))
+        Ok(Some(profiles))
     }
 
     pub fn reset_profile_iterator(
         &self,
         id: AccountIdInternal,
     ) -> Result<IteratorSessionIdInternal, DataError> {
-        let location = self
-            .cache
-            .read_cache_blocking(id.as_id(), |e| {
-                e.profile.as_ref().map(|p| p.location.clone())
-            })
-            .into_data_error(id)?
-            .ok_or(DataError::FeatureDisabled.report())?;
-
-        let next_state = self
-            .location
-            .reset_iterator(location.current_iterator, location.current_position);
-
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
                 let new_id = IteratorSessionIdInternal::create_random();
                 if let Some(p) = e.profile.as_mut() {
+                    let next_state = self
+                        .location
+                        .reset_iterator(p.location.current_iterator, p.location.current_position);
                     p.location.current_iterator = next_state;
                     p.profile_iterator_session_id = Some(new_id);
                 }

@@ -1,6 +1,5 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, IteratorSessionId, ProfilePage};
-use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
 
 use crate::{
@@ -29,23 +28,17 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData + ReadDat
 ) -> Result<Json<ProfilePage>, StatusCode> {
     PROFILE.post_get_next_profile_page.incr();
 
-    let current_iterator_session_id: Option<IteratorSessionId> = state
-        .read()
-        .profile()
-        .profile_iterator_session_id(account_id)
-        .await?
-        .map(|v| v.into());
+    let data = state
+        .concurrent_write_profile_blocking(
+            account_id.as_id(),
+            move |cmds| {
+                cmds.next_profiles(account_id, iterator_session_id)
+            }
+        )
+        .await??;
 
-    if current_iterator_session_id == Some(iterator_session_id) {
-        let data = state
-            .concurrent_write_profile_blocking(
-                account_id.as_id(),
-                move |cmds| {
-                    cmds.next_profiles(account_id)
-                }
-            )
-            .await??;
-
+    if let Some(data) = data {
+        // Profile iterator session ID was valid
         Ok(ProfilePage {
             profiles: data,
             error_invalid_iterator_session_id: false,
