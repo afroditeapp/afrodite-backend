@@ -114,7 +114,7 @@ impl Benchmark {
         const BENCHMARK: ActionArray = action_array![
             ActionsBeforeIteration,
             ResetProfileIterator,
-            RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileList),
+            RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileListBenchmark),
             ActionsAfterIteration,
         ];
         let iter = SETUP.iter().copied().chain(BENCHMARK.iter().copied().cycle());
@@ -215,6 +215,22 @@ impl BotAction for GetProfile {
 }
 
 #[derive(Debug)]
+pub struct GetProfileListBenchmark;
+
+#[async_trait]
+impl BotAction for GetProfileListBenchmark {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let result = GetProfileList.excecute_impl(state).await;
+        COUNTERS.inc_sub();
+        result
+    }
+
+    fn previous_value_supported(&self) -> bool {
+        true
+    }
+}
+
+#[derive(Debug)]
 pub struct GetProfileFromDatabase;
 
 #[async_trait]
@@ -295,14 +311,15 @@ struct ActionsAfterIteration;
 #[async_trait]
 impl BotAction for ActionsAfterIteration {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        COUNTERS.inc_get_profile();
+        COUNTERS.inc_main();
 
         if state.print_info() {
             info!(
-                "{:?}: {:?}, total: {}",
+                "{:?}: {:?}, total: {}, details: {}",
                 state.previous_action,
                 state.benchmark.action_duration.elapsed(),
-                COUNTERS.reset_get_profile()
+                COUNTERS.reset_main(),
+                COUNTERS.reset_sub(),
             );
         }
         Ok(())

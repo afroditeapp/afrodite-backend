@@ -8,24 +8,37 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// Benchmark counters
 #[derive(Default, Debug)]
 pub struct Counters {
-    get_profile: AtomicU64,
+    /// Counter for one benchmark iteration
+    main: AtomicU64,
+    /// Counter for details about one benchmark iteration
+    sub: AtomicU64,
 }
 
 impl Counters {
     pub const fn new() -> Self {
         Self {
-            get_profile: AtomicU64::new(0),
+            main: AtomicU64::new(0),
+            sub: AtomicU64::new(0),
         }
     }
 
-    pub fn inc_get_profile(&self) {
-        self.get_profile.fetch_add(1, Ordering::Relaxed);
+    pub fn inc_main(&self) {
+        self.main.fetch_add(1, Ordering::Relaxed);
     }
 
-    pub fn reset_get_profile(&self) -> u64 {
-        self.get_profile.swap(0, Ordering::Relaxed)
+    pub fn reset_main(&self) -> u64 {
+        self.main.swap(0, Ordering::Relaxed)
+    }
+
+    pub fn inc_sub(&self) {
+        self.sub.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub fn reset_sub(&self) -> u64 {
+        self.sub.swap(0, Ordering::Relaxed)
     }
 }
 
