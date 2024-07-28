@@ -15,6 +15,7 @@ pub const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/:account_id";
 #[utoipa::path(
     get,
     path = "/chat_api/public_key/{account_id}",
+    params(AccountId),
     responses(
         (status = 200, description = "Success.", body = GetPublicKey),
         (status = 401, description = "Unauthorized."),
