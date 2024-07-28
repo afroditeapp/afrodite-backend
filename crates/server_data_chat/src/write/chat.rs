@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -287,6 +287,17 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             cmds.chat()
                 .message()
                 .insert_pending_message_if_match(sender, receiver, message)
+        })
+    }
+
+    pub async fn set_public_key(
+        &mut self,
+        id: AccountIdInternal,
+        data: SetPublicKey,
+    ) -> Result<PublicKeyId, DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .set_public_key(id, data)
         })
     }
 }

@@ -68,6 +68,8 @@ pub enum DieselDatabaseError {
     NotAllowed,
     #[error("Action is already done")]
     AlreadyDone,
+    #[error("No available IDs")]
+    NoAvailableIds,
 
     #[error("Data format conversion failed")]
     DataFormatConversion,

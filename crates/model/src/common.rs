@@ -339,6 +339,9 @@ pub struct AccessTokenRaw {
     pub token: Option<String>,
 }
 
+// TODO(prod): Do not use Uuid for token generation
+// because some bits are fixed. Check all tokens.
+
 /// AccessToken is used as a short lived token for API access.
 ///
 /// The token is 256 bit random value which is Base64 encoded.

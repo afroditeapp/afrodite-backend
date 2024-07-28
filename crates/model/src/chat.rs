@@ -14,6 +14,9 @@ pub use sync_version::*;
 mod push_notifications;
 pub use push_notifications::*;
 
+mod public_key;
+pub use public_key::*;
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]
@@ -26,6 +29,9 @@ pub struct ChatStateRaw {
     pub pending_notification: PendingNotification,
     pub fcm_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
+    pub public_key_id: Option<PublicKeyId>,
+    pub public_key_version: Option<PublicKeyVersion>,
+    pub public_key_data: Option<PublicKeyData>,
 }
 
 #[derive(Debug, Clone, Copy)]

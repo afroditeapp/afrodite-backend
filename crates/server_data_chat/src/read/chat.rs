@@ -1,7 +1,7 @@
 mod push_notifications;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, MatchesPage, MessageNumber, PendingMessagesPage, ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage
+    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessagesPage, ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage
 };
 use server_data::{
  define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
@@ -199,5 +199,15 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         }).await?;
 
         Ok(unlimited_likes_a0 == unlimited_likes_a1)
+    }
+
+    pub async fn get_public_key(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<GetPublicKey, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().public_key(id))
+            .await
+            .map(|key| GetPublicKey { key })
+            .into_error()
     }
 }

@@ -20,6 +20,7 @@ impl ConnectedApp {
             .merge(api::chat::block::block_router(self.state.clone()))
             .merge(api::chat::match_routes::match_router(self.state.clone()))
             .merge(api::chat::message::message_router(self.state.clone()))
+            .merge(api::chat::public_key::public_key_router(self.state.clone()))
             .merge(
                 api::chat::push_notifications::push_notification_router_private(self.state.clone()),
             )

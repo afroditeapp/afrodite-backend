@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
-use model::{AccountIdInternal, ChatStateRaw};
+use model::{AccountIdInternal, ChatStateRaw, PublicKey};
 
 use crate::IntoDatabaseError;
 
@@ -30,5 +30,20 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
             .select(ChatStateRaw::as_select())
             .first(self.conn())
             .into_db_error(())
+    }
+
+    pub fn public_key(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<PublicKey>, DieselDatabaseError> {
+        let chat_state = self.chat_state(id)?;
+        if let (Some(id), Some(version), Some(data)) =
+            (chat_state.public_key_id, chat_state.public_key_version, chat_state.public_key_data) {
+                Ok(Some(
+                    PublicKey { id, version, data }
+                ))
+            } else {
+                Ok(None)
+            }
     }
 }

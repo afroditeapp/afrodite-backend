@@ -2,9 +2,9 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ChatStateRaw, MatchesSyncVersion, ReceivedBlocksSyncVersion,
-    ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SyncVersionUtils,
+    AccountIdInternal, ChatStateRaw, MatchesSyncVersion, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SetPublicKey, SyncVersionUtils
 };
+use simple_backend_utils::ContextExt;
 
 use crate::IntoDatabaseError;
 
@@ -76,6 +76,40 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         };
 
         Ok(changes)
+    }
+
+    pub fn set_public_key(
+        &mut self,
+        id: AccountIdInternal,
+        new_key: SetPublicKey,
+    ) -> Result<PublicKeyId, DieselDatabaseError> {
+        use model::schema::chat_state::dsl::*;
+
+        let current = self.read().chat().public_key(id)?;
+        let new_id = if let Some(current) = current {
+            if current.id.id == i64::MAX {
+                return Err(DieselDatabaseError::NoAvailableIds.report());
+            } else {
+                PublicKeyId {
+                    id: current.id.id + 1,
+                }
+            }
+        } else {
+            PublicKeyId {
+                id: 0,
+            }
+        };
+
+        insert_into(chat_state)
+            .values((
+                public_key_id.eq(new_id),
+                public_key_version.eq(new_key.version),
+                public_key_data.eq(new_key.data),
+            ))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(new_id)
     }
 }
 

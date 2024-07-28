@@ -2,6 +2,7 @@
 //!
 //!
 
+use server_api_chat::chat::CHAT_PUBLIC_KEY_COUNTERS_LIST;
 use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
 
 use crate::api::{
@@ -84,6 +85,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("chat_block", CHAT_BLOCK_COUNTERS_LIST),
     &CounterCategory::new("chat_match", CHAT_MATCH_COUNTERS_LIST),
     &CounterCategory::new("chat_message", CHAT_MESSAGE_COUNTERS_LIST),
+    &CounterCategory::new("chat_public_key", CHAT_PUBLIC_KEY_COUNTERS_LIST),
     &CounterCategory::new(
         "chat_push_notification",
         CHAT_PUSH_NOTIFICATION_COUNTERS_LIST,
