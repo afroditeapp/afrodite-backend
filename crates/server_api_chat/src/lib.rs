@@ -52,6 +52,7 @@ pub use server_common::{data::DataError, result};
         model::chat::PendingMessageDeleteList,
         model::chat::MessageNumber,
         model::chat::SendMessageToAccount,
+        model::chat::SendMessageResult,
         model::chat::UpdateMessageViewStatus,
         model::chat::ReceivedBlocksSyncVersion,
         model::chat::ReceivedLikesSyncVersion,

@@ -1,6 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage, SendMessageToAccount, UpdateMessageViewStatus
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage, SendMessageResult, SendMessageToAccount, UpdateMessageViewStatus
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -145,13 +145,15 @@ pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + Write
 
 pub const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 
-/// Send message to a match
+/// Send message to a match.
+///
+/// Max pending message count is 50.
 #[utoipa::path(
     post,
-    path = "/chat_api/send_message",
+    path = PATH_POST_SEND_MESSAGE,
     request_body(content = SendMessageToAccount),
     responses(
-        (status = 200, description = "Success."),
+        (status = 200, description = "Success.", body = SendMessageResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -161,23 +163,28 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(message_info): Json<SendMessageToAccount>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<SendMessageResult>, StatusCode> {
     CHAT.post_send_message.incr();
 
     let message_reciever = state.get_internal_id(message_info.receiver).await?;
-    db_write_multiple!(state, move |cmds| {
-        cmds.chat()
-            .insert_pending_message_if_match(id, message_reciever, message_info.message)
+    let result = db_write_multiple!(state, move |cmds| {
+        let result = cmds.chat()
+            .insert_pending_message_if_match(
+                id,
+                message_reciever,
+                message_info.message,
+                message_info.receiver_public_key_id
+            )
             .await?;
 
         cmds.events()
             .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
             .await?;
 
-        Ok(())
+        Ok(result)
     })?;
 
-    Ok(())
+    Ok(result.into())
 }
 
 pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {

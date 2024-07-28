@@ -343,6 +343,36 @@ pub struct SendMessageToAccount {
     /// Receiver of the message.
     pub receiver: AccountId,
     pub message: String,
+    /// Message receiver's public key ID for check
+    /// to prevent sending message encrypted with outdated
+    /// public key.
+    pub receiver_public_key_id: PublicKeyId,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct SendMessageResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_too_many_pending_messages: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_receiver_public_key_outdated: bool,
+}
+
+impl SendMessageResult {
+    pub fn too_many_pending_messages() -> Self {
+        Self {
+            error_too_many_pending_messages: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn public_key_outdated() -> Self {
+        Self {
+            error_receiver_public_key_outdated: true,
+            ..Self::default()
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

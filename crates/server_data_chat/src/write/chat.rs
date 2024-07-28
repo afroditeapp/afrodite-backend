@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, SendMessageResult, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -276,17 +276,41 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         })
     }
 
-    /// Insert a new pending message if sender and receiver are a match
+    /// Insert a new pending message if sender and receiver are a match.
+    ///
+    /// Receiver public key check is for preventing client from
+    /// sending messages encrypted with outdated public key.
+    ///
+    /// Max pending message count is 50.
+    ///
     pub async fn insert_pending_message_if_match(
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
         message: String,
-    ) -> Result<(), DataError> {
+        receiver_public_key_from_client: PublicKeyId,
+    ) -> Result<SendMessageResult, DataError> {
         db_transaction!(self, move |mut cmds| {
+            let current_key = cmds.read().chat().public_key(receiver)?;
+            if Some(receiver_public_key_from_client) != current_key.map(|v| v.id) {
+                return Ok(SendMessageResult::public_key_outdated());
+            }
+
+            let pending_message_count = cmds
+                .read()
+                .chat()
+                .message()
+                .pending_message_count(sender, receiver)?;
+
+            if pending_message_count >= 50 {
+                return Ok(SendMessageResult::too_many_pending_messages());
+            }
+
             cmds.chat()
                 .message()
-                .insert_pending_message_if_match(sender, receiver, message)
+                .insert_pending_message_if_match(sender, receiver, message)?;
+
+            Ok(SendMessageResult::default())
         })
     }
 

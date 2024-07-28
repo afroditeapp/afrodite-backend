@@ -60,4 +60,19 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
 
         Ok(account_id_vec)
     }
+
+    pub fn pending_message_count(
+        &mut self,
+        id_message_sender: AccountIdInternal,
+        id_message_receiver: AccountIdInternal,
+    ) -> Result<i64, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
+
+        pending_messages
+            .filter(account_id_sender.eq(id_message_sender.as_db_id()))
+            .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+            .count()
+            .get_result(self.conn())
+            .into_db_error(())
+    }
 }
