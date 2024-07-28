@@ -50,6 +50,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
 *ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
 *ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages
+*ChatApi* | [**get_public_key**](docs/ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{account_id} | Get current public key of some account
 *ChatApi* | [**get_received_blocks**](docs/ChatApi.md#get_received_blocks) | **GET** /chat_api/received_blocks | Get list of received blocks
 *ChatApi* | [**get_received_likes**](docs/ChatApi.md#get_received_likes) | **GET** /chat_api/received_likes | Get received likes.
 *ChatApi* | [**get_sent_blocks**](docs/ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
@@ -58,7 +59,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_get_pending_notification**](docs/ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
 *ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
-*ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match
+*ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 *ChatApi* | [**post_unblock_profile**](docs/ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
@@ -167,6 +168,7 @@ Class | Method | HTTP request | Description
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
  - [GetProfileQueryParam](docs/GetProfileQueryParam.md)
  - [GetProfileResult](docs/GetProfileResult.md)
+ - [GetPublicKey](docs/GetPublicKey.md)
  - [GroupValues](docs/GroupValues.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
  - [IconLocation](docs/IconLocation.md)
@@ -226,6 +228,10 @@ Class | Method | HTTP request | Description
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
  - [ProfileVisibility](docs/ProfileVisibility.md)
+ - [PublicKey](docs/PublicKey.md)
+ - [PublicKeyData](docs/PublicKeyData.md)
+ - [PublicKeyId](docs/PublicKeyId.md)
+ - [PublicKeyVersion](docs/PublicKeyVersion.md)
  - [RebootQueryParam](docs/RebootQueryParam.md)
  - [ReceivedBlocksPage](docs/ReceivedBlocksPage.md)
  - [ReceivedBlocksSyncVersion](docs/ReceivedBlocksSyncVersion.md)
@@ -235,6 +241,7 @@ Class | Method | HTTP request | Description
  - [ResetDataQueryParam](docs/ResetDataQueryParam.md)
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContent](docs/SecurityContent.md)
+ - [SendMessageResult](docs/SendMessageResult.md)
  - [SendMessageToAccount](docs/SendMessageToAccount.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
  - [SentBlocksSyncVersion](docs/SentBlocksSyncVersion.md)
@@ -242,6 +249,7 @@ Class | Method | HTTP request | Description
  - [SentLikesSyncVersion](docs/SentLikesSyncVersion.md)
  - [SetAccountSetup](docs/SetAccountSetup.md)
  - [SetProfileContent](docs/SetProfileContent.md)
+ - [SetPublicKey](docs/SetPublicKey.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SlotId](docs/SlotId.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)

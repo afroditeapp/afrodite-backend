@@ -59,6 +59,7 @@ docs/GetProfileContentQueryParams.md
 docs/GetProfileContentResult.md
 docs/GetProfileQueryParam.md
 docs/GetProfileResult.md
+docs/GetPublicKey.md
 docs/GroupValues.md
 docs/HandleModerationRequest.md
 docs/IconLocation.md
@@ -122,6 +123,10 @@ docs/ProfileSearchAgeRange.md
 docs/ProfileUpdate.md
 docs/ProfileVersion.md
 docs/ProfileVisibility.md
+docs/PublicKey.md
+docs/PublicKeyData.md
+docs/PublicKeyId.md
+docs/PublicKeyVersion.md
 docs/RebootQueryParam.md
 docs/ReceivedBlocksPage.md
 docs/ReceivedBlocksSyncVersion.md
@@ -131,6 +136,7 @@ docs/RefreshToken.md
 docs/ResetDataQueryParam.md
 docs/SearchGroups.md
 docs/SecurityContent.md
+docs/SendMessageResult.md
 docs/SendMessageToAccount.md
 docs/SentBlocksPage.md
 docs/SentBlocksSyncVersion.md
@@ -138,6 +144,7 @@ docs/SentLikesPage.md
 docs/SentLikesSyncVersion.md
 docs/SetAccountSetup.md
 docs/SetProfileContent.md
+docs/SetPublicKey.md
 docs/SignInWithLoginInfo.md
 docs/SlotId.md
 docs/SoftwareInfo.md
@@ -213,6 +220,7 @@ src/models/get_profile_content_query_params.rs
 src/models/get_profile_content_result.rs
 src/models/get_profile_query_param.rs
 src/models/get_profile_result.rs
+src/models/get_public_key.rs
 src/models/group_values.rs
 src/models/handle_moderation_request.rs
 src/models/icon_location.rs
@@ -273,6 +281,10 @@ src/models/profile_search_age_range.rs
 src/models/profile_update.rs
 src/models/profile_version.rs
 src/models/profile_visibility.rs
+src/models/public_key.rs
+src/models/public_key_data.rs
+src/models/public_key_id.rs
+src/models/public_key_version.rs
 src/models/reboot_query_param.rs
 src/models/received_blocks_page.rs
 src/models/received_blocks_sync_version.rs
@@ -282,6 +294,7 @@ src/models/refresh_token.rs
 src/models/reset_data_query_param.rs
 src/models/search_groups.rs
 src/models/security_content.rs
+src/models/send_message_result.rs
 src/models/send_message_to_account.rs
 src/models/sent_blocks_page.rs
 src/models/sent_blocks_sync_version.rs
@@ -289,6 +302,7 @@ src/models/sent_likes_page.rs
 src/models/sent_likes_sync_version.rs
 src/models/set_account_setup.rs
 src/models/set_profile_content.rs
+src/models/set_public_key.rs
 src/models/sign_in_with_login_info.rs
 src/models/slot_id.rs
 src/models/software_info.rs

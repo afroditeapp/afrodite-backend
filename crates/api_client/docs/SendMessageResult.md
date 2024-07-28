@@ -1,12 +1,11 @@
-# SendMessageToAccount
+# SendMessageResult
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**message** | **String** |  | 
-**receiver** | [**crate::models::AccountId**](AccountId.md) |  | 
-**receiver_public_key_id** | [**crate::models::PublicKeyId**](PublicKeyId.md) |  | 
+**error_receiver_public_key_outdated** | Option<**bool**> |  | [optional][default to false]
+**error_too_many_pending_messages** | Option<**bool**> |  | [optional][default to false]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

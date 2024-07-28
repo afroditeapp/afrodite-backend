@@ -6,8 +6,7 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            delete_pending_messages, get_pending_messages, get_received_likes, post_send_like,
-            post_send_message,
+            delete_pending_messages, get_pending_messages, get_public_key, get_received_likes, post_send_like, post_send_message
         },
         profile_api::{
             get_available_profile_attributes, post_profile, post_search_age_range,
@@ -15,13 +14,13 @@ use api_client::{
         },
     },
     models::{
-        AccountState, AttributeMode, PendingMessageDeleteList, ProfileAttributeValueUpdate,
-        ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount,
+        AccountId, AccountState, AttributeMode, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount
     },
 };
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
 use error_stack::{Result, ResultExt};
+use tracing::warn;
 
 use super::{
     actions::{
@@ -321,15 +320,7 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
                 .change_context(TestError::ApiRequest)?;
 
             let new_msg = "Hello!".to_string();
-
-            let send_msg = SendMessageToAccount {
-                receiver: Box::new(like),
-                message: new_msg,
-            };
-
-            post_send_message(state.api.chat(), send_msg)
-                .await
-                .change_context(TestError::ApiRequest)?;
+            send_message(state, like, new_msg).await?;
         }
 
         Ok(())
@@ -364,19 +355,37 @@ impl BotAction for AnswerReceivedMessages {
 
         for msg in messages.messages {
             let new_msg = "Hello!".to_string();
-
-            let send_msg = SendMessageToAccount {
-                receiver: msg.id.account_id_sender,
-                message: new_msg,
-            };
-
-            post_send_message(state.api.chat(), send_msg)
-                .await
-                .change_context(TestError::ApiRequest)?;
+            send_message(state, *msg.id.account_id_sender, new_msg).await?;
         }
 
         Ok(())
     }
+}
+
+async fn send_message(
+    state: &mut BotState,
+    receiver: AccountId,
+    msg: String,
+) -> Result<(), TestError> {
+    let public_key = get_public_key(state.api.chat(), &receiver.account_id.to_string())
+        .await
+        .change_context(TestError::ApiRequest)?;
+
+    if let Some(receiver_public_key) = public_key.key.flatten() {
+        let send_msg = SendMessageToAccount {
+            receiver: Box::from(receiver),
+            message: msg,
+            receiver_public_key_id: receiver_public_key.id,
+        };
+
+        post_send_message(state.api.chat(), send_msg)
+            .await
+            .change_context(TestError::ApiRequest)?;
+    } else {
+        warn!("Receiver public key is missing");
+    }
+
+    Ok(())
 }
 
 #[derive(Debug)]

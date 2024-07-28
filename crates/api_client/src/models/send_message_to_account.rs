@@ -17,13 +17,16 @@ pub struct SendMessageToAccount {
     pub message: String,
     #[serde(rename = "receiver")]
     pub receiver: Box<crate::models::AccountId>,
+    #[serde(rename = "receiver_public_key_id")]
+    pub receiver_public_key_id: Box<crate::models::PublicKeyId>,
 }
 
 impl SendMessageToAccount {
-    pub fn new(message: String, receiver: crate::models::AccountId) -> SendMessageToAccount {
+    pub fn new(message: String, receiver: crate::models::AccountId, receiver_public_key_id: crate::models::PublicKeyId) -> SendMessageToAccount {
         SendMessageToAccount {
             message,
             receiver: Box::new(receiver),
+            receiver_public_key_id: Box::new(receiver_public_key_id),
         }
     }
 }

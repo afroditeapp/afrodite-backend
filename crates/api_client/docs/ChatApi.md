@@ -9,6 +9,7 @@ Method | HTTP request | Description
 [**get_matches**](ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
 [**get_message_number_of_latest_viewed_message**](ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
 [**get_pending_messages**](ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages
+[**get_public_key**](ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{account_id} | Get current public key of some account
 [**get_received_blocks**](ChatApi.md#get_received_blocks) | **GET** /chat_api/received_blocks | Get list of received blocks
 [**get_received_likes**](ChatApi.md#get_received_likes) | **GET** /chat_api/received_likes | Get received likes.
 [**get_sent_blocks**](ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
@@ -17,7 +18,7 @@ Method | HTTP request | Description
 [**post_get_pending_notification**](ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
 [**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
 [**post_send_like**](ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
-[**post_send_message**](ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match
+[**post_send_message**](ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 [**post_set_device_token**](ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 [**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 
@@ -154,6 +155,36 @@ This endpoint does not need any parameter.
 ### Return type
 
 [**crate::models::PendingMessagesPage**](PendingMessagesPage.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_public_key
+
+> crate::models::GetPublicKey get_public_key(account_id)
+Get current public key of some account
+
+Get current public key of some account
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | **uuid::Uuid** |  | [required] |
+
+### Return type
+
+[**crate::models::GetPublicKey**](GetPublicKey.md)
 
 ### Authorization
 
@@ -397,10 +428,10 @@ Name | Type | Description  | Required | Notes
 
 ## post_send_message
 
-> post_send_message(send_message_to_account)
-Send message to a match
+> crate::models::SendMessageResult post_send_message(send_message_to_account)
+Send message to a match.
 
-Send message to a match
+Send message to a match.  Max pending message count is 50.
 
 ### Parameters
 
@@ -411,7 +442,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
- (empty response body)
+[**crate::models::SendMessageResult**](SendMessageResult.md)
 
 ### Authorization
 
@@ -420,7 +451,7 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
