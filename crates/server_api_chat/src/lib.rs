@@ -71,6 +71,7 @@ pub use server_common::{data::DataError, result};
         model::chat::PublicKeyData,
         model::chat::GetPublicKey,
         model::chat::SetPublicKey,
+        model::chat::EncryptedMessage,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

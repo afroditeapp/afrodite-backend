@@ -389,3 +389,11 @@ pub enum LimitedActionStatus {
     /// Action failed because the action limit is already reached.
     FailureLimitAlreadyReached,
 }
+
+/// Encrypted message container for client.
+#[derive(ToSchema)]
+pub struct EncryptedMessage {
+    /// Encryption version
+    pub version: i64,
+    pub pgp_message: String,
+}
