@@ -367,7 +367,7 @@ async fn send_message(
     receiver: AccountId,
     msg: String,
 ) -> Result<(), TestError> {
-    let public_key = get_public_key(state.api.chat(), &receiver.account_id.to_string())
+    let public_key = get_public_key(state.api.chat(), &receiver.account_id.to_string(), 1)
         .await
         .change_context(TestError::ApiRequest)?;
 
@@ -376,6 +376,7 @@ async fn send_message(
             receiver: Box::from(receiver),
             message: msg,
             receiver_public_key_id: receiver_public_key.id,
+            receiver_public_key_version: receiver_public_key.version,
         };
 
         post_send_message(state.api.chat(), send_msg)

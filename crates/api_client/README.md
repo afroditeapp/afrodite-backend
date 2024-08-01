@@ -159,6 +159,7 @@ Class | Method | HTTP request | Description
  - [DemoModeToken](docs/DemoModeToken.md)
  - [DownloadType](docs/DownloadType.md)
  - [DownloadTypeQueryParam](docs/DownloadTypeQueryParam.md)
+ - [EncryptedMessage](docs/EncryptedMessage.md)
  - [EventToClient](docs/EventToClient.md)
  - [EventType](docs/EventType.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)

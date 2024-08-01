@@ -84,6 +84,8 @@ pub mod download_type;
 pub use self::download_type::DownloadType;
 pub mod download_type_query_param;
 pub use self::download_type_query_param::DownloadTypeQueryParam;
+pub mod encrypted_message;
+pub use self::encrypted_message::EncryptedMessage;
 pub mod event_to_client;
 pub use self::event_to_client::EventToClient;
 pub mod event_type;

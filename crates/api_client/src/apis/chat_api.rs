@@ -351,7 +351,7 @@ pub async fn get_pending_messages(configuration: &configuration::Configuration, 
 }
 
 /// Get current public key of some account
-pub async fn get_public_key(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::GetPublicKey, Error<GetPublicKeyError>> {
+pub async fn get_public_key(configuration: &configuration::Configuration, account_id: &str, version: i64) -> Result<crate::models::GetPublicKey, Error<GetPublicKeyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -359,6 +359,7 @@ pub async fn get_public_key(configuration: &configuration::Configuration, accoun
     let local_var_uri_str = format!("{}/chat_api/public_key/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
+    local_var_req_builder = local_var_req_builder.query(&[("version", &version.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }

@@ -14,15 +14,15 @@
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct PublicKeyVersion {
-    #[serde(rename = "message_number")]
-    pub message_number: i64,
+    #[serde(rename = "version")]
+    pub version: i64,
 }
 
 impl PublicKeyVersion {
     /// Version number for asymmetric encryption public key data which client defines. This allows changing client's end-to-end crypto implementation.
-    pub fn new(message_number: i64) -> PublicKeyVersion {
+    pub fn new(version: i64) -> PublicKeyVersion {
         PublicKeyVersion {
-            message_number,
+            version,
         }
     }
 }

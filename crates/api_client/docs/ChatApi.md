@@ -170,7 +170,7 @@ This endpoint does not need any parameter.
 
 ## get_public_key
 
-> crate::models::GetPublicKey get_public_key(account_id)
+> crate::models::GetPublicKey get_public_key(account_id, version)
 Get current public key of some account
 
 Get current public key of some account
@@ -181,6 +181,7 @@ Get current public key of some account
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **account_id** | **uuid::Uuid** |  | [required] |
+**version** | **i64** |  | [required] |
 
 ### Return type
 
