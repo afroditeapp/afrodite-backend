@@ -83,9 +83,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
         id: AccountIdInternal,
         new_key: SetPublicKey,
     ) -> Result<PublicKeyId, DieselDatabaseError> {
-        use model::schema::chat_state::dsl::*;
+        use model::schema::public_key::dsl::*;
 
-        let current = self.read().chat().public_key(id)?;
+        let current = self.read().chat().public_key(id, new_key.version)?;
         let new_id = if let Some(current) = current {
             if current.id.id == i64::MAX {
                 return Err(DieselDatabaseError::NoAvailableIds.report());
@@ -100,10 +100,17 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
             }
         };
 
-        insert_into(chat_state)
+        insert_into(public_key)
             .values((
-                public_key_id.eq(new_id),
+                account_id.eq(id.as_db_id()),
                 public_key_version.eq(new_key.version),
+                public_key_id.eq(new_id),
+                public_key_data.eq(new_key.data.clone()),
+            ))
+            .on_conflict((account_id, public_key_version))
+            .do_update()
+            .set((
+                public_key_id.eq(new_id),
                 public_key_data.eq(new_key.data),
             ))
             .execute(self.conn())

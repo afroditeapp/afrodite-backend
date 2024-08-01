@@ -29,9 +29,6 @@ pub struct ChatStateRaw {
     pub pending_notification: PendingNotification,
     pub fcm_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
-    pub public_key_id: Option<PublicKeyId>,
-    pub public_key_version: Option<PublicKeyVersion>,
-    pub public_key_data: Option<PublicKeyData>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -347,6 +344,7 @@ pub struct SendMessageToAccount {
     /// to prevent sending message encrypted with outdated
     /// public key.
     pub receiver_public_key_id: PublicKeyId,
+    pub receiver_public_key_version: PublicKeyVersion,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]

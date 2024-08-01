@@ -112,9 +112,6 @@ diesel::table! {
         pending_notification_token -> Nullable<Text>,
         fcm_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
-        public_key_id -> Nullable<Integer>,
-        public_key_version -> Nullable<Integer>,
-        public_key_data -> Nullable<Text>,
     }
 }
 
@@ -361,6 +358,17 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    public_key (account_id, public_key_version) {
+        account_id -> Integer,
+        public_key_version -> Integer,
+        public_key_id -> Nullable<Integer>,
+        public_key_data -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     queue_entry (queue_number, queue_type_number) {
         queue_number -> Integer,
         queue_type_number -> Integer,
@@ -422,6 +430,7 @@ diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list_filters -> account_id (account_id));
 diesel::joinable!(profile_state -> account_id (account_id));
+diesel::joinable!(public_key -> account_id (account_id));
 diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));
 diesel::joinable!(shared_state -> account_id (account_id));
@@ -457,6 +466,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_number_list,
     profile_attributes_number_list_filters,
     profile_state,
+    public_key,
     queue_entry,
     refresh_token,
     shared_state,

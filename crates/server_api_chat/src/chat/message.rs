@@ -173,7 +173,8 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
                 id,
                 message_reciever,
                 message_info.message,
-                message_info.receiver_public_key_id
+                message_info.receiver_public_key_id,
+                message_info.receiver_public_key_version,
             )
             .await?;
 

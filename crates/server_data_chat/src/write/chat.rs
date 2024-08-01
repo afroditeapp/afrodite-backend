@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, SendMessageResult, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, SendMessageResult, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -289,9 +289,13 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         receiver: AccountIdInternal,
         message: String,
         receiver_public_key_from_client: PublicKeyId,
+        receiver_public_key_version_from_client: PublicKeyVersion,
     ) -> Result<SendMessageResult, DataError> {
         db_transaction!(self, move |mut cmds| {
-            let current_key = cmds.read().chat().public_key(receiver)?;
+            let current_key = cmds.read().chat().public_key(
+                receiver,
+                receiver_public_key_version_from_client
+            )?;
             if Some(receiver_public_key_from_client) != current_key.map(|v| v.id) {
                 return Ok(SendMessageResult::public_key_outdated());
             }

@@ -484,9 +484,18 @@ CREATE TABLE IF NOT EXISTS chat_state(
     pending_notification_token   TEXT           UNIQUE,
     fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
     fcm_device_token             TEXT           UNIQUE,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS public_key(
+    account_id                   INTEGER NOT NULL,
+    public_key_version           INTEGER NOT NULL,
     public_key_id                INTEGER,
-    public_key_version           INTEGER,
     public_key_data              TEXT,
+    PRIMARY KEY (account_id, public_key_version)
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

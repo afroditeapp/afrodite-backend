@@ -45,6 +45,7 @@ diesel_i64_wrapper!(PublicKeyId);
     Deserialize,
     Serialize,
     ToSchema,
+    IntoParams,
     PartialEq,
     Default,
     FromSqlRow,
@@ -52,16 +53,16 @@ diesel_i64_wrapper!(PublicKeyId);
 )]
 #[diesel(sql_type = BigInt)]
 pub struct PublicKeyVersion {
-    pub message_number: i64,
+    pub version: i64,
 }
 
 impl PublicKeyVersion {
     pub fn new(id: i64) -> Self {
-        Self { message_number: id }
+        Self { version: id }
     }
 
     pub fn as_i64(&self) -> &i64 {
-        &self.message_number
+        &self.version
     }
 }
 
