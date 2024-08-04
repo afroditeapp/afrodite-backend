@@ -38,6 +38,7 @@ pub use server_common::{data::DataError, result};
         chat::post_message_number_of_latest_viewed_message,
         chat::post_set_device_token,
         chat::post_get_pending_notification,
+        chat::post_public_key,
     ),
     components(schemas(
         // Chat
