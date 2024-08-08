@@ -15,17 +15,14 @@
 pub struct PendingMessage {
     #[serde(rename = "id")]
     pub id: Box<crate::models::PendingMessageId>,
-    #[serde(rename = "message")]
-    pub message: String,
     #[serde(rename = "unix_time")]
     pub unix_time: Box<crate::models::UnixTime>,
 }
 
 impl PendingMessage {
-    pub fn new(id: crate::models::PendingMessageId, message: String, unix_time: crate::models::UnixTime) -> PendingMessage {
+    pub fn new(id: crate::models::PendingMessageId, unix_time: crate::models::UnixTime) -> PendingMessage {
         PendingMessage {
             id: Box::new(id),
-            message,
             unix_time: Box::new(unix_time),
         }
     }

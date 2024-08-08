@@ -6,16 +6,15 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            delete_pending_messages, get_pending_messages, get_public_key, get_received_likes, post_send_like, post_send_message
+            delete_pending_messages, get_public_key, get_received_likes, post_send_like
         },
         profile_api::{
             get_available_profile_attributes, post_profile, post_search_age_range,
             post_search_groups,
         },
-    },
-    models::{
-        AccountId, AccountState, AttributeMode, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups, SendMessageToAccount
-    },
+    }, manual_additions::{get_pending_messages_fixed, post_send_message_fixed}, models::{
+        AccountId, AccountState, AttributeMode, PendingMessage, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups
+    }
 };
 use async_trait::async_trait;
 use config::bot_config_file::Gender;
@@ -333,16 +332,44 @@ pub struct AnswerReceivedMessages;
 #[async_trait]
 impl BotAction for AnswerReceivedMessages {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let messages = get_pending_messages(state.api.chat())
+        let messages = get_pending_messages_fixed(state.api.chat())
             .await
             .change_context(TestError::ApiRequest)?;
 
-        if messages.messages.is_empty() {
+        if messages.is_empty() {
             return Ok(());
         }
 
-        let messages_ids = messages
-            .messages
+        fn parse_messages(messages: &[u8]) -> Option<Vec<PendingMessage>> {
+            let mut list_iterator = messages.iter().cloned();
+            let mut pending_messages: Vec<PendingMessage> = vec![];
+            loop {
+                let pending_message_json_len = [
+                    match list_iterator.next() {
+                        Some(v) => v,
+                        None => break,
+                    },
+                    list_iterator.next()?,
+                ];
+                let pending_message_json_len = u16::from_le_bytes(pending_message_json_len);
+                let pending_message_json = list_iterator.by_ref().take(pending_message_json_len.into()).collect::<Vec<u8>>();
+                let pending_message: PendingMessage = serde_json::from_slice(&pending_message_json).ok()?;
+                pending_messages.push(pending_message);
+                let data_len = [
+                    list_iterator.next()?,
+                    list_iterator.next()?,
+                ];
+                let data_len = u16::from_le_bytes(data_len);
+                list_iterator.by_ref().skip(data_len.into()).for_each(drop);
+            }
+
+            Some(pending_messages)
+        }
+
+        let pending_messages = parse_messages(&messages)
+            .ok_or(TestError::MissingValue)?;
+
+        let messages_ids = pending_messages
             .iter()
             .map(|msg| msg.id.as_ref().clone())
             .collect::<Vec<_>>();
@@ -353,7 +380,7 @@ impl BotAction for AnswerReceivedMessages {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        for msg in messages.messages {
+        for msg in pending_messages {
             let new_msg = "Hello!".to_string();
             send_message(state, *msg.id.account_id_sender, new_msg).await?;
         }
@@ -365,21 +392,24 @@ impl BotAction for AnswerReceivedMessages {
 async fn send_message(
     state: &mut BotState,
     receiver: AccountId,
-    msg: String,
+    // Bots send invalid messages for now
+    _msg: String,
 ) -> Result<(), TestError> {
     let public_key = get_public_key(state.api.chat(), &receiver.account_id.to_string(), 1)
         .await
         .change_context(TestError::ApiRequest)?;
 
     if let Some(receiver_public_key) = public_key.key.flatten() {
-        let send_msg = SendMessageToAccount {
-            receiver: Box::from(receiver),
-            message: msg,
-            receiver_public_key_id: receiver_public_key.id,
-            receiver_public_key_version: receiver_public_key.version,
-        };
-
-        post_send_message(state.api.chat(), send_msg)
+        post_send_message_fixed(
+            state.api.chat(),
+            &receiver.account_id.to_string(),
+            receiver_public_key.id.id,
+            receiver_public_key.version.version,
+            vec![
+                0, // Message type PGP
+                0, // Invalid message content
+            ],
+        )
             .await
             .change_context(TestError::ApiRequest)?;
     } else {

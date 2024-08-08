@@ -49,7 +49,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**delete_pending_messages**](docs/ChatApi.md#delete_pending_messages) | **DELETE** /chat_api/pending_messages | Delete list of pending messages
 *ChatApi* | [**get_matches**](docs/ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
 *ChatApi* | [**get_message_number_of_latest_viewed_message**](docs/ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
-*ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages
+*ChatApi* | [**get_pending_messages**](docs/ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages.
 *ChatApi* | [**get_public_key**](docs/ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{account_id} | Get current public key of some account
 *ChatApi* | [**get_received_blocks**](docs/ChatApi.md#get_received_blocks) | **GET** /chat_api/received_blocks | Get list of received blocks
 *ChatApi* | [**get_received_likes**](docs/ChatApi.md#get_received_likes) | **GET** /chat_api/received_likes | Get received likes.
@@ -58,6 +58,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_block_profile**](docs/ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
 *ChatApi* | [**post_get_pending_notification**](docs/ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
 *ChatApi* | [**post_message_number_of_latest_viewed_message**](docs/ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
+*ChatApi* | [**post_public_key**](docs/ChatApi.md#post_public_key) | **POST** /chat_api/public_key | Replace current public key with a new public key.
 *ChatApi* | [**post_send_like**](docs/ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
 *ChatApi* | [**post_send_message**](docs/ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
 *ChatApi* | [**post_set_device_token**](docs/ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
@@ -202,7 +203,6 @@ Class | Method | HTTP request | Description
  - [PendingMessage](docs/PendingMessage.md)
  - [PendingMessageDeleteList](docs/PendingMessageDeleteList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
- - [PendingMessagesPage](docs/PendingMessagesPage.md)
  - [PendingNotificationToken](docs/PendingNotificationToken.md)
  - [PendingNotificationWithData](docs/PendingNotificationWithData.md)
  - [PendingProfileContent](docs/PendingProfileContent.md)
@@ -243,7 +243,6 @@ Class | Method | HTTP request | Description
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContent](docs/SecurityContent.md)
  - [SendMessageResult](docs/SendMessageResult.md)
- - [SendMessageToAccount](docs/SendMessageToAccount.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
  - [SentBlocksSyncVersion](docs/SentBlocksSyncVersion.md)
  - [SentLikesPage](docs/SentLikesPage.md)

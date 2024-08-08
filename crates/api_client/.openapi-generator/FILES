@@ -96,7 +96,6 @@ docs/NewContentParams.md
 docs/PendingMessage.md
 docs/PendingMessageDeleteList.md
 docs/PendingMessageId.md
-docs/PendingMessagesPage.md
 docs/PendingNotificationToken.md
 docs/PendingNotificationWithData.md
 docs/PendingProfileContent.md
@@ -138,7 +137,6 @@ docs/ResetDataQueryParam.md
 docs/SearchGroups.md
 docs/SecurityContent.md
 docs/SendMessageResult.md
-docs/SendMessageToAccount.md
 docs/SentBlocksPage.md
 docs/SentBlocksSyncVersion.md
 docs/SentLikesPage.md
@@ -256,7 +254,6 @@ src/models/new_content_params.rs
 src/models/pending_message.rs
 src/models/pending_message_delete_list.rs
 src/models/pending_message_id.rs
-src/models/pending_messages_page.rs
 src/models/pending_notification_token.rs
 src/models/pending_notification_with_data.rs
 src/models/pending_profile_content.rs
@@ -297,7 +294,6 @@ src/models/reset_data_query_param.rs
 src/models/search_groups.rs
 src/models/security_content.rs
 src/models/send_message_result.rs
-src/models/send_message_to_account.rs
 src/models/sent_blocks_page.rs
 src/models/sent_blocks_sync_version.rs
 src/models/sent_likes_page.rs
