@@ -1,9 +1,12 @@
-use axum::{extract::State, Extension, Router};
+use axum::{body::Body, extract::{Query, State}, Extension, Router};
+use axum_extra::TypedHeader;
+use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, PendingMessagesPage, SendMessageResult, SendMessageToAccount, UpdateMessageViewStatus
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, SendMessageResult, SendMessageToAccountParams, UpdateMessageViewStatus
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
+use tracing::error;
 
 use super::super::{
     db_write,
@@ -16,12 +19,18 @@ use crate::{
 
 pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
-/// Get list of pending messages
+/// Get list of pending messages.
+///
+/// The returned bytes is list of objects with following data:
+/// - UTF-8 text length encoded as 16 bit little endian number.
+/// - UTF-8 text which is PendingMessage JSON.
+/// - Binary message data length as 16 bit little endian number.
+/// - Binary message data
 #[utoipa::path(
     get,
     path = "/chat_api/pending_messages",
     responses(
-        (status = 200, description = "Success.", body = PendingMessagesPage),
+        (status = 200, description = "Success.", body = Vec<u8>, content_type = "application/octet-stream"),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -30,10 +39,44 @@ pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 pub async fn get_pending_messages<S: ReadData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<PendingMessagesPage>, StatusCode> {
+) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
     CHAT.get_pending_messages.incr();
-    let page = state.read().chat().all_pending_messages(id).await?;
-    Ok(page.into())
+    let pending_messages = state.read().chat().all_pending_messages(id).await?;
+
+    let mut bytes: Vec<u8> = vec![];
+    for p in pending_messages {
+        let pending_message_json = match serde_json::to_string(&p.pending_message) {
+            Ok(s) => s,
+            Err(_) => {
+                error!("Deserializing pending message failed");
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
+        };
+        let json_length: u16 = match pending_message_json
+            .len()
+            .try_into() {
+                Ok(len) => len,
+                Err(_) => {
+                    error!("Pending message JSON is too large");
+                    return Err(StatusCode::INTERNAL_SERVER_ERROR);
+                }
+            };
+        bytes.extend_from_slice(&json_length.to_le_bytes());
+        bytes.extend_from_slice(pending_message_json.as_bytes());
+        let message_length: u16 = match p.message
+            .len()
+            .try_into() {
+                Ok(len) => len,
+                Err(_) => {
+                    error!("Pending message data is too large");
+                    return Err(StatusCode::INTERNAL_SERVER_ERROR);
+                }
+            };
+        bytes.extend_from_slice(&message_length.to_le_bytes());
+        bytes.extend_from_slice(&p.message);
+    }
+
+    Ok((TypedHeader(ContentType::octet_stream()), bytes))
 }
 
 pub const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
@@ -148,33 +191,40 @@ pub const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 /// Send message to a match.
 ///
 /// Max pending message count is 50.
+/// Max message size is u16::MAX.
 #[utoipa::path(
     post,
     path = PATH_POST_SEND_MESSAGE,
-    request_body(content = SendMessageToAccount),
+    params(SendMessageToAccountParams),
+    request_body(content = Vec<u8>, content_type = "application/octet-stream"),
     responses(
         (status = 200, description = "Success.", body = SendMessageResult),
         (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
+        (status = 500, description = "Internal server error or message data related error."),
     ),
     security(("access_token" = [])),
 )]
 pub async fn post_send_message<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(message_info): Json<SendMessageToAccount>,
+    Query(query_params): Query<SendMessageToAccountParams>,
+    message_bytes: Body,
 ) -> Result<Json<SendMessageResult>, StatusCode> {
     CHAT.post_send_message.incr();
 
-    let message_reciever = state.get_internal_id(message_info.receiver).await?;
+    let bytes = axum::body::to_bytes(message_bytes, u16::MAX.into())
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let message_reciever = state.get_internal_id(query_params.receiver).await?;
     let result = db_write_multiple!(state, move |cmds| {
         let result = cmds.chat()
             .insert_pending_message_if_match(
                 id,
                 message_reciever,
-                message_info.message,
-                message_info.receiver_public_key_id,
-                message_info.receiver_public_key_version,
+                bytes.into(),
+                query_params.receiver_public_key_id,
+                query_params.receiver_public_key_version,
             )
             .await?;
 

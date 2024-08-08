@@ -2,7 +2,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, PendingMessage, PendingMessageId, PendingMessageInternal
+    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId, PendingMessageInternal
 };
 
 use crate::IntoDatabaseError;
@@ -13,7 +13,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
     pub fn all_pending_messages(
         &mut self,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<Vec<PendingMessage>, DieselDatabaseError> {
+    ) -> Result<Vec<PendingMessageAndMessageData>, DieselDatabaseError> {
         use crate::schema::{account_id, pending_messages::dsl::*};
 
         let value: Vec<(AccountId, PendingMessageInternal)> = pending_messages
@@ -27,14 +27,18 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
 
         let messages = value
             .into_iter()
-            .map(|(sender_uuid, msg)| PendingMessage {
-                id: PendingMessageId {
-                    account_id_sender: sender_uuid,
-                    message_number: msg.message_number,
-                },
-                unix_time: msg.unix_time,
-                message: msg.message_text,
-            })
+            .map(|(sender_uuid, msg)|
+                PendingMessageAndMessageData {
+                    pending_message: PendingMessage {
+                        id: PendingMessageId {
+                            account_id_sender: sender_uuid,
+                            message_number: msg.message_number,
+                        },
+                        unix_time: msg.unix_time,
+                    },
+                    message: msg.message_bytes,
+                }
+            )
             .collect();
 
         Ok(messages)

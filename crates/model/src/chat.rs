@@ -1,7 +1,7 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, UnixTime};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal};
 
@@ -228,7 +228,7 @@ pub struct PendingMessageInternal {
     pub account_id_receiver: AccountIdDb,
     pub unix_time: UnixTime,
     pub message_number: MessageNumber,
-    pub message_text: String,
+    pub message_bytes: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
@@ -271,17 +271,17 @@ pub struct ReceivedBlocksPage {
     pub profiles: Vec<AccountId>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+#[derive(Debug, Serialize, Clone, ToSchema)]
 pub struct PendingMessage {
     pub id: PendingMessageId,
     /// Unix time when server received the message.
     pub unix_time: UnixTime,
-    pub message: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct PendingMessagesPage {
-    pub messages: Vec<PendingMessage>,
+#[derive(Debug, Clone)]
+pub struct PendingMessageAndMessageData {
+    pub pending_message: PendingMessage,
+    pub message: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
@@ -335,16 +335,75 @@ pub struct UpdateMessageViewStatus {
     pub message_number: MessageNumber,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct SendMessageToAccount {
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]
+pub struct SendMessageToAccountParams {
     /// Receiver of the message.
+    #[serde(serialize_with = "account_id_as_uuid", deserialize_with = "account_id_from_uuid")]
+    #[param(value_type = uuid::Uuid)]
     pub receiver: AccountId,
-    pub message: String,
     /// Message receiver's public key ID for check
     /// to prevent sending message encrypted with outdated
     /// public key.
+    #[serde(serialize_with = "public_key_id_as_i64", deserialize_with = "public_key_id_from_i64")]
+    #[param(value_type = i64)]
     pub receiver_public_key_id: PublicKeyId,
+    #[serde(serialize_with = "public_key_version_as_i64", deserialize_with = "public_key_version_from_i64")]
+    #[param(value_type = i64)]
     pub receiver_public_key_version: PublicKeyVersion,
+}
+
+pub fn account_id_as_uuid<
+    S: Serializer,
+>(
+    value: &AccountId,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    value.account_id.serialize(s)
+}
+
+pub fn public_key_id_as_i64<
+    S: Serializer,
+>(
+    value: &PublicKeyId,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    value.id.serialize(s)
+}
+
+pub fn public_key_version_as_i64<
+    S: Serializer,
+>(
+    value: &PublicKeyVersion,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    value.version.serialize(s)
+}
+
+pub fn account_id_from_uuid<
+    'de,
+    D: Deserializer<'de>,
+>(
+    d: D,
+) -> Result<AccountId, D::Error> {
+    uuid::Uuid::deserialize(d).map(|account_id| AccountId { account_id })
+}
+
+pub fn public_key_id_from_i64<
+    'de,
+    D: Deserializer<'de>,
+>(
+    d: D,
+) -> Result<PublicKeyId, D::Error> {
+    i64::deserialize(d).map(|id| PublicKeyId { id })
+}
+
+pub fn public_key_version_from_i64<
+    'de,
+    D: Deserializer<'de>,
+>(
+    d: D,
+) -> Result<PublicKeyVersion, D::Error> {
+    i64::deserialize(d).map(|version| PublicKeyVersion { version })
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]

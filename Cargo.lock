@@ -2957,12 +2957,16 @@ name = "server_api_chat"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "axum-extra",
+ "headers 0.4.0",
  "model",
+ "serde_json",
  "server_api",
  "server_common",
  "server_data",
  "server_data_chat",
  "simple_backend",
+ "tracing",
  "utoipa",
 ]
 

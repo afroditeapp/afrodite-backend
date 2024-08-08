@@ -567,8 +567,8 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     unix_time                       INTEGER NOT NULL,
     -- Order number for the message in the conversation.
     message_number                  INTEGER NOT NULL,
-    -- Message text.
-    message_text                    TEXT    NOT NULL,
+    -- Message bytes.
+    message_bytes                   BLOB    NOT NULL,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE

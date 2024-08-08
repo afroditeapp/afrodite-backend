@@ -287,7 +287,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
-        message: String,
+        message: Vec<u8>,
         receiver_public_key_from_client: PublicKeyId,
         receiver_public_key_version_from_client: PublicKeyVersion,
     ) -> Result<SendMessageResult, DataError> {

@@ -52,7 +52,7 @@ impl ConnectionTools for S {
                 .await
                 .change_context(WebSocketError::DatabasePendingMessagesQuery)?;
 
-            if !pending_messages.messages.is_empty() {
+            if !pending_messages.is_empty() {
                 send_event(socket, EventToClientInternal::NewMessageReceived).await?;
             }
         }

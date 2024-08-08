@@ -35,7 +35,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
-        message: String,
+        message: Vec<u8>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = current_unix_time();
@@ -63,7 +63,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
                 account_id_receiver.eq(receiver.as_db_id()),
                 unix_time.eq(time),
                 message_number.eq(new_message_number),
-                message_text.eq(message),
+                message_bytes.eq(message),
             ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
