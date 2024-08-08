@@ -6,14 +6,14 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            delete_pending_messages, get_public_key, get_received_likes, post_send_like
+            delete_pending_messages, get_public_key, get_received_likes, post_public_key, post_send_like
         },
         profile_api::{
             get_available_profile_attributes, post_profile, post_search_age_range,
             post_search_groups,
         },
     }, manual_additions::{get_pending_messages_fixed, post_send_message_fixed}, models::{
-        AccountId, AccountState, AttributeMode, PendingMessage, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, SearchGroups
+        AccountId, AccountState, AttributeMode, PendingMessage, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SetPublicKey
     }
 };
 use async_trait::async_trait;
@@ -166,6 +166,7 @@ impl BotAction for DoInitialSetupIfNeeded {
                     slots_to_request: &[0],
                 },
                 ChangeBotAgeAndOtherSettings,
+                SetBotPublicKey,
                 CompleteAccountSetup,
                 AssertAccountState::account(AccountState::Normal),
             );
@@ -173,6 +174,68 @@ impl BotAction for DoInitialSetupIfNeeded {
                 .excecute_impl_task_state(state, task_state)
                 .await?;
         }
+
+        Ok(())
+    }
+}
+
+/*
+The key is generated with pgp library using following settings:
+
+let mut key_params = SecretKeyParamsBuilder::default();
+key_params
+    .key_type(KeyType::ECDSA(ECCCurve::P256))
+    .can_encrypt(false)
+    .can_certify(false)
+    .can_sign(true)
+    .primary_user_id("User ID".to_string())
+    .preferred_symmetric_algorithms(smallvec![
+        SymmetricKeyAlgorithm::AES128,
+    ])
+    .preferred_hash_algorithms(smallvec![
+        HashAlgorithm::SHA2_256,
+    ])
+    .preferred_compression_algorithms(smallvec![])
+    .subkey(
+        SubkeyParamsBuilder::default()
+            .key_type(KeyType::ECDH(ECCCurve::P256))
+            .can_authenticate(false)
+            .can_certify(false)
+            .can_encrypt(true)
+            .can_sign(false)
+            .build()
+            .unwrap()
+    );
+*/
+const BOT_PUBLIC_KEY: &str = "
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xlIEZrUithMIKoZIzj0DAQcCAwQPyfhOjBpuNHTfc3RLX2jkK6kPD2awvT1M32Ye
+WNb2TnlS/GQkMPiO8FzIM4HeOhH8gCFPF2Zdx4sKPJmliNsyzQdVc2VyIElEwoME
+EBMIACsCGQEFAma1IrYCGwICCwcCFQgBFhYhBHZlmH4QZ4iaqMhnaWXPEpaBFVLg
+AAoJEGXPEpaBFVLgAQcBALaroQGcjCGJagYl394YnDLgLrU4x65vrMBTkUWJPTlF
+AQCMJXAIcJzdAE8granlxSUyECfAOxdav8N0ZEkFY15BMs5WBGa1IrYSCCqGSM49
+AwEHAgMEiuP4c3Y99j9iA8KsVGY5a/g1PFCDJCTOi/ISjY4bg5Y3Qt0ZildT8gyo
+5h8QUadvRciIFEPe1/5/uaMTuPfD1gMBCAfCeAQYEwgAIAUCZrUitgIbDBYhBHZl
+mH4QZ4iaqMhnaWXPEpaBFVLgAAoJEGXPEpaBFVLgZRoA/2h6zKOrtMoqdg07d+yI
+pLFJWGK6aPpk4axuljBPjHxSAQCoggKkU+Bf4vFqbwJQuVbh/G+tJG8w0YtF/Jfp
+qzmprA==
+=xgPw
+-----END PGP PUBLIC KEY BLOCK-----
+";
+
+#[derive(Debug)]
+pub struct SetBotPublicKey;
+
+#[async_trait]
+impl BotAction for SetBotPublicKey {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        post_public_key(state.api.chat(), SetPublicKey {
+            version: PublicKeyVersion::new(1).into(),
+            data: PublicKeyData::new(BOT_PUBLIC_KEY.to_string()).into(),
+        })
+            .await
+            .change_context(TestError::ApiRequest)?;
 
         Ok(())
     }
