@@ -188,6 +188,10 @@ pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + Write
 
 pub const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 
+// TODO: Send message route should return timestamp and message number.
+// TODO: Client should create UUID and send that with message. The
+//       UUID would allow checking is message on server.
+
 /// Send message to a match.
 ///
 /// Max pending message count is 50.
