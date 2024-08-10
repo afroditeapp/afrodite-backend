@@ -228,9 +228,12 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
             )
             .await?;
 
-        cmds.events()
-            .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
-            .await?;
+        if !result.error_receiver_public_key_outdated && !result.error_too_many_pending_messages {
+            cmds.events()
+                .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
+                .await
+                .ignore_and_log_error();
+        }
 
         Ok(result)
     })?;

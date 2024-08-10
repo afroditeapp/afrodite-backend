@@ -227,10 +227,15 @@ enum RequestError {
 /// to have the correct caller location. This fixes error location printed
 /// from db_write macro.
 ///
-pub trait ConvertDataErrorToStatusCode<Ok> {
+pub trait ConvertDataErrorToStatusCode<Ok>: Sized {
     #[track_caller]
     fn convert_data_error_to_status_code(self)
         -> std::result::Result<Ok, crate::utils::StatusCode>;
+
+    #[track_caller]
+    fn ignore_and_log_error(self) {
+        let _ = self.convert_data_error_to_status_code();
+    }
 }
 
 macro_rules! impl_error_to_status_code {
