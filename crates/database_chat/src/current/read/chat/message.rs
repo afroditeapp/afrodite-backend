@@ -2,7 +2,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId, PendingMessageInternal
+    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId, PendingMessageInternal, SenderMessageId
 };
 
 use crate::IntoDatabaseError;
@@ -65,18 +65,18 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
         Ok(account_id_vec)
     }
 
-    pub fn pending_message_count(
+    pub fn pending_message_sender_ids(
         &mut self,
         id_message_sender: AccountIdInternal,
         id_message_receiver: AccountIdInternal,
-    ) -> Result<i64, DieselDatabaseError> {
+    ) -> Result<Vec<SenderMessageId>, DieselDatabaseError> {
         use crate::schema::pending_messages::dsl::*;
 
         pending_messages
             .filter(account_id_sender.eq(id_message_sender.as_db_id()))
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
-            .count()
-            .get_result(self.conn())
+            .select(sender_message_id)
+            .load(self.conn())
             .into_db_error(())
     }
 }

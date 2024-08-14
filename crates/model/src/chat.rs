@@ -350,6 +350,9 @@ pub struct SendMessageToAccountParams {
     #[serde(serialize_with = "public_key_version_as_i64", deserialize_with = "public_key_version_from_i64")]
     #[param(value_type = i64)]
     pub receiver_public_key_version: PublicKeyVersion,
+    #[serde(serialize_with = "sender_message_id_as_i64", deserialize_with = "sender_message_id_from_i64")]
+    #[param(value_type = i64)]
+    pub sender_message_id: SenderMessageId,
 }
 
 pub fn account_id_as_uuid<
@@ -379,6 +382,15 @@ pub fn public_key_version_as_i64<
     value.version.serialize(s)
 }
 
+pub fn sender_message_id_as_i64<
+    S: Serializer,
+>(
+    value: &SenderMessageId,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    value.id.serialize(s)
+}
+
 pub fn account_id_from_uuid<
     'de,
     D: Deserializer<'de>,
@@ -406,17 +418,42 @@ pub fn public_key_version_from_i64<
     i64::deserialize(d).map(|version| PublicKeyVersion { version })
 }
 
+pub fn sender_message_id_from_i64<
+    'de,
+    D: Deserializer<'de>,
+>(
+    d: D,
+) -> Result<SenderMessageId, D::Error> {
+    i64::deserialize(d).map(|id| SenderMessageId { id })
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SendMessageResult {
+    /// None if error happened
+    #[serde(flatten)]
+    unix_time: Option<UnixTime>,
+    /// None if error happened
+    #[serde(flatten)]
+    message_number: Option<MessageNumber>,
+    // Errors
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_too_many_pending_messages: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_receiver_public_key_outdated: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_sender_message_id_already_exists: bool,
 }
 
 impl SendMessageResult {
+    pub fn is_err(&self) -> bool {
+        self.error_too_many_pending_messages ||
+        self.error_receiver_public_key_outdated ||
+        self.error_sender_message_id_already_exists
+    }
+
     pub fn too_many_pending_messages() -> Self {
         Self {
             error_too_many_pending_messages: true,
@@ -427,6 +464,21 @@ impl SendMessageResult {
     pub fn public_key_outdated() -> Self {
         Self {
             error_receiver_public_key_outdated: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn sender_message_id_already_exists() -> Self {
+        Self {
+            error_sender_message_id_already_exists: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn successful(values: NewPendingMessageValues) -> Self {
+        Self {
+            unix_time: Some(values.unix_time),
+            message_number: Some(values.message_number),
             ..Self::default()
         }
     }
@@ -447,10 +499,47 @@ pub enum LimitedActionStatus {
     FailureLimitAlreadyReached,
 }
 
+/// Message ID from client which client uses to detect is message on server.
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    IntoParams,
+    Copy,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct SenderMessageId {
+    pub id: i64,
+}
+
+impl SenderMessageId {
+    pub fn new(id: i64) -> Self {
+        Self { id }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.id
+    }
+}
+
+diesel_i64_wrapper!(SenderMessageId);
+
 /// Encrypted message container for client.
 #[derive(ToSchema)]
 pub struct EncryptedMessage {
     /// Encryption version
     pub version: i64,
     pub pgp_message: String,
+}
+
+pub struct NewPendingMessageValues {
+    pub unix_time: UnixTime,
+    pub message_number: MessageNumber,
 }

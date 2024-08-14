@@ -279,6 +279,7 @@ diesel::table! {
         account_id_receiver -> Integer,
         unix_time -> Integer,
         message_number -> Integer,
+        sender_message_id -> Integer,
         message_bytes -> Binary,
     }
 }

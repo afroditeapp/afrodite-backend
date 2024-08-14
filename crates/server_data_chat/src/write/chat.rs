@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, SendMessageResult, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, SendMessageResult, SenderMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -290,6 +290,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         message: Vec<u8>,
         receiver_public_key_from_client: PublicKeyId,
         receiver_public_key_version_from_client: PublicKeyVersion,
+        sender_message_id: SenderMessageId,
     ) -> Result<SendMessageResult, DataError> {
         db_transaction!(self, move |mut cmds| {
             let current_key = cmds.read().chat().public_key(
@@ -300,21 +301,25 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 return Ok(SendMessageResult::public_key_outdated());
             }
 
-            let pending_message_count = cmds
+            let pending_message_sender_ids = cmds
                 .read()
                 .chat()
                 .message()
-                .pending_message_count(sender, receiver)?;
+                .pending_message_sender_ids(sender, receiver)?;
 
-            if pending_message_count >= 50 {
+            if pending_message_sender_ids.len() >= 50 {
                 return Ok(SendMessageResult::too_many_pending_messages());
             }
 
-            cmds.chat()
+            if pending_message_sender_ids.into_iter().any(|v| v == sender_message_id) {
+                return Ok(SendMessageResult::sender_message_id_already_exists());
+            }
+
+            let message_values = cmds.chat()
                 .message()
                 .insert_pending_message_if_match(sender, receiver, message)?;
 
-            Ok(SendMessageResult::default())
+            Ok(SendMessageResult::successful(message_values))
         })
     }
 

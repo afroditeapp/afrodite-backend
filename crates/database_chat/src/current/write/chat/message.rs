@@ -1,9 +1,7 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, AccountInteractionState, PendingMessageId};
-use simple_backend_utils::current_unix_time;
-
+use model::{AccountIdInternal, AccountInteractionState, MessageNumber, NewPendingMessageValues, PendingMessageId, UnixTime};
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(CurrentWriteChatMessage, CurrentSyncWriteChatMessage);
@@ -36,9 +34,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
         message: Vec<u8>,
-    ) -> Result<(), DieselDatabaseError> {
+
+    ) -> Result<NewPendingMessageValues, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
-        let time = current_unix_time();
+        let time = UnixTime::current_time();
         let interaction = self
             .cmds()
             .chat()
@@ -46,7 +45,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             .get_or_create_account_interaction(sender, receiver)?;
         // Skip message number 0, so that latest viewed message number
         // does not have that message already viewed.
-        let new_message_number = interaction.message_counter + 1;
+        let new_message_number = MessageNumber::new(interaction.message_counter + 1);
 
         if interaction.state_number != AccountInteractionState::Match {
             return Err(DieselDatabaseError::NotAllowed.into());
@@ -68,6 +67,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
 
-        Ok(())
+        Ok(NewPendingMessageValues {
+            unix_time: time,
+            message_number: new_message_number,
+        })
     }
 }

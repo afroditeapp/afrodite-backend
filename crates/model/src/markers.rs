@@ -87,6 +87,9 @@ disable_logging!(
     SetProfileContent,
     SetProfileContentInternal,
     ContentState,
+    // Chat
+    MessageNumber,
+    // General
     i64,
     (),
 );
