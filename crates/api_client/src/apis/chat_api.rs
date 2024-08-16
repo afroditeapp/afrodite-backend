@@ -87,6 +87,15 @@ pub enum GetReceivedLikesError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_sender_message_id`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetSenderMessageIdError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_sent_blocks`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -153,6 +162,15 @@ pub enum PostSendLikeError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostSendMessageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_sender_message_id`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostSenderMessageIdError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -469,6 +487,42 @@ pub async fn get_received_likes(configuration: &configuration::Configuration, ) 
     }
 }
 
+/// Get conversation specific expected sender message ID which API caller account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
+pub async fn get_sender_message_id(configuration: &configuration::Configuration, account_id: &str) -> Result<crate::models::SenderMessageId, Error<GetSenderMessageIdError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/chat_api/sender_message_id/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetSenderMessageIdError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 /// Get list of sent blocks
 pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> Result<crate::models::SentBlocksPage, Error<GetSentBlocksError>> {
     let local_var_configuration = configuration;
@@ -718,8 +772,8 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.
-pub async fn post_send_message(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, body: std::path::PathBuf) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
+/// Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
+pub async fn post_send_message(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, sender_message_id: i64, body: std::path::PathBuf) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -730,6 +784,7 @@ pub async fn post_send_message(configuration: &configuration::Configuration, rec
     local_var_req_builder = local_var_req_builder.query(&[("receiver", &receiver.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_id", &receiver_public_key_id.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_version", &receiver_public_key_version.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("sender_message_id", &sender_message_id.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -753,6 +808,43 @@ pub async fn post_send_message(configuration: &configuration::Configuration, rec
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PostSendMessageError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Set conversation specific expected sender message ID which API caller account owns.  This errors if the accounts are not in match state.
+pub async fn post_sender_message_id(configuration: &configuration::Configuration, account_id: &str, sender_message_id: crate::models::SenderMessageId) -> Result<(), Error<PostSenderMessageIdError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/chat_api/sender_message_id/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+    local_var_req_builder = local_var_req_builder.json(&sender_message_id);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<PostSenderMessageIdError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }

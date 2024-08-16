@@ -12,6 +12,7 @@ Method | HTTP request | Description
 [**get_public_key**](ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{account_id} | Get current public key of some account
 [**get_received_blocks**](ChatApi.md#get_received_blocks) | **GET** /chat_api/received_blocks | Get list of received blocks
 [**get_received_likes**](ChatApi.md#get_received_likes) | **GET** /chat_api/received_likes | Get received likes.
+[**get_sender_message_id**](ChatApi.md#get_sender_message_id) | **GET** /chat_api/sender_message_id/{account_id} | Get conversation specific expected sender message ID which API caller
 [**get_sent_blocks**](ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
 [**get_sent_likes**](ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
 [**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
@@ -20,6 +21,7 @@ Method | HTTP request | Description
 [**post_public_key**](ChatApi.md#post_public_key) | **POST** /chat_api/public_key | Replace current public key with a new public key.
 [**post_send_like**](ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
 [**post_send_message**](ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
+[**post_sender_message_id**](ChatApi.md#post_sender_message_id) | **POST** /chat_api/sender_message_id/{account_id} | Set conversation specific expected sender message ID which API caller
 [**post_set_device_token**](ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
 [**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
 
@@ -254,6 +256,36 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## get_sender_message_id
+
+> crate::models::SenderMessageId get_sender_message_id(account_id)
+Get conversation specific expected sender message ID which API caller
+
+Get conversation specific expected sender message ID which API caller account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | **uuid::Uuid** |  | [required] |
+
+### Return type
+
+[**crate::models::SenderMessageId**](SenderMessageId.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## get_sent_blocks
 
 > crate::models::SentBlocksPage get_sent_blocks()
@@ -460,10 +492,10 @@ Name | Type | Description  | Required | Notes
 
 ## post_send_message
 
-> crate::models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, body)
+> crate::models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, sender_message_id, body)
 Send message to a match.
 
-Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.
+Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
 
 ### Parameters
 
@@ -473,6 +505,7 @@ Name | Type | Description  | Required | Notes
 **receiver** | **uuid::Uuid** | Receiver of the message. | [required] |
 **receiver_public_key_id** | **i64** | Message receiver's public key ID for check to prevent sending message encrypted with outdated public key. | [required] |
 **receiver_public_key_version** | **i64** |  | [required] |
+**sender_message_id** | **i64** |  | [required] |
 **body** | **std::path::PathBuf** |  | [required] |
 
 ### Return type
@@ -487,6 +520,37 @@ Name | Type | Description  | Required | Notes
 
 - **Content-Type**: application/octet-stream
 - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_sender_message_id
+
+> post_sender_message_id(account_id, sender_message_id)
+Set conversation specific expected sender message ID which API caller
+
+Set conversation specific expected sender message ID which API caller account owns.  This errors if the accounts are not in match state.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**account_id** | **uuid::Uuid** |  | [required] |
+**sender_message_id** | [**SenderMessageId**](SenderMessageId.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

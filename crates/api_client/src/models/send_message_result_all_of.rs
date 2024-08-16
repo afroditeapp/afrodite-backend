@@ -12,24 +12,21 @@
 
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
-pub struct SendMessageResult {
+pub struct SendMessageResultAllOf {
     #[serde(rename = "error_receiver_public_key_outdated", skip_serializing_if = "Option::is_none")]
     pub error_receiver_public_key_outdated: Option<bool>,
     #[serde(rename = "error_sender_message_id_was_not_expected_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub error_sender_message_id_was_not_expected_id: Option<Option<Box<crate::models::SenderMessageId>>>,
     #[serde(rename = "error_too_many_pending_messages", skip_serializing_if = "Option::is_none")]
     pub error_too_many_pending_messages: Option<bool>,
-    #[serde(rename = "unix_time")]
-    pub unix_time: i64,
 }
 
-impl SendMessageResult {
-    pub fn new(unix_time: i64) -> SendMessageResult {
-        SendMessageResult {
+impl SendMessageResultAllOf {
+    pub fn new() -> SendMessageResultAllOf {
+        SendMessageResultAllOf {
             error_receiver_public_key_outdated: None,
             error_sender_message_id_was_not_expected_id: None,
             error_too_many_pending_messages: None,
-            unix_time,
         }
     }
 }

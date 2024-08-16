@@ -118,8 +118,9 @@ pub async fn put_content_to_content_slot_fixed(
     }
 }
 
-/// Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.
-pub async fn post_send_message_fixed(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, body: Vec<u8>) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
+
+/// Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
+pub async fn post_send_message_fixed(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, sender_message_id: i64, body: Vec<u8>) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -130,6 +131,7 @@ pub async fn post_send_message_fixed(configuration: &configuration::Configuratio
     local_var_req_builder = local_var_req_builder.query(&[("receiver", &receiver.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_id", &receiver_public_key_id.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_version", &receiver_public_key_version.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("sender_message_id", &sender_message_id.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
@@ -157,7 +159,6 @@ pub async fn post_send_message_fixed(configuration: &configuration::Configuratio
         Err(Error::ResponseError(local_var_error))
     }
 }
-
 
 /// Get list of pending messages.  The returned bytes is list of objects with following data: - UTF-8 text length encoded as 16 bit little endian number. - UTF-8 text which is PendingMessage JSON. - Binary message data length as 16 bit little endian number. - Binary message data
 pub async fn get_pending_messages_fixed(configuration: &configuration::Configuration, ) -> Result<Vec<u8>, Error<GetPendingMessagesError>> {

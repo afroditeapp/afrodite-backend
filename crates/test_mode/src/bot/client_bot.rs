@@ -6,14 +6,14 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            delete_pending_messages, get_public_key, get_received_likes, post_public_key, post_send_like
+            delete_pending_messages, get_public_key, get_received_likes, post_public_key, post_send_like, post_sender_message_id
         },
         profile_api::{
             get_available_profile_attributes, post_profile, post_search_age_range,
             post_search_groups,
         },
     }, manual_additions::{get_pending_messages_fixed, post_send_message_fixed}, models::{
-        AccountId, AccountState, AttributeMode, PendingMessage, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SetPublicKey
+        AccountId, AccountState, AttributeMode, PendingMessage, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SenderMessageId, SetPublicKey
     }
 };
 use async_trait::async_trait;
@@ -463,11 +463,16 @@ async fn send_message(
         .change_context(TestError::ApiRequest)?;
 
     if let Some(receiver_public_key) = public_key.key.flatten() {
+        post_sender_message_id(state.api.chat(), &receiver.account_id.to_string(), SenderMessageId::new(0))
+            .await
+            .change_context(TestError::ApiRequest)?;
+
         post_send_message_fixed(
             state.api.chat(),
             &receiver.account_id.to_string(),
             receiver_public_key.id.id,
             receiver_public_key.version.version,
+            0,
             vec![
                 0, // Message type PGP
                 0, // Invalid message content
