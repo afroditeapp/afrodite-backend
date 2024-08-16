@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { workspace = true, features = ["ws", "macros"] }
+axum = { workspace = true }
 
 server_api = { path = "../server_api" }
 server_api_account = { path = "../server_api_account" }

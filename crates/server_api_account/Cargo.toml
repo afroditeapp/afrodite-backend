@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { workspace = true, features = ["full"] }
-axum = { workspace = true, features = ["ws", "macros"] }
+tokio = { workspace = true }
+axum = { workspace = true }
 tracing = { workspace = true }
 
 utoipa = { workspace = true }

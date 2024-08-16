@@ -9,7 +9,7 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-syn = { workspace = true, features = ["full"] }
+syn = { workspace = true }
 quote = { workspace = true }
 
 [dev-dependencies]

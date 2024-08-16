@@ -8,21 +8,21 @@ edition = "2021"
 [dependencies]
 
 tracing = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["env-filter"] }
+tracing-subscriber = { workspace = true }
 
-uuid = { workspace = true, features = ["v4", "serde"] }
+uuid = { workspace = true }
 
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true }
 serde_json = { workspace = true }
 toml = { workspace = true }
 
 futures = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
-tokio-stream = { workspace = true, features = ["sync", "fs"] }
-hyper = { workspace = true, features = ["full"] }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+hyper = { workspace = true }
 headers = { workspace = true }
-reqwest = { workspace = true, features = ["json"] }
-url = { workspace = true, features = ["serde"] }
+reqwest = { workspace = true }
+url = { workspace = true }
 
 thiserror = { workspace = true }
 error-stack = { workspace = true }
@@ -40,7 +40,7 @@ rand = { workspace = true }
 rand_xoshiro = { workspace = true }
 nix = { workspace = true, default-features = false, features = ["signal"] }
 image = { workspace = true, default-features = false, features = ["jpeg"] }
-tokio-tungstenite = { workspace = true, features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { workspace = true }
 inventory = { workspace = true }
 
 api_client = { path = "../api_client" }

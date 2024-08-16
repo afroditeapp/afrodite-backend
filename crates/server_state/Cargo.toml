@@ -7,11 +7,11 @@ edition = "2021"
 
 [dependencies]
 serde_json = { workspace = true }
-uuid = { workspace = true, features = ["v4", "serde"] }
+uuid = { workspace = true }
 
 futures = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
-axum = { workspace = true, features = ["ws", "macros"] }
+tokio = { workspace = true }
+axum = { workspace = true }
 
 error-stack = { workspace = true }
 

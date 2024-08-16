@@ -6,16 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true }
 serde_json = { workspace = true }
 
-tokio = { workspace = true, features = ["full"] }
-hyper = { workspace = true, features = ["full"] }
-axum = { workspace = true, features = ["ws", "macros"] }
-axum-extra = { workspace = true, features = ["typed-header"] }
+tokio = { workspace = true }
+hyper = { workspace = true }
+axum = { workspace = true }
+axum-extra = { workspace = true }
 tracing = { workspace = true }
 headers = { workspace = true }
-reqwest = { workspace = true, features = ["json"] }
+reqwest = { workspace = true }
 
 utoipa = { workspace = true }
 

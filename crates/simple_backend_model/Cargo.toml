@@ -7,11 +7,11 @@ edition = "2021"
 
 [dependencies]
 
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true }
 utoipa = { workspace = true }
 diesel = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils"}
 
 [dev-dependencies]
-uuid = { workspace = true, features = ["v4", "serde"] }
+uuid = { workspace = true }
