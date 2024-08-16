@@ -25,8 +25,8 @@ hyper-util = { workspace = true, features = ["full"] }
 axum = { workspace = true, features = ["ws", "macros"] }
 tower = { workspace = true }
 tower-http = { workspace = true, features = ["trace"] }
-reqwest = { workspace = true, features = ["json"] }
-reqwest_headers = { workspace = true }
+reqwest = { workspace = true }
+headers = { workspace = true }
 
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 

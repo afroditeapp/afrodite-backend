@@ -375,7 +375,7 @@ dependencies = [
  "axum-core",
  "bytes",
  "futures-util",
- "headers 0.4.0",
+ "headers",
  "http 1.0.0",
  "http-body 1.0.0",
  "http-body-util",
@@ -626,7 +626,7 @@ dependencies = [
  "clap",
  "error-stack",
  "model",
- "reqwest 0.11.24",
+ "reqwest 0.12.5",
  "serde",
  "sha2",
  "simple_backend_config",
@@ -1291,41 +1291,17 @@ dependencies = [
 
 [[package]]
 name = "headers"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06683b93020a07e3dbcf5f8c0f6d40080d725bea7936fc01ad345c01b97dc270"
-dependencies = [
- "base64 0.21.7",
- "bytes",
- "headers-core 0.2.0",
- "http 0.2.11",
- "httpdate",
- "mime",
- "sha1",
-]
-
-[[package]]
-name = "headers"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "322106e6bd0cba2d5ead589ddb8150a13d7c4217cf80d7c4f682ca994ccc6aa9"
 dependencies = [
  "base64 0.21.7",
  "bytes",
- "headers-core 0.3.0",
+ "headers-core",
  "http 1.0.0",
  "httpdate",
  "mime",
  "sha1",
-]
-
-[[package]]
-name = "headers-core"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7f66481bfee273957b1f20485a4ff3362987f85b2c236580d81b4eb7a326429"
-dependencies = [
- "http 0.2.11",
 ]
 
 [[package]]
@@ -3001,11 +2977,11 @@ dependencies = [
  "axum-extra",
  "config",
  "error-stack",
- "headers 0.4.0",
+ "headers",
  "hyper 1.1.0",
  "manager_model",
  "model",
- "reqwest 0.11.24",
+ "reqwest 0.12.5",
  "serde",
  "serde_json",
  "server_common",
@@ -3043,7 +3019,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
- "headers 0.4.0",
+ "headers",
  "model",
  "serde_json",
  "server_api",
@@ -3062,7 +3038,7 @@ dependencies = [
  "api_internal",
  "axum",
  "axum-extra",
- "headers 0.4.0",
+ "headers",
  "model",
  "server_api",
  "server_common",
@@ -3348,14 +3324,14 @@ dependencies = [
  "chrono",
  "error-stack",
  "futures",
- "headers 0.3.9",
+ "headers",
  "hyper 1.1.0",
  "hyper-util",
  "jsonwebtoken",
  "lettre",
  "manager_api",
  "manager_model",
- "reqwest 0.11.24",
+ "reqwest 0.12.5",
  "rustls-acme",
  "serde",
  "simple_backend_config",
@@ -3380,7 +3356,7 @@ dependencies = [
  "clap",
  "error-stack",
  "lettre",
- "reqwest 0.11.24",
+ "reqwest 0.12.5",
  "rustls-pemfile 2.0.0",
  "serde",
  "simple_backend_utils",
@@ -3590,7 +3566,7 @@ dependencies = [
  "config",
  "error-stack",
  "futures",
- "headers 0.4.0",
+ "headers",
  "hyper 1.1.0",
  "image",
  "inventory",
@@ -3598,7 +3574,7 @@ dependencies = [
  "num_cpus",
  "rand",
  "rand_xoshiro",
- "reqwest 0.11.24",
+ "reqwest 0.12.5",
  "serde",
  "serde_json",
  "server_data",

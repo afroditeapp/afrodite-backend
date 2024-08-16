@@ -5,7 +5,7 @@ use jsonwebtoken::{
     jwk::{Jwk, JwkSet},
     DecodingKey, Validation,
 };
-use reqwest_headers::{CacheControl, HeaderMapExt};
+use headers::{CacheControl, HeaderMapExt};
 use serde::Deserialize;
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
