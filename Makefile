@@ -61,8 +61,9 @@ unit-test:
 
 update-manager-submodule:
 	git submodule update --remote --merge
-update-api-bindings:
+update-api-bindings-step-update-binary:
 	cargo build --bin pihka-backend
+update-api-bindings-step-generate-bindings:
 	./target/debug/pihka-backend open-api > $(TMP_FILE)
 	openapi-generator-cli generate \
 	-i $(TMP_FILE) \
@@ -77,6 +78,10 @@ update-api-bindings:
 	cp $(TMP_FILE) crates/api_client/src/apis/media_admin_api.rs
 	sed 's/content_type: MediaContentType/content_type: crate::models::MediaContentType/g' crates/api_client/src/apis/media_api.rs > $(TMP_FILE)
 	cp $(TMP_FILE) crates/api_client/src/apis/media_api.rs
+update-api-bindings: update-api-bindings-step-update-binary update-api-bindings-step-generate-bindings
+	echo "API bindings updated"
+update-api-bindings-with-existing-binary: update-api-bindings-step-generate-bindings
+	echo "API bindings updated"
 
 validate-openapi:
 	cargo build --bin pihka-backend
