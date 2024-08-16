@@ -39,6 +39,8 @@ pub use server_common::{data::DataError, result};
         chat::post_set_device_token,
         chat::post_get_pending_notification,
         chat::post_public_key,
+        chat::get_sender_message_id,
+        chat::post_sender_message_id,
     ),
     components(schemas(
         // Chat
@@ -71,6 +73,7 @@ pub use server_common::{data::DataError, result};
         model::chat::GetPublicKey,
         model::chat::SetPublicKey,
         model::chat::EncryptedMessage,
+        model::chat::SenderMessageId,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

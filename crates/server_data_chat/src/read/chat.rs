@@ -1,7 +1,7 @@
 mod push_notifications;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessageAndMessageData, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikesPage, SentBlocksPage, SentLikesPage
+    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessageAndMessageData, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikesPage, SenderMessageId, SentBlocksPage, SentLikesPage
 };
 use server_data::{
  define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
@@ -208,6 +208,16 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         self.db_read(move |mut cmds| cmds.chat().public_key(id, version))
             .await
             .map(|key| GetPublicKey { key })
+            .into_error()
+    }
+
+    pub async fn get_expected_sender_message_id(
+        &self,
+        sender: AccountIdInternal,
+        receiver: AccountIdInternal,
+    ) -> Result<SenderMessageId, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().interaction().current_expected_sender_id(sender, receiver))
+            .await
             .into_error()
     }
 }

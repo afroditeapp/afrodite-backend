@@ -76,6 +76,8 @@ diesel::table! {
         message_counter -> Integer,
         sender_latest_viewed_message -> Nullable<Integer>,
         receiver_latest_viewed_message -> Nullable<Integer>,
+        sender_next_message_id -> Integer,
+        receiver_next_message_id -> Integer,
     }
 }
 
@@ -279,7 +281,6 @@ diesel::table! {
         account_id_receiver -> Integer,
         unix_time -> Integer,
         message_number -> Integer,
-        sender_message_id -> Integer,
         message_bytes -> Binary,
     }
 }

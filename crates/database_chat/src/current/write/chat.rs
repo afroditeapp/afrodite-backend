@@ -12,6 +12,8 @@ mod interaction;
 mod message;
 mod push_notifications;
 
+pub use message::UnexpectedSenderMessageId;
+
 define_current_write_commands!(CurrentWriteChat, CurrentSyncWriteChat);
 
 impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {

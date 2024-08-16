@@ -1,7 +1,8 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, AccountInteractionInternal};
+use model::{AccountIdInternal, AccountInteractionInternal, SenderMessageId};
+use simple_backend_utils::ContextExt;
 
 use crate::IntoDatabaseError;
 
@@ -75,5 +76,28 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
             Some(interaction) => Ok(interaction),
             None => self.insert_account_interaction(account1, account2),
         }
+    }
+
+    /// Fails if the interaction between accounts is not in match state.
+    pub fn set_next_expected_sender_message_id(
+        &mut self,
+        sender: AccountIdInternal,
+        receiver: AccountIdInternal,
+        new_expected_id: SenderMessageId,
+    ) -> Result<(), DieselDatabaseError> {
+        let mut interaction = self.get_or_create_account_interaction(sender, receiver)?;
+        if !interaction.is_match() {
+            return Err(DieselDatabaseError::NotAllowed.report());
+        }
+
+        match interaction.next_expected_message_id_mut(sender.into_db_id()) {
+            None => return Err(DieselDatabaseError::NotFound.report()),
+            Some(current) =>
+                *current = new_expected_id,
+        }
+
+        self.update_account_interaction(interaction)?;
+
+        Ok(())
     }
 }

@@ -1,6 +1,6 @@
 mod push_notifications;
 
-use database_chat::current::write::chat::ChatStateChanges;
+use database_chat::current::write::chat::{ChatStateChanges, UnexpectedSenderMessageId};
 use error_stack::ResultExt;
 use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, SendMessageResult, SenderMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
@@ -301,25 +301,31 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 return Ok(SendMessageResult::public_key_outdated());
             }
 
-            let pending_message_sender_ids = cmds
+            let pending_messages_count = cmds
                 .read()
                 .chat()
                 .message()
-                .pending_message_sender_ids(sender, receiver)?;
+                .pending_messages_count(sender, receiver)?;
 
-            if pending_message_sender_ids.len() >= 50 {
+            if pending_messages_count >= 50 {
                 return Ok(SendMessageResult::too_many_pending_messages());
             }
 
-            if pending_message_sender_ids.into_iter().any(|v| v == sender_message_id) {
-                return Ok(SendMessageResult::sender_message_id_already_exists());
-            }
-
-            let message_values = cmds.chat()
+            let message_values_result = cmds.chat()
                 .message()
-                .insert_pending_message_if_match(sender, receiver, message)?;
+                .insert_pending_message_if_match(
+                    sender,
+                    receiver,
+                    message,
+                    sender_message_id,
+                )?;
 
-            Ok(SendMessageResult::successful(message_values))
+            match message_values_result {
+                Ok(message_values) =>
+                    Ok(SendMessageResult::successful(message_values)),
+                Err(UnexpectedSenderMessageId { expected }) =>
+                    Ok(SendMessageResult::sender_message_id_was_not_expected_id(expected)),
+            }
         })
     }
 
@@ -331,6 +337,19 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .set_public_key(id, data)
+        })
+    }
+
+    pub async fn set_next_expected_sender_message_id(
+        &mut self,
+        sender: AccountIdInternal,
+        receiver: AccountIdInternal,
+        new_id: SenderMessageId,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .interaction()
+                .set_next_expected_sender_message_id(sender, receiver, new_id)
         })
     }
 }

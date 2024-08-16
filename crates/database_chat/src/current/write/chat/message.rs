@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, AccountInteractionState, MessageNumber, NewPendingMessageValues, PendingMessageId, UnixTime};
+use model::{AccountIdInternal, AccountInteractionState, MessageNumber, NewPendingMessageValues, PendingMessageId, SenderMessageId, UnixTime};
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(CurrentWriteChatMessage, CurrentSyncWriteChatMessage);
@@ -34,11 +34,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
         message: Vec<u8>,
-
-    ) -> Result<NewPendingMessageValues, DieselDatabaseError> {
+        sender_message_id: SenderMessageId,
+    ) -> Result<std::result::Result<NewPendingMessageValues, UnexpectedSenderMessageId>, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = UnixTime::current_time();
-        let interaction = self
+        let mut interaction = self
             .cmds()
             .chat()
             .interaction()
@@ -51,8 +51,24 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 
+        if let Some(expected_id) = interaction.next_expected_message_id_mut(*sender.as_db_id()) {
+            if *expected_id != sender_message_id {
+                return Ok(Err(UnexpectedSenderMessageId {
+                    expected: *expected_id,
+                }));
+            } else {
+                *expected_id = expected_id.increment();
+            }
+        } else {
+            return Err(DieselDatabaseError::NotFound.into());
+        }
+
         update(account_interaction::table.find(interaction.id))
-            .set(account_interaction::message_counter.eq(new_message_number))
+            .set((
+                account_interaction::message_counter.eq(new_message_number),
+                account_interaction::sender_next_message_id.eq(interaction.sender_next_message_id),
+                account_interaction::receiver_next_message_id.eq(interaction.receiver_next_message_id),
+            ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
 
@@ -67,9 +83,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
 
-        Ok(NewPendingMessageValues {
+        Ok(Ok(NewPendingMessageValues {
             unix_time: time,
             message_number: new_message_number,
-        })
+        }))
     }
+}
+
+pub struct UnexpectedSenderMessageId {
+    pub expected: SenderMessageId,
 }

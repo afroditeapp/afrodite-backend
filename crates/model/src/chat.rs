@@ -79,6 +79,8 @@ pub struct AccountInteractionInternal {
     pub message_counter: i64,
     pub sender_latest_viewed_message: Option<MessageNumber>,
     pub receiver_latest_viewed_message: Option<MessageNumber>,
+    pub sender_next_message_id: SenderMessageId,
+    pub receiver_next_message_id: SenderMessageId,
 }
 
 impl AccountInteractionInternal {
@@ -113,6 +115,8 @@ impl AccountInteractionInternal {
                 state_number: target,
                 sender_latest_viewed_message: Some(MessageNumber::default()),
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
+                sender_next_message_id: SenderMessageId::default(),
+                receiver_next_message_id: SenderMessageId::default(),
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),
@@ -176,6 +180,34 @@ impl AccountInteractionInternal {
 
     pub fn is_blocked(&self) -> bool {
         self.state_number == AccountInteractionState::Block
+    }
+
+    /// Get next expected message ID for the account
+    pub fn next_expected_message_id_mut(
+        &mut self,
+        account: AccountIdDb,
+    ) -> Option<&mut SenderMessageId> {
+        if self.account_id_receiver == Some(account) {
+            Some(&mut self.receiver_next_message_id)
+        } else if self.account_id_sender == Some(account) {
+            Some(&mut self.sender_next_message_id)
+        } else {
+            None
+        }
+    }
+
+    /// Get next expected message ID for the account
+    pub fn next_expected_message_id(
+        &self,
+        account: AccountIdDb,
+    ) -> Option<&SenderMessageId> {
+        if self.account_id_receiver == Some(account) {
+            Some(&self.receiver_next_message_id)
+        } else if self.account_id_sender == Some(account) {
+            Some(&self.sender_next_message_id)
+        } else {
+            None
+        }
     }
 }
 
@@ -442,16 +474,14 @@ pub struct SendMessageResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_receiver_public_key_outdated: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_sender_message_id_already_exists: bool,
+    pub error_sender_message_id_was_not_expected_id: Option<SenderMessageId>,
 }
 
 impl SendMessageResult {
     pub fn is_err(&self) -> bool {
         self.error_too_many_pending_messages ||
         self.error_receiver_public_key_outdated ||
-        self.error_sender_message_id_already_exists
+        self.error_sender_message_id_was_not_expected_id.is_some()
     }
 
     pub fn too_many_pending_messages() -> Self {
@@ -468,9 +498,11 @@ impl SendMessageResult {
         }
     }
 
-    pub fn sender_message_id_already_exists() -> Self {
+    pub fn sender_message_id_was_not_expected_id(
+        expected_id: SenderMessageId,
+    ) -> Self {
         Self {
-            error_sender_message_id_already_exists: true,
+            error_sender_message_id_was_not_expected_id: Some(expected_id),
             ..Self::default()
         }
     }
@@ -499,7 +531,13 @@ pub enum LimitedActionStatus {
     FailureLimitAlreadyReached,
 }
 
-/// Message ID from client which client uses to detect is message on server.
+/// Conversation message counter located on the server which only message sender
+/// owns (conversation can have 2 senders, so there is two counters).
+///
+/// The server increments the ID automatically when message is sent. The server
+/// resets the ID when account interaction is changed to match state. Also the
+/// client can reset the counter as it might go out of sync for example
+/// when the account is changed to different device.
 #[derive(
     Debug,
     Serialize,
@@ -511,6 +549,7 @@ pub enum LimitedActionStatus {
     PartialEq,
     IntoParams,
     Copy,
+    Default,
     FromSqlRow,
     AsExpression,
 )]
@@ -526,6 +565,12 @@ impl SenderMessageId {
 
     pub fn as_i64(&self) -> &i64 {
         &self.id
+    }
+
+    pub fn increment(&self) -> Self {
+        Self {
+            id: self.id.wrapping_add(1),
+        }
     }
 }
 

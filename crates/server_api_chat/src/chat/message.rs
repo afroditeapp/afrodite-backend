@@ -1,8 +1,8 @@
-use axum::{body::Body, extract::{Query, State}, Extension, Router};
+use axum::{body::Body, extract::{Path, Query, State}, Extension, Router};
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, SendMessageResult, SendMessageToAccountParams, UpdateMessageViewStatus
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, SendMessageResult, SendMessageToAccountParams, SenderMessageId, UpdateMessageViewStatus
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -192,6 +192,8 @@ pub const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 ///
 /// Max pending message count is 50.
 /// Max message size is u16::MAX.
+///
+/// The sender message ID must be value which server expects.
 #[utoipa::path(
     post,
     path = PATH_POST_SEND_MESSAGE,
@@ -242,6 +244,73 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
     Ok(result.into())
 }
 
+pub const PATH_GET_SENDER_MESSAGE_ID: &str =
+    "/chat_api/sender_message_id/:account_id";
+
+/// Get conversation specific expected sender message ID which API caller
+/// account owns.
+///
+/// Default value is returned if the accounts are not in match state. Also
+/// state change to match state will reset the ID.
+#[utoipa::path(
+    get,
+    path = "/chat_api/sender_message_id/{account_id}",
+    params(AccountId),
+    responses(
+        (status = 200, description = "Success.", body = SenderMessageId),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_sender_message_id<S: ReadData + GetAccounts>(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Path(requested_account): Path<AccountId>,
+) -> Result<Json<SenderMessageId>, StatusCode> {
+    CHAT.get_sender_message_id.incr();
+    let requested_account = state.get_internal_id(requested_account).await?;
+    let sender_message_id = state
+        .read()
+        .chat()
+        .get_expected_sender_message_id(id, requested_account)
+        .await?;
+    Ok(sender_message_id.into())
+}
+
+pub const PATH_POST_SENDER_MESSAGE_ID: &str =
+    "/chat_api/sender_message_id/:account_id";
+
+/// Set conversation specific expected sender message ID which API caller
+/// account owns.
+///
+/// This errors if the accounts are not in match state.
+#[utoipa::path(
+    post,
+    path = "/chat_api/sender_message_id/{account_id}",
+    params(AccountId),
+    request_body(content = SenderMessageId),
+    responses(
+        (status = 200, description = "Success."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_sender_message_id<S: WriteData + GetAccounts>(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+    Path(requested_account): Path<AccountId>,
+    Json(new_sender_message_id): Json<SenderMessageId>,
+) -> Result<(), StatusCode> {
+    CHAT.post_sender_message_id.incr();
+    let requested_account = state.get_internal_id(requested_account).await?;
+    db_write!(state, move |cmds| {
+        cmds.chat().set_next_expected_sender_message_id(id, requested_account, new_sender_message_id)
+    })?;
+    Ok(())
+}
+
 pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
     use axum::routing::{delete, get, post};
 
@@ -260,6 +329,8 @@ pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -
             post(post_message_number_of_latest_viewed_message::<S>),
         )
         .route(PATH_POST_SEND_MESSAGE, post(post_send_message::<S>))
+        .route(PATH_GET_SENDER_MESSAGE_ID, get(get_sender_message_id::<S>))
+        .route(PATH_POST_SENDER_MESSAGE_ID, post(post_sender_message_id::<S>))
         .with_state(s)
 }
 
@@ -272,4 +343,6 @@ create_counters!(
     get_message_number_of_latest_viewed_message,
     post_message_number_of_latest_viewed_message,
     post_send_message,
+    get_sender_message_id,
+    post_sender_message_id,
 );

@@ -545,7 +545,11 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     sender_latest_viewed_message    INTEGER,
     -- Receivers's latest viewed message number in the conversation.
     -- Can be null for example if account is blocked.
-    receiver_latest_viewed_message    INTEGER,
+    receiver_latest_viewed_message  INTEGER,
+    -- Next expected message ID from sender's client.
+    sender_next_message_id          INTEGER NOT NULL DEFAULT 0,
+    -- Next expected message ID from receiver's client.
+    receiver_next_message_id        INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -567,8 +571,6 @@ CREATE TABLE IF NOT EXISTS pending_messages(
     unix_time                       INTEGER NOT NULL,
     -- Order number for the message in the conversation.
     message_number                  INTEGER NOT NULL,
-    -- Sender message ID from client.
-    sender_message_id               INTEGER NOT NULL,
     -- Message bytes.
     message_bytes                   BLOB    NOT NULL,
     FOREIGN KEY (account_id_sender)
