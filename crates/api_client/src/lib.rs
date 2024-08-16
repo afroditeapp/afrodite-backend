@@ -3,15 +3,8 @@
     clippy::empty_docs,
     clippy::to_string_trait_impl,
     clippy::too_many_arguments,
+    unused_imports,
 )]
-
-#[macro_use]
-extern crate serde_derive;
-
-extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
-extern crate url;
 
 #[rustfmt::skip]
 pub mod apis;
