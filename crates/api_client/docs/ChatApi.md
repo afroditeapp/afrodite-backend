@@ -29,7 +29,7 @@ Method | HTTP request | Description
 
 ## delete_like
 
-> crate::models::LimitedActionResult delete_like(account_id)
+> models::LimitedActionResult delete_like(account_id)
 Delete sent like.
 
 Delete sent like.  Delete will not work if profile is a match.
@@ -43,7 +43,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::LimitedActionResult**](LimitedActionResult.md)
+[**models::LimitedActionResult**](LimitedActionResult.md)
 
 ### Authorization
 
@@ -89,7 +89,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_matches
 
-> crate::models::MatchesPage get_matches()
+> models::MatchesPage get_matches()
 Get matches
 
 Get matches
@@ -100,7 +100,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::MatchesPage**](MatchesPage.md)
+[**models::MatchesPage**](MatchesPage.md)
 
 ### Authorization
 
@@ -116,7 +116,7 @@ This endpoint does not need any parameter.
 
 ## get_message_number_of_latest_viewed_message
 
-> crate::models::MessageNumber get_message_number_of_latest_viewed_message(account_id)
+> models::MessageNumber get_message_number_of_latest_viewed_message(account_id)
 Get message number of the most recent message that the recipient has viewed.
 
 Get message number of the most recent message that the recipient has viewed.
@@ -130,7 +130,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::MessageNumber**](MessageNumber.md)
+[**models::MessageNumber**](MessageNumber.md)
 
 ### Authorization
 
@@ -173,7 +173,7 @@ This endpoint does not need any parameter.
 
 ## get_public_key
 
-> crate::models::GetPublicKey get_public_key(account_id, version)
+> models::GetPublicKey get_public_key(account_id, version)
 Get current public key of some account
 
 Get current public key of some account
@@ -188,7 +188,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::GetPublicKey**](GetPublicKey.md)
+[**models::GetPublicKey**](GetPublicKey.md)
 
 ### Authorization
 
@@ -204,7 +204,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_received_blocks
 
-> crate::models::ReceivedBlocksPage get_received_blocks()
+> models::ReceivedBlocksPage get_received_blocks()
 Get list of received blocks
 
 Get list of received blocks
@@ -215,7 +215,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::ReceivedBlocksPage**](ReceivedBlocksPage.md)
+[**models::ReceivedBlocksPage**](ReceivedBlocksPage.md)
 
 ### Authorization
 
@@ -231,7 +231,7 @@ This endpoint does not need any parameter.
 
 ## get_received_likes
 
-> crate::models::ReceivedLikesPage get_received_likes()
+> models::ReceivedLikesPage get_received_likes()
 Get received likes.
 
 Get received likes.  Profile will not be returned if: - Profile is blocked - Profile is a match
@@ -242,7 +242,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::ReceivedLikesPage**](ReceivedLikesPage.md)
+[**models::ReceivedLikesPage**](ReceivedLikesPage.md)
 
 ### Authorization
 
@@ -258,7 +258,7 @@ This endpoint does not need any parameter.
 
 ## get_sender_message_id
 
-> crate::models::SenderMessageId get_sender_message_id(account_id)
+> models::SenderMessageId get_sender_message_id(account_id)
 Get conversation specific expected sender message ID which API caller
 
 Get conversation specific expected sender message ID which API caller account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
@@ -272,7 +272,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::SenderMessageId**](SenderMessageId.md)
+[**models::SenderMessageId**](SenderMessageId.md)
 
 ### Authorization
 
@@ -288,7 +288,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_sent_blocks
 
-> crate::models::SentBlocksPage get_sent_blocks()
+> models::SentBlocksPage get_sent_blocks()
 Get list of sent blocks
 
 Get list of sent blocks
@@ -299,7 +299,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::SentBlocksPage**](SentBlocksPage.md)
+[**models::SentBlocksPage**](SentBlocksPage.md)
 
 ### Authorization
 
@@ -315,7 +315,7 @@ This endpoint does not need any parameter.
 
 ## get_sent_likes
 
-> crate::models::SentLikesPage get_sent_likes()
+> models::SentLikesPage get_sent_likes()
 Get sent likes.
 
 Get sent likes.  Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
@@ -326,7 +326,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::SentLikesPage**](SentLikesPage.md)
+[**models::SentLikesPage**](SentLikesPage.md)
 
 ### Authorization
 
@@ -372,7 +372,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_get_pending_notification
 
-> crate::models::PendingNotificationWithData post_get_pending_notification(pending_notification_token)
+> models::PendingNotificationWithData post_get_pending_notification(pending_notification_token)
 Get pending notification and reset pending notification.
 
 Get pending notification and reset pending notification.  Requesting this route is always valid to avoid figuring out device token values more easily.
@@ -386,7 +386,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::PendingNotificationWithData**](PendingNotificationWithData.md)
+[**models::PendingNotificationWithData**](PendingNotificationWithData.md)
 
 ### Authorization
 
@@ -432,7 +432,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_public_key
 
-> crate::models::PublicKeyId post_public_key(set_public_key)
+> models::PublicKeyId post_public_key(set_public_key)
 Replace current public key with a new public key.
 
 Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.  Only version 1 public keys are currently supported.
@@ -446,7 +446,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::PublicKeyId**](PublicKeyId.md)
+[**models::PublicKeyId**](PublicKeyId.md)
 
 ### Authorization
 
@@ -462,7 +462,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_send_like
 
-> crate::models::LimitedActionResult post_send_like(account_id)
+> models::LimitedActionResult post_send_like(account_id)
 Send a like to some account. If both will like each other, then
 
 Send a like to some account. If both will like each other, then the accounts will be a match.
@@ -476,7 +476,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::LimitedActionResult**](LimitedActionResult.md)
+[**models::LimitedActionResult**](LimitedActionResult.md)
 
 ### Authorization
 
@@ -492,7 +492,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_send_message
 
-> crate::models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, sender_message_id, body)
+> models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, sender_message_id, body)
 Send message to a match.
 
 Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
@@ -510,7 +510,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::SendMessageResult**](SendMessageResult.md)
+[**models::SendMessageResult**](SendMessageResult.md)
 
 ### Authorization
 
@@ -557,7 +557,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_set_device_token
 
-> crate::models::PendingNotificationToken post_set_device_token(fcm_device_token)
+> models::PendingNotificationToken post_set_device_token(fcm_device_token)
 
 
 ### Parameters
@@ -569,7 +569,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::PendingNotificationToken**](PendingNotificationToken.md)
+[**models::PendingNotificationToken**](PendingNotificationToken.md)
 
 ### Authorization
 

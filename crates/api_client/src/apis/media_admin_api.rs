@@ -10,8 +10,8 @@
 
 
 use reqwest;
-
-use crate::apis::ResponseContent;
+use serde::{Deserialize, Serialize};
+use crate::{apis::ResponseContent, models};
 use super::{Error, configuration};
 
 
@@ -35,7 +35,7 @@ pub enum PostHandleModerationRequestError {
 
 
 /// Get current list of moderation requests in my moderation queue. Additional requests will be added to my queue if necessary.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
-pub async fn patch_moderation_request_list(configuration: &configuration::Configuration, queue: crate::models::ModerationQueueType) -> Result<crate::models::ModerationList, Error<PatchModerationRequestListError>> {
+pub async fn patch_moderation_request_list(configuration: &configuration::Configuration, queue: models::ModerationQueueType) -> Result<models::ModerationList, Error<PatchModerationRequestListError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -72,7 +72,7 @@ pub async fn patch_moderation_request_list(configuration: &configuration::Config
 }
 
 /// Handle moderation request of some account.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
-pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, account_id: &str, handle_moderation_request: crate::models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
+pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, account_id: &str, handle_moderation_request: models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

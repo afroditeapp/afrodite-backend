@@ -11,7 +11,7 @@ Method | HTTP request | Description
 
 ## post_login
 
-> crate::models::LoginResult post_login(account_id)
+> models::LoginResult post_login(account_id)
 Get new AccessToken for a bot account. If the account is not registered
 
 Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
@@ -25,7 +25,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::LoginResult**](LoginResult.md)
+[**models::LoginResult**](LoginResult.md)
 
 ### Authorization
 
@@ -41,7 +41,7 @@ No authorization required
 
 ## post_register
 
-> crate::models::AccountId post_register()
+> models::AccountId post_register()
 Register a new bot account. Returns new account ID which is UUID.
 
 Register a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
@@ -52,7 +52,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::AccountId**](AccountId.md)
+[**models::AccountId**](AccountId.md)
 
 ### Authorization
 

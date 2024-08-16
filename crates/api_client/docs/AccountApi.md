@@ -54,7 +54,7 @@ This endpoint does not need any parameter.
 
 ## get_account_data
 
-> crate::models::AccountData get_account_data()
+> models::AccountData get_account_data()
 Get changeable user information to account.
 
 Get changeable user information to account.
@@ -65,7 +65,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::AccountData**](AccountData.md)
+[**models::AccountData**](AccountData.md)
 
 ### Authorization
 
@@ -81,7 +81,7 @@ This endpoint does not need any parameter.
 
 ## get_account_setup
 
-> crate::models::AccountSetup get_account_setup()
+> models::AccountSetup get_account_setup()
 Get non-changeable user information to account.
 
 Get non-changeable user information to account.
@@ -92,7 +92,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::AccountSetup**](AccountSetup.md)
+[**models::AccountSetup**](AccountSetup.md)
 
 ### Authorization
 
@@ -108,7 +108,7 @@ This endpoint does not need any parameter.
 
 ## get_account_state
 
-> crate::models::Account get_account_state()
+> models::Account get_account_state()
 Get current account state.
 
 Get current account state.
@@ -119,7 +119,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::Account**](Account.md)
+[**models::Account**](Account.md)
 
 ### Authorization
 
@@ -135,7 +135,7 @@ This endpoint does not need any parameter.
 
 ## get_deletion_status
 
-> crate::models::DeleteStatus get_deletion_status()
+> models::DeleteStatus get_deletion_status()
 Get deletion status.
 
 Get deletion status.  Get information when account will be really deleted.
@@ -146,7 +146,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::DeleteStatus**](DeleteStatus.md)
+[**models::DeleteStatus**](DeleteStatus.md)
 
 ### Authorization
 
@@ -162,7 +162,7 @@ This endpoint does not need any parameter.
 
 ## get_latest_birthdate
 
-> crate::models::LatestBirthdate get_latest_birthdate()
+> models::LatestBirthdate get_latest_birthdate()
 
 
 ### Parameters
@@ -171,7 +171,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::LatestBirthdate**](LatestBirthdate.md)
+[**models::LatestBirthdate**](LatestBirthdate.md)
 
 ### Authorization
 
@@ -301,7 +301,7 @@ This endpoint does not need any parameter.
 
 ## post_demo_mode_accessible_accounts
 
-> Vec<crate::models::AccessibleAccount> post_demo_mode_accessible_accounts(demo_mode_token)
+> Vec<models::AccessibleAccount> post_demo_mode_accessible_accounts(demo_mode_token)
 Get demo account's available accounts.
 
 Get demo account's available accounts.  This path is using HTTP POST because there is JSON in the request body.
@@ -315,7 +315,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**Vec<crate::models::AccessibleAccount>**](AccessibleAccount.md)
+[**Vec<models::AccessibleAccount>**](AccessibleAccount.md)
 
 ### Authorization
 
@@ -331,7 +331,7 @@ No authorization required
 
 ## post_demo_mode_confirm_login
 
-> crate::models::DemoModeConfirmLoginResult post_demo_mode_confirm_login(demo_mode_confirm_login)
+> models::DemoModeConfirmLoginResult post_demo_mode_confirm_login(demo_mode_confirm_login)
 
 
 ### Parameters
@@ -343,7 +343,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::DemoModeConfirmLoginResult**](DemoModeConfirmLoginResult.md)
+[**models::DemoModeConfirmLoginResult**](DemoModeConfirmLoginResult.md)
 
 ### Authorization
 
@@ -359,7 +359,7 @@ No authorization required
 
 ## post_demo_mode_login
 
-> crate::models::DemoModeLoginResult post_demo_mode_login(demo_mode_password)
+> models::DemoModeLoginResult post_demo_mode_login(demo_mode_password)
 Access demo mode, which allows accessing all or specific accounts
 
 Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
@@ -373,7 +373,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::DemoModeLoginResult**](DemoModeLoginResult.md)
+[**models::DemoModeLoginResult**](DemoModeLoginResult.md)
 
 ### Authorization
 
@@ -389,7 +389,7 @@ No authorization required
 
 ## post_demo_mode_login_to_account
 
-> crate::models::LoginResult post_demo_mode_login_to_account(demo_mode_login_to_account)
+> models::LoginResult post_demo_mode_login_to_account(demo_mode_login_to_account)
 
 
 ### Parameters
@@ -401,7 +401,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::LoginResult**](LoginResult.md)
+[**models::LoginResult**](LoginResult.md)
 
 ### Authorization
 
@@ -417,7 +417,7 @@ No authorization required
 
 ## post_demo_mode_register_account
 
-> crate::models::AccountId post_demo_mode_register_account(demo_mode_token)
+> models::AccountId post_demo_mode_register_account(demo_mode_token)
 
 
 ### Parameters
@@ -429,7 +429,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::AccountId**](AccountId.md)
+[**models::AccountId**](AccountId.md)
 
 ### Authorization
 
@@ -445,7 +445,7 @@ No authorization required
 
 ## post_sign_in_with_login
 
-> crate::models::LoginResult post_sign_in_with_login(sign_in_with_login_info)
+> models::LoginResult post_sign_in_with_login(sign_in_with_login_info)
 Start new session with sign in with Apple or Google. Creates new account if
 
 Start new session with sign in with Apple or Google. Creates new account if it does not exists.
@@ -459,7 +459,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::LoginResult**](LoginResult.md)
+[**models::LoginResult**](LoginResult.md)
 
 ### Authorization
 

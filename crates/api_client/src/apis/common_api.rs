@@ -10,8 +10,8 @@
 
 
 use reqwest;
-
-use crate::apis::ResponseContent;
+use serde::{Deserialize, Serialize};
+use crate::{apis::ResponseContent, models};
 use super::{Error, configuration};
 
 
@@ -69,7 +69,7 @@ pub async fn get_connect_websocket(configuration: &configuration::Configuration,
 }
 
 /// Get backend version.
-pub async fn get_version(configuration: &configuration::Configuration, ) -> Result<crate::models::BackendVersion, Error<GetVersionError>> {
+pub async fn get_version(configuration: &configuration::Configuration, ) -> Result<models::BackendVersion, Error<GetVersionError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

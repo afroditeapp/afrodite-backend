@@ -10,8 +10,8 @@
 
 
 use reqwest;
-
-use crate::apis::ResponseContent;
+use serde::{Deserialize, Serialize};
+use crate::{apis::ResponseContent, models};
 use super::{Error, configuration};
 
 
@@ -211,7 +211,7 @@ pub async fn delete_cancel_deletion(configuration: &configuration::Configuration
 }
 
 /// Get changeable user information to account.
-pub async fn get_account_data(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountData, Error<GetAccountDataError>> {
+pub async fn get_account_data(configuration: &configuration::Configuration, ) -> Result<models::AccountData, Error<GetAccountDataError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -247,7 +247,7 @@ pub async fn get_account_data(configuration: &configuration::Configuration, ) ->
 }
 
 /// Get non-changeable user information to account.
-pub async fn get_account_setup(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountSetup, Error<GetAccountSetupError>> {
+pub async fn get_account_setup(configuration: &configuration::Configuration, ) -> Result<models::AccountSetup, Error<GetAccountSetupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -283,7 +283,7 @@ pub async fn get_account_setup(configuration: &configuration::Configuration, ) -
 }
 
 /// Get current account state.
-pub async fn get_account_state(configuration: &configuration::Configuration, ) -> Result<crate::models::Account, Error<GetAccountStateError>> {
+pub async fn get_account_state(configuration: &configuration::Configuration, ) -> Result<models::Account, Error<GetAccountStateError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -319,7 +319,7 @@ pub async fn get_account_state(configuration: &configuration::Configuration, ) -
 }
 
 /// Get deletion status.  Get information when account will be really deleted.
-pub async fn get_deletion_status(configuration: &configuration::Configuration, ) -> Result<crate::models::DeleteStatus, Error<GetDeletionStatusError>> {
+pub async fn get_deletion_status(configuration: &configuration::Configuration, ) -> Result<models::DeleteStatus, Error<GetDeletionStatusError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -354,7 +354,7 @@ pub async fn get_deletion_status(configuration: &configuration::Configuration, )
     }
 }
 
-pub async fn get_latest_birthdate(configuration: &configuration::Configuration, ) -> Result<crate::models::LatestBirthdate, Error<GetLatestBirthdateError>> {
+pub async fn get_latest_birthdate(configuration: &configuration::Configuration, ) -> Result<models::LatestBirthdate, Error<GetLatestBirthdateError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -390,7 +390,7 @@ pub async fn get_latest_birthdate(configuration: &configuration::Configuration, 
 }
 
 /// Set changeable user information to account.
-pub async fn post_account_data(configuration: &configuration::Configuration, account_data: crate::models::AccountData) -> Result<(), Error<PostAccountDataError>> {
+pub async fn post_account_data(configuration: &configuration::Configuration, account_data: models::AccountData) -> Result<(), Error<PostAccountDataError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -427,7 +427,7 @@ pub async fn post_account_data(configuration: &configuration::Configuration, acc
 }
 
 /// Setup non-changeable user information during `initial setup` state.
-pub async fn post_account_setup(configuration: &configuration::Configuration, set_account_setup: crate::models::SetAccountSetup) -> Result<(), Error<PostAccountSetupError>> {
+pub async fn post_account_setup(configuration: &configuration::Configuration, set_account_setup: models::SetAccountSetup) -> Result<(), Error<PostAccountSetupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -536,7 +536,7 @@ pub async fn post_delete(configuration: &configuration::Configuration, ) -> Resu
 }
 
 /// Get demo account's available accounts.  This path is using HTTP POST because there is JSON in the request body.
-pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::Configuration, demo_mode_token: crate::models::DemoModeToken) -> Result<Vec<crate::models::AccessibleAccount>, Error<PostDemoModeAccessibleAccountsError>> {
+pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::Configuration, demo_mode_token: models::DemoModeToken) -> Result<Vec<models::AccessibleAccount>, Error<PostDemoModeAccessibleAccountsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -564,7 +564,7 @@ pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::C
     }
 }
 
-pub async fn post_demo_mode_confirm_login(configuration: &configuration::Configuration, demo_mode_confirm_login: crate::models::DemoModeConfirmLogin) -> Result<crate::models::DemoModeConfirmLoginResult, Error<PostDemoModeConfirmLoginError>> {
+pub async fn post_demo_mode_confirm_login(configuration: &configuration::Configuration, demo_mode_confirm_login: models::DemoModeConfirmLogin) -> Result<models::DemoModeConfirmLoginResult, Error<PostDemoModeConfirmLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -593,7 +593,7 @@ pub async fn post_demo_mode_confirm_login(configuration: &configuration::Configu
 }
 
 /// Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
-pub async fn post_demo_mode_login(configuration: &configuration::Configuration, demo_mode_password: crate::models::DemoModePassword) -> Result<crate::models::DemoModeLoginResult, Error<PostDemoModeLoginError>> {
+pub async fn post_demo_mode_login(configuration: &configuration::Configuration, demo_mode_password: models::DemoModePassword) -> Result<models::DemoModeLoginResult, Error<PostDemoModeLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -621,7 +621,7 @@ pub async fn post_demo_mode_login(configuration: &configuration::Configuration, 
     }
 }
 
-pub async fn post_demo_mode_login_to_account(configuration: &configuration::Configuration, demo_mode_login_to_account: crate::models::DemoModeLoginToAccount) -> Result<crate::models::LoginResult, Error<PostDemoModeLoginToAccountError>> {
+pub async fn post_demo_mode_login_to_account(configuration: &configuration::Configuration, demo_mode_login_to_account: models::DemoModeLoginToAccount) -> Result<models::LoginResult, Error<PostDemoModeLoginToAccountError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -649,7 +649,7 @@ pub async fn post_demo_mode_login_to_account(configuration: &configuration::Conf
     }
 }
 
-pub async fn post_demo_mode_register_account(configuration: &configuration::Configuration, demo_mode_token: crate::models::DemoModeToken) -> Result<crate::models::AccountId, Error<PostDemoModeRegisterAccountError>> {
+pub async fn post_demo_mode_register_account(configuration: &configuration::Configuration, demo_mode_token: models::DemoModeToken) -> Result<models::AccountId, Error<PostDemoModeRegisterAccountError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -678,7 +678,7 @@ pub async fn post_demo_mode_register_account(configuration: &configuration::Conf
 }
 
 /// Start new session with sign in with Apple or Google. Creates new account if it does not exists.
-pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: crate::models::SignInWithLoginInfo) -> Result<crate::models::LoginResult, Error<PostSignInWithLoginError>> {
+pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: models::SignInWithLoginInfo) -> Result<models::LoginResult, Error<PostSignInWithLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -707,7 +707,7 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
 }
 
 /// Update current or pending profile visiblity value.  NOTE: Client uses this in initial setup.
-pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: crate::models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
+pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -743,7 +743,7 @@ pub async fn put_setting_profile_visiblity(configuration: &configuration::Config
     }
 }
 
-pub async fn put_setting_unlimited_likes(configuration: &configuration::Configuration, boolean_setting: crate::models::BooleanSetting) -> Result<(), Error<PutSettingUnlimitedLikesError>> {
+pub async fn put_setting_unlimited_likes(configuration: &configuration::Configuration, boolean_setting: models::BooleanSetting) -> Result<(), Error<PutSettingUnlimitedLikesError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

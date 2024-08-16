@@ -18,7 +18,7 @@ Method | HTTP request | Description
 
 ## get_backend_config
 
-> crate::models::BackendConfig get_backend_config()
+> models::BackendConfig get_backend_config()
 Get dynamic backend config.
 
 Get dynamic backend config.  # Capabilities Requires admin_server_maintenance_view_backend_settings.
@@ -29,7 +29,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::BackendConfig**](BackendConfig.md)
+[**models::BackendConfig**](BackendConfig.md)
 
 ### Authorization
 
@@ -45,7 +45,7 @@ This endpoint does not need any parameter.
 
 ## get_latest_build_info
 
-> crate::models::BuildInfo get_latest_build_info(software_options)
+> models::BuildInfo get_latest_build_info(software_options)
 Get latest software build information available for update from manager
 
 Get latest software build information available for update from manager instance.
@@ -59,7 +59,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::BuildInfo**](BuildInfo.md)
+[**models::BuildInfo**](BuildInfo.md)
 
 ### Authorization
 
@@ -75,7 +75,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_perf_data
 
-> crate::models::PerfHistoryQueryResult get_perf_data(start_time, end_time)
+> models::PerfHistoryQueryResult get_perf_data(start_time, end_time)
 Get performance data
 
 Get performance data  # Capabilities Requires admin_server_maintenance_view_info.
@@ -85,12 +85,12 @@ Get performance data  # Capabilities Requires admin_server_maintenance_view_info
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**start_time** | Option<[**crate::models::UnixTime**](.md)> | Start time for query results. |  |
-**end_time** | Option<[**crate::models::UnixTime**](.md)> | End time for query results. |  |
+**start_time** | Option<[**models::UnixTime**](.md)> | Start time for query results. |  |
+**end_time** | Option<[**models::UnixTime**](.md)> | End time for query results. |  |
 
 ### Return type
 
-[**crate::models::PerfHistoryQueryResult**](PerfHistoryQueryResult.md)
+[**models::PerfHistoryQueryResult**](PerfHistoryQueryResult.md)
 
 ### Authorization
 
@@ -106,7 +106,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_software_info
 
-> crate::models::SoftwareInfo get_software_info()
+> models::SoftwareInfo get_software_info()
 Get software version information from manager instance.
 
 Get software version information from manager instance.
@@ -117,7 +117,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::SoftwareInfo**](SoftwareInfo.md)
+[**models::SoftwareInfo**](SoftwareInfo.md)
 
 ### Authorization
 
@@ -133,7 +133,7 @@ This endpoint does not need any parameter.
 
 ## get_system_info
 
-> crate::models::SystemInfoList get_system_info()
+> models::SystemInfoList get_system_info()
 Get system information from manager instance.
 
 Get system information from manager instance.
@@ -144,7 +144,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::SystemInfoList**](SystemInfoList.md)
+[**models::SystemInfoList**](SystemInfoList.md)
 
 ### Authorization
 

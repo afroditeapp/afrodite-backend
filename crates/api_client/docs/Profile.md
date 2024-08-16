@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **age** | **i64** |  | 
-**attributes** | [**Vec<crate::models::ProfileAttributeValue>**](ProfileAttributeValue.md) |  | 
+**attributes** | [**Vec<models::ProfileAttributeValue>**](ProfileAttributeValue.md) |  | 
 **name** | **String** |  | 
 **profile_text** | **String** | Profile text support is disabled for now. | 
 **unlimited_likes** | Option<**bool**> |  | [optional][default to false]

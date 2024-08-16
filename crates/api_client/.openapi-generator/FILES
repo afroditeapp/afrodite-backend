@@ -137,7 +137,6 @@ docs/ResetDataQueryParam.md
 docs/SearchGroups.md
 docs/SecurityContent.md
 docs/SendMessageResult.md
-docs/SendMessageResultAllOf.md
 docs/SenderMessageId.md
 docs/SentBlocksPage.md
 docs/SentBlocksSyncVersion.md
@@ -296,7 +295,6 @@ src/models/reset_data_query_param.rs
 src/models/search_groups.rs
 src/models/security_content.rs
 src/models/send_message_result.rs
-src/models/send_message_result_all_of.rs
 src/models/sender_message_id.rs
 src/models/sent_blocks_page.rs
 src/models/sent_blocks_sync_version.rs

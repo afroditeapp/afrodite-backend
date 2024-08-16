@@ -112,7 +112,7 @@ This endpoint does not need any parameter.
 
 ## get_all_account_media_content
 
-> crate::models::AccountContent get_all_account_media_content(account_id)
+> models::AccountContent get_all_account_media_content(account_id)
 Get list of all media content on the server for one account.
 
 Get list of all media content on the server for one account.
@@ -126,7 +126,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::AccountContent**](AccountContent.md)
+[**models::AccountContent**](AccountContent.md)
 
 ### Authorization
 
@@ -174,7 +174,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_content_slot_state
 
-> crate::models::ContentProcessingState get_content_slot_state(slot_id)
+> models::ContentProcessingState get_content_slot_state(slot_id)
 Get state of content slot.
 
 Get state of content slot.  Slots from 0 to 6 are available. 
@@ -188,7 +188,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::ContentProcessingState**](ContentProcessingState.md)
+[**models::ContentProcessingState**](ContentProcessingState.md)
 
 ### Authorization
 
@@ -236,7 +236,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_moderation_request
 
-> crate::models::CurrentModerationRequest get_moderation_request()
+> models::CurrentModerationRequest get_moderation_request()
 Get current moderation request.
 
 Get current moderation request. 
@@ -247,7 +247,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::CurrentModerationRequest**](CurrentModerationRequest.md)
+[**models::CurrentModerationRequest**](CurrentModerationRequest.md)
 
 ### Authorization
 
@@ -263,7 +263,7 @@ This endpoint does not need any parameter.
 
 ## get_pending_profile_content_info
 
-> crate::models::PendingProfileContent get_pending_profile_content_info(account_id)
+> models::PendingProfileContent get_pending_profile_content_info(account_id)
 Get pending profile content for selected profile
 
 Get pending profile content for selected profile
@@ -277,7 +277,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::PendingProfileContent**](PendingProfileContent.md)
+[**models::PendingProfileContent**](PendingProfileContent.md)
 
 ### Authorization
 
@@ -293,7 +293,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_pending_security_content_info
 
-> crate::models::PendingSecurityContent get_pending_security_content_info(account_id)
+> models::PendingSecurityContent get_pending_security_content_info(account_id)
 Get pending security content for selected profile.
 
 Get pending security content for selected profile.
@@ -307,7 +307,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::PendingSecurityContent**](PendingSecurityContent.md)
+[**models::PendingSecurityContent**](PendingSecurityContent.md)
 
 ### Authorization
 
@@ -323,7 +323,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_profile_content_info
 
-> crate::models::GetProfileContentResult get_profile_content_info(account_id, version, is_match)
+> models::GetProfileContentResult get_profile_content_info(account_id, version, is_match)
 Get current profile content for selected profile.
 
 Get current profile content for selected profile.  # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.
@@ -339,7 +339,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::GetProfileContentResult**](GetProfileContentResult.md)
+[**models::GetProfileContentResult**](GetProfileContentResult.md)
 
 ### Authorization
 
@@ -355,7 +355,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_security_content_info
 
-> crate::models::SecurityContent get_security_content_info(account_id)
+> models::SecurityContent get_security_content_info(account_id)
 Get current security content for selected profile.
 
 Get current security content for selected profile.
@@ -369,7 +369,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::SecurityContent**](SecurityContent.md)
+[**models::SecurityContent**](SecurityContent.md)
 
 ### Authorization
 
@@ -385,7 +385,7 @@ Name | Type | Description  | Required | Notes
 
 ## put_content_to_content_slot
 
-> crate::models::ContentProcessingId put_content_to_content_slot(slot_id, secure_capture, content_type, body)
+> models::ContentProcessingId put_content_to_content_slot(slot_id, secure_capture, content_type, body)
 Set content to content processing slot.
 
 Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512. 
@@ -402,7 +402,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::ContentProcessingId**](ContentProcessingId.md)
+[**models::ContentProcessingId**](ContentProcessingId.md)
 
 ### Authorization
 

@@ -57,7 +57,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_available_profile_attributes
 
-> crate::models::AvailableProfileAttributes get_available_profile_attributes()
+> models::AvailableProfileAttributes get_available_profile_attributes()
 Get info what profile attributes server supports.
 
 Get info what profile attributes server supports.
@@ -68,7 +68,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::AvailableProfileAttributes**](AvailableProfileAttributes.md)
+[**models::AvailableProfileAttributes**](AvailableProfileAttributes.md)
 
 ### Authorization
 
@@ -84,7 +84,7 @@ This endpoint does not need any parameter.
 
 ## get_favorite_profiles
 
-> crate::models::FavoriteProfilesPage get_favorite_profiles()
+> models::FavoriteProfilesPage get_favorite_profiles()
 Get list of all favorite profiles.
 
 Get list of all favorite profiles.
@@ -95,7 +95,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::FavoriteProfilesPage**](FavoriteProfilesPage.md)
+[**models::FavoriteProfilesPage**](FavoriteProfilesPage.md)
 
 ### Authorization
 
@@ -111,7 +111,7 @@ This endpoint does not need any parameter.
 
 ## get_location
 
-> crate::models::Location get_location()
+> models::Location get_location()
 Get location for account which makes this request.
 
 Get location for account which makes this request.
@@ -122,7 +122,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::Location**](Location.md)
+[**models::Location**](Location.md)
 
 ### Authorization
 
@@ -138,7 +138,7 @@ This endpoint does not need any parameter.
 
 ## get_profile
 
-> crate::models::GetProfileResult get_profile(account_id, version, is_match)
+> models::GetProfileResult get_profile(account_id, version, is_match)
 Get account's current profile.
 
 Get account's current profile.  Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
@@ -154,7 +154,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::GetProfileResult**](GetProfileResult.md)
+[**models::GetProfileResult**](GetProfileResult.md)
 
 ### Authorization
 
@@ -170,7 +170,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_profile_attribute_filters
 
-> crate::models::ProfileAttributeFilterList get_profile_attribute_filters()
+> models::ProfileAttributeFilterList get_profile_attribute_filters()
 Get current profile attribute filter values.
 
 Get current profile attribute filter values.
@@ -181,7 +181,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::ProfileAttributeFilterList**](ProfileAttributeFilterList.md)
+[**models::ProfileAttributeFilterList**](ProfileAttributeFilterList.md)
 
 ### Authorization
 
@@ -197,7 +197,7 @@ This endpoint does not need any parameter.
 
 ## get_profile_from_database_debug_mode_benchmark
 
-> crate::models::Profile get_profile_from_database_debug_mode_benchmark(account_id)
+> models::Profile get_profile_from_database_debug_mode_benchmark(account_id)
 Get account's current profile from database. Debug mode must be enabled
 
 Get account's current profile from database. Debug mode must be enabled that route can be used.
@@ -211,7 +211,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::Profile**](Profile.md)
+[**models::Profile**](Profile.md)
 
 ### Authorization
 
@@ -227,7 +227,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_search_age_range
 
-> crate::models::ProfileSearchAgeRange get_search_age_range()
+> models::ProfileSearchAgeRange get_search_age_range()
 Get account's current search age range
 
 Get account's current search age range
@@ -238,7 +238,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::ProfileSearchAgeRange**](ProfileSearchAgeRange.md)
+[**models::ProfileSearchAgeRange**](ProfileSearchAgeRange.md)
 
 ### Authorization
 
@@ -254,7 +254,7 @@ This endpoint does not need any parameter.
 
 ## get_search_groups
 
-> crate::models::SearchGroups get_search_groups()
+> models::SearchGroups get_search_groups()
 Get account's current search groups
 
 Get account's current search groups (gender and what gender user is looking for)
@@ -265,7 +265,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::SearchGroups**](SearchGroups.md)
+[**models::SearchGroups**](SearchGroups.md)
 
 ### Authorization
 
@@ -311,7 +311,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_get_next_profile_page
 
-> crate::models::ProfilePage post_get_next_profile_page(iterator_session_id)
+> models::ProfilePage post_get_next_profile_page(iterator_session_id)
 Post (updates iterator) to get next page of profile list.
 
 Post (updates iterator) to get next page of profile list.
@@ -325,7 +325,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**crate::models::ProfilePage**](ProfilePage.md)
+[**models::ProfilePage**](ProfilePage.md)
 
 ### Authorization
 
@@ -431,7 +431,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_reset_profile_paging
 
-> crate::models::IteratorSessionId post_reset_profile_paging()
+> models::IteratorSessionId post_reset_profile_paging()
 Reset profile paging.
 
 Reset profile paging.  After this request getting next profiles will continue from the nearest profiles.
@@ -442,7 +442,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::IteratorSessionId**](IteratorSessionId.md)
+[**models::IteratorSessionId**](IteratorSessionId.md)
 
 ### Authorization
 

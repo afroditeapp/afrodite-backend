@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **age** | **i64** |  | 
-**attributes** | [**Vec<crate::models::ProfileAttributeValueUpdate>**](ProfileAttributeValueUpdate.md) |  | 
+**attributes** | [**Vec<models::ProfileAttributeValueUpdate>**](ProfileAttributeValueUpdate.md) |  | 
 **name** | **String** |  | 
 **profile_text** | **String** | This must be empty because profile text support is disabled. | 
 

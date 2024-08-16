@@ -38,7 +38,7 @@ This endpoint does not need any parameter.
 
 ## get_version
 
-> crate::models::BackendVersion get_version()
+> models::BackendVersion get_version()
 Get backend version.
 
 Get backend version.
@@ -49,7 +49,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**crate::models::BackendVersion**](BackendVersion.md)
+[**models::BackendVersion**](BackendVersion.md)
 
 ### Authorization
 

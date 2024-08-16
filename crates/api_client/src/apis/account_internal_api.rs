@@ -10,8 +10,8 @@
 
 
 use reqwest;
-
-use crate::apis::ResponseContent;
+use serde::{Deserialize, Serialize};
+use crate::{apis::ResponseContent, models};
 use super::{Error, configuration};
 
 
@@ -33,7 +33,7 @@ pub enum PostRegisterError {
 
 
 /// Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
-pub async fn post_login(configuration: &configuration::Configuration, account_id: crate::models::AccountId) -> Result<crate::models::LoginResult, Error<PostLoginError>> {
+pub async fn post_login(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LoginResult, Error<PostLoginError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -62,7 +62,7 @@ pub async fn post_login(configuration: &configuration::Configuration, account_id
 }
 
 /// Register a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
-pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<crate::models::AccountId, Error<PostRegisterError>> {
+pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<models::AccountId, Error<PostRegisterError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

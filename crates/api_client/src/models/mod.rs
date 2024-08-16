@@ -250,8 +250,6 @@ pub mod security_content;
 pub use self::security_content::SecurityContent;
 pub mod send_message_result;
 pub use self::send_message_result::SendMessageResult;
-pub mod send_message_result_all_of;
-pub use self::send_message_result_all_of::SendMessageResultAllOf;
 pub mod sender_message_id;
 pub use self::sender_message_id::SenderMessageId;
 pub mod sent_blocks_page;
