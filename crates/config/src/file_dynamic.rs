@@ -6,7 +6,7 @@ use error_stack::{Result, ResultExt};
 use model::{BackendConfig, BotConfig};
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
-use toml_edit::{Document, Item};
+use toml_edit::{DocumentMut, Item};
 
 use crate::file::ConfigFileError;
 
@@ -59,7 +59,7 @@ impl ConfigFileDynamic {
         .change_context(ConfigFileError::SimpleBackendError)?;
 
         let mut config_document = config
-            .parse::<Document>()
+            .parse::<DocumentMut>()
             .change_context(ConfigFileError::EditConfig)?;
 
         edit_document_bot_config(&mut config_document, bot_config)?;
@@ -75,7 +75,7 @@ impl ConfigFileDynamic {
 /// Edit BotConfig. Note that if the config ("bots" table) does not already
 /// exist in the document, the document will not be edited.
 fn edit_document_bot_config(
-    config_document: &mut Document,
+    config_document: &mut DocumentMut,
     bot_config: BotConfig,
 ) -> Result<(), ConfigFileError> {
     if let Some(Item::Table(bot_config_table)) = config_document.get_mut("bots") {
@@ -116,7 +116,7 @@ mod tests {
             users = 0
             admins = 0
         "#;
-        let mut document = toml_edit::Document::from_str(toml_with_no_bots_section).unwrap();
+        let mut document = toml_edit::DocumentMut::from_str(toml_with_no_bots_section).unwrap();
 
         let new_config = model::BotConfig {
             users: 1,

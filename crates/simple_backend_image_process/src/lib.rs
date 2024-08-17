@@ -55,7 +55,7 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
     let img_file = std::fs::File::open(&settings.input)
         .change_context(ImageProcessError::InputReadingFailed)?;
     let buffered_reader = BufReader::new(img_file);
-    let img = image::io::Reader::with_format(buffered_reader, format)
+    let img = image::ImageReader::with_format(buffered_reader, format)
         .decode()
         .change_context(ImageProcessError::InputReadingFailed)?;
 

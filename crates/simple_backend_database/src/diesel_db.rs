@@ -12,8 +12,8 @@ pub type DieselPool = deadpool::unmanaged::Pool<DieselConnection>;
 pub type PoolObject = deadpool::unmanaged::Object<DieselConnection>;
 
 mod sqlite_version {
-    use diesel::sql_function;
-    sql_function! { fn sqlite_version() -> Text }
+    use diesel::define_sql_function;
+    define_sql_function! { fn sqlite_version() -> Text }
 }
 
 impl ComponentError for DieselDatabaseError {
