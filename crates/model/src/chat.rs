@@ -462,11 +462,9 @@ pub fn sender_message_id_from_i64<
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SendMessageResult {
     /// None if error happened
-    #[serde(flatten)]
-    unix_time: Option<UnixTime>,
+    unix_time: Option<i64>,
     /// None if error happened
-    #[serde(flatten)]
-    message_number: Option<MessageNumber>,
+    message_number: Option<i64>,
     // Errors
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -509,8 +507,8 @@ impl SendMessageResult {
 
     pub fn successful(values: NewPendingMessageValues) -> Self {
         Self {
-            unix_time: Some(values.unix_time),
-            message_number: Some(values.message_number),
+            unix_time: Some(values.unix_time.unix_time),
+            message_number: Some(values.message_number.message_number),
             ..Self::default()
         }
     }
