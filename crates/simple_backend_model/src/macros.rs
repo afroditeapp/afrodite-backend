@@ -56,7 +56,7 @@ macro_rules! diesel_uuid_wrapper {
                 out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
                 let uuid = self.as_uuid();
-                let bytes = uuid.as_bytes();
+                let bytes: &[u8] = uuid.as_bytes();
                 bytes.to_sql(out)
             }
         }
