@@ -19,4 +19,4 @@ simple_backend_image_process = { path = "../simple_backend_image_process" }
 simple_backend_config = { path = "../simple_backend_config" }
 
 [build-dependencies]
-vergen = { workspace = true }
+vergen-gitcl = { workspace = true }
