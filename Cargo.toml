@@ -119,6 +119,8 @@ quote = "1.0.36"
 # Test mode
 inventory = "0.3.15"
 tokio-tungstenite = { version = "0.22.0", features = ["native-tls"] }
+pgp = "0.13.2"
+bstr = "1.10.0"
 
 # Firebase cloud messaging
 [workspace.dependencies.fcm]

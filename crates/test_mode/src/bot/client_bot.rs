@@ -27,8 +27,7 @@ use super::{
         media::SendImageToSlot,
         profile::{ChangeProfileText, GetProfile, ProfileText, UpdateLocationRandom},
         BotAction, RunActions, RunActionsIf,
-    },
-    BotState, BotStruct, TaskState,
+    }, utils::encrypt::encrypt_data, BotState, BotStruct, TaskState
 };
 use crate::{
     action_array,
@@ -455,17 +454,34 @@ impl BotAction for AnswerReceivedMessages {
 async fn send_message(
     state: &mut BotState,
     receiver: AccountId,
-    // Bots send invalid messages for now
-    _msg: String,
+    msg: String,
 ) -> Result<(), TestError> {
     let public_key = get_public_key(state.api.chat(), &receiver.account_id.to_string(), 1)
         .await
         .change_context(TestError::ApiRequest)?;
 
     if let Some(receiver_public_key) = public_key.key.flatten() {
-        post_sender_message_id(state.api.chat(), &receiver.account_id.to_string(), SenderMessageId::new(0))
+        post_sender_message_id(
+            state.api.chat(),
+            &receiver.account_id.to_string(),
+            SenderMessageId::new(0),
+        )
             .await
             .change_context(TestError::ApiRequest)?;
+
+        let mut message_bytes = vec![0]; // Text message
+        let len_u16 = msg.len() as u16;
+        message_bytes.extend_from_slice(&len_u16.to_le_bytes());
+        message_bytes.extend_from_slice(msg.as_bytes());
+        let encrypted_bytes = encrypt_data(
+            "", // Not needed
+            &receiver_public_key.data.data,
+            &message_bytes,
+        )
+            .map_err(|e| TestError::MessageEncryptionError(e).report())?;
+
+        let mut type_number_and_message = vec![0]; // Message type PGP
+        type_number_and_message.extend_from_slice(&encrypted_bytes);
 
         post_send_message_fixed(
             state.api.chat(),
@@ -473,10 +489,7 @@ async fn send_message(
             receiver_public_key.id.id,
             receiver_public_key.version.version,
             0,
-            vec![
-                0, // Message type PGP
-                0, // Invalid message content
-            ],
+            type_number_and_message,
         )
             .await
             .change_context(TestError::ApiRequest)?;

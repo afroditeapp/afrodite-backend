@@ -1,7 +1,7 @@
 pub mod actions;
 mod benchmark;
 mod client_bot;
-mod utils;
+pub mod utils;
 
 use std::{fmt::Debug, sync::{atomic::{AtomicBool, Ordering}, Arc}, vec};
 
