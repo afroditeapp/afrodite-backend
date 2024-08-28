@@ -9,6 +9,7 @@ edition = "2021"
 clap = { workspace = true }
 
 tokio = { workspace = true }
+tokio-rustls = { workspace = true }
 
 config = { path = "../config" }
 test_mode = { path = "../test_mode" }

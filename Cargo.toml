@@ -108,9 +108,9 @@ tower-http = { version = "0.5.2", features = ["trace"] }
 lettre = { version = "0.11.7", features = ["tokio1", "tokio1-native-tls"] }
 
 # Server TLS
-tokio-rustls = "0.26.0"
+tokio-rustls = { version = "0.26.0", default-features = false, features = ["logging", "tls12", "ring"] }
 rustls-pemfile = "2.1.3"
-rustls-acme = { version = "0.10.1", features = ["tokio"] }
+rustls-acme = { version = "0.10.1", default-features = false, features = ["tokio", "ring", "tls12"] }
 
 # Test mode macro
 syn = { version = "2.0.74", features = ["full"] }
@@ -118,7 +118,7 @@ quote = "1.0.36"
 
 # Test mode
 inventory = "0.3.15"
-tokio-tungstenite = { version = "0.22.0", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.22.0", features = ["native-tls"] }
 
 # Firebase cloud messaging
 [workspace.dependencies.fcm]

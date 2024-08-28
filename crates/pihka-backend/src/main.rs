@@ -16,6 +16,8 @@ use simple_backend_config::args::ImageProcessModeArgs;
 use test_mode::TestRunner;
 
 fn main() -> ExitCode {
+    tokio_rustls::rustls::crypto::ring::default_provider();
+
     let args = match args::get_config() {
         Ok(args) => args,
         Err(e) => return e,
