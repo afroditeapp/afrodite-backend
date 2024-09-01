@@ -13,26 +13,28 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SendMessageResult {
-    #[serde(rename = "unix_time")]
-    pub unix_time: i64,
-    #[serde(rename = "message_number")]
-    pub message_number: i64,
     #[serde(rename = "error_receiver_public_key_outdated", skip_serializing_if = "Option::is_none")]
     pub error_receiver_public_key_outdated: Option<bool>,
     #[serde(rename = "error_sender_message_id_was_not_expected_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub error_sender_message_id_was_not_expected_id: Option<Option<Box<models::SenderMessageId>>>,
     #[serde(rename = "error_too_many_pending_messages", skip_serializing_if = "Option::is_none")]
     pub error_too_many_pending_messages: Option<bool>,
+    /// None if error happened
+    #[serde(rename = "message_number", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub message_number: Option<Option<i64>>,
+    /// None if error happened
+    #[serde(rename = "unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub unix_time: Option<Option<i64>>,
 }
 
 impl SendMessageResult {
-    pub fn new(unix_time: i64, message_number: i64) -> SendMessageResult {
+    pub fn new() -> SendMessageResult {
         SendMessageResult {
-            unix_time,
-            message_number,
             error_receiver_public_key_outdated: None,
             error_sender_message_id_was_not_expected_id: None,
             error_too_many_pending_messages: None,
+            message_number: None,
+            unix_time: None,
         }
     }
 }

@@ -21,7 +21,7 @@ Method | HTTP request | Description
 > models::BackendConfig get_backend_config()
 Get dynamic backend config.
 
-Get dynamic backend config.  # Capabilities Requires admin_server_maintenance_view_backend_settings.
+# Capabilities Requires admin_server_maintenance_view_backend_settings.
 
 ### Parameters
 
@@ -48,7 +48,7 @@ This endpoint does not need any parameter.
 > models::BuildInfo get_latest_build_info(software_options)
 Get latest software build information available for update from manager
 
-Get latest software build information available for update from manager instance.
+instance.
 
 ### Parameters
 
@@ -78,7 +78,7 @@ Name | Type | Description  | Required | Notes
 > models::PerfHistoryQueryResult get_perf_data(start_time, end_time)
 Get performance data
 
-Get performance data  # Capabilities Requires admin_server_maintenance_view_info.
+# Capabilities Requires admin_server_maintenance_view_info.
 
 ### Parameters
 
@@ -109,8 +109,6 @@ Name | Type | Description  | Required | Notes
 > models::SoftwareInfo get_software_info()
 Get software version information from manager instance.
 
-Get software version information from manager instance.
-
 ### Parameters
 
 This endpoint does not need any parameter.
@@ -134,8 +132,6 @@ This endpoint does not need any parameter.
 ## get_system_info
 
 > models::SystemInfoList get_system_info()
-Get system information from manager instance.
-
 Get system information from manager instance.
 
 ### Parameters
@@ -163,7 +159,7 @@ This endpoint does not need any parameter.
 > post_backend_config(backend_config)
 Save dynamic backend config.
 
-Save dynamic backend config.  # Capabilities Requires admin_server_maintenance_save_backend_settings.
+# Capabilities Requires admin_server_maintenance_save_backend_settings.
 
 ### Parameters
 
@@ -191,8 +187,6 @@ Name | Type | Description  | Required | Notes
 ## post_request_build_software
 
 > post_request_build_software(software_options)
-Request building new software from manager instance.
-
 Request building new software from manager instance.
 
 ### Parameters
@@ -223,7 +217,7 @@ Name | Type | Description  | Required | Notes
 > post_request_restart_or_reset_backend(reset_data)
 Request restarting or reseting backend through app-manager instance.
 
-Request restarting or reseting backend through app-manager instance.  # Capabilities Requires admin_server_maintenance_restart_backend. Also requires admin_server_maintenance_reset_data if reset_data is true.
+# Capabilities Requires admin_server_maintenance_restart_backend. Also requires admin_server_maintenance_reset_data if reset_data is true.
 
 ### Parameters
 
@@ -253,7 +247,7 @@ Name | Type | Description  | Required | Notes
 > post_request_update_software(software_options, reboot, reset_data)
 Request updating new software from manager instance.
 
-Request updating new software from manager instance.  Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintenance_update_software. Also requires admin_server_maintenance_reset_data if reset_data is true.
+Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintenance_update_software. Also requires admin_server_maintenance_reset_data if reset_data is true.
 
 ### Parameters
 

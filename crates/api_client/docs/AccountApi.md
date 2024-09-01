@@ -30,7 +30,7 @@ Method | HTTP request | Description
 > delete_cancel_deletion()
 Cancel account deletion.
 
-Cancel account deletion.  Account state will move to previous state.
+Account state will move to previous state.
 
 ### Parameters
 
@@ -55,8 +55,6 @@ This endpoint does not need any parameter.
 ## get_account_data
 
 > models::AccountData get_account_data()
-Get changeable user information to account.
-
 Get changeable user information to account.
 
 ### Parameters
@@ -84,8 +82,6 @@ This endpoint does not need any parameter.
 > models::AccountSetup get_account_setup()
 Get non-changeable user information to account.
 
-Get non-changeable user information to account.
-
 ### Parameters
 
 This endpoint does not need any parameter.
@@ -109,8 +105,6 @@ This endpoint does not need any parameter.
 ## get_account_state
 
 > models::Account get_account_state()
-Get current account state.
-
 Get current account state.
 
 ### Parameters
@@ -138,7 +132,7 @@ This endpoint does not need any parameter.
 > models::DeleteStatus get_deletion_status()
 Get deletion status.
 
-Get deletion status.  Get information when account will be really deleted.
+Get information when account will be really deleted.
 
 ### Parameters
 
@@ -190,8 +184,6 @@ This endpoint does not need any parameter.
 > post_account_data(account_data)
 Set changeable user information to account.
 
-Set changeable user information to account.
-
 ### Parameters
 
 
@@ -218,8 +210,6 @@ Name | Type | Description  | Required | Notes
 ## post_account_setup
 
 > post_account_setup(set_account_setup)
-Setup non-changeable user information during `initial setup` state.
-
 Setup non-changeable user information during `initial setup` state.
 
 ### Parameters
@@ -250,7 +240,7 @@ Name | Type | Description  | Required | Notes
 > post_complete_setup()
 Complete initial setup.
 
-Complete initial setup.  Requirements: - Account must be in `InitialSetup` state. - Account must have a valid AccountSetup info set. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
+Requirements: - Account must be in `InitialSetup` state. - Account must have a valid AccountSetup info set. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
 
 ### Parameters
 
@@ -277,7 +267,7 @@ This endpoint does not need any parameter.
 > post_delete()
 Delete account.
 
-Delete account.  Changes account state to `pending deletion` from all possible states. Previous state will be saved, so it will be possible to stop automatic deletion process.
+Changes account state to `pending deletion` from all possible states. Previous state will be saved, so it will be possible to stop automatic deletion process.
 
 ### Parameters
 
@@ -304,7 +294,7 @@ This endpoint does not need any parameter.
 > Vec<models::AccessibleAccount> post_demo_mode_accessible_accounts(demo_mode_token)
 Get demo account's available accounts.
 
-Get demo account's available accounts.  This path is using HTTP POST because there is JSON in the request body.
+This path is using HTTP POST because there is JSON in the request body.
 
 ### Parameters
 
@@ -362,7 +352,7 @@ No authorization required
 > models::DemoModeLoginResult post_demo_mode_login(demo_mode_password)
 Access demo mode, which allows accessing all or specific accounts
 
-Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
+depending on the server configuration.
 
 ### Parameters
 
@@ -448,7 +438,7 @@ No authorization required
 > models::LoginResult post_sign_in_with_login(sign_in_with_login_info)
 Start new session with sign in with Apple or Google. Creates new account if
 
-Start new session with sign in with Apple or Google. Creates new account if it does not exists.
+it does not exists.
 
 ### Parameters
 
@@ -478,7 +468,7 @@ No authorization required
 > put_setting_profile_visiblity(boolean_setting)
 Update current or pending profile visiblity value.
 
-Update current or pending profile visiblity value.  NOTE: Client uses this in initial setup.
+NOTE: Client uses this in initial setup.
 
 ### Parameters
 

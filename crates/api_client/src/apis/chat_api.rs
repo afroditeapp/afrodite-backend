@@ -195,7 +195,7 @@ pub enum PostUnblockProfileError {
 }
 
 
-/// Delete sent like.  Delete will not work if profile is a match.
+/// Delete will not work if profile is a match.
 pub async fn delete_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LimitedActionResult, Error<DeleteLikeError>> {
     let local_var_configuration = configuration;
 
@@ -232,7 +232,6 @@ pub async fn delete_like(configuration: &configuration::Configuration, account_i
     }
 }
 
-/// Delete list of pending messages
 pub async fn delete_pending_messages(configuration: &configuration::Configuration, pending_message_delete_list: models::PendingMessageDeleteList) -> Result<(), Error<DeletePendingMessagesError>> {
     let local_var_configuration = configuration;
 
@@ -269,7 +268,6 @@ pub async fn delete_pending_messages(configuration: &configuration::Configuratio
     }
 }
 
-/// Get matches
 pub async fn get_matches(configuration: &configuration::Configuration, ) -> Result<models::MatchesPage, Error<GetMatchesError>> {
     let local_var_configuration = configuration;
 
@@ -305,7 +303,6 @@ pub async fn get_matches(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
-/// Get message number of the most recent message that the recipient has viewed.
 pub async fn get_message_number_of_latest_viewed_message(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::MessageNumber, Error<GetMessageNumberOfLatestViewedMessageError>> {
     let local_var_configuration = configuration;
 
@@ -342,7 +339,7 @@ pub async fn get_message_number_of_latest_viewed_message(configuration: &configu
     }
 }
 
-/// Get list of pending messages.  The returned bytes is list of objects with following data: - UTF-8 text length encoded as 16 bit little endian number. - UTF-8 text which is PendingMessage JSON. - Binary message data length as 16 bit little endian number. - Binary message data
+/// The returned bytes is list of objects with following data: - UTF-8 text length encoded as 16 bit little endian number. - UTF-8 text which is PendingMessage JSON. - Binary message data length as 16 bit little endian number. - Binary message data
 pub async fn get_pending_messages(configuration: &configuration::Configuration, ) -> Result<std::path::PathBuf, Error<GetPendingMessagesError>> {
     let local_var_configuration = configuration;
 
@@ -378,7 +375,6 @@ pub async fn get_pending_messages(configuration: &configuration::Configuration, 
     }
 }
 
-/// Get current public key of some account
 pub async fn get_public_key(configuration: &configuration::Configuration, account_id: &str, version: i64) -> Result<models::GetPublicKey, Error<GetPublicKeyError>> {
     let local_var_configuration = configuration;
 
@@ -415,7 +411,6 @@ pub async fn get_public_key(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Get list of received blocks
 pub async fn get_received_blocks(configuration: &configuration::Configuration, ) -> Result<models::ReceivedBlocksPage, Error<GetReceivedBlocksError>> {
     let local_var_configuration = configuration;
 
@@ -451,7 +446,7 @@ pub async fn get_received_blocks(configuration: &configuration::Configuration, )
     }
 }
 
-/// Get received likes.  Profile will not be returned if: - Profile is blocked - Profile is a match
+/// Profile will not be returned if: - Profile is blocked - Profile is a match
 pub async fn get_received_likes(configuration: &configuration::Configuration, ) -> Result<models::ReceivedLikesPage, Error<GetReceivedLikesError>> {
     let local_var_configuration = configuration;
 
@@ -487,7 +482,7 @@ pub async fn get_received_likes(configuration: &configuration::Configuration, ) 
     }
 }
 
-/// Get conversation specific expected sender message ID which API caller account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
+/// account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
 pub async fn get_sender_message_id(configuration: &configuration::Configuration, account_id: &str) -> Result<models::SenderMessageId, Error<GetSenderMessageIdError>> {
     let local_var_configuration = configuration;
 
@@ -523,7 +518,6 @@ pub async fn get_sender_message_id(configuration: &configuration::Configuration,
     }
 }
 
-/// Get list of sent blocks
 pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> Result<models::SentBlocksPage, Error<GetSentBlocksError>> {
     let local_var_configuration = configuration;
 
@@ -559,7 +553,7 @@ pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> 
     }
 }
 
-/// Get sent likes.  Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
+/// Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
 pub async fn get_sent_likes(configuration: &configuration::Configuration, ) -> Result<models::SentLikesPage, Error<GetSentLikesError>> {
     let local_var_configuration = configuration;
 
@@ -595,7 +589,6 @@ pub async fn get_sent_likes(configuration: &configuration::Configuration, ) -> R
     }
 }
 
-/// Block profile
 pub async fn post_block_profile(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<(), Error<PostBlockProfileError>> {
     let local_var_configuration = configuration;
 
@@ -632,7 +625,7 @@ pub async fn post_block_profile(configuration: &configuration::Configuration, ac
     }
 }
 
-/// Get pending notification and reset pending notification.  Requesting this route is always valid to avoid figuring out device token values more easily.
+/// Requesting this route is always valid to avoid figuring out device token values more easily.
 pub async fn post_get_pending_notification(configuration: &configuration::Configuration, pending_notification_token: models::PendingNotificationToken) -> Result<models::PendingNotificationWithData, Error<PostGetPendingNotificationError>> {
     let local_var_configuration = configuration;
 
@@ -661,7 +654,6 @@ pub async fn post_get_pending_notification(configuration: &configuration::Config
     }
 }
 
-/// Update message number of the most recent message that the recipient has viewed.
 pub async fn post_message_number_of_latest_viewed_message(configuration: &configuration::Configuration, update_message_view_status: models::UpdateMessageViewStatus) -> Result<(), Error<PostMessageNumberOfLatestViewedMessageError>> {
     let local_var_configuration = configuration;
 
@@ -698,7 +690,7 @@ pub async fn post_message_number_of_latest_viewed_message(configuration: &config
     }
 }
 
-/// Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.  Only version 1 public keys are currently supported.
+/// Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.  Only version 1 public keys are currently supported.
 pub async fn post_public_key(configuration: &configuration::Configuration, set_public_key: models::SetPublicKey) -> Result<models::PublicKeyId, Error<PostPublicKeyError>> {
     let local_var_configuration = configuration;
 
@@ -735,7 +727,7 @@ pub async fn post_public_key(configuration: &configuration::Configuration, set_p
     }
 }
 
-/// Send a like to some account. If both will like each other, then the accounts will be a match.
+/// the accounts will be a match.
 pub async fn post_send_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LimitedActionResult, Error<PostSendLikeError>> {
     let local_var_configuration = configuration;
 
@@ -772,7 +764,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
+/// Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
 pub async fn post_send_message(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, sender_message_id: i64, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 
@@ -813,7 +805,7 @@ pub async fn post_send_message(configuration: &configuration::Configuration, rec
     }
 }
 
-/// Set conversation specific expected sender message ID which API caller account owns.  This errors if the accounts are not in match state.
+/// account owns.  This errors if the accounts are not in match state.
 pub async fn post_sender_message_id(configuration: &configuration::Configuration, account_id: &str, sender_message_id: models::SenderMessageId) -> Result<(), Error<PostSenderMessageIdError>> {
     let local_var_configuration = configuration;
 
@@ -886,7 +878,6 @@ pub async fn post_set_device_token(configuration: &configuration::Configuration,
     }
 }
 
-/// Unblock profile
 pub async fn post_unblock_profile(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<(), Error<PostUnblockProfileError>> {
     let local_var_configuration = configuration;
 

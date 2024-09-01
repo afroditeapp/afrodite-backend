@@ -97,7 +97,7 @@ pub enum PostRequestUpdateSoftwareError {
 }
 
 
-/// Get dynamic backend config.  # Capabilities Requires admin_server_maintenance_view_backend_settings.
+/// # Capabilities Requires admin_server_maintenance_view_backend_settings.
 pub async fn get_backend_config(configuration: &configuration::Configuration, ) -> Result<models::BackendConfig, Error<GetBackendConfigError>> {
     let local_var_configuration = configuration;
 
@@ -133,7 +133,7 @@ pub async fn get_backend_config(configuration: &configuration::Configuration, ) 
     }
 }
 
-/// Get latest software build information available for update from manager instance.
+/// instance.
 pub async fn get_latest_build_info(configuration: &configuration::Configuration, software_options: models::SoftwareOptions) -> Result<models::BuildInfo, Error<GetLatestBuildInfoError>> {
     let local_var_configuration = configuration;
 
@@ -170,7 +170,7 @@ pub async fn get_latest_build_info(configuration: &configuration::Configuration,
     }
 }
 
-/// Get performance data  # Capabilities Requires admin_server_maintenance_view_info.
+/// # Capabilities Requires admin_server_maintenance_view_info.
 pub async fn get_perf_data(configuration: &configuration::Configuration, start_time: Option<models::UnixTime>, end_time: Option<models::UnixTime>) -> Result<models::PerfHistoryQueryResult, Error<GetPerfDataError>> {
     let local_var_configuration = configuration;
 
@@ -212,7 +212,6 @@ pub async fn get_perf_data(configuration: &configuration::Configuration, start_t
     }
 }
 
-/// Get software version information from manager instance.
 pub async fn get_software_info(configuration: &configuration::Configuration, ) -> Result<models::SoftwareInfo, Error<GetSoftwareInfoError>> {
     let local_var_configuration = configuration;
 
@@ -248,7 +247,6 @@ pub async fn get_software_info(configuration: &configuration::Configuration, ) -
     }
 }
 
-/// Get system information from manager instance.
 pub async fn get_system_info(configuration: &configuration::Configuration, ) -> Result<models::SystemInfoList, Error<GetSystemInfoError>> {
     let local_var_configuration = configuration;
 
@@ -284,7 +282,7 @@ pub async fn get_system_info(configuration: &configuration::Configuration, ) -> 
     }
 }
 
-/// Save dynamic backend config.  # Capabilities Requires admin_server_maintenance_save_backend_settings.
+/// # Capabilities Requires admin_server_maintenance_save_backend_settings.
 pub async fn post_backend_config(configuration: &configuration::Configuration, backend_config: models::BackendConfig) -> Result<(), Error<PostBackendConfigError>> {
     let local_var_configuration = configuration;
 
@@ -321,7 +319,6 @@ pub async fn post_backend_config(configuration: &configuration::Configuration, b
     }
 }
 
-/// Request building new software from manager instance.
 pub async fn post_request_build_software(configuration: &configuration::Configuration, software_options: models::SoftwareOptions) -> Result<(), Error<PostRequestBuildSoftwareError>> {
     let local_var_configuration = configuration;
 
@@ -358,7 +355,7 @@ pub async fn post_request_build_software(configuration: &configuration::Configur
     }
 }
 
-/// Request restarting or reseting backend through app-manager instance.  # Capabilities Requires admin_server_maintenance_restart_backend. Also requires admin_server_maintenance_reset_data if reset_data is true.
+/// # Capabilities Requires admin_server_maintenance_restart_backend. Also requires admin_server_maintenance_reset_data if reset_data is true.
 pub async fn post_request_restart_or_reset_backend(configuration: &configuration::Configuration, reset_data: bool) -> Result<(), Error<PostRequestRestartOrResetBackendError>> {
     let local_var_configuration = configuration;
 
@@ -395,7 +392,7 @@ pub async fn post_request_restart_or_reset_backend(configuration: &configuration
     }
 }
 
-/// Request updating new software from manager instance.  Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintenance_update_software. Also requires admin_server_maintenance_reset_data if reset_data is true.
+/// Reboot query parameter will force reboot of the server after update. If it is off, the server will be rebooted when the usual reboot check is done.  Reset data query parameter will reset data like defined in current app-manager version. If this is true then specific capability is needed for completing this request.  # Capablities Requires admin_server_maintenance_update_software. Also requires admin_server_maintenance_reset_data if reset_data is true.
 pub async fn post_request_update_software(configuration: &configuration::Configuration, software_options: models::SoftwareOptions, reboot: bool, reset_data: bool) -> Result<(), Error<PostRequestUpdateSoftwareError>> {
     let local_var_configuration = configuration;
 

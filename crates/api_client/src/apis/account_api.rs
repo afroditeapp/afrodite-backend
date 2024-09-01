@@ -174,7 +174,7 @@ pub enum PutSettingUnlimitedLikesError {
 }
 
 
-/// Cancel account deletion.  Account state will move to previous state.
+/// Account state will move to previous state.
 pub async fn delete_cancel_deletion(configuration: &configuration::Configuration, ) -> Result<(), Error<DeleteCancelDeletionError>> {
     let local_var_configuration = configuration;
 
@@ -210,7 +210,6 @@ pub async fn delete_cancel_deletion(configuration: &configuration::Configuration
     }
 }
 
-/// Get changeable user information to account.
 pub async fn get_account_data(configuration: &configuration::Configuration, ) -> Result<models::AccountData, Error<GetAccountDataError>> {
     let local_var_configuration = configuration;
 
@@ -246,7 +245,6 @@ pub async fn get_account_data(configuration: &configuration::Configuration, ) ->
     }
 }
 
-/// Get non-changeable user information to account.
 pub async fn get_account_setup(configuration: &configuration::Configuration, ) -> Result<models::AccountSetup, Error<GetAccountSetupError>> {
     let local_var_configuration = configuration;
 
@@ -282,7 +280,6 @@ pub async fn get_account_setup(configuration: &configuration::Configuration, ) -
     }
 }
 
-/// Get current account state.
 pub async fn get_account_state(configuration: &configuration::Configuration, ) -> Result<models::Account, Error<GetAccountStateError>> {
     let local_var_configuration = configuration;
 
@@ -318,7 +315,7 @@ pub async fn get_account_state(configuration: &configuration::Configuration, ) -
     }
 }
 
-/// Get deletion status.  Get information when account will be really deleted.
+/// Get information when account will be really deleted.
 pub async fn get_deletion_status(configuration: &configuration::Configuration, ) -> Result<models::DeleteStatus, Error<GetDeletionStatusError>> {
     let local_var_configuration = configuration;
 
@@ -389,7 +386,6 @@ pub async fn get_latest_birthdate(configuration: &configuration::Configuration, 
     }
 }
 
-/// Set changeable user information to account.
 pub async fn post_account_data(configuration: &configuration::Configuration, account_data: models::AccountData) -> Result<(), Error<PostAccountDataError>> {
     let local_var_configuration = configuration;
 
@@ -426,7 +422,6 @@ pub async fn post_account_data(configuration: &configuration::Configuration, acc
     }
 }
 
-/// Setup non-changeable user information during `initial setup` state.
 pub async fn post_account_setup(configuration: &configuration::Configuration, set_account_setup: models::SetAccountSetup) -> Result<(), Error<PostAccountSetupError>> {
     let local_var_configuration = configuration;
 
@@ -463,7 +458,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, se
     }
 }
 
-/// Complete initial setup.  Requirements: - Account must be in `InitialSetup` state. - Account must have a valid AccountSetup info set. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
+/// Requirements: - Account must be in `InitialSetup` state. - Account must have a valid AccountSetup info set. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
 pub async fn post_complete_setup(configuration: &configuration::Configuration, ) -> Result<(), Error<PostCompleteSetupError>> {
     let local_var_configuration = configuration;
 
@@ -499,7 +494,7 @@ pub async fn post_complete_setup(configuration: &configuration::Configuration, )
     }
 }
 
-/// Delete account.  Changes account state to `pending deletion` from all possible states. Previous state will be saved, so it will be possible to stop automatic deletion process.
+/// Changes account state to `pending deletion` from all possible states. Previous state will be saved, so it will be possible to stop automatic deletion process.
 pub async fn post_delete(configuration: &configuration::Configuration, ) -> Result<(), Error<PostDeleteError>> {
     let local_var_configuration = configuration;
 
@@ -535,7 +530,7 @@ pub async fn post_delete(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
-/// Get demo account's available accounts.  This path is using HTTP POST because there is JSON in the request body.
+/// This path is using HTTP POST because there is JSON in the request body.
 pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::Configuration, demo_mode_token: models::DemoModeToken) -> Result<Vec<models::AccessibleAccount>, Error<PostDemoModeAccessibleAccountsError>> {
     let local_var_configuration = configuration;
 
@@ -592,7 +587,7 @@ pub async fn post_demo_mode_confirm_login(configuration: &configuration::Configu
     }
 }
 
-/// Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
+/// depending on the server configuration.
 pub async fn post_demo_mode_login(configuration: &configuration::Configuration, demo_mode_password: models::DemoModePassword) -> Result<models::DemoModeLoginResult, Error<PostDemoModeLoginError>> {
     let local_var_configuration = configuration;
 
@@ -677,7 +672,7 @@ pub async fn post_demo_mode_register_account(configuration: &configuration::Conf
     }
 }
 
-/// Start new session with sign in with Apple or Google. Creates new account if it does not exists.
+/// it does not exists.
 pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: models::SignInWithLoginInfo) -> Result<models::LoginResult, Error<PostSignInWithLoginError>> {
     let local_var_configuration = configuration;
 
@@ -706,7 +701,7 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
     }
 }
 
-/// Update current or pending profile visiblity value.  NOTE: Client uses this in initial setup.
+/// NOTE: Client uses this in initial setup.
 pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
     let local_var_configuration = configuration;
 

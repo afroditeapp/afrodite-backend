@@ -32,7 +32,7 @@ pub enum PostRegisterError {
 }
 
 
-/// Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
+/// as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
 pub async fn post_login(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LoginResult, Error<PostLoginError>> {
     let local_var_configuration = configuration;
 
@@ -61,7 +61,7 @@ pub async fn post_login(configuration: &configuration::Configuration, account_id
     }
 }
 
-/// Register a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
+/// Available only if server internal API is enabled with bot_login from config file.
 pub async fn post_register(configuration: &configuration::Configuration, ) -> Result<models::AccountId, Error<PostRegisterError>> {
     let local_var_configuration = configuration;
 

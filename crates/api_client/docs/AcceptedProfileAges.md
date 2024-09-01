@@ -1,11 +1,11 @@
-# SetAccountSetup
+# AcceptedProfileAges
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**birthdate** | Option<**String**> | String date with \"YYYY-MM-DD\" format.  This is not required at the moment to reduce sensitive user data. | [optional]
-**is_adult** | **bool** |  | 
+**profile_initial_age** | [**models::ProfileAge**](ProfileAge.md) |  | 
+**profile_initial_age_set_unix_time** | [**models::UnixTime**](UnixTime.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

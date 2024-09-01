@@ -32,7 +32,7 @@ Method | HTTP request | Description
 > models::LimitedActionResult delete_like(account_id)
 Delete sent like.
 
-Delete sent like.  Delete will not work if profile is a match.
+Delete will not work if profile is a match.
 
 ### Parameters
 
@@ -60,8 +60,6 @@ Name | Type | Description  | Required | Notes
 ## delete_pending_messages
 
 > delete_pending_messages(pending_message_delete_list)
-Delete list of pending messages
-
 Delete list of pending messages
 
 ### Parameters
@@ -92,8 +90,6 @@ Name | Type | Description  | Required | Notes
 > models::MatchesPage get_matches()
 Get matches
 
-Get matches
-
 ### Parameters
 
 This endpoint does not need any parameter.
@@ -117,8 +113,6 @@ This endpoint does not need any parameter.
 ## get_message_number_of_latest_viewed_message
 
 > models::MessageNumber get_message_number_of_latest_viewed_message(account_id)
-Get message number of the most recent message that the recipient has viewed.
-
 Get message number of the most recent message that the recipient has viewed.
 
 ### Parameters
@@ -149,7 +143,7 @@ Name | Type | Description  | Required | Notes
 > std::path::PathBuf get_pending_messages()
 Get list of pending messages.
 
-Get list of pending messages.  The returned bytes is list of objects with following data: - UTF-8 text length encoded as 16 bit little endian number. - UTF-8 text which is PendingMessage JSON. - Binary message data length as 16 bit little endian number. - Binary message data
+The returned bytes is list of objects with following data: - UTF-8 text length encoded as 16 bit little endian number. - UTF-8 text which is PendingMessage JSON. - Binary message data length as 16 bit little endian number. - Binary message data
 
 ### Parameters
 
@@ -174,8 +168,6 @@ This endpoint does not need any parameter.
 ## get_public_key
 
 > models::GetPublicKey get_public_key(account_id, version)
-Get current public key of some account
-
 Get current public key of some account
 
 ### Parameters
@@ -207,8 +199,6 @@ Name | Type | Description  | Required | Notes
 > models::ReceivedBlocksPage get_received_blocks()
 Get list of received blocks
 
-Get list of received blocks
-
 ### Parameters
 
 This endpoint does not need any parameter.
@@ -234,7 +224,7 @@ This endpoint does not need any parameter.
 > models::ReceivedLikesPage get_received_likes()
 Get received likes.
 
-Get received likes.  Profile will not be returned if: - Profile is blocked - Profile is a match
+Profile will not be returned if: - Profile is blocked - Profile is a match
 
 ### Parameters
 
@@ -261,7 +251,7 @@ This endpoint does not need any parameter.
 > models::SenderMessageId get_sender_message_id(account_id)
 Get conversation specific expected sender message ID which API caller
 
-Get conversation specific expected sender message ID which API caller account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
+account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
 
 ### Parameters
 
@@ -291,8 +281,6 @@ Name | Type | Description  | Required | Notes
 > models::SentBlocksPage get_sent_blocks()
 Get list of sent blocks
 
-Get list of sent blocks
-
 ### Parameters
 
 This endpoint does not need any parameter.
@@ -318,7 +306,7 @@ This endpoint does not need any parameter.
 > models::SentLikesPage get_sent_likes()
 Get sent likes.
 
-Get sent likes.  Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
+Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
 
 ### Parameters
 
@@ -343,8 +331,6 @@ This endpoint does not need any parameter.
 ## post_block_profile
 
 > post_block_profile(account_id)
-Block profile
-
 Block profile
 
 ### Parameters
@@ -375,7 +361,7 @@ Name | Type | Description  | Required | Notes
 > models::PendingNotificationWithData post_get_pending_notification(pending_notification_token)
 Get pending notification and reset pending notification.
 
-Get pending notification and reset pending notification.  Requesting this route is always valid to avoid figuring out device token values more easily.
+Requesting this route is always valid to avoid figuring out device token values more easily.
 
 ### Parameters
 
@@ -403,8 +389,6 @@ No authorization required
 ## post_message_number_of_latest_viewed_message
 
 > post_message_number_of_latest_viewed_message(update_message_view_status)
-Update message number of the most recent message that the recipient has viewed.
-
 Update message number of the most recent message that the recipient has viewed.
 
 ### Parameters
@@ -435,7 +419,7 @@ Name | Type | Description  | Required | Notes
 > models::PublicKeyId post_public_key(set_public_key)
 Replace current public key with a new public key.
 
-Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.  Only version 1 public keys are currently supported.
+Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.  Only version 1 public keys are currently supported.
 
 ### Parameters
 
@@ -465,7 +449,7 @@ Name | Type | Description  | Required | Notes
 > models::LimitedActionResult post_send_like(account_id)
 Send a like to some account. If both will like each other, then
 
-Send a like to some account. If both will like each other, then the accounts will be a match.
+the accounts will be a match.
 
 ### Parameters
 
@@ -495,7 +479,7 @@ Name | Type | Description  | Required | Notes
 > models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, sender_message_id, body)
 Send message to a match.
 
-Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
+Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
 
 ### Parameters
 
@@ -529,7 +513,7 @@ Name | Type | Description  | Required | Notes
 > post_sender_message_id(account_id, sender_message_id)
 Set conversation specific expected sender message ID which API caller
 
-Set conversation specific expected sender message ID which API caller account owns.  This errors if the accounts are not in match state.
+account owns.  This errors if the accounts are not in match state.
 
 ### Parameters
 
@@ -586,8 +570,6 @@ Name | Type | Description  | Required | Notes
 ## post_unblock_profile
 
 > post_unblock_profile(account_id)
-Unblock profile
-
 Unblock profile
 
 ### Parameters

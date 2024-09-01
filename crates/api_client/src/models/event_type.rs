@@ -41,6 +41,8 @@ pub enum EventType {
     ContentProcessingStateChanged,
     #[serde(rename = "AvailableProfileAttributesChanged")]
     AvailableProfileAttributesChanged,
+    #[serde(rename = "ProfileChanged")]
+    ProfileChanged,
 
 }
 
@@ -60,6 +62,7 @@ impl std::fmt::Display for EventType {
             Self::LatestViewedMessageChanged => write!(f, "LatestViewedMessageChanged"),
             Self::ContentProcessingStateChanged => write!(f, "ContentProcessingStateChanged"),
             Self::AvailableProfileAttributesChanged => write!(f, "AvailableProfileAttributesChanged"),
+            Self::ProfileChanged => write!(f, "ProfileChanged"),
         }
     }
 }

@@ -34,7 +34,7 @@ pub enum PostHandleModerationRequestError {
 }
 
 
-/// Get current list of moderation requests in my moderation queue. Additional requests will be added to my queue if necessary.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
+/// Additional requests will be added to my queue if necessary.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
 pub async fn patch_moderation_request_list(configuration: &configuration::Configuration, queue: models::ModerationQueueType) -> Result<models::ModerationList, Error<PatchModerationRequestListError>> {
     let local_var_configuration = configuration;
 
@@ -71,7 +71,7 @@ pub async fn patch_moderation_request_list(configuration: &configuration::Config
     }
 }
 
-/// Handle moderation request of some account.  ## Access  Account with `admin_moderate_images` capability is required to access this route. 
+/// ## Access  Account with `admin_moderate_images` capability is required to access this route. 
 pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, account_id: &str, handle_moderation_request: models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
     let local_var_configuration = configuration;
 

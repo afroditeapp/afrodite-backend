@@ -14,7 +14,7 @@ Method | HTTP request | Description
 > models::LoginResult post_login(account_id)
 Get new AccessToken for a bot account. If the account is not registered
 
-Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
+as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
 
 ### Parameters
 
@@ -44,7 +44,7 @@ No authorization required
 > models::AccountId post_register()
 Register a new bot account. Returns new account ID which is UUID.
 
-Register a new bot account. Returns new account ID which is UUID.  Available only if server internal API is enabled with bot_login from config file.
+Available only if server internal API is enabled with bot_login from config file.
 
 ### Parameters
 

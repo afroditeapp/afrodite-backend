@@ -101,7 +101,9 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
 *ProfileApi* | [**get_available_profile_attributes**](docs/ProfileApi.md#get_available_profile_attributes) | **GET** /profile_api/available_profile_attributes | Get info what profile attributes server supports.
 *ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
+*ProfileApi* | [**get_initial_profile_age_info**](docs/ProfileApi.md#get_initial_profile_age_info) | **GET** /profile_api/initial_profile_age_info | Get initial profile age information which can be used for calculating
 *ProfileApi* | [**get_location**](docs/ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
+*ProfileApi* | [**get_my_profile**](docs/ProfileApi.md#get_my_profile) | **GET** /profile_api/my_profile | Get my profile
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
 *ProfileApi* | [**get_profile_attribute_filters**](docs/ProfileApi.md#get_profile_attribute_filters) | **GET** /profile_api/profile_attribute_filters | Get current profile attribute filter values.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{account_id} | Get account's current profile from database. Debug mode must be enabled
@@ -120,6 +122,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [AcceptedProfileAges](docs/AcceptedProfileAges.md)
  - [AccessToken](docs/AccessToken.md)
  - [AccessibleAccount](docs/AccessibleAccount.md)
  - [Account](docs/Account.md)
@@ -169,6 +172,8 @@ Class | Method | HTTP request | Description
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
  - [GetContentQueryParams](docs/GetContentQueryParams.md)
+ - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
+ - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetProfileContentQueryParams](docs/GetProfileContentQueryParams.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
  - [GetProfileQueryParam](docs/GetProfileQueryParam.md)
@@ -229,6 +234,7 @@ Class | Method | HTTP request | Description
  - [ProfileLink](docs/ProfileLink.md)
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileSearchAgeRange](docs/ProfileSearchAgeRange.md)
+ - [ProfileSyncVersion](docs/ProfileSyncVersion.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
  - [ProfileVisibility](docs/ProfileVisibility.md)

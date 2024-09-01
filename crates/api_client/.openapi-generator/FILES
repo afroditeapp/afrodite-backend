@@ -2,6 +2,7 @@
 .travis.yml
 Cargo.toml
 README.md
+docs/AcceptedProfileAges.md
 docs/AccessToken.md
 docs/AccessibleAccount.md
 docs/Account.md
@@ -56,6 +57,8 @@ docs/EventType.md
 docs/FavoriteProfilesPage.md
 docs/FcmDeviceToken.md
 docs/GetContentQueryParams.md
+docs/GetInitialProfileAgeInfoResult.md
+docs/GetMyProfileResult.md
 docs/GetProfileContentQueryParams.md
 docs/GetProfileContentResult.md
 docs/GetProfileQueryParam.md
@@ -120,6 +123,7 @@ docs/ProfileContentVersion.md
 docs/ProfileLink.md
 docs/ProfilePage.md
 docs/ProfileSearchAgeRange.md
+docs/ProfileSyncVersion.md
 docs/ProfileUpdate.md
 docs/ProfileVersion.md
 docs/ProfileVisibility.md
@@ -168,6 +172,7 @@ src/apis/media_api.rs
 src/apis/media_internal_api.rs
 src/apis/mod.rs
 src/apis/profile_api.rs
+src/models/accepted_profile_ages.rs
 src/models/access_token.rs
 src/models/accessible_account.rs
 src/models/account.rs
@@ -217,6 +222,8 @@ src/models/event_type.rs
 src/models/favorite_profiles_page.rs
 src/models/fcm_device_token.rs
 src/models/get_content_query_params.rs
+src/models/get_initial_profile_age_info_result.rs
+src/models/get_my_profile_result.rs
 src/models/get_profile_content_query_params.rs
 src/models/get_profile_content_result.rs
 src/models/get_profile_query_param.rs
@@ -278,6 +285,7 @@ src/models/profile_content_version.rs
 src/models/profile_link.rs
 src/models/profile_page.rs
 src/models/profile_search_age_range.rs
+src/models/profile_sync_version.rs
 src/models/profile_update.rs
 src/models/profile_version.rs
 src/models/profile_visibility.rs

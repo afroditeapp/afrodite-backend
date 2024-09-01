@@ -9,7 +9,6 @@ use api_client::{
 };
 use async_trait::async_trait;
 use base64::Engine;
-use chrono::{Datelike, Local, NaiveDate};
 use error_stack::{Result, ResultExt};
 use futures::SinkExt;
 use headers::HeaderValue;
@@ -306,18 +305,9 @@ impl Default for SetAccountSetup<'static> {
 #[async_trait]
 impl<'a> BotAction for SetAccountSetup<'a> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let wanted_age: i32 = state.get_bot_config()
-            .and_then(|c| c.age)
-            .unwrap_or(DEFAULT_AGE)
-            .into();
-
-        let current_date = Local::now().date_naive();
-        let wanted_year = current_date.year() - wanted_age;
-        let wanted_birthdate = NaiveDate::from_ymd_opt(wanted_year, 1, 1)
-            .expect("Wanted year calculation failed");
-
         let setup = api_client::models::SetAccountSetup {
-            birthdate: wanted_birthdate.to_string(),
+            birthdate: None,
+            is_adult: true,
         };
         post_account_setup(state.api.account(), setup)
             .await

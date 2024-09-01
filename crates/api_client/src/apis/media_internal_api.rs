@@ -24,7 +24,6 @@ pub enum InternalGetCheckModerationRequestForAccountError {
 }
 
 
-/// Check that media server has correct state for completing initial setup. 
 pub async fn internal_get_check_moderation_request_for_account(configuration: &configuration::Configuration, account_id: &str) -> Result<(), Error<InternalGetCheckModerationRequestForAccountError>> {
     let local_var_configuration = configuration;
 

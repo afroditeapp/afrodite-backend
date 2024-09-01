@@ -13,14 +13,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SetAccountSetup {
-    #[serde(rename = "birthdate")]
-    pub birthdate: String,
+    /// String date with \"YYYY-MM-DD\" format.  This is not required at the moment to reduce sensitive user data.
+    #[serde(rename = "birthdate", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub birthdate: Option<Option<String>>,
+    #[serde(rename = "is_adult")]
+    pub is_adult: bool,
 }
 
 impl SetAccountSetup {
-    pub fn new(birthdate: String) -> SetAccountSetup {
+    pub fn new(is_adult: bool) -> SetAccountSetup {
         SetAccountSetup {
-            birthdate,
+            birthdate: None,
+            is_adult,
         }
     }
 }

@@ -42,10 +42,28 @@ pub enum GetFavoriteProfilesError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_initial_profile_age_info`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetInitialProfileAgeInfoError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_location`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetLocationError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_my_profile`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetMyProfileError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -178,7 +196,6 @@ pub enum PutLocationError {
 }
 
 
-/// Delete favorite profile
 pub async fn delete_favorite_profile(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<(), Error<DeleteFavoriteProfileError>> {
     let local_var_configuration = configuration;
 
@@ -215,7 +232,6 @@ pub async fn delete_favorite_profile(configuration: &configuration::Configuratio
     }
 }
 
-/// Get info what profile attributes server supports.
 pub async fn get_available_profile_attributes(configuration: &configuration::Configuration, ) -> Result<models::AvailableProfileAttributes, Error<GetAvailableProfileAttributesError>> {
     let local_var_configuration = configuration;
 
@@ -251,7 +267,6 @@ pub async fn get_available_profile_attributes(configuration: &configuration::Con
     }
 }
 
-/// Get list of all favorite profiles.
 pub async fn get_favorite_profiles(configuration: &configuration::Configuration, ) -> Result<models::FavoriteProfilesPage, Error<GetFavoriteProfilesError>> {
     let local_var_configuration = configuration;
 
@@ -287,7 +302,42 @@ pub async fn get_favorite_profiles(configuration: &configuration::Configuration,
     }
 }
 
-/// Get location for account which makes this request.
+/// current accepted profile ages.
+pub async fn get_initial_profile_age_info(configuration: &configuration::Configuration, ) -> Result<models::GetInitialProfileAgeInfoResult, Error<GetInitialProfileAgeInfoError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/profile_api/initial_profile_age_info", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetInitialProfileAgeInfoError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 pub async fn get_location(configuration: &configuration::Configuration, ) -> Result<models::Location, Error<GetLocationError>> {
     let local_var_configuration = configuration;
 
@@ -323,7 +373,42 @@ pub async fn get_location(configuration: &configuration::Configuration, ) -> Res
     }
 }
 
-/// Get account's current profile.  Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
+pub async fn get_my_profile(configuration: &configuration::Configuration, ) -> Result<models::GetMyProfileResult, Error<GetMyProfileError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/profile_api/my_profile", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetMyProfileError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
 pub async fn get_profile(configuration: &configuration::Configuration, account_id: &str, version: Option<&str>, is_match: Option<bool>) -> Result<models::GetProfileResult, Error<GetProfileError>> {
     let local_var_configuration = configuration;
 
@@ -365,7 +450,6 @@ pub async fn get_profile(configuration: &configuration::Configuration, account_i
     }
 }
 
-/// Get current profile attribute filter values.
 pub async fn get_profile_attribute_filters(configuration: &configuration::Configuration, ) -> Result<models::ProfileAttributeFilterList, Error<GetProfileAttributeFiltersError>> {
     let local_var_configuration = configuration;
 
@@ -401,7 +485,7 @@ pub async fn get_profile_attribute_filters(configuration: &configuration::Config
     }
 }
 
-/// Get account's current profile from database. Debug mode must be enabled that route can be used.
+/// that route can be used.
 pub async fn get_profile_from_database_debug_mode_benchmark(configuration: &configuration::Configuration, account_id: &str) -> Result<models::Profile, Error<GetProfileFromDatabaseDebugModeBenchmarkError>> {
     let local_var_configuration = configuration;
 
@@ -437,7 +521,6 @@ pub async fn get_profile_from_database_debug_mode_benchmark(configuration: &conf
     }
 }
 
-/// Get account's current search age range
 pub async fn get_search_age_range(configuration: &configuration::Configuration, ) -> Result<models::ProfileSearchAgeRange, Error<GetSearchAgeRangeError>> {
     let local_var_configuration = configuration;
 
@@ -473,7 +556,7 @@ pub async fn get_search_age_range(configuration: &configuration::Configuration, 
     }
 }
 
-/// Get account's current search groups (gender and what gender user is looking for)
+/// (gender and what gender user is looking for)
 pub async fn get_search_groups(configuration: &configuration::Configuration, ) -> Result<models::SearchGroups, Error<GetSearchGroupsError>> {
     let local_var_configuration = configuration;
 
@@ -509,7 +592,6 @@ pub async fn get_search_groups(configuration: &configuration::Configuration, ) -
     }
 }
 
-/// Add new favorite profile
 pub async fn post_favorite_profile(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<(), Error<PostFavoriteProfileError>> {
     let local_var_configuration = configuration;
 
@@ -546,7 +628,6 @@ pub async fn post_favorite_profile(configuration: &configuration::Configuration,
     }
 }
 
-/// Post (updates iterator) to get next page of profile list.
 pub async fn post_get_next_profile_page(configuration: &configuration::Configuration, iterator_session_id: models::IteratorSessionId) -> Result<models::ProfilePage, Error<PostGetNextProfilePageError>> {
     let local_var_configuration = configuration;
 
@@ -583,7 +664,7 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
     }
 }
 
-/// Update profile information.  Writes the profile to the database only if it is changed.  # Requirements - Profile attributes must be valid - Profile text must be empty - Profile age must be same as currently or same as the current age calculated from birthdate  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid - Profile text must be empty - Profile age must match with currently valid age range. The first min value for the age range is the age at the initial setup. The second min and max value is calculated using the following algorithm: - The initial age (initialAge) is paired with the year of initial setup completed (initialSetupYear). - Year difference (yearDifference = currentYear - initialSetupYear) is used for changing the range min and max. - Min value: initialAge + yearDifference - 1. - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 pub async fn post_profile(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 
@@ -620,7 +701,6 @@ pub async fn post_profile(configuration: &configuration::Configuration, profile_
     }
 }
 
-/// Set profile attribute filter values.
 pub async fn post_profile_attribute_filters(configuration: &configuration::Configuration, profile_attribute_filter_list_update: models::ProfileAttributeFilterListUpdate) -> Result<(), Error<PostProfileAttributeFiltersError>> {
     let local_var_configuration = configuration;
 
@@ -657,7 +737,7 @@ pub async fn post_profile_attribute_filters(configuration: &configuration::Confi
     }
 }
 
-/// Post account's current profile directly to database. Debug mode must be enabled that route can be used.
+/// that route can be used.
 pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileToDatabaseDebugModeBenchmarkError>> {
     let local_var_configuration = configuration;
 
@@ -694,7 +774,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &confi
     }
 }
 
-/// Reset profile paging.  After this request getting next profiles will continue from the nearest profiles.
+/// After this request getting next profiles will continue from the nearest profiles.
 pub async fn post_reset_profile_paging(configuration: &configuration::Configuration, ) -> Result<models::IteratorSessionId, Error<PostResetProfilePagingError>> {
     let local_var_configuration = configuration;
 
@@ -730,7 +810,6 @@ pub async fn post_reset_profile_paging(configuration: &configuration::Configurat
     }
 }
 
-/// Set account's current search age range
 pub async fn post_search_age_range(configuration: &configuration::Configuration, profile_search_age_range: models::ProfileSearchAgeRange) -> Result<(), Error<PostSearchAgeRangeError>> {
     let local_var_configuration = configuration;
 
@@ -767,7 +846,7 @@ pub async fn post_search_age_range(configuration: &configuration::Configuration,
     }
 }
 
-/// Set account's current search groups (gender and what gender user is looking for)
+/// (gender and what gender user is looking for)
 pub async fn post_search_groups(configuration: &configuration::Configuration, search_groups: models::SearchGroups) -> Result<(), Error<PostSearchGroupsError>> {
     let local_var_configuration = configuration;
 
@@ -804,7 +883,6 @@ pub async fn post_search_groups(configuration: &configuration::Configuration, se
     }
 }
 
-/// Update location for account which makes this request.
 pub async fn put_location(configuration: &configuration::Configuration, location: models::Location) -> Result<(), Error<PutLocationError>> {
     let local_var_configuration = configuration;
 

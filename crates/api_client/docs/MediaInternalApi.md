@@ -13,8 +13,6 @@ Method | HTTP request | Description
 > internal_get_check_moderation_request_for_account(account_id)
 Check that media server has correct state for completing initial setup.
 
-Check that media server has correct state for completing initial setup. 
-
 ### Parameters
 
 
