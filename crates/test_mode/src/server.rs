@@ -271,6 +271,7 @@ fn new_config(
         tile_map: None,
         firebase_cloud_messaging: None,
         email_sending: None,
+        scheduled_tasks: None,
     };
 
     (config, simple_backend_config)

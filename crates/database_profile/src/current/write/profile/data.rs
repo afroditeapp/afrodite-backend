@@ -207,7 +207,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         use model::schema::profile_state::dsl::*;
 
         update(profile_state)
-            .filter(account_id.eq(id))
+            .filter(account_id.eq(id.as_db_id()))
             .filter(profile_sync_version.lt(SyncVersion::MAX_VALUE))
             .set(profile_sync_version.eq(profile_sync_version + 1))
             .execute(self.conn())

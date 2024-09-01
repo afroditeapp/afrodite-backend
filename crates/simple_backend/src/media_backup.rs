@@ -5,7 +5,6 @@ use std::{
     time::Duration,
 };
 
-use chrono::{DateTime, Local, NaiveTime};
 use error_stack::{Result, ResultExt};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_database::data::create_dirs_and_get_files_dir_path;
@@ -13,7 +12,7 @@ use simple_backend_utils::ContextExt;
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
 
-use crate::ServerQuitWatcher;
+use crate::{utils::time::sleep_until_local_time_clock_is_at, ServerQuitWatcher};
 
 pub const MEDIA_BACKUP_MANAGER_QUEUE_SIZE: usize = 64;
 
@@ -355,37 +354,15 @@ impl MediaBackupManager {
     }
 
     pub async fn sleep_until(config: &SimpleBackendConfig) -> Result<(), MediaBackupError> {
-        let now = Self::get_local_time();
-
-        let target_time = if let Some(config) = config.media_backup() {
-            NaiveTime::from_hms_opt(config.rsync_time.hours.into(), config.rsync_time.minutes.into(), 0)
-                .ok_or(MediaBackupError::TimeError.report())?
+        if let Some(config) = config.media_backup() {
+            sleep_until_local_time_clock_is_at(config.rsync_time)
+                .await
+                .change_context(MediaBackupError::TimeError)?;
+            Ok(())
         } else {
             futures::future::pending::<()>().await;
-            return Err(MediaBackupError::ConfigError.report());
-        };
-
-        let target_date_time = now.with_time(target_time)
-            .single()
-            .ok_or(MediaBackupError::TimeError.report())?;
-
-        let duration = if target_date_time > now {
-            target_date_time - now
-        } else {
-            let tomorrow = now + Duration::from_secs(24 * 60 * 60);
-            let tomorrow_target_date_time = tomorrow.with_time(target_time)
-                .single()
-                .ok_or(MediaBackupError::TimeError.report())?;
-            tomorrow_target_date_time - now
-        };
-        let duration_seconds = Duration::from_secs(duration.abs().num_seconds() as u64);
-        sleep(duration_seconds).await;
-
-        Ok(())
-    }
-
-    pub fn get_local_time() -> DateTime<Local> {
-        Local::now()
+            unreachable!()
+        }
     }
 }
 

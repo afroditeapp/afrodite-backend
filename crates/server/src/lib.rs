@@ -9,6 +9,7 @@ pub mod api_doc;
 pub mod bot;
 pub mod content_processing;
 pub mod perf;
+pub mod scheduled_tasks;
 pub mod startup_tasks;
 pub mod shutdown_tasks;
 pub mod utils;
@@ -21,6 +22,7 @@ use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
 use model::{AccountIdInternal, EmailMessages};
 use perf::ALL_COUNTERS;
+use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
 use server_common::push_notifications::{
     self, PushNotificationManager, PushNotificationManagerQuitHandle,
 };
@@ -62,6 +64,7 @@ impl PihkaServer {
             push_notifications_quit_handle: None,
             email_manager_quit_handle: None,
             shutdown_tasks: None,
+            scheduled_tasks: None,
         };
         let server = simple_backend::SimpleBackend::new(logic, self.config.simple_backend_arc());
         server.run().await;
@@ -77,6 +80,7 @@ pub struct PihkaBusinessLogic {
     push_notifications_quit_handle: Option<PushNotificationManagerQuitHandle>,
     email_manager_quit_handle: Option<EmailManagerQuitHandle>,
     shutdown_tasks: Option<ShutdownTasks>,
+    scheduled_tasks: Option<ScheduledTaskManagerQuitHandle>,
 }
 
 impl BusinessLogic for PihkaBusinessLogic {
@@ -216,12 +220,18 @@ impl BusinessLogic for PihkaBusinessLogic {
             .await
             .expect("Startup tasks failed");
 
+        let scheduled_tasks = ScheduledTaskManager::new_manager(
+            app_state.clone(),
+            server_quit_watcher.resubscribe(),
+        );
+
         self.database_manager = Some(database_manager);
         self.write_cmd_waiter = Some(write_cmd_waiter);
         self.content_processing_quit_handle = Some(content_processing_quit_handle);
         self.push_notifications_quit_handle = Some(push_notifications_quit_handle);
         self.email_manager_quit_handle = Some(email_manager_quit_handle);
         self.shutdown_tasks = Some(ShutdownTasks::new(app_state.clone()));
+        self.scheduled_tasks = Some(scheduled_tasks);
         app_state
     }
 
@@ -260,6 +270,12 @@ impl BusinessLogic for PihkaBusinessLogic {
             .wait_quit()
             .await;
         self.push_notifications_quit_handle
+            .expect("Not initialized")
+            .wait_quit()
+            .await;
+
+        // Avoid running scheduled tasks simultaneously with shutdown tasks.
+        self.scheduled_tasks
             .expect("Not initialized")
             .wait_quit()
             .await;

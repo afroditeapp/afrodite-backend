@@ -85,6 +85,9 @@ name = "history"
 # binary = "/usr/bin/litestream"
 # config_file = "litestream.yml"
 
+# [scheduled_tasks]
+# daily_run_time = "3:00"
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -117,6 +120,7 @@ pub struct SimpleBackendConfigFile {
 
     pub media_backup: Option<MediaBackupConfig>,
     pub litestream: Option<LitestreamConfig>,
+    pub scheduled_tasks: Option<ScheduledTasksConfig>,
 }
 
 impl SimpleBackendConfigFile {
@@ -325,7 +329,7 @@ pub struct MediaBackupConfig {
     /// Target media backup location on remote server.
     pub target_location: PathBuf,
     pub ssh_private_key: AbsolutePathNoWhitespace,
-    pub rsync_time: TimeValue,
+    pub rsync_time: LocalTimeValue,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -349,11 +353,37 @@ impl TryFrom<String> for SshAddress {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+/// System local time
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub struct LocalTimeValue(pub TimeValue);
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "String")]
 pub struct TimeValue {
     pub hours: u8,
     pub minutes: u8,
+}
+
+impl TimeValue {
+    const MAX_HOURS: u8 = 23;
+    const MAX_MINUTES: u8 = 59;
+    const DEFAULT_SCHEDULED_TASKS_TIME: Self = Self::new(3, 0);
+
+    /// Panics if values are out of range
+    const fn new(hours: u8, minutes: u8) -> Self {
+        if hours > Self::MAX_HOURS {
+            panic!("Hours value is not valid");
+        }
+
+        if minutes > Self::MAX_MINUTES {
+            panic!("Minutes value is not valid");
+        }
+
+        Self {
+            hours,
+            minutes,
+        }
+    }
 }
 
 impl TryFrom<String> for TimeValue {
@@ -366,16 +396,14 @@ impl TryFrom<String> for TimeValue {
                 let hours: u8 = hours
                     .parse()
                     .map_err(|e: std::num::ParseIntError| e.to_string())?;
-                const MAX_HOURS: u8 = 23;
-                if hours > MAX_HOURS {
-                    return Err(format!("Max value for hours is {MAX_HOURS}, current value: {hours}"));
+                if hours > Self::MAX_HOURS {
+                    return Err(format!("Max value for hours is {}, current value: {hours}", Self::MAX_HOURS));
                 }
                 let minutes: u8 = minutes
                     .parse()
                     .map_err(|e: std::num::ParseIntError| e.to_string())?;
-                const MAX_MINUTES: u8 = 59;
-                if minutes > MAX_MINUTES {
-                    return Err(format!("Max value for minutes is {MAX_MINUTES}, current value: {minutes}"));
+                if minutes > Self::MAX_MINUTES {
+                    return Err(format!("Max value for minutes is {}, current value: {minutes}", Self::MAX_MINUTES));
                 }
                 Ok(TimeValue { hours, minutes })
             }
@@ -436,4 +464,17 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
     }
 
     Ok(())
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ScheduledTasksConfig {
+    pub daily_run_time: LocalTimeValue,
+}
+
+impl Default for ScheduledTasksConfig {
+    fn default() -> Self {
+        Self {
+            daily_run_time: LocalTimeValue(TimeValue::DEFAULT_SCHEDULED_TASKS_TIME)
+        }
+    }
 }

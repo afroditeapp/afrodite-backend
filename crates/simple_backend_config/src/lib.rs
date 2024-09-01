@@ -15,7 +15,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::{DatabaseInfo, FirebaseCloudMessagingConfig, TileMapConfig};
+use file::{DatabaseInfo, FirebaseCloudMessagingConfig, ScheduledTasksConfig, TileMapConfig};
 use reqwest::Url;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
@@ -181,6 +181,10 @@ impl SimpleBackendConfig {
 
     pub fn email_sending(&self) -> Option<&file::EmailSendingConfig> {
         self.file.email_sending.as_ref()
+    }
+
+    pub fn scheduled_tasks(&self) -> ScheduledTasksConfig {
+        self.file.scheduled_tasks.clone().unwrap_or_default()
     }
 }
 

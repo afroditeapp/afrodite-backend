@@ -51,12 +51,14 @@ impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
             .into_error()
     }
 
+    // TODO: move to common
     pub async fn account_ids_vec(&self) -> Result<Vec<AccountId>, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_ids())
             .await
             .into_error()
     }
 
+    // TODO: move to common
     pub async fn account_ids_internal_vec(&self) -> Result<Vec<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_ids_internal())
             .await
