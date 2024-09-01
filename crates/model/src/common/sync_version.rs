@@ -36,6 +36,7 @@ pub enum SyncCheckDataType {
     SentBlocks = 4,
     Matches = 5,
     AvailableProfileAttributes = 6,
+    Profile = 7,
 }
 
 impl TryFrom<u8> for SyncCheckDataType {
@@ -50,6 +51,7 @@ impl TryFrom<u8> for SyncCheckDataType {
             4 => Ok(Self::SentBlocks),
             5 => Ok(Self::Matches),
             6 => Ok(Self::AvailableProfileAttributes),
+            7 => Ok(Self::Profile),
             _ => Err(format!("Unknown sync check data type {}", value)),
         }
     }

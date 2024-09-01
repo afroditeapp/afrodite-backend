@@ -110,9 +110,10 @@ pub struct ProfileStateInternal {
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
+    pub profile_sync_version: ProfileSyncVersion,
 }
 
-sync_version_wrappers!(ProfileAttributesSyncVersion,);
+sync_version_wrappers!(ProfileAttributesSyncVersion, ProfileSyncVersion,);
 
 /// Subset of ProfileStateInternal which is cached in memory.
 #[derive(Debug, Clone, Copy)]
@@ -370,6 +371,14 @@ impl GetProfileResult {
             last_seen_time: None,
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct GetMyProfileResult {
+    pub profile: Profile,
+    pub version: ProfileVersion,
+    pub sync_version: ProfileSyncVersion,
+    pub last_seen_time: Option<LastSeenTime>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]

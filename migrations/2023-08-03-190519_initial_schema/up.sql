@@ -202,7 +202,9 @@ CREATE TABLE IF NOT EXISTS profile_state(
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile attributes config file.
-    profile_attributes_sync_version   INTEGER         NOT NULL    DEFAULT 0,
+    profile_attributes_sync_version   INTEGER       NOT NULL    DEFAULT 0,
+    -- Sync version for profile data for this account.
+    profile_sync_version              INTEGER       NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed
     profile_initial_age               INTEGER,
     profile_initial_age_set_unix_time INTEGER,

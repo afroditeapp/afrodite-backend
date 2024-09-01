@@ -68,6 +68,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.profile()
                 .data()
                 .upsert_profile_attributes(id, profile_data.new_data.attributes, config.profile_attributes())?;
+            cmds.profile().data().increment_profile_sync_version(id)?;
             cmds.read().common().account(id)
         })?;
 
@@ -243,6 +244,18 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.profile()
                 .data()
                 .reset_profile_attributes_sync_version(id)
+        })
+    }
+
+    /// Only server WebSocket code should call this method.
+    pub async fn reset_profile_sync_version(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.profile()
+                .data()
+                .reset_profile_sync_version(id)
         })
     }
 

@@ -200,6 +200,37 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
         Ok(())
     }
 
+    pub fn increment_profile_sync_version(
+        &mut self,
+        id: AccountIdInternal
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_state::dsl::*;
+
+        update(profile_state)
+            .filter(account_id.eq(id))
+            .filter(profile_sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(profile_sync_version.eq(profile_sync_version + 1))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn reset_profile_sync_version(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::profile_state::dsl::*;
+
+        update(profile_state)
+            .filter(account_id.eq(id.as_db_id()))
+            .set(profile_sync_version.eq(0))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
     pub fn update_last_seen_time_filter(
         &mut self,
         id: AccountIdInternal,

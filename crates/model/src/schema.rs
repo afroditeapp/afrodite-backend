@@ -355,6 +355,7 @@ diesel::table! {
         latitude -> Double,
         longitude -> Double,
         profile_attributes_sync_version -> Integer,
+        profile_sync_version -> Integer,
         profile_initial_age -> Nullable<Integer>,
         profile_initial_age_set_unix_time -> Nullable<Integer>,
     }

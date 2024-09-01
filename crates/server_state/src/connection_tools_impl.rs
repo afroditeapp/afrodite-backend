@@ -161,6 +161,17 @@ impl ConnectionTools for S {
                         .await?;
                     }
                 }
+                SyncCheckDataType::Profile => {
+                    if self.config().components().profile {
+                        handle_profile_sync_version_check(
+                            self,
+                            socket,
+                            id,
+                            version.version,
+                        )
+                        .await?;
+                    }
+                }
             }
         }
 
@@ -288,6 +299,40 @@ async fn handle_profile_attributes_sync_version_check<S: WriteData + ReadData>(
     send_event(
         socket,
         EventToClientInternal::AvailableProfileAttributesChanged,
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn handle_profile_sync_version_check<S: WriteData + ReadData>(
+    state: &S,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    sync_version: SyncVersionFromClient,
+) -> Result<(), WebSocketError> {
+    let current = state
+        .read()
+        .profile()
+        .profile_state(id)
+        .await
+        .change_context(WebSocketError::DatabaseProfileStateQuery)?
+        .profile_sync_version;
+    match current.check_is_sync_required(sync_version) {
+        SyncCheckResult::DoNothing => return Ok(()),
+        SyncCheckResult::ResetVersionAndSync => db_write_raw!(state, move |cmds| {
+            cmds.profile()
+                .reset_profile_sync_version(id)
+                .await
+        })
+            .await
+            .change_context(WebSocketError::ProfileSyncVersionResetFailed)?,
+        SyncCheckResult::Sync => (),
+    };
+
+    send_event(
+        socket,
+        EventToClientInternal::ProfileChanged,
     )
     .await?;
 

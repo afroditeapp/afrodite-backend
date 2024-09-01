@@ -24,6 +24,7 @@ pub use server_common::{data::DataError, result};
         // Profile
         profile::get_profile,
         profile::get_profile_from_database_debug_mode_benchmark,
+        profile::get_my_profile,
         profile::get_location,
         profile::get_favorite_profiles,
         profile::get_available_profile_attributes,
@@ -52,6 +53,7 @@ pub use server_common::{data::DataError, result};
         model::profile::ProfileSearchAgeRange,
         model::profile::GetProfileResult,
         model::profile::GetProfileQueryParam,
+        model::profile::GetMyProfileResult,
         model::profile::Location,
         model::profile::FavoriteProfilesPage,
         model::profile::AvailableProfileAttributes,

@@ -91,6 +91,8 @@ pub enum WebSocketError {
     ChatDataVersionResetFailed,
     #[error("Profile attributes sync version number reset failed")]
     ProfileAttributesSyncVersionResetFailed,
+    #[error("Profile sync version number reset failed")]
+    ProfileSyncVersionResetFailed,
 }
 
 pub use utils::api::PATH_CONNECT;

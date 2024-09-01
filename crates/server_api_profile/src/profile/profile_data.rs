@@ -3,7 +3,7 @@ use axum::{
     Extension, Router,
 };
 use model::{
-    AccountId, AccountIdInternal, AccountState, Capabilities, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
+    AccountId, AccountIdInternal, AccountState, Capabilities, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
 use server_api::{app::IsMatch, db_write_multiple};
 use server_data::read::GetReadCommandsCommon;
@@ -123,6 +123,9 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// Update profile information.
 ///
 /// Writes the profile to the database only if it is changed.
+///
+/// WebSocket event about profile change will not be emitted. The event
+/// is emitted only from server side profile updates.
 ///
 /// # Requirements
 /// - Profile attributes must be valid
@@ -292,6 +295,53 @@ pub async fn post_search_age_range<S: WriteData>(
         .update_search_age_range(account_id, validated))
 }
 
+pub const PATH_GET_MY_PROFILE: &str = "/profile_api/my_profile";
+
+/// Get my profile
+#[utoipa::path(
+    get,
+    path = PATH_GET_MY_PROFILE,
+    responses(
+        (status = 200, description = "Get my profile", body = GetMyProfileResult),
+        (status = 401, description = "Unauthorized"),
+        (
+            status = 500,
+            description = "Internal server error",
+        ),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_my_profile<
+    S: ReadData,
+>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<GetMyProfileResult>, StatusCode> {
+    PROFILE.get_my_profile.incr();
+
+    let profile_info = state
+        .read()
+        .profile()
+        .profile(account_id)
+        .await?;
+
+    let sync_version = state
+        .read()
+        .profile()
+        .profile_state(account_id)
+        .await?
+        .profile_sync_version;
+
+    let r = GetMyProfileResult {
+        profile: profile_info.profile,
+        version: profile_info.version,
+        last_seen_time: profile_info.last_seen_time,
+        sync_version,
+    };
+
+    Ok(r.into())
+}
+
 pub fn profile_data_router<
     S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig + IsMatch,
 >(
@@ -306,6 +356,7 @@ pub fn profile_data_router<
         .route(PATH_POST_PROFILE, post(post_profile::<S>))
         .route(PATH_POST_SEARCH_GROUPS, post(post_search_groups::<S>))
         .route(PATH_POST_SEARCH_AGE_RANGE, post(post_search_age_range::<S>))
+        .route(PATH_GET_MY_PROFILE, get(get_my_profile::<S>))
         .with_state(s)
 }
 
@@ -319,4 +370,5 @@ create_counters!(
     post_profile,
     post_search_groups,
     post_search_age_range,
+    get_my_profile,
 );
