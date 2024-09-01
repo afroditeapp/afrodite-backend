@@ -407,3 +407,8 @@ impl AcceptedProfileAges {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct GetInitialProfileAgeInfoResult {
+    pub info: Option<AcceptedProfileAges>,
+}

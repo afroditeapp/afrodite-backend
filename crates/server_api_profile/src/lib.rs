@@ -31,6 +31,7 @@ pub use server_common::{data::DataError, result};
         profile::get_search_groups,
         profile::get_search_age_range,
         profile::get_profile_attribute_filters,
+        profile::get_initial_profile_age_info,
         profile::post_get_next_profile_page,
         profile::post_profile,
         profile::post_profile_to_database_debug_mode_benchmark,
@@ -54,6 +55,7 @@ pub use server_common::{data::DataError, result};
         model::profile::GetProfileResult,
         model::profile::GetProfileQueryParam,
         model::profile::GetMyProfileResult,
+        model::profile::GetInitialProfileAgeInfoResult,
         model::profile::Location,
         model::profile::FavoriteProfilesPage,
         model::profile::AvailableProfileAttributes,
@@ -79,6 +81,7 @@ pub use server_common::{data::DataError, result};
         model::profile::LastSeenTime,
         model::profile::LastSeenTimeFilter,
         model::profile::IteratorSessionId,
+        model::profile::AcceptedProfileAges,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

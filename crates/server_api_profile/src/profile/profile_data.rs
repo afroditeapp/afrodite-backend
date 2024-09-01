@@ -3,7 +3,7 @@ use axum::{
     Extension, Router,
 };
 use model::{
-    AccountId, AccountIdInternal, AccountState, Capabilities, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
+    AccountId, AccountIdInternal, AccountState, Capabilities, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
 use server_api::{app::IsMatch, db_write_multiple};
 use server_data::read::GetReadCommandsCommon;
@@ -342,6 +342,44 @@ pub async fn get_my_profile<
     Ok(r.into())
 }
 
+pub const PATH_GET_INITIAL_PROFILE_AGE_INFO: &str = "/profile_api/initial_profile_age_info";
+
+/// Get initial profile age information which can be used for calculating
+/// current accepted profile ages.
+#[utoipa::path(
+    get,
+    path = PATH_GET_INITIAL_PROFILE_AGE_INFO,
+    responses(
+        (status = 200, description = "Success", body = GetInitialProfileAgeInfoResult),
+        (status = 401, description = "Unauthorized"),
+        (
+            status = 500,
+            description = "Internal server error",
+        ),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_initial_profile_age_info<
+    S: ReadData,
+>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<GetInitialProfileAgeInfoResult>, StatusCode> {
+    PROFILE.get_initial_profile_age_info.incr();
+
+    let info = state
+        .read()
+        .profile()
+        .accepted_profile_ages(account_id)
+        .await?;
+
+    let r = GetInitialProfileAgeInfoResult {
+        info,
+    };
+
+    Ok(r.into())
+}
+
 pub fn profile_data_router<
     S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig + IsMatch,
 >(
@@ -357,6 +395,7 @@ pub fn profile_data_router<
         .route(PATH_POST_SEARCH_GROUPS, post(post_search_groups::<S>))
         .route(PATH_POST_SEARCH_AGE_RANGE, post(post_search_age_range::<S>))
         .route(PATH_GET_MY_PROFILE, get(get_my_profile::<S>))
+        .route(PATH_GET_INITIAL_PROFILE_AGE_INFO, get(get_initial_profile_age_info::<S>))
         .with_state(s)
 }
 
@@ -371,4 +410,5 @@ create_counters!(
     post_search_groups,
     post_search_age_range,
     get_my_profile,
+    get_initial_profile_age_info,
 );
