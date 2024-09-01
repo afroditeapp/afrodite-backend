@@ -296,7 +296,7 @@ pub struct SetAccountSetup {
     /// String date with "YYYY-MM-DD" format.
     ///
     /// This is not required at the moment to reduce sensitive user data.
-    #[schema(value_type = String)]
+    #[schema(value_type = Option<String>)]
     pub birthdate: Option<NaiveDate>,
     pub is_adult: bool,
 }
