@@ -67,7 +67,7 @@ pub async fn post_account_setup<S: GetConfig + GetInternalApi + WriteData>(
     ACCOUNT.post_account_setup.incr();
 
     if account_state == AccountState::InitialSetup {
-        if data.is_invalid() {
+        if !data.is_valid() {
             return Err(StatusCode::NOT_ACCEPTABLE);
         }
 

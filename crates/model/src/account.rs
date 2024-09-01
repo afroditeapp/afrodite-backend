@@ -302,10 +302,10 @@ pub struct SetAccountSetup {
 }
 
 impl SetAccountSetup {
-    pub fn is_invalid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         let birthdate_is_valid = if let Some(birthdate) = self.birthdate {
             let age = age_in_years_from_birthdate(birthdate);
-            age < 18 || age > 150
+            18 <= age && age <= 150
         } else {
             true
         };
@@ -333,11 +333,12 @@ impl SetAccountSetup {
 pub struct AccountSetup {
     #[schema(value_type = Option<String>)]
     birthdate: Option<NaiveDate>,
+    is_adult: Option<bool>,
 }
 
 impl AccountSetup {
-    pub fn is_invalid(&self) -> bool {
-        self.birthdate.is_none()
+    pub fn is_valid(&self) -> bool {
+        self.is_adult == Some(true)
     }
 }
 

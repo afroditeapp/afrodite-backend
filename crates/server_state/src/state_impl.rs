@@ -434,7 +434,7 @@ impl CompleteInitialSetupCmd for S {
             }
 
             let account_setup = cmds.read().account().account_setup(id).await?;
-            if account_setup.is_invalid() {
+            if !account_setup.is_valid() {
                 return Err(DataError::NotAllowed.report());
             }
 
