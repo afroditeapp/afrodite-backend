@@ -5,7 +5,7 @@ use axum::{
 use model::{
     AccountId, AccountIdInternal, AccountState, Capabilities, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
-use server_api::app::IsMatch;
+use server_api::{app::IsMatch, db_write_multiple};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -127,8 +127,15 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// # Requirements
 /// - Profile attributes must be valid
 /// - Profile text must be empty
-/// - Profile age must be same as currently or same as the current
-///   age calculated from birthdate
+/// - Profile age must match with currently valid age range. The first min
+///   value for the age range is the age at the initial setup. The second min
+///   and max value is calculated using the following algorithm:
+///  - The initial age (initialAge) is paired with the year of initial
+///    setup completed (initialSetupYear).
+///    - Year difference (yearDifference = currentYear - initialSetupYear) is
+///      used for changing the range min and max.
+///      - Min value: initialAge + yearDifference - 1.
+///      - Max value: initialAge + yearDifference + 1.
 ///
 /// TODO: string lenght validation, limit saving new profiles
 /// TODO: return the new proifle. Edit: is this really needed?
@@ -153,19 +160,30 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
 ) -> Result<(), StatusCode> {
     PROFILE.post_profile.incr();
 
-    let old_profile = state.read().profile().profile(account_id).await?;
-    let birthdate = state.read().common().latest_birthdate(account_id).await?;
-    let profile = profile
-        .validate(state.config().profile_attributes(), &old_profile.profile, &birthdate)
-        .into_error_string(DataError::NotAllowed)?;
+    db_write_multiple!(state, move |cmds| {
+        let account_state = cmds.read().common().account(account_id).await?.state();
+        let old_profile = cmds.read().profile().profile(account_id).await?;
+        let accepted_ages = if account_state != AccountState::InitialSetup {
+            cmds.read().profile().accepted_profile_ages(account_id).await?
+        } else {
+            None
+        };
+        let profile = profile
+            .validate(cmds.config().profile_attributes(), &old_profile.profile, accepted_ages)
+            .into_error_string(DataError::NotAllowed)?;
 
-    if profile.equals_with(&old_profile.profile) {
-        return Ok(());
-    }
+        if profile.equals_with(&old_profile.profile) {
+            return Ok(());
+        }
 
-    let new = ProfileUpdateInternal::new(profile);
+        let new = ProfileUpdateInternal::new(profile);
 
-    db_write!(state, move |cmds| cmds.profile().profile(account_id, new))
+        cmds.profile().profile(account_id, new).await?;
+
+        Ok(())
+    })?;
+
+    Ok(())
 }
 
 pub const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";

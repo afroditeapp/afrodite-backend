@@ -42,6 +42,13 @@ pub trait ValidateModerationRequest: GetConfig + ReadData + GetInternalApi {
     ) -> impl std::future::Future<Output = server_common::result::Result<(), InternalApiError>> + Send;
 }
 
+pub trait CompleteInitialSetupCmd: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest {
+    fn complete_initial_setup(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> impl std::future::Future<Output = std::result::Result<(), StatusCode>> + Send;
+}
+
 pub trait RegisteringCmd: WriteData {
     fn register_impl(
         &self,

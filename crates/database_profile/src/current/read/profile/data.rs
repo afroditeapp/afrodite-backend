@@ -4,7 +4,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, Location, Profile, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
+    AcceptedProfileAges, AccountIdInternal, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
 };
 
 define_current_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);
@@ -206,5 +206,32 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         }
 
         Ok(data)
+    }
+
+    /// Returns Ok(None) if the initial profile age is not yet set.
+    /// The age is set when complete initial setup command runs.
+    pub fn accepted_profile_ages(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<AcceptedProfileAges>, DieselDatabaseError> {
+        use crate::schema::profile_state::dsl::*;
+
+        let r: (Option<ProfileAge>, Option<UnixTime>) = profile_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select((
+                profile_initial_age,
+                profile_initial_age_set_unix_time,
+            ))
+            .first(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        if let (Some(age), Some(time)) = r {
+            Ok(Some(AcceptedProfileAges {
+                profile_initial_age: age,
+                profile_initial_age_set_unix_time: time,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 }

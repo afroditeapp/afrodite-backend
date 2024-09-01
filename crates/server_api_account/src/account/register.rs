@@ -1,12 +1,11 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, AccountSetup, AccountState, Capabilities, EmailMessages, EventToClientInternal, SetAccountSetup};
-use server_api::{app::ValidateModerationRequest, result::WrappedContextExt, DataError};
+use model::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
+use server_api::app::{CompleteInitialSetupCmd, ValidateModerationRequest};
 use server_data_account::{
     read::GetReadCommandsAccount,
-    write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount},
+    write::GetWriteCommandsAccount,
 };
 use simple_backend::create_counters;
-use tracing::warn;
 
 use crate::{
     app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData},
@@ -109,7 +108,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     security(("access_token" = [])),
 )]
 pub async fn post_complete_setup<
-    S: ReadData + WriteData + GetInternalApi + GetConfig + ValidateModerationRequest,
+    S: CompleteInitialSetupCmd,
 >(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
@@ -117,111 +116,13 @@ pub async fn post_complete_setup<
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_complete_setup.incr();
 
-    // Initial account state check
+    // Initial account state check. The complete setup implementation has
+    // another which handles race conditions.
     if account_state != AccountState::InitialSetup {
         return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
-    // Validate media moderation.
-    // Moderation request creation also validates that the initial request
-    // contains security content, so there is no possibility that user
-    // changes the request to be invalid just after this check.
-    state.media_check_moderation_request_for_account(id).await?;
-
-    let account_data = state.read().account().account_data(id).await?;
-    let sign_in_with_info = state.read().account().account_sign_in_with_info(id).await?;
-    let (matches_with_grant_admin_access_config, grant_admin_access_more_than_once) =
-        if let Some(grant_admin_access_config) = state.config().grant_admin_access_config() {
-            let matches = match (
-                grant_admin_access_config.email.as_ref(),
-                grant_admin_access_config.google_account_id.as_ref(),
-            ) {
-                (wanted_email @ Some(_), Some(wanted_google_account_id)) => {
-                    wanted_email == account_data.email.as_ref()
-                        && sign_in_with_info
-                            .google_account_id_matches_with(wanted_google_account_id)
-                }
-                (wanted_email @ Some(_), None) => wanted_email == account_data.email.as_ref(),
-                (None, Some(wanted_google_account_id)) => {
-                    sign_in_with_info.google_account_id_matches_with(wanted_google_account_id)
-                }
-                (None, None) => false,
-            };
-
-            (
-                matches,
-                grant_admin_access_config.for_every_matching_new_account,
-            )
-        } else {
-            (false, false)
-        };
-
-    let is_bot_account = state.read().account().is_bot_account(id).await?;
-
-    let new_account = db_write_multiple!(state, move |cmds| {
-        // Second account state check as db_write quarantees synchronous
-        // access.
-        let account_state = cmds.read().common().account(id).await?.state();
-        if account_state != AccountState::InitialSetup {
-            return Err(DataError::NotAllowed.report());
-        }
-
-        let account_setup = cmds.read().account().account_setup(id).await?;
-        if account_setup.is_invalid() {
-            return Err(DataError::NotAllowed.report());
-        }
-
-        let global_state = cmds.read().account().global_state().await?;
-        let enable_all_capabilities = if matches_with_grant_admin_access_config
-            && (global_state.admin_access_granted_count == 0 || grant_admin_access_more_than_once)
-        {
-            Some(IncrementAdminAccessGrantedCount)
-        } else {
-            None
-        };
-
-        let new_account = cmds
-            .account()
-            .update_syncable_account_data(
-                id,
-                enable_all_capabilities,
-                move |state, capabilities, _| {
-                    if *state == AccountState::InitialSetup {
-                        *state = AccountState::Normal;
-                        if enable_all_capabilities.is_some() {
-                            warn!("Account detected as admin account. Enabling all capabilities");
-                            *capabilities = Capabilities::all_enabled();
-                        }
-                    }
-                    Ok(())
-                },
-            )
-            .await?;
-
-        if !is_bot_account && !sign_in_with_info.some_sign_in_with_method_is_set() {
-            // Account registered email is not yet sent if email address
-            // was provided manually and not from some sign in with method.
-            cmds.account().email().send_email_if_not_already_sent(id, EmailMessages::AccountRegistered).await?;
-        }
-
-        cmds.events()
-            .send_connected_event(
-                id.uuid,
-                EventToClientInternal::AccountStateChanged(new_account.state()),
-            )
-            .await?;
-
-        cmds.events()
-            .send_connected_event(
-                id.uuid,
-                EventToClientInternal::AccountCapabilitiesChanged(new_account.capablities()),
-            )
-            .await?;
-
-        Ok(new_account)
-    })?;
-
-    internal_api::common::sync_account_state(&state, id, new_account).await?;
+    state.complete_initial_setup(id).await?;
 
     Ok(())
 }
@@ -234,7 +135,8 @@ pub fn register_router<
         + GetInternalApi
         + GetConfig
         + GetAccessTokens
-        + ValidateModerationRequest,
+        + ValidateModerationRequest
+        + CompleteInitialSetupCmd,
 >(
     s: S,
 ) -> Router {

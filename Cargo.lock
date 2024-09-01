@@ -3717,7 +3717,6 @@ dependencies = [
  "server_data_account",
  "simple_backend",
  "tokio",
- "tracing",
  "utoipa",
 ]
 
@@ -3956,6 +3955,7 @@ dependencies = [
  "simple_backend",
  "simple_backend_config",
  "tokio",
+ "tracing",
  "uuid",
 ]
 
@@ -4142,6 +4142,7 @@ dependencies = [
 name = "simple_backend_model"
 version = "0.0.0"
 dependencies = [
+ "chrono",
  "diesel",
  "serde",
  "simple_backend_utils",

@@ -293,14 +293,24 @@ define_capablities!(
     Eq,
 )]
 pub struct SetAccountSetup {
+    /// String date with "YYYY-MM-DD" format.
+    ///
+    /// This is not required at the moment to reduce sensitive user data.
     #[schema(value_type = String)]
-    pub birthdate: NaiveDate,
+    pub birthdate: Option<NaiveDate>,
+    pub is_adult: bool,
 }
 
 impl SetAccountSetup {
     pub fn is_invalid(&self) -> bool {
-        let age = age_in_years_from_birthdate(self.birthdate);
-        age < 18 || age > 150
+        let birthdate_is_valid = if let Some(birthdate) = self.birthdate {
+            let age = age_in_years_from_birthdate(birthdate);
+            age < 18 || age > 150
+        } else {
+            true
+        };
+
+        birthdate_is_valid && self.is_adult
     }
 }
 

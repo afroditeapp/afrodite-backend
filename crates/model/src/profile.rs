@@ -1,14 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
-use chrono::NaiveDate;
 use diesel::{
     prelude::*,
     sql_types::{BigInt, Binary},
     AsExpression, FromSqlRow,
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper};
-use utils::time::age_in_years_from_birthdate;
+use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -149,11 +147,12 @@ pub struct ProfileUpdate {
 }
 
 impl ProfileUpdate {
+    /// `AcceptedProfileAges` is checked only if it is Some.
     pub fn validate(
         mut self,
         attribute_info: Option<&ProfileAttributes>,
         current_profile: &Profile,
-        birthdate: &Option<NaiveDate>,
+        accepted_profile_ages: Option<AcceptedProfileAges>,
     ) -> Result<ProfileUpdateValidated, String> {
         let mut hash_set = HashSet::new();
         for a in &mut self.attributes {
@@ -185,14 +184,10 @@ impl ProfileUpdate {
         }
 
         if self.age != current_profile.age {
-            if let Some(birthdate) = birthdate {
-                let birthdate_age = age_in_years_from_birthdate(*birthdate);
-                let new_profile_age: i32 = self.age.value().into();
-                if birthdate_age <= ProfileAge::MAX_AGE.into() && birthdate_age != new_profile_age {
-                    return Err("The new age is not the same as the age from birthdate".to_string());
+            if let Some(age_range) = accepted_profile_ages {
+                if !age_range.is_age_valid(self.age) {
+                    return Err("The new profile age is not in the current accepted profile age range".to_string());
                 }
-            } else {
-                return Err("Birthdate is not set".to_string());
             }
         }
 
@@ -373,6 +368,33 @@ impl GetProfileResult {
             profile: None,
             version: None,
             last_seen_time: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct AcceptedProfileAges {
+    pub profile_initial_age: ProfileAge,
+    pub profile_initial_age_set_unix_time: UnixTime,
+}
+
+impl AcceptedProfileAges {
+    pub fn is_age_valid(&self, age: ProfileAge) -> bool {
+        if age.value() < self.profile_initial_age.value() {
+            return false;
+        }
+
+        let current_time = UnixTime::current_time();
+        match (current_time.year(), self.profile_initial_age_set_unix_time.year()) {
+            (Some(current_year), Some(initial_year)) => {
+                let initial_age: i32 = self.profile_initial_age.value().into();
+                let year_diff = current_year - initial_year;
+                let min = initial_age + year_diff - 1;
+                let max = initial_age + year_diff + 1;
+                let age: i32 = age.value().into();
+                min <= age && age <= max
+            }
+            _ => false,
         }
     }
 }

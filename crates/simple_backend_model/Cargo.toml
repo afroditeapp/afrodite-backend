@@ -10,6 +10,7 @@ edition = "2021"
 serde = { workspace = true }
 utoipa = { workspace = true }
 diesel = { workspace = true }
+chrono = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils"}
 

@@ -143,6 +143,7 @@ CREATE TABLE IF NOT EXISTS account_setup(
     -- account initial setup is done. The birthdate in shared_state can
     -- be modified later.
     birthdate                 DATE,
+    is_adult                  BOOLEAN,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -201,7 +202,10 @@ CREATE TABLE IF NOT EXISTS profile_state(
     latitude                   DOUBLE               NOT NULL    DEFAULT 0.0,
     longitude                  DOUBLE               NOT NULL    DEFAULT 0.0,
     -- Sync version for profile attributes config file.
-    profile_attributes_sync_version INTEGER         NOT NULL    DEFAULT 0,
+    profile_attributes_sync_version   INTEGER         NOT NULL    DEFAULT 0,
+    -- Profile age when initial setup is completed
+    profile_initial_age               INTEGER,
+    profile_initial_age_set_unix_time INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

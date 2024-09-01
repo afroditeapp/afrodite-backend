@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use diesel::{sql_types::BigInt, AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::current_unix_time;
@@ -37,6 +38,11 @@ impl UnixTime {
         Self {
             unix_time: current_unix_time(),
         }
+    }
+
+    pub fn year(&self) -> Option<i32> {
+        chrono::DateTime::from_timestamp(self.unix_time, 0)
+            .map(|v| v.year())
     }
 }
 

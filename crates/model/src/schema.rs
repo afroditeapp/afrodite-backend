@@ -97,6 +97,7 @@ diesel::table! {
     account_setup (account_id) {
         account_id -> Integer,
         birthdate -> Nullable<Date>,
+        is_adult -> Nullable<Bool>,
     }
 }
 
@@ -354,6 +355,8 @@ diesel::table! {
         latitude -> Double,
         longitude -> Double,
         profile_attributes_sync_version -> Integer,
+        profile_initial_age -> Nullable<Integer>,
+        profile_initial_age_set_unix_time -> Nullable<Integer>,
     }
 }
 

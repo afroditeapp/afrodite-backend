@@ -289,4 +289,14 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.profile().data().profile_last_seen_time(id, last_seen_time)
         })
     }
+
+    pub async fn set_initial_profile_age_from_current_profile(
+        self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            let profile = cmds.read().profile().data().profile(id)?;
+            cmds.profile().data().initial_profile_age(id, profile.age)
+        })
+    }
 }

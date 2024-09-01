@@ -2,7 +2,7 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
 use model::{
-    AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
+    AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
 };
 
 use super::ConnectionProvider;
@@ -113,6 +113,26 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
 
         update(profile_state.find(id.as_db_id()))
             .set(data)
+            .execute(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(())
+    }
+
+    pub fn initial_profile_age(
+        &mut self,
+        id: AccountIdInternal,
+        initial_age: ProfileAge,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::profile_state::dsl::*;
+
+        let current_time = UnixTime::current_time();
+
+        update(profile_state.find(id.as_db_id()))
+            .set((
+                profile_initial_age.eq(initial_age),
+                profile_initial_age_set_unix_time.eq(current_time),
+            ))
             .execute(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 
