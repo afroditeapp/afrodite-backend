@@ -5,7 +5,7 @@ use axum::{
 use model::{
     AccountId, AccountIdInternal, AccountState, Capabilities, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
-use server_api::{app::IsMatch, db_write_multiple};
+use server_api::{app::IsMatch, db_write_multiple, result::WrappedContextExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -128,8 +128,9 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// is emitted only from server side profile updates.
 ///
 /// # Requirements
-/// - Profile attributes must be valid
-/// - Profile text must be empty
+/// - Profile attributes must be valid.
+/// - Profile text must be empty.
+/// - Profile name changes are only possible when initial setup is ongoing.
 /// - Profile age must match with currently valid age range. The first min
 ///   value for the age range is the age at the initial setup. The second min
 ///   and max value is calculated using the following algorithm:
@@ -177,6 +178,10 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
 
         if profile.equals_with(&old_profile.profile) {
             return Ok(());
+        }
+
+        if account_state != AccountState::InitialSetup && profile.name != old_profile.profile.name {
+            return Err(DataError::NotAllowed.report());
         }
 
         let new = ProfileUpdateInternal::new(profile);

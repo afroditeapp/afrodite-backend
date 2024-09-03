@@ -74,8 +74,12 @@ impl TestContext {
         Account::register_and_login(self.clone()).await
     }
 
-    /// Account with Normal state.
+    /// Account with Normal state, age 30 and name "Test".
     pub async fn new_account(&self) -> Result<Account, TestError> {
+      self.new_account_internal(30, "Test").await
+    }
+
+    async fn new_account_internal(&self, age: i64, name: &str) -> Result<Account, TestError> {
         let mut account = Account::register_and_login(self.clone()).await?;
         account
             .run_actions(action_array![
@@ -88,9 +92,25 @@ impl TestContext {
                 MakeModerationRequest {
                     slots_to_request: &[0],
                 },
+            ])
+            .await?;
+
+        let update = ProfileUpdate {
+            attributes: vec![],
+            age,
+            name: name.to_string(),
+            profile_text: String::new(),
+        };
+        post_profile(account.profile_api(), update)
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        account
+            .run_actions(action_array![
                 CompleteAccountSetup,
             ])
             .await?;
+
         Ok(account)
     }
 
@@ -102,16 +122,7 @@ impl TestContext {
         max_age: i32,
         groups: SearchGroups,
     ) -> Result<Account, TestError> {
-        let account = self.new_account().await?;
-        let update = ProfileUpdate {
-            attributes: vec![],
-            age,
-            name: name.to_string(),
-            profile_text: String::new(),
-        };
-        post_profile(account.profile_api(), update)
-            .await
-            .change_context(TestError::ApiRequest)?;
+        let account = self.new_account_internal(age, name).await?;
 
         let range = ProfileSearchAgeRange {
             min: min_age,
