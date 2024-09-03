@@ -8,6 +8,8 @@ use crate::{
 };
 
 /// Profile age value which is in inclusive range `[18, 99]`.
+///
+/// This serializes to i64, so this must not be added to API doc.
 #[derive(
     Debug,
     Clone,

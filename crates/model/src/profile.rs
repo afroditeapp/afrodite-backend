@@ -383,6 +383,7 @@ pub struct GetMyProfileResult {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct AcceptedProfileAges {
+    #[schema(value_type = i64)]
     pub profile_initial_age: ProfileAge,
     pub profile_initial_age_set_unix_time: UnixTime,
 }
