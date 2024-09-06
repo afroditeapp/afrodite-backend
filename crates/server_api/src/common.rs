@@ -10,7 +10,7 @@ use axum::{
     },
     response::IntoResponse,
 };
-use axum_extra::TypedHeader;
+use http::HeaderMap;
 use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
 use tokio::time::Instant;
 use crate::{app::ConnectionTools, utils::Json};
@@ -19,7 +19,7 @@ use simple_backend::{create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
 
-use super::utils::{AccessTokenHeader, StatusCode};
+use super::utils::StatusCode;
 use crate::{
     app::GetAccessTokens,
     result::{Result, WrappedContextExt, WrappedResultExt},
@@ -105,7 +105,7 @@ pub use utils::api::PATH_CONNECT;
 /// Protocol:
 /// 1. Client sends version information as Binary message, where
 ///    - u8: Client WebSocket protocol version (currently 0).
-///    - u8: Client type number. (0 = Android, 1 = iOS, 255 = Test mode bot)
+///    - u8: Client type number. (0 = Android, 1 = iOS, 2 = Web, 255 = Test mode bot)
 ///    - u16: Client Major version.
 ///    - u16: Client Minor version.
 ///    - u16: Client Patch version.
@@ -137,22 +137,25 @@ pub use utils::api::PATH_CONNECT;
 /// send a WebScoket ping message before 6 minutes elapses from connection
 /// establishment or previous ping message.
 ///
+/// `Sec-WebSocket-Protocol` header must have 2 protocols/values. The first
+/// is "0" and that protocol is accepted. The second is access token of
+/// currently logged in account. The token is base64url encoded without padding.
 #[utoipa::path(
     get,
-    path = "/common_api/connect",
+    path = PATH_CONNECT,
     responses(
         (status = 101, description = "Switching protocols."),
         (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error. TODO: can be removed?"),
+        (status = 500, description = "Internal server error."),
     ),
-    security(("access_token" = [])),
+    security(),
 )]
 pub async fn get_connect_websocket<
     S: ConnectionTools + GetAccessTokens + EventManagerProvider,
 >(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
-    TypedHeader(access_token): TypedHeader<AccessTokenHeader>,
+    header_map: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     ws_manager: WebSocketManager,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
@@ -161,14 +164,33 @@ pub async fn get_connect_websocket<
     // NOTE: This handler does not have authentication layer enabled, so
     // authentication must be done manually.
 
-    let id = state
-        .access_token_exists(access_token.key())
-        .await
-        .ok_or(StatusCode::UNAUTHORIZED)?;
+    let mut protocols_iterator = header_map.get(http::header::SEC_WEBSOCKET_PROTOCOL)
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?
+        .to_str()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .split(',')
+        .map(|v| v.trim());
+
+    if protocols_iterator.next() != Some("0") {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let id = if let Some(access_token) = protocols_iterator.next() {
+        let access_token = AccessToken::new(access_token.to_string());
+        state
+            .access_token_exists(&access_token)
+            .await
+            .ok_or(StatusCode::UNAUTHORIZED)?
+    } else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
 
     info!("get_connect_websocket for '{}'", id.id.as_i64());
 
-    Ok(websocket.on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager)))
+    let response = websocket
+        .protocols(["0"])
+        .on_upgrade(move |socket| handle_socket(socket, addr, id, state, ws_manager));
+    Ok(response)
 }
 
 async fn handle_socket<S: ConnectionTools + EventManagerProvider>(

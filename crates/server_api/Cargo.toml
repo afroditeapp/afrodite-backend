@@ -12,10 +12,10 @@ serde_json = { workspace = true }
 tokio = { workspace = true }
 hyper = { workspace = true }
 axum = { workspace = true }
-axum-extra = { workspace = true }
 tracing = { workspace = true }
 headers = { workspace = true }
 reqwest = { workspace = true }
+http = { workspace = true }
 
 utoipa = { workspace = true }
 

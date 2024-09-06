@@ -15,7 +15,7 @@ use headers::HeaderValue;
 use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{client::IntoClientRequest, Message};
 use url::Url;
-use utils::api::{ACCESS_TOKEN_HEADER_STR, PATH_CONNECT};
+use utils::api::PATH_CONNECT;
 
 use super::{super::super::client::TestError, BotAction, BotState, PreviousValue};
 use crate::{
@@ -134,9 +134,10 @@ async fn connect_websocket(
     let mut r = url
         .into_client_request()
         .change_context(TestError::WebSocket)?;
+    let protocol_header_value = format!("0,{}", auth.access.access_token);
     r.headers_mut().insert(
-        ACCESS_TOKEN_HEADER_STR,
-        HeaderValue::from_str(&auth.access.access_token).change_context(TestError::WebSocket)?,
+        http::header::SEC_WEBSOCKET_PROTOCOL,
+        HeaderValue::from_str(&protocol_header_value).change_context(TestError::WebSocket)?,
     );
     let (mut stream, _) = tokio_tungstenite::connect_async(r)
         .await

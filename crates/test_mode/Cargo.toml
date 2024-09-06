@@ -23,6 +23,7 @@ hyper = { workspace = true }
 headers = { workspace = true }
 reqwest = { workspace = true }
 url = { workspace = true }
+http = { workspace = true }
 
 thiserror = { workspace = true }
 error-stack = { workspace = true }

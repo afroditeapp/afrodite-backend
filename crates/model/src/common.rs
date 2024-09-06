@@ -348,8 +348,8 @@ pub struct AccessTokenRaw {
 
 /// AccessToken is used as a short lived token for API access.
 ///
-/// The token is 256 bit random value which is Base64 encoded.
-/// The token lenght in characters is 44.
+/// The token is 256 bit random value which is base64url encoded
+/// without padding. The token lenght in characters is 44.
 ///
 /// OWASP recommends at least 128 bit session IDs.
 /// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
@@ -367,7 +367,7 @@ impl AccessToken {
             token.extend(uuid::Uuid::new_v4().to_bytes_le())
         }
         Self {
-            access_token: base64::engine::general_purpose::STANDARD.encode(token),
+            access_token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(token),
         }
     }
 
