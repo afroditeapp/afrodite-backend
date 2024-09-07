@@ -3,6 +3,7 @@
 pub enum ClientTypeNumber {
     Android = 0,
     Ios = 1,
+    Web = 2,
     /// Type number for test mode bots. It is the last available value
     /// to keep it more hidden.
     TestModeBot = 255,
@@ -15,6 +16,7 @@ impl TryFrom<u8> for ClientTypeNumber {
         match value {
             0 => Ok(Self::Android),
             1 => Ok(Self::Ios),
+            2 => Ok(Self::Web),
             255 => Ok(Self::TestModeBot),
             _ => Err(format!("Unknown client type number {}", value)),
         }
