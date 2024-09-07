@@ -116,7 +116,8 @@ pub use utils::api::PATH_CONNECT;
 ///    as Binary message.
 ///    If server does not support the client, the server sends Text message
 ///    and closes the connection.
-/// 4. Server sends new access token as Text message.
+/// 4. Server sends new access token as Binary message. The client must
+///    convert the token to base64url encoding without padding.
 ///    (At this point API can be used.)
 /// 5. Client sends list of current data sync versions as Binary message, where
 ///    items are [u8; 2] and the first u8 of an item is the data type number
@@ -335,14 +336,13 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
     // Refresh check was successful, so the new refresh token can be sent.
 
     let (new_refresh_token, new_refresh_token_bytes) = RefreshToken::generate_new_with_bytes();
-    let new_access_token = AccessToken::generate_new();
+    let (new_access_token, new_access_token_bytes) = AccessToken::generate_new_with_bytes();
 
     socket
         .send(Message::Binary(new_refresh_token_bytes))
         .await
         .change_context(WebSocketError::Send)?;
 
-    let new_access_token_cloned = new_access_token.clone();
     let mut event_receiver = state
         .write(move |cmds| async move {
             // Prevent sending push notification if this connection
@@ -354,7 +354,7 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
                 .set_new_auth_pair(
                     id,
                     AuthPair {
-                        access: new_access_token_cloned,
+                        access: new_access_token,
                         refresh: new_refresh_token,
                     },
                     Some(address),
@@ -366,7 +366,7 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
         .ok_or(WebSocketError::EventChannelCreationFailed.report())?;
 
     socket
-        .send(Message::Text(new_access_token.into_string()))
+        .send(Message::Binary(new_access_token_bytes))
         .await
         .change_context(WebSocketError::Send)?;
 

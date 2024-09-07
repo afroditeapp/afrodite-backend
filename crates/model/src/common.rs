@@ -360,15 +360,20 @@ pub struct AccessToken {
 }
 
 impl AccessToken {
-    pub fn generate_new() -> Self {
+    pub fn generate_new_with_bytes() -> (Self, Vec<u8>) {
         // Generate 256 bit token
         let mut token = Vec::new();
         for _ in 1..=2 {
             token.extend(uuid::Uuid::new_v4().to_bytes_le())
         }
-        Self {
-            access_token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(token),
-        }
+        let access_token = Self {
+            access_token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&token),
+        };
+        (access_token, token)
+    }
+
+    pub fn generate_new() -> Self {
+        Self::generate_new_with_bytes().0
     }
 
     pub fn new(access_token: String) -> Self {

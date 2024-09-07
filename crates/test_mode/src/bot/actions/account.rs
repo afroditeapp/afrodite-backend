@@ -181,7 +181,10 @@ async fn connect_websocket(
         .ok_or(TestError::WebSocket.report())?
         .change_context(TestError::WebSocket)?;
     match access_token {
-        Message::Text(access_token) => state.api.set_access_token(access_token),
+        Message::Binary(access_token_bytes) => {
+            let access_token = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(access_token_bytes);
+            state.api.set_access_token(access_token)
+        },
         _ => return Err(TestError::WebSocketWrongValue.report()),
     }
 
