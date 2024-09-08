@@ -139,7 +139,16 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     fn create_swagger_ui(&self) -> Option<SwaggerUi> {
-        Some(SwaggerUi::new("/swagger-ui").url("/api-doc/pihka_api.json", ApiDoc::all()))
+        const API_DOC_URL: &str = "/api-doc/pihka_api.json";
+        Some(
+            SwaggerUi::new("/swagger-ui")
+                .url(API_DOC_URL, ApiDoc::all())
+                .config(
+                    utoipa_swagger_ui::Config::from(API_DOC_URL)
+                        .display_operation_id(true)
+                        .use_base_layout()
+                )
+        )
     }
 
     async fn on_before_server_start(
