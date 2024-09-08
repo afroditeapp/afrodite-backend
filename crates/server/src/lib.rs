@@ -311,3 +311,6 @@ impl BusinessLogic for PihkaBusinessLogic {
             .await;
     }
 }
+
+// TODO(prod): Add Cache-Control header for images as web client should
+// use browser cache.
