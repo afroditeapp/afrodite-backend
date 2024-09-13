@@ -1,0 +1,15 @@
+[package]
+name = "obfuscate_api_macro"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { workspace = true }
+quote = { workspace = true }
+sha1 = { workspace = true }
+base64 = { workspace = true }
