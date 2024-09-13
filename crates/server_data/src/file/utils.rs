@@ -14,6 +14,8 @@ pub const TMP_DIR_NAME: &str = "tmp";
 pub const CONTENT_DIR_NAME: &str = "content";
 pub const EXPORT_DIR_NAME: &str = "export";
 
+const MAX_TMP_FILE_SIZE: usize = 1024 * 1024 * 1024 * 10; // 10 MiB
+
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
 pub struct FileDir {
@@ -258,8 +260,14 @@ impl PathToFile {
             .await
             .change_context(FileError::IoFileCreate)?;
 
+        let mut file_size = 0;
+
         while let Some(result) = stream.next().await {
             let mut data = result.change_context(FileError::StreamReadFailed)?;
+            file_size += data.len();
+            if file_size > MAX_TMP_FILE_SIZE {
+                return Err(FileError::FileUploadMaxFileSizeReached.report());
+            }
             file.write_all_buf(&mut data)
                 .await
                 .change_context(FileError::IoFileWrite)?;
