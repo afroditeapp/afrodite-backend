@@ -295,15 +295,11 @@ impl BotState {
         })
     }
 
-    /// Is current bot an admin bot.
+    /// Is current bot an bot mode admin bot.
     ///
-    /// Admin bot is detected from bot ID. First `n` bots are user bots
-    /// and the rest are admin bots.
-    pub fn is_admin_bot(&self) -> bool {
-        self.config
-            .bot_mode()
-            .map(|bot_config| self.bot_id < bot_config.admins)
-            .unwrap_or(false)
+    /// All bots in task ID 1 are admin bots in bot mode.
+    pub fn is_bot_mode_admin_bot(&self) -> bool {
+        self.config.bot_mode().is_some() && self.task_id == 1
     }
 
     pub fn get_bot_config(&self) -> Option<&BotInstanceConfig> {
@@ -406,7 +402,7 @@ impl BotManager {
         bot_running_handle: mpsc::Sender<Vec<BotPersistentState>>,
     ) -> Self {
         let mut bots = Vec::<Box<dyn BotStruct>>::new();
-        for bot_i in 0..config.bots() {
+        for bot_i in 0..config.bots(task_id) {
             let state = BotState::new(
                 old_state.as_ref().and_then(|d| {
                     d.find_matching(task_id, bot_i)

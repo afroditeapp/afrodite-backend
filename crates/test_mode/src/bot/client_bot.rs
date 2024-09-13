@@ -53,7 +53,7 @@ impl Debug for ClientBot {
 
 impl ClientBot {
     pub fn new(state: BotState) -> Self {
-        let iter = if state.is_admin_bot() {
+        let iter = if state.is_bot_mode_admin_bot() {
             // Admin bot
 
             const SETUP: ActionArray = action_array![

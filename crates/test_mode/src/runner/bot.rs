@@ -1,6 +1,6 @@
 //! Bot mode related test/bot runner.
 
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{collections::{HashMap, HashSet}, path::PathBuf, sync::Arc};
 
 use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
 use tokio::{
@@ -77,11 +77,7 @@ impl BotTestRunner {
         let mut task_number = self.test_config.tasks();
 
         if !quit_now {
-            info!(
-                "Task count: {}, Bot count per task: {}",
-                self.test_config.tasks(),
-                self.test_config.bots(),
-            );
+            self.log_task_and_bot_count_info();
 
             while task_number > 0 {
                 BotManager::spawn(
@@ -178,6 +174,27 @@ impl BotTestRunner {
                 error!("state data loading error: {:?}", e);
                 None
             }
+        }
+    }
+
+    fn log_task_and_bot_count_info(&self) {
+        let mut bot_counts: Vec<u32> = vec![];
+        for task_id in 0..self.test_config.tasks() {
+            bot_counts.push(self.test_config.bots(task_id));
+        }
+        let all_values_equal_info: HashSet<u32> = bot_counts.iter().copied().collect();
+        if all_values_equal_info.len() <= 1 {
+            info!(
+                "Task count: {}, Bot count per task: {}",
+                self.test_config.tasks(),
+                self.test_config.bots(0),
+            );
+        } else {
+            info!(
+                "Task count: {}, Bot counts per task: {:?}",
+                self.test_config.tasks(),
+                bot_counts,
+            );
         }
     }
 

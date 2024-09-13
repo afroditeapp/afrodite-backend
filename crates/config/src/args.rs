@@ -103,9 +103,10 @@ pub struct TestMode {
 }
 
 impl TestMode {
-    pub fn bots(&self) -> u32 {
+    pub fn bots(&self, task_id: u32) -> u32 {
         match &self.mode {
-            TestModeSubMode::Bot(c) => c.users + c.admins,
+            TestModeSubMode::Bot(c) if task_id == 0 => c.users,
+            TestModeSubMode::Bot(c) if task_id == 1 => c.admins,
             TestModeSubMode::Benchmark(c) => c.bots,
             _ => 1,
         }
@@ -113,6 +114,8 @@ impl TestMode {
 
     pub fn tasks(&self) -> u32 {
         match &self.mode {
+            TestModeSubMode::Bot(c) if c.admins > 0 => 2,
+            TestModeSubMode::Bot(_) => 1,
             TestModeSubMode::Benchmark(c) =>
                 match c.benchmark {
                     SelectedBenchmark::GetProfileList => c.tasks + 2,
