@@ -3914,8 +3914,6 @@ dependencies = [
  "server_common",
  "server_data",
  "simple_backend",
- "tokio",
- "tokio-util",
 ]
 
 [[package]]
