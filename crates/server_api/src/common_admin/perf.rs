@@ -3,6 +3,7 @@ use axum::{
     Extension, Router,
 };
 use model::Capabilities;
+use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
 
@@ -11,6 +12,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
+#[obfuscate_api]
 pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 
 /// Get performance data
@@ -19,7 +21,7 @@ pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 /// Requires admin_server_maintenance_view_info.
 #[utoipa::path(
     get,
-    path = "/common_api/perf_data",
+    path = PATH_GET_PERF_DATA,
     params(PerfHistoryQuery),
     responses(
         (status = 200, description = "Get was successfull.", body = PerfHistoryQueryResult),
@@ -46,7 +48,7 @@ pub fn perf_router<S: StateBase + PerfCounterDataProvider>(s: S) -> Router {
     use axum::routing::get;
 
     Router::new()
-        .route(PATH_GET_PERF_DATA, get(get_perf_data::<S>))
+        .route(PATH_GET_PERF_DATA_AXUM, get(get_perf_data::<S>))
         .with_state(s)
 }
 

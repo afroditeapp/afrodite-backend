@@ -21,7 +21,7 @@ use simple_backend::web_socket::WebSocketManager;
 pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Router {
     let public = Router::new()
         .route(
-            api::common::PATH_GET_VERSION, // TODO(prod): Make private?
+            api::common::PATH_GET_VERSION_AXUM, // TODO(prod): Make private?
             get(server_api::common::get_version::<S>),
         )
         .route(
@@ -33,7 +33,7 @@ pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Ro
             get(server_api::common::get_file_package_access_root::<S>),
         )
         .route(
-            api::common::PATH_CONNECT, // This route checks the access token by itself.
+            api::common::PATH_CONNECT_AXUM, // This route checks the access token by itself.
             get({
                 move |state, param1, param2, param3| {
                     api::common::get_connect_websocket::<S>(

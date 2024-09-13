@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, BackendConfig, Capabilities};
+use obfuscate_api_macro::obfuscate_api;
 use simple_backend::create_counters;
 use tracing::info;
 
@@ -8,6 +9,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
+#[obfuscate_api]
 pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
 
 /// Get dynamic backend config.
@@ -16,7 +18,7 @@ pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
 /// Requires admin_server_maintenance_view_backend_settings.
 #[utoipa::path(
     get,
-    path = "/common_api/backend_config",
+    path = PATH_GET_BACKEND_CONFIG,
     params(),
     responses(
         (status = 200, description = "Get was successfull.", body = BackendConfig),
@@ -39,6 +41,7 @@ pub async fn get_backend_config<S: ReadDynamicConfig>(
     }
 }
 
+#[obfuscate_api]
 pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
 
 /// Save dynamic backend config.
@@ -47,7 +50,7 @@ pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
 /// Requires admin_server_maintenance_save_backend_settings.
 #[utoipa::path(
     post,
-    path = "/common_api/backend_config",
+    path = PATH_POST_BACKEND_CONFIG,
     params(),
     request_body(content = BackendConfig),
     responses(
@@ -83,8 +86,8 @@ pub fn config_router<S: StateBase + WriteDynamicConfig + ReadDynamicConfig>(s: S
     use axum::routing::{get, post};
 
     Router::new()
-        .route(PATH_GET_BACKEND_CONFIG, get(get_backend_config::<S>))
-        .route(PATH_POST_BACKEND_CONFIG, post(post_backend_config::<S>))
+        .route(PATH_GET_BACKEND_CONFIG_AXUM, get(get_backend_config::<S>))
+        .route(PATH_POST_BACKEND_CONFIG_AXUM, post(post_backend_config::<S>))
         .with_state(s)
 }
 

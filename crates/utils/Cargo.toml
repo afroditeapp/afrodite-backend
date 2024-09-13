@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 chrono = { workspace = true }
+
+obfuscate_api_macro = { path = "../obfuscate_api_macro" }

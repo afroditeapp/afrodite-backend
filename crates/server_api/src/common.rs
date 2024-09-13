@@ -12,6 +12,7 @@ use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
 use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
+use obfuscate_api_macro::obfuscate_api;
 use tokio::time::Instant;
 use crate::{app::ConnectionTools, utils::Json};
 use server_data::{app::{BackendVersionProvider, EventManagerProvider}, read::GetReadCommandsCommon};
@@ -25,12 +26,13 @@ use crate::{
     result::{WrappedContextExt, WrappedResultExt},
 };
 
+#[obfuscate_api]
 pub const PATH_GET_VERSION: &str = "/common_api/version";
 
 /// Get backend version.
 #[utoipa::path(
     get,
-    path = "/common_api/version",
+    path = PATH_GET_VERSION,
     security(),
     responses(
         (status = 200, description = "Version information.", body = BackendVersion),
@@ -126,6 +128,7 @@ pub enum WebSocketError {
 }
 
 pub use utils::api::PATH_CONNECT;
+pub use utils::api::PATH_CONNECT_AXUM;
 
 // ------------------------- WebSocket -------------------------
 

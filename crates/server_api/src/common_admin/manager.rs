@@ -7,6 +7,7 @@ use manager_model::{
     SystemInfoList,
 };
 use model::{AccountIdInternal, Capabilities};
+use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
 
@@ -15,12 +16,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
+#[obfuscate_api]
 pub const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 
 /// Get system information from manager instance.
 #[utoipa::path(
     get,
-    path = "/common_api/system_info",
+    path = PATH_GET_SYSTEM_INFO,
     responses(
         (status = 200, description = "Get was successfull.", body = SystemInfoList),
         (status = 401, description = "Unauthorized."),
@@ -42,12 +44,13 @@ pub async fn get_system_info<S: GetManagerApi>(
     }
 }
 
+#[obfuscate_api]
 pub const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
 
 /// Get software version information from manager instance.
 #[utoipa::path(
     get,
-    path = "/common_api/software_info",
+    path = PATH_GET_SOFTWARE_INFO,
     responses(
         (status = 200, description = "Get was successfull.", body = SoftwareInfo),
         (status = 401, description = "Unauthorized."),
@@ -69,13 +72,14 @@ pub async fn get_software_info<S: GetManagerApi>(
     }
 }
 
+#[obfuscate_api]
 pub const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info";
 
 /// Get latest software build information available for update from manager
 /// instance.
 #[utoipa::path(
     get,
-    path = "/common_api/get_latest_build_info",
+    path = PATH_GET_LATEST_BUILD_INFO,
     params(SoftwareOptionsQueryParam),
     responses(
         (status = 200, description = "Get was successfull.", body = BuildInfo),
@@ -102,12 +106,13 @@ pub async fn get_latest_build_info<S: GetManagerApi>(
     }
 }
 
+#[obfuscate_api]
 pub const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_software";
 
 /// Request building new software from manager instance.
 #[utoipa::path(
     post,
-    path = "/common_api/request_build_software",
+    path = PATH_POST_REQUEST_BUILD_SOFTWARE,
     params(SoftwareOptionsQueryParam),
     responses(
         (status = 200, description = "Request was successfull."),
@@ -134,6 +139,7 @@ pub async fn post_request_build_software<S: GetManagerApi>(
     }
 }
 
+#[obfuscate_api]
 pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_software";
 
 /// Request updating new software from manager instance.
@@ -151,7 +157,7 @@ pub const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_
 /// admin_server_maintenance_reset_data if reset_data is true.
 #[utoipa::path(
     post,
-    path = "/common_api/request_update_software",
+    path = PATH_POST_REQUEST_UPDATE_SOFTWARE,
     params(SoftwareOptionsQueryParam, RebootQueryParam, ResetDataQueryParam),
     responses(
         (status = 200, description = "Request was successfull."),
@@ -192,6 +198,7 @@ pub async fn post_request_update_software<S: GetManagerApi>(
     }
 }
 
+#[obfuscate_api]
 pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
     "/common_api/request_restart_or_reset_backend";
 
@@ -202,7 +209,7 @@ pub const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
 /// admin_server_maintenance_reset_data if reset_data is true.
 #[utoipa::path(
     post,
-    path = "/common_api/request_restart_or_reset_backend",
+    path = PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND,
     params(ResetDataQueryParam),
     responses(
         (status = 200, description = "Request was successfull."),
@@ -243,19 +250,19 @@ pub fn manager_router<S: StateBase + GetManagerApi>(s: S) -> Router {
     use axum::routing::{get, post};
 
     Router::new()
-        .route(PATH_GET_SYSTEM_INFO, get(get_system_info::<S>))
-        .route(PATH_GET_SOFTWARE_INFO, get(get_software_info::<S>))
-        .route(PATH_GET_LATEST_BUILD_INFO, get(get_latest_build_info::<S>))
+        .route(PATH_GET_SYSTEM_INFO_AXUM, get(get_system_info::<S>))
+        .route(PATH_GET_SOFTWARE_INFO_AXUM, get(get_software_info::<S>))
+        .route(PATH_GET_LATEST_BUILD_INFO_AXUM, get(get_latest_build_info::<S>))
         .route(
-            PATH_POST_REQUEST_BUILD_SOFTWARE,
+            PATH_POST_REQUEST_BUILD_SOFTWARE_AXUM,
             post(post_request_build_software::<S>),
         )
         .route(
-            PATH_POST_REQUEST_UPDATE_SOFTWARE,
+            PATH_POST_REQUEST_UPDATE_SOFTWARE_AXUM,
             post(post_request_update_software::<S>),
         )
         .route(
-            PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND,
+            PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND_AXUM,
             post(post_request_restart_or_reset_backend::<S>),
         )
         .with_state(s)

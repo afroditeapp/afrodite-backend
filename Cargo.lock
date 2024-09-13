@@ -3738,6 +3738,7 @@ dependencies = [
  "hyper",
  "manager_model",
  "model",
+ "obfuscate_api_macro",
  "reqwest",
  "serde",
  "serde_json",
@@ -4863,6 +4864,7 @@ name = "utils"
 version = "0.0.0"
 dependencies = [
  "chrono",
+ "obfuscate_api_macro",
 ]
 
 [[package]]
