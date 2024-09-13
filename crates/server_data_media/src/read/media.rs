@@ -6,8 +6,7 @@ use server_common::{
     data::{DataError, IntoDataError},
     result::Result,
 };
-use server_data::{define_server_data_read_commands, read::ReadCommandsProvider};
-use tokio_util::io::ReaderStream;
+use server_data::{define_server_data_read_commands, file::utils::ContentFile, read::ReadCommandsProvider};
 
 define_server_data_read_commands!(ReadCommandsMedia);
 define_db_read_command!(ReadCommandsMedia);
@@ -17,12 +16,10 @@ impl<C: ReadCommandsProvider> ReadCommandsMedia<C> {
         &self,
         account_id: AccountId,
         content_id: ContentId,
-    ) -> Result<Vec<u8>, DataError> {
-        self.files()
-            .media_content(account_id, content_id)
-            .read_all()
-            .await
-            .into_data_error((account_id, content_id))
+    ) -> Result<ContentFile, DataError> {
+        let c = self.files()
+            .media_content(account_id, content_id);
+        Ok(c)
     }
 
     pub async fn current_account_media(
@@ -36,18 +33,6 @@ impl<C: ReadCommandsProvider> ReadCommandsMedia<C> {
         })
         .await
         .into_error()
-    }
-
-    pub async fn image_stream(
-        &self,
-        account_id: AccountId,
-        content_id: ContentId,
-    ) -> Result<ReaderStream<tokio::fs::File>, DataError> {
-        self.files()
-            .media_content(account_id, content_id)
-            .read_stream()
-            .await
-            .into_data_error((account_id, content_id))
     }
 
     pub async fn all_account_media_content(

@@ -179,8 +179,8 @@ impl ContentFile {
         self.path.remove_if_exists().await
     }
 
-    pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
-        self.path.read_stream().await
+    pub async fn byte_count_and_read_stream(&self) -> Result<(u64, ReaderStream<tokio::fs::File>), FileError> {
+        self.path.byte_count_and_read_stream().await
     }
 
     pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {
@@ -271,11 +271,14 @@ impl PathToFile {
         Ok(())
     }
 
-    pub async fn read_stream(&self) -> Result<ReaderStream<tokio::fs::File>, FileError> {
+    pub async fn byte_count_and_read_stream(&self) -> Result<(u64, ReaderStream<tokio::fs::File>), FileError> {
         let file = tokio::fs::File::open(&self.path)
             .await
             .change_context(FileError::IoFileOpen)?;
-        Ok(ReaderStream::new(file))
+        let metadata = file.metadata()
+            .await
+            .change_context(FileError::IoFileMetadata)?;
+        Ok((metadata.len(), ReaderStream::new(file)))
     }
 
     pub async fn read_all(&self) -> Result<Vec<u8>, FileError> {

@@ -2,11 +2,11 @@ use axum::{
     body::Body, extract::{Path, Query, State}, Extension, Router
 };
 use axum_extra::TypedHeader;
-use headers::ContentType;
+use headers::{ContentLength, ContentType};
 use model::{
     AccountContent, AccountId, AccountIdInternal, AccountState, Capabilities, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
 };
-use server_api::app::IsMatch;
+use server_api::{app::IsMatch, result::WrappedResultExt};
 use server_data::{
     read::GetReadCommandsCommon, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle}, DataError
 };
@@ -58,21 +58,21 @@ pub async fn get_content<S: ReadData + GetAccounts + IsMatch>(
     Path(requested_profile): Path<AccountId>,
     Path(requested_content_id): Path<ContentId>,
     Query(params): Query<GetContentQueryParams>,
-) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
+) -> Result<(TypedHeader<ContentType>, TypedHeader<ContentLength>, Body), StatusCode> {
     MEDIA.get_content.incr();
 
     let send_content = || async {
-        // TODO: Change to use stream when error handling is improved in future axum
-        // version. Or check will the connection be closed if there is an error. And
-        // set content lenght? Or use ServeFile service from tower middleware.
-
         let data = state
             .read()
             .media()
             .content_data(requested_profile, requested_content_id)
             .await?;
 
-        Ok((TypedHeader(ContentType::octet_stream()), data))
+        let (lenght, stream) = data.byte_count_and_read_stream()
+            .await
+            .change_context(DataError::File)?;
+
+        Ok((TypedHeader(ContentType::octet_stream()), TypedHeader(ContentLength(lenght)), Body::from_stream(stream)))
     };
 
     if account_id.as_id() == requested_profile {

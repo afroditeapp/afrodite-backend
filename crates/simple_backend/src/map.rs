@@ -2,11 +2,14 @@
 
 use error_stack::{Result, ResultExt};
 use simple_backend_config::{file::TileMapConfig, SimpleBackendConfig};
+use tokio_util::io::ReaderStream;
 
 #[derive(thiserror::Error, Debug)]
 pub enum TileMapError {
-    #[error("File reading failed")]
-    IoFileRead,
+    #[error("File open failed")]
+    IoFileOpen,
+    #[error("Getting file metadata failed")]
+    IoFileMetadata,
 
     #[error("Missing tile map config")]
     MissingTileMapConfig,
@@ -23,12 +26,12 @@ impl TileMapManager {
         }
     }
 
-    pub async fn load_map_tile(
+    pub async fn map_tile_byte_count_and_byte_stream(
         &self,
         z: u32,
         x: u32,
         y: u32,
-    ) -> Result<Option<Vec<u8>>, TileMapError> {
+    ) -> Result<Option<(u64, ReaderStream<tokio::fs::File>)>, TileMapError> {
         let config = self
             .config
             .as_ref()
@@ -40,12 +43,14 @@ impl TileMapManager {
             return Ok(None);
         }
 
-        // TODO: tile map cache
-
-        let data = tokio::fs::read(path)
+        let file = tokio::fs::File::open(path)
             .await
-            .change_context(TileMapError::IoFileRead)?;
+            .change_context(TileMapError::IoFileOpen)?;
+        let metadata = file.metadata()
+            .await
+            .change_context(TileMapError::IoFileMetadata)?;
+        let stream = ReaderStream::new(file);
 
-        Ok(Some(data))
+        Ok(Some((metadata.len(), stream)))
     }
 }

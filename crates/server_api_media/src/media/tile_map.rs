@@ -1,9 +1,8 @@
 use axum::{
-    extract::{Path, State},
-    Router,
+    body::Body, extract::{Path, State}, Router
 };
 use axum_extra::TypedHeader;
-use headers::ContentType;
+use headers::{ContentLength, ContentType};
 use model::{MapTileX, MapTileY, MapTileZ};
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
@@ -31,7 +30,7 @@ pub async fn get_map_tile<S: GetTileMap>(
     Path(z): Path<MapTileZ>,
     Path(x): Path<MapTileX>,
     Path(y): Path<MapTileY>,
-) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
+) -> Result<(TypedHeader<ContentType>, TypedHeader<ContentLength>, Body), StatusCode> {
     MEDIA.get_map_tile.incr();
 
     let y_string = y.y.trim_end_matches(".png");
@@ -39,17 +38,18 @@ pub async fn get_map_tile<S: GetTileMap>(
         .parse::<u32>()
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
-    let data = state
+    let byte_count_and_data_stream = state
         .tile_map()
-        .load_map_tile(z.z, x.x, y)
+        .map_tile_byte_count_and_byte_stream(z.z, x.x, y)
         .await
         .map_err(|e| {
             error!("{:?}", e);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    match data {
-        Some(data) => Ok((TypedHeader(ContentType::png()), data)),
+    match byte_count_and_data_stream {
+        Some((byte_count, data_stream)) =>
+            Ok((TypedHeader(ContentType::png()), TypedHeader(ContentLength(byte_count)), Body::from_stream(data_stream))),
         None => Err(StatusCode::NOT_FOUND),
     }
 }

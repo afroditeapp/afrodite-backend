@@ -27,6 +27,8 @@ pub enum FileError {
     IoFileRemove,
     #[error("Iterating directory contents failed")]
     IoDirIter,
+    #[error("Getting file metadata failed")]
+    IoFileMetadata,
 
     #[error("Missing file name")]
     MissingFileName,
