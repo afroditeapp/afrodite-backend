@@ -1,6 +1,6 @@
 //! Bot mode related test/bot runner.
 
-use std::{path::PathBuf, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use config::{args::TestMode, bot_config_file::BotConfigFile, Config};
 use tokio::{
@@ -155,6 +155,7 @@ impl BotTestRunner {
         };
 
         if self.test_config.save_state() {
+            let new_state = Self::merge_old_and_new_state_data(old_state.clone(), new_state);
             self.save_state_data(&new_state).await;
         }
 
@@ -177,6 +178,28 @@ impl BotTestRunner {
                 error!("state data loading error: {:?}", e);
                 None
             }
+        }
+    }
+
+    fn merge_old_and_new_state_data(
+        old: Option<Arc<StateData>>,
+        new: StateData
+    ) -> StateData {
+        let mut bot_data: HashMap<(u32, u32), BotPersistentState> = HashMap::new();
+        if let Some(old_state) = &old {
+            for s in old_state.bot_states.iter().cloned() {
+                bot_data.insert((s.task, s.bot), s);
+            }
+        }
+        for s in new.bot_states {
+            bot_data.insert((s.task, s.bot), s);
+        }
+        let mut data: Vec<BotPersistentState> = bot_data.into_values().collect();
+        data.sort_by(|a, b| (a.task, a.bot).cmp(&(b.task, b.bot)));
+
+        StateData {
+            test_name: new.test_name,
+            bot_states: data,
         }
     }
 

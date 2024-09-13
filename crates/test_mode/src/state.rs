@@ -17,7 +17,7 @@ impl StateData {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BotPersistentState {
     pub account_id: uuid::Uuid,
     pub task: u32,
