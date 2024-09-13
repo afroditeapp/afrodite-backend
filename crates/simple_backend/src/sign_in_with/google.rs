@@ -2,8 +2,7 @@ use std::{sync::Arc, time::Instant};
 
 use error_stack::{Result, ResultExt};
 use jsonwebtoken::{
-    jwk::{Jwk, JwkSet},
-    DecodingKey, Validation,
+    jwk::{Jwk, JwkSet}, DecodingKey, TokenData, Validation
 };
 use headers::{CacheControl, HeaderMapExt};
 use serde::Deserialize;
@@ -11,12 +10,6 @@ use simple_backend_config::SimpleBackendConfig;
 use simple_backend_utils::ContextExt;
 use tokio::sync::RwLock;
 use tracing::error;
-// use utils::ContextExt;
-
-// TODO: Send serverAuthCode to server. Get refresh and access tokens from
-// google with that and save the tokens to database. After server receives app's
-// own refresh token from WebSocket then get new access token from google if
-// required.
 
 /// Possible Google ID token (from client) iss field (issuer) values.
 const POSSIBLE_ISS_VALUES_GOOGLE: &[&str] = &["accounts.google.com", "https://accounts.google.com"];
@@ -124,19 +117,31 @@ impl SignInWithGoogleManager {
             .change_context(SignInWithGoogleError::DecodingKeyGenerationFailed)?;
 
         let mut v = Validation::new(not_validated_header.alg);
-        v.set_required_spec_claims(&["exp", "aud", "iss"]);
+        v.set_required_spec_claims(&["exp", "iss"]);
         v.set_issuer(POSSIBLE_ISS_VALUES_GOOGLE);
-        v.set_audience(&[&google_config.client_id_server]);
+        v.validate_aud = false;
 
         let data = jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &v)
             .change_context(SignInWithGoogleError::InvalidToken)?;
 
-        let valid_client_ids = [
-            google_config.client_id_android.as_str(),
-            google_config.client_id_ios.as_str(),
-        ];
+        let azp_valid = if data.claims.azp == google_config.client_id_web {
+            // Sign in with Google happened on the web client
+            true
+        } else {
+            // Mobile clients support audience
+            let mut validate_aud = Validation::new(not_validated_header.alg);
+            validate_aud.set_required_spec_claims(&["aud"]);
+            validate_aud.set_audience(&[&google_config.client_id_server]);
+            let _: TokenData<GoogleTokenClaims> = jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &validate_aud)
+                .change_context(SignInWithGoogleError::InvalidToken)?;
 
-        let azp_valid = valid_client_ids.into_iter().any(|id| id == data.claims.azp);
+            let valid_client_ids = [
+                google_config.client_id_android.as_str(),
+                google_config.client_id_ios.as_str(),
+            ];
+
+            valid_client_ids.into_iter().any(|id| id == data.claims.azp)
+        };
 
         if !azp_valid || !data.claims.email_verified {
             return Err(SignInWithGoogleError::InvalidToken.report());

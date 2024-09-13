@@ -43,6 +43,7 @@ name = "history"
 # [sign_in_with_google]
 # client_id_android = "id"
 # client_id_ios = "id"
+# client_id_web = "id"
 # client_id_server = "id"
 
 # [firebase_cloud_messaging]
@@ -253,6 +254,7 @@ pub struct TileMapConfig {
 pub struct SignInWithGoogleConfig {
     pub client_id_android: String,
     pub client_id_ios: String,
+    pub client_id_web: String,
     pub client_id_server: String,
 }
 
