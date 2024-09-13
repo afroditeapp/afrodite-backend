@@ -25,6 +25,14 @@ pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Ro
             get(server_api::common::get_version::<S>),
         )
         .route(
+            api::common::PATH_FILE_PACKAGE_ACCESS,
+            get(server_api::common::get_file_package_access::<S>),
+        )
+        .route(
+            api::common::PATH_FILE_PACKAGE_ACCESS_ROOT,
+            get(server_api::common::get_file_package_access_root::<S>),
+        )
+        .route(
             api::common::PATH_CONNECT, // This route checks the access token by itself.
             get({
                 move |state, param1, param2, param3| {

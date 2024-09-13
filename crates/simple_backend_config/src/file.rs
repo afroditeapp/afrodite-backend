@@ -88,6 +88,10 @@ name = "history"
 # [scheduled_tasks]
 # daily_run_time = "3:00"
 
+# [static_file_package_hosting]
+# package = "frontend.tar.gz"
+# read_from_dir = "" # optional, by default disabled
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -121,6 +125,7 @@ pub struct SimpleBackendConfigFile {
     pub media_backup: Option<MediaBackupConfig>,
     pub litestream: Option<LitestreamConfig>,
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
+    pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
 }
 
 impl SimpleBackendConfigFile {
@@ -419,6 +424,14 @@ pub struct LitestreamConfig {
     pub binary: PathBuf,
     /// Path to Litestream config file.
     pub config_file: PathBuf,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct StaticFilePackageHostingConfig {
+    /// Path to tar.gz package.
+    pub package: PathBuf,
+    /// Read files only from specific directory in the package.
+    pub read_from_dir: Option<String>,
 }
 
 /// Absolute path with no whitespace.

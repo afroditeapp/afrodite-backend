@@ -4,25 +4,25 @@
 use std::{net::SocketAddr, time::Duration};
 
 use axum::{
-    extract::{
-        ws::{Message, WebSocket},
-        ConnectInfo, State, WebSocketUpgrade,
-    },
-    response::IntoResponse,
+    body::Bytes, extract::{
+        ws::{Message, WebSocket}, ConnectInfo, Path, State, WebSocketUpgrade
+    }, response::IntoResponse
 };
+use axum_extra::TypedHeader;
+use headers::ContentType;
 use http::HeaderMap;
 use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
 use tokio::time::Instant;
 use crate::{app::ConnectionTools, utils::Json};
 use server_data::{app::{BackendVersionProvider, EventManagerProvider}, read::GetReadCommandsCommon};
-use simple_backend::{create_counters, web_socket::WebSocketManager};
+use simple_backend::{app::FilePackageProvider, create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
 
 use super::utils::StatusCode;
 use crate::{
     app::GetAccessTokens,
-    result::{Result, WrappedContextExt, WrappedResultExt},
+    result::{WrappedContextExt, WrappedResultExt},
 };
 
 pub const PATH_GET_VERSION: &str = "/common_api/version";
@@ -41,6 +41,36 @@ pub async fn get_version<S: BackendVersionProvider>(
 ) -> Json<BackendVersion> {
     COMMON.get_version.incr();
     state.backend_version().into()
+}
+
+// TODO(prod): HTTP cache header support for file package access
+
+pub const PATH_FILE_PACKAGE_ACCESS: &str = "/*path";
+
+pub async fn get_file_package_access<S: FilePackageProvider>(
+    State(state): State<S>,
+    Path(path_parts): Path<Vec<String>>
+) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
+    COMMON.get_file_package_access.incr();
+    let wanted_file =  path_parts.join("/");
+    let (content_type, data) = state
+        .file_package()
+        .data(&wanted_file)
+        .ok_or(StatusCode::NOT_FOUND)?;
+    Ok((TypedHeader(content_type), data))
+}
+
+pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
+
+pub async fn get_file_package_access_root<S: FilePackageProvider>(
+    State(state): State<S>,
+) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
+    COMMON.get_file_package_access_root.incr();
+    let (content_type, data) = state
+        .file_package()
+        .data("index.html")
+        .ok_or(StatusCode::NOT_FOUND)?;
+    Ok((TypedHeader(content_type), data))
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -268,7 +298,7 @@ async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
     address: SocketAddr,
     id: AccountIdInternal,
     state: &S,
-) -> Result<(), WebSocketError> {
+) -> crate::result::Result<(), WebSocketError> {
     info!("handle_socket_result for '{}', address: {}", id.id.as_i64(), address);
 
     // Receive protocol version byte.
@@ -480,4 +510,4 @@ impl ConnectionPingTracker {
     }
 }
 
-create_counters!(CommonCounters, COMMON, COMMON_COUNTERS_LIST, get_version, get_connect_websocket,);
+create_counters!(CommonCounters, COMMON, COMMON_COUNTERS_LIST, get_version, get_file_package_access, get_file_package_access_root, get_connect_websocket,);

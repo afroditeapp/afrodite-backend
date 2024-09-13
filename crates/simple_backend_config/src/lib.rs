@@ -186,6 +186,10 @@ impl SimpleBackendConfig {
     pub fn scheduled_tasks(&self) -> ScheduledTasksConfig {
         self.file.scheduled_tasks.clone().unwrap_or_default()
     }
+
+    pub fn file_package(&self) -> Option<&file::StaticFilePackageHostingConfig> {
+        self.file.static_file_package_hosting.as_ref()
+    }
 }
 
 /// Read config file from current directory.

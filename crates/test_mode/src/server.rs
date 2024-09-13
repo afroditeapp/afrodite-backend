@@ -272,6 +272,7 @@ fn new_config(
         firebase_cloud_messaging: None,
         email_sending: None,
         scheduled_tasks: None,
+        static_file_package_hosting: None,
     };
 
     (config, simple_backend_config)

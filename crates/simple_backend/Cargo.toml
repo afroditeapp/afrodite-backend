@@ -30,6 +30,11 @@ headers = { workspace = true }
 
 utoipa-swagger-ui = { workspace = true }
 
+# File hosting package extracting
+flate2 = { workspace = true }
+tar = { workspace = true }
+mime = { workspace = true }
+
 # Email sending
 lettre = { workspace = true }
 

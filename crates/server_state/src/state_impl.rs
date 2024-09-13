@@ -17,7 +17,7 @@ use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikes
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_profile::write::GetWriteCommandsProfile;
 use simple_backend::{
-    app::{GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
+    app::{FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, file_package::FilePackageManager, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
 use simple_backend_config::SimpleBackendConfig;
 
@@ -552,6 +552,12 @@ impl GetTileMap for S {
 impl PerfCounterDataProvider for S {
     fn perf_counter_data(&self) -> &PerfCounterManagerData {
         &self.simple_backend_state.perf_data
+    }
+}
+
+impl FilePackageProvider for S {
+    fn file_package(&self) -> &FilePackageManager {
+        &self.simple_backend_state.file_packages
     }
 }
 

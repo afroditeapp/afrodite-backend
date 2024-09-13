@@ -107,6 +107,11 @@ tower-http = { version = "0.5.2", features = ["trace"] }
 # Email sending
 lettre = { version = "0.11.7", features = ["tokio1", "tokio1-native-tls"] }
 
+# File hosting package extracting
+flate2 = "1.0.33"
+tar = "0.4.41"
+mime = "0.3.17"
+
 # Server TLS
 tokio-rustls = { version = "0.26.0", default-features = false, features = ["logging", "tls12", "ring"] }
 rustls-pemfile = "2.1.3"

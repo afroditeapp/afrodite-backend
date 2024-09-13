@@ -20,6 +20,7 @@ pub mod sign_in_with;
 pub mod utils;
 pub mod web_socket;
 pub mod email;
+pub mod file_package;
 
 use std::{convert::Infallible, future::IntoFuture, net::SocketAddr, pin::Pin, sync::Arc};
 
@@ -208,6 +209,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
             PerfCounterManager::new_manager(perf_data.clone(), server_quit_watcher.resubscribe());
 
         let simple_state = SimpleBackendAppState::new(self.config.clone(), perf_data)
+            .await
             .expect("State builder init failed");
 
         let state = self
