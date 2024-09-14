@@ -64,7 +64,7 @@ pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
 
 #[obfuscate_api]
 const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
-    "/media_api/admin/moderation/handle_request/{account_id}";
+    "/media_api/admin/moderation/handle_request/{aid}";
 
 /// Handle moderation request of some account.
 ///

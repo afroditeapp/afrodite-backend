@@ -21,7 +21,7 @@ use crate::{
 };
 
 #[obfuscate_api]
-const PATH_GET_CONTENT: &str = "/media_api/content/{account_id}/{content_id}";
+const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 
 /// Get content data
 ///
@@ -122,7 +122,7 @@ pub async fn get_content<S: ReadData + GetAccounts + IsMatch>(
 
 #[obfuscate_api]
 const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str =
-    "/media_api/all_account_media_content/{account_id}";
+    "/media_api/all_account_media_content/{aid}";
 
 /// Get list of all media content on the server for one account.
 #[utoipa::path(
@@ -264,7 +264,7 @@ pub async fn get_content_slot_state<S: ContentProcessingProvider>(
 }
 
 #[obfuscate_api]
-const PATH_DELETE_CONTENT: &str = "/media_api/content/{account_id}/{content_id}";
+const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 
 /// Delete content data. Content can be removed after specific time has passed
 /// since removing all usage from it (content is not a security image or profile

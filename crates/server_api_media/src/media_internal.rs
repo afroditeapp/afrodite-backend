@@ -17,7 +17,7 @@ pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
 ///
 #[utoipa::path(
     get,
-    path = "/internal/media_api/moderation/request/{account_id}",
+    path = "/internal/media_api/moderation/request/{aid}",
     params(AccountId),
     responses(
         (status = 200, description = "Successful."),

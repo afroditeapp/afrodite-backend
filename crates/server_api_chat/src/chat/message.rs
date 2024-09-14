@@ -252,7 +252,7 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
 
 #[obfuscate_api]
 const PATH_GET_SENDER_MESSAGE_ID: &str =
-    "/chat_api/sender_message_id/{account_id}";
+    "/chat_api/sender_message_id/{aid}";
 
 /// Get conversation specific expected sender message ID which API caller
 /// account owns.
@@ -287,7 +287,7 @@ pub async fn get_sender_message_id<S: ReadData + GetAccounts>(
 
 #[obfuscate_api]
 const PATH_POST_SENDER_MESSAGE_ID: &str =
-    "/chat_api/sender_message_id/{account_id}";
+    "/chat_api/sender_message_id/{aid}";
 
 /// Set conversation specific expected sender message ID which API caller
 /// account owns.

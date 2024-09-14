@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[obfuscate_api]
-const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{account_id}";
+const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{aid}";
 
 /// Get current security content for selected profile.
 #[utoipa::path(
@@ -84,7 +84,7 @@ pub async fn put_security_content_info<S: WriteData>(
 
 #[obfuscate_api]
 const PATH_GET_PENDING_SECURITY_CONTENT_INFO: &str =
-    "/media_api/pending_security_content_info/{account_id}";
+    "/media_api/pending_security_content_info/{aid}";
 
 /// Get pending security content for selected profile.
 #[utoipa::path(

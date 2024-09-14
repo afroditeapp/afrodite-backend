@@ -24,7 +24,7 @@ use crate::{
 // TODO: Add timeout for database commands
 
 #[obfuscate_api]
-const PATH_GET_PROFILE: &str = "/profile_api/profile/{account_id}";
+const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
 
 /// Get account's current profile.
 ///

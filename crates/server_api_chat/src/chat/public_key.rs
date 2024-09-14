@@ -11,7 +11,7 @@ use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, StateBase};
 
 #[obfuscate_api]
-const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{account_id}";
+const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{aid}";
 
 /// Get current public key of some account
 #[utoipa::path(

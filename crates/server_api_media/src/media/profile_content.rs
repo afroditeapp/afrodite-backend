@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[obfuscate_api]
-const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{account_id}";
+const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{aid}";
 
 /// Get current profile content for selected profile.
 ///
@@ -135,7 +135,7 @@ pub async fn put_profile_content<S: WriteData>(
 
 #[obfuscate_api]
 const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str =
-    "/media_api/pending_profile_content_info/{account_id}";
+    "/media_api/pending_profile_content_info/{aid}";
 
 /// Get pending profile content for selected profile
 #[utoipa::path(

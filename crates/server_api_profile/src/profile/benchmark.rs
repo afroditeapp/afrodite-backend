@@ -21,7 +21,7 @@ use crate::{
 
 #[obfuscate_api]
 const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
-    "/profile_api/benchmark/profile/{account_id}";
+    "/profile_api/benchmark/profile/{aid}";
 
 /// Get account's current profile from database. Debug mode must be enabled
 /// that route can be used.
