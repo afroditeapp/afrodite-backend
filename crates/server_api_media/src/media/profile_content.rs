@@ -5,6 +5,7 @@ use axum::{
 use model::{
     AccountId, AccountIdInternal, AccountState, Capabilities, GetProfileContentQueryParams, GetProfileContentResult, PendingProfileContent, ProfileContent, SetProfileContent
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_api::app::IsMatch;
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
@@ -16,7 +17,8 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/:account_id";
+#[obfuscate_api]
+const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{account_id}";
 
 /// Get current profile content for selected profile.
 ///
@@ -36,7 +38,7 @@ pub const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info
 /// is required.
 #[utoipa::path(
     get,
-    path = "/media_api/profile_content_info/{account_id}",
+    path = PATH_GET_PROFILE_CONTENT_INFO,
     params(AccountId, GetProfileContentQueryParams),
     responses(
         (status = 200, description = "Get profile content info.", body = GetProfileContentResult),
@@ -99,7 +101,8 @@ pub async fn get_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
     }
 }
 
-pub const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
+#[obfuscate_api]
+const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
 
 /// Set new profile content for current account.
 ///
@@ -109,7 +112,7 @@ pub const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
 /// - All content must be images.
 #[utoipa::path(
     put,
-    path = "/media_api/profile_content",
+    path = PATH_PUT_PROFILE_CONTENT,
     request_body(content = SetProfileContent),
     responses(
         (status = 200, description = "Successful."),
@@ -130,13 +133,14 @@ pub async fn put_profile_content<S: WriteData>(
         .update_profile_content(api_caller_account_id, new))
 }
 
-pub const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str =
-    "/media_api/pending_profile_content_info/:account_id";
+#[obfuscate_api]
+const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str =
+    "/media_api/pending_profile_content_info/{account_id}";
 
 /// Get pending profile content for selected profile
 #[utoipa::path(
     get,
-    path = "/media_api/pending_profile_content_info/{account_id}",
+    path = PATH_GET_PENDING_PROFILE_CONTENT_INFO,
     params(AccountId),
     responses(
         (status = 200, description = "Successful.", body = PendingProfileContent),
@@ -166,7 +170,8 @@ pub async fn get_pending_profile_content_info<S: ReadData + GetAccounts>(
     Ok(info.into())
 }
 
-pub const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
+#[obfuscate_api]
+const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
 
 /// Set new pending profile content for current account.
 /// Server will switch to pending content when next moderation request is
@@ -178,7 +183,7 @@ pub const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_c
 /// - All content must be images.
 #[utoipa::path(
     put,
-    path = "/media_api/pending_profile_content",
+    path = PATH_PUT_PENDING_PROFILE_CONTENT,
     request_body(content = SetProfileContent),
     responses(
         (status = 200, description = "Successful."),
@@ -202,14 +207,15 @@ pub async fn put_pending_profile_content<S: WriteData>(
         ))
 }
 
-pub const PATH_DELETE_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
+#[obfuscate_api]
+const PATH_DELETE_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_content";
 
 /// Delete new pending profile content for current account.
 /// Server will not switch to pending content when next moderation request is
 /// accepted.
 #[utoipa::path(
     delete,
-    path = "/media_api/pending_profile_content",
+    path = PATH_DELETE_PENDING_PROFILE_CONTENT,
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -236,20 +242,20 @@ pub fn profile_content_router<S: StateBase + WriteData + ReadData + GetAccounts 
 
     Router::new()
         .route(
-            PATH_GET_PROFILE_CONTENT_INFO,
+            PATH_GET_PROFILE_CONTENT_INFO_AXUM,
             get(get_profile_content_info::<S>),
         )
-        .route(PATH_PUT_PROFILE_CONTENT, put(put_profile_content::<S>))
+        .route(PATH_PUT_PROFILE_CONTENT_AXUM, put(put_profile_content::<S>))
         .route(
-            PATH_GET_PENDING_PROFILE_CONTENT_INFO,
+            PATH_GET_PENDING_PROFILE_CONTENT_INFO_AXUM,
             get(get_pending_profile_content_info::<S>),
         )
         .route(
-            PATH_PUT_PENDING_PROFILE_CONTENT,
+            PATH_PUT_PENDING_PROFILE_CONTENT_AXUM,
             put(put_pending_profile_content::<S>),
         )
         .route(
-            PATH_DELETE_PENDING_PROFILE_CONTENT,
+            PATH_DELETE_PENDING_PROFILE_CONTENT_AXUM,
             delete(delete_pending_profile_content::<S>),
         )
         .with_state(s)

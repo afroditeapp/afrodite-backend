@@ -6,6 +6,7 @@ use headers::{ContentLength, ContentType};
 use model::{
     AccountContent, AccountId, AccountIdInternal, AccountState, Capabilities, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::IsMatch, result::WrappedResultExt};
 use server_data::{
     read::GetReadCommandsCommon, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle}, DataError
@@ -19,7 +20,8 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_CONTENT: &str = "/media_api/content/:account_id/:content_id";
+#[obfuscate_api]
+const PATH_GET_CONTENT: &str = "/media_api/content/{account_id}/{content_id}";
 
 /// Get content data
 ///
@@ -41,7 +43,7 @@ pub const PATH_GET_CONTENT: &str = "/media_api/content/:account_id/:content_id";
 ///
 #[utoipa::path(
     get,
-    path = "/media_api/content/{account_id}/{content_id}",
+    path = PATH_GET_CONTENT,
     params(AccountId, ContentId, GetContentQueryParams),
     responses(
         (status = 200, description = "Get content file.", body = Vec<u8>, content_type = "application/octet-stream"),
@@ -118,13 +120,14 @@ pub async fn get_content<S: ReadData + GetAccounts + IsMatch>(
     }
 }
 
-pub const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str =
-    "/media_api/all_account_media_content/:account_id";
+#[obfuscate_api]
+const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str =
+    "/media_api/all_account_media_content/{account_id}";
 
 /// Get list of all media content on the server for one account.
 #[utoipa::path(
     get,
-    path = "/media_api/all_account_media_content/{account_id}",
+    path = PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
     params(AccountId),
     responses(
         (status = 200, description = "Successful.", body = AccountContent),
@@ -158,7 +161,8 @@ pub async fn get_all_account_media_content<S: ReadData + GetAccounts>(
     Ok(AccountContent { data }.into())
 }
 
-pub const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/:slot_id";
+#[obfuscate_api]
+const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/{slot_id}";
 
 /// Set content to content processing slot.
 /// Processing ID will be returned and processing of the content
@@ -179,7 +183,7 @@ pub const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/:slo
 ///
 #[utoipa::path(
     put,
-    path = "/media_api/content_slot/{slot_id}",
+    path = PATH_PUT_CONTENT_TO_CONTENT_SLOT,
     params(SlotId, NewContentParams),
     request_body(content = Vec<u8>, content_type = "image/jpeg"),
     responses(
@@ -223,7 +227,8 @@ pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvide
     Ok(content_info.processing_id.into())
 }
 
-pub const PATH_GET_CONTENT_SLOT_STATE: &str = "/media_api/content_slot/:slot_id";
+#[obfuscate_api]
+const PATH_GET_CONTENT_SLOT_STATE: &str = "/media_api/content_slot/{slot_id}";
 
 /// Get state of content slot.
 ///
@@ -231,7 +236,7 @@ pub const PATH_GET_CONTENT_SLOT_STATE: &str = "/media_api/content_slot/:slot_id"
 ///
 #[utoipa::path(
     get,
-    path = "/media_api/content_slot/{slot_id}",
+    path = PATH_GET_CONTENT_SLOT_STATE,
     params(SlotId),
     responses(
         (status = 200, description = "Successful.", body = ContentProcessingState),
@@ -258,14 +263,15 @@ pub async fn get_content_slot_state<S: ContentProcessingProvider>(
     }
 }
 
-pub const PATH_DELETE_CONTENT: &str = "/media_api/content/:account_id/:content_id";
+#[obfuscate_api]
+const PATH_DELETE_CONTENT: &str = "/media_api/content/{account_id}/{content_id}";
 
 /// Delete content data. Content can be removed after specific time has passed
 /// since removing all usage from it (content is not a security image or profile
 /// content).
 #[utoipa::path(
     delete,
-    path = "/media_api/content/{account_id}/{content_id}",
+    path = PATH_DELETE_CONTENT,
     params(AccountId, ContentId),
     responses(
         (status = 200, description = "Content data deleted."),
@@ -300,20 +306,20 @@ pub fn content_router<
     use axum::routing::{delete, get, put};
 
     Router::new()
-        .route(PATH_GET_CONTENT, get(get_content::<S>))
+        .route(PATH_GET_CONTENT_AXUM, get(get_content::<S>))
         .route(
-            PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
+            PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT_AXUM,
             get(get_all_account_media_content::<S>),
         )
         .route(
-            PATH_PUT_CONTENT_TO_CONTENT_SLOT,
+            PATH_PUT_CONTENT_TO_CONTENT_SLOT_AXUM,
             put(put_content_to_content_slot::<S>),
         )
         .route(
-            PATH_GET_CONTENT_SLOT_STATE,
+            PATH_GET_CONTENT_SLOT_STATE_AXUM,
             get(get_content_slot_state::<S>),
         )
-        .route(PATH_DELETE_CONTENT, delete(delete_content::<S>))
+        .route(PATH_DELETE_CONTENT_AXUM, delete(delete_content::<S>))
         .with_state(s)
 }
 

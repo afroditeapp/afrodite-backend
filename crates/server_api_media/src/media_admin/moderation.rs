@@ -6,6 +6,7 @@ use model::{
     AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest,
     ModerationList, ModerationQueueTypeParam,
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 
@@ -19,7 +20,8 @@ use crate::{
 //       Moderation should have some value which keeps track how much moderation
 //       request has moderation weight added. Perhaps this should not be in MVP?
 
-pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/next";
+#[obfuscate_api]
+const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/next";
 
 /// Get current list of moderation requests in my moderation queue.
 /// Additional requests will be added to my queue if necessary.
@@ -31,7 +33,7 @@ pub const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/p
 ///
 #[utoipa::path(
     patch,
-    path = "/media_api/admin/moderation/page/next",
+    path = PATH_ADMIN_MODERATION_PAGE_NEXT,
     params(ModerationQueueTypeParam),
     responses(
         (status = 200, description = "Get moderation request list was successfull.", body = ModerationList),
@@ -60,8 +62,9 @@ pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
 // TODO(prod): Check that make, get and moderate requests in both moderation
 //             queues.
 
-pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
-    "/media_api/admin/moderation/handle_request/:account_id";
+#[obfuscate_api]
+const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
+    "/media_api/admin/moderation/handle_request/{account_id}";
 
 /// Handle moderation request of some account.
 ///
@@ -72,7 +75,7 @@ pub const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
 ///
 #[utoipa::path(
     post,
-    path = "/media_api/admin/moderation/handle_request/{account_id}",
+    path = PATH_ADMIN_MODERATION_HANDLE_REQUEST,
     request_body(content = HandleModerationRequest),
     params(AccountId),
     responses(
@@ -140,11 +143,11 @@ pub fn admin_moderation_router<
 
     Router::new()
         .route(
-            PATH_ADMIN_MODERATION_PAGE_NEXT,
+            PATH_ADMIN_MODERATION_PAGE_NEXT_AXUM,
             patch(patch_moderation_request_list::<S>),
         )
         .route(
-            PATH_ADMIN_MODERATION_HANDLE_REQUEST,
+            PATH_ADMIN_MODERATION_HANDLE_REQUEST_AXUM,
             post(post_handle_moderation_request::<S>),
         )
         .with_state(s)

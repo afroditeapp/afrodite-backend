@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -9,13 +10,14 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
+#[obfuscate_api]
+const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
 
 /// Get current moderation request.
 ///
 #[utoipa::path(
     get,
-    path = "/media_api/moderation/request",
+    path = PATH_MODERATION_REQUEST,
     responses(
         (status = 200, description = "Get moderation request was successfull.", body = CurrentModerationRequest),
         (status = 401, description = "Unauthorized."),
@@ -43,7 +45,7 @@ pub async fn get_moderation_request<S: ReadData>(
 ///
 #[utoipa::path(
     put,
-    path = "/media_api/moderation/request",
+    path = PATH_MODERATION_REQUEST,
     request_body(content = ModerationRequestContent),
     responses(
         (status = 200, description = "Sending or updating new image moderation request was successfull."),
@@ -68,7 +70,7 @@ pub async fn put_moderation_request<S: WriteData>(
 /// Delete current moderation request which is not yet in moderation.
 #[utoipa::path(
     delete,
-    path = "/media_api/moderation/request",
+    path = PATH_MODERATION_REQUEST,
     responses(
         (status = 200, description = "Successfull."),
         (status = 401, description = "Unauthorized."),
@@ -92,10 +94,10 @@ pub fn moderation_request_router<S: StateBase + WriteData + ReadData>(s: S) -> R
     use axum::routing::{delete, get, put};
 
     Router::new()
-        .route(PATH_MODERATION_REQUEST, get(get_moderation_request::<S>))
-        .route(PATH_MODERATION_REQUEST, put(put_moderation_request::<S>))
+        .route(PATH_MODERATION_REQUEST_AXUM, get(get_moderation_request::<S>))
+        .route(PATH_MODERATION_REQUEST_AXUM, put(put_moderation_request::<S>))
         .route(
-            PATH_MODERATION_REQUEST,
+            PATH_MODERATION_REQUEST_AXUM,
             delete(delete_moderation_request::<S>),
         )
         .with_state(s)

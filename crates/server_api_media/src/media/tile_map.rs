@@ -4,19 +4,21 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model::{MapTileX, MapTileY, MapTileZ};
+use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 
 use crate::{app::StateBase, utils::StatusCode};
 
-pub const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/:z/:x/:y";
+#[obfuscate_api]
+const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/{z}/{x}/{y}";
 
 /// Get map tile PNG file.
 ///
 /// Returns a .png even if the URL does not have it.
 #[utoipa::path(
     get,
-    path = "/media_api/map_tile/{z}/{x}/{y}",
+    path = PATH_GET_MAP_TILE,
     params(MapTileZ, MapTileX, MapTileY),
     responses(
         (status = 200, description = "Get map tile PNG file.", body = Vec<u8>, content_type = "image/png"),
@@ -58,7 +60,7 @@ pub fn tile_map_router<S: StateBase + GetTileMap>(s: S) -> Router {
     use axum::routing::get;
 
     Router::new()
-        .route(PATH_GET_MAP_TILE, get(get_map_tile::<S>))
+        .route(PATH_GET_MAP_TILE_AXUM, get(get_map_tile::<S>))
         .with_state(s)
 }
 

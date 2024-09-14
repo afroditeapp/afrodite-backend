@@ -3,6 +3,7 @@ use axum::{
     Extension, Router,
 };
 use model::{AccountId, AccountIdInternal, ContentId, PendingSecurityContent, SecurityContent};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -12,12 +13,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/:account_id";
+#[obfuscate_api]
+const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{account_id}";
 
 /// Get current security content for selected profile.
 #[utoipa::path(
     get,
-    path = "/media_api/security_content_info/{account_id}",
+    path = PATH_GET_SECURITY_CONTENT_INFO,
     params(AccountId),
     responses(
         (status = 200, description = "Successful.", body = SecurityContent),
@@ -47,7 +49,8 @@ pub async fn get_security_content_info<S: ReadData + GetAccounts>(
     Ok(info.into())
 }
 
-pub const PATH_PUT_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info";
+#[obfuscate_api]
+const PATH_PUT_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info";
 
 /// Set current security content content for current account.
 ///
@@ -58,7 +61,7 @@ pub const PATH_PUT_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_in
 /// - The content must be captured by client.
 #[utoipa::path(
     put,
-    path = "/media_api/security_content_info",
+    path = PATH_PUT_SECURITY_CONTENT_INFO,
     request_body = ContentId,
     responses(
         (status = 200, description = "Successful."),
@@ -79,13 +82,14 @@ pub async fn put_security_content_info<S: WriteData>(
         .update_security_content(api_caller_account_id, content_id))
 }
 
-pub const PATH_GET_PENDING_SECURITY_CONTENT_INFO: &str =
-    "/media_api/pending_security_content_info/:account_id";
+#[obfuscate_api]
+const PATH_GET_PENDING_SECURITY_CONTENT_INFO: &str =
+    "/media_api/pending_security_content_info/{account_id}";
 
 /// Get pending security content for selected profile.
 #[utoipa::path(
     get,
-    path = "/media_api/pending_security_content_info/{account_id}",
+    path = PATH_GET_PENDING_SECURITY_CONTENT_INFO,
     params(AccountId),
     responses(
         (status = 200, description = "Successful.", body = PendingSecurityContent),
@@ -115,12 +119,13 @@ pub async fn get_pending_security_content_info<S: ReadData + GetAccounts>(
     Ok(info.into())
 }
 
-pub const PATH_PUT_PENDING_SECURITY_CONTENT_INFO: &str = "/media_api/pending_security_content_info";
+#[obfuscate_api]
+const PATH_PUT_PENDING_SECURITY_CONTENT_INFO: &str = "/media_api/pending_security_content_info";
 
 /// Set pending security content for current account.
 #[utoipa::path(
     put,
-    path = "/media_api/pending_security_content_info",
+    path = PATH_PUT_PENDING_SECURITY_CONTENT_INFO,
     request_body = ContentId,
     responses(
         (status = 200, description = "Successful."),
@@ -144,14 +149,15 @@ pub async fn put_pending_security_content_info<S: WriteData>(
         ))
 }
 
-pub const DELETE_PENDING_SECURITY_CONTENT_INFO: &str = "/media_api/pending_security_content_info";
+#[obfuscate_api]
+const DELETE_PENDING_SECURITY_CONTENT_INFO: &str = "/media_api/pending_security_content_info";
 
 /// Delete pending security content for current account.
 /// Server will not change the security content when next moderation request
 /// is moderated as accepted.
 #[utoipa::path(
     delete,
-    path = "/media_api/pending_security_content_info",
+    path = DELETE_PENDING_SECURITY_CONTENT_INFO,
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -178,23 +184,23 @@ pub fn security_content_router<S: StateBase + WriteData + ReadData + GetAccounts
 
     Router::new()
         .route(
-            PATH_GET_SECURITY_CONTENT_INFO,
+            PATH_GET_SECURITY_CONTENT_INFO_AXUM,
             get(get_security_content_info::<S>),
         )
         .route(
-            PATH_PUT_SECURITY_CONTENT_INFO,
+            PATH_PUT_SECURITY_CONTENT_INFO_AXUM,
             put(put_security_content_info::<S>),
         )
         .route(
-            PATH_GET_PENDING_SECURITY_CONTENT_INFO,
+            PATH_GET_PENDING_SECURITY_CONTENT_INFO_AXUM,
             get(get_pending_security_content_info::<S>),
         )
         .route(
-            PATH_PUT_PENDING_SECURITY_CONTENT_INFO,
+            PATH_PUT_PENDING_SECURITY_CONTENT_INFO_AXUM,
             put(put_pending_security_content_info::<S>),
         )
         .route(
-            DELETE_PENDING_SECURITY_CONTENT_INFO,
+            DELETE_PENDING_SECURITY_CONTENT_INFO_AXUM,
             delete(delete_pending_security_content_info::<S>),
         )
         .with_state(s)
