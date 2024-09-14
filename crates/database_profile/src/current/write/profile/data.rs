@@ -292,7 +292,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
                     .execute(self.conn())
                     .into_db_error(())?;
 
-                let values: Vec<_> = a.values.into_iter().map(|value| {
+                let values: Vec<_> = a.v.into_iter().map(|value| {
                     (
                         account_id.eq(id.as_db_id()),
                         attribute_id.eq(a.id as i64),
@@ -312,8 +312,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
                     .values((
                         account_id.eq(id.as_db_id()),
                         attribute_id.eq(a.id as i64),
-                        attribute_value_part1.eq(a.values.first().copied().map(|v| v as i64)),
-                        attribute_value_part2.eq(a.values.get(1).copied().map(|v| v as i64)),
+                        attribute_value_part1.eq(a.v.first().copied().map(|v| v as i64)),
+                        attribute_value_part2.eq(a.v.get(1).copied().map(|v| v as i64)),
                     ))
                     .on_conflict((account_id, attribute_id))
                     .do_update()

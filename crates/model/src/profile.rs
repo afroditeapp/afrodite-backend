@@ -170,12 +170,12 @@ impl ProfileUpdate {
                 match attribute_info {
                     None => return Err("Unknown attribute ID".to_string()),
                     Some(info) => {
-                        if info.mode.is_number_list() && a.values.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES {
+                        if info.mode.is_number_list() && a.v.len() > NUMBER_LIST_ATTRIBUTE_MAX_VALUES {
                             return Err(format!("Number list attribute supports max {} values", NUMBER_LIST_ATTRIBUTE_MAX_VALUES));
                         }
 
                         if info.mode.is_number_list() {
-                            a.values.sort();
+                            a.v.sort();
                         }
                     }
                 }

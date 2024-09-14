@@ -14,7 +14,7 @@ pub struct ProfileAttributeValueUpdate {
     /// - First value is bitflags value or top level attribute value ID or first number list value.
     /// - Second value is sub level attribute value ID or second number list value.
     /// - Third and rest are number list values.
-    pub values: Vec<u16>,
+    pub v: Vec<u16>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -26,31 +26,31 @@ pub struct ProfileAttributeValue {
     /// - Third and rest are number list values.
     ///
     /// The number list values are in ascending order.
-    values: Vec<u16>,
+    v: Vec<u16>,
 }
 
 impl ProfileAttributeValue {
     pub fn try_from_update_and_sort(mut value: ProfileAttributeValueUpdate, attribute: &Attribute) -> Result<Self, String> {
         if attribute.mode.is_number_list() {
-            value.values.sort();
+            value.v.sort();
         }
         Self::try_from_update(value)
     }
 
     pub fn try_from_update(value: ProfileAttributeValueUpdate) -> Result<Self, String> {
-        match value.values.first() {
-            Some(_) => Ok(Self { id: value.id, values: value.values }),
+        match value.v.first() {
+            Some(_) => Ok(Self { id: value.id, v: value.v }),
             None => Err("Value part1 missing".to_string()),
         }
     }
 
     pub fn new_not_number_list(id: u16, values: Vec<u16>) -> Self {
-        Self { id, values }
+        Self { id, v: values }
     }
 
     pub fn new_number_list(id: u16, mut values: Vec<u16>) -> Self {
         values.sort();
-        Self { id, values }
+        Self { id, v: values }
     }
 
     pub fn id(&self) -> u16 {
@@ -58,21 +58,21 @@ impl ProfileAttributeValue {
     }
 
     pub fn as_bitflags(&self) -> u16 {
-        self.values.first().copied().unwrap_or(0)
+        self.v.first().copied().unwrap_or(0)
     }
 
     /// ID number for top level AttributeValue ID.
     pub fn as_top_level_id(&self) -> u16 {
-        self.values.first().copied().unwrap_or(0)
+        self.v.first().copied().unwrap_or(0)
     }
 
     /// ID number for sub level AttributeValue ID.
     pub fn as_sub_level_id(&self) -> Option<u16> {
-        self.values.get(1).copied()
+        self.v.get(1).copied()
     }
 
     pub fn as_number_list(&self) -> &[u16] {
-        &self.values
+        &self.v
     }
 }
 
@@ -80,7 +80,7 @@ impl From<ProfileAttributeValue> for ProfileAttributeValueUpdate {
     fn from(value: ProfileAttributeValue) -> Self {
         Self {
             id: value.id,
-            values: value.values,
+            v: value.v,
         }
     }
 }
@@ -100,7 +100,7 @@ impl SortedProfileAttributes {
             let id_usize: usize = a.id.into();
             if let Some(info) = all_attributes.and_then(|attributes| attributes.attributes.get(id_usize)) {
                 if info.mode.is_number_list() {
-                    a.values.sort();
+                    a.v.sort();
                 }
             }
         }
