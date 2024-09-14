@@ -186,7 +186,7 @@ impl ScheduledTaskManager {
 
             // Save the new age to database
             let profile_update = ProfileUpdate {
-                profile_text: profile.profile_text.clone(),
+                ptext: profile.ptext.clone(),
                 name: profile.name.clone(),
                 age: age_plus_one,
                 attributes: profile.attributes

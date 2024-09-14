@@ -346,10 +346,10 @@ pub async fn get_my_profile<
         .profile_sync_version;
 
     let r = GetMyProfileResult {
-        profile: profile_info.profile,
-        version: profile_info.version,
-        last_seen_time: profile_info.last_seen_time,
-        sync_version,
+        p: profile_info.profile,
+        v: profile_info.version,
+        lst: profile_info.last_seen_time,
+        sv: sync_version,
     };
 
     Ok(r.into())

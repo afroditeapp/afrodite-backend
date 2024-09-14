@@ -126,13 +126,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                 account_id.eq(request_creator.as_db_id()),
                 queue_number.eq(queue_number_new),
                 queue_number_type.eq(queue_type),
-                content_id_0.eq(request.content0),
-                content_id_1.eq(request.content1),
-                content_id_2.eq(request.content2),
-                content_id_3.eq(request.content3),
-                content_id_4.eq(request.content4),
-                content_id_5.eq(request.content5),
-                content_id_6.eq(request.content6),
+                content_id_0.eq(request.c0),
+                content_id_1.eq(request.c1),
+                content_id_2.eq(request.c2),
+                content_id_3.eq(request.c3),
+                content_id_4.eq(request.c4),
+                content_id_5.eq(request.c5),
+                content_id_6.eq(request.c6),
             ))
             .execute(self.conn())
             .into_db_error((request_creator, request))?;
@@ -172,13 +172,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
             }) => {
                 update(media_moderation_request.find(request_owner_account_id.as_db_id()))
                     .set((
-                        content_id_0.eq(new_request.content0),
-                        content_id_1.eq(new_request.content1),
-                        content_id_2.eq(new_request.content2),
-                        content_id_3.eq(new_request.content3),
-                        content_id_4.eq(new_request.content4),
-                        content_id_5.eq(new_request.content5),
-                        content_id_6.eq(new_request.content6),
+                        content_id_0.eq(new_request.c0),
+                        content_id_1.eq(new_request.c1),
+                        content_id_2.eq(new_request.c2),
+                        content_id_3.eq(new_request.c3),
+                        content_id_4.eq(new_request.c4),
+                        content_id_5.eq(new_request.c5),
+                        content_id_6.eq(new_request.c6),
                     ))
                     .execute(self.conn())
                     .change_context(DieselDatabaseError::Execute)?;

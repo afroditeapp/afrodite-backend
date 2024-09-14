@@ -57,7 +57,7 @@ pub struct ProfileInternal {
 impl ProfileInternal {
     pub fn update_from(&mut self, update: &ProfileUpdateValidated) {
         self.name.clone_from(&update.name);
-        self.profile_text.clone_from(&update.profile_text);
+        self.profile_text.clone_from(&update.ptext);
         self.age = update.age;
     }
 }
@@ -67,9 +67,13 @@ impl ProfileInternal {
 pub struct Profile {
     pub name: String,
     /// Profile text support is disabled for now.
-    pub profile_text: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[schema(default = "")]
+    pub ptext: String,
     #[schema(value_type = i64)]
     pub age: ProfileAge,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schema(default = json!([]))]
     pub attributes: Vec<ProfileAttributeValue>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -84,7 +88,7 @@ impl Profile {
     ) -> Self {
         Self {
             name: value.name,
-            profile_text: value.profile_text,
+            ptext: value.profile_text,
             age: value.age,
             attributes,
             unlimited_likes,
@@ -140,7 +144,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {
     /// This must be empty because profile text support is disabled.
-    pub profile_text: String,
+    pub ptext: String,
     pub name: String,
     #[schema(value_type = i64)]
     pub age: ProfileAge,
@@ -180,7 +184,7 @@ impl ProfileUpdate {
             }
         }
 
-        if !self.profile_text.is_empty() {
+        if !self.ptext.is_empty() {
             return Err("Profile text is not empty".to_string());
         }
 
@@ -193,7 +197,7 @@ impl ProfileUpdate {
         }
 
         Ok(ProfileUpdateValidated {
-            profile_text: self.profile_text,
+            ptext: self.ptext,
             name: self.name,
             age: self.age,
             attributes: self.attributes,
@@ -204,7 +208,7 @@ impl ProfileUpdate {
 /// Makes sure that the number list attributes are sorted.
 #[derive(Debug, Clone, Default)]
 pub struct ProfileUpdateValidated {
-    pub profile_text: String,
+    pub ptext: String,
     pub name: String,
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValueUpdate>,
@@ -213,7 +217,7 @@ pub struct ProfileUpdateValidated {
 impl ProfileUpdateValidated {
     pub fn equals_with(&self, other: &Profile) -> bool {
         let basic = self.name == other.name
-            && self.profile_text == other.profile_text
+            && self.ptext == other.ptext
             && self.age == other.age;
         if basic {
             let a1: HashMap<u16, ProfileAttributeValueUpdate> =
@@ -292,21 +296,21 @@ pub struct FavoriteProfilesPage {
 )]
 #[diesel(sql_type = Binary)]
 pub struct ProfileVersion {
-    version: uuid::Uuid,
+    v: uuid::Uuid,
 }
 
 impl ProfileVersion {
     pub(crate) fn new(version: uuid::Uuid) -> Self {
-        Self { version }
+        Self { v: version }
     }
 
     pub fn new_random() -> Self {
         let version = uuid::Uuid::new_v4();
-        Self { version }
+        Self { v: version }
     }
 
     pub fn as_uuid(&self) -> &uuid::Uuid {
-        &self.version
+        &self.v
     }
 }
 
@@ -315,7 +319,7 @@ diesel_uuid_wrapper!(ProfileVersion);
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileQueryParam {
     /// Profile version UUID
-    version: Option<uuid::Uuid>,
+    v: Option<uuid::Uuid>,
     /// If requested profile is not public, allow getting the profile
     /// data if the requested profile is a match.
     #[serde(default)]
@@ -324,7 +328,7 @@ pub struct GetProfileQueryParam {
 
 impl GetProfileQueryParam {
     pub fn profile_version(self) -> Option<ProfileVersion> {
-        self.version.map(ProfileVersion::new)
+        self.v.map(ProfileVersion::new)
     }
 
     pub fn allow_get_profile_if_match(self) -> bool {
@@ -335,11 +339,11 @@ impl GetProfileQueryParam {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileResult {
     /// Profile data if it is newer than the version in the query.
-    pub profile: Option<Profile>,
+    pub p: Option<Profile>,
     /// If empty then profile does not exist or current account does
     /// not have access to the profile.
-    pub version: Option<ProfileVersion>,
-    last_seen_time: Option<LastSeenTime>,
+    pub v: Option<ProfileVersion>,
+    lst: Option<LastSeenTime>,
 }
 
 impl GetProfileResult {
@@ -347,9 +351,9 @@ impl GetProfileResult {
         info: ProfileAndProfileVersion,
     ) -> Self {
         Self {
-            profile: Some(info.profile),
-            version: Some(info.version),
-            last_seen_time: info.last_seen_time,
+            p: Some(info.profile),
+            v: Some(info.version),
+            lst: info.last_seen_time,
         }
     }
 
@@ -358,27 +362,27 @@ impl GetProfileResult {
         last_seen_time: Option<LastSeenTime>,
     ) -> Self {
         Self {
-            profile: None,
-            version: Some(version),
-            last_seen_time,
+            p: None,
+            v: Some(version),
+            lst: last_seen_time,
         }
     }
 
     pub fn empty() -> Self {
         Self {
-            profile: None,
-            version: None,
-            last_seen_time: None,
+            p: None,
+            v: None,
+            lst: None,
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetMyProfileResult {
-    pub profile: Profile,
-    pub version: ProfileVersion,
-    pub sync_version: ProfileSyncVersion,
-    pub last_seen_time: Option<LastSeenTime>,
+    pub p: Profile,
+    pub v: ProfileVersion,
+    pub sv: ProfileSyncVersion,
+    pub lst: Option<LastSeenTime>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]

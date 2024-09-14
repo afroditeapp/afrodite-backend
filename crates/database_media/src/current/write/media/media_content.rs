@@ -89,12 +89,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         update(current_account_media.find(id.as_db_id()))
             .set((
                 profile_content_version_uuid.eq(new_version),
-                profile_content_id_0.eq(convert(Some(new.content_id_0))?),
-                profile_content_id_1.eq(convert(new.content_id_1)?),
-                profile_content_id_2.eq(convert(new.content_id_2)?),
-                profile_content_id_3.eq(convert(new.content_id_3)?),
-                profile_content_id_4.eq(convert(new.content_id_4)?),
-                profile_content_id_5.eq(convert(new.content_id_5)?),
+                profile_content_id_0.eq(convert(Some(new.c0))?),
+                profile_content_id_1.eq(convert(new.c1)?),
+                profile_content_id_2.eq(convert(new.c2)?),
+                profile_content_id_3.eq(convert(new.c3)?),
+                profile_content_id_4.eq(convert(new.c4)?),
+                profile_content_id_5.eq(convert(new.c5)?),
                 grid_crop_size.eq(new.grid_crop_size),
                 grid_crop_x.eq(new.grid_crop_x),
                 grid_crop_y.eq(new.grid_crop_y),
@@ -139,12 +139,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
 
         update(current_account_media.find(id.as_db_id()))
             .set((
-                pending_profile_content_id_0.eq(convert(new.content_id_0)?),
-                pending_profile_content_id_1.eq(convert(new.content_id_1)?),
-                pending_profile_content_id_2.eq(convert(new.content_id_2)?),
-                pending_profile_content_id_3.eq(convert(new.content_id_3)?),
-                pending_profile_content_id_4.eq(convert(new.content_id_4)?),
-                pending_profile_content_id_5.eq(convert(new.content_id_5)?),
+                pending_profile_content_id_0.eq(convert(new.c0)?),
+                pending_profile_content_id_1.eq(convert(new.c1)?),
+                pending_profile_content_id_2.eq(convert(new.c2)?),
+                pending_profile_content_id_3.eq(convert(new.c3)?),
+                pending_profile_content_id_4.eq(convert(new.c4)?),
+                pending_profile_content_id_5.eq(convert(new.c5)?),
                 pending_grid_crop_size.eq(new.grid_crop_size),
                 pending_grid_crop_x.eq(new.grid_crop_x),
                 pending_grid_crop_y.eq(new.grid_crop_y),

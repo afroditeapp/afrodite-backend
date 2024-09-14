@@ -94,7 +94,7 @@ pub struct ContentProcessingState {
     /// this will be 1.
     pub wait_queue_position: Option<u64>,
     /// Content ID of the processed content.
-    pub content_id: Option<ContentId>,
+    pub cid: Option<ContentId>,
 }
 
 impl ContentProcessingState {
@@ -102,7 +102,7 @@ impl ContentProcessingState {
         Self {
             state: ContentProcessingStateType::Empty,
             wait_queue_position: None,
-            content_id: None,
+            cid: None,
         }
     }
 
@@ -110,26 +110,26 @@ impl ContentProcessingState {
         Self {
             state: ContentProcessingStateType::InQueue,
             wait_queue_position: Some(wait_queue_position),
-            content_id: None,
+            cid: None,
         }
     }
 
     pub fn change_to_processing(&mut self) {
         self.state = ContentProcessingStateType::Processing;
         self.wait_queue_position = None;
-        self.content_id = None;
+        self.cid = None;
     }
 
     pub fn change_to_completed(&mut self, content_id: ContentId) {
         self.state = ContentProcessingStateType::Completed;
         self.wait_queue_position = None;
-        self.content_id = Some(content_id);
+        self.cid = Some(content_id);
     }
 
     pub fn change_to_failed(&mut self) {
         self.state = ContentProcessingStateType::Failed;
         self.wait_queue_position = None;
-        self.content_id = None;
+        self.cid = None;
     }
 }
 
@@ -196,25 +196,25 @@ diesel_i64_try_from!(ContentSlot);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ModerationRequestContent {
-    pub content0: ContentId,
-    pub content1: Option<ContentId>,
-    pub content2: Option<ContentId>,
-    pub content3: Option<ContentId>,
-    pub content4: Option<ContentId>,
-    pub content5: Option<ContentId>,
-    pub content6: Option<ContentId>,
+    pub c0: ContentId,
+    pub c1: Option<ContentId>,
+    pub c2: Option<ContentId>,
+    pub c3: Option<ContentId>,
+    pub c4: Option<ContentId>,
+    pub c5: Option<ContentId>,
+    pub c6: Option<ContentId>,
 }
 
 impl ModerationRequestContent {
     pub fn iter(&self) -> impl Iterator<Item = ContentId> {
         [
-            Some(self.content0),
-            self.content1,
-            self.content2,
-            self.content3,
-            self.content4,
-            self.content5,
-            self.content6,
+            Some(self.c0),
+            self.c1,
+            self.c2,
+            self.c3,
+            self.c4,
+            self.c5,
+            self.c6,
         ]
         .into_iter()
         .flatten()
@@ -253,13 +253,13 @@ pub struct MediaModerationRequestRaw {
 impl MediaModerationRequestRaw {
     pub fn to_moderation_request_content(&self) -> ModerationRequestContent {
         ModerationRequestContent {
-            content0: self.content_id_0,
-            content1: self.content_id_1,
-            content2: self.content_id_2,
-            content3: self.content_id_3,
-            content4: self.content_id_4,
-            content5: self.content_id_5,
-            content6: self.content_id_6,
+            c0: self.content_id_0,
+            c1: self.content_id_1,
+            c2: self.content_id_2,
+            c3: self.content_id_3,
+            c4: self.content_id_4,
+            c5: self.content_id_5,
+            c6: self.content_id_6,
         }
     }
 }
@@ -424,14 +424,14 @@ pub struct NewContentParams {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ContentInfo {
-    pub id: ContentId,
-    pub content_type: MediaContentType,
+    pub cid: ContentId,
+    pub ctype: MediaContentType,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct ContentInfoDetailed {
-    pub id: ContentId,
-    pub content_type: MediaContentType,
+    pub cid: ContentId,
+    pub ctype: MediaContentType,
     pub state: ContentState,
     pub slot: Option<ContentSlot>,
     pub secure_capture: bool,
@@ -454,7 +454,7 @@ pub struct ContentInfoDetailed {
 )]
 #[diesel(sql_type = Binary)]
 pub struct ContentId {
-    pub content_id: uuid::Uuid,
+    pub cid: uuid::Uuid,
 }
 
 diesel_uuid_wrapper!(ContentId);
@@ -462,25 +462,25 @@ diesel_uuid_wrapper!(ContentId);
 impl ContentId {
     pub fn new_random_id() -> Self {
         Self {
-            content_id: Uuid::new_v4(),
+            cid: Uuid::new_v4(),
         }
     }
 
     pub fn new(content_id: uuid::Uuid) -> Self {
-        Self { content_id }
+        Self { cid: content_id }
     }
 
     pub fn as_uuid(&self) -> &uuid::Uuid {
-        &self.content_id
+        &self.cid
     }
 
     /// File name for unprocessed user uploaded content.
     pub fn raw_content_file_name(&self) -> String {
-        format!("{}.raw", self.content_id.as_hyphenated())
+        format!("{}.raw", self.cid.as_hyphenated())
     }
 
     pub fn content_file_name(&self) -> String {
-        format!("{}", self.content_id.as_hyphenated())
+        format!("{}", self.cid.as_hyphenated())
     }
 
     pub fn not_in(&self, mut iter: impl Iterator<Item = ContentId>) -> bool {
@@ -536,8 +536,8 @@ impl From<MediaContentRaw> for ContentId {
 impl From<MediaContentRaw> for ContentInfo {
     fn from(value: MediaContentRaw) -> Self {
         ContentInfo {
-            id: value.uuid,
-            content_type: value.content_type_number,
+            cid: value.uuid,
+            ctype: value.content_type_number,
         }
     }
 }
@@ -545,8 +545,8 @@ impl From<MediaContentRaw> for ContentInfo {
 impl From<MediaContentRaw> for ContentInfoDetailed {
     fn from(value: MediaContentRaw) -> Self {
         ContentInfoDetailed {
-            id: value.uuid,
-            content_type: value.content_type_number,
+            cid: value.uuid,
+            ctype: value.content_type_number,
             state: value.content_state,
             slot: value.slot_number(),
             secure_capture: value.secure_capture,
@@ -657,12 +657,12 @@ impl CurrentAccountMediaInternal {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SetProfileContent {
     /// Primary profile image which is shown in grid view.
-    pub content_id_0: ContentId,
-    pub content_id_1: Option<ContentId>,
-    pub content_id_2: Option<ContentId>,
-    pub content_id_3: Option<ContentId>,
-    pub content_id_4: Option<ContentId>,
-    pub content_id_5: Option<ContentId>,
+    pub c0: ContentId,
+    pub c1: Option<ContentId>,
+    pub c2: Option<ContentId>,
+    pub c3: Option<ContentId>,
+    pub c4: Option<ContentId>,
+    pub c5: Option<ContentId>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
@@ -671,27 +671,27 @@ pub struct SetProfileContent {
 impl SetProfileContent {
     pub fn iter(&self) -> impl Iterator<Item = ContentId> {
         [
-            Some(self.content_id_0),
-            self.content_id_1,
-            self.content_id_2,
-            self.content_id_3,
-            self.content_id_4,
-            self.content_id_5,
+            Some(self.c0),
+            self.c1,
+            self.c2,
+            self.c3,
+            self.c4,
+            self.c5,
         ]
         .into_iter()
         .filter_map(|c| c.as_ref().cloned())
     }
 }
 
-#[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct SetProfileContentInternal {
     /// Primary profile image which is shown in grid view.
-    pub content_id_0: Option<ContentId>,
-    pub content_id_1: Option<ContentId>,
-    pub content_id_2: Option<ContentId>,
-    pub content_id_3: Option<ContentId>,
-    pub content_id_4: Option<ContentId>,
-    pub content_id_5: Option<ContentId>,
+    pub c0: Option<ContentId>,
+    pub c1: Option<ContentId>,
+    pub c2: Option<ContentId>,
+    pub c3: Option<ContentId>,
+    pub c4: Option<ContentId>,
+    pub c5: Option<ContentId>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
@@ -700,12 +700,12 @@ pub struct SetProfileContentInternal {
 impl From<SetProfileContent> for SetProfileContentInternal {
     fn from(value: SetProfileContent) -> Self {
         Self {
-            content_id_0: Some(value.content_id_0),
-            content_id_1: value.content_id_1,
-            content_id_2: value.content_id_2,
-            content_id_3: value.content_id_3,
-            content_id_4: value.content_id_4,
-            content_id_5: value.content_id_5,
+            c0: Some(value.c0),
+            c1: value.c1,
+            c2: value.c2,
+            c3: value.c3,
+            c4: value.c4,
+            c5: value.c5,
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -717,12 +717,12 @@ impl From<SetProfileContent> for SetProfileContentInternal {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ProfileContent {
     /// Primary profile image which is shown in grid view.
-    pub content_id_0: Option<ContentInfo>,
-    pub content_id_1: Option<ContentInfo>,
-    pub content_id_2: Option<ContentInfo>,
-    pub content_id_3: Option<ContentInfo>,
-    pub content_id_4: Option<ContentInfo>,
-    pub content_id_5: Option<ContentInfo>,
+    pub c0: Option<ContentInfo>,
+    pub c1: Option<ContentInfo>,
+    pub c2: Option<ContentInfo>,
+    pub c3: Option<ContentInfo>,
+    pub c4: Option<ContentInfo>,
+    pub c5: Option<ContentInfo>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
@@ -731,12 +731,12 @@ pub struct ProfileContent {
 impl From<CurrentAccountMediaInternal> for ProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            content_id_0: value.profile_content_id_0.map(|c| c.into()),
-            content_id_1: value.profile_content_id_1.map(|c| c.into()),
-            content_id_2: value.profile_content_id_2.map(|c| c.into()),
-            content_id_3: value.profile_content_id_3.map(|c| c.into()),
-            content_id_4: value.profile_content_id_4.map(|c| c.into()),
-            content_id_5: value.profile_content_id_5.map(|c| c.into()),
+            c0: value.profile_content_id_0.map(|c| c.into()),
+            c1: value.profile_content_id_1.map(|c| c.into()),
+            c2: value.profile_content_id_2.map(|c| c.into()),
+            c3: value.profile_content_id_3.map(|c| c.into()),
+            c4: value.profile_content_id_4.map(|c| c.into()),
+            c5: value.profile_content_id_5.map(|c| c.into()),
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -752,12 +752,12 @@ pub struct PendingProfileContent {
     ///
     /// If this is None, then server will not change the current profile content
     /// when moderation is accepted.
-    pub content_id_0: Option<ContentInfo>,
-    pub content_id_1: Option<ContentInfo>,
-    pub content_id_2: Option<ContentInfo>,
-    pub content_id_3: Option<ContentInfo>,
-    pub content_id_4: Option<ContentInfo>,
-    pub content_id_5: Option<ContentInfo>,
+    pub c0: Option<ContentInfo>,
+    pub c1: Option<ContentInfo>,
+    pub c2: Option<ContentInfo>,
+    pub c3: Option<ContentInfo>,
+    pub c4: Option<ContentInfo>,
+    pub c5: Option<ContentInfo>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
@@ -766,12 +766,12 @@ pub struct PendingProfileContent {
 impl From<CurrentAccountMediaInternal> for PendingProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            content_id_0: value.pending_profile_content_id_0.map(|c| c.into()),
-            content_id_1: value.pending_profile_content_id_1.map(|c| c.into()),
-            content_id_2: value.pending_profile_content_id_2.map(|c| c.into()),
-            content_id_3: value.pending_profile_content_id_3.map(|c| c.into()),
-            content_id_4: value.pending_profile_content_id_4.map(|c| c.into()),
-            content_id_5: value.pending_profile_content_id_5.map(|c| c.into()),
+            c0: value.pending_profile_content_id_0.map(|c| c.into()),
+            c1: value.pending_profile_content_id_1.map(|c| c.into()),
+            c2: value.pending_profile_content_id_2.map(|c| c.into()),
+            c3: value.pending_profile_content_id_3.map(|c| c.into()),
+            c4: value.pending_profile_content_id_4.map(|c| c.into()),
+            c5: value.pending_profile_content_id_5.map(|c| c.into()),
             grid_crop_size: value.pending_grid_crop_size,
             grid_crop_x: value.pending_grid_crop_x,
             grid_crop_y: value.pending_grid_crop_y,
@@ -781,13 +781,13 @@ impl From<CurrentAccountMediaInternal> for PendingProfileContent {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityContent {
-    pub content_id: Option<ContentInfo>,
+    pub c0: Option<ContentInfo>,
 }
 
 impl From<CurrentAccountMediaInternal> for SecurityContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            content_id: value.security_content_id.map(|c| c.into()),
+            c0: value.security_content_id.map(|c| c.into()),
         }
     }
 }
@@ -796,13 +796,13 @@ impl From<CurrentAccountMediaInternal> for SecurityContent {
 /// accepted.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct PendingSecurityContent {
-    pub content_id: Option<ContentInfo>,
+    pub c0: Option<ContentInfo>,
 }
 
 impl From<CurrentAccountMediaInternal> for PendingSecurityContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            content_id: value.pending_security_content_id.map(|c| c.into()),
+            c0: value.pending_security_content_id.map(|c| c.into()),
         }
     }
 }
@@ -836,29 +836,29 @@ impl GetProfileContentQueryParams {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileContentResult {
-    pub content: Option<ProfileContent>,
-    pub version: Option<ProfileContentVersion>,
+    pub c: Option<ProfileContent>,
+    pub v: Option<ProfileContentVersion>,
 }
 
 impl GetProfileContentResult {
     pub fn current_version_latest_response(version: ProfileContentVersion) -> Self {
         Self {
-            content: None,
-            version: Some(version),
+            c: None,
+            v: Some(version),
         }
     }
 
     pub fn content_with_version(content: ProfileContent, version: ProfileContentVersion) -> Self {
         Self {
-            content: Some(content),
-            version: Some(version),
+            c: Some(content),
+            v: Some(version),
         }
     }
 
     pub fn empty() -> Self {
         Self {
-            content: None,
-            version: None,
+            c: None,
+            v: None,
         }
     }
 }
@@ -965,21 +965,21 @@ impl MediaStateRaw {
 )]
 #[diesel(sql_type = Binary)]
 pub struct ProfileContentVersion {
-    version: uuid::Uuid,
+    v: uuid::Uuid,
 }
 
 impl ProfileContentVersion {
     pub(crate) fn new(version: uuid::Uuid) -> Self {
-        Self { version }
+        Self { v: version }
     }
 
     pub fn new_random() -> Self {
         let version = uuid::Uuid::new_v4();
-        Self { version }
+        Self { v: version }
     }
 
     pub fn as_uuid(&self) -> &uuid::Uuid {
-        &self.version
+        &self.v
     }
 }
 
