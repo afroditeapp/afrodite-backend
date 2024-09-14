@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AcceptedProfileAges {
     #[serde(rename = "profile_initial_age")]
-    pub profile_initial_age: Box<models::ProfileAge>,
+    pub profile_initial_age: i64,
     #[serde(rename = "profile_initial_age_set_unix_time")]
     pub profile_initial_age_set_unix_time: Box<models::UnixTime>,
 }
 
 impl AcceptedProfileAges {
-    pub fn new(profile_initial_age: models::ProfileAge, profile_initial_age_set_unix_time: models::UnixTime) -> AcceptedProfileAges {
+    pub fn new(profile_initial_age: i64, profile_initial_age_set_unix_time: models::UnixTime) -> AcceptedProfileAges {
         AcceptedProfileAges {
-            profile_initial_age: Box::new(profile_initial_age),
+            profile_initial_age,
             profile_initial_age_set_unix_time: Box::new(profile_initial_age_set_unix_time),
         }
     }

@@ -4,8 +4,8 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**content_type** | [**models::MediaContentType**](MediaContentType.md) |  | 
-**id** | [**models::ContentId**](ContentId.md) |  | 
+**cid** | [**models::ContentId**](ContentId.md) |  | 
+**ctype** | [**models::MediaContentType**](MediaContentType.md) |  | 
 **secure_capture** | **bool** |  | 
 **slot** | Option<[**models::ContentSlot**](ContentSlot.md)> |  | [optional]
 **state** | [**models::ContentState**](ContentState.md) |  | 

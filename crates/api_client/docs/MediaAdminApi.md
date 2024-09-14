@@ -4,8 +4,8 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**patch_moderation_request_list**](MediaAdminApi.md#patch_moderation_request_list) | **PATCH** /media_api/admin/moderation/page/next | Get current list of moderation requests in my moderation queue.
-[**post_handle_moderation_request**](MediaAdminApi.md#post_handle_moderation_request) | **POST** /media_api/admin/moderation/handle_request/{account_id} | Handle moderation request of some account.
+[**patch_moderation_request_list**](MediaAdminApi.md#patch_moderation_request_list) | **PATCH** /6GF9AybnmCb3J1d4ZfTT95UoiSg | Get current list of moderation requests in my moderation queue.
+[**post_handle_moderation_request**](MediaAdminApi.md#post_handle_moderation_request) | **POST** /SiEktmT-jyNLA69x7qffV8c0YUk/{aid} | Handle moderation request of some account.
 
 
 
@@ -41,7 +41,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_handle_moderation_request
 
-> post_handle_moderation_request(account_id, handle_moderation_request)
+> post_handle_moderation_request(aid, handle_moderation_request)
 Handle moderation request of some account.
 
 ## Access  Account with `admin_moderate_images` capability is required to access this route. 
@@ -51,7 +51,7 @@ Handle moderation request of some account.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 **handle_moderation_request** | [**HandleModerationRequest**](HandleModerationRequest.md) |  | [required] |
 
 ### Return type

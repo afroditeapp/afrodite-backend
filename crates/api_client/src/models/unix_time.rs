@@ -13,14 +13,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UnixTime {
-    #[serde(rename = "unix_time")]
-    pub unix_time: i64,
+    #[serde(rename = "ut")]
+    pub ut: i64,
 }
 
 impl UnixTime {
-    pub fn new(unix_time: i64) -> UnixTime {
+    pub fn new(ut: i64) -> UnixTime {
         UnixTime {
-            unix_time,
+            ut,
         }
     }
 }

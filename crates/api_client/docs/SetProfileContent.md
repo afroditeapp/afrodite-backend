@@ -4,12 +4,12 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**content_id_0** | [**models::ContentId**](ContentId.md) |  | 
-**content_id_1** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
-**content_id_2** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
-**content_id_3** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
-**content_id_4** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
-**content_id_5** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
+**c0** | [**models::ContentId**](ContentId.md) |  | 
+**c1** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
+**c2** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
+**c3** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
+**c4** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
+**c5** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
 **grid_crop_size** | Option<**f64**> |  | [optional]
 **grid_crop_x** | Option<**f64**> |  | [optional]
 **grid_crop_y** | Option<**f64**> |  | [optional]

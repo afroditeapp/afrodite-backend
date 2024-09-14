@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 /// ContentId : Content ID for media content for example images
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentId {
-    #[serde(rename = "content_id")]
-    pub content_id: uuid::Uuid,
+    #[serde(rename = "cid")]
+    pub cid: uuid::Uuid,
 }
 
 impl ContentId {
     /// Content ID for media content for example images
-    pub fn new(content_id: uuid::Uuid) -> ContentId {
+    pub fn new(cid: uuid::Uuid) -> ContentId {
         ContentId {
-            content_id,
+            cid,
         }
     }
 }

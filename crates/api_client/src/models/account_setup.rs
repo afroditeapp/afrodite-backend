@@ -15,12 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct AccountSetup {
     #[serde(rename = "birthdate", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub birthdate: Option<Option<String>>,
+    #[serde(rename = "is_adult", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub is_adult: Option<Option<bool>>,
 }
 
 impl AccountSetup {
     pub fn new() -> AccountSetup {
         AccountSetup {
             birthdate: None,
+            is_adult: None,
         }
     }
 }

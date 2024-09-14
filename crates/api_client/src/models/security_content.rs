@@ -13,14 +13,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SecurityContent {
-    #[serde(rename = "content_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c0", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c0: Option<Option<Box<models::ContentInfo>>>,
 }
 
 impl SecurityContent {
     pub fn new() -> SecurityContent {
         SecurityContent {
-            content_id: None,
+            c0: None,
         }
     }
 }

@@ -49,13 +49,13 @@ impl BotAction for ModerateMediaModerationRequest {
 
             for request in list.list.clone() {
                 let images = [
-                    Some(request.content.content0),
-                    request.content.content1.flatten(),
-                    request.content.content2.flatten(),
-                    request.content.content3.flatten(),
-                    request.content.content4.flatten(),
-                    request.content.content5.flatten(),
-                    request.content.content6.flatten(),
+                    Some(request.content.c0),
+                    request.content.c1.flatten(),
+                    request.content.c2.flatten(),
+                    request.content.c3.flatten(),
+                    request.content.c4.flatten(),
+                    request.content.c5.flatten(),
+                    request.content.c6.flatten(),
                 ];
                 for content_id in images.iter().flatten() {
                     api_client::manual_additions::get_content_fixed(

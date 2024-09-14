@@ -16,25 +16,25 @@ use serde::{Deserialize, Serialize};
 pub struct Profile {
     #[serde(rename = "age")]
     pub age: i64,
-    #[serde(rename = "attributes")]
-    pub attributes: Vec<models::ProfileAttributeValue>,
+    #[serde(rename = "attributes", skip_serializing_if = "Option::is_none")]
+    pub attributes: Option<Vec<models::ProfileAttributeValue>>,
     #[serde(rename = "name")]
     pub name: String,
     /// Profile text support is disabled for now.
-    #[serde(rename = "profile_text")]
-    pub profile_text: String,
+    #[serde(rename = "ptext", skip_serializing_if = "Option::is_none")]
+    pub ptext: Option<String>,
     #[serde(rename = "unlimited_likes", skip_serializing_if = "Option::is_none")]
     pub unlimited_likes: Option<bool>,
 }
 
 impl Profile {
     /// Public profile info
-    pub fn new(age: i64, attributes: Vec<models::ProfileAttributeValue>, name: String, profile_text: String) -> Profile {
+    pub fn new(age: i64, name: String) -> Profile {
         Profile {
             age,
-            attributes,
+            attributes: None,
             name,
-            profile_text,
+            ptext: None,
             unlimited_likes: None,
         }
     }

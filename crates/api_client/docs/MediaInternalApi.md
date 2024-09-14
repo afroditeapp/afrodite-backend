@@ -4,13 +4,13 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**internal_get_check_moderation_request_for_account**](MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{account_id} | Check that media server has correct state for completing initial setup.
+[**internal_get_check_moderation_request_for_account**](MediaInternalApi.md#internal_get_check_moderation_request_for_account) | **GET** /internal/media_api/moderation/request/{aid} | Check that media server has correct state for completing initial setup.
 
 
 
 ## internal_get_check_moderation_request_for_account
 
-> internal_get_check_moderation_request_for_account(account_id)
+> internal_get_check_moderation_request_for_account(aid)
 Check that media server has correct state for completing initial setup.
 
 ### Parameters
@@ -18,7 +18,7 @@ Check that media server has correct state for completing initial setup.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 

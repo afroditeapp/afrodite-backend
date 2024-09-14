@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 /// MessageNumber : Message order number in a conversation.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MessageNumber {
-    #[serde(rename = "message_number")]
-    pub message_number: i64,
+    #[serde(rename = "mn")]
+    pub mn: i64,
 }
 
 impl MessageNumber {
     /// Message order number in a conversation.
-    pub fn new(message_number: i64) -> MessageNumber {
+    pub fn new(mn: i64) -> MessageNumber {
         MessageNumber {
-            message_number,
+            mn,
         }
     }
 }

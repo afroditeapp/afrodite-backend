@@ -4,26 +4,26 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**delete_like**](ChatApi.md#delete_like) | **DELETE** /chat_api/delete_like | Delete sent like.
-[**delete_pending_messages**](ChatApi.md#delete_pending_messages) | **DELETE** /chat_api/pending_messages | Delete list of pending messages
-[**get_matches**](ChatApi.md#get_matches) | **GET** /chat_api/matches | Get matches
-[**get_message_number_of_latest_viewed_message**](ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /chat_api/message_number_of_latest_viewed_message | Get message number of the most recent message that the recipient has viewed.
-[**get_pending_messages**](ChatApi.md#get_pending_messages) | **GET** /chat_api/pending_messages | Get list of pending messages.
-[**get_public_key**](ChatApi.md#get_public_key) | **GET** /chat_api/public_key/{account_id} | Get current public key of some account
-[**get_received_blocks**](ChatApi.md#get_received_blocks) | **GET** /chat_api/received_blocks | Get list of received blocks
-[**get_received_likes**](ChatApi.md#get_received_likes) | **GET** /chat_api/received_likes | Get received likes.
-[**get_sender_message_id**](ChatApi.md#get_sender_message_id) | **GET** /chat_api/sender_message_id/{account_id} | Get conversation specific expected sender message ID which API caller
-[**get_sent_blocks**](ChatApi.md#get_sent_blocks) | **GET** /chat_api/sent_blocks | Get list of sent blocks
-[**get_sent_likes**](ChatApi.md#get_sent_likes) | **GET** /chat_api/sent_likes | Get sent likes.
-[**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /chat_api/block_profile | Block profile
-[**post_get_pending_notification**](ChatApi.md#post_get_pending_notification) | **POST** /chat_api/get_pending_notification | Get pending notification and reset pending notification.
-[**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /chat_api/message_number_of_latest_viewed_message | Update message number of the most recent message that the recipient has viewed.
-[**post_public_key**](ChatApi.md#post_public_key) | **POST** /chat_api/public_key | Replace current public key with a new public key.
-[**post_send_like**](ChatApi.md#post_send_like) | **POST** /chat_api/send_like | Send a like to some account. If both will like each other, then
-[**post_send_message**](ChatApi.md#post_send_message) | **POST** /chat_api/send_message | Send message to a match.
-[**post_sender_message_id**](ChatApi.md#post_sender_message_id) | **POST** /chat_api/sender_message_id/{account_id} | Set conversation specific expected sender message ID which API caller
-[**post_set_device_token**](ChatApi.md#post_set_device_token) | **POST** /chat_api/set_device_token | 
-[**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /chat_api/unblock_profile | Unblock profile
+[**delete_like**](ChatApi.md#delete_like) | **DELETE** /O3DZlGOjDYbQ8PlCorta0onQDLI | Delete sent like.
+[**delete_pending_messages**](ChatApi.md#delete_pending_messages) | **DELETE** /7sKe87sefWrLYS0JvbPS10_F8oc | Delete list of pending messages
+[**get_matches**](ChatApi.md#get_matches) | **GET** /kzySqAe9qYi69MoCBnFGKdn76-Q | Get matches
+[**get_message_number_of_latest_viewed_message**](ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Get message number of the most recent message that the recipient has viewed.
+[**get_pending_messages**](ChatApi.md#get_pending_messages) | **GET** /7sKe87sefWrLYS0JvbPS10_F8oc | Get list of pending messages.
+[**get_public_key**](ChatApi.md#get_public_key) | **GET** /e-r4VrqWJD1kIttg1McD9kv5o0k/{aid} | Get current public key of some account
+[**get_received_blocks**](ChatApi.md#get_received_blocks) | **GET** /hjP9LovH2kBxnbwWKSyVgFL4o58 | Get list of received blocks
+[**get_received_likes**](ChatApi.md#get_received_likes) | **GET** /eEB4pq6DGUYlMVAYwPCm2RT5HP0 | Get received likes.
+[**get_sender_message_id**](ChatApi.md#get_sender_message_id) | **GET** /tn7H7RialxF_rBX74MazT7jYaqg/{aid} | Get conversation specific expected sender message ID which API caller
+[**get_sent_blocks**](ChatApi.md#get_sent_blocks) | **GET** /3qT3qSKKzXHjo8LGEphwMLF8vjk | Get list of sent blocks
+[**get_sent_likes**](ChatApi.md#get_sent_likes) | **GET** /pTybb424uGsXvCyOLljsPujVe5Y | Get sent likes.
+[**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /MpWSY01lXj7KaDK1KCNHLWRg9k4 | Block profile
+[**post_get_pending_notification**](ChatApi.md#post_get_pending_notification) | **POST** /MhQXhJMKgrUh0s95FueOgalQg-o | Get pending notification and reset pending notification.
+[**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Update message number of the most recent message that the recipient has viewed.
+[**post_public_key**](ChatApi.md#post_public_key) | **POST** /e-r4VrqWJD1kIttg1McD9kv5o0k | Replace current public key with a new public key.
+[**post_send_like**](ChatApi.md#post_send_like) | **POST** /sXq6ko76GtT7DuNXnkTTtFL6isY | Send a like to some account. If both will like each other, then
+[**post_send_message**](ChatApi.md#post_send_message) | **POST** /YEFESgzw0YxQUETcUmnmfWCaF1g | Send message to a match.
+[**post_sender_message_id**](ChatApi.md#post_sender_message_id) | **POST** /tn7H7RialxF_rBX74MazT7jYaqg/{aid} | Set conversation specific expected sender message ID which API caller
+[**post_set_device_token**](ChatApi.md#post_set_device_token) | **POST** /CBoGGZ4HDW0REbM6SxasDCvXJNM | 
+[**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /j2Ofh-WeAFmjCQqO_AyHIM1eZEo | Unblock profile
 
 
 
@@ -167,7 +167,7 @@ This endpoint does not need any parameter.
 
 ## get_public_key
 
-> models::GetPublicKey get_public_key(account_id, version)
+> models::GetPublicKey get_public_key(aid, version)
 Get current public key of some account
 
 ### Parameters
@@ -175,7 +175,7 @@ Get current public key of some account
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 **version** | **i64** |  | [required] |
 
 ### Return type
@@ -248,7 +248,7 @@ This endpoint does not need any parameter.
 
 ## get_sender_message_id
 
-> models::SenderMessageId get_sender_message_id(account_id)
+> models::SenderMessageId get_sender_message_id(aid)
 Get conversation specific expected sender message ID which API caller
 
 account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
@@ -258,7 +258,7 @@ account owns.  Default value is returned if the accounts are not in match state.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 
@@ -510,7 +510,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_sender_message_id
 
-> post_sender_message_id(account_id, sender_message_id)
+> post_sender_message_id(aid, sender_message_id)
 Set conversation specific expected sender message ID which API caller
 
 account owns.  This errors if the accounts are not in match state.
@@ -520,7 +520,7 @@ account owns.  This errors if the accounts are not in match state.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 **sender_message_id** | [**SenderMessageId**](SenderMessageId.md) |  | [required] |
 
 ### Return type

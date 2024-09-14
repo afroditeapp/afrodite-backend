@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **account** | [**models::AuthPair**](AuthPair.md) |  | 
-**account_id** | [**models::AccountId**](AccountId.md) |  | 
+**aid** | [**models::AccountId**](AccountId.md) |  | 
 **email** | Option<**String**> |  | [optional]
 **media** | Option<[**models::AuthPair**](AuthPair.md)> |  | [optional]
 **profile** | Option<[**models::AuthPair**](AuthPair.md)> |  | [optional]

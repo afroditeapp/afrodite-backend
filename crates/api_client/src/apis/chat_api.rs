@@ -201,7 +201,7 @@ pub async fn delete_like(configuration: &configuration::Configuration, account_i
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/delete_like", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/O3DZlGOjDYbQ8PlCorta0onQDLI", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -237,7 +237,7 @@ pub async fn delete_pending_messages(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/pending_messages", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/7sKe87sefWrLYS0JvbPS10_F8oc", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -273,7 +273,7 @@ pub async fn get_matches(configuration: &configuration::Configuration, ) -> Resu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/matches", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/kzySqAe9qYi69MoCBnFGKdn76-Q", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -308,7 +308,7 @@ pub async fn get_message_number_of_latest_viewed_message(configuration: &configu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/message_number_of_latest_viewed_message", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/gas7m77c7kw7N7TKyMQVzUKy3AQ", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -345,7 +345,7 @@ pub async fn get_pending_messages(configuration: &configuration::Configuration, 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/pending_messages", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/7sKe87sefWrLYS0JvbPS10_F8oc", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -375,12 +375,12 @@ pub async fn get_pending_messages(configuration: &configuration::Configuration, 
     }
 }
 
-pub async fn get_public_key(configuration: &configuration::Configuration, account_id: &str, version: i64) -> Result<models::GetPublicKey, Error<GetPublicKeyError>> {
+pub async fn get_public_key(configuration: &configuration::Configuration, aid: &str, version: i64) -> Result<models::GetPublicKey, Error<GetPublicKeyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/public_key/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/e-r4VrqWJD1kIttg1McD9kv5o0k/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("version", &version.to_string())]);
@@ -416,7 +416,7 @@ pub async fn get_received_blocks(configuration: &configuration::Configuration, )
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/received_blocks", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/hjP9LovH2kBxnbwWKSyVgFL4o58", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -452,7 +452,7 @@ pub async fn get_received_likes(configuration: &configuration::Configuration, ) 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/received_likes", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/eEB4pq6DGUYlMVAYwPCm2RT5HP0", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -483,12 +483,12 @@ pub async fn get_received_likes(configuration: &configuration::Configuration, ) 
 }
 
 /// account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
-pub async fn get_sender_message_id(configuration: &configuration::Configuration, account_id: &str) -> Result<models::SenderMessageId, Error<GetSenderMessageIdError>> {
+pub async fn get_sender_message_id(configuration: &configuration::Configuration, aid: &str) -> Result<models::SenderMessageId, Error<GetSenderMessageIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/sender_message_id/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/tn7H7RialxF_rBX74MazT7jYaqg/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -523,7 +523,7 @@ pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/sent_blocks", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/3qT3qSKKzXHjo8LGEphwMLF8vjk", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -559,7 +559,7 @@ pub async fn get_sent_likes(configuration: &configuration::Configuration, ) -> R
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/sent_likes", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/pTybb424uGsXvCyOLljsPujVe5Y", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -594,7 +594,7 @@ pub async fn post_block_profile(configuration: &configuration::Configuration, ac
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/block_profile", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/MpWSY01lXj7KaDK1KCNHLWRg9k4", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -631,7 +631,7 @@ pub async fn post_get_pending_notification(configuration: &configuration::Config
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/get_pending_notification", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/MhQXhJMKgrUh0s95FueOgalQg-o", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -659,7 +659,7 @@ pub async fn post_message_number_of_latest_viewed_message(configuration: &config
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/message_number_of_latest_viewed_message", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/gas7m77c7kw7N7TKyMQVzUKy3AQ", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -696,7 +696,7 @@ pub async fn post_public_key(configuration: &configuration::Configuration, set_p
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/public_key", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/e-r4VrqWJD1kIttg1McD9kv5o0k", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -733,7 +733,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/send_like", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/sXq6ko76GtT7DuNXnkTTtFL6isY", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -770,7 +770,7 @@ pub async fn post_send_message(configuration: &configuration::Configuration, rec
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/send_message", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/YEFESgzw0YxQUETcUmnmfWCaF1g", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("receiver", &receiver.to_string())]);
@@ -806,12 +806,12 @@ pub async fn post_send_message(configuration: &configuration::Configuration, rec
 }
 
 /// account owns.  This errors if the accounts are not in match state.
-pub async fn post_sender_message_id(configuration: &configuration::Configuration, account_id: &str, sender_message_id: models::SenderMessageId) -> Result<(), Error<PostSenderMessageIdError>> {
+pub async fn post_sender_message_id(configuration: &configuration::Configuration, aid: &str, sender_message_id: models::SenderMessageId) -> Result<(), Error<PostSenderMessageIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/sender_message_id/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/tn7H7RialxF_rBX74MazT7jYaqg/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -847,7 +847,7 @@ pub async fn post_set_device_token(configuration: &configuration::Configuration,
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/set_device_token", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/CBoGGZ4HDW0REbM6SxasDCvXJNM", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -883,7 +883,7 @@ pub async fn post_unblock_profile(configuration: &configuration::Configuration, 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/unblock_profile", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/j2Ofh-WeAFmjCQqO_AyHIM1eZEo", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

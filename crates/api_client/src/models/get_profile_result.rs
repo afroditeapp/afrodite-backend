@@ -14,20 +14,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetProfileResult {
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
-    #[serde(rename = "last_seen_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub last_seen_time: Option<Option<i64>>,
-    #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile: Option<Option<Box<models::Profile>>>,
-    #[serde(rename = "version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub version: Option<Option<Box<models::ProfileVersion>>>,
+    #[serde(rename = "lst", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub lst: Option<Option<i64>>,
+    #[serde(rename = "p", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub p: Option<Option<Box<models::Profile>>>,
+    #[serde(rename = "v", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub v: Option<Option<Box<models::ProfileVersion>>>,
 }
 
 impl GetProfileResult {
     pub fn new() -> GetProfileResult {
         GetProfileResult {
-            last_seen_time: None,
-            profile: None,
-            version: None,
+            lst: None,
+            p: None,
+            v: None,
         }
     }
 }

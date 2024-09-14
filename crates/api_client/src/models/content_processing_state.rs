@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentProcessingState {
-    #[serde(rename = "content_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id: Option<Option<Box<models::ContentId>>>,
+    #[serde(rename = "cid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub cid: Option<Option<Box<models::ContentId>>>,
     #[serde(rename = "state")]
     pub state: models::ContentProcessingStateType,
     /// Current position in processing queue.  If ProcessingContentId is added to empty queue, then this will be 1.
@@ -25,7 +25,7 @@ pub struct ContentProcessingState {
 impl ContentProcessingState {
     pub fn new(state: models::ContentProcessingStateType) -> ContentProcessingState {
         ContentProcessingState {
-            content_id: None,
+            cid: None,
             state,
             wait_queue_position: None,
         }

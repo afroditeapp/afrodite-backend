@@ -180,7 +180,7 @@ pub async fn delete_cancel_deletion(configuration: &configuration::Configuration
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/delete", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/_aiEAY0WZCquNl_WQ5fDORGuHwA", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -215,7 +215,7 @@ pub async fn get_account_data(configuration: &configuration::Configuration, ) ->
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/account_data", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/Ln3_j2LpJIbQABKwnMMhUEtio5k", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -250,7 +250,7 @@ pub async fn get_account_setup(configuration: &configuration::Configuration, ) -
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/account_setup", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/RNb6qhf_lZU8t6kOm5kQY7Y34ok", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -285,7 +285,7 @@ pub async fn get_account_state(configuration: &configuration::Configuration, ) -
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/state", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/C9sCP6O2IfIBQCu8LM1_SCybuW0", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -321,7 +321,7 @@ pub async fn get_deletion_status(configuration: &configuration::Configuration, )
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/delete", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/_aiEAY0WZCquNl_WQ5fDORGuHwA", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -356,7 +356,7 @@ pub async fn get_latest_birthdate(configuration: &configuration::Configuration, 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/latest_birthdate", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/Hg2W1drXZ94YVp3Uh38hnQzYIng", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -391,7 +391,7 @@ pub async fn post_account_data(configuration: &configuration::Configuration, acc
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/account_data", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/Ln3_j2LpJIbQABKwnMMhUEtio5k", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -427,7 +427,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, se
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/account_setup", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/RNb6qhf_lZU8t6kOm5kQY7Y34ok", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -464,7 +464,7 @@ pub async fn post_complete_setup(configuration: &configuration::Configuration, )
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/complete_setup", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/VzPyCXS5Hx50SbAApdpUYfCY-Iw", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -500,7 +500,7 @@ pub async fn post_delete(configuration: &configuration::Configuration, ) -> Resu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/delete", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/_aiEAY0WZCquNl_WQ5fDORGuHwA", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -536,7 +536,7 @@ pub async fn post_demo_mode_accessible_accounts(configuration: &configuration::C
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_accessible_accounts", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/xyG8kH6eLanLiKYXdnOx1xxeAdA", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -564,7 +564,7 @@ pub async fn post_demo_mode_confirm_login(configuration: &configuration::Configu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_confirm_login", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/3KlEajKOIo1Drd3uW-IzQ1L3qlE", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -593,7 +593,7 @@ pub async fn post_demo_mode_login(configuration: &configuration::Configuration, 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_login", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/TYbxniP-G9ibgdoAkpvVWTKkxaU", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -621,7 +621,7 @@ pub async fn post_demo_mode_login_to_account(configuration: &configuration::Conf
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_login_to_account", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/sBH-LyNGOOFXivrv5clCpNrkwcA", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -649,7 +649,7 @@ pub async fn post_demo_mode_register_account(configuration: &configuration::Conf
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/demo_mode_register_account", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/oDv1gK4Y6nMrPgEo5nArQAckh6Q", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -678,7 +678,7 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/sign_in_with_login", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/ijts6B4AAg_6Dyjhaw85iBnw5Bo", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -707,7 +707,7 @@ pub async fn put_setting_profile_visiblity(configuration: &configuration::Config
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/settings/profile_visibility", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/yG0OQXcMed-EGdvhSoq3qlXTYQc", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -743,7 +743,7 @@ pub async fn put_setting_unlimited_likes(configuration: &configuration::Configur
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/account_api/settings/unlimited_likes", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/oKbgnRxyzLb50Y2_ZCuLJYtEIcM", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

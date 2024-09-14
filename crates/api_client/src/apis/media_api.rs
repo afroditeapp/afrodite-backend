@@ -181,12 +181,12 @@ pub enum PutSecurityContentInfoError {
 
 
 /// since removing all usage from it (content is not a security image or profile content).
-pub async fn delete_content(configuration: &configuration::Configuration, account_id: &str, content_id: &str) -> Result<(), Error<DeleteContentError>> {
+pub async fn delete_content(configuration: &configuration::Configuration, aid: &str, cid: &str) -> Result<(), Error<DeleteContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/content/{account_id}/{content_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), content_id=crate::apis::urlencode(content_id));
+    let local_var_uri_str = format!("{}/9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid), cid=crate::apis::urlencode(cid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -221,7 +221,7 @@ pub async fn delete_moderation_request(configuration: &configuration::Configurat
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/moderation/request", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/O6uTeSLARVqY1bvDxmX96ITtBCM", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -257,7 +257,7 @@ pub async fn delete_pending_security_content_info(configuration: &configuration:
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_security_content_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/sO2QJPZs98Emtu1vW1k4iHD-gz8", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -287,12 +287,12 @@ pub async fn delete_pending_security_content_info(configuration: &configuration:
     }
 }
 
-pub async fn get_all_account_media_content(configuration: &configuration::Configuration, account_id: &str) -> Result<models::AccountContent, Error<GetAllAccountMediaContentError>> {
+pub async fn get_all_account_media_content(configuration: &configuration::Configuration, aid: &str) -> Result<models::AccountContent, Error<GetAllAccountMediaContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/all_account_media_content/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/RzBkQfHdmWHdL0L1Uq-DVE6kiVY/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -323,12 +323,12 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
 }
 
 /// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required. 
-pub async fn get_content(configuration: &configuration::Configuration, account_id: &str, content_id: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
+pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/content/{account_id}/{content_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), content_id=crate::apis::urlencode(content_id));
+    let local_var_uri_str = format!("{}/9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid), cid=crate::apis::urlencode(cid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_str) = is_match {
@@ -367,7 +367,7 @@ pub async fn get_content_slot_state(configuration: &configuration::Configuration
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/content_slot/{slot_id}", local_var_configuration.base_path, slot_id=slot_id);
+    let local_var_uri_str = format!("{}/y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id}", local_var_configuration.base_path, slot_id=slot_id);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -403,7 +403,7 @@ pub async fn get_map_tile(configuration: &configuration::Configuration, z: i32, 
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/map_tile/{z}/{x}/{y}", local_var_configuration.base_path, z=z, x=x, y=crate::apis::urlencode(y));
+    let local_var_uri_str = format!("{}/BoFh54UgWwlQvwJfb0TpJqd4gaM/{z}/{x}/{y}", local_var_configuration.base_path, z=z, x=x, y=crate::apis::urlencode(y));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -438,7 +438,7 @@ pub async fn get_moderation_request(configuration: &configuration::Configuration
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/moderation/request", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/O6uTeSLARVqY1bvDxmX96ITtBCM", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -468,12 +468,12 @@ pub async fn get_moderation_request(configuration: &configuration::Configuration
     }
 }
 
-pub async fn get_pending_profile_content_info(configuration: &configuration::Configuration, account_id: &str) -> Result<models::PendingProfileContent, Error<GetPendingProfileContentInfoError>> {
+pub async fn get_pending_profile_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::PendingProfileContent, Error<GetPendingProfileContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_profile_content_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/-NOw5oduzs2zI-cDLwFQKJkiO2U/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -503,12 +503,12 @@ pub async fn get_pending_profile_content_info(configuration: &configuration::Con
     }
 }
 
-pub async fn get_pending_security_content_info(configuration: &configuration::Configuration, account_id: &str) -> Result<models::PendingSecurityContent, Error<GetPendingSecurityContentInfoError>> {
+pub async fn get_pending_security_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::PendingSecurityContent, Error<GetPendingSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_security_content_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/sO2QJPZs98Emtu1vW1k4iHD-gz8/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -539,12 +539,12 @@ pub async fn get_pending_security_content_info(configuration: &configuration::Co
 }
 
 /// # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.
-pub async fn get_profile_content_info(configuration: &configuration::Configuration, account_id: &str, version: Option<&str>, is_match: Option<bool>) -> Result<models::GetProfileContentResult, Error<GetProfileContentInfoError>> {
+pub async fn get_profile_content_info(configuration: &configuration::Configuration, aid: &str, version: Option<&str>, is_match: Option<bool>) -> Result<models::GetProfileContentResult, Error<GetProfileContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/profile_content_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/ZYlzEPvPMBx2V1S6Ee-kIhp2_rg/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_str) = version {
@@ -580,12 +580,12 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
     }
 }
 
-pub async fn get_security_content_info(configuration: &configuration::Configuration, account_id: &str) -> Result<models::SecurityContent, Error<GetSecurityContentInfoError>> {
+pub async fn get_security_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::SecurityContent, Error<GetSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/security_content_info/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/6lWoyl4YuurCAEnkJbnSy1wP22M/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -621,7 +621,7 @@ pub async fn put_content_to_content_slot(configuration: &configuration::Configur
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/content_slot/{slot_id}", local_var_configuration.base_path, slot_id=slot_id);
+    let local_var_uri_str = format!("{}/y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id}", local_var_configuration.base_path, slot_id=slot_id);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("secure_capture", &secure_capture.to_string())]);
@@ -660,7 +660,7 @@ pub async fn put_moderation_request(configuration: &configuration::Configuration
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/moderation/request", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/O6uTeSLARVqY1bvDxmX96ITtBCM", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -697,7 +697,7 @@ pub async fn put_pending_profile_content(configuration: &configuration::Configur
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_profile_content", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/6LYLKEUqrhj86bf2PXWOjUYHbls", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -733,7 +733,7 @@ pub async fn put_pending_security_content_info(configuration: &configuration::Co
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/pending_security_content_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/sO2QJPZs98Emtu1vW1k4iHD-gz8", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -770,7 +770,7 @@ pub async fn put_profile_content(configuration: &configuration::Configuration, s
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/profile_content", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/_rsyG4gpvDy3O3Aj5hpLp3-8oPE", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -807,7 +807,7 @@ pub async fn put_security_content_info(configuration: &configuration::Configurat
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/security_content_info", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/6lWoyl4YuurCAEnkJbnSy1wP22M", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

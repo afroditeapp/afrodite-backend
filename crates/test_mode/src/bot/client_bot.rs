@@ -436,7 +436,7 @@ impl BotAction for AnswerReceivedMessages {
             .map(|msg| msg.id.as_ref().clone())
             .collect::<Vec<_>>();
 
-        let delete_list = PendingMessageDeleteList { messages_ids };
+        let delete_list = PendingMessageDeleteList { ids: messages_ids };
 
         delete_pending_messages(state.api.chat(), delete_list)
             .await
@@ -444,7 +444,7 @@ impl BotAction for AnswerReceivedMessages {
 
         for msg in pending_messages {
             let new_msg = "Hello!".to_string();
-            send_message(state, *msg.id.account_id_sender, new_msg).await?;
+            send_message(state, *msg.id.sender, new_msg).await?;
         }
 
         Ok(())
@@ -456,14 +456,14 @@ async fn send_message(
     receiver: AccountId,
     msg: String,
 ) -> Result<(), TestError> {
-    let public_key = get_public_key(state.api.chat(), &receiver.account_id.to_string(), 1)
+    let public_key = get_public_key(state.api.chat(), &receiver.aid.to_string(), 1)
         .await
         .change_context(TestError::ApiRequest)?;
 
     if let Some(receiver_public_key) = public_key.key.flatten() {
         post_sender_message_id(
             state.api.chat(),
-            &receiver.account_id.to_string(),
+            &receiver.aid.to_string(),
             SenderMessageId::new(0),
         )
             .await
@@ -485,7 +485,7 @@ async fn send_message(
 
         post_send_message_fixed(
             state.api.chat(),
-            &receiver.account_id.to_string(),
+            &receiver.aid.to_string(),
             receiver_public_key.id.id,
             receiver_public_key.version.version,
             0,

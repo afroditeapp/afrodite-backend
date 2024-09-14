@@ -32,26 +32,18 @@ pub enum GetVersionError {
 }
 
 
-/// Connection is required as API access is allowed for connected clients.  Protocol: 1. Client sends version information as Binary message, where - u8: Client WebSocket protocol version (currently 0). - u8: Client type number. (0 = Android, 1 = iOS, 255 = Test mode bot) - u16: Client Major version. - u16: Client Minor version. - u16: Client Patch version.  The u16 values are in little endian byte order. 2. Client sends current refresh token as Binary message. 3. If server supports the client, the server sends next refresh token as Binary message. If server does not support the client, the server sends Text message and closes the connection. 4. Server sends new access token as Text message. (At this point API can be used.) 5. Client sends list of current data sync versions as Binary message, where items are [u8; 2] and the first u8 of an item is the data type number and the second u8 of an item is the sync version number for that data. If client does not have any version of the data, the client should send 255 as the version number.  Available data types: - 0: Account 6. Server starts to send JSON events as Text messages and empty binary messages to test connection to the client. Client can ignore the empty binary messages. 7. If needed, the client sends empty binary messages to test connection to the server.  The new access token is valid until this WebSocket is closed or the server detects a timeout. To prevent the timeout the client must send a WebScoket ping message before 6 minutes elapses from connection establishment or previous ping message. 
+/// Connection is required as API access is allowed for connected clients.  Protocol: 1. Client sends version information as Binary message, where - u8: Client WebSocket protocol version (currently 0). - u8: Client type number. (0 = Android, 1 = iOS, 2 = Web, 255 = Test mode bot) - u16: Client Major version. - u16: Client Minor version. - u16: Client Patch version.  The u16 values are in little endian byte order. 2. Client sends current refresh token as Binary message. 3. If server supports the client, the server sends next refresh token as Binary message. If server does not support the client, the server sends Text message and closes the connection. 4. Server sends new access token as Binary message. The client must convert the token to base64url encoding without padding. (At this point API can be used.) 5. Client sends list of current data sync versions as Binary message, where items are [u8; 2] and the first u8 of an item is the data type number and the second u8 of an item is the sync version number for that data. If client does not have any version of the data, the client should send 255 as the version number.  Available data types: - 0: Account 6. Server starts to send JSON events as Text messages and empty binary messages to test connection to the client. Client can ignore the empty binary messages. 7. If needed, the client sends empty binary messages to test connection to the server.  The new access token is valid until this WebSocket is closed or the server detects a timeout. To prevent the timeout the client must send a WebScoket ping message before 6 minutes elapses from connection establishment or previous ping message.  `Sec-WebSocket-Protocol` header must have 2 protocols/values. The first is \"0\" and that protocol is accepted. The second is access token of currently logged in account. The token is base64url encoded without padding.
 pub async fn get_connect_websocket(configuration: &configuration::Configuration, ) -> Result<(), Error<GetConnectWebsocketError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/connect", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/6qQZ2jQO5exMKFI2jCzGAdMysxE", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }
-    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
-        let local_var_key = local_var_apikey.key.clone();
-        let local_var_value = match local_var_apikey.prefix {
-            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
-            None => local_var_key,
-        };
-        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
-    };
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -73,7 +65,7 @@ pub async fn get_version(configuration: &configuration::Configuration, ) -> Resu
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/common_api/version", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/0E_N3KS0gI2PPBujveMhHLv292Y", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

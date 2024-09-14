@@ -13,17 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LatestViewedMessageChanged {
-    #[serde(rename = "account_id_viewer")]
-    pub account_id_viewer: Box<models::AccountId>,
     #[serde(rename = "new_latest_viewed_message")]
     pub new_latest_viewed_message: Box<models::MessageNumber>,
+    #[serde(rename = "viewer")]
+    pub viewer: Box<models::AccountId>,
 }
 
 impl LatestViewedMessageChanged {
-    pub fn new(account_id_viewer: models::AccountId, new_latest_viewed_message: models::MessageNumber) -> LatestViewedMessageChanged {
+    pub fn new(new_latest_viewed_message: models::MessageNumber, viewer: models::AccountId) -> LatestViewedMessageChanged {
         LatestViewedMessageChanged {
-            account_id_viewer: Box::new(account_id_viewer),
             new_latest_viewed_message: Box::new(new_latest_viewed_message),
+            viewer: Box::new(viewer),
         }
     }
 }

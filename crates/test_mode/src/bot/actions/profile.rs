@@ -41,7 +41,7 @@ impl BotAction for ChangeProfileText {
         let current_profile = get_profile(state.api.profile(), &id, None, None)
             .await
             .change_context(TestError::ApiRequest)?
-            .profile
+            .p
             .flatten()
             .ok_or(TestError::MissingValue.report())?
             .as_ref()
@@ -57,6 +57,7 @@ impl BotAction for ChangeProfileText {
         let update = ProfileUpdate {
             attributes: current_profile
                 .attributes
+                .unwrap_or_default()
                 .iter()
                 .map(|a| ProfileAttributeValueUpdate {
                     id: a.id,
@@ -65,7 +66,7 @@ impl BotAction for ChangeProfileText {
                 .collect(),
             age: current_profile.age,
             name: current_profile.name,
-            profile_text,
+            ptext: profile_text,
         };
         post_profile(state.api.profile(), update)
             .await
@@ -83,7 +84,7 @@ impl BotAction for GetProfile {
         let profile = get_profile(state.api.profile(), &state.account_id_string()?, None, None)
             .await
             .change_context(TestError::ApiRequest)?
-            .profile
+            .p
             .flatten()
             .ok_or(TestError::MissingValue.report())?
             .as_ref()

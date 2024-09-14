@@ -4,26 +4,26 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**delete_favorite_profile**](ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
-[**get_available_profile_attributes**](ProfileApi.md#get_available_profile_attributes) | **GET** /profile_api/available_profile_attributes | Get info what profile attributes server supports.
-[**get_favorite_profiles**](ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
-[**get_initial_profile_age_info**](ProfileApi.md#get_initial_profile_age_info) | **GET** /profile_api/initial_profile_age_info | Get initial profile age information which can be used for calculating
-[**get_location**](ProfileApi.md#get_location) | **GET** /profile_api/location | Get location for account which makes this request.
-[**get_my_profile**](ProfileApi.md#get_my_profile) | **GET** /profile_api/my_profile | Get my profile
-[**get_profile**](ProfileApi.md#get_profile) | **GET** /profile_api/profile/{account_id} | Get account's current profile.
-[**get_profile_attribute_filters**](ProfileApi.md#get_profile_attribute_filters) | **GET** /profile_api/profile_attribute_filters | Get current profile attribute filter values.
-[**get_profile_from_database_debug_mode_benchmark**](ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{account_id} | Get account's current profile from database. Debug mode must be enabled
-[**get_search_age_range**](ProfileApi.md#get_search_age_range) | **GET** /profile_api/search_age_range | Get account's current search age range
-[**get_search_groups**](ProfileApi.md#get_search_groups) | **GET** /profile_api/search_groups | Get account's current search groups
-[**post_favorite_profile**](ProfileApi.md#post_favorite_profile) | **POST** /profile_api/favorite_profile | Add new favorite profile
-[**post_get_next_profile_page**](ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
-[**post_profile**](ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
-[**post_profile_attribute_filters**](ProfileApi.md#post_profile_attribute_filters) | **POST** /profile_api/profile_attribute_filters | Set profile attribute filter values.
-[**post_profile_to_database_debug_mode_benchmark**](ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled
-[**post_reset_profile_paging**](ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
-[**post_search_age_range**](ProfileApi.md#post_search_age_range) | **POST** /profile_api/search_age_range | Set account's current search age range
-[**post_search_groups**](ProfileApi.md#post_search_groups) | **POST** /profile_api/search_groups | Set account's current search groups
-[**put_location**](ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location for account which makes this request.
+[**delete_favorite_profile**](ProfileApi.md#delete_favorite_profile) | **DELETE** /yD1PtVhVvdk-usEran42JmCTFVQ | Delete favorite profile
+[**get_available_profile_attributes**](ProfileApi.md#get_available_profile_attributes) | **GET** /_lqy4YCINbw_RCxebKLGXdDq2AM | Get info what profile attributes server supports.
+[**get_favorite_profiles**](ProfileApi.md#get_favorite_profiles) | **GET** /Oep5nM7bWqTdRfRoULt-_FTkKJQ | Get list of all favorite profiles.
+[**get_initial_profile_age_info**](ProfileApi.md#get_initial_profile_age_info) | **GET** /NWOWjOlm6oTYsXiPsbhBDgknan0 | Get initial profile age information which can be used for calculating
+[**get_location**](ProfileApi.md#get_location) | **GET** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Get location for account which makes this request.
+[**get_my_profile**](ProfileApi.md#get_my_profile) | **GET** /iu25rmmvUzADXhW5SsP_DBGY2_w | Get my profile
+[**get_profile**](ProfileApi.md#get_profile) | **GET** /5i55ZcY0jIPD7B6pyyridKY0j0Q/{aid} | Get account's current profile.
+[**get_profile_attribute_filters**](ProfileApi.md#get_profile_attribute_filters) | **GET** /AL531AoIDRcTSWC-pdxcexf6tOM | Get current profile attribute filter values.
+[**get_profile_from_database_debug_mode_benchmark**](ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled
+[**get_search_age_range**](ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
+[**get_search_groups**](ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups
+[**post_favorite_profile**](ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
+[**post_get_next_profile_page**](ProfileApi.md#post_get_next_profile_page) | **POST** /_XRgLHtmWtbgW3ZAlgfTH5bs6bE | Post (updates iterator) to get next page of profile list.
+[**post_profile**](ProfileApi.md#post_profile) | **POST** /5i55ZcY0jIPD7B6pyyridKY0j0Q | Update profile information.
+[**post_profile_attribute_filters**](ProfileApi.md#post_profile_attribute_filters) | **POST** /AL531AoIDRcTSWC-pdxcexf6tOM | Set profile attribute filter values.
+[**post_profile_to_database_debug_mode_benchmark**](ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /XDTSz35S_5tOKIsSpDITOc46MR4 | Post account's current profile directly to database. Debug mode must be enabled
+[**post_reset_profile_paging**](ProfileApi.md#post_reset_profile_paging) | **POST** /uUYIl9C8DoXwTj1icArj0S4RTFI | Reset profile paging.
+[**post_search_age_range**](ProfileApi.md#post_search_age_range) | **POST** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Set account's current search age range
+[**post_search_groups**](ProfileApi.md#post_search_groups) | **POST** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Set account's current search groups
+[**put_location**](ProfileApi.md#put_location) | **PUT** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Update location for account which makes this request.
 
 
 
@@ -184,7 +184,7 @@ This endpoint does not need any parameter.
 
 ## get_profile
 
-> models::GetProfileResult get_profile(account_id, version, is_match)
+> models::GetProfileResult get_profile(aid, v, is_match)
 Get account's current profile.
 
 Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.  # Microservice notes If account feature is set as external service then cached capability information from account service is used for access checks.
@@ -194,8 +194,8 @@ Response includes version UUID which can be used for caching.  # Access  ## Own 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
-**version** | Option<**uuid::Uuid**> | Profile version UUID |  |
+**aid** | **uuid::Uuid** |  | [required] |
+**v** | Option<**uuid::Uuid**> | Profile version UUID |  |
 **is_match** | Option<**bool**> | If requested profile is not public, allow getting the profile data if the requested profile is a match. |  |
 
 ### Return type
@@ -241,7 +241,7 @@ This endpoint does not need any parameter.
 
 ## get_profile_from_database_debug_mode_benchmark
 
-> models::Profile get_profile_from_database_debug_mode_benchmark(account_id)
+> models::Profile get_profile_from_database_debug_mode_benchmark(aid)
 Get account's current profile from database. Debug mode must be enabled
 
 that route can be used.
@@ -251,7 +251,7 @@ that route can be used.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 
@@ -382,7 +382,7 @@ Name | Type | Description  | Required | Notes
 > post_profile(profile_update)
 Update profile information.
 
-Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid - Profile text must be empty - Profile age must match with currently valid age range. The first min value for the age range is the age at the initial setup. The second min and max value is calculated using the following algorithm: - The initial age (initialAge) is paired with the year of initial setup completed (initialSetupYear). - Year difference (yearDifference = currentYear - initialSetupYear) is used for changing the range min and max. - Min value: initialAge + yearDifference - 1. - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile age must match with currently valid age range. The first min value for the age range is the age at the initial setup. The second min and max value is calculated using the following algorithm: - The initial age (initialAge) is paired with the year of initial setup completed (initialSetupYear). - Year difference (yearDifference = currentYear - initialSetupYear) is used for changing the range min and max. - Min value: initialAge + yearDifference - 1. - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 
 ### Parameters
 

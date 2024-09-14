@@ -280,7 +280,7 @@ impl BotAction for PostProfileToDatabase {
             attributes: vec![],
             age: 18,
             name: String::new(),
-            profile_text: format!("{}", profile),
+            ptext: format!("{}", profile),
         };
         post_profile_to_database_debug_mode_benchmark(state.api.profile(), profile)
             .await

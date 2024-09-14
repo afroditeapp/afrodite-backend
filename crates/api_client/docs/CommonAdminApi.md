@@ -4,15 +4,15 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_backend_config**](CommonAdminApi.md#get_backend_config) | **GET** /common_api/backend_config | Get dynamic backend config.
-[**get_latest_build_info**](CommonAdminApi.md#get_latest_build_info) | **GET** /common_api/get_latest_build_info | Get latest software build information available for update from manager
-[**get_perf_data**](CommonAdminApi.md#get_perf_data) | **GET** /common_api/perf_data | Get performance data
-[**get_software_info**](CommonAdminApi.md#get_software_info) | **GET** /common_api/software_info | Get software version information from manager instance.
-[**get_system_info**](CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
-[**post_backend_config**](CommonAdminApi.md#post_backend_config) | **POST** /common_api/backend_config | Save dynamic backend config.
-[**post_request_build_software**](CommonAdminApi.md#post_request_build_software) | **POST** /common_api/request_build_software | Request building new software from manager instance.
-[**post_request_restart_or_reset_backend**](CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /common_api/request_restart_or_reset_backend | Request restarting or reseting backend through app-manager instance.
-[**post_request_update_software**](CommonAdminApi.md#post_request_update_software) | **POST** /common_api/request_update_software | Request updating new software from manager instance.
+[**get_backend_config**](CommonAdminApi.md#get_backend_config) | **GET** /E1D6g_Gvk0QMUdCm5KecTU_CfxY | Get dynamic backend config.
+[**get_latest_build_info**](CommonAdminApi.md#get_latest_build_info) | **GET** /iTg7lktGRkK6vDTVhYAZcnfGSQk | Get latest software build information available for update from manager
+[**get_perf_data**](CommonAdminApi.md#get_perf_data) | **GET** /LFF7-r3TWVsPUnfVzncXBphb0CM | Get performance data
+[**get_software_info**](CommonAdminApi.md#get_software_info) | **GET** /uAURrHBf-ePlVvcYS0FslKy5pV8 | Get software version information from manager instance.
+[**get_system_info**](CommonAdminApi.md#get_system_info) | **GET** /NZCbtziElAJucvGefGs9Z6btUrQ | Get system information from manager instance.
+[**post_backend_config**](CommonAdminApi.md#post_backend_config) | **POST** /E1D6g_Gvk0QMUdCm5KecTU_CfxY | Save dynamic backend config.
+[**post_request_build_software**](CommonAdminApi.md#post_request_build_software) | **POST** /vGQvKiH7zbpopxyScZILldwiCsg | Request building new software from manager instance.
+[**post_request_restart_or_reset_backend**](CommonAdminApi.md#post_request_restart_or_reset_backend) | **POST** /rAIji-qOFiclUKWs_5JIR_-dLoI | Request restarting or reseting backend through app-manager instance.
+[**post_request_update_software**](CommonAdminApi.md#post_request_update_software) | **POST** /yFSS8sqNjFU8nfjNqoKN1qQ743w | Request updating new software from manager instance.
 
 
 

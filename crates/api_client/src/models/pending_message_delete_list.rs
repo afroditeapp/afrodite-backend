@@ -13,14 +13,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingMessageDeleteList {
-    #[serde(rename = "messages_ids")]
-    pub messages_ids: Vec<models::PendingMessageId>,
+    #[serde(rename = "ids")]
+    pub ids: Vec<models::PendingMessageId>,
 }
 
 impl PendingMessageDeleteList {
-    pub fn new(messages_ids: Vec<models::PendingMessageId>) -> PendingMessageDeleteList {
+    pub fn new(ids: Vec<models::PendingMessageId>) -> PendingMessageDeleteList {
         PendingMessageDeleteList {
-            messages_ids,
+            ids,
         }
     }
 }

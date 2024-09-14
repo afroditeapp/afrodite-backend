@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 /// PendingSecurityContent : Security content settings which will be applied when moderation request is accepted.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingSecurityContent {
-    #[serde(rename = "content_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c0", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c0: Option<Option<Box<models::ContentInfo>>>,
 }
 
 impl PendingSecurityContent {
     /// Security content settings which will be applied when moderation request is accepted.
     pub fn new() -> PendingSecurityContent {
         PendingSecurityContent {
-            content_id: None,
+            c0: None,
         }
     }
 }

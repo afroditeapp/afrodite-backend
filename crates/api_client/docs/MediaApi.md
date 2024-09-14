@@ -4,30 +4,30 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**delete_content**](MediaApi.md#delete_content) | **DELETE** /media_api/content/{account_id}/{content_id} | Delete content data. Content can be removed after specific time has passed
-[**delete_moderation_request**](MediaApi.md#delete_moderation_request) | **DELETE** /media_api/moderation/request | Delete current moderation request which is not yet in moderation.
-[**delete_pending_security_content_info**](MediaApi.md#delete_pending_security_content_info) | **DELETE** /media_api/pending_security_content_info | Delete pending security content for current account.
-[**get_all_account_media_content**](MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{account_id} | Get list of all media content on the server for one account.
-[**get_content**](MediaApi.md#get_content) | **GET** /media_api/content/{account_id}/{content_id} | Get content data
-[**get_content_slot_state**](MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
-[**get_map_tile**](MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
-[**get_moderation_request**](MediaApi.md#get_moderation_request) | **GET** /media_api/moderation/request | Get current moderation request.
-[**get_pending_profile_content_info**](MediaApi.md#get_pending_profile_content_info) | **GET** /media_api/pending_profile_content_info/{account_id} | Get pending profile content for selected profile
-[**get_pending_security_content_info**](MediaApi.md#get_pending_security_content_info) | **GET** /media_api/pending_security_content_info/{account_id} | Get pending security content for selected profile.
-[**get_profile_content_info**](MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{account_id} | Get current profile content for selected profile.
-[**get_security_content_info**](MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{account_id} | Get current security content for selected profile.
-[**put_content_to_content_slot**](MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Set content to content processing slot.
-[**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /media_api/moderation/request | Create new or override old moderation request.
-[**put_pending_profile_content**](MediaApi.md#put_pending_profile_content) | **PUT** /media_api/pending_profile_content | Set new pending profile content for current account.
-[**put_pending_security_content_info**](MediaApi.md#put_pending_security_content_info) | **PUT** /media_api/pending_security_content_info | Set pending security content for current account.
-[**put_profile_content**](MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
-[**put_security_content_info**](MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content content for current account.
+[**delete_content**](MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Delete content data. Content can be removed after specific time has passed
+[**delete_moderation_request**](MediaApi.md#delete_moderation_request) | **DELETE** /O6uTeSLARVqY1bvDxmX96ITtBCM | Delete current moderation request which is not yet in moderation.
+[**delete_pending_security_content_info**](MediaApi.md#delete_pending_security_content_info) | **DELETE** /sO2QJPZs98Emtu1vW1k4iHD-gz8 | Delete pending security content for current account.
+[**get_all_account_media_content**](MediaApi.md#get_all_account_media_content) | **GET** /RzBkQfHdmWHdL0L1Uq-DVE6kiVY/{aid} | Get list of all media content on the server for one account.
+[**get_content**](MediaApi.md#get_content) | **GET** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Get content data
+[**get_content_slot_state**](MediaApi.md#get_content_slot_state) | **GET** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Get state of content slot.
+[**get_map_tile**](MediaApi.md#get_map_tile) | **GET** /BoFh54UgWwlQvwJfb0TpJqd4gaM/{z}/{x}/{y} | Get map tile PNG file.
+[**get_moderation_request**](MediaApi.md#get_moderation_request) | **GET** /O6uTeSLARVqY1bvDxmX96ITtBCM | Get current moderation request.
+[**get_pending_profile_content_info**](MediaApi.md#get_pending_profile_content_info) | **GET** /-NOw5oduzs2zI-cDLwFQKJkiO2U/{aid} | Get pending profile content for selected profile
+[**get_pending_security_content_info**](MediaApi.md#get_pending_security_content_info) | **GET** /sO2QJPZs98Emtu1vW1k4iHD-gz8/{aid} | Get pending security content for selected profile.
+[**get_profile_content_info**](MediaApi.md#get_profile_content_info) | **GET** /ZYlzEPvPMBx2V1S6Ee-kIhp2_rg/{aid} | Get current profile content for selected profile.
+[**get_security_content_info**](MediaApi.md#get_security_content_info) | **GET** /6lWoyl4YuurCAEnkJbnSy1wP22M/{aid} | Get current security content for selected profile.
+[**put_content_to_content_slot**](MediaApi.md#put_content_to_content_slot) | **PUT** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Set content to content processing slot.
+[**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /O6uTeSLARVqY1bvDxmX96ITtBCM | Create new or override old moderation request.
+[**put_pending_profile_content**](MediaApi.md#put_pending_profile_content) | **PUT** /6LYLKEUqrhj86bf2PXWOjUYHbls | Set new pending profile content for current account.
+[**put_pending_security_content_info**](MediaApi.md#put_pending_security_content_info) | **PUT** /sO2QJPZs98Emtu1vW1k4iHD-gz8 | Set pending security content for current account.
+[**put_profile_content**](MediaApi.md#put_profile_content) | **PUT** /_rsyG4gpvDy3O3Aj5hpLp3-8oPE | Set new profile content for current account.
+[**put_security_content_info**](MediaApi.md#put_security_content_info) | **PUT** /6lWoyl4YuurCAEnkJbnSy1wP22M | Set current security content content for current account.
 
 
 
 ## delete_content
 
-> delete_content(account_id, content_id)
+> delete_content(aid, cid)
 Delete content data. Content can be removed after specific time has passed
 
 since removing all usage from it (content is not a security image or profile content).
@@ -37,8 +37,8 @@ since removing all usage from it (content is not a security image or profile con
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
-**content_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
+**cid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 
@@ -110,7 +110,7 @@ This endpoint does not need any parameter.
 
 ## get_all_account_media_content
 
-> models::AccountContent get_all_account_media_content(account_id)
+> models::AccountContent get_all_account_media_content(aid)
 Get list of all media content on the server for one account.
 
 ### Parameters
@@ -118,7 +118,7 @@ Get list of all media content on the server for one account.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 
@@ -138,7 +138,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_content
 
-> std::path::PathBuf get_content(account_id, content_id, is_match)
+> std::path::PathBuf get_content(aid, cid, is_match)
 Get content data
 
 # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required. 
@@ -148,8 +148,8 @@ Get content data
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
-**content_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
+**cid** | **uuid::Uuid** |  | [required] |
 **is_match** | Option<**bool**> | If false media content access is allowed when profile is set as public. If true media content access is allowed when users are a match. |  |
 
 ### Return type
@@ -257,7 +257,7 @@ This endpoint does not need any parameter.
 
 ## get_pending_profile_content_info
 
-> models::PendingProfileContent get_pending_profile_content_info(account_id)
+> models::PendingProfileContent get_pending_profile_content_info(aid)
 Get pending profile content for selected profile
 
 ### Parameters
@@ -265,7 +265,7 @@ Get pending profile content for selected profile
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 
@@ -285,7 +285,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_pending_security_content_info
 
-> models::PendingSecurityContent get_pending_security_content_info(account_id)
+> models::PendingSecurityContent get_pending_security_content_info(aid)
 Get pending security content for selected profile.
 
 ### Parameters
@@ -293,7 +293,7 @@ Get pending security content for selected profile.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 
@@ -313,7 +313,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_profile_content_info
 
-> models::GetProfileContentResult get_profile_content_info(account_id, version, is_match)
+> models::GetProfileContentResult get_profile_content_info(aid, version, is_match)
 Get current profile content for selected profile.
 
 # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.
@@ -323,7 +323,7 @@ Get current profile content for selected profile.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 **version** | Option<**uuid::Uuid**> |  |  |
 **is_match** | Option<**bool**> | If false profile content access is allowed when profile is set as public. If true profile content access is allowed when users are a match. |  |
 
@@ -345,7 +345,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_security_content_info
 
-> models::SecurityContent get_security_content_info(account_id)
+> models::SecurityContent get_security_content_info(aid)
 Get current security content for selected profile.
 
 ### Parameters
@@ -353,7 +353,7 @@ Get current security content for selected profile.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**account_id** | **uuid::Uuid** |  | [required] |
+**aid** | **uuid::Uuid** |  | [required] |
 
 ### Return type
 

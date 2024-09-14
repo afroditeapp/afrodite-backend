@@ -20,17 +20,17 @@ pub struct ProfileUpdate {
     #[serde(rename = "name")]
     pub name: String,
     /// This must be empty because profile text support is disabled.
-    #[serde(rename = "profile_text")]
-    pub profile_text: String,
+    #[serde(rename = "ptext")]
+    pub ptext: String,
 }
 
 impl ProfileUpdate {
-    pub fn new(age: i64, attributes: Vec<models::ProfileAttributeValueUpdate>, name: String, profile_text: String) -> ProfileUpdate {
+    pub fn new(age: i64, attributes: Vec<models::ProfileAttributeValueUpdate>, name: String, ptext: String) -> ProfileUpdate {
         ProfileUpdate {
             age,
             attributes,
             name,
-            profile_text,
+            ptext,
         }
     }
 }

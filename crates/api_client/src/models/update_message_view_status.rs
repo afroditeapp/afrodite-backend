@@ -13,17 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateMessageViewStatus {
-    #[serde(rename = "account_id_sender")]
-    pub account_id_sender: Box<models::AccountId>,
-    #[serde(rename = "message_number")]
-    pub message_number: Box<models::MessageNumber>,
+    #[serde(rename = "mn")]
+    pub mn: Box<models::MessageNumber>,
+    #[serde(rename = "sender")]
+    pub sender: Box<models::AccountId>,
 }
 
 impl UpdateMessageViewStatus {
-    pub fn new(account_id_sender: models::AccountId, message_number: models::MessageNumber) -> UpdateMessageViewStatus {
+    pub fn new(mn: models::MessageNumber, sender: models::AccountId) -> UpdateMessageViewStatus {
         UpdateMessageViewStatus {
-            account_id_sender: Box::new(account_id_sender),
-            message_number: Box::new(message_number),
+            mn: Box::new(mn),
+            sender: Box::new(sender),
         }
     }
 }

@@ -14,23 +14,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetMyProfileResult {
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
-    #[serde(rename = "last_seen_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub last_seen_time: Option<Option<i64>>,
-    #[serde(rename = "profile")]
-    pub profile: Box<models::Profile>,
-    #[serde(rename = "sync_version")]
-    pub sync_version: Box<models::ProfileSyncVersion>,
-    #[serde(rename = "version")]
-    pub version: Box<models::ProfileVersion>,
+    #[serde(rename = "lst", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub lst: Option<Option<i64>>,
+    #[serde(rename = "p")]
+    pub p: Box<models::Profile>,
+    #[serde(rename = "sv")]
+    pub sv: Box<models::ProfileSyncVersion>,
+    #[serde(rename = "v")]
+    pub v: Box<models::ProfileVersion>,
 }
 
 impl GetMyProfileResult {
-    pub fn new(profile: models::Profile, sync_version: models::ProfileSyncVersion, version: models::ProfileVersion) -> GetMyProfileResult {
+    pub fn new(p: models::Profile, sv: models::ProfileSyncVersion, v: models::ProfileVersion) -> GetMyProfileResult {
         GetMyProfileResult {
-            last_seen_time: None,
-            profile: Box::new(profile),
-            sync_version: Box::new(sync_version),
-            version: Box::new(version),
+            lst: None,
+            p: Box::new(p),
+            sv: Box::new(sv),
+            v: Box::new(v),
         }
     }
 }

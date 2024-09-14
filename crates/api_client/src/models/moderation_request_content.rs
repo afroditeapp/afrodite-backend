@@ -13,32 +13,32 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ModerationRequestContent {
-    #[serde(rename = "content0")]
-    pub content0: Box<models::ContentId>,
-    #[serde(rename = "content1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content1: Option<Option<Box<models::ContentId>>>,
-    #[serde(rename = "content2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content2: Option<Option<Box<models::ContentId>>>,
-    #[serde(rename = "content3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content3: Option<Option<Box<models::ContentId>>>,
-    #[serde(rename = "content4", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content4: Option<Option<Box<models::ContentId>>>,
-    #[serde(rename = "content5", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content5: Option<Option<Box<models::ContentId>>>,
-    #[serde(rename = "content6", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content6: Option<Option<Box<models::ContentId>>>,
+    #[serde(rename = "c0")]
+    pub c0: Box<models::ContentId>,
+    #[serde(rename = "c1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c1: Option<Option<Box<models::ContentId>>>,
+    #[serde(rename = "c2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c2: Option<Option<Box<models::ContentId>>>,
+    #[serde(rename = "c3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c3: Option<Option<Box<models::ContentId>>>,
+    #[serde(rename = "c4", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c4: Option<Option<Box<models::ContentId>>>,
+    #[serde(rename = "c5", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c5: Option<Option<Box<models::ContentId>>>,
+    #[serde(rename = "c6", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c6: Option<Option<Box<models::ContentId>>>,
 }
 
 impl ModerationRequestContent {
-    pub fn new(content0: models::ContentId) -> ModerationRequestContent {
+    pub fn new(c0: models::ContentId) -> ModerationRequestContent {
         ModerationRequestContent {
-            content0: Box::new(content0),
-            content1: None,
-            content2: None,
-            content3: None,
-            content4: None,
-            content5: None,
-            content6: None,
+            c0: Box::new(c0),
+            c1: None,
+            c2: None,
+            c3: None,
+            c4: None,
+            c5: None,
+            c6: None,
         }
     }
 }

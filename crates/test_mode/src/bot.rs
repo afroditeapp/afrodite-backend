@@ -289,7 +289,7 @@ impl BotState {
 
     pub fn persistent_state(&self) -> Option<BotPersistentState> {
         self.id.map(|id| BotPersistentState {
-            account_id: id.account_id,
+            account_id: id.aid,
             task: self.task_id,
             bot: self.bot_id,
         })

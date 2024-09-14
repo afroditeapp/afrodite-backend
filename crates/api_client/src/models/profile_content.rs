@@ -14,18 +14,18 @@ use serde::{Deserialize, Serialize};
 /// ProfileContent : Current content in public profile.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileContent {
-    #[serde(rename = "content_id_0", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id_0: Option<Option<Box<models::ContentInfo>>>,
-    #[serde(rename = "content_id_1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id_1: Option<Option<Box<models::ContentInfo>>>,
-    #[serde(rename = "content_id_2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id_2: Option<Option<Box<models::ContentInfo>>>,
-    #[serde(rename = "content_id_3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id_3: Option<Option<Box<models::ContentInfo>>>,
-    #[serde(rename = "content_id_4", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id_4: Option<Option<Box<models::ContentInfo>>>,
-    #[serde(rename = "content_id_5", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content_id_5: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c0", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c0: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c1: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c2", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c2: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c3", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c3: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c4", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c4: Option<Option<Box<models::ContentInfo>>>,
+    #[serde(rename = "c5", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c5: Option<Option<Box<models::ContentInfo>>>,
     #[serde(rename = "grid_crop_size", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<Option<f64>>,
     #[serde(rename = "grid_crop_x", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -38,12 +38,12 @@ impl ProfileContent {
     /// Current content in public profile.
     pub fn new() -> ProfileContent {
         ProfileContent {
-            content_id_0: None,
-            content_id_1: None,
-            content_id_2: None,
-            content_id_3: None,
-            content_id_4: None,
-            content_id_5: None,
+            c0: None,
+            c1: None,
+            c2: None,
+            c3: None,
+            c4: None,
+            c5: None,
             grid_crop_size: None,
             grid_crop_x: None,
             grid_crop_y: None,

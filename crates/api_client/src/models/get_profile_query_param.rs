@@ -17,15 +17,15 @@ pub struct GetProfileQueryParam {
     #[serde(rename = "is_match", skip_serializing_if = "Option::is_none")]
     pub is_match: Option<bool>,
     /// Profile version UUID
-    #[serde(rename = "version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub version: Option<Option<uuid::Uuid>>,
+    #[serde(rename = "v", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub v: Option<Option<uuid::Uuid>>,
 }
 
 impl GetProfileQueryParam {
     pub fn new() -> GetProfileQueryParam {
         GetProfileQueryParam {
             is_match: None,
-            version: None,
+            v: None,
         }
     }
 }

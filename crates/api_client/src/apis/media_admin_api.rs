@@ -40,7 +40,7 @@ pub async fn patch_moderation_request_list(configuration: &configuration::Config
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/admin/moderation/page/next", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/6GF9AybnmCb3J1d4ZfTT95UoiSg", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PATCH, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("queue", &queue.to_string())]);
@@ -72,12 +72,12 @@ pub async fn patch_moderation_request_list(configuration: &configuration::Config
 }
 
 /// ## Access  Account with `admin_moderate_images` capability is required to access this route. 
-pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, account_id: &str, handle_moderation_request: models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
+pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, aid: &str, handle_moderation_request: models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/admin/moderation/handle_request/{account_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id));
+    let local_var_uri_str = format!("{}/SiEktmT-jyNLA69x7qffV8c0YUk/{aid}", local_var_configuration.base_path, aid=crate::apis::urlencode(aid));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {

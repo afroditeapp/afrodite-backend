@@ -13,17 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentInfo {
-    #[serde(rename = "content_type")]
-    pub content_type: models::MediaContentType,
-    #[serde(rename = "id")]
-    pub id: Box<models::ContentId>,
+    #[serde(rename = "cid")]
+    pub cid: Box<models::ContentId>,
+    #[serde(rename = "ctype")]
+    pub ctype: models::MediaContentType,
 }
 
 impl ContentInfo {
-    pub fn new(content_type: models::MediaContentType, id: models::ContentId) -> ContentInfo {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType) -> ContentInfo {
         ContentInfo {
-            content_type,
-            id: Box::new(id),
+            cid: Box::new(cid),
+            ctype,
         }
     }
 }

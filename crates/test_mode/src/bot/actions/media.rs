@@ -126,7 +126,7 @@ impl SendImageToSlot {
                     }
                     ContentProcessingStateType::Completed => {
                         return Ok(*slot_state
-                            .content_id
+                            .cid
                             .flatten()
                             .expect("Content ID is missing"))
                     }
@@ -224,13 +224,13 @@ impl BotAction for MakeModerationRequest {
         }
 
         let new = ModerationRequestContent {
-            content0: content_ids[0].clone().expect("Content ID is missing"),
-            content1: content_ids.get(1).cloned(),
-            content2: content_ids.get(2).cloned(),
-            content3: None,
-            content4: None,
-            content5: None,
-            content6: None,
+            c0: content_ids[0].clone().expect("Content ID is missing"),
+            c1: content_ids.get(1).cloned(),
+            c2: content_ids.get(2).cloned(),
+            c3: None,
+            c4: None,
+            c5: None,
+            c6: None,
         };
 
         put_moderation_request(state.api.media(), new)
@@ -261,7 +261,7 @@ impl BotAction for SetPendingContent {
             let bot_info = state.get_bot_config();
 
             let info = SetProfileContent {
-                content_id_0: content_id.into(),
+                c0: content_id.into(),
                 grid_crop_size: bot_info.and_then(|v| v.grid_crop_size).into(),
                 grid_crop_x: bot_info.and_then(|v| v.grid_crop_x).into(),
                 grid_crop_y: bot_info.and_then(|v| v.grid_crop_y).into(),

@@ -11,7 +11,7 @@ impl Copy for AccountId {}
 
 impl fmt::Display for AccountId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.account_id.hyphenated())
+        write!(f, "{}", self.aid.hyphenated())
     }
 }
 
@@ -19,13 +19,13 @@ impl Copy for ContentId {}
 
 impl fmt::Display for ContentId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.content_id.hyphenated())
+        write!(f, "{}", self.cid.hyphenated())
     }
 }
 
 impl fmt::Display for UnixTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.unix_time)
+        write!(f, "{}", self.ut)
     }
 }
 

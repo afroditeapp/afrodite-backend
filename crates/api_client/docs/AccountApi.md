@@ -4,24 +4,24 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**delete_cancel_deletion**](AccountApi.md#delete_cancel_deletion) | **DELETE** /account_api/delete | Cancel account deletion.
-[**get_account_data**](AccountApi.md#get_account_data) | **GET** /account_api/account_data | Get changeable user information to account.
-[**get_account_setup**](AccountApi.md#get_account_setup) | **GET** /account_api/account_setup | Get non-changeable user information to account.
-[**get_account_state**](AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
-[**get_deletion_status**](AccountApi.md#get_deletion_status) | **GET** /account_api/delete | Get deletion status.
-[**get_latest_birthdate**](AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
-[**post_account_data**](AccountApi.md#post_account_data) | **POST** /account_api/account_data | Set changeable user information to account.
-[**post_account_setup**](AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
-[**post_complete_setup**](AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
-[**post_delete**](AccountApi.md#post_delete) | **PUT** /account_api/delete | Delete account.
-[**post_demo_mode_accessible_accounts**](AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /account_api/demo_mode_accessible_accounts | Get demo account's available accounts.
-[**post_demo_mode_confirm_login**](AccountApi.md#post_demo_mode_confirm_login) | **POST** /account_api/demo_mode_confirm_login | 
-[**post_demo_mode_login**](AccountApi.md#post_demo_mode_login) | **POST** /account_api/demo_mode_login | Access demo mode, which allows accessing all or specific accounts
-[**post_demo_mode_login_to_account**](AccountApi.md#post_demo_mode_login_to_account) | **POST** /account_api/demo_mode_login_to_account | 
-[**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /account_api/demo_mode_register_account | 
-[**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google. Creates new account if
-[**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
-[**put_setting_unlimited_likes**](AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
+[**delete_cancel_deletion**](AccountApi.md#delete_cancel_deletion) | **DELETE** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Cancel account deletion.
+[**get_account_data**](AccountApi.md#get_account_data) | **GET** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Get changeable user information to account.
+[**get_account_setup**](AccountApi.md#get_account_setup) | **GET** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Get non-changeable user information to account.
+[**get_account_state**](AccountApi.md#get_account_state) | **GET** /C9sCP6O2IfIBQCu8LM1_SCybuW0 | Get current account state.
+[**get_deletion_status**](AccountApi.md#get_deletion_status) | **GET** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Get deletion status.
+[**get_latest_birthdate**](AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
+[**post_account_data**](AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
+[**post_account_setup**](AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
+[**post_complete_setup**](AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
+[**post_delete**](AccountApi.md#post_delete) | **PUT** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Delete account.
+[**post_demo_mode_accessible_accounts**](AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /xyG8kH6eLanLiKYXdnOx1xxeAdA | Get demo account's available accounts.
+[**post_demo_mode_confirm_login**](AccountApi.md#post_demo_mode_confirm_login) | **POST** /3KlEajKOIo1Drd3uW-IzQ1L3qlE | 
+[**post_demo_mode_login**](AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts
+[**post_demo_mode_login_to_account**](AccountApi.md#post_demo_mode_login_to_account) | **POST** /sBH-LyNGOOFXivrv5clCpNrkwcA | 
+[**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
+[**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if
+[**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
+[**put_setting_unlimited_likes**](AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 
 
 
 

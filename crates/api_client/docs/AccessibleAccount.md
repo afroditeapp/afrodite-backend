@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **age** | Option<**i64**> |  | [optional]
-**id** | [**models::AccountId**](AccountId.md) |  | 
+**aid** | [**models::AccountId**](AccountId.md) |  | 
 **name** | Option<**String**> |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

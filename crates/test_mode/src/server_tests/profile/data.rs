@@ -13,14 +13,14 @@ async fn updating_profile_works(context: TestContext) -> TestResult {
         attributes: vec![],
         age: 18,
         name: "A".to_string(),
-        profile_text: "".to_string(),
+        ptext: "".to_string(),
     };
     post_profile(account.account_api(), profile).await?;
     assert_eq(
         "A",
         &get_profile(account.account_api(), &account.account_id_string(), None, None)
             .await?
-            .profile
+            .p
             .flatten()
             .ok_or(TestError::MissingValue.report())?
             .name,

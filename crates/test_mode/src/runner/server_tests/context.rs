@@ -99,7 +99,7 @@ impl TestContext {
             attributes: vec![],
             age,
             name: name.to_string(),
-            profile_text: String::new(),
+            ptext: String::new(),
         };
         post_profile(account.profile_api(), update)
             .await
@@ -271,7 +271,7 @@ impl Account {
     }
 
     pub fn account_id_string(&self) -> String {
-        self.account_id().account_id.to_string()
+        self.account_id().aid.to_string()
     }
 
     /// Only actions without TaskState usage are supported

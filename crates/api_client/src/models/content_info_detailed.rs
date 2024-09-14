@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentInfoDetailed {
-    #[serde(rename = "content_type")]
-    pub content_type: models::MediaContentType,
-    #[serde(rename = "id")]
-    pub id: Box<models::ContentId>,
+    #[serde(rename = "cid")]
+    pub cid: Box<models::ContentId>,
+    #[serde(rename = "ctype")]
+    pub ctype: models::MediaContentType,
     #[serde(rename = "secure_capture")]
     pub secure_capture: bool,
     #[serde(rename = "slot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -26,10 +26,10 @@ pub struct ContentInfoDetailed {
 }
 
 impl ContentInfoDetailed {
-    pub fn new(content_type: models::MediaContentType, id: models::ContentId, secure_capture: bool, state: models::ContentState) -> ContentInfoDetailed {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, secure_capture: bool, state: models::ContentState) -> ContentInfoDetailed {
         ContentInfoDetailed {
-            content_type,
-            id: Box::new(id),
+            cid: Box::new(cid),
+            ctype,
             secure_capture,
             slot: None,
             state,
