@@ -18,7 +18,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             delete(
                 pending_messages.filter(
                     message_number
-                        .eq(message.message_number)
+                        .eq(message.mn)
                         .and(account_id_receiver.eq(message_receiver.as_db_id())),
                 ),
             )

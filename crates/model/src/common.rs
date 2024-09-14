@@ -64,7 +64,7 @@ pub enum EventType {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct LatestViewedMessageChanged {
     /// Account id of message viewer
-    pub account_id_viewer: AccountId,
+    pub viewer: AccountId,
     /// New value for latest vieqed message
     pub new_latest_viewed_message: MessageNumber,
 }
@@ -249,7 +249,7 @@ impl AccountIdInternal {
     }
 
     pub fn as_uuid(&self) -> &uuid::Uuid {
-        &self.uuid.account_id
+        &self.uuid.aid
     }
 
     pub fn as_db_id(&self) -> &AccountIdDb {
@@ -303,28 +303,28 @@ impl std::fmt::Display for AccountIdInternal {
 )]
 #[diesel(sql_type = Binary)]
 pub struct AccountId {
-    pub account_id: uuid::Uuid,
+    pub aid: uuid::Uuid,
 }
 
 impl AccountId {
     pub fn new(account_id: uuid::Uuid) -> Self {
-        Self { account_id }
+        Self { aid: account_id }
     }
 
     pub fn as_uuid(&self) -> &uuid::Uuid {
-        &self.account_id
+        &self.aid
     }
 
     pub fn for_debugging_only_zero() -> Self {
         Self {
-            account_id: uuid::Uuid::nil(),
+            aid: uuid::Uuid::nil(),
         }
     }
 }
 
 impl From<AccountId> for uuid::Uuid {
     fn from(value: AccountId) -> Self {
-        value.account_id
+        value.aid
     }
 }
 
@@ -332,7 +332,7 @@ diesel_uuid_wrapper!(AccountId);
 
 impl std::fmt::Display for AccountId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.account_id.hyphenated())
+        write!(f, "{}", self.aid.hyphenated())
     }
 }
 

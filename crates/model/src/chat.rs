@@ -319,14 +319,13 @@ pub struct PendingMessageAndMessageData {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct PendingMessageId {
     /// Sender of the message.
-    pub account_id_sender: AccountId,
-    pub message_number: MessageNumber,
+    pub sender: AccountId,
+    pub mn: MessageNumber,
 }
 
-// TODO(prod): change messages_ids to message_ids
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct PendingMessageDeleteList {
-    pub messages_ids: Vec<PendingMessageId>,
+    pub ids: Vec<PendingMessageId>,
 }
 
 /// Message order number in a conversation.
@@ -344,16 +343,16 @@ pub struct PendingMessageDeleteList {
 )]
 #[diesel(sql_type = BigInt)]
 pub struct MessageNumber {
-    pub message_number: i64,
+    pub mn: i64,
 }
 
 impl MessageNumber {
     pub fn new(id: i64) -> Self {
-        Self { message_number: id }
+        Self { mn: id }
     }
 
     pub fn as_i64(&self) -> &i64 {
-        &self.message_number
+        &self.mn
     }
 }
 
@@ -362,9 +361,9 @@ diesel_i64_wrapper!(MessageNumber);
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct UpdateMessageViewStatus {
     /// Sender of the messages.
-    pub account_id_sender: AccountId,
+    pub sender: AccountId,
     /// New message number for message view status.
-    pub message_number: MessageNumber,
+    pub mn: MessageNumber,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]
@@ -393,7 +392,7 @@ pub fn account_id_as_uuid<
     value: &AccountId,
     s: S,
 ) -> Result<S::Ok, S::Error> {
-    value.account_id.serialize(s)
+    value.aid.serialize(s)
 }
 
 pub fn public_key_id_as_i64<
@@ -429,7 +428,7 @@ pub fn account_id_from_uuid<
 >(
     d: D,
 ) -> Result<AccountId, D::Error> {
-    uuid::Uuid::deserialize(d).map(|account_id| AccountId { account_id })
+    uuid::Uuid::deserialize(d).map(|account_id| AccountId { aid: account_id })
 }
 
 pub fn public_key_id_from_i64<
@@ -462,9 +461,9 @@ pub fn sender_message_id_from_i64<
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SendMessageResult {
     /// None if error happened
-    unix_time: Option<i64>,
+    ut: Option<UnixTime>,
     /// None if error happened
-    message_number: Option<i64>,
+    mn: Option<MessageNumber>,
     // Errors
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -507,8 +506,8 @@ impl SendMessageResult {
 
     pub fn successful(values: NewPendingMessageValues) -> Self {
         Self {
-            unix_time: Some(values.unix_time.unix_time),
-            message_number: Some(values.message_number.message_number),
+            ut: Some(values.unix_time),
+            mn: Some(values.message_number),
             ..Self::default()
         }
     }
@@ -573,14 +572,6 @@ impl SenderMessageId {
 }
 
 diesel_i64_wrapper!(SenderMessageId);
-
-/// Encrypted message container for client.
-#[derive(ToSchema)]
-pub struct EncryptedMessage {
-    /// Encryption version
-    pub version: i64,
-    pub pgp_message: String,
-}
 
 pub struct NewPendingMessageValues {
     pub unix_time: UnixTime,

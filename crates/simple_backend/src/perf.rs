@@ -237,7 +237,7 @@ impl PerformanceCounterHistory {
             } else {
                 let seconds = 60 * ((self.next_index as i64) - 1);
                 let area_start_time = UnixTime {
-                    unix_time: start_time.unix_time + seconds,
+                    ut: start_time.ut + seconds,
                 };
                 let data = &self.data[..self.next_index];
                 Some((area_start_time, data))
@@ -255,7 +255,7 @@ impl PerformanceCounterHistory {
             } else {
                 let seconds = 60 * self.next_index as i64;
                 let area_start_time = UnixTime {
-                    unix_time: previous_start_time.unix_time + seconds,
+                    ut: previous_start_time.ut + seconds,
                 };
                 let data = &self.data[self.next_index..];
                 Some((area_start_time, data))

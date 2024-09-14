@@ -249,7 +249,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 .ok_or(DieselDatabaseError::NotFound.report())?;
 
             // Prevent marking future messages as viewed
-            if new_message_number.message_number > interaction.message_counter {
+            if new_message_number.mn > interaction.message_counter {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
 

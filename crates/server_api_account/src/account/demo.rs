@@ -158,7 +158,7 @@ pub async fn post_demo_mode_login_to_account<
 
     let _demo_mode_id: DemoModeId = state.demo_mode_token_exists(&info.token).await?;
 
-    let result = login_impl(info.account_id, state).await?;
+    let result = login_impl(info.aid, state).await?;
 
     Ok(result.into())
 }

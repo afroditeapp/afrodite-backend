@@ -28,7 +28,7 @@ pub struct LoginResult {
     pub media: Option<AuthPair>,
 
     /// Account ID of current account.
-    pub account_id: AccountId,
+    pub aid: AccountId,
 
     /// Current email of current account.
     pub email: Option<EmailAddress>,

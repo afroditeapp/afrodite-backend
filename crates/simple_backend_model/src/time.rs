@@ -22,26 +22,26 @@ use crate::macros::diesel_i64_wrapper;
 )]
 #[diesel(sql_type = BigInt)]
 pub struct UnixTime {
-    pub unix_time: i64,
+    pub ut: i64,
 }
 
 impl UnixTime {
     pub fn new(value: i64) -> Self {
-        Self { unix_time: value }
+        Self { ut: value }
     }
 
     pub fn as_i64(&self) -> &i64 {
-        &self.unix_time
+        &self.ut
     }
 
     pub fn current_time() -> Self {
         Self {
-            unix_time: current_unix_time(),
+            ut: current_unix_time(),
         }
     }
 
     pub fn year(&self) -> Option<i32> {
-        chrono::DateTime::from_timestamp(self.unix_time, 0)
+        chrono::DateTime::from_timestamp(self.ut, 0)
             .map(|v| v.year())
     }
 }

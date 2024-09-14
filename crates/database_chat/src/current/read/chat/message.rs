@@ -31,8 +31,8 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
                 PendingMessageAndMessageData {
                     pending_message: PendingMessage {
                         id: PendingMessageId {
-                            account_id_sender: sender_uuid,
-                            message_number: msg.message_number,
+                            sender: sender_uuid,
+                            mn: msg.message_number,
                         },
                         unix_time: msg.unix_time,
                     },

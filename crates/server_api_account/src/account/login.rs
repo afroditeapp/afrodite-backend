@@ -40,7 +40,7 @@ pub async fn login_impl<S: ReadData + WriteData + GetAccounts + ResetPushNotific
         account,
         profile: None,
         media: None,
-        account_id: id.as_id(),
+        aid: id.as_id(),
         email: email.email,
     };
     Ok(result)

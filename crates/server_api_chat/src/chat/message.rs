@@ -105,7 +105,7 @@ pub async fn delete_pending_messages<S: WriteData>(
 
     db_write!(state, move |cmds| {
         cmds.chat()
-            .delete_pending_message_list(id, list.messages_ids)
+            .delete_pending_message_list(id, list.ids)
     })?;
     Ok(())
 }
@@ -165,13 +165,13 @@ pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + Write
 ) -> Result<(), StatusCode> {
     CHAT.post_message_number_of_latest_viewed_message.incr();
 
-    let message_sender = state.get_internal_id(update_info.account_id_sender).await?;
+    let message_sender = state.get_internal_id(update_info.sender).await?;
     db_write_multiple!(state, move |cmds| {
         cmds.chat()
             .update_message_number_of_latest_viewed_message(
                 id,
                 message_sender,
-                update_info.message_number,
+                update_info.mn,
             )
             .await?;
 
@@ -179,8 +179,8 @@ pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + Write
             .send_connected_event(
                 message_sender,
                 EventToClientInternal::LatestViewedMessageChanged(LatestViewedMessageChanged {
-                    account_id_viewer: id.into(),
-                    new_latest_viewed_message: update_info.message_number,
+                    viewer: id.into(),
+                    new_latest_viewed_message: update_info.mn,
                 }),
             )
             .await?;

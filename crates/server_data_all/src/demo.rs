@@ -391,13 +391,13 @@ impl AccessibleAccountsInfo {
                 let internal_id = state.get_internal_id(*id).await?;
                 let profile = state.read().profile().profile(internal_id).await?;
                 AccessibleAccount {
-                    id: *id,
+                    aid: *id,
                     name: Some(profile.profile.name),
                     age: Some(profile.profile.age),
                 }
             } else {
                 AccessibleAccount {
-                    id: *id,
+                    aid: *id,
                     name: None,
                     age: None,
                 }

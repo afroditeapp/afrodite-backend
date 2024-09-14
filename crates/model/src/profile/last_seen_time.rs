@@ -22,7 +22,7 @@ impl LastSeenTime {
 
 impl From<UnixTime> for LastSeenTime {
     fn from(value: UnixTime) -> Self {
-        Self(value.unix_time)
+        Self(value.ut)
     }
 }
 
@@ -70,8 +70,8 @@ impl LastSeenTimeFilter {
     ) -> bool {
         if *self == Self::ONLINE {
             last_seen_time == LastSeenTime::ONLINE
-        } else if last_seen_time.0 <= current_time.unix_time {
-            let seconds_since_last_seen = last_seen_time.0.abs_diff(current_time.unix_time);
+        } else if last_seen_time.0 <= current_time.ut {
+            let seconds_since_last_seen = last_seen_time.0.abs_diff(current_time.ut);
             let max_seconds_since = self.value as u64;
             last_seen_time == LastSeenTime::ONLINE ||
             seconds_since_last_seen <= max_seconds_since

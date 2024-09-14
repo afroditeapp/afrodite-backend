@@ -90,7 +90,7 @@ impl DemoModeToken {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct AccessibleAccount {
-    pub id: AccountId,
+    pub aid: AccountId,
     pub name: Option<String>,
     #[schema(value_type = Option<i64>)]
     pub age: Option<ProfileAge>,
@@ -99,7 +99,7 @@ pub struct AccessibleAccount {
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct DemoModeLoginToAccount {
     pub token: DemoModeToken,
-    pub account_id: AccountId,
+    pub aid: AccountId,
 }
 
 #[derive(
