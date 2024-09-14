@@ -2,6 +2,7 @@ use axum::{extract::State, Extension, Router};
 use model::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::UpdateUnlimitedLikes, db_write, db_write_multiple};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
@@ -12,12 +13,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
+#[obfuscate_api]
+const PATH_GET_ACCOUNT_DATA: &str = "/account_api/account_data";
 
 /// Get changeable user information to account.
 #[utoipa::path(
     get,
-    path = "/account_api/account_data",
+    path = PATH_GET_ACCOUNT_DATA,
     responses(
         (status = 200, description = "Request successfull.", body = AccountData),
         (status = 401, description = "Unauthorized."),
@@ -38,12 +40,13 @@ pub async fn get_account_data<S: GetAccessTokens + ReadData + WriteData>(
     Ok(data.into())
 }
 
-pub const PATH_POST_ACCOUNT_DATA: &str = "/account_api/account_data";
+#[obfuscate_api]
+const PATH_POST_ACCOUNT_DATA: &str = "/account_api/account_data";
 
 /// Set changeable user information to account.
 #[utoipa::path(
     post,
-    path = "/account_api/account_data",
+    path = PATH_POST_ACCOUNT_DATA,
     request_body(content = AccountData),
     responses(
         (status = 200, description = "Request successfull."),
@@ -71,14 +74,15 @@ pub async fn post_account_data<S: GetAccessTokens + ReadData + WriteData>(
         .account_data(api_caller_account_id, data))
 }
 
-pub const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
+#[obfuscate_api]
+const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
 /// Update current or pending profile visiblity value.
 ///
 /// NOTE: Client uses this in initial setup.
 #[utoipa::path(
     put,
-    path = "/account_api/settings/profile_visibility",
+    path = PATH_SETTING_PROFILE_VISIBILITY,
     request_body(content = BooleanSetting),
     responses(
         (status = 200, description = "Update successfull."),
@@ -126,6 +130,7 @@ pub async fn put_setting_profile_visiblity<S: GetInternalApi + GetConfig + Write
     Ok(())
 }
 
+#[obfuscate_api]
 pub const PATH_SETTING_UNLIMITED_LIKES: &str = "/account_api/settings/unlimited_likes";
 
 #[utoipa::path(
@@ -161,14 +166,14 @@ pub fn settings_router<
     use axum::routing::{get, post, put};
 
     Router::new()
-        .route(PATH_GET_ACCOUNT_DATA, get(get_account_data::<S>))
-        .route(PATH_POST_ACCOUNT_DATA, post(post_account_data::<S>))
+        .route(PATH_GET_ACCOUNT_DATA_AXUM, get(get_account_data::<S>))
+        .route(PATH_POST_ACCOUNT_DATA_AXUM, post(post_account_data::<S>))
         .route(
-            PATH_SETTING_PROFILE_VISIBILITY,
+            PATH_SETTING_PROFILE_VISIBILITY_AXUM,
             put(put_setting_profile_visiblity::<S>),
         )
         .route(
-            PATH_SETTING_UNLIMITED_LIKES,
+            PATH_SETTING_UNLIMITED_LIKES_AXUM,
             put(put_setting_unlimited_likes::<S>),
         )
         .with_state(s)

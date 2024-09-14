@@ -6,6 +6,7 @@ use model::{
     DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult,
     SignInWithInfo,
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
@@ -21,7 +22,8 @@ use crate::{
 //             password? Also info about locked account only if password
 //             is correct?
 
-pub const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
+#[obfuscate_api]
+const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
 
 /// Access demo mode, which allows accessing all or specific accounts
 /// depending on the server configuration.
@@ -46,7 +48,8 @@ pub async fn post_demo_mode_login<S: DemoModeManagerProvider>(
     Ok(result.into())
 }
 
-pub const PATH_POST_DEMO_MODE_CONFIRM_LOGIN: &str = "/account_api/demo_mode_confirm_login";
+#[obfuscate_api]
+const PATH_POST_DEMO_MODE_CONFIRM_LOGIN: &str = "/account_api/demo_mode_confirm_login";
 
 #[utoipa::path(
     post,
@@ -67,7 +70,8 @@ pub async fn post_demo_mode_confirm_login<S: DemoModeManagerProvider>(
     Ok(result.into())
 }
 
-pub const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str =
+#[obfuscate_api]
+const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str =
     "/account_api/demo_mode_accessible_accounts";
 
 // TODO: Return Unauthorized instead of internal server error on routes which
@@ -99,7 +103,8 @@ pub async fn post_demo_mode_accessible_accounts<
     Ok(result.into())
 }
 
-pub const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_register_account";
+#[obfuscate_api]
+const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_register_account";
 
 #[utoipa::path(
     post,
@@ -130,7 +135,8 @@ pub async fn post_demo_mode_register_account<
     Ok(id.as_id().into())
 }
 
-pub const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login_to_account";
+#[obfuscate_api]
+const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login_to_account";
 
 #[utoipa::path(
     post,
@@ -173,20 +179,20 @@ pub fn demo_mode_router<
 
     Router::new()
         .route(
-            PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS,
+            PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS_AXUM,
             post(post_demo_mode_accessible_accounts::<S>),
         )
-        .route(PATH_POST_DEMO_MODE_LOGIN, post(post_demo_mode_login::<S>))
+        .route(PATH_POST_DEMO_MODE_LOGIN_AXUM, post(post_demo_mode_login::<S>))
         .route(
-            PATH_POST_DEMO_MODE_CONFIRM_LOGIN,
+            PATH_POST_DEMO_MODE_CONFIRM_LOGIN_AXUM,
             post(post_demo_mode_confirm_login::<S>),
         )
         .route(
-            PATH_POST_DEMO_MODE_REGISTER_ACCOUNT,
+            PATH_POST_DEMO_MODE_REGISTER_ACCOUNT_AXUM,
             post(post_demo_mode_register_account::<S>),
         )
         .route(
-            PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT,
+            PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT_AXUM,
             post(post_demo_mode_login_to_account::<S>),
         )
         .with_state(s)

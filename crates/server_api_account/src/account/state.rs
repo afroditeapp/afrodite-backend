@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{Account, AccountIdInternal, LatestBirthdate};
+use obfuscate_api_macro::obfuscate_api;
 use server_data::read::GetReadCommandsCommon;
 use simple_backend::create_counters;
 
@@ -8,12 +9,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_ACCOUNT_STATE: &str = "/account_api/state";
+#[obfuscate_api]
+const PATH_ACCOUNT_STATE: &str = "/account_api/state";
 
 /// Get current account state.
 #[utoipa::path(
     get,
-    path = "/account_api/state",
+    path = PATH_ACCOUNT_STATE,
     responses(
         (status = 200, description = "Request successfull.", body = Account),
         (status = 401, description = "Unauthorized."),
@@ -30,7 +32,8 @@ pub async fn get_account_state<S: GetAccessTokens + ReadData>(
     Ok(account.into())
 }
 
-pub const PATH_LATEST_BIRTHDATE: &str = "/account_api/latest_birthdate";
+#[obfuscate_api]
+const PATH_LATEST_BIRTHDATE: &str = "/account_api/latest_birthdate";
 
 #[utoipa::path(
     get,
@@ -58,8 +61,8 @@ pub fn state_router<S: StateBase + GetAccessTokens + ReadData>(s: S) -> Router {
     use axum::routing::get;
 
     Router::new()
-        .route(PATH_ACCOUNT_STATE, get(get_account_state::<S>))
-        .route(PATH_LATEST_BIRTHDATE, get(get_latest_birthdate::<S>))
+        .route(PATH_ACCOUNT_STATE_AXUM, get(get_account_state::<S>))
+        .route(PATH_LATEST_BIRTHDATE_AXUM, get(get_latest_birthdate::<S>))
         .with_state(s)
 }
 

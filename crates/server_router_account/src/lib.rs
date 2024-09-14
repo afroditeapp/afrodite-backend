@@ -50,7 +50,7 @@ pub fn create_common_server_router(state: S, ws_manager: WebSocketManager) -> Ro
 pub fn create_account_server_router(state: S) -> Router {
     let public = Router::new()
         .route(
-            api::account::PATH_SIGN_IN_WITH_LOGIN,
+            api::account::PATH_SIGN_IN_WITH_LOGIN_AXUM,
             post(api::account::post_sign_in_with_login::<S>),
         )
         .with_state(state.clone());

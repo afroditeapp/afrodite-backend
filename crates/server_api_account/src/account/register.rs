@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
+use obfuscate_api_macro::obfuscate_api;
 use server_api::app::{CompleteInitialSetupCmd, ValidateModerationRequest};
 use server_data_account::{
     read::GetReadCommandsAccount,
@@ -15,12 +16,13 @@ use crate::{
 
 // TODO: Update register and login to support Apple and Google single sign on.
 
-pub const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
+#[obfuscate_api]
+const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
 /// Get non-changeable user information to account.
 #[utoipa::path(
     get,
-    path = "/account_api/account_setup",
+    path = PATH_GET_ACCOUNT_SETUP,
     responses(
         (status = 200, description = "Request successfull.", body = AccountSetup),
         (status = 401, description = "Unauthorized."),
@@ -41,12 +43,13 @@ pub async fn get_account_setup<S: GetAccessTokens + ReadData + WriteData>(
     Ok(data.into())
 }
 
-pub const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
+#[obfuscate_api]
+const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
 
 /// Setup non-changeable user information during `initial setup` state.
 #[utoipa::path(
     post,
-    path = "/account_api/account_setup",
+    path = PATH_POST_ACCOUNT_SETUP,
     request_body(content = SetAccountSetup),
     responses(
         (status = 200, description = "Request successfull."),
@@ -84,7 +87,8 @@ pub async fn post_account_setup<S: GetConfig + GetInternalApi + WriteData>(
     }
 }
 
-pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
+#[obfuscate_api]
+const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 
 /// Complete initial setup.
 ///
@@ -98,7 +102,7 @@ pub const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
 ///
 #[utoipa::path(
     post,
-    path = "/account_api/complete_setup",
+    path = PATH_ACCOUNT_COMPLETE_SETUP,
     responses(
         (status = 200, description = "Request successfull."),
         (status = 406, description = "Current state is not initial setup."),
@@ -144,9 +148,9 @@ pub fn register_router<
 
     Router::new()
         // Skip PATH_REGISTER because it does not need authentication.
-        .route(PATH_GET_ACCOUNT_SETUP, get(get_account_setup::<S>))
-        .route(PATH_POST_ACCOUNT_SETUP, post(post_account_setup::<S>))
-        .route(PATH_ACCOUNT_COMPLETE_SETUP, post(post_complete_setup::<S>))
+        .route(PATH_GET_ACCOUNT_SETUP_AXUM, get(get_account_setup::<S>))
+        .route(PATH_POST_ACCOUNT_SETUP_AXUM, post(post_account_setup::<S>))
+        .route(PATH_ACCOUNT_COMPLETE_SETUP_AXUM, post(post_complete_setup::<S>))
         .with_state(s)
 }
 

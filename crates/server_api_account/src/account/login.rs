@@ -3,6 +3,7 @@ use model::{
     AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
     SignInWithInfo, SignInWithLoginInfo,
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -45,13 +46,14 @@ pub async fn login_impl<S: ReadData + WriteData + GetAccounts + ResetPushNotific
     Ok(result)
 }
 
+#[obfuscate_api]
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
 
 /// Start new session with sign in with Apple or Google. Creates new account if
 /// it does not exists.
 #[utoipa::path(
     post,
-    path = "/account_api/sign_in_with_login",
+    path = PATH_SIGN_IN_WITH_LOGIN,
     security(),
     request_body = SignInWithLoginInfo,
     responses(
