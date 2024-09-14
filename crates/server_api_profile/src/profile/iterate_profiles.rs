@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, IteratorSessionId, ProfilePage};
+use obfuscate_api_macro::obfuscate_api;
 use simple_backend::create_counters;
 
 use crate::{
@@ -7,12 +8,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
+#[obfuscate_api]
+const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 
 /// Post (updates iterator) to get next page of profile list.
 #[utoipa::path(
     post,
-    path = "/profile_api/page/next",
+    path = PATH_POST_NEXT_PROFILE_PAGE,
     request_body(content = IteratorSessionId),
     responses(
         (status = 200, description = "Update successfull.", body = ProfilePage),
@@ -51,7 +53,8 @@ pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData + ReadDat
     }
 }
 
-pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
+#[obfuscate_api]
+const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 
 /// Reset profile paging.
 ///
@@ -59,7 +62,7 @@ pub const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 /// profiles.
 #[utoipa::path(
     post,
-    path = "/profile_api/page/reset",
+    path = PATH_POST_RESET_PROFILE_PAGING,
     responses(
         (status = 200, description = "Update successfull.", body = IteratorSessionId),
         (status = 401, description = "Unauthorized."),
@@ -92,11 +95,11 @@ pub fn iterate_profiles_router<S: StateBase + GetAccessTokens + WriteData + Read
 
     Router::new()
         .route(
-            PATH_POST_NEXT_PROFILE_PAGE,
+            PATH_POST_NEXT_PROFILE_PAGE_AXUM,
             post(post_get_next_profile_page::<S>),
         )
         .route(
-            PATH_POST_RESET_PROFILE_PAGING,
+            PATH_POST_RESET_PROFILE_PAGING_AXUM,
             post(post_reset_profile_paging::<S>),
         )
         .with_state(s)

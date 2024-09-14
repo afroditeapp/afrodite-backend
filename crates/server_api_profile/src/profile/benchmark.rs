@@ -3,6 +3,7 @@ use axum::{
     Extension, Router,
 };
 use model::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
@@ -18,14 +19,15 @@ use crate::{
 
 // ------------------- Benchmark routes ----------------------------
 
-pub const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
-    "/profile_api/benchmark/profile/:account_id";
+#[obfuscate_api]
+const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
+    "/profile_api/benchmark/profile/{account_id}";
 
 /// Get account's current profile from database. Debug mode must be enabled
 /// that route can be used.
 #[utoipa::path(
     get,
-    path = "/profile_api/benchmark/profile/{account_id}",
+    path = PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK,
     params(AccountId),
     responses(
         (status = 200, description = "Get current profile.", body = Profile),
@@ -66,13 +68,14 @@ pub async fn get_profile_from_database_debug_mode_benchmark<
     }
 }
 
-pub const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile";
+#[obfuscate_api]
+const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/profile";
 
 /// Post account's current profile directly to database. Debug mode must be enabled
 /// that route can be used.
 #[utoipa::path(
     post,
-    path = "/profile_api/benchmark/profile",
+    path = PATH_POST_PROFILE_TO_DATABASE_BENCHMARK,
     request_body = ProfileUpdate,
     responses(
         (status = 200, description = "Update profile"),
@@ -126,11 +129,11 @@ pub fn benchmark_router<
 
     Router::new()
         .route(
-            PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK,
+            PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK_AXUM,
             get(get_profile_from_database_debug_mode_benchmark::<S>),
         )
         .route(
-            PATH_POST_PROFILE_TO_DATABASE_BENCHMARK,
+            PATH_POST_PROFILE_TO_DATABASE_BENCHMARK_AXUM,
             post(post_profile_to_database_debug_mode_benchmark::<S>),
         )
         .with_state(s)

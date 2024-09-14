@@ -3815,6 +3815,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "model",
+ "obfuscate_api_macro",
  "server_api",
  "server_common",
  "server_data",

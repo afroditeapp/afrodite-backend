@@ -3,6 +3,7 @@ use model::{
     AccountIdInternal, AvailableProfileAttributes, ProfileAttributeFilterList,
     ProfileAttributeFilterListUpdate,
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -14,12 +15,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_profile_attributes";
+#[obfuscate_api]
+const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_profile_attributes";
 
 /// Get info what profile attributes server supports.
 #[utoipa::path(
     get,
-    path = "/profile_api/available_profile_attributes",
+    path = PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES,
     responses(
         (status = 200, description = "Get successfull.", body = AvailableProfileAttributes),
         (status = 401, description = "Unauthorized."),
@@ -40,12 +42,13 @@ pub async fn get_available_profile_attributes<S: GetConfig + ReadData>(
     Ok(info.into())
 }
 
-pub const PATH_GET_PROFILE_ATTRIBUTE_FILTERS: &str = "/profile_api/profile_attribute_filters";
+#[obfuscate_api]
+const PATH_GET_PROFILE_ATTRIBUTE_FILTERS: &str = "/profile_api/profile_attribute_filters";
 
 /// Get current profile attribute filter values.
 #[utoipa::path(
     get,
-    path = "/profile_api/profile_attribute_filters",
+    path = PATH_GET_PROFILE_ATTRIBUTE_FILTERS,
     responses(
         (status = 200, description = "Successfull.", body = ProfileAttributeFilterList),
         (status = 401, description = "Unauthorized."),
@@ -66,12 +69,13 @@ pub async fn get_profile_attribute_filters<S: ReadData>(
     Ok(filters.into())
 }
 
-pub const PATH_POST_PROFILE_ATTRIBUTE_FILTERS: &str = "/profile_api/profile_attribute_filters";
+#[obfuscate_api]
+const PATH_POST_PROFILE_ATTRIBUTE_FILTERS: &str = "/profile_api/profile_attribute_filters";
 
 /// Set profile attribute filter values.
 #[utoipa::path(
     post,
-    path = "/profile_api/profile_attribute_filters",
+    path = PATH_POST_PROFILE_ATTRIBUTE_FILTERS,
     request_body = ProfileAttributeFilterListUpdate,
     responses(
         (status = 200, description = "Successfull."),
@@ -99,15 +103,15 @@ pub fn attributes_router<S: StateBase + WriteData + GetConfig + ReadData>(s: S) 
 
     Router::new()
         .route(
-            PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES,
+            PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES_AXUM,
             get(get_available_profile_attributes::<S>),
         )
         .route(
-            PATH_GET_PROFILE_ATTRIBUTE_FILTERS,
+            PATH_GET_PROFILE_ATTRIBUTE_FILTERS_AXUM,
             get(get_profile_attribute_filters::<S>),
         )
         .route(
-            PATH_POST_PROFILE_ATTRIBUTE_FILTERS,
+            PATH_POST_PROFILE_ATTRIBUTE_FILTERS_AXUM,
             post(post_profile_attribute_filters::<S>),
         )
         .with_state(s)

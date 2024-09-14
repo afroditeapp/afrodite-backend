@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, Location};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
@@ -9,12 +10,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_LOCATION: &str = "/profile_api/location";
+#[obfuscate_api]
+const PATH_GET_LOCATION: &str = "/profile_api/location";
 
 /// Get location for account which makes this request.
 #[utoipa::path(
     get,
-    path = "/profile_api/location",
+    path = PATH_GET_LOCATION,
     responses(
         (status = 200, description = "Get successfull.", body = Location),
         (status = 401, description = "Unauthorized."),
@@ -32,12 +34,13 @@ pub async fn get_location<S: GetAccessTokens + ReadData>(
     Ok(location.into())
 }
 
-pub const PATH_PUT_LOCATION: &str = "/profile_api/location";
+#[obfuscate_api]
+const PATH_PUT_LOCATION: &str = "/profile_api/location";
 
 /// Update location for account which makes this request.
 #[utoipa::path(
     put,
-    path = "/profile_api/location",
+    path = PATH_PUT_LOCATION,
     request_body = Location,
     responses(
         (status = 200, description = "Update successfull."),
@@ -62,8 +65,8 @@ pub fn location_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(s:
     use axum::routing::{get, put};
 
     Router::new()
-        .route(PATH_GET_LOCATION, get(get_location::<S>))
-        .route(PATH_PUT_LOCATION, put(put_location::<S>))
+        .route(PATH_GET_LOCATION_AXUM, get(get_location::<S>))
+        .route(PATH_PUT_LOCATION_AXUM, put(put_location::<S>))
         .with_state(s)
 }
 

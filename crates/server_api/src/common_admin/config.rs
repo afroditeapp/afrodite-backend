@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[obfuscate_api]
-pub const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
+const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
 
 /// Get dynamic backend config.
 ///
@@ -42,7 +42,7 @@ pub async fn get_backend_config<S: ReadDynamicConfig>(
 }
 
 #[obfuscate_api]
-pub const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
+const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
 
 /// Save dynamic backend config.
 ///

@@ -5,6 +5,7 @@ use axum::{
 use model::{
     AccountId, AccountIdInternal, AccountState, Capabilities, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::IsMatch, db_write_multiple, result::WrappedContextExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
@@ -22,7 +23,8 @@ use crate::{
 
 // TODO: Add timeout for database commands
 
-pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
+#[obfuscate_api]
+const PATH_GET_PROFILE: &str = "/profile_api/profile/{account_id}";
 
 /// Get account's current profile.
 ///
@@ -48,7 +50,7 @@ pub const PATH_GET_PROFILE: &str = "/profile_api/profile/:account_id";
 /// information from account service is used for access checks.
 #[utoipa::path(
     get,
-    path = "/profile_api/profile/{account_id}",
+    path = PATH_GET_PROFILE,
     params(AccountId, GetProfileQueryParam),
     responses(
         (status = 200, description = "Get current profile", body = GetProfileResult),
@@ -118,7 +120,8 @@ pub async fn get_profile<
     }
 }
 
-pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
+#[obfuscate_api]
+const PATH_POST_PROFILE: &str = "/profile_api/profile";
 
 /// Update profile information.
 ///
@@ -145,7 +148,7 @@ pub const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// TODO: return the new proifle. Edit: is this really needed?
 #[utoipa::path(
     post,
-    path = "/profile_api/profile",
+    path = PATH_POST_PROFILE,
     request_body = ProfileUpdate,
     responses(
         (status = 200, description = "Update profile"),
@@ -194,13 +197,14 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
     Ok(())
 }
 
-pub const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";
+#[obfuscate_api]
+const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";
 
 /// Get account's current search groups
 /// (gender and what gender user is looking for)
 #[utoipa::path(
     get,
-    path = "/profile_api/search_groups",
+    path = PATH_GET_SEARCH_GROUPS,
     responses(
         (status = 200, description = "Successful.", body = SearchGroups),
         (status = 401, description = "Unauthorized."),
@@ -217,13 +221,14 @@ pub async fn get_search_groups<S: ReadData>(
     Ok(Json(profile_state.search_group_flags.into()))
 }
 
-pub const PATH_POST_SEARCH_GROUPS: &str = "/profile_api/search_groups";
+#[obfuscate_api]
+const PATH_POST_SEARCH_GROUPS: &str = "/profile_api/search_groups";
 
 /// Set account's current search groups
 /// (gender and what gender user is looking for)
 #[utoipa::path(
     post,
-    path = "/profile_api/search_groups",
+    path = PATH_POST_SEARCH_GROUPS,
     request_body = SearchGroups,
     responses(
         (status = 200, description = "Successful."),
@@ -248,12 +253,13 @@ pub async fn post_search_groups<S: WriteData>(
         .update_search_groups(account_id, validated))
 }
 
-pub const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
+#[obfuscate_api]
+const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 
 /// Get account's current search age range
 #[utoipa::path(
     get,
-    path = "/profile_api/search_age_range",
+    path = PATH_GET_SEARCH_AGE_RANGE,
     responses(
         (status = 200, description = "Successful.", body = ProfileSearchAgeRange),
         (status = 401, description = "Unauthorized."),
@@ -270,12 +276,13 @@ pub async fn get_search_age_range<S: ReadData>(
     Ok(Json(profile_state.into()))
 }
 
-pub const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
+#[obfuscate_api]
+const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
 
 /// Set account's current search age range
 #[utoipa::path(
     post,
-    path = "/profile_api/search_age_range",
+    path = PATH_POST_SEARCH_AGE_RANGE,
     request_body = ProfileSearchAgeRange,
     responses(
         (status = 200, description = "Successful."),
@@ -300,7 +307,8 @@ pub async fn post_search_age_range<S: WriteData>(
         .update_search_age_range(account_id, validated))
 }
 
-pub const PATH_GET_MY_PROFILE: &str = "/profile_api/my_profile";
+#[obfuscate_api]
+const PATH_GET_MY_PROFILE: &str = "/profile_api/my_profile";
 
 /// Get my profile
 #[utoipa::path(
@@ -347,7 +355,8 @@ pub async fn get_my_profile<
     Ok(r.into())
 }
 
-pub const PATH_GET_INITIAL_PROFILE_AGE_INFO: &str = "/profile_api/initial_profile_age_info";
+#[obfuscate_api]
+const PATH_GET_INITIAL_PROFILE_AGE_INFO: &str = "/profile_api/initial_profile_age_info";
 
 /// Get initial profile age information which can be used for calculating
 /// current accepted profile ages.
@@ -393,14 +402,14 @@ pub fn profile_data_router<
     use axum::routing::{get, post};
 
     Router::new()
-        .route(PATH_GET_PROFILE, get(get_profile::<S>))
-        .route(PATH_GET_SEARCH_GROUPS, get(get_search_groups::<S>))
-        .route(PATH_GET_SEARCH_AGE_RANGE, get(get_search_age_range::<S>))
-        .route(PATH_POST_PROFILE, post(post_profile::<S>))
-        .route(PATH_POST_SEARCH_GROUPS, post(post_search_groups::<S>))
-        .route(PATH_POST_SEARCH_AGE_RANGE, post(post_search_age_range::<S>))
-        .route(PATH_GET_MY_PROFILE, get(get_my_profile::<S>))
-        .route(PATH_GET_INITIAL_PROFILE_AGE_INFO, get(get_initial_profile_age_info::<S>))
+        .route(PATH_GET_PROFILE_AXUM, get(get_profile::<S>))
+        .route(PATH_GET_SEARCH_GROUPS_AXUM, get(get_search_groups::<S>))
+        .route(PATH_GET_SEARCH_AGE_RANGE_AXUM, get(get_search_age_range::<S>))
+        .route(PATH_POST_PROFILE_AXUM, post(post_profile::<S>))
+        .route(PATH_POST_SEARCH_GROUPS_AXUM, post(post_search_groups::<S>))
+        .route(PATH_POST_SEARCH_AGE_RANGE_AXUM, post(post_search_age_range::<S>))
+        .route(PATH_GET_MY_PROFILE_AXUM, get(get_my_profile::<S>))
+        .route(PATH_GET_INITIAL_PROFILE_AGE_INFO_AXUM, get(get_initial_profile_age_info::<S>))
         .with_state(s)
 }
 

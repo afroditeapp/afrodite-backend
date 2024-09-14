@@ -134,7 +134,7 @@ pub async fn get_sent_likes<S: ReadData>(
 // TODO(prod): Store date and time when account was created.
 
 #[obfuscate_api]
-pub const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
+const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
 
 /// Get received likes.
 ///

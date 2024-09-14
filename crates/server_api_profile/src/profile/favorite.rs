@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountId, AccountIdInternal, FavoriteProfilesPage};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 
@@ -9,12 +10,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
+#[obfuscate_api]
+const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
 
 /// Get list of all favorite profiles.
 #[utoipa::path(
     get,
-    path = "/profile_api/favorite_profiles",
+    path = PATH_GET_FAVORITE_PROFILES,
     responses(
         (status = 200, description = "Get successfull.", body = FavoriteProfilesPage),
         (status = 401, description = "Unauthorized."),
@@ -36,12 +38,13 @@ pub async fn get_favorite_profiles<S: ReadData>(
     Ok(page.into())
 }
 
-pub const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
+#[obfuscate_api]
+const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
 
 /// Add new favorite profile
 #[utoipa::path(
     post,
-    path = "/profile_api/favorite_profile",
+    path = PATH_POST_FAVORITE_PROFILE,
     request_body(content = AccountId),
     responses(
         (status = 200, description = "Request successfull."),
@@ -65,12 +68,13 @@ pub async fn post_favorite_profile<S: WriteData + GetAccounts>(
     Ok(())
 }
 
-pub const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
+#[obfuscate_api]
+const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
 
 /// Delete favorite profile
 #[utoipa::path(
     delete,
-    path = "/profile_api/favorite_profile",
+    path = PATH_DELETE_FAVORITE_PROFILE,
     request_body(content = AccountId),
     responses(
         (status = 200, description = "Request successfull."),
@@ -97,10 +101,10 @@ pub fn favorite_router<S: StateBase + WriteData + GetAccounts + ReadData>(s: S) 
     use axum::routing::{delete, get, post};
 
     Router::new()
-        .route(PATH_GET_FAVORITE_PROFILES, get(get_favorite_profiles::<S>))
-        .route(PATH_POST_FAVORITE_PROFILE, post(post_favorite_profile::<S>))
+        .route(PATH_GET_FAVORITE_PROFILES_AXUM, get(get_favorite_profiles::<S>))
+        .route(PATH_POST_FAVORITE_PROFILE_AXUM, post(post_favorite_profile::<S>))
         .route(
-            PATH_DELETE_FAVORITE_PROFILE,
+            PATH_DELETE_FAVORITE_PROFILE_AXUM,
             delete(delete_favorite_profile::<S>),
         )
         .with_state(s)

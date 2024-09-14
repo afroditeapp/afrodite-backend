@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[obfuscate_api]
-pub const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
+const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 
 /// Get performance data
 ///

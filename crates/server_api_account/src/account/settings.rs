@@ -131,7 +131,7 @@ pub async fn put_setting_profile_visiblity<S: GetInternalApi + GetConfig + Write
 }
 
 #[obfuscate_api]
-pub const PATH_SETTING_UNLIMITED_LIKES: &str = "/account_api/settings/unlimited_likes";
+const PATH_SETTING_UNLIMITED_LIKES: &str = "/account_api/settings/unlimited_likes";
 
 #[utoipa::path(
     put,
