@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -9,12 +10,13 @@ use crate::{
     db_write_multiple,
 };
 
-pub const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
+#[obfuscate_api]
+const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
 
 /// Block profile
 #[utoipa::path(
     post,
-    path = "/chat_api/block_profile",
+    path = PATH_POST_BLOCK_PROFILE,
     request_body(content = AccountId),
     responses(
         (status = 200, description = "Success."),
@@ -46,12 +48,13 @@ pub async fn post_block_profile<S: GetAccounts + WriteData>(
     Ok(())
 }
 
-pub const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
+#[obfuscate_api]
+const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
 
 /// Unblock profile
 #[utoipa::path(
     post,
-    path = "/chat_api/unblock_profile",
+    path = PATH_POST_UNBLOCK_PROFILE,
     request_body(content = AccountId),
     responses(
         (status = 200, description = "Success."),
@@ -86,12 +89,13 @@ pub async fn post_unblock_profile<S: GetAccounts + WriteData>(
     Ok(())
 }
 
-pub const PATH_GET_SENT_BLOCKS: &str = "/chat_api/sent_blocks";
+#[obfuscate_api]
+const PATH_GET_SENT_BLOCKS: &str = "/chat_api/sent_blocks";
 
 /// Get list of sent blocks
 #[utoipa::path(
     get,
-    path = "/chat_api/sent_blocks",
+    path = PATH_GET_SENT_BLOCKS,
     responses(
         (status = 200, description = "Success.", body = SentBlocksPage),
         (status = 401, description = "Unauthorized."),
@@ -112,12 +116,13 @@ pub async fn get_sent_blocks<S: ReadData>(
 // TODO: Add some block query info, so that server can send sync received blocks
 //       list command to client.
 
-pub const PATH_GET_RECEIVED_BLOCKS: &str = "/chat_api/received_blocks";
+#[obfuscate_api]
+const PATH_GET_RECEIVED_BLOCKS: &str = "/chat_api/received_blocks";
 
 /// Get list of received blocks
 #[utoipa::path(
     get,
-    path = "/chat_api/received_blocks",
+    path = PATH_GET_RECEIVED_BLOCKS,
     responses(
         (status = 200, description = "Success.", body = ReceivedBlocksPage),
         (status = 401, description = "Unauthorized."),
@@ -139,10 +144,10 @@ pub fn block_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> 
     use axum::routing::{get, post};
 
     Router::new()
-        .route(PATH_POST_BLOCK_PROFILE, post(post_block_profile::<S>))
-        .route(PATH_POST_UNBLOCK_PROFILE, post(post_unblock_profile::<S>))
-        .route(PATH_GET_SENT_BLOCKS, get(get_sent_blocks::<S>))
-        .route(PATH_GET_RECEIVED_BLOCKS, get(get_received_blocks::<S>))
+        .route(PATH_POST_BLOCK_PROFILE_AXUM, post(post_block_profile::<S>))
+        .route(PATH_POST_UNBLOCK_PROFILE_AXUM, post(post_unblock_profile::<S>))
+        .route(PATH_GET_SENT_BLOCKS_AXUM, get(get_sent_blocks::<S>))
+        .route(PATH_GET_RECEIVED_BLOCKS_AXUM, get(get_received_blocks::<S>))
         .with_state(s)
 }
 

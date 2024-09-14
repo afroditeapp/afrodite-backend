@@ -3779,6 +3779,7 @@ dependencies = [
  "axum-extra",
  "headers",
  "model",
+ "obfuscate_api_macro",
  "serde_json",
  "server_api",
  "server_common",

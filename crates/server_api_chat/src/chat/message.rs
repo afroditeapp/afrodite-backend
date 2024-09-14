@@ -4,6 +4,7 @@ use headers::ContentType;
 use model::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, SendMessageResult, SendMessageToAccountParams, SenderMessageId, UpdateMessageViewStatus
 };
+use obfuscate_api_macro::obfuscate_api;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use tracing::error;
@@ -17,7 +18,8 @@ use crate::{
     db_write_multiple,
 };
 
-pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
+#[obfuscate_api]
+const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
 /// Get list of pending messages.
 ///
@@ -28,7 +30,7 @@ pub const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// - Binary message data
 #[utoipa::path(
     get,
-    path = "/chat_api/pending_messages",
+    path = PATH_GET_PENDING_MESSAGES,
     responses(
         (status = 200, description = "Success.", body = Vec<u8>, content_type = "application/octet-stream"),
         (status = 401, description = "Unauthorized."),
@@ -79,12 +81,13 @@ pub async fn get_pending_messages<S: ReadData>(
     Ok((TypedHeader(ContentType::octet_stream()), bytes))
 }
 
-pub const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
+#[obfuscate_api]
+const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 
 /// Delete list of pending messages
 #[utoipa::path(
     delete,
-    path = "/chat_api/pending_messages",
+    path = PATH_DELETE_PENDING_MESSAGES,
     request_body(content = PendingMessageDeleteList),
     responses(
         (status = 200, description = "Success."),
@@ -107,13 +110,14 @@ pub async fn delete_pending_messages<S: WriteData>(
     Ok(())
 }
 
-pub const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
+#[obfuscate_api]
+const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     "/chat_api/message_number_of_latest_viewed_message";
 
 /// Get message number of the most recent message that the recipient has viewed.
 #[utoipa::path(
     get,
-    path = "/chat_api/message_number_of_latest_viewed_message",
+    path = PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
     request_body(content = AccountId),
     responses(
         (status = 200, description = "Success.", body = MessageNumber),
@@ -138,13 +142,14 @@ pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccoun
     Ok(number.into())
 }
 
-pub const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
+#[obfuscate_api]
+const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     "/chat_api/message_number_of_latest_viewed_message";
 
 /// Update message number of the most recent message that the recipient has viewed.
 #[utoipa::path(
     post,
-    path = "/chat_api/message_number_of_latest_viewed_message",
+    path = PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
     request_body(content = UpdateMessageViewStatus),
     responses(
         (status = 200, description = "Success."),
@@ -186,7 +191,8 @@ pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + Write
     Ok(())
 }
 
-pub const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
+#[obfuscate_api]
+const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 
 /// Send message to a match.
 ///
@@ -244,8 +250,9 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
     Ok(result.into())
 }
 
-pub const PATH_GET_SENDER_MESSAGE_ID: &str =
-    "/chat_api/sender_message_id/:account_id";
+#[obfuscate_api]
+const PATH_GET_SENDER_MESSAGE_ID: &str =
+    "/chat_api/sender_message_id/{account_id}";
 
 /// Get conversation specific expected sender message ID which API caller
 /// account owns.
@@ -254,7 +261,7 @@ pub const PATH_GET_SENDER_MESSAGE_ID: &str =
 /// state change to match state will reset the ID.
 #[utoipa::path(
     get,
-    path = "/chat_api/sender_message_id/{account_id}",
+    path = PATH_GET_SENDER_MESSAGE_ID,
     params(AccountId),
     responses(
         (status = 200, description = "Success.", body = SenderMessageId),
@@ -278,8 +285,9 @@ pub async fn get_sender_message_id<S: ReadData + GetAccounts>(
     Ok(sender_message_id.into())
 }
 
-pub const PATH_POST_SENDER_MESSAGE_ID: &str =
-    "/chat_api/sender_message_id/:account_id";
+#[obfuscate_api]
+const PATH_POST_SENDER_MESSAGE_ID: &str =
+    "/chat_api/sender_message_id/{account_id}";
 
 /// Set conversation specific expected sender message ID which API caller
 /// account owns.
@@ -287,7 +295,7 @@ pub const PATH_POST_SENDER_MESSAGE_ID: &str =
 /// This errors if the accounts are not in match state.
 #[utoipa::path(
     post,
-    path = "/chat_api/sender_message_id/{account_id}",
+    path = PATH_POST_SENDER_MESSAGE_ID,
     params(AccountId),
     request_body(content = SenderMessageId),
     responses(
@@ -315,22 +323,22 @@ pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -
     use axum::routing::{delete, get, post};
 
     Router::new()
-        .route(PATH_GET_PENDING_MESSAGES, get(get_pending_messages::<S>))
+        .route(PATH_GET_PENDING_MESSAGES_AXUM, get(get_pending_messages::<S>))
         .route(
-            PATH_DELETE_PENDING_MESSAGES,
+            PATH_DELETE_PENDING_MESSAGES_AXUM,
             delete(delete_pending_messages::<S>),
         )
         .route(
-            PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
+            PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE_AXUM,
             get(get_message_number_of_latest_viewed_message::<S>),
         )
         .route(
-            PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE,
+            PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE_AXUM,
             post(post_message_number_of_latest_viewed_message::<S>),
         )
-        .route(PATH_POST_SEND_MESSAGE, post(post_send_message::<S>))
-        .route(PATH_GET_SENDER_MESSAGE_ID, get(get_sender_message_id::<S>))
-        .route(PATH_POST_SENDER_MESSAGE_ID, post(post_sender_message_id::<S>))
+        .route(PATH_POST_SEND_MESSAGE_AXUM, post(post_send_message::<S>))
+        .route(PATH_GET_SENDER_MESSAGE_ID_AXUM, get(get_sender_message_id::<S>))
+        .route(PATH_POST_SENDER_MESSAGE_ID_AXUM, post(post_sender_message_id::<S>))
         .with_state(s)
 }
 

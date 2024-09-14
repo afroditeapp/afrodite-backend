@@ -2,6 +2,7 @@
 
 use axum::{extract::{Path, Query, State}, Extension, Router};
 use model::{AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey};
+use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData}, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -9,12 +10,13 @@ use simple_backend::create_counters;
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, StateBase};
 
-pub const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/:account_id";
+#[obfuscate_api]
+const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{account_id}";
 
 /// Get current public key of some account
 #[utoipa::path(
     get,
-    path = "/chat_api/public_key/{account_id}",
+    path = PATH_GET_PUBLIC_KEY,
     params(AccountId, PublicKeyVersion),
     responses(
         (status = 200, description = "Success.", body = GetPublicKey),
@@ -35,7 +37,8 @@ async fn get_public_key<S: ReadData + GetAccounts>(
     Ok(key.into())
 }
 
-pub const PATH_POST_PUBLIC_KEY: &str = "/chat_api/public_key";
+#[obfuscate_api]
+const PATH_POST_PUBLIC_KEY: &str = "/chat_api/public_key";
 
 /// Replace current public key with a new public key.
 /// Returns public key ID number which server increments.
@@ -45,7 +48,7 @@ pub const PATH_POST_PUBLIC_KEY: &str = "/chat_api/public_key";
 /// Only version 1 public keys are currently supported.
 #[utoipa::path(
     post,
-    path = "/chat_api/public_key",
+    path = PATH_POST_PUBLIC_KEY,
     request_body(content = SetPublicKey),
     responses(
         (status = 200, description = "Success.", body = PublicKeyId),
@@ -77,8 +80,8 @@ pub fn public_key_router<S: StateBase + ReadData + WriteData + GetAccounts>(s: S
     use axum::routing::{get, post};
 
     Router::new()
-        .route(PATH_GET_PUBLIC_KEY, get(get_public_key::<S>))
-        .route(PATH_POST_PUBLIC_KEY, post(post_public_key::<S>))
+        .route(PATH_GET_PUBLIC_KEY_AXUM, get(get_public_key::<S>))
+        .route(PATH_POST_PUBLIC_KEY_AXUM, post(post_public_key::<S>))
         .with_state(s)
 }
 

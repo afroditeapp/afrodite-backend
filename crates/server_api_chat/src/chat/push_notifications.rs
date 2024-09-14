@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotificationFlags, PendingNotificationToken, PendingNotificationWithData};
+use obfuscate_api_macro::obfuscate_api;
 use server_api::app::ReadData;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -15,7 +16,8 @@ use crate::{
 // TOOD(microservice): Most likely public ID will not be sent from account
 // to other servers.
 
-pub const PATH_POST_SET_DEVICE_TOKEN: &str = "/chat_api/set_device_token";
+#[obfuscate_api]
+const PATH_POST_SET_DEVICE_TOKEN: &str = "/chat_api/set_device_token";
 
 #[utoipa::path(
     post,
@@ -44,7 +46,8 @@ pub async fn post_set_device_token<S: WriteData>(
     Ok(pending_notification_token.into())
 }
 
-pub const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/chat_api/get_pending_notification";
+#[obfuscate_api]
+const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/chat_api/get_pending_notification";
 
 /// Get pending notification and reset pending notification.
 ///
@@ -93,7 +96,7 @@ pub fn push_notification_router_private<S: StateBase + WriteData>(s: S) -> Route
     use axum::routing::post;
 
     Router::new()
-        .route(PATH_POST_SET_DEVICE_TOKEN, post(post_set_device_token::<S>))
+        .route(PATH_POST_SET_DEVICE_TOKEN_AXUM, post(post_set_device_token::<S>))
         .with_state(s)
 }
 
@@ -102,7 +105,7 @@ pub fn push_notification_router_public<S: StateBase + GetAccounts + WriteData + 
 
     Router::new()
         .route(
-            PATH_POST_GET_PENDING_NOTIFICATION,
+            PATH_POST_GET_PENDING_NOTIFICATION_AXUM,
             post(post_get_pending_notification::<S>),
         )
         .with_state(s)

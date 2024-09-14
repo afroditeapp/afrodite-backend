@@ -27,7 +27,7 @@ pub fn obfuscate_api(_attr: TokenStream, input: TokenStream) -> TokenStream {
     let path_name_axum = format_ident!("{}_AXUM", path_name);
 
     let string_literal_error = || {
-        syn::Error::new_spanned(&path.expr, "only string literals starting with '/' are supported")
+        syn::Error::new_spanned(&path.expr, "only string literals starting with '/' and without ':' characters are supported")
             .to_compile_error()
             .into()
     };
@@ -35,6 +35,9 @@ pub fn obfuscate_api(_attr: TokenStream, input: TokenStream) -> TokenStream {
         syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(lit_str), ..}) => {
             let path_string = lit_str.value();
             if !path_string.starts_with('/') {
+                return string_literal_error();
+            }
+            if path_string.contains(':') {
                 return string_literal_error();
             }
             path_string

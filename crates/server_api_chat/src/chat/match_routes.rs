@@ -2,18 +2,20 @@
 
 use axum::{extract::State, Extension, Router};
 use model::{AccountIdInternal, MatchesPage};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_chat::read::GetReadChatCommands;
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, StateBase};
 
-pub const PATH_GET_MATCHES: &str = "/chat_api/matches";
+#[obfuscate_api]
+const PATH_GET_MATCHES: &str = "/chat_api/matches";
 
 /// Get matches
 #[utoipa::path(
     get,
-    path = "/chat_api/matches",
+    path = PATH_GET_MATCHES,
     responses(
         (status = 200, description = "Success.", body = MatchesPage),
         (status = 401, description = "Unauthorized."),
@@ -35,7 +37,7 @@ pub fn match_router<S: StateBase + ReadData>(s: S) -> Router {
     use axum::routing::get;
 
     Router::new()
-        .route(PATH_GET_MATCHES, get(get_matches::<S>))
+        .route(PATH_GET_MATCHES_AXUM, get(get_matches::<S>))
         .with_state(s)
 }
 

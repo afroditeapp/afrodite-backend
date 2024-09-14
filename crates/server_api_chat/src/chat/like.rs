@@ -1,5 +1,6 @@
 use axum::{extract::State, Extension, Router};
 use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, ReceivedLikesPage, SentLikesPage};
+use obfuscate_api_macro::obfuscate_api;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -9,13 +10,14 @@ use crate::{
     db_write_multiple,
 };
 
-pub const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
+#[obfuscate_api]
+const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
 
 /// Send a like to some account. If both will like each other, then
 /// the accounts will be a match.
 #[utoipa::path(
     post,
-    path = "/chat_api/send_like",
+    path = PATH_POST_SEND_LIKE,
     request_body(content = AccountId),
     responses(
         (status = 200, description = "Success.", body = LimitedActionResult),
@@ -79,7 +81,8 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
     Ok(LimitedActionResult { status: action_status }.into())
 }
 
-pub const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
+#[obfuscate_api]
+const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
 
 /// Get sent likes.
 ///
@@ -90,7 +93,7 @@ pub const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
 /// - Profile is a match
 #[utoipa::path(
     get,
-    path = "/chat_api/sent_likes",
+    path = PATH_GET_SENT_LIKES,
     responses(
         (status = 200, description = "Success.", body = SentLikesPage),
         (status = 401, description = "Unauthorized."),
@@ -130,6 +133,7 @@ pub async fn get_sent_likes<S: ReadData>(
 
 // TODO(prod): Store date and time when account was created.
 
+#[obfuscate_api]
 pub const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
 
 /// Get received likes.
@@ -139,7 +143,7 @@ pub const PATH_GET_RECEIVED_LIKES: &str = "/chat_api/received_likes";
 /// - Profile is a match
 #[utoipa::path(
     get,
-    path = "/chat_api/received_likes",
+    path = PATH_GET_RECEIVED_LIKES,
     responses(
         (status = 200, description = "Success.", body = ReceivedLikesPage),
         (status = 401, description = "Unauthorized."),
@@ -157,14 +161,15 @@ pub async fn get_received_likes<S: ReadData>(
     Ok(page.into())
 }
 
-pub const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
+#[obfuscate_api]
+const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
 
 /// Delete sent like.
 ///
 /// Delete will not work if profile is a match.
 #[utoipa::path(
     delete,
-    path = "/chat_api/delete_like",
+    path = PATH_DELETE_LIKE,
     request_body(content = AccountId),
     responses(
         (status = 200, description = "Success.", body = LimitedActionResult),
@@ -216,10 +221,10 @@ pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> R
     use axum::routing::{delete, get, post};
 
     Router::new()
-        .route(PATH_POST_SEND_LIKE, post(post_send_like::<S>))
-        .route(PATH_GET_SENT_LIKES, get(get_sent_likes::<S>))
-        .route(PATH_GET_RECEIVED_LIKES, get(get_received_likes::<S>))
-        .route(PATH_DELETE_LIKE, delete(delete_like::<S>))
+        .route(PATH_POST_SEND_LIKE_AXUM, post(post_send_like::<S>))
+        .route(PATH_GET_SENT_LIKES_AXUM, get(get_sent_likes::<S>))
+        .route(PATH_GET_RECEIVED_LIKES_AXUM, get(get_received_likes::<S>))
+        .route(PATH_DELETE_LIKE_AXUM, delete(delete_like::<S>))
         .with_state(s)
 }
 
