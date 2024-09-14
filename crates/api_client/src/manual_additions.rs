@@ -39,7 +39,7 @@ pub async fn get_content_fixed(configuration: &configuration::Configuration, acc
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/content/{account_id}/{content_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), content_id=crate::apis::urlencode(content_id));
+    let local_var_uri_str = format!("{}/9ztWJZUmcnzICLL2gJ8qV8gVoR8/{account_id}/{content_id}", local_var_configuration.base_path, account_id=crate::apis::urlencode(account_id), content_id=crate::apis::urlencode(content_id));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("is_match", &is_match.to_string())]);
@@ -85,7 +85,7 @@ pub async fn put_content_to_content_slot_fixed(
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/media_api/content_slot/{slot_id}", local_var_configuration.base_path, slot_id=slot_id);
+    let local_var_uri_str = format!("{}/y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id}", local_var_configuration.base_path, slot_id=slot_id);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("secure_capture", &secure_capture.to_string())]);
@@ -125,7 +125,7 @@ pub async fn post_send_message_fixed(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/send_message", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/YEFESgzw0YxQUETcUmnmfWCaF1g", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     local_var_req_builder = local_var_req_builder.query(&[("receiver", &receiver.to_string())]);
@@ -166,7 +166,7 @@ pub async fn get_pending_messages_fixed(configuration: &configuration::Configura
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/chat_api/pending_messages", local_var_configuration.base_path);
+    let local_var_uri_str = format!("{}/7sKe87sefWrLYS0JvbPS10_F8oc", local_var_configuration.base_path);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
