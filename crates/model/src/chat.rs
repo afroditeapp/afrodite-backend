@@ -71,6 +71,7 @@ impl std::error::Error for AccountInteractionStateError {}
 pub struct AccountInteractionInternal {
     pub id: i64,
     pub state_number: AccountInteractionState,
+    pub state_change_unix_time: Option<UnixTime>,
     pub account_id_sender: Option<AccountIdDb>,
     pub account_id_receiver: Option<AccountIdDb>,
     /// Message counter is incrementing for each message sent.
@@ -94,6 +95,7 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Empty => Ok(Self {
                 state_number: target,
+                state_change_unix_time: Some(UnixTime::current_time()),
                 account_id_sender: Some(id_like_sender.into_db_id()),
                 account_id_receiver: Some(id_like_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
@@ -113,6 +115,7 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Like => Ok(Self {
                 state_number: target,
+                state_change_unix_time: Some(UnixTime::current_time()),
                 sender_latest_viewed_message: Some(MessageNumber::default()),
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
                 sender_next_message_id: SenderMessageId::default(),
@@ -137,6 +140,7 @@ impl AccountInteractionInternal {
             | AccountInteractionState::Like
             | AccountInteractionState::Match => Ok(Self {
                 state_number: AccountInteractionState::Block,
+                state_change_unix_time: Some(UnixTime::current_time()),
                 account_id_sender: Some(id_block_sender.into_db_id()),
                 account_id_receiver: Some(id_block_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
@@ -153,6 +157,7 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Block | AccountInteractionState::Like => Ok(Self {
                 state_number: target,
+                state_change_unix_time: Some(UnixTime::current_time()),
                 account_id_sender: None,
                 account_id_receiver: None,
                 sender_latest_viewed_message: None,

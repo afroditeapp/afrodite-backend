@@ -538,6 +538,7 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- 2 = match
     -- 3 = block
     state_number                    INTEGER NOT NULL DEFAULT 0,
+    state_change_unix_time          INTEGER,
     -- The account which started the interaction (e.g. sent a like).
     -- Can be null for example if a like is removed afterwards.
     account_id_sender               INTEGER,
