@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    ProfileVisibility, SenderMessageId,
+    ProfileVisibility, SenderMessageId, UnixTime,
 };
 
 use crate::IntoDatabaseError;
@@ -94,6 +94,68 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
             .filter(account_id_receiver.eq(id_receiver.as_db_id()))
             .filter(state_number.eq(with_state as i64))
             .select(account_id::uuid)
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(value)
+    }
+
+    /// Return for example all accounts which have liked the id_receiver account
+    /// and specific likeing time
+    pub fn all_receiver_account_interactions_with_unix_time(
+        &mut self,
+        id_receiver: AccountIdInternal,
+        with_state: AccountInteractionState,
+        unix_time: UnixTime,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::{account_id, account_interaction::dsl::*};
+
+        let value: Vec<AccountId> = account_interaction
+            .inner_join(
+                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+            )
+            .filter(account_id_sender.is_not_null())
+            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+            .filter(state_number.eq(with_state as i64))
+            .filter(state_change_unix_time.eq(unix_time))
+            .select(account_id::uuid)
+            .order((
+                id.desc(),
+            ))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(value)
+    }
+
+    /// Interaction ordering goes from recent to older starting
+    /// from `unix_time`.
+    pub fn paged_receiver_account_interactions_from_unix_time(
+        &mut self,
+        id_receiver: AccountIdInternal,
+        with_state: AccountInteractionState,
+        unix_time: UnixTime,
+        page: i64,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::{account_id, account_interaction::dsl::*};
+
+        const PAGE_SIZE: i64 = 25;
+
+        let value: Vec<AccountId> = account_interaction
+            .inner_join(
+                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+            )
+            .filter(account_id_sender.is_not_null())
+            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+            .filter(state_number.eq(with_state as i64))
+            .filter(state_change_unix_time.le(unix_time))
+            .select(account_id::uuid)
+            .order((
+                state_change_unix_time.desc(),
+                id.desc(),
+            ))
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE.saturating_mul(page))
             .load(self.conn())
             .into_db_error(())?;
 

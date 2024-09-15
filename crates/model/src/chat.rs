@@ -17,12 +17,15 @@ pub use push_notifications::*;
 mod public_key;
 pub use public_key::*;
 
+mod received_likes;
+pub use received_likes::*;
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct ChatStateRaw {
     pub received_blocks_sync_version: ReceivedBlocksSyncVersion,
-    pub received_likes_sync_version: ReceivedLikesSyncVersion,
+    pub received_likes_sync_version: ReceivedLikesSyncVersion, // TODO: Remove
     pub sent_blocks_sync_version: SentBlocksSyncVersion,
     pub sent_likes_sync_version: SentLikesSyncVersion,
     pub matches_sync_version: MatchesSyncVersion,
@@ -278,10 +281,10 @@ pub struct SentLikesPage {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ReceivedLikesPage {
-    /// This version can be sent to the server when WebSocket protocol
-    /// data sync is happening.
-    pub version: ReceivedLikesSyncVersion,
     pub profiles: Vec<AccountId>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_invalid_iterator_session_id: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]

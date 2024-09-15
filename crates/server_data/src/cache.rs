@@ -6,6 +6,7 @@ use limit::ChatLimits;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, IteratorSessionIdInternal, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
+use received_likes::ReceivedLikesIterator;
 use simple_backend_model::UnixTime;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -14,6 +15,7 @@ use super::index::location::LocationIndexIteratorState;
 use crate::event::{event_channel, EventReceiver, EventSender};
 
 pub mod limit;
+pub mod received_likes;
 
 /// If this exists update last seen time atomic variable in location
 /// index.
@@ -360,6 +362,7 @@ pub struct CachedChatComponentData {
     // same FcmDeviceToken might be used for different account if
     // user logs out and logs in with different account.
     // pub fcm_device_token: Option<FcmDeviceToken>,
+    pub received_likes_iterator: ReceivedLikesIterator,
 }
 
 #[derive(Debug)]

@@ -22,7 +22,6 @@ pub use server_common::{data::DataError, result};
     paths(
         // Chat
         chat::get_sent_likes,
-        chat::get_received_likes,
         chat::get_matches,
         chat::get_sent_blocks,
         chat::get_received_blocks,
@@ -41,6 +40,8 @@ pub use server_common::{data::DataError, result};
         chat::post_public_key,
         chat::get_sender_message_id,
         chat::post_sender_message_id,
+        chat::post_reset_received_likes_paging,
+        chat::post_get_next_received_likes_page,
     ),
     components(schemas(
         // Chat
@@ -73,6 +74,7 @@ pub use server_common::{data::DataError, result};
         model::chat::GetPublicKey,
         model::chat::SetPublicKey,
         model::chat::SenderMessageId,
+        model::chat::ReceivedLikesIteratorSessionId,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

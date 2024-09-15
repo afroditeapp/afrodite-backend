@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, ProfileLink};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, ProfileLink, ReceivedLikesIteratorSessionId, ReceivedLikesIteratorSessionIdInternal};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -16,10 +16,7 @@ use super::{
     IntoDataError,
 };
 use crate::{
-    content_processing::NewContentInfo,
-    db_manager::RouterDatabaseWriteHandle,
-    result::Result,
-    DataError,
+    cache::received_likes::ReceivedLikesIteratorState, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -210,6 +207,22 @@ impl ConcurrentWriteProfileHandleBlocking {
             .user_write_commands_account()
             .reset_profile_iterator(id)
     }
+
+    pub fn next_received_likes_iterator_state(
+        &self,
+        id: AccountIdInternal,
+        iterator_id: ReceivedLikesIteratorSessionId,
+    ) -> Result<Option<ReceivedLikesIteratorState>, DataError> {
+        self.write
+            .user_write_commands_account()
+            .next_received_likes_iterator_state(id, iterator_id)
+    }
+
+    pub fn reset_received_likes_iterator(&self, id: AccountIdInternal) -> Result<ReceivedLikesIteratorSessionIdInternal, DataError> {
+        self.write
+            .user_write_commands_account()
+            .reset_received_likes_iterator(id)
+    }
 }
 
 /// Commands that can run concurrently with other write commands, but which have
@@ -338,6 +351,37 @@ impl<'a> WriteCommandsConcurrent<'a> {
                     p.profile_iterator_session_id = Some(new_id);
                 }
                 Ok(new_id)
+            })
+            .into_data_error(id)
+    }
+
+    pub fn next_received_likes_iterator_state(
+        &self,
+        id: AccountIdInternal,
+        iterator_session_id: ReceivedLikesIteratorSessionId,
+    ) -> Result<Option<ReceivedLikesIteratorState>, DataError> {
+        self.cache
+            .write_cache_blocking(id.as_id(), |e| {
+                if let Some(c) = e.chat.as_mut() {
+                    Ok(c.received_likes_iterator.get_and_increment(iterator_session_id))
+                } else {
+                    Err(CacheError::FeatureNotEnabled.report())
+                }
+            })
+            .into_data_error(id)
+    }
+
+    pub fn reset_received_likes_iterator(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<ReceivedLikesIteratorSessionIdInternal, DataError> {
+        self.cache
+            .write_cache_blocking(id.as_id(), |e| {
+                if let Some(c) = e.chat.as_mut() {
+                    Ok(c.received_likes_iterator.reset())
+                } else {
+                    Err(CacheError::FeatureNotEnabled.report())
+                }
             })
             .into_data_error(id)
     }
