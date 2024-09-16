@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
-use diesel::{prelude::*, Associations};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt, Associations};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_try_from, diesel_string_wrapper};
+use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_string_wrapper};
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
@@ -480,3 +480,41 @@ pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
 pub struct AccountGlobalState {
     pub admin_access_granted_count: i64,
 }
+
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    IntoParams,
+    Copy,
+    Default,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct ClientId {
+    pub id: i64,
+}
+
+impl ClientId {
+    pub fn new(id: i64) -> Self {
+        Self { id }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.id
+    }
+
+    pub fn increment(&self) -> Self {
+        Self {
+            id: self.id.wrapping_add(1),
+        }
+    }
+}
+
+diesel_i64_wrapper!(ClientId);

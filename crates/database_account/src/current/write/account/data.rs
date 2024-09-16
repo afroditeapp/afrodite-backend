@@ -2,7 +2,7 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, AccountInternal, EmailAddress, SetAccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
+    AccountIdInternal, AccountInternal, ClientId, EmailAddress, SetAccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
 };
 
 use crate::IntoDatabaseError;
@@ -108,5 +108,35 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
             .into_db_error(id)?;
 
         Ok(())
+    }
+
+    pub fn get_next_client_id(
+        mut self,
+        id: AccountIdInternal,
+    ) -> Result<ClientId, DieselDatabaseError> {
+        use model::schema::account_next_client_id::dsl::*;
+
+        let current: ClientId = account_next_client_id
+            .filter(account_id.eq(id.as_db_id()))
+            .select(next_client_id)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())?
+            .unwrap_or_default();
+
+        let next = current.increment();
+
+        insert_into(account_next_client_id)
+            .values((
+                account_id.eq(id.as_db_id()),
+                next_client_id.eq(next),
+            ))
+            .on_conflict(account_id)
+            .do_update()
+            .set(next_client_id.eq(next))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(current)
     }
 }
