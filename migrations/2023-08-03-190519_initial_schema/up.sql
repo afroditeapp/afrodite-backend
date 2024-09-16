@@ -490,6 +490,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
     pending_notification_token   TEXT           UNIQUE,
     fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
     fcm_device_token             TEXT           UNIQUE,
+    new_received_likes_available BOOLEAN        NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

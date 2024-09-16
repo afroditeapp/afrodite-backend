@@ -116,6 +116,7 @@ diesel::table! {
         pending_notification_token -> Nullable<Text>,
         fcm_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
+        new_received_likes_available -> Bool,
     }
 }
 

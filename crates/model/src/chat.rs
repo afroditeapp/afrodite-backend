@@ -25,13 +25,14 @@ pub use received_likes::*;
 #[diesel(check_for_backend(crate::Db))]
 pub struct ChatStateRaw {
     pub received_blocks_sync_version: ReceivedBlocksSyncVersion,
-    pub received_likes_sync_version: ReceivedLikesSyncVersion, // TODO: Remove
+    pub received_likes_sync_version: ReceivedLikesSyncVersion,
     pub sent_blocks_sync_version: SentBlocksSyncVersion,
     pub sent_likes_sync_version: SentLikesSyncVersion,
     pub matches_sync_version: MatchesSyncVersion,
     pub pending_notification: PendingNotification,
     pub fcm_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
+    pub new_received_likes_available: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -277,14 +278,6 @@ pub struct SentLikesPage {
     /// data sync is happening.
     pub version: SentLikesSyncVersion,
     pub profiles: Vec<AccountId>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct ReceivedLikesPage {
-    pub profiles: Vec<AccountId>,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_invalid_iterator_session_id: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]

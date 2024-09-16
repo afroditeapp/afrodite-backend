@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::{ChatStateChanges, UnexpectedSenderMessageId};
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, SendMessageResult, SenderMessageId, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SenderMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -93,7 +93,8 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             })?;
 
             let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
-                if interaction.is_empty() {
+                if interaction.is_empty() && !s.new_received_likes_available {
+                    s.new_received_likes_available = true;
                     s.received_likes_sync_version
                         .increment_if_not_max_value_mut();
                 } else if interaction.is_like() {
@@ -350,6 +351,20 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             cmds.chat()
                 .interaction()
                 .set_next_expected_sender_message_id(sender, receiver, new_id)
+        })
+    }
+
+    pub async fn reset_new_received_likes_available_boolean(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<ReceivedLikesSyncVersion, DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat().modify_chat_state(id, |s| {
+                s.received_likes_sync_version.increment_if_not_max_value_mut();
+                s.new_received_likes_available = false;
+            })?;
+            let new_version = cmds.read().chat().chat_state(id)?.received_likes_sync_version;
+            Ok(new_version)
         })
     }
 }

@@ -154,8 +154,16 @@ pub trait SyncVersionUtils: Sized + Default {
 }
 
 macro_rules! sync_version_wrappers {
-    ( $( $name:ident ,)* ) => {
+    (
         $(
+            $( #[doc = $doc:expr] )*
+            $name:ident ,
+        )*
+    ) => {
+        $(
+            $(
+                #[doc = $doc]
+            )*
             #[derive(
                 Debug,
                 Serialize,

@@ -1,6 +1,7 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, ReceivedLikesIteratorSessionId, ReceivedLikesPage, SentLikesPage};
+use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesAvailableResult, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::db_write;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -111,6 +112,33 @@ pub async fn get_sent_likes<S: ReadData>(
     Ok(page.into())
 }
 
+#[obfuscate_api]
+const PATH_GET_NEW_RECEIVED_LIKES_AVAILABLE: &str = "/chat_api/new_received_likes_available";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_NEW_RECEIVED_LIKES_AVAILABLE,
+    responses(
+        (status = 200, description = "Success.", body = NewReceivedLikesAvailableResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_new_received_likes_available<S: ReadData>(
+    State(state): State<S>,
+    Extension(id): Extension<AccountIdInternal>,
+) -> Result<Json<NewReceivedLikesAvailableResult>, StatusCode> {
+    CHAT.get_new_received_likes_available.incr();
+
+    let chat_state = state.read().chat().chat_state(id).await?;
+    let r = NewReceivedLikesAvailableResult {
+        version: chat_state.received_likes_sync_version,
+        new_received_likes_available: chat_state.new_received_likes_available,
+    };
+    Ok(r.into())
+}
+
 // TODO(prod): Add pagination to chat related lists. Pagination
 // iterator shows latest items first. Some ID key will be used as a
 // iterator starting point so that newer items do not make older items
@@ -140,16 +168,16 @@ const PATH_POST_RESET_RECEIVED_LIKES_PAGING: &str = "/chat_api/received_likes/re
     post,
     path = PATH_POST_RESET_RECEIVED_LIKES_PAGING,
     responses(
-        (status = 200, description = "Successfull.", body = ReceivedLikesIteratorSessionId),
+        (status = 200, description = "Successfull.", body = ResetReceivedLikesIteratorResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_reset_received_likes_paging<S: WriteData>(
+pub async fn post_reset_received_likes_paging<S: WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ReceivedLikesIteratorSessionId>, StatusCode> {
+) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
     let iterator_session_id: ReceivedLikesIteratorSessionId = state
         .concurrent_write_profile_blocking(
@@ -161,7 +189,21 @@ pub async fn post_reset_received_likes_paging<S: WriteData>(
         .await??
         .into();
 
-    Ok(iterator_session_id.into())
+    let chat_state = state.read().chat().chat_state(account_id).await?;
+    let new_version = if chat_state.new_received_likes_available {
+        db_write!(state, move |cmds| {
+            cmds.chat().reset_new_received_likes_available_boolean(account_id)
+        })?
+    } else {
+        chat_state.received_likes_sync_version
+    };
+    let r = ResetReceivedLikesIteratorResult {
+        version: new_version,
+        new_received_likes_available: false,
+        session_id: iterator_session_id,
+    };
+
+    Ok(r.into())
 }
 
 #[obfuscate_api]
@@ -282,6 +324,7 @@ pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> R
     Router::new()
         .route(PATH_POST_SEND_LIKE_AXUM, post(post_send_like::<S>))
         .route(PATH_GET_SENT_LIKES_AXUM, get(get_sent_likes::<S>))
+        .route(PATH_GET_NEW_RECEIVED_LIKES_AVAILABLE_AXUM, get(get_new_received_likes_available::<S>))
         .route(PATH_POST_RESET_RECEIVED_LIKES_PAGING_AXUM, post(post_reset_received_likes_paging::<S>))
         .route(PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE_AXUM, post(post_get_next_received_likes_page::<S>))
         .route(PATH_DELETE_LIKE_AXUM, delete(delete_like::<S>))
@@ -294,6 +337,7 @@ create_counters!(
     CHAT_LIKE_COUNTERS_LIST,
     post_send_like,
     get_sent_likes,
+    get_new_received_likes_available,
     post_reset_received_likes_paging,
     post_get_next_received_likes_page,
     delete_like,

@@ -74,6 +74,8 @@ pub use server_common::{data::DataError, result};
         model::chat::GetPublicKey,
         model::chat::SetPublicKey,
         model::chat::SenderMessageId,
+        model::chat::NewReceivedLikesAvailableResult,
+        model::chat::ResetReceivedLikesIteratorResult,
         model::chat::ReceivedLikesIteratorSessionId,
     )),
     modifiers(&SecurityApiAccessTokenDefault),

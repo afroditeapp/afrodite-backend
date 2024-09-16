@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::AccountId;
+
+use super::ReceivedLikesSyncVersion;
+
 
 /// Session ID type for received likes iterator so that client can detect
 /// server restarts and ask user to refresh received likes.
@@ -32,4 +36,31 @@ impl From<ReceivedLikesIteratorSessionIdInternal> for ReceivedLikesIteratorSessi
             id: value.id.hyphenated().to_string(),
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct NewReceivedLikesAvailableResult {
+    /// The sync version is for `new_received_likes_available`
+    pub version: ReceivedLikesSyncVersion,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub new_received_likes_available: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ResetReceivedLikesIteratorResult {
+    /// The sync version is for `new_received_likes_available`
+    pub version: ReceivedLikesSyncVersion,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub new_received_likes_available: bool,
+    pub session_id: ReceivedLikesIteratorSessionId,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct ReceivedLikesPage {
+    pub profiles: Vec<AccountId>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_invalid_iterator_session_id: bool,
 }
