@@ -1,8 +1,8 @@
 mod push_notifications;
 
-use database_chat::current::write::chat::{ChatStateChanges, UnexpectedSenderMessageId};
+use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, MessageNumber, PendingMessageId, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SenderMessageId, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -210,16 +210,24 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
 
     // TODO(prod): Change SQLite settings that delete is overwriting.
 
-    /// Delete these pending messages which the receiver has received
-    pub async fn delete_pending_message_list(
+    pub async fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &mut self,
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
     ) -> Result<(), DataError> {
+        let mut converted = vec![];
+        for m in messages {
+            let sender = self.cache().to_account_id_internal(m.sender).await?;
+            converted.push(PendingMessageIdInternal {
+                sender,
+                mn: m.mn,
+            });
+        }
+
         let pending_messages = db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .message()
-                .delete_pending_message_list(message_receiver, messages)?;
+                .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(message_receiver, converted)?;
 
             cmds.read().chat().message().all_pending_message_sender_account_ids(message_receiver)
         })?;
@@ -230,6 +238,20 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 .remove_specific_pending_notification_flags_from_cache(message_receiver, PendingNotificationFlags::NEW_MESSAGE)
                 .await;
         }
+
+        Ok(())
+    }
+
+    pub async fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
+        &mut self,
+        message_receiver: AccountIdInternal,
+        messages: Vec<SentMessageId>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.chat()
+                .message()
+                .add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(message_receiver, messages)
+        })?;
 
         Ok(())
     }
@@ -282,8 +304,11 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
     /// Receiver public key check is for preventing client from
     /// sending messages encrypted with outdated public key.
     ///
-    /// Max pending message count is 50.
+    /// Max receiver acknowledgements missing count is 50.
     ///
+    /// Max sender acknowledgements missing count is 50.
+    ///
+    #[allow(clippy::too_many_arguments)]
     pub async fn insert_pending_message_if_match(
         &mut self,
         sender: AccountIdInternal,
@@ -291,7 +316,8 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         message: Vec<u8>,
         receiver_public_key_from_client: PublicKeyId,
         receiver_public_key_version_from_client: PublicKeyVersion,
-        sender_message_id: SenderMessageId,
+        client_id_value: ClientId,
+        client_local_id_value: ClientLocalId,
     ) -> Result<SendMessageResult, DataError> {
         db_transaction!(self, move |mut cmds| {
             let current_key = cmds.read().chat().public_key(
@@ -302,31 +328,37 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 return Ok(SendMessageResult::public_key_outdated());
             }
 
-            let pending_messages_count = cmds
+            let receiver_acknowledgements_missing = cmds
                 .read()
                 .chat()
                 .message()
-                .pending_messages_count(sender, receiver)?;
+                .receiver_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
 
-            if pending_messages_count >= 50 {
-                return Ok(SendMessageResult::too_many_pending_messages());
+            if receiver_acknowledgements_missing >= 50 {
+                return Ok(SendMessageResult::too_many_receiver_acknowledgements_missing());
             }
 
-            let message_values_result = cmds.chat()
+            let sender_acknowledgements_missing = cmds
+                .read()
+                .chat()
+                .message()
+                .sender_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
+
+            if sender_acknowledgements_missing >= 50 {
+                return Ok(SendMessageResult::too_many_sender_acknowledgements_missing());
+            }
+
+            let message_values = cmds.chat()
                 .message()
                 .insert_pending_message_if_match(
                     sender,
                     receiver,
                     message,
-                    sender_message_id,
+                    client_id_value,
+                    client_local_id_value,
                 )?;
 
-            match message_values_result {
-                Ok(message_values) =>
-                    Ok(SendMessageResult::successful(message_values)),
-                Err(UnexpectedSenderMessageId { expected }) =>
-                    Ok(SendMessageResult::sender_message_id_was_not_expected_id(expected)),
-            }
+            Ok(SendMessageResult::successful(message_values))
         })
     }
 
@@ -338,19 +370,6 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .set_public_key(id, data)
-        })
-    }
-
-    pub async fn set_next_expected_sender_message_id(
-        &mut self,
-        sender: AccountIdInternal,
-        receiver: AccountIdInternal,
-        new_id: SenderMessageId,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .interaction()
-                .set_next_expected_sender_message_id(sender, receiver, new_id)
         })
     }
 

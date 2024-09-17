@@ -2,7 +2,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId, PendingMessageInternal
+    AccountId, AccountIdInternal, PendingMessage, PendingMessageAndMessageData, PendingMessageId, PendingMessageInternal, SentMessageId
 };
 
 use crate::IntoDatabaseError;
@@ -21,6 +21,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
                 account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
             )
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+            .filter(receiver_acknowledgement.eq(false))
             .select((account_id::uuid, PendingMessageInternal::as_select()))
             .load(self.conn())
             .into_db_error(())?;
@@ -55,6 +56,7 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
                 account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
             )
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+            .filter(receiver_acknowledgement.eq(false))
             .select(account_id::uuid)
             .order_by(account_id::id)
             .load(self.conn())
@@ -65,7 +67,33 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
         Ok(account_id_vec)
     }
 
-    pub fn pending_messages_count(
+    pub fn all_sent_messages(
+        &mut self,
+        id_message_sender: AccountIdInternal,
+    ) -> Result<Vec<SentMessageId>, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
+
+        let value: Vec<PendingMessageInternal> = pending_messages
+            .filter(account_id_sender.eq(id_message_sender.as_db_id()))
+            .filter(sender_acknowledgement.eq(false))
+            .select(PendingMessageInternal::as_select())
+            .load(self.conn())
+            .into_db_error(())?;
+
+        let messages = value
+            .into_iter()
+            .map(|msg|
+                SentMessageId {
+                    c: msg.sender_client_id,
+                    l: msg.sender_client_local_id,
+                }
+            )
+            .collect();
+
+        Ok(messages)
+    }
+
+    pub fn receiver_acknowledgements_missing_count_for_one_conversation(
         &mut self,
         id_message_sender: AccountIdInternal,
         id_message_receiver: AccountIdInternal,
@@ -75,6 +103,23 @@ impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
         pending_messages
             .filter(account_id_sender.eq(id_message_sender.as_db_id()))
             .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+            .filter(receiver_acknowledgement.eq(false))
+            .count()
+            .get_result(self.conn())
+            .into_db_error(())
+    }
+
+    pub fn sender_acknowledgements_missing_count_for_one_conversation(
+        &mut self,
+        id_message_sender: AccountIdInternal,
+        id_message_receiver: AccountIdInternal,
+    ) -> Result<i64, DieselDatabaseError> {
+        use crate::schema::pending_messages::dsl::*;
+
+        pending_messages
+            .filter(account_id_sender.eq(id_message_sender.as_db_id()))
+            .filter(account_id_receiver.eq(id_message_receiver.as_db_id()))
+            .filter(sender_acknowledgement.eq(false))
             .count()
             .get_result(self.conn())
             .into_db_error(())

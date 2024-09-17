@@ -1,8 +1,8 @@
-use axum::{body::Body, extract::{Path, Query, State}, Extension, Router};
+use axum::{body::Body, extract::{Query, State}, Extension, Router};
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{
-    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageDeleteList, SendMessageResult, SendMessageToAccountParams, SenderMessageId, UpdateMessageViewStatus
+    AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -82,13 +82,12 @@ pub async fn get_pending_messages<S: ReadData>(
 }
 
 #[obfuscate_api]
-const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
+const PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT: &str = "/chat_api/add_receiver_acknowledgement";
 
-/// Delete list of pending messages
 #[utoipa::path(
-    delete,
-    path = PATH_DELETE_PENDING_MESSAGES,
-    request_body(content = PendingMessageDeleteList),
+    post,
+    path = PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT,
+    request_body(content = PendingMessageAcknowledgementList),
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
@@ -96,16 +95,16 @@ const PATH_DELETE_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_pending_messages<S: WriteData>(
+pub async fn post_add_receiver_acknowledgement<S: WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(list): Json<PendingMessageDeleteList>,
+    Json(list): Json<PendingMessageAcknowledgementList>,
 ) -> Result<(), StatusCode> {
     CHAT.delete_pending_messages.incr();
 
     db_write!(state, move |cmds| {
         cmds.chat()
-            .delete_pending_message_list(id, list.ids)
+            .add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(id, list.ids)
     })?;
     Ok(())
 }
@@ -233,7 +232,8 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
                 bytes.into(),
                 query_params.receiver_public_key_id,
                 query_params.receiver_public_key_version,
-                query_params.sender_message_id,
+                query_params.client_id,
+                query_params.client_local_id,
             )
             .await?;
 
@@ -251,53 +251,43 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
 }
 
 #[obfuscate_api]
-const PATH_GET_SENDER_MESSAGE_ID: &str =
-    "/chat_api/sender_message_id/{aid}";
+const PATH_GET_SENT_MESSAGE_IDS: &str =
+    "/chat_api/sent_message_ids";
 
-/// Get conversation specific expected sender message ID which API caller
-/// account owns.
-///
-/// Default value is returned if the accounts are not in match state. Also
-/// state change to match state will reset the ID.
 #[utoipa::path(
     get,
-    path = PATH_GET_SENDER_MESSAGE_ID,
-    params(AccountId),
+    path = PATH_GET_SENT_MESSAGE_IDS,
     responses(
-        (status = 200, description = "Success.", body = SenderMessageId),
+        (status = 200, description = "Success.", body = SentMessageIdList),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_sender_message_id<S: ReadData + GetAccounts>(
+pub async fn get_sent_message_ids<S: ReadData + GetAccounts>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Path(requested_account): Path<AccountId>,
-) -> Result<Json<SenderMessageId>, StatusCode> {
-    CHAT.get_sender_message_id.incr();
-    let requested_account = state.get_internal_id(requested_account).await?;
-    let sender_message_id = state
+) -> Result<Json<SentMessageIdList>, StatusCode> {
+    CHAT.get_sent_message_ids.incr();
+    let ids = state
         .read()
         .chat()
-        .get_expected_sender_message_id(id, requested_account)
+        .all_sent_messages(id)
         .await?;
-    Ok(sender_message_id.into())
+    let id_list = SentMessageIdList {
+        ids,
+    };
+    Ok(id_list.into())
 }
 
 #[obfuscate_api]
-const PATH_POST_SENDER_MESSAGE_ID: &str =
-    "/chat_api/sender_message_id/{aid}";
+const PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT: &str =
+    "/chat_api/add_sender_acknowledgement";
 
-/// Set conversation specific expected sender message ID which API caller
-/// account owns.
-///
-/// This errors if the accounts are not in match state.
 #[utoipa::path(
     post,
-    path = PATH_POST_SENDER_MESSAGE_ID,
-    params(AccountId),
-    request_body(content = SenderMessageId),
+    path = PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT,
+    request_body(content = SentMessageIdList),
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
@@ -305,28 +295,26 @@ const PATH_POST_SENDER_MESSAGE_ID: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_sender_message_id<S: WriteData + GetAccounts>(
+pub async fn post_add_sender_acknowledgement<S: WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Path(requested_account): Path<AccountId>,
-    Json(new_sender_message_id): Json<SenderMessageId>,
+    Json(id_list): Json<SentMessageIdList>,
 ) -> Result<(), StatusCode> {
-    CHAT.post_sender_message_id.incr();
-    let requested_account = state.get_internal_id(requested_account).await?;
+    CHAT.post_add_sender_acknowledgement.incr();
     db_write!(state, move |cmds| {
-        cmds.chat().set_next_expected_sender_message_id(id, requested_account, new_sender_message_id)
+        cmds.chat().add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(id, id_list.ids)
     })?;
     Ok(())
 }
 
 pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
-    use axum::routing::{delete, get, post};
+    use axum::routing::{get, post};
 
     Router::new()
         .route(PATH_GET_PENDING_MESSAGES_AXUM, get(get_pending_messages::<S>))
         .route(
-            PATH_DELETE_PENDING_MESSAGES_AXUM,
-            delete(delete_pending_messages::<S>),
+            PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT_AXUM,
+            post(post_add_receiver_acknowledgement::<S>),
         )
         .route(
             PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE_AXUM,
@@ -337,8 +325,8 @@ pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -
             post(post_message_number_of_latest_viewed_message::<S>),
         )
         .route(PATH_POST_SEND_MESSAGE_AXUM, post(post_send_message::<S>))
-        .route(PATH_GET_SENDER_MESSAGE_ID_AXUM, get(get_sender_message_id::<S>))
-        .route(PATH_POST_SENDER_MESSAGE_ID_AXUM, post(post_sender_message_id::<S>))
+        .route(PATH_GET_SENT_MESSAGE_IDS_AXUM, get(get_sent_message_ids::<S>))
+        .route(PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT_AXUM, post(post_add_sender_acknowledgement::<S>))
         .with_state(s)
 }
 
@@ -351,6 +339,6 @@ create_counters!(
     get_message_number_of_latest_viewed_message,
     post_message_number_of_latest_viewed_message,
     post_send_message,
-    get_sender_message_id,
-    post_sender_message_id,
+    get_sent_message_ids,
+    post_add_sender_acknowledgement,
 );

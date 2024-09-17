@@ -3,7 +3,7 @@ mod push_notifications;
 use std::i64;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessageAndMessageData, PublicKeyVersion, ReceivedBlocksPage, SenderMessageId, SentBlocksPage, SentLikesPage
+    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessageAndMessageData, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
  cache::received_likes::ReceivedLikesIteratorState, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
@@ -163,6 +163,15 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
             .into_error()
     }
 
+    pub async fn all_sent_messages(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<SentMessageId>, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().message().all_sent_messages(id))
+            .await
+            .into_error()
+    }
+
     /// Get message number of message that receiver has viewed the latest
     pub async fn message_number_of_latest_viewed_message(
         &self,
@@ -232,16 +241,6 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         self.db_read(move |mut cmds| cmds.chat().public_key(id, version))
             .await
             .map(|key| GetPublicKey { key })
-            .into_error()
-    }
-
-    pub async fn get_expected_sender_message_id(
-        &self,
-        sender: AccountIdInternal,
-        receiver: AccountIdInternal,
-    ) -> Result<SenderMessageId, DataError> {
-        self.db_read(move |mut cmds| cmds.chat().interaction().current_expected_sender_id(sender, receiver))
-            .await
             .into_error()
     }
 }

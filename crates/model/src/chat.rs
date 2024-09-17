@@ -3,7 +3,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdDb, AccountIdInternal};
+use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId};
 
 mod db_only;
 pub use db_only::*;
@@ -84,8 +84,6 @@ pub struct AccountInteractionInternal {
     pub message_counter: i64,
     pub sender_latest_viewed_message: Option<MessageNumber>,
     pub receiver_latest_viewed_message: Option<MessageNumber>,
-    pub sender_next_message_id: SenderMessageId,
-    pub receiver_next_message_id: SenderMessageId,
 }
 
 impl AccountInteractionInternal {
@@ -122,8 +120,6 @@ impl AccountInteractionInternal {
                 state_change_unix_time: Some(UnixTime::current_time()),
                 sender_latest_viewed_message: Some(MessageNumber::default()),
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
-                sender_next_message_id: SenderMessageId::default(),
-                receiver_next_message_id: SenderMessageId::default(),
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),
@@ -190,34 +186,6 @@ impl AccountInteractionInternal {
     pub fn is_blocked(&self) -> bool {
         self.state_number == AccountInteractionState::Block
     }
-
-    /// Get next expected message ID for the account
-    pub fn next_expected_message_id_mut(
-        &mut self,
-        account: AccountIdDb,
-    ) -> Option<&mut SenderMessageId> {
-        if self.account_id_receiver == Some(account) {
-            Some(&mut self.receiver_next_message_id)
-        } else if self.account_id_sender == Some(account) {
-            Some(&mut self.sender_next_message_id)
-        } else {
-            None
-        }
-    }
-
-    /// Get next expected message ID for the account
-    pub fn next_expected_message_id(
-        &self,
-        account: AccountIdDb,
-    ) -> Option<&SenderMessageId> {
-        if self.account_id_receiver == Some(account) {
-            Some(&self.receiver_next_message_id)
-        } else if self.account_id_sender == Some(account) {
-            Some(&self.sender_next_message_id)
-        } else {
-            None
-        }
-    }
 }
 
 /// Account interaction states
@@ -270,6 +238,8 @@ pub struct PendingMessageInternal {
     pub unix_time: UnixTime,
     pub message_number: MessageNumber,
     pub message_bytes: Vec<u8>,
+    pub sender_client_id: ClientId,
+    pub sender_client_local_id: ClientLocalId,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
@@ -324,9 +294,27 @@ pub struct PendingMessageId {
     pub mn: MessageNumber,
 }
 
+#[derive(Debug, Clone)]
+pub struct PendingMessageIdInternal {
+    /// Sender of the message.
+    pub sender: AccountIdInternal,
+    pub mn: MessageNumber,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct PendingMessageDeleteList {
+pub struct PendingMessageAcknowledgementList {
     pub ids: Vec<PendingMessageId>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct SentMessageId {
+    pub c: ClientId,
+    pub l: ClientLocalId,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct SentMessageIdList {
+    pub ids: Vec<SentMessageId>,
 }
 
 /// Message order number in a conversation.
@@ -382,9 +370,12 @@ pub struct SendMessageToAccountParams {
     #[serde(serialize_with = "public_key_version_as_i64", deserialize_with = "public_key_version_from_i64")]
     #[param(value_type = i64)]
     pub receiver_public_key_version: PublicKeyVersion,
-    #[serde(serialize_with = "sender_message_id_as_i64", deserialize_with = "sender_message_id_from_i64")]
+    #[serde(serialize_with = "client_id_as_i64", deserialize_with = "client_id_from_i64")]
     #[param(value_type = i64)]
-    pub sender_message_id: SenderMessageId,
+    pub client_id: ClientId,
+    #[serde(serialize_with = "client_local_id_as_i64", deserialize_with = "client_local_id_from_i64")]
+    #[param(value_type = i64)]
+    pub client_local_id: ClientLocalId,
 }
 
 pub fn account_id_as_uuid<
@@ -414,10 +405,19 @@ pub fn public_key_version_as_i64<
     value.version.serialize(s)
 }
 
-pub fn sender_message_id_as_i64<
+pub fn client_id_as_i64<
     S: Serializer,
 >(
-    value: &SenderMessageId,
+    value: &ClientId,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    value.id.serialize(s)
+}
+
+pub fn client_local_id_as_i64<
+    S: Serializer,
+>(
+    value: &ClientLocalId,
     s: S,
 ) -> Result<S::Ok, S::Error> {
     value.id.serialize(s)
@@ -450,13 +450,22 @@ pub fn public_key_version_from_i64<
     i64::deserialize(d).map(|version| PublicKeyVersion { version })
 }
 
-pub fn sender_message_id_from_i64<
+pub fn client_id_from_i64<
     'de,
     D: Deserializer<'de>,
 >(
     d: D,
-) -> Result<SenderMessageId, D::Error> {
-    i64::deserialize(d).map(|id| SenderMessageId { id })
+) -> Result<ClientId, D::Error> {
+    i64::deserialize(d).map(|id| ClientId { id })
+}
+
+pub fn client_local_id_from_i64<
+    'de,
+    D: Deserializer<'de>,
+>(
+    d: D,
+) -> Result<ClientLocalId, D::Error> {
+    i64::deserialize(d).map(|id| ClientLocalId { id })
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
@@ -468,23 +477,32 @@ pub struct SendMessageResult {
     // Errors
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_too_many_pending_messages: bool,
+    pub error_too_many_receiver_acknowledgements_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_too_many_sender_acknowledgements_missing: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_receiver_public_key_outdated: bool,
-    pub error_sender_message_id_was_not_expected_id: Option<SenderMessageId>,
 }
 
 impl SendMessageResult {
     pub fn is_err(&self) -> bool {
-        self.error_too_many_pending_messages ||
-        self.error_receiver_public_key_outdated ||
-        self.error_sender_message_id_was_not_expected_id.is_some()
+        self.error_too_many_receiver_acknowledgements_missing ||
+        self.error_too_many_sender_acknowledgements_missing ||
+        self.error_receiver_public_key_outdated
     }
 
-    pub fn too_many_pending_messages() -> Self {
+    pub fn too_many_receiver_acknowledgements_missing() -> Self {
         Self {
-            error_too_many_pending_messages: true,
+            error_too_many_receiver_acknowledgements_missing: true,
+            ..Self::default()
+        }
+    }
+
+    pub fn too_many_sender_acknowledgements_missing() -> Self {
+        Self {
+            error_too_many_sender_acknowledgements_missing: true,
             ..Self::default()
         }
     }
@@ -492,15 +510,6 @@ impl SendMessageResult {
     pub fn public_key_outdated() -> Self {
         Self {
             error_receiver_public_key_outdated: true,
-            ..Self::default()
-        }
-    }
-
-    pub fn sender_message_id_was_not_expected_id(
-        expected_id: SenderMessageId,
-    ) -> Self {
-        Self {
-            error_sender_message_id_was_not_expected_id: Some(expected_id),
             ..Self::default()
         }
     }
@@ -528,51 +537,6 @@ pub enum LimitedActionStatus {
     /// Action failed because the action limit is already reached.
     FailureLimitAlreadyReached,
 }
-
-/// Conversation message counter located on the server which only message sender
-/// owns (conversation can have 2 senders, so there is two counters).
-///
-/// The server increments the ID automatically when message is sent. The server
-/// resets the ID when account interaction is changed to match state. Also the
-/// client can reset the counter as it might go out of sync for example
-/// when the account is changed to different device.
-#[derive(
-    Debug,
-    Serialize,
-    Deserialize,
-    ToSchema,
-    Clone,
-    Eq,
-    Hash,
-    PartialEq,
-    IntoParams,
-    Copy,
-    Default,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-pub struct SenderMessageId {
-    pub id: i64,
-}
-
-impl SenderMessageId {
-    pub fn new(id: i64) -> Self {
-        Self { id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.id
-    }
-
-    pub fn increment(&self) -> Self {
-        Self {
-            id: self.id.wrapping_add(1),
-        }
-    }
-}
-
-diesel_i64_wrapper!(SenderMessageId);
 
 pub struct NewPendingMessageValues {
     pub unix_time: UnixTime,

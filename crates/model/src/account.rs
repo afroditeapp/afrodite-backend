@@ -481,6 +481,10 @@ pub struct AccountGlobalState {
     pub admin_access_granted_count: i64,
 }
 
+/// ID which client receives from server once.
+/// Next value is incremented compared to previous value, so
+/// in practice the ID can be used as unique ID even if it
+/// can wrap.
 #[derive(
     Debug,
     Serialize,
@@ -518,3 +522,37 @@ impl ClientId {
 }
 
 diesel_i64_wrapper!(ClientId);
+
+/// ID which client owns. This should be unique when
+/// considering one client instance.
+#[derive(
+    Debug,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    Clone,
+    Eq,
+    Hash,
+    PartialEq,
+    IntoParams,
+    Copy,
+    Default,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct ClientLocalId {
+    pub id: i64,
+}
+
+impl ClientLocalId {
+    pub fn new(id: i64) -> Self {
+        Self { id }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.id
+    }
+}
+
+diesel_i64_wrapper!(ClientLocalId);

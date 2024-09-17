@@ -70,6 +70,7 @@ pub use server_common::{data::DataError, result};
         model::account::EmailAddress,
         model::account::LatestBirthdate,
         model::account::ClientId,
+        model::account::ClientLocalId,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

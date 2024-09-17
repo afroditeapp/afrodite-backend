@@ -1,29 +1,65 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, AccountInteractionState, MessageNumber, NewPendingMessageValues, PendingMessageId, SenderMessageId, UnixTime};
+use model::{AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, MessageNumber, NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, UnixTime};
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(CurrentWriteChatMessage, CurrentSyncWriteChatMessage);
 
 impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
-    pub fn delete_pending_message_list(
+    pub fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &mut self,
         message_receiver: AccountIdInternal,
-        messages: Vec<PendingMessageId>,
+        messages: Vec<PendingMessageIdInternal>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_messages::dsl::*;
 
         for message in messages {
-            delete(
-                pending_messages.filter(
-                    message_number
-                        .eq(message.mn)
-                        .and(account_id_receiver.eq(message_receiver.as_db_id())),
-                ),
-            )
-            .execute(self.conn())
-            .into_db_error(message_receiver)?;
+            update(pending_messages)
+                .filter(message_number.eq(message.mn))
+                .filter(account_id_sender.eq(message.sender.as_db_id()))
+                .filter(account_id_receiver.eq(message_receiver.as_db_id()))
+                .set(receiver_acknowledgement.eq(true))
+                .execute(self.conn())
+                .into_db_error(message_receiver)?;
+
+            delete(pending_messages)
+                .filter(message_number.eq(message.mn))
+                .filter(account_id_sender.eq(message.sender.as_db_id()))
+                .filter(account_id_receiver.eq(message_receiver.as_db_id()))
+                .filter(sender_acknowledgement.eq(true))
+                .filter(receiver_acknowledgement.eq(true))
+                .execute(self.conn())
+                .into_db_error(message_receiver)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
+        &mut self,
+        message_sender: AccountIdInternal,
+        messages: Vec<SentMessageId>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::pending_messages::dsl::*;
+
+        for message in messages {
+            update(pending_messages)
+                .filter(sender_client_id.eq(message.c))
+                .filter(sender_client_local_id.eq(message.l))
+                .filter(account_id_sender.eq(message_sender.as_db_id()))
+                .set(sender_acknowledgement.eq(true))
+                .execute(self.conn())
+                .into_db_error(message_sender)?;
+
+            delete(pending_messages)
+                .filter(sender_client_id.eq(message.c))
+                .filter(sender_client_local_id.eq(message.l))
+                .filter(account_id_sender.eq(message_sender.as_db_id()))
+                .filter(sender_acknowledgement.eq(true))
+                .filter(receiver_acknowledgement.eq(true))
+                .execute(self.conn())
+                .into_db_error(message_sender)?;
         }
 
         Ok(())
@@ -34,11 +70,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
         message: Vec<u8>,
-        sender_message_id: SenderMessageId,
-    ) -> Result<std::result::Result<NewPendingMessageValues, UnexpectedSenderMessageId>, DieselDatabaseError> {
+        client_id_value: ClientId,
+        client_local_id_value: ClientLocalId
+    ) -> Result<NewPendingMessageValues, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = UnixTime::current_time();
-        let mut interaction = self
+        let interaction = self
             .cmds()
             .chat()
             .interaction()
@@ -51,23 +88,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 
-        if let Some(expected_id) = interaction.next_expected_message_id_mut(*sender.as_db_id()) {
-            if *expected_id != sender_message_id {
-                return Ok(Err(UnexpectedSenderMessageId {
-                    expected: *expected_id,
-                }));
-            } else {
-                *expected_id = expected_id.increment();
-            }
-        } else {
-            return Err(DieselDatabaseError::NotFound.into());
-        }
-
         update(account_interaction::table.find(interaction.id))
             .set((
                 account_interaction::message_counter.eq(new_message_number),
-                account_interaction::sender_next_message_id.eq(interaction.sender_next_message_id),
-                account_interaction::receiver_next_message_id.eq(interaction.receiver_next_message_id),
             ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
@@ -79,17 +102,15 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
                 unix_time.eq(time),
                 message_number.eq(new_message_number),
                 message_bytes.eq(message),
+                sender_client_id.eq(client_id_value),
+                sender_client_local_id.eq(client_local_id_value),
             ))
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
 
-        Ok(Ok(NewPendingMessageValues {
+        Ok(NewPendingMessageValues {
             unix_time: time,
             message_number: new_message_number,
-        }))
+        })
     }
-}
-
-pub struct UnexpectedSenderMessageId {
-    pub expected: SenderMessageId,
 }

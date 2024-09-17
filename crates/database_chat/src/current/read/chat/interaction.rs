@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    ProfileVisibility, SenderMessageId, UnixTime,
+    ProfileVisibility, UnixTime,
 };
 
 use crate::IntoDatabaseError;
@@ -158,29 +158,6 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
             .offset(PAGE_SIZE.saturating_mul(page))
             .load(self.conn())
             .into_db_error(())?;
-
-        Ok(value)
-    }
-
-    /// If sender and receiver is not in match state then default
-    /// value is returned.
-    pub fn current_expected_sender_id(
-        &mut self,
-        sender: AccountIdInternal,
-        receiver: AccountIdInternal,
-    ) -> Result<SenderMessageId, DieselDatabaseError> {
-        let value = match self.account_interaction(sender, receiver)? {
-            None => SenderMessageId::default(),
-            Some(interaction) => {
-                if interaction.is_match() {
-                    interaction.next_expected_message_id(sender.into_db_id())
-                        .copied()
-                        .unwrap_or_default()
-                } else {
-                    SenderMessageId::default()
-                }
-            }
-        };
 
         Ok(value)
     }
