@@ -5,23 +5,24 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**delete_like**](ChatApi.md#delete_like) | **DELETE** /O3DZlGOjDYbQ8PlCorta0onQDLI | Delete sent like.
-[**delete_pending_messages**](ChatApi.md#delete_pending_messages) | **DELETE** /7sKe87sefWrLYS0JvbPS10_F8oc | Delete list of pending messages
 [**get_matches**](ChatApi.md#get_matches) | **GET** /kzySqAe9qYi69MoCBnFGKdn76-Q | Get matches
 [**get_message_number_of_latest_viewed_message**](ChatApi.md#get_message_number_of_latest_viewed_message) | **GET** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Get message number of the most recent message that the recipient has viewed.
 [**get_pending_messages**](ChatApi.md#get_pending_messages) | **GET** /7sKe87sefWrLYS0JvbPS10_F8oc | Get list of pending messages.
 [**get_public_key**](ChatApi.md#get_public_key) | **GET** /e-r4VrqWJD1kIttg1McD9kv5o0k/{aid} | Get current public key of some account
 [**get_received_blocks**](ChatApi.md#get_received_blocks) | **GET** /hjP9LovH2kBxnbwWKSyVgFL4o58 | Get list of received blocks
-[**get_received_likes**](ChatApi.md#get_received_likes) | **GET** /eEB4pq6DGUYlMVAYwPCm2RT5HP0 | Get received likes.
-[**get_sender_message_id**](ChatApi.md#get_sender_message_id) | **GET** /tn7H7RialxF_rBX74MazT7jYaqg/{aid} | Get conversation specific expected sender message ID which API caller
 [**get_sent_blocks**](ChatApi.md#get_sent_blocks) | **GET** /3qT3qSKKzXHjo8LGEphwMLF8vjk | Get list of sent blocks
 [**get_sent_likes**](ChatApi.md#get_sent_likes) | **GET** /pTybb424uGsXvCyOLljsPujVe5Y | Get sent likes.
+[**get_sent_message_ids**](ChatApi.md#get_sent_message_ids) | **GET** /-sDy1a8MS72uNy3UUtX9K8-wYWU | 
+[**post_add_receiver_acknowledgement**](ChatApi.md#post_add_receiver_acknowledgement) | **POST** /PBreZU5Cmo7tTtNMMb58yN_xFZ8 | 
+[**post_add_sender_acknowledgement**](ChatApi.md#post_add_sender_acknowledgement) | **POST** /E-yVIcGOLJyZ7nsT_Lh4KPCRkQg | 
 [**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /MpWSY01lXj7KaDK1KCNHLWRg9k4 | Block profile
+[**post_get_next_received_likes_page**](ChatApi.md#post_get_next_received_likes_page) | **POST** /eEB4pq6DGUYlMVAYwPCm2RT5HP0 | Update received likes iterator and get next page
 [**post_get_pending_notification**](ChatApi.md#post_get_pending_notification) | **POST** /MhQXhJMKgrUh0s95FueOgalQg-o | Get pending notification and reset pending notification.
 [**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Update message number of the most recent message that the recipient has viewed.
 [**post_public_key**](ChatApi.md#post_public_key) | **POST** /e-r4VrqWJD1kIttg1McD9kv5o0k | Replace current public key with a new public key.
+[**post_reset_received_likes_paging**](ChatApi.md#post_reset_received_likes_paging) | **POST** /B75BRIylLV-JmwoB4YiOYSlyO-A | 
 [**post_send_like**](ChatApi.md#post_send_like) | **POST** /sXq6ko76GtT7DuNXnkTTtFL6isY | Send a like to some account. If both will like each other, then
 [**post_send_message**](ChatApi.md#post_send_message) | **POST** /YEFESgzw0YxQUETcUmnmfWCaF1g | Send message to a match.
-[**post_sender_message_id**](ChatApi.md#post_sender_message_id) | **POST** /tn7H7RialxF_rBX74MazT7jYaqg/{aid} | Set conversation specific expected sender message ID which API caller
 [**post_set_device_token**](ChatApi.md#post_set_device_token) | **POST** /CBoGGZ4HDW0REbM6SxasDCvXJNM | 
 [**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /j2Ofh-WeAFmjCQqO_AyHIM1eZEo | Unblock profile
 
@@ -53,34 +54,6 @@ Name | Type | Description  | Required | Notes
 
 - **Content-Type**: application/json
 - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-
-## delete_pending_messages
-
-> delete_pending_messages(pending_message_delete_list)
-Delete list of pending messages
-
-### Parameters
-
-
-Name | Type | Description  | Required | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-**pending_message_delete_list** | [**PendingMessageDeleteList**](PendingMessageDeleteList.md) |  | [required] |
-
-### Return type
-
- (empty response body)
-
-### Authorization
-
-[access_token](../README.md#access_token)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -219,63 +192,6 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
-## get_received_likes
-
-> models::ReceivedLikesPage get_received_likes()
-Get received likes.
-
-Profile will not be returned if: - Profile is blocked - Profile is a match
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**models::ReceivedLikesPage**](ReceivedLikesPage.md)
-
-### Authorization
-
-[access_token](../README.md#access_token)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-
-## get_sender_message_id
-
-> models::SenderMessageId get_sender_message_id(aid)
-Get conversation specific expected sender message ID which API caller
-
-account owns.  Default value is returned if the accounts are not in match state. Also state change to match state will reset the ID.
-
-### Parameters
-
-
-Name | Type | Description  | Required | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
-
-### Return type
-
-[**models::SenderMessageId**](SenderMessageId.md)
-
-### Authorization
-
-[access_token](../README.md#access_token)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-
 ## get_sent_blocks
 
 > models::SentBlocksPage get_sent_blocks()
@@ -328,6 +244,87 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## get_sent_message_ids
+
+> models::SentMessageIdList get_sent_message_ids()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**models::SentMessageIdList**](SentMessageIdList.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_add_receiver_acknowledgement
+
+> post_add_receiver_acknowledgement(pending_message_acknowledgement_list)
+
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**pending_message_acknowledgement_list** | [**PendingMessageAcknowledgementList**](PendingMessageAcknowledgementList.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_add_sender_acknowledgement
+
+> post_add_sender_acknowledgement(sent_message_id_list)
+
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**sent_message_id_list** | [**SentMessageIdList**](SentMessageIdList.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_block_profile
 
 > post_block_profile(account_id)
@@ -352,6 +349,36 @@ Name | Type | Description  | Required | Notes
 
 - **Content-Type**: application/json
 - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_get_next_received_likes_page
+
+> models::ReceivedLikesPage post_get_next_received_likes_page(received_likes_iterator_session_id)
+Update received likes iterator and get next page
+
+of received likes. If the page is empty there is no more received likes available.  Profile will not be returned if: - Profile is blocked - Profile is a match
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**received_likes_iterator_session_id** | [**ReceivedLikesIteratorSessionId**](ReceivedLikesIteratorSessionId.md) |  | [required] |
+
+### Return type
+
+[**models::ReceivedLikesPage**](ReceivedLikesPage.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -444,6 +471,31 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## post_reset_received_likes_paging
+
+> models::ResetReceivedLikesIteratorResult post_reset_received_likes_paging()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**models::ResetReceivedLikesIteratorResult**](ResetReceivedLikesIteratorResult.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_send_like
 
 > models::LimitedActionResult post_send_like(account_id)
@@ -476,7 +528,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_send_message
 
-> models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, sender_message_id, body)
+> models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, client_id, client_local_id, body)
 Send message to a match.
 
 Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
@@ -489,7 +541,8 @@ Name | Type | Description  | Required | Notes
 **receiver** | **uuid::Uuid** | Receiver of the message. | [required] |
 **receiver_public_key_id** | **i64** | Message receiver's public key ID for check to prevent sending message encrypted with outdated public key. | [required] |
 **receiver_public_key_version** | **i64** |  | [required] |
-**sender_message_id** | **i64** |  | [required] |
+**client_id** | **i64** |  | [required] |
+**client_local_id** | **i64** |  | [required] |
 **body** | **std::path::PathBuf** |  | [required] |
 
 ### Return type
@@ -504,37 +557,6 @@ Name | Type | Description  | Required | Notes
 
 - **Content-Type**: application/octet-stream
 - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-
-## post_sender_message_id
-
-> post_sender_message_id(aid, sender_message_id)
-Set conversation specific expected sender message ID which API caller
-
-account owns.  This errors if the accounts are not in match state.
-
-### Parameters
-
-
-Name | Type | Description  | Required | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
-**sender_message_id** | [**SenderMessageId**](SenderMessageId.md) |  | [required] |
-
-### Return type
-
- (empty response body)
-
-### Authorization
-
-[access_token](../README.md#access_token)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

@@ -6,14 +6,14 @@ use api_client::{
     apis::{
         account_api::get_account_state,
         chat_api::{
-            delete_pending_messages, get_public_key, get_received_likes, post_public_key, post_send_like, post_sender_message_id
+            get_public_key, post_add_receiver_acknowledgement, post_add_sender_acknowledgement, post_get_next_received_likes_page, post_public_key, post_reset_received_likes_paging, post_send_like
         },
         profile_api::{
             get_available_profile_attributes, post_profile, post_search_age_range,
             post_search_groups,
         },
     }, manual_additions::{get_pending_messages_fixed, post_send_message_fixed}, models::{
-        AccountId, AccountState, AttributeMode, PendingMessage, PendingMessageDeleteList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SenderMessageId, SetPublicKey
+        AccountId, AccountState, AttributeMode, ClientId, ClientLocalId, PendingMessage, PendingMessageAcknowledgementList, ProfileAttributeValueUpdate, ProfileSearchAgeRange, ProfileUpdate, PublicKeyData, PublicKeyVersion, SearchGroups, SentMessageId, SentMessageIdList, SetPublicKey
     }
 };
 use async_trait::async_trait;
@@ -371,17 +371,28 @@ pub struct AcceptReceivedLikesAndSendMessage;
 #[async_trait]
 impl BotAction for AcceptReceivedLikesAndSendMessage {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let received_likes = get_received_likes(state.api.chat())
+        let r = post_reset_received_likes_paging(state.api.chat())
             .await
             .change_context(TestError::ApiRequest)?;
+        let session_id = *r.session_id;
 
-        for like in received_likes.profiles {
-            post_send_like(state.api.chat(), like)
+        loop {
+            let received_likes = post_get_next_received_likes_page(state.api.chat(), session_id.clone())
                 .await
                 .change_context(TestError::ApiRequest)?;
 
-            let new_msg = "Hello!".to_string();
-            send_message(state, like, new_msg).await?;
+            if received_likes.profiles.is_empty() {
+                break;
+            }
+
+            for like in received_likes.profiles {
+                post_send_like(state.api.chat(), like)
+                    .await
+                    .change_context(TestError::ApiRequest)?;
+
+                let new_msg = "Hello!".to_string();
+                send_message(state, like, new_msg).await?;
+            }
         }
 
         Ok(())
@@ -436,9 +447,9 @@ impl BotAction for AnswerReceivedMessages {
             .map(|msg| msg.id.as_ref().clone())
             .collect::<Vec<_>>();
 
-        let delete_list = PendingMessageDeleteList { ids: messages_ids };
+        let delete_list = PendingMessageAcknowledgementList { ids: messages_ids };
 
-        delete_pending_messages(state.api.chat(), delete_list)
+        post_add_receiver_acknowledgement(state.api.chat(), delete_list)
             .await
             .change_context(TestError::ApiRequest)?;
 
@@ -461,14 +472,6 @@ async fn send_message(
         .change_context(TestError::ApiRequest)?;
 
     if let Some(receiver_public_key) = public_key.key.flatten() {
-        post_sender_message_id(
-            state.api.chat(),
-            &receiver.aid.to_string(),
-            SenderMessageId::new(0),
-        )
-            .await
-            .change_context(TestError::ApiRequest)?;
-
         let mut message_bytes = vec![0]; // Text message
         let len_u16 = msg.len() as u16;
         message_bytes.extend_from_slice(&len_u16.to_le_bytes());
@@ -489,7 +492,22 @@ async fn send_message(
             receiver_public_key.id.id,
             receiver_public_key.version.version,
             0,
+            0,
             type_number_and_message,
+        )
+            .await
+            .change_context(TestError::ApiRequest)?;
+
+        post_add_sender_acknowledgement(
+            state.api.chat(),
+            SentMessageIdList {
+                ids: vec![
+                    SentMessageId {
+                        c: ClientId::new(0).into(),
+                        l: ClientLocalId::new(0).into(),
+                    }
+                ],
+            },
         )
             .await
             .change_context(TestError::ApiRequest)?;

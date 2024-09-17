@@ -1,11 +1,10 @@
-# ReceivedLikesPage
+# SentMessageIdList
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**error_invalid_iterator_session_id** | Option<**bool**> |  | [optional][default to false]
-**profiles** | [**Vec<models::AccountId>**](AccountId.md) |  | 
+**ids** | [**Vec<models::SentMessageId>**](SentMessageId.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

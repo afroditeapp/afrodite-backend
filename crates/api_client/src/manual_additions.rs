@@ -119,8 +119,8 @@ pub async fn put_content_to_content_slot_fixed(
 }
 
 
-/// Send message to a match.  Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
-pub async fn post_send_message_fixed(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, sender_message_id: i64, body: Vec<u8>) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
+/// Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
+pub async fn post_send_message_fixed(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, client_id: i64, client_local_id: i64, body: Vec<u8>) -> Result<crate::models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -131,7 +131,8 @@ pub async fn post_send_message_fixed(configuration: &configuration::Configuratio
     local_var_req_builder = local_var_req_builder.query(&[("receiver", &receiver.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_id", &receiver_public_key_id.to_string())]);
     local_var_req_builder = local_var_req_builder.query(&[("receiver_public_key_version", &receiver_public_key_version.to_string())]);
-    local_var_req_builder = local_var_req_builder.query(&[("sender_message_id", &sender_message_id.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("client_id", &client_id.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("client_local_id", &client_local_id.to_string())]);
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
     }

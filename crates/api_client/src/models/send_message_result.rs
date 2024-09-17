@@ -15,10 +15,10 @@ use serde::{Deserialize, Serialize};
 pub struct SendMessageResult {
     #[serde(rename = "error_receiver_public_key_outdated", skip_serializing_if = "Option::is_none")]
     pub error_receiver_public_key_outdated: Option<bool>,
-    #[serde(rename = "error_sender_message_id_was_not_expected_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub error_sender_message_id_was_not_expected_id: Option<Option<Box<models::SenderMessageId>>>,
-    #[serde(rename = "error_too_many_pending_messages", skip_serializing_if = "Option::is_none")]
-    pub error_too_many_pending_messages: Option<bool>,
+    #[serde(rename = "error_too_many_receiver_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
+    pub error_too_many_receiver_acknowledgements_missing: Option<bool>,
+    #[serde(rename = "error_too_many_sender_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
+    pub error_too_many_sender_acknowledgements_missing: Option<bool>,
     #[serde(rename = "mn", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub mn: Option<Option<Box<models::MessageNumber>>>,
     #[serde(rename = "ut", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -29,8 +29,8 @@ impl SendMessageResult {
     pub fn new() -> SendMessageResult {
         SendMessageResult {
             error_receiver_public_key_outdated: None,
-            error_sender_message_id_was_not_expected_id: None,
-            error_too_many_pending_messages: None,
+            error_too_many_receiver_acknowledgements_missing: None,
+            error_too_many_sender_acknowledgements_missing: None,
             mn: None,
             ut: None,
         }
