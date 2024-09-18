@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
-pub enum ClientTypeNumber {
+pub enum WebSocketClientTypeNumber {
     Android = 0,
     Ios = 1,
     Web = 2,
@@ -9,7 +9,7 @@ pub enum ClientTypeNumber {
     TestModeBot = 255,
 }
 
-impl TryFrom<u8> for ClientTypeNumber {
+impl TryFrom<u8> for WebSocketClientTypeNumber {
     type Error = String;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -27,7 +27,7 @@ impl TryFrom<u8> for ClientTypeNumber {
 /// the protocol version byte.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WebSocketClientInfo {
-    pub client_type: ClientTypeNumber,
+    pub client_type: WebSocketClientTypeNumber,
     pub major_version: u16,
     pub minor_version: u16,
     pub patch_version: u16,
@@ -37,7 +37,7 @@ impl WebSocketClientInfo {
     pub fn parse(bytes: &[u8]) -> Result<Self, String> {
         match bytes {
             [client_type0, major0, major1, minor0, minor1, patch0, patch1] => {
-                let client_type = ClientTypeNumber::try_from(*client_type0)?;
+                let client_type = WebSocketClientTypeNumber::try_from(*client_type0)?;
                 let major_version = u16::from_le_bytes([*major0, *major1]);
                 let minor_version = u16::from_le_bytes([*minor0, *minor1]);
                 let patch_version = u16::from_le_bytes([*patch0, *patch1]);

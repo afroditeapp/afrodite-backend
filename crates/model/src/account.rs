@@ -6,7 +6,7 @@ use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::{Integer, Text}, AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountStateRelatedSharedState, AccountSyncVersion, RefreshToken
+    schema_sqlite_types::{Integer, Text}, AccessToken, AccountId, AccountIdDb, AccountIdInternal, AccountStateRelatedSharedState, AccountSyncVersion, PublicKeyIdAndVersion, RefreshToken
 };
 
 mod demo;
@@ -19,19 +19,70 @@ pub use email::*;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct LoginResult {
-    pub account: AuthPair,
+    /// If `None`, the client is unsupported.
+    pub account: Option<AuthPair>,
 
-    /// If None profile microservice is disabled.
+    /// If `None`, profile microservice is disabled or the version client is
+    /// unsupported.
     pub profile: Option<AuthPair>,
 
-    /// If None media microservice is disabled.
+    /// If `None`, media microservice is disabled or the client version is
+    /// unsupported.
     pub media: Option<AuthPair>,
 
-    /// Account ID of current account.
-    pub aid: AccountId,
+    /// Account ID of current account. If `None`, the client is unsupported.
+    pub aid: Option<AccountId>,
 
-    /// Current email of current account.
+    /// Current email of current account. If `None`, if email address is not
+    /// set or the client version is unsupported.
     pub email: Option<EmailAddress>,
+
+    /// Info about latest public keys. Client can use this value to
+    /// ask if user wants to copy existing private and public key from
+    /// other device. If empty, public key is not set or the client
+    /// is unsupported.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schema(default = json!([]))]
+    pub latest_public_keys: Vec<PublicKeyIdAndVersion>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_unsupported_client: bool,
+}
+
+impl LoginResult {
+    pub fn error_unsupported_client() -> Self {
+        Self {
+            account: None,
+            profile: None,
+            media: None,
+            aid: None,
+            email: None,
+            latest_public_keys: vec![],
+            error_unsupported_client: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, ToSchema)]
+pub enum ClientType {
+    Android,
+    Ios,
+    Web,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, ToSchema)]
+pub struct ClientInfo {
+    pub client_type: ClientType,
+    pub major_version: u16,
+    pub minor_version: u16,
+    pub patch_version: u16,
+}
+
+impl ClientInfo {
+    pub fn is_unsupported_client(&self) -> bool {
+        false
+    }
 }
 
 /// AccessToken and RefreshToken
@@ -369,6 +420,7 @@ pub struct DeleteStatus {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SignInWithLoginInfo {
+    pub client_info: ClientInfo,
     pub apple_token: Option<String>,
     pub google_token: Option<String>,
 }

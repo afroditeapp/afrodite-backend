@@ -7,7 +7,7 @@ use model::{
     SignInWithInfo,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::{RegisteringCmd, ResetPushNotificationTokens}, db_write};
+use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
@@ -149,7 +149,7 @@ const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login
     security(),
 )]
 pub async fn post_demo_mode_login_to_account<
-    S: DemoModeManagerProvider + ReadData + WriteData + GetAccounts + ResetPushNotificationTokens,
+    S: DemoModeManagerProvider + ReadData + WriteData + GetAccounts + ResetPushNotificationTokens + LatestPublicKeysInfo,
 >(
     State(state): State<S>,
     Json(info): Json<DemoModeLoginToAccount>,
@@ -171,7 +171,8 @@ pub fn demo_mode_router<
         + GetAccounts
         + GetConfig
         + RegisteringCmd
-        + ResetPushNotificationTokens,
+        + ResetPushNotificationTokens
+        + LatestPublicKeysInfo,
 >(
     s: S,
 ) -> Router {

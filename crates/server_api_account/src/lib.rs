@@ -71,6 +71,8 @@ pub use server_common::{data::DataError, result};
         model::account::LatestBirthdate,
         model::account::ClientId,
         model::account::ClientLocalId,
+        model::account::ClientType,
+        model::account::ClientInfo,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

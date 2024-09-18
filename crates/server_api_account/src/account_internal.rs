@@ -2,7 +2,7 @@
 
 use axum::extract::State;
 use model::{AccountId, LoginResult, SignInWithInfo};
-use server_api::{app::{RegisteringCmd, ResetPushNotificationTokens}, db_write};
+use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -29,7 +29,7 @@ pub const PATH_LOGIN: &str = "/account_api/login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_login<S: WriteData + ReadData + GetAccounts + ResetPushNotificationTokens>(
+pub async fn post_login<S: WriteData + ReadData + GetAccounts + ResetPushNotificationTokens + LatestPublicKeysInfo>(
     State(state): State<S>,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {

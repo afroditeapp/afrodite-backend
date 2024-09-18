@@ -4,7 +4,7 @@ use model::{
     SignInWithInfo, SignInWithLoginInfo,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::{RegisteringCmd, ResetPushNotificationTokens}, db_write};
+use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
@@ -14,12 +14,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-pub async fn login_impl<S: ReadData + WriteData + GetAccounts + ResetPushNotificationTokens>(
+pub async fn login_impl<S: ReadData + WriteData + GetAccounts + ResetPushNotificationTokens + LatestPublicKeysInfo>(
     id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
     let email = state.read().account().account_data(id).await?;
+    let latest_public_keys = state.latest_public_keys_info(id).await?;
 
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
@@ -37,11 +38,13 @@ pub async fn login_impl<S: ReadData + WriteData + GetAccounts + ResetPushNotific
     // TODO(microservice): microservice support
 
     let result = LoginResult {
-        account,
+        account: Some(account),
         profile: None,
         media: None,
-        aid: id.as_id(),
+        aid: Some(id.as_id()),
         email: email.email,
+        latest_public_keys,
+        error_unsupported_client: false,
     };
     Ok(result)
 }
@@ -62,12 +65,17 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
     ),
 )]
 pub async fn post_sign_in_with_login<
-    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig + RegisteringCmd + ResetPushNotificationTokens,
+    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig + RegisteringCmd + ResetPushNotificationTokens + LatestPublicKeysInfo,
 >(
     State(state): State<S>,
     Json(tokens): Json<SignInWithLoginInfo>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_sign_in_with_login.incr();
+
+    if tokens.client_info.is_unsupported_client() {
+        return Ok(LoginResult::error_unsupported_client().into());
+    }
+
     if let Some(google) = tokens.google_token {
         let info = state
             .sign_in_with_manager()

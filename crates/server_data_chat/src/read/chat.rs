@@ -3,7 +3,7 @@ mod push_notifications;
 use std::i64;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessageAndMessageData, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
  cache::received_likes::ReceivedLikesIteratorState, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
@@ -241,6 +241,15 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         self.db_read(move |mut cmds| cmds.chat().public_key(id, version))
             .await
             .map(|key| GetPublicKey { key })
+            .into_error()
+    }
+
+    pub async fn get_latest_public_keys_info(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<PublicKeyIdAndVersion>, DataError> {
+        self.db_read(move |mut cmds| cmds.chat().get_latest_public_keys_info(id))
+            .await
             .into_error()
     }
 }

@@ -4,7 +4,7 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, EventToClientInternal, PendingNotificationFlags, PushNotificationStateInfoWithFlags, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, EventToClientInternal, PendingNotificationFlags, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
@@ -211,6 +211,15 @@ impl ResetPushNotificationTokens for S {
             cmds.chat().push_notifications().remove_fcm_device_token_and_pending_notification_token(account_id).await
         })
         .await
+    }
+}
+
+impl LatestPublicKeysInfo for S {
+    async fn latest_public_keys_info(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> server_common::result::Result<Vec<PublicKeyIdAndVersion>, DataError> {
+        self.read().chat().get_latest_public_keys_info(account_id).await
     }
 }
 

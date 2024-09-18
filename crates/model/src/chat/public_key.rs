@@ -135,3 +135,16 @@ pub struct SetPublicKey {
     pub version: PublicKeyVersion,
     pub data: PublicKeyData,
 }
+
+#[derive(
+    Debug,
+    Clone,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+)]
+pub struct PublicKeyIdAndVersion {
+    pub id: PublicKeyId,
+    pub version: PublicKeyVersion,
+}

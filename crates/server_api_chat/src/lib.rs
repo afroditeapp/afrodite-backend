@@ -69,6 +69,7 @@ pub use server_common::{data::DataError, result};
         model::chat::LimitedActionStatus,
         model::chat::PublicKey,
         model::chat::PublicKeyId,
+        model::chat::PublicKeyIdAndVersion,
         model::chat::PublicKeyVersion,
         model::chat::PublicKeyData,
         model::chat::GetPublicKey,
