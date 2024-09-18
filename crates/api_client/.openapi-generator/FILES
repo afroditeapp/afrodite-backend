@@ -29,7 +29,9 @@ docs/BuildInfo.md
 docs/Capabilities.md
 docs/ChatApi.md
 docs/ClientId.md
+docs/ClientInfo.md
 docs/ClientLocalId.md
+docs/ClientType.md
 docs/CommandOutput.md
 docs/CommonAdminApi.md
 docs/CommonApi.md
@@ -131,6 +133,7 @@ docs/ProfileVisibility.md
 docs/PublicKey.md
 docs/PublicKeyData.md
 docs/PublicKeyId.md
+docs/PublicKeyIdAndVersion.md
 docs/PublicKeyVersion.md
 docs/RebootQueryParam.md
 docs/ReceivedBlocksPage.md
@@ -200,7 +203,9 @@ src/models/bot_config.rs
 src/models/build_info.rs
 src/models/capabilities.rs
 src/models/client_id.rs
+src/models/client_info.rs
 src/models/client_local_id.rs
+src/models/client_type.rs
 src/models/command_output.rs
 src/models/content_id.rs
 src/models/content_info.rs
@@ -297,6 +302,7 @@ src/models/profile_visibility.rs
 src/models/public_key.rs
 src/models/public_key_data.rs
 src/models/public_key_id.rs
+src/models/public_key_id_and_version.rs
 src/models/public_key_version.rs
 src/models/reboot_query_param.rs
 src/models/received_blocks_page.rs

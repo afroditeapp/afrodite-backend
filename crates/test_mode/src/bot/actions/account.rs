@@ -59,9 +59,15 @@ impl BotAction for Login {
             .await
             .change_context(TestError::ApiRequest)?;
 
+        let auth_pair = if let Some(Some(auth_pair)) = login_result.account {
+            *auth_pair.clone()
+        } else {
+            return Err(TestError::ApiRequest.report());
+        };
+
         state
             .api
-            .set_access_token(login_result.account.access.access_token.clone());
+            .set_access_token(auth_pair.access.access_token.clone());
 
         let (event_sender, event_receiver, quit_handle) =
             create_event_channel(state.connections.enable_event_sending.clone());
@@ -73,7 +79,7 @@ impl BotAction for Login {
             .join(PATH_CONNECT)
             .change_context(TestError::WebSocket)?;
         let account: Option<WsConnection> =
-            connect_websocket(*login_result.account, url, state, event_sender.clone())
+            connect_websocket(auth_pair, url, state, event_sender.clone())
                 .await?
                 .into();
 

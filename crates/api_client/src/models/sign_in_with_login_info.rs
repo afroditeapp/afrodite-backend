@@ -15,14 +15,17 @@ use serde::{Deserialize, Serialize};
 pub struct SignInWithLoginInfo {
     #[serde(rename = "apple_token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub apple_token: Option<Option<String>>,
+    #[serde(rename = "client_info")]
+    pub client_info: Box<models::ClientInfo>,
     #[serde(rename = "google_token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub google_token: Option<Option<String>>,
 }
 
 impl SignInWithLoginInfo {
-    pub fn new() -> SignInWithLoginInfo {
+    pub fn new(client_info: models::ClientInfo) -> SignInWithLoginInfo {
         SignInWithLoginInfo {
             apple_token: None,
+            client_info: Box::new(client_info),
             google_token: None,
         }
     }
