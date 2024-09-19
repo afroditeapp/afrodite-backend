@@ -96,7 +96,7 @@ impl FilePackageManager {
     fn path_string_to_content_type(mime_types: &ExtraMimeTypes, path: &str) -> error_stack::Result<ContentType, FilePackageError> {
         let content_type = if path.ends_with(".html") {
             ContentType::html()
-        } else if path.ends_with(".js") {
+        } else if path.ends_with(".js") || path.ends_with(".mjs") {
             mime::APPLICATION_JAVASCRIPT_UTF_8.into()
         } else if path.ends_with(".json") {
             ContentType::json()
