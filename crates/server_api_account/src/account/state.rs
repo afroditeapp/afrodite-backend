@@ -63,7 +63,7 @@ pub async fn get_latest_birthdate<S: GetAccessTokens + ReadData>(
 const PATH_POST_GET_NEXT_CLIENT_ID: &str = "/account_api/next_client_id";
 
 #[utoipa::path(
-    get,
+    post,
     path = PATH_POST_GET_NEXT_CLIENT_ID,
     responses(
         (status = 200, description = "Successfull.", body = ClientId),
