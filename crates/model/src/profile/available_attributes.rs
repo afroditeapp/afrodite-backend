@@ -68,7 +68,7 @@ pub struct AttributeInternal {
     pub visible: bool,
     #[serde(default = "value_bool_false", skip_serializing_if = "value_is_false")]
     pub required: bool,
-    pub icon: IconResource,
+    pub icon: Option<IconResource>,
     pub id: u16,
     pub order_number: u16,
     pub value_order: AttributeValueOrderMode,
@@ -668,8 +668,8 @@ pub struct Attribute {
     #[schema(default = false)]
     pub required: bool,
     /// Icon for the attribute.
-    #[schema(value_type = String)]
-    pub icon: IconResource,
+    #[schema(value_type = Option<String>)]
+    pub icon: Option<IconResource>,
     /// Numeric unique identifier for the attribute.
     pub id: u16,
     /// Attribute order number.
