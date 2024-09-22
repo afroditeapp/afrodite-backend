@@ -223,6 +223,24 @@ qzmprA==
 -----END PGP PUBLIC KEY BLOCK-----
 ";
 
+const BOT_PRIVATE_KEY: &str = "
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+xXcEZrUithMIKoZIzj0DAQcCAwQPyfhOjBpuNHTfc3RLX2jkK6kPD2awvT1M32Ye
+WNb2TnlS/GQkMPiO8FzIM4HeOhH8gCFPF2Zdx4sKPJmliNsyAAEAhfnLqgKe8T/V
+YxvmviGU5dh7r1kUdNpO1f82f4d9pnsSDs0HVXNlciBJRMKDBBATCAArAhkBBQJm
+tSK2AhsCAgsHAhUIARYWIQR2ZZh+EGeImqjIZ2llzxKWgRVS4AAKCRBlzxKWgRVS
+4AEHAQC2q6EBnIwhiWoGJd/eGJwy4C61OMeub6zAU5FFiT05RQEAjCVwCHCc3QBP
+IK2p5cUlMhAnwDsXWr/DdGRJBWNeQTLHewRmtSK2EggqhkjOPQMBBwIDBIrj+HN2
+PfY/YgPCrFRmOWv4NTxQgyQkzovyEo2OG4OWN0LdGYpXU/IMqOYfEFGnb0XIiBRD
+3tf+f7mjE7j3w9YDAQgHAAEAoIh5mtDadAnwyL/2ZHTYPHwBbGQACc9eqFu3JKOV
+hg0P6MJ4BBgTCAAgBQJmtSK2AhsMFiEEdmWYfhBniJqoyGdpZc8SloEVUuAACgkQ
+Zc8SloEVUuBlGgD/aHrMo6u0yip2DTt37IiksUlYYrpo+mThrG6WME+MfFIBAKiC
+AqRT4F/i8WpvAlC5VuH8b60kbzDRi0X8l+mrOams
+=JeHT
+-----END PGP PRIVATE KEY BLOCK-----
+";
+
 #[derive(Debug)]
 pub struct SetBotPublicKey;
 
@@ -477,7 +495,7 @@ async fn send_message(
         message_bytes.extend_from_slice(&len_u16.to_le_bytes());
         message_bytes.extend_from_slice(msg.as_bytes());
         let encrypted_bytes = encrypt_data(
-            "", // Not needed
+            BOT_PRIVATE_KEY,
             &receiver_public_key.data.data,
             &message_bytes,
         )
