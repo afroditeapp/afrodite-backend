@@ -392,18 +392,18 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
         let r = post_reset_received_likes_paging(state.api.chat())
             .await
             .change_context(TestError::ApiRequest)?;
-        let session_id = *r.session_id;
+        let session_id = *r.s;
 
         loop {
             let received_likes = post_get_next_received_likes_page(state.api.chat(), session_id.clone())
                 .await
                 .change_context(TestError::ApiRequest)?;
 
-            if received_likes.profiles.is_empty() {
+            if received_likes.p.is_empty() {
                 break;
             }
 
-            for like in received_likes.profiles {
+            for like in received_likes.p {
                 post_send_like(state.api.chat(), like)
                     .await
                     .change_context(TestError::ApiRequest)?;

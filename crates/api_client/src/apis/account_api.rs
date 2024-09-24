@@ -687,7 +687,7 @@ pub async fn post_get_next_client_id(configuration: &configuration::Configuratio
     let local_var_client = &local_var_configuration.client;
 
     let local_var_uri_str = format!("{}/b5kd4x8_ybr1Rj_tprU5BxF_xGo", local_var_configuration.base_path);
-    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
         local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());

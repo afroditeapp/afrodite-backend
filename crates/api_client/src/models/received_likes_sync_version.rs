@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ReceivedLikesSyncVersion : Sync version for new received likes boolean
+/// ReceivedLikesSyncVersion : Sync version for new received likes count
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReceivedLikesSyncVersion {
     #[serde(rename = "version")]
@@ -19,7 +19,7 @@ pub struct ReceivedLikesSyncVersion {
 }
 
 impl ReceivedLikesSyncVersion {
-    /// Sync version for new received likes boolean
+    /// Sync version for new received likes count
     pub fn new(version: i64) -> ReceivedLikesSyncVersion {
         ReceivedLikesSyncVersion {
             version,

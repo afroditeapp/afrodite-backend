@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **editable** | Option<**bool**> | Client should show this attribute when editing a profile. | [optional][default to true]
-**icon** | **String** | Icon for the attribute. | 
+**icon** | Option<**String**> | Icon for the attribute. | [optional]
 **id** | **i32** | Numeric unique identifier for the attribute. | 
 **key** | **String** | String unique identifier for the attribute. | 
 **mode** | [**models::AttributeMode**](AttributeMode.md) |  | 

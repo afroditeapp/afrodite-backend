@@ -178,6 +178,8 @@ pub mod new_content_params;
 pub use self::new_content_params::NewContentParams;
 pub mod new_received_likes_available_result;
 pub use self::new_received_likes_available_result::NewReceivedLikesAvailableResult;
+pub mod new_received_likes_count;
+pub use self::new_received_likes_count::NewReceivedLikesCount;
 pub mod pending_message;
 pub use self::pending_message::PendingMessage;
 pub mod pending_message_acknowledgement_list;

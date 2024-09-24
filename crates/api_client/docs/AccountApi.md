@@ -19,7 +19,7 @@ Method | HTTP request | Description
 [**post_demo_mode_login**](AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts
 [**post_demo_mode_login_to_account**](AccountApi.md#post_demo_mode_login_to_account) | **POST** /sBH-LyNGOOFXivrv5clCpNrkwcA | 
 [**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
-[**post_get_next_client_id**](AccountApi.md#post_get_next_client_id) | **GET** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
+[**post_get_next_client_id**](AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
 [**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
 [**put_setting_unlimited_likes**](AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 

@@ -17,8 +17,8 @@ pub struct Attribute {
     #[serde(rename = "editable", skip_serializing_if = "Option::is_none")]
     pub editable: Option<bool>,
     /// Icon for the attribute.
-    #[serde(rename = "icon")]
-    pub icon: String,
+    #[serde(rename = "icon", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub icon: Option<Option<String>>,
     /// Numeric unique identifier for the attribute.
     #[serde(rename = "id")]
     pub id: i32,
@@ -50,10 +50,10 @@ pub struct Attribute {
 }
 
 impl Attribute {
-    pub fn new(icon: String, id: i32, key: String, mode: models::AttributeMode, name: String, order_number: i32, value_order: models::AttributeValueOrderMode, values: Vec<models::AttributeValue>) -> Attribute {
+    pub fn new(id: i32, key: String, mode: models::AttributeMode, name: String, order_number: i32, value_order: models::AttributeValueOrderMode, values: Vec<models::AttributeValue>) -> Attribute {
         Attribute {
             editable: None,
-            icon,
+            icon: None,
             id,
             key,
             mode,

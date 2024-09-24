@@ -13,20 +13,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ResetReceivedLikesIteratorResult {
-    #[serde(rename = "new_received_likes_available", skip_serializing_if = "Option::is_none")]
-    pub new_received_likes_available: Option<bool>,
-    #[serde(rename = "session_id")]
-    pub session_id: Box<models::ReceivedLikesIteratorSessionId>,
-    #[serde(rename = "version")]
-    pub version: Box<models::ReceivedLikesSyncVersion>,
+    #[serde(rename = "c")]
+    pub c: Box<models::NewReceivedLikesCount>,
+    #[serde(rename = "s")]
+    pub s: Box<models::ReceivedLikesIteratorSessionId>,
+    #[serde(rename = "v")]
+    pub v: Box<models::ReceivedLikesSyncVersion>,
 }
 
 impl ResetReceivedLikesIteratorResult {
-    pub fn new(session_id: models::ReceivedLikesIteratorSessionId, version: models::ReceivedLikesSyncVersion) -> ResetReceivedLikesIteratorResult {
+    pub fn new(c: models::NewReceivedLikesCount, s: models::ReceivedLikesIteratorSessionId, v: models::ReceivedLikesSyncVersion) -> ResetReceivedLikesIteratorResult {
         ResetReceivedLikesIteratorResult {
-            new_received_likes_available: None,
-            session_id: Box::new(session_id),
-            version: Box::new(version),
+            c: Box::new(c),
+            s: Box::new(s),
+            v: Box::new(v),
         }
     }
 }

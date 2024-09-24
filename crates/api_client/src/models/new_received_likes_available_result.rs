@@ -13,17 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewReceivedLikesAvailableResult {
-    #[serde(rename = "new_received_likes_available", skip_serializing_if = "Option::is_none")]
-    pub new_received_likes_available: Option<bool>,
-    #[serde(rename = "version")]
-    pub version: Box<models::ReceivedLikesSyncVersion>,
+    #[serde(rename = "c")]
+    pub c: Box<models::NewReceivedLikesCount>,
+    #[serde(rename = "v")]
+    pub v: Box<models::ReceivedLikesSyncVersion>,
 }
 
 impl NewReceivedLikesAvailableResult {
-    pub fn new(version: models::ReceivedLikesSyncVersion) -> NewReceivedLikesAvailableResult {
+    pub fn new(c: models::NewReceivedLikesCount, v: models::ReceivedLikesSyncVersion) -> NewReceivedLikesAvailableResult {
         NewReceivedLikesAvailableResult {
-            new_received_likes_available: None,
-            version: Box::new(version),
+            c: Box::new(c),
+            v: Box::new(v),
         }
     }
 }

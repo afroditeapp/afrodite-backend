@@ -100,6 +100,7 @@ docs/ModerationRequestId.md
 docs/ModerationRequestState.md
 docs/NewContentParams.md
 docs/NewReceivedLikesAvailableResult.md
+docs/NewReceivedLikesCount.md
 docs/PendingMessage.md
 docs/PendingMessageAcknowledgementList.md
 docs/PendingMessageId.md
@@ -270,6 +271,7 @@ src/models/moderation_request_id.rs
 src/models/moderation_request_state.rs
 src/models/new_content_params.rs
 src/models/new_received_likes_available_result.rs
+src/models/new_received_likes_count.rs
 src/models/pending_message.rs
 src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
