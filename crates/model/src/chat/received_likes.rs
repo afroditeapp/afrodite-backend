@@ -1,4 +1,6 @@
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
+use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
 use crate::AccountId;
@@ -40,27 +42,55 @@ impl From<ReceivedLikesIteratorSessionIdInternal> for ReceivedLikesIteratorSessi
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct NewReceivedLikesAvailableResult {
-    /// The sync version is for `new_received_likes_available`
-    pub version: ReceivedLikesSyncVersion,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub new_received_likes_available: bool,
+    pub v: ReceivedLikesSyncVersion,
+    pub c: NewReceivedLikesCount,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ResetReceivedLikesIteratorResult {
-    /// The sync version is for `new_received_likes_available`
-    pub version: ReceivedLikesSyncVersion,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub new_received_likes_available: bool,
-    pub session_id: ReceivedLikesIteratorSessionId,
+    pub v: ReceivedLikesSyncVersion,
+    pub c: NewReceivedLikesCount,
+    pub s: ReceivedLikesIteratorSessionId,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ReceivedLikesPage {
-    pub profiles: Vec<AccountId>,
+    pub p: Vec<AccountId>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_invalid_iterator_session_id: bool,
 }
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Default,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct NewReceivedLikesCount {
+    pub c: i64,
+}
+
+impl NewReceivedLikesCount {
+    pub fn new(count: i64) -> Self {
+        Self { c: count }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.c
+    }
+
+    /// Return new incremented value using `saturated_add`.
+    pub fn increment(&self) -> Self {
+        Self { c: self.c.saturating_add(1) }
+    }
+}
+
+diesel_i64_wrapper!(NewReceivedLikesCount);

@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -93,8 +93,8 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             })?;
 
             let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
-                if interaction.is_empty() && !s.new_received_likes_available {
-                    s.new_received_likes_available = true;
+                if interaction.is_empty() && s.new_received_likes_available.c == 0 {
+                    s.new_received_likes_available = s.new_received_likes_available.increment();
                     s.received_likes_sync_version
                         .increment_if_not_max_value_mut();
                 } else if interaction.is_like() {
@@ -373,14 +373,14 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         })
     }
 
-    pub async fn reset_new_received_likes_available_boolean(
+    pub async fn reset_new_received_likes_available_count(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<ReceivedLikesSyncVersion, DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat().modify_chat_state(id, |s| {
                 s.received_likes_sync_version.increment_if_not_max_value_mut();
-                s.new_received_likes_available = false;
+                s.new_received_likes_available = NewReceivedLikesCount::default();
             })?;
             let new_version = cmds.read().chat().chat_state(id)?.received_likes_sync_version;
             Ok(new_version)

@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesAvailableResult, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
+use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesAvailableResult, NewReceivedLikesCount, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::db_write;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -133,8 +133,8 @@ pub async fn get_new_received_likes_available<S: ReadData>(
 
     let chat_state = state.read().chat().chat_state(id).await?;
     let r = NewReceivedLikesAvailableResult {
-        version: chat_state.received_likes_sync_version,
-        new_received_likes_available: chat_state.new_received_likes_available,
+        v: chat_state.received_likes_sync_version,
+        c: chat_state.new_received_likes_available,
     };
     Ok(r.into())
 }
@@ -190,17 +190,17 @@ pub async fn post_reset_received_likes_paging<S: WriteData + ReadData>(
         .into();
 
     let chat_state = state.read().chat().chat_state(account_id).await?;
-    let new_version = if chat_state.new_received_likes_available {
+    let new_version = if chat_state.new_received_likes_available.c != 0 {
         db_write!(state, move |cmds| {
-            cmds.chat().reset_new_received_likes_available_boolean(account_id)
+            cmds.chat().reset_new_received_likes_available_count(account_id)
         })?
     } else {
         chat_state.received_likes_sync_version
     };
     let r = ResetReceivedLikesIteratorResult {
-        version: new_version,
-        new_received_likes_available: false,
-        session_id: iterator_session_id,
+        v: new_version,
+        c: NewReceivedLikesCount::default(),
+        s: iterator_session_id,
     };
 
     Ok(r.into())
@@ -251,12 +251,12 @@ pub async fn post_get_next_received_likes_page<S: WriteData + ReadData>(
             .received_likes_page(account_id, data)
             .await?;
         Ok(ReceivedLikesPage {
-            profiles,
+            p: profiles,
             error_invalid_iterator_session_id: false,
         }.into())
     } else {
         Ok(ReceivedLikesPage {
-            profiles: vec![],
+            p: vec![],
             error_invalid_iterator_session_id: true,
         }.into())
     }

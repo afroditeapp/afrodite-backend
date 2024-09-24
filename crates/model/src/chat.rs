@@ -32,7 +32,7 @@ pub struct ChatStateRaw {
     pub pending_notification: PendingNotification,
     pub fcm_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
-    pub new_received_likes_available: bool,
+    pub new_received_likes_available: NewReceivedLikesCount,
 }
 
 #[derive(Debug, Clone, Copy)]

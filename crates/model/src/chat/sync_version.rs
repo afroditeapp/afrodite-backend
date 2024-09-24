@@ -7,7 +7,7 @@ use crate::{sync_version_wrappers, SyncVersion, SyncVersionUtils};
 
 sync_version_wrappers!(
     ReceivedBlocksSyncVersion,
-    /// Sync version for new received likes boolean
+    /// Sync version for new received likes count
     ReceivedLikesSyncVersion,
     SentBlocksSyncVersion,
     SentLikesSyncVersion,
