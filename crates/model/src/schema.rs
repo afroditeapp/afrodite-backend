@@ -77,6 +77,7 @@ diesel::table! {
         message_counter -> Integer,
         sender_latest_viewed_message -> Nullable<Integer>,
         receiver_latest_viewed_message -> Nullable<Integer>,
+        included_in_received_new_likes_count -> Bool,
     }
 }
 
@@ -123,7 +124,7 @@ diesel::table! {
         pending_notification_token -> Nullable<Text>,
         fcm_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
-        new_received_likes_available -> Integer,
+        new_received_likes_count -> Integer,
     }
 }
 

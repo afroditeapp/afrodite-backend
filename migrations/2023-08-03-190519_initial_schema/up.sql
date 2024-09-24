@@ -499,7 +499,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
     pending_notification_token   TEXT           UNIQUE,
     fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
     fcm_device_token             TEXT           UNIQUE,
-    new_received_likes_available INTEGER        NOT NULL DEFAULT 0,
+    new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -563,6 +563,9 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Receivers's latest viewed message number in the conversation.
     -- Can be null for example if account is blocked.
     receiver_latest_viewed_message  INTEGER,
+    -- Track is the received like included in the receiver's
+    -- new_received_likes_count.
+    included_in_received_new_likes_count  BOOLEAN NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE

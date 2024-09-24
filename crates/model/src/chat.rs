@@ -32,7 +32,7 @@ pub struct ChatStateRaw {
     pub pending_notification: PendingNotification,
     pub fcm_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
-    pub new_received_likes_available: NewReceivedLikesCount,
+    pub new_received_likes_count: NewReceivedLikesCount,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -84,6 +84,7 @@ pub struct AccountInteractionInternal {
     pub message_counter: i64,
     pub sender_latest_viewed_message: Option<MessageNumber>,
     pub receiver_latest_viewed_message: Option<MessageNumber>,
+    pub included_in_received_new_likes_count: bool,
 }
 
 impl AccountInteractionInternal {
@@ -102,6 +103,7 @@ impl AccountInteractionInternal {
                 account_id_receiver: Some(id_like_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
+                included_in_received_new_likes_count: true,
                 ..self
             }),
             AccountInteractionState::Like => Ok(self),
@@ -120,6 +122,7 @@ impl AccountInteractionInternal {
                 state_change_unix_time: Some(UnixTime::current_time()),
                 sender_latest_viewed_message: Some(MessageNumber::default()),
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
+                included_in_received_new_likes_count: false,
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),
@@ -145,6 +148,7 @@ impl AccountInteractionInternal {
                 account_id_receiver: Some(id_block_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
+                included_in_received_new_likes_count: false,
                 ..self
             }),
             AccountInteractionState::Block => Ok(self),
@@ -162,6 +166,7 @@ impl AccountInteractionInternal {
                 account_id_receiver: None,
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
+                included_in_received_new_likes_count: false,
                 ..self
             }),
             AccountInteractionState::Empty => Ok(self),

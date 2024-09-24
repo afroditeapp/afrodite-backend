@@ -93,12 +93,18 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             })?;
 
             let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
-                if interaction.is_empty() && s.new_received_likes_available.c == 0 {
-                    s.new_received_likes_available = s.new_received_likes_available.increment();
+                if interaction.is_empty() {
+                    s.new_received_likes_count = s.new_received_likes_count.increment();
                     s.received_likes_sync_version
                         .increment_if_not_max_value_mut();
                 } else if interaction.is_like() {
                     s.matches_sync_version.increment_if_not_max_value_mut();
+
+                    if interaction.included_in_received_new_likes_count {
+                        s.new_received_likes_count = s.new_received_likes_count.decrement();
+                        s.received_likes_sync_version
+                            .increment_if_not_max_value_mut();
+                    }
                 }
             })?;
 
@@ -146,6 +152,11 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 if interaction.is_like() {
                     s.received_likes_sync_version
                         .increment_if_not_max_value_mut();
+                    if interaction.included_in_received_new_likes_count {
+                        s.new_received_likes_count = s.new_received_likes_count.decrement();
+                        s.received_likes_sync_version
+                            .increment_if_not_max_value_mut();
+                    }
                 } else if interaction.is_blocked() {
                     s.received_blocks_sync_version
                         .increment_if_not_max_value_mut();
@@ -378,9 +389,10 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         id: AccountIdInternal,
     ) -> Result<ReceivedLikesSyncVersion, DataError> {
         db_transaction!(self, move |mut cmds| {
+            cmds.chat().interaction().reset_included_in_received_new_likes_count(id)?;
             cmds.chat().modify_chat_state(id, |s| {
                 s.received_likes_sync_version.increment_if_not_max_value_mut();
-                s.new_received_likes_available = NewReceivedLikesCount::default();
+                s.new_received_likes_count = NewReceivedLikesCount::default();
             })?;
             let new_version = cmds.read().chat().chat_state(id)?.received_likes_sync_version;
             Ok(new_version)

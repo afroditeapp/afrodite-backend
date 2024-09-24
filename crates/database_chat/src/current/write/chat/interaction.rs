@@ -76,4 +76,19 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
             None => self.insert_account_interaction(account1, account2),
         }
     }
+
+    pub fn reset_included_in_received_new_likes_count(
+        &mut self,
+        receiver: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_interaction::dsl::*;
+
+        update(account_interaction)
+            .filter(account_id_receiver.eq(receiver.as_db_id()))
+            .set(included_in_received_new_likes_count.eq(false))
+            .execute(self.conn())
+            .into_db_error(receiver)?;
+
+        Ok(())
+    }
 }

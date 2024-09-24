@@ -134,7 +134,7 @@ pub async fn get_new_received_likes_available<S: ReadData>(
     let chat_state = state.read().chat().chat_state(id).await?;
     let r = NewReceivedLikesAvailableResult {
         v: chat_state.received_likes_sync_version,
-        c: chat_state.new_received_likes_available,
+        c: chat_state.new_received_likes_count,
     };
     Ok(r.into())
 }
@@ -190,7 +190,7 @@ pub async fn post_reset_received_likes_paging<S: WriteData + ReadData>(
         .into();
 
     let chat_state = state.read().chat().chat_state(account_id).await?;
-    let new_version = if chat_state.new_received_likes_available.c != 0 {
+    let new_version = if chat_state.new_received_likes_count.c != 0 {
         db_write!(state, move |cmds| {
             cmds.chat().reset_new_received_likes_available_count(account_id)
         })?
