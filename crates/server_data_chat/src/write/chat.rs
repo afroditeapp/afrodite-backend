@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils, UnixTime};
 use server_data::{
     cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
 };
@@ -384,15 +384,24 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         })
     }
 
-    pub async fn reset_new_received_likes_available_count(
+    /// Resets new received likes count if needed and updates received likes
+    /// iterator reset time.
+    pub async fn handle_reset_received_likes_iterator_reset(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<ReceivedLikesSyncVersion, DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat().interaction().reset_included_in_received_new_likes_count(id)?;
             cmds.chat().modify_chat_state(id, |s| {
-                s.received_likes_sync_version.increment_if_not_max_value_mut();
-                s.new_received_likes_count = NewReceivedLikesCount::default();
+                if s.new_received_likes_count.c != 0 {
+                    s.received_likes_sync_version.increment_if_not_max_value_mut();
+                    s.new_received_likes_count = NewReceivedLikesCount::default();
+                }
+                std::mem::swap(
+                    &mut s.received_likes_iterator_reset_unix_time_previous,
+                    &mut s.received_likes_iterator_reset_unix_time
+                );
+                s.received_likes_iterator_reset_unix_time = Some(UnixTime::current_time());
             })?;
             let new_version = cmds.read().chat().chat_state(id)?.received_likes_sync_version;
             Ok(new_version)

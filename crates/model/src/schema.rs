@@ -125,6 +125,8 @@ diesel::table! {
         fcm_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
         new_received_likes_count -> Integer,
+        received_likes_iterator_reset_unix_time_previous -> Nullable<Integer>,
+        received_likes_iterator_reset_unix_time -> Nullable<Integer>,
     }
 }
 

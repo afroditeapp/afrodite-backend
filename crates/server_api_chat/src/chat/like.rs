@@ -189,14 +189,9 @@ pub async fn post_reset_received_likes_paging<S: WriteData + ReadData>(
         .await??
         .into();
 
-    let chat_state = state.read().chat().chat_state(account_id).await?;
-    let new_version = if chat_state.new_received_likes_count.c != 0 {
-        db_write!(state, move |cmds| {
-            cmds.chat().reset_new_received_likes_available_count(account_id)
-        })?
-    } else {
-        chat_state.received_likes_sync_version
-    };
+    let new_version = db_write!(state, move |cmds| {
+        cmds.chat().handle_reset_received_likes_iterator_reset(account_id)
+    })?;
     let r = ResetReceivedLikesIteratorResult {
         v: new_version,
         c: NewReceivedLikesCount::default(),

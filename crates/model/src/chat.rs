@@ -33,6 +33,8 @@ pub struct ChatStateRaw {
     pub fcm_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
     pub new_received_likes_count: NewReceivedLikesCount,
+    pub received_likes_iterator_reset_unix_time_previous: Option<UnixTime>,
+    pub received_likes_iterator_reset_unix_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Copy)]
