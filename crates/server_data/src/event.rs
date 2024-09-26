@@ -185,9 +185,14 @@ impl<'a> EventManagerWithCacheReference<'a> {
             self.send_connected_event(c.id, EventToClientInternal::ReceivedBlocksChanged)
                 .await?;
         }
-        if c.received_likes_sync_version.is_some() {
-            self.send_connected_event(c.id, EventToClientInternal::ReceivedLikesChanged)
-                .await?;
+        if let Some(info) = c.received_likes_change {
+            if info.previous_count.c == 0 && info.current_count.c == 1 {
+                self.send_notification(c.id, NotificationEvent::ReceivedLikesChanged)
+                    .await?;
+            } else {
+                self.send_connected_event(c.id, EventToClientInternal::ReceivedLikesChanged)
+                    .await?;
+            }
         }
         if c.sent_likes_sync_version.is_some() {
             self.send_connected_event(c.id, EventToClientInternal::SentLikesChanged)

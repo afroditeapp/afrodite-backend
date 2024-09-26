@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesAvailableResult, NewReceivedLikesCount, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
+use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::db_write;
+use server_api::{app::EventManagerProvider, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 
@@ -113,29 +113,35 @@ pub async fn get_sent_likes<S: ReadData>(
 }
 
 #[obfuscate_api]
-const PATH_GET_NEW_RECEIVED_LIKES_AVAILABLE: &str = "/chat_api/new_received_likes_available";
+const PATH_POST_GET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/new_received_likes_count";
 
 #[utoipa::path(
-    get,
-    path = PATH_GET_NEW_RECEIVED_LIKES_AVAILABLE,
+    post,
+    path = PATH_POST_GET_NEW_RECEIVED_LIKES_COUNT,
     responses(
-        (status = 200, description = "Success.", body = NewReceivedLikesAvailableResult),
+        (status = 200, description = "Success.", body = NewReceivedLikesCountResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_new_received_likes_available<S: ReadData>(
+pub async fn post_get_new_received_likes_count<S: ReadData + EventManagerProvider>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<NewReceivedLikesAvailableResult>, StatusCode> {
-    CHAT.get_new_received_likes_available.incr();
+) -> Result<Json<NewReceivedLikesCountResult>, StatusCode> {
+    CHAT.post_get_new_received_likes_count.incr();
 
     let chat_state = state.read().chat().chat_state(id).await?;
-    let r = NewReceivedLikesAvailableResult {
+    let r = NewReceivedLikesCountResult {
         v: chat_state.received_likes_sync_version,
         c: chat_state.new_received_likes_count,
     };
+
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::RECEIVED_LIKES_CHANGED)
+        .await;
+
     Ok(r.into())
 }
 
@@ -313,13 +319,13 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     Ok(LimitedActionResult { status: action_status }.into())
 }
 
-pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
+pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> Router {
     use axum::routing::{delete, get, post};
 
     Router::new()
         .route(PATH_POST_SEND_LIKE_AXUM, post(post_send_like::<S>))
         .route(PATH_GET_SENT_LIKES_AXUM, get(get_sent_likes::<S>))
-        .route(PATH_GET_NEW_RECEIVED_LIKES_AVAILABLE_AXUM, get(get_new_received_likes_available::<S>))
+        .route(PATH_POST_GET_NEW_RECEIVED_LIKES_COUNT_AXUM, post(post_get_new_received_likes_count::<S>))
         .route(PATH_POST_RESET_RECEIVED_LIKES_PAGING_AXUM, post(post_reset_received_likes_paging::<S>))
         .route(PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE_AXUM, post(post_get_next_received_likes_page::<S>))
         .route(PATH_DELETE_LIKE_AXUM, delete(delete_like::<S>))
@@ -332,7 +338,7 @@ create_counters!(
     CHAT_LIKE_COUNTERS_LIST,
     post_send_like,
     get_sent_likes,
-    get_new_received_likes_available,
+    post_get_new_received_likes_count,
     post_reset_received_likes_paging,
     post_get_next_received_likes_page,
     delete_like,

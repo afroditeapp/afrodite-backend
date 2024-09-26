@@ -8,6 +8,8 @@ use crate::{
     schema_sqlite_types::{Integer, Text}, AccountId, NotificationEvent
 };
 
+use super::NewReceivedLikesCountResult;
+
 /// Pending notification (or multiple notifications which each have
 /// different type) not yet received notifications which push notification
 /// requests client to download.
@@ -15,6 +17,7 @@ use crate::{
 /// The integer is a bitflag.
 ///
 /// - const NEW_MESSAGE = 0x1;
+/// - const RECEIVED_LIKES_CHANGED = 0x2;
 ///
 #[derive(
     Debug,
@@ -51,6 +54,7 @@ bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq)]
     pub struct PendingNotificationFlags: i64 {
         const NEW_MESSAGE = 0x1;
+        const RECEIVED_LIKES_CHANGED = 0x2;
     }
 }
 
@@ -64,6 +68,7 @@ impl From<NotificationEvent> for PendingNotificationFlags {
     fn from(value: NotificationEvent) -> Self {
         match value {
             NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
+            NotificationEvent::ReceivedLikesChanged => Self::RECEIVED_LIKES_CHANGED,
         }
     }
 }
@@ -179,7 +184,6 @@ diesel_string_wrapper!(PendingNotificationToken);
     Deserialize,
     Serialize,
     ToSchema,
-    PartialEq,
 )]
 pub struct PendingNotificationWithData {
     pub value: PendingNotification,
@@ -187,4 +191,6 @@ pub struct PendingNotificationWithData {
     ///
     /// List of account IDs which have sent a new message.
     pub new_message_received_from: Option<Vec<AccountId>>,
+    /// Data for RECEIVED_LIKES_CHANGED notification.
+    pub received_likes_changed: Option<NewReceivedLikesCountResult>,
 }

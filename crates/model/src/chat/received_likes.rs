@@ -41,7 +41,7 @@ impl From<ReceivedLikesIteratorSessionIdInternal> for ReceivedLikesIteratorSessi
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct NewReceivedLikesAvailableResult {
+pub struct NewReceivedLikesCountResult {
     pub v: ReceivedLikesSyncVersion,
     pub c: NewReceivedLikesCount,
 }

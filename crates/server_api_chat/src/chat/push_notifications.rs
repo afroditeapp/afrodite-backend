@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountIdInternal, FcmDeviceToken, PendingNotificationFlags, PendingNotificationToken, PendingNotificationWithData};
+use model::{AccountIdInternal, FcmDeviceToken, NewReceivedLikesCountResult, PendingNotificationFlags, PendingNotificationToken, PendingNotificationWithData};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::app::ReadData;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -82,13 +82,25 @@ pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData
     let flags = PendingNotificationFlags::from(notification_value);
     let sender_info = if flags == PendingNotificationFlags::NEW_MESSAGE {
         state.read().chat().all_pending_message_sender_account_ids(id).await.ok()
-    }   else {
+    } else {
+        None
+    };
+
+    let received_likes_info = if flags == PendingNotificationFlags::RECEIVED_LIKES_CHANGED {
+        state.read().chat().chat_state(id).await.ok().map(|chat_state| {
+            NewReceivedLikesCountResult {
+                v: chat_state.received_likes_sync_version,
+                c: chat_state.new_received_likes_count,
+            }
+        })
+    } else {
         None
     };
 
     PendingNotificationWithData {
         value: notification_value,
         new_message_received_from: sender_info,
+        received_likes_changed: received_likes_info,
     }.into()
 }
 

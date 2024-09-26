@@ -42,7 +42,7 @@ pub use server_common::{data::DataError, result};
         chat::post_add_sender_acknowledgement,
         chat::post_reset_received_likes_paging,
         chat::post_get_next_received_likes_page,
-        chat::get_new_received_likes_available,
+        chat::post_get_new_received_likes_count,
     ),
     components(schemas(
         // Chat
@@ -75,7 +75,7 @@ pub use server_common::{data::DataError, result};
         model::chat::PublicKeyData,
         model::chat::GetPublicKey,
         model::chat::SetPublicKey,
-        model::chat::NewReceivedLikesAvailableResult,
+        model::chat::NewReceivedLikesCountResult,
         model::chat::ResetReceivedLikesIteratorResult,
         model::chat::ReceivedLikesIteratorSessionId,
         model::chat::SentMessageId,

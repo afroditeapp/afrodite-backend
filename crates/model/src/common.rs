@@ -211,12 +211,14 @@ impl From<EventToClientInternal> for EventToClient {
 #[derive(Debug, Clone, Copy)]
 pub enum NotificationEvent {
     NewMessageReceived,
+    ReceivedLikesChanged,
 }
 
 impl From<NotificationEvent> for EventToClientInternal {
     fn from(event: NotificationEvent) -> Self {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
+            NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
         }
     }
 }

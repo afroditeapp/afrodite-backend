@@ -2,7 +2,7 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ChatStateRaw, MatchesSyncVersion, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SetPublicKey, SyncVersionUtils
+    AccountIdInternal, ChatStateRaw, MatchesSyncVersion, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SetPublicKey, SyncVersionUtils
 };
 use simple_backend_utils::ContextExt;
 
@@ -61,9 +61,16 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
             received_blocks_sync_version: current
                 .received_blocks_sync_version
                 .return_new_if_different(new.received_blocks_sync_version),
-            received_likes_sync_version: current
+            received_likes_change: current
                 .received_likes_sync_version
-                .return_new_if_different(new.received_likes_sync_version),
+                .return_new_if_different(new.received_likes_sync_version)
+                .map(|changed_sync_version| {
+                    ReceivedLikesChangeInfo {
+                        current_version: changed_sync_version,
+                        current_count: new.new_received_likes_count,
+                        previous_count: current.new_received_likes_count,
+                    }
+                }),
             sent_likes_sync_version: current
                 .sent_likes_sync_version
                 .return_new_if_different(new.sent_likes_sync_version),
@@ -123,8 +130,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
 pub struct ChatStateChanges {
     pub id: AccountIdInternal,
     pub received_blocks_sync_version: Option<ReceivedBlocksSyncVersion>,
-    pub received_likes_sync_version: Option<ReceivedLikesSyncVersion>,
+    pub received_likes_change: Option<ReceivedLikesChangeInfo>,
     pub sent_likes_sync_version: Option<SentLikesSyncVersion>,
     pub sent_blocks_sync_version: Option<SentBlocksSyncVersion>,
     pub matches_sync_version: Option<MatchesSyncVersion>,
+}
+
+pub struct ReceivedLikesChangeInfo {
+    pub current_version: ReceivedLikesSyncVersion,
+    pub current_count: NewReceivedLikesCount,
+    pub previous_count: NewReceivedLikesCount,
 }
