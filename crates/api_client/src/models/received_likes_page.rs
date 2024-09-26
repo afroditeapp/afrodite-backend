@@ -15,14 +15,17 @@ use serde::{Deserialize, Serialize};
 pub struct ReceivedLikesPage {
     #[serde(rename = "error_invalid_iterator_session_id", skip_serializing_if = "Option::is_none")]
     pub error_invalid_iterator_session_id: Option<bool>,
+    #[serde(rename = "n")]
+    pub n: Box<models::PageItemCountForNewLikes>,
     #[serde(rename = "p")]
     pub p: Vec<models::AccountId>,
 }
 
 impl ReceivedLikesPage {
-    pub fn new(p: Vec<models::AccountId>) -> ReceivedLikesPage {
+    pub fn new(n: models::PageItemCountForNewLikes, p: Vec<models::AccountId>) -> ReceivedLikesPage {
         ReceivedLikesPage {
             error_invalid_iterator_session_id: None,
+            n: Box::new(n),
             p,
         }
     }

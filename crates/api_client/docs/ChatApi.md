@@ -16,6 +16,7 @@ Method | HTTP request | Description
 [**post_add_receiver_acknowledgement**](ChatApi.md#post_add_receiver_acknowledgement) | **POST** /PBreZU5Cmo7tTtNMMb58yN_xFZ8 | 
 [**post_add_sender_acknowledgement**](ChatApi.md#post_add_sender_acknowledgement) | **POST** /E-yVIcGOLJyZ7nsT_Lh4KPCRkQg | 
 [**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /MpWSY01lXj7KaDK1KCNHLWRg9k4 | Block profile
+[**post_get_new_received_likes_count**](ChatApi.md#post_get_new_received_likes_count) | **POST** /dCPla4TZep6KONk57U2J7p7s6jw | 
 [**post_get_next_received_likes_page**](ChatApi.md#post_get_next_received_likes_page) | **POST** /eEB4pq6DGUYlMVAYwPCm2RT5HP0 | Update received likes iterator and get next page
 [**post_get_pending_notification**](ChatApi.md#post_get_pending_notification) | **POST** /MhQXhJMKgrUh0s95FueOgalQg-o | Get pending notification and reset pending notification.
 [**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Update message number of the most recent message that the recipient has viewed.
@@ -349,6 +350,31 @@ Name | Type | Description  | Required | Notes
 
 - **Content-Type**: application/json
 - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_get_new_received_likes_count
+
+> models::NewReceivedLikesCountResult post_get_new_received_likes_count()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**models::NewReceivedLikesCountResult**](NewReceivedLikesCountResult.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

@@ -1,12 +1,11 @@
-# ReceivedLikesPage
+# NewReceivedLikesCountResult
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**error_invalid_iterator_session_id** | Option<**bool**> |  | [optional][default to false]
-**n** | [**models::PageItemCountForNewLikes**](PageItemCountForNewLikes.md) |  | 
-**p** | [**Vec<models::AccountId>**](AccountId.md) |  | 
+**c** | [**models::NewReceivedLikesCount**](NewReceivedLikesCount.md) |  | 
+**v** | [**models::ReceivedLikesSyncVersion**](ReceivedLikesSyncVersion.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

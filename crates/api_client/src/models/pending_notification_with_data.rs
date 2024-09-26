@@ -17,7 +17,9 @@ pub struct PendingNotificationWithData {
     /// Data for NEW_MESSAGE notification.  List of account IDs which have sent a new message.
     #[serde(rename = "new_message_received_from", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub new_message_received_from: Option<Option<Vec<models::AccountId>>>,
-    /// Pending notification (or multiple notifications which each have different type) not yet received notifications which push notification requests client to download.  The integer is a bitflag.  - const NEW_MESSAGE = 0x1; 
+    #[serde(rename = "received_likes_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub received_likes_changed: Option<Option<Box<models::NewReceivedLikesCountResult>>>,
+    /// Pending notification (or multiple notifications which each have different type) not yet received notifications which push notification requests client to download.  The integer is a bitflag.  - const NEW_MESSAGE = 0x1; - const RECEIVED_LIKES_CHANGED = 0x2; 
     #[serde(rename = "value")]
     pub value: i64,
 }
@@ -27,6 +29,7 @@ impl PendingNotificationWithData {
     pub fn new(value: i64) -> PendingNotificationWithData {
         PendingNotificationWithData {
             new_message_received_from: None,
+            received_likes_changed: None,
             value,
         }
     }
