@@ -101,20 +101,47 @@ impl NewReceivedLikesCount {
 
 diesel_i64_wrapper!(NewReceivedLikesCount);
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct ReceivedLikeId {
+    pub id: i64,
+}
+
+impl ReceivedLikeId {
+    pub fn new(id: i64) -> Self {
+        Self { id }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.id
+    }
+
+    /// Return new incremented value using `saturated_add`.
+    pub fn increment(&self) -> Self {
+        Self { id: self.id.saturating_add(1) }
+    }
+
+    /// This returns -1 if ID is not incremented.
+    pub fn next_id_to_latest_used_id(&self) -> Self {
+        Self { id: self.id - 1 }
+    }
+}
+
+diesel_i64_wrapper!(ReceivedLikeId);
+
 /// Define how many returned profiles counted from the first page item are
 /// new likes (interaction state changed to like after previous received likes
 /// iterator reset).
-///
-/// NOTE: The current alogirthm for new likes count does not
-/// handle the following case:
-/// 1. time: 0, Iterator reset happens.
-/// 2. time: 0, First page is returned.
-/// 3. time: 0, New like is added.
-/// 4. time: 1, Iterator reset happens.
-/// 5. time: 1, First page is returned. The new like is not
-///    added in the new likes count because
-///    state_change_unix_time.gt(reset_time_previous)
-///    is false.
 #[derive(
     Debug,
     Clone,

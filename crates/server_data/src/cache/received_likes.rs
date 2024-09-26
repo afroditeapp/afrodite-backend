@@ -1,46 +1,27 @@
-use std::num::NonZeroU64;
-
-use model::{ReceivedLikesIteratorSessionId, ReceivedLikesIteratorSessionIdInternal, UnixTime};
-
+use model::{ReceivedLikeId, ReceivedLikesIteratorSessionId, ReceivedLikesIteratorSessionIdInternal};
 
 #[derive(Debug, Clone, Copy)]
-pub enum ReceivedLikesIteratorState {
-    /// First page should contain all likes made at `first_like_time` and
-    /// first page of likes made at `first_like_time - 1` and before that.
-    FirstPage {
-        first_like_time: UnixTime,
-        /// Reset time (first_like_time) from previous iterator reset
-        reset_time_previous: Option<UnixTime>,
-    },
-    NextPages {
-        time_value: UnixTime,
-        /// Zero page is already handled when state is [ReceivedLikesIteratorState::FirstPage]
-        page: NonZeroU64,
-        /// Reset time (first_like_time) from previous iterator reset
-        reset_time_previous: Option<UnixTime>,
-    }
+pub struct ReceivedLikesIteratorState {
+    pub id_at_reset: ReceivedLikeId,
+    pub page: u64,
+    /// Received like ID value from previous iterator reset
+    pub id_at_reset_previous: Option<ReceivedLikeId>,
 }
 
 impl ReceivedLikesIteratorState {
-    fn new(reset_time: UnixTime, previous_reset_time: Option<UnixTime>) -> Self {
-        Self::FirstPage {
-            first_like_time: reset_time,
-            reset_time_previous: previous_reset_time,
+    fn new(id_at_reset: ReceivedLikeId, id_at_reset_previous: Option<ReceivedLikeId>) -> Self {
+        Self {
+            id_at_reset,
+            page: 0,
+            id_at_reset_previous,
         }
     }
 
     fn next(self) -> Self {
-        match self {
-            Self::FirstPage { first_like_time, reset_time_previous } => Self::NextPages {
-                time_value: first_like_time.decrement(),
-                page: NonZeroU64::MIN,
-                reset_time_previous,
-            },
-            Self::NextPages { time_value, page, reset_time_previous } => Self::NextPages {
-                time_value,
-                page: page.saturating_add(1),
-                reset_time_previous,
-            }
+        Self {
+            id_at_reset: self.id_at_reset,
+            page: self.page.saturating_add(1),
+            id_at_reset_previous: self.id_at_reset_previous,
         }
     }
 }
@@ -59,13 +40,13 @@ pub struct ReceivedLikesIterator {
 impl ReceivedLikesIterator {
     pub fn reset(
         &mut self,
-        reset_time: UnixTime,
-        reset_time_previous: Option<UnixTime>,
+        id_at_reset: ReceivedLikeId,
+        id_at_reset_previous: Option<ReceivedLikeId>,
     ) -> ReceivedLikesIteratorSessionIdInternal {
         let id = ReceivedLikesIteratorSessionIdInternal::create_random();
         self.state = Some(InternalState {
             id,
-            state: ReceivedLikesIteratorState::new(reset_time, reset_time_previous),
+            state: ReceivedLikesIteratorState::new(id_at_reset, id_at_reset_previous),
         });
         id
     }

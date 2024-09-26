@@ -33,8 +33,9 @@ pub struct ChatStateRaw {
     pub fcm_notification_sent: bool,
     pub fcm_device_token: Option<FcmDeviceToken>,
     pub new_received_likes_count: NewReceivedLikesCount,
-    pub received_likes_iterator_reset_unix_time_previous: Option<UnixTime>,
-    pub received_likes_iterator_reset_unix_time: Option<UnixTime>,
+    pub next_received_like_id: ReceivedLikeId,
+    pub received_likes_iterator_reset_received_like_id_previous: Option<ReceivedLikeId>,
+    pub received_likes_iterator_reset_received_like_id: Option<ReceivedLikeId>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -87,6 +88,7 @@ pub struct AccountInteractionInternal {
     pub sender_latest_viewed_message: Option<MessageNumber>,
     pub receiver_latest_viewed_message: Option<MessageNumber>,
     pub included_in_received_new_likes_count: bool,
+    pub received_like_id: Option<ReceivedLikeId>,
 }
 
 impl AccountInteractionInternal {
@@ -94,6 +96,7 @@ impl AccountInteractionInternal {
         self,
         id_like_sender: AccountIdInternal,
         id_like_receiver: AccountIdInternal,
+        received_like_id: ReceivedLikeId,
     ) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Like;
         let state = self.state_number;
@@ -106,6 +109,7 @@ impl AccountInteractionInternal {
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
                 included_in_received_new_likes_count: true,
+                received_like_id: Some(received_like_id),
                 ..self
             }),
             AccountInteractionState::Like => Ok(self),
@@ -125,6 +129,7 @@ impl AccountInteractionInternal {
                 sender_latest_viewed_message: Some(MessageNumber::default()),
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
                 included_in_received_new_likes_count: false,
+                received_like_id: None,
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),
@@ -151,6 +156,7 @@ impl AccountInteractionInternal {
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
                 included_in_received_new_likes_count: false,
+                received_like_id: None,
                 ..self
             }),
             AccountInteractionState::Block => Ok(self),
@@ -169,6 +175,7 @@ impl AccountInteractionInternal {
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
                 included_in_received_new_likes_count: false,
+                received_like_id: None,
                 ..self
             }),
             AccountInteractionState::Empty => Ok(self),

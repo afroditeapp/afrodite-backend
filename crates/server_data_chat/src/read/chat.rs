@@ -47,39 +47,16 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         state: ReceivedLikesIteratorState,
     ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DataError> {
         self.db_read(move |mut cmds| {
-            let profiles = match state {
-                ReceivedLikesIteratorState::FirstPage { first_like_time, reset_time_previous } => {
-                    let (mut profiles, new_profiles_count) = cmds
-                        .chat()
-                        .interaction()
-                        .all_receiver_account_interactions_with_unix_time(
-                            id,
-                            AccountInteractionState::Like,
-                            first_like_time,
-                            reset_time_previous,
-                        )?;
-                    let older_time = first_like_time.decrement();
-                    let (older_likes, new_profiles_count2) = cmds
-                        .chat()
-                        .interaction()
-                        .paged_receiver_account_interactions_from_unix_time(id, AccountInteractionState::Like, older_time, 0, reset_time_previous)?;
-                    profiles.extend(older_likes);
-                    (profiles, new_profiles_count.merge(new_profiles_count2))
-                }
-                ReceivedLikesIteratorState::NextPages { time_value, page, reset_time_previous } =>
-                    cmds
-                        .chat()
-                        .interaction()
-                        .paged_receiver_account_interactions_from_unix_time(
-                            id,
-                            AccountInteractionState::Like,
-                            time_value,
-                            page.get().try_into().unwrap_or(i64::MAX),
-                            reset_time_previous,
-                        )?,
-            };
-
-            Ok(profiles)
+            let value = cmds
+                .chat()
+                .interaction()
+                .paged_received_likes_from_received_like_id(
+                    id,
+                    state.id_at_reset,
+                    state.page.try_into().unwrap_or(i64::MAX),
+                    state.id_at_reset_previous,
+                )?;
+            Ok(value)
         })
         .await
         .into_error()

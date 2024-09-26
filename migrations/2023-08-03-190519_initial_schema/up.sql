@@ -500,8 +500,9 @@ CREATE TABLE IF NOT EXISTS chat_state(
     fcm_notification_sent        BOOLEAN        NOT NULL DEFAULT 0,
     fcm_device_token             TEXT           UNIQUE,
     new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
-    received_likes_iterator_reset_unix_time_previous     INTEGER,
-    received_likes_iterator_reset_unix_time              INTEGER,
+    next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
+    received_likes_iterator_reset_received_like_id_previous     INTEGER,
+    received_likes_iterator_reset_received_like_id              INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -568,6 +569,9 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Track is the received like included in the receiver's
     -- new_received_likes_count.
     included_in_received_new_likes_count  BOOLEAN NOT NULL DEFAULT 0,
+    -- Received likes iterator uses received likes ID to return
+    -- correct pages.
+    received_like_id                INTEGER,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE

@@ -4,7 +4,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PageItemCountForNewLikes, ProfileVisibility, UnixTime
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PageItemCountForNewLikes, ProfileVisibility, ReceivedLikeId
 };
 
 use crate::IntoDatabaseError;
@@ -101,121 +101,56 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
         Ok(value)
     }
 
-    /// Return for example all accounts which have liked the id_receiver account
-    /// and specific likeing time
-    pub fn all_receiver_account_interactions_with_unix_time(
-        &mut self,
-        id_receiver: AccountIdInternal,
-        with_state: AccountInteractionState,
-        unix_time: UnixTime,
-        reset_time_previous: Option<UnixTime>,
-    ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DieselDatabaseError> {
-        use crate::schema::{account_id, account_interaction::dsl::*};
-
-        let value: Vec<AccountId> = account_interaction
-            .inner_join(
-                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
-            )
-            .filter(account_id_sender.is_not_null())
-            .filter(account_id_receiver.eq(id_receiver.as_db_id()))
-            .filter(state_number.eq(with_state as i64))
-            .filter(state_change_unix_time.eq(unix_time))
-            .select(account_id::uuid)
-            .order((
-                id.desc(),
-            ))
-            .load(self.conn())
-            .into_db_error(())?;
-
-        let new_likes_count = if let Some(reset_time_previous) = reset_time_previous {
-            if unix_time.ut > reset_time_previous.ut {
-                PageItemCountForNewLikes {
-                    c: value.len().try_into().unwrap_or(i64::MAX)
-                }
-            } else {
-                PageItemCountForNewLikes::default()
-            }
-        } else {
-            PageItemCountForNewLikes::default()
-        };
-
-        Ok((value, new_likes_count))
-    }
-
     /// Interaction ordering goes from recent to older starting
-    /// from `unix_time`.
-    pub fn paged_receiver_account_interactions_from_unix_time(
+    /// from `received_like_id_value`.
+    pub fn paged_received_likes_from_received_like_id(
         &mut self,
         id_receiver: AccountIdInternal,
-        with_state: AccountInteractionState,
-        unix_time: UnixTime,
+        received_like_id_value: ReceivedLikeId,
         page: i64,
-        reset_time_previous: Option<UnixTime>,
+        received_like_id_previous_value: Option<ReceivedLikeId>,
     ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DieselDatabaseError> {
         use crate::schema::{account_id, account_interaction::dsl::*};
 
         const PAGE_SIZE: i64 = 25;
 
-        let value: Vec<AccountId> = account_interaction
+        let account_ids_and_received_like_ids: Vec<(AccountId, ReceivedLikeId)> = account_interaction
             .inner_join(
                 account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
             )
             .filter(account_id_sender.is_not_null())
             .filter(account_id_receiver.eq(id_receiver.as_db_id()))
-            .filter(state_number.eq(with_state as i64))
-            .filter(state_change_unix_time.le(unix_time))
-            .select(account_id::uuid)
+            .filter(state_number.eq(AccountInteractionState::Like))
+            .filter(received_like_id.is_not_null())
+            .filter(received_like_id.le(received_like_id_value))
+            .select((account_id::uuid, received_like_id.assume_not_null()))
             .order((
-                state_change_unix_time.desc(),
-                id.desc(),
+                received_like_id.desc(),
             ))
             .limit(PAGE_SIZE)
             .offset(PAGE_SIZE.saturating_mul(page))
             .load(self.conn())
             .into_db_error(())?;
 
-        let new_likes_count = if let Some(reset_time_previous) = reset_time_previous {
-            if unix_time.ut > reset_time_previous.ut {
-                // NOTE: The current alogirthm for new likes count does not
-                // handle the following case:
-                // 1. time: 0, Iterator reset happens.
-                // 2. time: 0, First page is returned.
-                // 3. time: 0, New like is added.
-                // 4. time: 1, Iterator reset happens.
-                // 5. time: 1, First page is returned. The new like is not
-                //    added in the new likes count because
-                //    state_change_unix_time.gt(reset_time_previous)
-                //    is false.
-                //
-                // TODO(prod?): To fix the above replace time with account
-                // specific received like ID value which increments like
-                // message ID
-                let count = account_interaction
-                    .filter(account_id_sender.is_not_null())
-                    .filter(account_id_receiver.eq(id_receiver.as_db_id()))
-                    .filter(state_number.eq(with_state as i64))
-                    .filter(state_change_unix_time.le(unix_time))
-                    .filter(state_change_unix_time.gt(reset_time_previous))
-                    .order((
-                        state_change_unix_time.desc(),
-                        id.desc(),
-                    ))
-                    .limit(PAGE_SIZE)
-                    .offset(PAGE_SIZE.saturating_mul(page))
-                    .count()
-                    .get_result(self.conn())
-                    .into_db_error(())?;
-
-                PageItemCountForNewLikes {
-                    c: count,
+        let mut count = 0;
+        let account_ids: Vec<AccountId> = if let Some(previous) = received_like_id_previous_value {
+            account_ids_and_received_like_ids.into_iter().map(|(aid, like_id)| {
+                if like_id.id > previous.id {
+                    count += 1;
                 }
-            } else {
-                PageItemCountForNewLikes::default()
-            }
+                aid
+            }).collect()
         } else {
-            PageItemCountForNewLikes::default()
+            account_ids_and_received_like_ids.into_iter().map(|(aid, _)| {
+                aid
+            }).collect()
         };
 
-        Ok((value, new_likes_count))
+        Ok((
+            account_ids,
+            PageItemCountForNewLikes {
+                c: count,
+            }
+        ))
     }
 }

@@ -78,6 +78,7 @@ diesel::table! {
         sender_latest_viewed_message -> Nullable<Integer>,
         receiver_latest_viewed_message -> Nullable<Integer>,
         included_in_received_new_likes_count -> Bool,
+        received_like_id -> Nullable<Integer>,
     }
 }
 
@@ -125,8 +126,9 @@ diesel::table! {
         fcm_notification_sent -> Bool,
         fcm_device_token -> Nullable<Text>,
         new_received_likes_count -> Integer,
-        received_likes_iterator_reset_unix_time_previous -> Nullable<Integer>,
-        received_likes_iterator_reset_unix_time -> Nullable<Integer>,
+        next_received_like_id -> Integer,
+        received_likes_iterator_reset_received_like_id_previous -> Nullable<Integer>,
+        received_likes_iterator_reset_received_like_id -> Nullable<Integer>,
     }
 }
 

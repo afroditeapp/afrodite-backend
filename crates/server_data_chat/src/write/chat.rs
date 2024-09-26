@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils, UnixTime};
+use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::{limit::ChatLimits, CacheError}, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError, IntoDataError
 };
@@ -75,10 +75,15 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             } else if interaction.is_match() {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             } else {
-                interaction
+                let next_id = cmds.read().chat().chat_state(id_like_receiver)?.next_received_like_id;
+                let updated_interaction = interaction
                     .clone()
-                    .try_into_like(id_like_sender, id_like_receiver)
-                    .change_context(DieselDatabaseError::NotAllowed)?
+                    .try_into_like(id_like_sender, id_like_receiver, next_id)
+                    .change_context(DieselDatabaseError::NotAllowed)?;
+                cmds.chat().modify_chat_state(id_like_receiver, |s| {
+                    s.next_received_like_id = next_id.increment();
+                })?;
+                updated_interaction
             };
             cmds.chat()
                 .interaction()
@@ -390,32 +395,32 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion), DataError> {
-        let (new_version, reset_time, reset_time_previous) = db_transaction!(self, move |mut cmds| {
+        let (new_version, reset_time_id, reset_time_id_previous) = db_transaction!(self, move |mut cmds| {
             cmds.chat().interaction().reset_included_in_received_new_likes_count(id)?;
-            let new_time = UnixTime::current_time();
+            let latest_used_id = cmds.read().chat().chat_state(id)?.next_received_like_id.next_id_to_latest_used_id();
             cmds.chat().modify_chat_state(id, |s| {
                 if s.new_received_likes_count.c != 0 {
                     s.received_likes_sync_version.increment_if_not_max_value_mut();
                     s.new_received_likes_count = NewReceivedLikesCount::default();
                 }
                 std::mem::swap(
-                    &mut s.received_likes_iterator_reset_unix_time_previous,
-                    &mut s.received_likes_iterator_reset_unix_time
+                    &mut s.received_likes_iterator_reset_received_like_id_previous,
+                    &mut s.received_likes_iterator_reset_received_like_id
                 );
-                s.received_likes_iterator_reset_unix_time = Some(new_time);
+                s.received_likes_iterator_reset_received_like_id = Some(latest_used_id);
             })?;
             let new_state = cmds.read().chat().chat_state(id)?;
             Ok((
                 new_state.received_likes_sync_version,
-                new_time,
-                new_state.received_likes_iterator_reset_unix_time_previous
+                latest_used_id,
+                new_state.received_likes_iterator_reset_received_like_id_previous,
             ))
         })?;
 
         let session_id = self.cache()
             .write_cache_blocking(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
-                    Ok(c.received_likes_iterator.reset(reset_time, reset_time_previous))
+                    Ok(c.received_likes_iterator.reset(reset_time_id, reset_time_id_previous))
                 } else {
                     Err(CacheError::FeatureNotEnabled.report())
                 }
