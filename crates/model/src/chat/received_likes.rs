@@ -55,6 +55,7 @@ pub struct ResetReceivedLikesIteratorResult {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ReceivedLikesPage {
+    pub n: PageItemCountForNewLikes,
     pub p: Vec<AccountId>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -99,3 +100,38 @@ impl NewReceivedLikesCount {
 }
 
 diesel_i64_wrapper!(NewReceivedLikesCount);
+
+/// Define how many returned profiles counted from the first page item are
+/// new likes (interaction state changed to like after previous received likes
+/// iterator reset).
+///
+/// NOTE: The current alogirthm for new likes count does not
+/// handle the following case:
+/// 1. time: 0, Iterator reset happens.
+/// 2. time: 0, First page is returned.
+/// 3. time: 0, New like is added.
+/// 4. time: 1, Iterator reset happens.
+/// 5. time: 1, First page is returned. The new like is not
+///    added in the new likes count because
+///    state_change_unix_time.gt(reset_time_previous)
+///    is false.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+)]
+pub struct PageItemCountForNewLikes {
+    pub c: i64,
+}
+
+impl PageItemCountForNewLikes {
+    /// Add another count using `saturating_add`
+    pub fn merge(self, v: Self) -> Self {
+        Self { c: self.c.saturating_add(v.c) }
+    }
+}

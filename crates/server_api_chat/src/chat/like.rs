@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
+use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -185,23 +185,13 @@ pub async fn post_reset_received_likes_paging<S: WriteData + ReadData>(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
-    let iterator_session_id: ReceivedLikesIteratorSessionId = state
-        .concurrent_write_profile_blocking(
-            account_id.as_id(),
-            move |cmds| {
-                cmds.reset_received_likes_iterator(account_id)
-            }
-        )
-        .await??
-        .into();
-
-    let new_version = db_write!(state, move |cmds| {
+    let (iterator_session_id, new_version) = db_write!(state, move |cmds| {
         cmds.chat().handle_reset_received_likes_iterator_reset(account_id)
     })?;
     let r = ResetReceivedLikesIteratorResult {
         v: new_version,
         c: NewReceivedLikesCount::default(),
-        s: iterator_session_id,
+        s: iterator_session_id.into(),
     };
 
     Ok(r.into())
@@ -246,17 +236,19 @@ pub async fn post_get_next_received_likes_page<S: WriteData + ReadData>(
 
     if let Some(data) = data {
         // Received likes iterator session ID was valid
-        let profiles = state
+        let (profiles, new_likes_count) = state
             .read()
             .chat()
             .received_likes_page(account_id, data)
             .await?;
         Ok(ReceivedLikesPage {
+            n: new_likes_count,
             p: profiles,
             error_invalid_iterator_session_id: false,
         }.into())
     } else {
         Ok(ReceivedLikesPage {
+            n: PageItemCountForNewLikes::default(),
             p: vec![],
             error_invalid_iterator_session_id: true,
         }.into())

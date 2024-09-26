@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, ProfileLink, ReceivedLikesIteratorSessionId, ReceivedLikesIteratorSessionIdInternal};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, ProfileLink, ReceivedLikesIteratorSessionId};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -217,12 +217,6 @@ impl ConcurrentWriteProfileHandleBlocking {
             .user_write_commands_account()
             .next_received_likes_iterator_state(id, iterator_id)
     }
-
-    pub fn reset_received_likes_iterator(&self, id: AccountIdInternal) -> Result<ReceivedLikesIteratorSessionIdInternal, DataError> {
-        self.write
-            .user_write_commands_account()
-            .reset_received_likes_iterator(id)
-    }
 }
 
 /// Commands that can run concurrently with other write commands, but which have
@@ -364,21 +358,6 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .write_cache_blocking(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
                     Ok(c.received_likes_iterator.get_and_increment(iterator_session_id))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
-            })
-            .into_data_error(id)
-    }
-
-    pub fn reset_received_likes_iterator(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<ReceivedLikesIteratorSessionIdInternal, DataError> {
-        self.cache
-            .write_cache_blocking(id.as_id(), |e| {
-                if let Some(c) = e.chat.as_mut() {
-                    Ok(c.received_likes_iterator.reset())
                 } else {
                     Err(CacheError::FeatureNotEnabled.report())
                 }

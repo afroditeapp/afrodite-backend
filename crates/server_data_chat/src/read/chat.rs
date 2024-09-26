@@ -3,7 +3,7 @@ mod push_notifications;
 use std::i64;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
  cache::received_likes::ReceivedLikesIteratorState, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
@@ -45,23 +45,28 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         &self,
         id: AccountIdInternal,
         state: ReceivedLikesIteratorState,
-    ) -> Result<Vec<AccountId>, DataError> {
+    ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DataError> {
         self.db_read(move |mut cmds| {
             let profiles = match state {
-                ReceivedLikesIteratorState::FirstPage { first_like_time } => {
-                    let mut profiles = cmds
+                ReceivedLikesIteratorState::FirstPage { first_like_time, reset_time_previous } => {
+                    let (mut profiles, new_profiles_count) = cmds
                         .chat()
                         .interaction()
-                        .all_receiver_account_interactions_with_unix_time(id, AccountInteractionState::Like, first_like_time)?;
+                        .all_receiver_account_interactions_with_unix_time(
+                            id,
+                            AccountInteractionState::Like,
+                            first_like_time,
+                            reset_time_previous,
+                        )?;
                     let older_time = first_like_time.decrement();
-                    let older_likes = cmds
+                    let (older_likes, new_profiles_count2) = cmds
                         .chat()
                         .interaction()
-                        .paged_receiver_account_interactions_from_unix_time(id, AccountInteractionState::Like, older_time, 0)?;
+                        .paged_receiver_account_interactions_from_unix_time(id, AccountInteractionState::Like, older_time, 0, reset_time_previous)?;
                     profiles.extend(older_likes);
-                    profiles
+                    (profiles, new_profiles_count.merge(new_profiles_count2))
                 }
-                ReceivedLikesIteratorState::NextPages { time_value, page } =>
+                ReceivedLikesIteratorState::NextPages { time_value, page, reset_time_previous } =>
                     cmds
                         .chat()
                         .interaction()
@@ -70,6 +75,7 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
                             AccountInteractionState::Like,
                             time_value,
                             page.get().try_into().unwrap_or(i64::MAX),
+                            reset_time_previous,
                         )?,
             };
 

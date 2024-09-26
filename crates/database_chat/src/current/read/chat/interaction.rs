@@ -1,9 +1,10 @@
+use std::i64;
+
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState,
-    ProfileVisibility, UnixTime,
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PageItemCountForNewLikes, ProfileVisibility, UnixTime
 };
 
 use crate::IntoDatabaseError;
@@ -107,7 +108,8 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
         id_receiver: AccountIdInternal,
         with_state: AccountInteractionState,
         unix_time: UnixTime,
-    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        reset_time_previous: Option<UnixTime>,
+    ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DieselDatabaseError> {
         use crate::schema::{account_id, account_interaction::dsl::*};
 
         let value: Vec<AccountId> = account_interaction
@@ -125,7 +127,19 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
             .load(self.conn())
             .into_db_error(())?;
 
-        Ok(value)
+        let new_likes_count = if let Some(reset_time_previous) = reset_time_previous {
+            if unix_time.ut > reset_time_previous.ut {
+                PageItemCountForNewLikes {
+                    c: value.len().try_into().unwrap_or(i64::MAX)
+                }
+            } else {
+                PageItemCountForNewLikes::default()
+            }
+        } else {
+            PageItemCountForNewLikes::default()
+        };
+
+        Ok((value, new_likes_count))
     }
 
     /// Interaction ordering goes from recent to older starting
@@ -136,7 +150,8 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
         with_state: AccountInteractionState,
         unix_time: UnixTime,
         page: i64,
-    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        reset_time_previous: Option<UnixTime>,
+    ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DieselDatabaseError> {
         use crate::schema::{account_id, account_interaction::dsl::*};
 
         const PAGE_SIZE: i64 = 25;
@@ -159,6 +174,48 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
             .load(self.conn())
             .into_db_error(())?;
 
-        Ok(value)
+        let new_likes_count = if let Some(reset_time_previous) = reset_time_previous {
+            if unix_time.ut > reset_time_previous.ut {
+                // NOTE: The current alogirthm for new likes count does not
+                // handle the following case:
+                // 1. time: 0, Iterator reset happens.
+                // 2. time: 0, First page is returned.
+                // 3. time: 0, New like is added.
+                // 4. time: 1, Iterator reset happens.
+                // 5. time: 1, First page is returned. The new like is not
+                //    added in the new likes count because
+                //    state_change_unix_time.gt(reset_time_previous)
+                //    is false.
+                //
+                // TODO(prod?): To fix the above replace time with account
+                // specific received like ID value which increments like
+                // message ID
+                let count = account_interaction
+                    .filter(account_id_sender.is_not_null())
+                    .filter(account_id_receiver.eq(id_receiver.as_db_id()))
+                    .filter(state_number.eq(with_state as i64))
+                    .filter(state_change_unix_time.le(unix_time))
+                    .filter(state_change_unix_time.gt(reset_time_previous))
+                    .order((
+                        state_change_unix_time.desc(),
+                        id.desc(),
+                    ))
+                    .limit(PAGE_SIZE)
+                    .offset(PAGE_SIZE.saturating_mul(page))
+                    .count()
+                    .get_result(self.conn())
+                    .into_db_error(())?;
+
+                PageItemCountForNewLikes {
+                    c: count,
+                }
+            } else {
+                PageItemCountForNewLikes::default()
+            }
+        } else {
+            PageItemCountForNewLikes::default()
+        };
+
+        Ok((value, new_likes_count))
     }
 }

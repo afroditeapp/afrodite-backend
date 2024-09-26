@@ -2,9 +2,9 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils, UnixTime};
+use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils, UnixTime};
 use server_data::{
-    cache::limit::ChatLimits, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError
+    cache::{limit::ChatLimits, CacheError}, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError, IntoDataError
 };
 use simple_backend_utils::ContextExt;
 
@@ -389,9 +389,10 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
     pub async fn handle_reset_received_likes_iterator_reset(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<ReceivedLikesSyncVersion, DataError> {
-        db_transaction!(self, move |mut cmds| {
+    ) -> Result<(ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion), DataError> {
+        let (new_version, reset_time, reset_time_previous) = db_transaction!(self, move |mut cmds| {
             cmds.chat().interaction().reset_included_in_received_new_likes_count(id)?;
+            let new_time = UnixTime::current_time();
             cmds.chat().modify_chat_state(id, |s| {
                 if s.new_received_likes_count.c != 0 {
                     s.received_likes_sync_version.increment_if_not_max_value_mut();
@@ -401,11 +402,27 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                     &mut s.received_likes_iterator_reset_unix_time_previous,
                     &mut s.received_likes_iterator_reset_unix_time
                 );
-                s.received_likes_iterator_reset_unix_time = Some(UnixTime::current_time());
+                s.received_likes_iterator_reset_unix_time = Some(new_time);
             })?;
-            let new_version = cmds.read().chat().chat_state(id)?.received_likes_sync_version;
-            Ok(new_version)
-        })
+            let new_state = cmds.read().chat().chat_state(id)?;
+            Ok((
+                new_state.received_likes_sync_version,
+                new_time,
+                new_state.received_likes_iterator_reset_unix_time_previous
+            ))
+        })?;
+
+        let session_id = self.cache()
+            .write_cache_blocking(id.as_id(), |e| {
+                if let Some(c) = e.chat.as_mut() {
+                    Ok(c.received_likes_iterator.reset(reset_time, reset_time_previous))
+                } else {
+                    Err(CacheError::FeatureNotEnabled.report())
+                }
+            })
+            .into_data_error(id)?;
+
+        Ok((session_id, new_version))
     }
 }
 
