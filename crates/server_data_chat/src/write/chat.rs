@@ -418,13 +418,14 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         })?;
 
         let session_id = self.cache()
-            .write_cache_blocking(id.as_id(), |e| {
+            .write_cache(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
                     Ok(c.received_likes_iterator.reset(reset_time_id, reset_time_id_previous))
                 } else {
                     Err(CacheError::FeatureNotEnabled.report())
                 }
             })
+            .await
             .into_data_error(id)?;
 
         Ok((session_id, new_version))
