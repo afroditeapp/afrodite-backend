@@ -31,7 +31,7 @@ Method | HTTP request | Description
 
 ## delete_like
 
-> models::LimitedActionResult delete_like(account_id)
+> models::DeleteLikeResult delete_like(account_id)
 Delete sent like.
 
 Delete will not work if profile is a match.
@@ -45,7 +45,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**models::LimitedActionResult**](LimitedActionResult.md)
+[**models::DeleteLikeResult**](DeleteLikeResult.md)
 
 ### Authorization
 
@@ -524,7 +524,7 @@ This endpoint does not need any parameter.
 
 ## post_send_like
 
-> models::LimitedActionResult post_send_like(account_id)
+> models::SendLikeResult post_send_like(account_id)
 Send a like to some account. If both will like each other, then
 
 the accounts will be a match.
@@ -538,7 +538,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**models::LimitedActionResult**](LimitedActionResult.md)
+[**models::SendLikeResult**](SendLikeResult.md)
 
 ### Authorization
 

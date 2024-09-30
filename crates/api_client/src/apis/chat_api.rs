@@ -214,7 +214,7 @@ pub enum PostUnblockProfileError {
 
 
 /// Delete will not work if profile is a match.
-pub async fn delete_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LimitedActionResult, Error<DeleteLikeError>> {
+pub async fn delete_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::DeleteLikeResult, Error<DeleteLikeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -852,7 +852,7 @@ pub async fn post_reset_received_likes_paging(configuration: &configuration::Con
 }
 
 /// the accounts will be a match.
-pub async fn post_send_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LimitedActionResult, Error<PostSendLikeError>> {
+pub async fn post_send_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::SendLikeResult, Error<PostSendLikeError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

@@ -45,6 +45,7 @@ docs/ContentProcessingStateType.md
 docs/ContentSlot.md
 docs/ContentState.md
 docs/CurrentModerationRequest.md
+docs/DeleteLikeResult.md
 docs/DeleteStatus.md
 docs/DemoModeConfirmLogin.md
 docs/DemoModeConfirmLoginResult.md
@@ -76,7 +77,6 @@ docs/Language.md
 docs/LastSeenTimeFilter.md
 docs/LatestBirthdate.md
 docs/LatestViewedMessageChanged.md
-docs/LimitedActionResult.md
 docs/LimitedActionStatus.md
 docs/Location.md
 docs/LoginResult.md
@@ -148,6 +148,7 @@ docs/ResetDataQueryParam.md
 docs/ResetReceivedLikesIteratorResult.md
 docs/SearchGroups.md
 docs/SecurityContent.md
+docs/SendLikeResult.md
 docs/SendMessageResult.md
 docs/SentBlocksPage.md
 docs/SentBlocksSyncVersion.md
@@ -219,6 +220,7 @@ src/models/content_processing_state_type.rs
 src/models/content_slot.rs
 src/models/content_state.rs
 src/models/current_moderation_request.rs
+src/models/delete_like_result.rs
 src/models/delete_status.rs
 src/models/demo_mode_confirm_login.rs
 src/models/demo_mode_confirm_login_result.rs
@@ -250,7 +252,6 @@ src/models/language.rs
 src/models/last_seen_time_filter.rs
 src/models/latest_birthdate.rs
 src/models/latest_viewed_message_changed.rs
-src/models/limited_action_result.rs
 src/models/limited_action_status.rs
 src/models/location.rs
 src/models/login_result.rs
@@ -319,6 +320,7 @@ src/models/reset_data_query_param.rs
 src/models/reset_received_likes_iterator_result.rs
 src/models/search_groups.rs
 src/models/security_content.rs
+src/models/send_like_result.rs
 src/models/send_message_result.rs
 src/models/sent_blocks_page.rs
 src/models/sent_blocks_sync_version.rs
