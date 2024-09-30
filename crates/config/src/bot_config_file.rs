@@ -9,6 +9,8 @@ use crate::file::ConfigFileError;
 pub struct BotConfigFile {
     pub man_image_dir: Option<PathBuf>,
     pub woman_image_dir: Option<PathBuf>,
+    /// All bots will try to send like to this account ID
+    pub send_like_to_account_id: Option<uuid::Uuid>,
     /// Predefined user bots.
     #[serde(default)]
     pub bot: Vec<BotInstanceConfig>,

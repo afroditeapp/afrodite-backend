@@ -79,6 +79,7 @@ impl ClientBot {
                 DoInitialSetupIfNeeded { admin: false },
                 UpdateLocationRandom::new(None),
                 SetProfileVisibility(true),
+                SendLikeIfNeeded,
             ];
             const ACTION_LOOP: ActionArray = action_array![
                 ActionsBeforeIteration,
@@ -554,6 +555,24 @@ struct ActionsAfterIteration;
 #[async_trait]
 impl BotAction for ActionsAfterIteration {
     async fn excecute_impl(&self, _state: &mut BotState) -> Result<(), TestError> {
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+struct SendLikeIfNeeded;
+
+#[async_trait]
+impl BotAction for SendLikeIfNeeded {
+    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        if let Some(account_id) = state.bot_config_file.send_like_to_account_id {
+            let account_id = AccountId::new(account_id);
+            let r = post_send_like(state.api.chat(), account_id)
+                .await;
+            if r.is_err() {
+                warn!("Sending like failed. Task: {}, Bot: {}", state.task_id, state.bot_id);
+            }
+        }
         Ok(())
     }
 }
