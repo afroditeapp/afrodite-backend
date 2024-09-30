@@ -137,10 +137,14 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             if interaction.account_id_sender != Some(id_sender.into_db_id()) {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
-            let updated = interaction
+            let mut updated = interaction
                 .clone()
                 .try_into_empty()
                 .change_context(DieselDatabaseError::NotAllowed)?;
+            if interaction.is_like() {
+                // Like was deleted
+                updated.account_id_previous_like_deleter = Some(id_sender.into_db_id());
+            }
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated)?;

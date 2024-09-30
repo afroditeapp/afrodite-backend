@@ -572,11 +572,16 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Received likes iterator uses received likes ID to return
     -- correct pages.
     received_like_id                INTEGER,
+    account_id_previous_like_deleter INTEGER,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     FOREIGN KEY (account_id_receiver)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_previous_like_deleter)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE

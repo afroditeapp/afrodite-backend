@@ -89,6 +89,7 @@ pub struct AccountInteractionInternal {
     pub receiver_latest_viewed_message: Option<MessageNumber>,
     pub included_in_received_new_likes_count: bool,
     pub received_like_id: Option<ReceivedLikeId>,
+    pub account_id_previous_like_deleter: Option<AccountIdDb>,
 }
 
 impl AccountInteractionInternal {
@@ -538,8 +539,27 @@ impl SendMessageResult {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct LimitedActionResult {
-    pub status: LimitedActionStatus,
+pub struct DeleteLikeResult {
+    /// The account tracking for delete like only tracks the latest deleter
+    /// account, so it is possible that this error resets if delete like
+    /// target account likes and removes the like.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_delete_already_done_before: bool,
+}
+
+impl DeleteLikeResult {
+    pub fn success() -> Self {
+        Self {
+            error_delete_already_done_before: false,
+        }
+    }
+
+    pub fn error_delete_already_done_once_before() -> Self {
+        Self {
+            error_delete_already_done_before: true
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

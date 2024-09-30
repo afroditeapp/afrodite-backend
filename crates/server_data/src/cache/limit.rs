@@ -9,7 +9,6 @@ const MAX_VALUE_1: u8 = 1;
 #[derive(Debug, Default)]
 pub struct ChatLimits {
     pub like_limit: AutoResetLimit<DailyLimit, MAX_VALUE_1>,
-    pub delete_like_limit: AutoResetLimit<DailyLimit, MAX_VALUE_1>,
 }
 
 pub enum LimitStatus {

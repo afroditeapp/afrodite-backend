@@ -3,7 +3,7 @@ mod push_notifications;
 use std::i64;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
  cache::received_likes::ReceivedLikesIteratorState, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
@@ -181,22 +181,19 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         Ok(number)
     }
 
-    pub async fn account_interaction_state(
+    pub async fn account_interaction(
         &self,
         account0: AccountIdInternal,
         account1: AccountIdInternal,
-    ) -> Result<Option<AccountInteractionState>, DataError> {
-        let interaction_state = self
+    ) -> Result<Option<AccountInteractionInternal>, DataError> {
+        let interaction = self
             .db_read(move |mut cmds| {
                 cmds.chat()
                     .interaction()
                     .account_interaction(account0, account1)
             })
-            .await?
-            .map(|interaction| {
-                interaction.state_number
-            });
-        Ok(interaction_state)
+            .await?;
+        Ok(interaction)
     }
 
     pub async fn unlimited_likes_are_enabled_for_both(

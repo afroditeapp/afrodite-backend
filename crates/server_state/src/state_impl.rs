@@ -513,7 +513,7 @@ impl IsMatch for S {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> server_common::result::Result<bool, DataError> {
-        let interaction_state = self.read().chat().account_interaction_state(account0, account1).await?;
+        let interaction_state = self.read().chat().account_interaction(account0, account1).await?.map(|v| v.state_number);
         Ok(interaction_state == Some(AccountInteractionState::Match))
     }
 }

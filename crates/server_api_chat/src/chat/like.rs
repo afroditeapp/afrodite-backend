@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
+use model::{AccountId, AccountIdInternal, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -42,8 +42,9 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
         let current_interaction_state = cmds
             .read()
             .chat()
-            .account_interaction_state(id, requested_profile)
-            .await?;
+            .account_interaction(id, requested_profile)
+            .await?
+            .map(|v| v.state_number);
         if current_interaction_state == Some(model::AccountInteractionState::Like) {
             return Ok(SendLikeResult::error_already_liked());
         }
@@ -275,7 +276,7 @@ const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
     path = PATH_DELETE_LIKE,
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Success.", body = LimitedActionResult),
+        (status = 200, description = "Success.", body = DeleteLikeResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -285,39 +286,38 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-) -> Result<Json<LimitedActionResult>, StatusCode> {
+) -> Result<Json<DeleteLikeResult>, StatusCode> {
     CHAT.delete_like.incr();
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    let action_status = db_write_multiple!(state, move |cmds| {
-        let allow_action = cmds
+    let r = db_write_multiple!(state, move |cmds| {
+        let previous_deleter = cmds
+            .read()
             .chat()
-            .modify_chat_limits(id, |limits| limits.delete_like_limit.is_limit_not_reached())
-            .await??;
+            .account_interaction(id, requested_profile)
+            .await?
+            .and_then(|v| v.account_id_previous_like_deleter);
 
-        if allow_action {
-            let changes = cmds
-                .chat()
-                .delete_like_or_block(id, requested_profile)
-                .await?;
-            cmds.events()
-                .handle_chat_state_changes(changes.sender)
-                .await?;
-            cmds.events()
-                .handle_chat_state_changes(changes.receiver)
-                .await?;
+        if previous_deleter == Some(id.into_db_id()) {
+            return Ok(DeleteLikeResult::error_delete_already_done_once_before());
         }
 
-        let status = cmds
+        let changes = cmds
             .chat()
-            .modify_chat_limits(id, |limits| limits.delete_like_limit.increment_if_possible())
-            .await??
-            .to_action_status();
-        Ok(status)
+            .delete_like_or_block(id, requested_profile)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.sender)
+            .await?;
+        cmds.events()
+            .handle_chat_state_changes(changes.receiver)
+            .await?;
+
+        Ok(DeleteLikeResult::success())
     })?;
 
-    Ok(LimitedActionResult { status: action_status }.into())
+    Ok(r.into())
 }
 
 pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> Router {

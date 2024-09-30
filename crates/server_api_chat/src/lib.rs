@@ -66,7 +66,6 @@ pub use server_common::{data::DataError, result};
         model::chat::PendingNotification,
         model::chat::PendingNotificationWithData,
         model::chat::PendingNotificationToken,
-        model::chat::LimitedActionResult,
         model::chat::LimitedActionStatus,
         model::chat::PublicKey,
         model::chat::PublicKeyId,
@@ -83,6 +82,7 @@ pub use server_common::{data::DataError, result};
         model::chat::NewReceivedLikesCount,
         model::chat::PageItemCountForNewLikes,
         model::chat::SendLikeResult,
+        model::chat::DeleteLikeResult,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]
