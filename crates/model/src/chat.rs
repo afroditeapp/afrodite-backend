@@ -556,3 +556,27 @@ pub struct NewPendingMessageValues {
     pub unix_time: UnixTime,
     pub message_number: MessageNumber,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct SendLikeResult {
+    pub status: Option<LimitedActionStatus>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_already_liked: bool,
+}
+
+impl SendLikeResult {
+    pub fn successful(status: LimitedActionStatus) -> Self {
+        Self {
+            status: Some(status),
+            error_already_liked: false,
+        }
+    }
+
+    pub fn error_already_liked() -> Self {
+        Self {
+            status: None,
+            error_already_liked: true,
+        }
+    }
+}

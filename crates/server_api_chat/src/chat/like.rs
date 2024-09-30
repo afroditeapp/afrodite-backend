@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SentLikesPage};
+use model::{AccountId, AccountIdInternal, LimitedActionResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -21,7 +21,7 @@ const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
     path = PATH_POST_SEND_LIKE,
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Success.", body = LimitedActionResult),
+        (status = 200, description = "Success.", body = SendLikeResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -31,14 +31,23 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
-) -> Result<Json<LimitedActionResult>, StatusCode> {
+) -> Result<Json<SendLikeResult>, StatusCode> {
     CHAT.post_send_like.incr();
 
     // TODO(prod): Check is profile public and is age ok.
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    let action_status = db_write_multiple!(state, move |cmds| {
+    let r = db_write_multiple!(state, move |cmds| {
+        let current_interaction_state = cmds
+            .read()
+            .chat()
+            .account_interaction_state(id, requested_profile)
+            .await?;
+        if current_interaction_state == Some(model::AccountInteractionState::Like) {
+            return Ok(SendLikeResult::error_already_liked());
+        }
+
         let unlimited_likes_enabled_for_both = cmds
             .read()
             .chat()
@@ -67,19 +76,19 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
                 .await?;
         }
 
-        if unlimited_likes_enabled_for_both {
-            Ok(LimitedActionStatus::Success)
+        let status = if unlimited_likes_enabled_for_both {
+            LimitedActionStatus::Success
         } else {
-            let status = cmds
+            cmds
                 .chat()
                 .modify_chat_limits(id, |limits| limits.like_limit.increment_if_possible())
                 .await??
-                .to_action_status();
-            Ok(status)
-        }
+                .to_action_status()
+        };
+        Ok(SendLikeResult::successful(status))
     })?;
 
-    Ok(LimitedActionResult { status: action_status }.into())
+    Ok(r.into())
 }
 
 #[obfuscate_api]

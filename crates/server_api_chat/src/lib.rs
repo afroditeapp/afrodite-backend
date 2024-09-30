@@ -82,6 +82,7 @@ pub use server_common::{data::DataError, result};
         model::chat::SentMessageIdList,
         model::chat::NewReceivedLikesCount,
         model::chat::PageItemCountForNewLikes,
+        model::chat::SendLikeResult,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

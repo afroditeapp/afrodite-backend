@@ -181,12 +181,12 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         Ok(number)
     }
 
-    pub async fn is_match(
+    pub async fn account_interaction_state(
         &self,
         account0: AccountIdInternal,
         account1: AccountIdInternal,
-    ) -> Result<bool, DataError> {
-        let is_match = self
+    ) -> Result<Option<AccountInteractionState>, DataError> {
+        let interaction_state = self
             .db_read(move |mut cmds| {
                 cmds.chat()
                     .interaction()
@@ -194,10 +194,9 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
             })
             .await?
             .map(|interaction| {
-                interaction.is_match()
-            })
-            .unwrap_or_default();
-        Ok(is_match)
+                interaction.state_number
+            });
+        Ok(interaction_state)
     }
 
     pub async fn unlimited_likes_are_enabled_for_both(
