@@ -5,7 +5,7 @@ use model::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
+use server_data_chat::{read::GetReadChatCommands, write::{chat::PushNotificationAllowed, GetWriteCommandsChat}};
 use simple_backend::create_counters;
 use tracing::error;
 
@@ -225,7 +225,7 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
 
     let message_reciever = state.get_internal_id(query_params.receiver).await?;
     let result = db_write_multiple!(state, move |cmds| {
-        let result = cmds.chat()
+        let (result, push_notification_allowed) = cmds.chat()
             .insert_pending_message_if_match(
                 id,
                 message_reciever,
@@ -238,10 +238,18 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
             .await?;
 
         if !result.is_err() {
-            cmds.events()
-                .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
-                .await
-                .ignore_and_log_error();
+            match push_notification_allowed {
+                Some(PushNotificationAllowed) =>
+                    cmds.events()
+                        .send_notification(message_reciever, NotificationEvent::NewMessageReceived)
+                        .await
+                        .ignore_and_log_error(),
+                None =>
+                    cmds.events()
+                        .send_connected_event(message_reciever, EventToClientInternal::NewMessageReceived)
+                        .await
+                        .ignore_and_log_error(),
+            }
         }
 
         Ok(result)

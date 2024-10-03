@@ -338,14 +338,14 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         receiver_public_key_version_from_client: PublicKeyVersion,
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId,
-    ) -> Result<SendMessageResult, DataError> {
+    ) -> Result<(SendMessageResult, Option<PushNotificationAllowed>), DataError> {
         db_transaction!(self, move |mut cmds| {
             let current_key = cmds.read().chat().public_key(
                 receiver,
                 receiver_public_key_version_from_client
             )?;
             if Some(receiver_public_key_from_client) != current_key.map(|v| v.id) {
-                return Ok(SendMessageResult::public_key_outdated());
+                return Ok((SendMessageResult::public_key_outdated(), None));
             }
 
             let receiver_acknowledgements_missing = cmds
@@ -355,7 +355,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 .receiver_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
 
             if receiver_acknowledgements_missing >= 50 {
-                return Ok(SendMessageResult::too_many_receiver_acknowledgements_missing());
+                return Ok((SendMessageResult::too_many_receiver_acknowledgements_missing(), None));
             }
 
             let sender_acknowledgements_missing = cmds
@@ -365,7 +365,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 .sender_acknowledgements_missing_count_for_one_conversation(sender, receiver)?;
 
             if sender_acknowledgements_missing >= 50 {
-                return Ok(SendMessageResult::too_many_sender_acknowledgements_missing());
+                return Ok((SendMessageResult::too_many_sender_acknowledgements_missing(), None));
             }
 
             let message_values = cmds.chat()
@@ -378,7 +378,13 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                     client_local_id_value,
                 )?;
 
-            Ok(SendMessageResult::successful(message_values))
+            let push_notification_allowd = if receiver_acknowledgements_missing == 0 {
+                Some(PushNotificationAllowed)
+            } else {
+                None
+            };
+
+            Ok((SendMessageResult::successful(message_values), push_notification_allowd))
         })
     }
 
@@ -440,3 +446,9 @@ pub struct SenderAndReceiverStateChanges {
     pub sender: ChatStateChanges,
     pub receiver: ChatStateChanges,
 }
+
+/// Message push notification is allowed to be sent if receiver side
+/// of acknowledgement queue is empty when sending a new message.
+/// This avoids sending multiple push notifications if client is running
+/// in background and can receive push notifications.
+pub struct PushNotificationAllowed;
