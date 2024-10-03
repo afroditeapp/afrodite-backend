@@ -546,18 +546,28 @@ pub struct DeleteLikeResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error_delete_already_done_before: bool,
+    pub error_account_interaction_state_mismatch: Option<CurrentAccountInteractionState>,
 }
 
 impl DeleteLikeResult {
     pub fn success() -> Self {
         Self {
             error_delete_already_done_before: false,
+            error_account_interaction_state_mismatch: None,
         }
     }
 
     pub fn error_delete_already_done_once_before() -> Self {
         Self {
-            error_delete_already_done_before: true
+            error_delete_already_done_before: true,
+            error_account_interaction_state_mismatch: None,
+        }
+    }
+
+    pub fn error_account_interaction_state_mismatch(state: CurrentAccountInteractionState) -> Self {
+        Self {
+            error_delete_already_done_before: false,
+            error_account_interaction_state_mismatch: Some(state),
         }
     }
 }
@@ -580,51 +590,30 @@ pub struct NewPendingMessageValues {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct SendLikeResult {
     pub status: Option<LimitedActionStatus>,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_already_like_sent: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_already_like_received: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub error_already_matched: bool,
+    pub error_account_interaction_state_mismatch: Option<CurrentAccountInteractionState>,
 }
 
 impl SendLikeResult {
     pub fn successful(status: LimitedActionStatus) -> Self {
         Self {
             status: Some(status),
-            error_already_like_sent: false,
-            error_already_like_received: false,
-            error_already_matched: false,
+            error_account_interaction_state_mismatch: None,
         }
     }
 
-    pub fn error_already_like_sent() -> Self {
+    pub fn error_account_interaction_state_mismatch(state: CurrentAccountInteractionState) -> Self {
         Self {
             status: None,
-            error_already_like_sent: true,
-            error_already_like_received: false,
-            error_already_matched: false,
+            error_account_interaction_state_mismatch: Some(state),
         }
     }
+}
 
-    pub fn error_already_like_received() -> Self {
-        Self {
-            status: None,
-            error_already_like_sent: false,
-            error_already_like_received: true,
-            error_already_matched: false,
-        }
-    }
-
-    pub fn error_already_matched() -> Self {
-        Self {
-            status: None,
-            error_already_like_sent: false,
-            error_already_like_received: false,
-            error_already_matched: true,
-        }
-    }
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub enum CurrentAccountInteractionState {
+    Empty,
+    LikeSent,
+    LikeReceived,
+    Match,
+    BlockSent,
 }

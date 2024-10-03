@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension, Router};
-use model::{AccountId, AccountIdInternal, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
+use model::{AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
@@ -45,14 +45,19 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
             .account_interaction(id, requested_profile)
             .await?;
         if let Some(current_interaction) = current_interaction {
-            if current_interaction.state_number == model::AccountInteractionState::Like {
-                if current_interaction.account_id_sender == Some(id.into_db_id()) {
-                    return Ok(SendLikeResult::error_already_like_sent());
-                } else {
-                    return Ok(SendLikeResult::error_already_like_received());
-                }
-            } else if current_interaction.state_number == model::AccountInteractionState::Match {
-                return Ok(SendLikeResult::error_already_matched());
+            match current_interaction.state_number {
+                AccountInteractionState::Empty |
+                AccountInteractionState::Block => (),
+                AccountInteractionState::Match =>
+                    return Ok(SendLikeResult::error_account_interaction_state_mismatch(
+                        CurrentAccountInteractionState::Match
+                    )),
+                AccountInteractionState::Like =>
+                    if current_interaction.account_id_sender == Some(id.into_db_id()) {
+                        return Ok(SendLikeResult::error_account_interaction_state_mismatch(
+                            CurrentAccountInteractionState::LikeSent
+                        ));
+                    }
             }
         }
 
@@ -299,6 +304,26 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
     let r = db_write_multiple!(state, move |cmds| {
+        let current_interaction = cmds
+            .read()
+            .chat()
+            .account_interaction(id, requested_profile)
+            .await?;
+        if let Some(current_interaction) = current_interaction {
+            match current_interaction.state_number {
+                AccountInteractionState::Empty =>
+                    return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
+                        CurrentAccountInteractionState::Empty
+                    )),
+                AccountInteractionState::Block => (),
+                AccountInteractionState::Match =>
+                    return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
+                        CurrentAccountInteractionState::Match
+                    )),
+                AccountInteractionState::Like => (),
+            }
+        }
+
         let previous_deleter = cmds
             .read()
             .chat()
