@@ -39,14 +39,21 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
     let r = db_write_multiple!(state, move |cmds| {
-        let current_interaction_state = cmds
+        let current_interaction = cmds
             .read()
             .chat()
             .account_interaction(id, requested_profile)
-            .await?
-            .map(|v| v.state_number);
-        if current_interaction_state == Some(model::AccountInteractionState::Like) {
-            return Ok(SendLikeResult::error_already_liked());
+            .await?;
+        if let Some(current_interaction) = current_interaction {
+            if current_interaction.state_number == model::AccountInteractionState::Like {
+                if current_interaction.account_id_sender == Some(id.into_db_id()) {
+                    return Ok(SendLikeResult::error_already_like_sent());
+                } else {
+                    return Ok(SendLikeResult::error_already_like_received());
+                }
+            } else if current_interaction.state_number == model::AccountInteractionState::Match {
+                return Ok(SendLikeResult::error_already_matched());
+            }
         }
 
         let unlimited_likes_enabled_for_both = cmds

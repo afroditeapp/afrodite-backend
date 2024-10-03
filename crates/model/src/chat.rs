@@ -582,21 +582,49 @@ pub struct SendLikeResult {
     pub status: Option<LimitedActionStatus>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub error_already_liked: bool,
+    pub error_already_like_sent: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_already_like_received: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_already_matched: bool,
 }
 
 impl SendLikeResult {
     pub fn successful(status: LimitedActionStatus) -> Self {
         Self {
             status: Some(status),
-            error_already_liked: false,
+            error_already_like_sent: false,
+            error_already_like_received: false,
+            error_already_matched: false,
         }
     }
 
-    pub fn error_already_liked() -> Self {
+    pub fn error_already_like_sent() -> Self {
         Self {
             status: None,
-            error_already_liked: true,
+            error_already_like_sent: true,
+            error_already_like_received: false,
+            error_already_matched: false,
+        }
+    }
+
+    pub fn error_already_like_received() -> Self {
+        Self {
+            status: None,
+            error_already_like_sent: false,
+            error_already_like_received: true,
+            error_already_matched: false,
+        }
+    }
+
+    pub fn error_already_matched() -> Self {
+        Self {
+            status: None,
+            error_already_like_sent: false,
+            error_already_like_received: false,
+            error_already_matched: true,
         }
     }
 }
