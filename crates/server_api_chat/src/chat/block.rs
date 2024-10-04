@@ -75,7 +75,7 @@ pub async fn post_unblock_profile<S: GetAccounts + WriteData>(
     db_write_multiple!(state, move |cmds| {
         let changes = cmds
             .chat()
-            .delete_like_or_block(id, requested_profile)
+            .delete_block(id, requested_profile)
             .await?;
         cmds.events()
             .handle_chat_state_changes(changes.sender)

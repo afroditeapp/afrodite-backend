@@ -71,9 +71,11 @@ diesel::table! {
     account_interaction (id) {
         id -> Integer,
         state_number -> Integer,
-        state_change_unix_time -> Nullable<Integer>,
         account_id_sender -> Nullable<Integer>,
         account_id_receiver -> Nullable<Integer>,
+        account_id_block_sender -> Nullable<Integer>,
+        account_id_block_receiver -> Nullable<Integer>,
+        two_way_block -> Bool,
         message_counter -> Integer,
         sender_latest_viewed_message -> Nullable<Integer>,
         receiver_latest_viewed_message -> Nullable<Integer>,

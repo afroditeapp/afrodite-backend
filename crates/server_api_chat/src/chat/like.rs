@@ -46,8 +46,7 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
             .await?;
         if let Some(current_interaction) = current_interaction {
             match current_interaction.state_number {
-                AccountInteractionState::Empty |
-                AccountInteractionState::Block => (),
+                AccountInteractionState::Empty => (),
                 AccountInteractionState::Match =>
                     return Ok(SendLikeResult::error_account_interaction_state_mismatch(
                         CurrentAccountInteractionState::Match
@@ -315,7 +314,6 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
                     return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
                         CurrentAccountInteractionState::Empty
                     )),
-                AccountInteractionState::Block => (),
                 AccountInteractionState::Match =>
                     return Ok(DeleteLikeResult::error_account_interaction_state_mismatch(
                         CurrentAccountInteractionState::Match
@@ -337,7 +335,7 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
 
         let changes = cmds
             .chat()
-            .delete_like_or_block(id, requested_profile)
+            .delete_like(id, requested_profile)
             .await?;
         cmds.events()
             .handle_chat_state_changes(changes.sender)

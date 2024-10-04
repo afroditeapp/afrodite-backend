@@ -99,9 +99,11 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
 
             let receiver = cmds.chat().modify_chat_state(id_like_receiver, |s| {
                 if interaction.is_empty() {
-                    s.new_received_likes_count = s.new_received_likes_count.increment();
-                    s.received_likes_sync_version
-                        .increment_if_not_max_value_mut();
+                    if updated.included_in_received_new_likes_count {
+                        s.new_received_likes_count = s.new_received_likes_count.increment();
+                        s.received_likes_sync_version
+                            .increment_if_not_max_value_mut();
+                    }
                 } else if interaction.is_like() {
                     s.matches_sync_version.increment_if_not_max_value_mut();
 
@@ -117,10 +119,10 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         })
     }
 
-    /// Delete a like or block.
+    /// Delete a like.
     ///
     /// Returns Ok only if the state change happened.
-    pub async fn delete_like_or_block(
+    pub async fn delete_like(
         &mut self,
         id_sender: AccountIdInternal,
         id_receiver: AccountIdInternal,
@@ -134,6 +136,9 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             if interaction.is_empty() {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             }
+            if !interaction.is_like() {
+                return Err(DieselDatabaseError::NotAllowed.report());
+            }
             if interaction.account_id_sender != Some(id_sender.into_db_id()) {
                 return Err(DieselDatabaseError::NotAllowed.report());
             }
@@ -141,33 +146,22 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 .clone()
                 .try_into_empty()
                 .change_context(DieselDatabaseError::NotAllowed)?;
-            if interaction.is_like() {
-                // Like was deleted
-                updated.account_id_previous_like_deleter = Some(id_sender.into_db_id());
-            }
+            updated.account_id_previous_like_deleter = Some(id_sender.into_db_id());
+
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated)?;
 
             let sender = cmds.chat().modify_chat_state(id_sender, |s| {
-                if interaction.is_like() {
-                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
-                } else if interaction.is_blocked() {
-                    s.sent_blocks_sync_version.increment_if_not_max_value_mut();
-                }
+                s.sent_likes_sync_version.increment_if_not_max_value_mut();
             })?;
 
             let receiver = cmds.chat().modify_chat_state(id_receiver, |s| {
-                if interaction.is_like() {
+                s.received_likes_sync_version
+                    .increment_if_not_max_value_mut();
+                if interaction.included_in_received_new_likes_count {
+                    s.new_received_likes_count = s.new_received_likes_count.decrement();
                     s.received_likes_sync_version
-                        .increment_if_not_max_value_mut();
-                    if interaction.included_in_received_new_likes_count {
-                        s.new_received_likes_count = s.new_received_likes_count.decrement();
-                        s.received_likes_sync_version
-                            .increment_if_not_max_value_mut();
-                    }
-                } else if interaction.is_blocked() {
-                    s.received_blocks_sync_version
                         .increment_if_not_max_value_mut();
                 }
             })?;
@@ -190,38 +184,66 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 .interaction()
                 .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
 
-            if interaction.is_blocked() {
+            if interaction.is_direction_blocked(
+                id_block_sender,
+                id_block_receiver,
+            ) {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             }
             let updated = interaction
                 .clone()
-                .try_into_block(id_block_sender, id_block_receiver)
-                .change_context(DieselDatabaseError::NotAllowed)?;
+                .add_block(id_block_sender, id_block_receiver);
             cmds.chat()
                 .interaction()
                 .update_account_interaction(updated)?;
 
             let sender = cmds.chat().modify_chat_state(id_block_sender, |s| {
                 s.sent_blocks_sync_version.increment_if_not_max_value_mut();
-                if interaction.is_like() {
-                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
-                    s.received_likes_sync_version
-                        .increment_if_not_max_value_mut();
-                } else if interaction.is_match() {
-                    s.matches_sync_version.increment_if_not_max_value_mut();
-                }
             })?;
 
             let receiver = cmds.chat().modify_chat_state(id_block_receiver, |s| {
                 s.received_blocks_sync_version
                     .increment_if_not_max_value_mut();
-                if interaction.is_like() {
-                    s.sent_likes_sync_version.increment_if_not_max_value_mut();
-                    s.received_likes_sync_version
-                        .increment_if_not_max_value_mut();
-                } else if interaction.is_match() {
-                    s.matches_sync_version.increment_if_not_max_value_mut();
-                }
+            })?;
+
+            Ok(SenderAndReceiverStateChanges { sender, receiver })
+        })
+    }
+
+    /// Delete block.
+    ///
+    /// Returns Ok only if the state change happened.
+    pub async fn delete_block(
+        &mut self,
+        id_block_sender: AccountIdInternal,
+        id_block_receiver: AccountIdInternal,
+    ) -> Result<SenderAndReceiverStateChanges, DataError> {
+        db_transaction!(self, move |mut cmds| {
+            let interaction = cmds
+                .chat()
+                .interaction()
+                .get_or_create_account_interaction(id_block_sender, id_block_receiver)?;
+
+            if !interaction.is_direction_blocked(
+                id_block_sender,
+                id_block_receiver,
+            ) {
+                return Err(DieselDatabaseError::NotAllowed.report());
+            }
+            let updated = interaction
+                .clone()
+                .delete_block(id_block_sender, id_block_receiver);
+            cmds.chat()
+                .interaction()
+                .update_account_interaction(updated)?;
+
+            let sender = cmds.chat().modify_chat_state(id_block_sender, |s| {
+                s.sent_blocks_sync_version.increment_if_not_max_value_mut();
+            })?;
+
+            let receiver = cmds.chat().modify_chat_state(id_block_receiver, |s| {
+                s.received_blocks_sync_version
+                    .increment_if_not_max_value_mut();
             })?;
 
             Ok(SenderAndReceiverStateChanges { sender, receiver })

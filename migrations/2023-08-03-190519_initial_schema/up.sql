@@ -549,15 +549,19 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- 0 = no interaction
     -- 1 = like
     -- 2 = match
-    -- 3 = block
     state_number                    INTEGER NOT NULL DEFAULT 0,
-    state_change_unix_time          INTEGER,
     -- The account which started the interaction (e.g. sent a like).
     -- Can be null for example if a like is removed afterwards.
     account_id_sender               INTEGER,
     -- The target of the interaction (e.g. received a like).
     -- Can be null for example if a like is removed afterwards.
     account_id_receiver             INTEGER,
+    -- The account which started the block.
+    account_id_block_sender         INTEGER,
+    -- The account which received the block.
+    account_id_block_receiver       INTEGER,
+    -- If this is true, then both sides have blocked each other.
+    two_way_block                   BOOLEAN NOT NULL DEFAULT 0,
     -- Incrementing counter for getting order number for conversation messages.
     message_counter                 INTEGER NOT NULL DEFAULT 0,
     -- Sender's latest viewed message number in the conversation.

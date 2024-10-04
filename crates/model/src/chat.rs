@@ -78,9 +78,11 @@ impl std::error::Error for AccountInteractionStateError {}
 pub struct AccountInteractionInternal {
     pub id: i64,
     pub state_number: AccountInteractionState,
-    pub state_change_unix_time: Option<UnixTime>,
     pub account_id_sender: Option<AccountIdDb>,
     pub account_id_receiver: Option<AccountIdDb>,
+    pub account_id_block_sender: Option<AccountIdDb>,
+    pub account_id_block_receiver: Option<AccountIdDb>,
+    pub two_way_block: bool,
     /// Message counter is incrementing for each message sent.
     /// It does not reset even if interaction state goes from
     /// blocked to empty.
@@ -104,17 +106,16 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Empty => Ok(Self {
                 state_number: target,
-                state_change_unix_time: Some(UnixTime::current_time()),
                 account_id_sender: Some(id_like_sender.into_db_id()),
                 account_id_receiver: Some(id_like_receiver.into_db_id()),
                 sender_latest_viewed_message: None,
                 receiver_latest_viewed_message: None,
-                included_in_received_new_likes_count: true,
+                included_in_received_new_likes_count: !self.is_blocked(),
                 received_like_id: Some(received_like_id),
                 ..self
             }),
             AccountInteractionState::Like => Ok(self),
-            AccountInteractionState::Match | AccountInteractionState::Block => {
+            AccountInteractionState::Match => {
                 Err(AccountInteractionStateError::transition(state, target))
             }
         }
@@ -126,7 +127,6 @@ impl AccountInteractionInternal {
         match state {
             AccountInteractionState::Like => Ok(Self {
                 state_number: target,
-                state_change_unix_time: Some(UnixTime::current_time()),
                 sender_latest_viewed_message: Some(MessageNumber::default()),
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
                 included_in_received_new_likes_count: false,
@@ -134,33 +134,9 @@ impl AccountInteractionInternal {
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),
-            AccountInteractionState::Empty | AccountInteractionState::Block => {
+            AccountInteractionState::Empty => {
                 Err(AccountInteractionStateError::transition(state, target))
             }
-        }
-    }
-
-    pub fn try_into_block(
-        self,
-        id_block_sender: AccountIdInternal,
-        id_block_receiver: AccountIdInternal,
-    ) -> Result<Self, AccountInteractionStateError> {
-        let state = self.state_number;
-        match state {
-            AccountInteractionState::Empty
-            | AccountInteractionState::Like
-            | AccountInteractionState::Match => Ok(Self {
-                state_number: AccountInteractionState::Block,
-                state_change_unix_time: Some(UnixTime::current_time()),
-                account_id_sender: Some(id_block_sender.into_db_id()),
-                account_id_receiver: Some(id_block_receiver.into_db_id()),
-                sender_latest_viewed_message: None,
-                receiver_latest_viewed_message: None,
-                included_in_received_new_likes_count: false,
-                received_like_id: None,
-                ..self
-            }),
-            AccountInteractionState::Block => Ok(self),
         }
     }
 
@@ -168,9 +144,8 @@ impl AccountInteractionInternal {
         let target = AccountInteractionState::Empty;
         let state = self.state_number;
         match state {
-            AccountInteractionState::Block | AccountInteractionState::Like => Ok(Self {
+            AccountInteractionState::Like => Ok(Self {
                 state_number: target,
-                state_change_unix_time: Some(UnixTime::current_time()),
                 account_id_sender: None,
                 account_id_receiver: None,
                 sender_latest_viewed_message: None,
@@ -186,6 +161,72 @@ impl AccountInteractionInternal {
         }
     }
 
+    #[allow(clippy::if_same_then_else)]
+    pub fn add_block(
+        self,
+        id_block_sender: AccountIdInternal,
+        id_block_receiver: AccountIdInternal,
+    ) -> Self {
+        if self.account_id_block_sender == Some(id_block_sender.into_db_id()) &&
+            self.account_id_block_receiver == Some(id_block_receiver.into_db_id()) {
+            // Already blocked
+            self
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
+            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) &&
+            self.two_way_block {
+            // Already blocked
+            self
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
+            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) {
+            Self {
+                two_way_block: true,
+                ..self
+            }
+        } else {
+            Self {
+                account_id_block_sender: Some(id_block_sender.into_db_id()),
+                account_id_block_receiver: Some(id_block_receiver.into_db_id()),
+                ..self
+            }
+        }
+    }
+
+    pub fn delete_block(
+        self,
+        id_block_sender: AccountIdInternal,
+        id_block_receiver: AccountIdInternal,
+    ) -> Self {
+        if self.account_id_block_sender == Some(id_block_sender.into_db_id()) &&
+            self.account_id_block_receiver == Some(id_block_receiver.into_db_id()) {
+            // Block detected
+            if self.two_way_block {
+                Self {
+                    account_id_block_sender: Some(id_block_receiver.into_db_id()),
+                    account_id_block_receiver: Some(id_block_sender.into_db_id()),
+                    two_way_block: false,
+                    ..self
+                }
+            } else {
+                Self {
+                    account_id_block_sender: None,
+                    account_id_block_receiver: None,
+                    ..self
+                }
+            }
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
+            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) &&
+            self.two_way_block {
+            // Block detected
+            Self {
+                two_way_block: false,
+                ..self
+            }
+        } else {
+            // No block
+            self
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.state_number == AccountInteractionState::Empty
     }
@@ -198,18 +239,36 @@ impl AccountInteractionInternal {
         self.state_number == AccountInteractionState::Match
     }
 
+    /// Return true if another or both have blocked each other
     pub fn is_blocked(&self) -> bool {
-        self.state_number == AccountInteractionState::Block
+        self.account_id_block_sender.is_some()
+    }
+
+    #[allow(clippy::if_same_then_else)]
+    pub fn is_direction_blocked(
+        &self,
+        id_block_sender: AccountIdInternal,
+        id_block_receiver: AccountIdInternal,
+    ) -> bool {
+        if self.account_id_block_sender == Some(id_block_sender.into_db_id()) &&
+            self.account_id_block_receiver == Some(id_block_receiver.into_db_id()) {
+            // Already blocked
+            true
+        } else if self.account_id_block_sender == Some(id_block_receiver.into_db_id()) &&
+            self.account_id_block_receiver == Some(id_block_sender.into_db_id()) &&
+            self.two_way_block {
+            // Already blocked
+            true
+        } else {
+            false
+        }
     }
 }
 
 /// Account interaction states
 ///
 /// Possible state transitions:
-/// - Empty -> Like -> Match -> Block
-/// - Empty -> Like -> Block
-/// - Empty -> Block
-/// - Block -> Empty
+/// - Empty -> Like -> Match
 /// - Like -> Empty
 #[derive(
     Debug,
@@ -224,7 +283,6 @@ pub enum AccountInteractionState {
     Empty = 0,
     Like = 1,
     Match = 2,
-    Block = 3,
 }
 
 impl TryFrom<i64> for AccountInteractionState {
@@ -235,7 +293,6 @@ impl TryFrom<i64> for AccountInteractionState {
             0 => Ok(Self::Empty),
             1 => Ok(Self::Like),
             2 => Ok(Self::Match),
-            3 => Ok(Self::Block),
             _ => Err(AccountInteractionStateError::WrongStateNumber(value)),
         }
     }

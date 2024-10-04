@@ -67,10 +67,8 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         id: AccountIdInternal,
     ) -> Result<SentBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
-            let profiles = cmds.chat().interaction().all_sender_account_interactions(
+            let profiles = cmds.chat().interaction().all_sent_blocks(
                 id,
-                AccountInteractionState::Block,
-                false,
             )?;
             let version = cmds.chat().chat_state(id)?.sent_blocks_sync_version;
             Ok(SentBlocksPage { profiles, version })
@@ -84,12 +82,8 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         id: AccountIdInternal,
     ) -> Result<ReceivedBlocksPage, DataError> {
         self.db_read(move |mut cmds| {
-            let profiles = cmds
-                .chat()
-                .interaction()
-                .all_receiver_account_interactions(id, AccountInteractionState::Block)?;
             let version = cmds.chat().chat_state(id)?.received_blocks_sync_version;
-            Ok(ReceivedBlocksPage { profiles, version })
+            Ok(ReceivedBlocksPage { profiles: vec![], version })
         })
         .await
         .into_error()

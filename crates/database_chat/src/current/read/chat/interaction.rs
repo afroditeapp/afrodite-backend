@@ -79,6 +79,38 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
         Ok(value)
     }
 
+    pub fn all_sent_blocks(
+        &mut self,
+        id_sender: AccountIdInternal,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::{account_id, account_interaction::dsl::*};
+
+        let mut first_list: Vec<AccountId> = account_interaction
+            .inner_join(
+                account_id::table.on(account_id_block_receiver.assume_not_null().eq(account_id::id)),
+            )
+            .filter(account_id_block_receiver.is_not_null())
+            .filter(account_id_block_sender.eq(id_sender.as_db_id()))
+            .select(account_id::uuid)
+            .load(self.conn())
+            .into_db_error(())?;
+
+        let second_list: Vec<AccountId> = account_interaction
+            .inner_join(
+                account_id::table.on(account_id_block_sender.assume_not_null().eq(account_id::id)),
+            )
+            .filter(account_id_block_sender.is_not_null())
+            .filter(account_id_block_receiver.eq(id_sender.as_db_id()))
+            .filter(two_way_block.eq(true))
+            .select(account_id::uuid)
+            .load(self.conn())
+            .into_db_error(())?;
+
+        first_list.extend(second_list);
+
+        Ok(first_list)
+    }
+
     /// Return for example all accounts which have liked the id_receiver account
     pub fn all_receiver_account_interactions(
         &mut self,
