@@ -101,6 +101,7 @@ impl AuthPair {
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::account)]
 #[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
 pub struct AccountInternal {
     pub email: Option<EmailAddress>,
 }
@@ -377,7 +378,6 @@ impl SetAccountSetup {
     Queryable,
     Selectable,
     Insertable,
-    AsChangeset,
 )]
 #[diesel(table_name = crate::schema::account_setup)]
 #[diesel(check_for_backend(crate::Db))]

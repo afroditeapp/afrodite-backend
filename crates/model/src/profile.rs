@@ -106,6 +106,7 @@ pub struct ProfileAndProfileVersion {
 #[derive(Debug, Clone, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::profile_state)]
 #[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
 pub struct ProfileStateInternal {
     pub search_age_range_min: ProfileAge,
     pub search_age_range_max: ProfileAge,

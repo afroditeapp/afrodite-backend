@@ -470,7 +470,7 @@ impl AccountIdDb {
 
 diesel_i64_wrapper!(AccountIdDb);
 
-#[derive(Debug, Clone, Default, Queryable, Selectable, Insertable, AsChangeset)]
+#[derive(Debug, Clone, Default, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct SharedStateRaw {
@@ -489,7 +489,7 @@ pub struct AccountStateRelatedSharedState {
     pub sync_version: AccountSyncVersion,
 }
 
-#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct OtherSharedState {

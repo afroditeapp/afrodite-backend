@@ -23,6 +23,7 @@ pub use received_likes::*;
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
 pub struct ChatStateRaw {
     pub received_blocks_sync_version: ReceivedBlocksSyncVersion,
     pub received_likes_sync_version: ReceivedLikesSyncVersion,
@@ -75,6 +76,7 @@ impl std::error::Error for AccountInteractionStateError {}
 #[derive(Debug, Clone, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::account_interaction)]
 #[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
 pub struct AccountInteractionInternal {
     pub id: i64,
     pub state_number: AccountInteractionState,
