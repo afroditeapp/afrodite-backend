@@ -210,6 +210,8 @@ const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
 /// Max message size is u16::MAX.
 ///
 /// The sender message ID must be value which server expects.
+///
+/// Sending will fail if one or two way block exists.
 #[utoipa::path(
     post,
     path = PATH_POST_SEND_MESSAGE,
@@ -237,7 +239,7 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
     let message_reciever = state.get_internal_id(query_params.receiver).await?;
     let result = db_write_multiple!(state, move |cmds| {
         let (result, push_notification_allowed) = cmds.chat()
-            .insert_pending_message_if_match(
+            .insert_pending_message_if_match_and_not_blocked(
                 id,
                 message_reciever,
                 bytes.into(),

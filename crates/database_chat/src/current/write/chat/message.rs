@@ -65,7 +65,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         Ok(())
     }
 
-    pub fn insert_pending_message_if_match(
+    pub fn insert_pending_message_if_match_and_not_blocked(
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
@@ -84,7 +84,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         // does not have that message already viewed.
         let new_message_number = MessageNumber::new(interaction.message_counter + 1);
 
-        if interaction.state_number != AccountInteractionState::Match {
+        if interaction.state_number != AccountInteractionState::Match || interaction.is_blocked() {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
 

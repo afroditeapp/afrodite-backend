@@ -341,7 +341,8 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         })
     }
 
-    /// Insert a new pending message if sender and receiver are a match.
+    /// Insert a new pending message if sender and receiver are a match and
+    /// one or two way block exists.
     ///
     /// Receiver public key check is for preventing client from
     /// sending messages encrypted with outdated public key.
@@ -351,7 +352,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
     /// Max sender acknowledgements missing count is 50.
     ///
     #[allow(clippy::too_many_arguments)]
-    pub async fn insert_pending_message_if_match(
+    pub async fn insert_pending_message_if_match_and_not_blocked(
         &mut self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
@@ -392,7 +393,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
 
             let message_values = cmds.chat()
                 .message()
-                .insert_pending_message_if_match(
+                .insert_pending_message_if_match_and_not_blocked(
                     sender,
                     receiver,
                     message,
