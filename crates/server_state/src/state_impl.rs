@@ -4,7 +4,7 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountInteractionState, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, EventToClientInternal, PendingNotificationFlags, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, EventToClientInternal, PendingNotificationFlags, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
@@ -513,8 +513,12 @@ impl IsMatch for S {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> server_common::result::Result<bool, DataError> {
-        let interaction_state = self.read().chat().account_interaction(account0, account1).await?.map(|v| v.state_number);
-        Ok(interaction_state == Some(AccountInteractionState::Match))
+        let interaction = self.read().chat().account_interaction(account0, account1).await?;
+        if let Some(interaction) = interaction {
+            Ok(interaction.is_match() && !interaction.is_blocked())
+        } else {
+            Ok(false)
+        }
     }
 }
 

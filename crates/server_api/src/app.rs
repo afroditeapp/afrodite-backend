@@ -112,6 +112,7 @@ pub trait ResetPushNotificationTokens: StateBase + WriteData {
 }
 
 pub trait IsMatch: StateBase + ReadData {
+    /// Account interaction is in match state and there is no one or two way block.
     fn is_match(
         &self,
         account0: AccountIdInternal,
