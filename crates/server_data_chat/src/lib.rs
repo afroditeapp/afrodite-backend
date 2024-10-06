@@ -30,6 +30,33 @@ macro_rules! define_db_read_command {
     };
 }
 
+macro_rules! define_db_read_command_for_write {
+    ($struct_name:ident) => {
+        impl<C: server_data::write::WriteCommandsProvider> $struct_name<C> {
+            pub async fn db_read<
+                T: FnOnce(
+                        database_chat::current::read::CurrentSyncReadCommands<
+                            &mut server_data::DieselConnection,
+                        >,
+                    ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+                    + Send
+                    + 'static,
+                R: Send + 'static,
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
+                self.db_read_raw(|conn| {
+                    cmd(database_chat::current::read::CurrentSyncReadCommands::new(
+                        conn,
+                    ))
+                })
+                .await
+            }
+        }
+    };
+}
+
 macro_rules! define_db_transaction_command {
     ($struct_name:ident) => {
         impl<C: server_data::write::WriteCommandsProvider> $struct_name<C> {

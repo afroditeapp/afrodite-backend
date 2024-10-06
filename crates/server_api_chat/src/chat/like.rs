@@ -111,7 +111,6 @@ const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
 /// Profile will not be returned if:
 ///
 /// - Profile is hidden (not public)
-/// - Profile is blocked
 /// - Profile is a match
 #[utoipa::path(
     get,
@@ -207,7 +206,7 @@ pub async fn post_reset_received_likes_paging<S: WriteData + ReadData>(
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
     CHAT.post_reset_received_likes_paging.incr();
     let (iterator_session_id, new_version) = db_write!(state, move |cmds| {
-        cmds.chat().handle_reset_received_likes_iterator_reset(account_id)
+        cmds.chat().handle_reset_received_likes_iterator(account_id)
     })?;
     let r = ResetReceivedLikesIteratorResult {
         v: new_version,

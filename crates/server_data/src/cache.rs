@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 use config::Config;
 use error_stack::Result;
 use limit::ChatLimits;
+use matches::MatchesIterator;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, IteratorSessionIdInternal, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
@@ -16,6 +17,8 @@ use crate::event::{event_channel, EventReceiver, EventSender};
 
 pub mod limit;
 pub mod received_likes;
+pub mod db_iterator;
+pub mod matches;
 
 /// If this exists update last seen time atomic variable in location
 /// index.
@@ -363,6 +366,7 @@ pub struct CachedChatComponentData {
     // user logs out and logs in with different account.
     // pub fcm_device_token: Option<FcmDeviceToken>,
     pub received_likes_iterator: ReceivedLikesIterator,
+    pub matches_iterator: MatchesIterator,
 }
 
 #[derive(Debug)]

@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
-use model::{AccountIdInternal, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId, PublicKeyIdAndVersion, PublicKeyVersion};
+use model::{AccountIdInternal, ChatGlobalState, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId, PublicKeyIdAndVersion, PublicKeyVersion, CHAT_GLOBAL_STATE_ROW_TYPE};
 
 use crate::IntoDatabaseError;
 
@@ -91,5 +91,17 @@ impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
             .collect::<Vec<_>>();
 
         Ok(info_list)
+    }
+
+    pub fn global_state(&mut self) -> Result<ChatGlobalState, DieselDatabaseError> {
+        use model::schema::chat_global_state::dsl::*;
+
+        chat_global_state
+            .filter(row_type.eq(CHAT_GLOBAL_STATE_ROW_TYPE))
+            .select(ChatGlobalState::as_select())
+            .first(self.conn())
+            .optional()
+            .map(|v| v.unwrap_or_default())
+            .into_db_error(())
     }
 }

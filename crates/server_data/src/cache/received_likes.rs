@@ -1,9 +1,11 @@
 use model::{ReceivedLikeId, ReceivedLikesIteratorSessionId, ReceivedLikesIteratorSessionIdInternal};
 
+use super::db_iterator::DbIteratorState;
+
 #[derive(Debug, Clone, Copy)]
 pub struct ReceivedLikesIteratorState {
     pub id_at_reset: ReceivedLikeId,
-    pub page: u64,
+    db_iterator: DbIteratorState,
     /// Received like ID value from previous iterator reset
     pub id_at_reset_previous: Option<ReceivedLikeId>,
 }
@@ -12,7 +14,7 @@ impl ReceivedLikesIteratorState {
     fn new(id_at_reset: ReceivedLikeId, id_at_reset_previous: Option<ReceivedLikeId>) -> Self {
         Self {
             id_at_reset,
-            page: 0,
+            db_iterator: DbIteratorState::new(),
             id_at_reset_previous,
         }
     }
@@ -20,9 +22,13 @@ impl ReceivedLikesIteratorState {
     fn next(self) -> Self {
         Self {
             id_at_reset: self.id_at_reset,
-            page: self.page.saturating_add(1),
+            db_iterator: self.db_iterator.next(),
             id_at_reset_previous: self.id_at_reset_previous,
         }
+    }
+
+    pub fn page(&self) -> u64 {
+        self.db_iterator.page
     }
 }
 

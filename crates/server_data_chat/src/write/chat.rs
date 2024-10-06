@@ -2,7 +2,7 @@ mod push_notifications;
 
 use database_chat::current::write::chat::ChatStateChanges;
 use error_stack::ResultExt;
-use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
+use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
     cache::{limit::ChatLimits, CacheError}, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError, IntoDataError
 };
@@ -12,6 +12,7 @@ use self::push_notifications::WriteCommandsChatPushNotifications;
 
 define_server_data_write_commands!(WriteCommandsChat);
 define_db_transaction_command!(WriteCommandsChat);
+define_db_read_command_for_write!(WriteCommandsChat);
 
 impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
     pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<C> {
@@ -68,10 +69,13 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 && interaction.account_id_sender == Some(id_like_receiver.into_db_id())
                 && interaction.account_id_receiver == Some(id_like_sender.into_db_id())
             {
-                interaction
+                let next_id = cmds.read().chat().global_state()?.next_match_id;
+                let updated_interaction = interaction
                     .clone()
-                    .try_into_match()
-                    .change_context(DieselDatabaseError::NotAllowed)?
+                    .try_into_match(next_id)
+                    .change_context(DieselDatabaseError::NotAllowed)?;
+                cmds.chat().upsert_next_match_id()?;
+                updated_interaction
             } else if interaction.is_match() {
                 return Err(DieselDatabaseError::AlreadyDone.report());
             } else {
@@ -424,11 +428,11 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
 
     /// Resets new received likes count if needed and updates received likes
     /// iterator reset time.
-    pub async fn handle_reset_received_likes_iterator_reset(
+    pub async fn handle_reset_received_likes_iterator(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion), DataError> {
-        let (new_version, reset_time_id, reset_time_id_previous) = db_transaction!(self, move |mut cmds| {
+        let (new_version, received_like_id, received_like_id_previous) = db_transaction!(self, move |mut cmds| {
             cmds.chat().interaction().reset_included_in_received_new_likes_count(id)?;
             let latest_used_id = cmds.read().chat().chat_state(id)?.next_received_like_id.next_id_to_latest_used_id();
             cmds.chat().modify_chat_state(id, |s| {
@@ -453,7 +457,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         let session_id = self.cache()
             .write_cache(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
-                    Ok(c.received_likes_iterator.reset(reset_time_id, reset_time_id_previous))
+                    Ok(c.received_likes_iterator.reset(received_like_id, received_like_id_previous))
                 } else {
                     Err(CacheError::FeatureNotEnabled.report())
                 }
@@ -462,6 +466,27 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             .into_data_error(id)?;
 
         Ok((session_id, new_version))
+    }
+
+    pub async fn handle_reset_matches_iterator(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<MatchesIteratorSessionIdInternal, DataError> {
+        let latest_used_id = self.db_read(|mut cmds| cmds.chat().global_state()).await?
+            .next_match_id
+            .next_id_to_latest_used_id();
+        let session_id = self.cache()
+            .write_cache(id.as_id(), |e| {
+                if let Some(c) = e.chat.as_mut() {
+                    Ok(c.matches_iterator.reset(latest_used_id))
+                } else {
+                    Err(CacheError::FeatureNotEnabled.report())
+                }
+            })
+            .await
+            .into_data_error(id)?;
+
+        Ok(session_id)
     }
 }
 

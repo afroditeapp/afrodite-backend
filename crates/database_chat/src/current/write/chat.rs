@@ -2,7 +2,7 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, ChatStateRaw, MatchesSyncVersion, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SetPublicKey, SyncVersionUtils
+    AccountIdInternal, ChatStateRaw, MatchId, MatchesSyncVersion, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SetPublicKey, SyncVersionUtils, CHAT_GLOBAL_STATE_ROW_TYPE
 };
 use simple_backend_utils::ContextExt;
 
@@ -124,6 +124,29 @@ impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
             .into_db_error(id)?;
 
         Ok(new_id)
+    }
+
+    /// Return unused MatchId
+    pub fn upsert_next_match_id(
+        &mut self,
+    ) -> Result<MatchId, DieselDatabaseError> {
+        use model::schema::chat_global_state::dsl::*;
+
+        let current = self.read().chat().global_state()?.next_match_id;
+        let next = current.increment();
+
+        insert_into(chat_global_state)
+            .values((
+                row_type.eq(CHAT_GLOBAL_STATE_ROW_TYPE),
+                next_match_id.eq(next),
+            ))
+            .on_conflict(row_type)
+            .do_update()
+            .set(next_match_id.eq(next))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(current)
     }
 }
 

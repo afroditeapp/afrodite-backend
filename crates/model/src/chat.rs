@@ -20,6 +20,9 @@ pub use public_key::*;
 mod received_likes;
 pub use received_likes::*;
 
+mod matches;
+pub use matches::*;
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
 #[diesel(table_name = crate::schema::chat_state)]
 #[diesel(check_for_backend(crate::Db))]
@@ -93,6 +96,7 @@ pub struct AccountInteractionInternal {
     pub receiver_latest_viewed_message: Option<MessageNumber>,
     pub included_in_received_new_likes_count: bool,
     pub received_like_id: Option<ReceivedLikeId>,
+    pub match_id: Option<MatchId>,
     pub account_id_previous_like_deleter: Option<AccountIdDb>,
 }
 
@@ -123,7 +127,7 @@ impl AccountInteractionInternal {
         }
     }
 
-    pub fn try_into_match(self) -> Result<Self, AccountInteractionStateError> {
+    pub fn try_into_match(self, match_id: MatchId) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Match;
         let state = self.state_number;
         match state {
@@ -133,6 +137,7 @@ impl AccountInteractionInternal {
                 receiver_latest_viewed_message: Some(MessageNumber::default()),
                 included_in_received_new_likes_count: false,
                 received_like_id: None,
+                match_id: Some(match_id),
                 ..self
             }),
             AccountInteractionState::Match => Ok(self),
@@ -321,14 +326,6 @@ pub struct SentLikesPage {
     /// This version can be sent to the server when WebSocket protocol
     /// data sync is happening.
     pub version: SentLikesSyncVersion,
-    pub profiles: Vec<AccountId>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct MatchesPage {
-    /// This version can be sent to the server when WebSocket protocol
-    /// data sync is happening.
-    pub version: MatchesSyncVersion,
     pub profiles: Vec<AccountId>,
 }
 
@@ -675,4 +672,14 @@ pub enum CurrentAccountInteractionState {
     LikeReceived,
     Match,
     BlockSent,
+}
+
+pub const CHAT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
+
+/// Global state for account component
+#[derive(Debug, Default, Clone, PartialEq, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::chat_global_state)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct ChatGlobalState {
+    pub next_match_id: MatchId,
 }

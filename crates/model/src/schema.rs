@@ -81,6 +81,7 @@ diesel::table! {
         receiver_latest_viewed_message -> Nullable<Integer>,
         included_in_received_new_likes_count -> Bool,
         received_like_id -> Nullable<Integer>,
+        match_id -> Nullable<Integer>,
         account_id_previous_like_deleter -> Nullable<Integer>,
     }
 }
@@ -111,6 +112,15 @@ diesel::table! {
         account_id -> Integer,
         birthdate -> Nullable<Date>,
         is_adult -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    chat_global_state (row_type) {
+        row_type -> Integer,
+        next_match_id -> Integer,
     }
 }
 
@@ -475,6 +485,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_interaction_index,
     account_next_client_id,
     account_setup,
+    chat_global_state,
     chat_state,
     current_account_media,
     demo_mode_account_ids,

@@ -43,12 +43,14 @@ pub use server_common::{data::DataError, result};
         chat::post_reset_received_likes_paging,
         chat::post_get_next_received_likes_page,
         chat::post_get_new_received_likes_count,
+        chat::post_reset_matches_paging,
+        chat::post_get_next_matches_page,
     ),
     components(schemas(
         // Chat
         model::chat::SentLikesPage,
         model::chat::ReceivedLikesPage,
-        model::chat::MatchesPage,
+        model::chat::AllMatchesPage,
         model::chat::SentBlocksPage,
         model::chat::ReceivedBlocksPage,
         model::chat::PendingMessage,
@@ -84,6 +86,9 @@ pub use server_common::{data::DataError, result};
         model::chat::SendLikeResult,
         model::chat::DeleteLikeResult,
         model::chat::CurrentAccountInteractionState,
+        model::chat::MatchesIteratorSessionId,
+        model::chat::ResetMatchesIteratorResult,
+        model::chat::MatchesPage,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

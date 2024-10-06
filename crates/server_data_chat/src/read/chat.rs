@@ -3,10 +3,10 @@ mod push_notifications;
 use std::i64;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, ChatStateRaw, GetPublicKey, MatchesPage, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
- cache::received_likes::ReceivedLikesIteratorState, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+ cache::{matches::MatchesIteratorState, received_likes::ReceivedLikesIteratorState}, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
@@ -53,8 +53,28 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
                 .paged_received_likes_from_received_like_id(
                     id,
                     state.id_at_reset,
-                    state.page.try_into().unwrap_or(i64::MAX),
+                    state.page().try_into().unwrap_or(i64::MAX),
                     state.id_at_reset_previous,
+                )?;
+            Ok(value)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn matches_page(
+        &self,
+        id: AccountIdInternal,
+        state: MatchesIteratorState,
+    ) -> Result<Vec<AccountId>, DataError> {
+        self.db_read(move |mut cmds| {
+            let value = cmds
+                .chat()
+                .interaction()
+                .paged_matches(
+                    id,
+                    state.id_at_reset,
+                    state.page().try_into().unwrap_or(i64::MAX),
                 )?;
             Ok(value)
         })
@@ -89,8 +109,10 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         .into_error()
     }
 
-    pub async fn all_matches(&self, id: AccountIdInternal) -> Result<MatchesPage, DataError> {
-        // TODO: Is single SQL query possible?
+    pub async fn all_matches(&self, id: AccountIdInternal) -> Result<AllMatchesPage, DataError> {
+        // TODO: Is single SQL query possible? Update: yes, check iterator
+        //       implementation.
+        // TODO: Remove because match iterator code is enough?
 
         let mut sent = self
             .db_read(move |mut cmds| {
@@ -116,7 +138,7 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
             .db_read(move |mut cmds| Ok(cmds.chat().chat_state(id)?.matches_sync_version))
             .await?;
 
-        Ok(MatchesPage {
+        Ok(AllMatchesPage {
             profiles: sent,
             version,
         })

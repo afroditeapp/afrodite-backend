@@ -576,6 +576,8 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Received likes iterator uses received likes ID to return
     -- correct pages.
     received_like_id                INTEGER,
+    -- Matches iterator uses match ID to return correct pages.
+    match_id                        INTEGER,
     account_id_previous_like_deleter INTEGER,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
@@ -621,6 +623,12 @@ CREATE TABLE IF NOT EXISTS pending_messages(
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_global_state(
+    -- 0 = chat component global state
+    row_type              INTEGER PRIMARY KEY NOT NULL,
+    next_match_id         INTEGER             NOT NULL DEFAULT 0
 );
 
 ---------- History tables for server component account ----------

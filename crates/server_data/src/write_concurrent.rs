@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, ProfileLink, ReceivedLikesIteratorSessionId};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, MatchesIteratorSessionId, ProfileLink, ReceivedLikesIteratorSessionId};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -16,7 +16,7 @@ use super::{
     IntoDataError,
 };
 use crate::{
-    cache::received_likes::ReceivedLikesIteratorState, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
+    cache::{matches::MatchesIteratorState, received_likes::ReceivedLikesIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -217,6 +217,16 @@ impl ConcurrentWriteProfileHandleBlocking {
             .user_write_commands_account()
             .next_received_likes_iterator_state(id, iterator_id)
     }
+
+    pub fn next_matches_iterator_state(
+        &self,
+        id: AccountIdInternal,
+        iterator_id: MatchesIteratorSessionId,
+    ) -> Result<Option<MatchesIteratorState>, DataError> {
+        self.write
+            .user_write_commands_account()
+            .next_matches_iterator_state(id, iterator_id)
+    }
 }
 
 /// Commands that can run concurrently with other write commands, but which have
@@ -358,6 +368,22 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .write_cache_blocking(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
                     Ok(c.received_likes_iterator.get_and_increment(iterator_session_id))
+                } else {
+                    Err(CacheError::FeatureNotEnabled.report())
+                }
+            })
+            .into_data_error(id)
+    }
+
+    pub fn next_matches_iterator_state(
+        &self,
+        id: AccountIdInternal,
+        iterator_session_id: MatchesIteratorSessionId,
+    ) -> Result<Option<MatchesIteratorState>, DataError> {
+        self.cache
+            .write_cache_blocking(id.as_id(), |e| {
+                if let Some(c) = e.chat.as_mut() {
+                    Ok(c.matches_iterator.get_and_increment(iterator_session_id))
                 } else {
                     Err(CacheError::FeatureNotEnabled.report())
                 }

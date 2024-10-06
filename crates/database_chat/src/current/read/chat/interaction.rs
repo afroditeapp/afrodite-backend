@@ -4,7 +4,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, PageItemCountForNewLikes, ProfileVisibility, ReceivedLikeId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, MatchId, PageItemCountForNewLikes, ProfileVisibility, ReceivedLikeId
 };
 
 use crate::IntoDatabaseError;
@@ -184,5 +184,42 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
                 c: count,
             }
         ))
+    }
+
+    /// Interaction ordering goes from recent to older starting
+    /// from `match_id_value`.
+    pub fn paged_matches(
+        &mut self,
+        id_value: AccountIdInternal,
+        match_id_value: MatchId,
+        page: i64,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::{account_id, account_interaction::dsl::*};
+
+        const PAGE_SIZE: i64 = 25;
+
+        let account_ids: Vec<AccountId> = account_interaction
+            .inner_join(
+                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+            )
+            .filter(
+                (account_id_sender.is_not_null().and(account_id_receiver.eq(id_value.as_db_id())))
+                    .or(
+                        account_id_receiver.is_not_null().and(account_id_sender.eq(id_value.as_db_id()))
+                    )
+            )
+            .filter(state_number.eq(AccountInteractionState::Match))
+            .filter(match_id.is_not_null())
+            .filter(match_id.le(match_id_value))
+            .select(account_id::uuid)
+            .order((
+                match_id.desc(),
+            ))
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE.saturating_mul(page))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(account_ids)
     }
 }
