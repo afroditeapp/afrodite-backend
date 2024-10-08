@@ -200,7 +200,12 @@ impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
 
         let account_ids: Vec<AccountId> = account_interaction
             .inner_join(
-                account_id::table.on(account_id_sender.assume_not_null().eq(account_id::id)),
+                account_id::table.on(
+                    (account_id_sender.assume_not_null().eq(account_id::id).and(account_id_receiver.eq(id_value.as_db_id())))
+                        .or(
+                            account_id_receiver.assume_not_null().eq(account_id::id).and(account_id_sender.eq(id_value.as_db_id()))
+                        )
+                ),
             )
             .filter(
                 (account_id_sender.is_not_null().and(account_id_receiver.eq(id_value.as_db_id())))
