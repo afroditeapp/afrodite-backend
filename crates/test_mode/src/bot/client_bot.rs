@@ -84,15 +84,15 @@ impl ClientBot {
             const ACTION_LOOP: ActionArray = action_array![
                 ActionsBeforeIteration,
                 GetProfile,
-                RunActionsIf(action_array!(UpdateLocationRandom::new(None)), || {
-                    rand::random::<f32>() < 0.2
+                RunActionsIf(action_array!(UpdateLocationRandom::new(None)), |s| {
+                    s.bot_config_file.change_location && rand::random::<f32>() < 0.2
                 }),
                 // TODO: Toggle the profile visiblity in the future?
-                RunActionsIf(action_array!(SetProfileVisibility(true)), || {
-                    rand::random::<f32>() < 0.5
+                RunActionsIf(action_array!(SetProfileVisibility(true)), |s| {
+                    s.bot_config_file.change_visibility && rand::random::<f32>() < 0.5
                 }),
-                RunActionsIf(action_array!(SetProfileVisibility(false)), || {
-                    rand::random::<f32>() < 0.1
+                RunActionsIf(action_array!(SetProfileVisibility(false)), |s| {
+                    s.bot_config_file.change_visibility && rand::random::<f32>() < 0.1
                 }),
                 AcceptReceivedLikesAndSendMessage,
                 AnswerReceivedMessages,

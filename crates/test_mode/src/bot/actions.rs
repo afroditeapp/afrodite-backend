@@ -417,7 +417,7 @@ impl BotAction for RunActions {
 }
 
 #[derive(Debug)]
-pub struct RunActionsIf(pub ActionArray, pub fn() -> bool);
+pub struct RunActionsIf(pub ActionArray, pub fn(&BotState) -> bool);
 
 #[async_trait]
 impl BotAction for RunActionsIf {
@@ -426,7 +426,7 @@ impl BotAction for RunActionsIf {
         state: &mut BotState,
         task_state: &mut TaskState,
     ) -> Result<(), TestError> {
-        if self.1() {
+        if self.1(state) {
             for a in self.0.iter() {
                 a.excecute(state, task_state).await?;
             }

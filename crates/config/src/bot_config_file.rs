@@ -11,6 +11,10 @@ pub struct BotConfigFile {
     pub woman_image_dir: Option<PathBuf>,
     /// All bots will try to send like to this account ID
     pub send_like_to_account_id: Option<uuid::Uuid>,
+    #[serde(default)]
+    pub change_visibility: bool,
+    #[serde(default)]
+    pub change_location: bool,
     /// Predefined user bots.
     #[serde(default)]
     pub bot: Vec<BotInstanceConfig>,
