@@ -49,7 +49,7 @@ impl TestRunner {
                     match BotConfigFile::load(bot_config_file_path) {
                         Ok(bot_config_file) => bot_config_file,
                         Err(e) => {
-                            eprintln!("Failed to load bot config file: {}", e);
+                            eprintln!("Failed to load bot config file: {:?}", e);
                             return;
                         }
                     }
