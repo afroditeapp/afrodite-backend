@@ -82,7 +82,8 @@ diesel::table! {
         included_in_received_new_likes_count -> Bool,
         received_like_id -> Nullable<Integer>,
         match_id -> Nullable<Integer>,
-        account_id_previous_like_deleter -> Nullable<Integer>,
+        account_id_previous_like_deleter_slot_0 -> Nullable<Integer>,
+        account_id_previous_like_deleter_slot_1 -> Nullable<Integer>,
     }
 }
 

@@ -321,14 +321,15 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
             }
         }
 
-        let previous_deleter = cmds
+        let like_deleted_once_before = cmds
             .read()
             .chat()
             .account_interaction(id, requested_profile)
             .await?
-            .and_then(|v| v.account_id_previous_like_deleter);
+            .map(|v| v.account_already_deleted_like(id))
+            .unwrap_or_default();
 
-        if previous_deleter == Some(id.into_db_id()) {
+        if like_deleted_once_before {
             return Ok(DeleteLikeResult::error_delete_already_done_once_before());
         }
 

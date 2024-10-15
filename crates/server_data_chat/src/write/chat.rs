@@ -150,7 +150,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                 .clone()
                 .try_into_empty()
                 .change_context(DieselDatabaseError::NotAllowed)?;
-            updated.account_id_previous_like_deleter = Some(id_sender.into_db_id());
+            updated.set_previous_like_deleter_if_slot_available(id_sender);
 
             cmds.chat()
                 .interaction()

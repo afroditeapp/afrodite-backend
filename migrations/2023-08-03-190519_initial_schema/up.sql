@@ -578,7 +578,8 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     received_like_id                INTEGER,
     -- Matches iterator uses match ID to return correct pages.
     match_id                        INTEGER,
-    account_id_previous_like_deleter INTEGER,
+    account_id_previous_like_deleter_slot_0 INTEGER,
+    account_id_previous_like_deleter_slot_1 INTEGER,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -587,7 +588,11 @@ CREATE TABLE IF NOT EXISTS account_interaction(
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
-    FOREIGN KEY (account_id_previous_like_deleter)
+    FOREIGN KEY (account_id_previous_like_deleter_slot_0)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_previous_like_deleter_slot_1)
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE

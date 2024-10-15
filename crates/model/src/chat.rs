@@ -97,7 +97,8 @@ pub struct AccountInteractionInternal {
     pub included_in_received_new_likes_count: bool,
     pub received_like_id: Option<ReceivedLikeId>,
     pub match_id: Option<MatchId>,
-    pub account_id_previous_like_deleter: Option<AccountIdDb>,
+    account_id_previous_like_deleter_slot_0: Option<AccountIdDb>,
+    account_id_previous_like_deleter_slot_1: Option<AccountIdDb>,
 }
 
 impl AccountInteractionInternal {
@@ -269,6 +270,27 @@ impl AccountInteractionInternal {
         } else {
             false
         }
+    }
+
+    pub fn set_previous_like_deleter_if_slot_available(
+        &mut self,
+        id_like_deleter: AccountIdInternal,
+    ) {
+        if self.account_already_deleted_like(id_like_deleter) {
+            // Skip
+        } else if self.account_id_previous_like_deleter_slot_0.is_none() {
+            self.account_id_previous_like_deleter_slot_0 = Some(id_like_deleter.into_db_id());
+        } else if self.account_id_previous_like_deleter_slot_1.is_none() {
+            self.account_id_previous_like_deleter_slot_1 = Some(id_like_deleter.into_db_id());
+        }
+    }
+
+    pub fn account_already_deleted_like(
+        &self,
+        id_like_deleter: AccountIdInternal,
+    ) -> bool {
+        self.account_id_previous_like_deleter_slot_0 == Some(id_like_deleter.into_db_id()) ||
+            self.account_id_previous_like_deleter_slot_1 == Some(id_like_deleter.into_db_id())
     }
 }
 
