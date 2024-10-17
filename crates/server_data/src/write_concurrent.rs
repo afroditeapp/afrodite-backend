@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, MatchesIteratorSessionId, ProfileLink, ReceivedLikesIteratorSessionId};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, IteratorSessionId, IteratorSessionIdInternal, MatchId, MatchesIteratorSessionId, NewsId, NewsIteratorSessionId, ProfileLink, ReceivedLikesIteratorSessionId};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -16,7 +16,7 @@ use super::{
     IntoDataError,
 };
 use crate::{
-    cache::{matches::MatchesIteratorState, received_likes::ReceivedLikesIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
+    cache::{chat::received_likes::ReceivedLikesIteratorState, db_iterator::DbIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -222,10 +222,20 @@ impl ConcurrentWriteProfileHandleBlocking {
         &self,
         id: AccountIdInternal,
         iterator_id: MatchesIteratorSessionId,
-    ) -> Result<Option<MatchesIteratorState>, DataError> {
+    ) -> Result<Option<DbIteratorState<MatchId>>, DataError> {
         self.write
             .user_write_commands_account()
             .next_matches_iterator_state(id, iterator_id)
+    }
+
+    pub fn next_news_iterator_state(
+        &self,
+        id: AccountIdInternal,
+        iterator_id: NewsIteratorSessionId,
+    ) -> Result<Option<DbIteratorState<NewsId>>, DataError> {
+        self.write
+            .user_write_commands_account()
+            .next_news_iterator_state(id, iterator_id)
     }
 }
 
@@ -379,11 +389,27 @@ impl<'a> WriteCommandsConcurrent<'a> {
         &self,
         id: AccountIdInternal,
         iterator_session_id: MatchesIteratorSessionId,
-    ) -> Result<Option<MatchesIteratorState>, DataError> {
+    ) -> Result<Option<DbIteratorState<MatchId>>, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
                     Ok(c.matches_iterator.get_and_increment(iterator_session_id))
+                } else {
+                    Err(CacheError::FeatureNotEnabled.report())
+                }
+            })
+            .into_data_error(id)
+    }
+
+    pub fn next_news_iterator_state(
+        &self,
+        id: AccountIdInternal,
+        iterator_session_id: NewsIteratorSessionId,
+    ) -> Result<Option<DbIteratorState<NewsId>>, DataError> {
+        self.cache
+            .write_cache_blocking(id.as_id(), |e| {
+                if let Some(c) = e.account.as_mut() {
+                    Ok(c.news_iterator.get_and_increment(iterator_session_id))
                 } else {
                     Err(CacheError::FeatureNotEnabled.report())
                 }

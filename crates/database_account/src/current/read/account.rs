@@ -6,6 +6,7 @@ mod data;
 mod demo;
 mod sign_in_with;
 mod email;
+mod news;
 
 impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
     pub fn data(self) -> data::CurrentSyncReadAccountData<C> {
@@ -22,5 +23,9 @@ impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
 
     pub fn email(self) -> email::CurrentSyncReadAccountEmail<C> {
         email::CurrentSyncReadAccountEmail::new(self.cmds)
+    }
+
+    pub fn news(self) -> news::CurrentSyncReadAccountNews<C> {
+        news::CurrentSyncReadAccountNews::new(self.cmds)
     }
 }

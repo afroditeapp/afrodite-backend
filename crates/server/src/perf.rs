@@ -2,6 +2,7 @@
 //!
 //!
 
+use server_api_account::account::ACCOUNT_NEWS_COUNTERS_LIST;
 use server_api_chat::chat::CHAT_PUBLIC_KEY_COUNTERS_LIST;
 use simple_backend::{perf::CounterCategory, SIMPLE_CONNECTION_COUNTERS_LIST};
 
@@ -50,6 +51,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_settings", ACCOUNT_SETTINGS_COUNTERS_LIST),
     &CounterCategory::new("account_state", ACCOUNT_STATE_COUNTERS_LIST),
     &CounterCategory::new("account_demo_mode", ACCOUNT_DEMO_MODE_COUNTERS_LIST),
+    &CounterCategory::new("account_news", ACCOUNT_NEWS_COUNTERS_LIST),
     // Account internal
     &CounterCategory::new("account_internal", ACCOUNT_INTERNAL_COUNTERS_LIST),
     // Media

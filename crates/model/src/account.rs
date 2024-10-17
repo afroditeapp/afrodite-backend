@@ -15,6 +15,9 @@ pub use demo::*;
 mod email;
 pub use email::*;
 
+mod news;
+pub use news::*;
+
 // TODO(prod): Also add info what sign in with service is used?
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]

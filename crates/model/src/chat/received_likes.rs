@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
-use crate::AccountId;
+use crate::{AccountId, NextNumberStorage};
 
 use super::ReceivedLikesSyncVersion;
 
@@ -12,15 +12,15 @@ use super::ReceivedLikesSyncVersion;
 /// server restarts and ask user to refresh received likes.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ReceivedLikesIteratorSessionIdInternal {
-    id: uuid::Uuid,
+    id: i64
 }
 
 impl ReceivedLikesIteratorSessionIdInternal {
-    /// Current implementation uses UUID. Only requirement for this
+    /// Current implementation uses i64. Only requirement for this
     /// type is that next one should be different than the previous.
-    pub fn create_random() -> Self {
+    pub fn create(storage: &mut NextNumberStorage) -> Self {
         Self {
-            id: uuid::Uuid::new_v4(),
+            id: storage.get_and_increment(),
         }
     }
 }
@@ -29,13 +29,21 @@ impl ReceivedLikesIteratorSessionIdInternal {
 /// server restarts and ask user to refresh received likes.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ReceivedLikesIteratorSessionId {
-    id: String,
+    id: i64,
 }
 
 impl From<ReceivedLikesIteratorSessionIdInternal> for ReceivedLikesIteratorSessionId {
     fn from(value: ReceivedLikesIteratorSessionIdInternal) -> Self {
         Self {
-            id: value.id.hyphenated().to_string(),
+            id: value.id,
+        }
+    }
+}
+
+impl From<ReceivedLikesIteratorSessionId> for ReceivedLikesIteratorSessionIdInternal {
+    fn from(value: ReceivedLikesIteratorSessionId) -> Self {
+        Self {
+            id: value.id,
         }
     }
 }

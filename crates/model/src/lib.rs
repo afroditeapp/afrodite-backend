@@ -44,3 +44,16 @@ pub enum EnumParsingError {
     #[error("ParsingFailed, value: {0}")]
     ParsingError(i64),
 }
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct NextNumberStorage {
+    next: i64
+}
+
+impl NextNumberStorage {
+    fn get_and_increment(&mut self) -> i64 {
+        let next = self.next;
+        self.next = self.next.wrapping_add(1);
+        next
+    }
+}

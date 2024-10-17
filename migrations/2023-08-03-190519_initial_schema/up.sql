@@ -164,9 +164,12 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
             ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS account_next_client_id(
+-- State specific to account component.
+CREATE TABLE IF NOT EXISTS account_state(
     account_id            INTEGER PRIMARY KEY NOT NULL,
     next_client_id        INTEGER             NOT NULL DEFAULT 0,
+    -- Sync version for news count.
+    news_count_sync_version    INTEGER        NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -184,10 +187,28 @@ CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS news(
+    id                    INTEGER PRIMARY KEY NOT NULL,
+    title                 TEXT                NOT NULL,
+    body                  TEXT                NOT NULL,
+    creation_unix_time    INTEGER             NOT NULL,
+    account_id_creator    INTEGER,
+    account_id_editor     INTEGER,
+    edit_unix_time        INTEGER,
+    FOREIGN KEY (account_id_creator)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_editor)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS account_global_state(
     -- 0 = account component global state
-    row_type              INTEGER PRIMARY KEY NOT NULL,
-    admin_access_granted_count INTEGER           NOT NULL DEFAULT 0
+    row_type                   INTEGER PRIMARY KEY NOT NULL,
+    admin_access_granted_count INTEGER             NOT NULL DEFAULT 0
 );
 
 ---------- Tables for server component profile ----------

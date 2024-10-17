@@ -76,6 +76,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         Ok(())
     }
 
+    pub fn insert_account_state(
+        mut self,
+        id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_state::dsl::*;
+
+        insert_into(account_state)
+            .values((
+                account_id.eq(id.as_db_id()),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
+        Ok(())
+    }
+
     pub fn upsert_increment_admin_access_granted_count(
         &mut self,
     ) -> Result<(), DieselDatabaseError> {
@@ -114,9 +129,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         mut self,
         id: AccountIdInternal,
     ) -> Result<ClientId, DieselDatabaseError> {
-        use model::schema::account_next_client_id::dsl::*;
+        use model::schema::account_state::dsl::*;
 
-        let current: ClientId = account_next_client_id
+        let current: ClientId = account_state
             .filter(account_id.eq(id.as_db_id()))
             .select(next_client_id)
             .first(self.conn())
@@ -126,7 +141,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
 
         let next = current.increment();
 
-        insert_into(account_next_client_id)
+        insert_into(account_state)
             .values((
                 account_id.eq(id.as_db_id()),
                 next_client_id.eq(next),

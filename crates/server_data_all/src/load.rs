@@ -7,7 +7,7 @@ use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
 use server_data::{
-    cache::{CachedChatComponentData, CachedMedia, CachedProfile, DatabaseCache},
+    cache::{chat::CachedChatComponentData, CachedMedia, CachedProfile, DatabaseCache},
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
 use tracing::info;

@@ -3,10 +3,10 @@ mod push_notifications;
 use std::i64;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
- cache::{matches::MatchesIteratorState, received_likes::ReceivedLikesIteratorState}, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    cache::{chat::received_likes::ReceivedLikesIteratorState, db_iterator::DbIteratorState}, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
@@ -65,7 +65,7 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
     pub async fn matches_page(
         &self,
         id: AccountIdInternal,
-        state: MatchesIteratorState,
+        state: DbIteratorState<MatchId>,
     ) -> Result<Vec<AccountId>, DataError> {
         self.db_read(move |mut cmds| {
             let value = cmds
@@ -73,7 +73,7 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
                 .interaction()
                 .paged_matches(
                     id,
-                    state.id_at_reset,
+                    state.id_at_reset(),
                     state.page().try_into().unwrap_or(i64::MAX),
                 )?;
             Ok(value)

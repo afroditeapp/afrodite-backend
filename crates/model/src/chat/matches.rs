@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
-use crate::AccountId;
+use crate::{AccountId, NextNumberStorage};
 
 use super::MatchesSyncVersion;
 
@@ -11,15 +11,15 @@ use super::MatchesSyncVersion;
 /// server restarts and ask user to refresh matches.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MatchesIteratorSessionIdInternal {
-    id: uuid::Uuid,
+    id: i64,
 }
 
 impl MatchesIteratorSessionIdInternal {
-    /// Current implementation uses UUID. Only requirement for this
+    /// Current implementation uses i64. Only requirement for this
     /// type is that next one should be different than the previous.
-    pub fn create_random() -> Self {
+    pub fn create(storage: &mut NextNumberStorage) -> Self {
         Self {
-            id: uuid::Uuid::new_v4(),
+            id: storage.get_and_increment(),
         }
     }
 }
@@ -28,13 +28,21 @@ impl MatchesIteratorSessionIdInternal {
 /// server restarts and ask user to matches.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct MatchesIteratorSessionId {
-    id: String,
+    id: i64,
 }
 
 impl From<MatchesIteratorSessionIdInternal> for MatchesIteratorSessionId {
     fn from(value: MatchesIteratorSessionIdInternal) -> Self {
         Self {
-            id: value.id.hyphenated().to_string(),
+            id: value.id,
+        }
+    }
+}
+
+impl From<MatchesIteratorSessionId> for MatchesIteratorSessionIdInternal {
+    fn from(value: MatchesIteratorSessionId) -> Self {
+        Self {
+            id: value.id,
         }
     }
 }
@@ -97,3 +105,9 @@ impl MatchId {
 }
 
 diesel_i64_wrapper!(MatchId);
+
+impl From<MatchId> for i64 {
+    fn from(value: MatchId) -> Self {
+        value.id
+    }
+}

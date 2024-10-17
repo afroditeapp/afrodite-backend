@@ -1,11 +1,11 @@
-use model::{ReceivedLikeId, ReceivedLikesIteratorSessionId, ReceivedLikesIteratorSessionIdInternal};
+use model::{NextNumberStorage, ReceivedLikeId, ReceivedLikesIteratorSessionId, ReceivedLikesIteratorSessionIdInternal};
 
-use super::db_iterator::DbIteratorState;
+use super::super::db_iterator::DbIteratorPageState;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ReceivedLikesIteratorState {
     pub id_at_reset: ReceivedLikeId,
-    db_iterator: DbIteratorState,
+    db_iterator: DbIteratorPageState,
     /// Received like ID value from previous iterator reset
     pub id_at_reset_previous: Option<ReceivedLikeId>,
 }
@@ -14,7 +14,7 @@ impl ReceivedLikesIteratorState {
     fn new(id_at_reset: ReceivedLikeId, id_at_reset_previous: Option<ReceivedLikeId>) -> Self {
         Self {
             id_at_reset,
-            db_iterator: DbIteratorState::new(),
+            db_iterator: DbIteratorPageState::new(),
             id_at_reset_previous,
         }
     }
@@ -41,6 +41,7 @@ struct InternalState {
 #[derive(Debug, Default)]
 pub struct ReceivedLikesIterator {
     state: Option<InternalState>,
+    session_id_storage: NextNumberStorage,
 }
 
 impl ReceivedLikesIterator {
@@ -49,7 +50,7 @@ impl ReceivedLikesIterator {
         id_at_reset: ReceivedLikeId,
         id_at_reset_previous: Option<ReceivedLikeId>,
     ) -> ReceivedLikesIteratorSessionIdInternal {
-        let id = ReceivedLikesIteratorSessionIdInternal::create_random();
+        let id = ReceivedLikesIteratorSessionIdInternal::create(&mut self.session_id_storage);
         self.state = Some(InternalState {
             id,
             state: ReceivedLikesIteratorState::new(id_at_reset, id_at_reset_previous),

@@ -100,19 +100,20 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    account_next_client_id (account_id) {
+    account_setup (account_id) {
         account_id -> Integer,
-        next_client_id -> Integer,
+        birthdate -> Nullable<Date>,
+        is_adult -> Nullable<Bool>,
     }
 }
 
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    account_setup (account_id) {
+    account_state (account_id) {
         account_id -> Integer,
-        birthdate -> Nullable<Date>,
-        is_adult -> Nullable<Bool>,
+        next_client_id -> Integer,
+        news_count_sync_version -> Integer,
     }
 }
 
@@ -295,6 +296,20 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    news (id) {
+        id -> Integer,
+        title -> Text,
+        body -> Text,
+        creation_unix_time -> Integer,
+        account_id_creator -> Nullable<Integer>,
+        account_id_editor -> Nullable<Integer>,
+        edit_unix_time -> Nullable<Integer>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     next_queue_number (queue_type_number) {
         queue_type_number -> Integer,
         next_number -> Integer,
@@ -451,8 +466,8 @@ diesel::joinable!(account -> account_id (account_id));
 diesel::joinable!(account_capabilities -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
-diesel::joinable!(account_next_client_id -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));
+diesel::joinable!(account_state -> account_id (account_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
 diesel::joinable!(history_account -> account_id (account_id));
@@ -484,8 +499,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_id,
     account_interaction,
     account_interaction_index,
-    account_next_client_id,
     account_setup,
+    account_state,
     chat_global_state,
     chat_state,
     current_account_media,
@@ -499,6 +514,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     media_moderation,
     media_moderation_request,
     media_state,
+    news,
     next_queue_number,
     pending_messages,
     profile,

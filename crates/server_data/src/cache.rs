@@ -1,13 +1,12 @@
 use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
+use account::CachedAccountComponentData;
+use chat::CachedChatComponentData;
 use config::Config;
 use error_stack::Result;
-use limit::ChatLimits;
-use matches::MatchesIterator;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, IteratorSessionIdInternal, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
 };
-use received_likes::ReceivedLikesIterator;
 use simple_backend_model::UnixTime;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
@@ -15,10 +14,9 @@ use tokio::sync::RwLock;
 use super::index::location::LocationIndexIteratorState;
 use crate::event::{event_channel, EventReceiver, EventSender};
 
-pub mod limit;
-pub mod received_likes;
 pub mod db_iterator;
-pub mod matches;
+pub mod account;
+pub mod chat;
 
 /// If this exists update last seen time atomic variable in location
 /// index.
@@ -357,18 +355,6 @@ pub struct LocationData {
     pub current_iterator: LocationIndexIteratorState,
 }
 
-#[derive(Debug, Default)]
-pub struct CachedChatComponentData {
-    pub limits: ChatLimits,
-    // This cached version of FcmDeviceToken is now disabled
-    // as some extra mapping other way aroud would be needed as
-    // same FcmDeviceToken might be used for different account if
-    // user logs out and logs in with different account.
-    // pub fcm_device_token: Option<FcmDeviceToken>,
-    pub received_likes_iterator: ReceivedLikesIterator,
-    pub matches_iterator: MatchesIterator,
-}
-
 #[derive(Debug)]
 pub struct CachedMedia {
     pub account_id: AccountId,
@@ -395,6 +381,7 @@ pub struct ConnectionInfo {
 
 #[derive(Debug)]
 pub struct CacheEntry {
+    pub account: Option<Box<CachedAccountComponentData>>,
     pub profile: Option<Box<CachedProfile>>,
     pub media: Option<Box<CachedMedia>>,
     pub chat: Option<Box<CachedChatComponentData>>,
@@ -411,6 +398,7 @@ pub struct CacheEntry {
 impl CacheEntry {
     pub fn new() -> Self {
         Self {
+            account: None,
             profile: None,
             media: None,
             chat: None,
@@ -424,6 +412,20 @@ impl CacheEntry {
     // TODO(refactor): Add helper functions to get data related do features
     // that can be disabled. Those should return Result<Data, CacheError>.
     // Also read_cache action closure might need or should to return Result.
+
+    pub fn account_data(&self) -> Result<&CachedAccountComponentData, CacheError> {
+        self.account
+            .as_ref()
+            .map(|v| v.as_ref())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
+
+    pub fn account_data_mut(&mut self) -> Result<&mut CachedAccountComponentData, CacheError> {
+        self.account
+            .as_mut()
+            .map(|v| v.as_mut())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
 
     pub fn chat_data(&self) -> Result<&CachedChatComponentData, CacheError> {
         self.chat

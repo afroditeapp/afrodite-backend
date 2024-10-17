@@ -5,6 +5,7 @@ use model::{
 use server_data::{define_server_data_read_commands, result::Result, DataError, IntoDataError};
 
 pub mod email;
+pub mod news;
 
 define_server_data_read_commands!(ReadCommandsAccount);
 define_db_read_command!(ReadCommandsAccount);
@@ -12,6 +13,10 @@ define_db_read_command!(ReadCommandsAccount);
 impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
     pub fn email(self) -> email::ReadCommandsAccountEmail<C> {
         email::ReadCommandsAccountEmail::new(self.cmds)
+    }
+
+    pub fn news(self) -> news::ReadCommandsAccountNews<C> {
+        news::ReadCommandsAccountNews::new(self.cmds)
     }
 
     pub async fn account_sign_in_with_info(

@@ -108,6 +108,10 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
                 .insert_default_account_setup(id)?;
             current
                 .account()
+                .data()
+                .insert_account_state(id)?;
+            current
+                .account()
                 .sign_in_with()
                 .insert_sign_in_with_info(id, &sign_in_with_info)?;
             if let Some(email) = email {
