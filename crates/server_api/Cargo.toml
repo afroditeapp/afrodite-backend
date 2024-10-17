@@ -19,6 +19,7 @@ reqwest = { workspace = true }
 http = { workspace = true }
 
 utoipa = { workspace = true }
+utoipa-axum = { workspace = true }
 
 thiserror = { workspace = true }
 error-stack = { workspace = true }

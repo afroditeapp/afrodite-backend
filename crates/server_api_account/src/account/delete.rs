@@ -1,7 +1,9 @@
-use axum::{extract::State, Router};
+use axum::extract::State;
 use model::DeleteStatus;
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccessTokens, ReadData, StateBase},
@@ -82,14 +84,13 @@ pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-pub fn delete_router<S: StateBase + GetAccessTokens + ReadData>(s: S) -> Router {
-    use axum::routing::{delete, get, post};
-
-    Router::new()
-        .route(PATH_POST_DELETE_AXUM, post(post_delete::<S>))
-        .route(PATH_GET_DELETION_STATUS_AXUM, get(get_deletion_status::<S>))
-        .route(PATH_CANCEL_DELETION_AXUM, delete(delete_cancel_deletion::<S>))
-        .with_state(s)
+pub fn delete_router<S: StateBase + GetAccessTokens + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_delete::<S>,
+        get_deletion_status::<S>,
+        delete_cancel_deletion::<S>,
+    )
 }
 
 create_counters!(

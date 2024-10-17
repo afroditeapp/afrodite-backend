@@ -1,10 +1,11 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{Account, AccountIdInternal, ClientId, LatestBirthdate};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::WriteData, db_write};
+use server_api::{app::WriteData, create_open_api_router, db_write};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccessTokens, ReadData, StateBase},
@@ -85,14 +86,13 @@ pub async fn post_get_next_client_id<S: WriteData>(
     Ok(client_id.into())
 }
 
-pub fn state_router<S: StateBase + GetAccessTokens + ReadData + WriteData>(s: S) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(PATH_ACCOUNT_STATE_AXUM, get(get_account_state::<S>))
-        .route(PATH_LATEST_BIRTHDATE_AXUM, get(get_latest_birthdate::<S>))
-        .route(PATH_POST_GET_NEXT_CLIENT_ID_AXUM, post(post_get_next_client_id::<S>))
-        .with_state(s)
+pub fn state_router<S: StateBase + GetAccessTokens + ReadData + WriteData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_account_state::<S>,
+        get_latest_birthdate::<S>,
+        post_get_next_client_id::<S>,
+    )
 }
 
 create_counters!(

@@ -1,10 +1,11 @@
 
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountIdInternal, NewsCountResult, NewsIteratorSessionId, NewsPage, ResetNewsIteratorResult};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::db_write;
+use server_api::{create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{GetAccounts, ReadData, StateBase, WriteData};
@@ -111,14 +112,13 @@ pub async fn post_get_next_news_page<S: WriteData + ReadData>(
     }
 }
 
-pub fn news_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
-    use axum::routing::post;
-
-    Router::new()
-        .route(PATH_POST_GET_NEWS_COUNT_AXUM, post(post_get_news_count::<S>))
-        .route(PATH_POST_RESET_NEWS_PAGING_AXUM, post(post_reset_news_paging::<S>))
-        .route(PATH_POST_GET_NEXT_NEWS_PAGE_AXUM, post(post_get_next_news_page::<S>))
-        .with_state(s)
+pub fn news_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_get_news_count::<S>,
+        post_reset_news_paging::<S>,
+        post_get_next_news_page::<S>,
+    )
 }
 
 create_counters!(

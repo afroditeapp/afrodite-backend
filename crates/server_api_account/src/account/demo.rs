@@ -1,15 +1,16 @@
 use std::time::Duration;
 
-use axum::{extract::State, Router};
+use axum::extract::State;
 use model::{
     AccessibleAccount, AccountId, DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId,
     DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult,
     SignInWithInfo,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
+use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, create_open_api_router, db_write};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::login_impl;
 use crate::{
@@ -175,28 +176,15 @@ pub fn demo_mode_router<
         + LatestPublicKeysInfo,
 >(
     s: S,
-) -> Router {
-    use axum::routing::post;
-
-    Router::new()
-        .route(
-            PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS_AXUM,
-            post(post_demo_mode_accessible_accounts::<S>),
-        )
-        .route(PATH_POST_DEMO_MODE_LOGIN_AXUM, post(post_demo_mode_login::<S>))
-        .route(
-            PATH_POST_DEMO_MODE_CONFIRM_LOGIN_AXUM,
-            post(post_demo_mode_confirm_login::<S>),
-        )
-        .route(
-            PATH_POST_DEMO_MODE_REGISTER_ACCOUNT_AXUM,
-            post(post_demo_mode_register_account::<S>),
-        )
-        .route(
-            PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT_AXUM,
-            post(post_demo_mode_login_to_account::<S>),
-        )
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_demo_mode_accessible_accounts::<S>,
+        post_demo_mode_login::<S>,
+        post_demo_mode_confirm_login::<S>,
+        post_demo_mode_register_account::<S>,
+        post_demo_mode_login_to_account::<S>,
+    )
 }
 
 create_counters!(

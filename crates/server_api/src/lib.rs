@@ -28,48 +28,9 @@ pub use server_common::{data::DataError, result};
         // Common
         common::get_version,
         common::get_connect_websocket,
-        // Common admin
-        common_admin::get_system_info,
-        common_admin::get_software_info,
-        common_admin::get_latest_build_info,
-        common_admin::get_backend_config,
-        common_admin::get_perf_data,
-        common_admin::post_request_build_software,
-        common_admin::post_request_update_software,
-        common_admin::post_request_restart_or_reset_backend,
-        common_admin::post_backend_config,
     ),
     components(schemas(
-        // Common
-        model::common::EventToClient,
-        model::common::EventType,
-        model::common::BackendVersion,
-        model::common::AccountId,
-        model::common::AccessToken,
-        model::common::RefreshToken,
-        model::common::LatestViewedMessageChanged,
-        model::common::ContentProcessingStateChanged,
-        model::common::sync_version::SyncVersion,
-        model::common::sync_version::AccountSyncVersion,
-        simple_backend_model::UnixTime,
-        // Common admin
-        model::common_admin::BackendConfig,
-        model::common_admin::BotConfig,
-        simple_backend_model::perf::TimeGranularity,
-        simple_backend_model::perf::PerfHistoryQuery,
-        simple_backend_model::perf::PerfValueArea,
-        simple_backend_model::perf::PerfHistoryValue,
-        simple_backend_model::perf::PerfHistoryQueryResult,
         // Manager
-        manager_model::SystemInfoList,
-        manager_model::SystemInfo,
-        manager_model::CommandOutput,
-        manager_model::BuildInfo,
-        manager_model::SoftwareInfo,
-        manager_model::RebootQueryParam,
-        manager_model::ResetDataQueryParam,
-        manager_model::DownloadType,
-        manager_model::DownloadTypeQueryParam,
         manager_model::SoftwareOptions,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
@@ -156,4 +117,25 @@ macro_rules! db_write_raw {
             r
         }
     }};
+}
+
+#[macro_export]
+macro_rules! create_open_api_router {
+    (
+        $state_instance:ident,
+        $(
+            $path:ident::<$state_type:ty>,
+        )*
+    ) => {
+        {
+            $(
+                let $path = $path::<$state_type>;
+            )*
+            utoipa_axum::router::OpenApiRouter::new()
+            $(
+                .merge(utoipa_axum::router::OpenApiRouter::new().routes(utoipa_axum::routes!($path)))
+            )*
+            .with_state($state_instance)
+        }
+    };
 }

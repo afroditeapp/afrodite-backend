@@ -491,6 +491,7 @@ pub struct AttributeValue {
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
     /// Sub level values for this attribute value.
+    #[schema(no_recursion)]
     pub group_values: Option<GroupValues>,
 }
 

@@ -16,6 +16,7 @@ use server_data_all::demo::DemoModeManager;
 use simple_backend::app::SimpleBackendAppState;
 
 pub mod state_impl;
+pub mod state_impl_empty;
 pub mod connection_tools_impl;
 
 /// State type for route handlers.
@@ -59,3 +60,8 @@ impl AppState {
         state
     }
 }
+
+pub(crate) type E = AppStateEmpty;
+
+#[derive(Clone)]
+pub struct AppStateEmpty;

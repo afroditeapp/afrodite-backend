@@ -367,6 +367,7 @@ pub struct ReceivedBlocksPage {
     pub profiles: Vec<AccountId>,
 }
 
+/// Client uses this type even if it is not directly in API routes
 #[derive(Debug, Serialize, Clone, ToSchema)]
 pub struct PendingMessage {
     pub id: PendingMessageId,

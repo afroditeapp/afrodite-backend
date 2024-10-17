@@ -10,6 +10,7 @@ tokio = { workspace = true }
 axum = { workspace = true }
 
 utoipa = { workspace = true }
+utoipa-axum = { workspace = true }
 
 model = { path = "../model" }
 

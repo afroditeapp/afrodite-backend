@@ -228,7 +228,6 @@ impl From<NotificationEvent> for EventToClientInternal {
     Debug,
     Serialize,
     Deserialize,
-    ToSchema,
     Clone,
     Eq,
     Hash,

@@ -1,11 +1,12 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::UpdateUnlimitedLikes, db_write, db_write_multiple};
+use server_api::{app::UpdateUnlimitedLikes, create_open_api_router, db_write, db_write_multiple};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData},
@@ -162,21 +163,14 @@ pub fn settings_router<
     S: StateBase + GetInternalApi + GetConfig + WriteData + ReadData + GetAccessTokens + UpdateUnlimitedLikes,
 >(
     s: S,
-) -> Router {
-    use axum::routing::{get, post, put};
-
-    Router::new()
-        .route(PATH_GET_ACCOUNT_DATA_AXUM, get(get_account_data::<S>))
-        .route(PATH_POST_ACCOUNT_DATA_AXUM, post(post_account_data::<S>))
-        .route(
-            PATH_SETTING_PROFILE_VISIBILITY_AXUM,
-            put(put_setting_profile_visiblity::<S>),
-        )
-        .route(
-            PATH_SETTING_UNLIMITED_LIKES_AXUM,
-            put(put_setting_unlimited_likes::<S>),
-        )
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_account_data::<S>,
+        post_account_data::<S>,
+        put_setting_profile_visiblity::<S>,
+        put_setting_unlimited_likes::<S>,
+    )
 }
 
 create_counters!(

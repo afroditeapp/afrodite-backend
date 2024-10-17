@@ -1,12 +1,13 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::app::{CompleteInitialSetupCmd, ValidateModerationRequest};
+use server_api::{app::{CompleteInitialSetupCmd, ValidateModerationRequest}, create_open_api_router};
 use server_data_account::{
     read::GetReadCommandsAccount,
     write::GetWriteCommandsAccount,
 };
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData},
@@ -143,15 +144,13 @@ pub fn register_router<
         + CompleteInitialSetupCmd,
 >(
     s: S,
-) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        // Skip PATH_REGISTER because it does not need authentication.
-        .route(PATH_GET_ACCOUNT_SETUP_AXUM, get(get_account_setup::<S>))
-        .route(PATH_POST_ACCOUNT_SETUP_AXUM, post(post_account_setup::<S>))
-        .route(PATH_ACCOUNT_COMPLETE_SETUP_AXUM, post(post_complete_setup::<S>))
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_account_setup::<S>,
+        post_account_setup::<S>,
+        post_complete_setup::<S>,
+    )
 }
 
 create_counters!(

@@ -1,6 +1,6 @@
 use axum::{
     extract::{Query, State},
-    Extension, Router,
+    Extension,
 };
 use manager_model::{
     BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
@@ -10,10 +10,10 @@ use model::{AccountIdInternal, Capabilities};
 use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::StateBase,
-    utils::{Json, StatusCode},
+    app::StateBase, create_open_api_router, utils::{Json, StatusCode}
 };
 
 #[obfuscate_api]
@@ -246,26 +246,16 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
     }
 }
 
-pub fn manager_router<S: StateBase + GetManagerApi>(s: S) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(PATH_GET_SYSTEM_INFO_AXUM, get(get_system_info::<S>))
-        .route(PATH_GET_SOFTWARE_INFO_AXUM, get(get_software_info::<S>))
-        .route(PATH_GET_LATEST_BUILD_INFO_AXUM, get(get_latest_build_info::<S>))
-        .route(
-            PATH_POST_REQUEST_BUILD_SOFTWARE_AXUM,
-            post(post_request_build_software::<S>),
-        )
-        .route(
-            PATH_POST_REQUEST_UPDATE_SOFTWARE_AXUM,
-            post(post_request_update_software::<S>),
-        )
-        .route(
-            PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND_AXUM,
-            post(post_request_restart_or_reset_backend::<S>),
-        )
-        .with_state(s)
+pub fn manager_router<S: StateBase + GetManagerApi>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_system_info::<S>,
+        get_software_info::<S>,
+        get_latest_build_info::<S>,
+        post_request_build_software::<S>,
+        post_request_update_software::<S>,
+        post_request_restart_or_reset_backend::<S>,
+    )
 }
 
 create_counters!(
