@@ -2,21 +2,23 @@ use std::{collections::HashMap, fmt::Debug, net::SocketAddr, sync::Arc};
 
 use account::CachedAccountComponentData;
 use chat::CachedChatComponentData;
-use config::Config;
 use error_stack::Result;
+use media::CachedMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, IteratorSessionIdInternal, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileContentVersion, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags
 };
+use profile::CachedProfile;
 use simple_backend_model::UnixTime;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
 
-use super::index::location::LocationIndexIteratorState;
 use crate::event::{event_channel, EventReceiver, EventSender};
 
 pub mod db_iterator;
 pub mod account;
 pub mod chat;
+pub mod profile;
+pub mod media;
 
 /// If this exists update last seen time atomic variable in location
 /// index.
@@ -305,72 +307,6 @@ impl DatabaseCache {
     //         .map(|current_data| *current_data.as_mut() = data)?;
     //     Ok(())
     // }
-}
-
-#[derive(Debug)]
-pub struct CachedProfile {
-    pub account_id: AccountId,
-    pub data: ProfileInternal,
-    pub state: ProfileStateCached,
-    pub location: LocationData,
-    pub attributes: SortedProfileAttributes,
-    pub filters: Vec<ProfileAttributeFilterValue>,
-    last_seen_time: Option<UnixTime>,
-    pub profile_iterator_session_id: Option<IteratorSessionIdInternal>,
-}
-
-impl CachedProfile {
-    pub fn new(
-        account_id: AccountId,
-        data: ProfileInternal,
-        state: ProfileStateInternal,
-        attributes: Vec<ProfileAttributeValue>,
-        filters: Vec<ProfileAttributeFilterValue>,
-        config: &Config,
-        last_seen_time: Option<UnixTime>,
-    ) -> Self {
-        Self {
-            account_id,
-            data,
-            state: state.into(),
-            location: LocationData {
-                current_position: LocationIndexKey::default(),
-                current_iterator: LocationIndexIteratorState::new(),
-            },
-            attributes: SortedProfileAttributes::new(attributes, config.profile_attributes()),
-            filters,
-            last_seen_time,
-            profile_iterator_session_id: None,
-        }
-    }
-
-    pub fn filters(&self) -> ProfileQueryMakerDetails {
-        ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct LocationData {
-    pub current_position: LocationIndexKey,
-    pub current_iterator: LocationIndexIteratorState,
-}
-
-#[derive(Debug)]
-pub struct CachedMedia {
-    pub account_id: AccountId,
-    pub profile_content_version: ProfileContentVersion,
-}
-
-impl CachedMedia {
-    pub fn new(
-        account_id: AccountId,
-        profile_content_version: ProfileContentVersion
-    ) -> Self {
-        Self {
-            account_id,
-            profile_content_version,
-        }
-    }
 }
 
 #[derive(Debug)]

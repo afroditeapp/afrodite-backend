@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, IteratorSessionId, ProfilePage};
+use model::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use simple_backend::create_counters;
@@ -17,7 +17,7 @@ const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 #[utoipa::path(
     post,
     path = PATH_POST_NEXT_PROFILE_PAGE,
-    request_body(content = IteratorSessionId),
+    request_body(content = ProfileIteratorSessionId),
     responses(
         (status = 200, description = "Update successfull.", body = ProfilePage),
         (status = 401, description = "Unauthorized."),
@@ -28,7 +28,7 @@ const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
 pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(iterator_session_id): Json<IteratorSessionId>,
+    Json(iterator_session_id): Json<ProfileIteratorSessionId>,
 ) -> Result<Json<ProfilePage>, StatusCode> {
     PROFILE.post_get_next_profile_page.incr();
 
@@ -66,7 +66,7 @@ const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     post,
     path = PATH_POST_RESET_PROFILE_PAGING,
     responses(
-        (status = 200, description = "Update successfull.", body = IteratorSessionId),
+        (status = 200, description = "Update successfull.", body = ProfileIteratorSessionId),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -75,9 +75,9 @@ const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
 pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<IteratorSessionId>, StatusCode> {
+) -> Result<Json<ProfileIteratorSessionId>, StatusCode> {
     PROFILE.post_reset_profile_paging.incr();
-    let iterator_session_id: IteratorSessionId = state
+    let iterator_session_id: ProfileIteratorSessionId = state
         .concurrent_write_profile_blocking(
             account_id.as_id(),
             move |cmds| {

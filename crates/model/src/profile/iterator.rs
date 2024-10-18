@@ -3,22 +3,22 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
-    AccountId, LastSeenTime, ProfileContentVersion, ProfileInternal, ProfileVersion,
+    AccountId, LastSeenTime, NextNumberStorage, ProfileContentVersion, ProfileInternal, ProfileVersion
 };
 
 /// Session ID type for profile iterator so that client can detect
 /// server restarts and ask user to refresh profiles.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct IteratorSessionIdInternal {
-    id: uuid::Uuid,
+pub struct ProfileIteratorSessionIdInternal {
+    id: i64,
 }
 
-impl IteratorSessionIdInternal {
-    /// Current implementation uses UUID. Only requirement for this
+impl ProfileIteratorSessionIdInternal {
+    /// Current implementation uses i64. Only requirement for this
     /// type is that next one should be different than the previous.
-    pub fn create_random() -> Self {
+    pub fn create(storage: &mut NextNumberStorage) -> Self {
         Self {
-            id: uuid::Uuid::new_v4(),
+            id: storage.get_and_increment(),
         }
     }
 }
@@ -26,14 +26,14 @@ impl IteratorSessionIdInternal {
 /// Session ID type for profile iterator so that client can detect
 /// server restarts and ask user to refresh profiles.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct IteratorSessionId {
-    id: String,
+pub struct ProfileIteratorSessionId {
+    id: i64,
 }
 
-impl From<IteratorSessionIdInternal> for IteratorSessionId {
-    fn from(value: IteratorSessionIdInternal) -> Self {
+impl From<ProfileIteratorSessionIdInternal> for ProfileIteratorSessionId {
+    fn from(value: ProfileIteratorSessionIdInternal) -> Self {
         Self {
-            id: value.id.hyphenated().to_string(),
+            id: value.id,
         }
     }
 }
