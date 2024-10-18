@@ -57,3 +57,7 @@ impl NextNumberStorage {
         next
     }
 }
+
+#[derive(utoipa::ToSchema)]
+#[schema(value_type = String, format = Binary)]
+pub struct BinaryData(());

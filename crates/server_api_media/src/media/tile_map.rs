@@ -23,7 +23,7 @@ const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/{z}/{x}/{y}";
     path = PATH_GET_MAP_TILE,
     params(MapTileZ, MapTileX, MapTileY),
     responses(
-        (status = 200, description = "Get map tile PNG file.", body = Vec<u8>, content_type = "image/png"),
+        (status = 200, description = "Get map tile PNG file.", body = inline(model::BinaryData), content_type = "image/png"),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),

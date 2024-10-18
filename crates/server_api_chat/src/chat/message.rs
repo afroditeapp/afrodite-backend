@@ -45,7 +45,7 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     get,
     path = PATH_GET_PENDING_MESSAGES,
     responses(
-        (status = 200, description = "Success.", body = Vec<u8>, content_type = "application/octet-stream"),
+        (status = 200, description = "Success.", body = inline(model::BinaryData), content_type = "application/octet-stream"),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -218,7 +218,7 @@ const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
     post,
     path = PATH_POST_SEND_MESSAGE,
     params(SendMessageToAccountParams),
-    request_body(content = Vec<u8>, content_type = "application/octet-stream"),
+    request_body(content = inline(model::BinaryData), content_type = "application/octet-stream"),
     responses(
         (status = 200, description = "Success.", body = SendMessageResult),
         (status = 401, description = "Unauthorized."),

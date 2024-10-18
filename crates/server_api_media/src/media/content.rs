@@ -47,7 +47,7 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
     path = PATH_GET_CONTENT,
     params(AccountId, ContentId, GetContentQueryParams),
     responses(
-        (status = 200, description = "Get content file.", body = Vec<u8>, content_type = "application/octet-stream"),
+        (status = 200, description = "Get content file.", body = inline(model::BinaryData), content_type = "application/octet-stream"),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
@@ -186,7 +186,7 @@ const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/{slot_id
     put,
     path = PATH_PUT_CONTENT_TO_CONTENT_SLOT,
     params(SlotId, NewContentParams),
-    request_body(content = Vec<u8>, content_type = "image/jpeg"),
+    request_body(content = inline(model::BinaryData), content_type = "application/octet-stream"),
     responses(
         (status = 200, description = "Image upload was successful.", body = ContentProcessingId),
         (status = 401, description = "Unauthorized."),
