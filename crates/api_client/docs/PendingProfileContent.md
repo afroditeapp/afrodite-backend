@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**c0** | Option<[**models::ContentInfo**](ContentInfo.md)> |  | [optional]
+**c0** | Option<[**models::ContentInfo**](ContentInfo.md)> | Primary profile image which is shown in grid view.  If this is None, then server will not change the current profile content when moderation is accepted. | [optional]
 **c1** | Option<[**models::ContentInfo**](ContentInfo.md)> |  | [optional]
 **c2** | Option<[**models::ContentInfo**](ContentInfo.md)> |  | [optional]
 **c3** | Option<[**models::ContentInfo**](ContentInfo.md)> |  | [optional]

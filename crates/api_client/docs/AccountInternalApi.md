@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**post_login**](AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered
+[**post_login**](AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 [**post_register**](AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
 
 
@@ -12,9 +12,9 @@ Method | HTTP request | Description
 ## post_login
 
 > models::LoginResult post_login(account_id)
-Get new AccessToken for a bot account. If the account is not registered
+Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 
-as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
+Available only if server internal API is enabled with bot_login from config file.
 
 ### Parameters
 

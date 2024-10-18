@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentProcessingState {
+    /// Content ID of the processed content.
     #[serde(rename = "cid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub cid: Option<Option<Box<models::ContentId>>>,
     #[serde(rename = "state")]

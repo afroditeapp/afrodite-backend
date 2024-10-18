@@ -17,12 +17,14 @@ Method | HTTP request | Description
 [**post_add_sender_acknowledgement**](ChatApi.md#post_add_sender_acknowledgement) | **POST** /E-yVIcGOLJyZ7nsT_Lh4KPCRkQg | 
 [**post_block_profile**](ChatApi.md#post_block_profile) | **POST** /MpWSY01lXj7KaDK1KCNHLWRg9k4 | Block profile
 [**post_get_new_received_likes_count**](ChatApi.md#post_get_new_received_likes_count) | **POST** /dCPla4TZep6KONk57U2J7p7s6jw | 
-[**post_get_next_received_likes_page**](ChatApi.md#post_get_next_received_likes_page) | **POST** /eEB4pq6DGUYlMVAYwPCm2RT5HP0 | Update received likes iterator and get next page
+[**post_get_next_matches_page**](ChatApi.md#post_get_next_matches_page) | **POST** /dci4ZhBnUr5EXK09jAQMfsKE9EM | Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
+[**post_get_next_received_likes_page**](ChatApi.md#post_get_next_received_likes_page) | **POST** /eEB4pq6DGUYlMVAYwPCm2RT5HP0 | Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
 [**post_get_pending_notification**](ChatApi.md#post_get_pending_notification) | **POST** /MhQXhJMKgrUh0s95FueOgalQg-o | Get pending notification and reset pending notification.
 [**post_message_number_of_latest_viewed_message**](ChatApi.md#post_message_number_of_latest_viewed_message) | **POST** /gas7m77c7kw7N7TKyMQVzUKy3AQ | Update message number of the most recent message that the recipient has viewed.
-[**post_public_key**](ChatApi.md#post_public_key) | **POST** /e-r4VrqWJD1kIttg1McD9kv5o0k | Replace current public key with a new public key.
+[**post_public_key**](ChatApi.md#post_public_key) | **POST** /e-r4VrqWJD1kIttg1McD9kv5o0k | Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.
+[**post_reset_matches_paging**](ChatApi.md#post_reset_matches_paging) | **POST** /kxGkIkvlKvyWPvovHYRtlC7fYXI | 
 [**post_reset_received_likes_paging**](ChatApi.md#post_reset_received_likes_paging) | **POST** /B75BRIylLV-JmwoB4YiOYSlyO-A | 
-[**post_send_like**](ChatApi.md#post_send_like) | **POST** /sXq6ko76GtT7DuNXnkTTtFL6isY | Send a like to some account. If both will like each other, then
+[**post_send_like**](ChatApi.md#post_send_like) | **POST** /sXq6ko76GtT7DuNXnkTTtFL6isY | Send a like to some account. If both will like each other, then the accounts will be a match.
 [**post_send_message**](ChatApi.md#post_send_message) | **POST** /YEFESgzw0YxQUETcUmnmfWCaF1g | Send message to a match.
 [**post_set_device_token**](ChatApi.md#post_set_device_token) | **POST** /CBoGGZ4HDW0REbM6SxasDCvXJNM | 
 [**post_unblock_profile**](ChatApi.md#post_unblock_profile) | **POST** /j2Ofh-WeAFmjCQqO_AyHIM1eZEo | Unblock profile
@@ -61,7 +63,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_matches
 
-> models::MatchesPage get_matches()
+> models::AllMatchesPage get_matches()
 Get matches
 
 ### Parameters
@@ -70,7 +72,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**models::MatchesPage**](MatchesPage.md)
+[**models::AllMatchesPage**](AllMatchesPage.md)
 
 ### Authorization
 
@@ -223,7 +225,7 @@ This endpoint does not need any parameter.
 > models::SentLikesPage get_sent_likes()
 Get sent likes.
 
-Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
+Profile will not be returned if:  - Profile is hidden (not public) - Profile is a match
 
 ### Parameters
 
@@ -379,12 +381,40 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## post_get_next_matches_page
+
+> models::MatchesPage post_get_next_matches_page(matches_iterator_session_id)
+Update matches iterator and get next page of matches. If the page is empty there is no more matches available.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**matches_iterator_session_id** | [**MatchesIteratorSessionId**](MatchesIteratorSessionId.md) |  | [required] |
+
+### Return type
+
+[**models::MatchesPage**](MatchesPage.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_get_next_received_likes_page
 
 > models::ReceivedLikesPage post_get_next_received_likes_page(received_likes_iterator_session_id)
-Update received likes iterator and get next page
+Update received likes iterator and get next page of received likes. If the page is empty there is no more received likes available.
 
-of received likes. If the page is empty there is no more received likes available.  Profile will not be returned if: - Profile is blocked - Profile is a match
+Profile will not be returned if: - Profile is blocked - Profile is a match
 
 ### Parameters
 
@@ -470,9 +500,9 @@ Name | Type | Description  | Required | Notes
 ## post_public_key
 
 > models::PublicKeyId post_public_key(set_public_key)
-Replace current public key with a new public key.
+Replace current public key with a new public key. Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.
 
-Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.  Only version 1 public keys are currently supported.
+Only version 1 public keys are currently supported.
 
 ### Parameters
 
@@ -492,6 +522,31 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_reset_matches_paging
+
+> models::ResetMatchesIteratorResult post_reset_matches_paging()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**models::ResetMatchesIteratorResult**](ResetMatchesIteratorResult.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -525,9 +580,7 @@ This endpoint does not need any parameter.
 ## post_send_like
 
 > models::SendLikeResult post_send_like(account_id)
-Send a like to some account. If both will like each other, then
-
-the accounts will be a match.
+Send a like to some account. If both will like each other, then the accounts will be a match.
 
 ### Parameters
 
@@ -557,7 +610,7 @@ Name | Type | Description  | Required | Notes
 > models::SendMessageResult post_send_message(receiver, receiver_public_key_id, receiver_public_key_version, client_id, client_local_id, body)
 Send message to a match.
 
-Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
+Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.  Sending will fail if one or two way block exists.
 
 ### Parameters
 

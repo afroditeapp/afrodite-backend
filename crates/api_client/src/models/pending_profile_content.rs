@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// PendingProfileContent : Profile image settings which will be applied when moderation request is accepted.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingProfileContent {
+    /// Primary profile image which is shown in grid view.  If this is None, then server will not change the current profile content when moderation is accepted.
     #[serde(rename = "c0", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub c0: Option<Option<Box<models::ContentInfo>>>,
     #[serde(rename = "c1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

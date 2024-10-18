@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DeleteLikeResult {
+    #[serde(rename = "error_account_interaction_state_mismatch", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub error_account_interaction_state_mismatch: Option<Option<models::CurrentAccountInteractionState>>,
     /// The account tracking for delete like only tracks the latest deleter account, so it is possible that this error resets if delete like target account likes and removes the like.
     #[serde(rename = "error_delete_already_done_before", skip_serializing_if = "Option::is_none")]
     pub error_delete_already_done_before: Option<bool>,
@@ -21,6 +23,7 @@ pub struct DeleteLikeResult {
 impl DeleteLikeResult {
     pub fn new() -> DeleteLikeResult {
         DeleteLikeResult {
+            error_account_interaction_state_mismatch: None,
             error_delete_already_done_before: None,
         }
     }

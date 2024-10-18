@@ -33,6 +33,15 @@ pub enum DeleteModerationRequestError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`delete_pending_profile_content`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeletePendingProfileContentError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`delete_pending_security_content_info`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -180,7 +189,6 @@ pub enum PutSecurityContentInfoError {
 }
 
 
-/// since removing all usage from it (content is not a security image or profile content).
 pub async fn delete_content(configuration: &configuration::Configuration, aid: &str, cid: &str) -> Result<(), Error<DeleteContentError>> {
     let local_var_configuration = configuration;
 
@@ -251,7 +259,41 @@ pub async fn delete_moderation_request(configuration: &configuration::Configurat
     }
 }
 
-/// Server will not change the security content when next moderation request is moderated as accepted.
+pub async fn delete_pending_profile_content(configuration: &configuration::Configuration, ) -> Result<(), Error<DeletePendingProfileContentError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/6LYLKEUqrhj86bf2PXWOjUYHbls", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<DeletePendingProfileContentError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 pub async fn delete_pending_security_content_info(configuration: &configuration::Configuration, ) -> Result<(), Error<DeletePendingSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
@@ -322,7 +364,7 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required. 
+/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required.  
 pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
     let local_var_configuration = configuration;
 
@@ -361,7 +403,7 @@ pub async fn get_content(configuration: &configuration::Configuration, aid: &str
     }
 }
 
-/// Slots from 0 to 6 are available. 
+/// Slots from 0 to 6 are available.  
 pub async fn get_content_slot_state(configuration: &configuration::Configuration, slot_id: i32) -> Result<models::ContentProcessingState, Error<GetContentSlotStateError>> {
     let local_var_configuration = configuration;
 
@@ -615,7 +657,7 @@ pub async fn get_security_content_info(configuration: &configuration::Configurat
     }
 }
 
-/// Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512. 
+/// The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512.  
 pub async fn put_content_to_content_slot(configuration: &configuration::Configuration, slot_id: i32, secure_capture: bool, content_type: models::MediaContentType, body: std::path::PathBuf) -> Result<models::ContentProcessingId, Error<PutContentToContentSlotError>> {
     let local_var_configuration = configuration;
 
@@ -654,7 +696,7 @@ pub async fn put_content_to_content_slot(configuration: &configuration::Configur
     }
 }
 
-/// Make sure that moderation request has content IDs which points to your own image slots. 
+/// Make sure that moderation request has content IDs which points to your own image slots.  
 pub async fn put_moderation_request(configuration: &configuration::Configuration, moderation_request_content: models::ModerationRequestContent) -> Result<(), Error<PutModerationRequestError>> {
     let local_var_configuration = configuration;
 
@@ -691,7 +733,7 @@ pub async fn put_moderation_request(configuration: &configuration::Configuration
     }
 }
 
-/// Server will switch to pending content when next moderation request is accepted.  # Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images.
+/// # Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images.
 pub async fn put_pending_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<(), Error<PutPendingProfileContentError>> {
     let local_var_configuration = configuration;
 

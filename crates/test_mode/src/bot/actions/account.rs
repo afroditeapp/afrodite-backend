@@ -329,7 +329,7 @@ impl<'a> BotAction for SetAccountSetup<'a> {
             .unwrap_or("default@example.com".to_string());
 
         let account_data = AccountData {
-            email: Some(Some(email)),
+            email: Some(email),
         };
 
         account_api::post_account_data(state.api.account(), account_data)

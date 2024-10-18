@@ -14,8 +14,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetMyProfileResult {
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
-    #[serde(rename = "lst", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub lst: Option<Option<i64>>,
+    #[serde(rename = "lst", skip_serializing_if = "Option::is_none")]
+    pub lst: Option<i64>,
     #[serde(rename = "p")]
     pub p: Box<models::Profile>,
     #[serde(rename = "sv")]

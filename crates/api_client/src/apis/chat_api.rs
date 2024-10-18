@@ -132,6 +132,15 @@ pub enum PostGetNewReceivedLikesCountError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_get_next_matches_page`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostGetNextMatchesPageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_get_next_received_likes_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -163,6 +172,15 @@ pub enum PostMessageNumberOfLatestViewedMessageError {
 pub enum PostPublicKeyError {
     Status401(),
     Status406(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_reset_matches_paging`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostResetMatchesPagingError {
+    Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -250,7 +268,7 @@ pub async fn delete_like(configuration: &configuration::Configuration, account_i
     }
 }
 
-pub async fn get_matches(configuration: &configuration::Configuration, ) -> Result<models::MatchesPage, Error<GetMatchesError>> {
+pub async fn get_matches(configuration: &configuration::Configuration, ) -> Result<models::AllMatchesPage, Error<GetMatchesError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -463,7 +481,7 @@ pub async fn get_sent_blocks(configuration: &configuration::Configuration, ) -> 
     }
 }
 
-/// Profile will not be returned if:  - Profile is hidden (not public) - Profile is blocked - Profile is a match
+/// Profile will not be returned if:  - Profile is hidden (not public) - Profile is a match
 pub async fn get_sent_likes(configuration: &configuration::Configuration, ) -> Result<models::SentLikesPage, Error<GetSentLikesError>> {
     let local_var_configuration = configuration;
 
@@ -677,7 +695,43 @@ pub async fn post_get_new_received_likes_count(configuration: &configuration::Co
     }
 }
 
-/// of received likes. If the page is empty there is no more received likes available.  Profile will not be returned if: - Profile is blocked - Profile is a match
+pub async fn post_get_next_matches_page(configuration: &configuration::Configuration, matches_iterator_session_id: models::MatchesIteratorSessionId) -> Result<models::MatchesPage, Error<PostGetNextMatchesPageError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/dci4ZhBnUr5EXK09jAQMfsKE9EM", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+    local_var_req_builder = local_var_req_builder.json(&matches_iterator_session_id);
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostGetNextMatchesPageError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Profile will not be returned if: - Profile is blocked - Profile is a match
 pub async fn post_get_next_received_likes_page(configuration: &configuration::Configuration, received_likes_iterator_session_id: models::ReceivedLikesIteratorSessionId) -> Result<models::ReceivedLikesPage, Error<PostGetNextReceivedLikesPageError>> {
     let local_var_configuration = configuration;
 
@@ -779,7 +833,7 @@ pub async fn post_message_number_of_latest_viewed_message(configuration: &config
     }
 }
 
-/// Returns public key ID number which server increments. This must be called only when needed as this route will fail every time if current public key ID number is i64::MAX.  Only version 1 public keys are currently supported.
+/// Only version 1 public keys are currently supported.
 pub async fn post_public_key(configuration: &configuration::Configuration, set_public_key: models::SetPublicKey) -> Result<models::PublicKeyId, Error<PostPublicKeyError>> {
     let local_var_configuration = configuration;
 
@@ -811,6 +865,41 @@ pub async fn post_public_key(configuration: &configuration::Configuration, set_p
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PostPublicKeyError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+pub async fn post_reset_matches_paging(configuration: &configuration::Configuration, ) -> Result<models::ResetMatchesIteratorResult, Error<PostResetMatchesPagingError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/kxGkIkvlKvyWPvovHYRtlC7fYXI", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PostResetMatchesPagingError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
         Err(Error::ResponseError(local_var_error))
     }
@@ -851,7 +940,6 @@ pub async fn post_reset_received_likes_paging(configuration: &configuration::Con
     }
 }
 
-/// the accounts will be a match.
 pub async fn post_send_like(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::SendLikeResult, Error<PostSendLikeError>> {
     let local_var_configuration = configuration;
 
@@ -888,7 +976,7 @@ pub async fn post_send_like(configuration: &configuration::Configuration, accoun
     }
 }
 
-/// Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.
+/// Max pending message count is 50. Max message size is u16::MAX.  The sender message ID must be value which server expects.  Sending will fail if one or two way block exists.
 pub async fn post_send_message(configuration: &configuration::Configuration, receiver: &str, receiver_public_key_id: i64, receiver_public_key_version: i64, client_id: i64, client_local_id: i64, body: std::path::PathBuf) -> Result<models::SendMessageResult, Error<PostSendMessageError>> {
     let local_var_configuration = configuration;
 

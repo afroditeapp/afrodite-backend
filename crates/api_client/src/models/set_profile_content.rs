@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// SetProfileContent : Update normal or pending profile content
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SetProfileContent {
+    /// Primary profile image which is shown in grid view.
     #[serde(rename = "c0")]
     pub c0: Box<models::ContentId>,
     #[serde(rename = "c1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

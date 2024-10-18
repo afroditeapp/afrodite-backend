@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**content_version** | Option<[**models::ProfileContentVersion**](ProfileContentVersion.md)> |  | [optional]
+**content_version** | Option<[**models::ProfileContentVersion**](ProfileContentVersion.md)> | This is optional because media component owns it. | [optional]
 **id** | [**models::AccountId**](AccountId.md) |  | 
 **last_seen_time** | Option<**i64**> | Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online. | [optional]
 **version** | [**models::ProfileVersion**](ProfileVersion.md) |  | 

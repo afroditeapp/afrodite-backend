@@ -7,22 +7,22 @@ Method | HTTP request | Description
 [**delete_favorite_profile**](ProfileApi.md#delete_favorite_profile) | **DELETE** /yD1PtVhVvdk-usEran42JmCTFVQ | Delete favorite profile
 [**get_available_profile_attributes**](ProfileApi.md#get_available_profile_attributes) | **GET** /_lqy4YCINbw_RCxebKLGXdDq2AM | Get info what profile attributes server supports.
 [**get_favorite_profiles**](ProfileApi.md#get_favorite_profiles) | **GET** /Oep5nM7bWqTdRfRoULt-_FTkKJQ | Get list of all favorite profiles.
-[**get_initial_profile_age_info**](ProfileApi.md#get_initial_profile_age_info) | **GET** /NWOWjOlm6oTYsXiPsbhBDgknan0 | Get initial profile age information which can be used for calculating
+[**get_initial_profile_age_info**](ProfileApi.md#get_initial_profile_age_info) | **GET** /NWOWjOlm6oTYsXiPsbhBDgknan0 | Get initial profile age information which can be used for calculating current accepted profile ages.
 [**get_location**](ProfileApi.md#get_location) | **GET** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Get location for account which makes this request.
 [**get_my_profile**](ProfileApi.md#get_my_profile) | **GET** /iu25rmmvUzADXhW5SsP_DBGY2_w | Get my profile
 [**get_profile**](ProfileApi.md#get_profile) | **GET** /5i55ZcY0jIPD7B6pyyridKY0j0Q/{aid} | Get account's current profile.
 [**get_profile_attribute_filters**](ProfileApi.md#get_profile_attribute_filters) | **GET** /AL531AoIDRcTSWC-pdxcexf6tOM | Get current profile attribute filter values.
-[**get_profile_from_database_debug_mode_benchmark**](ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled
+[**get_profile_from_database_debug_mode_benchmark**](ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
 [**get_search_age_range**](ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
-[**get_search_groups**](ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups
+[**get_search_groups**](ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups (gender and what gender user is looking for)
 [**post_favorite_profile**](ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
 [**post_get_next_profile_page**](ProfileApi.md#post_get_next_profile_page) | **POST** /_XRgLHtmWtbgW3ZAlgfTH5bs6bE | Post (updates iterator) to get next page of profile list.
 [**post_profile**](ProfileApi.md#post_profile) | **POST** /5i55ZcY0jIPD7B6pyyridKY0j0Q | Update profile information.
 [**post_profile_attribute_filters**](ProfileApi.md#post_profile_attribute_filters) | **POST** /AL531AoIDRcTSWC-pdxcexf6tOM | Set profile attribute filter values.
-[**post_profile_to_database_debug_mode_benchmark**](ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /XDTSz35S_5tOKIsSpDITOc46MR4 | Post account's current profile directly to database. Debug mode must be enabled
+[**post_profile_to_database_debug_mode_benchmark**](ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /XDTSz35S_5tOKIsSpDITOc46MR4 | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
 [**post_reset_profile_paging**](ProfileApi.md#post_reset_profile_paging) | **POST** /uUYIl9C8DoXwTj1icArj0S4RTFI | Reset profile paging.
 [**post_search_age_range**](ProfileApi.md#post_search_age_range) | **POST** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Set account's current search age range
-[**post_search_groups**](ProfileApi.md#post_search_groups) | **POST** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Set account's current search groups
+[**post_search_groups**](ProfileApi.md#post_search_groups) | **POST** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Set account's current search groups (gender and what gender user is looking for)
 [**put_location**](ProfileApi.md#put_location) | **PUT** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Update location for account which makes this request.
 
 
@@ -108,9 +108,7 @@ This endpoint does not need any parameter.
 ## get_initial_profile_age_info
 
 > models::GetInitialProfileAgeInfoResult get_initial_profile_age_info()
-Get initial profile age information which can be used for calculating
-
-current accepted profile ages.
+Get initial profile age information which can be used for calculating current accepted profile ages.
 
 ### Parameters
 
@@ -242,9 +240,7 @@ This endpoint does not need any parameter.
 ## get_profile_from_database_debug_mode_benchmark
 
 > models::Profile get_profile_from_database_debug_mode_benchmark(aid)
-Get account's current profile from database. Debug mode must be enabled
-
-that route can be used.
+Get account's current profile from database. Debug mode must be enabled that route can be used.
 
 ### Parameters
 
@@ -297,9 +293,7 @@ This endpoint does not need any parameter.
 ## get_search_groups
 
 > models::SearchGroups get_search_groups()
-Get account's current search groups
-
-(gender and what gender user is looking for)
+Get account's current search groups (gender and what gender user is looking for)
 
 ### Parameters
 
@@ -351,7 +345,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_get_next_profile_page
 
-> models::ProfilePage post_get_next_profile_page(iterator_session_id)
+> models::ProfilePage post_get_next_profile_page(profile_iterator_session_id)
 Post (updates iterator) to get next page of profile list.
 
 ### Parameters
@@ -359,7 +353,7 @@ Post (updates iterator) to get next page of profile list.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**iterator_session_id** | [**IteratorSessionId**](IteratorSessionId.md) |  | [required] |
+**profile_iterator_session_id** | [**ProfileIteratorSessionId**](ProfileIteratorSessionId.md) |  | [required] |
 
 ### Return type
 
@@ -382,7 +376,7 @@ Name | Type | Description  | Required | Notes
 > post_profile(profile_update)
 Update profile information.
 
-Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile age must match with currently valid age range. The first min value for the age range is the age at the initial setup. The second min and max value is calculated using the following algorithm: - The initial age (initialAge) is paired with the year of initial setup completed (initialSetupYear). - Year difference (yearDifference = currentYear - initialSetupYear) is used for changing the range min and max. - Min value: initialAge + yearDifference - 1. - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 
 ### Parameters
 
@@ -438,9 +432,7 @@ Name | Type | Description  | Required | Notes
 ## post_profile_to_database_debug_mode_benchmark
 
 > post_profile_to_database_debug_mode_benchmark(profile_update)
-Post account's current profile directly to database. Debug mode must be enabled
-
-that route can be used.
+Post account's current profile directly to database. Debug mode must be enabled that route can be used.
 
 ### Parameters
 
@@ -467,7 +459,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_reset_profile_paging
 
-> models::IteratorSessionId post_reset_profile_paging()
+> models::ProfileIteratorSessionId post_reset_profile_paging()
 Reset profile paging.
 
 After this request getting next profiles will continue from the nearest profiles.
@@ -478,7 +470,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**models::IteratorSessionId**](IteratorSessionId.md)
+[**models::ProfileIteratorSessionId**](ProfileIteratorSessionId.md)
 
 ### Authorization
 
@@ -523,9 +515,7 @@ Name | Type | Description  | Required | Notes
 ## post_search_groups
 
 > post_search_groups(search_groups)
-Set account's current search groups
-
-(gender and what gender user is looking for)
+Set account's current search groups (gender and what gender user is looking for)
 
 ### Parameters
 

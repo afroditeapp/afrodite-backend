@@ -14,18 +14,24 @@ use serde::{Deserialize, Serialize};
 /// EventToClient : Event to client which is sent through websocket.  This is not an enum to make generated API bindings more easier to use.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EventToClient {
+    /// Data for event AccountStateChanged
     #[serde(rename = "account_state", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub account_state: Option<Option<models::AccountState>>,
+    /// Data for event AccountSyncVersionChanged
     #[serde(rename = "account_sync_version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub account_sync_version: Option<Option<Box<models::AccountSyncVersion>>>,
+    /// Data for event AccountCapabilitiesChanged
     #[serde(rename = "capabilities", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub capabilities: Option<Option<Box<models::Capabilities>>>,
+    /// Data for event ContentProcessingStateChanged
     #[serde(rename = "content_processing_state_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub content_processing_state_changed: Option<Option<Box<models::ContentProcessingStateChanged>>>,
     #[serde(rename = "event")]
     pub event: models::EventType,
+    /// Data for event LatestViewedMessageChanged
     #[serde(rename = "latest_viewed_message_changed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub latest_viewed_message_changed: Option<Option<Box<models::LatestViewedMessageChanged>>>,
+    /// Data for event ProfileVisibilityChanged
     #[serde(rename = "visibility", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub visibility: Option<Option<models::ProfileVisibility>>,
 }

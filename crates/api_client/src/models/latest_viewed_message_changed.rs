@@ -13,8 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LatestViewedMessageChanged {
+    /// New value for latest vieqed message
     #[serde(rename = "new_latest_viewed_message")]
     pub new_latest_viewed_message: Box<models::MessageNumber>,
+    /// Account id of message viewer
     #[serde(rename = "viewer")]
     pub viewer: Box<models::AccountId>,
 }

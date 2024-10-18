@@ -13,17 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MatchesPage {
-    #[serde(rename = "profiles")]
-    pub profiles: Vec<models::AccountId>,
-    #[serde(rename = "version")]
-    pub version: Box<models::MatchesSyncVersion>,
+    #[serde(rename = "error_invalid_iterator_session_id", skip_serializing_if = "Option::is_none")]
+    pub error_invalid_iterator_session_id: Option<bool>,
+    #[serde(rename = "p")]
+    pub p: Vec<models::AccountId>,
 }
 
 impl MatchesPage {
-    pub fn new(profiles: Vec<models::AccountId>, version: models::MatchesSyncVersion) -> MatchesPage {
+    pub fn new(p: Vec<models::AccountId>) -> MatchesPage {
         MatchesPage {
-            profiles,
-            version: Box::new(version),
+            error_invalid_iterator_session_id: None,
+            p,
         }
     }
 }

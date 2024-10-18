@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SendLikeResult {
-    #[serde(rename = "error_already_liked", skip_serializing_if = "Option::is_none")]
-    pub error_already_liked: Option<bool>,
+    #[serde(rename = "error_account_interaction_state_mismatch", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub error_account_interaction_state_mismatch: Option<Option<models::CurrentAccountInteractionState>>,
     #[serde(rename = "status", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub status: Option<Option<models::LimitedActionStatus>>,
 }
@@ -22,7 +22,7 @@ pub struct SendLikeResult {
 impl SendLikeResult {
     pub fn new() -> SendLikeResult {
         SendLikeResult {
-            error_already_liked: None,
+            error_account_interaction_state_mismatch: None,
             status: None,
         }
     }

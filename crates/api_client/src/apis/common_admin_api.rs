@@ -133,7 +133,6 @@ pub async fn get_backend_config(configuration: &configuration::Configuration, ) 
     }
 }
 
-/// instance.
 pub async fn get_latest_build_info(configuration: &configuration::Configuration, software_options: models::SoftwareOptions) -> Result<models::BuildInfo, Error<GetLatestBuildInfoError>> {
     let local_var_configuration = configuration;
 

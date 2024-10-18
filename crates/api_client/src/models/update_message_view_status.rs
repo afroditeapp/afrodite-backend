@@ -13,8 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateMessageViewStatus {
+    /// New message number for message view status.
     #[serde(rename = "mn")]
     pub mn: Box<models::MessageNumber>,
+    /// Sender of the messages.
     #[serde(rename = "sender")]
     pub sender: Box<models::AccountId>,
 }

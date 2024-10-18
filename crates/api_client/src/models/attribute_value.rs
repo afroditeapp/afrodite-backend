@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct AttributeValue {
     #[serde(rename = "editable", skip_serializing_if = "Option::is_none")]
     pub editable: Option<bool>,
+    /// Sub level values for this attribute value.
     #[serde(rename = "group_values", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub group_values: Option<Option<Box<models::GroupValues>>>,
     #[serde(rename = "icon", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

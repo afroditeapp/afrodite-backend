@@ -16,11 +16,14 @@ Method | HTTP request | Description
 [**post_delete**](AccountApi.md#post_delete) | **PUT** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Delete account.
 [**post_demo_mode_accessible_accounts**](AccountApi.md#post_demo_mode_accessible_accounts) | **POST** /xyG8kH6eLanLiKYXdnOx1xxeAdA | Get demo account's available accounts.
 [**post_demo_mode_confirm_login**](AccountApi.md#post_demo_mode_confirm_login) | **POST** /3KlEajKOIo1Drd3uW-IzQ1L3qlE | 
-[**post_demo_mode_login**](AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts
+[**post_demo_mode_login**](AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
 [**post_demo_mode_login_to_account**](AccountApi.md#post_demo_mode_login_to_account) | **POST** /sBH-LyNGOOFXivrv5clCpNrkwcA | 
 [**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
+[**post_get_news_count**](AccountApi.md#post_get_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | 
 [**post_get_next_client_id**](AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
-[**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if
+[**post_get_next_news_page**](AccountApi.md#post_get_next_news_page) | **POST** /BUFRdjIQCtPBjy00uEOHIA9X8CI | 
+[**post_reset_news_paging**](AccountApi.md#post_reset_news_paging) | **POST** /OVfZ-hXmiyX1uFTG4k-9SIBUh7U | 
+[**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
 [**put_setting_unlimited_likes**](AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 
 
@@ -241,7 +244,7 @@ Name | Type | Description  | Required | Notes
 > post_complete_setup()
 Complete initial setup.
 
-Requirements: - Account must be in `InitialSetup` state. - Account must have a valid AccountSetup info set. - Account must have a moderation request. - The current or pending security image of the account is in the request. - The current or pending first profile image of the account is in the request. 
+Requirements:  - Account must be in `InitialSetup` state.  - Account must have a valid AccountSetup info set.  - Account must have a moderation request.  - The current or pending security image of the account is in the request.  - The current or pending first profile image of the account is in the    request.  
 
 ### Parameters
 
@@ -351,9 +354,7 @@ No authorization required
 ## post_demo_mode_login
 
 > models::DemoModeLoginResult post_demo_mode_login(demo_mode_password)
-Access demo mode, which allows accessing all or specific accounts
-
-depending on the server configuration.
+Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
 
 ### Parameters
 
@@ -434,6 +435,31 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## post_get_news_count
+
+> models::NewsCountResult post_get_news_count()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**models::NewsCountResult**](NewsCountResult.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_get_next_client_id
 
 > models::ClientId post_get_next_client_id()
@@ -459,12 +485,63 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## post_get_next_news_page
+
+> models::NewsPage post_get_next_news_page(news_iterator_session_id)
+
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**news_iterator_session_id** | [**NewsIteratorSessionId**](NewsIteratorSessionId.md) |  | [required] |
+
+### Return type
+
+[**models::NewsPage**](NewsPage.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_reset_news_paging
+
+> models::ResetNewsIteratorResult post_reset_news_paging()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**models::ResetNewsIteratorResult**](ResetNewsIteratorResult.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_sign_in_with_login
 
 > models::LoginResult post_sign_in_with_login(sign_in_with_login_info)
-Start new session with sign in with Apple or Google. Creates new account if
-
-it does not exists.
+Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 
 ### Parameters
 

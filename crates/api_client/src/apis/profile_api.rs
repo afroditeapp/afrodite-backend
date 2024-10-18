@@ -302,7 +302,6 @@ pub async fn get_favorite_profiles(configuration: &configuration::Configuration,
     }
 }
 
-/// current accepted profile ages.
 pub async fn get_initial_profile_age_info(configuration: &configuration::Configuration, ) -> Result<models::GetInitialProfileAgeInfoResult, Error<GetInitialProfileAgeInfoError>> {
     let local_var_configuration = configuration;
 
@@ -485,7 +484,6 @@ pub async fn get_profile_attribute_filters(configuration: &configuration::Config
     }
 }
 
-/// that route can be used.
 pub async fn get_profile_from_database_debug_mode_benchmark(configuration: &configuration::Configuration, aid: &str) -> Result<models::Profile, Error<GetProfileFromDatabaseDebugModeBenchmarkError>> {
     let local_var_configuration = configuration;
 
@@ -556,7 +554,6 @@ pub async fn get_search_age_range(configuration: &configuration::Configuration, 
     }
 }
 
-/// (gender and what gender user is looking for)
 pub async fn get_search_groups(configuration: &configuration::Configuration, ) -> Result<models::SearchGroups, Error<GetSearchGroupsError>> {
     let local_var_configuration = configuration;
 
@@ -628,7 +625,7 @@ pub async fn post_favorite_profile(configuration: &configuration::Configuration,
     }
 }
 
-pub async fn post_get_next_profile_page(configuration: &configuration::Configuration, iterator_session_id: models::IteratorSessionId) -> Result<models::ProfilePage, Error<PostGetNextProfilePageError>> {
+pub async fn post_get_next_profile_page(configuration: &configuration::Configuration, profile_iterator_session_id: models::ProfileIteratorSessionId) -> Result<models::ProfilePage, Error<PostGetNextProfilePageError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -647,7 +644,7 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
         };
         local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&iterator_session_id);
+    local_var_req_builder = local_var_req_builder.json(&profile_iterator_session_id);
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -664,7 +661,7 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
     }
 }
 
-/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile age must match with currently valid age range. The first min value for the age range is the age at the initial setup. The second min and max value is calculated using the following algorithm: - The initial age (initialAge) is paired with the year of initial setup completed (initialSetupYear). - Year difference (yearDifference = currentYear - initialSetupYear) is used for changing the range min and max. - Min value: initialAge + yearDifference - 1. - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 pub async fn post_profile(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 
@@ -737,7 +734,6 @@ pub async fn post_profile_attribute_filters(configuration: &configuration::Confi
     }
 }
 
-/// that route can be used.
 pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileToDatabaseDebugModeBenchmarkError>> {
     let local_var_configuration = configuration;
 
@@ -775,7 +771,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &confi
 }
 
 /// After this request getting next profiles will continue from the nearest profiles.
-pub async fn post_reset_profile_paging(configuration: &configuration::Configuration, ) -> Result<models::IteratorSessionId, Error<PostResetProfilePagingError>> {
+pub async fn post_reset_profile_paging(configuration: &configuration::Configuration, ) -> Result<models::ProfileIteratorSessionId, Error<PostResetProfilePagingError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -846,7 +842,6 @@ pub async fn post_search_age_range(configuration: &configuration::Configuration,
     }
 }
 
-/// (gender and what gender user is looking for)
 pub async fn post_search_groups(configuration: &configuration::Configuration, search_groups: models::SearchGroups) -> Result<(), Error<PostSearchGroupsError>> {
     let local_var_configuration = configuration;
 

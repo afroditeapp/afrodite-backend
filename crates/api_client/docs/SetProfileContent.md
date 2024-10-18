@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**c0** | [**models::ContentId**](ContentId.md) |  | 
+**c0** | [**models::ContentId**](ContentId.md) | Primary profile image which is shown in grid view. | 
 **c1** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
 **c2** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]
 **c3** | Option<[**models::ContentId**](ContentId.md)> |  | [optional]

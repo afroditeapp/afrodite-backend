@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 /// ProfileContent : Current content in public profile.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileContent {
+    /// Primary profile image which is shown in grid view.
     #[serde(rename = "c0", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub c0: Option<Option<Box<models::ContentInfo>>>,
     #[serde(rename = "c1", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

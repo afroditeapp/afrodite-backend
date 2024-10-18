@@ -19,8 +19,10 @@ pub struct SendMessageResult {
     pub error_too_many_receiver_acknowledgements_missing: Option<bool>,
     #[serde(rename = "error_too_many_sender_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
     pub error_too_many_sender_acknowledgements_missing: Option<bool>,
+    /// None if error happened
     #[serde(rename = "mn", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub mn: Option<Option<Box<models::MessageNumber>>>,
+    /// None if error happened
     #[serde(rename = "ut", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub ut: Option<Option<Box<models::UnixTime>>>,
 }

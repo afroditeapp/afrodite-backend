@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct SentLikesPage {
     #[serde(rename = "profiles")]
     pub profiles: Vec<models::AccountId>,
+    /// This version can be sent to the server when WebSocket protocol data sync is happening.
     #[serde(rename = "version")]
     pub version: Box<models::SentLikesSyncVersion>,
 }

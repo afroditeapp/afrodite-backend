@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct PendingMessageId {
     #[serde(rename = "mn")]
     pub mn: Box<models::MessageNumber>,
+    /// Sender of the message.
     #[serde(rename = "sender")]
     pub sender: Box<models::AccountId>,
 }

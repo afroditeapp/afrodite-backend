@@ -4,9 +4,10 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**delete_content**](MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Delete content data. Content can be removed after specific time has passed
+[**delete_content**](MediaApi.md#delete_content) | **DELETE** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Delete content data. Content can be removed after specific time has passed since removing all usage from it (content is not a security image or profile content).
 [**delete_moderation_request**](MediaApi.md#delete_moderation_request) | **DELETE** /O6uTeSLARVqY1bvDxmX96ITtBCM | Delete current moderation request which is not yet in moderation.
-[**delete_pending_security_content_info**](MediaApi.md#delete_pending_security_content_info) | **DELETE** /sO2QJPZs98Emtu1vW1k4iHD-gz8 | Delete pending security content for current account.
+[**delete_pending_profile_content**](MediaApi.md#delete_pending_profile_content) | **DELETE** /6LYLKEUqrhj86bf2PXWOjUYHbls | Delete new pending profile content for current account. Server will not switch to pending content when next moderation request is accepted.
+[**delete_pending_security_content_info**](MediaApi.md#delete_pending_security_content_info) | **DELETE** /sO2QJPZs98Emtu1vW1k4iHD-gz8 | Delete pending security content for current account. Server will not change the security content when next moderation request is moderated as accepted.
 [**get_all_account_media_content**](MediaApi.md#get_all_account_media_content) | **GET** /RzBkQfHdmWHdL0L1Uq-DVE6kiVY/{aid} | Get list of all media content on the server for one account.
 [**get_content**](MediaApi.md#get_content) | **GET** /9ztWJZUmcnzICLL2gJ8qV8gVoR8/{aid}/{cid} | Get content data
 [**get_content_slot_state**](MediaApi.md#get_content_slot_state) | **GET** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Get state of content slot.
@@ -16,9 +17,9 @@ Method | HTTP request | Description
 [**get_pending_security_content_info**](MediaApi.md#get_pending_security_content_info) | **GET** /sO2QJPZs98Emtu1vW1k4iHD-gz8/{aid} | Get pending security content for selected profile.
 [**get_profile_content_info**](MediaApi.md#get_profile_content_info) | **GET** /ZYlzEPvPMBx2V1S6Ee-kIhp2_rg/{aid} | Get current profile content for selected profile.
 [**get_security_content_info**](MediaApi.md#get_security_content_info) | **GET** /6lWoyl4YuurCAEnkJbnSy1wP22M/{aid} | Get current security content for selected profile.
-[**put_content_to_content_slot**](MediaApi.md#put_content_to_content_slot) | **PUT** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Set content to content processing slot.
+[**put_content_to_content_slot**](MediaApi.md#put_content_to_content_slot) | **PUT** /y5DgJJAaDZF89y6X4ge84klpBq0/{slot_id} | Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.
 [**put_moderation_request**](MediaApi.md#put_moderation_request) | **PUT** /O6uTeSLARVqY1bvDxmX96ITtBCM | Create new or override old moderation request.
-[**put_pending_profile_content**](MediaApi.md#put_pending_profile_content) | **PUT** /6LYLKEUqrhj86bf2PXWOjUYHbls | Set new pending profile content for current account.
+[**put_pending_profile_content**](MediaApi.md#put_pending_profile_content) | **PUT** /6LYLKEUqrhj86bf2PXWOjUYHbls | Set new pending profile content for current account. Server will switch to pending content when next moderation request is accepted.
 [**put_pending_security_content_info**](MediaApi.md#put_pending_security_content_info) | **PUT** /sO2QJPZs98Emtu1vW1k4iHD-gz8 | Set pending security content for current account.
 [**put_profile_content**](MediaApi.md#put_profile_content) | **PUT** /_rsyG4gpvDy3O3Aj5hpLp3-8oPE | Set new profile content for current account.
 [**put_security_content_info**](MediaApi.md#put_security_content_info) | **PUT** /6lWoyl4YuurCAEnkJbnSy1wP22M | Set current security content content for current account.
@@ -28,9 +29,7 @@ Method | HTTP request | Description
 ## delete_content
 
 > delete_content(aid, cid)
-Delete content data. Content can be removed after specific time has passed
-
-since removing all usage from it (content is not a security image or profile content).
+Delete content data. Content can be removed after specific time has passed since removing all usage from it (content is not a security image or profile content).
 
 ### Parameters
 
@@ -81,12 +80,35 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## delete_pending_profile_content
+
+> delete_pending_profile_content()
+Delete new pending profile content for current account. Server will not switch to pending content when next moderation request is accepted.
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## delete_pending_security_content_info
 
 > delete_pending_security_content_info()
-Delete pending security content for current account.
-
-Server will not change the security content when next moderation request is moderated as accepted.
+Delete pending security content for current account. Server will not change the security content when next moderation request is moderated as accepted.
 
 ### Parameters
 
@@ -141,7 +163,7 @@ Name | Type | Description  | Required | Notes
 > std::path::PathBuf get_content(aid, cid, is_match)
 Get content data
 
-# Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required. 
+# Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required.  
 
 ### Parameters
 
@@ -173,7 +195,7 @@ Name | Type | Description  | Required | Notes
 > models::ContentProcessingState get_content_slot_state(slot_id)
 Get state of content slot.
 
-Slots from 0 to 6 are available. 
+Slots from 0 to 6 are available.  
 
 ### Parameters
 
@@ -374,9 +396,9 @@ Name | Type | Description  | Required | Notes
 ## put_content_to_content_slot
 
 > models::ContentProcessingId put_content_to_content_slot(slot_id, secure_capture, content_type, body)
-Set content to content processing slot.
+Set content to content processing slot. Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.
 
-Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512. 
+The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512.  
 
 ### Parameters
 
@@ -398,7 +420,7 @@ Name | Type | Description  | Required | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: image/jpeg
+- **Content-Type**: application/octet-stream
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -409,7 +431,7 @@ Name | Type | Description  | Required | Notes
 > put_moderation_request(moderation_request_content)
 Create new or override old moderation request.
 
-Make sure that moderation request has content IDs which points to your own image slots. 
+Make sure that moderation request has content IDs which points to your own image slots.  
 
 ### Parameters
 
@@ -437,9 +459,9 @@ Name | Type | Description  | Required | Notes
 ## put_pending_profile_content
 
 > put_pending_profile_content(set_profile_content)
-Set new pending profile content for current account.
+Set new pending profile content for current account. Server will switch to pending content when next moderation request is accepted.
 
-Server will switch to pending content when next moderation request is accepted.  # Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images.
+# Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images.
 
 ### Parameters
 

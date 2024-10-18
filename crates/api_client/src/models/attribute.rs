@@ -25,6 +25,7 @@ pub struct Attribute {
     /// String unique identifier for the attribute.
     #[serde(rename = "key")]
     pub key: String,
+    /// Mode of the attribute.
     #[serde(rename = "mode")]
     pub mode: models::AttributeMode,
     /// English text for the attribute.
@@ -39,6 +40,7 @@ pub struct Attribute {
     /// Translations for attribute name and attribute values.
     #[serde(rename = "translations", skip_serializing_if = "Option::is_none")]
     pub translations: Option<Vec<models::Language>>,
+    /// Attribute value ordering mode for client to determine in what order the values should be displayed.
     #[serde(rename = "value_order")]
     pub value_order: models::AttributeValueOrderMode,
     /// Top level values for the attribute.  Values are sorted by AttributeValue ID. Indexing with it is not possible as ID might be a bitflag value.

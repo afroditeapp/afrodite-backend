@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::profile_api::{self, get_location, get_profile, post_profile},
-    models::{IteratorSessionId, Location, ProfileAttributeValueUpdate, ProfileUpdate},
+    models::{ProfileIteratorSessionId, Location, ProfileAttributeValueUpdate, ProfileUpdate},
 };
 use async_trait::async_trait;
 use config::file::LocationConfig;
@@ -13,7 +13,7 @@ use crate::bot::utils::location::LocationConfigUtils;
 
 #[derive(Debug, Default)]
 pub struct ProfileState {
-    profile_iterator_session_id: Option<IteratorSessionId>,
+    profile_iterator_session_id: Option<ProfileIteratorSessionId>,
 }
 
 impl ProfileState {

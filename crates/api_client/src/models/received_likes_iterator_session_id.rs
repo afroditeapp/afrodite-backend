@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReceivedLikesIteratorSessionId {
     #[serde(rename = "id")]
-    pub id: String,
+    pub id: i64,
 }
 
 impl ReceivedLikesIteratorSessionId {
     /// Session ID type for received likes iterator so that client can detect server restarts and ask user to refresh received likes.
-    pub fn new(id: String) -> ReceivedLikesIteratorSessionId {
+    pub fn new(id: i64) -> ReceivedLikesIteratorSessionId {
         ReceivedLikesIteratorSessionId {
             id,
         }

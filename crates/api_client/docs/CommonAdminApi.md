@@ -5,7 +5,7 @@ All URIs are relative to *http://localhost*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**get_backend_config**](CommonAdminApi.md#get_backend_config) | **GET** /E1D6g_Gvk0QMUdCm5KecTU_CfxY | Get dynamic backend config.
-[**get_latest_build_info**](CommonAdminApi.md#get_latest_build_info) | **GET** /iTg7lktGRkK6vDTVhYAZcnfGSQk | Get latest software build information available for update from manager
+[**get_latest_build_info**](CommonAdminApi.md#get_latest_build_info) | **GET** /iTg7lktGRkK6vDTVhYAZcnfGSQk | Get latest software build information available for update from manager instance.
 [**get_perf_data**](CommonAdminApi.md#get_perf_data) | **GET** /LFF7-r3TWVsPUnfVzncXBphb0CM | Get performance data
 [**get_software_info**](CommonAdminApi.md#get_software_info) | **GET** /uAURrHBf-ePlVvcYS0FslKy5pV8 | Get software version information from manager instance.
 [**get_system_info**](CommonAdminApi.md#get_system_info) | **GET** /NZCbtziElAJucvGefGs9Z6btUrQ | Get system information from manager instance.
@@ -46,9 +46,7 @@ This endpoint does not need any parameter.
 ## get_latest_build_info
 
 > models::BuildInfo get_latest_build_info(software_options)
-Get latest software build information available for update from manager
-
-instance.
+Get latest software build information available for update from manager instance.
 
 ### Parameters
 
@@ -85,8 +83,8 @@ Get performance data
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**start_time** | Option<[**models::UnixTime**](.md)> | Start time for query results. |  |
-**end_time** | Option<[**models::UnixTime**](.md)> | End time for query results. |  |
+**start_time** | Option<[**UnixTime**](.md)> | Start time for query results. |  |
+**end_time** | Option<[**UnixTime**](.md)> | End time for query results. |  |
 
 ### Return type
 

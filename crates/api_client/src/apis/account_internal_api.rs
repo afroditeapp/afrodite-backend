@@ -32,7 +32,7 @@ pub enum PostRegisterError {
 }
 
 
-/// as a bot account, then the request will fail.  Available only if server internal API is enabled with bot_login from config file.
+/// Available only if server internal API is enabled with bot_login from config file.
 pub async fn post_login(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::LoginResult, Error<PostLoginError>> {
     let local_var_configuration = configuration;
 

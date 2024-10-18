@@ -13,8 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PerfValueArea {
+    /// Time for first data point in values.
     #[serde(rename = "start_time")]
     pub start_time: Box<models::UnixTime>,
+    /// Time granularity for values in between start time and time points.
     #[serde(rename = "time_granularity")]
     pub time_granularity: models::TimeGranularity,
     #[serde(rename = "values")]
