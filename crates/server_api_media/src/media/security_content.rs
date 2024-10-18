@@ -1,11 +1,13 @@
 use axum::{
     extract::{Path, State},
-    Extension, Router,
+    Extension,
 };
 use model::{AccountId, AccountIdInternal, ContentId, PendingSecurityContent, SecurityContent};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, StateBase, WriteData},
@@ -179,31 +181,15 @@ pub async fn delete_pending_security_content_info<S: WriteData>(
         ))
 }
 
-pub fn security_content_router<S: StateBase + WriteData + ReadData + GetAccounts>(s: S) -> Router {
-    use axum::routing::{delete, get, put};
-
-    Router::new()
-        .route(
-            PATH_GET_SECURITY_CONTENT_INFO_AXUM,
-            get(get_security_content_info::<S>),
-        )
-        .route(
-            PATH_PUT_SECURITY_CONTENT_INFO_AXUM,
-            put(put_security_content_info::<S>),
-        )
-        .route(
-            PATH_GET_PENDING_SECURITY_CONTENT_INFO_AXUM,
-            get(get_pending_security_content_info::<S>),
-        )
-        .route(
-            PATH_PUT_PENDING_SECURITY_CONTENT_INFO_AXUM,
-            put(put_pending_security_content_info::<S>),
-        )
-        .route(
-            DELETE_PENDING_SECURITY_CONTENT_INFO_AXUM,
-            delete(delete_pending_security_content_info::<S>),
-        )
-        .with_state(s)
+pub fn security_content_router<S: StateBase + WriteData + ReadData + GetAccounts>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_security_content_info::<S>,
+        put_security_content_info::<S>,
+        get_pending_security_content_info::<S>,
+        put_pending_security_content_info::<S>,
+        delete_pending_security_content_info::<S>,
+    )
 }
 
 create_counters!(

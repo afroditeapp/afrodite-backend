@@ -1,8 +1,10 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{ReadData, StateBase, WriteData},
@@ -90,17 +92,13 @@ pub async fn delete_moderation_request<S: WriteData>(
     })
 }
 
-pub fn moderation_request_router<S: StateBase + WriteData + ReadData>(s: S) -> Router {
-    use axum::routing::{delete, get, put};
-
-    Router::new()
-        .route(PATH_MODERATION_REQUEST_AXUM, get(get_moderation_request::<S>))
-        .route(PATH_MODERATION_REQUEST_AXUM, put(put_moderation_request::<S>))
-        .route(
-            PATH_MODERATION_REQUEST_AXUM,
-            delete(delete_moderation_request::<S>),
-        )
-        .with_state(s)
+pub fn moderation_request_router<S: StateBase + WriteData + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_moderation_request::<S>,
+        put_moderation_request::<S>,
+        delete_moderation_request::<S>,
+    )
 }
 
 create_counters!(

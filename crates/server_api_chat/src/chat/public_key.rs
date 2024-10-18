@@ -1,11 +1,12 @@
 //! Public key management related routes
 
-use axum::{extract::{Path, Query, State}, Extension, Router};
+use axum::{extract::{Path, Query, State}, Extension};
 use model::{AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::{GetAccounts, WriteData}, db_write};
+use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, StateBase};
@@ -76,13 +77,12 @@ async fn post_public_key<S: WriteData>(
     Ok(new_key.into())
 }
 
-pub fn public_key_router<S: StateBase + ReadData + WriteData + GetAccounts>(s: S) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(PATH_GET_PUBLIC_KEY_AXUM, get(get_public_key::<S>))
-        .route(PATH_POST_PUBLIC_KEY_AXUM, post(post_public_key::<S>))
-        .with_state(s)
+pub fn public_key_router<S: StateBase + ReadData + WriteData + GetAccounts>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_public_key::<S>,
+        post_public_key::<S>,
+    )
 }
 
 create_counters!(

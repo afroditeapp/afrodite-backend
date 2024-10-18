@@ -1,13 +1,15 @@
-use axum::{body::Body, extract::{Query, State}, Extension, Router};
+use axum::{body::Body, extract::{Query, State}, Extension};
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use model::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_chat::{read::GetReadChatCommands, write::{chat::PushNotificationAllowed, GetWriteCommandsChat}};
 use simple_backend::create_counters;
 use tracing::error;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::super::{
     db_write,
@@ -328,27 +330,17 @@ pub async fn post_add_sender_acknowledgement<S: WriteData>(
     Ok(())
 }
 
-pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(PATH_GET_PENDING_MESSAGES_AXUM, get(get_pending_messages::<S>))
-        .route(
-            PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT_AXUM,
-            post(post_add_receiver_acknowledgement::<S>),
-        )
-        .route(
-            PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE_AXUM,
-            get(get_message_number_of_latest_viewed_message::<S>),
-        )
-        .route(
-            PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE_AXUM,
-            post(post_message_number_of_latest_viewed_message::<S>),
-        )
-        .route(PATH_POST_SEND_MESSAGE_AXUM, post(post_send_message::<S>))
-        .route(PATH_GET_SENT_MESSAGE_IDS_AXUM, get(get_sent_message_ids::<S>))
-        .route(PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT_AXUM, post(post_add_sender_acknowledgement::<S>))
-        .with_state(s)
+pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_pending_messages::<S>,
+        post_add_receiver_acknowledgement::<S>,
+        get_message_number_of_latest_viewed_message::<S>,
+        post_message_number_of_latest_viewed_message::<S>,
+        post_send_message::<S>,
+        get_sent_message_ids::<S>,
+        post_add_sender_acknowledgement::<S>,
+    )
 }
 
 create_counters!(

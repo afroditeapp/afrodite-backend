@@ -550,7 +550,7 @@ impl AttributeMode {
     }
 }
 
-#[derive(Debug, Clone, Copy, ToSchema)]
+#[derive(Debug, Clone, Copy)]
 pub enum IconLocation {
     /// Icon is located in the Material icon set.
     Material,
@@ -575,7 +575,7 @@ impl FromStr for IconLocation {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(try_from = "String")]
 #[serde(into = "String")]
 pub struct IconResource {

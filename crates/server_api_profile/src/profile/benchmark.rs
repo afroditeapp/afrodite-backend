@@ -1,12 +1,14 @@
 use axum::{
     extract::{Path, State},
-    Extension, Router,
+    Extension,
 };
 use model::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{
@@ -124,19 +126,12 @@ pub fn benchmark_router<
     S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
 >(
     s: S,
-) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(
-            PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK_AXUM,
-            get(get_profile_from_database_debug_mode_benchmark::<S>),
-        )
-        .route(
-            PATH_POST_PROFILE_TO_DATABASE_BENCHMARK_AXUM,
-            post(post_profile_to_database_debug_mode_benchmark::<S>),
-        )
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_profile_from_database_debug_mode_benchmark::<S>,
+        post_profile_to_database_debug_mode_benchmark::<S>,
+    )
 }
 
 create_counters!(

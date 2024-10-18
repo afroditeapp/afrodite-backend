@@ -3735,6 +3735,7 @@ dependencies = [
  "simple_backend",
  "tracing",
  "utoipa",
+ "utoipa-axum",
 ]
 
 [[package]]
@@ -3754,6 +3755,7 @@ dependencies = [
  "simple_backend",
  "tracing",
  "utoipa",
+ "utoipa-axum",
 ]
 
 [[package]]
@@ -3770,6 +3772,7 @@ dependencies = [
  "simple_backend",
  "simple_backend_utils",
  "utoipa",
+ "utoipa-axum",
 ]
 
 [[package]]

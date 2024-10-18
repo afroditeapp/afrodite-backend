@@ -1,15 +1,16 @@
 use axum::{
     extract::{Path, Query, State},
-    Extension, Router,
+    Extension,
 };
 use model::{
     AccountId, AccountIdInternal, AccountState, Capabilities, GetProfileContentQueryParams, GetProfileContentResult, PendingProfileContent, ProfileContent, SetProfileContent
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::app::IsMatch;
+use server_api::{app::IsMatch, create_open_api_router};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, StateBase, WriteData},
@@ -237,28 +238,15 @@ pub async fn delete_pending_profile_content<S: WriteData>(
         ))
 }
 
-pub fn profile_content_router<S: StateBase + WriteData + ReadData + GetAccounts + IsMatch>(s: S) -> Router {
-    use axum::routing::{delete, get, put};
-
-    Router::new()
-        .route(
-            PATH_GET_PROFILE_CONTENT_INFO_AXUM,
-            get(get_profile_content_info::<S>),
-        )
-        .route(PATH_PUT_PROFILE_CONTENT_AXUM, put(put_profile_content::<S>))
-        .route(
-            PATH_GET_PENDING_PROFILE_CONTENT_INFO_AXUM,
-            get(get_pending_profile_content_info::<S>),
-        )
-        .route(
-            PATH_PUT_PENDING_PROFILE_CONTENT_AXUM,
-            put(put_pending_profile_content::<S>),
-        )
-        .route(
-            PATH_DELETE_PENDING_PROFILE_CONTENT_AXUM,
-            delete(delete_pending_profile_content::<S>),
-        )
-        .with_state(s)
+pub fn profile_content_router<S: StateBase + WriteData + ReadData + GetAccounts + IsMatch>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_profile_content_info::<S>,
+        put_profile_content::<S>,
+        get_pending_profile_content_info::<S>,
+        put_pending_profile_content::<S>,
+        delete_pending_profile_content::<S>,
+    )
 }
 
 create_counters!(

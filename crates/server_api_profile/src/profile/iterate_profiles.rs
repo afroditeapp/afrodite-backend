@@ -1,7 +1,9 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountIdInternal, IteratorSessionId, ProfilePage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccessTokens, ReadData, StateBase, WriteData},
@@ -90,19 +92,12 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
 
 pub fn iterate_profiles_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(
     s: S,
-) -> Router {
-    use axum::routing::post;
-
-    Router::new()
-        .route(
-            PATH_POST_NEXT_PROFILE_PAGE_AXUM,
-            post(post_get_next_profile_page::<S>),
-        )
-        .route(
-            PATH_POST_RESET_PROFILE_PAGING_AXUM,
-            post(post_reset_profile_paging::<S>),
-        )
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_get_next_profile_page::<S>,
+        post_reset_profile_paging::<S>,
+    )
 }
 
 create_counters!(

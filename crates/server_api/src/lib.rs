@@ -30,6 +30,8 @@ pub use server_common::{data::DataError, result};
         common::get_connect_websocket,
     ),
     components(schemas(
+        // Common
+        model::common::EventToClient,
         // Manager
         manager_model::SoftwareOptions,
     )),

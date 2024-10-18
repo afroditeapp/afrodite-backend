@@ -1,12 +1,14 @@
 use axum::{
-    body::Body, extract::{Path, State}, Router
+    body::Body, extract::{Path, State},
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model::{MapTileX, MapTileY, MapTileZ};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{app::StateBase, utils::StatusCode};
 
@@ -56,12 +58,11 @@ pub async fn get_map_tile<S: GetTileMap>(
     }
 }
 
-pub fn tile_map_router<S: StateBase + GetTileMap>(s: S) -> Router {
-    use axum::routing::get;
-
-    Router::new()
-        .route(PATH_GET_MAP_TILE_AXUM, get(get_map_tile::<S>))
-        .with_state(s)
+pub fn tile_map_router<S: StateBase + GetTileMap>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_map_tile::<S>,
+    )
 }
 
 create_counters!(

@@ -1,8 +1,10 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
@@ -140,15 +142,14 @@ pub async fn get_received_blocks<S: ReadData>(
     Ok(page.into())
 }
 
-pub fn block_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(PATH_POST_BLOCK_PROFILE_AXUM, post(post_block_profile::<S>))
-        .route(PATH_POST_UNBLOCK_PROFILE_AXUM, post(post_unblock_profile::<S>))
-        .route(PATH_GET_SENT_BLOCKS_AXUM, get(get_sent_blocks::<S>))
-        .route(PATH_GET_RECEIVED_BLOCKS_AXUM, get(get_received_blocks::<S>))
-        .with_state(s)
+pub fn block_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_block_profile::<S>,
+        post_unblock_profile::<S>,
+        get_sent_blocks::<S>,
+        get_received_blocks::<S>,
+    )
 }
 
 create_counters!(

@@ -1,9 +1,10 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountIdInternal, FcmDeviceToken, NewReceivedLikesCountResult, PendingNotificationFlags, PendingNotificationToken, PendingNotificationWithData};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::app::ReadData;
+use server_api::{app::ReadData, create_open_api_router};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
@@ -104,23 +105,18 @@ pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData
     }.into()
 }
 
-pub fn push_notification_router_private<S: StateBase + WriteData>(s: S) -> Router {
-    use axum::routing::post;
-
-    Router::new()
-        .route(PATH_POST_SET_DEVICE_TOKEN_AXUM, post(post_set_device_token::<S>))
-        .with_state(s)
+pub fn push_notification_router_private<S: StateBase + WriteData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_set_device_token::<S>,
+    )
 }
 
-pub fn push_notification_router_public<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> Router {
-    use axum::routing::post;
-
-    Router::new()
-        .route(
-            PATH_POST_GET_PENDING_NOTIFICATION_AXUM,
-            post(post_get_pending_notification::<S>),
-        )
-        .with_state(s)
+pub fn push_notification_router_public<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_get_pending_notification::<S>,
+    )
 }
 
 create_counters!(

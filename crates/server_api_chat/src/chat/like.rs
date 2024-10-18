@@ -1,9 +1,10 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::EventManagerProvider, db_write};
+use server_api::{app::EventManagerProvider, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
@@ -350,17 +351,16 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     Ok(r.into())
 }
 
-pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> Router {
-    use axum::routing::{delete, get, post};
-
-    Router::new()
-        .route(PATH_POST_SEND_LIKE_AXUM, post(post_send_like::<S>))
-        .route(PATH_GET_SENT_LIKES_AXUM, get(get_sent_likes::<S>))
-        .route(PATH_POST_GET_NEW_RECEIVED_LIKES_COUNT_AXUM, post(post_get_new_received_likes_count::<S>))
-        .route(PATH_POST_RESET_RECEIVED_LIKES_PAGING_AXUM, post(post_reset_received_likes_paging::<S>))
-        .route(PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE_AXUM, post(post_get_next_received_likes_page::<S>))
-        .route(PATH_DELETE_LIKE_AXUM, delete(delete_like::<S>))
-        .with_state(s)
+pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        post_send_like::<S>,
+        get_sent_likes::<S>,
+        post_get_new_received_likes_count::<S>,
+        post_reset_received_likes_paging::<S>,
+        post_get_next_received_likes_page::<S>,
+        delete_like::<S>,
+    )
 }
 
 create_counters!(

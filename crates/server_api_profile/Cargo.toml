@@ -9,6 +9,7 @@ edition = "2021"
 axum = { workspace = true }
 
 utoipa = { workspace = true }
+utoipa-axum = { workspace = true }
 
 model = { path = "../model" }
 

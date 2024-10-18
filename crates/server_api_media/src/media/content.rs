@@ -1,5 +1,5 @@
 use axum::{
-    body::Body, extract::{Path, Query, State}, Extension, Router
+    body::Body, extract::{Path, Query, State}, Extension,
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
@@ -7,12 +7,13 @@ use model::{
     AccountContent, AccountId, AccountIdInternal, AccountState, Capabilities, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::IsMatch, result::WrappedResultExt};
+use server_api::{app::IsMatch, create_open_api_router, result::WrappedResultExt};
 use server_data::{
     read::GetReadCommandsCommon, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle}, DataError
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{ContentProcessingProvider, GetAccounts, ReadData, StateBase, WriteData},
@@ -302,25 +303,15 @@ pub fn content_router<
     S: StateBase + WriteData + GetAccounts + ReadData + ContentProcessingProvider + IsMatch,
 >(
     s: S,
-) -> Router {
-    use axum::routing::{delete, get, put};
-
-    Router::new()
-        .route(PATH_GET_CONTENT_AXUM, get(get_content::<S>))
-        .route(
-            PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT_AXUM,
-            get(get_all_account_media_content::<S>),
-        )
-        .route(
-            PATH_PUT_CONTENT_TO_CONTENT_SLOT_AXUM,
-            put(put_content_to_content_slot::<S>),
-        )
-        .route(
-            PATH_GET_CONTENT_SLOT_STATE_AXUM,
-            get(get_content_slot_state::<S>),
-        )
-        .route(PATH_DELETE_CONTENT_AXUM, delete(delete_content::<S>))
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_content::<S>,
+        get_all_account_media_content::<S>,
+        put_content_to_content_slot::<S>,
+        get_content_slot_state::<S>,
+        delete_content::<S>,
+    )
 }
 
 create_counters!(

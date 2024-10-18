@@ -1,13 +1,15 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{
     AccountIdInternal, AvailableProfileAttributes, ProfileAttributeFilterList,
     ProfileAttributeFilterListUpdate,
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetConfig, ReadData, StateBase, WriteData},
@@ -98,23 +100,13 @@ pub async fn post_profile_attribute_filters<S: WriteData + GetConfig>(
         .update_profile_attribute_filters(account_id, validated))
 }
 
-pub fn attributes_router<S: StateBase + WriteData + GetConfig + ReadData>(s: S) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(
-            PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES_AXUM,
-            get(get_available_profile_attributes::<S>),
-        )
-        .route(
-            PATH_GET_PROFILE_ATTRIBUTE_FILTERS_AXUM,
-            get(get_profile_attribute_filters::<S>),
-        )
-        .route(
-            PATH_POST_PROFILE_ATTRIBUTE_FILTERS_AXUM,
-            post(post_profile_attribute_filters::<S>),
-        )
-        .with_state(s)
+pub fn attributes_router<S: StateBase + WriteData + GetConfig + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_available_profile_attributes::<S>,
+        get_profile_attribute_filters::<S>,
+        post_profile_attribute_filters::<S>,
+    )
 }
 
 create_counters!(

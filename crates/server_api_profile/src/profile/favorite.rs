@@ -1,8 +1,10 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountId, AccountIdInternal, FavoriteProfilesPage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccounts, ReadData, StateBase, WriteData},
@@ -97,17 +99,13 @@ pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
     Ok(())
 }
 
-pub fn favorite_router<S: StateBase + WriteData + GetAccounts + ReadData>(s: S) -> Router {
-    use axum::routing::{delete, get, post};
-
-    Router::new()
-        .route(PATH_GET_FAVORITE_PROFILES_AXUM, get(get_favorite_profiles::<S>))
-        .route(PATH_POST_FAVORITE_PROFILE_AXUM, post(post_favorite_profile::<S>))
-        .route(
-            PATH_DELETE_FAVORITE_PROFILE_AXUM,
-            delete(delete_favorite_profile::<S>),
-        )
-        .with_state(s)
+pub fn favorite_router<S: StateBase + WriteData + GetAccounts + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_favorite_profiles::<S>,
+        post_favorite_profile::<S>,
+        delete_favorite_profile::<S>,
+    )
 }
 
 create_counters!(

@@ -1,16 +1,17 @@
 use axum::{
     extract::{Path, Query, State},
-    Extension, Router,
+    Extension,
 };
 use model::{
     AccountId, AccountIdInternal, AccountState, Capabilities, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::IsMatch, db_write_multiple, result::WrappedContextExt};
+use server_api::{app::IsMatch, create_open_api_router, db_write_multiple, result::WrappedContextExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use simple_backend_utils::IntoReportFromString;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{
@@ -398,19 +399,18 @@ pub fn profile_data_router<
     S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig + IsMatch,
 >(
     s: S,
-) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(PATH_GET_PROFILE_AXUM, get(get_profile::<S>))
-        .route(PATH_GET_SEARCH_GROUPS_AXUM, get(get_search_groups::<S>))
-        .route(PATH_GET_SEARCH_AGE_RANGE_AXUM, get(get_search_age_range::<S>))
-        .route(PATH_POST_PROFILE_AXUM, post(post_profile::<S>))
-        .route(PATH_POST_SEARCH_GROUPS_AXUM, post(post_search_groups::<S>))
-        .route(PATH_POST_SEARCH_AGE_RANGE_AXUM, post(post_search_age_range::<S>))
-        .route(PATH_GET_MY_PROFILE_AXUM, get(get_my_profile::<S>))
-        .route(PATH_GET_INITIAL_PROFILE_AGE_INFO_AXUM, get(get_initial_profile_age_info::<S>))
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_profile::<S>,
+        get_search_groups::<S>,
+        get_search_age_range::<S>,
+        post_profile::<S>,
+        post_search_groups::<S>,
+        post_search_age_range::<S>,
+        get_my_profile::<S>,
+        get_initial_profile_age_info::<S>,
+    )
 }
 
 create_counters!(

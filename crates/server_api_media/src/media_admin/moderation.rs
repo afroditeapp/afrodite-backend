@@ -1,14 +1,16 @@
 use axum::{
     extract::{Path, Query, State},
-    Extension, Router,
+    Extension,
 };
 use model::{
     AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest,
     ModerationList, ModerationQueueTypeParam,
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, StateBase, WriteData},
@@ -138,19 +140,12 @@ pub fn admin_moderation_router<
     S: StateBase + GetInternalApi + WriteData + GetAccounts + GetConfig + GetAccessTokens,
 >(
     s: S,
-) -> Router {
-    use axum::routing::{patch, post};
-
-    Router::new()
-        .route(
-            PATH_ADMIN_MODERATION_PAGE_NEXT_AXUM,
-            patch(patch_moderation_request_list::<S>),
-        )
-        .route(
-            PATH_ADMIN_MODERATION_HANDLE_REQUEST_AXUM,
-            post(post_handle_moderation_request::<S>),
-        )
-        .with_state(s)
+) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        patch_moderation_request_list::<S>,
+        post_handle_moderation_request::<S>,
+    )
 }
 
 create_counters!(

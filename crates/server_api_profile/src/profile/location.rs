@@ -1,8 +1,10 @@
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountIdInternal, Location};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{GetAccessTokens, ReadData, StateBase, WriteData},
@@ -61,13 +63,12 @@ pub async fn put_location<S: GetAccessTokens + WriteData>(
         .profile_update_location(account_id, location))
 }
 
-pub fn location_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(s: S) -> Router {
-    use axum::routing::{get, put};
-
-    Router::new()
-        .route(PATH_GET_LOCATION_AXUM, get(get_location::<S>))
-        .route(PATH_PUT_LOCATION_AXUM, put(put_location::<S>))
-        .with_state(s)
+pub fn location_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_location::<S>,
+        put_location::<S>,
+    )
 }
 
 create_counters!(

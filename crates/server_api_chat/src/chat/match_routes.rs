@@ -1,11 +1,12 @@
 //! Match related routes
 
-use axum::{extract::State, Extension, Router};
+use axum::{extract::State, Extension};
 use model::{AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage, ResetMatchesIteratorResult};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::WriteData, db_write};
+use server_api::{app::WriteData, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
+use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, StateBase};
@@ -114,14 +115,13 @@ pub async fn post_get_next_matches_page<S: WriteData + ReadData>(
     }
 }
 
-pub fn match_router<S: StateBase + ReadData + WriteData>(s: S) -> Router {
-    use axum::routing::{get, post};
-
-    Router::new()
-        .route(PATH_GET_MATCHES_AXUM, get(get_matches::<S>))
-        .route(PATH_POST_RESET_MATCHES_PAGING_AXUM, post(post_reset_matches_paging::<S>))
-        .route(PATH_POST_GET_NEXT_MATCHES_PAGE_AXUM, post(post_get_next_matches_page::<S>))
-        .with_state(s)
+pub fn match_router<S: StateBase + ReadData + WriteData>(s: S) -> OpenApiRouter {
+    create_open_api_router!(
+        s,
+        get_matches::<S>,
+        post_reset_matches_paging::<S>,
+        post_get_next_matches_page::<S>,
+    )
 }
 
 create_counters!(ChatCounters, CHAT, CHAT_MATCH_COUNTERS_LIST, get_matches, post_reset_matches_paging, post_get_next_matches_page,);
