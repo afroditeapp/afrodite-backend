@@ -32,6 +32,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /C9sCP6O2IfIBQCu8LM1_SCybuW0 | Get current account state.
 *AccountApi* | [**get_deletion_status**](docs/AccountApi.md#get_deletion_status) | **GET** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Get deletion status.
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
+*AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
 *AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
@@ -154,7 +155,6 @@ Class | Method | HTTP request | Description
  - [BooleanSetting](docs/BooleanSetting.md)
  - [BotConfig](docs/BotConfig.md)
  - [BuildInfo](docs/BuildInfo.md)
- - [Capabilities](docs/Capabilities.md)
  - [ClientId](docs/ClientId.md)
  - [ClientInfo](docs/ClientInfo.md)
  - [ClientLocalId](docs/ClientLocalId.md)
@@ -186,6 +186,7 @@ Class | Method | HTTP request | Description
  - [FcmDeviceToken](docs/FcmDeviceToken.md)
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
+ - [GetNewsItemResult](docs/GetNewsItemResult.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
  - [GetProfileResult](docs/GetProfileResult.md)
  - [GetPublicKey](docs/GetPublicKey.md)
@@ -215,6 +216,7 @@ Class | Method | HTTP request | Description
  - [NewsCount](docs/NewsCount.md)
  - [NewsCountResult](docs/NewsCountResult.md)
  - [NewsId](docs/NewsId.md)
+ - [NewsItem](docs/NewsItem.md)
  - [NewsItemSimple](docs/NewsItemSimple.md)
  - [NewsIteratorSessionId](docs/NewsIteratorSessionId.md)
  - [NewsPage](docs/NewsPage.md)
@@ -230,6 +232,7 @@ Class | Method | HTTP request | Description
  - [PerfHistoryQueryResult](docs/PerfHistoryQueryResult.md)
  - [PerfHistoryValue](docs/PerfHistoryValue.md)
  - [PerfValueArea](docs/PerfValueArea.md)
+ - [Permissions](docs/Permissions.md)
  - [Profile](docs/Profile.md)
  - [ProfileAttributeFilterList](docs/ProfileAttributeFilterList.md)
  - [ProfileAttributeFilterListUpdate](docs/ProfileAttributeFilterListUpdate.md)

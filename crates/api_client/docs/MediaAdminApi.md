@@ -14,7 +14,7 @@ Method | HTTP request | Description
 > models::ModerationList patch_moderation_request_list(queue)
 Get current list of moderation requests in my moderation queue. Additional requests will be added to my queue if necessary.
 
-## Access  Account with `admin_moderate_images` capability is required to access this route.  
+## Access  Account with `admin_moderate_images` permission is required to access this route.  
 
 ### Parameters
 
@@ -44,7 +44,7 @@ Name | Type | Description  | Required | Notes
 > post_handle_moderation_request(aid, handle_moderation_request)
 Handle moderation request of some account.
 
-## Access  Account with `admin_moderate_images` capability is required to access this route.  
+## Access  Account with `admin_moderate_images` permission is required to access this route.  
 
 ### Parameters
 

@@ -163,7 +163,7 @@ Name | Type | Description  | Required | Notes
 > std::path::PathBuf get_content(aid, cid, is_match)
 Get content data
 
-# Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required.  
+# Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then permission `admin_view_all_profiles` or `admin_moderate_images` is required.  
 
 ### Parameters
 
@@ -338,7 +338,7 @@ Name | Type | Description  | Required | Notes
 > models::GetProfileContentResult get_profile_content_info(aid, version, is_match)
 Get current profile content for selected profile.
 
-# Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.
+# Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then permission `admin_view_all_profiles` is required.
 
 ### Parameters
 

@@ -10,6 +10,7 @@ Method | HTTP request | Description
 [**get_account_state**](AccountApi.md#get_account_state) | **GET** /C9sCP6O2IfIBQCu8LM1_SCybuW0 | Get current account state.
 [**get_deletion_status**](AccountApi.md#get_deletion_status) | **GET** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Get deletion status.
 [**get_latest_birthdate**](AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
+[**get_news_item**](AccountApi.md#get_news_item) | **GET** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
 [**post_account_data**](AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
 [**post_account_setup**](AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
 [**post_complete_setup**](AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
@@ -170,6 +171,38 @@ This endpoint does not need any parameter.
 ### Return type
 
 [**models::LatestBirthdate**](LatestBirthdate.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_news_item
+
+> models::GetNewsItemResult get_news_item(nid, locale, require_locale)
+Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
+
+If specific locale is not found when [RequireNewsLocale::require_locale] is `true` then [GetNewsItemResult::item] is `None`.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**nid** | **i64** |  | [required] |
+**locale** | **String** |  | [required] |
+**require_locale** | Option<**bool**> |  |  |[default to false]
+
+### Return type
+
+[**models::GetNewsItemResult**](GetNewsItemResult.md)
 
 ### Authorization
 
@@ -487,7 +520,7 @@ This endpoint does not need any parameter.
 
 ## post_get_next_news_page
 
-> models::NewsPage post_get_next_news_page(news_iterator_session_id)
+> models::NewsPage post_get_next_news_page(locale, news_iterator_session_id)
 
 
 ### Parameters
@@ -495,6 +528,7 @@ This endpoint does not need any parameter.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
+**locale** | **String** |  | [required] |
 **news_iterator_session_id** | [**NewsIteratorSessionId**](NewsIteratorSessionId.md) |  | [required] |
 
 ### Return type

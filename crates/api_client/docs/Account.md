@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**capabilities** | [**models::Capabilities**](Capabilities.md) |  | 
+**permissions** | [**models::Permissions**](Permissions.md) |  | 
 **state** | [**models::AccountState**](AccountState.md) |  | 
 **sync_version** | [**models::AccountSyncVersion**](AccountSyncVersion.md) |  | 
 **visibility** | [**models::ProfileVisibility**](ProfileVisibility.md) |  | 

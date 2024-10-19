@@ -34,7 +34,7 @@ pub enum PostHandleModerationRequestError {
 }
 
 
-/// ## Access  Account with `admin_moderate_images` capability is required to access this route.  
+/// ## Access  Account with `admin_moderate_images` permission is required to access this route.  
 pub async fn patch_moderation_request_list(configuration: &configuration::Configuration, queue: models::ModerationQueueType) -> Result<models::ModerationList, Error<PatchModerationRequestListError>> {
     let local_var_configuration = configuration;
 
@@ -71,7 +71,7 @@ pub async fn patch_moderation_request_list(configuration: &configuration::Config
     }
 }
 
-/// ## Access  Account with `admin_moderate_images` capability is required to access this route.  
+/// ## Access  Account with `admin_moderate_images` permission is required to access this route.  
 pub async fn post_handle_moderation_request(configuration: &configuration::Configuration, aid: &str, handle_moderation_request: models::HandleModerationRequest) -> Result<(), Error<PostHandleModerationRequestError>> {
     let local_var_configuration = configuration;
 

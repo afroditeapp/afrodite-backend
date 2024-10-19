@@ -17,8 +17,8 @@ use serde::{Deserialize, Serialize};
 pub enum EventType {
     #[serde(rename = "AccountStateChanged")]
     AccountStateChanged,
-    #[serde(rename = "AccountCapabilitiesChanged")]
-    AccountCapabilitiesChanged,
+    #[serde(rename = "AccountPermissionsChanged")]
+    AccountPermissionsChanged,
     #[serde(rename = "ProfileVisibilityChanged")]
     ProfileVisibilityChanged,
     #[serde(rename = "AccountSyncVersionChanged")]
@@ -50,7 +50,7 @@ impl std::fmt::Display for EventType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::AccountStateChanged => write!(f, "AccountStateChanged"),
-            Self::AccountCapabilitiesChanged => write!(f, "AccountCapabilitiesChanged"),
+            Self::AccountPermissionsChanged => write!(f, "AccountPermissionsChanged"),
             Self::ProfileVisibilityChanged => write!(f, "ProfileVisibilityChanged"),
             Self::AccountSyncVersionChanged => write!(f, "AccountSyncVersionChanged"),
             Self::NewMessageReceived => write!(f, "NewMessageReceived"),

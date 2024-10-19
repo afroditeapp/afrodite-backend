@@ -364,7 +364,7 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then capability `admin_view_all_profiles` or `admin_moderate_images` is required.  
+/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If the previous is not true, then permission `admin_view_all_profiles` or `admin_moderate_images` is required.  
 pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>) -> Result<std::path::PathBuf, Error<GetContentError>> {
     let local_var_configuration = configuration;
 
@@ -580,7 +580,7 @@ pub async fn get_pending_security_content_info(configuration: &configuration::Co
     }
 }
 
-/// # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then capability `admin_view_all_profiles` is required.
+/// # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then permission `admin_view_all_profiles` is required.
 pub async fn get_profile_content_info(configuration: &configuration::Configuration, aid: &str, version: Option<&str>, is_match: Option<bool>) -> Result<models::GetProfileContentResult, Error<GetProfileContentInfoError>> {
     let local_var_configuration = configuration;
 

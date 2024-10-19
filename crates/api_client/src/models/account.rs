@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Account {
-    #[serde(rename = "capabilities")]
-    pub capabilities: Box<models::Capabilities>,
+    #[serde(rename = "permissions")]
+    pub permissions: Box<models::Permissions>,
     #[serde(rename = "state")]
     pub state: models::AccountState,
     #[serde(rename = "sync_version")]
@@ -24,9 +24,9 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn new(capabilities: models::Capabilities, state: models::AccountState, sync_version: models::AccountSyncVersion, visibility: models::ProfileVisibility) -> Account {
+    pub fn new(permissions: models::Permissions, state: models::AccountState, sync_version: models::AccountSyncVersion, visibility: models::ProfileVisibility) -> Account {
         Account {
-            capabilities: Box::new(capabilities),
+            permissions: Box::new(permissions),
             state,
             sync_version: Box::new(sync_version),
             visibility,

@@ -27,7 +27,6 @@ docs/BackendVersion.md
 docs/BooleanSetting.md
 docs/BotConfig.md
 docs/BuildInfo.md
-docs/Capabilities.md
 docs/ChatApi.md
 docs/ClientId.md
 docs/ClientInfo.md
@@ -62,6 +61,7 @@ docs/FavoriteProfilesPage.md
 docs/FcmDeviceToken.md
 docs/GetInitialProfileAgeInfoResult.md
 docs/GetMyProfileResult.md
+docs/GetNewsItemResult.md
 docs/GetProfileContentResult.md
 docs/GetProfileResult.md
 docs/GetPublicKey.md
@@ -94,6 +94,7 @@ docs/NewReceivedLikesCountResult.md
 docs/NewsCount.md
 docs/NewsCountResult.md
 docs/NewsId.md
+docs/NewsItem.md
 docs/NewsItemSimple.md
 docs/NewsIteratorSessionId.md
 docs/NewsPage.md
@@ -109,6 +110,7 @@ docs/PendingSecurityContent.md
 docs/PerfHistoryQueryResult.md
 docs/PerfHistoryValue.md
 docs/PerfValueArea.md
+docs/Permissions.md
 docs/Profile.md
 docs/ProfileApi.md
 docs/ProfileAttributeFilterList.md
@@ -201,7 +203,6 @@ src/models/backend_version.rs
 src/models/boolean_setting.rs
 src/models/bot_config.rs
 src/models/build_info.rs
-src/models/capabilities.rs
 src/models/client_id.rs
 src/models/client_info.rs
 src/models/client_local_id.rs
@@ -233,6 +234,7 @@ src/models/favorite_profiles_page.rs
 src/models/fcm_device_token.rs
 src/models/get_initial_profile_age_info_result.rs
 src/models/get_my_profile_result.rs
+src/models/get_news_item_result.rs
 src/models/get_profile_content_result.rs
 src/models/get_profile_result.rs
 src/models/get_public_key.rs
@@ -263,6 +265,7 @@ src/models/new_received_likes_count_result.rs
 src/models/news_count.rs
 src/models/news_count_result.rs
 src/models/news_id.rs
+src/models/news_item.rs
 src/models/news_item_simple.rs
 src/models/news_iterator_session_id.rs
 src/models/news_page.rs
@@ -278,6 +281,7 @@ src/models/pending_security_content.rs
 src/models/perf_history_query_result.rs
 src/models/perf_history_value.rs
 src/models/perf_value_area.rs
+src/models/permissions.rs
 src/models/profile.rs
 src/models/profile_attribute_filter_list.rs
 src/models/profile_attribute_filter_list_update.rs

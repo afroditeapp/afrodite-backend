@@ -14,7 +14,7 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
     assert(
         get_account_state(account1.account().account_api())
             .await?
-            .capabilities
+            .permissions
             .admin_moderate_images
             .unwrap_or_default(),
     )?;
@@ -23,7 +23,7 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
     assert(
         !get_account_state(account2.account().account_api())
             .await?
-            .capabilities
+            .permissions
             .admin_moderate_images
             .unwrap_or_default(),
     )?;
@@ -32,7 +32,7 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
     assert(
         !get_account_state(account3.account().account_api())
             .await?
-            .capabilities
+            .permissions
             .admin_moderate_images
             .unwrap_or_default(),
     )
@@ -44,7 +44,7 @@ async fn normal_account_does_not_have_admin_rights(context: TestContext) -> Test
     assert_eq(
         get_account_state(account1.account_api())
             .await?
-            .capabilities,
+            .permissions,
         Default::default(),
     )
 }

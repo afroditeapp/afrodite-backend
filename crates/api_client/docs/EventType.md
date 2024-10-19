@@ -5,7 +5,7 @@
 | Name | Value |
 |---- | -----|
 | AccountStateChanged | AccountStateChanged |
-| AccountCapabilitiesChanged | AccountCapabilitiesChanged |
+| AccountPermissionsChanged | AccountPermissionsChanged |
 | ProfileVisibilityChanged | ProfileVisibilityChanged |
 | AccountSyncVersionChanged | AccountSyncVersionChanged |
 | NewMessageReceived | NewMessageReceived |
