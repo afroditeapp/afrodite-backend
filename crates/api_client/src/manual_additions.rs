@@ -4,7 +4,7 @@ use crate::{
     apis::{
         chat_api::{GetPendingMessagesError, PostSendMessageError}, configuration, media_api::{GetContentError, PutContentToContentSlotError}, Error, ResponseContent
     },
-    models::{AccountId, ContentId, Location, MediaContentType, UnixTime},
+    models::{AccountId, ContentId, GetPerfDataEndTimeParameter, Location, MediaContentType, UnixTime},
 };
 
 impl Copy for AccountId {}
@@ -26,6 +26,13 @@ impl fmt::Display for ContentId {
 impl fmt::Display for UnixTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.ut)
+    }
+}
+
+impl fmt::Display for GetPerfDataEndTimeParameter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let GetPerfDataEndTimeParameter::UnixTime(ut) = self;
+        write!(f, "{}", ut)
     }
 }
 

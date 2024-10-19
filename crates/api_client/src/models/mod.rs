@@ -108,6 +108,8 @@ pub mod get_my_profile_result;
 pub use self::get_my_profile_result::GetMyProfileResult;
 pub mod get_news_item_result;
 pub use self::get_news_item_result::GetNewsItemResult;
+pub mod get_perf_data_end_time_parameter;
+pub use self::get_perf_data_end_time_parameter::GetPerfDataEndTimeParameter;
 pub mod get_profile_content_result;
 pub use self::get_profile_content_result::GetProfileContentResult;
 pub mod get_profile_result;

@@ -63,6 +63,7 @@ docs/FcmDeviceToken.md
 docs/GetInitialProfileAgeInfoResult.md
 docs/GetMyProfileResult.md
 docs/GetNewsItemResult.md
+docs/GetPerfDataEndTimeParameter.md
 docs/GetProfileContentResult.md
 docs/GetProfileResult.md
 docs/GetPublicKey.md
@@ -239,6 +240,7 @@ src/models/fcm_device_token.rs
 src/models/get_initial_profile_age_info_result.rs
 src/models/get_my_profile_result.rs
 src/models/get_news_item_result.rs
+src/models/get_perf_data_end_time_parameter.rs
 src/models/get_profile_content_result.rs
 src/models/get_profile_result.rs
 src/models/get_public_key.rs
