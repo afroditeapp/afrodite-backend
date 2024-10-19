@@ -6,7 +6,7 @@ use manager_model::{
     BuildInfo, RebootQueryParam, ResetDataQueryParam, SoftwareInfo, SoftwareOptionsQueryParam,
     SystemInfoList,
 };
-use model::{AccountIdInternal, Capabilities};
+use model::{AccountIdInternal, Permissions};
 use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
@@ -32,11 +32,11 @@ const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
 )]
 pub async fn get_system_info<S: GetManagerApi>(
     State(state): State<S>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<Json<SystemInfoList>, StatusCode> {
     COMMON_ADMIN.get_system_info.incr();
 
-    if api_caller_capabilities.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_maintenance_view_info {
         let info = state.manager_api().system_info().await?;
         Ok(info.into())
     } else {
@@ -60,11 +60,11 @@ const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
 )]
 pub async fn get_software_info<S: GetManagerApi>(
     State(state): State<S>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<Json<SoftwareInfo>, StatusCode> {
     COMMON_ADMIN.get_software_info.incr();
 
-    if api_caller_capabilities.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_maintenance_view_info {
         let info = state.manager_api().software_info().await?;
         Ok(info.into())
     } else {
@@ -91,11 +91,11 @@ const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info";
 pub async fn get_latest_build_info<S: GetManagerApi>(
     State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<Json<BuildInfo>, StatusCode> {
     COMMON_ADMIN.get_latest_build_info.incr();
 
-    if api_caller_capabilities.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_maintenance_view_info {
         let info = state
             .manager_api()
             .get_latest_build_info(software.software_options)
@@ -124,11 +124,11 @@ const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_softwa
 pub async fn post_request_build_software<S: GetManagerApi>(
     State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_request_build_software.incr();
 
-    if api_caller_capabilities.admin_server_maintenance_update_software {
+    if api_caller_permissions.admin_server_maintenance_update_software {
         state
             .manager_api()
             .request_build_software_from_build_server(software.software_options)
@@ -149,10 +149,10 @@ const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_soft
 /// is done.
 ///
 /// Reset data query parameter will reset data like defined in current
-/// app-manager version. If this is true then specific capability is needed
+/// app-manager version. If this is true then specific permission is needed
 /// for completing this request.
 ///
-/// # Capablities
+/// # Permissions
 /// Requires admin_server_maintenance_update_software. Also requires
 /// admin_server_maintenance_reset_data if reset_data is true.
 #[utoipa::path(
@@ -172,15 +172,15 @@ pub async fn post_request_update_software<S: GetManagerApi>(
     Query(reboot): Query<RebootQueryParam>,
     Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_request_update_software.incr();
 
-    if reset_data.reset_data && !api_caller_capabilities.admin_server_maintenance_reset_data {
+    if reset_data.reset_data && !api_caller_permissions.admin_server_maintenance_reset_data {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if api_caller_capabilities.admin_server_maintenance_update_software {
+    if api_caller_permissions.admin_server_maintenance_update_software {
         info!(
             "Requesting update software, account: {}, software: {:?}, reboot: {}, reset_data: {},",
             api_caller_account_id.as_uuid(),
@@ -204,7 +204,7 @@ const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
 
 /// Request restarting or reseting backend through app-manager instance.
 ///
-/// # Capabilities
+/// # Permissions
 /// Requires admin_server_maintenance_restart_backend. Also requires
 /// admin_server_maintenance_reset_data if reset_data is true.
 #[utoipa::path(
@@ -222,15 +222,15 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
     State(state): State<S>,
     Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_request_restart_or_reset_backend.incr();
 
-    if reset_data.reset_data && !api_caller_capabilities.admin_server_maintenance_reset_data {
+    if reset_data.reset_data && !api_caller_permissions.admin_server_maintenance_reset_data {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if api_caller_capabilities.admin_server_maintenance_update_software {
+    if api_caller_permissions.admin_server_maintenance_update_software {
         info!(
             "Requesting reset or restart backend, account: {}, reset_data: {}",
             api_caller_account_id.as_uuid(),

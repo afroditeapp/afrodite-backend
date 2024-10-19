@@ -10,7 +10,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountState, Capabilities, ContentProcessingId,
+    schema_sqlite_types::Integer, Account, AccountState, Permissions, ContentProcessingId,
     ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType,
     ProfileVisibility,
 };
@@ -37,9 +37,9 @@ pub enum EventType {
     /// New account state for client.
     /// Data: account_state
     AccountStateChanged,
-    /// New capabilities for client.
-    /// Data: capabilities
-    AccountCapabilitiesChanged,
+    /// New permissions for client.
+    /// Data: permissions
+    AccountPermissionsChanged,
     /// New profile visiblity for client.
     /// Data: visibility
     ProfileVisibilityChanged,
@@ -84,8 +84,8 @@ pub struct EventToClient {
     event: EventType,
     /// Data for event AccountStateChanged
     account_state: Option<AccountState>,
-    /// Data for event AccountCapabilitiesChanged
-    capabilities: Option<Capabilities>,
+    /// Data for event AccountPermissionsChanged
+    permissions: Option<Permissions>,
     /// Data for event ProfileVisibilityChanged
     visibility: Option<ProfileVisibility>,
     /// Data for event AccountSyncVersionChanged
@@ -110,7 +110,7 @@ impl From<SpecialEventToClient> for EventToClient {
         let mut value = Self {
             event: EventType::AccountStateChanged,
             account_state: None,
-            capabilities: None,
+            permissions: None,
             visibility: None,
             account_sync_version: None,
             latest_viewed_message_changed: None,
@@ -137,8 +137,8 @@ impl From<SpecialEventToClient> for EventToClient {
 pub enum EventToClientInternal {
     /// New account state for client
     AccountStateChanged(AccountState),
-    /// New capabilities for client
-    AccountCapabilitiesChanged(Capabilities),
+    /// New permissions for client
+    AccountPermissionsChanged(Permissions),
     /// New profile visiblity for client
     ProfileVisibilityChanged(ProfileVisibility),
     LatestViewedMessageChanged(LatestViewedMessageChanged),
@@ -158,7 +158,7 @@ impl From<&EventToClientInternal> for EventType {
         use EventToClientInternal::*;
         match value {
             AccountStateChanged(_) => Self::AccountStateChanged,
-            AccountCapabilitiesChanged(_) => Self::AccountCapabilitiesChanged,
+            AccountPermissionsChanged(_) => Self::AccountPermissionsChanged,
             ProfileVisibilityChanged(_) => Self::ProfileVisibilityChanged,
             LatestViewedMessageChanged(_) => Self::LatestViewedMessageChanged,
             ContentProcessingStateChanged(_) => Self::ContentProcessingStateChanged,
@@ -179,7 +179,7 @@ impl From<EventToClientInternal> for EventToClient {
         let mut value = Self {
             event: (&internal).into(),
             account_state: None,
-            capabilities: None,
+            permissions: None,
             visibility: None,
             account_sync_version: None,
             latest_viewed_message_changed: None,
@@ -190,7 +190,7 @@ impl From<EventToClientInternal> for EventToClient {
 
         match internal {
             AccountStateChanged(v) => value.account_state = Some(v),
-            AccountCapabilitiesChanged(v) => value.capabilities = Some(v),
+            AccountPermissionsChanged(v) => value.permissions = Some(v),
             ProfileVisibilityChanged(v) => value.visibility = Some(v),
             LatestViewedMessageChanged(v) => value.latest_viewed_message_changed = Some(v),
             ContentProcessingStateChanged(v) => value.content_processing_state_changed = Some(v),

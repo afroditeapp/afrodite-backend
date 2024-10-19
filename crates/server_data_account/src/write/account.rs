@@ -1,6 +1,6 @@
 use email::WriteCommandsAccountEmail;
 use model::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Capabilities, ClientId, DemoModeId, NewsIteratorSessionIdInternal, ProfileVisibility, SetAccountSetup
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Permissions, ClientId, DemoModeId, NewsIteratorSessionIdInternal, ProfileVisibility, SetAccountSetup
 };
 use server_data::{
     cache::CacheError, define_server_data_write_commands, result::Result, DataError, DieselDatabaseError, IntoDataError
@@ -20,7 +20,7 @@ impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
         WriteCommandsAccountEmail::new(self.cmds)
     }
 
-    /// The only method which can modify AccountState, Capabilities and
+    /// The only method which can modify AccountState, Permissions and
     /// ProfileVisibility. This also updates profile index if profile component
     /// is enabled and the visibility changed.
     ///
@@ -31,7 +31,7 @@ impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
         increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
         modify_action: impl FnOnce(
                 &mut AccountState,
-                &mut Capabilities,
+                &mut Permissions,
                 &mut ProfileVisibility,
             ) -> error_stack::Result<(), DieselDatabaseError>
             + Send

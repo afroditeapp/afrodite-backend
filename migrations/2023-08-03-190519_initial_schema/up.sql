@@ -32,12 +32,12 @@ CREATE TABLE IF NOT EXISTS refresh_token(
             ON UPDATE CASCADE
 );
 
--- Account capabilities are shared between server components.
+-- Account permissions are shared between server components.
 -- If the data is located in this table it should be set through account
 -- server as it propagates the changes to other components.
-CREATE TABLE IF NOT EXISTS account_capabilities(
+CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    INTEGER PRIMARY KEY NOT NULL,
-    admin_modify_capabilities                    BOOLEAN NOT NULL DEFAULT 0,
+    admin_modify_permissions                    BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_images                        BOOLEAN NOT NULL DEFAULT 0,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS account_capabilities(
     admin_server_maintenance_reset_data          BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_reboot_backend      BOOLEAN NOT NULL DEFAULT 0,
     admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT 0,
+    admin_news_create                            BOOLEAN NOT NULL DEFAULT 0,
+    admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

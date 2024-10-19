@@ -220,7 +220,7 @@ async fn handle_account_data_sync<S: WriteData + ReadData>(
 
     send_event(
         socket,
-        EventToClientInternal::AccountCapabilitiesChanged(account.capablities().clone()),
+        EventToClientInternal::AccountPermissionsChanged(account.permissions().clone()),
     )
     .await?;
 

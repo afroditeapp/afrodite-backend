@@ -4,7 +4,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model::{
-    AccountContent, AccountId, AccountIdInternal, AccountState, Capabilities, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
+    AccountContent, AccountId, AccountIdInternal, AccountState, Permissions, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::IsMatch, create_open_api_router, result::WrappedResultExt};
@@ -39,7 +39,7 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// is in current profile content, then the requested content can be accessed
 /// if query parameter `is_match` is set to `true`.
 ///
-/// If the previous is not true, then capability `admin_view_all_profiles` or
+/// If the previous is not true, then permission `admin_view_all_profiles` or
 /// `admin_moderate_images` is required.
 ///
 #[utoipa::path(
@@ -57,7 +57,7 @@ pub async fn get_content<S: ReadData + GetAccounts + IsMatch>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
-    Extension(capabilities): Extension<Capabilities>,
+    Extension(permissions): Extension<Permissions>,
     Path(requested_profile): Path<AccountId>,
     Path(requested_content_id): Path<ContentId>,
     Query(params): Query<GetContentQueryParams>,
@@ -107,8 +107,8 @@ pub async fn get_content<S: ReadData + GetAccounts + IsMatch>(
         .any(|c| c.content_id() == requested_content_id);
 
     if (visibility && requested_content_is_profile_content) ||
-        capabilities.admin_view_all_profiles ||
-        capabilities.admin_moderate_images ||
+        permissions.admin_view_all_profiles ||
+        permissions.admin_moderate_images ||
         (
             params.is_match &&
             requested_content_is_profile_content &&

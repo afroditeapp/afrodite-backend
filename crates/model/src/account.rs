@@ -117,7 +117,7 @@ pub struct AccountData {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Account {
     state: AccountState,
-    capabilities: Capabilities,
+    permissions: Permissions,
     visibility: ProfileVisibility,
     sync_version: AccountSyncVersion,
 }
@@ -128,25 +128,25 @@ impl Account {
     }
 
     pub fn new_from_internal_types(
-        capabilities: Capabilities,
+        permissions: Permissions,
         shared_state: AccountStateRelatedSharedState,
     ) -> Self {
         Self {
             state: shared_state.account_state_number,
-            capabilities,
+            permissions,
             visibility: shared_state.profile_visibility(),
             sync_version: shared_state.sync_version,
         }
     }
 
     pub fn new_from(
-        capabilities: Capabilities,
+        permissions: Permissions,
         state: AccountState,
         visibility: ProfileVisibility,
         sync_version: AccountSyncVersion,
     ) -> Self {
         Self {
-            capabilities,
+            permissions,
             state,
             visibility,
             sync_version,
@@ -157,8 +157,8 @@ impl Account {
         self.state
     }
 
-    pub fn capablities(&self) -> Capabilities {
-        self.capabilities.clone()
+    pub fn permissions(&self) -> Permissions {
+        self.permissions.clone()
     }
 
     pub fn profile_visibility(&self) -> ProfileVisibility {
@@ -291,13 +291,13 @@ impl TryFrom<i64> for ProfileVisibility {
 
 diesel_i64_try_from!(ProfileVisibility);
 
-macro_rules! define_capablities {
-    ($( $( #[doc = $text:literal] )* $name:ident , )* ) => {
+macro_rules! define_permissions {
+    (struct $struct_name:ident, $( $( #[doc = $text:literal] )* $name:ident , )* ) => {
 
         #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq, Queryable, Selectable, Insertable, AsChangeset)]
-        #[diesel(table_name = crate::schema::account_capabilities)]
+        #[diesel(table_name = crate::schema::account_permissions)]
         #[diesel(check_for_backend(crate::Db))]
-        pub struct Capabilities {
+        pub struct $struct_name {
             $(
                 $(#[doc = $text])?
                 #[serde(default, skip_serializing_if = "std::ops::Not::not")] // Skips false
@@ -306,7 +306,7 @@ macro_rules! define_capablities {
             )*
         }
 
-        impl Capabilities {
+        impl $struct_name {
             pub fn all_enabled() -> Self {
                 Self {
                     $(
@@ -319,8 +319,9 @@ macro_rules! define_capablities {
     };
 }
 
-define_capablities!(
-    admin_modify_capabilities,
+define_permissions!(
+    struct Permissions,
+    admin_modify_permissions,
     admin_moderate_profiles,
     admin_moderate_images,
     /// View public and private profiles.
@@ -335,7 +336,15 @@ define_capablities!(
     admin_server_maintenance_reset_data,
     admin_server_maintenance_reboot_backend,
     admin_server_maintenance_save_backend_config,
+    admin_news_create,
+    admin_news_edit_all,
 );
+
+impl Permissions {
+    pub fn some_admin_news_permissions_granted(&self) -> bool {
+        self.admin_news_create || self.admin_news_edit_all
+    }
+}
 
 #[derive(
     Debug,

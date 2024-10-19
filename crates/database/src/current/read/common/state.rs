@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, AccountStateRelatedSharedState, Capabilities, OtherSharedState};
+use model::{AccountIdInternal, AccountStateRelatedSharedState, Permissions, OtherSharedState};
 use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
 
 use crate::IntoDatabaseError;
@@ -34,15 +34,15 @@ impl<C: ConnectionProvider> CurrentSyncReadCommonState<C> {
             .into_db_error(id)
     }
 
-    pub fn account_capabilities(
+    pub fn account_permissions(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<Capabilities, DieselDatabaseError> {
-        use crate::schema::account_capabilities::dsl::*;
+    ) -> Result<Permissions, DieselDatabaseError> {
+        use crate::schema::account_permissions::dsl::*;
 
-        account_capabilities
+        account_permissions
             .filter(account_id.eq(id.as_db_id()))
-            .select(Capabilities::as_select())
+            .select(Permissions::as_select())
             .first(self.conn())
             .into_db_error(id)
     }

@@ -35,8 +35,8 @@ pub static ACCESS_TOKEN_HEADER: header::HeaderName =
 /// "Extension(api_caller_account_id): Extension<AccountIdInternal>"
 /// to handlers is possible.
 ///
-/// Adds `Capabilities` extension to request, so that adding
-/// "Extension(api_caller_capabilities): Extension<Capabilities>"
+/// Adds `Permissions` extension to request, so that adding
+/// "Extension(api_caller_permissions): Extension<Permissions>"
 /// to handlers is possible.
 ///
 /// Adds `AccountState` extension to request, so that adding
@@ -55,11 +55,11 @@ pub async fn authenticate_with_access_token<S: GetAccessTokens>(
     let key_str = header.to_str().map_err(|_| StatusCode::BAD_REQUEST)?;
     let key = AccessToken::new(key_str.to_string());
 
-    if let Some((id, capabilities, account_state)) =
+    if let Some((id, permissions, account_state)) =
         state.access_token_and_connection_exists(&key, addr).await
     {
         req.extensions_mut().insert(id);
-        req.extensions_mut().insert(capabilities);
+        req.extensions_mut().insert(permissions);
         req.extensions_mut().insert(account_state);
         Ok(next.run(req).await)
     } else {

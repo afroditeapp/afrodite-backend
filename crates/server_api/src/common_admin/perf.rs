@@ -2,7 +2,7 @@ use axum::{
     extract::{Query, State},
     Extension,
 };
-use model::Capabilities;
+use model::Permissions;
 use obfuscate_api_macro::obfuscate_api;
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
@@ -17,7 +17,7 @@ const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 
 /// Get performance data
 ///
-/// # Capabilities
+/// # Permissions
 /// Requires admin_server_maintenance_view_info.
 #[utoipa::path(
     get,
@@ -32,11 +32,11 @@ const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
 )]
 pub async fn get_perf_data<S: PerfCounterDataProvider>(
     State(state): State<S>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
     Query(_query): Query<PerfHistoryQuery>,
 ) -> Result<Json<PerfHistoryQueryResult>, StatusCode> {
     COMMON_ADMIN.get_perf_data.incr();
-    if api_caller_capabilities.admin_server_maintenance_view_info {
+    if api_caller_permissions.admin_server_maintenance_view_info {
         let data = state.perf_counter_data().get_history().await;
         Ok(data.into())
     } else {

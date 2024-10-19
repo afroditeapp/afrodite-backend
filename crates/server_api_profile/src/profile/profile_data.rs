@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use model::{
-    AccountId, AccountIdInternal, AccountState, Capabilities, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
+    AccountId, AccountIdInternal, AccountState, Permissions, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::IsMatch, create_open_api_router, db_write_multiple, result::WrappedContextExt};
@@ -43,11 +43,11 @@ const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
 /// If the profile is a match, then the profile can be accessed if query
 /// parameter `is_match` is set to `true`.
 ///
-/// If the profile is not a match, then capability `admin_view_all_profiles`
+/// If the profile is not a match, then permission `admin_view_all_profiles`
 /// is required.
 ///
 /// # Microservice notes
-/// If account feature is set as external service then cached capability
+/// If account feature is set as external service then cached permission
 /// information from account service is used for access checks.
 #[utoipa::path(
     get,
@@ -69,7 +69,7 @@ pub async fn get_profile<
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
-    Extension(capabilities): Extension<Capabilities>,
+    Extension(permissions): Extension<Permissions>,
     Path(requested_profile): Path<AccountId>,
     Query(params): Query<GetProfileQueryParam>,
 ) -> Result<Json<GetProfileResult>, StatusCode> {
@@ -112,7 +112,7 @@ pub async fn get_profile<
         .is_currently_public();
 
     if visibility ||
-        capabilities.admin_view_all_profiles ||
+        permissions.admin_view_all_profiles ||
         (params.allow_get_profile_if_match() && state.is_match(account_id, requested_profile).await?)
     {
         read_profile_action().await

@@ -36,7 +36,7 @@ impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
         let account = self
             .read_cache(id, |cache| {
                 Account::new_from_internal_types(
-                    cache.capabilities.clone(),
+                    cache.permissions.clone(),
                     cache.account_state_related_shared_state.clone(),
                 )
             })

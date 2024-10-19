@@ -82,10 +82,10 @@ impl DbDataToCacheLoader {
         let mut entry = account_entry.cache.write().await;
 
         // Common
-        let capabilities = db
-            .db_read_common(move |mut cmds| cmds.common().state().account_capabilities(account_id))
+        let permissions = db
+            .db_read_common(move |mut cmds| cmds.common().state().account_permissions(account_id))
             .await?;
-        entry.capabilities = capabilities;
+        entry.permissions = permissions;
         let state = db
             .db_read_common(move |mut cmds| cmds.common().state().account_state_related_shared_state(account_id))
             .await?;

@@ -3,11 +3,11 @@
 When account is created the first state is 'initial setup'. That happens when
 user logins using Apple/Google single sign on.
 
-Account has several capablities for example granting admin related features.
-Admin can give some capablities or also user actions can grant some of those.
+Account has several permissions for example granting admin related features.
+Admin can give some permissions or also user actions can grant some of those.
 
 Initial admin must be set from the server settings. This admin has
-'admin_modify_capablities' and 'admin_setup_possible' capablities.
+'admin_modify_permissions' and 'admin_setup_possible' permissions.
 
 Terms of Service updates are notified early using email, so no need to save
 accepted version to the server.
@@ -16,7 +16,7 @@ accepted version to the server.
 
 When user account is in this state the app launches to the account setup screen.
 In this screen it is possible to move account to 'pending deletion' state. Also
-if admin gives user some admin capabilities it is possible to partly skip
+if admin gives user some admin permissions it is possible to partly skip
 the initial setup.
 
 Possible state transfers:
@@ -24,7 +24,7 @@ Possible state transfers:
 * Banned
 * Pending deletion
 
-### Capablities
+### Permissions
 
 * 'admin_setup_possible' - User can select if complete initial setup or minimal
 admin setup should be done when doing initial setup.
@@ -37,11 +37,11 @@ Possible state transfers:
 * Banned
 * Pending deletion
 
-### Capabilities
+### Permissions
 
 Admin:
 
-* 'admin_modify_capablities' - Add and remove capablities exept this one.
+* 'admin_modify_permissions' - Add and remove permissions exept this one.
 * 'admin_moderate_profiles' - View and moderate all user flagged profiles.
 * 'admin_moderate_images' - Account image moderation is now possible.
 * 'admin_view_private_info' - View private account info.
@@ -65,7 +65,7 @@ Possible state transfers:
 * Pending deletion
 * Normal
 
-### Capabilities
+### Permissions
 
 * 'banned_edit_profile' - Edit profile and then send it to moderation again.
 

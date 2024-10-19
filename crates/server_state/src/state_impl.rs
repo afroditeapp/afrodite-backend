@@ -4,7 +4,7 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Capabilities, EmailAddress, EmailMessages, EventToClientInternal, PendingNotificationFlags, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Permissions, EmailAddress, EmailMessages, EventToClientInternal, PendingNotificationFlags, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
@@ -300,7 +300,7 @@ impl GetAccessTokens for S {
         &self,
         token: &AccessToken,
         connection: SocketAddr,
-    ) -> Option<(AccountIdInternal, Capabilities, AccountState)> {
+    ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
         self.database
             .access_token_manager()
             .access_token_and_connection_exists(token, connection)
@@ -451,7 +451,7 @@ impl CompleteInitialSetupCmd for S {
             cmds.profile().set_initial_profile_age_from_current_profile(id).await?;
 
             let global_state = cmds.read().account().global_state().await?;
-            let enable_all_capabilities = if matches_with_grant_admin_access_config
+            let enable_all_permissions = if matches_with_grant_admin_access_config
                 && (global_state.admin_access_granted_count == 0 || grant_admin_access_more_than_once)
             {
                 Some(IncrementAdminAccessGrantedCount)
@@ -463,13 +463,13 @@ impl CompleteInitialSetupCmd for S {
                 .account()
                 .update_syncable_account_data(
                     id,
-                    enable_all_capabilities,
-                    move |state, capabilities, _| {
+                    enable_all_permissions,
+                    move |state, permissions, _| {
                         if *state == AccountState::InitialSetup {
                             *state = AccountState::Normal;
-                            if enable_all_capabilities.is_some() {
-                                warn!("Account detected as admin account. Enabling all capabilities");
-                                *capabilities = Capabilities::all_enabled();
+                            if enable_all_permissions.is_some() {
+                                warn!("Account detected as admin account. Enabling all permissions");
+                                *permissions = Permissions::all_enabled();
                             }
                         }
                         Ok(())
@@ -493,7 +493,7 @@ impl CompleteInitialSetupCmd for S {
             cmds.events()
                 .send_connected_event(
                     id.uuid,
-                    EventToClientInternal::AccountCapabilitiesChanged(new_account.capablities()),
+                    EventToClientInternal::AccountPermissionsChanged(new_account.permissions()),
                 )
                 .await?;
 

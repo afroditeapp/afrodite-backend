@@ -9,7 +9,7 @@ use model::{
     AccountState,
     BackendConfig,
     BackendVersion,
-    Capabilities,
+    Permissions,
     EmailAddress,
     EmailMessages,
     PendingNotificationFlags,
@@ -205,7 +205,7 @@ impl GetAccessTokens for E {
         &self,
         _token: &AccessToken,
         _connection: SocketAddr,
-    ) -> Option<(AccountIdInternal, Capabilities, AccountState)> {
+    ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
         unimplemented!()
     }
 }

@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use axum::extract::ws::WebSocket;
 use model::{
-    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, Capabilities, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, PublicKeyIdAndVersion, SignInWithInfo, SyncDataVersionFromClient
+    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, Permissions, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, PublicKeyIdAndVersion, SignInWithInfo, SyncDataVersionFromClient
 };
 use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;
@@ -26,7 +26,7 @@ pub trait GetAccessTokens {
         &self,
         token: &AccessToken,
         connection: SocketAddr,
-    ) -> impl std::future::Future<Output = Option<(AccountIdInternal, Capabilities, AccountState)>> + Send;
+    ) -> impl std::future::Future<Output = Option<(AccountIdInternal, Permissions, AccountState)>> + Send;
 }
 
 pub trait ContentProcessingProvider {

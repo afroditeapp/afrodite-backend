@@ -5,7 +5,7 @@ use chat::CachedChatComponentData;
 use error_stack::Result;
 use media::CachedMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Capabilities, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Permissions, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags
 };
 use profile::CachedProfile;
 use simple_backend_model::UnixTime;
@@ -189,14 +189,14 @@ impl DatabaseCache {
         &self,
         access_token: &AccessToken,
         connection: SocketAddr,
-    ) -> Option<(AccountIdInternal, Capabilities, AccountState)> {
+    ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
             if r.current_connection.as_ref().map(|a| a.connection.ip()) == Some(connection.ip()) {
                 Some((
                     entry.account_id_internal,
-                    r.capabilities.clone(),
+                    r.permissions.clone(),
                     r.account_state_related_shared_state.account_state_number,
                 ))
             } else {
@@ -321,7 +321,7 @@ pub struct CacheEntry {
     pub profile: Option<Box<CachedProfile>>,
     pub media: Option<Box<CachedMedia>>,
     pub chat: Option<Box<CachedChatComponentData>>,
-    pub capabilities: Capabilities,
+    pub permissions: Permissions,
     pub account_state_related_shared_state: AccountStateRelatedSharedState,
     pub other_shared_state: OtherSharedState,
     current_connection: Option<ConnectionInfo>,
@@ -338,7 +338,7 @@ impl CacheEntry {
             profile: None,
             media: None,
             chat: None,
-            capabilities: Capabilities::default(),
+            permissions: Permissions::default(),
             account_state_related_shared_state: AccountStateRelatedSharedState::default(),
             other_shared_state: OtherSharedState::default(),
             current_connection: None,

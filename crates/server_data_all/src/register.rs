@@ -86,7 +86,7 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
         current
             .common()
             .state()
-            .insert_default_account_capabilities(id)?;
+            .insert_default_account_permissions(id)?;
         current
             .common()
             .state()

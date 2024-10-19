@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use model::{
-    AccountId, AccountIdInternal, AccountState, Capabilities, GetProfileContentQueryParams, GetProfileContentResult, PendingProfileContent, ProfileContent, SetProfileContent
+    AccountId, AccountIdInternal, AccountState, Permissions, GetProfileContentQueryParams, GetProfileContentResult, PendingProfileContent, ProfileContent, SetProfileContent
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::IsMatch, create_open_api_router};
@@ -35,7 +35,7 @@ const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{ai
 /// If the profile is a match, then the profile can be accessed if query
 /// parameter `is_match` is set to `true`.
 ///
-/// If the profile is not a match, then capability `admin_view_all_profiles`
+/// If the profile is not a match, then permission `admin_view_all_profiles`
 /// is required.
 #[utoipa::path(
     get,
@@ -52,7 +52,7 @@ pub async fn get_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
-    Extension(capabilities): Extension<Capabilities>,
+    Extension(permissions): Extension<Permissions>,
     Path(requested_profile): Path<AccountId>,
     Query(params): Query<GetProfileContentQueryParams>,
 ) -> Result<Json<GetProfileContentResult>, StatusCode> {
@@ -93,7 +93,7 @@ pub async fn get_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
         .is_currently_public();
 
     if visibility ||
-        capabilities.admin_view_all_profiles ||
+        permissions.admin_view_all_profiles ||
         (params.allow_get_content_if_match() && state.is_match(account_id, requested_profile).await?)
     {
         read_profile_action().await

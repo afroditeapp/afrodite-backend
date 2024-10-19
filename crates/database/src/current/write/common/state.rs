@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion, Capabilities, ProfileVisibility, SharedStateRaw, SyncVersionUtils
+    Account, AccountIdInternal, AccountState, AccountStateRelatedSharedState, AccountSyncVersion, Permissions, ProfileVisibility, SharedStateRaw, SyncVersionUtils
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -73,13 +73,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
-    pub fn insert_default_account_capabilities(
+    pub fn insert_default_account_permissions(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_capabilities::dsl::*;
+        use model::schema::account_permissions::dsl::*;
 
-        insert_into(account_capabilities)
+        insert_into(account_permissions)
             .values((account_id.eq(id.as_db_id()),))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -87,14 +87,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
-    fn account_capabilities(
+    fn account_permissions(
         &mut self,
         id: AccountIdInternal,
-        data: Capabilities,
+        data: Permissions,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_capabilities::dsl::*;
+        use model::schema::account_permissions::dsl::*;
 
-        update(account_capabilities.find(id.as_db_id()))
+        update(account_permissions.find(id.as_db_id()))
             .set(data)
             .execute(self.conn())
             .into_db_error(id)?;
@@ -102,7 +102,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
-    /// The only method which can modify AccountState, Capabilities and
+    /// The only method which can modify AccountState, Permissions and
     /// ProfileVisibility. Updates automatically the AccountSyncVersion number.
     ///
     /// Returns the modified Account.
@@ -112,21 +112,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         account: Account,
         modify_action: impl FnOnce(
                 &mut AccountState,
-                &mut Capabilities,
+                &mut Permissions,
                 &mut ProfileVisibility,
             ) -> error_stack::Result<(), DieselDatabaseError>
             + Send
             + 'static,
     ) -> Result<Account, DieselDatabaseError> {
         let mut state = account.state();
-        let mut capabilities = account.capablities();
+        let mut permissions = account.permissions();
         let mut profile_visibility = account.profile_visibility();
-        modify_action(&mut state, &mut capabilities, &mut profile_visibility)
+        modify_action(&mut state, &mut permissions, &mut profile_visibility)
             .map_err(|_| DieselDatabaseError::NotAllowed.report())?;
         let new_version = account.sync_version().increment_if_not_max_value();
-        let new_account = Account::new_from(capabilities, state, profile_visibility, new_version);
+        let new_account = Account::new_from(permissions, state, profile_visibility, new_version);
 
-        self.account_capabilities(id, new_account.capablities())?;
+        self.account_permissions(id, new_account.permissions())?;
         self.update_account_related_shared_state(id, new_account.clone().into())?;
 
         Ok(new_account)

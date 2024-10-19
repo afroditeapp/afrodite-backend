@@ -25,7 +25,7 @@ using path `/account_api/complete_setup`. Account server will check that all
 required information is set to the account and then also check is there really
 an moderation request created using internal media server API.
 
-TODO: Remove capablity 'admin_setup_possible' from another document.
+TODO: Remove permission 'admin_setup_possible' from another document.
 
 ## Normal state
 
@@ -54,14 +54,14 @@ handled using `/media/events`
 
 ### Profile grid view
 
-Client will use previously get account state and check if capablity
-'view_public_profiles' is visible. If that capability is not visible then client
+Client will use previously get account state and check if permission
+'view_public_profiles' is visible. If that permission is not visible then client
 will check `/media/moderation/request` to see is there a currently ongoing
 moderation request. That info will also include current position in the
 moderation queue. Client will show moderation info if images are pending
 moderation. If not then client will show text "Profile is not set as public".
 
-If capablility 'view_public_profiles' is set then update location with
+If permission 'view_public_profiles' is set then update location with
 `/profile/location` and start profile paging `/profile/page/next`.
 Refresh is possible when using `/profile/page/reset`.
 
@@ -251,7 +251,7 @@ this API for sending events to clients.
 
 #### Image moderation
 
-If capability 'admin_moderate_images' can be found the client displays option to
+If permission 'admin_moderate_images' can be found the client displays option to
 go image moderation mode. In that mode the app will fetch all images which need
 moderation using `/media_api/admin/moderation/page/next`.
 That path will get next set of not handled image moderations.

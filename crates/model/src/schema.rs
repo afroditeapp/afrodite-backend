@@ -21,26 +21,6 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
-    account_capabilities (account_id) {
-        account_id -> Integer,
-        admin_modify_capabilities -> Bool,
-        admin_moderate_profiles -> Bool,
-        admin_moderate_images -> Bool,
-        admin_view_all_profiles -> Bool,
-        admin_view_private_info -> Bool,
-        admin_view_profile_history -> Bool,
-        admin_server_maintenance_view_info -> Bool,
-        admin_server_maintenance_view_backend_config -> Bool,
-        admin_server_maintenance_update_software -> Bool,
-        admin_server_maintenance_reset_data -> Bool,
-        admin_server_maintenance_reboot_backend -> Bool,
-        admin_server_maintenance_save_backend_config -> Bool,
-    }
-}
-
-diesel::table! {
-    use crate::schema_sqlite_types::*;
-
     account_email_sending_state (account_id) {
         account_id -> Integer,
         account_registered_state_number -> Integer,
@@ -94,6 +74,28 @@ diesel::table! {
         account_id_first -> Integer,
         account_id_second -> Integer,
         interaction_id -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    account_permissions (account_id) {
+        account_id -> Integer,
+        admin_modify_permissions -> Bool,
+        admin_moderate_profiles -> Bool,
+        admin_moderate_images -> Bool,
+        admin_view_all_profiles -> Bool,
+        admin_view_private_info -> Bool,
+        admin_view_profile_history -> Bool,
+        admin_server_maintenance_view_info -> Bool,
+        admin_server_maintenance_view_backend_config -> Bool,
+        admin_server_maintenance_update_software -> Bool,
+        admin_server_maintenance_reset_data -> Bool,
+        admin_server_maintenance_reboot_backend -> Bool,
+        admin_server_maintenance_save_backend_config -> Bool,
+        admin_news_create -> Bool,
+        admin_news_edit_all -> Bool,
     }
 }
 
@@ -472,9 +474,9 @@ diesel::table! {
 
 diesel::joinable!(access_token -> account_id (account_id));
 diesel::joinable!(account -> account_id (account_id));
-diesel::joinable!(account_capabilities -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
+diesel::joinable!(account_permissions -> account_id (account_id));
 diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(account_state -> account_id (account_id));
 diesel::joinable!(chat_state -> account_id (account_id));
@@ -503,12 +505,12 @@ diesel::joinable!(sign_in_with_info -> account_id (account_id));
 diesel::allow_tables_to_appear_in_same_query!(
     access_token,
     account,
-    account_capabilities,
     account_email_sending_state,
     account_global_state,
     account_id,
     account_interaction,
     account_interaction_index,
+    account_permissions,
     account_setup,
     account_state,
     chat_global_state,

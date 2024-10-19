@@ -98,7 +98,7 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
     ) -> Result<(), DataError> {
         let new_account_clone = new_account.clone();
         self.write_cache(id, |cache| {
-            cache.capabilities = new_account_clone.capablities();
+            cache.permissions = new_account_clone.permissions();
             cache.account_state_related_shared_state = new_account_clone.into();
             Ok(())
         })

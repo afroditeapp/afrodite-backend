@@ -26,7 +26,7 @@ If item does not have client/server specified then work for both is needed.
 - [ ] Profile reporting
 - [ ] Account removing
 - [ ] Account banning (with ban time)
-- [ ] Admin view and edit capabilities
+- [ ] Admin view and edit permissions
 - [ ] Client: admin: open profile with account ID
 
 ### Chat

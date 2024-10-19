@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use model::{
-    AccountId, AccountIdInternal, Capabilities, EventToClientInternal, HandleModerationRequest,
+    AccountId, AccountIdInternal, Permissions, EventToClientInternal, HandleModerationRequest,
     ModerationList, ModerationQueueTypeParam,
 };
 use obfuscate_api_macro::obfuscate_api;
@@ -30,7 +30,7 @@ const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/
 ///
 /// ## Access
 ///
-/// Account with `admin_moderate_images` capability is required to access this
+/// Account with `admin_moderate_images` permission is required to access this
 /// route.
 ///
 #[utoipa::path(
@@ -72,7 +72,7 @@ const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
 ///
 /// ## Access
 ///
-/// Account with `admin_moderate_images` capability is required to access this
+/// Account with `admin_moderate_images` permission is required to access this
 /// route.
 ///
 #[utoipa::path(
@@ -93,12 +93,12 @@ pub async fn post_handle_moderation_request<
     State(state): State<S>,
     Path(moderation_request_owner_account_id): Path<AccountId>,
     Extension(admin_account_id): Extension<AccountIdInternal>,
-    Extension(api_caller_capabilities): Extension<Capabilities>,
+    Extension(api_caller_permissions): Extension<Permissions>,
     Json(moderation_decision): Json<HandleModerationRequest>,
 ) -> Result<(), StatusCode> {
     MEDIA_ADMIN.post_handle_moderation_request.incr();
 
-    if !api_caller_capabilities.admin_moderate_images {
+    if !api_caller_permissions.admin_moderate_images {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
