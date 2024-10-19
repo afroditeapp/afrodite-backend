@@ -21,6 +21,8 @@ pub struct NewsItemInternal {
     pub id: NewsId,
     pub public: bool,
     pub account_id_creator: Option<AccountIdDb>,
+    pub first_publication_unix_time: Option<UnixTime>,
+    pub latest_publication_unix_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
@@ -229,7 +231,7 @@ pub struct GetNewsItemResult {
 pub struct NewsItemSimple {
     pub id: NewsId,
     pub title: Option<String>,
-    pub creation_time: Option<UnixTime>,
+    pub time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams)]

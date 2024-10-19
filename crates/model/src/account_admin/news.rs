@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use simple_backend_model::UnixTime;
 use utoipa::ToSchema;
 
 use crate::{AccountId, NewsId, NewsItem, NewsTranslationVersion};
@@ -8,6 +9,8 @@ pub struct NewsTranslations {
     pub id: NewsId,
     pub public: bool,
     pub aid_creator: Option<AccountId>,
+    pub first_publication_time: Option<UnixTime>,
+    pub latest_publication_time: Option<UnixTime>,
     pub translations: Vec<NewsItem>,
 }
 

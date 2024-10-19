@@ -100,9 +100,26 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::news::dsl::*;
 
+        let current_value = self.read().account_admin().news().news_translations(id_value)?;
+        let current_time = UnixTime::current_time();
+        let first_publication = if is_public && current_value.first_publication_time.is_none() {
+            Some(current_time)
+        } else {
+            current_value.first_publication_time
+        };
+        let latest_publication = if is_public {
+            Some(current_time)
+        } else {
+            current_value.latest_publication_time
+        };
+
         update(news)
             .filter(id.eq(id_value))
-            .set(public.eq(is_public))
+            .set((
+                public.eq(is_public),
+                first_publication_unix_time.eq(first_publication),
+                latest_publication_unix_time.eq(latest_publication),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 

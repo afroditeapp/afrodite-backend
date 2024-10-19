@@ -193,6 +193,8 @@ CREATE TABLE IF NOT EXISTS news(
     id                    INTEGER PRIMARY KEY NOT NULL,
     public                BOOLEAN             NOT NULL DEFAULT 0,
     account_id_creator    INTEGER,
+    first_publication_unix_time  INTEGER,
+    latest_publication_unix_time INTEGER,
     FOREIGN KEY (account_id_creator)
     REFERENCES account_id (id)
         ON DELETE SET NULL

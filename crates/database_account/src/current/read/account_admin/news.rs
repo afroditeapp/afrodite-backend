@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, NewsId, NewsItem, NewsTranslationInternal, NewsTranslations};
+use model::{AccountId, NewsId, NewsItem, NewsItemInternal, NewsTranslationInternal, NewsTranslations};
 
 use crate::IntoDatabaseError;
 
@@ -14,7 +14,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNewsAdmin<C> {
     ) -> Result<NewsTranslations, DieselDatabaseError> {
         use crate::schema::{account_id, news, news_translations};
 
-        let (is_news_public, news_creator) = {
+        let (news_item, news_creator) = {
             let creator_aid = alias!(account_id as creator_aid);
             news::table
                 .left_outer_join(
@@ -24,7 +24,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNewsAdmin<C> {
                 )
                 .filter(news::id.eq(news_id_value))
                 .select((
-                    news::public,
+                    NewsItemInternal::as_select(),
                     creator_aid.field(account_id::uuid).nullable(),
                 ))
                 .first(self.conn())
@@ -72,8 +72,10 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNewsAdmin<C> {
 
         Ok(NewsTranslations {
             id: news_id_value,
-            public: is_news_public,
+            public: news_item.public,
             aid_creator: news_creator,
+            first_publication_time: news_item.first_publication_unix_time,
+            latest_publication_time: news_item.latest_publication_unix_time,
             translations,
         })
     }

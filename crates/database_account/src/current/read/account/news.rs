@@ -74,7 +74,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .select((
                 news::id,
                 news_translations::title.nullable(),
-                news_translations::creation_unix_time.nullable(),
+                news::first_publication_unix_time.nullable(),
             ))
             .order((
                 news::id.desc(),
@@ -90,7 +90,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
                 NewsItemSimple {
                     id: r.0,
                     title: r.1,
-                    creation_time: r.2,
+                    time: r.2,
                 }
             })
             .collect();

@@ -302,6 +302,8 @@ diesel::table! {
         id -> Integer,
         public -> Bool,
         account_id_creator -> Nullable<Integer>,
+        first_publication_unix_time -> Nullable<Integer>,
+        latest_publication_unix_time -> Nullable<Integer>,
     }
 }
 
