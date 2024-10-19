@@ -8,7 +8,7 @@ use server_api::{app::ConnectionTools, common::WebSocketError, db_write_raw};
 use server_data::read::GetReadCommandsCommon;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 
-use server_data_account::write::GetWriteCommandsAccount;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 
 use server_api::{
     app::{GetConfig, ReadData, WriteData},
@@ -164,6 +164,17 @@ impl ConnectionTools for S {
                 SyncCheckDataType::Profile => {
                     if self.config().components().profile {
                         handle_profile_sync_version_check(
+                            self,
+                            socket,
+                            id,
+                            version.version,
+                        )
+                        .await?;
+                    }
+                }
+                SyncCheckDataType::NewsCount => {
+                    if self.config().components().account {
+                        handle_news_count_sync_version_check(
                             self,
                             socket,
                             id,
@@ -333,6 +344,42 @@ async fn handle_profile_sync_version_check<S: WriteData + ReadData>(
     send_event(
         socket,
         EventToClientInternal::ProfileChanged,
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn handle_news_count_sync_version_check<S: WriteData + ReadData>(
+    state: &S,
+    socket: &mut WebSocket,
+    id: AccountIdInternal,
+    sync_version: SyncVersionFromClient,
+) -> Result<(), WebSocketError> {
+    let current = state
+        .read()
+        .account()
+        .news()
+        .news_count_for_public_news(id)
+        .await
+        .change_context(WebSocketError::DatabaseNewsCountQuery)?
+        .v;
+    match current.check_is_sync_required(sync_version) {
+        SyncCheckResult::DoNothing => return Ok(()),
+        SyncCheckResult::ResetVersionAndSync => db_write_raw!(state, move |cmds| {
+            cmds.account()
+                .news()
+                .reset_news_count_sync_version(id)
+                .await
+        })
+            .await
+            .change_context(WebSocketError::NewsCountSyncVersionResetFailed)?,
+        SyncCheckResult::Sync => (),
+    };
+
+    send_event(
+        socket,
+        EventToClientInternal::NewsCountChanged,
     )
     .await?;
 

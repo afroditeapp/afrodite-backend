@@ -1,12 +1,14 @@
 use email::WriteCommandsAccountEmail;
 use model::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Permissions, ClientId, DemoModeId, NewsIteratorSessionIdInternal, ProfileVisibility, SetAccountSetup
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Permissions, ClientId, DemoModeId, ProfileVisibility, SetAccountSetup
 };
+use news::WriteCommandsAccountNews;
 use server_data::{
-    cache::CacheError, define_server_data_write_commands, result::Result, DataError, DieselDatabaseError, IntoDataError
+    define_server_data_write_commands, result::Result, DataError, DieselDatabaseError
 };
 
 pub mod email;
+pub mod news;
 
 define_server_data_write_commands!(WriteCommandsAccount);
 define_db_transaction_command!(WriteCommandsAccount);
@@ -18,6 +20,10 @@ pub struct IncrementAdminAccessGrantedCount;
 impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
     pub fn email(self) -> WriteCommandsAccountEmail<C> {
         WriteCommandsAccountEmail::new(self.cmds)
+    }
+
+    pub fn news(self) -> WriteCommandsAccountNews<C> {
+        WriteCommandsAccountNews::new(self.cmds)
     }
 
     /// The only method which can modify AccountState, Permissions and
@@ -130,24 +136,5 @@ impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().data().get_next_client_id(id)
         })
-    }
-
-    pub async fn handle_reset_news_iterator(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<NewsIteratorSessionIdInternal, DataError> {
-        let latest_used_id = self.db_read(|mut cmds| cmds.account().news().latest_used_news_id()).await?;
-        let session_id = self.cache()
-            .write_cache(id.as_id(), |e| {
-                if let Some(c) = e.account.as_mut() {
-                    Ok(c.news_iterator.reset(latest_used_id))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
-            })
-            .await
-            .into_data_error(id)?;
-
-        Ok(session_id)
     }
 }

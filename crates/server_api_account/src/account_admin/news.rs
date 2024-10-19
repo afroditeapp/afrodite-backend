@@ -1,6 +1,6 @@
 
 use axum::{extract::{Path, State}, Extension};
-use model::{AccountIdInternal, NewsId, NewsLocale, Permissions, UpdateNewsTranslation, UpdateNewsTranslationResult};
+use model::{AccountIdInternal, BooleanSetting, NewsId, NewsLocale, Permissions, UpdateNewsTranslation, UpdateNewsTranslationResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write, db_write_multiple, result::WrappedContextExt, DataError};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -189,6 +189,61 @@ pub async fn delete_news_translation<S: ReadData + WriteData>(
     Ok(())
 }
 
+#[obfuscate_api]
+const PATH_POST_SET_NEWS_PUBLICITY: &str = "/account_api/set_news_publicity/{nid}";
+
+#[utoipa::path(
+    delete,
+    path = PATH_POST_SET_NEWS_PUBLICITY,
+    params(NewsId),
+    request_body(content = BooleanSetting),
+    responses(
+        (status = 200, description = "Success."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_set_news_publicity<S: ReadData + WriteData>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(permissions): Extension<Permissions>,
+    Path(nid): Path<NewsId>,
+    Json(publicity): Json<BooleanSetting>,
+) -> Result<(), StatusCode> {
+    ACCOUNT.post_set_news_publicity.incr();
+
+    if !permissions.some_admin_news_permissions_granted() {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    db_write_multiple!(state, move |cmds| {
+        let item = cmds
+            .read()
+            .account_admin()
+            .news()
+            .news_translations(nid)
+            .await?;
+
+        if !permissions.admin_news_edit_all && item.aid_creator != Some(account_id.uuid) {
+            return Err(DataError::NotAllowed.report());
+        }
+
+        if item.public == publicity.value {
+            return Ok(());
+        }
+
+        cmds.account_admin().news().set_news_publicity(
+            nid,
+            publicity.value,
+        ).await?;
+
+        Ok(())
+    })?;
+
+    Ok(())
+}
+
 pub fn admin_news_router<S: StateBase + WriteData + ReadData>(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
@@ -196,6 +251,7 @@ pub fn admin_news_router<S: StateBase + WriteData + ReadData>(s: S) -> OpenApiRo
         delete_news_item::<S>,
         post_update_news_translation::<S>,
         delete_news_translation::<S>,
+        post_set_news_publicity::<S>,
     )
 }
 
@@ -207,4 +263,5 @@ create_counters!(
     delete_news_item,
     post_update_news_translation,
     delete_news_translation,
+    post_set_news_publicity,
 );

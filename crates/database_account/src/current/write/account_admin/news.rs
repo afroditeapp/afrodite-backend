@@ -1,9 +1,9 @@
 
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
-use diesel::{delete, insert_into, prelude::*, upsert::excluded};
+use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, NewsId, NewsLocale, UnixTime, UpdateNewsTranslation
+    AccountIdInternal, NewsId, NewsLocale, SyncVersion, UnixTime, UpdateNewsTranslation
 };
 
 use crate::IntoDatabaseError;
@@ -87,6 +87,38 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
         delete(news_translations)
             .filter(news_id.eq(id_value))
             .filter(locale.eq(locale_value.locale))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn set_news_publicity(
+        &mut self,
+        id_value: NewsId,
+        is_public: bool,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::news::dsl::*;
+
+        update(news)
+            .filter(id.eq(id_value))
+            .set(public.eq(is_public))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        self.increment_news_count_sync_version_for_every_account()?;
+
+        Ok(())
+    }
+
+    fn increment_news_count_sync_version_for_every_account(
+        &mut self,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_state::dsl::*;
+
+        update(account_state)
+            .filter(news_count_sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(news_count_sync_version.eq(news_count_sync_version + 1))
             .execute(self.conn())
             .into_db_error(())?;
 

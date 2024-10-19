@@ -46,4 +46,14 @@ impl<C: WriteCommandsProvider> WriteCommandsAccountNewsAdmin<C> {
             cmds.account_admin().news().delete_news_translation(nid, locale)
         })
     }
+
+    pub async fn set_news_publicity(
+        &self,
+        nid: NewsId,
+        is_public: bool,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account_admin().news().set_news_publicity(nid, is_public)
+        })
+    }
 }

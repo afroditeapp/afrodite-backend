@@ -107,6 +107,8 @@ pub enum WebSocketError {
     DatabaseChatStateQuery,
     #[error("Database: Profile state query failed")]
     DatabaseProfileStateQuery,
+    #[error("Database: News count state query failed")]
+    DatabaseNewsCountQuery,
     #[error("Database: Pending messages query failed")]
     DatabasePendingMessagesQuery,
     #[error("Database: Pending notification reset failed")]
@@ -125,6 +127,8 @@ pub enum WebSocketError {
     ProfileAttributesSyncVersionResetFailed,
     #[error("Profile sync version number reset failed")]
     ProfileSyncVersionResetFailed,
+    #[error("News count sync version number reset failed")]
+    NewsCountSyncVersionResetFailed,
 }
 
 pub use utils::api::PATH_CONNECT;

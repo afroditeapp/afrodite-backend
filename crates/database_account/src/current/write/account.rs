@@ -4,6 +4,7 @@ mod data;
 mod demo;
 mod sign_in_with;
 mod email;
+mod news;
 
 define_current_write_commands!(CurrentWriteAccount, CurrentSyncWriteAccount);
 
@@ -22,5 +23,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccount<C> {
 
     pub fn email(self) -> email::CurrentSyncWriteAccountEmail<C> {
         email::CurrentSyncWriteAccountEmail::new(self.cmds)
+    }
+
+    pub fn news(self) -> news::CurrentSyncWriteAccountNews<C> {
+        news::CurrentSyncWriteAccountNews::new(self.cmds)
     }
 }

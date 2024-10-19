@@ -37,6 +37,7 @@ pub enum SyncCheckDataType {
     Matches = 5,
     AvailableProfileAttributes = 6,
     Profile = 7,
+    NewsCount = 8,
 }
 
 impl TryFrom<u8> for SyncCheckDataType {

@@ -53,7 +53,7 @@ pub async fn post_reset_news_paging<S: WriteData + ReadData>(
 ) -> Result<Json<ResetNewsIteratorResult>, StatusCode> {
     ACCOUNT.post_reset_news_paging.incr();
     let iterator_session_id = db_write!(state, move |cmds| {
-        cmds.account().handle_reset_news_iterator(account_id)
+        cmds.account().news().handle_reset_news_iterator(account_id)
     })?;
     let r = ResetNewsIteratorResult {
         s: iterator_session_id.into(),
