@@ -7,13 +7,13 @@ define_server_data_read_commands!(ReadCommandsAccountNews);
 define_db_read_command!(ReadCommandsAccountNews);
 
 impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
-    pub async fn news_count(
+    pub async fn news_count_for_public_news(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<NewsCountResult, DataError> {
         self
             .db_read(move |mut cmds| {
-                let c = cmds.account().news().news_count()?;
+                let c = cmds.account().news().news_count_for_public_news()?;
                 let v = cmds.account().news().news_sync_version(id)?;
                 Ok(NewsCountResult {v, c})
             })
@@ -25,6 +25,7 @@ impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
         &self,
         state: DbIteratorState<NewsId>,
         locale: NewsLocale,
+        include_private_news: bool,
     ) -> Result<Vec<NewsItemSimple>, DataError> {
         self.db_read(move |mut cmds| {
             let value = cmds
@@ -34,6 +35,7 @@ impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
                     state.id_at_reset(),
                     state.page().try_into().unwrap_or(i64::MAX),
                     locale,
+                    include_private_news,
                 )?;
             Ok(value)
         })

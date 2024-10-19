@@ -30,7 +30,7 @@ pub async fn post_get_news_count<S: ReadData>(
 ) -> Result<Json<NewsCountResult>, StatusCode> {
     ACCOUNT.post_get_news_count.incr();
 
-    let r = state.read().account().news().news_count(id).await?;
+    let r = state.read().account().news().news_count_for_public_news(id).await?;
     Ok(r.into())
 }
 
@@ -80,6 +80,7 @@ const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/news";
 pub async fn post_get_next_news_page<S: WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
+    Extension(permissions): Extension<Permissions>,
     Query(locale): Query<NewsLocale>,
     Json(iterator_session_id): Json<NewsIteratorSessionId>,
 ) -> Result<Json<NewsPage>, StatusCode> {
@@ -100,7 +101,7 @@ pub async fn post_get_next_news_page<S: WriteData + ReadData>(
             .read()
             .account()
             .news()
-            .news_page(data, locale)
+            .news_page(data, locale, permissions.some_admin_news_permissions_granted())
             .await?;
         Ok(NewsPage {
             news,

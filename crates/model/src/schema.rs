@@ -300,6 +300,8 @@ diesel::table! {
 
     news (id) {
         id -> Integer,
+        public -> Bool,
+        account_id_creator -> Nullable<Integer>,
     }
 }
 
@@ -490,6 +492,7 @@ diesel::joinable!(media_moderation -> account_id (account_id));
 diesel::joinable!(media_moderation -> media_moderation_request (moderation_request_id));
 diesel::joinable!(media_moderation_request -> account_id (account_id));
 diesel::joinable!(media_state -> account_id (account_id));
+diesel::joinable!(news -> account_id (account_id_creator));
 diesel::joinable!(news_translations -> news (news_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_attributes -> account_id (account_id));

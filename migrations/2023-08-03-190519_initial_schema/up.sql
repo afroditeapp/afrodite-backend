@@ -190,7 +190,13 @@ CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
 );
 
 CREATE TABLE IF NOT EXISTS news(
-    id                    INTEGER PRIMARY KEY NOT NULL
+    id                    INTEGER PRIMARY KEY NOT NULL,
+    public                BOOLEAN             NOT NULL DEFAULT 0,
+    account_id_creator    INTEGER,
+    FOREIGN KEY (account_id_creator)
+    REFERENCES account_id (id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS news_translations(

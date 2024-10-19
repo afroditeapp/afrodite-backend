@@ -1,3 +1,4 @@
+use account_admin::CurrentSyncWriteAccountAdmin;
 use database::{ConnectionProvider, DieselConnection};
 
 use self::account::CurrentSyncWriteAccount;
@@ -32,6 +33,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
 impl CurrentSyncWriteCommands<&mut DieselConnection> {
     pub fn account(&mut self) -> CurrentSyncWriteAccount<&mut DieselConnection> {
         CurrentSyncWriteAccount::new(self.write())
+    }
+
+    pub fn account_admin(&mut self) -> CurrentSyncWriteAccountAdmin<&mut DieselConnection> {
+        CurrentSyncWriteAccountAdmin::new(self.write())
     }
 
     pub fn common(

@@ -1,19 +1,20 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, NewsCount, NewsId, NewsItem, NewsItemSimple, NewsLocale, NewsSyncVersion, NewsTranslationInternal, RequireNewsLocale};
+use model::{AccountId, AccountIdInternal, NewsCount, NewsId, NewsItem, NewsItemSimple, NewsLocale, NewsSyncVersion, NewsTranslationInternal, RequireNewsLocale, UnixTime};
 
 use crate::IntoDatabaseError;
 
 define_current_read_commands!(CurrentReadAccountNews, CurrentSyncReadAccountNews);
 
 impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
-    pub fn news_count(
+    pub fn news_count_for_public_news(
         &mut self,
     ) -> Result<NewsCount, DieselDatabaseError> {
         use crate::schema::news::dsl::*;
 
         news
+            .filter(public.eq(true))
             .count()
             .get_result(self.conn())
             .into_db_error(())
@@ -52,22 +53,29 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
         news_id_value: NewsId,
         page: i64,
         locale_value: NewsLocale,
+        include_private_news: bool,
     ) -> Result<Vec<NewsItemSimple>, DieselDatabaseError> {
         use crate::schema::{news, news_translations};
 
         const PAGE_SIZE: i64 = 25;
 
-        let account_ids: Vec<NewsItemSimple> = news::table
-            .inner_join(
+        let include_private_news = diesel::expression::AsExpression::<diesel::sql_types::Bool>::as_expression(include_private_news);
+
+        let rows: Vec<(NewsId, Option<String>, Option<UnixTime>)> = news::table
+            .left_outer_join(
                 news_translations::table.on(
                     news::id.eq(news_translations::news_id).and(
                         news_translations::locale.eq(locale_value.locale).or(news_translations::locale.eq(NewsLocale::ENGLISH))
                     )
                 ),
             )
-            .filter(news::id.is_not_null())
+            .filter(news::public.eq(true).or(include_private_news))
             .filter(news::id.le(news_id_value))
-            .select(NewsItemSimple::as_select())
+            .select((
+                news::id,
+                news_translations::title.nullable(),
+                news_translations::creation_unix_time.nullable(),
+            ))
             .order((
                 news::id.desc(),
             ))
@@ -76,7 +84,18 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .load(self.conn())
             .into_db_error(())?;
 
-        Ok(account_ids)
+        let items = rows
+            .into_iter()
+            .map(|r| {
+                NewsItemSimple {
+                    id: r.0,
+                    title: r.1,
+                    creation_time: r.2,
+                }
+            })
+            .collect();
+
+        Ok(items)
     }
 
     pub fn news_item(
@@ -124,6 +143,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
         let news_item = NewsItem {
             title: internal.title,
             body: internal.body,
+            locale: internal.locale,
             creation_time: internal.creation_unix_time,
             aid_creator: creator,
             aid_editor: editor,

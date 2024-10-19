@@ -11,6 +11,7 @@ use self::utils::SecurityApiAccessTokenDefault;
 
 // Routes
 pub mod account;
+pub mod account_admin;
 pub mod account_internal;
 
 pub use server_api::{app, internal_api, utils};

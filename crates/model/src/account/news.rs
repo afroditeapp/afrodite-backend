@@ -19,6 +19,8 @@ sync_version_wrappers!(
 #[diesel(check_for_backend(crate::Db))]
 pub struct NewsItemInternal {
     pub id: NewsId,
+    pub public: bool,
+    pub account_id_creator: Option<AccountIdDb>,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
@@ -166,6 +168,7 @@ pub struct NewsPage {
 pub struct NewsItem {
     pub title: String,
     pub body: String,
+    pub locale: String,
     pub creation_time: UnixTime,
     /// Only visible for accounts which have some news permissions
     pub aid_creator: Option<AccountId>,
@@ -186,15 +189,11 @@ pub struct GetNewsItemResult {
     pub item: Option<NewsItem>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::news_translations)]
-#[diesel(check_for_backend(crate::Db))]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct NewsItemSimple {
-    #[diesel(column_name = news_id)]
     pub id: NewsId,
-    pub title: String,
-    #[diesel(column_name = creation_unix_time)]
-    pub creation_time: UnixTime,
+    pub title: Option<String>,
+    pub creation_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams)]
@@ -212,4 +211,12 @@ pub struct RequireNewsLocale {
 impl NewsLocale {
     pub const ENGLISH: &'static str = "en";
     pub const FINNISH: &'static str = "fi";
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
+pub struct NewsTranslations {
+    pub id: NewsId,
+    pub public: bool,
+    pub aid_creator: Option<AccountId>,
+    pub translations: Vec<NewsItem>,
 }
