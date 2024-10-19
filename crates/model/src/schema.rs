@@ -314,6 +314,7 @@ diesel::table! {
         title -> Text,
         body -> Text,
         creation_unix_time -> Integer,
+        version_number -> Integer,
         account_id_creator -> Nullable<Integer>,
         account_id_editor -> Nullable<Integer>,
         edit_unix_time -> Nullable<Integer>,

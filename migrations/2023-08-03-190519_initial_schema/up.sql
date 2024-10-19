@@ -205,6 +205,7 @@ CREATE TABLE IF NOT EXISTS news_translations(
     title                 TEXT                NOT NULL,
     body                  TEXT                NOT NULL,
     creation_unix_time    INTEGER             NOT NULL,
+    version_number        INTEGER             NOT NULL DEFAULT 0,
     account_id_creator    INTEGER,
     account_id_editor     INTEGER,
     edit_unix_time        INTEGER,

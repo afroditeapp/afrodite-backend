@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, NewsId};
+use model::{AccountIdInternal, NewsId, NewsLocale, UpdateNewsTranslation};
 use server_data::{
     define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError,
 };
@@ -22,6 +22,28 @@ impl<C: WriteCommandsProvider> WriteCommandsAccountNewsAdmin<C> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account_admin().news().delete_news_item(id)
+        })
+    }
+
+    pub async fn upsert_news_translation(
+        &self,
+        id: AccountIdInternal,
+        nid: NewsId,
+        locale: NewsLocale,
+        content: UpdateNewsTranslation,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account_admin().news().upsert_news_translation(id, nid, locale, content)
+        })
+    }
+
+    pub async fn delete_news_translation(
+        &self,
+        nid: NewsId,
+        locale: NewsLocale,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account_admin().news().delete_news_translation(nid, locale)
         })
     }
 }

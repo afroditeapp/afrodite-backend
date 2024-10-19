@@ -1,9 +1,9 @@
 
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
-use diesel::{delete, insert_into, prelude::*};
+use diesel::{delete, insert_into, prelude::*, upsert::excluded};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, NewsId
+    AccountIdInternal, NewsId, NewsLocale, UnixTime, UpdateNewsTranslation
 };
 
 use crate::IntoDatabaseError;
@@ -36,6 +36,57 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
 
         delete(news)
             .filter(id.eq(id_value))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn upsert_news_translation(
+        &mut self,
+        id_value: AccountIdInternal,
+        news_id_value: NewsId,
+        locale_value: NewsLocale,
+        content: UpdateNewsTranslation,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::news_translations::dsl::*;
+
+        let current_time = UnixTime::current_time();
+
+        insert_into(news_translations)
+            .values((
+                locale.eq(locale_value.locale),
+                news_id.eq(news_id_value),
+                title.eq(content.title),
+                body.eq(content.body),
+                creation_unix_time.eq(current_time),
+                account_id_creator.eq(id_value.as_db_id()),
+            ))
+            .on_conflict((news_id, locale))
+            .do_update()
+            .set((
+                title.eq(excluded(title)),
+                body.eq(excluded(body)),
+                version_number.eq(version_number + 1),
+                edit_unix_time.eq(current_time),
+                account_id_editor.eq(id_value.as_db_id()),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn delete_news_translation(
+        &mut self,
+        id_value: NewsId,
+        locale_value: NewsLocale,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::news_translations::dsl::*;
+
+        delete(news_translations)
+            .filter(news_id.eq(id_value))
+            .filter(locale.eq(locale_value.locale))
             .execute(self.conn())
             .into_db_error(())?;
 

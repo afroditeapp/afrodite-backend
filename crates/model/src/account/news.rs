@@ -23,16 +23,16 @@ pub struct NewsItemInternal {
     pub account_id_creator: Option<AccountIdDb>,
 }
 
-#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::news_translations)]
 #[diesel(check_for_backend(crate::Db))]
-#[diesel(treat_none_as_null = true)]
 pub struct NewsTranslationInternal {
     pub locale: String,
     pub news_id: NewsId,
     pub title: String,
     pub body: String,
     pub creation_unix_time: UnixTime,
+    pub version_number: NewsTranslationVersion,
     pub account_id_creator: Option<AccountIdDb>,
     pub account_id_editor: Option<AccountIdDb>,
     pub edit_unix_time: Option<UnixTime>,
@@ -74,6 +74,38 @@ impl From<NewsId> for i64 {
         value.nid
     }
 }
+
+/// News translation version which prevents editing
+/// newer version than user has seen.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Default,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct NewsTranslationVersion {
+    pub version: i64,
+}
+
+impl NewsTranslationVersion {
+    pub fn new(version: i64) -> Self {
+        Self { version }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.version
+    }
+}
+
+diesel_i64_wrapper!(NewsTranslationVersion);
 
 /// Session ID type for news iterator so that client can detect
 /// server restarts and ask user to refresh news.
@@ -174,6 +206,8 @@ pub struct NewsItem {
     pub aid_creator: Option<AccountId>,
     /// Only visible for accounts which have some news permissions
     pub aid_editor: Option<AccountId>,
+    /// Only visible for accounts which have some news permissions
+    pub version: Option<NewsTranslationVersion>,
     pub edit_time: Option<UnixTime>,
 }
 
@@ -181,6 +215,7 @@ impl NewsItem {
     pub fn clear_admin_info(&mut self) {
         self.aid_creator = None;
         self.aid_editor = None;
+        self.version = None;
     }
 }
 
@@ -211,12 +246,8 @@ pub struct RequireNewsLocale {
 impl NewsLocale {
     pub const ENGLISH: &'static str = "en";
     pub const FINNISH: &'static str = "fi";
-}
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct NewsTranslations {
-    pub id: NewsId,
-    pub public: bool,
-    pub aid_creator: Option<AccountId>,
-    pub translations: Vec<NewsItem>,
+    pub fn is_supported_locale(&self) -> bool {
+        self.locale == Self::ENGLISH || self.locale == Self::FINNISH
+    }
 }
