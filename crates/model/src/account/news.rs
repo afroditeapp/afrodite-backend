@@ -167,9 +167,18 @@ pub struct NewsItem {
     pub title: String,
     pub body: String,
     pub creation_time: UnixTime,
+    /// Only visible for accounts which have some news permissions
     pub aid_creator: Option<AccountId>,
+    /// Only visible for accounts which have some news permissions
     pub aid_editor: Option<AccountId>,
     pub edit_time: Option<UnixTime>,
+}
+
+impl NewsItem {
+    pub fn clear_admin_info(&mut self) {
+        self.aid_creator = None;
+        self.aid_editor = None;
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

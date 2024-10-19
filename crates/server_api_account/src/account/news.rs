@@ -1,6 +1,6 @@
 
 use axum::{extract::{Path, Query, State}, Extension};
-use model::{AccountIdInternal, GetNewsItemResult, NewsCountResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, RequireNewsLocale, ResetNewsIteratorResult};
+use model::{AccountIdInternal, GetNewsItemResult, NewsCountResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, Permissions, RequireNewsLocale, ResetNewsIteratorResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -135,18 +135,24 @@ const PATH_GET_NEWS_ITEM: &str = "/account_api/news/{nid}";
 )]
 pub async fn get_news_item<S: ReadData>(
     State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
     Path(nid): Path<NewsId>,
     Query(locale): Query<NewsLocale>,
     Query(require_locale): Query<RequireNewsLocale>,
 ) -> Result<Json<GetNewsItemResult>, StatusCode> {
     ACCOUNT.get_news_item.incr();
 
-    let item = state
+    let mut item = state
         .read()
         .account()
         .news()
         .news_item(nid, locale, require_locale)
         .await?;
+    if !permissions.some_admin_news_permissions_granted() {
+        if let Some(item) = item.as_mut() {
+            item.clear_admin_info();
+        }
+    }
     let news = GetNewsItemResult {
         item,
     };
