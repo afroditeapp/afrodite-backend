@@ -35,7 +35,7 @@ pub async fn post_get_news_count<S: ReadData>(
 }
 
 #[obfuscate_api]
-const PATH_POST_RESET_NEWS_PAGING: &str = "/account_api/news/reset";
+const PATH_POST_RESET_NEWS_PAGING: &str = "/account_api/reset_news_paging";
 
 #[utoipa::path(
     post,
@@ -116,7 +116,7 @@ pub async fn post_get_next_news_page<S: WriteData + ReadData>(
 }
 
 #[obfuscate_api]
-const PATH_GET_NEWS_ITEM: &str = "/account_api/news/{nid}";
+const PATH_GET_NEWS_ITEM: &str = "/account_api/news_item/{nid}";
 
 /// Get news item content using specific locale and fallback to locale "en"
 /// if news translation is not found.

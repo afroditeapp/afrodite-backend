@@ -41,7 +41,7 @@ pub async fn post_create_news_item<S: WriteData>(
 }
 
 #[obfuscate_api]
-const PATH_DELETE_NEWS_ITEM: &str = "/account_api/news/{nid}";
+const PATH_DELETE_NEWS_ITEM: &str = "/account_api/admin/delete_news/{nid}";
 
 #[utoipa::path(
     delete,
@@ -145,7 +145,7 @@ pub async fn post_update_news_translation<S: ReadData + WriteData>(
 }
 
 #[obfuscate_api]
-const PATH_DELETE_NEWS_TRANSLATION: &str = "/account_api/news/{nid}/{locale}";
+const PATH_DELETE_NEWS_TRANSLATION: &str = "/account_api/admin/delete_news_translation/{nid}/{locale}";
 
 #[utoipa::path(
     delete,
@@ -190,7 +190,7 @@ pub async fn delete_news_translation<S: ReadData + WriteData>(
 }
 
 #[obfuscate_api]
-const PATH_POST_SET_NEWS_PUBLICITY: &str = "/account_api/set_news_publicity/{nid}";
+const PATH_POST_SET_NEWS_PUBLICITY: &str = "/account_api/admin/set_news_publicity/{nid}";
 
 #[utoipa::path(
     delete,
