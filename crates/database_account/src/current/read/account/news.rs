@@ -148,7 +148,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             version: Some(internal.version_number),
             aid_creator: creator,
             aid_editor: editor,
-            edit_time: internal.edit_unix_time,
+            edit_unix_time: internal.edit_unix_time.map(|x| x.ut),
         };
 
         Ok(Some(news_item))

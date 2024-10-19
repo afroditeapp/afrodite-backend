@@ -65,7 +65,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNewsAdmin<C> {
                     version: Some(internal.version_number),
                     aid_creator: creator,
                     aid_editor: editor,
-                    edit_time: internal.edit_unix_time,
+                    edit_unix_time: internal.edit_unix_time.map(|x| x.ut),
                 }
             })
             .collect();

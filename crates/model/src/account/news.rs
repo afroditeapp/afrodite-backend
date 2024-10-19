@@ -208,7 +208,8 @@ pub struct NewsItem {
     pub aid_editor: Option<AccountId>,
     /// Only visible for accounts which have some news permissions
     pub version: Option<NewsTranslationVersion>,
-    pub edit_time: Option<UnixTime>,
+    /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
+    pub edit_unix_time: Option<i64>,
 }
 
 impl NewsItem {

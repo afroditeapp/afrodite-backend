@@ -63,7 +63,7 @@ pub async fn post_reset_news_paging<S: WriteData + ReadData>(
 }
 
 #[obfuscate_api]
-const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/news";
+const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/next_news_page";
 
 #[utoipa::path(
     post,
