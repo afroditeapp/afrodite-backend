@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, NewsCount, NewsId, NewsItem, NewsItemInternal, NewsItemSimple, NewsSyncVersion};
+use model::{AccountId, AccountIdInternal, NewsCount, NewsId, NewsItem, NewsItemSimple, NewsLocale, NewsSyncVersion, NewsTranslationInternal, RequireNewsLocale};
 
 use crate::IntoDatabaseError;
 
@@ -51,17 +51,25 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
         &mut self,
         news_id_value: NewsId,
         page: i64,
+        locale_value: NewsLocale,
     ) -> Result<Vec<NewsItemSimple>, DieselDatabaseError> {
-        use crate::schema::news::dsl::*;
+        use crate::schema::{news, news_translations};
 
         const PAGE_SIZE: i64 = 25;
 
-        let account_ids: Vec<NewsItemSimple> = news
-            .filter(id.is_not_null())
-            .filter(id.le(news_id_value))
+        let account_ids: Vec<NewsItemSimple> = news::table
+            .inner_join(
+                news_translations::table.on(
+                    news::id.eq(news_translations::news_id).and(
+                        news_translations::locale.eq(locale_value.locale).or(news_translations::locale.eq(NewsLocale::ENGLISH))
+                    )
+                ),
+            )
+            .filter(news::id.is_not_null())
+            .filter(news::id.le(news_id_value))
             .select(NewsItemSimple::as_select())
             .order((
-                id.desc(),
+                news::id.desc(),
             ))
             .limit(PAGE_SIZE)
             .offset(PAGE_SIZE.saturating_mul(page))
@@ -74,30 +82,44 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
     pub fn news_item(
         &mut self,
         news_id_value: NewsId,
-    ) -> Result<NewsItem, DieselDatabaseError> {
-        use crate::schema::{account_id, news::dsl::*};
+        locale_value: NewsLocale,
+        require_locale: RequireNewsLocale,
+    ) -> Result<Option<NewsItem>, DieselDatabaseError> {
+        use crate::schema::{account_id, news, news_translations};
 
         let (creator_aid, editor_aid) = alias!(account_id as creator_aid, account_id as editor_aid);
 
-        let (internal, creator, editor): (NewsItemInternal, Option<AccountId>, Option<AccountId>) = news
+        let (internal, creator, editor):
+            (NewsTranslationInternal, Option<AccountId>, Option<AccountId>) = news::table
+            .inner_join(
+                news_translations::table.on(
+                    news::id.eq(news_translations::news_id).and(
+                        news_translations::locale.eq(locale_value.locale.clone()).or(news_translations::locale.eq(NewsLocale::ENGLISH))
+                    )
+                ),
+            )
             .left_outer_join(
                 creator_aid.on(
-                    account_id_creator.assume_not_null().eq(creator_aid.field(account_id::id))
+                    news_translations::account_id_creator.assume_not_null().eq(creator_aid.field(account_id::id))
                 ),
             )
             .left_outer_join(
                 editor_aid.on(
-                    account_id_editor.assume_not_null().eq(editor_aid.field(account_id::id))
+                    news_translations::account_id_editor.assume_not_null().eq(editor_aid.field(account_id::id))
                 ),
             )
-            .filter(id.eq(news_id_value))
+            .filter(news::id.eq(news_id_value))
             .select((
-                NewsItemInternal::as_select(),
+                NewsTranslationInternal::as_select(),
                 creator_aid.field(account_id::uuid).nullable(),
                 editor_aid.field(account_id::uuid).nullable()
             ))
             .first(self.conn())
             .into_db_error(())?;
+
+        if require_locale.require_locale && internal.locale != locale_value.locale {
+            return Ok(None);
+        }
 
         let news_item = NewsItem {
             title: internal.title,
@@ -108,6 +130,6 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             edit_time: internal.edit_unix_time,
         };
 
-        Ok(news_item)
+        Ok(Some(news_item))
     }
 }

@@ -1,7 +1,7 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     AccountId, AccountIdDb, NextNumberStorage
@@ -14,12 +14,20 @@ sync_version_wrappers!(
 );
 
 
-#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::news)]
 #[diesel(check_for_backend(crate::Db))]
-#[diesel(treat_none_as_null = true)]
 pub struct NewsItemInternal {
     pub id: NewsId,
+}
+
+#[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
+#[diesel(table_name = crate::schema::news_translations)]
+#[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
+pub struct NewsTranslationInternal {
+    pub locale: String,
+    pub news_id: NewsId,
     pub title: String,
     pub body: String,
     pub creation_unix_time: UnixTime,
@@ -36,6 +44,7 @@ pub struct NewsItemInternal {
     Deserialize,
     Serialize,
     ToSchema,
+    IntoParams,
     PartialEq,
     Default,
     FromSqlRow,
@@ -163,12 +172,35 @@ pub struct NewsItem {
     pub edit_time: Option<UnixTime>,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetNewsItemResult {
+    pub item: Option<NewsItem>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::news)]
+#[diesel(table_name = crate::schema::news_translations)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct NewsItemSimple {
+    #[diesel(column_name = news_id)]
     pub id: NewsId,
     pub title: String,
     #[diesel(column_name = creation_unix_time)]
     pub creation_time: UnixTime,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, IntoParams)]
+pub struct NewsLocale {
+    pub locale: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, IntoParams)]
+pub struct RequireNewsLocale {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[param(default = false)]
+    pub require_locale: bool,
+}
+
+impl NewsLocale {
+    pub const ENGLISH: &'static str = "en";
+    pub const FINNISH: &'static str = "fi";
 }

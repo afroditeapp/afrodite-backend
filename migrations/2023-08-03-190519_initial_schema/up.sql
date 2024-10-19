@@ -188,13 +188,23 @@ CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
 );
 
 CREATE TABLE IF NOT EXISTS news(
-    id                    INTEGER PRIMARY KEY NOT NULL,
+    id                    INTEGER PRIMARY KEY NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS news_translations(
+    locale                TEXT                NOT NULL,
+    news_id               INTEGER             NOT NULL,
     title                 TEXT                NOT NULL,
     body                  TEXT                NOT NULL,
     creation_unix_time    INTEGER             NOT NULL,
     account_id_creator    INTEGER,
     account_id_editor     INTEGER,
     edit_unix_time        INTEGER,
+    PRIMARY KEY (locale, news_id),
+    FOREIGN KEY (news_id)
+        REFERENCES news (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
     FOREIGN KEY (account_id_creator)
         REFERENCES account_id (id)
             ON DELETE SET NULL

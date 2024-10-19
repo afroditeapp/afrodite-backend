@@ -1,6 +1,6 @@
 
-use axum::{extract::State, Extension};
-use model::{AccountIdInternal, NewsCountResult, NewsIteratorSessionId, NewsPage, ResetNewsIteratorResult};
+use axum::{extract::{Path, Query, State}, Extension};
+use model::{AccountIdInternal, GetNewsItemResult, NewsCountResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, RequireNewsLocale, ResetNewsIteratorResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -68,6 +68,7 @@ const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/news";
 #[utoipa::path(
     post,
     path = PATH_POST_GET_NEXT_NEWS_PAGE,
+    params(NewsLocale),
     request_body(content = NewsIteratorSessionId),
     responses(
         (status = 200, description = "Success.", body = NewsPage),
@@ -79,6 +80,7 @@ const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/news";
 pub async fn post_get_next_news_page<S: WriteData + ReadData>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
+    Query(locale): Query<NewsLocale>,
     Json(iterator_session_id): Json<NewsIteratorSessionId>,
 ) -> Result<Json<NewsPage>, StatusCode> {
     ACCOUNT.post_get_next_news_page.incr();
@@ -93,12 +95,12 @@ pub async fn post_get_next_news_page<S: WriteData + ReadData>(
         .await??;
 
     if let Some(data) = data {
-        // Received likes iterator session ID was valid
+        // Session ID is valid
         let news = state
             .read()
             .account()
             .news()
-            .news_page(data)
+            .news_page(data, locale)
             .await?;
         Ok(NewsPage {
             news,
@@ -112,12 +114,52 @@ pub async fn post_get_next_news_page<S: WriteData + ReadData>(
     }
 }
 
+#[obfuscate_api]
+const PATH_GET_NEWS_ITEM: &str = "/account_api/news/{nid}";
+
+/// Get news item content using specific locale and fallback to locale "en"
+/// if news translation is not found.
+///
+/// If specific locale is not found when [RequireNewsLocale::require_locale]
+/// is `true` then [GetNewsItemResult::item] is `None`.
+#[utoipa::path(
+    get,
+    path = PATH_GET_NEWS_ITEM,
+    params(NewsId, NewsLocale, RequireNewsLocale),
+    responses(
+        (status = 200, description = "Success.", body = GetNewsItemResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_news_item<S: ReadData>(
+    State(state): State<S>,
+    Path(nid): Path<NewsId>,
+    Query(locale): Query<NewsLocale>,
+    Query(require_locale): Query<RequireNewsLocale>,
+) -> Result<Json<GetNewsItemResult>, StatusCode> {
+    ACCOUNT.get_news_item.incr();
+
+    let item = state
+        .read()
+        .account()
+        .news()
+        .news_item(nid, locale, require_locale)
+        .await?;
+    let news = GetNewsItemResult {
+        item,
+    };
+    Ok(news.into())
+}
+
 pub fn news_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         post_get_news_count::<S>,
         post_reset_news_paging::<S>,
         post_get_next_news_page::<S>,
+        get_news_item::<S>,
     )
 }
 
@@ -128,4 +170,5 @@ create_counters!(
     post_get_news_count,
     post_reset_news_paging,
     post_get_next_news_page,
+    get_news_item,
 );

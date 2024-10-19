@@ -298,6 +298,15 @@ diesel::table! {
 
     news (id) {
         id -> Integer,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
+    news_translations (locale, news_id) {
+        locale -> Text,
+        news_id -> Integer,
         title -> Text,
         body -> Text,
         creation_unix_time -> Integer,
@@ -479,6 +488,7 @@ diesel::joinable!(media_moderation -> account_id (account_id));
 diesel::joinable!(media_moderation -> media_moderation_request (moderation_request_id));
 diesel::joinable!(media_moderation_request -> account_id (account_id));
 diesel::joinable!(media_state -> account_id (account_id));
+diesel::joinable!(news_translations -> news (news_id));
 diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list -> account_id (account_id));
@@ -515,6 +525,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     media_moderation_request,
     media_state,
     news,
+    news_translations,
     next_queue_number,
     pending_messages,
     profile,
