@@ -1,12 +1,12 @@
-# NewsItemSimple
+# UpdateNewsTranslation
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**creation_time** | Option<[**models::UnixTime**](UnixTime.md)> |  | [optional]
-**id** | [**models::NewsId**](NewsId.md) |  | 
-**title** | Option<**String**> |  | [optional]
+**body** | **String** |  | 
+**current_version** | [**models::NewsTranslationVersion**](NewsTranslationVersion.md) |  | 
+**title** | **String** |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

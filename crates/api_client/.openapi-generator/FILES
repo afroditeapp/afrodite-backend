@@ -6,6 +6,7 @@ docs/AcceptedProfileAges.md
 docs/AccessToken.md
 docs/AccessibleAccount.md
 docs/Account.md
+docs/AccountAdminApi.md
 docs/AccountApi.md
 docs/AccountContent.md
 docs/AccountData.md
@@ -99,6 +100,7 @@ docs/NewsItemSimple.md
 docs/NewsIteratorSessionId.md
 docs/NewsPage.md
 docs/NewsSyncVersion.md
+docs/NewsTranslationVersion.md
 docs/PageItemCountForNewLikes.md
 docs/PendingMessage.md
 docs/PendingMessageAcknowledgementList.md
@@ -168,7 +170,9 @@ docs/TimeGranularity.md
 docs/Translation.md
 docs/UnixTime.md
 docs/UpdateMessageViewStatus.md
+docs/UpdateNewsTranslation.md
 git_push.sh
+src/apis/account_admin_api.rs
 src/apis/account_api.rs
 src/apis/account_internal_api.rs
 src/apis/chat_api.rs
@@ -270,6 +274,7 @@ src/models/news_item_simple.rs
 src/models/news_iterator_session_id.rs
 src/models/news_page.rs
 src/models/news_sync_version.rs
+src/models/news_translation_version.rs
 src/models/page_item_count_for_new_likes.rs
 src/models/pending_message.rs
 src/models/pending_message_acknowledgement_list.rs
@@ -338,3 +343,4 @@ src/models/time_granularity.rs
 src/models/translation.rs
 src/models/unix_time.rs
 src/models/update_message_view_status.rs
+src/models/update_news_translation.rs

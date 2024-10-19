@@ -49,6 +49,11 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 
+*AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid} | 
+*AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid}/{locale} | 
+*AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /XEss8YDw9lPgwKoH6K9THZIF_N4 | 
+*AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /VhK61QQYLFov-eCH2YS2i5M2jdk/{nid} | 
+*AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /4pD-Q4FhZGTNkUGYExHmZN6TxjU/{nid}/{locale} | 
 *AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 *AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
 *ChatApi* | [**delete_like**](docs/ChatApi.md#delete_like) | **DELETE** /O3DZlGOjDYbQ8PlCorta0onQDLI | Delete sent like.
@@ -221,6 +226,7 @@ Class | Method | HTTP request | Description
  - [NewsIteratorSessionId](docs/NewsIteratorSessionId.md)
  - [NewsPage](docs/NewsPage.md)
  - [NewsSyncVersion](docs/NewsSyncVersion.md)
+ - [NewsTranslationVersion](docs/NewsTranslationVersion.md)
  - [PageItemCountForNewLikes](docs/PageItemCountForNewLikes.md)
  - [PendingMessage](docs/PendingMessage.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
@@ -289,6 +295,7 @@ Class | Method | HTTP request | Description
  - [Translation](docs/Translation.md)
  - [UnixTime](docs/UnixTime.md)
  - [UpdateMessageViewStatus](docs/UpdateMessageViewStatus.md)
+ - [UpdateNewsTranslation](docs/UpdateNewsTranslation.md)
 
 
 To get access to the crate's generated documentation, use:
