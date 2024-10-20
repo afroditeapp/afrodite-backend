@@ -97,8 +97,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
 
         let (creator_aid, editor_aid) = alias!(account_id as creator_aid, account_id as editor_aid);
 
-        let (internal, creator, editor):
-            (NewsTranslationInternal, Option<AccountId>, Option<AccountId>) = news::table
+        let value: Option<(NewsTranslationInternal, Option<AccountId>, Option<AccountId>)> = news::table
             .inner_join(
                 news_translations::table.on(
                     news::id.eq(news_translations::news_id).and(
@@ -123,7 +122,14 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
                 editor_aid.field(account_id::uuid).nullable()
             ))
             .first(self.conn())
+            .optional()
             .into_db_error(())?;
+
+        let (internal, creator, editor) = if let Some(value) = value {
+            value
+        } else {
+            return Ok(None);
+        };
 
         if require_locale.require_locale && internal.locale != locale_value.locale {
             return Ok(None);
