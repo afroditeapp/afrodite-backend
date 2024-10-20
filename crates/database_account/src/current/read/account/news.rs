@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsLocale, NewsSyncVersion, NewsTranslationInternal, RequireNewsLocale, UnixTime};
+use model::{AccountId, AccountIdInternal, NewsId, NewsItem, NewsItemInternal, NewsItemSimple, NewsLocale, NewsSyncVersion, NewsTranslationInternal, RequireNewsLocale};
 
 use crate::IntoDatabaseError;
 
@@ -49,7 +49,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
 
         let include_private_news = diesel::expression::AsExpression::<diesel::sql_types::Bool>::as_expression(include_private_news);
 
-        let rows: Vec<(NewsId, Option<String>, Option<UnixTime>)> = news::table
+        let rows: Vec<(NewsItemInternal, Option<String>)> = news::table
             .left_outer_join(
                 news_translations::table.on(
                     news::id.eq(news_translations::news_id).and(
@@ -60,9 +60,8 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .filter(news::public.eq(true).or(include_private_news))
             .filter(news::id.le(news_id_value))
             .select((
-                news::id,
+                NewsItemInternal::as_select(),
                 news_translations::title.nullable(),
-                news::first_publication_unix_time.nullable(),
             ))
             .order((
                 news::id.desc(),
@@ -76,9 +75,10 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .into_iter()
             .map(|r| {
                 NewsItemSimple {
-                    id: r.0,
+                    id: r.0.id,
                     title: r.1,
-                    time: r.2,
+                    time: r.0.first_publication_unix_time,
+                    private: !r.0.public
                 }
             })
             .collect();

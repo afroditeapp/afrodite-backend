@@ -232,6 +232,9 @@ pub struct NewsItemSimple {
     pub id: NewsId,
     pub title: Option<String>,
     pub time: Option<UnixTime>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub private: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams)]
