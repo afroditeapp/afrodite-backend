@@ -7,7 +7,7 @@ use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
 use server_data::{
-    cache::{chat::CachedChatComponentData, media::CachedMedia, profile::CachedProfile, DatabaseCache},
+    cache::{account::CachedAccountComponentData, chat::CachedChatComponentData, media::CachedMedia, profile::CachedProfile, DatabaseCache},
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
 use tracing::info;
@@ -96,7 +96,8 @@ impl DbDataToCacheLoader {
         entry.other_shared_state = other_state;
 
         if config.components().account {
-            // empty
+            let account_data = CachedAccountComponentData::default();
+            entry.account = Some(Box::new(account_data));
         }
 
         // Media must be before profile because ProfileLink can

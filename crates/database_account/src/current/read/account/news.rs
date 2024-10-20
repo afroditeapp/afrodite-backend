@@ -10,7 +10,7 @@ define_current_read_commands!(CurrentReadAccountNews, CurrentSyncReadAccountNews
 impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
     pub fn latest_used_news_id(
         &mut self,
-    ) -> Result<NewsId, DieselDatabaseError> {
+    ) -> Result<Option<NewsId>, DieselDatabaseError> {
         use crate::schema::news::dsl::*;
 
         news
@@ -18,6 +18,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .limit(1)
             .order(id.desc())
             .first(self.conn())
+            .optional()
             .into_db_error(())
     }
 

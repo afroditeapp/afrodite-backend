@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, NewsIteratorSessionIdInternal};
+use model::{AccountIdInternal, NewsId, NewsIteratorSessionIdInternal};
 use server_data::{
     cache::CacheError, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, IntoDataError
 };
@@ -12,7 +12,8 @@ impl<C: WriteCommandsProvider> WriteCommandsAccountNews<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<NewsIteratorSessionIdInternal, DataError> {
-        let latest_used_id = self.db_read(|mut cmds| cmds.account().news().latest_used_news_id()).await?;
+        let latest_used_id = self.db_read(|mut cmds| cmds.account().news().latest_used_news_id()).await?
+            .unwrap_or(NewsId::NO_NEWS_ID);
         let session_id = self.cache()
             .write_cache(id.as_id(), |e| {
                 if let Some(c) = e.account.as_mut() {

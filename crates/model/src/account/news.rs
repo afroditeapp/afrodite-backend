@@ -60,6 +60,10 @@ pub struct NewsId {
 }
 
 impl NewsId {
+    /// The value is the same as [crate::MatchId::next_id_to_latest_used_id]
+    /// returns if there is no items.
+    pub const NO_NEWS_ID: NewsId = NewsId { nid: -1 };
+
     pub fn new(id: i64) -> Self {
         Self { nid: id }
     }
