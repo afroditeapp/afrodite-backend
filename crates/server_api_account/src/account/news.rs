@@ -14,6 +14,7 @@ use crate::app::{GetAccounts, ReadData, StateBase, WriteData};
 #[obfuscate_api]
 const PATH_POST_GET_NEWS_COUNT: &str = "/account_api/news_count";
 
+/// The news count for once public news. It always increments.
 #[utoipa::path(
     post,
     path = PATH_POST_GET_NEWS_COUNT,
@@ -30,7 +31,7 @@ pub async fn post_get_news_count<S: ReadData>(
 ) -> Result<Json<NewsCountResult>, StatusCode> {
     ACCOUNT.post_get_news_count.incr();
 
-    let r = state.read().account().news().news_count_for_public_news(id).await?;
+    let r = state.read().account().news().news_count_for_once_public_news(id).await?;
     Ok(r.into())
 }
 

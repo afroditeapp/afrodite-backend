@@ -33,6 +33,7 @@ diesel::table! {
     account_global_state (row_type) {
         row_type -> Integer,
         admin_access_granted_count -> Integer,
+        once_public_news_count -> Integer,
     }
 }
 

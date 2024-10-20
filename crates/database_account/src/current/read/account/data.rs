@@ -3,7 +3,6 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{
     AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountInternal, AccountSetup,
-    ACCOUNT_GLOBAL_STATE_ROW_TYPE,
 };
 
 use crate::IntoDatabaseError;
@@ -60,7 +59,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
         use model::schema::account_global_state::dsl::*;
 
         account_global_state
-            .filter(row_type.eq(ACCOUNT_GLOBAL_STATE_ROW_TYPE))
+            .filter(row_type.eq(AccountGlobalState::ACCOUNT_GLOBAL_STATE_ROW_TYPE))
             .select(AccountGlobalState::as_select())
             .first(self.conn())
             .optional()

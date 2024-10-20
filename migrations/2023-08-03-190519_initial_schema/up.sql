@@ -229,7 +229,9 @@ CREATE TABLE IF NOT EXISTS news_translations(
 CREATE TABLE IF NOT EXISTS account_global_state(
     -- 0 = account component global state
     row_type                   INTEGER PRIMARY KEY NOT NULL,
-    admin_access_granted_count INTEGER             NOT NULL DEFAULT 0
+    admin_access_granted_count INTEGER             NOT NULL DEFAULT 0,
+    -- Count for news which always increments
+    once_public_news_count     INTEGER             NOT NULL DEFAULT 0
 );
 
 ---------- Tables for server component profile ----------

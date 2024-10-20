@@ -535,14 +535,18 @@ impl TryFrom<String> for EmailAddress {
     }
 }
 
-pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
-
 /// Global state for account component
 #[derive(Debug, Default, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::account_global_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountGlobalState {
     pub admin_access_granted_count: i64,
+    pub once_public_news_count: NewsCount,
+}
+
+impl AccountGlobalState {
+    /// Key for the only row in the table
+    pub const ACCOUNT_GLOBAL_STATE_ROW_TYPE: i64 = 0;
 }
 
 /// ID which client receives from server once.

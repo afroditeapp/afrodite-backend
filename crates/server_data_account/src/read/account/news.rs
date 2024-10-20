@@ -7,13 +7,13 @@ define_server_data_read_commands!(ReadCommandsAccountNews);
 define_db_read_command!(ReadCommandsAccountNews);
 
 impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
-    pub async fn news_count_for_public_news(
+    pub async fn news_count_for_once_public_news(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<NewsCountResult, DataError> {
         self
             .db_read(move |mut cmds| {
-                let c = cmds.account().news().news_count_for_public_news()?;
+                let c = cmds.account().data().global_state()?.once_public_news_count;
                 let v = cmds.account().news().news_sync_version(id)?;
                 Ok(NewsCountResult {v, c})
             })

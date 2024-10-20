@@ -3,7 +3,7 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, NewsId, NewsLocale, SyncVersion, UnixTime, UpdateNewsTranslation
+    AccountGlobalState, AccountIdInternal, NewsId, NewsLocale, SyncVersion, UnixTime, UpdateNewsTranslation
 };
 
 use crate::IntoDatabaseError;
@@ -103,6 +103,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
         let current_value = self.read().account_admin().news().news_translations(id_value)?;
         let current_time = UnixTime::current_time();
         let first_publication = if is_public && current_value.first_publication_time.is_none() {
+            self.upsert_increment_once_public_news_count()?;
+            self.increment_news_count_sync_version_for_every_account()?;
             Some(current_time)
         } else {
             current_value.first_publication_time
@@ -123,8 +125,6 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
             .execute(self.conn())
             .into_db_error(())?;
 
-        self.increment_news_count_sync_version_for_every_account()?;
-
         Ok(())
     }
 
@@ -136,6 +136,25 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
         update(account_state)
             .filter(news_count_sync_version.lt(SyncVersion::MAX_VALUE))
             .set(news_count_sync_version.eq(news_count_sync_version + 1))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn upsert_increment_once_public_news_count(
+        &mut self,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_global_state::dsl::*;
+
+        insert_into(account_global_state)
+            .values((
+                row_type.eq(AccountGlobalState::ACCOUNT_GLOBAL_STATE_ROW_TYPE),
+                once_public_news_count.eq(1),
+            ))
+            .on_conflict(row_type)
+            .do_update()
+            .set(once_public_news_count.eq(once_public_news_count + 1))
             .execute(self.conn())
             .into_db_error(())?;
 

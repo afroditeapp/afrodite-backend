@@ -360,7 +360,7 @@ async fn handle_news_count_sync_version_check<S: WriteData + ReadData>(
         .read()
         .account()
         .news()
-        .news_count_for_public_news(id)
+        .news_count_for_once_public_news(id)
         .await
         .change_context(WebSocketError::DatabaseNewsCountQuery)?
         .v;

@@ -2,7 +2,7 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountIdInternal, AccountInternal, ClientId, EmailAddress, SetAccountSetup, ACCOUNT_GLOBAL_STATE_ROW_TYPE
+    AccountGlobalState, AccountIdInternal, AccountInternal, ClientId, EmailAddress, SetAccountSetup
 };
 
 use crate::IntoDatabaseError;
@@ -98,7 +98,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
 
         insert_into(account_global_state)
             .values((
-                row_type.eq(ACCOUNT_GLOBAL_STATE_ROW_TYPE),
+                row_type.eq(AccountGlobalState::ACCOUNT_GLOBAL_STATE_ROW_TYPE),
                 admin_access_granted_count.eq(1),
             ))
             .on_conflict(row_type)
