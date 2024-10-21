@@ -93,7 +93,7 @@ const PATH_POST_UPDATE_NEWS_TRANSLATION: &str = "/account_api/admin/update_news_
     params(NewsId, NewsLocale),
     request_body(content = UpdateNewsTranslation),
     responses(
-        (status = 200, description = "Success."),
+        (status = 200, description = "Success.", body = UpdateNewsTranslationResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
