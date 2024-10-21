@@ -208,14 +208,14 @@ pub struct NewsItem {
     pub body: String,
     pub locale: String,
     pub creation_time: UnixTime,
+    /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
+    pub edit_unix_time: Option<i64>,
     /// Only visible for accounts which have some news permissions
     pub aid_creator: Option<AccountId>,
     /// Only visible for accounts which have some news permissions
     pub aid_editor: Option<AccountId>,
     /// Only visible for accounts which have some news permissions
     pub version: Option<NewsTranslationVersion>,
-    /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
-    pub edit_unix_time: Option<i64>,
 }
 
 impl NewsItem {
@@ -229,6 +229,9 @@ impl NewsItem {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetNewsItemResult {
     pub item: Option<NewsItem>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub private: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]

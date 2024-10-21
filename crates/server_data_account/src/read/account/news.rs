@@ -63,4 +63,21 @@ impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
         .await
         .into_error()
     }
+
+    pub async fn is_public(
+        &self,
+        id: NewsId,
+    ) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| {
+            let value = cmds
+                .account()
+                .news()
+                .is_public(
+                    id,
+                )?;
+            Ok(value)
+        })
+        .await
+        .into_error()
+    }
 }

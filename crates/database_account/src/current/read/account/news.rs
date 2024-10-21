@@ -140,12 +140,27 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             body: internal.body,
             locale: internal.locale,
             creation_time: internal.creation_unix_time,
+            edit_unix_time: internal.edit_unix_time.map(|x| x.ut),
             version: Some(internal.version_number),
             aid_creator: creator,
             aid_editor: editor,
-            edit_unix_time: internal.edit_unix_time.map(|x| x.ut),
         };
 
         Ok(Some(news_item))
+    }
+
+    pub fn is_public(
+        &mut self,
+        news_id_value: NewsId,
+    ) -> Result<bool, DieselDatabaseError> {
+        use crate::schema::news;
+
+        let value = news::table
+            .filter(news::id.eq(news_id_value))
+            .select(NewsItemInternal::as_select())
+            .first(self.conn())
+            .into_db_error(())?;
+
+        Ok(value.public)
     }
 }

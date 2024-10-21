@@ -155,8 +155,17 @@ pub async fn get_news_item<S: ReadData>(
             item.clear_admin_info();
         }
     }
+
+    let is_public = state
+        .read()
+        .account()
+        .news()
+        .is_public(nid)
+        .await?;
+
     let news = GetNewsItemResult {
         item,
+        private: !is_public,
     };
     Ok(news.into())
 }
