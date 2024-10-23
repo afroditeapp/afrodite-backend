@@ -172,7 +172,7 @@ impl ConnectionTools for S {
                         .await?;
                     }
                 }
-                SyncCheckDataType::NewsCount => {
+                SyncCheckDataType::News => {
                     if self.config().components().account {
                         handle_news_count_sync_version_check(
                             self,
