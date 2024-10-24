@@ -119,6 +119,7 @@ diesel::table! {
         news_sync_version -> Integer,
         unread_news_count -> Integer,
         publication_id_at_news_iterator_reset -> Nullable<Integer>,
+        publication_id_at_unread_news_count_incrementing -> Nullable<Integer>,
     }
 }
 

@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     news_sync_version     INTEGER             NOT NULL DEFAULT 0,
     unread_news_count     INTEGER             NOT NULL DEFAULT 0,
     publication_id_at_news_iterator_reset INTEGER,
+    publication_id_at_unread_news_count_incrementing INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

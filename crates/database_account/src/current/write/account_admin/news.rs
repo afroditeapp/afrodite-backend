@@ -108,11 +108,17 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
             current_value.first_publication_time
         };
         let (publication_id_value, latest_publication) = if is_public {
-            self.increment_news_unread_count_for_every_account()?;
             let new_publication_id = self.get_next_news_publication_id_and_increment_it()?;
+            self.increment_news_unread_count_for_every_account(new_publication_id)?;
             (Some(new_publication_id), Some(current_time))
         } else {
-            self.decrement_news_unread_count_for_every_account()?;
+            let publication_id_value: PublicationId = news
+                .filter(id.eq(id_value))
+                .filter(publication_id.is_not_null())
+                .select(publication_id.assume_not_null())
+                .first(self.conn())
+                .into_db_error(())?;
+            self.decrement_news_unread_count_for_every_account(publication_id_value)?;
             (None, current_value.latest_publication_time)
         };
 
@@ -147,11 +153,15 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
 
     fn increment_news_unread_count_for_every_account(
         &mut self,
+        publication_id: PublicationId,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 
         update(account_state)
-            .set(unread_news_count.eq(unread_news_count + 1))
+            .set((
+                unread_news_count.eq(unread_news_count + 1),
+                publication_id_at_unread_news_count_incrementing.eq(publication_id),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 
@@ -160,11 +170,13 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
 
     fn decrement_news_unread_count_for_every_account(
         &mut self,
+        id: PublicationId,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 
         update(account_state)
             .filter(unread_news_count.gt(0))
+            .filter(publication_id_at_unread_news_count_incrementing.ge(id))
             .set(unread_news_count.eq(unread_news_count - 1))
             .execute(self.conn())
             .into_db_error(())?;
