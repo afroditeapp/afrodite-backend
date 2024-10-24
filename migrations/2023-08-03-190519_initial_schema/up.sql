@@ -548,8 +548,7 @@ CREATE TABLE IF NOT EXISTS chat_state(
     fcm_device_token             TEXT           UNIQUE,
     new_received_likes_count     INTEGER        NOT NULL DEFAULT 0,
     next_received_like_id        INTEGER        NOT NULL DEFAULT 0,
-    received_likes_iterator_reset_received_like_id_previous     INTEGER,
-    received_likes_iterator_reset_received_like_id              INTEGER,
+    received_like_id_at_received_likes_iterator_reset           INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

@@ -147,8 +147,7 @@ diesel::table! {
         fcm_device_token -> Nullable<Text>,
         new_received_likes_count -> Integer,
         next_received_like_id -> Integer,
-        received_likes_iterator_reset_received_like_id_previous -> Nullable<Integer>,
-        received_likes_iterator_reset_received_like_id -> Nullable<Integer>,
+        received_like_id_at_received_likes_iterator_reset -> Nullable<Integer>,
     }
 }
 

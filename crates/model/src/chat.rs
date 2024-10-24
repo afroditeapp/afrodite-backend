@@ -38,8 +38,7 @@ pub struct ChatStateRaw {
     pub fcm_device_token: Option<FcmDeviceToken>,
     pub new_received_likes_count: NewReceivedLikesCount,
     pub next_received_like_id: ReceivedLikeId,
-    pub received_likes_iterator_reset_received_like_id_previous: Option<ReceivedLikeId>,
-    pub received_likes_iterator_reset_received_like_id: Option<ReceivedLikeId>,
+    pub received_like_id_at_received_likes_iterator_reset: Option<ReceivedLikeId>,
 }
 
 #[derive(Debug, Clone, Copy)]
