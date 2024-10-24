@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, MatchId, MatchesIteratorSessionId, NewsId, NewsIteratorSessionId, ProfileLink, ReceivedLikesIteratorSessionId};
+use model::{AccountId, AccountIdInternal, ContentProcessingId, MatchId, MatchesIteratorSessionId, NewsIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink, PublicationId, ReceivedLikeId, ReceivedLikesIteratorSessionId};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{
@@ -16,7 +16,7 @@ use super::{
     IntoDataError,
 };
 use crate::{
-    cache::{chat::received_likes::ReceivedLikesIteratorState, db_iterator::DbIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
+    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -212,7 +212,7 @@ impl ConcurrentWriteProfileHandleBlocking {
         &self,
         id: AccountIdInternal,
         iterator_id: ReceivedLikesIteratorSessionId,
-    ) -> Result<Option<ReceivedLikesIteratorState>, DataError> {
+    ) -> Result<Option<DbIteratorStateNewCount<ReceivedLikeId>>, DataError> {
         self.write
             .user_write_commands_account()
             .next_received_likes_iterator_state(id, iterator_id)
@@ -232,7 +232,7 @@ impl ConcurrentWriteProfileHandleBlocking {
         &self,
         id: AccountIdInternal,
         iterator_id: NewsIteratorSessionId,
-    ) -> Result<Option<DbIteratorState<NewsId>>, DataError> {
+    ) -> Result<Option<DbIteratorStateNewCount<PublicationId>>, DataError> {
         self.write
             .user_write_commands_account()
             .next_news_iterator_state(id, iterator_id)
@@ -372,7 +372,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         &self,
         id: AccountIdInternal,
         iterator_session_id: ReceivedLikesIteratorSessionId,
-    ) -> Result<Option<ReceivedLikesIteratorState>, DataError> {
+    ) -> Result<Option<DbIteratorStateNewCount<ReceivedLikeId>>, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
                 if let Some(c) = e.chat.as_mut() {
@@ -404,7 +404,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
         &self,
         id: AccountIdInternal,
         iterator_session_id: NewsIteratorSessionId,
-    ) -> Result<Option<DbIteratorState<NewsId>>, DataError> {
+    ) -> Result<Option<DbIteratorStateNewCount<PublicationId>>, DataError> {
         self.cache
             .write_cache_blocking(id.as_id(), |e| {
                 if let Some(c) = e.account.as_mut() {

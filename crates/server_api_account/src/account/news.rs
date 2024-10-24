@@ -1,6 +1,6 @@
 
 use axum::{extract::{Path, Query, State}, Extension};
-use model::{AccountIdInternal, GetNewsItemResult, NewsCountResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, Permissions, RequireNewsLocale, ResetNewsIteratorResult};
+use model::{AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, PageItemCountForNewPublicNews, Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -12,26 +12,26 @@ use crate::app::{GetAccounts, ReadData, StateBase, WriteData};
 
 
 #[obfuscate_api]
-const PATH_POST_GET_NEWS_COUNT: &str = "/account_api/news_count";
+const PATH_GET_UNREAD_NEWS_COUNT: &str = "/account_api/news_count";
 
-/// The news count for once public news. It always increments.
+/// The unread news count for public news.
 #[utoipa::path(
-    post,
-    path = PATH_POST_GET_NEWS_COUNT,
+    get,
+    path = PATH_GET_UNREAD_NEWS_COUNT,
     responses(
-        (status = 200, description = "Success.", body = NewsCountResult),
+        (status = 200, description = "Success.", body = UnreadNewsCountResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_news_count<S: ReadData>(
+pub async fn get_unread_news_count<S: ReadData>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<NewsCountResult>, StatusCode> {
-    ACCOUNT.post_get_news_count.incr();
+) -> Result<Json<UnreadNewsCountResult>, StatusCode> {
+    ACCOUNT.get_unread_news_count.incr();
 
-    let r = state.read().account().news().news_count_for_once_public_news(id).await?;
+    let r = state.read().account().news().unread_news_count(id).await?;
     Ok(r.into())
 }
 
@@ -53,16 +53,15 @@ pub async fn post_reset_news_paging<S: WriteData + ReadData>(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetNewsIteratorResult>, StatusCode> {
     ACCOUNT.post_reset_news_paging.incr();
-    let iterator_session_id = db_write!(state, move |cmds| {
+    let r = db_write!(state, move |cmds| {
         cmds.account().news().handle_reset_news_iterator(account_id)
     })?;
-    let r = ResetNewsIteratorResult {
-        s: iterator_session_id.into(),
-    };
 
     Ok(r.into())
 }
 
+/// For admins the first items on the first page are all
+/// private news.
 #[obfuscate_api]
 const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/next_news_page";
 
@@ -98,18 +97,20 @@ pub async fn post_get_next_news_page<S: WriteData + ReadData>(
 
     if let Some(data) = data {
         // Session ID is valid
-        let news = state
+        let (news, n) = state
             .read()
             .account()
             .news()
             .news_page(data, locale, permissions.some_admin_news_permissions_granted())
             .await?;
         Ok(NewsPage {
+            n,
             news,
             error_invalid_iterator_session_id: false,
         }.into())
     } else {
         Ok(NewsPage {
+            n: PageItemCountForNewPublicNews::default(),
             news: vec![],
             error_invalid_iterator_session_id: true,
         }.into())
@@ -173,7 +174,7 @@ pub async fn get_news_item<S: ReadData>(
 pub fn news_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_get_news_count::<S>,
+        get_unread_news_count::<S>,
         post_reset_news_paging::<S>,
         post_get_next_news_page::<S>,
         get_news_item::<S>,
@@ -184,7 +185,7 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_NEWS_COUNTERS_LIST,
-    post_get_news_count,
+    get_unread_news_count,
     post_reset_news_paging,
     post_get_next_news_page,
     get_news_item,

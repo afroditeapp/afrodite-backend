@@ -3,7 +3,7 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
 use model::{
-    AccountGlobalState, AccountIdInternal, NewsId, NewsLocale, SyncVersion, UnixTime, UpdateNewsTranslation
+    AccountGlobalState, AccountIdInternal, NewsId, NewsLocale, PublicationId, SyncVersion, UnixTime, UpdateNewsTranslation
 };
 
 use crate::IntoDatabaseError;
@@ -103,22 +103,25 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
         let current_value = self.read().account_admin().news().news_translations(id_value)?;
         let current_time = UnixTime::current_time();
         let first_publication = if is_public && current_value.first_publication_time.is_none() {
-            self.upsert_increment_once_public_news_count()?;
-            self.increment_news_count_sync_version_for_every_account()?;
             Some(current_time)
         } else {
             current_value.first_publication_time
         };
-        let latest_publication = if is_public {
-            Some(current_time)
+        let (publication_id_value, latest_publication) = if is_public {
+            self.increment_news_unread_count_for_every_account()?;
+            let new_publication_id = self.get_next_news_publication_id_and_increment_it()?;
+            (Some(new_publication_id), Some(current_time))
         } else {
-            current_value.latest_publication_time
+            self.decrement_news_unread_count_for_every_account()?;
+            (None, current_value.latest_publication_time)
         };
+
+        self.increment_news_sync_version_for_every_account()?;
 
         update(news)
             .filter(id.eq(id_value))
             .set((
-                public.eq(is_public),
+                publication_id.eq(publication_id_value),
                 first_publication_unix_time.eq(first_publication),
                 latest_publication_unix_time.eq(latest_publication),
             ))
@@ -128,36 +131,69 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
         Ok(())
     }
 
-    fn increment_news_count_sync_version_for_every_account(
+    fn increment_news_sync_version_for_every_account(
         &mut self,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 
         update(account_state)
-            .filter(news_count_sync_version.lt(SyncVersion::MAX_VALUE))
-            .set(news_count_sync_version.eq(news_count_sync_version + 1))
+            .filter(news_sync_version.lt(SyncVersion::MAX_VALUE))
+            .set(news_sync_version.eq(news_sync_version + 1))
             .execute(self.conn())
             .into_db_error(())?;
 
         Ok(())
     }
 
-    pub fn upsert_increment_once_public_news_count(
+    fn increment_news_unread_count_for_every_account(
         &mut self,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_global_state::dsl::*;
+        use model::schema::account_state::dsl::*;
 
-        insert_into(account_global_state)
-            .values((
-                row_type.eq(AccountGlobalState::ACCOUNT_GLOBAL_STATE_ROW_TYPE),
-                once_public_news_count.eq(1),
-            ))
-            .on_conflict(row_type)
-            .do_update()
-            .set(once_public_news_count.eq(once_public_news_count + 1))
+        update(account_state)
+            .set(unread_news_count.eq(unread_news_count + 1))
             .execute(self.conn())
             .into_db_error(())?;
 
         Ok(())
+    }
+
+    fn decrement_news_unread_count_for_every_account(
+        &mut self,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_state::dsl::*;
+
+        update(account_state)
+            .filter(unread_news_count.gt(0))
+            .set(unread_news_count.eq(unread_news_count - 1))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn get_next_news_publication_id_and_increment_it(
+        &mut self,
+    ) -> Result<PublicationId, DieselDatabaseError> {
+        use model::schema::account_global_state::dsl::*;
+
+        let id = self.read()
+            .account()
+            .data()
+            .global_state()?
+            .next_news_publication_id;
+
+        insert_into(account_global_state)
+            .values((
+                row_type.eq(AccountGlobalState::ACCOUNT_GLOBAL_STATE_ROW_TYPE),
+                next_news_publication_id.eq(1),
+            ))
+            .on_conflict(row_type)
+            .do_update()
+            .set(next_news_publication_id.eq(next_news_publication_id + 1))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(id)
     }
 }

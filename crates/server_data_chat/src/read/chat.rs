@@ -3,10 +3,10 @@ mod push_notifications;
 use std::i64;
 
 use model::{
-    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, SentBlocksPage, SentLikesPage, SentMessageId
+    AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
-    cache::{chat::received_likes::ReceivedLikesIteratorState, db_iterator::DbIteratorState}, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
@@ -44,7 +44,7 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
     pub async fn received_likes_page(
         &self,
         id: AccountIdInternal,
-        state: ReceivedLikesIteratorState,
+        state: DbIteratorStateNewCount<ReceivedLikeId>,
     ) -> Result<(Vec<AccountId>, PageItemCountForNewLikes), DataError> {
         self.db_read(move |mut cmds| {
             let value = cmds
@@ -52,9 +52,9 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
                 .interaction()
                 .paged_received_likes_from_received_like_id(
                     id,
-                    state.id_at_reset,
+                    state.id_at_reset(),
                     state.page().try_into().unwrap_or(i64::MAX),
-                    state.id_at_reset_previous,
+                    state.previous_id_at_reset(),
                 )?;
             Ok(value)
         })

@@ -1,5 +1,6 @@
 use model::NextNumberStorage;
 
+pub mod new_count;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct DbIteratorPageState {

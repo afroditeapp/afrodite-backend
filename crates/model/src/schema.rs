@@ -33,7 +33,7 @@ diesel::table! {
     account_global_state (row_type) {
         row_type -> Integer,
         admin_access_granted_count -> Integer,
-        once_public_news_count -> Integer,
+        next_news_publication_id -> Integer,
     }
 }
 
@@ -116,7 +116,9 @@ diesel::table! {
     account_state (account_id) {
         account_id -> Integer,
         next_client_id -> Integer,
-        news_count_sync_version -> Integer,
+        news_sync_version -> Integer,
+        unread_news_count -> Integer,
+        publication_id_at_news_iterator_reset -> Nullable<Integer>,
     }
 }
 
@@ -301,10 +303,10 @@ diesel::table! {
 
     news (id) {
         id -> Integer,
-        public -> Bool,
         account_id_creator -> Nullable<Integer>,
         first_publication_unix_time -> Nullable<Integer>,
         latest_publication_unix_time -> Nullable<Integer>,
+        publication_id -> Nullable<Integer>,
     }
 }
 

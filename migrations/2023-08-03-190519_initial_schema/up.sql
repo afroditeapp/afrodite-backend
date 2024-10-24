@@ -170,8 +170,10 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
 CREATE TABLE IF NOT EXISTS account_state(
     account_id            INTEGER PRIMARY KEY NOT NULL,
     next_client_id        INTEGER             NOT NULL DEFAULT 0,
-    -- Sync version for news count.
-    news_count_sync_version    INTEGER        NOT NULL DEFAULT 0,
+    -- Sync version for news.
+    news_sync_version     INTEGER             NOT NULL DEFAULT 0,
+    unread_news_count     INTEGER             NOT NULL DEFAULT 0,
+    publication_id_at_news_iterator_reset INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -191,10 +193,11 @@ CREATE TABLE IF NOT EXISTS demo_mode_account_ids(
 
 CREATE TABLE IF NOT EXISTS news(
     id                    INTEGER PRIMARY KEY NOT NULL,
-    public                BOOLEAN             NOT NULL DEFAULT 0,
     account_id_creator    INTEGER,
     first_publication_unix_time  INTEGER,
     latest_publication_unix_time INTEGER,
+    -- If publication ID exists the news are public.
+    publication_id        INTEGER,
     FOREIGN KEY (account_id_creator)
     REFERENCES account_id (id)
         ON DELETE SET NULL
@@ -230,8 +233,8 @@ CREATE TABLE IF NOT EXISTS account_global_state(
     -- 0 = account component global state
     row_type                   INTEGER PRIMARY KEY NOT NULL,
     admin_access_granted_count INTEGER             NOT NULL DEFAULT 0,
-    -- Count for news which always increments
-    once_public_news_count     INTEGER             NOT NULL DEFAULT 0
+    -- Publication ID for news which always increments.
+    next_news_publication_id   INTEGER             NOT NULL DEFAULT 0
 );
 
 ---------- Tables for server component profile ----------

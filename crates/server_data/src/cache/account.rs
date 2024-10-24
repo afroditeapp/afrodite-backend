@@ -1,11 +1,11 @@
-use model::{NewsId, NewsIteratorSessionIdInternal, NextNumberStorage};
+use model::{NewsIteratorSessionIdInternal, NextNumberStorage, PublicationId};
 
-use super::db_iterator::{DbIterator, IteratorSessionIdTrait, IteratorStartPoint};
+use super::db_iterator::{new_count::DbIteratorNewCount, IteratorSessionIdTrait, IteratorStartPoint};
 
 
 #[derive(Debug, Default)]
 pub struct CachedAccountComponentData {
-    pub news_iterator: DbIterator<NewsIteratorSessionIdInternal, NewsId>,
+    pub news_iterator: DbIteratorNewCount<NewsIteratorSessionIdInternal, PublicationId>,
 }
 
 impl IteratorSessionIdTrait for NewsIteratorSessionIdInternal {
@@ -14,4 +14,4 @@ impl IteratorSessionIdTrait for NewsIteratorSessionIdInternal {
     }
 }
 
-impl IteratorStartPoint for NewsId {}
+impl IteratorStartPoint for PublicationId {}

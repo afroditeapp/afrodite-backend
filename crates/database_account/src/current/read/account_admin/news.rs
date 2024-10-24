@@ -72,7 +72,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNewsAdmin<C> {
 
         Ok(NewsTranslations {
             id: news_id_value,
-            public: news_item.public,
+            public: news_item.publication_id.is_some(),
             aid_creator: news_creator,
             first_publication_time: news_item.first_publication_unix_time,
             latest_publication_time: news_item.latest_publication_unix_time,

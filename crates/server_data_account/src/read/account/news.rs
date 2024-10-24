@@ -1,21 +1,21 @@
-use model::{AccountIdInternal, NewsCountResult, NewsId, NewsItem, NewsItemSimple, NewsLocale, RequireNewsLocale};
+use model::{AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsLocale, PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale, UnreadNewsCountResult};
 use server_data::{
-    cache::db_iterator::DbIteratorState, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    cache::db_iterator::new_count::DbIteratorStateNewCount, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };
 
 define_server_data_read_commands!(ReadCommandsAccountNews);
 define_db_read_command!(ReadCommandsAccountNews);
 
 impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
-    pub async fn news_count_for_once_public_news(
+    pub async fn unread_news_count(
         &mut self,
         id: AccountIdInternal,
-    ) -> Result<NewsCountResult, DataError> {
+    ) -> Result<UnreadNewsCountResult, DataError> {
         self
             .db_read(move |mut cmds| {
-                let c = cmds.account().data().global_state()?.once_public_news_count;
+                let c = cmds.account().news().unread_news_count(id)?;
                 let v = cmds.account().news().news_sync_version(id)?;
-                Ok(NewsCountResult {v, c})
+                Ok(UnreadNewsCountResult {v, c})
             })
             .await
             .into_data_error(id)
@@ -23,16 +23,17 @@ impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
 
     pub async fn news_page(
         &self,
-        state: DbIteratorState<NewsId>,
+        state: DbIteratorStateNewCount<PublicationId>,
         locale: NewsLocale,
         include_private_news: bool,
-    ) -> Result<Vec<NewsItemSimple>, DataError> {
+    ) -> Result<(Vec<NewsItemSimple>, PageItemCountForNewPublicNews), DataError> {
         self.db_read(move |mut cmds| {
             let value = cmds
                 .account()
                 .news()
                 .paged_news(
                     state.id_at_reset(),
+                    state.previous_id_at_reset(),
                     state.page().try_into().unwrap_or(i64::MAX),
                     locale,
                     include_private_news,

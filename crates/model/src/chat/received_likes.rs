@@ -147,6 +147,12 @@ impl ReceivedLikeId {
 
 diesel_i64_wrapper!(ReceivedLikeId);
 
+impl From<ReceivedLikeId> for i64 {
+    fn from(value: ReceivedLikeId) -> Self {
+        value.id
+    }
+}
+
 /// Define how many returned profiles counted from the first page item are
 /// new likes (interaction state changed to like after previous received likes
 /// iterator reset).
@@ -162,11 +168,4 @@ diesel_i64_wrapper!(ReceivedLikeId);
 )]
 pub struct PageItemCountForNewLikes {
     pub c: i64,
-}
-
-impl PageItemCountForNewLikes {
-    /// Add another count using `saturating_add`
-    pub fn merge(self, v: Self) -> Self {
-        Self { c: self.c.saturating_add(v.c) }
-    }
 }

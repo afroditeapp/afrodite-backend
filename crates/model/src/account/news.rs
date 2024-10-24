@@ -19,10 +19,10 @@ sync_version_wrappers!(
 #[diesel(check_for_backend(crate::Db))]
 pub struct NewsItemInternal {
     pub id: NewsId,
-    pub public: bool,
     pub account_id_creator: Option<AccountIdDb>,
     pub first_publication_unix_time: Option<UnixTime>,
     pub latest_publication_unix_time: Option<UnixTime>,
+    pub publication_id: Option<PublicationId>,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
@@ -78,6 +78,52 @@ diesel_i64_wrapper!(NewsId);
 impl From<NewsId> for i64 {
     fn from(value: NewsId) -> Self {
         value.nid
+    }
+}
+
+/// Publication ID
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    IntoParams,
+    PartialEq,
+    Default,
+    FromSqlRow,
+    AsExpression,
+)]
+#[diesel(sql_type = BigInt)]
+pub struct PublicationId {
+    pub id: i64,
+}
+
+impl PublicationId {
+    /// The value is the same as [crate::MatchId::next_id_to_latest_used_id]
+    /// returns if there is no items.
+    pub const NO_PUBLICATION_ID: PublicationId = PublicationId { id: -1 };
+
+    pub fn new(id: i64) -> Self {
+        Self { id }
+    }
+
+    pub fn as_i64(&self) -> &i64 {
+        &self.id
+    }
+
+    /// Might return -1 if no IDs are used
+    pub fn to_latest_used_id(&self) -> Self {
+        Self { id: self.id - 1 }
+    }
+}
+
+diesel_i64_wrapper!(PublicationId);
+
+impl From<PublicationId> for i64 {
+    fn from(value: PublicationId) -> Self {
+        value.id
     }
 }
 
@@ -166,11 +212,11 @@ impl From<NewsIteratorSessionId> for NewsIteratorSessionIdInternal {
     AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
-pub struct NewsCount {
+pub struct UnreadNewsCount {
     pub c: i64,
 }
 
-impl NewsCount {
+impl UnreadNewsCount {
     pub fn new(count: i64) -> Self {
         Self { c: count }
     }
@@ -180,22 +226,25 @@ impl NewsCount {
     }
 }
 
-diesel_i64_wrapper!(NewsCount);
+diesel_i64_wrapper!(UnreadNewsCount);
 
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct NewsCountResult {
+pub struct UnreadNewsCountResult {
     pub v: NewsSyncVersion,
-    pub c: NewsCount,
+    pub c: UnreadNewsCount,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ResetNewsIteratorResult {
     pub s: NewsIteratorSessionId,
+    pub v: NewsSyncVersion,
+    pub c: UnreadNewsCount,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct NewsPage {
+    pub n: PageItemCountForNewPublicNews,
     pub news: Vec<NewsItemSimple>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -263,4 +312,21 @@ impl NewsLocale {
     pub fn is_supported_locale(&self) -> bool {
         self.locale == Self::ENGLISH || self.locale == Self::FINNISH
     }
+}
+
+/// Define how many returned news items counted from the first public
+/// news item are new news (news publicity changed to public after
+/// previous news iterator reset).
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+)]
+pub struct PageItemCountForNewPublicNews {
+    pub c: i64,
 }

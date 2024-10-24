@@ -541,7 +541,7 @@ impl TryFrom<String> for EmailAddress {
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountGlobalState {
     pub admin_access_granted_count: i64,
-    pub once_public_news_count: NewsCount,
+    pub next_news_publication_id: PublicationId,
 }
 
 impl AccountGlobalState {
