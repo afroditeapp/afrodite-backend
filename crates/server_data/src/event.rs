@@ -88,6 +88,31 @@ impl<'a> EventManagerWithCacheReference<'a> {
             .into_data_error(id)
     }
 
+    async fn access_connection_event_sender_for_logged_in_clients(
+        &'a self,
+        action: impl Fn(Option<&EventSender>),
+    ) {
+        self.cache
+            .read_cache_for_logged_in_clients(|entry| action(entry.connection_event_sender()))
+            .await
+    }
+
+    /// Send only if the client is connected.
+    ///
+    /// Event will be skipped if event queue is full.
+    pub async fn send_connected_event_to_logged_in_clients(
+        &'a self,
+        event: EventToClientInternal,
+    ) {
+        self.access_connection_event_sender_for_logged_in_clients(move |sender| {
+            if let Some(sender) = sender {
+                // Ignore errors
+                let _ = sender.sender.try_send(InternalEventType::NormalEvent(event.clone()));
+            }
+        })
+        .await
+    }
+
     /// Send only if the client is connected.
     ///
     /// Event will be skipped if event queue is full.

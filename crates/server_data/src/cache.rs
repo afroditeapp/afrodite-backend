@@ -219,6 +219,17 @@ impl DatabaseCache {
         Ok(data)
     }
 
+    pub async fn read_cache_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(&CacheEntry),
+    ) {
+        let guard = self.access_tokens.read().await;
+        for v in guard.values() {
+            let cache_entry = v.cache.read().await;
+            cache_operation(&cache_entry)
+        }
+    }
+
     pub async fn read_cache<T, Id: Into<AccountId>>(
         &self,
         id: Id,

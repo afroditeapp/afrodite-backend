@@ -379,7 +379,7 @@ async fn handle_news_count_sync_version_check<S: WriteData + ReadData>(
 
     send_event(
         socket,
-        EventToClientInternal::NewsCountChanged,
+        EventToClientInternal::NewsChanged,
     )
     .await?;
 

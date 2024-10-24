@@ -152,7 +152,7 @@ pub enum EventToClientInternal {
     MatchesChanged,
     AvailableProfileAttributesChanged,
     ProfileChanged,
-    NewsCountChanged,
+    NewsChanged,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -172,7 +172,7 @@ impl From<&EventToClientInternal> for EventType {
             MatchesChanged => Self::MatchesChanged,
             AvailableProfileAttributesChanged => Self::AvailableProfileAttributesChanged,
             ProfileChanged => Self::ProfileChanged,
-            NewsCountChanged => Self::NewsCountChanged,
+            NewsChanged => Self::NewsCountChanged,
         }
     }
 }
@@ -205,7 +205,7 @@ impl From<EventToClientInternal> for EventToClient {
             | MatchesChanged
             | AvailableProfileAttributesChanged
             | ProfileChanged
-            | NewsCountChanged => (),
+            | NewsChanged => (),
         }
 
         value
