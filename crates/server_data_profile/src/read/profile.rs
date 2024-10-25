@@ -8,10 +8,16 @@ use server_data::{
     DataError, IntoDataError,
 };
 
+mod statistics;
+
 define_server_data_read_commands!(ReadCommandsProfile);
 define_db_read_command!(ReadCommandsProfile);
 
 impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
+    pub fn statistics(self) -> statistics::ReadCommandsProfileStatistics<C> {
+        statistics::ReadCommandsProfileStatistics::new(self.cmds)
+    }
+
     pub async fn profile_internal(
         &self,
         id: AccountIdInternal,

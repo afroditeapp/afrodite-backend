@@ -28,6 +28,7 @@ use server_data::{
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle},
     DataError
 };
+use server_data_profile::app::ProfileStatisticsCacheProvider;
 use simple_backend::{
     app::{FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider}, file_package::FilePackageManager, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
@@ -182,6 +183,14 @@ impl WriteData for E {
 
 impl ReadData for E {
     fn read(&self) -> ReadCommandsContainer {
+        unimplemented!()
+    }
+}
+
+// Server data profile
+
+impl ProfileStatisticsCacheProvider for E {
+    fn profile_statistics_cache(&self) -> &server_data_profile::statistics::ProfileStatisticsCache {
         unimplemented!()
     }
 }

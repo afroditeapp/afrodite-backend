@@ -230,6 +230,19 @@ impl DatabaseCache {
         }
     }
 
+    pub async fn read_cache_for_all_accounts(
+        &self,
+        mut cache_operation: impl FnMut(&CacheEntry) -> Result<(), CacheError>,
+    ) -> Result<(), CacheError> {
+        let guard = self.accounts.read().await;
+        for v in guard.values() {
+            let cache_entry = v.cache.read().await;
+            cache_operation(&cache_entry)?
+        }
+
+        Ok(())
+    }
+
     pub async fn read_cache<T, Id: Into<AccountId>>(
         &self,
         id: Id,

@@ -13,6 +13,7 @@ use server_data::{
     write_commands::WriteCommandRunnerHandle,
 };
 use server_data_all::demo::DemoModeManager;
+use server_data_profile::statistics::ProfileStatisticsCache;
 use simple_backend::app::SimpleBackendAppState;
 
 pub mod state_impl;
@@ -32,6 +33,7 @@ pub struct AppState {
     demo_mode: DemoModeManager,
     push_notification_sender: PushNotificationSender,
     simple_backend_state: SimpleBackendAppState,
+    profile_statistics_cache: Arc<ProfileStatisticsCache>,
 }
 
 impl AppState {
@@ -55,6 +57,7 @@ impl AppState {
             demo_mode,
             push_notification_sender,
             simple_backend_state,
+            profile_statistics_cache: ProfileStatisticsCache::default().into()
         };
 
         state

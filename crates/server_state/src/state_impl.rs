@@ -15,7 +15,7 @@ use server_data::{
 use server_data_account::{read::GetReadCommandsAccount, write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount}};
 use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
-use server_data_profile::write::GetWriteCommandsProfile;
+use server_data_profile::{app::ProfileStatisticsCacheProvider, write::GetWriteCommandsProfile};
 use simple_backend::{
     app::{FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, file_package::FilePackageManager, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
@@ -275,6 +275,14 @@ impl WriteData for S {
 impl ReadData for S {
     fn read(&self) -> ReadCommandsContainer {
         ReadCommandsContainer::new(self.database.read())
+    }
+}
+
+// Server data profile
+
+impl ProfileStatisticsCacheProvider for S {
+    fn profile_statistics_cache(&self) -> &server_data_profile::statistics::ProfileStatisticsCache {
+        &self.profile_statistics_cache
     }
 }
 

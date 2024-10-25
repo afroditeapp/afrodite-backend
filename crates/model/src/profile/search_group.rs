@@ -130,6 +130,21 @@ impl SearchGroupFlags {
     pub fn to_filter(&self) -> SearchGroupFlagsFilter {
         SearchGroupFlagsFilter::new(*self)
     }
+
+    pub fn is_man(self) -> bool {
+        let groups: SearchGroups = self.into();
+        groups.to_validated_man().is_some()
+    }
+
+    pub fn is_woman(self) -> bool {
+        let groups: SearchGroups = self.into();
+        groups.to_validated_woman().is_some()
+    }
+
+    pub fn is_non_binary(self) -> bool {
+        let groups: SearchGroups = self.into();
+        groups.to_validated_non_binary().is_some()
+    }
 }
 
 impl TryFrom<i64> for SearchGroupFlags {

@@ -3,12 +3,11 @@ use axum::{
     Extension,
 };
 use model::{
-    AccountIdInternal, GetProfileStatisticsParams, GetProfileStatisticsResult, Permissions
+    GetProfileStatisticsParams, GetProfileStatisticsResult, Permissions
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{create_open_api_router, db_write_multiple, result::WrappedContextExt};
-use server_data::read::GetReadCommandsCommon;
-use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
+use server_api::create_open_api_router;
+use server_data_profile::{app::ProfileStatisticsCacheProvider, read::GetReadProfileCommands};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
@@ -21,7 +20,6 @@ use crate::{
 
 #[obfuscate_api]
 const PATH_GET_PROFILE_STATISTICS: &str = "/profile_api/profile_statistics";
-
 
 /// Non default values for [model::GetProfileStatisticsParams]
 /// requires [model::Permissions::admin_profile_statistics].
@@ -40,10 +38,9 @@ const PATH_GET_PROFILE_STATISTICS: &str = "/profile_api/profile_statistics";
     security(("access_token" = [])),
 )]
 pub async fn get_profile_statistics<
-    S: ReadData,
+    S: ReadData + ProfileStatisticsCacheProvider,
 >(
     State(state): State<S>,
-    Extension(account_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
     Query(params): Query<GetProfileStatisticsParams>,
 ) -> Result<Json<GetProfileStatisticsResult>, StatusCode> {
@@ -53,11 +50,17 @@ pub async fn get_profile_statistics<
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    unimplemented!()
+    let r = if params == GetProfileStatisticsParams::default() {
+        state.profile_statistics_cache().get_or_update_statistics(&state).await?
+    } else {
+        state.read().profile().statistics().profile_statistics(params.profile_visibility).await?
+    };
+
+    Ok(r.into())
 }
 
 pub fn statistics_router<
-    S: StateBase + ReadData,
+    S: StateBase + ReadData + ProfileStatisticsCacheProvider,
 >(
     s: S,
 ) -> OpenApiRouter {
