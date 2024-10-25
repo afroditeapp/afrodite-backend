@@ -338,6 +338,7 @@ define_permissions!(
     admin_server_maintenance_save_backend_config,
     admin_news_create,
     admin_news_edit_all,
+    admin_profile_statistics,
 );
 
 impl Permissions {

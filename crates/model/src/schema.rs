@@ -97,6 +97,7 @@ diesel::table! {
         admin_server_maintenance_save_backend_config -> Bool,
         admin_news_create -> Bool,
         admin_news_edit_all -> Bool,
+        admin_profile_statistics -> Bool,
     }
 }
 

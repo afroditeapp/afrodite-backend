@@ -40,6 +40,9 @@ pub use search_group::*;
 mod last_seen_time;
 pub use last_seen_time::*;
 
+mod statistics;
+pub use statistics::*;
+
 const NUMBER_LIST_ATTRIBUTE_MAX_VALUES: usize = 8;
 
 /// Profile's database data

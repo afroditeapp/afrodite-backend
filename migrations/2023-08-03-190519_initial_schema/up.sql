@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_server_maintenance_save_backend_config BOOLEAN NOT NULL DEFAULT 0,
     admin_news_create                            BOOLEAN NOT NULL DEFAULT 0,
     admin_news_edit_all                          BOOLEAN NOT NULL DEFAULT 0,
+    admin_profile_statistics                     BOOLEAN NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

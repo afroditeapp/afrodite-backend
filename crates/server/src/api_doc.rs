@@ -62,6 +62,7 @@ impl ApiDoc {
             .merge_from(server_api_profile::profile::iterate_profiles_router(state.clone()).into_openapi())
             .merge_from(server_api_profile::profile::location_router(state.clone()).into_openapi())
             .merge_from(server_api_profile::profile::profile_data_router(state.clone()).into_openapi())
+            .merge_from(server_api_profile::profile::statistics_router(state.clone()).into_openapi())
             .tag_routes("profile");
         doc.merge(profile);
         // Chat
