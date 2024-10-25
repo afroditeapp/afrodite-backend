@@ -1,5 +1,7 @@
 -- Your SQL goes here
 
+-- TODO(prod): Add autoincrement where needed. News?
+
 ---------- Tables for server component common ----------
 
 -- UUID for account
@@ -686,6 +688,8 @@ CREATE TABLE IF NOT EXISTS chat_global_state(
 
 ---------- History tables for server component account ----------
 
+-- TODO(prod): Remove unnecessary history tables
+
 CREATE TABLE IF NOT EXISTS history_account(
     id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     account_id INTEGER                           NOT NULL,
@@ -712,13 +716,76 @@ CREATE TABLE IF NOT EXISTS history_account_setup(
 
 ---------- History tables for server component profile ----------
 
-CREATE TABLE IF NOT EXISTS history_profile(
-    id     INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    account_id INTEGER                           NOT NULL,
-    unix_time  INTEGER                           NOT NULL,
-    json_text  TEXT                              NOT NULL,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
+CREATE TABLE IF NOT EXISTS history_profile_statistics_save_time(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    unix_time  INTEGER                           NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_men(
+    save_time_id  INTEGER NOT NULL,
+    age           INTEGER NOT NULL,
+    count         INTEGER NOT NULL,
+    PRIMARY KEY (save_time_id, age)
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_woman(
+    save_time_id  INTEGER NOT NULL,
+    age           INTEGER NOT NULL,
+    count         INTEGER NOT NULL,
+    PRIMARY KEY (save_time_id, age)
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
+    save_time_id  INTEGER NOT NULL,
+    age           INTEGER NOT NULL,
+    count         INTEGER NOT NULL,
+    PRIMARY KEY (save_time_id, age)
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_account(
+    save_time_id  INTEGER PRIMARY KEY NOT NULL,
+    count INTEGER             NOT NULL,
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_man(
+    save_time_id  INTEGER PRIMARY KEY NOT NULL,
+    count     INTEGER             NOT NULL,
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_woman(
+    save_time_id  INTEGER PRIMARY KEY NOT NULL,
+    count   INTEGER             NOT NULL,
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_non_binary(
+    save_time_id     INTEGER PRIMARY KEY NOT NULL,
+    count INTEGER             NOT NULL,
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

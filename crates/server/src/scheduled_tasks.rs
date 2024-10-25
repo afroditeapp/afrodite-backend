@@ -4,7 +4,7 @@ use server_api::{db_write_raw, result::WrappedContextExt, DataError};
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
-use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
+use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile, app::ProfileStatisticsCacheProvider};
 use server_state::S;
 use simple_backend::{utils::time::sleep_until_local_time_clock_is_at, ServerQuitWatcher};
 use simple_backend_config::file::ScheduledTasksConfig;
@@ -20,6 +20,9 @@ pub enum ScheduledTaskError {
 
     #[error("Database update error")]
     DatabaseError,
+
+    #[error("Profile statistics error")]
+    ProfileStatisticsError,
 
     #[error("Unexpected server quit request detected while scheduled tasks were running")]
     QuitRequested,
@@ -105,7 +108,28 @@ impl ScheduledTaskManager {
 
     pub async fn run_tasks_and_return_result(&self, quit_notification: &mut ServerQuitWatcher) -> Result<(), ScheduledTaskError> {
         self.run_tasks_for_individual_accounts(quit_notification).await?;
+        self.save_profile_statistics().await?;
         // TODO(prod): SQLite database backups
+        Ok(())
+    }
+
+    pub async fn save_profile_statistics(&self) -> Result<(), ScheduledTaskError> {
+        let statistics = self
+            .state
+            .profile_statistics_cache()
+            .update_statistics(&self.state)
+            .await
+            .change_context(ScheduledTaskError::ProfileStatisticsError)?;
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds
+                .profile_admin_history()
+                .save_profile_statistics(statistics)
+                .await
+        })
+            .await
+            .change_context(ScheduledTaskError::DatabaseError)?;
+
         Ok(())
     }
 

@@ -80,6 +80,33 @@ macro_rules! define_db_transaction_command {
     };
 }
 
+macro_rules! define_db_transaction_history_command {
+    ($struct_name:ident) => {
+        impl<C: server_data::write::WriteCommandsProvider> $struct_name<C> {
+            pub async fn db_transaction_history<
+                T: FnOnce(
+                        database_profile::history::write::HistorySyncWriteCommands<
+                            &mut server_data::DieselConnection,
+                        >,
+                    ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+                    + Send
+                    + 'static,
+                R: Send + 'static,
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
+                self.cmds
+                    .write_cmds()
+                    .db_transaction_history_raw(|conn| {
+                        cmd(database_profile::history::write::HistorySyncWriteCommands::new(conn))
+                    })
+                    .await
+            }
+        }
+    };
+}
+
 macro_rules! db_transaction {
     ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
         server_common::data::IntoDataError::into_error(
@@ -89,6 +116,19 @@ macro_rules! db_transaction {
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         $crate::data::IntoDataError::into_error(
             $state.db_transaction(move |$cmds| ($commands)).await,
+        )
+    }};
+}
+
+macro_rules! db_transaction_history {
+    ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
+        server_common::data::IntoDataError::into_error(
+            $state.db_transaction_history(move |mut $cmds| ($commands)).await,
+        )
+    }};
+    ($state:expr, move |$cmds:ident| $commands:expr) => {{
+        $crate::data::IntoDataError::into_error(
+            $state.db_transaction_history(move |$cmds| ($commands)).await,
         )
     }};
 }

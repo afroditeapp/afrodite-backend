@@ -1,4 +1,5 @@
 use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
+use profile_admin::HistorySyncWriteProfileAdmin;
 
 use self::profile::HistorySyncWriteProfile;
 
@@ -34,6 +35,10 @@ impl<C: ConnectionProvider> HistorySyncWriteCommands<C> {
 impl HistorySyncWriteCommands<&mut DieselConnection> {
     pub fn profile(&mut self) -> HistorySyncWriteProfile<&mut DieselConnection> {
         HistorySyncWriteProfile::new(self.write())
+    }
+
+    pub fn profile_admin(&mut self) -> HistorySyncWriteProfileAdmin<&mut DieselConnection> {
+        HistorySyncWriteProfileAdmin::new(self.write())
     }
 
     pub fn transaction<

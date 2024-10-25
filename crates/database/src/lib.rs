@@ -15,6 +15,7 @@ use current::{
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use error_stack::{Context, Result, ResultExt};
+use history::write::HistorySyncWriteCommands;
 pub use model::schema;
 use model::IsLoggingAllowed;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
@@ -370,6 +371,68 @@ impl<'a> DbWriter<'a> {
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
         self.db_transaction_raw(|conn| cmd(CurrentSyncWriteCommands::new(conn)))
+            .await
+    }
+}
+
+
+pub struct DbWriterHistory<'a> {
+    db: &'a HistoryWriteHandle,
+}
+
+impl<'a> DbWriterHistory<'a> {
+    pub fn new(db: &'a HistoryWriteHandle) -> Self {
+        Self { db }
+    }
+
+    fn transaction<
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
+        T,
+    >(
+        conn: &mut DieselConnection,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
+        use diesel::prelude::*;
+        conn.transaction(transaction_actions)
+            .map_err(|e| e.into_report())
+    }
+
+    pub async fn db_transaction_raw<
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        let conn = self
+            .db
+            .0
+            .diesel()
+            .pool()
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+
+        conn.interact(move |conn| {
+            Self::transaction(conn, move |conn| cmd(conn).map_err(|err| err.into()))
+        })
+        .await?
+    }
+
+    pub async fn db_transaction<
+        T: FnOnce(
+                HistorySyncWriteCommands<&mut DieselConnection>,
+            ) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        self.db_transaction_raw(|conn| cmd(HistorySyncWriteCommands::new(conn)))
             .await
     }
 }

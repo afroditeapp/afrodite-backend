@@ -35,6 +35,7 @@ pub use markers::*;
 pub use media::*;
 pub use media_admin::*;
 pub use profile::*;
+pub use profile_admin::*;
 
 pub type Db = diesel::sqlite::Sqlite;
 

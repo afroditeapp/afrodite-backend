@@ -4,10 +4,7 @@ use std::sync::Arc;
 
 use config::Config;
 use database::{
-    current::{read::CurrentSyncReadCommands, write::TransactionConnection},
-    CurrentWriteHandle, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter,
-    DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject,
-    TransactionError,
+    current::{read::CurrentSyncReadCommands, write::TransactionConnection}, CurrentWriteHandle, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
 };
 use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender};
 use simple_backend::media_backup::MediaBackupHandle;
@@ -199,6 +196,20 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
         DbWriter::new(self.current_write_handle)
+            .db_transaction_raw(cmd)
+            .await
+    }
+
+    pub async fn db_transaction_history_raw<
+        T: FnOnce(&mut database::DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbWriterHistory::new(self.history_write_handle)
             .db_transaction_raw(cmd)
             .await
     }
