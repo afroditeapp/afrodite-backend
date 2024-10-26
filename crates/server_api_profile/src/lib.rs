@@ -24,6 +24,9 @@ pub use server_common::{data::DataError, result};
     components(schemas(
         // Profile
         model::profile::GroupValues,
+        model::profile::StatisticsProfileVisibility,
+        // Profile admin
+        model::profile_admin::ProfileStatisticsHistoryValueType,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

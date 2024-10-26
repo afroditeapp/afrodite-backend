@@ -46,14 +46,14 @@ pub async fn get_profile_statistics<
 ) -> Result<Json<GetProfileStatisticsResult>, StatusCode> {
     PROFILE.get_profile_statistics.incr();
 
-    if !permissions.admin_profile_statistics && params != GetProfileStatisticsParams::default() {
+    if !permissions.admin_profile_statistics && params.contains_admin_settings() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = if params == GetProfileStatisticsParams::default() {
+    let r = if params.contains_admin_settings() {
         state.profile_statistics_cache().get_or_update_statistics(&state).await?
     } else {
-        state.read().profile().statistics().profile_statistics(params.profile_visibility).await?
+        state.read().profile().statistics().profile_statistics(params.profile_visibility.unwrap_or_default()).await?
     };
 
     Ok(r.into())

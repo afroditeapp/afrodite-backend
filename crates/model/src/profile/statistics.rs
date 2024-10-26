@@ -4,20 +4,25 @@ use utoipa::{IntoParams, ToSchema};
 
 use super::ProfileAge;
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, IntoParams)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileStatisticsParams {
     /// Control which profiles are included in
-    /// [GetProfileStatisticsResult::profile_ages]
+    /// [GetProfileStatisticsResult::age_counts]
     /// by profile visibility.
     ///
     /// Non default value is only for admins.
-    #[serde(default, skip_serializing_if = "StatisticsProfileVisibility::is_default_statistics")]
-    #[param(default = StatisticsProfileVisibility::default)]
-    pub profile_visibility: StatisticsProfileVisibility,
+    pub profile_visibility: Option<StatisticsProfileVisibility>,
     /// Non default value is only for admins.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[param(default = false)]
     pub generate_new_statistics: bool,
+}
+
+impl GetProfileStatisticsParams {
+    pub fn contains_admin_settings(&self) -> bool {
+        !self.profile_visibility.unwrap_or_default().is_default_statistics() ||
+        self.generate_new_statistics
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -51,7 +56,7 @@ pub enum StatisticsGender {
     NonBinary,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema)]
 pub enum StatisticsProfileVisibility {
     Public,
     /// Includes [crate::ProfileVisibility::PendingPublic]
