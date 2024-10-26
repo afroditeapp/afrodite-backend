@@ -12,7 +12,7 @@ use simple_backend_utils::ContextExt;
 use tokio::{io::AsyncWriteExt, process::Command, sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::log::{error, info, warn};
 
-use crate::{utils::time::sleep_until_local_time_clock_is_at, ServerQuitWatcher};
+use crate::{utils::time::sleep_until_current_time_is_at, ServerQuitWatcher};
 
 pub const MEDIA_BACKUP_MANAGER_QUEUE_SIZE: usize = 64;
 
@@ -355,7 +355,7 @@ impl MediaBackupManager {
 
     pub async fn sleep_until(config: &SimpleBackendConfig) -> Result<(), MediaBackupError> {
         if let Some(config) = config.media_backup() {
-            sleep_until_local_time_clock_is_at(config.rsync_time)
+            sleep_until_current_time_is_at(config.rsync_time)
                 .await
                 .change_context(MediaBackupError::TimeError)?;
             Ok(())

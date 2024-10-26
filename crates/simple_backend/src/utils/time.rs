@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use chrono::{Local, NaiveTime};
-use simple_backend_config::file::LocalTimeValue;
+use chrono::{NaiveTime, Utc};
+use simple_backend_config::file::UtcTimeValue;
 use tokio::time::sleep;
 
 #[derive(thiserror::Error, Debug)]
@@ -14,8 +14,8 @@ pub enum SleepUntilLocalClockIsAtError {
     DateTimeCreationForTomorrowFailed,
 }
 
-pub async fn sleep_until_local_time_clock_is_at(wanted_time: LocalTimeValue) -> Result<(), SleepUntilLocalClockIsAtError> {
-    let now = Local::now();
+pub async fn sleep_until_current_time_is_at(wanted_time: UtcTimeValue) -> Result<(), SleepUntilLocalClockIsAtError> {
+    let now: chrono::DateTime<Utc> = Utc::now();
 
     let target_time =
         NaiveTime::from_hms_opt(wanted_time.0.hours.into(), wanted_time.0.minutes.into(), 0)

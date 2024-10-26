@@ -336,7 +336,7 @@ pub struct MediaBackupConfig {
     /// Target media backup location on remote server.
     pub target_location: PathBuf,
     pub ssh_private_key: AbsolutePathNoWhitespace,
-    pub rsync_time: LocalTimeValue,
+    pub rsync_time: UtcTimeValue,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -360,9 +360,9 @@ impl TryFrom<String> for SshAddress {
     }
 }
 
-/// System local time
+/// UTC time value
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
-pub struct LocalTimeValue(pub TimeValue);
+pub struct UtcTimeValue(pub TimeValue);
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[serde(try_from = "String")]
@@ -483,13 +483,13 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ScheduledTasksConfig {
-    pub daily_run_time: LocalTimeValue,
+    pub daily_run_time: UtcTimeValue,
 }
 
 impl Default for ScheduledTasksConfig {
     fn default() -> Self {
         Self {
-            daily_run_time: LocalTimeValue(TimeValue::DEFAULT_SCHEDULED_TASKS_TIME)
+            daily_run_time: UtcTimeValue(TimeValue::DEFAULT_SCHEDULED_TASKS_TIME)
         }
     }
 }

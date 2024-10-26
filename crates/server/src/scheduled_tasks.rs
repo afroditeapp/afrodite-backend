@@ -6,7 +6,7 @@ use server_data::read::GetReadCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile, app::ProfileStatisticsCacheProvider};
 use server_state::S;
-use simple_backend::{utils::time::sleep_until_local_time_clock_is_at, ServerQuitWatcher};
+use simple_backend::{utils::time::sleep_until_current_time_is_at, ServerQuitWatcher};
 use simple_backend_config::file::ScheduledTasksConfig;
 use simple_backend_utils::IntoReportFromString;
 use tokio::{sync::broadcast::error::TryRecvError, task::JoinHandle, time::sleep};
@@ -91,7 +91,7 @@ impl ScheduledTaskManager {
     }
 
     pub async fn sleep_until(config: &ScheduledTasksConfig) -> Result<(), ScheduledTaskError> {
-        sleep_until_local_time_clock_is_at(config.daily_run_time)
+        sleep_until_current_time_is_at(config.daily_run_time)
             .await
             .change_context(ScheduledTaskError::TimeError)?;
         Ok(())
