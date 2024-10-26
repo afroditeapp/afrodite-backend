@@ -13,6 +13,7 @@ pub mod file_email_content;
 use std::{path::Path, sync::Arc};
 
 use args::{AppMode, ArgsConfig};
+use chrono::FixedOffset;
 use error_stack::{Result, ResultExt};
 use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig};
 use file_dynamic::ConfigFileDynamic;
@@ -66,6 +67,8 @@ pub struct Config {
     profile_attributes: Option<ProfileAttributes>,
     profile_attributes_sha256: Option<String>,
     email_content: Option<EmailContentFile>,
+
+    reset_likes_utc_offset: FixedOffset,
 }
 
 impl Config {
@@ -148,6 +151,10 @@ impl Config {
     pub fn simple_backend_arc(&self) -> Arc<SimpleBackendConfig> {
         self.simple_backend_config.clone()
     }
+
+    pub fn reset_likes_utc_offset(&self) -> FixedOffset {
+        self.reset_likes_utc_offset
+    }
 }
 
 pub fn get_config(
@@ -218,6 +225,14 @@ pub fn get_config(
         );
     }
 
+    let limits = file_config.limits.clone().unwrap_or_default();
+    let offset_hours = 60 * 60 * Into::<i32>::into(limits.like_limit_reset_time_utc_offset_hours);
+    let Some(reset_likes_utc_offset) = FixedOffset::east_opt(offset_hours) else {
+        return Err(GetConfigError::InvalidConfiguration).attach_printable(
+            "like_limit_reset_time_utc_offset_hours is not valid",
+        );
+    };
+
     let config = Config {
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
@@ -228,6 +243,7 @@ pub fn get_config(
         profile_attributes,
         profile_attributes_sha256,
         email_content,
+        reset_likes_utc_offset,
     };
 
     Ok(config)

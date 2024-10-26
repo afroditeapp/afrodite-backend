@@ -241,6 +241,7 @@ fn new_config(
         profile_attributes_file: None,
         email_content_file: None,
         demo_mode: None,
+        limits: None,
     };
 
     let simple_backend_config = SimpleBackendConfigFile {

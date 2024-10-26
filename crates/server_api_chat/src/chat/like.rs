@@ -72,7 +72,7 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
         } else {
             cmds
                 .chat()
-                .modify_chat_limits(id, |limits| limits.like_limit.is_limit_not_reached())
+                .modify_chat_limits(id, |limits| limits.like_limit.is_limit_not_reached(cmds.config()))
                 .await??
         };
 
@@ -94,7 +94,7 @@ pub async fn post_send_like<S: GetAccounts + WriteData>(
         } else {
             cmds
                 .chat()
-                .modify_chat_limits(id, |limits| limits.like_limit.increment_if_possible())
+                .modify_chat_limits(id, |limits| limits.like_limit.increment_if_possible(cmds.config()))
                 .await??
                 .to_action_status()
         };

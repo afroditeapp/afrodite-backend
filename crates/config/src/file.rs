@@ -59,6 +59,9 @@ chat = true
 # [queue_limits]
 # content_upload = 10
 
+# [limits]
+# like_limit_reset_time_utc_offset_hours = 0
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -90,6 +93,7 @@ pub struct ConfigFile {
     pub internal_api: Option<InternalApiConfig>,
     pub queue_limits: Option<QueueLimitsConfig>,
     pub demo_mode: Option<Vec<DemoModeConfig>>,
+    pub limits: Option<LimitsConfig>,
 }
 
 impl ConfigFile {
@@ -185,6 +189,12 @@ impl Default for QueueLimitsConfig {
     fn default() -> Self {
         Self { content_upload: 10 }
     }
+}
+
+/// Limits config
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct LimitsConfig {
+    pub like_limit_reset_time_utc_offset_hours: i8,
 }
 
 /// Demo mode configuration.

@@ -24,7 +24,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
     pub async fn modify_chat_limits<T>(
         &mut self,
         id: AccountIdInternal,
-        mut action: impl FnMut(&mut ChatLimits) -> T + Send + 'static,
+        mut action: impl FnMut(&mut ChatLimits) -> T,
     ) -> Result<T, DataError> {
         let value = self.cache().write_cache(id, move |entry| {
             let chat = entry.chat_data_mut()?;

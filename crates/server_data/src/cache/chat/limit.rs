@@ -1,4 +1,5 @@
 use chrono::Datelike;
+use config::Config;
 use model::LimitedActionStatus;
 use server_common::data::cache::CacheError;
 
@@ -37,16 +38,16 @@ pub struct AutoResetLimit<R: ResetLogic, const MAX_VALUE: u8> {
 }
 
 impl <R: ResetLogic, const MAX_VALUE: u8> AutoResetLimit<R, MAX_VALUE> {
-    pub fn is_limit_not_reached(&mut self) -> Result<bool, CacheError> {
-        if self.reset_provider.reset_can_be_done()? {
+    pub fn is_limit_not_reached(&mut self, config: &Config) -> Result<bool, CacheError> {
+        if self.reset_provider.reset_can_be_done(config)? {
             self.value = 0;
         }
 
         Ok(self.value < MAX_VALUE)
     }
 
-    pub fn increment_if_possible(&mut self) -> Result<LimitStatus, CacheError> {
-        if self.reset_provider.reset_can_be_done()? {
+    pub fn increment_if_possible(&mut self, config: &Config) -> Result<LimitStatus, CacheError> {
+        if self.reset_provider.reset_can_be_done(config)? {
             self.value = 0;
         }
 
@@ -64,7 +65,7 @@ impl <R: ResetLogic, const MAX_VALUE: u8> AutoResetLimit<R, MAX_VALUE> {
 }
 
 pub trait ResetLogic: Default {
-    fn reset_can_be_done(&mut self) -> Result<bool, CacheError>;
+    fn reset_can_be_done(&mut self, config: &Config) -> Result<bool, CacheError>;
 }
 
 #[derive(Debug, Default)]
@@ -73,9 +74,9 @@ pub struct DailyLimit {
 }
 
 impl ResetLogic for DailyLimit {
-    fn reset_can_be_done(&mut self) -> Result<bool, CacheError> {
-        let local_time = chrono::Local::now();
-        let current_day = local_time.day() as u8;
+    fn reset_can_be_done(&mut self, config: &Config) -> Result<bool, CacheError> {
+        let time = chrono::Utc::now().with_timezone(&config.reset_likes_utc_offset());
+        let current_day = time.day() as u8;
         let reset_can_be_done = if let Some(previous_reset_day) = self.previous_reset_day {
             previous_reset_day != current_day
         } else {
