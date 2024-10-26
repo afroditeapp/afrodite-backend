@@ -28,6 +28,31 @@ macro_rules! define_db_read_command {
     };
 }
 
+macro_rules! define_db_read_history_command {
+    ($struct_name:ident) => {
+        impl<C: server_data::read::ReadCommandsProvider> $struct_name<C> {
+            pub async fn db_read_history<
+                T: FnOnce(
+                        database_profile::history::read::HistorySyncReadCommands<
+                            &mut server_data::DieselConnection,
+                        >,
+                    ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+                    + Send
+                    + 'static,
+                R: Send + 'static,
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
+                self.db_read_history_raw(|conn| {
+                    cmd(database_profile::history::read::HistorySyncReadCommands::new(conn))
+                })
+                .await
+            }
+        }
+    };
+}
+
 macro_rules! define_db_read_command_for_write {
     ($struct_name:ident) => {
         impl<C: server_data::write::WriteCommandsProvider> $struct_name<C> {

@@ -23,44 +23,32 @@ pub struct GetProfileStatisticsParams {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileStatisticsResult {
     pub generation_time: UnixTime,
-    pub profile_ages: Vec<ProfileAgesPage>,
+    pub age_counts: ProfileAgeCounts,
     pub account_count: i64,
     pub public_profile_counts: PublicProfileCounts,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+impl GetProfileStatisticsResult {
+    pub fn new(
+        generation_time: UnixTime,
+        age_counts: ProfileAgeCounts,
+        account_count: i64,
+        public_profile_counts: PublicProfileCounts,
+    ) -> Self {
+        Self {
+            generation_time,
+            age_counts,
+            account_count,
+            public_profile_counts,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum StatisticsGender {
     Man,
     Woman,
     NonBinary,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ProfileAgesPage {
-    pub gender: StatisticsGender,
-    pub start_age: i64,
-    /// First item is count of profiles with age [Self::start_age] and
-    /// the next is the age incremented by one and so on.
-    pub profile_counts: Vec<i64>,
-}
-
-impl ProfileAgesPage {
-    pub fn empty(gender: StatisticsGender) -> Self {
-        let available_age_value_count = ProfileAge::MAX_AGE - ProfileAge::MIN_AGE + 1;
-
-        Self {
-            gender,
-            start_age: ProfileAge::MIN_AGE.into(),
-            profile_counts: vec![0; available_age_value_count.into()],
-        }
-    }
-
-    pub fn increment_age(&mut self, age: u8) {
-        let i = age - ProfileAge::MIN_AGE;
-        if let Some(c) = self.profile_counts.get_mut::<usize>(i.into())  {
-            *c += 1;
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
@@ -88,4 +76,39 @@ pub struct PublicProfileCounts {
     pub man: i64,
     pub woman: i64,
     pub non_binary: i64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct ProfileAgeCounts {
+    /// Age for first count
+    pub start_age: i64,
+    pub man: Vec<i64>,
+    pub woman: Vec<i64>,
+    pub non_binary: Vec<i64>,
+}
+
+impl ProfileAgeCounts {
+    const AVAILABLE_AGE_VALUE_COUNT: u8 = ProfileAge::MAX_AGE - ProfileAge::MIN_AGE + 1;
+
+    pub fn empty() -> Self {
+        let empty = vec![0; Self::AVAILABLE_AGE_VALUE_COUNT.into()];
+        Self {
+            start_age: ProfileAge::MIN_AGE.into(),
+            man: empty.clone(),
+            woman: empty.clone(),
+            non_binary: empty,
+        }
+    }
+
+    pub fn increment_age(&mut self, gender: StatisticsGender, age: u8) {
+        let i = age - ProfileAge::MIN_AGE;
+        let v = match gender {
+            StatisticsGender::Man => &mut self.man,
+            StatisticsGender::Woman => &mut self.woman,
+            StatisticsGender::NonBinary => &mut self.non_binary,
+        };
+        if let Some(c) = v.get_mut::<usize>(i.into())  {
+            *c += 1;
+        }
+    }
 }

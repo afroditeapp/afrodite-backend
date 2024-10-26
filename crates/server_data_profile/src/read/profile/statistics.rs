@@ -1,4 +1,4 @@
-use model::{GetProfileStatisticsResult, ProfileAgesPage, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime};
+use model::{GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime};
 use server_data::{
     define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };
@@ -16,9 +16,7 @@ impl<C: ReadCommandsProvider> ReadCommandsProfileStatistics<C> {
         let mut account_count = 0;
         let mut public_profile_counts = PublicProfileCounts::default();
 
-        let mut man = ProfileAgesPage::empty(StatisticsGender::Man);
-        let mut woman = ProfileAgesPage::empty(StatisticsGender::Woman);
-        let mut non_binary = ProfileAgesPage::empty(StatisticsGender::NonBinary);
+        let mut age_counts = ProfileAgeCounts::empty();
 
         self
             .cache().read_cache_for_all_accounts(|e| {
@@ -53,11 +51,11 @@ impl<C: ReadCommandsProvider> ReadCommandsProfileStatistics<C> {
                 }
 
                 if groups.is_man() {
-                    man.increment_age(p.data.age.value());
+                    age_counts.increment_age(StatisticsGender::Man, p.data.age.value());
                 } else if groups.is_woman() {
-                    woman.increment_age(p.data.age.value());
+                    age_counts.increment_age(StatisticsGender::Woman, p.data.age.value());
                 } else if groups.is_non_binary() {
-                    non_binary.increment_age(p.data.age.value());
+                    age_counts.increment_age(StatisticsGender::NonBinary, p.data.age.value());
                 }
 
                 Ok(())
@@ -65,15 +63,11 @@ impl<C: ReadCommandsProvider> ReadCommandsProfileStatistics<C> {
             .await
             .into_data_error(())?;
 
-        Ok(GetProfileStatisticsResult {
+        Ok(GetProfileStatisticsResult::new(
             generation_time,
-            profile_ages: vec![
-                man,
-                woman,
-                non_binary,
-            ],
+            age_counts,
             account_count,
             public_profile_counts,
-        })
+        ))
     }
 }

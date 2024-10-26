@@ -1,6 +1,5 @@
 use database::{
-    current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader, DbReaderRaw,
-    DieselConnection, DieselDatabaseError,
+    current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader, DbReaderHistoryRaw, DbReaderRaw, DieselConnection, DieselDatabaseError, HistoryReadHandle
 };
 
 use self::common::ReadCommandsCommon;
@@ -59,18 +58,21 @@ pub mod common;
 
 pub struct ReadCommands<'a> {
     pub db: &'a CurrentReadHandle,
+    pub db_history: &'a HistoryReadHandle,
     pub cache: &'a DatabaseCache,
     pub files: &'a FileDir,
 }
 
 impl<'a> ReadCommands<'a> {
     pub fn new(
-        current_read_handle: &'a CurrentReadHandle,
+        db: &'a CurrentReadHandle,
+        db_history: &'a HistoryReadHandle,
         cache: &'a DatabaseCache,
         files: &'a FileDir,
     ) -> Self {
         Self {
-            db: current_read_handle,
+            db,
+            db_history,
             cache,
             files,
         }
@@ -104,6 +106,18 @@ impl<'a> ReadCommands<'a> {
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
         DbReaderRaw::new(self.db).db_read(cmd).await
+    }
+
+    pub async fn db_read_history_raw<
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReaderHistoryRaw::new(self.db_history).db_read_history(cmd).await
     }
 }
 

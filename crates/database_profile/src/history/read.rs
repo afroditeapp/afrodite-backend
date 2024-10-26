@@ -1,4 +1,4 @@
-use database::ConnectionProvider;
+use database::{ConnectionProvider, DieselConnection};
 
 use self::{profile::HistorySyncReadProfile, profile_admin::HistorySyncReadProfileAdmin};
 
@@ -20,5 +20,15 @@ impl<C: ConnectionProvider> HistorySyncReadCommands<C> {
 
     pub fn into_profile_admin(self) -> HistorySyncReadProfileAdmin<C> {
         HistorySyncReadProfileAdmin::new(self.conn)
+    }
+
+    pub fn conn(&mut self) -> &mut C {
+        &mut self.conn
+    }
+}
+
+impl HistorySyncReadCommands<&mut DieselConnection> {
+    pub fn profile_admin(&mut self) -> HistorySyncReadProfileAdmin<&mut DieselConnection> {
+        HistorySyncReadProfileAdmin::new(self.conn())
     }
 }

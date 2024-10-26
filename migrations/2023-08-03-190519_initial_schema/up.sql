@@ -754,6 +754,17 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_non_binary(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS history_profile_statistics_age_changes_all_genders(
+    save_time_id  INTEGER NOT NULL,
+    age           INTEGER NOT NULL,
+    count         INTEGER NOT NULL,
+    PRIMARY KEY (save_time_id, age)
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_account(
     save_time_id  INTEGER PRIMARY KEY NOT NULL,
     count INTEGER             NOT NULL,
@@ -782,6 +793,15 @@ CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_woman(
 );
 
 CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_non_binary(
+    save_time_id     INTEGER PRIMARY KEY NOT NULL,
+    count INTEGER             NOT NULL,
+    FOREIGN KEY (save_time_id)
+        REFERENCES history_profile_statistics_save_time (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS history_profile_statistics_count_changes_all_genders(
     save_time_id     INTEGER PRIMARY KEY NOT NULL,
     count INTEGER             NOT NULL,
     FOREIGN KEY (save_time_id)

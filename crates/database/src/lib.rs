@@ -46,6 +46,12 @@ pub struct CurrentReadHandle(pub DbReadHandle);
 #[derive(Clone, Debug)]
 pub struct HistoryWriteHandle(pub DbWriteHandle);
 
+impl HistoryWriteHandle {
+    pub fn to_read_handle(&self) -> HistoryReadHandle {
+        HistoryReadHandle(self.0.to_read_handle())
+    }
+}
+
 /// Read handle for current database.
 #[derive(Clone, Debug)]
 pub struct HistoryReadHandle(pub DbReadHandle);
@@ -228,6 +234,37 @@ impl<'a> DbReaderRaw<'a> {
     }
 
     pub async fn db_read<
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        let conn = self
+            .db
+            .0
+            .diesel()
+            .pool()
+            .get()
+            .await
+            .change_context(DieselDatabaseError::GetConnection)?;
+
+        conn.interact(move |conn| cmd(conn)).await?
+    }
+}
+
+pub struct DbReaderHistoryRaw<'a> {
+    db: &'a HistoryReadHandle,
+}
+
+impl<'a> DbReaderHistoryRaw<'a> {
+    pub fn new(db: &'a HistoryReadHandle) -> Self {
+        Self { db }
+    }
+
+    pub async fn db_read_history<
         T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,

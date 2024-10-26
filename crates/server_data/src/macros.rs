@@ -34,6 +34,20 @@ macro_rules! define_server_data_read_commands {
                 self.cmds.read_cmds().db_read_raw(cmd).await
             }
 
+            pub async fn db_read_history_raw<
+                T: FnOnce(
+                        &mut $crate::DieselConnection,
+                    ) -> error_stack::Result<R, $crate::DieselDatabaseError>
+                    + Send
+                    + 'static,
+                R: Send + 'static,
+            >(
+                &self,
+                cmd: T,
+            ) -> error_stack::Result<R, $crate::DieselDatabaseError> {
+                self.cmds.read_cmds().db_read_history_raw(cmd).await
+            }
+
             pub async fn db_read_common<
                 T: FnOnce(
                         $crate::CurrentSyncReadCommands<&mut $crate::DieselConnection>,

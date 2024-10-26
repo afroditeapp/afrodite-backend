@@ -65,6 +65,10 @@ impl ApiDoc {
             .merge_from(server_api_profile::profile::statistics_router(state.clone()).into_openapi())
             .tag_routes("profile");
         doc.merge(profile);
+        let profile_admin = ApiDoc::openapi()
+            .merge_from(server_api_profile::profile_admin::admin_statistics_router(state.clone()).into_openapi())
+            .tag_routes("profile_admin");
+        doc.merge(profile_admin);
         // Chat
         doc.merge(server_api_chat::ApiDocChat::openapi());
         let chat = ApiDoc::openapi()

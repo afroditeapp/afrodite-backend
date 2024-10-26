@@ -137,7 +137,7 @@ impl DatabaseManager {
         let cache = router_write_handle.cache.clone();
         let router_read_handle = RouterDatabaseReadHandle {
             current_read_handle: current_read_handle.clone(),
-            _history_read_handle: history_read_handle.clone(),
+            history_read_handle: history_read_handle.clone(),
             root,
             cache,
         };
@@ -204,6 +204,7 @@ impl RouterDatabaseWriteHandle {
             root: self.root,
             current_read_handle: self.current_write_handle.to_read_handle(),
             current_write_handle: self.current_write_handle,
+            history_read_handle: self.history_write_handle.to_read_handle(),
             history_write_handle: self.history_write_handle,
             cache: self.cache,
             location: self.location,
@@ -225,6 +226,7 @@ pub struct SyncWriteHandle {
     root: Arc<DatabaseRoot>,
     current_write_handle: CurrentWriteHandle,
     current_read_handle: CurrentReadHandle, // This is actually the write handle
+    history_read_handle: HistoryReadHandle, // This is actually the write handle
     history_write_handle: HistoryWriteHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
@@ -249,7 +251,12 @@ impl SyncWriteHandle {
     }
 
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(&self.current_read_handle, &self.cache, &self.root.file_dir)
+        ReadCommands::new(
+            &self.current_read_handle,
+            &self.history_read_handle,
+            &self.cache,
+            &self.root.file_dir
+        )
     }
 
     pub fn common(&self) -> WriteCommandsCommon<WriteCommandsContainer<'_>> {
@@ -268,6 +275,7 @@ impl SyncWriteHandle {
         SyncWriteHandleRef {
             write_cmds: self.cmds(),
             current_read_handle: &self.current_read_handle,
+            history_read_handle: &self.history_read_handle,
             push_notification_sender: &self.push_notification_sender,
         }
     }
@@ -285,6 +293,7 @@ impl SyncWriteHandle {
 pub struct SyncWriteHandleRef<'a> {
     pub(crate) write_cmds: WriteCommands<'a>,
     current_read_handle: &'a CurrentReadHandle, // This is actually the write handle
+    history_read_handle: &'a HistoryReadHandle, // This is actually the write handle
     push_notification_sender: &'a PushNotificationSender,
 }
 
@@ -296,6 +305,7 @@ impl<'a> SyncWriteHandleRef<'a> {
     pub fn read(&self) -> ReadCommands<'_> {
         ReadCommands::new(
             self.current_read_handle,
+            self.history_read_handle,
             self.write_cmds.cache,
             self.write_cmds.file_dir,
         )
@@ -332,14 +342,18 @@ impl SyncWriteHandleRefRef<'_> {
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
     current_read_handle: CurrentReadHandle,
-    // TODO(prod): Remove if not used
-    _history_read_handle: HistoryReadHandle,
+    history_read_handle: HistoryReadHandle,
     cache: Arc<DatabaseCache>,
 }
 
 impl RouterDatabaseReadHandle {
     pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(&self.current_read_handle, &self.cache, &self.root.file_dir)
+        ReadCommands::new(
+            &self.current_read_handle,
+            &self.history_read_handle,
+            &self.cache,
+            &self.root.file_dir
+        )
     }
 
     pub fn access_token_manager(&self) -> AccessTokenManager<'_> {
