@@ -443,6 +443,7 @@ diesel::table! {
         account_id -> Integer,
         version_uuid -> Binary,
         name -> Text,
+        name_accepted -> Bool,
         profile_text -> Text,
         age -> Integer,
         last_seen_unix_time -> Nullable<Integer>,
@@ -495,6 +496,16 @@ diesel::table! {
 diesel::table! {
     use crate::schema_sqlite_types::*;
 
+    profile_name_allowlist (profile_name) {
+        profile_name -> Text,
+        name_creator_account_id -> Integer,
+        name_moderator_account_id -> Nullable<Integer>,
+    }
+}
+
+diesel::table! {
+    use crate::schema_sqlite_types::*;
+
     profile_state (account_id) {
         account_id -> Integer,
         search_age_range_min -> Integer,
@@ -508,6 +519,7 @@ diesel::table! {
         profile_sync_version -> Integer,
         profile_initial_age -> Nullable<Integer>,
         profile_initial_age_set_unix_time -> Nullable<Integer>,
+        profile_name_denied -> Bool,
     }
 }
 
@@ -645,6 +657,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     profile_attributes_file_hash,
     profile_attributes_number_list,
     profile_attributes_number_list_filters,
+    profile_name_allowlist,
     profile_state,
     public_key,
     queue_entry,

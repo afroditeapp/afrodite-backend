@@ -9,9 +9,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils,
-};
+use crate::{sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils};
 
 mod age;
 pub use age::*;
@@ -53,6 +51,7 @@ pub struct ProfileInternal {
     pub account_id: AccountIdDb,
     pub version_uuid: ProfileVersion,
     pub name: String,
+    pub name_accepted: bool,
     pub profile_text: String,
     pub age: ProfileAge,
 }
@@ -81,6 +80,18 @@ pub struct Profile {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     unlimited_likes: bool,
+    /// The name has been accepted using allowlist or manual moderation.
+    #[serde(default = "news_accepted_default", skip_serializing_if = "is_true")]
+    #[schema(default = true)]
+    name_accepted: bool,
+}
+
+fn news_accepted_default() -> bool {
+    true
+}
+
+fn is_true(value: &bool) -> bool {
+    *value
 }
 
 impl Profile {
@@ -95,6 +106,7 @@ impl Profile {
             age: value.age,
             attributes,
             unlimited_likes,
+            name_accepted: value.name_accepted,
         }
     }
 }

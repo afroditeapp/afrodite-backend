@@ -268,6 +268,9 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Profile age when initial setup is completed
     profile_initial_age               INTEGER,
     profile_initial_age_set_unix_time INTEGER,
+    -- Profile name has been denied with manual moderation.
+    -- This prevents showing the name on profile name moderation list.
+    profile_name_denied        BOOL                 NOT NULL    DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -280,6 +283,8 @@ CREATE TABLE IF NOT EXISTS profile(
     account_id      INTEGER PRIMARY KEY NOT NULL,
     version_uuid    BLOB                NOT NULL,
     name            TEXT                NOT NULL    DEFAULT '',
+    -- The name has been accepted using allowlist or manual moderation.
+    name_accepted   BOOL                NOT NULL    DEFAULT 0,
     profile_text    TEXT                NOT NULL    DEFAULT '',
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,
@@ -357,6 +362,20 @@ CREATE TABLE IF NOT EXISTS favorite_profile(
     FOREIGN KEY (favorite_account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS profile_name_allowlist(
+    profile_name              TEXT    PRIMARY KEY NOT NULL,
+    name_creator_account_id   INTEGER             NOT NULL,
+    name_moderator_account_id INTEGER,
+    FOREIGN KEY (name_creator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (name_moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 

@@ -15,4 +15,6 @@ model = { path = "../model" }
 
 database = { path = "../database" }
 
+config = { path = "../config" }
+
 simple_backend_utils = { path = "../simple_backend_utils" }

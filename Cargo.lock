@@ -1046,6 +1046,7 @@ dependencies = [
 name = "database_profile"
 version = "0.0.0"
 dependencies = [
+ "config",
  "database",
  "diesel",
  "error-stack",

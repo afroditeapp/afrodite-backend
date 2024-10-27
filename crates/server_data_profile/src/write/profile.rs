@@ -64,11 +64,24 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
         let profile_data = data.clone();
         let config = self.config_arc().clone();
         let account = db_transaction!(self, move |mut cmds| {
+            let name_update_detected = {
+                let current_profile = cmds.read().profile().data().profile(id)?;
+                current_profile.name != profile_data.new_data.name
+            };
             cmds.profile().data().profile(id, &profile_data)?;
             cmds.profile()
                 .data()
                 .upsert_profile_attributes(id, profile_data.new_data.attributes, config.profile_attributes())?;
             cmds.profile().data().increment_profile_sync_version(id)?;
+            if name_update_detected {
+                cmds.profile()
+                    .profile_name_allowlist()
+                    .reset_profile_name_accepted_and_denied_values(
+                        id,
+                        &profile_data.new_data.name,
+                        config.profile_name_allowlist(),
+                    )?;
+            }
             cmds.read().common().account(id)
         })?;
 
