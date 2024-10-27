@@ -9,6 +9,7 @@ pub mod bot_config_file;
 pub mod file;
 pub mod file_dynamic;
 pub mod file_email_content;
+pub mod profile_name_allowlist;
 
 use std::{path::Path, sync::Arc};
 
@@ -18,6 +19,7 @@ use error_stack::{Result, ResultExt};
 use file::{DemoModeConfig, GrantAdminAccessConfig, QueueLimitsConfig};
 use file_dynamic::ConfigFileDynamic;
 use file_email_content::EmailContentFile;
+use profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use model::{AttributesFileInternal, BotConfig, ProfileAttributes};
 use reqwest::Url;
 use sha2::{Digest, Sha256};
@@ -37,8 +39,8 @@ pub enum GetConfigError {
     GetWorkingDir,
     #[error("File loading failed")]
     LoadFileError,
-    #[error("Load config file")]
-    LoadConfig,
+    #[error("Profile name allowlist error")]
+    ProfileNameAllowlistError,
 
     // External service configuration errors
     #[error(
@@ -69,6 +71,7 @@ pub struct Config {
     email_content: Option<EmailContentFile>,
 
     reset_likes_utc_offset: FixedOffset,
+    profile_name_allowlist: ProfileNameAllowlistData,
 }
 
 impl Config {
@@ -155,6 +158,10 @@ impl Config {
     pub fn reset_likes_utc_offset(&self) -> FixedOffset {
         self.reset_likes_utc_offset
     }
+
+    pub fn profile_name_allowlist(&self) -> &ProfileNameAllowlistData {
+        &self.profile_name_allowlist
+    }
 }
 
 pub fn get_config(
@@ -233,6 +240,17 @@ pub fn get_config(
         );
     };
 
+    let mut allowlist_builder = ProfileNameAllowlistBuilder::default();
+    let csv_configs = file_config.profile_name_allowlist
+        .as_ref()
+        .map(|v| v.iter())
+        .unwrap_or_default();
+    for c in csv_configs {
+        allowlist_builder.load(c)
+            .change_context(GetConfigError::ProfileNameAllowlistError)?;
+    }
+    let profile_name_allowlist = allowlist_builder.build();
+
     let config = Config {
         simple_backend_config: simple_backend_config.into(),
         file: file_config,
@@ -244,6 +262,7 @@ pub fn get_config(
         profile_attributes_sha256,
         email_content,
         reset_likes_utc_offset,
+        profile_name_allowlist,
     };
 
     Ok(config)

@@ -62,6 +62,11 @@ chat = true
 # [limits]
 # like_limit_reset_time_utc_offset_hours = 0
 
+# [[profile_name_allowlist]]
+# csv_file = "names.csv"
+# column_index = 0
+# start_row_index = 1
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -94,6 +99,7 @@ pub struct ConfigFile {
     pub queue_limits: Option<QueueLimitsConfig>,
     pub demo_mode: Option<Vec<DemoModeConfig>>,
     pub limits: Option<LimitsConfig>,
+    pub profile_name_allowlist: Option<Vec<ProfiletNameAllowlistConfig>>,
 }
 
 impl ConfigFile {
@@ -219,4 +225,14 @@ pub struct DemoModeConfig {
     /// AccountIds for accounts that are accessible in demo mode.
     #[serde(default)]
     pub accessible_accounts: Vec<uuid::Uuid>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ProfiletNameAllowlistConfig {
+    pub csv_file: PathBuf,
+    /// Column index starting from zero.
+    pub column_index: usize,
+    /// Index for first row where data reading starts. The index values
+    /// starts from zero.
+    pub start_row_index: usize,
 }
