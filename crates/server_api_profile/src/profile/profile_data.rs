@@ -135,6 +135,7 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// - Profile attributes must be valid.
 /// - Profile text must be empty.
 /// - Profile name changes are only possible when initial setup is ongoing.
+/// - Profile name must be trimmed and not empty.
 /// - Profile age must match with currently valid age range. The first min
 ///   value for the age range is the age at the initial setup. The second min
 ///   and max value is calculated using the following algorithm:
@@ -185,6 +186,10 @@ pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>
         }
 
         if account_state != AccountState::InitialSetup && profile.name != old_profile.profile.name {
+            return Err(DataError::NotAllowed.report());
+        }
+
+        if profile.name.trim().is_empty() || profile.name != profile.name.trim() {
             return Err(DataError::NotAllowed.report());
         }
 
