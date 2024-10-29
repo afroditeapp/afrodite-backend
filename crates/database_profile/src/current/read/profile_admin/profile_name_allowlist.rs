@@ -17,6 +17,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileNameAllowlist<C> {
             .inner_join(
                 profile_state::table.on(profile_state::account_id.eq(account_id::id)),
             )
+            .filter(name.ne(""))
             .filter(name_accepted.eq(false))
             .filter(profile_state::profile_name_denied.eq(false))
             .select((
