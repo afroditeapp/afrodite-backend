@@ -1,4 +1,5 @@
 use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
+use profile_admin::CurrentSyncWriteProfileAdmin;
 
 use self::profile::CurrentSyncWriteProfile;
 
@@ -32,6 +33,10 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
 impl CurrentSyncWriteCommands<&mut DieselConnection> {
     pub fn profile(&mut self) -> CurrentSyncWriteProfile<&mut DieselConnection> {
         CurrentSyncWriteProfile::new(self.write())
+    }
+
+    pub fn profile_admin(&mut self) -> CurrentSyncWriteProfileAdmin<&mut DieselConnection> {
+        CurrentSyncWriteProfileAdmin::new(self.write())
     }
 
     pub fn common(

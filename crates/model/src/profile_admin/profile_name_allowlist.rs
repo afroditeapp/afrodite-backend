@@ -25,3 +25,10 @@ pub struct ProfileNamePendingModeration {
     pub id: AccountId,
     pub name: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
+pub struct PostModerateProfileName {
+    pub id: AccountId,
+    pub name: String,
+    pub accept: bool,
+}

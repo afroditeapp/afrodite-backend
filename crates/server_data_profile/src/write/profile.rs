@@ -56,6 +56,15 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
         Ok(())
     }
 
+    /// Updates [model::Profile].
+    ///
+    /// Updates also [model::ProfileSyncVersion].
+    ///
+    /// Check also
+    /// [crate::write::profile_admin::profile_name_allowlist::WriteCommandsProfileAdminProfileNameAllowlist::moderate_profile_name]
+    /// and from other `server_data_all`
+    /// `UnlimitedLikesUpdate::update_unlimited_likes_value`
+    /// as those also modifies the [model::Profile].
     pub async fn profile(
         self,
         id: AccountIdInternal,

@@ -25,6 +25,7 @@ impl<C: WriteCommandsProvider> UnlimitedLikesUpdate<C> {
         let account = db_transaction!(self, move |mut cmds| {
             if is_profile_component_enabled {
                 cmds.profile().data().only_profile_version(id, new_profile_version)?;
+                cmds.profile().data().increment_profile_sync_version(id)?;
             }
             cmds.common().state().update_unlimited_likes(
                 id,
