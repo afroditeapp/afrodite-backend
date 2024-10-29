@@ -86,6 +86,7 @@ diesel::table! {
         admin_modify_permissions -> Bool,
         admin_moderate_profiles -> Bool,
         admin_moderate_images -> Bool,
+        admin_moderate_profile_names -> Bool,
         admin_view_all_profiles -> Bool,
         admin_view_private_info -> Bool,
         admin_view_profile_history -> Bool,

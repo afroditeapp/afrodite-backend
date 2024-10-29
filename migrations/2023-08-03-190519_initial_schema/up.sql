@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_modify_permissions                    BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_images                        BOOLEAN NOT NULL DEFAULT 0,
+    admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_private_info                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT 0,

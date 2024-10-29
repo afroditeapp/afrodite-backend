@@ -324,6 +324,7 @@ define_permissions!(
     admin_modify_permissions,
     admin_moderate_profiles,
     admin_moderate_images,
+    admin_moderate_profile_names,
     /// View public and private profiles.
     admin_view_all_profiles,
     admin_view_private_info,
