@@ -11,8 +11,8 @@ define_current_write_commands!(CurrentWriteProfileAdminProfileNameAllowlist, Cur
 impl<C: ConnectionProvider> CurrentWriteProfileAdminProfileNameAllowlist<C> {
     pub fn moderate_profile_name(
         &mut self,
-        name_owner_id: AccountIdInternal,
         moderator_id: AccountIdInternal,
+        name_owner_id: AccountIdInternal,
         name: String,
         accepted: bool,
     ) -> Result<(), DieselDatabaseError> {
