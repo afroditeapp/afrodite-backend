@@ -9,6 +9,8 @@ pub enum CsvFileError {
     Load,
     #[error("Selected column does not exist")]
     SelectedColumnDoesNotExists,
+    #[error("Delimiter character is unsupported")]
+    UnsupportedDelimiterCharacter,
 }
 
 #[derive(Debug, Default)]
@@ -18,9 +20,13 @@ pub struct ProfileNameAllowlistBuilder {
 
 impl ProfileNameAllowlistBuilder {
     pub fn load(&mut self, config: &ProfiletNameAllowlistConfig) -> Result<(), CsvFileError> {
+        let delimiter: u8 = TryInto::<u8>::try_into(config.delimiter)
+            .change_context(CsvFileError::UnsupportedDelimiterCharacter)
+            .attach_printable(config.delimiter.to_string())?;
 
         let r = csv::ReaderBuilder::new()
             .has_headers(false)
+            .delimiter(delimiter)
             .from_path(&config.csv_file)
             .change_context(CsvFileError::Load)
             .attach_printable(format!(
@@ -29,7 +35,7 @@ impl ProfileNameAllowlistBuilder {
             ))?;
 
         let name_rows = r.into_records()
-            .skip(config.start_row_index + 1);
+            .skip(config.start_row_index);
 
         for r in name_rows {
             let r = r.change_context(CsvFileError::Load)?;

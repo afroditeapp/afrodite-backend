@@ -64,6 +64,7 @@ chat = true
 
 # [[profile_name_allowlist]]
 # csv_file = "names.csv"
+# delimiter = ";"
 # column_index = 0
 # start_row_index = 1
 
@@ -230,6 +231,7 @@ pub struct DemoModeConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProfiletNameAllowlistConfig {
     pub csv_file: PathBuf,
+    pub delimiter: char,
     /// Column index starting from zero.
     pub column_index: usize,
     /// Index for first row where data reading starts. The index values
