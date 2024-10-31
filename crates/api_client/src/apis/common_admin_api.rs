@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -170,7 +170,7 @@ pub async fn get_latest_build_info(configuration: &configuration::Configuration,
 }
 
 /// # Permissions Requires admin_server_maintenance_view_info.
-pub async fn get_perf_data(configuration: &configuration::Configuration, start_time: Option<models::UnixTime>, end_time: Option<models::GetPerfDataEndTimeParameter>) -> Result<models::PerfHistoryQueryResult, Error<GetPerfDataError>> {
+pub async fn get_perf_data(configuration: &configuration::Configuration, start_time: Option<models::UnixTime>, end_time: Option<models::UnixTime>) -> Result<models::PerfHistoryQueryResult, Error<GetPerfDataError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

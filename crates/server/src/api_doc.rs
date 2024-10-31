@@ -3,8 +3,8 @@ use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(info(
-    title = "pihka-backend",
-    description = "Pihka backend API",
+    title = "dating-app-backend",
+    description = "Dating app backend API",
     version = "0.1.0",
     license(
         name = "",

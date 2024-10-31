@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -15,12 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct GetNewsItemResult {
     #[serde(rename = "item", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub item: Option<Option<Box<models::NewsItem>>>,
+    #[serde(rename = "private", skip_serializing_if = "Option::is_none")]
+    pub private: Option<bool>,
 }
 
 impl GetNewsItemResult {
     pub fn new() -> GetNewsItemResult {
         GetNewsItemResult {
             item: None,
+            private: None,
         }
     }
 }

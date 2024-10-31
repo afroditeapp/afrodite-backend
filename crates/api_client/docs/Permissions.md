@@ -5,10 +5,12 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **admin_moderate_images** | Option<**bool**> |  | [optional][default to false]
+**admin_moderate_profile_names** | Option<**bool**> |  | [optional][default to false]
 **admin_moderate_profiles** | Option<**bool**> |  | [optional][default to false]
 **admin_modify_permissions** | Option<**bool**> |  | [optional][default to false]
 **admin_news_create** | Option<**bool**> |  | [optional][default to false]
 **admin_news_edit_all** | Option<**bool**> |  | [optional][default to false]
+**admin_profile_statistics** | Option<**bool**> |  | [optional][default to false]
 **admin_server_maintenance_reboot_backend** | Option<**bool**> |  | [optional][default to false]
 **admin_server_maintenance_reset_data** | Option<**bool**> |  | [optional][default to false]
 **admin_server_maintenance_save_backend_config** | Option<**bool**> |  | [optional][default to false]

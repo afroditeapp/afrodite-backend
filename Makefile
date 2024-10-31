@@ -35,7 +35,7 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p simple_backend_database \
 					-p simple_backend_image_process \
 					-p obfuscate_api_macro \
-					-p pihka-backend
+					-p dating_app_backend
 
 ifdef CONTINUE_FROM
 TEST_QA_ARGS = --continue-from $(CONTINUE_FROM)
@@ -45,17 +45,17 @@ TMP_FILE = ./target/tmp_file_for_makefile
 
 # Default rule
 run:
-	RUST_LOG=$${RUST_LOG:-info} cargo run --bin pihka-backend
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin dating_app_backend
 
 run-release:
-	RUST_LOG=$${RUST_LOG:-info} cargo run --bin pihka-backend --release
+	RUST_LOG=$${RUST_LOG:-info} cargo run --bin dating_app_backend --release
 
 fmt:
 	cargo +nightly fmt $(CARGO_CRATE_ARGS)
 fix:
 	cargo fix ${CARGO_CRATE_ARGS}
 test:
-	RUST_LOG=info cargo run --bin pihka-backend -- --sqlite-in-ram test ${TEST_ARGS} qa ${TEST_QA_ARGS}
+	RUST_LOG=info cargo run --bin dating_app_backend -- --sqlite-in-ram test ${TEST_ARGS} qa ${TEST_QA_ARGS}
 unit-test:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="sqlite:database/sqlite/current/current.db" cargo test
@@ -63,9 +63,9 @@ unit-test:
 update-manager-submodule:
 	git submodule update --remote --merge
 update-api-bindings-step-update-binary:
-	cargo build --bin pihka-backend
+	cargo build --bin dating_app_backend
 update-api-bindings-step-generate-bindings:
-	./target/debug/pihka-backend open-api > $(TMP_FILE)
+	./target/debug/dating_app_backend open-api > $(TMP_FILE)
 	openapi-generator-cli generate \
 	-i $(TMP_FILE) \
 	-g rust \
@@ -87,8 +87,8 @@ update-api-bindings-with-existing-binary: update-api-bindings-step-generate-bind
 	echo "API bindings updated"
 
 validate-openapi:
-	cargo build --bin pihka-backend
-	./target/debug/pihka-backend open-api > $(TMP_FILE)
+	cargo build --bin dating_app_backend
+	./target/debug/dating_app_backend open-api > $(TMP_FILE)
 	openapi-generator-cli validate \
 	-i $(TMP_FILE)
 
@@ -100,7 +100,7 @@ reset-database:
 	DATABASE_URL="database/sqlite/current/current.db" diesel database reset
 
 profile-build:
-	RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zself-profile=target/profile-build cargo build --bin pihka-backend
+	RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zself-profile=target/profile-build cargo build --bin dating_app_backend
 
 code-stats:
 	@/bin/echo -n "Lines:"
@@ -140,6 +140,6 @@ code-stats:
 	crates/simple_backend_database \
 	crates/simple_backend_image_process \
 	crates/obfuscate_api_macro \
-	crates/pihka-backend \
+	crates/dating_app_backend \
 	-name '*.rs' | xargs wc -l | tail -n 1
 	@echo "\nCommits:   `git rev-list --count HEAD` total"

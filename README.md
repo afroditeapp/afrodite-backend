@@ -1,4 +1,4 @@
-# pihka-backend
+# Afrodite
 Dating app backend
 
 
@@ -37,10 +37,10 @@ cargo install diesel_cli --no-default-features --features sqlite
 2. Install latest node LTS with nvm. For example `nvm install 18`
 3. Install openapi-generator from npm.
    `npm install @openapitools/openapi-generator-cli -g`
-4. Start pihka backend in debug mode.
+4. Start the backend in debug mode.
 5. Generate bindings
 ```
-openapi-generator-cli generate -i http://localhost:3000/api-doc/pihka_api.json -g rust -o crates/api_client --package-name api_client
+openapi-generator-cli generate -i http://localhost:3000/api-doc/dating-app-backend.json -g rust -o crates/api_client --package-name api_client
 ```
 
 ## Reset database
@@ -131,12 +131,12 @@ mkdir -p backend_src
 rsync -av --delete --progress --exclude="/target" /SRC_DIR_LOCATION/ ~/backend_src
 
 cd ~/backend_src
-cargo build --bin pihka-backend --release
-sudo -u pihka mkdir -p /pihka-secure-storage/pihka/binaries
-sudo -u pihka mkdir -p /pihka-secure-storage/pihka/backend-working-dir
+cargo build --bin dating_app_backend --release
+sudo -u app mkdir -p /app-secure-storage/app/binaries
+sudo -u app mkdir -p /app-secure-storage/app/backend-working-dir
 sudo systemctl stop app-backend
-sudo cp target/release/pihka-backend /pihka-secure-storage/pihka/binaries
-sudo chown pihka:pihka /pihka-secure-storage/pihka/binaries/pihka-backend
+sudo cp target/release/dating_app_backend /app-secure-storage/app/binaries
+sudo chown app:app /app-secure-storage/app/binaries/dating_app_backend
 sudo systemctl restart app-backend
 sudo journalctl -u app-backend.service -b -e -f
 ```
@@ -146,7 +146,7 @@ Edit config file script:
 ```bash
 #!/bin/bash -eux
 
-sudo -u pihka vim /pihka-secure-storage/pihka/backend-working-dir/server_config.toml
+sudo -u app vim /app-secure-storage/app/backend-working-dir/server_config.toml
 ```
 
 # Litestream
@@ -154,13 +154,13 @@ sudo -u pihka vim /pihka-secure-storage/pihka/backend-working-dir/server_config.
 Example config file:
 ```yml
 dbs:
- - path: /pihka-secure-storage/pihka/backend-working-dir/database/current/current.db
+ - path: /app-secure-storage/app/backend-working-dir/database/current/current.db
    replicas:
      - type:    sftp
        host:    192.168.64.77:22
        user:    ubuntu
        path:    /home/ubuntu/litestream/current
-       key-path: /pihka-secure-storage/pihka/.ssh/id_ed25519
+       key-path: /app-secure-storage/app/.ssh/id_ed25519
 ```
 
 # Diesel
@@ -171,7 +171,7 @@ DATABASE_URL="database/current/current.db" diesel database reset
 
 # Profiling build
 
-cargo build --bin pihka-backend --timings
+cargo build --bin dating_app_backend --timings
 
 https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/self-profile.html
 Command for this is in Makefile.

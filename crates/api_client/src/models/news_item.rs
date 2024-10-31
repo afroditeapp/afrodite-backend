@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -23,8 +23,9 @@ pub struct NewsItem {
     pub body: String,
     #[serde(rename = "creation_time")]
     pub creation_time: Box<models::UnixTime>,
-    #[serde(rename = "edit_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub edit_time: Option<Option<Box<models::UnixTime>>>,
+    /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
+    #[serde(rename = "edit_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub edit_unix_time: Option<Option<i64>>,
     #[serde(rename = "locale")]
     pub locale: String,
     #[serde(rename = "title")]
@@ -41,7 +42,7 @@ impl NewsItem {
             aid_editor: None,
             body,
             creation_time: Box::new(creation_time),
-            edit_time: None,
+            edit_unix_time: None,
             locale,
             title,
             version: None,

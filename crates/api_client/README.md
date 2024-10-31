@@ -1,6 +1,6 @@
 # Rust API client for api_client
 
-Pihka backend API
+Dating app backend API
 
 
 ## Overview
@@ -32,7 +32,8 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /C9sCP6O2IfIBQCu8LM1_SCybuW0 | Get current account state.
 *AccountApi* | [**get_deletion_status**](docs/AccountApi.md#get_deletion_status) | **GET** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Get deletion status.
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
-*AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
+*AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /2OHF85k7hpH2tAibkA0V9YLwpF4/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
+*AccountApi* | [**get_unread_news_count**](docs/AccountApi.md#get_unread_news_count) | **GET** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
 *AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
@@ -42,17 +43,16 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_demo_mode_login**](docs/AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
 *AccountApi* | [**post_demo_mode_login_to_account**](docs/AccountApi.md#post_demo_mode_login_to_account) | **POST** /sBH-LyNGOOFXivrv5clCpNrkwcA | 
 *AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
-*AccountApi* | [**post_get_news_count**](docs/AccountApi.md#post_get_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | 
 *AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
-*AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /BUFRdjIQCtPBjy00uEOHIA9X8CI | 
-*AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /OVfZ-hXmiyX1uFTG4k-9SIBUh7U | 
+*AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /i9QOC8N-Nx9PdWvjKyAz8tXD2Q0 | 
+*AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /BQwxuLNWbM8vN0-p-Wu-QCRy3x0 | 
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /oKbgnRxyzLb50Y2_ZCuLJYtEIcM | 
-*AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid} | 
-*AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid}/{locale} | 
+*AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /ca0uk9qgmQ82WCpd83_WNNn8qOY/{nid} | 
+*AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /jo1Lboa4U8YVA07py8NJebpu1zo/{nid}/{locale} | 
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /XEss8YDw9lPgwKoH6K9THZIF_N4 | 
-*AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /VhK61QQYLFov-eCH2YS2i5M2jdk/{nid} | 
+*AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /McvctMKFEqrUfola2WlvkbigBDU/{nid} | 
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /4pD-Q4FhZGTNkUGYExHmZN6TxjU/{nid}/{locale} | 
 *AccountInternalApi* | [**post_login**](docs/AccountInternalApi.md#post_login) | **POST** /account_api/login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 *AccountInternalApi* | [**post_register**](docs/AccountInternalApi.md#post_register) | **POST** /account_api/register | Register a new bot account. Returns new account ID which is UUID.
@@ -122,6 +122,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /5i55ZcY0jIPD7B6pyyridKY0j0Q/{aid} | Get account's current profile.
 *ProfileApi* | [**get_profile_attribute_filters**](docs/ProfileApi.md#get_profile_attribute_filters) | **GET** /AL531AoIDRcTSWC-pdxcexf6tOM | Get current profile attribute filter values.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
+*ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /WJCHYdLNpydn1OkJNyZKKksc4Yw | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
@@ -133,6 +134,9 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Set account's current search age range
 *ProfileApi* | [**post_search_groups**](docs/ProfileApi.md#post_search_groups) | **POST** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Set account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Update location for account which makes this request.
+*ProfileAdminApi* | [**get_profile_name_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_name_pending_moderation_list) | **GET** /82woXm_Kq9yEtRHP7KAcXkgRWnU | 
+*ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /6CGbSNdoURdJRTBxb3Hb_OGw9ME | 
+*ProfileAdminApi* | [**post_moderate_profile_name**](docs/ProfileAdminApi.md#post_moderate_profile_name) | **POST** /bnrAbC2DpwIftQouXUAVR1W6g8Y | 
 
 
 ## Documentation For Models
@@ -192,9 +196,11 @@ Class | Method | HTTP request | Description
  - [GetInitialProfileAgeInfoResult](docs/GetInitialProfileAgeInfoResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetNewsItemResult](docs/GetNewsItemResult.md)
- - [GetPerfDataEndTimeParameter](docs/GetPerfDataEndTimeParameter.md)
  - [GetProfileContentResult](docs/GetProfileContentResult.md)
+ - [GetProfileNamePendingModerationList](docs/GetProfileNamePendingModerationList.md)
  - [GetProfileResult](docs/GetProfileResult.md)
+ - [GetProfileStatisticsHistoryResult](docs/GetProfileStatisticsHistoryResult.md)
+ - [GetProfileStatisticsResult](docs/GetProfileStatisticsResult.md)
  - [GetPublicKey](docs/GetPublicKey.md)
  - [GroupValues](docs/GroupValues.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
@@ -219,8 +225,6 @@ Class | Method | HTTP request | Description
  - [ModerationRequestState](docs/ModerationRequestState.md)
  - [NewReceivedLikesCount](docs/NewReceivedLikesCount.md)
  - [NewReceivedLikesCountResult](docs/NewReceivedLikesCountResult.md)
- - [NewsCount](docs/NewsCount.md)
- - [NewsCountResult](docs/NewsCountResult.md)
  - [NewsId](docs/NewsId.md)
  - [NewsItem](docs/NewsItem.md)
  - [NewsItemSimple](docs/NewsItemSimple.md)
@@ -229,6 +233,7 @@ Class | Method | HTTP request | Description
  - [NewsSyncVersion](docs/NewsSyncVersion.md)
  - [NewsTranslationVersion](docs/NewsTranslationVersion.md)
  - [PageItemCountForNewLikes](docs/PageItemCountForNewLikes.md)
+ - [PageItemCountForNewPublicNews](docs/PageItemCountForNewPublicNews.md)
  - [PendingMessage](docs/PendingMessage.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
@@ -240,7 +245,9 @@ Class | Method | HTTP request | Description
  - [PerfHistoryValue](docs/PerfHistoryValue.md)
  - [PerfValueArea](docs/PerfValueArea.md)
  - [Permissions](docs/Permissions.md)
+ - [PostModerateProfileName](docs/PostModerateProfileName.md)
  - [Profile](docs/Profile.md)
+ - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
  - [ProfileAttributeFilterList](docs/ProfileAttributeFilterList.md)
  - [ProfileAttributeFilterListUpdate](docs/ProfileAttributeFilterListUpdate.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)
@@ -253,8 +260,11 @@ Class | Method | HTTP request | Description
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)
+ - [ProfileNamePendingModeration](docs/ProfileNamePendingModeration.md)
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileSearchAgeRange](docs/ProfileSearchAgeRange.md)
+ - [ProfileStatisticsHistoryValue](docs/ProfileStatisticsHistoryValue.md)
+ - [ProfileStatisticsHistoryValueType](docs/ProfileStatisticsHistoryValueType.md)
  - [ProfileSyncVersion](docs/ProfileSyncVersion.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
@@ -264,6 +274,7 @@ Class | Method | HTTP request | Description
  - [PublicKeyId](docs/PublicKeyId.md)
  - [PublicKeyIdAndVersion](docs/PublicKeyIdAndVersion.md)
  - [PublicKeyVersion](docs/PublicKeyVersion.md)
+ - [PublicProfileCounts](docs/PublicProfileCounts.md)
  - [ReceivedBlocksPage](docs/ReceivedBlocksPage.md)
  - [ReceivedBlocksSyncVersion](docs/ReceivedBlocksSyncVersion.md)
  - [ReceivedLikesIteratorSessionId](docs/ReceivedLikesIteratorSessionId.md)
@@ -289,14 +300,18 @@ Class | Method | HTTP request | Description
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)
  - [SoftwareOptions](docs/SoftwareOptions.md)
+ - [StatisticsProfileVisibility](docs/StatisticsProfileVisibility.md)
  - [SyncVersion](docs/SyncVersion.md)
  - [SystemInfo](docs/SystemInfo.md)
  - [SystemInfoList](docs/SystemInfoList.md)
  - [TimeGranularity](docs/TimeGranularity.md)
  - [Translation](docs/Translation.md)
  - [UnixTime](docs/UnixTime.md)
+ - [UnreadNewsCount](docs/UnreadNewsCount.md)
+ - [UnreadNewsCountResult](docs/UnreadNewsCountResult.md)
  - [UpdateMessageViewStatus](docs/UpdateMessageViewStatus.md)
  - [UpdateNewsTranslation](docs/UpdateNewsTranslation.md)
+ - [UpdateNewsTranslationResult](docs/UpdateNewsTranslationResult.md)
 
 
 To get access to the crate's generated documentation, use:

@@ -4,10 +4,10 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**delete_news_item**](AccountAdminApi.md#delete_news_item) | **DELETE** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid} | 
-[**delete_news_translation**](AccountAdminApi.md#delete_news_translation) | **DELETE** /BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid}/{locale} | 
+[**delete_news_item**](AccountAdminApi.md#delete_news_item) | **DELETE** /ca0uk9qgmQ82WCpd83_WNNn8qOY/{nid} | 
+[**delete_news_translation**](AccountAdminApi.md#delete_news_translation) | **DELETE** /jo1Lboa4U8YVA07py8NJebpu1zo/{nid}/{locale} | 
 [**post_create_news_item**](AccountAdminApi.md#post_create_news_item) | **POST** /XEss8YDw9lPgwKoH6K9THZIF_N4 | 
-[**post_set_news_publicity**](AccountAdminApi.md#post_set_news_publicity) | **DELETE** /VhK61QQYLFov-eCH2YS2i5M2jdk/{nid} | 
+[**post_set_news_publicity**](AccountAdminApi.md#post_set_news_publicity) | **DELETE** /McvctMKFEqrUfola2WlvkbigBDU/{nid} | 
 [**post_update_news_translation**](AccountAdminApi.md#post_update_news_translation) | **POST** /4pD-Q4FhZGTNkUGYExHmZN6TxjU/{nid}/{locale} | 
 
 
@@ -125,7 +125,7 @@ Name | Type | Description  | Required | Notes
 
 ## post_update_news_translation
 
-> post_update_news_translation(nid, locale, update_news_translation)
+> models::UpdateNewsTranslationResult post_update_news_translation(nid, locale, update_news_translation)
 
 
 ### Parameters
@@ -139,7 +139,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
- (empty response body)
+[**models::UpdateNewsTranslationResult**](UpdateNewsTranslationResult.md)
 
 ### Authorization
 
@@ -148,7 +148,7 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: Not defined
+- **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

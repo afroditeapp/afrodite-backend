@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -20,6 +20,9 @@ pub struct Profile {
     pub attributes: Option<Vec<models::ProfileAttributeValue>>,
     #[serde(rename = "name")]
     pub name: String,
+    /// The name has been accepted using allowlist or manual moderation.
+    #[serde(rename = "name_accepted", skip_serializing_if = "Option::is_none")]
+    pub name_accepted: Option<bool>,
     /// Profile text support is disabled for now.
     #[serde(rename = "ptext", skip_serializing_if = "Option::is_none")]
     pub ptext: Option<String>,
@@ -34,6 +37,7 @@ impl Profile {
             age,
             attributes: None,
             name,
+            name_accepted: None,
             ptext: None,
             unlimited_likes: None,
         }

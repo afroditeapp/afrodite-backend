@@ -13,6 +13,7 @@ Method | HTTP request | Description
 [**get_profile**](ProfileApi.md#get_profile) | **GET** /5i55ZcY0jIPD7B6pyyridKY0j0Q/{aid} | Get account's current profile.
 [**get_profile_attribute_filters**](ProfileApi.md#get_profile_attribute_filters) | **GET** /AL531AoIDRcTSWC-pdxcexf6tOM | Get current profile attribute filter values.
 [**get_profile_from_database_debug_mode_benchmark**](ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /XDTSz35S_5tOKIsSpDITOc46MR4/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
+[**get_profile_statistics**](ProfileApi.md#get_profile_statistics) | **GET** /WJCHYdLNpydn1OkJNyZKKksc4Yw | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
 [**get_search_age_range**](ProfileApi.md#get_search_age_range) | **GET** /xTy-zcnl0LQlfPKQalAEnWQQ-rw | Get account's current search age range
 [**get_search_groups**](ProfileApi.md#get_search_groups) | **GET** /p1KA-sqKKtU3FHvUqYRZnQgj7RQ | Get account's current search groups (gender and what gender user is looking for)
 [**post_favorite_profile**](ProfileApi.md#post_favorite_profile) | **POST** /yD1PtVhVvdk-usEran42JmCTFVQ | Add new favorite profile
@@ -265,6 +266,35 @@ Name | Type | Description  | Required | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## get_profile_statistics
+
+> models::GetProfileStatisticsResult get_profile_statistics(profile_visibility, generate_new_statistics)
+Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**profile_visibility** | Option<[**StatisticsProfileVisibility**](.md)> | Control which profiles are included in [GetProfileStatisticsResult::age_counts] by profile visibility.  Non default value is only for admins. |  |
+**generate_new_statistics** | Option<**bool**> | Non default value is only for admins. |  |[default to false]
+
+### Return type
+
+[**models::GetProfileStatisticsResult**](GetProfileStatisticsResult.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## get_search_age_range
 
 > models::ProfileSearchAgeRange get_search_age_range()
@@ -376,7 +406,7 @@ Name | Type | Description  | Required | Notes
 > post_profile(profile_update)
 Update profile information.
 
-Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile name must be trimmed and not empty. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 
 ### Parameters
 

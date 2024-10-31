@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -91,6 +91,15 @@ pub enum GetProfileAttributeFiltersError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetProfileFromDatabaseDebugModeBenchmarkError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_profile_statistics`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetProfileStatisticsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -519,6 +528,47 @@ pub async fn get_profile_from_database_debug_mode_benchmark(configuration: &conf
     }
 }
 
+pub async fn get_profile_statistics(configuration: &configuration::Configuration, profile_visibility: Option<models::StatisticsProfileVisibility>, generate_new_statistics: Option<bool>) -> Result<models::GetProfileStatisticsResult, Error<GetProfileStatisticsError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/WJCHYdLNpydn1OkJNyZKKksc4Yw", local_var_configuration.base_path);
+    let mut local_var_req_builder = local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = profile_visibility {
+        local_var_req_builder = local_var_req_builder.query(&[("profile_visibility", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = generate_new_statistics {
+        local_var_req_builder = local_var_req_builder.query(&[("generate_new_statistics", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder = local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("x-access-token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetProfileStatisticsError> = serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 pub async fn get_search_age_range(configuration: &configuration::Configuration, ) -> Result<models::ProfileSearchAgeRange, Error<GetSearchAgeRangeError>> {
     let local_var_configuration = configuration;
 
@@ -661,7 +711,7 @@ pub async fn post_get_next_profile_page(configuration: &configuration::Configura
     }
 }
 
-/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be empty. - Profile name changes are only possible when initial setup is ongoing. - Profile name must be trimmed and not empty. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 pub async fn post_profile(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     let local_var_configuration = configuration;
 

@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -66,7 +66,7 @@ pub async fn delete_news_item(configuration: &configuration::Configuration, nid:
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid}", local_var_configuration.base_path, nid=nid);
+    let local_var_uri_str = format!("{}/ca0uk9qgmQ82WCpd83_WNNn8qOY/{nid}", local_var_configuration.base_path, nid=nid);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -101,7 +101,7 @@ pub async fn delete_news_translation(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/BUFRdjIQCtPBjy00uEOHIA9X8CI/{nid}/{locale}", local_var_configuration.base_path, nid=nid, locale=crate::apis::urlencode(locale));
+    let local_var_uri_str = format!("{}/jo1Lboa4U8YVA07py8NJebpu1zo/{nid}/{locale}", local_var_configuration.base_path, nid=nid, locale=crate::apis::urlencode(locale));
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -171,7 +171,7 @@ pub async fn post_set_news_publicity(configuration: &configuration::Configuratio
 
     let local_var_client = &local_var_configuration.client;
 
-    let local_var_uri_str = format!("{}/VhK61QQYLFov-eCH2YS2i5M2jdk/{nid}", local_var_configuration.base_path, nid=nid);
+    let local_var_uri_str = format!("{}/McvctMKFEqrUfola2WlvkbigBDU/{nid}", local_var_configuration.base_path, nid=nid);
     let mut local_var_req_builder = local_var_client.request(reqwest::Method::DELETE, local_var_uri_str.as_str());
 
     if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
@@ -202,7 +202,7 @@ pub async fn post_set_news_publicity(configuration: &configuration::Configuratio
     }
 }
 
-pub async fn post_update_news_translation(configuration: &configuration::Configuration, nid: i64, locale: &str, update_news_translation: models::UpdateNewsTranslation) -> Result<(), Error<PostUpdateNewsTranslationError>> {
+pub async fn post_update_news_translation(configuration: &configuration::Configuration, nid: i64, locale: &str, update_news_translation: models::UpdateNewsTranslation) -> Result<models::UpdateNewsTranslationResult, Error<PostUpdateNewsTranslationError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -230,7 +230,7 @@ pub async fn post_update_news_translation(configuration: &configuration::Configu
     let local_var_content = local_var_resp.text().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        Ok(())
+        serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<PostUpdateNewsTranslationError> = serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent { status: local_var_status, content: local_var_content, entity: local_var_entity };

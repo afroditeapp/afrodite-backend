@@ -2,7 +2,7 @@
 name = "api_client"
 version = "0.1.0"
 authors = ["OpenAPI Generator team and contributors"]
-description = "Pihka backend API"
+description = "Dating app backend API"
 license = ""
 edition = "2021"
 

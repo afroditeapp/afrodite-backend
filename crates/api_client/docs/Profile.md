@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **age** | **i64** |  | 
 **attributes** | Option<[**Vec<models::ProfileAttributeValue>**](ProfileAttributeValue.md)> |  | [optional][default to []]
 **name** | **String** |  | 
+**name_accepted** | Option<**bool**> | The name has been accepted using allowlist or manual moderation. | [optional][default to true]
 **ptext** | Option<**String**> | Profile text support is disabled for now. | [optional][default to ]
 **unlimited_likes** | Option<**bool**> |  | [optional][default to false]
 

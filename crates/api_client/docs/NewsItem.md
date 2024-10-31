@@ -8,7 +8,7 @@ Name | Type | Description | Notes
 **aid_editor** | Option<[**models::AccountId**](AccountId.md)> | Only visible for accounts which have some news permissions | [optional]
 **body** | **String** |  | 
 **creation_time** | [**models::UnixTime**](UnixTime.md) |  | 
-**edit_time** | Option<[**models::UnixTime**](UnixTime.md)> |  | [optional]
+**edit_unix_time** | Option<**i64**> | Option<i64> is a workaround for Dart OpenApi generator version 7.9.0 | [optional]
 **locale** | **String** |  | 
 **title** | **String** |  | 
 **version** | Option<[**models::NewsTranslationVersion**](NewsTranslationVersion.md)> | Only visible for accounts which have some news permissions | [optional]

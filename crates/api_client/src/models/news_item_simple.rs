@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -13,10 +13,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewsItemSimple {
-    #[serde(rename = "creation_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub creation_time: Option<Option<Box<models::UnixTime>>>,
     #[serde(rename = "id")]
     pub id: Box<models::NewsId>,
+    #[serde(rename = "private", skip_serializing_if = "Option::is_none")]
+    pub private: Option<bool>,
+    #[serde(rename = "time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub time: Option<Option<Box<models::UnixTime>>>,
     #[serde(rename = "title", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub title: Option<Option<String>>,
 }
@@ -24,8 +26,9 @@ pub struct NewsItemSimple {
 impl NewsItemSimple {
     pub fn new(id: models::NewsId) -> NewsItemSimple {
         NewsItemSimple {
-            creation_time: None,
             id: Box::new(id),
+            private: None,
+            time: None,
             title: None,
         }
     }

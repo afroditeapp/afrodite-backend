@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct Permissions {
     #[serde(rename = "admin_moderate_images", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_images: Option<bool>,
+    #[serde(rename = "admin_moderate_profile_names", skip_serializing_if = "Option::is_none")]
+    pub admin_moderate_profile_names: Option<bool>,
     #[serde(rename = "admin_moderate_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_profiles: Option<bool>,
     #[serde(rename = "admin_modify_permissions", skip_serializing_if = "Option::is_none")]
@@ -23,6 +25,8 @@ pub struct Permissions {
     pub admin_news_create: Option<bool>,
     #[serde(rename = "admin_news_edit_all", skip_serializing_if = "Option::is_none")]
     pub admin_news_edit_all: Option<bool>,
+    #[serde(rename = "admin_profile_statistics", skip_serializing_if = "Option::is_none")]
+    pub admin_profile_statistics: Option<bool>,
     #[serde(rename = "admin_server_maintenance_reboot_backend", skip_serializing_if = "Option::is_none")]
     pub admin_server_maintenance_reboot_backend: Option<bool>,
     #[serde(rename = "admin_server_maintenance_reset_data", skip_serializing_if = "Option::is_none")]
@@ -49,10 +53,12 @@ impl Permissions {
     pub fn new() -> Permissions {
         Permissions {
             admin_moderate_images: None,
+            admin_moderate_profile_names: None,
             admin_moderate_profiles: None,
             admin_modify_permissions: None,
             admin_news_create: None,
             admin_news_edit_all: None,
+            admin_profile_statistics: None,
             admin_server_maintenance_reboot_backend: None,
             admin_server_maintenance_reset_data: None,
             admin_server_maintenance_save_backend_config: None,

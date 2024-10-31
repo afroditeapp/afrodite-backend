@@ -84,7 +84,7 @@ Get performance data
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **start_time** | Option<[**UnixTime**](.md)> | Start time for query results. |  |
-**end_time** | Option<[**GetPerfDataEndTimeParameter**](.md)> | End time for query results. |  |
+**end_time** | Option<[**UnixTime**](.md)> | End time for query results. |  |
 
 ### Return type
 

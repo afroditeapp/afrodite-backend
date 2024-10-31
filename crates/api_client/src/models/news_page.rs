@@ -1,7 +1,7 @@
 /*
- * pihka-backend
+ * dating-app-backend
  *
- * Pihka backend API
+ * Dating app backend API
  *
  * The version of the OpenAPI document: 0.1.0
  * 
@@ -15,14 +15,17 @@ use serde::{Deserialize, Serialize};
 pub struct NewsPage {
     #[serde(rename = "error_invalid_iterator_session_id", skip_serializing_if = "Option::is_none")]
     pub error_invalid_iterator_session_id: Option<bool>,
+    #[serde(rename = "n")]
+    pub n: Box<models::PageItemCountForNewPublicNews>,
     #[serde(rename = "news")]
     pub news: Vec<models::NewsItemSimple>,
 }
 
 impl NewsPage {
-    pub fn new(news: Vec<models::NewsItemSimple>) -> NewsPage {
+    pub fn new(n: models::PageItemCountForNewPublicNews, news: Vec<models::NewsItemSimple>) -> NewsPage {
         NewsPage {
             error_invalid_iterator_session_id: None,
+            n: Box::new(n),
             news,
         }
     }

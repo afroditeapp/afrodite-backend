@@ -1055,6 +1055,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "dating_app_backend"
+version = "0.4.0"
+dependencies = [
+ "clap",
+ "config",
+ "server",
+ "server_data",
+ "simple_backend_config",
+ "simple_backend_image_process",
+ "test_mode",
+ "tokio",
+ "tokio-rustls",
+ "vergen-gitcl",
+]
+
+[[package]]
 name = "dbl"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2890,22 +2906,6 @@ dependencies = [
  "twofish",
  "x25519-dalek",
  "zeroize",
-]
-
-[[package]]
-name = "pihka-backend"
-version = "0.4.0"
-dependencies = [
- "clap",
- "config",
- "server",
- "server_data",
- "simple_backend_config",
- "simple_backend_image_process",
- "test_mode",
- "tokio",
- "tokio-rustls",
- "vergen-gitcl",
 ]
 
 [[package]]

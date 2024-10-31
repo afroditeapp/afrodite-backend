@@ -43,11 +43,11 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use crate::bot::BotClient;
 
-pub struct PihkaServer {
+pub struct DatingAppServer {
     config: Arc<Config>,
 }
 
-impl PihkaServer {
+impl DatingAppServer {
     pub fn new(config: Config) -> Self {
         Self {
             config: config.into(),
@@ -55,7 +55,7 @@ impl PihkaServer {
     }
 
     pub async fn run(self) {
-        let logic = PihkaBusinessLogic {
+        let logic = DatingAppBusinessLogic {
             config: self.config.clone(),
             bot_client: None,
             write_cmd_waiter: None,
@@ -71,7 +71,7 @@ impl PihkaServer {
     }
 }
 
-pub struct PihkaBusinessLogic {
+pub struct DatingAppBusinessLogic {
     config: Arc<Config>,
     bot_client: Option<BotClient>,
     write_cmd_waiter: Option<WriteCmdWatcher>,
@@ -83,7 +83,7 @@ pub struct PihkaBusinessLogic {
     scheduled_tasks: Option<ScheduledTaskManagerQuitHandle>,
 }
 
-impl BusinessLogic for PihkaBusinessLogic {
+impl BusinessLogic for DatingAppBusinessLogic {
     type AppState = AppState;
 
     fn all_counters(&self) -> AllCounters {
@@ -139,7 +139,7 @@ impl BusinessLogic for PihkaBusinessLogic {
     }
 
     fn create_swagger_ui(&self) -> Option<SwaggerUi> {
-        const API_DOC_URL: &str = "/api-doc/pihka_api.json";
+        const API_DOC_URL: &str = "/api-doc/dating-app-api-doc.json";
         Some(
             SwaggerUi::new("/swagger-ui")
                 .url(API_DOC_URL, ApiDoc::all())
