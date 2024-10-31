@@ -1,6 +1,8 @@
 # Afrodite
-Dating app backend
+Afrodite is a permissively licensed dating app based on profile browsing. This
+repository contains the backend part.
 
+The app is under development and it is not ready for production.
 
 ## Running
 
