@@ -206,3 +206,7 @@ Access Context Manager Reader
 OAuth Config Editor
 Service Usage Viewer
 ```
+
+## License
+
+MIT License or Apache License 2.0
