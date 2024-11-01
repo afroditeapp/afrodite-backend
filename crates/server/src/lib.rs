@@ -139,7 +139,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
     }
 
     fn create_swagger_ui(&self) -> Option<SwaggerUi> {
-        const API_DOC_URL: &str = "/api-doc/dating-app-api-doc.json";
+        const API_DOC_URL: &str = "/api-doc/app_api.json";
         Some(
             SwaggerUi::new("/swagger-ui")
                 .url(API_DOC_URL, ApiDoc::all())

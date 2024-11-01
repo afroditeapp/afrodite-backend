@@ -42,7 +42,7 @@ cargo install diesel_cli --no-default-features --features sqlite
 4. Start the backend in debug mode.
 5. Generate bindings
 ```
-openapi-generator-cli generate -i http://localhost:3000/api-doc/dating-app-backend.json -g rust -o crates/api_client --package-name api_client
+openapi-generator-cli generate -i http://localhost:3000/api-doc/app_api.json -g rust -o crates/api_client --package-name api_client
 ```
 
 ## Reset database
