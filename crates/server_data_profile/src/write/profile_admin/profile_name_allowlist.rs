@@ -22,7 +22,12 @@ impl<C: WriteCommandsProvider> WriteCommandsProfileAdminProfileNameAllowlist<C> 
         accept: bool,
     ) -> Result<(), DataError> {
         let current_profile = self.db_read(move |mut cmds| cmds.profile().data().profile(name_owner_id)).await?;
+        let current_profile_state = self.db_read(move |mut cmds| cmds.profile().data().profile_state(name_owner_id)).await?;
         if current_profile.name != name {
+            return Err(DataError::NotAllowed.report());
+        }
+        if current_profile.name_accepted() || current_profile_state.profile_name_denied {
+            // Already moderated
             return Err(DataError::NotAllowed.report());
         }
         if accept {

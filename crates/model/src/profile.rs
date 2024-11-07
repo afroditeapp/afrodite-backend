@@ -122,6 +122,10 @@ impl Profile {
             ptext_accepted: profile_text_moderation_state.is_accepted(),
         }
     }
+
+    pub fn name_accepted(&self) -> bool {
+        self.name_accepted
+    }
 }
 
 pub struct ProfileAndProfileVersion {
@@ -144,6 +148,7 @@ pub struct ProfileStateInternal {
     pub unlimited_likes_filter: Option<bool>,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
     pub profile_sync_version: ProfileSyncVersion,
+    pub profile_name_denied: bool,
     pub profile_text_moderation_state: ProfileTextModerationState,
     pub profile_text_moderation_rejected_reason_category: Option<ProfileTextModerationRejectedReasonCategory>,
     pub profile_text_moderation_rejected_reason_details: Option<ProfileTextModerationRejectedReasonDetails>,
