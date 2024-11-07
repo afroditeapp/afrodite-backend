@@ -1,5 +1,5 @@
 use database::{
-    current::read::CurrentSyncReadCommands, CurrentReadHandle, DbReader, DbReaderHistoryRaw, DbReaderRaw, DieselConnection, DieselDatabaseError, HistoryReadHandle
+    CurrentReadHandle, DbReaderHistoryRaw, DbReaderRaw, DieselConnection, DieselDatabaseError, HistoryReadHandle
 };
 
 use self::common::ReadCommandsCommon;
@@ -39,7 +39,9 @@ macro_rules! define_read_commands {
                 &self,
                 cmd: T,
             ) -> error_stack::Result<R, database::DieselDatabaseError> {
-                self.cmds.read_cmds().db_read(cmd).await
+                self.cmds.read_cmds().db_read_raw(move |conn| {
+                    cmd(database::current::read::CurrentSyncReadCommands::new(conn))
+                }).await
             }
 
             // TODO: change cache operation to return Result?
@@ -80,20 +82,6 @@ impl<'a> ReadCommands<'a> {
 
     pub fn common(self) -> ReadCommandsCommon<ReadCommandsContainer<'a>> {
         ReadCommandsCommon::new(ReadCommandsContainer::new(self))
-    }
-
-    pub async fn db_read<
-        T: FnOnce(
-                CurrentSyncReadCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReader::new(self.db).db_read(cmd).await
     }
 
     pub async fn db_read_raw<

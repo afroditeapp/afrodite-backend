@@ -59,7 +59,9 @@ macro_rules! define_server_data_read_commands {
                 &self,
                 cmd: T,
             ) -> error_stack::Result<R, $crate::DieselDatabaseError> {
-                self.cmds.read_cmds().db_read(cmd).await
+                self.cmds.read_cmds().db_read_raw(move |conn| {
+                    cmd($crate::CurrentSyncReadCommands::new(conn))
+                }).await
             }
 
             // TODO: change cache operation to return Result?
@@ -182,7 +184,9 @@ macro_rules! define_server_data_write_commands {
                 &self,
                 cmd: T,
             ) -> error_stack::Result<R, $crate::DieselDatabaseError> {
-                self.cmds.write_cmds().db_read(cmd).await
+                self.cmds.write_cmds().db_read_raw(|conn| {
+                    cmd($crate::CurrentSyncReadCommands::new(conn))
+                }).await
             }
 
             pub async fn write_cache<T, Id: Into<model::AccountId>>(

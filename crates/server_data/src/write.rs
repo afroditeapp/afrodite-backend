@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use config::Config;
 use database::{
-    current::{read::CurrentSyncReadCommands, write::TransactionConnection}, CurrentWriteHandle, DbReaderRawUsingWriteHandle, DbReaderUsingWriteHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
+    current::write::TransactionConnection, CurrentWriteHandle, DbReaderRawUsingWriteHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
 };
 use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender};
 use simple_backend::media_backup::MediaBackupHandle;
@@ -98,7 +98,9 @@ macro_rules! define_write_commands {
                 &self,
                 cmd: T,
             ) -> error_stack::Result<R, database::DieselDatabaseError> {
-                self.cmds.write_cmds().db_read(cmd).await
+                self.cmds.write_cmds().db_read_raw(|conn| {
+                    cmd(database::current::read::CurrentSyncReadCommands::new(conn))
+                }).await
             }
 
             pub async fn write_cache<T, Id: Into<model::AccountId>>(
@@ -182,7 +184,7 @@ impl<'a> WriteCommands<'a> {
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
         DbWriter::new(self.current_write_handle)
-            .db_transaction(cmd)
+            .db_transaction_raw(|conn| cmd(database::current::write::CurrentSyncWriteCommands::new(conn)))
             .await
     }
 
@@ -228,22 +230,6 @@ impl<'a> WriteCommands<'a> {
     {
         DbWriterWithHistory::new(self.current_write_handle, self.history_write_handle)
             .db_transaction_with_history(cmd)
-            .await
-    }
-
-    pub async fn db_read<
-        T: FnOnce(
-                CurrentSyncReadCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReaderUsingWriteHandle::new(self.current_write_handle)
-            .db_read(cmd)
             .await
     }
 
