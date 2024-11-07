@@ -219,6 +219,10 @@ impl ProfileUpdate {
             }
         }
 
+        if self.name.len() > 100 {
+            return Err("Profile name is too long".to_string());
+        }
+
         if self.ptext.len() > 400 {
             return Err("Profile text is too long".to_string());
         }

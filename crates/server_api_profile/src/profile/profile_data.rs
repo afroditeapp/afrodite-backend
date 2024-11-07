@@ -137,6 +137,7 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// - Profile text must be trimmed.
 /// - Profile name changes are only possible when initial setup is ongoing.
 /// - Profile name must be trimmed and not empty.
+/// - Profile name must be 100 bytes or less.
 /// - Profile age must match with currently valid age range. The first min
 ///   value for the age range is the age at the initial setup. The second min
 ///   and max value is calculated using the following algorithm:
