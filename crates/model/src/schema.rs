@@ -87,6 +87,7 @@ diesel::table! {
         admin_moderate_profiles -> Bool,
         admin_moderate_images -> Bool,
         admin_moderate_profile_names -> Bool,
+        admin_moderate_profile_texts -> Bool,
         admin_view_all_profiles -> Bool,
         admin_view_private_info -> Bool,
         admin_view_profile_history -> Bool,
@@ -525,6 +526,7 @@ diesel::table! {
         profile_text_moderation_rejected_reason_category -> Nullable<Integer>,
         profile_text_moderation_rejected_reason_details -> Nullable<Text>,
         profile_text_moderation_moderator_account_id -> Nullable<Integer>,
+        profile_text_edit_time_unix_time -> Nullable<Integer>,
     }
 }
 

@@ -49,6 +49,18 @@ impl ProfileTextModerationState {
             Self::RejectedByHuman => false,
         }
     }
+
+    pub fn is_moderated(&self) -> bool {
+        match self {
+            Self::AcceptedByBot |
+            Self::AcceptedByHuman |
+            Self::RejectedByBot |
+            Self::RejectedByHuman => true,
+            Self::Empty |
+            Self::WaitingBotOrHumanModeration |
+            Self::WaitingHumanModeration => false,
+        }
+    }
 }
 
 impl Default for ProfileTextModerationState {

@@ -100,6 +100,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
                         .profile_text()
                         .reset_profile_text_moderation_state(
                             id,
+                            profile_data.new_data.ptext.is_empty()
                         )?
                 )
             } else {

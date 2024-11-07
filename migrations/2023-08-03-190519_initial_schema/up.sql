@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_moderate_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_images                        BOOLEAN NOT NULL DEFAULT 0,
     admin_moderate_profile_names                 BOOLEAN NOT NULL DEFAULT 0,
+    admin_moderate_profile_texts                 BOOLEAN NOT NULL DEFAULT 0,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_private_info                      BOOLEAN NOT NULL DEFAULT 0,
     admin_view_profile_history                   BOOLEAN NOT NULL DEFAULT 0,
@@ -289,6 +290,7 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_text_moderation_rejected_reason_category INTEGER,
     profile_text_moderation_rejected_reason_details  TEXT,
     profile_text_moderation_moderator_account_id     INTEGER,
+    profile_text_edit_time_unix_time                 INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
