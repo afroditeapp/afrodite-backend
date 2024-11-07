@@ -1,5 +1,5 @@
 use model::{
-    AcceptedProfileAges, AccountIdInternal, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
+    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
 };
 use server_data::{
     define_server_data_read_commands,
@@ -49,6 +49,17 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
         })
         .await?
         .ok_or(DataError::NotFound.report())
+    }
+
+    pub async fn my_profile(&self, id: AccountIdInternal) -> Result<GetMyProfileResult, DataError> {
+        let last_seen_time = self.read_cache(id, move |cache| {
+            cache.last_seen_time()
+        })
+        .await?;
+
+        self.db_read(move |mut cmds| cmds.profile().data().my_profile(id, last_seen_time))
+            .await
+            .into_error()
     }
 
     pub async fn profile_location(&self, id: AccountIdInternal) -> Result<Location, DataError> {

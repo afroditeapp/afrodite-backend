@@ -4,7 +4,7 @@ use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseE
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::{
-    AcceptedProfileAges, AccountIdInternal, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
+    AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, LastSeenTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
 };
 
 define_current_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);
@@ -34,6 +34,32 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
             attributes,
             other_shared_state.unlimited_likes,
         ))
+    }
+
+    pub fn my_profile(
+        &mut self,
+        id: AccountIdInternal,
+        last_seen_time: Option<LastSeenTime>,
+    ) -> Result<GetMyProfileResult, DieselDatabaseError> {
+        let profile = self.profile_internal(id)?;
+        let profile_version = profile.version_uuid;
+        let profile_state = self.profile_state(id)?;
+        let attributes = self.profile_attribute_values(id)?;
+        let other_shared_state = self.read().common().state().other_shared_state(id)?;
+        let p = Profile::new(
+            profile,
+            profile_state.profile_text_moderation_state,
+            attributes,
+            other_shared_state.unlimited_likes,
+        );
+        let r = GetMyProfileResult {
+            p,
+            lst: last_seen_time,
+            v: profile_version,
+            sv: profile_state.profile_sync_version,
+            text_moderation_info: profile_state.into(),
+        };
+        Ok(r)
     }
 
     pub fn profile_location(

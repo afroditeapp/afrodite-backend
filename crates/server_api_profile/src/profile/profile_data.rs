@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use model::{
-    AccountId, AccountIdInternal, AccountState, Permissions, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
+    AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::IsMatch, create_open_api_router, db_write_multiple, result::WrappedContextExt};
@@ -340,25 +340,11 @@ pub async fn get_my_profile<
 ) -> Result<Json<GetMyProfileResult>, StatusCode> {
     PROFILE.get_my_profile.incr();
 
-    let profile_info = state
+    let r = state
         .read()
         .profile()
-        .profile(account_id)
+        .my_profile(account_id)
         .await?;
-
-    let sync_version = state
-        .read()
-        .profile()
-        .profile_state(account_id)
-        .await?
-        .profile_sync_version;
-
-    let r = GetMyProfileResult {
-        p: profile_info.profile,
-        v: profile_info.version,
-        lst: profile_info.last_seen_time,
-        sv: sync_version,
-    };
 
     Ok(r.into())
 }

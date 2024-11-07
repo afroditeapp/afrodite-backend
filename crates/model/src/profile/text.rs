@@ -9,6 +9,8 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::schema_sqlite_types::Integer;
 
+use super::ProfileStateInternal;
+
 
 #[derive(
     Debug,
@@ -112,3 +114,27 @@ impl ProfileTextModerationRejectedReasonDetails {
 }
 
 diesel_string_wrapper!(ProfileTextModerationRejectedReasonDetails);
+
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    ToSchema,
+)]
+pub struct ProfileTextModerationInfo {
+    pub state: ProfileTextModerationState,
+    pub rejected_reason_category: Option<ProfileTextModerationRejectedReasonCategory>,
+    pub rejected_reason_details: Option<ProfileTextModerationRejectedReasonDetails>,
+}
+
+impl From<ProfileStateInternal> for ProfileTextModerationInfo {
+    fn from(value: ProfileStateInternal) -> Self {
+        Self {
+            state: value.profile_text_moderation_state,
+            rejected_reason_category: value.profile_text_moderation_rejected_reason_category,
+            rejected_reason_details: value.profile_text_moderation_rejected_reason_details,
+        }
+    }
+}
