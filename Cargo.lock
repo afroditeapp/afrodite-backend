@@ -2383,6 +2383,7 @@ dependencies = [
  "chrono",
  "diesel",
  "nalgebra",
+ "num_enum",
  "serde",
  "serde_json",
  "simple_backend_model",

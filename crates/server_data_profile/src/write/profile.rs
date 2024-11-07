@@ -72,10 +72,13 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
         let config = self.config_arc().clone();
-        let account = db_transaction!(self, move |mut cmds| {
-            let name_update_detected = {
+        let (account, profile_text_moderation_state_update) = db_transaction!(self, move |mut cmds| {
+            let (name_update_detected, text_update_detected) = {
                 let current_profile = cmds.read().profile().data().profile(id)?;
-                current_profile.name != profile_data.new_data.name
+                (
+                    current_profile.name != profile_data.new_data.name,
+                    current_profile.ptext != profile_data.new_data.ptext
+                )
             };
             cmds.profile().data().profile(id, &profile_data)?;
             cmds.profile()
@@ -91,7 +94,22 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
                         config.profile_name_allowlist(),
                     )?;
             }
-            cmds.read().common().account(id)
+            let profile_text_moderation_state_update = if text_update_detected {
+                Some(
+                    cmds.profile()
+                        .profile_text()
+                        .reset_profile_text_moderation_state(
+                            id,
+                        )?
+                )
+            } else {
+                None
+            };
+            let updated_data = (
+                cmds.read().common().account(id)?,
+                profile_text_moderation_state_update,
+            );
+            Ok(updated_data)
         })?;
 
         let (location, profile_data) = self
@@ -102,6 +120,9 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
                 p.data.update_from(&data.new_data);
                 p.attributes.update_from(&data.new_data);
                 p.data.version_uuid = data.version;
+                if let Some(update) = profile_text_moderation_state_update {
+                    p.state.profile_text_moderation_state = update;
+                }
 
                 Ok((p.location.current_position, e.location_index_profile_data()?))
             })

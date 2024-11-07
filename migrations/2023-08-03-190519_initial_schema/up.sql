@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS account_permissions(
             ON UPDATE CASCADE
 );
 
+-- TODO(prod): Add subscription level to shared_state
+
 -- Shared state between server components.
 -- If the data is located in this table it should be set through account
 -- server as it propagates the changes to other components.
@@ -244,6 +246,10 @@ CREATE TABLE IF NOT EXISTS account_global_state(
 
 ---------- Tables for server component profile ----------
 
+-- TODO(prod): Change denied to rejected
+-- TODO(prod): Combine profile_name_denied and name_denied to
+--             profile_name_moderation_state
+
 -- Private profile related state for some account.
 CREATE TABLE IF NOT EXISTS profile_state(
     account_id                 INTEGER PRIMARY KEY  NOT NULL,
@@ -271,10 +277,25 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_initial_age_set_unix_time INTEGER,
     -- Profile name has been denied with manual moderation.
     -- This prevents showing the name on profile name moderation list.
-    profile_name_denied        BOOL                 NOT NULL    DEFAULT 0,
+    profile_name_denied               BOOL          NOT NULL    DEFAULT 0,
+    -- 0 = Empty
+    -- 1 = WaitingBotOrHumanModeration
+    -- 2 = WaitingHumanModeration
+    -- 3 = AcceptedByBot
+    -- 4 = AcceptedByHuman
+    -- 5 = RejectedByBot
+    -- 6 = RejectedByHuman
+    profile_text_moderation_state     INTEGER       NOT NULL    DEFAULT 0,
+    profile_text_moderation_rejected_reason_category INTEGER,
+    profile_text_moderation_rejected_reason_details  TEXT,
+    profile_text_moderation_moderator_account_id     INTEGER,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (profile_text_moderation_moderator_account_id)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 

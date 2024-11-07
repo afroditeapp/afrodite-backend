@@ -521,6 +521,10 @@ diesel::table! {
         profile_initial_age -> Nullable<Integer>,
         profile_initial_age_set_unix_time -> Nullable<Integer>,
         profile_name_denied -> Bool,
+        profile_text_moderation_state -> Integer,
+        profile_text_moderation_rejected_reason_category -> Nullable<Integer>,
+        profile_text_moderation_rejected_reason_details -> Nullable<Text>,
+        profile_text_moderation_moderator_account_id -> Nullable<Integer>,
     }
 }
 
@@ -609,7 +613,6 @@ diesel::joinable!(profile -> account_id (account_id));
 diesel::joinable!(profile_attributes -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list -> account_id (account_id));
 diesel::joinable!(profile_attributes_number_list_filters -> account_id (account_id));
-diesel::joinable!(profile_state -> account_id (account_id));
 diesel::joinable!(public_key -> account_id (account_id));
 diesel::joinable!(queue_entry -> account_id (account_id));
 diesel::joinable!(refresh_token -> account_id (account_id));

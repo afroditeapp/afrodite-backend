@@ -66,6 +66,7 @@ image = { version = "0.25.2", default-features = false, features = ["jpeg"] }
 mozjpeg = "0.10.9"
 kamadak-exif = "0.5.5"
 bitflags = "2.6.0"
+num_enum = "0.7.3"
 sha2 = "0.10.8"
 
 clap = { version = "4.5.16", features = ["cargo", "derive"] }

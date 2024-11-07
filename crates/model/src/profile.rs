@@ -41,6 +41,9 @@ pub use last_seen_time::*;
 mod statistics;
 pub use statistics::*;
 
+mod text;
+pub use text::*;
+
 const NUMBER_LIST_ATTRIBUTE_MAX_VALUES: usize = 8;
 
 /// Profile's database data
@@ -81,12 +84,20 @@ pub struct Profile {
     #[schema(default = false)]
     unlimited_likes: bool,
     /// The name has been accepted using allowlist or manual moderation.
-    #[serde(default = "news_accepted_default", skip_serializing_if = "is_true")]
+    #[serde(default = "name_accepted_default", skip_serializing_if = "is_true")]
     #[schema(default = true)]
     name_accepted: bool,
+    /// The profile text has been accepted by bot or human moderator.
+    #[serde(default = "ptext_accepted_default", skip_serializing_if = "is_true")]
+    #[schema(default = true)]
+    ptext_accepted: bool,
 }
 
-fn news_accepted_default() -> bool {
+fn name_accepted_default() -> bool {
+    true
+}
+
+fn ptext_accepted_default() -> bool {
     true
 }
 
@@ -97,6 +108,7 @@ fn is_true(value: &bool) -> bool {
 impl Profile {
     pub fn new(
         value: ProfileInternal,
+        profile_text_moderation_state: ProfileTextModerationState,
         attributes: Vec<ProfileAttributeValue>,
         unlimited_likes: bool,
     ) -> Self {
@@ -107,6 +119,7 @@ impl Profile {
             attributes,
             unlimited_likes,
             name_accepted: value.name_accepted,
+            ptext_accepted: profile_text_moderation_state.is_accepted(),
         }
     }
 }
@@ -131,6 +144,10 @@ pub struct ProfileStateInternal {
     pub unlimited_likes_filter: Option<bool>,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
     pub profile_sync_version: ProfileSyncVersion,
+    pub profile_text_moderation_state: ProfileTextModerationState,
+    pub profile_text_moderation_rejected_reason_category: Option<ProfileTextModerationRejectedReasonCategory>,
+    pub profile_text_moderation_rejected_reason_details: Option<ProfileTextModerationRejectedReasonDetails>,
+    pub profile_text_moderation_moderator_account_id: Option<AccountIdDb>,
 }
 
 sync_version_wrappers!(ProfileAttributesSyncVersion, ProfileSyncVersion,);
@@ -143,6 +160,7 @@ pub struct ProfileStateCached {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    pub profile_text_moderation_state: ProfileTextModerationState,
 }
 
 impl From<ProfileStateInternal> for ProfileStateCached {
@@ -153,6 +171,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_group_flags: value.search_group_flags,
             last_seen_time_filter: value.last_seen_time_filter,
             unlimited_likes_filter: value.unlimited_likes_filter,
+            profile_text_moderation_state: value.profile_text_moderation_state,
         }
     }
 }
@@ -200,8 +219,12 @@ impl ProfileUpdate {
             }
         }
 
-        if !self.ptext.is_empty() {
-            return Err("Profile text is not empty".to_string());
+        if self.ptext.len() > 400 {
+            return Err("Profile text is too long".to_string());
+        }
+
+        if self.ptext != self.ptext.trim() {
+            return Err("Profile text is not trimmed".to_string());
         }
 
         if self.age != current_profile.age {
