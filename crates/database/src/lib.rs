@@ -195,6 +195,18 @@ impl<'a> DbReaderRaw<'a> {
         Self { db }
     }
 
+    fn transaction<
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
+        T,
+    >(
+        conn: &mut DieselConnection,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
+        use diesel::prelude::*;
+        conn.transaction(transaction_actions)
+            .map_err(|e| e.into_report())
+    }
+
     pub async fn db_read<
         T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
             + Send
@@ -213,7 +225,10 @@ impl<'a> DbReaderRaw<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        conn.interact(move |conn| cmd(conn)).await?
+        conn.interact(move |conn| {
+            Self::transaction(conn, move |conn| cmd(conn).map_err(|err| err.into()))
+        })
+        .await?
     }
 }
 
@@ -224,6 +239,18 @@ pub struct DbReaderHistoryRaw<'a> {
 impl<'a> DbReaderHistoryRaw<'a> {
     pub fn new(db: &'a HistoryReadHandle) -> Self {
         Self { db }
+    }
+
+    fn transaction<
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
+        T,
+    >(
+        conn: &mut DieselConnection,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
+        use diesel::prelude::*;
+        conn.transaction(transaction_actions)
+            .map_err(|e| e.into_report())
     }
 
     pub async fn db_read_history<
@@ -244,7 +271,10 @@ impl<'a> DbReaderHistoryRaw<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        conn.interact(move |conn| cmd(conn)).await?
+        conn.interact(move |conn| {
+            Self::transaction(conn, move |conn| cmd(conn).map_err(|err| err.into()))
+        })
+        .await?
     }
 }
 
@@ -255,6 +285,18 @@ pub struct DbReaderRawUsingWriteHandle<'a> {
 impl<'a> DbReaderRawUsingWriteHandle<'a> {
     pub fn new(db: &'a CurrentWriteHandle) -> Self {
         Self { db }
+    }
+
+    fn transaction<
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
+        T,
+    >(
+        conn: &mut DieselConnection,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
+        use diesel::prelude::*;
+        conn.transaction(transaction_actions)
+            .map_err(|e| e.into_report())
     }
 
     pub async fn db_read<
@@ -275,7 +317,10 @@ impl<'a> DbReaderRawUsingWriteHandle<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        conn.interact(move |conn| cmd(conn)).await?
+        conn.interact(move |conn| {
+            Self::transaction(conn, move |conn| cmd(conn).map_err(|err| err.into()))
+        })
+        .await?
     }
 }
 
