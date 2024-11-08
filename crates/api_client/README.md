@@ -33,7 +33,6 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_deletion_status**](docs/AccountApi.md#get_deletion_status) | **GET** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Get deletion status.
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /2OHF85k7hpH2tAibkA0V9YLwpF4/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
-*AccountApi* | [**get_unread_news_count**](docs/AccountApi.md#get_unread_news_count) | **GET** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
 *AccountApi* | [**post_account_data**](docs/AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
@@ -45,6 +44,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
 *AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
 *AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /i9QOC8N-Nx9PdWvjKyAz8tXD2Q0 | 
+*AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /BQwxuLNWbM8vN0-p-Wu-QCRy3x0 | 
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
@@ -136,7 +136,9 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /lf5KMD9dBSVuaVcwjm4TB0d7bfY | Update location for account which makes this request.
 *ProfileAdminApi* | [**get_profile_name_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_name_pending_moderation_list) | **GET** /82woXm_Kq9yEtRHP7KAcXkgRWnU | 
 *ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /6CGbSNdoURdJRTBxb3Hb_OGw9ME | 
+*ProfileAdminApi* | [**get_profile_text_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_text_pending_moderation_list) | **GET** /pdEU3ussEDsELfe6TOtjqrDojOc | Get first page of pending profile text moderations. Oldest item is first and count 25.
 *ProfileAdminApi* | [**post_moderate_profile_name**](docs/ProfileAdminApi.md#post_moderate_profile_name) | **POST** /bnrAbC2DpwIftQouXUAVR1W6g8Y | 
+*ProfileAdminApi* | [**post_moderate_profile_text**](docs/ProfileAdminApi.md#post_moderate_profile_text) | **POST** /53BBFzgF9dZhb7_HvZSqLidsqbg | 
 
 
 ## Documentation For Models
@@ -201,6 +203,7 @@ Class | Method | HTTP request | Description
  - [GetProfileResult](docs/GetProfileResult.md)
  - [GetProfileStatisticsHistoryResult](docs/GetProfileStatisticsHistoryResult.md)
  - [GetProfileStatisticsResult](docs/GetProfileStatisticsResult.md)
+ - [GetProfileTextPendingModerationList](docs/GetProfileTextPendingModerationList.md)
  - [GetPublicKey](docs/GetPublicKey.md)
  - [GroupValues](docs/GroupValues.md)
  - [HandleModerationRequest](docs/HandleModerationRequest.md)
@@ -246,6 +249,7 @@ Class | Method | HTTP request | Description
  - [PerfValueArea](docs/PerfValueArea.md)
  - [Permissions](docs/Permissions.md)
  - [PostModerateProfileName](docs/PostModerateProfileName.md)
+ - [PostModerateProfileText](docs/PostModerateProfileText.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
  - [ProfileAttributeFilterList](docs/ProfileAttributeFilterList.md)
@@ -266,6 +270,11 @@ Class | Method | HTTP request | Description
  - [ProfileStatisticsHistoryValue](docs/ProfileStatisticsHistoryValue.md)
  - [ProfileStatisticsHistoryValueType](docs/ProfileStatisticsHistoryValueType.md)
  - [ProfileSyncVersion](docs/ProfileSyncVersion.md)
+ - [ProfileTextModerationInfo](docs/ProfileTextModerationInfo.md)
+ - [ProfileTextModerationRejectedReasonCategory](docs/ProfileTextModerationRejectedReasonCategory.md)
+ - [ProfileTextModerationRejectedReasonDetails](docs/ProfileTextModerationRejectedReasonDetails.md)
+ - [ProfileTextModerationState](docs/ProfileTextModerationState.md)
+ - [ProfileTextPendingModeration](docs/ProfileTextPendingModeration.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
  - [ProfileVersion](docs/ProfileVersion.md)
  - [ProfileVisibility](docs/ProfileVisibility.md)

@@ -17,6 +17,8 @@ pub struct Permissions {
     pub admin_moderate_images: Option<bool>,
     #[serde(rename = "admin_moderate_profile_names", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_profile_names: Option<bool>,
+    #[serde(rename = "admin_moderate_profile_texts", skip_serializing_if = "Option::is_none")]
+    pub admin_moderate_profile_texts: Option<bool>,
     #[serde(rename = "admin_moderate_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_moderate_profiles: Option<bool>,
     #[serde(rename = "admin_modify_permissions", skip_serializing_if = "Option::is_none")]
@@ -54,6 +56,7 @@ impl Permissions {
         Permissions {
             admin_moderate_images: None,
             admin_moderate_profile_names: None,
+            admin_moderate_profile_texts: None,
             admin_moderate_profiles: None,
             admin_modify_permissions: None,
             admin_news_create: None,

@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **admin_moderate_images** | Option<**bool**> |  | [optional][default to false]
 **admin_moderate_profile_names** | Option<**bool**> |  | [optional][default to false]
+**admin_moderate_profile_texts** | Option<**bool**> |  | [optional][default to false]
 **admin_moderate_profiles** | Option<**bool**> |  | [optional][default to false]
 **admin_modify_permissions** | Option<**bool**> |  | [optional][default to false]
 **admin_news_create** | Option<**bool**> |  | [optional][default to false]

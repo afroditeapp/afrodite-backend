@@ -20,16 +20,19 @@ pub struct GetMyProfileResult {
     pub p: Box<models::Profile>,
     #[serde(rename = "sv")]
     pub sv: Box<models::ProfileSyncVersion>,
+    #[serde(rename = "text_moderation_info")]
+    pub text_moderation_info: Box<models::ProfileTextModerationInfo>,
     #[serde(rename = "v")]
     pub v: Box<models::ProfileVersion>,
 }
 
 impl GetMyProfileResult {
-    pub fn new(p: models::Profile, sv: models::ProfileSyncVersion, v: models::ProfileVersion) -> GetMyProfileResult {
+    pub fn new(p: models::Profile, sv: models::ProfileSyncVersion, text_moderation_info: models::ProfileTextModerationInfo, v: models::ProfileVersion) -> GetMyProfileResult {
         GetMyProfileResult {
             lst: None,
             p: Box::new(p),
             sv: Box::new(sv),
+            text_moderation_info: Box::new(text_moderation_info),
             v: Box::new(v),
         }
     }

@@ -26,6 +26,9 @@ pub struct Profile {
     /// Profile text support is disabled for now.
     #[serde(rename = "ptext", skip_serializing_if = "Option::is_none")]
     pub ptext: Option<String>,
+    /// The profile text has been accepted by bot or human moderator.
+    #[serde(rename = "ptext_accepted", skip_serializing_if = "Option::is_none")]
+    pub ptext_accepted: Option<bool>,
     #[serde(rename = "unlimited_likes", skip_serializing_if = "Option::is_none")]
     pub unlimited_likes: Option<bool>,
 }
@@ -39,6 +42,7 @@ impl Profile {
             name,
             name_accepted: None,
             ptext: None,
+            ptext_accepted: None,
             unlimited_likes: None,
         }
     }

@@ -11,7 +11,6 @@ Method | HTTP request | Description
 [**get_deletion_status**](AccountApi.md#get_deletion_status) | **GET** /_aiEAY0WZCquNl_WQ5fDORGuHwA | Get deletion status.
 [**get_latest_birthdate**](AccountApi.md#get_latest_birthdate) | **GET** /Hg2W1drXZ94YVp3Uh38hnQzYIng | 
 [**get_news_item**](AccountApi.md#get_news_item) | **GET** /2OHF85k7hpH2tAibkA0V9YLwpF4/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
-[**get_unread_news_count**](AccountApi.md#get_unread_news_count) | **GET** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
 [**post_account_data**](AccountApi.md#post_account_data) | **POST** /Ln3_j2LpJIbQABKwnMMhUEtio5k | Set changeable user information to account.
 [**post_account_setup**](AccountApi.md#post_account_setup) | **POST** /RNb6qhf_lZU8t6kOm5kQY7Y34ok | Setup non-changeable user information during `initial setup` state.
 [**post_complete_setup**](AccountApi.md#post_complete_setup) | **POST** /VzPyCXS5Hx50SbAApdpUYfCY-Iw | Complete initial setup.
@@ -23,6 +22,7 @@ Method | HTTP request | Description
 [**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
 [**post_get_next_client_id**](AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
 [**post_get_next_news_page**](AccountApi.md#post_get_next_news_page) | **POST** /i9QOC8N-Nx9PdWvjKyAz8tXD2Q0 | 
+[**post_get_unread_news_count**](AccountApi.md#post_get_unread_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
 [**post_reset_news_paging**](AccountApi.md#post_reset_news_paging) | **POST** /BQwxuLNWbM8vN0-p-Wu-QCRy3x0 | 
 [**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
@@ -203,31 +203,6 @@ Name | Type | Description  | Required | Notes
 ### Return type
 
 [**models::GetNewsItemResult**](GetNewsItemResult.md)
-
-### Authorization
-
-[access_token](../README.md#access_token)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-
-## get_unread_news_count
-
-> models::UnreadNewsCountResult get_unread_news_count()
-The unread news count for public news.
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**models::UnreadNewsCountResult**](UnreadNewsCountResult.md)
 
 ### Authorization
 
@@ -542,6 +517,31 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_get_unread_news_count
+
+> models::UnreadNewsCountResult post_get_unread_news_count()
+The unread news count for public news.
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**models::UnreadNewsCountResult**](UnreadNewsCountResult.md)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
