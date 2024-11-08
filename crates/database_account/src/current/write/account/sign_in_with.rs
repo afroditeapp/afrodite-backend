@@ -43,19 +43,4 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
 
         Ok(())
     }
-
-    pub fn set_is_bot_account(
-        &mut self,
-        id: AccountIdInternal,
-        value_for_is_bot_account: bool,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::sign_in_with_info::dsl::*;
-
-        update(sign_in_with_info.find(id.as_db_id()))
-            .set((is_bot_account.eq(value_for_is_bot_account),))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
 }

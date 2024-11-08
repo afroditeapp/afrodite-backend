@@ -119,16 +119,6 @@ impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
         })
     }
 
-    pub async fn set_is_bot_account(
-        &self,
-        id: AccountIdInternal,
-        value: bool,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.account().sign_in_with().set_is_bot_account(id, value)
-        })
-    }
-
     pub async fn get_next_client_id(
         &self,
         id: AccountIdInternal,

@@ -35,9 +35,9 @@ impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
 
     pub async fn is_bot_account(&self, id: AccountIdInternal) -> Result<bool, DataError> {
         self.db_read(move |mut cmds| {
-            cmds.account()
-                .sign_in_with()
-                .sign_in_with_info_raw(id)
+            cmds.common()
+                .state()
+                .other_shared_state(id)
                 .map(|v| v.is_bot_account)
         })
         .await

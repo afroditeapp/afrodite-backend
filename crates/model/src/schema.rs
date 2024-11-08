@@ -570,6 +570,7 @@ diesel::table! {
         sync_version -> Integer,
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,
+        is_bot_account -> Bool,
     }
 }
 
@@ -579,7 +580,6 @@ diesel::table! {
     sign_in_with_info (account_id) {
         account_id -> Integer,
         google_account_id -> Nullable<Text>,
-        is_bot_account -> Bool,
     }
 }
 

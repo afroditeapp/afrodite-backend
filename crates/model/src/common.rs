@@ -498,6 +498,7 @@ pub struct AccountStateRelatedSharedState {
 pub struct OtherSharedState {
     pub unlimited_likes: bool,
     pub birthdate: Option<NaiveDate>,
+    pub is_bot_account: bool,
 }
 
 impl AccountStateRelatedSharedState {

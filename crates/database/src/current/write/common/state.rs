@@ -73,6 +73,21 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
         Ok(())
     }
 
+    pub fn set_is_bot_account(
+        &mut self,
+        id: AccountIdInternal,
+        value_for_is_bot_account: bool,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::shared_state::dsl::*;
+
+        update(shared_state.find(id.as_db_id()))
+            .set((is_bot_account.eq(value_for_is_bot_account),))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
     pub fn insert_default_account_permissions(
         &mut self,
         id: AccountIdInternal,

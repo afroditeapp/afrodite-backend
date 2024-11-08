@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- birthdate validation using third party service is implemented
     -- someday.
     birthdate                 DATE,
+    is_bot_account            BOOLEAN              NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -128,7 +129,6 @@ CREATE TABLE IF NOT EXISTS queue_entry(
 CREATE TABLE IF NOT EXISTS sign_in_with_info(
     account_id         INTEGER PRIMARY KEY NOT NULL,
     google_account_id  TEXT                          UNIQUE,
-    is_bot_account     BOOLEAN                       NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

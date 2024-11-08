@@ -3,7 +3,8 @@
 use axum::extract::State;
 use model::{AccountId, LoginResult, SignInWithInfo};
 use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
-use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
+use server_data::write::GetWriteCommandsCommon;
+use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
 use super::account::login_impl;
@@ -66,8 +67,11 @@ pub async fn post_register<S: WriteData + GetConfig + RegisteringCmd>(
     let new_account_id = state.register_impl(SignInWithInfo::default(), None).await?;
 
     db_write!(state, move |cmds| {
-        cmds.account().set_is_bot_account(new_account_id, true)
+        cmds.common().set_is_bot_account(new_account_id, true)
     })?;
+
+    // TODO(microservice): The is_bot_account is currently not synced
+    // to other servers.
 
     Ok(new_account_id.as_id().into())
 }

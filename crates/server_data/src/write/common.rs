@@ -159,4 +159,14 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
             .await
             .into_data_error(id)
     }
+
+    pub async fn set_is_bot_account(
+        &self,
+        id: AccountIdInternal,
+        value: bool,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common().state().set_is_bot_account(id, value)
+        })
+    }
 }
