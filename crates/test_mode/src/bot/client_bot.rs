@@ -151,7 +151,7 @@ impl BotAction for DoInitialSetupIfNeeded {
             .excecute_impl_task_state(state, task_state)
             .await?;
 
-            const ACTIONS: ActionArray = action_array!(
+            const ACTIONS1: ActionArray = action_array!(
                 SendImageToSlot {
                     slot: 0,
                     random_if_not_defined_in_config: true,
@@ -165,12 +165,19 @@ impl BotAction for DoInitialSetupIfNeeded {
                 MakeModerationRequest {
                     slots_to_request: &[0],
                 },
-                ChangeBotAgeAndOtherSettings,
+            );
+            RunActions(ACTIONS1)
+                .excecute_impl_task_state(state, task_state)
+                .await?;
+            ChangeBotAgeAndOtherSettings { admin: self.admin }
+                .excecute_impl_task_state(state, task_state)
+                .await?;
+            const ACTIONS2: ActionArray = action_array!(
                 SetBotPublicKey,
                 CompleteAccountSetup,
                 AssertAccountState::account(AccountState::Normal),
             );
-            RunActions(ACTIONS)
+            RunActions(ACTIONS2)
                 .excecute_impl_task_state(state, task_state)
                 .await?;
         }
@@ -281,7 +288,9 @@ impl BotAction for ChangeBotProfileText {
 }
 
 #[derive(Debug)]
-pub struct ChangeBotAgeAndOtherSettings;
+pub struct ChangeBotAgeAndOtherSettings {
+    pub admin: bool,
+}
 
 #[async_trait]
 impl BotAction for ChangeBotAgeAndOtherSettings {
@@ -356,11 +365,18 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
                 attributes.push(update);
             }
         }
-        let update = ProfileUpdate {
-            name: state
+
+        let name = if self.admin {
+            format!("Admin bot {}", state.bot_id + 1)
+        } else {
+            state
                 .get_bot_config()
                 .and_then(|v| v.name.clone())
-                .unwrap_or("B".to_string()),
+                .unwrap_or("B".to_string())
+        };
+
+        let update = ProfileUpdate {
+            name,
             age: age.into(),
             attributes,
             ..Default::default()

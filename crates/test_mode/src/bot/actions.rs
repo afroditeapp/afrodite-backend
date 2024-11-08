@@ -447,7 +447,9 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
     MakeModerationRequest {
         slots_to_request: &[0],
     },
-    ChangeBotAgeAndOtherSettings,
+    ChangeBotAgeAndOtherSettings {
+        admin: false,
+    },
     CompleteAccountSetup,
     AssertAccountState::account(AccountState::Normal),
 ];
@@ -464,7 +466,9 @@ pub const TO_ADMIN_NORMAL_STATE: ActionArray = action_array![
     MakeModerationRequest {
         slots_to_request: &[0],
     },
-    ChangeBotAgeAndOtherSettings,
+    ChangeBotAgeAndOtherSettings {
+        admin: true,
+    },
     CompleteAccountSetup,
     AssertAccountState::account(AccountState::Normal),
 ];
