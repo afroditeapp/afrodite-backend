@@ -19,7 +19,7 @@ impl<C: ConnectionProvider> CurrentWriteProfileAdminProfileText<C> {
     ) -> Result<ProfileTextModerationState, DieselDatabaseError> {
         use model::schema::profile_state;
 
-        let moderator_is_bot = false; // TODO(prod): implement
+        let moderator_is_bot = self.read().common().state().other_shared_state(moderator_id)?.is_bot_account;
 
         let next_state = if accepted {
             if moderator_is_bot {

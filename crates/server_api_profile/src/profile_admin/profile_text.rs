@@ -41,6 +41,7 @@ pub async fn get_profile_text_pending_moderation_list<
     S: ReadData,
 >(
     State(state): State<S>,
+    Extension(moderator_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
     Query(params): Query<GetProfileTextPendingModerationParams>,
 ) -> Result<Json<GetProfileTextPendingModerationList>, StatusCode> {
@@ -54,7 +55,7 @@ pub async fn get_profile_text_pending_moderation_list<
         .read()
         .profile_admin()
         .profile_text()
-        .profile_text_pending_moderation_list(params)
+        .profile_text_pending_moderation_list(moderator_id, params)
         .await?;
 
     Ok(r.into())
