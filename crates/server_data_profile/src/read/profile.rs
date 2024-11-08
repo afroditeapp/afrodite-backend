@@ -38,6 +38,7 @@ impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
                     ProfileAndProfileVersion {
                         profile: Profile::new(
                             data.data.clone(),
+                            data.state.profile_name_moderation_state,
                             data.state.profile_text_moderation_state,
                             data.attributes.attributes().clone(),
                             cache.other_shared_state.unlimited_likes,

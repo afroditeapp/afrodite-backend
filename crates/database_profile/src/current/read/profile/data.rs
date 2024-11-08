@@ -30,6 +30,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         let other_shared_state = self.read().common().state().other_shared_state(id)?;
         Ok(Profile::new(
             profile,
+            profile_state.profile_name_moderation_state,
             profile_state.profile_text_moderation_state,
             attributes,
             other_shared_state.unlimited_likes,
@@ -48,6 +49,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
         let other_shared_state = self.read().common().state().other_shared_state(id)?;
         let p = Profile::new(
             profile,
+            profile_state.profile_name_moderation_state,
             profile_state.profile_text_moderation_state,
             attributes,
             other_shared_state.unlimited_likes,

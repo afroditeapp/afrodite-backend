@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{GetProfileNamePendingModerationList, ProfileNamePendingModeration};
+use model::{GetProfileNamePendingModerationList, ProfileNameModerationState, ProfileNamePendingModeration};
 use database::IntoDatabaseError;
 
 define_current_read_commands!(CurrentReadProfileNameAllowlist, CurrentSyncReadProfileNameAllowlist);
@@ -17,13 +17,15 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileNameAllowlist<C> {
             .inner_join(
                 profile_state::table.on(profile_state::account_id.eq(account_id::id)),
             )
-            .filter(name.ne(""))
-            .filter(name_accepted.eq(false))
-            .filter(profile_state::profile_name_denied.eq(false))
+            .filter(
+                profile_state::profile_name_moderation_state.eq(ProfileNameModerationState::WaitingBotOrHumanModeration)
+                    .or(profile_state::profile_name_moderation_state.eq(ProfileNameModerationState::WaitingHumanModeration))
+            )
             .select((
                 account_id::uuid,
                 name,
             ))
+            .order(account_id::id.asc())
             .load::<ProfileNamePendingModeration>(self.conn())
             .into_db_error(())?;
 

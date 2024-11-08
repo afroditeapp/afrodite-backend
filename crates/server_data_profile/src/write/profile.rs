@@ -88,7 +88,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             if name_update_detected {
                 cmds.profile()
                     .profile_name_allowlist()
-                    .reset_profile_name_accepted_and_denied_values(
+                    .reset_profile_name_moderation_state(
                         id,
                         &profile_data.new_data.name,
                         config.profile_name_allowlist(),

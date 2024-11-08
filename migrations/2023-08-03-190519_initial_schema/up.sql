@@ -247,10 +247,6 @@ CREATE TABLE IF NOT EXISTS account_global_state(
 
 ---------- Tables for server component profile ----------
 
--- TODO(prod): Change denied to rejected
--- TODO(prod): Combine profile_name_denied and name_denied to
---             profile_name_moderation_state
-
 -- Private profile related state for some account.
 CREATE TABLE IF NOT EXISTS profile_state(
     account_id                 INTEGER PRIMARY KEY  NOT NULL,
@@ -276,9 +272,15 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Profile age when initial setup is completed
     profile_initial_age               INTEGER,
     profile_initial_age_set_unix_time INTEGER,
-    -- Profile name has been denied with manual moderation.
-    -- This prevents showing the name on profile name moderation list.
-    profile_name_denied               BOOL          NOT NULL    DEFAULT 0,
+    -- 0 = Empty
+    -- 1 = WaitingBotOrHumanModeration
+    -- 2 = WaitingHumanModeration
+    -- 3 = AcceptedByBot
+    -- 4 = AcceptedByHuman
+    -- 5 = AcceptedUsingAllowlist
+    -- 6 = RejectedByBot
+    -- 7 = RejectedByHuman
+    profile_name_moderation_state     INTEGER        NOT NULL    DEFAULT 0,
     -- 0 = Empty
     -- 1 = WaitingBotOrHumanModeration
     -- 2 = WaitingHumanModeration
@@ -307,8 +309,6 @@ CREATE TABLE IF NOT EXISTS profile(
     account_id      INTEGER PRIMARY KEY NOT NULL,
     version_uuid    BLOB                NOT NULL,
     name            TEXT                NOT NULL    DEFAULT '',
-    -- The name has been accepted using allowlist or manual moderation.
-    name_accepted   BOOL                NOT NULL    DEFAULT 0,
     profile_text    TEXT                NOT NULL    DEFAULT '',
     -- Age in years and inside inclusive range of [18,99].
     age             INTEGER             NOT NULL    DEFAULT 18,

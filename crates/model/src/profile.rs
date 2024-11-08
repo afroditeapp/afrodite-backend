@@ -44,6 +44,9 @@ pub use statistics::*;
 mod text;
 pub use text::*;
 
+mod name;
+pub use name::*;
+
 const NUMBER_LIST_ATTRIBUTE_MAX_VALUES: usize = 8;
 
 /// Profile's database data
@@ -54,7 +57,6 @@ pub struct ProfileInternal {
     pub account_id: AccountIdDb,
     pub version_uuid: ProfileVersion,
     pub name: String,
-    pub name_accepted: bool,
     pub profile_text: String,
     pub age: ProfileAge,
 }
@@ -108,6 +110,7 @@ fn is_true(value: &bool) -> bool {
 impl Profile {
     pub fn new(
         value: ProfileInternal,
+        profile_name_moderation_state: ProfileNameModerationState,
         profile_text_moderation_state: ProfileTextModerationState,
         attributes: Vec<ProfileAttributeValue>,
         unlimited_likes: bool,
@@ -118,7 +121,7 @@ impl Profile {
             age: value.age,
             attributes,
             unlimited_likes,
-            name_accepted: value.name_accepted,
+            name_accepted: profile_name_moderation_state.is_accepted(),
             ptext_accepted: profile_text_moderation_state.is_accepted(),
         }
     }
@@ -148,7 +151,7 @@ pub struct ProfileStateInternal {
     pub unlimited_likes_filter: Option<bool>,
     pub profile_attributes_sync_version: ProfileAttributesSyncVersion,
     pub profile_sync_version: ProfileSyncVersion,
-    pub profile_name_denied: bool,
+    pub profile_name_moderation_state: ProfileNameModerationState,
     pub profile_text_moderation_state: ProfileTextModerationState,
     pub profile_text_moderation_rejected_reason_category: Option<ProfileTextModerationRejectedReasonCategory>,
     pub profile_text_moderation_rejected_reason_details: Option<ProfileTextModerationRejectedReasonDetails>,
@@ -165,6 +168,7 @@ pub struct ProfileStateCached {
     pub search_group_flags: SearchGroupFlags,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
+    pub profile_name_moderation_state: ProfileNameModerationState,
     pub profile_text_moderation_state: ProfileTextModerationState,
 }
 
@@ -176,6 +180,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_group_flags: value.search_group_flags,
             last_seen_time_filter: value.last_seen_time_filter,
             unlimited_likes_filter: value.unlimited_likes_filter,
+            profile_name_moderation_state: value.profile_name_moderation_state,
             profile_text_moderation_state: value.profile_text_moderation_state,
         }
     }
