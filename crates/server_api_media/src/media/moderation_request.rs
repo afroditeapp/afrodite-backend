@@ -1,7 +1,7 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent};
+use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent, PendingNotificationFlags};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::create_open_api_router;
+use server_api::{app::EventManagerProvider, create_open_api_router};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -27,7 +27,7 @@ const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_moderation_request<S: ReadData>(
+pub async fn get_moderation_request<S: ReadData + EventManagerProvider>(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<CurrentModerationRequest>, StatusCode> {
@@ -36,6 +36,14 @@ pub async fn get_moderation_request<S: ReadData>(
     let request = state.read().media().moderation_request(account_id).await?;
 
     let request = CurrentModerationRequest { request };
+
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(
+            account_id,
+            PendingNotificationFlags::CONTENT_MODERATION_REQUEST_COMPLETED
+        )
+        .await;
 
     Ok(request.into())
 }
@@ -92,7 +100,7 @@ pub async fn delete_moderation_request<S: WriteData>(
     })
 }
 
-pub fn moderation_request_router<S: StateBase + WriteData + ReadData>(s: S) -> OpenApiRouter {
+pub fn moderation_request_router<S: StateBase + WriteData + ReadData + EventManagerProvider>(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         get_moderation_request::<S>,

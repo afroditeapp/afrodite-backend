@@ -60,6 +60,7 @@ pub enum EventType {
     AvailableProfileAttributesChanged,
     ProfileChanged,
     NewsCountChanged,
+    ContentModerationRequestCompleted,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -153,6 +154,7 @@ pub enum EventToClientInternal {
     AvailableProfileAttributesChanged,
     ProfileChanged,
     NewsChanged,
+    ContentModerationRequestCompleted,
 }
 
 impl From<&EventToClientInternal> for EventType {
@@ -173,6 +175,7 @@ impl From<&EventToClientInternal> for EventType {
             AvailableProfileAttributesChanged => Self::AvailableProfileAttributesChanged,
             ProfileChanged => Self::ProfileChanged,
             NewsChanged => Self::NewsCountChanged,
+            ContentModerationRequestCompleted => Self::ContentModerationRequestCompleted,
         }
     }
 }
@@ -205,7 +208,8 @@ impl From<EventToClientInternal> for EventToClient {
             | MatchesChanged
             | AvailableProfileAttributesChanged
             | ProfileChanged
-            | NewsChanged => (),
+            | NewsChanged
+            | ContentModerationRequestCompleted => (),
         }
 
         value
@@ -216,6 +220,7 @@ impl From<EventToClientInternal> for EventToClient {
 pub enum NotificationEvent {
     NewMessageReceived,
     ReceivedLikesChanged,
+    ContentModerationRequestCompleted,
 }
 
 impl From<NotificationEvent> for EventToClientInternal {
@@ -223,6 +228,7 @@ impl From<NotificationEvent> for EventToClientInternal {
         match event {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
             NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
+            NotificationEvent::ContentModerationRequestCompleted => EventToClientInternal::ContentModerationRequestCompleted,
         }
     }
 }

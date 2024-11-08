@@ -1,8 +1,8 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, FcmDeviceToken, NewReceivedLikesCountResult, PendingNotificationFlags, PendingNotificationToken, PendingNotificationWithData};
+use model::{AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::ReadData, create_open_api_router};
-use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
+use server_api::{app::{GetPushNotificationData, ReadData}, create_open_api_router};
+use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
@@ -63,7 +63,7 @@ const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/chat_api/get_pending_notifica
     ),
     security(), // This is public route handler
 )]
-pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData>(
+pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData + GetPushNotificationData>(
     State(state): State<S>,
     Json(token): Json<PendingNotificationToken>,
 ) -> Json<PendingNotificationWithData> {
@@ -80,29 +80,7 @@ pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData
         Err(_) => return PendingNotificationWithData::default().into(),
     };
 
-    let flags = PendingNotificationFlags::from(notification_value);
-    let sender_info = if flags == PendingNotificationFlags::NEW_MESSAGE {
-        state.read().chat().all_pending_message_sender_account_ids(id).await.ok()
-    } else {
-        None
-    };
-
-    let received_likes_info = if flags == PendingNotificationFlags::RECEIVED_LIKES_CHANGED {
-        state.read().chat().chat_state(id).await.ok().map(|chat_state| {
-            NewReceivedLikesCountResult {
-                v: chat_state.received_likes_sync_version,
-                c: chat_state.new_received_likes_count,
-            }
-        })
-    } else {
-        None
-    };
-
-    PendingNotificationWithData {
-        value: notification_value,
-        new_message_received_from: sender_info,
-        received_likes_changed: received_likes_info,
-    }.into()
+    state.get_push_notification_data(id, notification_value).await.into()
 }
 
 pub fn push_notification_router_private<S: StateBase + WriteData>(s: S) -> OpenApiRouter {
@@ -112,7 +90,7 @@ pub fn push_notification_router_private<S: StateBase + WriteData>(s: S) -> OpenA
     )
 }
 
-pub fn push_notification_router_public<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+pub fn push_notification_router_public<S: StateBase + GetAccounts + WriteData + ReadData + GetPushNotificationData>(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
         post_get_pending_notification::<S>,

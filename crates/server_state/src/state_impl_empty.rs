@@ -3,19 +3,7 @@ use std::net::SocketAddr;
 use config::{file::ConfigFileError, Config};
 use futures::Future;
 use model::{
-    AccessToken,
-    AccountId,
-    AccountIdInternal,
-    AccountState,
-    BackendConfig,
-    BackendVersion,
-    Permissions,
-    EmailAddress,
-    EmailMessages,
-    PendingNotificationFlags,
-    PublicKeyIdAndVersion,
-    PushNotificationStateInfoWithFlags,
-    SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailAddress, EmailMessages, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{internal_api::InternalApiClient, utils::StatusCode};
@@ -304,6 +292,17 @@ impl UpdateUnlimitedLikes for E {
         _id: AccountIdInternal,
         _unlimited_likes: bool,
     ) -> server_common::result::Result<(), DataError> {
+        unimplemented!()
+    }
+}
+
+
+impl GetPushNotificationData for E {
+    async fn get_push_notification_data(
+        &self,
+        _id: AccountIdInternal,
+        _pending_notification: PendingNotification,
+    ) -> PendingNotificationWithData {
         unimplemented!()
     }
 }

@@ -3,8 +3,7 @@ use axum::{
     Extension,
 };
 use model::{
-    AccountId, AccountIdInternal, Permissions, EventToClientInternal, HandleModerationRequest,
-    ModerationList, ModerationQueueTypeParam,
+    AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueTypeParam, NotificationEvent, Permissions
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
@@ -126,6 +125,13 @@ pub async fn post_handle_moderation_request<
                     .await?;
             }
         }
+
+        cmds.events()
+            .send_notification(
+                moderation_request_owner,
+                NotificationEvent::ContentModerationRequestCompleted,
+            )
+            .await?;
 
         Ok(())
     })?;

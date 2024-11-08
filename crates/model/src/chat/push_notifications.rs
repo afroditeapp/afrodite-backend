@@ -5,7 +5,7 @@ use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
 use utoipa::ToSchema;
 
 use crate::{
-    schema_sqlite_types::{Integer, Text}, AccountId, NotificationEvent
+    schema_sqlite_types::{Integer, Text}, AccountId, ModerationRequestState, NotificationEvent
 };
 
 use super::NewReceivedLikesCountResult;
@@ -18,6 +18,7 @@ use super::NewReceivedLikesCountResult;
 ///
 /// - const NEW_MESSAGE = 0x1;
 /// - const RECEIVED_LIKES_CHANGED = 0x2;
+/// - const CONTENT_MODERATION_REQUEST_COMPLETED = 0x4;
 ///
 #[derive(
     Debug,
@@ -55,6 +56,7 @@ bitflags::bitflags! {
     pub struct PendingNotificationFlags: i64 {
         const NEW_MESSAGE = 0x1;
         const RECEIVED_LIKES_CHANGED = 0x2;
+        const CONTENT_MODERATION_REQUEST_COMPLETED = 0x4;
     }
 }
 
@@ -69,6 +71,7 @@ impl From<NotificationEvent> for PendingNotificationFlags {
         match value {
             NotificationEvent::NewMessageReceived => Self::NEW_MESSAGE,
             NotificationEvent::ReceivedLikesChanged => Self::RECEIVED_LIKES_CHANGED,
+            NotificationEvent::ContentModerationRequestCompleted => Self::CONTENT_MODERATION_REQUEST_COMPLETED,
         }
     }
 }
@@ -193,4 +196,6 @@ pub struct PendingNotificationWithData {
     pub new_message_received_from: Option<Vec<AccountId>>,
     /// Data for RECEIVED_LIKES_CHANGED notification.
     pub received_likes_changed: Option<NewReceivedLikesCountResult>,
+    /// Data for CONTENT_MODERATION_REQUEST_COMPLETED notification.
+    pub content_moderation_request_completed: Option<ModerationRequestState>,
 }

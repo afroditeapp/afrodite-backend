@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use axum::extract::ws::WebSocket;
 use model::{
-    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, Permissions, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, PublicKeyIdAndVersion, SignInWithInfo, SyncDataVersionFromClient
+    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, PendingNotification, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, SignInWithInfo, SyncDataVersionFromClient
 };
 use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;
@@ -133,4 +133,12 @@ pub trait LatestPublicKeysInfo: StateBase + WriteData {
         &self,
         id: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<Vec<PublicKeyIdAndVersion>, DataError>> + Send;
+}
+
+pub trait GetPushNotificationData: StateBase + ReadData {
+    fn get_push_notification_data(
+        &self,
+        id: AccountIdInternal,
+        pending_notification: PendingNotification,
+    ) -> impl std::future::Future<Output = PendingNotificationWithData> + Send;
 }

@@ -4,7 +4,7 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, Permissions, EmailAddress, EmailMessages, EventToClientInternal, PendingNotificationFlags, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailAddress, EmailMessages, EventToClientInternal, NewReceivedLikesCountResult, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
 };
 pub use server_api::app::*;
 use server_api::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
@@ -16,6 +16,7 @@ use server_data_account::{read::GetReadCommandsAccount, write::{account::Increme
 use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_profile::{app::ProfileStatisticsCacheProvider, write::GetWriteCommandsProfile};
+use server_data_media::read::GetReadMediaCommands;
 use simple_backend::{
     app::{FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap, PerfCounterDataProvider, SignInWith}, email::{EmailData, EmailDataProvider, EmailError}, file_package::FilePackageManager, manager_client::ManagerApiManager, map::TileMapManager, perf::PerfCounterManagerData, sign_in_with::SignInWithManager
 };
@@ -542,6 +543,47 @@ impl UpdateUnlimitedLikes for S {
                 .await
         })
         .await
+    }
+}
+
+impl GetPushNotificationData for S {
+    async fn get_push_notification_data(
+        &self,
+        id: AccountIdInternal,
+        notification_value: PendingNotification,
+    ) -> PendingNotificationWithData {
+        let flags = PendingNotificationFlags::from(notification_value);
+        let sender_info = if flags.contains(PendingNotificationFlags::NEW_MESSAGE) {
+            self.read().chat().all_pending_message_sender_account_ids(id).await.ok()
+        } else {
+            None
+        };
+
+        let received_likes_info = if flags.contains(PendingNotificationFlags::RECEIVED_LIKES_CHANGED) {
+            self.read().chat().chat_state(id).await.ok().map(|chat_state| {
+                NewReceivedLikesCountResult {
+                    v: chat_state.received_likes_sync_version,
+                    c: chat_state.new_received_likes_count,
+                }
+            })
+        } else {
+            None
+        };
+
+        let content_moderation_state = if flags.contains(PendingNotificationFlags::CONTENT_MODERATION_REQUEST_COMPLETED) {
+            self.read().media().moderation_request(id).await.ok().flatten().map(|content_moderation_request| {
+                content_moderation_request.state
+            })
+        } else {
+            None
+        };
+
+        PendingNotificationWithData {
+            value: notification_value,
+            new_message_received_from: sender_info,
+            received_likes_changed: received_likes_info,
+            content_moderation_request_completed: content_moderation_state,
+        }
     }
 }
 
