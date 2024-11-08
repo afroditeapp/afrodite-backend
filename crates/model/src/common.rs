@@ -221,6 +221,7 @@ pub enum NotificationEvent {
     NewMessageReceived,
     ReceivedLikesChanged,
     ContentModerationRequestCompleted,
+    NewsChanged,
 }
 
 impl From<NotificationEvent> for EventToClientInternal {
@@ -229,6 +230,7 @@ impl From<NotificationEvent> for EventToClientInternal {
             NotificationEvent::NewMessageReceived => EventToClientInternal::NewMessageReceived,
             NotificationEvent::ReceivedLikesChanged => EventToClientInternal::ReceivedLikesChanged,
             NotificationEvent::ContentModerationRequestCompleted => EventToClientInternal::ContentModerationRequestCompleted,
+            NotificationEvent::NewsChanged => EventToClientInternal::NewsChanged,
         }
     }
 }

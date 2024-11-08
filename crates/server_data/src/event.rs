@@ -14,6 +14,8 @@ use crate::{
     DataError,
 };
 
+// TODO(prod): Automatic logout if no activity for some months
+
 #[derive(thiserror::Error, Debug)]
 pub enum EventError {
     #[error("Event mode access failed")]
@@ -165,6 +167,29 @@ impl<'a> EventManagerWithCacheReference<'a> {
         }
 
         Ok(())
+    }
+
+    pub async fn send_low_priority_notification_to_logged_in_clients(
+        &'a self,
+        event: NotificationEvent,
+    ) {
+        self.cache
+            .write_cache_for_logged_in_clients(|account_id, entry| {
+                entry.pending_notification_flags |= event.into();
+                let sent = if let Some(sender) = entry.connection_event_sender() {
+                    match sender.sender.try_send(InternalEventType::Notification(event)) {
+                        Ok(()) => true,
+                        Err(TrySendError::Closed(_) | TrySendError::Full(_)) => false,
+                    }
+                } else {
+                    false
+                };
+
+                if !sent {
+                    self.push_notification_sender.send_low_priority(account_id)
+                }
+            })
+            .await;
     }
 
     pub async fn trigger_push_notification_sending_check_if_needed(

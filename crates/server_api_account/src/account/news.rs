@@ -1,8 +1,8 @@
 
 use axum::{extract::{Path, Query, State}, Extension};
-use model::{AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, PageItemCountForNewPublicNews, Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult};
+use model::{AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{create_open_api_router, db_write};
+use server_api::{app::EventManagerProvider, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -16,7 +16,7 @@ const PATH_GET_UNREAD_NEWS_COUNT: &str = "/account_api/news_count";
 
 /// The unread news count for public news.
 #[utoipa::path(
-    get,
+    post,
     path = PATH_GET_UNREAD_NEWS_COUNT,
     responses(
         (status = 200, description = "Success.", body = UnreadNewsCountResult),
@@ -25,13 +25,19 @@ const PATH_GET_UNREAD_NEWS_COUNT: &str = "/account_api/news_count";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_unread_news_count<S: ReadData>(
+pub async fn post_get_unread_news_count<S: ReadData + EventManagerProvider>(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<UnreadNewsCountResult>, StatusCode> {
     ACCOUNT.get_unread_news_count.incr();
 
     let r = state.read().account().news().unread_news_count(id).await?;
+
+    state
+        .event_manager()
+        .remove_specific_pending_notification_flags_from_cache(id, PendingNotificationFlags::NEWS_CHANGED)
+        .await;
+
     Ok(r.into())
 }
 
@@ -171,10 +177,10 @@ pub async fn get_news_item<S: ReadData>(
     Ok(news.into())
 }
 
-pub fn news_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+pub fn news_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_unread_news_count::<S>,
+        post_get_unread_news_count::<S>,
         post_reset_news_paging::<S>,
         post_get_next_news_page::<S>,
         get_news_item::<S>,

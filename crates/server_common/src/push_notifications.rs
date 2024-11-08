@@ -14,7 +14,7 @@ use simple_backend::ServerQuitWatcher;
 use simple_backend_config::SimpleBackendConfig;
 use tokio::{
     sync::mpsc::{error::TrySendError, Receiver, Sender},
-    task::JoinHandle,
+    task::JoinHandle, time::MissedTickBehavior,
 };
 use tracing::{error, info, warn};
 
@@ -65,6 +65,7 @@ pub struct SendPushNotification {
 #[derive(Debug, Clone)]
 pub struct PushNotificationSender {
     sender: Sender<SendPushNotification>,
+    sender_low_priority: Sender<SendPushNotification>,
 }
 
 impl PushNotificationSender {
@@ -77,6 +78,19 @@ impl PushNotificationSender {
             }
             Err(TrySendError::Full(_)) => {
                 error!("Sending push notification to internal channel failed: channel is full");
+            }
+        }
+    }
+
+    pub fn send_low_priority(&self, account_id: AccountIdInternal) {
+        let notification = SendPushNotification { account_id };
+        match self.sender_low_priority.try_send(notification) {
+            Ok(()) => (),
+            Err(TrySendError::Closed(_)) => {
+                error!("Sending low priority push notification to internal channel failed: channel is broken");
+            }
+            Err(TrySendError::Full(_)) => {
+                error!("Sending low priority push notification to internal channel failed: channel is full");
             }
         }
     }
@@ -112,14 +126,16 @@ pub trait PushNotificationStateProvider {
 
 pub fn channel() -> (PushNotificationSender, PushNotificationReceiver) {
     let (sender, receiver) = tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
-    let sender = PushNotificationSender { sender };
-    let receiver = PushNotificationReceiver { receiver };
+    let (sender_low_priority, receiver_low_priority) = tokio::sync::mpsc::channel(PUSH_NOTIFICATION_CHANNEL_BUFFER_SIZE);
+    let sender = PushNotificationSender { sender, sender_low_priority };
+    let receiver = PushNotificationReceiver { receiver, receiver_low_priority };
     (sender, receiver)
 }
 
 #[derive(Debug)]
 pub struct PushNotificationReceiver {
     receiver: Receiver<SendPushNotification>,
+    receiver_low_priority: Receiver<SendPushNotification>,
 }
 
 pub struct PushNotificationManager<T> {
@@ -181,8 +197,23 @@ impl<T: PushNotificationStateProvider + Send + 'static> PushNotificationManager<
 
     pub async fn logic(&mut self) {
         let mut sending_logic = FcmSendingLogic::new();
+        let mut low_priority_notification_allowed = false;
+        let mut low_priority_notification_interval = tokio::time::interval(Duration::from_millis(500));
+        low_priority_notification_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         loop {
-            let notification = self.receiver.receiver.recv().await;
+            let notification = tokio::select! {
+                notification = self.receiver.receiver.recv() => notification,
+                notification = self.receiver.receiver_low_priority.recv(), if low_priority_notification_allowed => {
+                    low_priority_notification_allowed = false;
+                    low_priority_notification_interval.reset();
+                    notification
+                },
+                _ = low_priority_notification_interval.tick(), if !low_priority_notification_allowed => {
+                    low_priority_notification_allowed = true;
+                    continue;
+                }
+            };
+
             match notification {
                 Some(notification) => {
                     let result = self

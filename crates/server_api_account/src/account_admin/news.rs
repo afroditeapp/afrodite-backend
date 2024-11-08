@@ -1,6 +1,6 @@
 
 use axum::{extract::{Path, State}, Extension};
-use model::{AccountIdInternal, BooleanSetting, EventToClientInternal, NewsId, NewsLocale, Permissions, UpdateNewsTranslation, UpdateNewsTranslationResult};
+use model::{AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions, UpdateNewsTranslation, UpdateNewsTranslationResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write, db_write_multiple, result::WrappedContextExt, DataError};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -239,8 +239,8 @@ pub async fn post_set_news_publicity<S: ReadData + WriteData>(
         ).await?;
 
         cmds.events()
-            .send_connected_event_to_logged_in_clients(
-                EventToClientInternal::NewsChanged
+            .send_low_priority_notification_to_logged_in_clients(
+                NotificationEvent::NewsChanged
             )
             .await;
 

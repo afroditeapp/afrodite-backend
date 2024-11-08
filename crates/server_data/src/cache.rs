@@ -301,6 +301,17 @@ impl DatabaseCache {
         cache_operation(&mut cache_entry)
     }
 
+    pub async fn write_cache_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(AccountIdInternal, &mut CacheEntry),
+    ) {
+        let guard = self.access_tokens.read().await;
+        for v in guard.values() {
+            let mut cache_entry = v.cache.write().await;
+            cache_operation(v.account_id_internal, &mut cache_entry)
+        }
+    }
+
     // pub async fn account(&self, id: AccountId) -> Result<Account, CacheError> {
     //     let guard = self.accounts.read().await;
     //     let data = guard

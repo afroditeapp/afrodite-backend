@@ -578,11 +578,18 @@ impl GetPushNotificationData for S {
             None
         };
 
+        let unread_news_count = if flags.contains(PendingNotificationFlags::NEWS_CHANGED) {
+            self.read().account().news().unread_news_count(id).await.ok()
+        } else {
+            None
+        };
+
         PendingNotificationWithData {
             value: notification_value,
             new_message_received_from: sender_info,
             received_likes_changed: received_likes_info,
             content_moderation_request_completed: content_moderation_state,
+            news_changed: unread_news_count,
         }
     }
 }
