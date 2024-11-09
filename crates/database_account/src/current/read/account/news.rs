@@ -46,19 +46,29 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
     ) -> Result<(Vec<NewsItemSimple>, PageItemCountForNewPublicNews), DieselDatabaseError> {
         use crate::schema::{news, news_translations};
 
-        let private_rows: Vec<(NewsItemInternal, Option<String>)> = if page == 0 && include_private_news {
+        let (requested_translation, default_translation) = alias!(news_translations as requested_translation, news_translations as default_translation);
+
+        let private_rows: Vec<(NewsItemInternal, Option<String>, Option<String>)> = if page == 0 && include_private_news {
             news::table
                 .left_outer_join(
-                    news_translations::table.on(
-                        news::id.eq(news_translations::news_id).and(
-                            news_translations::locale.eq(locale_value.locale.clone()).or(news_translations::locale.eq(NewsLocale::ENGLISH))
+                    requested_translation.on(
+                        news::id.eq(requested_translation.field(news_translations::news_id)).and(
+                            requested_translation.field(news_translations::locale).eq(locale_value.locale.clone())
+                        )
+                    ),
+                )
+                .left_outer_join(
+                    default_translation.on(
+                        news::id.eq(default_translation.field(news_translations::news_id)).and(
+                            default_translation.field(news_translations::locale).eq(NewsLocale::ENGLISH)
                         )
                     ),
                 )
                 .filter(news::publication_id.is_null())
                 .select((
                     NewsItemInternal::as_select(),
-                    news_translations::title.nullable(),
+                    requested_translation.field(news_translations::title).nullable(),
+                    default_translation.field(news_translations::title).nullable(),
                 ))
                 .order(news::id.desc())
                 .load(self.conn())
@@ -69,11 +79,18 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
 
         const PAGE_SIZE: i64 = 25;
 
-        let public_rows: Vec<(NewsItemInternal, Option<String>, PublicationId)> = news::table
+        let public_rows: Vec<(NewsItemInternal, PublicationId, Option<String>, Option<String>)> = news::table
             .left_outer_join(
-                news_translations::table.on(
-                    news::id.eq(news_translations::news_id).and(
-                        news_translations::locale.eq(locale_value.locale).or(news_translations::locale.eq(NewsLocale::ENGLISH))
+                requested_translation.on(
+                    news::id.eq(requested_translation.field(news_translations::news_id)).and(
+                        requested_translation.field(news_translations::locale).eq(locale_value.locale.clone())
+                    )
+                ),
+            )
+            .left_outer_join(
+                default_translation.on(
+                    news::id.eq(default_translation.field(news_translations::news_id)).and(
+                        default_translation.field(news_translations::locale).eq(NewsLocale::ENGLISH)
                     )
                 ),
             )
@@ -81,8 +98,9 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .filter(news::publication_id.le(id_value))
             .select((
                 NewsItemInternal::as_select(),
-                news_translations::title.nullable(),
                 news::publication_id.assume_not_null(),
+                requested_translation.field(news_translations::title).nullable(),
+                default_translation.field(news_translations::title).nullable(),
             ))
             .order(news::publication_id.desc())
             .limit(PAGE_SIZE)
@@ -97,7 +115,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .map(|r| {
                 NewsItemSimple {
                     id: r.0.id,
-                    title: r.1,
+                    title: r.1.or(r.2),
                     time: r.0.first_publication_unix_time,
                     private: r.0.publication_id.is_none()
                 }
@@ -107,13 +125,13 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
                     .into_iter()
                     .map(|r| {
                         if let Some(previous_id_value) = previous_id_value {
-                            if r.2.id > previous_id_value.id {
+                            if r.1.id > previous_id_value.id {
                                 new_items_count += 1;
                             }
                         }
                         NewsItemSimple {
                             id: r.0.id,
-                            title: r.1,
+                            title: r.2.or(r.3),
                             time: r.0.first_publication_unix_time,
                             private: r.0.publication_id.is_none()
                         }
