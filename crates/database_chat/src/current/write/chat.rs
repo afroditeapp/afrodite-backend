@@ -164,3 +164,5 @@ pub struct ReceivedLikesChangeInfo {
     pub current_count: NewReceivedLikesCount,
     pub previous_count: NewReceivedLikesCount,
 }
+
+pub struct ReceiverBlockedSender;

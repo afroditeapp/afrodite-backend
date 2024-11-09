@@ -46,4 +46,10 @@ impl<'a> AccountIdManager<'a> {
             .await
             .into_data_error(id)
     }
+
+    pub async fn get_internal_id_optional(&self, id: AccountId) -> Option<AccountIdInternal> {
+        self.cache
+            .to_account_id_internal_optional(id)
+            .await
+    }
 }

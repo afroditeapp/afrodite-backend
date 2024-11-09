@@ -211,12 +211,18 @@ impl DatabaseCache {
         &self,
         id: AccountId,
     ) -> Result<AccountIdInternal, CacheError> {
+        self.to_account_id_internal_optional(id).await
+            .ok_or(CacheError::KeyNotExists.report())
+    }
+
+    pub async fn to_account_id_internal_optional(
+        &self,
+        id: AccountId,
+    ) -> Option<AccountIdInternal> {
         let guard = self.accounts.read().await;
-        let data = guard
+        guard
             .get(&id)
-            .ok_or(CacheError::KeyNotExists)?
-            .account_id_internal;
-        Ok(data)
+            .map(|e| e.account_id_internal)
     }
 
     pub async fn read_cache_for_logged_in_clients(

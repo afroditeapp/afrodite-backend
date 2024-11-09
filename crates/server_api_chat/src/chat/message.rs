@@ -238,7 +238,9 @@ pub async fn post_send_message<S: GetAccounts + WriteData>(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let message_reciever = state.get_internal_id(query_params.receiver).await?;
+    let Some(message_reciever) = state.get_internal_id_optional(query_params.receiver).await else {
+        return Ok(SendMessageResult::receiver_blocked_sender_or_receiver_not_found().into())
+    };
     let result = db_write_multiple!(state, move |cmds| {
         let (result, push_notification_allowed) = cmds.chat()
             .insert_pending_message_if_match_and_not_blocked(

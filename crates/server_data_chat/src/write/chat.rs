@@ -1,6 +1,6 @@
 mod push_notifications;
 
-use database_chat::current::write::chat::ChatStateChanges;
+use database_chat::current::write::chat::{ChatStateChanges, ReceiverBlockedSender};
 use error_stack::ResultExt;
 use model::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
@@ -404,6 +404,12 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
                     client_id_value,
                     client_local_id_value,
                 )?;
+
+            let message_values = match message_values {
+                Ok(v) => v,
+                Err(ReceiverBlockedSender) =>
+                    return Ok((SendMessageResult::receiver_blocked_sender_or_receiver_not_found(), None)),
+            };
 
             let push_notification_allowd = if receiver_acknowledgements_missing == 0 {
                 Some(PushNotificationAllowed)

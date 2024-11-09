@@ -32,6 +32,11 @@ pub trait GetAccounts {
         &self,
         id: AccountId,
     ) -> impl std::future::Future<Output = Result<AccountIdInternal, DataError>> + Send;
+
+    fn get_internal_id_optional(
+        &self,
+        id: AccountId,
+    ) -> impl std::future::Future<Output = Option<AccountIdInternal>> + Send;
 }
 
 // pub trait FileAccessProvider {

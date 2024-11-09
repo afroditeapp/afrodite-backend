@@ -36,6 +36,9 @@ impl GetAccounts for E {
     async fn get_internal_id(&self, _id: AccountId) -> error_stack::Result<AccountIdInternal, DataError> {
         unimplemented!()
     }
+    async fn get_internal_id_optional(&self, _id: AccountId) -> Option<AccountIdInternal> {
+        unimplemented!()
+    }
 }
 
 impl ReadDynamicConfig for E {

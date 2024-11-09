@@ -4,6 +4,8 @@ use error_stack::Result;
 use model::{AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, MessageNumber, NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, UnixTime};
 use crate::IntoDatabaseError;
 
+use super::ReceiverBlockedSender;
+
 define_current_write_commands!(CurrentWriteChatMessage, CurrentSyncWriteChatMessage);
 
 impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
@@ -72,7 +74,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         message: Vec<u8>,
         client_id_value: ClientId,
         client_local_id_value: ClientLocalId
-    ) -> Result<NewPendingMessageValues, DieselDatabaseError> {
+    ) -> Result<std::result::Result<NewPendingMessageValues, ReceiverBlockedSender>, DieselDatabaseError> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = UnixTime::current_time();
         let interaction = self
@@ -84,6 +86,12 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         // does not have that message already viewed.
         let new_message_number = MessageNumber::new(interaction.message_counter + 1);
 
+        if interaction.is_direction_blocked(receiver, sender) {
+            return Ok(Err(ReceiverBlockedSender));
+        }
+
+        // The is_blocked handles the case where sender has blocked the
+        // message receiver.
         if interaction.state_number != AccountInteractionState::Match || interaction.is_blocked() {
             return Err(DieselDatabaseError::NotAllowed.into());
         }
@@ -108,9 +116,9 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
             .execute(self.conn())
             .into_db_error((sender, receiver, new_message_number))?;
 
-        Ok(NewPendingMessageValues {
+        Ok(Ok(NewPendingMessageValues {
             unix_time: time,
             message_number: new_message_number,
-        })
+        }))
     }
 }

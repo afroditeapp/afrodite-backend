@@ -42,6 +42,13 @@ impl GetAccounts for S {
             .await
             .map_err(|e| e.into_report())
     }
+
+    async fn get_internal_id_optional(&self, id: AccountId) -> Option<AccountIdInternal> {
+        self.database
+            .account_id_manager()
+            .get_internal_id_optional(id)
+            .await
+    }
 }
 
 impl ReadDynamicConfig for S {
