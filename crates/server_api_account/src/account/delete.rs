@@ -10,6 +10,9 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
+// TODO(prod): Save all AccountId UUIDs to prevent reusing removed
+// AccountId UUID? Save AccountId UUIDs to history database?
+
 #[obfuscate_api]
 const PATH_POST_DELETE: &str = "/account_api/delete";
 
