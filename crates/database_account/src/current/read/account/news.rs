@@ -130,6 +130,22 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
         locale_value: NewsLocale,
         require_locale: RequireNewsLocale,
     ) -> Result<Option<NewsItem>, DieselDatabaseError> {
+        let requested_locale_news = self.news_item_internal(news_id_value, locale_value)?;
+
+        if requested_locale_news.is_none() && require_locale.require_locale {
+            Ok(requested_locale_news)
+        } else if requested_locale_news.is_none() {
+            self.news_item_internal(news_id_value, NewsLocale::default())
+        } else {
+            Ok(requested_locale_news)
+        }
+    }
+
+    fn news_item_internal(
+        &mut self,
+        news_id_value: NewsId,
+        locale_value: NewsLocale,
+    ) -> Result<Option<NewsItem>, DieselDatabaseError> {
         use crate::schema::{account_id, news, news_translations};
 
         let (creator_aid, editor_aid) = alias!(account_id as creator_aid, account_id as editor_aid);
@@ -137,9 +153,8 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
         let value: Option<(NewsTranslationInternal, Option<AccountId>, Option<AccountId>)> = news::table
             .inner_join(
                 news_translations::table.on(
-                    news::id.eq(news_translations::news_id).and(
-                        news_translations::locale.eq(locale_value.locale.clone()).or(news_translations::locale.eq(NewsLocale::ENGLISH))
-                    )
+                    news::id.eq(news_translations::news_id)
+                        .and(news_translations::locale.eq(locale_value.locale.clone()))
                 ),
             )
             .left_outer_join(
@@ -167,10 +182,6 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
         } else {
             return Ok(None);
         };
-
-        if require_locale.require_locale && internal.locale != locale_value.locale {
-            return Ok(None);
-        }
 
         let news_item = NewsItem {
             title: internal.title,

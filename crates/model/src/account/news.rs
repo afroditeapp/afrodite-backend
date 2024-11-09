@@ -314,6 +314,14 @@ impl NewsLocale {
     }
 }
 
+impl Default for NewsLocale {
+    fn default() -> Self {
+        Self {
+            locale: Self::ENGLISH.to_string(),
+        }
+    }
+}
+
 /// Define how many returned news items counted from the first public
 /// news item are new news (news publicity changed to public after
 /// previous news iterator reset).
