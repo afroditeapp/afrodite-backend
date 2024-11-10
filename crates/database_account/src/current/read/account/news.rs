@@ -116,7 +116,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
                 NewsItemSimple {
                     id: r.0.id,
                     title: r.1.or(r.2),
-                    time: r.0.first_publication_unix_time,
+                    time: r.0.latest_publication_unix_time,
                     private: r.0.publication_id.is_none()
                 }
             })
@@ -132,7 +132,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
                         NewsItemSimple {
                             id: r.0.id,
                             title: r.2.or(r.3),
-                            time: r.0.first_publication_unix_time,
+                            time: r.0.latest_publication_unix_time,
                             private: r.0.publication_id.is_none()
                         }
                     })
@@ -168,7 +168,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
 
         let (creator_aid, editor_aid) = alias!(account_id as creator_aid, account_id as editor_aid);
 
-        let value: Option<(NewsTranslationInternal, Option<AccountId>, Option<AccountId>)> = news::table
+        let value: Option<(NewsItemInternal, NewsTranslationInternal, Option<AccountId>, Option<AccountId>)> = news::table
             .inner_join(
                 news_translations::table.on(
                     news::id.eq(news_translations::news_id)
@@ -187,6 +187,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             )
             .filter(news::id.eq(news_id_value))
             .select((
+                NewsItemInternal::as_select(),
                 NewsTranslationInternal::as_select(),
                 creator_aid.field(account_id::uuid).nullable(),
                 editor_aid.field(account_id::uuid).nullable()
@@ -195,7 +196,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             .optional()
             .into_db_error(())?;
 
-        let (internal, creator, editor) = if let Some(value) = value {
+        let (item_internal, internal, creator, editor) = if let Some(value) = value {
             value
         } else {
             return Ok(None);
@@ -205,7 +206,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
             title: internal.title,
             body: internal.body,
             locale: internal.locale,
-            creation_time: internal.creation_unix_time,
+            time: item_internal.latest_publication_unix_time,
             edit_unix_time: internal.edit_unix_time.map(|x| x.ut),
             version: Some(internal.version_number),
             aid_creator: creator,

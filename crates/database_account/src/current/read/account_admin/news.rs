@@ -61,7 +61,7 @@ impl<C: ConnectionProvider> CurrentSyncReadAccountNewsAdmin<C> {
                     title: internal.title,
                     body: internal.body,
                     locale: internal.locale,
-                    creation_time: internal.creation_unix_time,
+                    time: news_item.latest_publication_unix_time,
                     version: Some(internal.version_number),
                     aid_creator: creator,
                     aid_editor: editor,

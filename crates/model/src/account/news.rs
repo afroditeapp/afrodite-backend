@@ -256,7 +256,8 @@ pub struct NewsItem {
     pub title: String,
     pub body: String,
     pub locale: String,
-    pub creation_time: UnixTime,
+    /// Latest publication time
+    pub time: Option<UnixTime>,
     /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
     pub edit_unix_time: Option<i64>,
     /// Only visible for accounts which have some news permissions
@@ -287,6 +288,7 @@ pub struct GetNewsItemResult {
 pub struct NewsItemSimple {
     pub id: NewsId,
     pub title: Option<String>,
+    /// Latest publication time
     pub time: Option<UnixTime>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
