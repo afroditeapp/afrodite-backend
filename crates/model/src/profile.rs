@@ -436,6 +436,7 @@ pub struct GetMyProfileResult {
     pub v: ProfileVersion,
     pub sv: ProfileSyncVersion,
     pub lst: Option<LastSeenTime>,
+    pub name_moderation_state: ProfileNameModerationState,
     pub text_moderation_info: ProfileTextModerationInfo,
 }
 

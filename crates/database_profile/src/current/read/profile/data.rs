@@ -59,6 +59,7 @@ impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
             lst: last_seen_time,
             v: profile_version,
             sv: profile_state.profile_sync_version,
+            name_moderation_state: profile_state.profile_name_moderation_state,
             text_moderation_info: profile_state.into(),
         };
         Ok(r)
