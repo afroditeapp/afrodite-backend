@@ -133,7 +133,7 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 ///
 /// # Requirements
 /// - Profile attributes must be valid.
-/// - Profile text must be 400 bytes or less.
+/// - Profile text must be 2000 bytes or less.
 /// - Profile text must be trimmed.
 /// - Profile name changes are only possible when initial setup is ongoing.
 /// - Profile name must be trimmed and not empty.
