@@ -304,7 +304,7 @@ impl BotState {
 
     pub fn get_bot_config(&self) -> Option<&BotInstanceConfig> {
         if let TestModeSubMode::Bot(_) = self.config.mode {
-            self.bot_config_file.bot.get(self.bot_id as usize)
+            self.bot_config_file.bot.iter().find(|v| Into::<u32>::into(v.id) == self.bot_id)
         } else {
             None
         }
