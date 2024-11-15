@@ -29,6 +29,7 @@ impl ConnectedApp {
     pub fn private_account_server_router(&self) -> Router {
         let private = Router::new()
             .merge(api::account::register_router(self.state.clone()))
+            .merge(api::account::logout_router(self.state.clone()))
             .merge(api::account::delete_router(self.state.clone()))
             .merge(api::account::settings_router(self.state.clone()))
             .merge(api::account::state_router(self.state.clone()))

@@ -69,9 +69,6 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
         Ok(())
     }
 
-    // TODO(prod): Logout route which removes current
-    //             tokens and connection address.
-
     /// Remove specific connection session.
     pub async fn end_connection_session(
         &self,

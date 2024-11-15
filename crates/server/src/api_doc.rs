@@ -29,6 +29,7 @@ impl ApiDoc {
         let account = ApiDoc::openapi()
             .merge_from(server_api_account::account::delete_router(state.clone()).into_openapi())
             .merge_from(server_api_account::account::demo_mode_router(state.clone()).into_openapi())
+            .merge_from(server_api_account::account::logout_router(state.clone()).into_openapi())
             .merge_from(server_api_account::account::news_router(state.clone()).into_openapi())
             .merge_from(server_api_account::account::register_router(state.clone()).into_openapi())
             .merge_from(server_api_account::account::settings_router(state.clone()).into_openapi())
