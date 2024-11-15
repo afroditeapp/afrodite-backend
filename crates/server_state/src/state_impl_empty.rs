@@ -239,6 +239,13 @@ impl DemoModeManagerProvider for E {
         unimplemented!()
     }
 
+    async fn demo_mode_logout(
+        &self,
+        _token: &model::DemoModeToken,
+    ) -> error_stack::Result<(), DataError> {
+        unimplemented!()
+    }
+
     async fn accessible_accounts_if_token_valid<
         S: StateBase + GetConfig + GetAccounts + ReadData,
     >(

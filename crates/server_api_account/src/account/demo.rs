@@ -18,7 +18,6 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-// TODO(prod): Logout route for demo account?
 // TODO(prod): Use one route for login and change wording to user ID and
 //             password? Also info about locked account only if password
 //             is correct?
@@ -164,6 +163,31 @@ pub async fn post_demo_mode_login_to_account<
     Ok(result.into())
 }
 
+#[obfuscate_api]
+const PATH_POST_DEMO_MODE_LOGOUT: &str =
+    "/account_api/demo_mode_logout";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_DEMO_MODE_LOGOUT,
+    request_body = DemoModeToken,
+    responses(
+        (status = 200, description = "Successfull."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(),
+)]
+pub async fn post_demo_mode_logout<
+    S: DemoModeManagerProvider,
+>(
+    State(state): State<S>,
+    Json(token): Json<DemoModeToken>,
+) -> Result<(), StatusCode> {
+    ACCOUNT.post_demo_mode_logout.incr();
+    state.demo_mode_logout(&token).await?;
+    Ok(())
+}
+
 pub fn demo_mode_router<
     S: StateBase
         + DemoModeManagerProvider
@@ -184,6 +208,7 @@ pub fn demo_mode_router<
         post_demo_mode_confirm_login::<S>,
         post_demo_mode_register_account::<S>,
         post_demo_mode_login_to_account::<S>,
+        post_demo_mode_logout::<S>,
     )
 }
 
@@ -196,4 +221,5 @@ create_counters!(
     post_demo_mode_confirm_login,
     post_demo_mode_register_account,
     post_demo_mode_login_to_account,
+    post_demo_mode_logout,
 );

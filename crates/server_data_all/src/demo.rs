@@ -216,6 +216,32 @@ impl DemoModeManager {
         }
     }
 
+    pub async fn demo_mode_logout(
+        &self,
+        token: &DemoModeToken,
+    ) -> Result<(), DataError> {
+        let mut w = self.state.write().await;
+        let state = w.states.iter().enumerate().find_map(|(i, state)| {
+            let result = state.token_equals(token);
+            match result {
+                Ok(false) | Err(_) => None,
+                Ok(true) => Some(i),
+            }
+        });
+
+        let token_index = match state {
+            Some(i) => i,
+            None => return Ok(()),
+        };
+
+        if let Some(s) = w.states.get_mut(token_index) {
+            s.access_granted_token = None;
+            Ok(())
+        } else {
+            Err(DataError::NotFound.report())
+        }
+    }
+
     pub async fn accessible_accounts_if_token_valid(
         &self,
         token: &DemoModeToken,

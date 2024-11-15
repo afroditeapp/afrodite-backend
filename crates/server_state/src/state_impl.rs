@@ -353,6 +353,13 @@ impl DemoModeManagerProvider for S {
         self.demo_mode.demo_mode_token_exists(token).await
     }
 
+    async fn demo_mode_logout(
+        &self,
+        token: &model::DemoModeToken,
+    ) -> error_stack::Result<(), DataError> {
+        self.demo_mode.demo_mode_logout(token).await
+    }
+
     async fn accessible_accounts_if_token_valid<
         S: StateBase + GetConfig + GetAccounts + ReadData,
     >(
