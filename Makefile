@@ -70,7 +70,8 @@ update-api-bindings-step-generate-bindings:
 	-i $(TMP_FILE) \
 	-g rust \
 	-o crates/api_client \
-	--package-name api_client
+	--package-name api_client \
+	--global-property apiDocs=false,modelDocs=false
 # Workarounds for generator bugs
 # Command output is redirected as macOS sed doesn't support normal -i
 	sed 's/software_options: SoftwareOptions/software_options: crate::models::SoftwareOptions/g' crates/api_client/src/apis/common_admin_api.rs > $(TMP_FILE)
