@@ -225,7 +225,7 @@ pub struct DemoModeConfig {
     pub access_all_accounts: bool,
     /// AccountIds for accounts that are accessible in demo mode.
     #[serde(default)]
-    pub accessible_accounts: Vec<uuid::Uuid>,
+    pub accessible_accounts: Vec<simple_backend_utils::UuidBase64Url>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

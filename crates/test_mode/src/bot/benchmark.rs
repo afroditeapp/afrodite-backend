@@ -275,7 +275,8 @@ impl BotAction for PostProfileToDatabase {
         state: &mut BotState,
         _task_state: &mut TaskState,
     ) -> Result<(), TestError> {
-        let profile = uuid::Uuid::new_v4(); // Uuid has same string size every time.
+        // Uuid has same string size every time.
+        let profile = simple_backend_utils::UuidBase64Url::new_random_id();
         let profile = ProfileUpdate {
             attributes: vec![],
             age: 18,

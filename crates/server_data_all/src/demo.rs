@@ -264,7 +264,7 @@ impl DemoModeManager {
                     .info
                     .accessible_accounts
                     .iter()
-                    .map(|v| AccountId::new(*v))
+                    .map(|v| AccountId::new_base_64_url(*v))
                     .collect();
                 Ok(AccessibleAccountsInfo::Specific {
                     config_file_accounts: accounts,

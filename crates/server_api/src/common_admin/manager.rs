@@ -183,7 +183,7 @@ pub async fn post_request_update_software<S: GetManagerApi>(
     if api_caller_permissions.admin_server_maintenance_update_software {
         info!(
             "Requesting update software, account: {}, software: {:?}, reboot: {}, reset_data: {},",
-            api_caller_account_id.as_uuid(),
+            api_caller_account_id.as_id(),
             software.software_options,
             reboot.reboot,
             reset_data.reset_data,
@@ -233,7 +233,7 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
     if api_caller_permissions.admin_server_maintenance_update_software {
         info!(
             "Requesting reset or restart backend, account: {}, reset_data: {}",
-            api_caller_account_id.as_uuid(),
+            api_caller_account_id.as_id(),
             reset_data.reset_data,
         );
         state

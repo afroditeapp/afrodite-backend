@@ -71,7 +71,7 @@ pub async fn post_backend_config<S: WriteDynamicConfig>(
     if api_caller_permissions.admin_server_maintenance_save_backend_config {
         info!(
             "Saving dynamic backend config, account: {}, settings: {:#?}",
-            api_caller_account_id.as_uuid(),
+            api_caller_account_id.as_id(),
             backend_config
         );
         state.write_config(backend_config).await?;

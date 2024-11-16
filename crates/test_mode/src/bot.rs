@@ -289,7 +289,7 @@ impl BotState {
 
     pub fn persistent_state(&self) -> Option<BotPersistentState> {
         self.id.map(|id| BotPersistentState {
-            account_id: id.aid,
+            account_id: simple_backend_utils::UuidBase64Url::new(id.aid),
             task: self.task_id,
             bot: self.bot_id,
         })
@@ -406,7 +406,7 @@ impl BotManager {
             let state = BotState::new(
                 old_state.as_ref().and_then(|d| {
                     d.find_matching(task_id, bot_i)
-                        .map(|s| AccountId::new(s.account_id))
+                        .map(|s| AccountId::new(*s.account_id.as_uuid()))
                 }),
                 server_config.clone(),
                 config.clone(),

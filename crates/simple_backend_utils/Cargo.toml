@@ -9,3 +9,7 @@ edition = "2021"
 error-stack = { workspace = true }
 
 chrono = { workspace = true }
+serde = { workspace = true }
+base64 = { workspace = true }
+uuid = { workspace = true }
+utoipa = { workspace = true }

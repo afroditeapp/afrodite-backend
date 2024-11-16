@@ -4,6 +4,7 @@
 /// ```
 /// use diesel::sql_types::Binary;
 /// use simple_backend_model::diesel_uuid_wrapper;
+/// use simple_backend_utils::UuidBase64Url;
 ///
 /// #[derive(
 ///     Debug,
@@ -12,15 +13,15 @@
 /// )]
 /// #[diesel(sql_type = Binary)]
 /// pub struct UuidWrapper {
-///     uuid: uuid::Uuid,
+///     uuid: UuidBase64Url,
 /// }
 ///
 /// impl UuidWrapper {
-///     pub fn new(uuid: uuid::Uuid) -> Self {
+///     pub fn diesel_uuid_wrapper_new(uuid: UuidBase64Url) -> Self {
 ///         Self { uuid }
 ///     }
 ///
-///     pub fn as_uuid(&self) -> &uuid::Uuid {
+///     pub fn diesel_uuid_wrapper_as_uuid(&self) -> &UuidBase64Url {
 ///         &self.uuid
 ///     }
 /// }
@@ -42,7 +43,8 @@ macro_rules! diesel_uuid_wrapper {
             ) -> diesel::deserialize::Result<Self> {
                 let bytes = Vec::<u8>::from_sql(bytes)?;
                 let uuid = uuid::Uuid::from_slice(&bytes)?;
-                Ok(<$name>::new(uuid))
+                let uuid = simple_backend_utils::UuidBase64Url::new(uuid);
+                Ok(<$name>::diesel_uuid_wrapper_new(uuid))
             }
         }
 
@@ -55,7 +57,7 @@ macro_rules! diesel_uuid_wrapper {
                 &'b self,
                 out: &mut diesel::serialize::Output<'b, '_, DB>,
             ) -> diesel::serialize::Result {
-                let uuid = self.as_uuid();
+                let uuid = self.diesel_uuid_wrapper_as_uuid().as_uuid();
                 let bytes: &[u8] = uuid.as_bytes();
                 bytes.to_sql(out)
             }

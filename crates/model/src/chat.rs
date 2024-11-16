@@ -451,8 +451,8 @@ pub struct UpdateMessageViewStatus {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IntoParams)]
 pub struct SendMessageToAccountParams {
     /// Receiver of the message.
-    #[serde(serialize_with = "account_id_as_uuid", deserialize_with = "account_id_from_uuid")]
-    #[param(value_type = uuid::Uuid)]
+    #[serde(serialize_with = "account_id_as_string", deserialize_with = "account_id_from_uuid")]
+    #[param(value_type = String)]
     pub receiver: AccountId,
     /// Message receiver's public key ID for check
     /// to prevent sending message encrypted with outdated
@@ -471,7 +471,7 @@ pub struct SendMessageToAccountParams {
     pub client_local_id: ClientLocalId,
 }
 
-pub fn account_id_as_uuid<
+pub fn account_id_as_string<
     S: Serializer,
 >(
     value: &AccountId,
@@ -522,7 +522,7 @@ pub fn account_id_from_uuid<
 >(
     d: D,
 ) -> Result<AccountId, D::Error> {
-    uuid::Uuid::deserialize(d).map(|account_id| AccountId { aid: account_id })
+    simple_backend_utils::UuidBase64Url::deserialize(d).map(|account_id| AccountId { aid: account_id })
 }
 
 pub fn public_key_id_from_i64<

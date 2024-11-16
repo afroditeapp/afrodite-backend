@@ -6,7 +6,6 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
-use uuid::Uuid;
 
 use crate::{schema_sqlite_types::Integer, AccountId, AccountIdDb, EnumParsingError, NextQueueNumberType};
 
@@ -136,16 +135,16 @@ impl ContentProcessingState {
 /// Content ID which is queued to be processed
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize, ToSchema)]
 pub struct ContentProcessingId {
-    id: uuid::Uuid,
+    id: simple_backend_utils::UuidBase64Url,
 }
 
 impl ContentProcessingId {
     pub fn new_random_id() -> Self {
-        Self { id: Uuid::new_v4() }
+        Self { id: simple_backend_utils::UuidBase64Url::new_random_id() }
     }
 
     pub fn to_content_id(&self) -> ContentId {
-        ContentId::new(self.id)
+        ContentId::new_base_64_url(self.id)
     }
 }
 
@@ -454,33 +453,31 @@ pub struct ContentInfoDetailed {
 )]
 #[diesel(sql_type = Binary)]
 pub struct ContentId {
-    pub cid: uuid::Uuid,
+    pub cid: simple_backend_utils::UuidBase64Url,
 }
 
 diesel_uuid_wrapper!(ContentId);
 
 impl ContentId {
-    pub fn new_random_id() -> Self {
-        Self {
-            cid: Uuid::new_v4(),
-        }
-    }
-
-    pub fn new(content_id: uuid::Uuid) -> Self {
+    fn new_base_64_url(content_id: simple_backend_utils::UuidBase64Url) -> Self {
         Self { cid: content_id }
     }
 
-    pub fn as_uuid(&self) -> &uuid::Uuid {
+    fn diesel_uuid_wrapper_new(cid: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { cid }
+    }
+
+    fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
         &self.cid
     }
 
     /// File name for unprocessed user uploaded content.
     pub fn raw_content_file_name(&self) -> String {
-        format!("{}.raw", self.cid.as_hyphenated())
+        format!("{}.raw", self.cid)
     }
 
     pub fn content_file_name(&self) -> String {
-        format!("{}", self.cid.as_hyphenated())
+        format!("{}", self.cid)
     }
 
     pub fn not_in(&self, mut iter: impl Iterator<Item = ContentId>) -> bool {
@@ -817,7 +814,7 @@ pub struct GetContentQueryParams {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileContentQueryParams {
-    version: Option<uuid::Uuid>,
+    version: Option<simple_backend_utils::UuidBase64Url>,
     /// If false profile content access is allowed when profile is set as public.
     /// If true profile content access is allowed when users are a match.
     #[serde(default)]
@@ -826,7 +823,7 @@ pub struct GetProfileContentQueryParams {
 
 impl GetProfileContentQueryParams {
     pub fn version(&self) -> Option<ProfileContentVersion> {
-        self.version.map(ProfileContentVersion::new)
+        self.version.map(ProfileContentVersion::new_base_64_url)
     }
 
     pub fn allow_get_content_if_match(&self) -> bool {
@@ -965,20 +962,23 @@ impl MediaStateRaw {
 )]
 #[diesel(sql_type = Binary)]
 pub struct ProfileContentVersion {
-    v: uuid::Uuid,
+    v: simple_backend_utils::UuidBase64Url,
 }
 
 impl ProfileContentVersion {
-    pub(crate) fn new(version: uuid::Uuid) -> Self {
+    fn new_base_64_url(version: simple_backend_utils::UuidBase64Url) -> Self {
         Self { v: version }
+    }
+
+    fn diesel_uuid_wrapper_new(v: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { v }
     }
 
     pub fn new_random() -> Self {
-        let version = uuid::Uuid::new_v4();
-        Self { v: version }
+        Self { v: simple_backend_utils::UuidBase64Url::new_random_id() }
     }
 
-    pub fn as_uuid(&self) -> &uuid::Uuid {
+    fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
         &self.v
     }
 }

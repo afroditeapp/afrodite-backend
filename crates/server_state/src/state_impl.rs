@@ -383,7 +383,7 @@ impl RegisteringCmd for S {
     ) -> std::result::Result<AccountIdInternal, StatusCode> {
         // New unique UUID is generated every time so no special handling needed
         // to avoid database collisions.
-        let id = AccountId::new(uuid::Uuid::new_v4());
+        let id = AccountId::new_random();
 
         let id = db_write_raw!(self, move |cmds| {
             let id = RegisterAccount::new(cmds.write_cmds())

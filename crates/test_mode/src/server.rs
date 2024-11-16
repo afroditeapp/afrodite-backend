@@ -296,12 +296,12 @@ impl ServerInstance {
         args_config: &TestMode,
         settings: AdditionalSettings,
     ) -> Self {
-        let id = uuid::Uuid::new_v4();
+        let id = simple_backend_utils::UuidBase64Url::new_random_id();
         let dir = dir.join(format!(
             "{}{}_{}",
             SERVER_INSTANCE_DIR_START,
             chrono::Utc::now(),
-            id.hyphenated()
+            id,
         ));
         std::fs::create_dir(&dir).unwrap();
 

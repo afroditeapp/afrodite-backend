@@ -51,7 +51,8 @@ impl BotAction for ChangeProfileText {
             ProfileText::Static(text) => text.to_string(),
             ProfileText::String(text) => text.clone(),
             ProfileText::Random => {
-                uuid::Uuid::new_v4().to_string() // Uuid has same string size every time.
+                // Uuid has same string size every time.
+                simple_backend_utils::UuidBase64Url::new_random_id().to_string()
             }
         };
         let update = ProfileUpdate {

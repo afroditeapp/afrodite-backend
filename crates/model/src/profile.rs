@@ -349,20 +349,23 @@ pub struct FavoriteProfilesPage {
 )]
 #[diesel(sql_type = Binary)]
 pub struct ProfileVersion {
-    v: uuid::Uuid,
+    v: simple_backend_utils::UuidBase64Url,
 }
 
 impl ProfileVersion {
-    pub(crate) fn new(version: uuid::Uuid) -> Self {
+    pub(crate) fn new_base_64_url(version: simple_backend_utils::UuidBase64Url) -> Self {
         Self { v: version }
+    }
+
+    fn diesel_uuid_wrapper_new(v: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { v }
     }
 
     pub fn new_random() -> Self {
-        let version = uuid::Uuid::new_v4();
-        Self { v: version }
+        Self { v: simple_backend_utils::UuidBase64Url::new_random_id() }
     }
 
-    pub fn as_uuid(&self) -> &uuid::Uuid {
+    fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
         &self.v
     }
 }
@@ -372,7 +375,7 @@ diesel_uuid_wrapper!(ProfileVersion);
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileQueryParam {
     /// Profile version UUID
-    v: Option<uuid::Uuid>,
+    v: Option<simple_backend_utils::UuidBase64Url>,
     /// If requested profile is not public, allow getting the profile
     /// data if the requested profile is a match.
     #[serde(default)]
@@ -381,7 +384,7 @@ pub struct GetProfileQueryParam {
 
 impl GetProfileQueryParam {
     pub fn profile_version(self) -> Option<ProfileVersion> {
-        self.v.map(ProfileVersion::new)
+        self.v.map(ProfileVersion::new_base_64_url)
     }
 
     pub fn allow_get_profile_if_match(self) -> bool {

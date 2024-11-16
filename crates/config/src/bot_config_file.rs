@@ -10,7 +10,7 @@ pub struct BotConfigFile {
     pub man_image_dir: Option<PathBuf>,
     pub woman_image_dir: Option<PathBuf>,
     /// All bots will try to send like to this account ID
-    pub send_like_to_account_id: Option<uuid::Uuid>,
+    pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
     #[serde(default)]
     pub change_visibility: bool,
     #[serde(default)]

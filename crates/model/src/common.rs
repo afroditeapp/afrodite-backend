@@ -262,10 +262,6 @@ impl AccountIdInternal {
         Self { id, uuid }
     }
 
-    pub fn as_uuid(&self) -> &uuid::Uuid {
-        &self.uuid.aid
-    }
-
     pub fn as_db_id(&self) -> &AccountIdDb {
         &self.id
     }
@@ -280,12 +276,6 @@ impl AccountIdInternal {
 
     pub fn as_id(&self) -> AccountId {
         self.uuid
-    }
-}
-
-impl From<AccountIdInternal> for uuid::Uuid {
-    fn from(value: AccountIdInternal) -> Self {
-        value.uuid.into()
     }
 }
 
@@ -317,28 +307,30 @@ impl std::fmt::Display for AccountIdInternal {
 )]
 #[diesel(sql_type = Binary)]
 pub struct AccountId {
-    pub aid: uuid::Uuid,
+    pub aid: simple_backend_utils::UuidBase64Url,
 }
 
 impl AccountId {
-    pub fn new(account_id: uuid::Uuid) -> Self {
-        Self { aid: account_id }
+    pub fn new_random() -> Self {
+        Self { aid: simple_backend_utils::UuidBase64Url::new_random_id() }
     }
 
-    pub fn as_uuid(&self) -> &uuid::Uuid {
+    fn diesel_uuid_wrapper_new(aid: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { aid }
+    }
+
+    fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
         &self.aid
+    }
+
+    pub fn new_base_64_url(account_id: simple_backend_utils::UuidBase64Url) -> Self {
+        Self { aid: account_id }
     }
 
     pub fn for_debugging_only_zero() -> Self {
         Self {
-            aid: uuid::Uuid::nil(),
+            aid: simple_backend_utils::UuidBase64Url::for_debugging_only_zero(),
         }
-    }
-}
-
-impl From<AccountId> for uuid::Uuid {
-    fn from(value: AccountId) -> Self {
-        value.aid
     }
 }
 
@@ -346,7 +338,7 @@ diesel_uuid_wrapper!(AccountId);
 
 impl std::fmt::Display for AccountId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.aid.hyphenated())
+        write!(f, "{}", self.aid)
     }
 }
 

@@ -7,6 +7,10 @@ use std::fmt::Display;
 
 use error_stack::{Context, Report, Result, ResultExt};
 
+mod uuid;
+
+pub use uuid::UuidBase64Url;
+
 pub trait IntoReportFromString {
     type Ok;
     type Err: Display;

@@ -817,7 +817,6 @@ dependencies = [
  "toml",
  "toml_edit 0.22.20",
  "url",
- "uuid",
 ]
 
 [[package]]
@@ -2387,6 +2386,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_backend_model",
+ "simple_backend_utils",
  "thiserror",
  "toml",
  "utils",
@@ -3997,7 +3997,6 @@ dependencies = [
  "simple_backend_config",
  "tokio",
  "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -4205,8 +4204,12 @@ dependencies = [
 name = "simple_backend_utils"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "error-stack",
+ "serde",
+ "utoipa",
+ "uuid",
 ]
 
 [[package]]
@@ -4393,6 +4396,7 @@ dependencies = [
  "server_data",
  "simple_backend",
  "simple_backend_config",
+ "simple_backend_utils",
  "test_mode_macro",
  "thiserror",
  "tokio",
@@ -4403,7 +4407,6 @@ dependencies = [
  "tracing-subscriber",
  "url",
  "utils",
- "uuid",
 ]
 
 [[package]]
