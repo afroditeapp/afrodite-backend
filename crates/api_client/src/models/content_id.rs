@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentId {
     #[serde(rename = "cid")]
-    pub cid: uuid::Uuid,
+    pub cid: String,
 }
 
 impl ContentId {
     /// Content ID for media content for example images
-    pub fn new(cid: uuid::Uuid) -> ContentId {
+    pub fn new(cid: String) -> ContentId {
         ContentId {
             cid,
         }

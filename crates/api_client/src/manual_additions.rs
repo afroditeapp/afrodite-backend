@@ -7,19 +7,15 @@ use crate::{
     models::{AccountId, ContentId, Location, MediaContentType, UnixTime},
 };
 
-impl Copy for AccountId {}
-
 impl fmt::Display for AccountId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.aid.hyphenated())
+        write!(f, "{}", self.aid)
     }
 }
 
-impl Copy for ContentId {}
-
 impl fmt::Display for ContentId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.cid.hyphenated())
+        write!(f, "{}", self.cid)
     }
 }
 

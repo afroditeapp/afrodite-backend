@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountId {
     #[serde(rename = "aid")]
-    pub aid: uuid::Uuid,
+    pub aid: String,
 }
 
 impl AccountId {
-    pub fn new(aid: uuid::Uuid) -> AccountId {
+    pub fn new(aid: String) -> AccountId {
         AccountId {
             aid,
         }

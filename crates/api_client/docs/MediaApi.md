@@ -36,8 +36,8 @@ Delete content data. Content can be removed after specific time has passed since
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
-**cid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
+**cid** | **String** |  | [required] |
 
 ### Return type
 
@@ -140,7 +140,7 @@ Get list of all media content on the server for one account.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 
 ### Return type
 
@@ -170,8 +170,8 @@ Get content data
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
-**cid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
+**cid** | **String** |  | [required] |
 **is_match** | Option<**bool**> | If false media content access is allowed when profile is set as public. If true media content access is allowed when users are a match. |  |
 
 ### Return type
@@ -287,7 +287,7 @@ Get pending profile content for selected profile
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 
 ### Return type
 
@@ -315,7 +315,7 @@ Get pending security content for selected profile.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 
 ### Return type
 
@@ -345,8 +345,8 @@ Get current profile content for selected profile.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
-**version** | Option<**uuid::Uuid**> |  |  |
+**aid** | **String** |  | [required] |
+**version** | Option<**String**> |  |  |
 **is_match** | Option<**bool**> | If false profile content access is allowed when profile is set as public. If true profile content access is allowed when users are a match. |  |
 
 ### Return type
@@ -375,7 +375,7 @@ Get current security content for selected profile.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 
 ### Return type
 

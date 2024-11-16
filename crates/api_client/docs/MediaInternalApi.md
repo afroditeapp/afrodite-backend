@@ -18,7 +18,7 @@ Check that media server has correct state for completing initial setup.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 
 ### Return type
 

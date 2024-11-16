@@ -270,13 +270,14 @@ impl BotState {
     }
 
     pub fn account_id(&self) -> Result<AccountId, TestError> {
-        self.id.ok_or(TestError::AccountIdMissing.report())
+        self.id.clone().ok_or(TestError::AccountIdMissing.report())
     }
 
     pub fn account_id_string(&self) -> Result<String, TestError> {
         self.id
+            .clone()
             .ok_or(TestError::AccountIdMissing.report())
-            .map(|id| id.to_string())
+            .map(|id| id.aid)
     }
 
     pub fn is_first_bot(&self) -> bool {
@@ -288,8 +289,8 @@ impl BotState {
     }
 
     pub fn persistent_state(&self) -> Option<BotPersistentState> {
-        self.id.map(|id| BotPersistentState {
-            account_id: simple_backend_utils::UuidBase64Url::new(id.aid),
+        self.id.clone().map(|id| BotPersistentState {
+            account_id: id.aid,
             task: self.task_id,
             bot: self.bot_id,
         })
@@ -406,7 +407,7 @@ impl BotManager {
             let state = BotState::new(
                 old_state.as_ref().and_then(|d| {
                     d.find_matching(task_id, bot_i)
-                        .map(|s| AccountId::new(*s.account_id.as_uuid()))
+                        .map(|s| AccountId::new(s.account_id.clone()))
                 }),
                 server_config.clone(),
                 config.clone(),

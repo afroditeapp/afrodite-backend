@@ -51,7 +51,7 @@ Handle moderation request of some account.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 **handle_moderation_request** | [**HandleModerationRequest**](HandleModerationRequest.md) |  | [required] |
 
 ### Return type

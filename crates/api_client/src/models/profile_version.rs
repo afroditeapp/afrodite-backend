@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileVersion {
     #[serde(rename = "v")]
-    pub v: uuid::Uuid,
+    pub v: String,
 }
 
 impl ProfileVersion {
-    pub fn new(v: uuid::Uuid) -> ProfileVersion {
+    pub fn new(v: String) -> ProfileVersion {
         ProfileVersion {
             v,
         }

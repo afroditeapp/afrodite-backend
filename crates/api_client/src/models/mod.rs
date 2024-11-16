@@ -240,6 +240,8 @@ pub mod profile_iterator_session_id;
 pub use self::profile_iterator_session_id::ProfileIteratorSessionId;
 pub mod profile_link;
 pub use self::profile_link::ProfileLink;
+pub mod profile_name_moderation_state;
+pub use self::profile_name_moderation_state::ProfileNameModerationState;
 pub mod profile_name_pending_moderation;
 pub use self::profile_name_pending_moderation::ProfileNamePendingModeration;
 pub mod profile_page;

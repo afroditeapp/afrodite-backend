@@ -17,6 +17,7 @@ pub struct NewsItemSimple {
     pub id: Box<models::NewsId>,
     #[serde(rename = "private", skip_serializing_if = "Option::is_none")]
     pub private: Option<bool>,
+    /// Latest publication time
     #[serde(rename = "time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub time: Option<Option<Box<models::UnixTime>>>,
     #[serde(rename = "title", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]

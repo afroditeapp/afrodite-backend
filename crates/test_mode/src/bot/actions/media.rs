@@ -211,7 +211,7 @@ impl BotAction for MakeModerationRequest {
 
         for i in self.slots_to_request {
             content_ids.push(
-                match state.media.slots[*i] {
+                match state.media.slots[*i].clone() {
                     Some(content_id) => Box::new(content_id),
                     None => return Err(
                         TestError::MissingValue
@@ -250,14 +250,14 @@ pub struct SetPendingContent {
 impl BotAction for SetPendingContent {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(i) = self.security_content_slot_i {
-            let content_id = state.media.slots[i].unwrap();
+            let content_id = state.media.slots[i].clone().unwrap();
             put_pending_security_content_info(state.api.media(), content_id)
                 .await
                 .change_context(TestError::ApiRequest)?;
         }
 
         if let Some(i) = self.content_0_slot_i {
-            let content_id = state.media.slots[i].unwrap();
+            let content_id = state.media.slots[i].clone().unwrap();
             let bot_info = state.get_bot_config();
 
             let info = SetProfileContent {

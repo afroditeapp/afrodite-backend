@@ -134,6 +134,7 @@ docs/ProfileContent.md
 docs/ProfileContentVersion.md
 docs/ProfileIteratorSessionId.md
 docs/ProfileLink.md
+docs/ProfileNameModerationState.md
 docs/ProfileNamePendingModeration.md
 docs/ProfilePage.md
 docs/ProfileSearchAgeRange.md
@@ -327,6 +328,7 @@ src/models/profile_content.rs
 src/models/profile_content_version.rs
 src/models/profile_iterator_session_id.rs
 src/models/profile_link.rs
+src/models/profile_name_moderation_state.rs
 src/models/profile_name_pending_moderation.rs
 src/models/profile_page.rs
 src/models/profile_search_age_range.rs

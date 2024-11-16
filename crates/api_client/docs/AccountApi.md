@@ -19,10 +19,12 @@ Method | HTTP request | Description
 [**post_demo_mode_confirm_login**](AccountApi.md#post_demo_mode_confirm_login) | **POST** /3KlEajKOIo1Drd3uW-IzQ1L3qlE | 
 [**post_demo_mode_login**](AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
 [**post_demo_mode_login_to_account**](AccountApi.md#post_demo_mode_login_to_account) | **POST** /sBH-LyNGOOFXivrv5clCpNrkwcA | 
+[**post_demo_mode_logout**](AccountApi.md#post_demo_mode_logout) | **POST** /C4cOpRmlYJh2YBXbEHQGkcz3iMY | 
 [**post_demo_mode_register_account**](AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
 [**post_get_next_client_id**](AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
 [**post_get_next_news_page**](AccountApi.md#post_get_next_news_page) | **POST** /i9QOC8N-Nx9PdWvjKyAz8tXD2Q0 | 
 [**post_get_unread_news_count**](AccountApi.md#post_get_unread_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
+[**post_logout**](AccountApi.md#post_logout) | **POST** /g2UxTGqbCXXzUsALaE6udVrIh2U | 
 [**post_reset_news_paging**](AccountApi.md#post_reset_news_paging) | **POST** /BQwxuLNWbM8vN0-p-Wu-QCRy3x0 | 
 [**post_sign_in_with_login**](AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 [**put_setting_profile_visiblity**](AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
@@ -440,6 +442,34 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
+## post_demo_mode_logout
+
+> post_demo_mode_logout(demo_mode_token)
+
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**demo_mode_token** | [**DemoModeToken**](DemoModeToken.md) |  | [required] |
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
 ## post_demo_mode_register_account
 
 > models::AccountId post_demo_mode_register_account(demo_mode_token)
@@ -543,6 +573,31 @@ This endpoint does not need any parameter.
 
 - **Content-Type**: Not defined
 - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## post_logout
+
+> post_logout()
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+ (empty response body)
+
+### Authorization
+
+[access_token](../README.md#access_token)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

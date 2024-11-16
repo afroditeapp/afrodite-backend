@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentProcessingId {
     #[serde(rename = "id")]
-    pub id: uuid::Uuid,
+    pub id: String,
 }
 
 impl ContentProcessingId {
     /// Content ID which is queued to be processed
-    pub fn new(id: uuid::Uuid) -> ContentProcessingId {
+    pub fn new(id: String) -> ContentProcessingId {
         ContentProcessingId {
             id,
         }

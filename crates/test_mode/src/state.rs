@@ -19,7 +19,7 @@ impl StateData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BotPersistentState {
-    pub account_id: simple_backend_utils::UuidBase64Url,
+    pub account_id: String,
     pub task: u32,
     pub bot: u32,
 }

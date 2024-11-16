@@ -151,7 +151,7 @@ Get current public key of some account
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 **version** | **i64** |  | [required] |
 
 ### Return type
@@ -617,7 +617,7 @@ Max pending message count is 50. Max message size is u16::MAX.  The sender messa
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**receiver** | **uuid::Uuid** | Receiver of the message. | [required] |
+**receiver** | **String** | Receiver of the message. | [required] |
 **receiver_public_key_id** | **i64** | Message receiver's public key ID for check to prevent sending message encrypted with outdated public key. | [required] |
 **receiver_public_key_version** | **i64** |  | [required] |
 **client_id** | **i64** |  | [required] |

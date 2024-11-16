@@ -21,13 +21,14 @@ pub struct NewsItem {
     pub aid_editor: Option<Option<Box<models::AccountId>>>,
     #[serde(rename = "body")]
     pub body: String,
-    #[serde(rename = "creation_time")]
-    pub creation_time: Box<models::UnixTime>,
     /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
     #[serde(rename = "edit_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub edit_unix_time: Option<Option<i64>>,
     #[serde(rename = "locale")]
     pub locale: String,
+    /// Latest publication time
+    #[serde(rename = "time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub time: Option<Option<Box<models::UnixTime>>>,
     #[serde(rename = "title")]
     pub title: String,
     /// Only visible for accounts which have some news permissions
@@ -36,14 +37,14 @@ pub struct NewsItem {
 }
 
 impl NewsItem {
-    pub fn new(body: String, creation_time: models::UnixTime, locale: String, title: String) -> NewsItem {
+    pub fn new(body: String, locale: String, title: String) -> NewsItem {
         NewsItem {
             aid_creator: None,
             aid_editor: None,
             body,
-            creation_time: Box::new(creation_time),
             edit_unix_time: None,
             locale,
+            time: None,
             title,
             version: None,
         }

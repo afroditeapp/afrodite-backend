@@ -4,6 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**error_receiver_blocked_sender_or_receiver_not_found** | Option<**bool**> |  | [optional][default to false]
 **error_receiver_public_key_outdated** | Option<**bool**> |  | [optional][default to false]
 **error_too_many_receiver_acknowledgements_missing** | Option<**bool**> |  | [optional][default to false]
 **error_too_many_sender_acknowledgements_missing** | Option<**bool**> |  | [optional][default to false]

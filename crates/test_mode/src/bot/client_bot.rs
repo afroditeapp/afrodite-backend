@@ -421,7 +421,7 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
             }
 
             for like in received_likes.p {
-                post_send_like(state.api.chat(), like)
+                post_send_like(state.api.chat(), like.clone())
                     .await
                     .change_context(TestError::ApiRequest)?;
 
@@ -582,7 +582,7 @@ struct SendLikeIfNeeded;
 impl BotAction for SendLikeIfNeeded {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(account_id) = state.bot_config_file.send_like_to_account_id {
-            let account_id = AccountId::new(*account_id.as_uuid());
+            let account_id = AccountId::new(account_id.to_string());
             let r = post_send_like(state.api.chat(), account_id)
                 .await;
             if r.is_err() {

@@ -267,7 +267,7 @@ impl Account {
     }
 
     pub fn account_id(&self) -> AccountId {
-        self.bot_state.id.unwrap()
+        self.bot_state.id.clone().unwrap()
     }
 
     pub fn account_id_string(&self) -> String {

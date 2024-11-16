@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **lst** | Option<**i64**> | Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online. | [optional]
+**name_moderation_state** | [**models::ProfileNameModerationState**](ProfileNameModerationState.md) |  | 
 **p** | [**models::Profile**](Profile.md) |  | 
 **sv** | [**models::ProfileSyncVersion**](ProfileSyncVersion.md) |  | 
 **text_moderation_info** | [**models::ProfileTextModerationInfo**](ProfileTextModerationInfo.md) |  | 

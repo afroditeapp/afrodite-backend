@@ -193,8 +193,8 @@ Response includes version UUID which can be used for caching.  # Access  ## Own 
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
-**v** | Option<**uuid::Uuid**> | Profile version UUID |  |
+**aid** | **String** |  | [required] |
+**v** | Option<**String**> | Profile version UUID |  |
 **is_match** | Option<**bool**> | If requested profile is not public, allow getting the profile data if the requested profile is a match. |  |
 
 ### Return type
@@ -248,7 +248,7 @@ Get account's current profile from database. Debug mode must be enabled that rou
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**aid** | **uuid::Uuid** |  | [required] |
+**aid** | **String** |  | [required] |
 
 ### Return type
 
@@ -406,7 +406,7 @@ Name | Type | Description  | Required | Notes
 > post_profile(profile_update)
 Update profile information.
 
-Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 400 bytes or less. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
+Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 2000 bytes or less. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  TODO: string lenght validation, limit saving new profiles TODO: return the new proifle. Edit: is this really needed?
 
 ### Parameters
 

@@ -41,10 +41,12 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_demo_mode_confirm_login**](docs/AccountApi.md#post_demo_mode_confirm_login) | **POST** /3KlEajKOIo1Drd3uW-IzQ1L3qlE | 
 *AccountApi* | [**post_demo_mode_login**](docs/AccountApi.md#post_demo_mode_login) | **POST** /TYbxniP-G9ibgdoAkpvVWTKkxaU | Access demo mode, which allows accessing all or specific accounts depending on the server configuration.
 *AccountApi* | [**post_demo_mode_login_to_account**](docs/AccountApi.md#post_demo_mode_login_to_account) | **POST** /sBH-LyNGOOFXivrv5clCpNrkwcA | 
+*AccountApi* | [**post_demo_mode_logout**](docs/AccountApi.md#post_demo_mode_logout) | **POST** /C4cOpRmlYJh2YBXbEHQGkcz3iMY | 
 *AccountApi* | [**post_demo_mode_register_account**](docs/AccountApi.md#post_demo_mode_register_account) | **POST** /oDv1gK4Y6nMrPgEo5nArQAckh6Q | 
 *AccountApi* | [**post_get_next_client_id**](docs/AccountApi.md#post_get_next_client_id) | **POST** /b5kd4x8_ybr1Rj_tprU5BxF_xGo | 
 *AccountApi* | [**post_get_next_news_page**](docs/AccountApi.md#post_get_next_news_page) | **POST** /i9QOC8N-Nx9PdWvjKyAz8tXD2Q0 | 
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /ljfyAP7CbP0864cA6nZX7ESufjY | The unread news count for public news.
+*AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /g2UxTGqbCXXzUsALaE6udVrIh2U | 
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /BQwxuLNWbM8vN0-p-Wu-QCRy3x0 | 
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /ijts6B4AAg_6Dyjhaw85iBnw5Bo | Start new session with sign in with Apple or Google. Creates new account if it does not exists.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /yG0OQXcMed-EGdvhSoq3qlXTYQc | Update current or pending profile visiblity value.
@@ -264,6 +266,7 @@ Class | Method | HTTP request | Description
  - [ProfileContentVersion](docs/ProfileContentVersion.md)
  - [ProfileIteratorSessionId](docs/ProfileIteratorSessionId.md)
  - [ProfileLink](docs/ProfileLink.md)
+ - [ProfileNameModerationState](docs/ProfileNameModerationState.md)
  - [ProfileNamePendingModeration](docs/ProfileNamePendingModeration.md)
  - [ProfilePage](docs/ProfilePage.md)
  - [ProfileSearchAgeRange](docs/ProfileSearchAgeRange.md)
