@@ -2,6 +2,7 @@ use base64::Engine;
 use diesel::{deserialize::Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_string_wrapper};
+use utils::random_bytes::random_128_bits;
 use utoipa::ToSchema;
 
 use crate::{
@@ -158,7 +159,7 @@ impl PendingNotificationToken {
         // Generate 256 bit token
         let mut token = Vec::new();
         for _ in 1..=2 {
-            token.extend(uuid::Uuid::new_v4().to_bytes_le())
+            token.extend(random_128_bits())
         }
         Self {
             token: base64::engine::general_purpose::STANDARD.encode(token)

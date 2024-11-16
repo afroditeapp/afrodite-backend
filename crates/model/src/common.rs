@@ -7,6 +7,7 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_wrapper};
+use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
@@ -356,9 +357,6 @@ pub struct AccessTokenRaw {
     pub token: Option<String>,
 }
 
-// TODO(prod): Do not use Uuid for token generation
-// because some bits are fixed. Check all tokens.
-
 /// AccessToken is used as a short lived token for API access.
 ///
 /// The token is 256 bit random value which is base64url encoded
@@ -377,7 +375,7 @@ impl AccessToken {
         // Generate 256 bit token
         let mut token = Vec::new();
         for _ in 1..=2 {
-            token.extend(uuid::Uuid::new_v4().to_bytes_le())
+            token.extend(random_128_bits())
         }
         let access_token = Self {
             access_token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&token),
@@ -430,7 +428,7 @@ impl RefreshToken {
         let mut token = Vec::new();
 
         for _ in 1..=24 {
-            token.extend(uuid::Uuid::new_v4().to_bytes_le())
+            token.extend(random_128_bits())
         }
 
         (Self::from_bytes(&token), token)
