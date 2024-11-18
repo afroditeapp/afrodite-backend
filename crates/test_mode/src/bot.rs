@@ -5,12 +5,12 @@ pub mod utils;
 
 use std::{fmt::Debug, sync::{atomic::{AtomicBool, Ordering}, Arc}, vec};
 
-use actions::profile::ProfileState;
+use actions::{admin::AdminBotState, profile::ProfileState};
 use api_client::models::{AccountId, EventToClient};
 use async_trait::async_trait;
 use config::{
     args::{PublicApiUrls, SelectedBenchmark, TestMode, TestModeSubMode},
-    bot_config_file::{BotConfigFile, BotInstanceConfig},
+    bot_config_file::{BaseBotConfig, BotConfigFile},
     Config,
 };
 use error_stack::{Result, ResultExt};
@@ -195,7 +195,7 @@ pub struct BotState {
     pub id: Option<AccountId>,
     pub server_config: Arc<Config>,
     pub config: Arc<TestMode>,
-    pub bot_config_file: Arc<BotConfigFile>,
+    bot_config_file: Arc<BotConfigFile>,
     pub task_id: u32,
     pub bot_id: u32,
     pub api: ApiClient,
@@ -206,6 +206,7 @@ pub struct BotState {
     pub benchmark: BenchmarkState,
     pub media: MediaState,
     pub profile: ProfileState,
+    pub admin: AdminBotState,
     pub connections: BotConnections,
     pub refresh_token: Option<Vec<u8>>,
     pub deterministic_rng: Xoshiro256PlusPlus,
@@ -238,6 +239,7 @@ impl BotState {
             action_history: vec![],
             media: MediaState::new(),
             profile: ProfileState::new(),
+            admin: AdminBotState::default(),
             connections: BotConnections::default(),
             refresh_token: None,
             deterministic_rng: {
@@ -303,12 +305,14 @@ impl BotState {
         self.config.bot_mode().is_some() && self.task_id == 1
     }
 
-    pub fn get_bot_config(&self) -> Option<&BotInstanceConfig> {
-        if let TestModeSubMode::Bot(_) = self.config.mode {
-            self.bot_config_file.bot.iter().find(|v| Into::<u32>::into(v.id) == self.bot_id)
-        } else {
-            None
-        }
+    /// Default [BaseBotConfig] is returned when current mode is other than
+    /// [TestModeSubMode::Bot] even if the bot config file exists.
+    pub fn get_bot_config(&self) -> &BaseBotConfig {
+        self.bot_config_file.bot
+            .iter()
+            .find(|v| Into::<u32>::into(v.id) == self.bot_id)
+            .map(|v| &v.config)
+            .unwrap_or(&self.bot_config_file.bot_config)
     }
 }
 

@@ -18,7 +18,7 @@ use crate::{
     bot::{
         actions::{
             account::{CompleteAccountSetup, Login, Register, SetAccountSetup},
-            admin::ModerateMediaModerationRequest,
+            admin::ModerateContentModerationRequest,
             media::{MakeModerationRequest, SendImageToSlot, SetPendingContent},
             BotAction,
         },
@@ -325,7 +325,7 @@ impl Admin {
     ) -> Result<(), TestError> {
         loop {
             self.account
-                .run(ModerateMediaModerationRequest::from_queue(queue))
+                .run(ModerateContentModerationRequest::from_queue(queue))
                 .await?;
 
             let list =

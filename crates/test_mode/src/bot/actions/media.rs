@@ -12,7 +12,7 @@ use api_client::{
     },
 };
 use async_trait::async_trait;
-use config::bot_config_file::{BotConfigFile, BotInstanceConfig, Gender};
+use config::bot_config_file::{BaseBotConfig, BotConfigFile, Gender};
 use error_stack::{Result, ResultExt};
 
 use super::{super::super::client::TestError, BotAction, BotState};
@@ -35,7 +35,6 @@ impl MediaState {
 #[derive(Debug)]
 pub struct SendImageToSlot {
     pub slot: i32,
-    pub random_if_not_defined_in_config: bool,
     pub copy_to_slot: Option<i32>,
     /// Add mark to the image
     pub mark_copied_image: bool,
@@ -46,39 +45,27 @@ impl SendImageToSlot {
     pub const fn slot(slot: i32) -> Self {
         Self {
             slot,
-            random_if_not_defined_in_config: false,
             copy_to_slot: None,
             mark_copied_image: false,
         }
     }
 
     async fn send_to_slot(&self, state: &mut BotState) -> Result<(), TestError> {
-        let img_data = if self.random_if_not_defined_in_config {
-            let img_path = if let Some(bot) = state.get_bot_config() {
-                img_for_bot(bot, &state.bot_config_file)
-            } else if let Some(dir) = &state.bot_config_file.man_image_dir {
-                if !state.bot_config_file.bot.iter().any(|v| v.image.is_some()) {
-                    ImageProvider::random_image_from_directory(dir)
-                } else {
-                    Ok(None)
-                }
-            } else {
-                Ok(None)
-            };
-
+        let img_data = if state.get_bot_config().random_color_image {
+            ImageProvider::random_jpeg_image()
+        } else {
+            let img_path = img_for_bot(state.get_bot_config(), &state.bot_config_file);
             match img_path {
                 Ok(Some(img_path)) => std::fs::read(img_path).unwrap_or_else(|e| {
                     tracing::error!("{e:?}");
-                    ImageProvider::random_jpeg_image()
+                    ImageProvider::default_jpeg_image()
                 }),
-                Ok(None) => ImageProvider::random_jpeg_image(),
+                Ok(None) => ImageProvider::default_jpeg_image(),
                 Err(e) => {
                     tracing::error!("{e:?}");
-                    ImageProvider::random_jpeg_image()
+                    ImageProvider::default_jpeg_image()
                 }
             }
-        } else {
-            ImageProvider::random_jpeg_image()
         };
 
         let _ = put_content_to_content_slot_fixed(
@@ -166,7 +153,7 @@ impl SendImageToSlot {
 }
 
 fn img_for_bot(
-    bot: &BotInstanceConfig,
+    bot: &BaseBotConfig,
     config: &BotConfigFile,
 ) -> std::result::Result<Option<PathBuf>, std::io::Error> {
     if let Some(image) = bot.get_img(config) {
@@ -262,9 +249,9 @@ impl BotAction for SetPendingContent {
 
             let info = SetProfileContent {
                 c0: content_id.into(),
-                grid_crop_size: bot_info.and_then(|v| v.grid_crop_size).into(),
-                grid_crop_x: bot_info.and_then(|v| v.grid_crop_x).into(),
-                grid_crop_y: bot_info.and_then(|v| v.grid_crop_y).into(),
+                grid_crop_size: bot_info.grid_crop_size.into(),
+                grid_crop_x: bot_info.grid_crop_x.into(),
+                grid_crop_y: bot_info.grid_crop_y.into(),
                 ..SetProfileContent::default()
             };
             put_pending_profile_content(state.api.media(), info)

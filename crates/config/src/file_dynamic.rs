@@ -22,7 +22,7 @@ pub const DEFAULT_CONFIG_FILE_DYNAMIC_TEXT: &str = r#"
 # it is uncommented.
 # [bots]
 # users = 5
-# admins = 1
+# admin = false
 
 "#;
 
@@ -86,11 +86,11 @@ fn edit_document_bot_config(
                 .attach_printable("The 'users' number field is missing from 'bots' table");
         }
 
-        if let Some(Item::Value(value)) = bot_config_table.get_mut("admins") {
-            *value = (bot_config.admins as i64).into();
+        if let Some(Item::Value(value)) = bot_config_table.get_mut("admin") {
+            *value = bot_config.admin.into();
         } else {
             return Err(ConfigFileError::EditConfig)
-                .attach_printable("The 'admins' number field is missing from 'bots' table");
+                .attach_printable("The 'admin' boolean field is missing from 'bots' table");
         }
 
         Ok(())
@@ -114,13 +114,13 @@ mod tests {
             test3 = 1
             [bots]
             users = 0
-            admins = 0
+            admin = false
         "#;
         let mut document = toml_edit::DocumentMut::from_str(toml_with_no_bots_section).unwrap();
 
         let new_config = model::BotConfig {
             users: 1,
-            admins: 1,
+            admin: true,
         };
 
         edit_document_bot_config(&mut document, new_config).unwrap();
@@ -132,7 +132,7 @@ mod tests {
             test3 = 1
             [bots]
             users = 1
-            admins = 1
+            admin = true
         "#;
 
         assert_eq!(expected, edited_document);

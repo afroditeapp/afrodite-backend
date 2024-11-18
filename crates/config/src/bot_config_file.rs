@@ -3,44 +3,41 @@ use std::path::{Path, PathBuf};
 use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
 
-use crate::file::ConfigFileError;
+use crate::{args::TestMode, file::ConfigFileError};
 
 #[derive(Debug, Default, Deserialize)]
 pub struct BotConfigFile {
     pub man_image_dir: Option<PathBuf>,
     pub woman_image_dir: Option<PathBuf>,
-    /// All bots will try to send like to this account ID
-    pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
-    #[serde(default)]
-    pub change_visibility: bool,
-    #[serde(default)]
-    pub change_location: bool,
-    /// Predefined user bots.
+    /// Config for user bots
+    pub bot_config: BaseBotConfig,
+    /// Override config for specific user bots.
     #[serde(default)]
     pub bot: Vec<BotInstanceConfig>,
+    pub profile_text_moderation: Option<ProfileTextModerationConfig>,
+    pub profile_content_moderation: Option<ProfileContentModerationConfig>,
 }
 
 impl BotConfigFile {
-    pub fn load(file: impl AsRef<Path>) -> Result<BotConfigFile, ConfigFileError> {
+    pub fn load_if_bot_mode_or_default(file: impl AsRef<Path>, test_mode: &TestMode) -> Result<BotConfigFile, ConfigFileError> {
+        if test_mode.bot_mode().is_none() {
+            return Ok(BotConfigFile::default())
+        }
+
         let config_content =
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
         let config: BotConfigFile =
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
-        let mut ids = std::collections::HashSet::<u16>::new();
-        for bot in &config.bot {
+        let validate_common_config = |bot: &BaseBotConfig, id: Option<u16>| {
+            let error_location = id.map(|v| format!("Bot ID {} config error.", v)).unwrap_or("Bot config error.".to_string());
             if let Some(age) = bot.age {
                 if age < 18 || age > 99 {
                     return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
-                        "Bot ID {} age must be between 18 and 99",
-                        bot.id
+                        "{} Age must be between 18 and 99",
+                        error_location
                     ));
                 }
-            }
-
-            if ids.contains(&bot.id) {
-                return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable(format!("Bot ID {} is defined more than once", bot.id));
             }
 
             if bot.image.is_some() {
@@ -48,19 +45,33 @@ impl BotConfigFile {
                     Gender::Man => {
                         if config.man_image_dir.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
-                            .attach_printable(format!("Bot ID {} has image file name configured but man image directory is not configured", bot.id));
+                                .attach_printable(format!("{} Image file name configured but man image directory is not configured", error_location));
                         }
                     }
                     Gender::Woman => {
                         if config.woman_image_dir.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
-                            .attach_printable(format!("Bot ID {} has image file name configured but woman image directory is not configured", bot.id));
+                                .attach_printable(format!("{} Image file name configured but woman image directory is not configured", error_location));
                         }
                     }
                 }
             }
 
             // TODO: Validate all fields?
+
+            Ok(())
+        };
+
+        validate_common_config(&config.bot_config, None)?;
+
+        let mut ids = std::collections::HashSet::<u16>::new();
+        for bot in &config.bot {
+            validate_common_config(&config.bot_config, Some(bot.id))?;
+
+            if ids.contains(&bot.id) {
+                return Err(ConfigFileError::InvalidConfig)
+                    .attach_printable(format!("Bot ID {} is defined more than once", bot.id));
+            }
 
             ids.insert(bot.id);
         }
@@ -82,7 +93,10 @@ fn check_imgs_exist(
     img_dir: &Path,
     gender: Gender,
 ) -> Result<(), ConfigFileError> {
-    for bot in &config.bot {
+    let configs = [&config.bot_config].into_iter()
+        .chain(config.bot.iter().map(|v| &v.config));
+
+    for bot in configs {
         if bot.img_dir_gender() != gender {
             continue;
         }
@@ -99,22 +113,34 @@ fn check_imgs_exist(
     Ok(())
 }
 
-#[derive(Debug, Deserialize)]
-pub struct BotInstanceConfig {
-    pub id: u16,
+#[derive(Debug, Default, Deserialize)]
+pub struct BaseBotConfig {
     pub age: Option<u8>,
     pub gender: Option<Gender>,
     pub name: Option<String>,
     /// Image file name.
     ///
     /// The image is loaded from directory which matches gender config.
+    ///
+    /// If this is not set and image directory is configured, then random
+    /// image from the directory is used as profile image.
     pub image: Option<String>,
+    /// Overrides image file configs and use randomly generated single color
+    /// image as profile image.
+    #[serde(default)]
+    pub random_color_image: bool,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
+    /// All bots will try to send like to this account ID
+    pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
+    #[serde(default)]
+    pub change_visibility: bool,
+    #[serde(default)]
+    pub change_location: bool,
 }
 
-impl BotInstanceConfig {
+impl BaseBotConfig {
     pub fn get_img(&self, config: &BotConfigFile) -> Option<PathBuf> {
         if let Some(img) = self.image.as_ref() {
             match self.img_dir_gender() {
@@ -132,6 +158,13 @@ impl BotInstanceConfig {
             Some(Gender::Woman) => Gender::Woman,
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BotInstanceConfig {
+    pub id: u16,
+    #[serde(flatten)]
+    pub config: BaseBotConfig,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -153,4 +186,18 @@ impl<'de> Deserialize<'de> for Gender {
             _ => Err(serde::de::Error::custom("Invalid value for Gender")),
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ProfileTextModerationConfig {
+    pub moderation_session_max_seconds: u32,
+    pub moderation_session_min_seconds: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ProfileContentModerationConfig {
+    pub initial_content: bool,
+    pub added_content: bool,
+    pub moderation_session_max_seconds: u32,
+    pub moderation_session_min_seconds: u32,
 }

@@ -29,6 +29,11 @@ impl ImageProvider {
         Self::jpeg_image_with_color(img_color)
     }
 
+    pub fn default_jpeg_image() -> Vec<u8> {
+        let img_color = [0, 145, 255];
+        Self::jpeg_image_with_color(img_color)
+    }
+
     pub fn random_image_from_directory(dir: &Path) -> Result<Option<PathBuf>, std::io::Error> {
         let mut imgs = vec![];
         for entry in std::fs::read_dir(dir)? {

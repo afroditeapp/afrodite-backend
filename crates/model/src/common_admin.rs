@@ -13,6 +13,6 @@ pub struct BackendConfig {
 pub struct BotConfig {
     /// User bot count
     pub users: u32,
-    /// Admin bot count
-    pub admins: u32,
+    /// Admin bot
+    pub admin: bool,
 }

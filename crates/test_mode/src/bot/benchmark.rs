@@ -28,7 +28,7 @@ use super::{
     utils::{Counters, Timer},
     BotState, BotStruct, TaskState,
 };
-use crate::{action_array, bot::actions::{admin::ModerateMediaModerationRequest, ActionArray, RepeatUntilFnSimple, RunFn, SleepMillis, TO_ADMIN_NORMAL_STATE}, client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK};
+use crate::{action_array, bot::actions::{admin::ModerateContentModerationRequest, ActionArray, RepeatUntilFnSimple, RunFn, SleepMillis, TO_ADMIN_NORMAL_STATE}, client::TestError, server::DEFAULT_LOCATION_CONFIG_BENCHMARK};
 
 static COUNTERS: Counters = Counters::new();
 
@@ -129,7 +129,7 @@ impl Benchmark {
     pub fn benchmark_get_profile_list_admin_bot(state: BotState) -> Self {
         const ACTIONS: ActionArray = action_array![
             RunActions(TO_ADMIN_NORMAL_STATE),
-            ModerateMediaModerationRequest::moderate_all_initial_content(),
+            ModerateContentModerationRequest::moderate_all_initial_content(),
         ];
         let iter = ACTIONS.iter().copied();
         Self {

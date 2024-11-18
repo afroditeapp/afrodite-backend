@@ -33,7 +33,7 @@ use crate::{
     action_array,
     bot::actions::{
         account::CompleteAccountSetup,
-        admin::ModerateMediaModerationRequest,
+        admin::{AdminBotContentModerationLogic, AdminBotProfileTextModerationLogic},
         media::{MakeModerationRequest, SetPendingContent},
         ActionArray,
     },
@@ -63,8 +63,8 @@ impl ClientBot {
             ];
             const ACTION_LOOP: ActionArray = action_array![
                 ActionsBeforeIteration,
-                ModerateMediaModerationRequest::moderate_initial_content(),
-                ModerateMediaModerationRequest::moderate_additional_content(),
+                AdminBotContentModerationLogic,
+                AdminBotProfileTextModerationLogic,
                 ActionsAfterIteration,
             ];
             let iter = SETUP.iter().copied().chain(ACTION_LOOP.iter().copied().cycle());
@@ -85,14 +85,14 @@ impl ClientBot {
                 ActionsBeforeIteration,
                 GetProfile,
                 RunActionsIf(action_array!(UpdateLocationRandom::new(None)), |s| {
-                    s.bot_config_file.change_location && rand::random::<f32>() < 0.2
+                    s.get_bot_config().change_location && rand::random::<f32>() < 0.2
                 }),
                 // TODO: Toggle the profile visiblity in the future?
                 RunActionsIf(action_array!(SetProfileVisibility(true)), |s| {
-                    s.bot_config_file.change_visibility && rand::random::<f32>() < 0.5
+                    s.get_bot_config().change_visibility && rand::random::<f32>() < 0.5
                 }),
                 RunActionsIf(action_array!(SetProfileVisibility(false)), |s| {
-                    s.bot_config_file.change_visibility && rand::random::<f32>() < 0.1
+                    s.get_bot_config().change_visibility && rand::random::<f32>() < 0.1
                 }),
                 AcceptReceivedLikesAndSendMessage,
                 AnswerReceivedMessages,
@@ -154,7 +154,6 @@ impl BotAction for DoInitialSetupIfNeeded {
             const ACTIONS1: ActionArray = action_array!(
                 SendImageToSlot {
                     slot: 0,
-                    random_if_not_defined_in_config: true,
                     copy_to_slot: None,
                     mark_copied_image: false,
                 },
@@ -295,48 +294,38 @@ pub struct ChangeBotAgeAndOtherSettings {
 #[async_trait]
 impl BotAction for ChangeBotAgeAndOtherSettings {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let (age, groups) = if let Some(bot_config) = state.get_bot_config() {
-            (
-                bot_config.age.unwrap_or(DEFAULT_AGE),
-                match bot_config.img_dir_gender() {
-                    Gender::Man => SearchGroups {
-                        man_for_man: Some(true),
-                        man_for_woman: Some(true),
-                        man_for_non_binary: Some(true),
-                        ..Default::default()
-                    },
-                    Gender::Woman => SearchGroups {
-                        woman_for_man: Some(true),
-                        woman_for_woman: Some(true),
-                        woman_for_non_binary: Some(true),
-                        ..Default::default()
-                    },
-                },
-            )
-        } else {
-            (
-                DEFAULT_AGE,
-                match state.bot_id % 3 {
-                    0 => SearchGroups {
-                        man_for_man: Some(true),
-                        man_for_woman: Some(true),
-                        man_for_non_binary: Some(true),
-                        ..Default::default()
-                    },
-                    1 => SearchGroups {
-                        woman_for_man: Some(true),
-                        woman_for_woman: Some(true),
-                        woman_for_non_binary: Some(true),
-                        ..Default::default()
-                    },
-                    _ => SearchGroups {
-                        non_binary_for_man: Some(true),
-                        non_binary_for_woman: Some(true),
-                        non_binary_for_non_binary: Some(true),
-                        ..Default::default()
-                    },
-                },
-            )
+        let bot_config = state.get_bot_config();
+        let age = bot_config.age.unwrap_or(DEFAULT_AGE);
+
+        let groups = {
+            let man = SearchGroups {
+                man_for_man: Some(true),
+                man_for_woman: Some(true),
+                man_for_non_binary: Some(true),
+                ..Default::default()
+            };
+            let woman = SearchGroups {
+                woman_for_man: Some(true),
+                woman_for_woman: Some(true),
+                woman_for_non_binary: Some(true),
+                ..Default::default()
+            };
+            let non_binary = SearchGroups {
+                non_binary_for_man: Some(true),
+                non_binary_for_woman: Some(true),
+                non_binary_for_non_binary: Some(true),
+                ..Default::default()
+            };
+
+            match bot_config.gender {
+                Some(Gender::Man) => man,
+                Some(Gender::Woman) => woman,
+                None => match state.bot_id % 3 {
+                    0 => man,
+                    1 => woman,
+                    _ => non_binary,
+                }
+            }
         };
 
         let available_attributes = get_available_profile_attributes(state.api.profile())
@@ -371,7 +360,8 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
         } else {
             state
                 .get_bot_config()
-                .and_then(|v| v.name.clone())
+                .name
+                .clone()
                 .unwrap_or("B".to_string())
         };
 
@@ -581,7 +571,7 @@ struct SendLikeIfNeeded;
 #[async_trait]
 impl BotAction for SendLikeIfNeeded {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        if let Some(account_id) = state.bot_config_file.send_like_to_account_id {
+        if let Some(account_id) = state.get_bot_config().send_like_to_account_id {
             let account_id = AccountId::new(account_id.to_string());
             let r = post_send_like(state.api.chat(), account_id)
                 .await;

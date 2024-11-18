@@ -106,7 +106,7 @@ impl TestMode {
     pub fn bots(&self, task_id: u32) -> u32 {
         match &self.mode {
             TestModeSubMode::Bot(c) if task_id == 0 => c.users,
-            TestModeSubMode::Bot(c) if task_id == 1 => c.admins,
+            TestModeSubMode::Bot(_) if task_id == 1 => 1, // Admin bot
             TestModeSubMode::Benchmark(c) => c.bots,
             _ => 1,
         }
@@ -114,7 +114,7 @@ impl TestMode {
 
     pub fn tasks(&self) -> u32 {
         match &self.mode {
-            TestModeSubMode::Bot(c) if c.admins > 0 => 2,
+            TestModeSubMode::Bot(c) if c.admin => 2,
             TestModeSubMode::Bot(_) => 1,
             TestModeSubMode::Benchmark(c) =>
                 match c.benchmark {
@@ -255,13 +255,13 @@ pub struct QaTestConfig {
 
 #[derive(Args, Debug, Clone)]
 pub struct BotModeConfig {
-    /// User bot count per task
+    /// User bot count
     #[arg(short, long, default_value = "1", value_name = "COUNT")]
     pub users: u32,
 
-    /// Admin bot count per task
-    #[arg(short, long, default_value = "0", value_name = "COUNT")]
-    pub admins: u32,
+    /// Admin bot enabled
+    #[arg(short, long)]
+    pub admin: bool,
 
     /// Make bots to make requests constantly
     #[arg(long)]
