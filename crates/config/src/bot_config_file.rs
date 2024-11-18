@@ -26,7 +26,7 @@ impl BotConfigFile {
 
         let config_content =
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
-        let config: BotConfigFile =
+        let mut config: BotConfigFile =
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
         let validate_common_config = |bot: &BaseBotConfig, id: Option<u16>| {
@@ -84,7 +84,29 @@ impl BotConfigFile {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
         }
 
+        config.merge_base_bot_config_with_specific_bot_configs();
+
         Ok(config)
+    }
+
+    fn merge_base_bot_config_with_specific_bot_configs(&mut self) {
+        for config in &mut self.bot {
+            let base = self.bot_config.clone();
+            let c = config.config.clone();
+            config.config = BaseBotConfig {
+                age: c.age.or(base.age),
+                gender: c.gender.or(base.gender),
+                name: c.name.or(base.name),
+                image: c.image.or(base.image),
+                random_color_image: c.random_color_image.or(base.random_color_image),
+                grid_crop_size: c.grid_crop_size.or(base.grid_crop_size),
+                grid_crop_x: c.grid_crop_x.or(base.grid_crop_x),
+                grid_crop_y: c.grid_crop_y.or(base.grid_crop_y),
+                send_like_to_account_id: c.send_like_to_account_id.or(base.send_like_to_account_id),
+                change_visibility: c.change_visibility.or(base.random_color_image),
+                change_location: c.change_location.or(base.change_location),
+            };
+        }
     }
 }
 
@@ -113,7 +135,7 @@ fn check_imgs_exist(
     Ok(())
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct BaseBotConfig {
     pub age: Option<u8>,
     pub gender: Option<Gender>,
@@ -127,17 +149,14 @@ pub struct BaseBotConfig {
     pub image: Option<String>,
     /// Overrides image file configs and use randomly generated single color
     /// image as profile image.
-    #[serde(default)]
-    pub random_color_image: bool,
+    random_color_image: Option<bool>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
     /// All bots will try to send like to this account ID
     pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64Url>,
-    #[serde(default)]
-    pub change_visibility: bool,
-    #[serde(default)]
-    pub change_location: bool,
+    change_visibility: Option<bool>,
+    change_location: Option<bool>,
 }
 
 impl BaseBotConfig {
@@ -157,6 +176,18 @@ impl BaseBotConfig {
             None | Some(Gender::Man) => Gender::Man,
             Some(Gender::Woman) => Gender::Woman,
         }
+    }
+
+    pub fn random_color_image(&self) -> bool {
+        self.random_color_image.unwrap_or_default()
+    }
+
+    pub fn change_visibility(&self) -> bool {
+        self.change_visibility.unwrap_or_default()
+    }
+
+    pub fn change_location(&self) -> bool {
+        self.change_location.unwrap_or_default()
     }
 }
 

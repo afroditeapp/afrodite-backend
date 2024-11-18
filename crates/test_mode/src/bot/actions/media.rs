@@ -51,7 +51,7 @@ impl SendImageToSlot {
     }
 
     async fn send_to_slot(&self, state: &mut BotState) -> Result<(), TestError> {
-        let img_data = if state.get_bot_config().random_color_image {
+        let img_data = if state.get_bot_config().random_color_image() {
             ImageProvider::random_jpeg_image()
         } else {
             let img_path = img_for_bot(state.get_bot_config(), &state.bot_config_file);
