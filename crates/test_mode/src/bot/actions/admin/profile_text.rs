@@ -36,7 +36,7 @@ impl AdminBotProfileTextModerationLogic {
             return Ok(Some(EmptyPage));
         }
 
-        let expected_response_lowercase = config.expected_response_beginning_text.trim().to_lowercase();
+        let expected_response_lowercase = config.expected_response.to_lowercase();
 
         for request in list.values {
             // Allow texts with only single visible character

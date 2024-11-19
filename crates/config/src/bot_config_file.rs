@@ -240,9 +240,10 @@ pub struct ProfileTextModerationConfig {
     pub system_text: String,
     /// Format argument "%s" is replaced with profile text.
     pub user_text_template: String,
-    /// If LLM response starts with this text the profile text
-    /// is moderated as accepted. The comparison is not case sensitive.
-    pub expected_response_beginning_text: String,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the profile text
+    /// is moderated as accepted. The comparisons are case insensitive.
+    pub expected_response: String,
     /// Accept all texts which only have single visible character.
     pub accept_single_visible_character: bool,
     pub moderation_session_max_seconds: u32,
