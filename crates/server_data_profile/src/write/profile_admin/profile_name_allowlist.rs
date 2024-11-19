@@ -30,52 +30,42 @@ impl<C: WriteCommandsProvider> WriteCommandsProfileAdminProfileNameAllowlist<C> 
             // Already moderated
             return Err(DataError::NotAllowed.report());
         }
-        if accept {
-            // Profile name accepted value is part of Profile, so update it's version
-            let new_profile_version = ProfileVersion::new_random();
-            let (account, new_state) = db_transaction!(self, move |mut cmds| {
-                cmds.profile().data().only_profile_version(name_owner_id, new_profile_version)?;
-                cmds.profile().data().increment_profile_sync_version(name_owner_id)?;
-                let new_state = cmds.profile_admin().profile_name_allowlist().moderate_profile_name(
-                    moderator_id,
-                    name_owner_id,
-                    name,
-                    accept,
-                )?;
-                let account = cmds.read().common().account(name_owner_id)?;
-                Ok((account, new_state))
-            })?;
 
-            let location_and_profile_data = self
-                .cache()
-                .write_cache(name_owner_id.as_id(), |e| {
-                    if let Some(p) = e.profile.as_mut() {
-                        p.state.profile_name_moderation_state = new_state;
-                        p.data.version_uuid = new_profile_version;
-                        Ok(Some((p.location.current_position, e.location_index_profile_data()?)))
-                    } else {
-                        Ok(None)
-                    }
-                })
-                .await
-                .into_data_error(name_owner_id)?;
+        // Profile name accepted value is part of Profile, so update it's version
+        let new_profile_version = ProfileVersion::new_random();
+        let (account, new_state) = db_transaction!(self, move |mut cmds| {
+            cmds.profile().data().only_profile_version(name_owner_id, new_profile_version)?;
+            cmds.profile().data().increment_profile_sync_version(name_owner_id)?;
+            let new_state = cmds.profile_admin().profile_name_allowlist().moderate_profile_name(
+                moderator_id,
+                name_owner_id,
+                name,
+                accept,
+            )?;
+            let account = cmds.read().common().account(name_owner_id)?;
+            Ok((account, new_state))
+        })?;
 
-            if account.profile_visibility().is_currently_public() {
-                if let Some((location, profile_data)) = location_and_profile_data {
-                    self.location()
+        let location_and_profile_data = self
+            .cache()
+            .write_cache(name_owner_id.as_id(), |e| {
+                if let Some(p) = e.profile.as_mut() {
+                    p.state.profile_name_moderation_state = new_state;
+                    p.data.version_uuid = new_profile_version;
+                    Ok(Some((p.location.current_position, e.location_index_profile_data()?)))
+                } else {
+                    Ok(None)
+                }
+            })
+            .await
+            .into_data_error(name_owner_id)?;
+
+        if account.profile_visibility().is_currently_public() {
+            if let Some((location, profile_data)) = location_and_profile_data {
+                self.location()
                     .update_profile_data(name_owner_id.as_id(), profile_data, location)
                     .await?;
-                }
             }
-        } else {
-            db_transaction!(self, move |mut cmds| {
-                cmds.profile_admin().profile_name_allowlist().moderate_profile_name(
-                    moderator_id,
-                    name_owner_id,
-                    name,
-                    accept,
-                )
-            })?;
         }
 
         Ok(())

@@ -116,11 +116,9 @@ pub async fn post_moderate_profile_text<
                 data.rejected_details,
             ).await?;
 
-        if data.accept {
-            cmds.events()
-                .send_connected_event(name_owner_id, EventToClientInternal::ProfileChanged)
-                .await?;
-        }
+        cmds.events()
+            .send_connected_event(name_owner_id, EventToClientInternal::ProfileChanged)
+            .await?;
 
         Ok(())
     })?;

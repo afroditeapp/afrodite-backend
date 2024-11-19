@@ -100,11 +100,9 @@ pub async fn post_moderate_profile_name<
                 data.accept,
             ).await?;
 
-        if data.accept {
-            cmds.events()
-                .send_connected_event(name_owner_id, EventToClientInternal::ProfileChanged)
-                .await?;
-        }
+        cmds.events()
+            .send_connected_event(name_owner_id, EventToClientInternal::ProfileChanged)
+            .await?;
 
         Ok(())
     })?;
