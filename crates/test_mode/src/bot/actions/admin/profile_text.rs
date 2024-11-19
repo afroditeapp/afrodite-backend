@@ -79,9 +79,9 @@ impl AdminBotProfileTextModerationLogic {
                 }
             };
 
-            let response = response.trim().to_lowercase();
-            let response_first_line = response.lines().next().unwrap_or_default();
-            let accepted = response.starts_with(&expected_response_lowercase) ||
+            let response_lowercase = response.trim().to_lowercase();
+            let response_first_line = response_lowercase.lines().next().unwrap_or_default();
+            let accepted = response_lowercase.starts_with(&expected_response_lowercase) ||
                 response_first_line.contains(&expected_response_lowercase);
             let rejected_details = if !accepted && server_config.debug_mode() {
                 Some(Some(Box::new(ProfileTextModerationRejectedReasonDetails::new(response))))
