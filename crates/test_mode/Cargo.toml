@@ -44,6 +44,7 @@ image = { workspace = true, default-features = false, features = ["jpeg"] }
 tokio-tungstenite = { workspace = true }
 inventory = { workspace = true }
 async-openai = { workspace = true }
+unicode-segmentation = { workspace = true }
 
 api_client = { path = "../api_client" }
 

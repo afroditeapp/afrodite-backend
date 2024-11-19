@@ -243,6 +243,8 @@ pub struct ProfileTextModerationConfig {
     /// If LLM response starts with this text the profile text
     /// is moderated as accepted. The comparison is not case sensitive.
     pub expected_response_beginning_text: String,
+    /// Accept all texts which only have single visible character.
+    pub accept_single_visible_character: bool,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
 }

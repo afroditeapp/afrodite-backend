@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use config::{bot_config_file::ProfileTextModerationConfig, Config};
 use error_stack::{Result, ResultExt};
 use tracing::error;
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::client::{ApiClient, TestError};
 
@@ -38,6 +39,25 @@ impl AdminBotProfileTextModerationLogic {
         let expected_response_lowercase = config.expected_response_beginning_text.trim().to_lowercase();
 
         for request in list.values {
+            // Allow texts with only single visible character
+            if config.accept_single_visible_character && request.text.graphemes(true).count() == 1 {
+                // Ignore errors as the user might have changed the text to
+                // another one or it is already moderated.
+                let _ = profile_admin_api::post_moderate_profile_text(
+                    api.profile(),
+                    api_client::models::PostModerateProfileText {
+                        id: request.id.clone(),
+                        text: request.text.clone(),
+                        accept: true,
+                        rejected_category: None,
+                        rejected_details: None,
+                    },
+                )
+                .await;
+
+                continue;
+            }
+
             let profile_text_paragraph = request.text
                 .lines()
                 .collect::<Vec<&str>>()
