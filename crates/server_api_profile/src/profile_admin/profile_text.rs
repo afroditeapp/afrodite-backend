@@ -64,6 +64,11 @@ pub async fn get_profile_text_pending_moderation_list<
 #[obfuscate_api]
 const PATH_POST_MODERATE_PROFILE_TEXT: &str = "/profile_api/admin/moderate_profile_text";
 
+
+/// Rejected category and details can be set only when the text is rejected.
+///
+/// This route will fail if the text is already moderated or the users's
+/// profile text is not the same text that was moderated.
 #[utoipa::path(
     post,
     path = PATH_POST_MODERATE_PROFILE_TEXT,

@@ -131,6 +131,7 @@ inventory = "0.3.15"
 tokio-tungstenite = { version = "0.22.0", features = ["native-tls"] }
 pgp = "0.13.2"
 bstr = "1.10.0"
+async-openai = "0.26.0"
 
 # Firebase cloud messaging
 [workspace.dependencies.fcm]

@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Deserializer};
+use url::Url;
 
 use crate::{args::TestMode, file::ConfigFileError};
 
@@ -82,6 +83,18 @@ impl BotConfigFile {
 
         if let Some(img_dir) = &config.woman_image_dir {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
+        }
+
+        if let Some(config) = &config.profile_text_moderation {
+            let count = config.user_text_template.split(ProfileTextModerationConfig::TEMPLATE_FORMAT_ARGUMENT).count();
+            #[allow(clippy::comparison_chain)]
+            if count > 2 {
+                return Err(ConfigFileError::InvalidConfig)
+                    .attach_printable("Profile text moderation user text template: only one '%s' format argument is allowed");
+            } else if count < 2 {
+                return Err(ConfigFileError::InvalidConfig)
+                    .attach_printable("Profile text moderation user text template: '%s' format argument is missing");
+            }
         }
 
         config.merge_base_bot_config_with_specific_bot_configs();
@@ -221,8 +234,21 @@ impl<'de> Deserialize<'de> for Gender {
 
 #[derive(Debug, Deserialize)]
 pub struct ProfileTextModerationConfig {
+    /// For example "http://localhost:11434/v1"
+    pub openai_api_url: Url,
+    pub model: String,
+    pub system_text: String,
+    /// Format argument "%s" is replaced with profile text.
+    pub user_text_template: String,
+    /// If LLM response starts with this text the profile text
+    /// is moderated as accepted. The comparison is not case sensitive.
+    pub expected_response_beginning_text: String,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
+}
+
+impl ProfileTextModerationConfig {
+    pub const TEMPLATE_FORMAT_ARGUMENT: &'static str = "%s";
 }
 
 #[derive(Debug, Deserialize)]

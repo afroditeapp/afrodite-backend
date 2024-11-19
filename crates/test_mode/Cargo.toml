@@ -43,6 +43,7 @@ nix = { workspace = true, default-features = false, features = ["signal"] }
 image = { workspace = true, default-features = false, features = ["jpeg"] }
 tokio-tungstenite = { workspace = true }
 inventory = { workspace = true }
+async-openai = { workspace = true }
 
 api_client = { path = "../api_client" }
 

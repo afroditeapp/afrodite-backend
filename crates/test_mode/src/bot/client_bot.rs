@@ -33,7 +33,7 @@ use crate::{
     action_array,
     bot::actions::{
         account::CompleteAccountSetup,
-        admin::{AdminBotContentModerationLogic, AdminBotProfileTextModerationLogic},
+        admin::{AdminBotContentModerationLogic, profile_text::AdminBotProfileTextModerationLogic},
         media::{MakeModerationRequest, SetPendingContent},
         ActionArray,
     },

@@ -90,6 +90,8 @@ impl Config {
     ///   Normally it also requires Google Account ID.
     /// * Routes for only related to benchmarking are available.
     /// * Axum JSON extractor shows errors.
+    /// * Admin bot profile text moderation saves LLM response text to server
+    ///   when the text is rejected.
     ///
     /// Check also `SimpleBackendConfig::debug_mode`.
     pub fn debug_mode(&self) -> bool {

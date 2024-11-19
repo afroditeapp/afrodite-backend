@@ -1,15 +1,18 @@
 use std::{fmt::Debug, time::Instant};
 
-use api_client::{apis::{media_admin_api, profile_admin_api}, models::ModerationQueueType};
+use api_client::{apis::media_admin_api, models::ModerationQueueType};
 use async_trait::async_trait;
 use error_stack::{Result, ResultExt};
+use profile_text::ProfileTextModerationState;
 
 use super::{super::super::client::TestError, BotAction, BotState};
+
+pub mod profile_text;
 
 #[derive(Debug, Default)]
 pub struct AdminBotState {
     profile_content_moderation_started: Option<Instant>,
-    profile_text_moderation_started: Option<Instant>,
+    profile_text: Option<ProfileTextModerationState>,
 }
 
 #[derive(Debug)]
@@ -176,71 +179,6 @@ impl BotAction for AdminBotContentModerationLogic {
                 if current_time.duration_since(start_time).as_secs() > config.moderation_session_max_seconds.into() {
                     return Ok(());
                 }
-            }
-        }
-
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
-pub struct AdminBotProfileTextModerationLogic;
-
-impl AdminBotProfileTextModerationLogic {
-    async fn moderate_one_page(state: &BotState) -> Result<Option<EmptyPage>, TestError> {
-        let list = profile_admin_api::get_profile_text_pending_moderation_list(state.api.profile(), true)
-            .await
-            .change_context(TestError::ApiRequest)?;
-
-        if list.values.is_empty() {
-            return Ok(Some(EmptyPage));
-        }
-
-        for request in list.values {
-            profile_admin_api::post_moderate_profile_text(
-                state.api.profile(),
-                api_client::models::PostModerateProfileText {
-                    id: request.id.clone(),
-                    text: request.text.clone(),
-                    accept: true,
-                    rejected_category: None,
-                    rejected_details: None,
-                },
-            )
-            .await
-            .change_context(TestError::ApiRequest)?;
-        }
-
-        Ok(None)
-    }
-}
-
-
-#[async_trait]
-impl BotAction for AdminBotProfileTextModerationLogic {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let Some(config) = &state.bot_config_file.profile_text_moderation else {
-            return Ok(());
-        };
-
-        let start_time = Instant::now();
-
-        if let Some(previous) = state.admin.profile_text_moderation_started {
-            if start_time.duration_since(previous).as_secs() < config.moderation_session_min_seconds.into() {
-                return Ok(());
-            }
-        }
-
-        state.admin.profile_text_moderation_started = Some(start_time);
-
-        loop {
-            if let Some(EmptyPage) = Self::moderate_one_page(state).await? {
-                break;
-            }
-
-            let current_time = Instant::now();
-            if current_time.duration_since(start_time).as_secs() > config.moderation_session_max_seconds.into() {
-                return Ok(());
             }
         }
 
