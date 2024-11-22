@@ -100,10 +100,10 @@ impl ContentProcessingManager {
         if let Some(state) = write.processing_states_mut().get_mut(&content.to_key()) {
             let result = self.if_successful_save_to_database(self.state.config(), result, state).await;
             match result {
-                Ok(()) => {
+                Ok(face_detected) => {
                     state
                         .processing_state
-                        .change_to_completed(state.processing_id.to_content_id());
+                        .change_to_completed(state.processing_id.to_content_id(), face_detected.0);
                 }
                 Err(e) => {
                     state.processing_state.change_to_failed();
@@ -127,12 +127,12 @@ impl ContentProcessingManager {
         }
     }
 
-    pub async fn if_successful_save_to_database(
+    async fn if_successful_save_to_database(
         &self,
         config: &Config,
         result: Result<ImageProcessingInfo, ContentProcessingError>,
         state: &mut ProcessingState,
-    ) -> Result<(), ContentProcessingError> {
+    ) -> Result<FaceDetected, ContentProcessingError> {
         let info = result?;
         let face_detected = if config.debug_mode() {
             true
@@ -153,6 +153,10 @@ impl ContentProcessingManager {
                 .await
         })
         .await
-        .change_context(ContentProcessingError::DatabaseError)
+        .change_context(ContentProcessingError::DatabaseError)?;
+
+        Ok(FaceDetected(face_detected))
     }
 }
+
+struct FaceDetected(bool);

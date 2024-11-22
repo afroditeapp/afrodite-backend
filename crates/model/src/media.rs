@@ -94,6 +94,8 @@ pub struct ContentProcessingState {
     pub wait_queue_position: Option<u64>,
     /// Content ID of the processed content.
     pub cid: Option<ContentId>,
+    /// Face detected info of the processed content.
+    pub fd: Option<bool>,
 }
 
 impl ContentProcessingState {
@@ -102,6 +104,7 @@ impl ContentProcessingState {
             state: ContentProcessingStateType::Empty,
             wait_queue_position: None,
             cid: None,
+            fd: None,
         }
     }
 
@@ -110,6 +113,7 @@ impl ContentProcessingState {
             state: ContentProcessingStateType::InQueue,
             wait_queue_position: Some(wait_queue_position),
             cid: None,
+            fd: None,
         }
     }
 
@@ -117,18 +121,25 @@ impl ContentProcessingState {
         self.state = ContentProcessingStateType::Processing;
         self.wait_queue_position = None;
         self.cid = None;
+        self.fd = None;
     }
 
-    pub fn change_to_completed(&mut self, content_id: ContentId) {
+    pub fn change_to_completed(
+        &mut self,
+        content_id: ContentId,
+        face_detected: bool,
+    ) {
         self.state = ContentProcessingStateType::Completed;
         self.wait_queue_position = None;
         self.cid = Some(content_id);
+        self.fd = Some(face_detected);
     }
 
     pub fn change_to_failed(&mut self) {
         self.state = ContentProcessingStateType::Failed;
         self.wait_queue_position = None;
         self.cid = None;
+        self.fd = None;
     }
 }
 
@@ -425,6 +436,8 @@ pub struct NewContentParams {
 pub struct ContentInfo {
     pub cid: ContentId,
     pub ctype: MediaContentType,
+    /// Face detected
+    pub fd: bool,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
@@ -434,6 +447,8 @@ pub struct ContentInfoDetailed {
     pub state: ContentState,
     pub slot: Option<ContentSlot>,
     pub secure_capture: bool,
+    /// Face detected
+    pub fd: bool,
 }
 
 /// Content ID for media content for example images
@@ -494,6 +509,7 @@ pub struct MediaContentRaw {
     pub account_id: AccountIdDb,
     pub content_state: ContentState,
     pub secure_capture: bool,
+    pub face_detected: bool,
     pub content_type_number: MediaContentType,
     slot_number: ContentSlot,
 }
@@ -535,6 +551,7 @@ impl From<MediaContentRaw> for ContentInfo {
         ContentInfo {
             cid: value.uuid,
             ctype: value.content_type_number,
+            fd: value.face_detected,
         }
     }
 }
@@ -547,6 +564,7 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
             state: value.content_state,
             slot: value.slot_number(),
             secure_capture: value.secure_capture,
+            fd: value.face_detected,
         }
     }
 }
