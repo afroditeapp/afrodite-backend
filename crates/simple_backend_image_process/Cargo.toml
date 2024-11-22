@@ -9,6 +9,9 @@ edition = "2021"
 image = { workspace = true, default-features = false, features = ["jpeg"] }
 mozjpeg = { workspace = true }
 kamadak-exif = { workspace = true }
+rustface = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 thiserror = { workspace = true }
 error-stack = { workspace = true }

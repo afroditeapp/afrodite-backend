@@ -1,11 +1,12 @@
 use std::{
-    io::BufReader,
-    path::{Path, PathBuf},
+    io::{BufReader, Write},
+    path::Path,
 };
 
 use error_stack::{report, Result, ResultExt};
-use image::{DynamicImage, EncodableLayout};
-use simple_backend_config::args::InputFileType;
+use image::{DynamicImage, EncodableLayout, GrayImage};
+use serde::{Deserialize, Serialize};
+use simple_backend_config::{args::{ImageProcessModeArgs, InputFileType}, file::ImageProcessingConfig};
 
 const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 512;
 
@@ -31,28 +32,35 @@ pub enum ImageProcessError {
         SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
     )]
     SourceImageTooSmall,
+
+    #[error("Face detection error")]
+    FaceDetection,
+
+    #[error("Face detection panic detect")]
+    FaceDetectionPanic,
+
+    #[error("Stdout error")]
+    Stdout,
 }
 
-pub struct Settings {
-    /// Input image file.
-    pub input: PathBuf,
-    pub input_file_type: InputFileType,
-    /// Output jpeg image file. Will be overwritten if exists.
-    pub output: PathBuf,
-    /// Output jpeg image quality. Clamped to 1-100 range.
-    /// Mozjpeg library recommends values in 60-80 range.
-    pub quality: f32,
+/// Image process returns this info as JSON to standard output.
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct ImageProcessingInfo {
+    pub face_detected: bool,
 }
 
-pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
-    let format = match settings.input_file_type {
+pub fn handle_image(
+    args: ImageProcessModeArgs,
+    config: ImageProcessingConfig,
+) -> Result<(), ImageProcessError> {
+    let format = match args.input_file_type {
         InputFileType::JpegImage => image::ImageFormat::Jpeg,
     };
 
     // Only JPEG images are supported
-    let rotation = read_exif_rotation_info(&settings.input).unwrap_or(0);
+    let rotation = read_exif_rotation_info(&args.input).unwrap_or(0);
 
-    let img_file = std::fs::File::open(&settings.input)
+    let img_file = std::fs::File::open(&args.input)
         .change_context(ImageProcessError::InputReadingFailed)?;
     let buffered_reader = BufReader::new(img_file);
     let img = image::ImageReader::with_format(buffered_reader, format)
@@ -66,18 +74,22 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
     }
 
     let img = resize_and_rotate_image(img, rotation);
+    let width = img.width();
+    let height = img.height();
+    let data_face_detection = img.to_luma8();
+    let data = img.into_rgb8();
 
     let result = std::panic::catch_unwind(|| -> Result<Vec<u8>, ImageProcessError> {
         let mut compress = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_RGB);
 
         compress.set_size(
-            TryInto::<usize>::try_into(img.width())
+            TryInto::<usize>::try_into(width)
                 .change_context(ImageProcessError::EncodingError)?,
-            TryInto::<usize>::try_into(img.height())
+            TryInto::<usize>::try_into(height)
                 .change_context(ImageProcessError::EncodingError)?,
         );
 
-        let quality = settings.quality.clamp(1.0, 100.0);
+        let quality = config.jpeg_quality().clamp(1.0, 100.0);
         let quality = if quality.is_nan() { 1.0 } else { quality };
         compress.set_quality(quality);
 
@@ -85,7 +97,6 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
             .start_compress(Vec::new())
             .change_context(ImageProcessError::EncodingError)?;
 
-        let data = img.into_rgb8();
         compress
             .write_scanlines(data.as_bytes())
             .change_context(ImageProcessError::EncodingError)?;
@@ -108,7 +119,22 @@ pub fn handle_image(settings: Settings) -> Result<(), ImageProcessError> {
     }
     .change_context(ImageProcessError::EncodingError)?;
 
-    std::fs::write(&settings.output, data).change_context(ImageProcessError::FileWriting)?;
+    std::fs::write(&args.output, data).change_context(ImageProcessError::FileWriting)?;
+
+    let info = match detect_face(config, data_face_detection) {
+        Ok(info) => info,
+        Err(e) => {
+            // Ignore
+            eprintln!("{:?}", e);
+            ImageProcessingInfo::default()
+        }
+    };
+
+    let mut stdout = std::io::stdout();
+    serde_json::to_writer(&stdout, &info)
+        .change_context(ImageProcessError::Stdout)?;
+    stdout.flush()
+        .change_context(ImageProcessError::Stdout)?;
 
     Ok(())
 }
@@ -166,4 +192,45 @@ fn resize_and_rotate_image(img: DynamicImage, exif_rotation: u32) -> DynamicImag
         8 => img.rotate270(),
         _ => img,
     }
+}
+
+fn detect_face(
+    config: ImageProcessingConfig,
+    data: GrayImage,
+) -> Result<ImageProcessingInfo, ImageProcessError> {
+    let Some(config) = config.seetaface else {
+        return Ok(ImageProcessingInfo {
+            face_detected: true,
+        });
+    };
+
+    let data = rustface::ImageData::new(&data, data.width(), data.height());
+
+    let result = std::panic::catch_unwind(|| -> Result<Vec<rustface::FaceInfo>, ImageProcessError> {
+        let mut model = rustface::create_detector(&config.model_file)
+            .change_context(ImageProcessError::FaceDetection)?;
+
+        model.set_score_thresh(config.detection_threshold);
+        model.set_pyramid_scale_factor(config.pyramid_scale_factor);
+        model.set_min_face_size(20);
+        model.set_slide_window_step(4, 4);
+
+        Ok(model.detect(&data))
+    });
+
+    let data = match result {
+        Ok(result) => result,
+        Err(e) => {
+            let error = e
+                .downcast_ref::<&str>()
+                .map(|message| message.to_string())
+                .unwrap_or_default();
+            return Err(report!(ImageProcessError::FaceDetectionPanic).attach_printable(error));
+        }
+    }
+    .change_context(ImageProcessError::FaceDetection)?;
+
+    Ok(ImageProcessingInfo {
+        face_detected: !data.is_empty(),
+    })
 }

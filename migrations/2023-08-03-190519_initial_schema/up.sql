@@ -525,6 +525,8 @@ CREATE TABLE IF NOT EXISTS media_content(
     content_state       INTEGER             NOT NULL,
     -- Client captured this media
     secure_capture      BOOLEAN             NOT NULL,
+    -- Face was detected from the content
+    face_detected       BOOLEAN             NOT NULL,
     -- JpegImage = 0, Jpeg image
     content_type_number INTEGER             NOT NULL,
     -- Numbers from 0 to 6.

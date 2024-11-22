@@ -17,19 +17,16 @@ pub struct ServerModeArgs {
 
 #[derive(Args, Debug, Clone)]
 pub struct ImageProcessModeArgs {
+    /// Input image file.
     #[arg(long, value_name = "FILE")]
     pub input: PathBuf,
 
     #[arg(long, value_name = "TYPE")]
     pub input_file_type: InputFileType,
 
+    /// Output jpeg image file. Will be overwritten if exists.
     #[arg(long, value_name = "FILE")]
     pub output: PathBuf,
-
-    /// Jpeg quality value. Value is clamped between 1-100.
-    /// Mozjpeg library recommends 60-80 values
-    #[arg(long, value_name = "NUMBER", default_value = "60")]
-    pub quality: u8,
 }
 
 #[derive(Debug, Clone, PartialEq, ValueEnum)]

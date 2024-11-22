@@ -15,7 +15,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use file::{DatabaseInfo, FirebaseCloudMessagingConfig, ScheduledTasksConfig, TileMapConfig};
+use file::{DatabaseInfo, FirebaseCloudMessagingConfig, ImageProcessingConfig, ScheduledTasksConfig, TileMapConfig};
 use reqwest::Url;
 use rustls_pemfile::certs;
 use tokio_rustls::rustls::ServerConfig;
@@ -189,6 +189,10 @@ impl SimpleBackendConfig {
 
     pub fn file_package(&self) -> Option<&file::StaticFilePackageHostingConfig> {
         self.file.static_file_package_hosting.as_ref()
+    }
+
+    pub fn image_processing(&self) -> ImageProcessingConfig {
+        self.file.image_processing.clone().unwrap_or_default()
     }
 }
 

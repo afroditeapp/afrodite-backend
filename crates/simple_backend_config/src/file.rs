@@ -93,6 +93,15 @@ name = "history"
 # package = "frontend.tar.gz"
 # read_from_dir = "" # optional, by default disabled
 
+# [image_processing]
+# jpeg_quality = 60 # optional
+
+# If face detection is not configured all images are marked to include a face
+# [image_processing.seetaface]
+# model_file = "model.bin"
+# detection_threshold = 2.8
+# pyramid_scale_factor = 0.5
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -127,6 +136,7 @@ pub struct SimpleBackendConfigFile {
     pub litestream: Option<LitestreamConfig>,
     pub scheduled_tasks: Option<ScheduledTasksConfig>,
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
+    pub image_processing: Option<ImageProcessingConfig>,
 }
 
 impl SimpleBackendConfigFile {
@@ -492,4 +502,39 @@ impl Default for ScheduledTasksConfig {
             daily_run_time: UtcTimeValue(TimeValue::DEFAULT_SCHEDULED_TASKS_TIME)
         }
     }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ImageProcessingConfig {
+    /// Jpeg quality value. Value is clamped between 1-100.
+    /// Mozjpeg library recommends 60-80 values
+    #[serde(default = "default_jpeg_quality")]
+    jpeg_quality: u8,
+    pub seetaface: Option<SeetaFaceConfig>,
+}
+
+fn default_jpeg_quality() -> u8 {
+    60
+}
+
+impl Default for ImageProcessingConfig {
+    fn default() -> Self {
+        Self {
+            jpeg_quality: default_jpeg_quality(),
+            seetaface: None,
+        }
+    }
+}
+
+impl ImageProcessingConfig {
+    pub fn jpeg_quality(&self) -> f32 {
+        self.jpeg_quality as f32
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct SeetaFaceConfig {
+    pub model_file: String,
+    pub detection_threshold: f64,
+    pub pyramid_scale_factor: f32,
 }

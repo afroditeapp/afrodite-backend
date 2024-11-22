@@ -14,6 +14,7 @@ tracing-subscriber = { workspace = true }
 # console-subscriber = { workspace = true }
 
 serde = { workspace = true }
+serde_json = { workspace = true }
 toml = { workspace = true }
 chrono = { workspace = true }
 
@@ -55,3 +56,4 @@ simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_database = { path = "../simple_backend_database" }
 simple_backend_model = { path = "../simple_backend_model" }
+simple_backend_image_process = { path = "../simple_backend_image_process" }

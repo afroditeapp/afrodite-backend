@@ -22,6 +22,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         content_id: ContentId,
         slot: ContentSlot,
         content_params: NewContentParams,
+        face_detected_value: bool,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
 
@@ -32,6 +33,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
                 content_state.eq(ContentState::InSlot),
                 slot_number.eq(slot as i64),
                 secure_capture.eq(content_params.secure_capture),
+                face_detected.eq(face_detected_value),
                 content_type_number.eq(content_params.content_type),
             ))
             .execute(self.conn())

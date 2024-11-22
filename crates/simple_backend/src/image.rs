@@ -4,8 +4,9 @@ use std::{env, os::unix::process::CommandExt, path::Path, str::from_utf8};
 
 use error_stack::{Result, ResultExt};
 use simple_backend_config::args::InputFileType;
+use simple_backend_image_process::ImageProcessingInfo;
 use simple_backend_utils::ContextExt;
-use tracing::error;
+use tracing::{error, warn};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ImageProcessError {
@@ -34,7 +35,7 @@ impl ImageProcess {
         input: &Path,
         input_file_type: InputFileType,
         output: &Path,
-    ) -> Result<(), ImageProcessError> {
+    ) -> Result<ImageProcessingInfo, ImageProcessError> {
         let start_cmd = env::args()
             .next()
             .ok_or(ImageProcessError::LaunchCommand.report())?
@@ -87,7 +88,18 @@ impl ImageProcess {
             .change_context(ImageProcessError::StartProcess)?;
 
         if result.status.success() {
-            Ok(())
+            let info: ImageProcessingInfo = serde_json::from_slice(&result.stdout)
+                .change_context(ImageProcessError::ImageProcessingFailure)?;
+
+            if !result.stderr.is_empty() {
+                let stderr_str = match from_utf8(&result.stderr) {
+                    Ok(msg) => msg.trim(),
+                    Err(_) => "stderr contains invalid utf-8",
+                };
+                warn!("Image processing error: {}", stderr_str);
+            }
+
+            Ok(info)
         } else {
             let mut report = ImageProcessError::ImageProcessingFailure.report();
             let stdout_str = match from_utf8(&result.stdout) {

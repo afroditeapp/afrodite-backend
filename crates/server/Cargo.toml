@@ -47,3 +47,4 @@ server_router_chat = { path = "../server_router_chat" }
 simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }
 simple_backend_config = { path = "../simple_backend_config" }
+simple_backend_image_process = { path = "../simple_backend_image_process" }

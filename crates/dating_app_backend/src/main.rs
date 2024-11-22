@@ -12,7 +12,7 @@ use build_info::{BUILD_INFO_CARGO_PKG_VERSION, BUILD_INFO_GIT_DESCRIBE};
 use config::{args::AppMode, get_config};
 use server::{api_doc::ApiDoc, DatingAppServer};
 use server_data::index::LocationIndexInfoCreator;
-use simple_backend_config::args::ImageProcessModeArgs;
+use simple_backend_config::{args::ImageProcessModeArgs, file::ImageProcessingConfig};
 use test_mode::TestRunner;
 
 fn main() -> ExitCode {
@@ -24,7 +24,12 @@ fn main() -> ExitCode {
     };
 
     if let Some(AppMode::ImageProcess(settings)) = args.mode {
-        return handle_image_process_mode(settings);
+        let config = simple_backend_config::get_config(
+            args.server,
+        BUILD_INFO_GIT_DESCRIBE.to_string(),
+        BUILD_INFO_CARGO_PKG_VERSION.to_string(),
+        ).unwrap();
+        return handle_image_process_mode(settings, config.image_processing());
     }
 
     if let Some(AppMode::OpenApi) = args.mode {
@@ -63,15 +68,11 @@ fn main() -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn handle_image_process_mode(settings: ImageProcessModeArgs) -> ExitCode {
-    let settings = simple_backend_image_process::Settings {
-        input: settings.input,
-        input_file_type: settings.input_file_type,
-        output: settings.output,
-        quality: settings.quality as f32,
-    };
-
-    match simple_backend_image_process::handle_image(settings) {
+fn handle_image_process_mode(
+    args: ImageProcessModeArgs,
+    config: ImageProcessingConfig,
+) -> ExitCode {
+    match simple_backend_image_process::handle_image(args, config) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("{:?}", e);

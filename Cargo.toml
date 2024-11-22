@@ -139,6 +139,12 @@ unicode-segmentation = "1.12.0"
 git = "https://github.com/jutuon/fcm-rust"
 rev = "1788092b8db6aeb50945ff4e279899d9b9336b2e"
 
+# Face detection
+[workspace.dependencies.rustface]
+git = "https://github.com/jutuon/rustface"
+rev = "271563b947d7906f2126e1dfaae292d900171bcb"
+default-features = false
+
 # Make image processing faster for debug builds
 [profile.dev.package.image]
 opt-level = 3

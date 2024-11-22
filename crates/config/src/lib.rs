@@ -92,6 +92,7 @@ impl Config {
     /// * Axum JSON extractor shows errors.
     /// * Admin bot profile text moderation saves LLM response text to server
     ///   when the text is rejected.
+    /// * Face detected boolean is set to true for every image.
     ///
     /// Check also `SimpleBackendConfig::debug_mode`.
     pub fn debug_mode(&self) -> bool {

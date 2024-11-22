@@ -71,6 +71,7 @@ impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
         content_id: ContentId,
         slot: ContentSlot,
         new_content_params: NewContentParams,
+        face_detected: bool,
     ) -> Result<(), DataError> {
         // Remove previous slot content.
         let current_content_in_slot = self
@@ -104,7 +105,7 @@ impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
         self.db_transaction(move |mut cmds| {
             cmds.media()
                 .moderation_request()
-                .insert_content_id_to_slot(id, content_id, slot, new_content_params)?;
+                .insert_content_id_to_slot(id, content_id, slot, new_content_params, face_detected)?;
 
             // Move content from tmp dir to content dir
             tmp_img
