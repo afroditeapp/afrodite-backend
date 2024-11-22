@@ -67,6 +67,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     ///  - The content must be moderated as accepted.
     ///  - The content must be of type JpegImage.
     ///  - The content must be in the account's media content.
+    ///  - The first content must have face detected flag set.
     pub fn update_profile_content(
         &mut self,
         id: AccountIdInternal,
@@ -80,6 +81,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .media()
             .media_content()
             .get_account_media_content(id)?;
+        let convert_first = |content_id: Option<ContentId>| {
+            Self::check_content_id(content_id, &all_content, |c| {
+                c.state() == ContentState::ModeratedAsAccepted && c.face_detected
+            })
+        };
         let convert = |content_id: Option<ContentId>| {
             Self::check_content_id(content_id, &all_content, |c| {
                 c.state() == ContentState::ModeratedAsAccepted
@@ -89,7 +95,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
         update(current_account_media.find(id.as_db_id()))
             .set((
                 profile_content_version_uuid.eq(new_version),
-                profile_content_id_0.eq(convert(Some(new.c0))?),
+                profile_content_id_0.eq(convert_first(Some(new.c0))?),
                 profile_content_id_1.eq(convert(new.c1)?),
                 profile_content_id_2.eq(convert(new.c2)?),
                 profile_content_id_3.eq(convert(new.c3)?),
@@ -111,6 +117,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     ///  - The content must not be moderated as rejected.
     ///  - The content must be of type JpegImage.
     ///  - The content must be in the account's media content.
+    ///  - The first content must have face detected flag set.
     pub fn update_or_delete_pending_profile_content(
         &mut self,
         id: AccountIdInternal,
@@ -131,6 +138,11 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .media()
             .media_content()
             .get_account_media_content(id)?;
+        let convert_first = |content_id: Option<ContentId>| {
+            Self::check_content_id(content_id, &all_content, |c| {
+                c.state() != ContentState::ModeratedAsRejected && c.face_detected
+            })
+        };
         let convert = |content_id: Option<ContentId>| {
             Self::check_content_id(content_id, &all_content, |c| {
                 c.state() != ContentState::ModeratedAsRejected
@@ -139,7 +151,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
 
         update(current_account_media.find(id.as_db_id()))
             .set((
-                pending_profile_content_id_0.eq(convert(new.c0)?),
+                pending_profile_content_id_0.eq(convert_first(new.c0)?),
                 pending_profile_content_id_1.eq(convert(new.c1)?),
                 pending_profile_content_id_2.eq(convert(new.c2)?),
                 pending_profile_content_id_3.eq(convert(new.c3)?),
@@ -162,6 +174,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     /// - The content must be of type JpegImage.
     /// - The content must be in the account's media content.
     /// - The content must have secure capture flag enabled.
+    /// - The content must have face detected flag enabled.
     pub fn update_security_content(
         &mut self,
         content_owner: AccountIdInternal,
@@ -176,7 +189,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .get_account_media_content(content_owner)?;
 
         let content_db_id = Self::check_content_id(Some(content_id), &all_content, |c| {
-            c.state() == ContentState::ModeratedAsAccepted && c.secure_capture
+            c.state() == ContentState::ModeratedAsAccepted && c.secure_capture && c.face_detected
         })?;
 
         update(current_account_media.find(content_owner.as_db_id()))
@@ -194,6 +207,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
     /// - The content must be of type JpegImage.
     /// - The content must be in the account's media content.
     /// - The content must have secure capture flag enabled.
+    /// - The content must have face detected flag enabled.
     pub fn update_or_delete_pending_security_content(
         &mut self,
         content_owner: AccountIdInternal,
@@ -208,7 +222,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
             .get_account_media_content(content_owner)?;
 
         let content_db_id = Self::check_content_id(content_id, &all_content, |c| {
-            c.state() != ContentState::ModeratedAsRejected && c.secure_capture
+            c.state() != ContentState::ModeratedAsRejected && c.secure_capture && c.face_detected
         })?;
 
         update(current_account_media.find(content_owner.as_db_id()))

@@ -61,6 +61,7 @@ const PATH_PUT_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info";
 /// - The content must be owned by the account.
 /// - The content must be an image.
 /// - The content must be captured by client.
+/// - The content must have face detected.
 #[utoipa::path(
     put,
     path = PATH_PUT_SECURITY_CONTENT_INFO,
@@ -125,6 +126,8 @@ pub async fn get_pending_security_content_info<S: ReadData + GetAccounts>(
 const PATH_PUT_PENDING_SECURITY_CONTENT_INFO: &str = "/media_api/pending_security_content_info";
 
 /// Set pending security content for current account.
+///
+/// Requires that the content has face detected.
 #[utoipa::path(
     put,
     path = PATH_PUT_PENDING_SECURITY_CONTENT_INFO,

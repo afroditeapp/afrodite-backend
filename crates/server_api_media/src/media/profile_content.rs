@@ -111,6 +111,7 @@ const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
 /// - All content must be moderated as accepted.
 /// - All content must be owned by the account.
 /// - All content must be images.
+/// - First content must have face detected.
 #[utoipa::path(
     put,
     path = PATH_PUT_PROFILE_CONTENT,
@@ -182,6 +183,7 @@ const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_conte
 /// - All content must not be moderated as rejected.
 /// - All content must be owned by the account.
 /// - All content must be images.
+/// - First content must have face detected.
 #[utoipa::path(
     put,
     path = PATH_PUT_PENDING_PROFILE_CONTENT,
