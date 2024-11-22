@@ -56,6 +56,11 @@ impl BotConfigFile {
                         }
                     }
                 }
+
+                if bot.random_color_image.is_some() {
+                    return Err(ConfigFileError::InvalidConfig)
+                        .attach_printable(format!("{} Image and random color image can't be both set", error_location));
+                }
             }
 
             // TODO: Validate all fields?
@@ -106,12 +111,26 @@ impl BotConfigFile {
         for config in &mut self.bot {
             let base = self.bot_config.clone();
             let c = config.config.clone();
+
+            let prevent_base_image_config = c.image.is_some() ||
+                c.random_color_image.is_some();
+            let base_image = if prevent_base_image_config {
+                None
+            } else {
+                base.image
+            };
+            let base_random_color_image = if prevent_base_image_config {
+                None
+            } else {
+                base.random_color_image
+            };
+
             config.config = BaseBotConfig {
                 age: c.age.or(base.age),
                 gender: c.gender.or(base.gender),
                 name: c.name.or(base.name),
-                image: c.image.or(base.image),
-                random_color_image: c.random_color_image.or(base.random_color_image),
+                image: c.image.or(base_image),
+                random_color_image: c.random_color_image.or(base_random_color_image),
                 grid_crop_size: c.grid_crop_size.or(base.grid_crop_size),
                 grid_crop_x: c.grid_crop_x.or(base.grid_crop_x),
                 grid_crop_y: c.grid_crop_y.or(base.grid_crop_y),
