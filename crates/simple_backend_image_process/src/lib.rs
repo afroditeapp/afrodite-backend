@@ -1,10 +1,7 @@
-use std::{
-    io::{BufReader, Write},
-    path::Path,
-};
+use std::io::Write;
 
 use error_stack::{report, Result, ResultExt};
-use image::{DynamicImage, EncodableLayout, GrayImage};
+use image::{DynamicImage, EncodableLayout, GrayImage, ImageDecoder, ImageReader};
 use serde::{Deserialize, Serialize};
 use simple_backend_config::{args::{ImageProcessModeArgs, InputFileType}, file::ImageProcessingConfig};
 
@@ -57,14 +54,14 @@ pub fn handle_image(
         InputFileType::JpegImage => image::ImageFormat::Jpeg,
     };
 
-    // Only JPEG images are supported
-    let rotation = read_exif_rotation_info(&args.input).unwrap_or(0);
-
-    let img_file = std::fs::File::open(&args.input)
+    let mut img_reader = ImageReader::open(&args.input)
         .change_context(ImageProcessError::InputReadingFailed)?;
-    let buffered_reader = BufReader::new(img_file);
-    let img = image::ImageReader::with_format(buffered_reader, format)
-        .decode()
+    img_reader.set_format(format);
+    let mut img_decoder = img_reader.into_decoder()
+        .change_context(ImageProcessError::InputReadingFailed)?;
+    let orientation = img_decoder.orientation()
+        .change_context(ImageProcessError::ExifReadingFailed)?;
+    let img = DynamicImage::from_decoder(img_decoder)
         .change_context(ImageProcessError::InputReadingFailed)?;
 
     if img.width() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
@@ -73,7 +70,8 @@ pub fn handle_image(
         return Err(report!(ImageProcessError::SourceImageTooSmall));
     }
 
-    let img = resize_and_rotate_image(img, rotation);
+    let mut img = resize_image_if_needed(img);
+    img.apply_orientation(orientation);
     let width = img.width();
     let height = img.height();
     let data_face_detection = img.to_luma8();
@@ -139,27 +137,6 @@ pub fn handle_image(
     Ok(())
 }
 
-/// Read exif rotation info from jpeg image.
-/// Returns error if reading failed or the rotation info does not exists.
-fn read_exif_rotation_info(image: &Path) -> Result<u32, ImageProcessError> {
-    let file = std::fs::File::open(image).change_context(ImageProcessError::ExifReadingFailed)?;
-    let mut buf_reader = std::io::BufReader::new(file);
-    let reader = exif::Reader::new();
-    let exif = reader
-        .read_from_container(&mut buf_reader)
-        .change_context(ImageProcessError::ExifReadingFailed)?;
-
-    let field = exif
-        .get_field(exif::Tag::Orientation, exif::In::PRIMARY)
-        .ok_or(report!(ImageProcessError::ExifReadingFailed))?;
-    let value = field
-        .value
-        .get_uint(0)
-        .ok_or(report!(ImageProcessError::ExifReadingFailed))?;
-
-    Ok(value)
-}
-
 fn resize_image_if_needed(img: DynamicImage) -> DynamicImage {
     const WIDTH: u32 = 1920;
     const HEIGHT: u32 = 1080;
@@ -176,21 +153,6 @@ fn resize_image_if_needed(img: DynamicImage) -> DynamicImage {
         }
     } else {
         img
-    }
-}
-
-fn resize_and_rotate_image(img: DynamicImage, exif_rotation: u32) -> DynamicImage {
-    let img = resize_image_if_needed(img);
-    match exif_rotation {
-        1 => img,
-        2 => img.fliph(),
-        3 => img.rotate180(),
-        4 => img.flipv(),
-        5 => img.rotate90().fliph(),
-        6 => img.rotate90(),
-        7 => img.rotate270().fliph(),
-        8 => img.rotate270(),
-        _ => img,
     }
 }
 

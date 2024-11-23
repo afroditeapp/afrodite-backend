@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 image = { workspace = true, default-features = false, features = ["jpeg"] }
 mozjpeg = { workspace = true }
-kamadak-exif = { workspace = true }
 rustface = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
