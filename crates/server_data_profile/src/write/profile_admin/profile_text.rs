@@ -14,6 +14,7 @@ define_db_read_command_for_write!(WriteCommandsProfileAdminProfileText);
 define_db_transaction_command!(WriteCommandsProfileAdminProfileText);
 
 impl<C: WriteCommandsProvider> WriteCommandsProfileAdminProfileText<C> {
+    #[allow(clippy::too_many_arguments)]
     pub async fn moderate_profile_text(
         self,
         moderator_id: AccountIdInternal,
@@ -22,6 +23,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfileAdminProfileText<C> {
         accept: bool,
         rejected_category: Option<ProfileTextModerationRejectedReasonCategory>,
         rejected_details: Option<ProfileTextModerationRejectedReasonDetails>,
+        move_to_human_moderation: bool,
     ) -> Result<(), DataError> {
         let current_profile = self.db_read(move |mut cmds| cmds.profile().data().profile(name_owner_id)).await?;
         let current_profile_state = self.db_read(move |mut cmds| cmds.profile().data().profile_state(name_owner_id)).await?;
@@ -37,13 +39,19 @@ impl<C: WriteCommandsProvider> WriteCommandsProfileAdminProfileText<C> {
         let (account, new_state) = db_transaction!(self, move |mut cmds| {
             cmds.profile().data().only_profile_version(name_owner_id, new_profile_version)?;
             cmds.profile().data().increment_profile_sync_version(name_owner_id)?;
-            let new_state = cmds.profile_admin().profile_text().moderate_profile_text(
-                moderator_id,
-                name_owner_id,
-                accept,
-                rejected_category,
-                rejected_details,
-            )?;
+            let new_state = if move_to_human_moderation {
+                cmds.profile_admin().profile_text().move_to_human_moderation(
+                    name_owner_id,
+                )?
+            } else {
+                cmds.profile_admin().profile_text().moderate_profile_text(
+                    moderator_id,
+                    name_owner_id,
+                    accept,
+                    rejected_category,
+                    rejected_details,
+                )?
+            };
             let account = cmds.read().common().account(name_owner_id)?;
             Ok((account, new_state))
         })?;

@@ -29,4 +29,7 @@ pub struct PostModerateProfileText {
     pub accept: bool,
     pub rejected_category: Option<ProfileTextModerationRejectedReasonCategory>,
     pub rejected_details: Option<ProfileTextModerationRejectedReasonDetails>,
+    /// If true, ignore accept, rejected_category, rejected_details and move
+    /// the text to waiting for human moderation state.
+    pub move_to_human: Option<bool>,
 }

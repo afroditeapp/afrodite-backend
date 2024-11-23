@@ -114,6 +114,7 @@ pub async fn post_moderate_profile_text<
                 data.accept,
                 data.rejected_category,
                 data.rejected_details,
+                data.move_to_human.unwrap_or_default(),
             ).await?;
 
         cmds.events()

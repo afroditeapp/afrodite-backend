@@ -46,4 +46,23 @@ impl<C: ConnectionProvider> CurrentWriteProfileAdminProfileText<C> {
 
         Ok(next_state)
     }
+
+    pub fn move_to_human_moderation(
+        &mut self,
+        text_owner_id: AccountIdInternal,
+    ) -> Result<ProfileTextModerationState, DieselDatabaseError> {
+        use model::schema::profile_state;
+
+        let next_state = ProfileTextModerationState::WaitingHumanModeration;
+
+        update(profile_state::table)
+            .filter(profile_state::account_id.eq(text_owner_id.as_db_id()))
+            .set((
+                profile_state::profile_text_moderation_state.eq(next_state),
+            ))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(next_state)
+    }
 }
