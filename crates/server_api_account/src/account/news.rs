@@ -1,6 +1,6 @@
 
 use axum::{extract::{Path, Query, State}, Extension};
-use model::{AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult};
+use model_account::{AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};

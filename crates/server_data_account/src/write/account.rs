@@ -1,5 +1,5 @@
 use email::WriteCommandsAccountEmail;
-use model::{
+use model_account::{
     Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Permissions, ClientId, DemoModeId, ProfileVisibility, SetAccountSetup
 };
 use news::WriteCommandsAccountNews;

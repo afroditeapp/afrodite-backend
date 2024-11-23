@@ -1,6 +1,6 @@
 
 use axum::{extract::{Path, State}, Extension};
-use model::{AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions, UpdateNewsTranslation, UpdateNewsTranslationResult};
+use model_account::{AccountIdInternal, BooleanSetting, NewsId, NewsLocale, NotificationEvent, Permissions, UpdateNewsTranslation, UpdateNewsTranslationResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{create_open_api_router, db_write, db_write_multiple, result::WrappedContextExt, DataError};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};

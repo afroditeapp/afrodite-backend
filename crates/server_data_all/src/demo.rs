@@ -2,7 +2,7 @@ use std::{collections::HashSet, sync::Arc};
 
 use config::file::DemoModeConfig;
 use error_stack::Result;
-use model::{
+use model_account::{
     AccessibleAccount, AccountId, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
     DemoModeLoginToken, DemoModePassword, DemoModeToken,
 };

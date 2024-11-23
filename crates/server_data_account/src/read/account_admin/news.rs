@@ -1,4 +1,4 @@
-use model::{NewsId, NewsTranslations};
+use model_account::{NewsId, NewsTranslations};
 use server_data::{
     define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };

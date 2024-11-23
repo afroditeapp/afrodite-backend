@@ -1,7 +1,7 @@
 //! Account related internal API routes
 
 use axum::extract::State;
-use model::{AccountId, LoginResult, SignInWithInfo};
+use model_account::{AccountId, LoginResult, SignInWithInfo};
 use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;

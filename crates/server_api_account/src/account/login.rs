@@ -1,5 +1,5 @@
 use axum::extract::State;
-use model::{
+use model_account::{
     AccessToken, AccountId, AuthPair, EmailAddress, GoogleAccountId, LoginResult, RefreshToken,
     SignInWithInfo, SignInWithLoginInfo,
 };

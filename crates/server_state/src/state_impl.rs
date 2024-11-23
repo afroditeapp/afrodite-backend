@@ -4,8 +4,9 @@ use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailAddress, EmailMessages, EventToClientInternal, NewReceivedLikesCountResult, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailMessages, EventToClientInternal, NewReceivedLikesCountResult, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags
 };
+use model_account::{EmailAddress, SignInWithInfo};
 pub use server_api::app::*;
 use server_api::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
@@ -333,29 +334,29 @@ impl ContentProcessingProvider for S {
 impl DemoModeManagerProvider for S {
     async fn stage0_login(
         &self,
-        password: model::DemoModePassword,
-    ) -> error_stack::Result<model::DemoModeLoginResult, DataError> {
+        password: model_account::DemoModePassword,
+    ) -> error_stack::Result<model_account::DemoModeLoginResult, DataError> {
         self.demo_mode.stage0_login(password).await
     }
 
     async fn stage1_login(
         &self,
-        password: model::DemoModePassword,
-        token: model::DemoModeLoginToken,
-    ) -> error_stack::Result<model::DemoModeConfirmLoginResult, DataError> {
+        password: model_account::DemoModePassword,
+        token: model_account::DemoModeLoginToken,
+    ) -> error_stack::Result<model_account::DemoModeConfirmLoginResult, DataError> {
         self.demo_mode.stage1_login(password, token).await
     }
 
     async fn demo_mode_token_exists(
         &self,
-        token: &model::DemoModeToken,
-    ) -> error_stack::Result<model::DemoModeId, DataError> {
+        token: &model_account::DemoModeToken,
+    ) -> error_stack::Result<model_account::DemoModeId, DataError> {
         self.demo_mode.demo_mode_token_exists(token).await
     }
 
     async fn demo_mode_logout(
         &self,
-        token: &model::DemoModeToken,
+        token: &model_account::DemoModeToken,
     ) -> error_stack::Result<(), DataError> {
         self.demo_mode.demo_mode_logout(token).await
     }
@@ -365,8 +366,8 @@ impl DemoModeManagerProvider for S {
     >(
         &self,
         state: &S,
-        token: &model::DemoModeToken,
-    ) -> server_common::result::Result<Vec<model::AccessibleAccount>, DataError> {
+        token: &model_account::DemoModeToken,
+    ) -> server_common::result::Result<Vec<model_account::AccessibleAccount>, DataError> {
         let info = self
             .demo_mode
             .accessible_accounts_if_token_valid(token)

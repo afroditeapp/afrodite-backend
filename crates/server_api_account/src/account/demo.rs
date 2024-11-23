@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use axum::extract::State;
-use model::{
+use model_account::{
     AccessibleAccount, AccountId, DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId,
     DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult,
     SignInWithInfo,

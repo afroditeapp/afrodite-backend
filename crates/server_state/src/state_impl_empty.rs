@@ -3,7 +3,11 @@ use std::net::SocketAddr;
 use config::{file::ConfigFileError, Config};
 use futures::Future;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailAddress, EmailMessages, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags, SignInWithInfo
+    AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailMessages, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags
+};
+use model_account::{
+    AccessibleAccount, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, SignInWithInfo
+
 };
 pub use server_api::app::*;
 use server_api::{internal_api::InternalApiClient, utils::StatusCode};
@@ -219,29 +223,29 @@ impl ContentProcessingProvider for E {
 impl DemoModeManagerProvider for E {
     async fn stage0_login(
         &self,
-        _password: model::DemoModePassword,
-    ) -> error_stack::Result<model::DemoModeLoginResult, DataError> {
+        _password: DemoModePassword,
+    ) -> error_stack::Result<DemoModeLoginResult, DataError> {
         unimplemented!()
     }
 
     async fn stage1_login(
         &self,
-        _password: model::DemoModePassword,
-        _token: model::DemoModeLoginToken,
-    ) -> error_stack::Result<model::DemoModeConfirmLoginResult, DataError> {
+        _password: DemoModePassword,
+        _token: DemoModeLoginToken,
+    ) -> error_stack::Result<DemoModeConfirmLoginResult, DataError> {
         unimplemented!()
     }
 
     async fn demo_mode_token_exists(
         &self,
-        _token: &model::DemoModeToken,
-    ) -> error_stack::Result<model::DemoModeId, DataError> {
+        _token: &DemoModeToken,
+    ) -> error_stack::Result<DemoModeId, DataError> {
         unimplemented!()
     }
 
     async fn demo_mode_logout(
         &self,
-        _token: &model::DemoModeToken,
+        _token: &DemoModeToken,
     ) -> error_stack::Result<(), DataError> {
         unimplemented!()
     }
@@ -251,8 +255,8 @@ impl DemoModeManagerProvider for E {
     >(
         &self,
         _state: &S,
-        _token: &model::DemoModeToken,
-    ) -> server_common::result::Result<Vec<model::AccessibleAccount>, DataError> {
+        _token: &DemoModeToken,
+    ) -> server_common::result::Result<Vec<AccessibleAccount>, DataError> {
         unimplemented!()
     }
 }

@@ -11,7 +11,8 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::ContentType;
 use http::HeaderMap;
-use model::{AccessToken, AccountIdInternal, AuthPair, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
+use model::{AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
+use model_account::AuthPair;
 use obfuscate_api_macro::obfuscate_api;
 use tokio::time::Instant;
 use crate::{app::ConnectionTools, utils::Json};

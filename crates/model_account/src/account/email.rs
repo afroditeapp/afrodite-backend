@@ -3,20 +3,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_try_from;
 use crate::{
-    schema_sqlite_types::Integer, EnumParsingError
+    schema_sqlite_types::Integer, EnumParsingError, EmailMessages
 };
-
-
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]
-pub enum EmailMessages {
-    AccountRegistered,
-}
-
-impl EmailMessages {
-    pub const VARIANTS: &'static [EmailMessages] = &[
-        EmailMessages::AccountRegistered,
-    ];
-}
 
 #[derive(
     Debug,

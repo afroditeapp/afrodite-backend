@@ -1,5 +1,5 @@
 use axum::extract::State;
-use model::DeleteStatus;
+use model_account::DeleteStatus;
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use simple_backend::create_counters;

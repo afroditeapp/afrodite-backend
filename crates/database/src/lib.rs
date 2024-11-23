@@ -13,7 +13,7 @@ use current::write::{CurrentSyncWriteCommands, TransactionConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use error_stack::{Context, Result, ResultExt};
 pub use model::schema;
-use model::IsLoggingAllowed;
+use model::markers::IsLoggingAllowed;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use simple_backend_database::{diesel_db::ObjectExtensions, DbReadHandle, DbWriteHandle};
 

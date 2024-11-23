@@ -1,4 +1,4 @@
-use model::{AccountEmailSendingStateRaw, AccountIdInternal};
+use model_account::{AccountEmailSendingStateRaw, AccountIdInternal};
 use server_data::{
     define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError,
 };

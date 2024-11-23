@@ -2,8 +2,9 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
-use model::{
-    AccountGlobalState, AccountIdInternal, NewsId, NewsLocale, PublicationId, SyncVersion, UnixTime, UpdateNewsTranslation
+use model::{AccountIdInternal, SyncVersion, UnixTime};
+use model_account::{
+    AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation,
 };
 
 use crate::IntoDatabaseError;

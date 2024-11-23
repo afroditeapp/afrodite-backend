@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use error_stack::{Result, ResultExt};
-use model::EmailMessages;
+use model_account::EmailMessages;
 use serde::Deserialize;
 
 use crate::file::ConfigFileError;

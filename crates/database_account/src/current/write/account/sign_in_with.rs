@@ -1,7 +1,8 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, SignInWithInfo};
+use model::AccountIdInternal;
+use model_account::SignInWithInfo;
 
 use crate::IntoDatabaseError;
 

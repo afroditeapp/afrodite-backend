@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, NewsId, NewsLocale, UpdateNewsTranslation};
+use model_account::{AccountIdInternal, NewsId, NewsLocale, UpdateNewsTranslation};
 use server_data::{
     define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError,
 };

@@ -2,7 +2,10 @@ use database::{define_current_write_commands, ConnectionProvider, DieselDatabase
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
-    AccountGlobalState, AccountIdInternal, AccountInternal, ClientId, EmailAddress, SetAccountSetup
+    AccountIdInternal, ClientId,
+};
+use model_account::{
+    AccountGlobalState, AccountInternal, EmailAddress, SetAccountSetup
 };
 
 use crate::IntoDatabaseError;

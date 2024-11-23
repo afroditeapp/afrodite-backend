@@ -1,7 +1,8 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, NewsId, NewsItem, NewsItemInternal, NewsTranslationInternal, NewsTranslations};
+use model::AccountId;
+use model_account::{NewsId, NewsItem, NewsItemInternal, NewsTranslationInternal, NewsTranslations};
 
 use crate::IntoDatabaseError;
 

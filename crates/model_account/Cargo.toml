@@ -1,5 +1,5 @@
 [package]
-name = "database_account"
+name = "model_account"
 version = "0.0.0"
 edition = "2021"
 
@@ -7,15 +7,14 @@ edition = "2021"
 
 [dependencies]
 
+serde = { workspace = true }
 serde_json = { workspace = true }
-
+utoipa = { workspace = true }
 diesel = { workspace = true }
 
-error-stack = { workspace = true }
+chrono = { workspace = true }
 
+utils = { path = "../utils" }
 model = { path = "../model" }
-model_account = { path = "../model_account" }
 
-database = { path = "../database" }
-
-simple_backend_utils = { path = "../simple_backend_utils" }
+simple_backend_model = { path = "../simple_backend_model"}

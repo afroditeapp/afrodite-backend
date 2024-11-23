@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
+use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
 use server_data::{
     define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError,
 };

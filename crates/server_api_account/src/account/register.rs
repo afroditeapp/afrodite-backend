@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
+use model_account::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{CompleteInitialSetupCmd, ValidateModerationRequest}, create_open_api_router};
 use server_data_account::{

@@ -857,6 +857,7 @@ dependencies = [
  "csv",
  "error-stack",
  "model",
+ "model_account",
  "reqwest",
  "serde",
  "sha2",
@@ -1064,6 +1065,7 @@ dependencies = [
  "diesel",
  "error-stack",
  "model",
+ "model_account",
  "serde_json",
  "simple_backend_utils",
 ]
@@ -2458,6 +2460,20 @@ dependencies = [
  "utils",
  "utoipa",
  "uuid",
+]
+
+[[package]]
+name = "model_account"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "model",
+ "serde",
+ "serde_json",
+ "simple_backend_model",
+ "utils",
+ "utoipa",
 ]
 
 [[package]]
@@ -3887,6 +3903,7 @@ dependencies = [
  "config",
  "error-stack",
  "model",
+ "model_account",
  "nix",
  "serde_json",
  "server_api",
@@ -3930,6 +3947,7 @@ dependencies = [
  "hyper",
  "manager_model",
  "model",
+ "model_account",
  "obfuscate_api_macro",
  "reqwest",
  "serde",
@@ -3954,6 +3972,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "model",
+ "model_account",
  "obfuscate_api_macro",
  "server_api",
  "server_common",
@@ -4053,6 +4072,7 @@ dependencies = [
  "error-stack",
  "futures",
  "model",
+ "model_account",
  "nalgebra",
  "num_cpus",
  "server_common",
@@ -4074,6 +4094,7 @@ dependencies = [
  "database_account",
  "error-stack",
  "model",
+ "model_account",
  "server_common",
  "server_data",
  "simple_backend",
@@ -4091,6 +4112,7 @@ dependencies = [
  "database_profile",
  "error-stack",
  "model",
+ "model_account",
  "server_common",
  "server_data",
  "server_data_account",
@@ -4193,6 +4215,7 @@ dependencies = [
  "error-stack",
  "futures",
  "model",
+ "model_account",
  "serde_json",
  "server_api",
  "server_api_media",

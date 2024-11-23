@@ -4,7 +4,7 @@ use config::Config;
 use database::{
     current::write::TransactionConnection, ConnectionProvider, PoolObject, TransactionError,
 };
-use model::{
+use model_account::{
     Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo
 };
 use server_data::{

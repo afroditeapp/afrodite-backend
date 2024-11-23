@@ -1,7 +1,8 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, GoogleAccountId, SignInWithInfoRaw};
+use model::AccountIdInternal;
+use model_account::{GoogleAccountId, SignInWithInfoRaw};
 
 use crate::IntoDatabaseError;
 

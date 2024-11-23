@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use database::ErrorContext;
 use error_stack::Context;
-use model::IsLoggingAllowed;
+use model::markers::IsLoggingAllowed;
 
 use crate::{internal_api::InternalApiError, result::WrappedReport};
 

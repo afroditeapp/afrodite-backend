@@ -1,4 +1,4 @@
-use model::{EmailMessages, EmailSendingState};
+use model_account::{EmailMessages, EmailSendingState};
 use server_api::{app::{EmailSenderImpl, ReadData, WriteData}, db_write_raw};
 use server_common::{app::GetConfig, data::DataError, result::Result};
 use server_data::write::GetWriteCommandsCommon;

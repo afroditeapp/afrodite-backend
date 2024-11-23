@@ -22,6 +22,7 @@ nix = { workspace = true, default-features = false, features = ["signal"] }
 
 config = { path = "../config" }
 model = { path = "../model" }
+model_account = { path = "../model_account" }
 
 server_common = { path = "../server_common" }
 

@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsLocale, PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale, UnreadNewsCountResult};
+use model_account::{AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsLocale, PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale, UnreadNewsCountResult};
 use server_data::{
     cache::db_iterator::new_count::DbIteratorStateNewCount, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };

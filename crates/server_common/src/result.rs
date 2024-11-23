@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use database::ErrorContext;
 use error_stack::{Context, Report};
-use model::IsLoggingAllowed;
+use model::markers::IsLoggingAllowed;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{

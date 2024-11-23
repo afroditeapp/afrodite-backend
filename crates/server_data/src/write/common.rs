@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 
-use model::{Account, AccountIdInternal, AuthPair};
+use model::{Account, AccountIdInternal};
+use model_account::AuthPair;
 use server_common::data::cache::CacheError;
 
 use super::WriteCommandsProvider;

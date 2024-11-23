@@ -1,4 +1,5 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
+use model::{NewsSyncVersion, UnreadNewsCount};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
@@ -6,12 +7,6 @@ use utoipa::{IntoParams, ToSchema};
 use crate::{
     AccountId, AccountIdDb, NextNumberStorage
 };
-
-use crate::{sync_version_wrappers, SyncVersion, SyncVersionUtils};
-
-sync_version_wrappers!(
-    NewsSyncVersion,
-);
 
 
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
@@ -197,42 +192,6 @@ impl From<NewsIteratorSessionId> for NewsIteratorSessionIdInternal {
             id: value.id,
         }
     }
-}
-
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-    Default,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-pub struct UnreadNewsCount {
-    pub c: i64,
-}
-
-impl UnreadNewsCount {
-    pub fn new(count: i64) -> Self {
-        Self { c: count }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.c
-    }
-}
-
-diesel_i64_wrapper!(UnreadNewsCount);
-
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct UnreadNewsCountResult {
-    pub v: NewsSyncVersion,
-    pub c: UnreadNewsCount,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

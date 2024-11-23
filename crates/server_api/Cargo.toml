@@ -29,6 +29,7 @@ manager_model = { path = "../app-manager/crates/manager_model" }
 utils = { path = "../utils" }
 config = { path = "../config" }
 model = { path = "../model" }
+model_account = { path = "../model_account" }
 api_internal = { path = "../api_internal" }
 
 server_common = { path = "../server_common" }

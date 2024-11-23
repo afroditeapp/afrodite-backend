@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{
+use model_account::{
     AccountData, AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility,
 };
 use obfuscate_api_macro::obfuscate_api;

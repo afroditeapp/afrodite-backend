@@ -1,4 +1,5 @@
-use model::{NewsIteratorSessionIdInternal, NextNumberStorage, PublicationId};
+use model::NextNumberStorage;
+use model_account::{NewsIteratorSessionIdInternal, PublicationId};
 
 use super::db_iterator::{new_count::DbIteratorNewCount, IteratorSessionIdTrait, IteratorStartPoint};
 

@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, ResetNewsIteratorResult};
+use model_account::{AccountIdInternal, ResetNewsIteratorResult};
 use server_data::{
     cache::CacheError, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, IntoDataError
 };

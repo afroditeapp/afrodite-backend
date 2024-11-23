@@ -2,7 +2,10 @@ use std::net::SocketAddr;
 
 use axum::extract::ws::WebSocket;
 use model::{
-    AccessToken, AccessibleAccount, AccountIdInternal, AccountState, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, PendingNotification, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, SignInWithInfo, SyncDataVersionFromClient
+    AccessToken, AccountIdInternal, AccountState, PendingNotification, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, SyncDataVersionFromClient
+};
+use model_account::{
+    AccessibleAccount, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, SignInWithInfo
 };
 use server_common::internal_api::InternalApiError;
 pub use server_data::app::*;

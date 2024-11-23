@@ -11,16 +11,19 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, Account, AccountState, Permissions, ContentProcessingId,
+    schema_sqlite_types::Integer, ContentProcessingId,
     ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType,
-    ProfileVisibility,
 };
 
 pub mod sync_version;
 pub mod version;
+pub mod account;
+pub mod news;
 
 pub use sync_version::*;
 pub use version::*;
+pub use account::*;
+pub use news::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {

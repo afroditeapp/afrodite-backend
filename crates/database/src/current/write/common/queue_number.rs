@@ -59,7 +59,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommonQueueNumber<C> {
 
     pub fn delete_queue_entry(
         &mut self,
-        queue_number_entry: impl Into<QueueNumber> + model::IsLoggingAllowed + Copy,
+        queue_number_entry: impl Into<QueueNumber> + model::markers::IsLoggingAllowed + Copy,
         queue: NextQueueNumberType,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::queue_entry::dsl::*;

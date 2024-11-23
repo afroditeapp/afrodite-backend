@@ -1,7 +1,8 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountEmailSendingStateRaw, AccountIdInternal};
+use model::AccountIdInternal;
+use model_account::AccountEmailSendingStateRaw;
 
 use crate::IntoDatabaseError;
 

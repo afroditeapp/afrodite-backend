@@ -1,4 +1,4 @@
-use model::{
+use model_account::{
     AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId,
     GoogleAccountId, SignInWithInfo,
 };

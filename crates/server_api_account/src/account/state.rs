@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{Account, AccountIdInternal, ClientId, LatestBirthdate};
+use model_account::{Account, AccountIdInternal, ClientId, LatestBirthdate};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::WriteData, create_open_api_router, db_write};
 use server_data::read::GetReadCommandsCommon;

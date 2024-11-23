@@ -25,31 +25,33 @@ pub trait IsLoggingAllowed: Debug {
     }
 }
 
+#[macro_export]
 macro_rules! disable_logging {
     ($($name:ty,)* ) => {
         $(
-            impl IsLoggingAllowed for $name {
-                type Value = NotAllowed;
+            impl $crate::markers::IsLoggingAllowed for $name {
+                type Value = $crate::markers::NotAllowed;
             }
-            impl IsLoggingAllowed for &$name {
-                type Value = NotAllowed;
+            impl $crate::markers::IsLoggingAllowed for &$name {
+                type Value = $crate::markers::NotAllowed;
             }
         )*
     };
 }
 
+#[macro_export]
 macro_rules! enable_logging {
     ($($name:ty,)* ) => {
         $(
-            impl IsLoggingAllowed for $name {
-                type Value = Allowed;
+            impl $crate::markers::IsLoggingAllowed for $name {
+                type Value = $crate::markers::Allowed;
 
                 fn fmt_loggable(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     write!(f, "{:?}", self)
                 }
             }
-            impl IsLoggingAllowed for &$name {
-                type Value = Allowed;
+            impl $crate::markers::IsLoggingAllowed for &$name {
+                type Value = $crate::markers::Allowed;
 
                 fn fmt_loggable(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     write!(f, "{:?}", self)
@@ -64,7 +66,6 @@ enable_logging!(
     AccountIdInternal,
     AccountId,
     Option<AccountIdDb>,
-    DemoModeId,
     // Media
     ModerationRequestIdDb,
     ModerationRequestId, // TODO: combine with ModerationRequestIdDb
@@ -79,8 +80,6 @@ enable_logging!(
 );
 
 disable_logging!(
-    // Account
-    GoogleAccountId,
     // Media
     ModerationRequestContent,
     ProfileContent,
