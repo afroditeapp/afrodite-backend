@@ -15,8 +15,6 @@ pub mod chat;
 pub mod chat_admin;
 pub mod common;
 pub mod common_admin;
-pub mod media;
-pub mod media_admin;
 pub mod profile;
 pub mod profile_admin;
 
@@ -27,8 +25,6 @@ pub mod schema_sqlite_types;
 pub use chat::*;
 pub use common::*;
 pub use common_admin::*;
-pub use media::*;
-pub use media_admin::*;
 pub use profile::*;
 pub use profile_admin::*;
 

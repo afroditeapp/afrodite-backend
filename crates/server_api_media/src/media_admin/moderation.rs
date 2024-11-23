@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use model::{
+use model_media::{
     AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueTypeParam, NotificationEvent, Permissions
 };
 use obfuscate_api_macro::obfuscate_api;

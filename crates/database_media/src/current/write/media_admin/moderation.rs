@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{
+use model_media::{
     AccountIdInternal, ContentState, HandleModerationRequest, Moderation, ModerationId,
     ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType, ProfileContentVersion,
 };

@@ -1,4 +1,5 @@
 use diesel::prelude::*;
+use model::ModerationQueueType;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -44,13 +45,6 @@ pub struct Moderation {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ModerationRequestId {
     pub request_row_id: ModerationRequestIdDb,
-}
-
-/// Subset of NextQueueNumberType containing only moderation queue types.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
-pub enum ModerationQueueType {
-    MediaModeration,
-    InitialMediaModeration,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]

@@ -28,7 +28,7 @@ pub use server_common::{data::DataError, result};
     ),
     components(schemas(
         // Media admin
-        model::media_admin::ModerationQueueType,
+        model_media::ModerationQueueType,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

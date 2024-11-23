@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use model::{
+use model_media::{
     AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
     ContentProcessingStateChanged, ContentSlot, NewContentParams,
 };

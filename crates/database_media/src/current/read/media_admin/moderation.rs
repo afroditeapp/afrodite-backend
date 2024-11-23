@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{
+use model_media::{
     AccountId, AccountIdInternal, MediaModerationRaw, MediaModerationRequestRaw, Moderation,
     ModerationId, ModerationQueueType, ModerationRequestContent, ModerationRequestId,
     ModerationRequestState, NextQueueNumberType,

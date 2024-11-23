@@ -1089,6 +1089,7 @@ dependencies = [
  "diesel",
  "error-stack",
  "model",
+ "model_media",
  "simple_backend_utils",
 ]
 
@@ -2473,6 +2474,18 @@ dependencies = [
  "serde_json",
  "simple_backend_model",
  "utils",
+ "utoipa",
+]
+
+[[package]]
+name = "model_media"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "model",
+ "serde",
+ "simple_backend_model",
+ "simple_backend_utils",
  "utoipa",
 ]
 
@@ -3904,6 +3917,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_account",
+ "model_media",
  "nix",
  "serde_json",
  "server_api",
@@ -4013,6 +4027,7 @@ dependencies = [
  "axum-extra",
  "headers",
  "model",
+ "model_media",
  "obfuscate_api_macro",
  "server_api",
  "server_common",
@@ -4073,6 +4088,7 @@ dependencies = [
  "futures",
  "model",
  "model_account",
+ "model_media",
  "nalgebra",
  "num_cpus",
  "server_common",
@@ -4145,6 +4161,7 @@ dependencies = [
  "database_media",
  "error-stack",
  "model",
+ "model_media",
  "server_common",
  "server_data",
  "simple_backend",

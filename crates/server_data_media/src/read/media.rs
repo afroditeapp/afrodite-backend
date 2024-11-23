@@ -1,4 +1,4 @@
-use model::{
+use model_media::{
     AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw,
     ModerationRequest, ModerationRequestState,
 };

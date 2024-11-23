@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
-use model::{ContentId, ContentState};
+use model_media::{ContentId, ContentState};
 
 use super::ConnectionProvider;
 use crate::IntoDatabaseError;

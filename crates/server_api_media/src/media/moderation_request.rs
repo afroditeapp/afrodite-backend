@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent, PendingNotificationFlags};
+use model_media::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent, PendingNotificationFlags};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::EventManagerProvider, create_open_api_router};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};

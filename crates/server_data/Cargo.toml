@@ -27,6 +27,7 @@ database = { path = "../database" }
 database_chat = { path = "../database_chat" }
 model = { path = "../model" }
 model_account = { path = "../model_account" }
+model_media = { path = "../model_media" }
 server_common = { path = "../server_common" }
 
 simple_backend = { path = "../simple_backend" }

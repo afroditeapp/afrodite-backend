@@ -67,25 +67,14 @@ enable_logging!(
     AccountId,
     Option<AccountIdDb>,
     // Media
-    ModerationRequestIdDb,
-    ModerationRequestId, // TODO: combine with ModerationRequestIdDb
-    ContentIdDb,
     ContentId,
     Option<ContentId>,
-    ContentSlot,
-    ModerationId,
     ModerationQueueNumber,
     ModerationQueueType,
     NextQueueNumberType,
 );
 
 disable_logging!(
-    // Media
-    ModerationRequestContent,
-    ProfileContent,
-    SetProfileContent,
-    SetProfileContentInternal,
-    ContentState,
     // Chat
     MessageNumber,
     // General

@@ -5,7 +5,7 @@ use database::{
 };
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{
+use model_media::{
     AccountIdInternal, ContentId, ContentSlot, ContentState, MediaContentRaw, MediaModerationRaw,
     MediaModerationRequestRaw, ModerationRequestContent, ModerationRequestId,
     ModerationRequestInternal, ModerationRequestState,

@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{
+use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentState, MediaContentRaw, MediaContentType, ProfileContentVersion, SetProfileContent, SetProfileContentInternal
 };
 use simple_backend_utils::ContextExt;

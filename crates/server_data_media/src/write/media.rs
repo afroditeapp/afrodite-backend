@@ -1,5 +1,5 @@
 use error_stack::ResultExt;
-use model::{
+use model_media::{
     AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileContentVersion, ProfileVisibility, SetProfileContent
 };
 use server_data::{

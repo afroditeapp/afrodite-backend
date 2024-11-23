@@ -1,5 +1,5 @@
 use config::Config;
-use model::MediaContentType;
+use model_media::MediaContentType;
 use server_api::{
     app::{ContentProcessingProvider, EventManagerProvider, WriteData},
     db_write_raw,

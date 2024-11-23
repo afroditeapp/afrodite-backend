@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Extension,
 };
-use model::{AccountId, AccountIdInternal, ContentId, PendingSecurityContent, SecurityContent};
+use model_media::{AccountId, AccountIdInternal, ContentId, PendingSecurityContent, SecurityContent};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};

@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, MediaStateRaw};
+use model_media::{AccountIdInternal, MediaStateRaw};
 
 use crate::IntoDatabaseError;
 

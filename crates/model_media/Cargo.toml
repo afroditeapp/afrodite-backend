@@ -1,5 +1,5 @@
 [package]
-name = "database_media"
+name = "model_media"
 version = "0.0.0"
 edition = "2021"
 
@@ -7,13 +7,11 @@ edition = "2021"
 
 [dependencies]
 
+serde = { workspace = true }
+utoipa = { workspace = true }
 diesel = { workspace = true }
 
-error-stack = { workspace = true }
-
 model = { path = "../model" }
-model_media = { path = "../model_media" }
 
-database = { path = "../database" }
-
-simple_backend_utils = { path = "../simple_backend_utils" }
+simple_backend_model = { path = "../simple_backend_model"}
+simple_backend_utils = { path = "../simple_backend_utils"}

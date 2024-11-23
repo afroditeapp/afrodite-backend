@@ -11,18 +11,20 @@ use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, ContentProcessingId,
-    ContentProcessingState, MessageNumber, ModerationQueueNumber, ModerationQueueType,
+    schema_sqlite_types::Integer,
+    MessageNumber,
 };
 
 pub mod sync_version;
 pub mod version;
 pub mod account;
+pub mod media;
 pub mod news;
 
 pub use sync_version::*;
 pub use version::*;
 pub use account::*;
+pub use media::*;
 pub use news::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

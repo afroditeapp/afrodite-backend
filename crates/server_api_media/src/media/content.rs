@@ -3,7 +3,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
-use model::{
+use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, Permissions, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
 };
 use obfuscate_api_macro::obfuscate_api;

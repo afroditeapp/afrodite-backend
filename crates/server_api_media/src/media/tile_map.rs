@@ -3,7 +3,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
-use model::{MapTileX, MapTileY, MapTileZ};
+use model_media::{MapTileX, MapTileY, MapTileZ};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use simple_backend::{app::GetTileMap, create_counters};

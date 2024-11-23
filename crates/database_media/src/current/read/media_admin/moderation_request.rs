@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{AccountIdInternal, ModerationQueueType, ModerationRequestId, NextQueueNumberType};
+use model_media::{AccountIdInternal, ModerationQueueType, ModerationRequestId, NextQueueNumberType};
 
 use crate::IntoDatabaseError;
 

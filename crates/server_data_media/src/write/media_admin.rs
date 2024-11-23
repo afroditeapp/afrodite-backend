@@ -1,5 +1,5 @@
 use database_media::current::write::media_admin::InitialModerationRequestIsNowAccepted;
-use model::{
+use model_media::{
     Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType,
     ProfileVisibility,
 };
