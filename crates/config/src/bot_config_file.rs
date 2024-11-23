@@ -265,6 +265,7 @@ pub struct ProfileTextModerationConfig {
     pub expected_response: String,
     /// Accept all texts which only have single visible character.
     pub accept_single_visible_character: bool,
+    pub move_rejected_to_human_moderation: bool,
     pub moderation_session_max_seconds: u32,
     pub moderation_session_min_seconds: u32,
 }

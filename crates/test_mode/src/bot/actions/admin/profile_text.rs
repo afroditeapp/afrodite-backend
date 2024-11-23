@@ -110,6 +110,12 @@ impl AdminBotProfileTextModerationLogic {
                 None
             };
 
+            let move_to_human = if !accepted && config.move_rejected_to_human_moderation {
+                Some(Some(true))
+            } else {
+                None
+            };
+
             // Ignore errors as the user might have changed the text to
             // another one or it is already moderated.
             let _ = profile_admin_api::post_moderate_profile_text(
@@ -120,7 +126,7 @@ impl AdminBotProfileTextModerationLogic {
                     accept: accepted,
                     rejected_category: None,
                     rejected_details,
-                    move_to_human: None,
+                    move_to_human,
                 },
             )
             .await;
