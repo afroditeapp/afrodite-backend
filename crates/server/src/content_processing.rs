@@ -134,8 +134,8 @@ impl ContentProcessingManager {
         state: &mut ProcessingState,
     ) -> Result<FaceDetected, ContentProcessingError> {
         let info = result?;
-        let face_detected = if config.debug_mode() {
-            true
+        let face_detected = if let Some(face_detected) = config.simple_backend().override_face_detection_result() {
+            face_detected
         } else {
             info.face_detected
         };

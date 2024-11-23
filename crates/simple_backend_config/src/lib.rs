@@ -194,6 +194,10 @@ impl SimpleBackendConfig {
     pub fn image_processing(&self) -> ImageProcessingConfig {
         self.file.image_processing.clone().unwrap_or_default()
     }
+
+    pub fn override_face_detection_result(&self) -> Option<bool> {
+        self.file.debug_override_face_detection_result
+    }
 }
 
 /// Read config file from current directory.
