@@ -17,6 +17,9 @@ pub struct ContentInfoDetailed {
     pub cid: Box<models::ContentId>,
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
+    /// Face detected
+    #[serde(rename = "fd")]
+    pub fd: bool,
     #[serde(rename = "secure_capture")]
     pub secure_capture: bool,
     #[serde(rename = "slot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -26,10 +29,11 @@ pub struct ContentInfoDetailed {
 }
 
 impl ContentInfoDetailed {
-    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, secure_capture: bool, state: models::ContentState) -> ContentInfoDetailed {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, secure_capture: bool, state: models::ContentState) -> ContentInfoDetailed {
         ContentInfoDetailed {
             cid: Box::new(cid),
             ctype,
+            fd,
             secure_capture,
             slot: None,
             state,

@@ -733,7 +733,7 @@ pub async fn put_moderation_request(configuration: &configuration::Configuration
     }
 }
 
-/// # Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images.
+/// # Restrictions - All content must not be moderated as rejected. - All content must be owned by the account. - All content must be images. - First content must have face detected.
 pub async fn put_pending_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<(), Error<PutPendingProfileContentError>> {
     let local_var_configuration = configuration;
 
@@ -770,6 +770,7 @@ pub async fn put_pending_profile_content(configuration: &configuration::Configur
     }
 }
 
+/// Requires that the content has face detected.
 pub async fn put_pending_security_content_info(configuration: &configuration::Configuration, content_id: models::ContentId) -> Result<(), Error<PutPendingSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 
@@ -806,7 +807,7 @@ pub async fn put_pending_security_content_info(configuration: &configuration::Co
     }
 }
 
-/// # Restrictions - All content must be moderated as accepted. - All content must be owned by the account. - All content must be images.
+/// # Restrictions - All content must be moderated as accepted. - All content must be owned by the account. - All content must be images. - First content must have face detected.
 pub async fn put_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<(), Error<PutProfileContentError>> {
     let local_var_configuration = configuration;
 
@@ -843,7 +844,7 @@ pub async fn put_profile_content(configuration: &configuration::Configuration, s
     }
 }
 
-/// # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client.
+/// # Restrictions - The content must be moderated as accepted. - The content must be owned by the account. - The content must be an image. - The content must be captured by client. - The content must have face detected.
 pub async fn put_security_content_info(configuration: &configuration::Configuration, content_id: models::ContentId) -> Result<(), Error<PutSecurityContentInfoError>> {
     let local_var_configuration = configuration;
 

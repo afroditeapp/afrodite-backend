@@ -51,6 +51,7 @@ impl AdminBotProfileTextModerationLogic {
                         accept: true,
                         rejected_category: None,
                         rejected_details: None,
+                        move_to_human: None,
                     },
                 )
                 .await;
@@ -119,6 +120,7 @@ impl AdminBotProfileTextModerationLogic {
                     accept: accepted,
                     rejected_category: None,
                     rejected_details,
+                    move_to_human: None,
                 },
             )
             .await;

@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 /// BotConfig : Enable automatic bots when server starts. Editing of this field with edit module is only allowed when this exists in the config file.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BotConfig {
-    /// Admin bot count
-    #[serde(rename = "admins")]
-    pub admins: i32,
+    /// Admin bot
+    #[serde(rename = "admin")]
+    pub admin: bool,
     /// User bot count
     #[serde(rename = "users")]
     pub users: i32,
@@ -24,9 +24,9 @@ pub struct BotConfig {
 
 impl BotConfig {
     /// Enable automatic bots when server starts. Editing of this field with edit module is only allowed when this exists in the config file.
-    pub fn new(admins: i32, users: i32) -> BotConfig {
+    pub fn new(admin: bool, users: i32) -> BotConfig {
         BotConfig {
-            admins,
+            admin,
             users,
         }
     }

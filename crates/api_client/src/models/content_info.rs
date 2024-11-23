@@ -17,13 +17,17 @@ pub struct ContentInfo {
     pub cid: Box<models::ContentId>,
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
+    /// Face detected
+    #[serde(rename = "fd")]
+    pub fd: bool,
 }
 
 impl ContentInfo {
-    pub fn new(cid: models::ContentId, ctype: models::MediaContentType) -> ContentInfo {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool) -> ContentInfo {
         ContentInfo {
             cid: Box::new(cid),
             ctype,
+            fd,
         }
     }
 }

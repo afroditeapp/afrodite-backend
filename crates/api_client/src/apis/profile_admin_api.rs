@@ -207,6 +207,7 @@ pub async fn post_moderate_profile_name(configuration: &configuration::Configura
     }
 }
 
+/// This route will fail if the text is already moderated or the users's profile text is not the same text that was moderated.
 pub async fn post_moderate_profile_text(configuration: &configuration::Configuration, post_moderate_profile_text: models::PostModerateProfileText) -> Result<(), Error<PostModerateProfileTextError>> {
     let local_var_configuration = configuration;
 

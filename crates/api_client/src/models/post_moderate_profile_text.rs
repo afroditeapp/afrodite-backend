@@ -17,6 +17,9 @@ pub struct PostModerateProfileText {
     pub accept: bool,
     #[serde(rename = "id")]
     pub id: Box<models::AccountId>,
+    /// If true, ignore accept, rejected_category, rejected_details and move the text to waiting for human moderation state.
+    #[serde(rename = "move_to_human", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub move_to_human: Option<Option<bool>>,
     #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_category: Option<Option<Box<models::ProfileTextModerationRejectedReasonCategory>>>,
     #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -30,6 +33,7 @@ impl PostModerateProfileText {
         PostModerateProfileText {
             accept,
             id: Box::new(id),
+            move_to_human: None,
             rejected_category: None,
             rejected_details: None,
             text,
