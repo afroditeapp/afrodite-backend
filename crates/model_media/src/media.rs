@@ -303,6 +303,12 @@ pub struct NewContentParams {
 pub struct ContentInfo {
     pub cid: ContentId,
     pub ctype: MediaContentType,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct ContentInfoWithFd {
+    pub cid: ContentId,
+    pub ctype: MediaContentType,
     /// Face detected
     pub fd: bool,
 }
@@ -368,6 +374,15 @@ impl From<MediaContentRaw> for ContentId {
 impl From<MediaContentRaw> for ContentInfo {
     fn from(value: MediaContentRaw) -> Self {
         ContentInfo {
+            cid: value.uuid,
+            ctype: value.content_type_number,
+        }
+    }
+}
+
+impl From<MediaContentRaw> for ContentInfoWithFd {
+    fn from(value: MediaContentRaw) -> Self {
+        ContentInfoWithFd {
             cid: value.uuid,
             ctype: value.content_type_number,
             fd: value.face_detected,
@@ -578,6 +593,37 @@ impl From<CurrentAccountMediaInternal> for ProfileContent {
     }
 }
 
+/// Current content in public profile.
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct MyProfileContent {
+    /// Primary profile image which is shown in grid view.
+    pub c0: Option<ContentInfoWithFd>,
+    pub c1: Option<ContentInfoWithFd>,
+    pub c2: Option<ContentInfoWithFd>,
+    pub c3: Option<ContentInfoWithFd>,
+    pub c4: Option<ContentInfoWithFd>,
+    pub c5: Option<ContentInfoWithFd>,
+    pub grid_crop_size: Option<f64>,
+    pub grid_crop_x: Option<f64>,
+    pub grid_crop_y: Option<f64>,
+}
+
+impl From<CurrentAccountMediaInternal> for MyProfileContent {
+    fn from(value: CurrentAccountMediaInternal) -> Self {
+        Self {
+            c0: value.profile_content_id_0.map(|c| c.into()),
+            c1: value.profile_content_id_1.map(|c| c.into()),
+            c2: value.profile_content_id_2.map(|c| c.into()),
+            c3: value.profile_content_id_3.map(|c| c.into()),
+            c4: value.profile_content_id_4.map(|c| c.into()),
+            c5: value.profile_content_id_5.map(|c| c.into()),
+            grid_crop_size: value.grid_crop_size,
+            grid_crop_x: value.grid_crop_x,
+            grid_crop_y: value.grid_crop_y,
+        }
+    }
+}
+
 /// Profile image settings which will be applied when moderation request is
 /// accepted.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
@@ -586,12 +632,12 @@ pub struct PendingProfileContent {
     ///
     /// If this is None, then server will not change the current profile content
     /// when moderation is accepted.
-    pub c0: Option<ContentInfo>,
-    pub c1: Option<ContentInfo>,
-    pub c2: Option<ContentInfo>,
-    pub c3: Option<ContentInfo>,
-    pub c4: Option<ContentInfo>,
-    pub c5: Option<ContentInfo>,
+    pub c0: Option<ContentInfoWithFd>,
+    pub c1: Option<ContentInfoWithFd>,
+    pub c2: Option<ContentInfoWithFd>,
+    pub c3: Option<ContentInfoWithFd>,
+    pub c4: Option<ContentInfoWithFd>,
+    pub c5: Option<ContentInfoWithFd>,
     pub grid_crop_size: Option<f64>,
     pub grid_crop_x: Option<f64>,
     pub grid_crop_y: Option<f64>,
@@ -615,7 +661,7 @@ impl From<CurrentAccountMediaInternal> for PendingProfileContent {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityContent {
-    pub c0: Option<ContentInfo>,
+    pub c0: Option<ContentInfoWithFd>,
 }
 
 impl From<CurrentAccountMediaInternal> for SecurityContent {
@@ -630,7 +676,7 @@ impl From<CurrentAccountMediaInternal> for SecurityContent {
 /// accepted.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct PendingSecurityContent {
-    pub c0: Option<ContentInfo>,
+    pub c0: Option<ContentInfoWithFd>,
 }
 
 impl From<CurrentAccountMediaInternal> for PendingSecurityContent {
@@ -695,6 +741,12 @@ impl GetProfileContentResult {
             v: None,
         }
     }
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+pub struct GetMyProfileContentResult {
+    pub c: MyProfileContent,
+    pub v: ProfileContentVersion,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]

@@ -3,7 +3,7 @@ use axum::{
     Extension,
 };
 use model_media::{
-    AccountId, AccountIdInternal, AccountState, Permissions, GetProfileContentQueryParams, GetProfileContentResult, PendingProfileContent, ProfileContent, SetProfileContent
+    AccountId, AccountIdInternal, AccountState, GetMyProfileContentResult, GetProfileContentQueryParams, GetProfileContentResult, MyProfileContent, PendingProfileContent, Permissions, ProfileContent, SetProfileContent
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::IsMatch, create_open_api_router};
@@ -100,6 +100,42 @@ pub async fn get_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
     } else {
         Ok(GetProfileContentResult::empty().into())
     }
+}
+
+#[obfuscate_api]
+const PATH_GET_MY_PROFILE_CONTENT_INFO: &str = "/media_api/my_profile_content_info";
+
+/// Get my profile content
+#[utoipa::path(
+    get,
+    path = PATH_GET_MY_PROFILE_CONTENT_INFO,
+    responses(
+        (status = 200, description = "Successful.", body = GetMyProfileContentResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_my_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<GetMyProfileContentResult>, StatusCode> {
+    MEDIA.get_my_profile_content_info.incr();
+
+    let internal = state
+            .read()
+            .media()
+            .current_account_media(account_id)
+            .await?;
+
+    let info: MyProfileContent = internal.clone().into();
+
+    let r = GetMyProfileContentResult {
+        c: info,
+        v: internal.profile_content_version_uuid,
+    };
+
+    Ok(r.into())
 }
 
 #[obfuscate_api]
@@ -244,6 +280,7 @@ pub fn profile_content_router<S: StateBase + WriteData + ReadData + GetAccounts 
     create_open_api_router!(
         s,
         get_profile_content_info::<S>,
+        get_my_profile_content_info::<S>,
         put_profile_content::<S>,
         get_pending_profile_content_info::<S>,
         put_pending_profile_content::<S>,
@@ -256,6 +293,7 @@ create_counters!(
     MEDIA,
     MEDIA_PROFILE_CONTENT_COUNTERS_LIST,
     get_profile_content_info,
+    get_my_profile_content_info,
     put_profile_content,
     get_pending_profile_content_info,
     put_pending_profile_content,
