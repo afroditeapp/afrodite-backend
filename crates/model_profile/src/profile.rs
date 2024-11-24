@@ -5,6 +5,7 @@ use diesel::{
     sql_types::{BigInt, Binary},
     AsExpression, FromSqlRow,
 };
+use model::ProfileAge;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{
+use model_profile::{
     AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, LastSeenTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
 };
 

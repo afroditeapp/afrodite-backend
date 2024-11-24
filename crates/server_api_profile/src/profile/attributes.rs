@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{
+use model_profile::{
     AccountIdInternal, AvailableProfileAttributes, ProfileAttributeFilterList,
     ProfileAttributeFilterListUpdate,
 };

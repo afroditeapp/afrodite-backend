@@ -2,7 +2,7 @@ use axum::{
     extract::{Query, State},
     Extension,
 };
-use model::{
+use model_profile::{
     GetProfileStatisticsHistoryParams, GetProfileStatisticsHistoryResult, Permissions, ProfileStatisticsHistoryValueTypeInternal
 };
 use obfuscate_api_macro::obfuscate_api;

@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
+use model_profile::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use simple_backend::create_counters;

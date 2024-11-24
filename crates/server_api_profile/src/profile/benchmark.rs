@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Extension,
 };
-use model::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal};
+use model_profile::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};

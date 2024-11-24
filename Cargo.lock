@@ -858,6 +858,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_account",
+ "model_profile",
  "reqwest",
  "serde",
  "sha2",
@@ -1102,6 +1103,7 @@ dependencies = [
  "diesel",
  "error-stack",
  "model",
+ "model_profile",
  "simple_backend_utils",
 ]
 
@@ -2450,14 +2452,11 @@ dependencies = [
  "bitflags 2.6.0",
  "chrono",
  "diesel",
- "nalgebra",
- "num_enum",
  "serde",
  "serde_json",
  "simple_backend_model",
  "simple_backend_utils",
  "thiserror 1.0.63",
- "toml",
  "utils",
  "utoipa",
  "uuid",
@@ -2487,6 +2486,24 @@ dependencies = [
  "simple_backend_model",
  "simple_backend_utils",
  "utoipa",
+]
+
+[[package]]
+name = "model_profile"
+version = "0.0.0"
+dependencies = [
+ "bitflags 2.6.0",
+ "diesel",
+ "model",
+ "nalgebra",
+ "num_enum",
+ "serde",
+ "serde_json",
+ "simple_backend_model",
+ "simple_backend_utils",
+ "toml",
+ "utoipa",
+ "uuid",
 ]
 
 [[package]]
@@ -3918,6 +3935,7 @@ dependencies = [
  "model",
  "model_account",
  "model_media",
+ "model_profile",
  "nix",
  "serde_json",
  "server_api",
@@ -4044,7 +4062,7 @@ name = "server_api_profile"
 version = "0.0.0"
 dependencies = [
  "axum",
- "model",
+ "model_profile",
  "obfuscate_api_macro",
  "server_api",
  "server_common",
@@ -4089,6 +4107,7 @@ dependencies = [
  "model",
  "model_account",
  "model_media",
+ "model_profile",
  "nalgebra",
  "num_cpus",
  "server_common",
@@ -4129,6 +4148,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_account",
+ "model_profile",
  "server_common",
  "server_data",
  "server_data_account",
@@ -4175,6 +4195,7 @@ dependencies = [
  "database_profile",
  "error-stack",
  "model",
+ "model_profile",
  "server_common",
  "server_data",
  "simple_backend",

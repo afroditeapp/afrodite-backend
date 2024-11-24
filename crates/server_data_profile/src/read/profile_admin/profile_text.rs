@@ -1,4 +1,4 @@
-use model::{AccountIdInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams};
+use model_profile::{AccountIdInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams};
 use server_data::{
     define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };

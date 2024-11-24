@@ -90,13 +90,13 @@ pub struct SyncVersion {
 impl SyncVersion {
     pub const MAX_VALUE: i64 = u8::MAX as i64;
 
-    pub(crate) fn new(id: i64) -> Self {
+    pub fn new(id: i64) -> Self {
         Self {
             version: id.clamp(0, Self::MAX_VALUE),
         }
     }
 
-    pub(crate) fn as_i64(&self) -> &i64 {
+    pub fn as_i64(&self) -> &i64 {
         &self.version
     }
 
@@ -155,6 +155,7 @@ pub trait SyncVersionUtils: Sized + Default {
     }
 }
 
+#[macro_export]
 macro_rules! sync_version_wrappers {
     (
         $(

@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update, ExpressionMethods};
 use error_stack::Result;
-use model::{AccountIdInternal, ProfileNameModerationState};
+use model_profile::{AccountIdInternal, ProfileNameModerationState};
 
 use super::ConnectionProvider;
 use crate::IntoDatabaseError;

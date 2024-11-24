@@ -12,6 +12,7 @@ members = [
     "crates/model",
     "crates/model_account",
     "crates/model_media",
+    "crates/model_profile",
     "crates/config",
     "crates/utils",
     "crates/test_mode",

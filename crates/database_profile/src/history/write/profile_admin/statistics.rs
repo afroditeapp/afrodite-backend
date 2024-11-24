@@ -2,7 +2,7 @@
 use database::{define_history_write_commands, ConnectionProvider, DieselDatabaseError, IntoDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model::{GetProfileStatisticsResult, SaveTimeId, UnixTime};
+use model_profile::{GetProfileStatisticsResult, SaveTimeId, UnixTime};
 
 define_history_write_commands!(HistoryWriteProfileAdminStatistics, HistorySyncWriteProfileAdminStatistics);
 

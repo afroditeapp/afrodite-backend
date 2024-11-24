@@ -15,9 +15,6 @@ pub mod chat;
 pub mod chat_admin;
 pub mod common;
 pub mod common_admin;
-pub mod profile;
-pub mod profile_admin;
-
 pub mod markers;
 pub mod schema;
 pub mod schema_sqlite_types;
@@ -25,8 +22,6 @@ pub mod schema_sqlite_types;
 pub use chat::*;
 pub use common::*;
 pub use common_admin::*;
-pub use profile::*;
-pub use profile_admin::*;
 
 pub type Db = diesel::sqlite::Sqlite;
 

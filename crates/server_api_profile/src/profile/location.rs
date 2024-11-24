@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, Location};
+use model_profile::{AccountIdInternal, Location};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};

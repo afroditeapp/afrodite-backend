@@ -1,4 +1,4 @@
-use model::GetProfileStatisticsResult;
+use model_profile::GetProfileStatisticsResult;
 use server_data::{define_server_data_write_commands, write::WriteCommandsProvider, DataError, result::Result};
 
 define_server_data_write_commands!(WriteCommandsProfileAdminHistory);

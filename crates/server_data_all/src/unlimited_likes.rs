@@ -1,5 +1,5 @@
 
-use model::{
+use model_profile::{
     AccountIdInternal, ProfileVersion,
 };
 use server_data::{

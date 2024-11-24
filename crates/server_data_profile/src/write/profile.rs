@@ -1,4 +1,4 @@
-use model::{
+use model_profile::{
     AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
 };
 use server_data::{

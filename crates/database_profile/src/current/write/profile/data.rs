@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded, ExpressionMethods, QueryDsl};
 use error_stack::{Result, ResultExt};
-use model::{
+use model_profile::{
     AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
 };
 

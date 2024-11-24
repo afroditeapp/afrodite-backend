@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use model::{
+use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
 use obfuscate_api_macro::obfuscate_api;

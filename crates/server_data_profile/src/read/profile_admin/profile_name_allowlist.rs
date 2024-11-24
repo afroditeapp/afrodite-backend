@@ -1,4 +1,4 @@
-use model::GetProfileNamePendingModerationList;
+use model_profile::GetProfileNamePendingModerationList;
 use server_data::{
     define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };

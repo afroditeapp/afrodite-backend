@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountId, AccountIdInternal, FavoriteProfilesPage};
+use model_profile::{AccountId, AccountIdInternal, FavoriteProfilesPage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};

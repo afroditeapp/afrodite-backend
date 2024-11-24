@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{GetProfileNamePendingModerationList, ProfileNameModerationState, ProfileNamePendingModeration};
+use model_profile::{GetProfileNamePendingModerationList, ProfileNameModerationState, ProfileNamePendingModeration};
 use database::IntoDatabaseError;
 
 define_current_read_commands!(CurrentReadProfileNameAllowlist, CurrentSyncReadProfileNameAllowlist);

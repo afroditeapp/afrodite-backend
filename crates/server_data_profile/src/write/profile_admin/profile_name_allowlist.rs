@@ -1,6 +1,6 @@
 use server_data::{define_server_data_write_commands, result::WrappedContextExt};
 
-use model::{
+use model_profile::{
     AccountIdInternal, ProfileVersion
 };
 use server_data::{

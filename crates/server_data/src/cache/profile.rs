@@ -1,5 +1,5 @@
 use config::Config;
-use model::{AccountId, ProfileIteratorSessionIdInternal, LocationIndexKey, NextNumberStorage, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes, UnixTime};
+use model_profile::{AccountId, ProfileIteratorSessionIdInternal, LocationIndexKey, NextNumberStorage, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes, UnixTime};
 
 use crate::index::location::LocationIndexIteratorState;
 

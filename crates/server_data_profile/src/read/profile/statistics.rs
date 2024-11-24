@@ -1,4 +1,4 @@
-use model::{GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime};
+use model_profile::{GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime};
 use server_data::{
     define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
 };

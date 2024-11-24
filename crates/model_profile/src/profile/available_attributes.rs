@@ -3,7 +3,7 @@ use std::{collections::HashSet, str::FromStr};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::ProfileAttributesSyncVersion;
+use super::ProfileAttributesSyncVersion;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttributesFileInternal {

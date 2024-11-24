@@ -2,7 +2,7 @@ use std::{collections::HashMap, mem::size_of, num::{NonZeroU16, NonZeroU8}, sync
 
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
-use model::{
+use model_profile::{
     AccountId, CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
     ProfileQueryMakerDetails, UnixTime,
 };

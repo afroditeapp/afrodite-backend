@@ -1,5 +1,5 @@
 use std::time::Duration;
-use model::{AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate, ProfileUpdateInternal};
+use model_profile::{AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdate, ProfileUpdateInternal};
 use server_api::{db_write_raw, result::WrappedContextExt, DataError};
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;

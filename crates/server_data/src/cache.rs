@@ -5,7 +5,10 @@ use chat::CachedChatComponentData;
 use error_stack::Result;
 use media::CachedMedia;
 use model::{
-    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Permissions, LastSeenTime, LocationIndexKey, LocationIndexProfileData, OtherSharedState, PendingNotificationFlags
+    AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Permissions, OtherSharedState, PendingNotificationFlags
+};
+use model_profile::{
+    LastSeenTime, LocationIndexKey, LocationIndexProfileData,
 };
 use profile::CachedProfile;
 use simple_backend_model::UnixTime;

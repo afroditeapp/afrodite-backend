@@ -1,4 +1,4 @@
-use model::{GetProfileStatisticsResult, StatisticsProfileVisibility};
+use model_profile::{GetProfileStatisticsResult, StatisticsProfileVisibility};
 use server_data::app::ReadData;
 use tokio::sync::Mutex;
 

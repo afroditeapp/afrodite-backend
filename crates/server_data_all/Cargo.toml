@@ -14,6 +14,7 @@ error-stack = { workspace = true }
 config = { path = "../config" }
 model = { path = "../model" }
 model_account = { path = "../model_account" }
+model_profile = { path = "../model_profile" }
 server_common = { path = "../server_common" }
 
 server_data = { path = "../server_data" }

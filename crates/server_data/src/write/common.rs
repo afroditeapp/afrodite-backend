@@ -129,7 +129,7 @@ impl<C: WriteCommandsProvider> WriteCommandsCommon<C> {
                 let index_data = e.location_index_profile_data()?;
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled.report())?;
 
-                Ok::<(model::LocationIndexKey, model::LocationIndexProfileData), error_stack::Report<CacheError>>((p.location.current_position, index_data))
+                Ok::<(model_profile::LocationIndexKey, model_profile::LocationIndexProfileData), error_stack::Report<CacheError>>((p.location.current_position, index_data))
             })
             .await
             .into_data_error(id)??;

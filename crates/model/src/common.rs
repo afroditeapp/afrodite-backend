@@ -20,12 +20,14 @@ pub mod version;
 pub mod account;
 pub mod media;
 pub mod news;
+pub mod profile;
 
 pub use sync_version::*;
 pub use version::*;
 pub use account::*;
 pub use media::*;
 pub use news::*;
+pub use profile::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {

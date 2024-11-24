@@ -23,10 +23,10 @@ pub use server_common::{data::DataError, result};
 #[openapi(
     components(schemas(
         // Profile
-        model::profile::GroupValues,
-        model::profile::StatisticsProfileVisibility,
+        model_profile::profile::GroupValues,
+        model_profile::profile::StatisticsProfileVisibility,
         // Profile admin
-        model::profile_admin::ProfileStatisticsHistoryValueType,
+        model_profile::profile_admin::ProfileStatisticsHistoryValueType,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

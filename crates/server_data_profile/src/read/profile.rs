@@ -1,4 +1,4 @@
-use model::{
+use model_profile::{
     AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
 };
 use server_data::{

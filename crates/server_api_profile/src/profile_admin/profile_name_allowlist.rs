@@ -2,7 +2,7 @@ use axum::{
     extract::State,
     Extension,
 };
-use model::{
+use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileNamePendingModerationList, Permissions, PostModerateProfileName
 };
 use obfuscate_api_macro::obfuscate_api;

@@ -1,8 +1,7 @@
+use model::ProfileAge;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
-
-use super::ProfileAge;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileStatisticsParams {

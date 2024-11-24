@@ -1,7 +1,7 @@
 use database::{define_history_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
-use model::{GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValue, ProfileStatisticsHistoryValueTypeInternal, StatisticsGender};
+use model_profile::{GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValue, ProfileStatisticsHistoryValueTypeInternal, StatisticsGender};
 
 define_history_read_commands!(HistoryReadProfileAdminStatistics, HistorySyncReadProfileAdminStatistics);
 
