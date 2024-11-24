@@ -1,5 +1,5 @@
 use axum::extract::ws::{Message, WebSocket};
-use model::{
+use model_chat::{
     AccountIdInternal, ChatStateRaw, EventToClient, EventToClientInternal, SpecialEventToClient,
     SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
     SyncVersionUtils,

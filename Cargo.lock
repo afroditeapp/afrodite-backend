@@ -1079,6 +1079,7 @@ dependencies = [
  "diesel",
  "error-stack",
  "model",
+ "model_chat",
  "simple_backend_utils",
 ]
 
@@ -2473,6 +2474,19 @@ dependencies = [
  "serde_json",
  "simple_backend_model",
  "utils",
+ "utoipa",
+]
+
+[[package]]
+name = "model_chat"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "model",
+ "serde",
+ "serde_json",
+ "simple_backend_model",
+ "simple_backend_utils",
  "utoipa",
 ]
 
@@ -4024,6 +4038,7 @@ dependencies = [
  "axum-extra",
  "headers",
  "model",
+ "model_chat",
  "obfuscate_api_macro",
  "serde_json",
  "server_api",
@@ -4106,6 +4121,7 @@ dependencies = [
  "futures",
  "model",
  "model_account",
+ "model_chat",
  "model_media",
  "model_profile",
  "nalgebra",
@@ -4167,6 +4183,7 @@ dependencies = [
  "database_chat",
  "error-stack",
  "model",
+ "model_chat",
  "server_common",
  "server_data",
  "simple_backend",
@@ -4254,6 +4271,7 @@ dependencies = [
  "futures",
  "model",
  "model_account",
+ "model_chat",
  "serde_json",
  "server_api",
  "server_api_media",

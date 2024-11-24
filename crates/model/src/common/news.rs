@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
-use crate::{sync_version_wrappers, SyncVersion, SyncVersionUtils};
+use crate::sync_version_wrappers;
 
 sync_version_wrappers!(
     NewsSyncVersion,

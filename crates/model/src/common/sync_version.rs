@@ -184,12 +184,12 @@ macro_rules! sync_version_wrappers {
             #[diesel(sql_type = BigInt)]
             pub struct $name {
                 #[serde(flatten)]
-                version: SyncVersion
+                version: $crate::SyncVersion
             }
 
             impl $name {
                 pub fn new(id: i64) -> Self {
-                    Self { version: SyncVersion::new(id) }
+                    Self { version: $crate::SyncVersion::new(id) }
                 }
 
                 pub fn as_i64(&self) -> &i64 {
@@ -199,12 +199,12 @@ macro_rules! sync_version_wrappers {
 
             diesel_i64_wrapper!($name);
 
-            impl SyncVersionUtils for $name {
-                fn sync_version(&self) -> SyncVersion {
+            impl $crate::SyncVersionUtils for $name {
+                fn sync_version(&self) -> $crate::SyncVersion {
                     self.version
                 }
 
-                fn new_with_sync_version(sync_version: SyncVersion) -> Self {
+                fn new_with_sync_version(sync_version: $crate::SyncVersion) -> Self {
                     Self { version: sync_version }
                 }
             }

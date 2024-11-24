@@ -1,7 +1,7 @@
 //! Match related routes
 
 use axum::{extract::State, Extension};
-use model::{AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage, ResetMatchesIteratorResult};
+use model_chat::{AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage, ResetMatchesIteratorResult};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::WriteData, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};

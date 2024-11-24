@@ -1,5 +1,5 @@
 use axum::{extract::State, Extension};
-use model::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
+use model_chat::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::create_open_api_router;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};

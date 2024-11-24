@@ -10,10 +10,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, diesel_uuid_
 use utils::random_bytes::random_128_bits;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{
-    schema_sqlite_types::Integer,
-    MessageNumber,
-};
+use crate::schema_sqlite_types::Integer;
 
 pub mod sync_version;
 pub mod version;
@@ -21,6 +18,9 @@ pub mod account;
 pub mod media;
 pub mod news;
 pub mod profile;
+pub mod chat;
+pub mod push_notifications;
+pub mod db_only;
 
 pub use sync_version::*;
 pub use version::*;
@@ -28,6 +28,9 @@ pub use account::*;
 pub use media::*;
 pub use news::*;
 pub use profile::*;
+pub use chat::*;
+pub use push_notifications::*;
+pub use db_only::*;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct BackendVersion {

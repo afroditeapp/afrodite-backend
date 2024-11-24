@@ -1,6 +1,6 @@
 use chrono::Datelike;
 use config::Config;
-use model::LimitedActionStatus;
+use model_chat::LimitedActionStatus;
 use server_common::data::cache::CacheError;
 
 use error_stack::Result;

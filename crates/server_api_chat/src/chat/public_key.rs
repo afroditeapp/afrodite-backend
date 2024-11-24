@@ -1,7 +1,7 @@
 //! Public key management related routes
 
 use axum::{extract::{Path, Query, State}, Extension};
-use model::{AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey};
+use model_chat::{AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey};
 use obfuscate_api_macro::obfuscate_api;
 use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};

@@ -1,18 +1,11 @@
-use diesel::{deserialize::FromSqlRow, expression::AsExpression, prelude::*, sql_types::BigInt};
+use diesel::{prelude::*, sql_types::BigInt};
+use model::{MessageNumber, PublicKeyId, PublicKeyVersion};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper, UnixTime};
+use simple_backend_model::{diesel_i64_try_from, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb, AccountIdInternal, ClientId, ClientLocalId};
-
-mod db_only;
-pub use db_only::*;
-
-mod sync_version;
-pub use sync_version::*;
-
-mod push_notifications;
-pub use push_notifications::*;
+use model::{ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, MatchesSyncVersion, PendingNotification, FcmDeviceToken, NewReceivedLikesCount};
 
 mod public_key;
 pub use public_key::*;
@@ -409,36 +402,6 @@ pub struct SentMessageId {
 pub struct SentMessageIdList {
     pub ids: Vec<SentMessageId>,
 }
-
-/// Message order number in a conversation.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    PartialEq,
-    Default,
-    FromSqlRow,
-    AsExpression,
-)]
-#[diesel(sql_type = BigInt)]
-pub struct MessageNumber {
-    pub mn: i64,
-}
-
-impl MessageNumber {
-    pub fn new(id: i64) -> Self {
-        Self { mn: id }
-    }
-
-    pub fn as_i64(&self) -> &i64 {
-        &self.mn
-    }
-}
-
-diesel_i64_wrapper!(MessageNumber);
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct UpdateMessageViewStatus {

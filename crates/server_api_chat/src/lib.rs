@@ -21,7 +21,7 @@ pub use server_common::{data::DataError, result};
 #[openapi(
     components(schemas(
         // Chat
-        model::chat::PendingMessage,
+        model_chat::chat::PendingMessage,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

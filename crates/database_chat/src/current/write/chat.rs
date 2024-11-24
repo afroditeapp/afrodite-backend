@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{
+use model_chat::{
     AccountIdInternal, ChatStateRaw, MatchId, MatchesSyncVersion, NewReceivedLikesCount, PublicKeyId, ReceivedBlocksSyncVersion, ReceivedLikesSyncVersion, SentBlocksSyncVersion, SentLikesSyncVersion, SetPublicKey, SyncVersionUtils, CHAT_GLOBAL_STATE_ROW_TYPE
 };
 use simple_backend_utils::ContextExt;

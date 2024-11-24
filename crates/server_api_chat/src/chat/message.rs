@@ -1,7 +1,7 @@
 use axum::{body::Body, extract::{Query, State}, Extension};
 use axum_extra::TypedHeader;
 use headers::ContentType;
-use model::{
+use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
 };
 use obfuscate_api_macro::obfuscate_api;

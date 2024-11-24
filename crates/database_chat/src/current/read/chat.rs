@@ -1,7 +1,7 @@
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
-use model::{AccountIdInternal, ChatGlobalState, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId, PublicKeyIdAndVersion, PublicKeyVersion, CHAT_GLOBAL_STATE_ROW_TYPE};
+use model_chat::{AccountIdInternal, ChatGlobalState, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId, PublicKeyIdAndVersion, PublicKeyVersion, CHAT_GLOBAL_STATE_ROW_TYPE};
 
 use crate::IntoDatabaseError;
 

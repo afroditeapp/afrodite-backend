@@ -1,7 +1,7 @@
 use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, AccountInteractionInternal};
+use model_chat::{AccountIdInternal, AccountInteractionInternal};
 
 use crate::IntoDatabaseError;
 

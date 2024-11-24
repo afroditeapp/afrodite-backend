@@ -12,6 +12,7 @@ diesel = { workspace = true }
 error-stack = { workspace = true }
 
 model = { path = "../model" }
+model_chat = { path = "../model_chat" }
 
 database = { path = "../database" }
 

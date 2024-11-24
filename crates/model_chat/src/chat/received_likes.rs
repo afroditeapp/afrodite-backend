@@ -1,20 +1,22 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use model::NewReceivedLikesCount;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::ToSchema;
 
 use crate::{AccountId, NextNumberStorage};
 
-use super::MatchesSyncVersion;
+use crate::ReceivedLikesSyncVersion;
 
-/// Session ID type for matches iterator so that client can detect
-/// server restarts and ask user to refresh matches.
+
+/// Session ID type for received likes iterator so that client can detect
+/// server restarts and ask user to refresh received likes.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct MatchesIteratorSessionIdInternal {
-    id: i64,
+pub struct ReceivedLikesIteratorSessionIdInternal {
+    id: i64
 }
 
-impl MatchesIteratorSessionIdInternal {
+impl ReceivedLikesIteratorSessionIdInternal {
     /// Current implementation uses i64. Only requirement for this
     /// type is that next one should be different than the previous.
     pub fn create(storage: &mut NextNumberStorage) -> Self {
@@ -24,44 +26,39 @@ impl MatchesIteratorSessionIdInternal {
     }
 }
 
-/// Session ID type for matches iterator so that client can detect
-/// server restarts and ask user to matches.
+/// Session ID type for received likes iterator so that client can detect
+/// server restarts and ask user to refresh received likes.
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct MatchesIteratorSessionId {
+pub struct ReceivedLikesIteratorSessionId {
     id: i64,
 }
 
-impl From<MatchesIteratorSessionIdInternal> for MatchesIteratorSessionId {
-    fn from(value: MatchesIteratorSessionIdInternal) -> Self {
+impl From<ReceivedLikesIteratorSessionIdInternal> for ReceivedLikesIteratorSessionId {
+    fn from(value: ReceivedLikesIteratorSessionIdInternal) -> Self {
         Self {
             id: value.id,
         }
     }
 }
 
-impl From<MatchesIteratorSessionId> for MatchesIteratorSessionIdInternal {
-    fn from(value: MatchesIteratorSessionId) -> Self {
+impl From<ReceivedLikesIteratorSessionId> for ReceivedLikesIteratorSessionIdInternal {
+    fn from(value: ReceivedLikesIteratorSessionId) -> Self {
         Self {
             id: value.id,
         }
     }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct AllMatchesPage {
-    /// This version can be sent to the server when WebSocket protocol
-    /// data sync is happening.
-    pub version: MatchesSyncVersion,
-    pub profiles: Vec<AccountId>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ResetMatchesIteratorResult {
-    pub s: MatchesIteratorSessionId,
+pub struct ResetReceivedLikesIteratorResult {
+    pub v: ReceivedLikesSyncVersion,
+    pub c: NewReceivedLikesCount,
+    pub s: ReceivedLikesIteratorSessionId,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
-pub struct MatchesPage {
+pub struct ReceivedLikesPage {
+    pub n: PageItemCountForNewLikes,
     pub p: Vec<AccountId>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -80,11 +77,11 @@ pub struct MatchesPage {
     AsExpression,
 )]
 #[diesel(sql_type = BigInt)]
-pub struct MatchId {
+pub struct ReceivedLikeId {
     pub id: i64,
 }
 
-impl MatchId {
+impl ReceivedLikeId {
     pub fn new(id: i64) -> Self {
         Self { id }
     }
@@ -104,10 +101,27 @@ impl MatchId {
     }
 }
 
-diesel_i64_wrapper!(MatchId);
+diesel_i64_wrapper!(ReceivedLikeId);
 
-impl From<MatchId> for i64 {
-    fn from(value: MatchId) -> Self {
+impl From<ReceivedLikeId> for i64 {
+    fn from(value: ReceivedLikeId) -> Self {
         value.id
     }
+}
+
+/// Define how many returned profiles counted from the first page item are
+/// new likes (interaction state changed to like after previous received likes
+/// iterator reset).
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+)]
+pub struct PageItemCountForNewLikes {
+    pub c: i64,
 }

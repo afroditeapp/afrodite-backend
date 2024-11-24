@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{sync_version_wrappers, AccountId, AccountIdDb, SyncVersion, SyncVersionUtils};
+use crate::{sync_version_wrappers, AccountId, AccountIdDb};
 
 mod age;
 pub use age::*;

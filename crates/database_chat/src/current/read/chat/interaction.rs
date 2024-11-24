@@ -3,7 +3,7 @@ use std::i64;
 use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{
+use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, MatchId, PageItemCountForNewLikes, ProfileVisibility, ReceivedLikeId
 };
 
