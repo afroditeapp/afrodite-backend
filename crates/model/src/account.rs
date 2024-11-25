@@ -7,6 +7,9 @@ use crate::{
     schema_sqlite_types::Integer, AccountStateRelatedSharedState, AccountSyncVersion,
 };
 
+mod news;
+pub use news::*;
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Account {
     state: AccountState,

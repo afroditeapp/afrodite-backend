@@ -9,7 +9,7 @@ use crate::{
     schema_sqlite_types::{Integer, Text}, AccountId, ModerationRequestState, NotificationEvent, UnreadNewsCountResult
 };
 
-use super::NewReceivedLikesCountResult;
+use crate::NewReceivedLikesCountResult;
 
 /// Pending notification (or multiple notifications which each have
 /// different type) not yet received notifications which push notification

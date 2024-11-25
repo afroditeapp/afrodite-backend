@@ -12,13 +12,29 @@
 pub use simple_backend_model::UnixTime;
 
 pub mod common;
+pub use common::*;
+
 pub mod common_admin;
+pub use common_admin::*;
+
+pub mod account;
+pub use account::*;
+
+pub mod chat;
+pub use chat::*;
+
+pub mod media;
+pub use media::*;
+
+pub mod profile;
+pub use profile::*;
+
+pub mod db_only;
+pub use db_only::*;
+
 pub mod markers;
 pub mod schema;
 pub mod schema_sqlite_types;
-
-pub use common::*;
-pub use common_admin::*;
 
 pub type Db = diesel::sqlite::Sqlite;
 
