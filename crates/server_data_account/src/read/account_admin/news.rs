@@ -1,12 +1,14 @@
 use model_account::{NewsId, NewsTranslations};
 use server_data::{
-    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
 
-define_server_data_read_commands!(ReadCommandsAccountNews);
-define_db_read_command!(ReadCommandsAccountNews);
+use crate::read::DbReadAccount;
 
-impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
+define_cmd_wrapper!(ReadCommandsAccountNewsAdmin);
+
+impl<C: DbReadAccount> ReadCommandsAccountNewsAdmin<C> {
+
     pub async fn news_translations(
         &self,
         id: NewsId,

@@ -14,11 +14,10 @@ use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 use super::{
     cache::{CacheError, DatabaseCache},
     file::utils::FileDir,
-    index::LocationIndexIteratorHandle,
     IntoDataError,
 };
 use crate::{
-    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, result::Result, DataError
+    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle, index::LocationIndexIteratorHandle, result::Result, DataError
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
@@ -72,9 +71,9 @@ pub struct ConcurrentWriteCommandHandle {
 }
 
 impl ConcurrentWriteCommandHandle {
-    pub fn new(write: RouterDatabaseWriteHandle, config: &Config) -> Self {
+    pub fn new(write: Arc<RouterDatabaseWriteHandle>, config: &Config) -> Self {
         Self {
-            write: write.into(),
+            write,
             content_upload_queue: tokio::sync::Semaphore::new(config.queue_limits().content_upload)
                 .into(),
             profile_index_queue: tokio::sync::Semaphore::new(num_cpus::get()).into(),
@@ -151,8 +150,12 @@ impl ConcurrentWriteSelectorHandle {
         ConcurrentWriteProfileHandleBlocking {
             write: self.write,
             _permit: permit,
-            _account_write_lock: self._account_write_lock,
+            account_write_lock: self._account_write_lock,
         }
+    }
+
+    pub fn into_lock(self) -> OwnedMutexGuard<AccountHandle> {
+        self._account_write_lock
     }
 }
 
@@ -184,7 +187,7 @@ impl ConcurrentWriteContentHandle {
 pub struct ConcurrentWriteProfileHandleBlocking {
     write: Arc<RouterDatabaseWriteHandle>,
     _permit: tokio::sync::OwnedSemaphorePermit,
-    _account_write_lock: OwnedMutexGuard<AccountHandle>,
+    account_write_lock: OwnedMutexGuard<AccountHandle>,
 }
 
 impl fmt::Debug for ConcurrentWriteProfileHandleBlocking {
@@ -228,6 +231,10 @@ impl ConcurrentWriteProfileHandleBlocking {
         self.write
             .user_write_commands_account()
             .next_matches_iterator_state(id, iterator_id)
+    }
+
+    pub fn into_lock(self) -> OwnedMutexGuard<AccountHandle> {
+        self.account_write_lock
     }
 
     pub fn next_news_iterator_state(

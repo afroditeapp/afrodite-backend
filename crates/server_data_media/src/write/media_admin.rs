@@ -4,10 +4,13 @@ use model_media::{
     ProfileVisibility,
 };
 use server_common::{data::DataError, result::Result};
-use server_data::{cache::CacheError, define_server_data_write_commands, write::WriteCommandsProvider};
+use server_data::{app::GetConfig, cache::CacheWriteCommon, db_manager::WriteAccessProvider, define_cmd_wrapper, write::{common::UpdateLocationIndexVisibility, GetWriteCommandsCommon}};
 
-define_server_data_write_commands!(WriteCommandsMediaAdmin);
-define_db_transaction_command!(WriteCommandsMediaAdmin);
+use crate::cache::CacheWriteMedia;
+
+use super::DbTransactionMedia;
+
+define_cmd_wrapper!(WriteCommandsMediaAdmin);
 
 // TODO(prod): Move event sending to WriteCommands instead of route handlers
 //             to avoid disappearing events in case client disconnects before
@@ -25,7 +28,7 @@ pub struct CurrentAndNewAccount {
     pub new: Account,
 }
 
-impl<C: WriteCommandsProvider> WriteCommandsMediaAdmin<C> {
+impl<C: DbTransactionMedia + GetConfig + CacheWriteMedia + WriteAccessProvider + CacheWriteCommon + UpdateLocationIndexVisibility + Copy> WriteCommandsMediaAdmin<C> {
     pub async fn moderation_get_list_and_create_new_if_necessary(
         self,
         account_id: AccountIdInternal,
@@ -93,18 +96,16 @@ impl<C: WriteCommandsProvider> WriteCommandsMediaAdmin<C> {
         })?;
 
         if let Some(initial_request_accepted_status) = &info.initial_request_accepted {
-            self.cache()
-                .write_cache(moderation_request_owner, |e| {
-                    let m = e.media.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
-                    m.profile_content_version = initial_request_accepted_status.new_profile_content_version;
+            self
+                .write_cache_media(moderation_request_owner, |e| {
+                    e.profile_content_version = initial_request_accepted_status.new_profile_content_version;
                     Ok(())
                 })
                 .await?;
         }
 
         if let Some(accounts) = &info.cache_should_be_updated {
-            self.cmds
-                .write_cmds()
+            self
                 .common()
                 .internal_handle_new_account_data_after_db_modification(
                     accounts.id,

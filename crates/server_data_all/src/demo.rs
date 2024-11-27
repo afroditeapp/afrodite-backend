@@ -7,10 +7,10 @@ use model_account::{
     DemoModeLoginToken, DemoModePassword, DemoModeToken,
 };
 use server_common::{
-    app::{GetAccounts, GetConfig},
+    app::GetAccounts,
     data::DataError,
 };
-use server_data::app::ReadData;
+use server_data::app::{GetConfig, ReadData};
 use server_data_account::read::GetReadCommandsAccount;
 use server_data_profile::read::GetReadProfileCommands;
 use simple_backend_utils::{ContextExt, IntoReportFromString};

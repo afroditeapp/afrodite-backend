@@ -2,8 +2,7 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{
-    CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle,
-    DbWriteCloseHandle, HistoryReadHandle, HistoryWriteHandle,
+    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbReaderRawUsingWriteHandle, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, PoolObject, TransactionError
 };
 pub use server_common::{
     data::{DataError, IntoDataError},
@@ -14,14 +13,7 @@ use simple_backend::media_backup::MediaBackupHandle;
 use tracing::info;
 
 use crate::{
-    cache::DatabaseCache,
-    event::EventManagerWithCacheReference,
-    file::utils::FileDir,
-    index::{LocationIndexIteratorHandle, LocationIndexManager},
-    read::ReadCommands,
-    utils::{AccessTokenManager, AccountIdManager},
-    write::{common::WriteCommandsCommon, WriteCommands, WriteCommandsContainer},
-    write_concurrent::WriteCommandsConcurrent,
+    cache::DatabaseCache, event::EventManagerWithCacheReference, file::utils::FileDir, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}, utils::{AccessTokenManager, AccountIdManager}, write_concurrent::WriteCommandsConcurrent
 };
 
 pub const DB_FILE_DIR_NAME: &str = "files";
@@ -125,6 +117,8 @@ impl DatabaseManager {
             config: config.clone(),
             current_write_handle: current_write_handle.clone(),
             history_write_handle: history_write_handle.clone(),
+            current_read_handle: current_write_handle.to_read_handle(),
+            history_read_handle: history_write_handle.to_read_handle(),
             root: root.into(),
             cache: cache.into(),
             location: index.into(),
@@ -168,6 +162,10 @@ pub struct RouterDatabaseWriteHandle {
     root: Arc<DatabaseRoot>,
     current_write_handle: CurrentWriteHandle,
     history_write_handle: HistoryWriteHandle,
+    /// This is actually the write handle
+    current_read_handle: CurrentReadHandle,
+    /// This is actually the write handle
+    history_read_handle: HistoryReadHandle,
     cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
@@ -176,20 +174,6 @@ pub struct RouterDatabaseWriteHandle {
 }
 
 impl RouterDatabaseWriteHandle {
-    pub fn user_write_commands(&self) -> WriteCommands {
-        WriteCommands::new(
-            &self.config,
-            &self.current_write_handle,
-            &self.history_write_handle,
-            &self.cache,
-            &self.root.file_dir,
-            &self.location,
-            &self.media_backup,
-            &self.push_notification_sender,
-            &self.email_sender,
-        )
-    }
-
     pub fn user_write_commands_account(&self) -> WriteCommandsConcurrent {
         WriteCommandsConcurrent::new(
             &self.cache,
@@ -198,69 +182,10 @@ impl RouterDatabaseWriteHandle {
         )
     }
 
-    pub fn into_sync_handle(self) -> SyncWriteHandle {
-        SyncWriteHandle {
-            config: self.config,
-            root: self.root,
-            current_read_handle: self.current_write_handle.to_read_handle(),
-            current_write_handle: self.current_write_handle,
-            history_read_handle: self.history_write_handle.to_read_handle(),
-            history_write_handle: self.history_write_handle,
-            cache: self.cache,
-            location: self.location,
-            media_backup: self.media_backup,
-            push_notification_sender: self.push_notification_sender,
-            email_sender: self.email_sender,
-        }
-    }
-
-    pub fn location_raw(&self) -> &LocationIndexManager {
-        &self.location
-    }
-}
-
-/// Handle for writing synchronous write commands.
-#[derive(Clone, Debug)]
-pub struct SyncWriteHandle {
-    config: Arc<Config>,
-    root: Arc<DatabaseRoot>,
-    current_write_handle: CurrentWriteHandle,
-    current_read_handle: CurrentReadHandle, // This is actually the write handle
-    history_read_handle: HistoryReadHandle, // This is actually the write handle
-    history_write_handle: HistoryWriteHandle,
-    cache: Arc<DatabaseCache>,
-    location: Arc<LocationIndexManager>,
-    media_backup: MediaBackupHandle,
-    push_notification_sender: PushNotificationSender,
-    email_sender: EmailSenderImpl,
-}
-
-impl SyncWriteHandle {
-    pub fn cmds(&self) -> WriteCommands {
-        WriteCommands::new(
-            &self.config,
-            &self.current_write_handle,
-            &self.history_write_handle,
-            &self.cache,
-            &self.root.file_dir,
-            &self.location,
-            &self.media_backup,
-            &self.push_notification_sender,
-            &self.email_sender,
+    pub fn read(&self) -> ReadAdapter<'_> {
+        ReadAdapter::new(
+            self
         )
-    }
-
-    pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(
-            &self.current_read_handle,
-            &self.history_read_handle,
-            &self.cache,
-            &self.root.file_dir
-        )
-    }
-
-    pub fn common(&self) -> WriteCommandsCommon<WriteCommandsContainer<'_>> {
-        self.cmds().into_common()
     }
 
     pub fn events(&self) -> EventManagerWithCacheReference<'_> {
@@ -271,73 +196,145 @@ impl SyncWriteHandle {
         &self.config
     }
 
-    pub fn to_ref_handle(&self) -> SyncWriteHandleRef<'_> {
-        SyncWriteHandleRef {
-            write_cmds: self.cmds(),
-            current_read_handle: &self.current_read_handle,
-            history_read_handle: &self.history_read_handle,
-            push_notification_sender: &self.push_notification_sender,
-        }
-    }
-
-    // pub async fn register(
-    //     &self,
-    //     id: AccountId,
-    //     sign_in_with_info: SignInWithInfo,
-    //     email: Option<EmailAddress>,
-    // ) -> Result<AccountIdInternal, DataError> {
-    //     self.cmds().register(id, sign_in_with_info, email).await
-    // }
-}
-
-pub struct SyncWriteHandleRef<'a> {
-    pub(crate) write_cmds: WriteCommands<'a>,
-    current_read_handle: &'a CurrentReadHandle, // This is actually the write handle
-    history_read_handle: &'a HistoryReadHandle, // This is actually the write handle
-    push_notification_sender: &'a PushNotificationSender,
-}
-
-impl<'a> SyncWriteHandleRef<'a> {
-    pub fn events(&self) -> EventManagerWithCacheReference {
-        EventManagerWithCacheReference::new(self.write_cmds.cache, self.push_notification_sender)
-    }
-
-    pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(
-            self.current_read_handle,
-            self.history_read_handle,
-            self.write_cmds.cache,
-            self.write_cmds.file_dir,
-        )
-    }
-
-    pub fn config(&self) -> &Config {
-        self.write_cmds.config
-    }
-
-    pub fn to_ref_handle(&self) -> SyncWriteHandleRefRef<'_> {
-        SyncWriteHandleRefRef { handle: self }
+    pub fn location_raw(&self) -> &LocationIndexManager {
+        &self.location
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct SyncWriteHandleRefRef<'a> {
-    pub(crate) handle: &'a SyncWriteHandleRef<'a>,
+pub struct RouterDatabaseWriteHandleRef<'a> {
+    pub handle: &'a RouterDatabaseWriteHandle,
 }
 
-impl SyncWriteHandleRefRef<'_> {
-    pub fn events(&self) -> EventManagerWithCacheReference {
-        self.handle.events()
+pub trait InternalWriting {
+    fn config(&self) -> &Config;
+    fn config_arc(&self) -> Arc<Config>;
+    fn root(&self) -> &DatabaseRoot;
+    fn current_write_handle(&self) -> &CurrentWriteHandle;
+    fn history_write_handle(&self) -> &HistoryWriteHandle;
+    fn current_read_handle(&self) -> &CurrentReadHandle;
+    fn history_read_handle(&self) -> &HistoryReadHandle;
+    fn cache(&self) -> &DatabaseCache;
+    fn location(&self) -> &LocationIndexManager;
+    fn media_backup(&self) -> &MediaBackupHandle;
+    fn push_notification_sender(&self) -> &PushNotificationSender;
+    fn email_sender(&self) -> &EmailSenderImpl;
+
+    fn location_index_write_handle(&self) -> LocationIndexWriteHandle {
+        LocationIndexWriteHandle::new(self.location())
     }
 
-    pub fn config(&self) -> &Config {
-        self.handle.config()
+    async fn db_transaction_raw<
+        T: FnOnce(&mut database::DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbWriter::new(self.current_write_handle())
+            .db_transaction_raw(cmd)
+            .await
     }
 
-    pub fn read(&self) -> ReadCommands<'_> {
-        self.handle.read()
+    async fn db_transaction_history_raw<
+        T: FnOnce(&mut database::DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbWriterHistory::new(self.history_write_handle())
+            .db_transaction_raw(cmd)
+            .await
+    }
+
+    async fn db_transaction_with_history<T, R: Send + 'static>(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError>
+    where
+        T: FnOnce(
+                TransactionConnection<'_>,
+                PoolObject,
+            ) -> std::result::Result<R, TransactionError>
+            + Send
+            + 'static,
+    {
+        DbWriterWithHistory::new(self.current_write_handle(), self.history_write_handle())
+            .db_transaction_with_history(cmd)
+            .await
+    }
+
+    async fn db_read_raw<
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReaderRawUsingWriteHandle::new(self.current_write_handle())
+            .db_read(cmd)
+            .await
     }
 }
+
+impl InternalWriting for &RouterDatabaseWriteHandle {
+    fn config(&self) -> &Config {
+        &self.config
+    }
+
+    fn config_arc(&self) -> Arc<Config> {
+        self.config.clone()
+    }
+
+    fn root(&self) -> &DatabaseRoot {
+        &self.root
+    }
+
+    fn current_write_handle(&self) -> &CurrentWriteHandle {
+        &self.current_write_handle
+    }
+
+    fn history_write_handle(&self) -> &HistoryWriteHandle {
+        &self.history_write_handle
+    }
+
+    fn current_read_handle(&self) -> &CurrentReadHandle {
+        &self.current_read_handle
+    }
+
+    fn history_read_handle(&self) -> &HistoryReadHandle {
+        &self.history_read_handle
+    }
+
+    fn cache(&self) -> &DatabaseCache {
+        &self.cache
+    }
+
+    fn location(&self) -> &LocationIndexManager {
+        &self.location
+    }
+
+    fn media_backup(&self) -> &MediaBackupHandle {
+        &self.media_backup
+    }
+
+    fn push_notification_sender(&self) -> &PushNotificationSender {
+        &self.push_notification_sender
+    }
+
+    fn email_sender(&self) -> &EmailSenderImpl {
+        &self.email_sender
+    }
+}
+
+pub trait WriteAccessProvider {}
+impl WriteAccessProvider for &RouterDatabaseWriteHandle {}
 
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
@@ -347,15 +344,6 @@ pub struct RouterDatabaseReadHandle {
 }
 
 impl RouterDatabaseReadHandle {
-    pub fn read(&self) -> ReadCommands<'_> {
-        ReadCommands::new(
-            &self.current_read_handle,
-            &self.history_read_handle,
-            &self.cache,
-            &self.root.file_dir
-        )
-    }
-
     pub fn access_token_manager(&self) -> AccessTokenManager<'_> {
         AccessTokenManager::new(&self.cache)
     }
@@ -373,34 +361,103 @@ impl RouterDatabaseReadHandle {
     }
 }
 
-// pub fn account(&self) -> WriteCommandsAccount {
-//     self.cmds().account()
-// }
+pub struct ReadAdapter<'a> {
+    pub cmds: &'a RouterDatabaseWriteHandle,
+}
 
-// pub fn account_admin(&self) -> WriteCommandsAccountAdmin {
-//     self.cmds().account_admin()
-// }
+impl<'a> ReadAdapter<'a> {
+    pub fn new(cmds: &'a RouterDatabaseWriteHandle) -> Self {
+        Self { cmds }
+    }
+}
 
-// pub fn media(&self) -> WriteCommandsMedia {
-//     self.cmds().media()
-// }
+pub trait ReadAccessProvider {}
+impl ReadAccessProvider for &RouterDatabaseReadHandle {}
+impl ReadAccessProvider for ReadAdapter<'_> {}
 
-// pub fn media_admin(&self) -> WriteCommandsMediaAdmin {
-//     self.cmds().media_admin()
-// }
+pub trait InternalReading {
+    fn root(&self) -> &DatabaseRoot;
+    fn current_read_handle(&self) -> &CurrentReadHandle;
+    fn history_read_handle(&self) -> &HistoryReadHandle;
+    fn cache(&self) -> &DatabaseCache;
 
-// pub fn profile(&self) -> WriteCommandsProfile {
-//     self.cmds().profile()
-// }
+    async fn db_read_raw<
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReaderRaw::new(self.current_read_handle()).db_read(cmd).await
+    }
 
-// pub fn profile_admin(&self) -> WriteCommandsProfileAdmin {
-//     self.cmds().profile_admin()
-// }
+    async fn db_read_history_raw<
+        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, DieselDatabaseError> {
+        DbReaderHistoryRaw::new(self.history_read_handle()).db_read_history(cmd).await
+    }
+}
 
-// pub fn chat(&self) -> WriteCommandsChat {
-//     self.cmds().chat()
-// }
 
-// pub fn chat_admin(&self) -> WriteCommandsChatAdmin {
-//     self.cmds().chat_admin()
-// }
+impl InternalReading for &RouterDatabaseReadHandle {
+    fn root(&self) -> &DatabaseRoot {
+        &self.root
+    }
+
+    fn current_read_handle(&self) -> &CurrentReadHandle {
+        &self.current_read_handle
+    }
+
+    fn history_read_handle(&self) -> &HistoryReadHandle {
+        &self.history_read_handle
+    }
+
+    fn cache(&self) -> &DatabaseCache {
+        &self.cache
+    }
+}
+
+impl <I: InternalWriting> InternalReading for I {
+    fn root(&self) -> &DatabaseRoot {
+        self.root()
+    }
+
+    fn current_read_handle(&self) -> &CurrentReadHandle {
+        self.current_read_handle()
+    }
+
+    fn history_read_handle(&self) -> &HistoryReadHandle {
+        self.history_read_handle()
+    }
+
+    fn cache(&self) -> &DatabaseCache {
+        self.cache()
+    }
+}
+
+
+impl InternalReading for ReadAdapter<'_> {
+    fn root(&self) -> &DatabaseRoot {
+        &self.cmds.root
+    }
+
+    fn current_read_handle(&self) -> &CurrentReadHandle {
+        &self.cmds.current_read_handle
+    }
+
+    fn history_read_handle(&self) -> &HistoryReadHandle {
+        &self.cmds.history_read_handle
+    }
+
+    fn cache(&self) -> &DatabaseCache {
+        &self.cmds.cache
+    }
+}

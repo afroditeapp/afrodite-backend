@@ -4,31 +4,30 @@ use database_chat::current::write::chat::{ChatStateChanges, ReceiverBlockedSende
 use error_stack::ResultExt;
 use model_chat::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
-    cache::{chat::limit::ChatLimits, CacheError}, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, DieselDatabaseError, IntoDataError
+    app::EventManagerProvider, cache::chat::limit::ChatLimits, define_cmd_wrapper, id::ToAccountIdInternal, result::Result, DataError, DieselDatabaseError, IntoDataError
 };
 use simple_backend_utils::ContextExt;
 
+use crate::{cache::CacheWriteChat, read::DbReadChat};
+
 use self::push_notifications::WriteCommandsChatPushNotifications;
 
-define_server_data_write_commands!(WriteCommandsChat);
-define_db_transaction_command!(WriteCommandsChat);
-define_db_read_command_for_write!(WriteCommandsChat);
+use super::DbTransactionChat;
 
-impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
+define_cmd_wrapper!(WriteCommandsChat);
+
+impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + EventManagerProvider> WriteCommandsChat<C> {
     pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<C> {
-        WriteCommandsChatPushNotifications::new(self.cmds)
+        WriteCommandsChatPushNotifications::new(self.0)
     }
-}
 
-impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
     pub async fn modify_chat_limits<T>(
         &mut self,
         id: AccountIdInternal,
         mut action: impl FnMut(&mut ChatLimits) -> T,
     ) -> Result<T, DataError> {
-        let value = self.cache().write_cache(id, move |entry| {
-            let chat = entry.chat_data_mut()?;
-            Ok(action(&mut chat.limits))
+        let value = self.write_cache_chat(id, move |entry| {
+            Ok(action(&mut entry.limits))
         })
             .await?;
 
@@ -263,7 +262,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
     ) -> Result<(), DataError> {
         let mut converted = vec![];
         for m in messages {
-            let sender = self.cache().to_account_id_internal(m.sender).await?;
+            let sender = self.to_account_id_internal(m.sender).await?;
             converted.push(PendingMessageIdInternal {
                 sender,
                 mn: m.mn,
@@ -280,7 +279,7 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
 
         if pending_messages.is_empty() {
             self
-                .events()
+                .event_manager()
                 .remove_specific_pending_notification_flags_from_cache(message_receiver, PendingNotificationFlags::NEW_MESSAGE)
                 .await;
         }
@@ -458,13 +457,9 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
             ))
         })?;
 
-        let session_id = self.cache()
-            .write_cache(id.as_id(), |e| {
-                if let Some(c) = e.chat.as_mut() {
-                    Ok(c.received_likes_iterator.reset(received_like_id, received_like_id_previous))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
+        let session_id = self
+            .write_cache_chat(id.as_id(), |e| {
+                Ok(e.received_likes_iterator.reset(received_like_id, received_like_id_previous))
             })
             .await
             .into_data_error(id)?;
@@ -479,13 +474,9 @@ impl<C: WriteCommandsProvider> WriteCommandsChat<C> {
         let latest_used_id = self.db_read(|mut cmds| cmds.chat().global_state()).await?
             .next_match_id
             .next_id_to_latest_used_id();
-        let session_id = self.cache()
-            .write_cache(id.as_id(), |e| {
-                if let Some(c) = e.chat.as_mut() {
-                    Ok(c.matches_iterator.reset(latest_used_id))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
+        let session_id = self
+            .write_cache_chat(id.as_id(), |e| {
+                Ok(e.matches_iterator.reset(latest_used_id))
             })
             .await
             .into_data_error(id)?;

@@ -8,7 +8,7 @@ use server_common::result::{Result, WrappedResultExt};
 use server_data::content_processing::{notify_client, ContentProcessingReceiver, ProcessingState};
 use server_data_media::write::GetWriteCommandsMedia;
 use server_state::S;
-use server_common::app::GetConfig;
+use server_data::app::GetConfig;
 use simple_backend::{image::ImageProcess, ServerQuitWatcher};
 use simple_backend_config::args::InputFileType;
 use simple_backend_image_process::ImageProcessingInfo;

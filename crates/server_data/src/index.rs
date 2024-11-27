@@ -7,14 +7,28 @@ use model_profile::{
     ProfileQueryMakerDetails, UnixTime,
 };
 use server_common::data::index::IndexError;
+use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
 use tokio::sync::RwLock;
 use tracing::info;
-
-use crate::cache::LastSeenTimeUpdated;
 
 use self::location::{IndexUpdater, LocationIndex, LocationIndexIteratorState};
 
 pub mod location;
+
+pub trait LocationWrite {
+    fn location(&self) -> crate::index::LocationIndexWriteHandle<'_>;
+    fn location_iterator(&self) -> crate::index::LocationIndexIteratorHandle<'_>;
+}
+
+impl <I: InternalWriting> LocationWrite for I {
+    fn location(&self) -> crate::index::LocationIndexWriteHandle<'_> {
+        crate::index::LocationIndexWriteHandle::new(InternalWriting::location(self))
+    }
+
+    fn location_iterator(&self) -> crate::index::LocationIndexIteratorHandle<'_> {
+        LocationIndexIteratorHandle::new(InternalWriting::location(self))
+    }
+}
 
 pub struct LocationIndexInfoCreator {
     config: LocationConfig,

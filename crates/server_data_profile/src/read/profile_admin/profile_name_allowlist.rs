@@ -1,12 +1,13 @@
 use model_profile::GetProfileNamePendingModerationList;
 use server_data::{
-    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
 
-define_server_data_read_commands!(ReadCommandsProfileNameAllowlist);
-define_db_read_command!(ReadCommandsProfileNameAllowlist);
+use crate::read::DbReadProfile;
 
-impl<C: ReadCommandsProvider> ReadCommandsProfileNameAllowlist<C> {
+define_cmd_wrapper!(ReadCommandsProfileNameAllowlist);
+
+impl<C: DbReadProfile> ReadCommandsProfileNameAllowlist<C> {
     pub async fn profile_name_pending_moderation_list(
         &mut self,
     ) -> Result<GetProfileNamePendingModerationList, DataError> {

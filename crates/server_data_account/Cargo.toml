@@ -8,12 +8,9 @@ edition = "2021"
 [dependencies]
 error-stack = { workspace = true }
 
-config = { path = "../config" }
 model = { path = "../model" }
 model_account = { path = "../model_account" }
 server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }
 
 database_account = { path = "../database_account" }
-
-simple_backend = { path = "../simple_backend" }

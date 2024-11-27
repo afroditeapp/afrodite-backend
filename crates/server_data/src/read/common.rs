@@ -1,18 +1,18 @@
 use chrono::NaiveDate;
 use model::{AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken};
+use server_common::data::IntoDataError;
 
-use super::{super::DataError, ReadCommandsProvider};
-use crate::{result::Result, IntoDataError};
+use super::{super::DataError, DbReadCommon};
+use crate::{cache::CacheReadCommon, define_cmd_wrapper, id::ToAccountIdInternal, result::Result};
 
-define_read_commands!(ReadCommandsCommon);
+define_cmd_wrapper!(ReadCommandsCommon);
 
-impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
+impl<C: DbReadCommon + CacheReadCommon + ToAccountIdInternal> ReadCommandsCommon<C> {
     pub async fn account_access_token(
         &self,
         id: AccountId,
     ) -> Result<Option<AccessToken>, DataError> {
         let id = self
-            .cache()
             .to_account_id_internal(id)
             .await
             .into_data_error(id)?;
@@ -32,13 +32,16 @@ impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
 
     /// Account is available on all servers as account server will sync it to
     /// others if server is running in microservice mode.
-    pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
+    pub async fn account(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Account, DataError> {
         let account = self
-            .read_cache(id, |cache| {
-                Account::new_from_internal_types(
+            .read_cache_common(id, |cache| {
+                Ok(Account::new_from_internal_types(
                     cache.permissions.clone(),
                     cache.account_state_related_shared_state.clone(),
-                )
+                ))
             })
             .await?;
         Ok(account)
@@ -48,7 +51,7 @@ impl<C: ReadCommandsProvider> ReadCommandsCommon<C> {
         &self,
         id: AccountIdInternal,
     ) -> Result<PendingNotificationFlags, DataError> {
-        let flags = self.read_cache(id, |cache| cache.pending_notification_flags)
+        let flags = self.read_cache_common(id, |cache| Ok(cache.pending_notification_flags))
             .await?;
         Ok(flags)
     }

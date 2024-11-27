@@ -101,33 +101,6 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
     }
 }
 
-macro_rules! define_db_transaction_command {
-    ($struct_name:ident) => {
-        impl<C: server_data::write::WriteCommandsProvider> $struct_name<C> {
-            pub async fn db_transaction<
-                T: FnOnce(
-                        $crate::CurrentSyncWriteCommands<
-                            &mut server_data::DieselConnection,
-                        >,
-                    ) -> error_stack::Result<R, server_data::DieselDatabaseError>
-                    + Send
-                    + 'static,
-                R: Send + 'static,
-            >(
-                &self,
-                cmd: T,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
-                self.cmds
-                    .write_cmds()
-                    .db_transaction_raw(|conn| {
-                        cmd($crate::CurrentSyncWriteCommands::new(conn))
-                    })
-                    .await
-            }
-        }
-    };
-}
-
 macro_rules! db_transaction {
     ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
         server_common::data::IntoDataError::into_error(

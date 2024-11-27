@@ -1,18 +1,19 @@
 use model_account::{AccountIdInternal, ResetNewsIteratorResult};
 use server_data::{
-    cache::CacheError, define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, IntoDataError
+    define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
 
-define_server_data_write_commands!(WriteCommandsAccountNews);
-define_db_transaction_command!(WriteCommandsAccountNews);
-define_db_read_command_for_write!(WriteCommandsAccountNews);
+use crate::{cache::CacheWriteAccount, write::DbTransactionAccount};
 
-impl<C: WriteCommandsProvider> WriteCommandsAccountNews<C> {
+define_cmd_wrapper!(WriteCommandsAccountNews);
+
+impl<C: DbTransactionAccount + CacheWriteAccount> WriteCommandsAccountNews<C> {
+
     pub async fn handle_reset_news_iterator(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<ResetNewsIteratorResult, DataError> {
-        let (previous_id, new_id, v, c) = db_transaction!(self, move |mut cmds| {
+        let (previous_id, new_id, v, count) = db_transaction!(self, move |mut cmds| {
             let previous_id = cmds.read().account().news().publication_id_at_news_iterator_reset(id)?;
             let new_id = cmds.read().account().data().global_state()?
                 .next_news_publication_id
@@ -22,13 +23,9 @@ impl<C: WriteCommandsProvider> WriteCommandsAccountNews<C> {
             Ok((previous_id, new_id, v, c))
         })?;
 
-        let session_id = self.cache()
-            .write_cache(id.as_id(), |e| {
-                if let Some(c) = e.account.as_mut() {
-                    Ok(c.news_iterator.reset(new_id, previous_id))
-                } else {
-                    Err(CacheError::FeatureNotEnabled.report())
-                }
+        let session_id = self
+            .write_cache_account(id.as_id(), |e| {
+                Ok(e.news_iterator.reset(new_id, previous_id))
             })
             .await
             .into_data_error(id)?;
@@ -36,12 +33,12 @@ impl<C: WriteCommandsProvider> WriteCommandsAccountNews<C> {
         Ok(ResetNewsIteratorResult {
             s: session_id.into(),
             v,
-            c
+            c: count,
         })
     }
 
     pub async fn reset_news_count_sync_version(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {

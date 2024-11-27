@@ -8,19 +8,19 @@ use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Permissions, OtherSharedState, PendingNotificationFlags
 };
 use model_profile::{
-    LastSeenTime, LocationIndexKey, LocationIndexProfileData,
+    LastSeenTime, LocationIndexKey, LocationIndexProfileData
 };
 use profile::CachedProfile;
 use simple_backend_model::UnixTime;
 pub use server_common::data::cache::CacheError;
 use tokio::sync::RwLock;
 
-use crate::event::{event_channel, EventReceiver, EventSender};
+use crate::{db_manager::{InternalReading, InternalWriting}, event::{event_channel, EventReceiver, EventSender}};
 
 pub mod db_iterator;
-pub mod account;
 pub mod chat;
 pub mod profile;
+pub mod account;
 pub mod media;
 
 /// If this exists update last seen time atomic variable in location
@@ -106,7 +106,7 @@ impl DatabaseCache {
             let event_receiver = if let Some(address) = address {
                 let (sender, receiver) = event_channel();
                 let mut write = cache_entry.cache.write().await;
-                write.current_connection = Some(ConnectionInfo {
+                write.common.current_connection = Some(ConnectionInfo {
                     connection: address,
                     event_sender: sender,
                 });
@@ -153,12 +153,12 @@ impl DatabaseCache {
             if connection.is_none() ||
                 (
                     connection.is_some() &&
-                    cache_entry_write.current_connection
+                    cache_entry_write.common.current_connection
                         .as_ref()
                         .map(|info| info.connection) == connection
                 )
             {
-                cache_entry_write.current_connection = None;
+                cache_entry_write.common.current_connection = None;
                 let last_seen_time = UnixTime::current_time();
                 if let Some(profile_entry) = cache_entry_write.profile.as_mut() {
                     profile_entry.last_seen_time = Some(last_seen_time);
@@ -196,11 +196,11 @@ impl DatabaseCache {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.cache.read().await;
-            if r.current_connection.as_ref().map(|a| a.connection.ip()) == Some(connection.ip()) {
+            if r.common.current_connection.as_ref().map(|a| a.connection.ip()) == Some(connection.ip()) {
                 Some((
                     entry.account_id_internal,
-                    r.permissions.clone(),
-                    r.account_state_related_shared_state.account_state_number,
+                    r.common.permissions.clone(),
+                    r.common.account_state_related_shared_state.account_state_number,
                 ))
             } else {
                 None
@@ -255,7 +255,7 @@ impl DatabaseCache {
     pub async fn read_cache<T, Id: Into<AccountId>>(
         &self,
         id: Id,
-        cache_operation: impl FnOnce(&CacheEntry) -> T,
+        cache_operation: impl FnOnce(&CacheEntry) -> Result<T, CacheError>,
     ) -> Result<T, CacheError> {
         let guard = self.accounts.read().await;
         let cache_entry = guard
@@ -264,7 +264,7 @@ impl DatabaseCache {
             .cache
             .read()
             .await;
-        Ok(cache_operation(&cache_entry))
+        cache_operation(&cache_entry)
     }
 
     pub fn read_cache_blocking<T, Id: Into<AccountId>>(
@@ -351,6 +351,137 @@ impl DatabaseCache {
     //         .map(|current_data| *current_data.as_mut() = data)?;
     //     Ok(())
     // }
+
+    pub async fn read_cache_common<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&CacheEntryCommon) -> Result<T, CacheError>,
+    ) -> Result<T, CacheError> {
+        self.read_cache(id, |e| cache_operation(&e.common)).await
+    }
+
+    pub async fn read_cache_common_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(&CacheEntryCommon),
+    ) {
+        self.read_cache_for_logged_in_clients(|e| cache_operation(&e.common)).await
+    }
+
+    pub async fn write_cache_common<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&mut CacheEntryCommon) -> Result<T, CacheError>,
+    ) -> Result<T, CacheError> {
+        self.write_cache(id, |e| cache_operation(&mut e.common)).await
+    }
+
+    pub async fn write_cache_common_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(AccountIdInternal, &mut CacheEntryCommon),
+    ) {
+        self.write_cache_for_logged_in_clients(|id, e| cache_operation(id, &mut e.common)).await
+    }
+}
+
+pub trait TopLevelCacheOperations {
+    /// Creates new event channel if address is Some.
+    async fn update_access_token_and_connection(
+        &self,
+        id: AccountId,
+        current_access_token: Option<AccessToken>,
+        new_access_token: AccessToken,
+        address: Option<SocketAddr>,
+    ) -> Result<Option<(EventReceiver, Option<LastSeenTimeUpdated>)>, CacheError>;
+
+    /// Delete current connection or specific connection.
+    /// Also delete access token if it is Some.
+    async fn delete_connection_and_specific_access_token(
+        &self,
+        id: AccountId,
+        connection: Option<SocketAddr>,
+        token: Option<AccessToken>,
+    ) -> Result<Option<LastSeenTimeUpdated>, CacheError>;
+}
+
+impl <I: InternalWriting> TopLevelCacheOperations for I {
+    async fn delete_connection_and_specific_access_token(
+        &self,
+        id: AccountId,
+        connection: Option<SocketAddr>,
+        token: Option<AccessToken>,
+    ) -> Result<Option<LastSeenTimeUpdated>, CacheError> {
+        self.cache().delete_connection_and_specific_access_token(id, connection, token).await
+    }
+
+    async fn update_access_token_and_connection(
+        &self,
+        id: AccountId,
+        current_access_token: Option<AccessToken>,
+        new_access_token: AccessToken,
+        address: Option<SocketAddr>,
+    ) -> Result<Option<(EventReceiver, Option<LastSeenTimeUpdated>)>, CacheError> {
+        self.cache().update_access_token_and_connection(id, current_access_token, new_access_token, address).await
+    }
+}
+
+pub trait CacheReadCommon {
+    async fn read_cache_common<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&CacheEntryCommon) -> Result<T, CacheError>,
+    ) -> Result<T, CacheError>;
+
+    async fn read_cache_common_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(&CacheEntryCommon),
+    );
+}
+
+impl <R: InternalReading> CacheReadCommon for R {
+    async fn read_cache_common<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&CacheEntryCommon) -> Result<T, CacheError>,
+    ) -> Result<T, CacheError> {
+        self.cache().read_cache_common(id, cache_operation).await
+    }
+
+    async fn read_cache_common_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(&CacheEntryCommon),
+    ) {
+        self.cache().read_cache_common_for_logged_in_clients(cache_operation).await
+    }
+}
+
+pub trait CacheWriteCommon {
+    async fn write_cache_common<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&mut CacheEntryCommon) -> Result<T, CacheError>,
+    ) -> Result<T, CacheError>;
+
+    async fn write_cache_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(AccountIdInternal, &mut CacheEntryCommon),
+    );
+}
+
+impl <I: InternalWriting> CacheWriteCommon for I {
+    async fn write_cache_common<T, Id: Into<AccountId>>(
+        &self,
+        id: Id,
+        cache_operation: impl FnOnce(&mut CacheEntryCommon) -> Result<T, CacheError>,
+    ) -> Result<T, CacheError> {
+        self.cache().write_cache_common(id, |e| cache_operation(e)).await
+    }
+
+    async fn write_cache_for_logged_in_clients(
+        &self,
+        cache_operation: impl Fn(AccountIdInternal, &mut CacheEntryCommon),
+    ) {
+        self.cache().write_cache_for_logged_in_clients(|id, e| cache_operation(id, &mut e.common)).await
+    }
 }
 
 #[derive(Debug)]
@@ -360,19 +491,30 @@ pub struct ConnectionInfo {
 }
 
 #[derive(Debug)]
+pub struct CacheEntryCommon {
+    pub permissions: Permissions,
+    pub account_state_related_shared_state: AccountStateRelatedSharedState,
+    pub other_shared_state: OtherSharedState,
+    pub current_connection: Option<ConnectionInfo>,
+    /// The cached pending notification flags indicates not yet handled
+    /// notification which PushNotificationManager will handle as soon as
+    /// possible.
+    pub pending_notification_flags: PendingNotificationFlags,
+}
+
+impl CacheEntryCommon {
+    pub fn connection_event_sender(&self) -> Option<&EventSender> {
+        self.current_connection.as_ref().map(|info| &info.event_sender)
+    }
+}
+
+#[derive(Debug)]
 pub struct CacheEntry {
     pub account: Option<Box<CachedAccountComponentData>>,
     pub profile: Option<Box<CachedProfile>>,
     pub media: Option<Box<CachedMedia>>,
     pub chat: Option<Box<CachedChatComponentData>>,
-    pub permissions: Permissions,
-    pub account_state_related_shared_state: AccountStateRelatedSharedState,
-    pub other_shared_state: OtherSharedState,
-    current_connection: Option<ConnectionInfo>,
-    /// The cached pending notification flags indicates not yet handled
-    /// notification which PushNotificationManager will handle as soon as
-    /// possible.
-    pub pending_notification_flags: PendingNotificationFlags,
+    pub common: CacheEntryCommon,
 }
 
 impl CacheEntry {
@@ -382,11 +524,13 @@ impl CacheEntry {
             profile: None,
             media: None,
             chat: None,
-            permissions: Permissions::default(),
-            account_state_related_shared_state: AccountStateRelatedSharedState::default(),
-            other_shared_state: OtherSharedState::default(),
-            current_connection: None,
-            pending_notification_flags: PendingNotificationFlags::empty(),
+            common: CacheEntryCommon {
+                permissions: Permissions::default(),
+                account_state_related_shared_state: AccountStateRelatedSharedState::default(),
+                other_shared_state: OtherSharedState::default(),
+                current_connection: None,
+                pending_notification_flags: PendingNotificationFlags::empty(),
+            },
         }
     }
     // TODO(refactor): Add helper functions to get data related do features
@@ -435,6 +579,20 @@ impl CacheEntry {
             .ok_or(CacheError::FeatureNotEnabled.report())
     }
 
+    pub fn media_data(&self) -> Result<&CachedMedia, CacheError> {
+        self.media
+            .as_ref()
+            .map(|v| v.as_ref())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
+
+    pub fn media_data_mut(&mut self) -> Result<&mut CachedMedia, CacheError> {
+        self.media
+            .as_mut()
+            .map(|v| v.as_mut())
+            .ok_or(CacheError::FeatureNotEnabled.report())
+    }
+
     pub fn location_index_profile_data(&self) -> Result<LocationIndexProfileData, CacheError> {
         let profile = self.profile.as_ref().ok_or(CacheError::FeatureNotEnabled)?;
 
@@ -444,31 +602,9 @@ impl CacheEntry {
             &profile.state,
             profile.attributes.clone(),
             self.media.as_ref().map(|m| m.profile_content_version),
-            self.other_shared_state.unlimited_likes,
-            self.last_seen_time(),
+            self.common.other_shared_state.unlimited_likes,
+            profile.last_seen_time(&self.common),
         ))
-    }
-
-    /// Available only if profile component is enabled.
-    pub fn last_seen_time(&self) -> Option<LastSeenTime> {
-        self.profile.as_ref().and_then(|v| {
-            if self.current_connection.is_some() {
-                Some(LastSeenTime::ONLINE)
-            } else {
-                v.last_seen_time.map(|v| v.into())
-            }
-        })
-    }
-
-    /// Available only if profile component is enabled.
-    pub fn last_seen_time_for_db(&self) -> Option<UnixTime> {
-        self.profile.as_ref().and_then(|v| {
-            v.last_seen_time
-        })
-    }
-
-    pub fn connection_event_sender(&self) -> Option<&EventSender> {
-        self.current_connection.as_ref().map(|info| &info.event_sender)
     }
 }
 

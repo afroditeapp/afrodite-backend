@@ -1,4 +1,3 @@
-use server_data::define_server_data_read_commands;
+use server_data::define_cmd_wrapper;
 
-define_server_data_read_commands!(ReadCommandsChatAdmin);
-define_db_read_command!(ReadCommandsChatAdmin);
+define_cmd_wrapper!(ReadCommandsChatAdmin);

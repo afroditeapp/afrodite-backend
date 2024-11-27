@@ -2,21 +2,22 @@ use model_account::{
     AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId,
     GoogleAccountId, SignInWithInfo,
 };
-use server_data::{define_server_data_read_commands, result::Result, DataError, IntoDataError};
+use server_data::{define_cmd_wrapper, result::Result, DataError, IntoDataError};
+
+use super::DbReadAccount;
 
 pub mod email;
 pub mod news;
 
-define_server_data_read_commands!(ReadCommandsAccount);
-define_db_read_command!(ReadCommandsAccount);
+define_cmd_wrapper!(ReadCommandsAccount);
 
-impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
+impl<C: DbReadAccount> ReadCommandsAccount<C> {
     pub fn email(self) -> email::ReadCommandsAccountEmail<C> {
-        email::ReadCommandsAccountEmail::new(self.cmds)
+        email::ReadCommandsAccountEmail::new(self.0)
     }
 
     pub fn news(self) -> news::ReadCommandsAccountNews<C> {
-        news::ReadCommandsAccountNews::new(self.cmds)
+        news::ReadCommandsAccountNews::new(self.0)
     }
 
     pub async fn account_sign_in_with_info(
@@ -33,7 +34,10 @@ impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
         .into_error()
     }
 
-    pub async fn is_bot_account(&self, id: AccountIdInternal) -> Result<bool, DataError> {
+    pub async fn is_bot_account(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
         self.db_read(move |mut cmds| {
             cmds.common()
                 .state()
@@ -44,27 +48,37 @@ impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
         .into_error()
     }
 
-    pub async fn account_data(&self, id: AccountIdInternal) -> Result<AccountData, DataError> {
+    pub async fn account_data(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<AccountData, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_data(id))
             .await
             .into_error()
     }
 
-    pub async fn account_setup(&self, id: AccountIdInternal) -> Result<AccountSetup, DataError> {
+    pub async fn account_setup(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<AccountSetup, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_setup(id))
             .await
             .into_error()
     }
 
     // TODO: move to common
-    pub async fn account_ids_vec(&self) -> Result<Vec<AccountId>, DataError> {
+    pub async fn account_ids_vec(
+        &self,
+    ) -> Result<Vec<AccountId>, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_ids())
             .await
             .into_error()
     }
 
     // TODO: move to common
-    pub async fn account_ids_internal_vec(&self) -> Result<Vec<AccountIdInternal>, DataError> {
+    pub async fn account_ids_internal_vec(
+        &self,
+    ) -> Result<Vec<AccountIdInternal>, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_ids_internal())
             .await
             .into_error()
@@ -92,7 +106,9 @@ impl<C: server_data::read::ReadCommandsProvider> ReadCommandsAccount<C> {
             .into_error()
     }
 
-    pub async fn global_state(&self) -> Result<AccountGlobalState, DataError> {
+    pub async fn global_state(
+        &self,
+    ) -> Result<AccountGlobalState, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().global_state())
             .await
             .into_error()

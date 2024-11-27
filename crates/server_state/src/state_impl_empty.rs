@@ -13,12 +13,7 @@ pub use server_api::app::*;
 use server_api::{internal_api::InternalApiClient, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
-    content_processing::ContentProcessingManagerData,
-    event::EventManagerWithCacheReference,
-    read::ReadCommandsContainer,
-    write_commands::WriteCmds,
-    write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle},
-    DataError
+    content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, event::EventManagerWithCacheReference, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_profile::app::ProfileStatisticsCacheProvider;
 use simple_backend::{
@@ -59,6 +54,10 @@ impl BackendVersionProvider for E {
 
 impl GetConfig for E {
     fn config(&self) -> &Config {
+        unimplemented!()
+    }
+
+    fn config_arc(&self) -> std::sync::Arc<Config> {
         unimplemented!()
     }
 }
@@ -177,7 +176,7 @@ impl WriteData for E {
 }
 
 impl ReadData for E {
-    fn read(&self) -> ReadCommandsContainer {
+    fn read(&self) -> &RouterDatabaseReadHandle {
         unimplemented!()
     }
 }

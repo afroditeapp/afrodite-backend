@@ -3,14 +3,16 @@ use model_media::{
     AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileContentVersion, ProfileVisibility, SetProfileContent
 };
 use server_data::{
-    cache::CacheError, define_server_data_write_commands, result::{Result, WrappedContextExt}, write::WriteCommandsProvider, DataError, DieselDatabaseError
+    cache::profile::UpdateLocationCacheState, define_cmd_wrapper, file::FileWrite, result::{Result, WrappedContextExt}, DataError, DieselDatabaseError
 };
 
-define_server_data_write_commands!(WriteCommandsMedia);
-define_db_read_command_for_write!(WriteCommandsMedia);
-define_db_transaction_command!(WriteCommandsMedia);
+use crate::{cache::CacheWriteMedia, read::DbReadMedia};
 
-impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
+use super::DbTransactionMedia;
+
+define_cmd_wrapper!(WriteCommandsMedia);
+
+impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateLocationCacheState> WriteCommandsMedia<C> {
     pub async fn create_or_update_moderation_request(
         &self,
         account_id: AccountIdInternal,
@@ -83,7 +85,7 @@ impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
             .await?;
 
         if let Some(content) = current_content_in_slot {
-            let path = self.file_dir().media_content(id.as_id(), content.into());
+            let path = self.files().media_content(id.as_id(), content.into());
             path.remove_if_exists()
                 .await
                 .change_context(DataError::File)?;
@@ -98,9 +100,9 @@ impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
 
         // Paths related to moving content from tmp dir to content dir
         let tmp_img = self
-            .file_dir()
+            .files()
             .processed_content_upload(id.as_id(), content_id);
-        let processed_content_path = self.file_dir().media_content(id.as_id(), content_id);
+        let processed_content_path = self.files().media_content(id.as_id(), content_id);
 
         self.db_transaction(move |mut cmds| {
             cmds.media()
@@ -133,27 +135,18 @@ impl<C: WriteCommandsProvider> WriteCommandsMedia<C> {
     ) -> Result<(), DataError> {
         let new_profile_content_version = ProfileContentVersion::new_random();
 
-        let account = db_transaction!(self, move |mut cmds| {
-            cmds.media().media_content().update_profile_content(id, new, new_profile_content_version)?;
-            cmds.read().common().account(id)
+        db_transaction!(self, move |mut cmds| {
+            cmds.media().media_content().update_profile_content(id, new, new_profile_content_version)
         })?;
 
-        let (location, profile_data) = self.cache()
-            .write_cache(id.as_id(), |e| {
-                let m = e.media.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
-                m.profile_content_version = new_profile_content_version;
-                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
-
-
-                Ok((p.location.current_position, e.location_index_profile_data()?))
+        self
+            .write_cache_media(id.as_id(), |e| {
+                e.profile_content_version = new_profile_content_version;
+                Ok(())
             })
             .await?;
 
-        if account.profile_visibility().is_currently_public() {
-            self.location()
-                .update_profile_data(id.as_id(), profile_data, location)
-                .await?;
-        }
+        self.update_location_cache_profile(id).await?;
 
         Ok(())
     }

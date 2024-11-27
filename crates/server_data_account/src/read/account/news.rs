@@ -1,14 +1,15 @@
 use model_account::{AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsLocale, PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale, UnreadNewsCountResult};
 use server_data::{
-    cache::db_iterator::new_count::DbIteratorStateNewCount, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    cache::db_iterator::new_count::DbIteratorStateNewCount, define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
 
-define_server_data_read_commands!(ReadCommandsAccountNews);
-define_db_read_command!(ReadCommandsAccountNews);
+use crate::read::DbReadAccount;
 
-impl<C: ReadCommandsProvider> ReadCommandsAccountNews<C> {
+define_cmd_wrapper!(ReadCommandsAccountNews);
+
+impl<C: DbReadAccount> ReadCommandsAccountNews<C> {
     pub async fn unread_news_count(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<UnreadNewsCountResult, DataError> {
         self

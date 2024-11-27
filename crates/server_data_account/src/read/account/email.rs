@@ -1,14 +1,15 @@
 use model_account::{AccountEmailSendingStateRaw, AccountIdInternal};
 use server_data::{
-    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError,
+    define_cmd_wrapper, result::Result, DataError
 };
 
-define_server_data_read_commands!(ReadCommandsAccountEmail);
-define_db_read_command!(ReadCommandsAccountEmail);
+use crate::read::DbReadAccount;
 
-impl<C: ReadCommandsProvider> ReadCommandsAccountEmail<C> {
+define_cmd_wrapper!(ReadCommandsAccountEmail);
+
+impl<C: DbReadAccount> ReadCommandsAccountEmail<C> {
     pub async fn email_state(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<AccountEmailSendingStateRaw, DataError> {
         let state = self

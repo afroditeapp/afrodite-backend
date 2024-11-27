@@ -1,12 +1,13 @@
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
 use server_data::{
-    define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError,
+    cache::CacheReadCommon, define_cmd_wrapper, result::Result, DataError
 };
 
-define_server_data_write_commands!(WriteCommandsChatPushNotifications);
-define_db_transaction_command!(WriteCommandsChatPushNotifications);
+use crate::write::DbTransactionChat;
 
-impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
+define_cmd_wrapper!(WriteCommandsChatPushNotifications);
+
+impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<C> {
     pub async fn remove_fcm_device_token_and_pending_notification_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
@@ -91,8 +92,8 @@ impl<C: WriteCommandsProvider> WriteCommandsChatPushNotifications<C> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let flags = self.cache().read_cache(id, move |entry| {
-            entry.pending_notification_flags
+        let flags = self.read_cache_common(id, move |entry| {
+            Ok(entry.pending_notification_flags)
         })
         .await?;
 

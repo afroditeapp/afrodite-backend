@@ -26,8 +26,7 @@ impl ConnectionTools for S {
         if self.config().components().chat {
             self
                 .write(move |cmds| async move {
-                    cmds.cmds()
-                        .chat()
+                    cmds.chat()
                         .push_notifications()
                         .reset_pending_notification(id)
                         .await

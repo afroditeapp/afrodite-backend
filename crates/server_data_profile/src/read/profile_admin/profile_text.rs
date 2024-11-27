@@ -1,12 +1,13 @@
 use model_profile::{AccountIdInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams};
 use server_data::{
-    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
 
-define_server_data_read_commands!(ReadCommandsProfileText);
-define_db_read_command!(ReadCommandsProfileText);
+use crate::read::DbReadProfile;
 
-impl<C: ReadCommandsProvider> ReadCommandsProfileText<C> {
+define_cmd_wrapper!(ReadCommandsProfileText);
+
+impl<C: DbReadProfile> ReadCommandsProfileText<C> {
     pub async fn profile_text_pending_moderation_list(
         &mut self,
         moderator_id: AccountIdInternal,

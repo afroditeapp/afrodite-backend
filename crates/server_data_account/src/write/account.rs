@@ -4,26 +4,27 @@ use model_account::{
 };
 use news::WriteCommandsAccountNews;
 use server_data::{
-    define_server_data_write_commands, result::Result, DataError, DieselDatabaseError
+    app::GetConfig, cache::CacheWriteCommon, db_manager::WriteAccessProvider, define_cmd_wrapper, read::DbReadCommon, result::Result, write::{common::UpdateLocationIndexVisibility, GetWriteCommandsCommon}, DataError, DieselDatabaseError
 };
+
+use super::DbTransactionAccount;
 
 pub mod email;
 pub mod news;
 
-define_server_data_write_commands!(WriteCommandsAccount);
-define_db_transaction_command!(WriteCommandsAccount);
-define_db_read_command_for_write!(WriteCommandsAccount);
-
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
 
-impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
+define_cmd_wrapper!(WriteCommandsAccount);
+
+impl<C: DbTransactionAccount + DbReadCommon + WriteAccessProvider + GetConfig + UpdateLocationIndexVisibility + CacheWriteCommon + Clone + Copy> WriteCommandsAccount<C> {
+
     pub fn email(self) -> WriteCommandsAccountEmail<C> {
-        WriteCommandsAccountEmail::new(self.cmds)
+        WriteCommandsAccountEmail::new(self.0)
     }
 
     pub fn news(self) -> WriteCommandsAccountNews<C> {
-        WriteCommandsAccountNews::new(self.cmds)
+        WriteCommandsAccountNews::new(self.0)
     }
 
     /// The only method which can modify AccountState, Permissions and
@@ -44,7 +45,7 @@ impl<C: server_data::write::WriteCommandsProvider> WriteCommandsAccount<C> {
             + 'static,
     ) -> Result<Account, DataError> {
         let current_account = self
-            .db_read_common(move |mut cmds| cmds.common().account(id))
+            .db_read(move |mut cmds| cmds.common().account(id))
             .await?;
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {

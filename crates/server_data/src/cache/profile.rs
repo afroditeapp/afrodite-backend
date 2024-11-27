@@ -1,7 +1,15 @@
 use config::Config;
-use model_profile::{AccountId, ProfileIteratorSessionIdInternal, LocationIndexKey, NextNumberStorage, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes, UnixTime};
+use error_stack::ResultExt;
+use model::AccountIdInternal;
+use model_profile::{AccountId, LastSeenTime, LocationIndexKey, NextNumberStorage, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes, UnixTime};
+use server_common::data::cache::CacheError;
+use server_common::data::DataError;
+use crate::cache::CacheEntryCommon;
 
+use crate::db_manager::InternalWriting;
 use crate::index::location::LocationIndexIteratorState;
+
+use error_stack::Result;
 
 #[derive(Debug)]
 pub struct CachedProfile {
@@ -45,10 +53,49 @@ impl CachedProfile {
     pub fn filters(&self) -> ProfileQueryMakerDetails {
         ProfileQueryMakerDetails::new(&self.data, &self.state, self.filters.clone())
     }
+
+    pub fn last_seen_time_for_db(&self) -> Option<UnixTime> {
+        self.last_seen_time
+    }
+
+    pub fn last_seen_time(&self, common: &CacheEntryCommon) -> Option<LastSeenTime> {
+        if common.current_connection.is_some() {
+            Some(LastSeenTime::ONLINE)
+        } else {
+            self.last_seen_time.map(|v| v.into())
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct LocationData {
     pub current_position: LocationIndexKey,
     pub current_iterator: LocationIndexIteratorState,
+}
+
+pub trait UpdateLocationCacheState {
+    async fn update_location_cache_profile(&self, id: AccountIdInternal) -> Result<(), DataError>;
+}
+
+impl <I: InternalWriting> UpdateLocationCacheState for I {
+    async fn update_location_cache_profile(&self, id: AccountIdInternal) -> Result<(), DataError> {
+        let (location, profile_data, profile_visibility) = self
+            .cache()
+            .read_cache(id.as_id(), |e| {
+                let profile_visibility = e.common.account_state_related_shared_state.profile_visibility();
+                let p = e.profile.as_deref().ok_or(CacheError::FeatureNotEnabled)?;
+                Ok((p.location.current_position, e.location_index_profile_data()?, profile_visibility))
+            })
+            .await
+            .change_context(DataError::Cache)?;
+
+        if profile_visibility.is_currently_public() {
+            self.location_index_write_handle()
+                .update_profile_data(id.as_id(), profile_data, location)
+                .await
+                .change_context(DataError::ProfileIndex)?;
+        }
+
+        Ok(())
+    }
 }

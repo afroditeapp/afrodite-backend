@@ -1,4 +1,3 @@
-use server_data::define_server_data_write_commands;
+use server_data::define_cmd_wrapper;
 
-define_server_data_write_commands!(WriteCommandsChatAdmin);
-define_db_transaction_command!(WriteCommandsChatAdmin);
+define_cmd_wrapper!(WriteCommandsChatAdmin);

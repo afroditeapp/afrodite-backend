@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 error-stack = { workspace = true }
 
-config = { path = "../config" }
 model = { path = "../model" }
 model_chat = { path = "../model_chat" }
 server_common = { path = "../server_common" }
@@ -16,5 +15,4 @@ server_data = { path = "../server_data" }
 
 database_chat = { path = "../database_chat" }
 
-simple_backend = { path = "../simple_backend" }
 simple_backend_utils = { path = "../simple_backend_utils" }

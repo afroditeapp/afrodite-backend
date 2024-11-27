@@ -3,13 +3,13 @@ use model_profile::{
     AccountIdInternal, ProfileVersion,
 };
 use server_data::{
-    define_server_data_write_commands, result::Result, write::WriteCommandsProvider, DataError, IntoDataError
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
+use server_data_profile::{cache::CacheWriteProfile, write::DbTransactionProfile};
 
-define_server_data_write_commands!(UnlimitedLikesUpdate);
-define_db_transaction_command!(UnlimitedLikesUpdate);
+define_cmd_wrapper!(UnlimitedLikesUpdate);
 
-impl<C: WriteCommandsProvider> UnlimitedLikesUpdate<C> {
+impl<C: DbTransactionProfile + GetConfig + UpdateLocationCacheState + CacheWriteProfile> UnlimitedLikesUpdate<C> {
     /// Unlimited likes value is needed in both profile and chat component, so
     /// account component owns it. Because of that, update new value code
     /// is located in this crate.
@@ -22,7 +22,7 @@ impl<C: WriteCommandsProvider> UnlimitedLikesUpdate<C> {
         // (if profile component is enabled).
         let new_profile_version = ProfileVersion::new_random();
         let is_profile_component_enabled = self.config().components().profile;
-        let account = db_transaction!(self, move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             if is_profile_component_enabled {
                 cmds.profile().data().only_profile_version(id, new_profile_version)?;
                 cmds.profile().data().increment_profile_sync_version(id)?;
@@ -30,32 +30,19 @@ impl<C: WriteCommandsProvider> UnlimitedLikesUpdate<C> {
             cmds.common().state().update_unlimited_likes(
                 id,
                 unlimited_likes_value,
-            )?;
-            cmds.read().common().account(id)
+            )
         })?;
 
-        let location_and_profile_data = self
-            .cache()
-            .write_cache(id.as_id(), |e| {
+        self
+            .write_cache_profile_and_common(id.as_id(), |p, e| {
                 e.other_shared_state.unlimited_likes = unlimited_likes_value;
-
-                if let Some(p) = e.profile.as_mut() {
-                    p.data.version_uuid = new_profile_version;
-                    Ok(Some((p.location.current_position, e.location_index_profile_data()?)))
-                } else {
-                    Ok(None)
-                }
+                p.data.version_uuid = new_profile_version;
+                Ok(())
             })
             .await
             .into_data_error(id)?;
 
-        if account.profile_visibility().is_currently_public() {
-            if let Some((location, profile_data)) = location_and_profile_data {
-                self.location()
-                .update_profile_data(id.as_id(), profile_data, location)
-                .await?;
-            }
-        }
+        self.update_location_cache_profile(id).await?;
 
         Ok(())
     }

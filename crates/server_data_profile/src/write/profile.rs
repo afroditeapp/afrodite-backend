@@ -2,33 +2,28 @@ use model_profile::{
     AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
 };
 use server_data::{
-    cache::CacheError,
-    define_server_data_write_commands,
-    index::location::LocationIndexIteratorState,
-    result::{Result, WrappedContextExt},
-    write::WriteCommandsProvider,
-    DataError, IntoDataError,
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper, result::Result, DataError, IntoDataError,
+    index::{location::LocationIndexIteratorState, LocationWrite},
 };
 use tracing::info;
+use crate::{cache::{CacheReadProfile, CacheWriteProfile}, read::DbReadProfile};
 
-define_server_data_write_commands!(WriteCommandsProfile);
-define_db_read_command_for_write!(WriteCommandsProfile);
-define_db_transaction_command!(WriteCommandsProfile);
+use super::DbTransactionProfile;
 
-impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
+define_cmd_wrapper!(WriteCommandsProfile);
+
+impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProfile + LocationWrite + GetConfig + UpdateLocationCacheState> WriteCommandsProfile<C> {
     pub async fn profile_update_location(
         self,
         id: AccountIdInternal,
         coordinates: Location,
     ) -> Result<(), DataError> {
         let location = self
-            .cache()
-            .read_cache(id.as_id(), |e| {
-                e.profile.as_ref().map(|p| p.location.clone())
+            .read_cache_profile_and_common(id.as_id(), |p, _| {
+                Ok(p.location.clone())
             })
             .await
-            .into_data_error(id)?
-            .ok_or(DataError::FeatureDisabled.report())?;
+            .into_data_error(id)?;
 
         let new_location_key = self.location().coordinates_to_key(&coordinates);
         db_transaction!(self, move |mut cmds| {
@@ -42,11 +37,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
         let new_iterator_state = self
             .location_iterator()
             .reset_iterator(LocationIndexIteratorState::new(), new_location_key);
-        self.write_cache(id, |entry| {
-            let p = entry
-                .profile
-                .as_mut()
-                .ok_or(CacheError::FeatureNotEnabled)?;
+        self.write_cache_profile(id, |p| {
             p.location.current_position = new_location_key;
             p.location.current_iterator = new_iterator_state;
             Ok(())
@@ -72,7 +63,7 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
     ) -> Result<(), DataError> {
         let profile_data = data.clone();
         let config = self.config_arc().clone();
-        let (account, profile_text_moderation_state_update) = db_transaction!(self, move |mut cmds| {
+        let profile_text_moderation_state_update = db_transaction!(self, move |mut cmds| {
             let (name_update_detected, text_update_detected) = {
                 let current_profile = cmds.read().profile().data().profile(id)?;
                 (
@@ -106,35 +97,23 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             } else {
                 None
             };
-            let updated_data = (
-                cmds.read().common().account(id)?,
-                profile_text_moderation_state_update,
-            );
-            Ok(updated_data)
+            Ok(profile_text_moderation_state_update)
         })?;
 
-        let (location, profile_data) = self
-            .cache()
-            .write_cache(id.as_id(), |e| {
-                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
-
+        self
+            .write_cache_profile(id.as_id(), |p| {
                 p.data.update_from(&data.new_data);
                 p.attributes.update_from(&data.new_data);
                 p.data.version_uuid = data.version;
                 if let Some(update) = profile_text_moderation_state_update {
                     p.state.profile_text_moderation_state = update;
                 }
-
-                Ok((p.location.current_position, e.location_index_profile_data()?))
+                Ok(())
             })
             .await
             .into_data_error(id)?;
 
-        if account.profile_visibility().is_currently_public() {
-            self.location()
-                .update_profile_data(id.as_id(), profile_data, location)
-                .await?;
-        }
+        self.update_location_cache_profile(id).await?;
 
         Ok(())
     }
@@ -149,28 +128,20 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             .await?;
         action(&mut s);
         let s_cloned = s.clone();
-        let account = db_transaction!(self, move |mut cmds| {
+        db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile_state(id, s_cloned)?;
             cmds.read().common().account(id)
         })?;
 
-        let (location, profile_data) = self
-            .cache()
-            .write_cache(id.as_id(), |e| {
-                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
-
+        self
+            .write_cache_profile(id.as_id(), |p| {
                 p.state = s.into();
-
-                Ok((p.location.current_position, e.location_index_profile_data()?))
+                Ok(())
             })
             .await
             .into_data_error(id)?;
 
-        if account.profile_visibility().is_currently_public() {
-            self.location()
-                .update_profile_data(id.as_id(), profile_data, location)
-                .await?;
-        }
+        self.update_location_cache_profile(id).await?;
 
         Ok(())
     }
@@ -194,9 +165,8 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.read().profile().data().profile_attribute_filters(id)
         })?;
 
-        self.cache()
-            .write_cache(id.as_id(), |e| {
-                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+        self
+            .write_cache_profile(id.as_id(), |p| {
                 p.filters = new_filters;
                 p.state.last_seen_time_filter = filters.last_seen_time_filter;
                 p.state.unlimited_likes_filter = filters.unlimited_likes_filter;
@@ -214,9 +184,8 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
             cmds.profile().data().profile_name(id, profile_data)
         })?;
 
-        self.cache()
-            .write_cache(id.as_id(), |e| {
-                let p = e.profile.as_mut().ok_or(CacheError::FeatureNotEnabled)?;
+        self
+            .write_cache_profile(id.as_id(), |p| {
                 p.data.name = data;
                 Ok(())
             })
@@ -338,8 +307,8 @@ impl<C: WriteCommandsProvider> WriteCommandsProfile<C> {
         self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
-        let last_seen_time = self.cache()
-            .read_cache(id, |e| e.last_seen_time_for_db())
+        let last_seen_time = self
+            .read_cache_profile_and_common(id, |p, _| Ok(p.last_seen_time_for_db()))
             .await?;
 
         db_transaction!(self, move |mut cmds| {

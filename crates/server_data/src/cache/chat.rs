@@ -1,7 +1,7 @@
 use limit::ChatLimits;
-use model_chat::{MatchId, MatchesIteratorSessionIdInternal, NextNumberStorage, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
+use model_chat::{MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
 
-use super::db_iterator::{new_count::DbIteratorNewCount, DbIterator, IteratorSessionIdTrait, IteratorStartPoint};
+use super::db_iterator::{new_count::DbIteratorNewCount, DbIterator};
 
 pub mod limit;
 
@@ -16,19 +16,3 @@ pub struct CachedChatComponentData {
     pub received_likes_iterator: DbIteratorNewCount<ReceivedLikesIteratorSessionIdInternal, ReceivedLikeId>,
     pub matches_iterator: DbIterator<MatchesIteratorSessionIdInternal, MatchId>,
 }
-
-impl IteratorSessionIdTrait for ReceivedLikesIteratorSessionIdInternal {
-    fn create(storage: &mut NextNumberStorage) -> Self {
-        ReceivedLikesIteratorSessionIdInternal::create(storage)
-    }
-}
-
-impl IteratorStartPoint for ReceivedLikeId {}
-
-impl IteratorSessionIdTrait for MatchesIteratorSessionIdInternal {
-    fn create(storage: &mut NextNumberStorage) -> Self {
-        MatchesIteratorSessionIdInternal::create(storage)
-    }
-}
-
-impl IteratorStartPoint for MatchId {}

@@ -1,12 +1,13 @@
 use model_profile::{GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValueTypeInternal};
 use server_data::{
-    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError,
+    define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
 
-define_server_data_read_commands!(ReadCommandsProfileAdminHistoryStatistics);
-define_db_read_history_command!(ReadCommandsProfileAdminHistoryStatistics);
+use crate::read::DbReadProfileHistory;
 
-impl<C: ReadCommandsProvider> ReadCommandsProfileAdminHistoryStatistics<C> {
+define_cmd_wrapper!(ReadCommandsProfileAdminHistoryStatistics);
+
+impl<C: DbReadProfileHistory> ReadCommandsProfileAdminHistoryStatistics<C> {
     pub async fn profile_statistics(
         &mut self,
         settings: ProfileStatisticsHistoryValueTypeInternal,

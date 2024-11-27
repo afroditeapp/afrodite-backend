@@ -2,59 +2,56 @@ use model_profile::{
     AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
 };
 use server_data::{
-    define_server_data_read_commands,
-    read::ReadCommandsProvider,
-    result::{Result, WrappedContextExt},
-    DataError, IntoDataError,
+    define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
+
+use crate::cache::CacheReadProfile;
+
+use super::DbReadProfile;
 
 mod statistics;
 
-define_server_data_read_commands!(ReadCommandsProfile);
-define_db_read_command!(ReadCommandsProfile);
+define_cmd_wrapper!(ReadCommandsProfile);
 
-impl<C: ReadCommandsProvider> ReadCommandsProfile<C> {
+impl<C> ReadCommandsProfile<C> {
     pub fn statistics(self) -> statistics::ReadCommandsProfileStatistics<C> {
-        statistics::ReadCommandsProfileStatistics::new(self.cmds)
+        statistics::ReadCommandsProfileStatistics::new(self.0)
     }
+}
 
+impl<C: DbReadProfile + CacheReadProfile> ReadCommandsProfile<C> {
     pub async fn profile_internal(
         &self,
         id: AccountIdInternal,
     ) -> Result<ProfileInternal, DataError> {
-        self.read_cache(id, move |cache| {
-            cache.profile.as_ref().map(|data| data.data.clone())
+        self.read_cache_profile_and_common(id, move |p, _| {
+            Ok(p.data.clone())
         })
-        .await?
-        .ok_or(DataError::NotFound.report())
+        .await
+        .into_error()
     }
 
     pub async fn profile(&self, id: AccountIdInternal) -> Result<ProfileAndProfileVersion, DataError> {
-        self.read_cache(id, move |cache| {
-            cache
-                .profile
-                .as_ref()
-                .map(|data|
-                    ProfileAndProfileVersion {
-                        profile: Profile::new(
-                            data.data.clone(),
-                            data.state.profile_name_moderation_state,
-                            data.state.profile_text_moderation_state,
-                            data.attributes.attributes().clone(),
-                            cache.other_shared_state.unlimited_likes,
-                        ),
-                        version: data.data.version_uuid,
-                        last_seen_time: cache.last_seen_time(),
-                    }
-                )
+        self.read_cache_profile_and_common(id, move |data, c| {
+            Ok(ProfileAndProfileVersion {
+                profile: Profile::new(
+                    data.data.clone(),
+                    data.state.profile_name_moderation_state,
+                    data.state.profile_text_moderation_state,
+                    data.attributes.attributes().clone(),
+                    c.other_shared_state.unlimited_likes,
+                ),
+                version: data.data.version_uuid,
+                last_seen_time: data.last_seen_time(c),
+            })
         })
-        .await?
-        .ok_or(DataError::NotFound.report())
+        .await
+        .into_error()
     }
 
     pub async fn my_profile(&self, id: AccountIdInternal) -> Result<GetMyProfileResult, DataError> {
-        let last_seen_time = self.read_cache(id, move |cache| {
-            cache.last_seen_time()
+        let last_seen_time = self.read_cache_profile_and_common(id, move |cache, common| {
+            Ok(cache.last_seen_time(common))
         })
         .await?;
 

@@ -4141,14 +4141,12 @@ dependencies = [
 name = "server_data_account"
 version = "0.0.0"
 dependencies = [
- "config",
  "database_account",
  "error-stack",
  "model",
  "model_account",
  "server_common",
  "server_data",
- "simple_backend",
 ]
 
 [[package]]
@@ -4169,7 +4167,6 @@ dependencies = [
  "server_data",
  "server_data_account",
  "server_data_profile",
- "simple_backend",
  "simple_backend_utils",
  "tokio",
  "tracing",
@@ -4179,14 +4176,12 @@ dependencies = [
 name = "server_data_chat"
 version = "0.0.0"
 dependencies = [
- "config",
  "database_chat",
  "error-stack",
  "model",
  "model_chat",
  "server_common",
  "server_data",
- "simple_backend",
  "simple_backend_utils",
 ]
 
@@ -4194,28 +4189,23 @@ dependencies = [
 name = "server_data_media"
 version = "0.0.0"
 dependencies = [
- "config",
  "database_media",
  "error-stack",
  "model",
  "model_media",
  "server_common",
  "server_data",
- "simple_backend",
 ]
 
 [[package]]
 name = "server_data_profile"
 version = "0.0.0"
 dependencies = [
- "config",
  "database_profile",
  "error-stack",
- "model",
  "model_profile",
  "server_common",
  "server_data",
- "simple_backend",
  "tokio",
  "tracing",
 ]

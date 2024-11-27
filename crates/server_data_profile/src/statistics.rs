@@ -1,9 +1,9 @@
 use model_profile::{GetProfileStatisticsResult, StatisticsProfileVisibility};
-use server_data::app::ReadData;
+
 use tokio::sync::Mutex;
 
 use server_data::{
-    result::Result, DataError,
+    app::ReadData, result::Result, DataError
 };
 
 use crate::read::GetReadProfileCommands;
@@ -21,7 +21,7 @@ impl ProfileStatisticsCache {
         let r = match data.as_mut() {
             Some(data) => data.clone(),
             None => {
-                let r = state.read().cmds.profile().statistics().profile_statistics(Self::VISIBILITY).await?;
+                let r = state.read().profile().statistics().profile_statistics(Self::VISIBILITY).await?;
                 *data = Some(r.clone());
                 r
             }
@@ -31,7 +31,7 @@ impl ProfileStatisticsCache {
 
     pub async fn update_statistics<S: ReadData>(&self, state: &S) -> Result<GetProfileStatisticsResult, DataError> {
         let mut data = self.data.lock().await;
-        let r = state.read().cmds.profile().statistics().profile_statistics(Self::VISIBILITY).await?;
+        let r = state.read().profile().statistics().profile_statistics(Self::VISIBILITY).await?;
         *data = Some(r.clone());
         Ok(r)
     }

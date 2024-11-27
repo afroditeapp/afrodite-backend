@@ -7,23 +7,19 @@ use database::{
 use model_account::{
     Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo
 };
+use server_data::db_manager::InternalWriting;
+use server_data::define_cmd_wrapper;
 use server_data::{
-    index::{LocationIndexIteratorHandle, LocationIndexWriteHandle},
     result::Result,
-    write::WriteCommandsProvider,
     DataError, IntoDataError,
 };
+use server_data::index::LocationIndexIteratorHandle;
 
 use crate::load::DbDataToCacheLoader;
 
-pub struct RegisterAccount<C: WriteCommandsProvider> {
-    cmds: C,
-}
+define_cmd_wrapper!(RegisterAccount);
 
-impl<C: WriteCommandsProvider> RegisterAccount<C> {
-    pub fn new(cmds: C) -> Self {
-        Self { cmds }
-    }
+impl<C: InternalWriting> RegisterAccount<C> {
 
     pub async fn register(
         &self,
@@ -31,10 +27,8 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> Result<AccountIdInternal, DataError> {
-        let config = self.cmds.write_cmds().config.clone();
+        let config = self.config_arc().clone();
         let id: AccountIdInternal = self
-            .cmds
-            .write_cmds()
             .db_transaction_with_history(move |transaction, history_conn| {
                 Self::register_db_action(
                     config,
@@ -48,12 +42,12 @@ impl<C: WriteCommandsProvider> RegisterAccount<C> {
             .await?;
 
         DbDataToCacheLoader::load_account_from_db(
-            self.cmds.write_cmds().cache,
+            self.cache(),
             id,
-            self.cmds.write_cmds().config,
-            &self.cmds.write_cmds().current_write_handle.to_read_handle(),
-            LocationIndexIteratorHandle::new(self.cmds.write_cmds().location_index),
-            LocationIndexWriteHandle::new(self.cmds.write_cmds().location_index),
+            self.config(),
+            self.current_read_handle(),
+            LocationIndexIteratorHandle::new(self.location()),
+            self.location_index_write_handle(),
         )
         .await
         .into_data_error(id)?;

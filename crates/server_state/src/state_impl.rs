@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, ops::Deref};
 
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
@@ -11,7 +11,7 @@ pub use server_api::app::*;
 use server_api::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
-    content_processing::ContentProcessingManagerData, event::EventManagerWithCacheReference, read::{GetReadCommandsCommon, ReadCommandsContainer}, write::WriteCommandsProvider, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
+    content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, event::EventManagerWithCacheReference, read::GetReadCommandsCommon, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_account::{read::GetReadCommandsAccount, write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount}};
 use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
@@ -81,6 +81,9 @@ impl BackendVersionProvider for S {
 impl GetConfig for S {
     fn config(&self) -> &Config {
         &self.config
+    }
+    fn config_arc(&self) -> std::sync::Arc<Config> {
+        self.config.clone()
     }
 }
 
@@ -177,7 +180,7 @@ impl PushNotificationStateProvider for S {
         flags: PendingNotificationFlags,
     ) -> error_stack::Result<(), PushNotificationError> {
         self.database.cache().write_cache(account_id, move |entry| {
-            entry.pending_notification_flags -= flags;
+            entry.common.pending_notification_flags -= flags;
             Ok(())
         })
         .await
@@ -282,8 +285,8 @@ impl WriteData for S {
 }
 
 impl ReadData for S {
-    fn read(&self) -> ReadCommandsContainer {
-        ReadCommandsContainer::new(self.database.read())
+    fn read(&self) -> &RouterDatabaseReadHandle {
+        &self.database
     }
 }
 
@@ -387,7 +390,7 @@ impl RegisteringCmd for S {
         let id = AccountId::new_random();
 
         let id = db_write_raw!(self, move |cmds| {
-            let id = RegisterAccount::new(cmds.write_cmds())
+            let id = RegisterAccount::new(cmds.deref())
                 .register(id, sign_in_with, email.clone())
                 .await?;
 
@@ -553,7 +556,7 @@ impl UpdateUnlimitedLikes for S {
         unlimited_likes: bool,
     ) -> server_common::result::Result<(), DataError> {
         db_write_raw!(self, move |cmds| {
-            UnlimitedLikesUpdate::new(cmds)
+            UnlimitedLikesUpdate::new(cmds.deref())
                 .update_unlimited_likes_value(id, unlimited_likes)
                 .await
         })

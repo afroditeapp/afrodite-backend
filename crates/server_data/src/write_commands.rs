@@ -2,22 +2,18 @@
 //!
 
 use std::{
-    future::Future,
-    sync::{Arc, OnceLock},
+    future::Future, sync::{Arc, OnceLock}
 };
 
 use config::Config;
 use model::AccountId;
 use tokio::sync::{mpsc, Mutex, OwnedMutexGuard};
 
-use super::{
-    db_manager::{RouterDatabaseWriteHandle, SyncWriteHandle},
-    write_concurrent::{
-        ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
-    },
+use super::write_concurrent::{
+    ConcurrentWriteAction, ConcurrentWriteCommandHandle, ConcurrentWriteSelectorHandle,
 };
 use crate::{
-    db_manager::SyncWriteHandleRef, result::{WrappedContextExt, WrappedResultExt}, write_concurrent::ConcurrentWriteProfileHandleBlocking, DataError
+    db_manager::RouterDatabaseWriteHandle, result::{WrappedContextExt, WrappedResultExt}, write_concurrent::ConcurrentWriteProfileHandleBlocking, DataError
 };
 
 pub type WriteCmds = Cmds;
@@ -33,11 +29,11 @@ fn get_quit_lock() -> &'static Mutex<Option<mpsc::Sender<()>>> {
 /// Make VSCode rust-analyzer code type annotation shorter.
 /// The annotation is displayed when calling write() method.
 pub struct Cmds {
-    pub write: OwnedMutexGuard<SyncWriteHandle>,
+    pub write: OwnedMutexGuard<RouterDatabaseWriteHandle>,
 }
 
 impl std::ops::Deref for Cmds {
-    type Target = OwnedMutexGuard<SyncWriteHandle>;
+    type Target = RouterDatabaseWriteHandle;
 
     fn deref(&self) -> &Self::Target {
         &self.write
@@ -58,7 +54,7 @@ impl std::ops::Deref for Cmds {
 
 #[derive(Debug)]
 pub struct WriteCommandRunnerHandle {
-    sync_write_mutex: Arc<Mutex<SyncWriteHandle>>,
+    sync_write_mutex: Arc<Mutex<RouterDatabaseWriteHandle>>,
     concurrent_write: ConcurrentWriteCommandHandle,
 }
 
@@ -70,8 +66,8 @@ impl WriteCommandRunnerHandle {
         let cmd_watcher = WriteCmdWatcher::new(quit_handle);
 
         let runner_handle = Self {
-            sync_write_mutex: Mutex::new(write.clone().into_sync_handle()).into(),
-            concurrent_write: ConcurrentWriteCommandHandle::new(write.clone(), config),
+            sync_write_mutex: Mutex::new(write.clone()).into(),
+            concurrent_write: ConcurrentWriteCommandHandle::new(write.into(), config),
         };
         (runner_handle, cmd_watcher)
     }
@@ -101,30 +97,6 @@ impl WriteCommandRunnerHandle {
             .await
             .change_context(DataError::CommandResultReceivingFailed)?
     }
-
-    pub async fn write_with_ref_handle<
-        CmdResult: Send + 'static,
-        Cmd: Future<Output = crate::result::Result<CmdResult, DataError>> + Send,
-        GetCmd,
-    >(
-        &self,
-        write_cmd: GetCmd,
-    ) -> crate::result::Result<CmdResult, DataError>
-    where
-        GetCmd: FnOnce(SyncWriteHandleRef<'_>) -> Cmd + Send + 'static,
-    {
-        self.write(|cmds| async move {
-            let ref_handle = cmds.to_ref_handle();
-            write_cmd(ref_handle).await
-        })
-        .await
-    }
-
-    // pub async fn test(&self) {
-    //     self.write_with_ref_handle(move|cmds| async move {
-    //         cmds.read().common().account_access_token(AccountId::for_debugging_only_zero()).await
-    //     }).await.unwrap();
-    // }
 
     pub async fn concurrent_write<
         CmdResult: Send + 'static,

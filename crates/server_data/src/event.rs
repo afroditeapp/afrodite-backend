@@ -85,7 +85,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
         action: impl FnOnce(Option<&EventSender>) -> T + Send,
     ) -> Result<T, DataError> {
         self.cache
-            .read_cache(id, move |entry| action(entry.connection_event_sender()))
+            .read_cache_common(id, move |entry| Ok(action(entry.connection_event_sender())))
             .await
             .into_data_error(id)
     }
@@ -95,7 +95,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
         action: impl Fn(Option<&EventSender>),
     ) {
         self.cache
-            .read_cache_for_logged_in_clients(|entry| action(entry.connection_event_sender()))
+            .read_cache_common_for_logged_in_clients(|entry| action(entry.connection_event_sender()))
             .await
     }
 
@@ -141,7 +141,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
         event: NotificationEvent,
     ) -> Result<(), DataError> {
         self.cache
-            .write_cache(account, move |entry| {
+            .write_cache_common(account, move |entry| {
                 entry.pending_notification_flags |= event.into();
                 Ok(())
             })
@@ -174,7 +174,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
         event: NotificationEvent,
     ) {
         self.cache
-            .write_cache_for_logged_in_clients(|account_id, entry| {
+            .write_cache_common_for_logged_in_clients(|account_id, entry| {
                 entry.pending_notification_flags |= event.into();
                 let sent = if let Some(sender) = entry.connection_event_sender() {
                     match sender.sender.try_send(InternalEventType::Notification(event)) {
@@ -197,8 +197,8 @@ impl<'a> EventManagerWithCacheReference<'a> {
         account: AccountIdInternal,
     ) {
         let flags_result = self.cache
-            .read_cache(account, move |entry| {
-                entry.pending_notification_flags
+            .read_cache_common(account, move |entry| {
+                Ok(entry.pending_notification_flags)
             })
             .await
             .into_data_error(account);
@@ -217,7 +217,7 @@ impl<'a> EventManagerWithCacheReference<'a> {
         flags: PendingNotificationFlags,
     ) {
         let edit_result = self.cache
-            .write_cache(account, move |entry| {
+            .write_cache_common(account, move |entry| {
                 entry.pending_notification_flags -= flags;
                 Ok(())
             })

@@ -6,10 +6,12 @@ use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
 use server_common::data::WithInfo;
-use server_data::{
-    cache::{account::CachedAccountComponentData, chat::CachedChatComponentData, media::CachedMedia, profile::CachedProfile, DatabaseCache},
-    index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
-};
+
+use server_data::cache::account::CachedAccountComponentData;
+use server_data::cache::chat::CachedChatComponentData;
+use server_data::cache::media::CachedMedia;
+use server_data::cache::DatabaseCache;
+use server_data::{cache::profile::CachedProfile, index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle}};
 use tracing::info;
 
 pub struct DbDataToCacheLoader;
@@ -85,15 +87,15 @@ impl DbDataToCacheLoader {
         let permissions = db
             .db_read_common(move |mut cmds| cmds.common().state().account_permissions(account_id))
             .await?;
-        entry.permissions = permissions;
+        entry.common.permissions = permissions;
         let state = db
             .db_read_common(move |mut cmds| cmds.common().state().account_state_related_shared_state(account_id))
             .await?;
-        entry.account_state_related_shared_state = state;
+        entry.common.account_state_related_shared_state = state;
         let other_state = db
             .db_read_common(move |mut cmds| cmds.common().state().other_shared_state(account_id))
             .await?;
-        entry.other_shared_state = other_state;
+        entry.common.other_shared_state = other_state;
 
         if config.components().account {
             let account_data = CachedAccountComponentData::default();
@@ -167,7 +169,7 @@ impl DbDataToCacheLoader {
                 .await?;
             // Try retry sending of not already sent notifications
             if !chat_state.fcm_notification_sent {
-                entry.pending_notification_flags = chat_state.pending_notification.into();
+                entry.common.pending_notification_flags = chat_state.pending_notification.into();
             }
 
             entry.chat = Some(CachedChatComponentData::default().into());

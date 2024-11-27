@@ -1,13 +1,9 @@
-use config::{file::ConfigFileError, Config};
+use config::file::ConfigFileError;
 use error_stack::Result;
 use model::{AccountId, AccountIdInternal, BackendConfig, BackendVersion, EmailMessages};
 use simple_backend::email::EmailSender;
 
 use crate::data::DataError;
-
-pub trait GetConfig {
-    fn config(&self) -> &Config;
-}
 
 pub trait WriteDynamicConfig {
     fn write_config(

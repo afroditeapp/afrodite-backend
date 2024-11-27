@@ -1,12 +1,13 @@
 use model_profile::{GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime};
 use server_data::{
-    define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    define_cmd_wrapper, result::Result, DataError
 };
 
-define_server_data_read_commands!(ReadCommandsProfileStatistics);
-define_db_read_command!(ReadCommandsProfileStatistics);
+use crate::cache::CacheReadProfile;
 
-impl<C: ReadCommandsProvider> ReadCommandsProfileStatistics<C> {
+define_cmd_wrapper!(ReadCommandsProfileStatistics);
+
+impl<C: CacheReadProfile> ReadCommandsProfileStatistics<C> {
     pub async fn profile_statistics(
         &mut self,
         profile_visibility: StatisticsProfileVisibility,
@@ -19,11 +20,10 @@ impl<C: ReadCommandsProvider> ReadCommandsProfileStatistics<C> {
         let mut age_counts = ProfileAgeCounts::empty();
 
         self
-            .cache().read_cache_for_all_accounts(|e| {
+            .read_cache_profile_and_common_for_all_accounts(|p, e| {
                 account_count += 1;
 
                 let visibility = e.account_state_related_shared_state.profile_visibility();
-                let p = e.profile_data()?;
 
                 let groups = p.state.search_group_flags;
                 if visibility.is_currently_public() {
@@ -40,12 +40,12 @@ impl<C: ReadCommandsProvider> ReadCommandsProfileStatistics<C> {
                     StatisticsProfileVisibility::All => (),
                     StatisticsProfileVisibility::Public => {
                         if !visibility.is_currently_public() {
-                            return Ok(());
+                            return;
                         }
                     }
                     StatisticsProfileVisibility::Private => {
                         if visibility.is_currently_public() {
-                            return Ok(());
+                            return;
                         }
                     }
                 }
@@ -57,11 +57,8 @@ impl<C: ReadCommandsProvider> ReadCommandsProfileStatistics<C> {
                 } else if groups.is_non_binary() {
                     age_counts.increment_age(StatisticsGender::NonBinary, p.data.age.value());
                 }
-
-                Ok(())
             })
-            .await
-            .into_data_error(())?;
+            .await?;
 
         Ok(GetProfileStatisticsResult::new(
             generation_time,

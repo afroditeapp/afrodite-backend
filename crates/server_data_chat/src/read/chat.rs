@@ -6,21 +6,21 @@ use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
-    cache::db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, define_server_data_read_commands, read::ReadCommandsProvider, result::Result, DataError, IntoDataError
+    cache::{db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, CacheReadCommon}, define_cmd_wrapper, result::Result, DataError, IntoDataError
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
 
-define_server_data_read_commands!(ReadCommandsChat);
-define_db_read_command!(ReadCommandsChat);
+use super::DbReadChat;
 
-impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
+
+define_cmd_wrapper!(ReadCommandsChat);
+
+impl<C: DbReadChat + CacheReadCommon> ReadCommandsChat<C> {
     pub fn push_notifications(self) -> ReadCommandsChatPushNotifications<C> {
-        ReadCommandsChatPushNotifications::new(self.cmds)
+        ReadCommandsChatPushNotifications::new(self.0)
     }
-}
 
-impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
     pub async fn chat_state(&self, id: AccountIdInternal) -> Result<ChatStateRaw, DataError> {
         self.db_read(move |mut cmds| cmds.chat().chat_state(id))
             .await
@@ -217,12 +217,12 @@ impl<C: ReadCommandsProvider> ReadCommandsChat<C> {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> Result<bool, DataError> {
-        let unlimited_likes_a0 = self.read_cache(account0, |entry| {
-            entry.other_shared_state.unlimited_likes
+        let unlimited_likes_a0 = self.read_cache_common(account0, |entry| {
+            Ok(entry.other_shared_state.unlimited_likes)
         }).await?;
 
-        let unlimited_likes_a1 = self.read_cache(account1, |entry| {
-            entry.other_shared_state.unlimited_likes
+        let unlimited_likes_a1 = self.read_cache_common(account1, |entry| {
+            Ok(entry.other_shared_state.unlimited_likes)
         }).await?;
 
         Ok(unlimited_likes_a0 == unlimited_likes_a1)

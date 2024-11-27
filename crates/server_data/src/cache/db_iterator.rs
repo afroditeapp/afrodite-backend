@@ -1,4 +1,6 @@
 use model::NextNumberStorage;
+use model_account::{NewsIteratorSessionIdInternal, PublicationId};
+use model_chat::{MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
 
 pub mod new_count;
 
@@ -102,3 +104,31 @@ impl <T: IteratorSessionIdTrait, U: IteratorStartPoint> Default for DbIterator<T
         }
     }
 }
+
+// Account
+
+impl IteratorSessionIdTrait for NewsIteratorSessionIdInternal {
+    fn create(storage: &mut NextNumberStorage) -> Self {
+        NewsIteratorSessionIdInternal::create(storage)
+    }
+}
+
+impl IteratorStartPoint for PublicationId {}
+
+// Chat
+
+impl IteratorSessionIdTrait for ReceivedLikesIteratorSessionIdInternal {
+    fn create(storage: &mut NextNumberStorage) -> Self {
+        ReceivedLikesIteratorSessionIdInternal::create(storage)
+    }
+}
+
+impl IteratorStartPoint for ReceivedLikeId {}
+
+impl IteratorSessionIdTrait for MatchesIteratorSessionIdInternal {
+    fn create(storage: &mut NextNumberStorage) -> Self {
+        MatchesIteratorSessionIdInternal::create(storage)
+    }
+}
+
+impl IteratorStartPoint for MatchId {}
