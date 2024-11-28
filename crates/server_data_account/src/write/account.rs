@@ -4,7 +4,7 @@ use model_account::{
 };
 use news::WriteCommandsAccountNews;
 use server_data::{
-    app::GetConfig, cache::CacheWriteCommon, db_manager::WriteAccessProvider, define_cmd_wrapper, read::DbReadCommon, result::Result, write::{common::UpdateLocationIndexVisibility, GetWriteCommandsCommon}, DataError, DieselDatabaseError
+    define_cmd_wrapper_write, read::DbReadCommon, result::Result, write::GetWriteCommandsCommon, DataError, DieselDatabaseError
 };
 
 use super::DbTransactionAccount;
@@ -15,18 +15,19 @@ pub mod news;
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
 
-define_cmd_wrapper!(WriteCommandsAccount);
+define_cmd_wrapper_write!(WriteCommandsAccount);
 
-impl<C: DbTransactionAccount + DbReadCommon + WriteAccessProvider + GetConfig + UpdateLocationIndexVisibility + CacheWriteCommon + Clone + Copy> WriteCommandsAccount<C> {
-
-    pub fn email(self) -> WriteCommandsAccountEmail<C> {
+impl <'a> WriteCommandsAccount<'a> {
+    pub fn email(self) -> WriteCommandsAccountEmail<'a> {
         WriteCommandsAccountEmail::new(self.0)
     }
 
-    pub fn news(self) -> WriteCommandsAccountNews<C> {
+    pub fn news(self) -> WriteCommandsAccountNews<'a> {
         WriteCommandsAccountNews::new(self.0)
     }
+}
 
+impl WriteCommandsAccount<'_> {
     /// The only method which can modify AccountState, Permissions and
     /// ProfileVisibility. This also updates profile index if profile component
     /// is enabled and the visibility changed.
@@ -63,7 +64,8 @@ impl<C: DbTransactionAccount + DbReadCommon + WriteAccessProvider + GetConfig + 
             Ok(account)
         })?;
 
-        self.common()
+        self.handle()
+            .common()
             .internal_handle_new_account_data_after_db_modification(
                 id,
                 &current_account,

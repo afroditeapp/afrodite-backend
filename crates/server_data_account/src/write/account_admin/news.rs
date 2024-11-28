@@ -1,13 +1,13 @@
 use model_account::{AccountIdInternal, NewsId, NewsLocale, UpdateNewsTranslation};
 use server_data::{
-    define_cmd_wrapper, result::Result, DataError
+    define_cmd_wrapper_write, result::Result, DataError
 };
 
 use crate::write::DbTransactionAccount;
 
-define_cmd_wrapper!(WriteCommandsAccountNewsAdmin);
+define_cmd_wrapper_write!(WriteCommandsAccountNewsAdmin);
 
-impl<C: DbTransactionAccount> WriteCommandsAccountNewsAdmin<C> {
+impl WriteCommandsAccountNewsAdmin<'_> {
 
     pub async fn create_news_item(
         &self,

@@ -1,13 +1,13 @@
 use model_profile::GetProfileStatisticsResult;
-use server_data::{define_cmd_wrapper, result::Result, DataError};
+use server_data::{define_cmd_wrapper_write, result::Result, DataError};
 
 use super::DbTransactionProfileHistory;
 
-define_cmd_wrapper!(WriteCommandsProfileAdminHistory);
+define_cmd_wrapper_write!(WriteCommandsProfileAdminHistory);
 
-impl<C: DbTransactionProfileHistory> WriteCommandsProfileAdminHistory<C> {
+impl WriteCommandsProfileAdminHistory<'_> {
     pub async fn save_profile_statistics(
-        self,
+        &self,
         r: GetProfileStatisticsResult,
     ) -> Result<(), DataError> {
         db_transaction_history!(self, move |mut cmds| {

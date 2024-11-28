@@ -1,4 +1,4 @@
-use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper, result::WrappedContextExt};
+use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, result::WrappedContextExt};
 
 use model_profile::{
     AccountIdInternal, ProfileTextModerationRejectedReasonCategory, ProfileTextModerationRejectedReasonDetails, ProfileVersion
@@ -10,12 +10,12 @@ use server_data::{
 
 use crate::{cache::CacheWriteProfile, read::DbReadProfile, write::DbTransactionProfile};
 
-define_cmd_wrapper!(WriteCommandsProfileAdminProfileText);
+define_cmd_wrapper_write!(WriteCommandsProfileAdminProfileText);
 
-impl<C: DbTransactionProfile + DbReadProfile + CacheWriteProfile + UpdateLocationCacheState> WriteCommandsProfileAdminProfileText<C> {
+impl WriteCommandsProfileAdminProfileText<'_> {
     #[allow(clippy::too_many_arguments)]
     pub async fn moderate_profile_text(
-        self,
+        &self,
         moderator_id: AccountIdInternal,
         name_owner_id: AccountIdInternal,
         text: String,

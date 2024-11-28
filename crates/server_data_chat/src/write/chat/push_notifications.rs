@@ -1,14 +1,14 @@
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
 use server_data::{
-    cache::CacheReadCommon, define_cmd_wrapper, result::Result, DataError
+    cache::CacheReadCommon, define_cmd_wrapper_write, result::Result, DataError
 };
 
 use crate::write::DbTransactionChat;
 
-define_cmd_wrapper!(WriteCommandsChatPushNotifications);
+define_cmd_wrapper_write!(WriteCommandsChatPushNotifications);
 
-impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<C> {
-    pub async fn remove_fcm_device_token_and_pending_notification_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
+impl WriteCommandsChatPushNotifications<'_> {
+    pub async fn remove_fcm_device_token_and_pending_notification_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
@@ -18,7 +18,7 @@ impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<
         Ok(())
     }
 
-    pub async fn remove_fcm_device_token(&mut self, id: AccountIdInternal) -> Result<(), DataError> {
+    pub async fn remove_fcm_device_token(&self, id: AccountIdInternal) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()
                 .push_notifications()
@@ -29,7 +29,7 @@ impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<
     }
 
     pub async fn set_device_token(
-        &mut self,
+        &self,
         id: AccountIdInternal,
         token: FcmDeviceToken,
     ) -> Result<PendingNotificationToken, DataError> {
@@ -44,7 +44,7 @@ impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<
     }
 
     pub async fn reset_pending_notification(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
@@ -55,7 +55,7 @@ impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<
     }
 
     pub async fn get_and_reset_pending_notification_with_notification_token(
-        &mut self,
+        &self,
         token: PendingNotificationToken,
     ) -> Result<(AccountIdInternal, PendingNotification), DataError> {
         db_transaction!(self, move |mut cmds| {
@@ -66,7 +66,7 @@ impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<
     }
 
     pub async fn enable_push_notification_sent_flag(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
@@ -77,7 +77,7 @@ impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<
     }
 
     pub async fn get_push_notification_state_info_and_add_notification_value(
-        &mut self,
+        &self,
         id: AccountIdInternal,
         notification: PendingNotification,
     ) -> Result<PushNotificationStateInfo, DataError> {
@@ -89,7 +89,7 @@ impl<C: DbTransactionChat + CacheReadCommon> WriteCommandsChatPushNotifications<
     }
 
     pub async fn save_current_non_empty_notification_flags_from_cache_to_database(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         let flags = self.read_cache_common(id, move |entry| {

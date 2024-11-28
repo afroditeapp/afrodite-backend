@@ -8,7 +8,7 @@ use model_account::{
     Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo
 };
 use server_data::db_manager::InternalWriting;
-use server_data::define_cmd_wrapper;
+use server_data::define_cmd_wrapper_write;
 use server_data::{
     result::Result,
     DataError, IntoDataError,
@@ -17,10 +17,9 @@ use server_data::index::LocationIndexIteratorHandle;
 
 use crate::load::DbDataToCacheLoader;
 
-define_cmd_wrapper!(RegisterAccount);
+define_cmd_wrapper_write!(RegisterAccount);
 
-impl<C: InternalWriting> RegisterAccount<C> {
-
+impl RegisterAccount<'_> {
     pub async fn register(
         &self,
         account_id: AccountId,

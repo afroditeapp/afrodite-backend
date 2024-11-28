@@ -4,13 +4,13 @@ use model_media::{
     ProfileVisibility,
 };
 use server_common::{data::DataError, result::Result};
-use server_data::{app::GetConfig, cache::CacheWriteCommon, db_manager::WriteAccessProvider, define_cmd_wrapper, write::{common::UpdateLocationIndexVisibility, GetWriteCommandsCommon}};
+use server_data::{app::GetConfig, define_cmd_wrapper_write, write::GetWriteCommandsCommon};
 
 use crate::cache::CacheWriteMedia;
 
 use super::DbTransactionMedia;
 
-define_cmd_wrapper!(WriteCommandsMediaAdmin);
+define_cmd_wrapper_write!(WriteCommandsMediaAdmin);
 
 // TODO(prod): Move event sending to WriteCommands instead of route handlers
 //             to avoid disappearing events in case client disconnects before
@@ -28,9 +28,9 @@ pub struct CurrentAndNewAccount {
     pub new: Account,
 }
 
-impl<C: DbTransactionMedia + GetConfig + CacheWriteMedia + WriteAccessProvider + CacheWriteCommon + UpdateLocationIndexVisibility + Copy> WriteCommandsMediaAdmin<C> {
+impl WriteCommandsMediaAdmin<'_> {
     pub async fn moderation_get_list_and_create_new_if_necessary(
-        self,
+        &self,
         account_id: AccountIdInternal,
         queue: ModerationQueueType,
     ) -> Result<Vec<Moderation>, DataError> {
@@ -44,7 +44,7 @@ impl<C: DbTransactionMedia + GetConfig + CacheWriteMedia + WriteAccessProvider +
     /// Updates moderation request and if needed, updates profile visibility to
     /// this server instance.
     pub async fn update_moderation(
-        self,
+        &self,
         moderator_id: AccountIdInternal,
         moderation_request_owner: AccountIdInternal,
         result: HandleModerationRequest,
@@ -106,6 +106,7 @@ impl<C: DbTransactionMedia + GetConfig + CacheWriteMedia + WriteAccessProvider +
 
         if let Some(accounts) = &info.cache_should_be_updated {
             self
+                .handle()
                 .common()
                 .internal_handle_new_account_data_after_db_modification(
                     accounts.id,

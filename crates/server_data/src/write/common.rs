@@ -6,12 +6,12 @@ use server_common::data::cache::CacheError;
 
 use super::DbTransactionCommon;
 use crate::{
-    app::GetConfig, cache::{CacheWriteCommon, LastSeenTimeUpdated, TopLevelCacheOperations}, db_manager::InternalWriting, define_cmd_wrapper, event::EventReceiver, file::FileWrite, result::Result, write::db_transaction, DataError, IntoDataError
+    cache::{CacheWriteCommon, LastSeenTimeUpdated, TopLevelCacheOperations}, db_manager::InternalWriting, define_cmd_wrapper_write, event::EventReceiver, file::FileWrite, result::Result, write::db_transaction, DataError, IntoDataError
 };
 
-define_cmd_wrapper!(WriteCommandsCommon);
+define_cmd_wrapper_write!(WriteCommandsCommon);
 
-impl<C: DbTransactionCommon + CacheWriteCommon + TopLevelCacheOperations + FileWrite + GetConfig + UpdateLocationIndexVisibility> WriteCommandsCommon<C> {
+impl WriteCommandsCommon<'_> {
     /// Creates new event channel if address is Some.
     pub async fn set_new_auth_pair(
         &self,
@@ -71,7 +71,7 @@ impl<C: DbTransactionCommon + CacheWriteCommon + TopLevelCacheOperations + FileW
 
     /// Remove specific connection session.
     pub async fn end_connection_session(
-        self,
+        &self,
         id: AccountIdInternal,
         session_address: SocketAddr,
     ) -> Result<(), DataError> {
@@ -106,6 +106,36 @@ impl<C: DbTransactionCommon + CacheWriteCommon + TopLevelCacheOperations + FileW
         db_transaction!(self, move |mut cmds| {
             cmds.common().state().set_is_bot_account(id, value)
         })
+    }
+
+    pub async fn internal_handle_new_account_data_after_db_modification(
+        &self,
+        id: AccountIdInternal,
+        current_account: &Account,
+        new_account: &Account,
+    ) -> Result<(), DataError> {
+        let new_account_clone = new_account.clone();
+        self.write_cache_common(id, |cache| {
+            cache.permissions = new_account_clone.permissions();
+            cache.account_state_related_shared_state = new_account_clone.into();
+            Ok(())
+        })
+        .await?;
+
+        // Other related state updating
+
+        if self.config().components().profile
+            && current_account.profile_visibility().is_currently_public()
+                != new_account.profile_visibility().is_currently_public()
+        {
+            self.profile_update_location_index_visibility(
+                id,
+                new_account.profile_visibility().is_currently_public(),
+            )
+            .await?;
+        }
+
+        Ok(())
     }
 }
 
@@ -159,37 +189,5 @@ impl <I: InternalWriting> UpdateLocationIndexVisibility for I {
         info: LastSeenTimeUpdated,
     ) {
         self.location_index_write_handle().update_last_seen_time(account_id, info).await
-    }
-}
-
-impl<C: CacheWriteCommon + GetConfig + UpdateLocationIndexVisibility> WriteCommandsCommon<C> {
-    pub async fn internal_handle_new_account_data_after_db_modification(
-        &self,
-        id: AccountIdInternal,
-        current_account: &Account,
-        new_account: &Account,
-    ) -> Result<(), DataError> {
-        let new_account_clone = new_account.clone();
-        self.write_cache_common(id, |cache| {
-            cache.permissions = new_account_clone.permissions();
-            cache.account_state_related_shared_state = new_account_clone.into();
-            Ok(())
-        })
-        .await?;
-
-        // Other related state updating
-
-        if self.config().components().profile
-            && current_account.profile_visibility().is_currently_public()
-                != new_account.profile_visibility().is_currently_public()
-        {
-            self.profile_update_location_index_visibility(
-                id,
-                new_account.profile_visibility().is_currently_public(),
-            )
-            .await?;
-        }
-
-        Ok(())
     }
 }

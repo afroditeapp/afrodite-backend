@@ -2,7 +2,7 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{
-    current::write::TransactionConnection, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbReaderRawUsingWriteHandle, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
+    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbReaderRawUsingWriteHandle, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, PoolObject, TransactionError
 };
 pub use server_common::{
     data::{DataError, IntoDataError},
@@ -18,7 +18,17 @@ use crate::{
 
 pub const DB_FILE_DIR_NAME: &str = "files";
 
-pub use database::{CurrentReadHandle, HistoryReadHandle};
+
+pub mod handle_types {
+    pub use database::{CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle};
+    pub use config::Config;
+    pub use simple_backend::media_backup::MediaBackupHandle;
+    pub use server_common::push_notifications::PushNotificationSender;
+    pub use server_common::app::EmailSenderImpl;
+
+    pub type ReadHandleType = super::RouterDatabaseReadHandle;
+    pub type WriteHandleType = super::RouterDatabaseWriteHandle;
+}
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
@@ -329,8 +339,14 @@ impl InternalWriting for &RouterDatabaseWriteHandle {
     }
 }
 
-pub trait WriteAccessProvider {}
-impl WriteAccessProvider for &RouterDatabaseWriteHandle {}
+pub trait WriteAccessProvider<'a> {
+    fn handle(self) -> &'a RouterDatabaseWriteHandle;
+}
+impl <'a> WriteAccessProvider<'a> for &'a RouterDatabaseWriteHandle {
+    fn handle(self) -> &'a RouterDatabaseWriteHandle {
+        self
+    }
+}
 
 #[derive(Debug)]
 pub struct RouterDatabaseReadHandle {

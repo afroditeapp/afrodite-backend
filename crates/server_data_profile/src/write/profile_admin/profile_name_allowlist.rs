@@ -1,4 +1,4 @@
-use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper, index::LocationWrite, result::WrappedContextExt};
+use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, result::WrappedContextExt};
 
 use model_profile::{
     AccountIdInternal, ProfileVersion
@@ -10,11 +10,11 @@ use server_data::{
 
 use crate::{cache::CacheWriteProfile, read::DbReadProfile, write::DbTransactionProfile};
 
-define_cmd_wrapper!(WriteCommandsProfileAdminProfileNameAllowlist);
+define_cmd_wrapper_write!(WriteCommandsProfileAdminProfileNameAllowlist);
 
-impl<C: DbTransactionProfile + DbReadProfile + CacheWriteProfile + LocationWrite + UpdateLocationCacheState> WriteCommandsProfileAdminProfileNameAllowlist<C> {
+impl WriteCommandsProfileAdminProfileNameAllowlist<'_> {
     pub async fn moderate_profile_name(
-        self,
+        &self,
         moderator_id: AccountIdInternal,
         name_owner_id: AccountIdInternal,
         name: String,

@@ -9,23 +9,23 @@ pub mod profile;
 pub mod profile_admin;
 pub mod profile_admin_history;
 
-pub trait GetWriteCommandsProfile: Sized {
-    fn profile(self) -> WriteCommandsProfile<Self>;
-    fn profile_admin(self) -> WriteCommandsProfileAdmin<Self>;
-    fn profile_admin_history(self) -> WriteCommandsProfileAdminHistory<Self>;
+pub trait GetWriteCommandsProfile<'a> {
+    fn profile(self) -> WriteCommandsProfile<'a>;
+    fn profile_admin(self) -> WriteCommandsProfileAdmin<'a>;
+    fn profile_admin_history(self) -> WriteCommandsProfileAdminHistory<'a>;
 }
 
-impl <I: WriteAccessProvider> GetWriteCommandsProfile for I {
-    fn profile(self) -> WriteCommandsProfile<Self> {
-        WriteCommandsProfile::new(self)
+impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsProfile<'a> for I {
+    fn profile(self) -> WriteCommandsProfile<'a> {
+        WriteCommandsProfile::new(self.handle())
     }
 
-    fn profile_admin(self) -> WriteCommandsProfileAdmin<Self> {
-        WriteCommandsProfileAdmin::new(self)
+    fn profile_admin(self) -> WriteCommandsProfileAdmin<'a> {
+        WriteCommandsProfileAdmin::new(self.handle())
     }
 
-    fn profile_admin_history(self) -> WriteCommandsProfileAdminHistory<Self> {
-        WriteCommandsProfileAdminHistory::new(self)
+    fn profile_admin_history(self) -> WriteCommandsProfileAdminHistory<'a> {
+        WriteCommandsProfileAdminHistory::new(self.handle())
     }
 }
 

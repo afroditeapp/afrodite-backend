@@ -7,18 +7,18 @@ use server_data::db_manager::{InternalWriting, WriteAccessProvider};
 pub mod account;
 pub mod account_admin;
 
-pub trait GetWriteCommandsAccount<C> {
-    fn account(self) -> WriteCommandsAccount<C>;
-    fn account_admin(self) -> WriteCommandsAccountAdmin<C>;
+pub trait GetWriteCommandsAccount<'a> {
+    fn account(self) -> WriteCommandsAccount<'a>;
+    fn account_admin(self) -> WriteCommandsAccountAdmin<'a>;
 }
 
-impl<C: WriteAccessProvider> GetWriteCommandsAccount<C> for C {
-    fn account(self) -> WriteCommandsAccount<C> {
-        WriteCommandsAccount::new(self)
+impl<'a, C: WriteAccessProvider<'a>> GetWriteCommandsAccount<'a> for C {
+    fn account(self) -> WriteCommandsAccount<'a> {
+        WriteCommandsAccount::new(self.handle())
     }
 
-    fn account_admin(self) -> WriteCommandsAccountAdmin<C> {
-        WriteCommandsAccountAdmin::new(self)
+    fn account_admin(self) -> WriteCommandsAccountAdmin<'a> {
+        WriteCommandsAccountAdmin::new(self.handle())
     }
 }
 

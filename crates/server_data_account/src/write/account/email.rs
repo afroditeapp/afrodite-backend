@@ -1,13 +1,13 @@
 use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
 use server_data::{
-    app::GetEmailSender, define_cmd_wrapper, result::Result, DataError
+    app::GetEmailSender, define_cmd_wrapper_write, result::Result, DataError
 };
 
 use crate::write::DbTransactionAccount;
 
-define_cmd_wrapper!(WriteCommandsAccountEmail);
+define_cmd_wrapper_write!(WriteCommandsAccountEmail);
 
-impl<C: DbTransactionAccount + GetEmailSender> WriteCommandsAccountEmail<C> {
+impl WriteCommandsAccountEmail<'_> {
     pub async fn account_email(
         &self,
         id: AccountIdInternal,

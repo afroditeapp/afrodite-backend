@@ -1,13 +1,11 @@
+use server_data::define_cmd_wrapper_write;
+
 mod news;
 
-pub struct WriteCommandsAccountAdmin<C>(C);
+define_cmd_wrapper_write!(WriteCommandsAccountAdmin);
 
-impl<C> WriteCommandsAccountAdmin<C> {
-    pub fn new(c: C) -> Self {
-        Self(c)
-    }
-
-    pub fn news(self) -> news::WriteCommandsAccountNewsAdmin<C> {
+impl<'a> WriteCommandsAccountAdmin<'a> {
+    pub fn news(self) -> news::WriteCommandsAccountNewsAdmin<'a> {
         news::WriteCommandsAccountNewsAdmin::new(self.0)
     }
 }

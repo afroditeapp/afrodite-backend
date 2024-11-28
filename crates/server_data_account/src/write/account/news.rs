@@ -1,13 +1,13 @@
 use model_account::{AccountIdInternal, ResetNewsIteratorResult};
 use server_data::{
-    define_cmd_wrapper, result::Result, DataError, IntoDataError
+    define_cmd_wrapper_write, result::Result, DataError, IntoDataError
 };
 
 use crate::{cache::CacheWriteAccount, write::DbTransactionAccount};
 
-define_cmd_wrapper!(WriteCommandsAccountNews);
+define_cmd_wrapper_write!(WriteCommandsAccountNews);
 
-impl<C: DbTransactionAccount + CacheWriteAccount> WriteCommandsAccountNews<C> {
+impl WriteCommandsAccountNews<'_> {
 
     pub async fn handle_reset_news_iterator(
         &self,

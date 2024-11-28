@@ -3,16 +3,16 @@ use model_media::{
     AccountIdInternal, ContentId, ContentSlot, ModerationRequestContent, ModerationRequestState, NewContentParams, NextQueueNumberType, ProfileContentVersion, ProfileVisibility, SetProfileContent
 };
 use server_data::{
-    cache::profile::UpdateLocationCacheState, define_cmd_wrapper, file::FileWrite, result::{Result, WrappedContextExt}, DataError, DieselDatabaseError
+    cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, file::FileWrite, result::{Result, WrappedContextExt}, DataError, DieselDatabaseError
 };
 
 use crate::{cache::CacheWriteMedia, read::DbReadMedia};
 
 use super::DbTransactionMedia;
 
-define_cmd_wrapper!(WriteCommandsMedia);
+define_cmd_wrapper_write!(WriteCommandsMedia);
 
-impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateLocationCacheState> WriteCommandsMedia<C> {
+impl WriteCommandsMedia<'_> {
     pub async fn create_or_update_moderation_request(
         &self,
         account_id: AccountIdInternal,
@@ -129,7 +129,7 @@ impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateL
     }
 
     pub async fn update_profile_content(
-        self,
+        &self,
         id: AccountIdInternal,
         new: SetProfileContent,
     ) -> Result<(), DataError> {
@@ -152,7 +152,7 @@ impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateL
     }
 
     pub async fn update_or_delete_pending_profile_content(
-        self,
+        &self,
         id: AccountIdInternal,
         new: Option<SetProfileContent>,
     ) -> Result<(), DataError> {
@@ -164,7 +164,7 @@ impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateL
     }
 
     pub async fn update_security_content(
-        self,
+        &self,
         content_owner: AccountIdInternal,
         content: ContentId,
     ) -> Result<(), DataError> {
@@ -176,7 +176,7 @@ impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateL
     }
 
     pub async fn update_or_delete_pending_security_content(
-        self,
+        &self,
         content_owner: AccountIdInternal,
         content: Option<ContentId>,
     ) -> Result<(), DataError> {
@@ -188,7 +188,7 @@ impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateL
     }
 
     pub async fn delete_content(
-        self,
+        &self,
         content_owner: AccountIdInternal,
         content: ContentId,
     ) -> Result<(), DataError> {
@@ -200,7 +200,7 @@ impl<C: DbTransactionMedia + DbReadMedia + FileWrite + CacheWriteMedia + UpdateL
     }
 
     pub async fn delete_moderation_request_not_yet_in_moderation(
-        self,
+        &self,
         moderation_request_owner: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {

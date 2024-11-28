@@ -2,7 +2,7 @@ use model_profile::{
     AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
 };
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper, result::Result, DataError, IntoDataError,
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, result::Result, DataError, IntoDataError,
     index::{location::LocationIndexIteratorState, LocationWrite},
 };
 use tracing::info;
@@ -10,11 +10,11 @@ use crate::{cache::{CacheReadProfile, CacheWriteProfile}, read::DbReadProfile};
 
 use super::DbTransactionProfile;
 
-define_cmd_wrapper!(WriteCommandsProfile);
+define_cmd_wrapper_write!(WriteCommandsProfile);
 
-impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProfile + LocationWrite + GetConfig + UpdateLocationCacheState> WriteCommandsProfile<C> {
+impl WriteCommandsProfile<'_> {
     pub async fn profile_update_location(
-        self,
+        &self,
         id: AccountIdInternal,
         coordinates: Location,
     ) -> Result<(), DataError> {
@@ -57,7 +57,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     /// `UnlimitedLikesUpdate::update_unlimited_likes_value`
     /// as those also modifies the [model::Profile].
     pub async fn profile(
-        self,
+        &self,
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
@@ -119,7 +119,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     async fn modify_profile_state(
-        self,
+        &self,
         id: AccountIdInternal,
         action: impl FnOnce(&mut ProfileStateInternal),
     ) -> Result<(), DataError> {
@@ -147,7 +147,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn update_profile_attribute_filters(
-        self,
+        &self,
         id: AccountIdInternal,
         filters: ProfileAttributeFilterListUpdateValidated,
     ) -> Result<(), DataError> {
@@ -178,7 +178,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
         Ok(())
     }
 
-    pub async fn profile_name(self, id: AccountIdInternal, data: String) -> Result<(), DataError> {
+    pub async fn profile_name(&self, id: AccountIdInternal, data: String) -> Result<(), DataError> {
         let profile_data = data.clone();
         db_transaction!(self, move |mut cmds| {
             cmds.profile().data().profile_name(id, profile_data)
@@ -196,7 +196,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn insert_favorite_profile(
-        self,
+        &self,
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
@@ -208,7 +208,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn remove_favorite_profile(
-        self,
+        &self,
         id: AccountIdInternal,
         favorite: AccountIdInternal,
     ) -> Result<(), DataError> {
@@ -222,7 +222,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     /// Updates the profile attributes sha256 and sync version for it for every
     /// account if needed.
     pub async fn update_profile_attributes_sha256_and_sync_versions(
-        self,
+        &self,
         sha256: String,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
@@ -273,7 +273,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn update_search_groups(
-        self,
+        &self,
         id: AccountIdInternal,
         search_groups: ValidatedSearchGroups,
     ) -> Result<(), DataError> {
@@ -282,7 +282,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn update_search_age_range(
-        self,
+        &self,
         id: AccountIdInternal,
         range: ProfileSearchAgeRangeValidated,
     ) -> Result<(), DataError> {
@@ -294,7 +294,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn benchmark_update_profile_bypassing_cache(
-        self,
+        &self,
         id: AccountIdInternal,
         data: ProfileUpdateInternal,
     ) -> Result<(), DataError> {
@@ -304,7 +304,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn update_last_seen_time_from_cache_to_database(
-        self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         let last_seen_time = self
@@ -317,7 +317,7 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
     }
 
     pub async fn set_initial_profile_age_from_current_profile(
-        self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {

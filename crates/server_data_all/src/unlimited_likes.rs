@@ -3,13 +3,13 @@ use model_profile::{
     AccountIdInternal, ProfileVersion,
 };
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper, result::Result, DataError, IntoDataError
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, result::Result, DataError, IntoDataError
 };
 use server_data_profile::{cache::CacheWriteProfile, write::DbTransactionProfile};
 
-define_cmd_wrapper!(UnlimitedLikesUpdate);
+define_cmd_wrapper_write!(UnlimitedLikesUpdate);
 
-impl<C: DbTransactionProfile + GetConfig + UpdateLocationCacheState + CacheWriteProfile> UnlimitedLikesUpdate<C> {
+impl UnlimitedLikesUpdate<'_> {
     /// Unlimited likes value is needed in both profile and chat component, so
     /// account component owns it. Because of that, update new value code
     /// is located in this crate.

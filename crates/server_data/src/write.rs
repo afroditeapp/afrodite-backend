@@ -43,13 +43,13 @@ macro_rules! db_transaction {
 // Make db_transaction available in all modules
 pub(crate) use db_transaction;
 
-pub trait GetWriteCommandsCommon<C> {
-    fn common(self) -> WriteCommandsCommon<C>;
+pub trait GetWriteCommandsCommon<'a> {
+    fn common(self) -> WriteCommandsCommon<'a>;
 }
 
-impl <I: WriteAccessProvider> GetWriteCommandsCommon<I> for I {
-    fn common(self) -> WriteCommandsCommon<I> {
-        WriteCommandsCommon::new(self)
+impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
+    fn common(self) -> WriteCommandsCommon<'a> {
+        WriteCommandsCommon::new(self.handle())
     }
 }
 

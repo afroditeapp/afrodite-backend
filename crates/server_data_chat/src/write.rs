@@ -7,17 +7,17 @@ use server_data::db_manager::{InternalWriting, WriteAccessProvider};
 pub mod chat;
 pub mod chat_admin;
 
-pub trait GetWriteCommandsChat: Sized {
-    fn chat(self) -> WriteCommandsChat<Self>;
-    fn chat_admin(self) -> WriteCommandsChatAdmin<Self>;
+pub trait GetWriteCommandsChat<'a> {
+    fn chat(self) -> WriteCommandsChat<'a>;
+    fn chat_admin(self) -> WriteCommandsChatAdmin<'a>;
 }
 
-impl <I: WriteAccessProvider> GetWriteCommandsChat for I {
-    fn chat(self) -> WriteCommandsChat<Self> {
-        WriteCommandsChat::new(self)
+impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsChat<'a> for I {
+    fn chat(self) -> WriteCommandsChat<'a> {
+        WriteCommandsChat::new(self.handle())
     }
-    fn chat_admin(self) -> WriteCommandsChatAdmin<Self> {
-        WriteCommandsChatAdmin::new(self)
+    fn chat_admin(self) -> WriteCommandsChatAdmin<'a> {
+        WriteCommandsChatAdmin::new(self.handle())
     }
 }
 

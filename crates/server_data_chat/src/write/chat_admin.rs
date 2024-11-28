@@ -1,3 +1,3 @@
-use server_data::define_cmd_wrapper;
+use server_data::define_cmd_wrapper_write;
 
-define_cmd_wrapper!(WriteCommandsChatAdmin);
+define_cmd_wrapper_write!(WriteCommandsChatAdmin);

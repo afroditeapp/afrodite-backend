@@ -4,7 +4,7 @@ use database_chat::current::write::chat::{ChatStateChanges, ReceiverBlockedSende
 use error_stack::ResultExt;
 use model_chat::{AccountIdInternal, ChatStateRaw, ClientId, ClientLocalId, MatchesIteratorSessionIdInternal, MessageNumber, NewReceivedLikesCount, PendingMessageId, PendingMessageIdInternal, PendingNotificationFlags, PublicKeyId, PublicKeyVersion, ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion, SendMessageResult, SentMessageId, SetPublicKey, SyncVersionUtils};
 use server_data::{
-    app::EventManagerProvider, cache::chat::limit::ChatLimits, define_cmd_wrapper, id::ToAccountIdInternal, result::Result, DataError, DieselDatabaseError, IntoDataError
+    app::EventManagerProvider, cache::chat::limit::ChatLimits, define_cmd_wrapper_write, id::ToAccountIdInternal, result::Result, DataError, DieselDatabaseError, IntoDataError
 };
 use simple_backend_utils::ContextExt;
 
@@ -14,15 +14,17 @@ use self::push_notifications::WriteCommandsChatPushNotifications;
 
 use super::DbTransactionChat;
 
-define_cmd_wrapper!(WriteCommandsChat);
+define_cmd_wrapper_write!(WriteCommandsChat);
 
-impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + EventManagerProvider> WriteCommandsChat<C> {
-    pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<C> {
+impl <'a> WriteCommandsChat<'a> {
+    pub fn push_notifications(self) -> WriteCommandsChatPushNotifications<'a> {
         WriteCommandsChatPushNotifications::new(self.0)
     }
+}
 
+impl WriteCommandsChat<'_> {
     pub async fn modify_chat_limits<T>(
-        &mut self,
+        &self,
         id: AccountIdInternal,
         mut action: impl FnMut(&mut ChatLimits) -> T,
     ) -> Result<T, DataError> {
@@ -35,7 +37,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     }
 
     pub async fn modify_chat_state(
-        &mut self,
+        &self,
         id: AccountIdInternal,
         action: impl Fn(&mut ChatStateRaw) + Send + 'static,
     ) -> Result<(), DataError> {
@@ -49,7 +51,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     ///
     /// Returns Ok only if the state change happened.
     pub async fn like_or_match_profile(
-        &mut self,
+        &self,
         id_like_sender: AccountIdInternal,
         id_like_receiver: AccountIdInternal,
     ) -> Result<SenderAndReceiverStateChanges, DataError> {
@@ -126,7 +128,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     ///
     /// Returns Ok only if the state change happened.
     pub async fn delete_like(
-        &mut self,
+        &self,
         id_sender: AccountIdInternal,
         id_receiver: AccountIdInternal,
     ) -> Result<SenderAndReceiverStateChanges, DataError> {
@@ -177,7 +179,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     ///
     /// Returns Ok only if the state change happened.
     pub async fn block_profile(
-        &mut self,
+        &self,
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> Result<SenderAndReceiverStateChanges, DataError> {
@@ -217,7 +219,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     ///
     /// Returns Ok only if the state change happened.
     pub async fn delete_block(
-        &mut self,
+        &self,
         id_block_sender: AccountIdInternal,
         id_block_receiver: AccountIdInternal,
     ) -> Result<SenderAndReceiverStateChanges, DataError> {
@@ -256,7 +258,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     // TODO(prod): Change SQLite settings that delete is overwriting.
 
     pub async fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
-        &mut self,
+        &self,
         message_receiver: AccountIdInternal,
         messages: Vec<PendingMessageId>,
     ) -> Result<(), DataError> {
@@ -288,7 +290,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     }
 
     pub async fn add_sender_acknowledgement_and_delete_if_also_receiver_has_acknowledged(
-        &mut self,
+        &self,
         message_receiver: AccountIdInternal,
         messages: Vec<SentMessageId>,
     ) -> Result<(), DataError> {
@@ -356,7 +358,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     ///
     #[allow(clippy::too_many_arguments)]
     pub async fn insert_pending_message_if_match_and_not_blocked(
-        &mut self,
+        &self,
         sender: AccountIdInternal,
         receiver: AccountIdInternal,
         message: Vec<u8>,
@@ -421,7 +423,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     }
 
     pub async fn set_public_key(
-        &mut self,
+        &self,
         id: AccountIdInternal,
         data: SetPublicKey,
     ) -> Result<PublicKeyId, DataError> {
@@ -434,7 +436,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     /// Resets new received likes count if needed and updates received likes
     /// iterator reset time.
     pub async fn handle_reset_received_likes_iterator(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<(ReceivedLikesIteratorSessionIdInternal, ReceivedLikesSyncVersion), DataError> {
         let (new_version, received_like_id, received_like_id_previous) = db_transaction!(self, move |mut cmds| {
@@ -468,7 +470,7 @@ impl<C: DbTransactionChat + DbReadChat + CacheWriteChat + ToAccountIdInternal + 
     }
 
     pub async fn handle_reset_matches_iterator(
-        &mut self,
+        &self,
         id: AccountIdInternal,
     ) -> Result<MatchesIteratorSessionIdInternal, DataError> {
         let latest_used_id = self.db_read(|mut cmds| cmds.chat().global_state()).await?
