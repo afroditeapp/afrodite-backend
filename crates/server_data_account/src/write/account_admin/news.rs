@@ -1,9 +1,8 @@
+use database_account::current::write::GetDbWriteCommandsAccount;
 use model_account::{AccountIdInternal, NewsId, NewsLocale, UpdateNewsTranslation};
 use server_data::{
-    define_cmd_wrapper_write, result::Result, DataError
+    define_cmd_wrapper_write, result::Result, DataError, write::DbTransaction,
 };
-
-use crate::write::DbTransactionAccount;
 
 define_cmd_wrapper_write!(WriteCommandsAccountNewsAdmin);
 

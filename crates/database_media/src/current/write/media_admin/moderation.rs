@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model_media::{
@@ -6,18 +6,17 @@ use model_media::{
     ModerationQueueType, ModerationRequestId, ModerationRequestState, NextQueueNumberType, ProfileContentVersion,
 };
 
-use super::{ConnectionProvider, InitialModerationRequestIsNowAccepted};
-use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
+use super::InitialModerationRequestIsNowAccepted;
+use crate::{current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia}, IntoDatabaseError};
 
 define_current_write_commands!(
-    CurrentWriteMediaAdminModeration,
-    CurrentSyncWriteMediaAdminModeration
+    CurrentWriteMediaAdminModeration
 );
 
 // TODO(prod): Support selecting initial and normal requests from API
 // level, so that admin can prioritize moderations.
 
-impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
+impl CurrentWriteMediaAdminModeration<'_> {
     pub fn moderation_get_list_and_create_new_if_necessary(
         &mut self,
         moderator_id: AccountIdInternal,
@@ -36,7 +35,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
 
         for _ in moderations.len()..MAX_COUNT {
             match self
-                .cmds()
+                .write()
                 .media_admin()
                 .moderation()
                 .create_moderation_from_next_request_in_queue(moderator_id, queue)?
@@ -92,7 +91,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                     account_id.eq(moderator_id.as_db_id()),
                     state_number.eq(ModerationRequestState::InProgress),
                 ))
-                .execute(self.cmds.conn())
+                .execute(self.conn())
                 .into_db_error((target_id, moderator_id))?;
         }
 
@@ -103,7 +102,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
         } else {
             NextQueueNumberType::MediaModeration
         };
-        self.common_write_access()
+        self.write()
             .common()
             .queue_number()
             .delete_queue_entry(request_raw.queue_number, queue_type)?;
@@ -115,7 +114,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 .media_content()
                 .get_media_content_raw(c)?;
             if content_info.content_state == ContentState::InSlot {
-                self.cmds()
+                self.write()
                     .media_admin()
                     .media_content()
                     .update_content_state(c, ContentState::InModeration)?;
@@ -185,7 +184,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
             // (In case the above TODO is true: are multiple
             //  moderations possible?)
             if content_info.content_state == ContentState::InModeration {
-                self.cmds()
+                self.write()
                     .media_admin()
                     .media_content()
                     .update_content_state(c, new_content_state)?;
@@ -209,14 +208,14 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminModeration<C> {
                 .get_media_state(moderation_request_owner)?;
             if media_state.current_moderation_request_is_initial() {
                 media_state.initial_moderation_request_accepted = true;
-                self.cmds()
+                self.write()
                     .media()
                     .update_media_state(moderation_request_owner, media_state)?;
 
                 let new_profile_content_version = ProfileContentVersion::new_random();
 
                 // Move pending content to current content.
-                self.cmds()
+                self.write()
                     .media()
                     .media_content()
                     .move_pending_content_to_current_content(moderation_request_owner, new_profile_content_version)?;

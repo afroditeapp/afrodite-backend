@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountId;
@@ -6,9 +6,9 @@ use model_account::DemoModeId;
 
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteAccountDemo, CurrentSyncWriteAccountDemo);
+define_current_write_commands!(CurrentWriteAccountDemo);
 
-impl<C: ConnectionProvider> CurrentSyncWriteAccountDemo<C> {
+impl CurrentWriteAccountDemo<'_> {
     pub fn insert_related_account_id(
         &mut self,
         demo_mode_related_id: DemoModeId,

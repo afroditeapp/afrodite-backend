@@ -1,14 +1,14 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model_chat::{AccountIdInternal, AccountInteractionState, ClientId, ClientLocalId, MessageNumber, NewPendingMessageValues, PendingMessageIdInternal, SentMessageId, UnixTime};
-use crate::IntoDatabaseError;
+use crate::{current::write::GetDbWriteCommandsChat, IntoDatabaseError};
 
 use super::ReceiverBlockedSender;
 
-define_current_write_commands!(CurrentWriteChatMessage, CurrentSyncWriteChatMessage);
+define_current_write_commands!(CurrentWriteChatMessage);
 
-impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
+impl CurrentWriteChatMessage<'_> {
     pub fn add_receiver_acknowledgement_and_delete_if_also_sender_has_acknowledged(
         &mut self,
         message_receiver: AccountIdInternal,
@@ -78,7 +78,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteChatMessage<C> {
         use model::schema::{account_interaction, pending_messages::dsl::*};
         let time = UnixTime::current_time();
         let interaction = self
-            .cmds()
+            .write()
             .chat()
             .interaction()
             .get_or_create_account_interaction(sender, receiver)?;

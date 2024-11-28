@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
@@ -6,11 +6,10 @@ use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotif
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(
-    CurrentWriteChatPushNotifications,
-    CurrentSyncWriteChatPushNotifications
+    CurrentWriteChatPushNotifications
 );
 
-impl<C: ConnectionProvider> CurrentSyncWriteChatPushNotifications<C> {
+impl CurrentWriteChatPushNotifications<'_> {
     pub fn remove_fcm_device_token_and_pending_notification_token(
         &mut self,
         id: AccountIdInternal,

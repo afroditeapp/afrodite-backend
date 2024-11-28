@@ -4,12 +4,11 @@ use diesel::{prelude::*, update, ExpressionMethods};
 use error_stack::Result;
 use model_profile::{AccountIdInternal, ProfileNameModerationState};
 
-use super::ConnectionProvider;
 use crate::{current::read::GetDbReadCommandsProfile, IntoDatabaseError};
 
-define_current_write_commands!(CurrentWriteProfileNameAllowlist, CurrentSyncWriteProfileNameAllowlist);
+define_current_write_commands!(CurrentWriteProfileNameAllowlist);
 
-impl<C: ConnectionProvider> CurrentSyncWriteProfileNameAllowlist<C> {
+impl CurrentWriteProfileNameAllowlist<'_> {
     pub fn reset_profile_name_moderation_state(
         &mut self,
         id: AccountIdInternal,

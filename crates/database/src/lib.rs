@@ -9,7 +9,7 @@ pub mod history;
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use current::write::{CurrentSyncWriteCommands, TransactionConnection};
+use current::write::TransactionConnection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use error_stack::{Context, Result, ResultExt};
 pub use model::schema;
@@ -188,6 +188,18 @@ impl From<::diesel::result::Error> for TransactionError {
 
 pub struct DbReadMode<'a>(pub &'a mut DieselConnection);
 pub struct DbReadModeHistory<'a>(pub &'a mut DieselConnection);
+pub struct DbWriteMode<'a>(pub &'a mut DieselConnection);
+impl DbWriteMode<'_> {
+    pub fn read(&mut self) -> DbReadMode {
+        DbReadMode(self.0)
+    }
+}
+pub struct DbWriteModeHistory<'a>(pub &'a mut DieselConnection);
+impl DbWriteModeHistory<'_> {
+    pub fn read(&mut self) -> DbReadModeHistory {
+        DbReadModeHistory(self.0)
+    }
+}
 
 pub trait DbReadAccessProvider {
     fn handle(&mut self) -> &mut DieselConnection;
@@ -197,11 +209,26 @@ impl DbReadAccessProvider for DbReadMode<'_> {
         self.0
     }
 }
-
 pub trait DbReadAccessProviderHistory {
     fn handle(&mut self) -> &mut DieselConnection;
 }
 impl <'a> DbReadAccessProviderHistory for DbReadModeHistory<'a> {
+    fn handle(&mut self) -> &mut DieselConnection {
+        self.0
+    }
+}
+pub trait DbWriteAccessProvider {
+    fn handle(&mut self) -> &mut DieselConnection;
+}
+impl DbWriteAccessProvider for DbWriteMode<'_> {
+    fn handle(&mut self) -> &mut DieselConnection {
+        self.0
+    }
+}
+pub trait DbWriteAccessProviderHistory {
+    fn handle(&mut self) -> &mut DieselConnection;
+}
+impl <'a> DbWriteAccessProviderHistory for DbWriteModeHistory<'a> {
     fn handle(&mut self) -> &mut DieselConnection {
         self.0
     }
@@ -309,19 +336,19 @@ impl<'a> DbWriter<'a> {
     }
 
     fn transaction<
-        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
+        F: FnOnce(DbWriteMode<'_>) -> std::result::Result<T, TransactionError>,
         T,
     >(
         conn: &mut DieselConnection,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        conn.transaction(transaction_actions)
+        conn.transaction(|conn| transaction_actions(DbWriteMode(conn)))
             .map_err(|e| e.into_report())
     }
 
     pub async fn db_transaction_raw<
-        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(DbWriteMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -356,19 +383,19 @@ impl<'a> DbWriterHistory<'a> {
     }
 
     fn transaction<
-        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
+        F: FnOnce(DbWriteModeHistory<'_>) -> std::result::Result<T, TransactionError>,
         T,
     >(
         conn: &mut DieselConnection,
         transaction_actions: F,
     ) -> error_stack::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
-        conn.transaction(transaction_actions)
+        conn.transaction(|conn| transaction_actions(DbWriteModeHistory(conn)))
             .map_err(|e| e.into_report())
     }
 
     pub async fn db_transaction_raw<
-        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(DbWriteModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -402,6 +429,18 @@ impl<'a> DbWriterWithHistory<'a> {
         Self { db, db_history }
     }
 
+    fn transaction<
+        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError>,
+        T,
+    >(
+        conn: &mut DieselConnection,
+        transaction_actions: F,
+    ) -> error_stack::Result<T, DieselDatabaseError> {
+        use diesel::prelude::*;
+        conn.transaction(transaction_actions)
+            .map_err(|e| e.into_report())
+    }
+
     pub async fn db_transaction_with_history<T, R: Send + 'static>(
         &self,
         cmd: T,
@@ -409,7 +448,7 @@ impl<'a> DbWriterWithHistory<'a> {
     where
         T: FnOnce(
                 TransactionConnection<'_>,
-                PoolObject,
+                DbWriteModeHistory<'_>,
             ) -> std::result::Result<R, TransactionError>
             + Send
             + 'static,
@@ -425,7 +464,7 @@ impl<'a> DbWriterWithHistory<'a> {
             .await
             .change_context(DieselDatabaseError::GetConnection)?;
 
-        let conn_history = self
+        let mut conn_history = self
             .db_history
             .0
             .diesel()
@@ -435,9 +474,9 @@ impl<'a> DbWriterWithHistory<'a> {
             .change_context(DieselDatabaseError::GetConnection)?;
 
         conn.interact(move |conn| {
-            CurrentSyncWriteCommands::new(conn).transaction(move |conn| {
-                let transaction_connection = TransactionConnection::new(conn);
-                cmd(transaction_connection, conn_history)
+            Self::transaction(conn, move |conn| {
+                let transaction_connection = TransactionConnection::new(DbWriteMode(conn));
+                cmd(transaction_connection, DbWriteModeHistory(conn_history.as_mut()))
             })
         })
         .await?

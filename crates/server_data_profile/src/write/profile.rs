@@ -1,15 +1,13 @@
 use database::current::read::GetDbReadCommandsCommon;
-use database_profile::current::read::GetDbReadCommandsProfile;
+use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
     AccountIdInternal, Location, ProfileAttributeFilterListUpdateValidated, ProfileSearchAgeRangeValidated, ProfileStateInternal, ProfileUpdateInternal, ValidatedSearchGroups
 };
 use server_data::{
-    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, index::{location::LocationIndexIteratorState, LocationWrite}, read::DbReadCommon, result::Result, DataError, IntoDataError
+    app::GetConfig, cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, index::{location::LocationIndexIteratorState, LocationWrite}, read::DbReadCommon, result::Result, DataError, IntoDataError, write::DbTransaction,
 };
 use tracing::info;
 use crate::cache::{CacheReadProfile, CacheWriteProfile};
-
-use super::DbTransactionProfile;
 
 define_cmd_wrapper_write!(WriteCommandsProfile);
 

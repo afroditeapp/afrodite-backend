@@ -5,12 +5,11 @@ use model_profile::{
     AccountIdInternal, Attribute, LastSeenTimeFilter, Location, ProfileAge, ProfileAttributeFilterValueUpdate, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileStateInternal, ProfileUpdateInternal, ProfileVersion, SyncVersion, UnixTime
 };
 
-use super::ConnectionProvider;
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteProfileData, CurrentSyncWriteProfileData);
+define_current_write_commands!(CurrentWriteProfileData);
 
-impl<C: ConnectionProvider> CurrentSyncWriteProfileData<C> {
+impl CurrentWriteProfileData<'_> {
     pub fn insert_profile(
         &mut self,
         id: AccountIdInternal,

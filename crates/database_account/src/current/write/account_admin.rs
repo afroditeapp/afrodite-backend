@@ -1,12 +1,11 @@
-use database::{define_current_write_commands, ConnectionProvider};
+use database::define_current_write_commands;
 
 mod news;
 
-define_current_write_commands!(CurrentWriteAccountAdmin, CurrentSyncWriteAccountAdmin);
+define_current_write_commands!(CurrentWriteAccountAdmin);
 
-
-impl<C: ConnectionProvider> CurrentSyncWriteAccountAdmin<C> {
-    pub fn news(self) -> news::CurrentSyncWriteAccountNewsAdmin<C> {
-        news::CurrentSyncWriteAccountNewsAdmin::new(self.cmds)
+impl <'a> CurrentWriteAccountAdmin<'a> {
+    pub fn news(self) -> news::CurrentWriteAccountNewsAdmin<'a> {
+        news::CurrentWriteAccountNewsAdmin::new(self.cmds)
     }
 }

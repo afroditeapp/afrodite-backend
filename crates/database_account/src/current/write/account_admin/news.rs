@@ -1,5 +1,5 @@
 
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
 use model::{AccountIdInternal, SyncVersion, UnixTime};
@@ -9,9 +9,9 @@ use model_account::{
 
 use crate::{current::read::GetDbReadCommandsAccount, IntoDatabaseError};
 
-define_current_write_commands!(CurrentWriteAccountNewsAdmin, CurrentSyncWriteAccountNewsAdmin);
+define_current_write_commands!(CurrentWriteAccountNewsAdmin);
 
-impl<C: ConnectionProvider> CurrentSyncWriteAccountNewsAdmin<C> {
+impl CurrentWriteAccountNewsAdmin<'_> {
     pub fn create_new_news_item(
         &mut self,
         id_value: AccountIdInternal,

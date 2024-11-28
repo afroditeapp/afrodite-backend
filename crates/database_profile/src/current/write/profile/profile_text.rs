@@ -3,12 +3,11 @@ use diesel::{prelude::*, update, ExpressionMethods};
 use error_stack::Result;
 use model_profile::{AccountIdDb, AccountIdInternal, ProfileTextModerationState, UnixTime};
 
-use super::ConnectionProvider;
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteProfileText, CurrentSyncWriteProfileText);
+define_current_write_commands!(CurrentWriteProfileText);
 
-impl<C: ConnectionProvider> CurrentSyncWriteProfileText<C> {
+impl CurrentWriteProfileText<'_> {
     pub fn reset_profile_text_moderation_state(
         &mut self,
         id: AccountIdInternal,

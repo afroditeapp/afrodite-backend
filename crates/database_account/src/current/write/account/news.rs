@@ -1,13 +1,13 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, NewsSyncVersion, SyncVersion, UnreadNewsCount};
 
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteAccountNews, CurrentSyncWriteAccountNews);
+define_current_write_commands!(CurrentWriteAccountNews);
 
-impl<C: ConnectionProvider> CurrentSyncWriteAccountNews<C> {
+impl CurrentWriteAccountNews<'_> {
     pub fn reset_news_sync_version(
         &mut self,
         id: AccountIdInternal,

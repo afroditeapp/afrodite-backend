@@ -1,3 +1,3 @@
 use database::define_current_write_commands;
 
-define_current_write_commands!(CurrentWriteChatAdmin, CurrentSyncWriteChatAdmin);
+define_current_write_commands!(CurrentWriteChatAdmin);

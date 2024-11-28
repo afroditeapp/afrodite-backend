@@ -6,12 +6,11 @@ use model_media::{
 };
 use simple_backend_utils::ContextExt;
 
-use super::ConnectionProvider;
 use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
 
-define_current_write_commands!(CurrentWriteMediaContent, CurrentSyncWriteMediaContent);
+define_current_write_commands!(CurrentWriteMediaContent);
 
-impl<C: ConnectionProvider> CurrentSyncWriteMediaContent<C> {
+impl CurrentWriteMediaContent<'_> {
     pub fn insert_current_account_media(
         &mut self,
         id: AccountIdInternal,

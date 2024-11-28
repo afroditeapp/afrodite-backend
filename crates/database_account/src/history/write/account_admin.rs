@@ -1,3 +1,3 @@
 use database::define_history_write_commands;
 
-define_history_write_commands!(HistoryWriteAccountAdmin, HistorySyncWriteAccountAdmin);
+define_history_write_commands!(HistoryWriteAccountAdmin);

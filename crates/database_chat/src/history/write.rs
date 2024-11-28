@@ -1,47 +1,21 @@
-use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
+use chat_admin::HistoryWriteChatAdmin;
+use database::DbWriteAccessProviderHistory;
 
-use self::chat::HistorySyncWriteChat;
+use self::chat::HistoryWriteChat;
 
 pub mod chat;
 pub mod chat_admin;
 
-pub struct HistorySyncWriteCommands<C: ConnectionProvider> {
-    conn: C,
+pub trait GetDbHistoryWriteCommandsChat {
+    fn chat_history(&mut self) -> HistoryWriteChat;
+    fn chat_admin_history(&mut self) -> HistoryWriteChatAdmin;
 }
 
-impl<C: ConnectionProvider> HistorySyncWriteCommands<C> {
-    pub fn new(conn: C) -> Self {
-        Self { conn }
+impl <I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsChat for I {
+    fn chat_history(&mut self) -> HistoryWriteChat {
+        HistoryWriteChat::new(self.handle())
     }
-
-    pub fn into_chat(self) -> HistorySyncWriteChat<C> {
-        HistorySyncWriteChat::new(self.conn)
-    }
-
-    // pub fn read(&mut self) -> crate::history::read::HistorySyncReadCommands<&mut DieselConnection> {
-    //     self.conn.read()
-    // }
-
-    pub fn write(&mut self) -> &mut C {
-        &mut self.conn
-    }
-
-    pub fn conn(&mut self) -> &mut DieselConnection {
-        self.conn.conn()
-    }
-}
-
-impl HistorySyncWriteCommands<&mut DieselConnection> {
-    pub fn transaction<
-        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError> + 'static,
-        T,
-    >(
-        self,
-        transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
-        use diesel::prelude::*;
-        self.conn
-            .transaction(transaction_actions)
-            .map_err(|e| e.into_report())
+    fn chat_admin_history(&mut self) -> HistoryWriteChatAdmin {
+        HistoryWriteChatAdmin::new(self.handle())
     }
 }

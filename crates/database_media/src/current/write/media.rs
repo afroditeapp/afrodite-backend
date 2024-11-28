@@ -3,27 +3,28 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model_media::{AccountIdInternal, MediaStateRaw};
 
-use super::ConnectionProvider;
 use crate::IntoDatabaseError;
 
 mod media_content;
 mod moderation_request;
 
-define_current_write_commands!(CurrentWriteMedia, CurrentSyncWriteMedia);
+define_current_write_commands!(CurrentWriteMedia);
 
 pub struct DeletedSomething;
 
-impl<C: ConnectionProvider> CurrentSyncWriteMedia<C> {
-    pub fn media_content(self) -> media_content::CurrentSyncWriteMediaContent<C> {
-        media_content::CurrentSyncWriteMediaContent::new(self.cmds)
+impl <'a> CurrentWriteMedia<'a> {
+    pub fn media_content(self) -> media_content::CurrentWriteMediaContent<'a> {
+        media_content::CurrentWriteMediaContent::new(self.cmds)
     }
 
     pub fn moderation_request(
         self,
-    ) -> moderation_request::CurrentSyncWriteMediaModerationRequest<C> {
-        moderation_request::CurrentSyncWriteMediaModerationRequest::new(self.cmds)
+    ) -> moderation_request::CurrentWriteMediaModerationRequest<'a> {
+        moderation_request::CurrentWriteMediaModerationRequest::new(self.cmds)
     }
+}
 
+impl CurrentWriteMedia<'_> {
     pub fn insert_media_state(&mut self, id: AccountIdInternal) -> Result<(), DieselDatabaseError> {
         use model::schema::media_state::dsl::*;
 

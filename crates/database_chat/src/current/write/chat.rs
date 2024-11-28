@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model_chat::{
@@ -12,23 +12,25 @@ mod interaction;
 mod message;
 mod push_notifications;
 
-define_current_write_commands!(CurrentWriteChat, CurrentSyncWriteChat);
+define_current_write_commands!(CurrentWriteChat);
 
-impl<C: ConnectionProvider> CurrentSyncWriteChat<C> {
-    pub fn interaction(self) -> interaction::CurrentSyncWriteChatInteraction<C> {
-        interaction::CurrentSyncWriteChatInteraction::new(self.cmds)
+impl <'a> CurrentWriteChat<'a> {
+    pub fn interaction(self) -> interaction::CurrentWriteChatInteraction<'a> {
+        interaction::CurrentWriteChatInteraction::new(self.cmds)
     }
 
-    pub fn message(self) -> message::CurrentSyncWriteChatMessage<C> {
-        message::CurrentSyncWriteChatMessage::new(self.cmds)
+    pub fn message(self) -> message::CurrentWriteChatMessage<'a> {
+        message::CurrentWriteChatMessage::new(self.cmds)
     }
 
     pub fn push_notifications(
         self,
-    ) -> push_notifications::CurrentSyncWriteChatPushNotifications<C> {
-        push_notifications::CurrentSyncWriteChatPushNotifications::new(self.cmds)
+    ) -> push_notifications::CurrentWriteChatPushNotifications<'a> {
+        push_notifications::CurrentWriteChatPushNotifications::new(self.cmds)
     }
+}
 
+impl CurrentWriteChat<'_> {
     pub fn insert_chat_state(&mut self, id: AccountIdInternal) -> Result<(), DieselDatabaseError> {
         use model::schema::chat_state::dsl::*;
 

@@ -1,13 +1,13 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model_chat::{AccountIdInternal, AccountInteractionInternal};
 
 use crate::{current::read::GetDbReadCommandsChat, IntoDatabaseError};
 
-define_current_write_commands!(CurrentWriteChatInteraction, CurrentSyncWriteChatInteraction);
+define_current_write_commands!(CurrentWriteChatInteraction);
 
-impl<C: ConnectionProvider> CurrentSyncWriteChatInteraction<C> {
+impl CurrentWriteChatInteraction<'_> {
     pub fn insert_account_interaction(
         &mut self,
         account1: AccountIdInternal,

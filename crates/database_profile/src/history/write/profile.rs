@@ -1,4 +1,4 @@
-use database::{define_history_write_commands, ConnectionProvider};
+use database::define_history_write_commands;
 // use diesel::{insert_into, prelude::*, ExpressionMethods};
 // use error_stack::{Result, ResultExt};
 // use model::{AccountIdInternal, Profile};
@@ -6,9 +6,9 @@ use database::{define_history_write_commands, ConnectionProvider};
 
 // use crate::IntoDatabaseError;
 
-define_history_write_commands!(HistoryWriteProfile, HistorySyncWriteProfile);
+define_history_write_commands!(HistoryWriteProfile);
 
-impl<C: ConnectionProvider> HistorySyncWriteProfile<C> {
+impl HistoryWriteProfile<'_> {
     // pub fn insert_profile(
     //     &mut self,
     //     account_id_internal: AccountIdInternal,

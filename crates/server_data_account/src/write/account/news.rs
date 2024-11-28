@@ -1,15 +1,14 @@
-use database_account::current::read::GetDbReadCommandsAccount;
+use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model_account::{AccountIdInternal, ResetNewsIteratorResult};
 use server_data::{
-    define_cmd_wrapper_write, result::Result, DataError, IntoDataError
+    define_cmd_wrapper_write, result::Result, DataError, IntoDataError, write::DbTransaction,
 };
 
-use crate::{cache::CacheWriteAccount, write::DbTransactionAccount};
+use crate::cache::CacheWriteAccount;
 
 define_cmd_wrapper_write!(WriteCommandsAccountNews);
 
 impl WriteCommandsAccountNews<'_> {
-
     pub async fn handle_reset_news_iterator(
         &self,
         id: AccountIdInternal,

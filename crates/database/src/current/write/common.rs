@@ -3,28 +3,29 @@ use error_stack::Result;
 use model::{AccountId, AccountIdDb, AccountIdInternal};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use super::ConnectionProvider;
-use crate::IntoDatabaseError;
+use crate::{define_current_write_commands, IntoDatabaseError};
 
 mod queue_number;
 mod state;
 mod token;
 
-define_write_commands!(CurrentWriteAccount, CurrentSyncWriteCommon);
+define_current_write_commands!(CurrentWriteCommon);
 
-impl<C: ConnectionProvider> CurrentSyncWriteCommon<C> {
-    pub fn queue_number(self) -> queue_number::CurrentSyncWriteCommonQueueNumber<C> {
-        queue_number::CurrentSyncWriteCommonQueueNumber::new(self.cmds)
+impl <'a> CurrentWriteCommon<'a> {
+    pub fn queue_number(self) -> queue_number::CurrentWriteCommonQueueNumber<'a> {
+        queue_number::CurrentWriteCommonQueueNumber::new(self.cmds)
     }
 
-    pub fn state(self) -> state::CurrentSyncWriteCommonState<C> {
-        state::CurrentSyncWriteCommonState::new(self.cmds)
+    pub fn state(self) -> state::CurrentWriteCommonState<'a> {
+        state::CurrentWriteCommonState::new(self.cmds)
     }
 
-    pub fn token(self) -> token::CurrentSyncWriteAccountToken<C> {
-        token::CurrentSyncWriteAccountToken::new(self.cmds)
+    pub fn token(self) -> token::CurrentWriteAccountToken<'a> {
+        token::CurrentWriteAccountToken::new(self.cmds)
     }
+}
 
+impl CurrentWriteCommon<'_> {
     pub fn insert_account_id(
         mut self,
         account_uuid: AccountId,

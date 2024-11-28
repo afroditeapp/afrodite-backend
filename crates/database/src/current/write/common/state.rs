@@ -7,12 +7,11 @@ use model::{
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
-use super::ConnectionProvider;
-use crate::{current::read::GetDbReadCommandsCommon, IntoDatabaseError};
+use crate::{current::read::GetDbReadCommandsCommon, define_current_write_commands, IntoDatabaseError};
 
-define_write_commands!(CurrentWriteAccountState, CurrentSyncWriteCommonState);
+define_current_write_commands!(CurrentWriteCommonState);
 
-impl<C: ConnectionProvider> CurrentSyncWriteCommonState<C> {
+impl CurrentWriteCommonState<'_> {
     pub fn insert_shared_state(
         &mut self,
         id: AccountIdInternal,

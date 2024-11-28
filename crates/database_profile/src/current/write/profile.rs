@@ -1,28 +1,26 @@
 use database::define_current_write_commands;
 
-use super::ConnectionProvider;
-
 mod data;
 mod favorite;
 mod profile_name_allowlist;
 mod profile_text;
 
-define_current_write_commands!(CurrentWriteProfile, CurrentSyncWriteProfile);
+define_current_write_commands!(CurrentWriteProfile);
 
-impl<C: ConnectionProvider> CurrentSyncWriteProfile<C> {
-    pub fn data(self) -> data::CurrentSyncWriteProfileData<C> {
-        data::CurrentSyncWriteProfileData::new(self.cmds)
+impl <'a> CurrentWriteProfile<'a> {
+    pub fn data(self) -> data::CurrentWriteProfileData<'a> {
+        data::CurrentWriteProfileData::new(self.cmds)
     }
 
-    pub fn favorite(self) -> favorite::CurrentSyncWriteProfileFavorite<C> {
-        favorite::CurrentSyncWriteProfileFavorite::new(self.cmds)
+    pub fn favorite(self) -> favorite::CurrentWriteProfileFavorite<'a> {
+        favorite::CurrentWriteProfileFavorite::new(self.cmds)
     }
 
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentSyncWriteProfileNameAllowlist<C> {
-        profile_name_allowlist::CurrentSyncWriteProfileNameAllowlist::new(self.cmds)
+    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentWriteProfileNameAllowlist<'a> {
+        profile_name_allowlist::CurrentWriteProfileNameAllowlist::new(self.cmds)
     }
 
-    pub fn profile_text(self) -> profile_text::CurrentSyncWriteProfileText<C> {
-        profile_text::CurrentSyncWriteProfileText::new(self.cmds)
+    pub fn profile_text(self) -> profile_text::CurrentWriteProfileText<'a> {
+        profile_text::CurrentWriteProfileText::new(self.cmds)
     }
 }

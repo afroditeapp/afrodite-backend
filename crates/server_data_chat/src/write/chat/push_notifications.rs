@@ -1,9 +1,8 @@
+use database_chat::current::write::GetDbWriteCommandsChat;
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotification, PendingNotificationToken, PushNotificationStateInfo};
 use server_data::{
-    cache::CacheReadCommon, define_cmd_wrapper_write, result::Result, DataError
+    cache::CacheReadCommon, define_cmd_wrapper_write, result::Result, DataError, write::DbTransaction,
 };
-
-use crate::write::DbTransactionChat;
 
 define_cmd_wrapper_write!(WriteCommandsChatPushNotifications);
 

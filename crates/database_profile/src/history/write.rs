@@ -1,56 +1,21 @@
-use database::{ConnectionProvider, DieselConnection, DieselDatabaseError, TransactionError};
-use profile_admin::HistorySyncWriteProfileAdmin;
+use database::DbWriteAccessProviderHistory;
+use profile_admin::HistoryWriteProfileAdmin;
 
-use self::profile::HistorySyncWriteProfile;
+use self::profile::HistoryWriteProfile;
 
 pub mod profile;
 pub mod profile_admin;
 
-pub struct HistorySyncWriteCommands<C: ConnectionProvider> {
-    conn: C,
+pub trait GetDbHistoryWriteCommandsProfile {
+    fn profile_history(&mut self) -> HistoryWriteProfile;
+    fn profile_admin_history(&mut self) -> HistoryWriteProfileAdmin;
 }
 
-impl<C: ConnectionProvider> HistorySyncWriteCommands<C> {
-    pub fn new(conn: C) -> Self {
-        Self { conn }
+impl <I: DbWriteAccessProviderHistory> GetDbHistoryWriteCommandsProfile for I {
+    fn profile_history(&mut self) -> HistoryWriteProfile {
+        HistoryWriteProfile::new(self.handle())
     }
-
-    pub fn into_profile(self) -> HistorySyncWriteProfile<C> {
-        HistorySyncWriteProfile::new(self.conn)
-    }
-
-    // pub fn read(&mut self) -> crate::history::read::HistorySyncReadCommands<&mut DieselConnection> {
-    //     self.conn.read()
-    // }
-
-    pub fn write(&mut self) -> &mut C {
-        &mut self.conn
-    }
-
-    pub fn conn(&mut self) -> &mut DieselConnection {
-        self.conn.conn()
-    }
-}
-
-impl HistorySyncWriteCommands<&mut DieselConnection> {
-    pub fn profile(&mut self) -> HistorySyncWriteProfile<&mut DieselConnection> {
-        HistorySyncWriteProfile::new(self.write())
-    }
-
-    pub fn profile_admin(&mut self) -> HistorySyncWriteProfileAdmin<&mut DieselConnection> {
-        HistorySyncWriteProfileAdmin::new(self.write())
-    }
-
-    pub fn transaction<
-        F: FnOnce(&mut DieselConnection) -> std::result::Result<T, TransactionError> + 'static,
-        T,
-    >(
-        self,
-        transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
-        use diesel::prelude::*;
-        self.conn
-            .transaction(transaction_actions)
-            .map_err(|e| e.into_report())
+    fn profile_admin_history(&mut self) -> HistoryWriteProfileAdmin {
+        HistoryWriteProfileAdmin::new(self.handle())
     }
 }

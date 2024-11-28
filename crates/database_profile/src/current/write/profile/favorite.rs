@@ -4,12 +4,11 @@ use error_stack::Result;
 use model::AccountIdInternal;
 use simple_backend_utils::current_unix_time;
 
-use super::ConnectionProvider;
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteProfileFavorite, CurrentSyncWriteProfileFavorite);
+define_current_write_commands!(CurrentWriteProfileFavorite);
 
-impl<C: ConnectionProvider> CurrentSyncWriteProfileFavorite<C> {
+impl CurrentWriteProfileFavorite<'_> {
     pub fn insert_favorite_profile(
         &mut self,
         id: AccountIdInternal,

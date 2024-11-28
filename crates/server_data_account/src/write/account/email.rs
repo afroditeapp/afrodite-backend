@@ -1,9 +1,8 @@
+use database_account::current::write::GetDbWriteCommandsAccount;
 use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
 use server_data::{
-    app::GetEmailSender, define_cmd_wrapper_write, result::Result, DataError
+    app::GetEmailSender, define_cmd_wrapper_write, result::Result, DataError, write::DbTransaction,
 };
-
-use crate::write::DbTransactionAccount;
 
 define_cmd_wrapper_write!(WriteCommandsAccountEmail);
 

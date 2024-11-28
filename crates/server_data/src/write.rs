@@ -31,7 +31,7 @@ pub struct AccountWriteLock;
 /// ```
 macro_rules! db_transaction {
     ($state:expr, move |mut $cmds:ident| $commands:expr) => {{
-        $crate::IntoDataError::into_error($state.db_transaction_common(move |mut $cmds| ($commands)).await)
+        $crate::IntoDataError::into_error($state.db_transaction(move |mut $cmds| ($commands)).await)
     }};
     ($state:expr, move |$cmds:ident| $commands:expr) => {{
         $crate::data::IntoDataError::into_error(
@@ -53,12 +53,10 @@ impl <'a, I: WriteAccessProvider<'a>> GetWriteCommandsCommon<'a> for I {
     }
 }
 
-pub trait DbTransactionCommon {
-    async fn db_transaction_common<
+pub trait DbTransaction {
+    async fn db_transaction<
         T: FnOnce(
-                database::current::write::CurrentSyncWriteCommands<
-                    &mut database::DieselConnection,
-                >,
+                database::DbWriteMode<'_>
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
@@ -69,12 +67,10 @@ pub trait DbTransactionCommon {
     ) -> error_stack::Result<R, database::DieselDatabaseError>;
 }
 
-impl <I: InternalWriting> DbTransactionCommon for I {
-    async fn db_transaction_common<
+impl <I: InternalWriting> DbTransaction for I {
+    async fn db_transaction<
         T: FnOnce(
-                database::current::write::CurrentSyncWriteCommands<
-                    &mut database::DieselConnection,
-                >,
+                database::DbWriteMode<'_>
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
@@ -83,6 +79,36 @@ impl <I: InternalWriting> DbTransactionCommon for I {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, database::DieselDatabaseError> {
-        self.db_transaction_raw(|c| cmd(database::current::write::CurrentSyncWriteCommands::new(c))).await
+        self.db_transaction_raw(cmd).await
+    }
+}
+
+pub trait DbTransactionHistory {
+    async fn db_transaction_history<
+        T: FnOnce(
+                database::DbWriteModeHistory<'_>
+            ) -> error_stack::Result<R, database::DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, database::DieselDatabaseError>;
+}
+
+impl <I: InternalWriting> DbTransactionHistory for I {
+    async fn db_transaction_history<
+        T: FnOnce(
+                database::DbWriteModeHistory<'_>
+            ) -> error_stack::Result<R, database::DieselDatabaseError>
+            + Send
+            + 'static,
+        R: Send + 'static,
+    >(
+        &self,
+        cmd: T,
+    ) -> error_stack::Result<R, database::DieselDatabaseError> {
+        self.db_transaction_history_raw(cmd).await
     }
 }

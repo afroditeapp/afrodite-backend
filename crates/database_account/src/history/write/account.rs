@@ -1,4 +1,4 @@
-use database::{define_history_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_history_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::{Result, ResultExt};
 use model::{Account, AccountIdInternal};
@@ -6,9 +6,9 @@ use simple_backend_utils::current_unix_time;
 
 use crate::IntoDatabaseError;
 
-define_history_write_commands!(HistoryWriteAccount, HistorySyncWriteAccount);
+define_history_write_commands!(HistoryWriteAccount);
 
-impl<C: ConnectionProvider> HistorySyncWriteAccount<C> {
+impl HistoryWriteAccount<'_> {
     pub fn insert_account_id(
         &mut self,
         account_id_internal: AccountIdInternal,

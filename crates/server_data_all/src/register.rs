@@ -1,9 +1,15 @@
-use std::{ops::DerefMut, sync::Arc};
+use std::sync::Arc;
 
 use config::Config;
+use database::current::write::GetDbWriteCommandsCommon;
 use database::{
-    current::write::TransactionConnection, ConnectionProvider, PoolObject, TransactionError,
+    current::write::TransactionConnection, TransactionError, DbWriteModeHistory
 };
+use database_account::current::write::GetDbWriteCommandsAccount;
+use database_account::history::write::GetDbHistoryWriteCommandsAccount;
+use database_chat::current::write::GetDbWriteCommandsChat;
+use database_media::current::write::GetDbWriteCommandsMedia;
+use database_profile::current::write::GetDbWriteCommandsProfile;
 use model_account::{
     Account, AccountId, AccountIdInternal, AccountInternal, EmailAddress, SharedStateRaw, SignInWithInfo
 };
@@ -59,20 +65,18 @@ impl RegisterAccount<'_> {
         account_id: AccountId,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
-        mut transaction: TransactionConnection<'_>,
-        mut history_conn: PoolObject,
+        transaction: TransactionConnection,
+        history_conn: DbWriteModeHistory,
     ) -> std::result::Result<AccountIdInternal, TransactionError> {
         let account = Account::default();
 
-        let mut conn = &mut transaction;
+        let mut current = transaction.into_conn();
 
         // No transaction for history as it does not matter if some default
         // data will be left there if there is some error.
-        let mut history =
-            database_account::history::write::HistorySyncWriteCommands::new(history_conn.as_mut());
+        let mut history = history_conn;
 
         // Common
-        let mut current = database::current::write::CurrentSyncWriteCommands::new(conn.conn());
         let id = current.common().insert_account_id(account_id)?;
         current.common().token().insert_access_token(id, None)?;
         current.common().token().insert_refresh_token(id, None)?;
@@ -86,11 +90,9 @@ impl RegisterAccount<'_> {
             .insert_shared_state(id, SharedStateRaw::default())?;
 
         // Common history
-        history.account().insert_account_id(id)?;
+        history.account_history().insert_account_id(id)?;
 
         if config.components().account {
-            let mut current =
-                database_account::current::write::CurrentSyncWriteCommands::new(conn.conn());
             current
                 .account()
                 .data()
@@ -112,15 +114,10 @@ impl RegisterAccount<'_> {
             }
 
             // Account history
-            history.account().insert_account(id, &account)?;
+            history.account_history().insert_account(id, &account)?;
         }
 
         if config.components().profile {
-            let mut current =
-                database_profile::current::write::CurrentSyncWriteCommands::new(conn.conn());
-            let _history = database_profile::history::write::HistorySyncWriteCommands::new(
-                history_conn.deref_mut(),
-            );
             let _profile = current.profile().data().insert_profile(id)?;
             current.profile().data().insert_profile_state(id)?;
 
@@ -135,8 +132,6 @@ impl RegisterAccount<'_> {
         }
 
         if config.components().media {
-            let mut current =
-                database_media::current::write::CurrentSyncWriteCommands::new(conn.conn());
             current.media().insert_media_state(id)?;
 
             current
@@ -146,8 +141,6 @@ impl RegisterAccount<'_> {
         }
 
         if config.components().chat {
-            let mut current =
-                database_chat::current::write::CurrentSyncWriteCommands::new(conn.conn());
             current.chat().insert_chat_state(id)?;
         }
 

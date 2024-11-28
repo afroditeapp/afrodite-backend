@@ -1,7 +1,6 @@
+use database_profile::history::write::GetDbHistoryWriteCommandsProfile;
 use model_profile::GetProfileStatisticsResult;
-use server_data::{define_cmd_wrapper_write, result::Result, DataError};
-
-use super::DbTransactionProfileHistory;
+use server_data::{define_cmd_wrapper_write, result::Result, DataError, write::DbTransactionHistory};
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminHistory);
 
@@ -11,7 +10,7 @@ impl WriteCommandsProfileAdminHistory<'_> {
         r: GetProfileStatisticsResult,
     ) -> Result<(), DataError> {
         db_transaction_history!(self, move |mut cmds| {
-            cmds.profile_admin().statistics().save_statistics(r)
+            cmds.profile_admin_history().statistics().save_statistics(r)
         })
     }
 }

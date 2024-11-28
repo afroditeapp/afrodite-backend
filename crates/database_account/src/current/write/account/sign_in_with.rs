@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::AccountIdInternal;
@@ -7,11 +7,10 @@ use model_account::SignInWithInfo;
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(
-    CurrentWriteAccountSignInWith,
-    CurrentSyncWriteAccountSignInWith
+    CurrentWriteAccountSignInWith
 );
 
-impl<C: ConnectionProvider> CurrentSyncWriteAccountSignInWith<C> {
+impl CurrentWriteAccountSignInWith<'_> {
     pub fn insert_sign_in_with_info(
         &mut self,
         id: AccountIdInternal,

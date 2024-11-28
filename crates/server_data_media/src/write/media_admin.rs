@@ -1,15 +1,13 @@
-use database::current::read::GetDbReadCommandsCommon;
-use database_media::current::write::media_admin::InitialModerationRequestIsNowAccepted;
+use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
+use database_media::current::write::{media_admin::InitialModerationRequestIsNowAccepted, GetDbWriteCommandsMedia};
 use model_media::{
     Account, AccountIdInternal, HandleModerationRequest, Moderation, ModerationQueueType,
     ProfileVisibility,
 };
 use server_common::{data::DataError, result::Result};
-use server_data::{app::GetConfig, define_cmd_wrapper_write, write::GetWriteCommandsCommon};
+use server_data::{app::GetConfig, define_cmd_wrapper_write, write::GetWriteCommandsCommon, write::DbTransaction};
 
 use crate::cache::CacheWriteMedia;
-
-use super::DbTransactionMedia;
 
 define_cmd_wrapper_write!(WriteCommandsMediaAdmin);
 

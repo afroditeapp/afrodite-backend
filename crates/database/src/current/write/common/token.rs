@@ -2,11 +2,11 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{AccessToken, AccountIdInternal, RefreshToken};
 
-use crate::{ConnectionProvider, DieselDatabaseError, IntoDatabaseError};
+use crate::{define_current_write_commands, DieselDatabaseError, IntoDatabaseError};
 
-define_write_commands!(CurrentWriteAccountToken, CurrentSyncWriteAccountToken);
+define_current_write_commands!(CurrentWriteAccountToken);
 
-impl<C: ConnectionProvider> CurrentSyncWriteAccountToken<C> {
+impl CurrentWriteAccountToken<'_> {
     pub fn insert_access_token(
         mut self,
         id: AccountIdInternal,

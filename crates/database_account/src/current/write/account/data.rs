@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, ConnectionProvider, DieselDatabaseError};
+use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
@@ -10,9 +10,9 @@ use model_account::{
 
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteAccountData, CurrentSyncWriteAccountData);
+define_current_write_commands!(CurrentWriteAccountData);
 
-impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
+impl CurrentWriteAccountData<'_> {
     pub fn insert_account(
         &mut self,
         id: AccountIdInternal,
@@ -65,7 +65,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteAccountData<C> {
         use model::schema::account_setup::dsl::*;
 
         if let Some(birthdate_value) = &data.birthdate {
-            self.common_write_access().common().state().update_birthdate(id, *birthdate_value)?;
+            self.write().common().state().update_birthdate(id, *birthdate_value)?;
         }
 
         update(account_setup.find(id.as_db_id()))

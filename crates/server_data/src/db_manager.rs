@@ -2,7 +2,7 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{
-    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, PoolObject, TransactionError
+    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, TransactionError
 };
 pub use server_common::{
     data::{DataError, IntoDataError},
@@ -230,7 +230,7 @@ pub trait InternalWriting {
     }
 
     async fn db_transaction_raw<
-        T: FnOnce(&mut database::DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbWriteMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -244,7 +244,7 @@ pub trait InternalWriting {
     }
 
     async fn db_transaction_history_raw<
-        T: FnOnce(&mut database::DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbWriteModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -264,7 +264,7 @@ pub trait InternalWriting {
     where
         T: FnOnce(
                 TransactionConnection<'_>,
-                PoolObject,
+                database::DbWriteModeHistory<'_>,
             ) -> std::result::Result<R, TransactionError>
             + Send
             + 'static,

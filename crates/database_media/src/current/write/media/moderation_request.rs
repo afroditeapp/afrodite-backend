@@ -1,4 +1,4 @@
-use database::{define_current_write_commands, DieselDatabaseError};
+use database::{current::write::GetDbWriteCommandsCommon, define_current_write_commands, DieselDatabaseError};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model_media::{
@@ -7,15 +7,14 @@ use model_media::{
 };
 use simple_backend_utils::ContextExt;
 
-use super::{ConnectionProvider, DeletedSomething};
+use super::DeletedSomething;
 use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
 
 define_current_write_commands!(
-    CurrentWriteMediaModerationRequest,
-    CurrentSyncWriteMediaModerationRequest
+    CurrentWriteMediaModerationRequest
 );
 
-impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
+impl CurrentWriteMediaModerationRequest<'_> {
     pub fn insert_content_id_to_slot(
         &mut self,
         content_uploader: AccountIdInternal,
@@ -118,7 +117,7 @@ impl<C: ConnectionProvider> CurrentSyncWriteMediaModerationRequest<C> {
         self.delete_moderation_request(request_creator)?;
 
         let queue_number_new = self
-            .common_write_access()
+            .write()
             .common()
             .queue_number()
             .create_new_queue_entry(request_creator, queue_type)?;

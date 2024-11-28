@@ -1,4 +1,4 @@
-use database_profile::current::read::GetDbReadCommandsProfile;
+use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, read::DbReadCommon, result::WrappedContextExt};
 
 use model_profile::{
@@ -6,10 +6,10 @@ use model_profile::{
 };
 use server_data::{
     result::Result,
-    DataError, IntoDataError,
+    DataError, IntoDataError, write::DbTransaction
 };
 
-use crate::{cache::CacheWriteProfile, write::DbTransactionProfile};
+use crate::cache::CacheWriteProfile;
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminProfileNameAllowlist);
 

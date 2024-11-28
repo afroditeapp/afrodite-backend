@@ -1,12 +1,12 @@
 
-use database::{define_history_write_commands, ConnectionProvider, DieselDatabaseError, IntoDatabaseError};
+use database::{define_history_write_commands, DieselDatabaseError, IntoDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model_profile::{GetProfileStatisticsResult, SaveTimeId, UnixTime};
 
-define_history_write_commands!(HistoryWriteProfileAdminStatistics, HistorySyncWriteProfileAdminStatistics);
+define_history_write_commands!(HistoryWriteProfileAdminStatistics);
 
-impl<C: ConnectionProvider> HistorySyncWriteProfileAdminStatistics<C> {
+impl <'a> HistoryWriteProfileAdminStatistics<'a> {
     pub fn save_statistics(
         &mut self,
         r: GetProfileStatisticsResult,
@@ -23,8 +23,8 @@ impl<C: ConnectionProvider> HistorySyncWriteProfileAdminStatistics<C> {
             r.public_profile_counts.non_binary
         )?;
 
-        type SaveMethod<C> = fn(&mut HistorySyncWriteProfileAdminStatistics<C>, SaveTimeId, i64, i64) -> Result<(), DieselDatabaseError>;
-        let mut handle_ages = |v: &Vec<i64>, save_method: SaveMethod<C>| {
+        type SaveMethod<'b> = fn(&mut HistoryWriteProfileAdminStatistics<'b>, SaveTimeId, i64, i64) -> Result<(), DieselDatabaseError>;
+        let mut handle_ages = |v: &Vec<i64>, save_method: SaveMethod<'a>| {
             for (i, c) in v.iter().enumerate() {
                 let age = r.age_counts.start_age + i as i64;
                 save_method(self, time_id, age, *c)?
@@ -68,7 +68,7 @@ macro_rules! define_integer_change_method {
         fn $method_name:ident,
         $table_name:ident,
     ) => {
-        impl<C: ConnectionProvider> HistorySyncWriteProfileAdminStatistics<C> {
+        impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
                 time_id: SaveTimeId,
@@ -133,7 +133,7 @@ macro_rules! define_age_change_method {
         fn $method_name:ident,
         $table_name:ident,
     ) => {
-        impl<C: ConnectionProvider> HistorySyncWriteProfileAdminStatistics<C> {
+        impl HistoryWriteProfileAdminStatistics<'_> {
             fn $method_name(
                 &mut self,
                 time_id: SaveTimeId,

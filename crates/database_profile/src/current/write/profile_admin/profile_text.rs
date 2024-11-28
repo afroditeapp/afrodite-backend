@@ -3,12 +3,11 @@ use diesel::{prelude::*, update, ExpressionMethods};
 use error_stack::Result;
 use model_profile::{AccountIdInternal, ProfileTextModerationRejectedReasonCategory, ProfileTextModerationRejectedReasonDetails, ProfileTextModerationState};
 
-use super::ConnectionProvider;
 use crate::IntoDatabaseError;
 
-define_current_write_commands!(CurrentWriteProfileAdminProfileText, CurrentWriteProfileAdminProfileText);
+define_current_write_commands!(CurrentWriteProfileAdminProfileText);
 
-impl<C: ConnectionProvider> CurrentWriteProfileAdminProfileText<C> {
+impl CurrentWriteProfileAdminProfileText<'_> {
     pub fn moderate_profile_text(
         &mut self,
         moderator_id: AccountIdInternal,

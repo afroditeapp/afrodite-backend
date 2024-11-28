@@ -1,3 +1,3 @@
 use database::define_history_write_commands;
 
-define_history_write_commands!(HistoryWriteMedia, HistorySyncWriteMedia);
+define_history_write_commands!(HistoryWriteMedia);

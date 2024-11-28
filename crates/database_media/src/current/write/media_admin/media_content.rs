@@ -3,15 +3,13 @@ use diesel::{prelude::*, update};
 use error_stack::Result;
 use model_media::{ContentId, ContentState};
 
-use super::ConnectionProvider;
 use crate::IntoDatabaseError;
 
 define_current_write_commands!(
-    CurrentWriteMediaAdminMediaContent,
-    CurrentSyncWriteMediaAdminMediaContent
+    CurrentWriteMediaAdminMediaContent
 );
 
-impl<C: ConnectionProvider> CurrentSyncWriteMediaAdminMediaContent<C> {
+impl CurrentWriteMediaAdminMediaContent<'_> {
     pub fn update_content_state(
         &mut self,
         content_id: ContentId,
