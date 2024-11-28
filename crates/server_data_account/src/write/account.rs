@@ -6,7 +6,7 @@ use model_account::{
 };
 use news::WriteCommandsAccountNews;
 use server_data::{
-    define_cmd_wrapper_write, read::DbReadCommon, result::Result, write::GetWriteCommandsCommon, DataError, DieselDatabaseError, write::DbTransaction,
+    define_cmd_wrapper_write, read::DbRead, result::Result, write::GetWriteCommandsCommon, DataError, DieselDatabaseError, write::DbTransaction,
 };
 
 pub mod email;

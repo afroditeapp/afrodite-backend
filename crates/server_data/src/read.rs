@@ -14,7 +14,7 @@ impl <'a, C: ReadAccessProvider<'a>> GetReadCommandsCommon<'a> for C {
     }
 }
 
-pub trait DbReadCommon {
+pub trait DbRead {
     async fn db_read<
         T: FnOnce(
                 database::DbReadMode<'_>,
@@ -28,7 +28,7 @@ pub trait DbReadCommon {
     ) -> error_stack::Result<R, database::DieselDatabaseError>;
 }
 
-impl <I: InternalReading> DbReadCommon for I {
+impl <I: InternalReading> DbRead for I {
     async fn db_read<
         T: FnOnce(
                 database::DbReadMode<'_>,

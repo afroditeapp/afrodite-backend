@@ -3,7 +3,7 @@ use database::current::read::GetDbReadCommandsCommon;
 use model::{AccessToken, Account, AccountId, AccountIdInternal, PendingNotificationFlags, RefreshToken};
 use server_common::data::IntoDataError;
 
-use super::{super::DataError, DbReadCommon};
+use super::{super::DataError, DbRead};
 use crate::{cache::CacheReadCommon, define_cmd_wrapper_read, id::ToAccountIdInternal, result::Result};
 
 define_cmd_wrapper_read!(ReadCommandsCommon);

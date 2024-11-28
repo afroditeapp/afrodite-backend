@@ -1,7 +1,7 @@
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{NewsId, NewsTranslations};
 use server_data::{
-    define_cmd_wrapper_read, read::DbReadCommon, result::Result, DataError, IntoDataError
+    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
 };
 
 define_cmd_wrapper_read!(ReadCommandsAccountNewsAdmin);

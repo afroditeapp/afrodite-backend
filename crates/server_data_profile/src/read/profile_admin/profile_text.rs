@@ -1,7 +1,7 @@
 use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{AccountIdInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams};
 use server_data::{
-    define_cmd_wrapper_read, read::DbReadCommon, result::Result, DataError, IntoDataError
+    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
 };
 
 define_cmd_wrapper_read!(ReadCommandsProfileText);

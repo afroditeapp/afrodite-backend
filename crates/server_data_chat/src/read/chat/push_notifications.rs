@@ -1,7 +1,7 @@
 use database_chat::current::read::GetDbReadCommandsChat;
 use model::AccountIdInternal;
 use server_data::{
-    define_cmd_wrapper_read, read::DbReadCommon, result::Result, DataError
+    define_cmd_wrapper_read, read::DbRead, result::Result, DataError
 };
 
 define_cmd_wrapper_read!(ReadCommandsChatPushNotifications);

@@ -3,7 +3,7 @@ use model_profile::{
     AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
 };
 use server_data::{
-    define_cmd_wrapper_read, read::DbReadCommon, result::Result, DataError, IntoDataError
+    define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError
 };
 
 use crate::cache::CacheReadProfile;

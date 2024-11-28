@@ -4,7 +4,7 @@ use model_account::{
     AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId,
     GoogleAccountId, SignInWithInfo,
 };
-use server_data::{define_cmd_wrapper_read, read::DbReadCommon, result::Result, DataError, IntoDataError};
+use server_data::{define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError};
 
 pub mod email;
 pub mod news;

@@ -1,5 +1,5 @@
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
-use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, read::DbReadCommon, result::WrappedContextExt};
+use server_data::{cache::profile::UpdateLocationCacheState, define_cmd_wrapper_write, read::DbRead, result::WrappedContextExt};
 
 use model_profile::{
     AccountIdInternal, ProfileTextModerationRejectedReasonCategory, ProfileTextModerationRejectedReasonDetails, ProfileVersion
