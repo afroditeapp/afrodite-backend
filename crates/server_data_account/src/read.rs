@@ -5,18 +5,18 @@ use self::{account::ReadCommandsAccount, account_admin::ReadCommandsAccountAdmin
 pub mod account;
 pub mod account_admin;
 
-pub trait GetReadCommandsAccount<C> {
-    fn account(self) -> ReadCommandsAccount<C>;
-    fn account_admin(self) -> ReadCommandsAccountAdmin<C>;
+pub trait GetReadCommandsAccount<'a> {
+    fn account(self) -> ReadCommandsAccount<'a>;
+    fn account_admin(self) -> ReadCommandsAccountAdmin<'a>;
 }
 
-impl <T: ReadAccessProvider> GetReadCommandsAccount<T> for T {
-    fn account(self) -> ReadCommandsAccount<T> {
-        ReadCommandsAccount::new(self)
+impl <'a, T: ReadAccessProvider<'a>> GetReadCommandsAccount<'a> for T {
+    fn account(self) -> ReadCommandsAccount<'a> {
+        ReadCommandsAccount::new(self.handle())
     }
 
-    fn account_admin(self) -> ReadCommandsAccountAdmin<T> {
-        ReadCommandsAccountAdmin::new(self)
+    fn account_admin(self) -> ReadCommandsAccountAdmin<'a> {
+        ReadCommandsAccountAdmin::new(self.handle())
     }
 }
 

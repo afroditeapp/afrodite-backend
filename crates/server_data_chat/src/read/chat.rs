@@ -6,7 +6,7 @@ use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
-    cache::{db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, CacheReadCommon}, define_cmd_wrapper, result::Result, DataError, IntoDataError
+    cache::{db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, CacheReadCommon}, define_cmd_wrapper_read, result::Result, DataError, IntoDataError
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
@@ -14,13 +14,15 @@ use self::push_notifications::ReadCommandsChatPushNotifications;
 use super::DbReadChat;
 
 
-define_cmd_wrapper!(ReadCommandsChat);
+define_cmd_wrapper_read!(ReadCommandsChat);
 
-impl<C: DbReadChat + CacheReadCommon> ReadCommandsChat<C> {
-    pub fn push_notifications(self) -> ReadCommandsChatPushNotifications<C> {
+impl <'a> ReadCommandsChat<'a> {
+    pub fn push_notifications(self) -> ReadCommandsChatPushNotifications<'a> {
         ReadCommandsChatPushNotifications::new(self.0)
     }
+}
 
+impl ReadCommandsChat<'_> {
     pub async fn chat_state(&self, id: AccountIdInternal) -> Result<ChatStateRaw, DataError> {
         self.db_read(move |mut cmds| cmds.chat().chat_state(id))
             .await

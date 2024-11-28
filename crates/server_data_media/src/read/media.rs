@@ -6,13 +6,13 @@ use server_common::{
     data::{DataError, IntoDataError},
     result::Result,
 };
-use server_data::{define_cmd_wrapper, file::{utils::ContentFile, FileRead}};
+use server_data::{define_cmd_wrapper_read, file::{utils::ContentFile, FileRead}};
 
 use super::DbReadMedia;
 
-define_cmd_wrapper!(ReadCommandsMedia);
+define_cmd_wrapper_read!(ReadCommandsMedia);
 
-impl<C: DbReadMedia + FileRead> ReadCommandsMedia<C> {
+impl ReadCommandsMedia<'_> {
     pub async fn content_data(
         &self,
         account_id: AccountId,

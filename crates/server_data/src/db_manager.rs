@@ -2,7 +2,7 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{
-    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbReaderRawUsingWriteHandle, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, PoolObject, TransactionError
+    current::write::TransactionConnection, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbReaderRawUsingWriteHandle, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryWriteHandle, PoolObject, TransactionError
 };
 pub use server_common::{
     data::{DataError, IntoDataError},
@@ -17,6 +17,8 @@ use crate::{
 };
 
 pub const DB_FILE_DIR_NAME: &str = "files";
+
+pub use database::{CurrentReadHandle, HistoryReadHandle};
 
 /// Absolsute path to database root directory.
 #[derive(Clone, Debug)]
@@ -114,21 +116,23 @@ impl DatabaseManager {
         let cache = DatabaseCache::new();
 
         let router_write_handle = RouterDatabaseWriteHandle {
+            read: RouterDatabaseReadHandle {
+                current_read_handle: current_write_handle.to_read_handle(),
+                history_read_handle: history_write_handle.to_read_handle(),
+                root: root.into(),
+                cache: cache.into(),
+            },
             config: config.clone(),
             current_write_handle: current_write_handle.clone(),
             history_write_handle: history_write_handle.clone(),
-            current_read_handle: current_write_handle.to_read_handle(),
-            history_read_handle: history_write_handle.to_read_handle(),
-            root: root.into(),
-            cache: cache.into(),
             location: index.into(),
             media_backup,
             push_notification_sender,
             email_sender,
         };
 
-        let root = router_write_handle.root.clone();
-        let cache = router_write_handle.cache.clone();
+        let root = router_write_handle.read.root.clone();
+        let cache = router_write_handle.read.cache.clone();
         let router_read_handle = RouterDatabaseReadHandle {
             current_read_handle: current_read_handle.clone(),
             history_read_handle: history_read_handle.clone(),
@@ -156,17 +160,13 @@ impl DatabaseManager {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct RouterDatabaseWriteHandle {
+    /// This is actually the write handle
+    read: RouterDatabaseReadHandle,
     config: Arc<Config>,
-    root: Arc<DatabaseRoot>,
     current_write_handle: CurrentWriteHandle,
     history_write_handle: HistoryWriteHandle,
-    /// This is actually the write handle
-    current_read_handle: CurrentReadHandle,
-    /// This is actually the write handle
-    history_read_handle: HistoryReadHandle,
-    cache: Arc<DatabaseCache>,
     location: Arc<LocationIndexManager>,
     media_backup: MediaBackupHandle,
     push_notification_sender: PushNotificationSender,
@@ -176,8 +176,8 @@ pub struct RouterDatabaseWriteHandle {
 impl RouterDatabaseWriteHandle {
     pub fn user_write_commands_account(&self) -> WriteCommandsConcurrent {
         WriteCommandsConcurrent::new(
-            &self.cache,
-            &self.root.file_dir,
+            &self.read.cache,
+            &self.read.root.file_dir,
             LocationIndexIteratorHandle::new(&self.location),
         )
     }
@@ -189,7 +189,7 @@ impl RouterDatabaseWriteHandle {
     }
 
     pub fn events(&self) -> EventManagerWithCacheReference<'_> {
-        EventManagerWithCacheReference::new(&self.cache, &self.push_notification_sender)
+        EventManagerWithCacheReference::new(&self.read.cache, &self.push_notification_sender)
     }
 
     pub fn config(&self) -> &Config {
@@ -199,10 +199,6 @@ impl RouterDatabaseWriteHandle {
     pub fn location_raw(&self) -> &LocationIndexManager {
         &self.location
     }
-}
-
-pub struct RouterDatabaseWriteHandleRef<'a> {
-    pub handle: &'a RouterDatabaseWriteHandle,
 }
 
 pub trait InternalWriting {
@@ -293,7 +289,7 @@ impl InternalWriting for &RouterDatabaseWriteHandle {
     }
 
     fn root(&self) -> &DatabaseRoot {
-        &self.root
+        &self.read.root
     }
 
     fn current_write_handle(&self) -> &CurrentWriteHandle {
@@ -305,15 +301,15 @@ impl InternalWriting for &RouterDatabaseWriteHandle {
     }
 
     fn current_read_handle(&self) -> &CurrentReadHandle {
-        &self.current_read_handle
+        &self.read.current_read_handle
     }
 
     fn history_read_handle(&self) -> &HistoryReadHandle {
-        &self.history_read_handle
+        &self.read.history_read_handle
     }
 
     fn cache(&self) -> &DatabaseCache {
-        &self.cache
+        &self.read.cache
     }
 
     fn location(&self) -> &LocationIndexManager {
@@ -336,6 +332,7 @@ impl InternalWriting for &RouterDatabaseWriteHandle {
 pub trait WriteAccessProvider {}
 impl WriteAccessProvider for &RouterDatabaseWriteHandle {}
 
+#[derive(Debug)]
 pub struct RouterDatabaseReadHandle {
     root: Arc<DatabaseRoot>,
     current_read_handle: CurrentReadHandle,
@@ -371,9 +368,19 @@ impl<'a> ReadAdapter<'a> {
     }
 }
 
-pub trait ReadAccessProvider {}
-impl ReadAccessProvider for &RouterDatabaseReadHandle {}
-impl ReadAccessProvider for ReadAdapter<'_> {}
+pub trait ReadAccessProvider<'a> {
+    fn handle(self) -> &'a RouterDatabaseReadHandle;
+}
+impl <'a> ReadAccessProvider<'a> for &'a RouterDatabaseReadHandle {
+    fn handle(self) -> &'a RouterDatabaseReadHandle {
+        self
+    }
+}
+impl <'a> ReadAccessProvider<'a> for ReadAdapter<'a> {
+    fn handle(self) -> &'a RouterDatabaseReadHandle {
+        &self.cmds.read
+    }
+}
 
 pub trait InternalReading {
     fn root(&self) -> &DatabaseRoot;
@@ -446,18 +453,18 @@ impl <I: InternalWriting> InternalReading for I {
 
 impl InternalReading for ReadAdapter<'_> {
     fn root(&self) -> &DatabaseRoot {
-        &self.cmds.root
+        &self.cmds.read.root
     }
 
     fn current_read_handle(&self) -> &CurrentReadHandle {
-        &self.cmds.current_read_handle
+        &self.cmds.read.current_read_handle
     }
 
     fn history_read_handle(&self) -> &HistoryReadHandle {
-        &self.cmds.history_read_handle
+        &self.cmds.read.history_read_handle
     }
 
     fn cache(&self) -> &DatabaseCache {
-        &self.cmds.cache
+        &self.cmds.read.cache
     }
 }

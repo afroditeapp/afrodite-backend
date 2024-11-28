@@ -5,18 +5,18 @@ use server_data::db_manager::{InternalReading, ReadAccessProvider};
 pub mod media;
 pub mod media_admin;
 
-pub trait GetReadMediaCommands: Sized {
-    fn media(self) -> ReadCommandsMedia<Self>;
-    fn media_admin(self) -> ReadCommandsMediaAdmin<Self>;
+pub trait GetReadMediaCommands<'a> {
+    fn media(self) -> ReadCommandsMedia<'a>;
+    fn media_admin(self) -> ReadCommandsMediaAdmin<'a>;
 }
 
-impl <I: ReadAccessProvider> GetReadMediaCommands for I {
-    fn media(self) -> ReadCommandsMedia<Self> {
-        ReadCommandsMedia::new(self)
+impl <'a, I: ReadAccessProvider<'a>> GetReadMediaCommands<'a> for I {
+    fn media(self) -> ReadCommandsMedia<'a> {
+        ReadCommandsMedia::new(self.handle())
     }
 
-    fn media_admin(self) -> ReadCommandsMediaAdmin<Self> {
-        ReadCommandsMediaAdmin::new(self)
+    fn media_admin(self) -> ReadCommandsMediaAdmin<'a> {
+        ReadCommandsMediaAdmin::new(self.handle())
     }
 }
 

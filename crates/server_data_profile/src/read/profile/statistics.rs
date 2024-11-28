@@ -1,18 +1,17 @@
 use model_profile::{GetProfileStatisticsResult, ProfileAgeCounts, PublicProfileCounts, StatisticsGender, StatisticsProfileVisibility, UnixTime};
 use server_data::{
-    define_cmd_wrapper, result::Result, DataError
+    define_cmd_wrapper_read, result::Result, DataError
 };
 
 use crate::cache::CacheReadProfile;
 
-define_cmd_wrapper!(ReadCommandsProfileStatistics);
+define_cmd_wrapper_read!(ReadCommandsProfileStatistics);
 
-impl<C: CacheReadProfile> ReadCommandsProfileStatistics<C> {
+impl ReadCommandsProfileStatistics<'_> {
     pub async fn profile_statistics(
-        &mut self,
+        &self,
         profile_visibility: StatisticsProfileVisibility,
     ) -> Result<GetProfileStatisticsResult, DataError> {
-
         let generation_time = UnixTime::current_time();
         let mut account_count = 0;
         let mut public_profile_counts = PublicProfileCounts::default();

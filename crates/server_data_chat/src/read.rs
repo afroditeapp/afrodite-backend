@@ -5,17 +5,17 @@ use server_data::db_manager::{InternalReading, ReadAccessProvider};
 pub mod chat;
 pub mod chat_admin;
 
-pub trait GetReadChatCommands: Sized {
-    fn chat(self) -> ReadCommandsChat<Self>;
-    fn chat_admin(self) -> ReadCommandsChatAdmin<Self>;
+pub trait GetReadChatCommands<'a> {
+    fn chat(self) -> ReadCommandsChat<'a>;
+    fn chat_admin(self) -> ReadCommandsChatAdmin<'a>;
 }
 
-impl <I: ReadAccessProvider> GetReadChatCommands for I {
-    fn chat(self) -> ReadCommandsChat<Self> {
-        ReadCommandsChat::new(self)
+impl <'a, I: ReadAccessProvider<'a>> GetReadChatCommands<'a> for I {
+    fn chat(self) -> ReadCommandsChat<'a> {
+        ReadCommandsChat::new(self.handle())
     }
-    fn chat_admin(self) -> ReadCommandsChatAdmin<Self> {
-        ReadCommandsChatAdmin::new(self)
+    fn chat_admin(self) -> ReadCommandsChatAdmin<'a> {
+        ReadCommandsChatAdmin::new(self.handle())
     }
 }
 

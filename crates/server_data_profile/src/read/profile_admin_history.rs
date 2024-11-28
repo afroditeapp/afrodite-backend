@@ -1,13 +1,11 @@
-use server_data::define_cmd_wrapper;
-
-use super::DbReadProfileHistory;
+use server_data::define_cmd_wrapper_read;
 
 mod statistics;
 
-define_cmd_wrapper!(ReadCommandsProfileAdminHistory);
+define_cmd_wrapper_read!(ReadCommandsProfileAdminHistory);
 
-impl<C: DbReadProfileHistory> ReadCommandsProfileAdminHistory<C> {
-    pub fn statistics(self) -> statistics::ReadCommandsProfileAdminHistoryStatistics<C> {
+impl <'a> ReadCommandsProfileAdminHistory<'a> {
+    pub fn statistics(self) -> statistics::ReadCommandsProfileAdminHistoryStatistics<'a> {
         statistics::ReadCommandsProfileAdminHistoryStatistics::new(self.0)
     }
 }

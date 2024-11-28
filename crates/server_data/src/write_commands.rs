@@ -29,7 +29,7 @@ fn get_quit_lock() -> &'static Mutex<Option<mpsc::Sender<()>>> {
 /// Make VSCode rust-analyzer code type annotation shorter.
 /// The annotation is displayed when calling write() method.
 pub struct Cmds {
-    pub write: OwnedMutexGuard<RouterDatabaseWriteHandle>,
+    pub write: OwnedMutexGuard<Arc<RouterDatabaseWriteHandle>>,
 }
 
 impl std::ops::Deref for Cmds {
@@ -40,26 +40,14 @@ impl std::ops::Deref for Cmds {
     }
 }
 
-// pub struct Cmds<'a> {
-//     pub write: SyncWriteHandleRef<'a>,
-// }
-
-// impl <'a> std::ops::Deref for Cmds<'a> {
-//     type Target = SyncWriteHandleRef<'a>;
-
-//     fn deref(&self) -> &Self::Target {
-//         &self.write
-//     }
-// }
-
 #[derive(Debug)]
 pub struct WriteCommandRunnerHandle {
-    sync_write_mutex: Arc<Mutex<RouterDatabaseWriteHandle>>,
+    sync_write_mutex: Arc<Mutex<Arc<RouterDatabaseWriteHandle>>>,
     concurrent_write: ConcurrentWriteCommandHandle,
 }
 
 impl WriteCommandRunnerHandle {
-    pub async fn new(write: RouterDatabaseWriteHandle, config: &Config) -> (Self, WriteCmdWatcher) {
+    pub async fn new(write: Arc<RouterDatabaseWriteHandle>, config: &Config) -> (Self, WriteCmdWatcher) {
         let (quit_lock, quit_handle) = mpsc::channel::<()>(1);
         *get_quit_lock().lock().await = Some(quit_lock);
 
@@ -67,7 +55,7 @@ impl WriteCommandRunnerHandle {
 
         let runner_handle = Self {
             sync_write_mutex: Mutex::new(write.clone()).into(),
-            concurrent_write: ConcurrentWriteCommandHandle::new(write.into(), config),
+            concurrent_write: ConcurrentWriteCommandHandle::new(write, config),
         };
         (runner_handle, cmd_watcher)
     }

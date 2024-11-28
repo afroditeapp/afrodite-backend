@@ -4,13 +4,13 @@ use self::common::ReadCommandsCommon;
 
 pub mod common;
 
-pub trait GetReadCommandsCommon<C> {
-    fn common(self) -> ReadCommandsCommon<C>;
+pub trait GetReadCommandsCommon<'a> {
+    fn common(self) -> ReadCommandsCommon<'a>;
 }
 
-impl <C: ReadAccessProvider> GetReadCommandsCommon<C> for C {
-    fn common(self) -> ReadCommandsCommon<C> {
-        ReadCommandsCommon::new(self)
+impl <'a, C: ReadAccessProvider<'a>> GetReadCommandsCommon<'a> for C {
+    fn common(self) -> ReadCommandsCommon<'a> {
+        ReadCommandsCommon::new(self.handle())
     }
 }
 

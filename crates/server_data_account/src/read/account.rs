@@ -2,24 +2,26 @@ use model_account::{
     AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId,
     GoogleAccountId, SignInWithInfo,
 };
-use server_data::{define_cmd_wrapper, result::Result, DataError, IntoDataError};
+use server_data::{define_cmd_wrapper_read, result::Result, DataError, IntoDataError};
 
 use super::DbReadAccount;
 
 pub mod email;
 pub mod news;
 
-define_cmd_wrapper!(ReadCommandsAccount);
+define_cmd_wrapper_read!(ReadCommandsAccount);
 
-impl<C: DbReadAccount> ReadCommandsAccount<C> {
-    pub fn email(self) -> email::ReadCommandsAccountEmail<C> {
+impl<'a> ReadCommandsAccount<'a> {
+    pub fn email(self) -> email::ReadCommandsAccountEmail<'a> {
         email::ReadCommandsAccountEmail::new(self.0)
     }
 
-    pub fn news(self) -> news::ReadCommandsAccountNews<C> {
+    pub fn news(self) -> news::ReadCommandsAccountNews<'a> {
         news::ReadCommandsAccountNews::new(self.0)
     }
+}
 
+impl ReadCommandsAccount<'_> {
     pub async fn account_sign_in_with_info(
         &self,
         id: AccountIdInternal,

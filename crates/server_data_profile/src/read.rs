@@ -7,23 +7,23 @@ pub mod profile;
 pub mod profile_admin;
 pub mod profile_admin_history;
 
-pub trait GetReadProfileCommands<C> {
-    fn profile(self) -> ReadCommandsProfile<C>;
-    fn profile_admin(self) -> ReadCommandsProfileAdmin<C>;
-    fn profile_admin_history(self) -> ReadCommandsProfileAdminHistory<C>;
+pub trait GetReadProfileCommands<'a> {
+    fn profile(self) -> ReadCommandsProfile<'a>;
+    fn profile_admin(self) -> ReadCommandsProfileAdmin<'a>;
+    fn profile_admin_history(self) -> ReadCommandsProfileAdminHistory<'a>;
 }
 
-impl <I: ReadAccessProvider> GetReadProfileCommands<I> for I {
-    fn profile(self) -> ReadCommandsProfile<I> {
-        ReadCommandsProfile::new(self)
+impl <'a, I: ReadAccessProvider<'a>> GetReadProfileCommands<'a> for I {
+    fn profile(self) -> ReadCommandsProfile<'a> {
+        ReadCommandsProfile::new(self.handle())
     }
 
-    fn profile_admin(self) -> ReadCommandsProfileAdmin<I> {
-        ReadCommandsProfileAdmin::new(self)
+    fn profile_admin(self) -> ReadCommandsProfileAdmin<'a> {
+        ReadCommandsProfileAdmin::new(self.handle())
     }
 
-    fn profile_admin_history(self) -> ReadCommandsProfileAdminHistory<I> {
-        ReadCommandsProfileAdminHistory::new(self)
+    fn profile_admin_history(self) -> ReadCommandsProfileAdminHistory<'a> {
+        ReadCommandsProfileAdminHistory::new(self.handle())
     }
 }
 

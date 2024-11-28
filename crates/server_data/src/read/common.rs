@@ -3,11 +3,11 @@ use model::{AccessToken, Account, AccountId, AccountIdInternal, PendingNotificat
 use server_common::data::IntoDataError;
 
 use super::{super::DataError, DbReadCommon};
-use crate::{cache::CacheReadCommon, define_cmd_wrapper, id::ToAccountIdInternal, result::Result};
+use crate::{cache::CacheReadCommon, define_cmd_wrapper_read, id::ToAccountIdInternal, result::Result};
 
-define_cmd_wrapper!(ReadCommandsCommon);
+define_cmd_wrapper_read!(ReadCommandsCommon);
 
-impl<C: DbReadCommon + CacheReadCommon + ToAccountIdInternal> ReadCommandsCommon<C> {
+impl ReadCommandsCommon<'_> {
     pub async fn account_access_token(
         &self,
         id: AccountId,

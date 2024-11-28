@@ -1,14 +1,11 @@
+use server_data::define_cmd_wrapper_read;
 
 pub mod news;
 
-pub struct ReadCommandsAccountAdmin<C>(C);
+define_cmd_wrapper_read!(ReadCommandsAccountAdmin);
 
-impl<C> ReadCommandsAccountAdmin<C> {
-    pub fn new(c: C) -> Self {
-        Self(c)
-    }
-
-    pub fn news(self) -> news::ReadCommandsAccountNewsAdmin<C> {
+impl <'a> ReadCommandsAccountAdmin<'a> {
+    pub fn news(self) -> news::ReadCommandsAccountNewsAdmin<'a> {
         news::ReadCommandsAccountNewsAdmin::new(self.0)
     }
 }

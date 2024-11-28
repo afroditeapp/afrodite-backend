@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::while_let_loop, async_fn_in_trait)]
 
+use db_manager::RouterDatabaseReadHandle;
 pub use server_common::{
     data::{DataError, IntoDataError},
     result,
@@ -28,6 +29,8 @@ pub mod write_concurrent;
 
 // TODO: Remove?
 pub type DatabeseEntryId = String;
+
+pub type ReadHandleType = RouterDatabaseReadHandle;
 
 pub use database::{
     current::{read::CurrentSyncReadCommands, write::CurrentSyncWriteCommands},

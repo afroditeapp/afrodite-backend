@@ -2,7 +2,7 @@ use model_profile::{
     AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, Location, Profile, ProfileAndProfileVersion, ProfileAttributeFilterList, ProfileInternal, ProfileStateInternal, UnixTime
 };
 use server_data::{
-    define_cmd_wrapper, result::Result, DataError, IntoDataError
+    define_cmd_wrapper_read, result::Result, DataError, IntoDataError
 };
 
 use crate::cache::CacheReadProfile;
@@ -11,15 +11,15 @@ use super::DbReadProfile;
 
 mod statistics;
 
-define_cmd_wrapper!(ReadCommandsProfile);
+define_cmd_wrapper_read!(ReadCommandsProfile);
 
-impl<C> ReadCommandsProfile<C> {
-    pub fn statistics(self) -> statistics::ReadCommandsProfileStatistics<C> {
+impl<'a> ReadCommandsProfile<'a> {
+    pub fn statistics(self) -> statistics::ReadCommandsProfileStatistics<'a> {
         statistics::ReadCommandsProfileStatistics::new(self.0)
     }
 }
 
-impl<C: DbReadProfile + CacheReadProfile> ReadCommandsProfile<C> {
+impl ReadCommandsProfile<'_> {
     pub async fn profile_internal(
         &self,
         id: AccountIdInternal,
