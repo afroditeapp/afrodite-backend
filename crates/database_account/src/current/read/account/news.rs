@@ -1,13 +1,13 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{AccountId, AccountIdInternal, NewsSyncVersion, UnreadNewsCount};
 use model_account::{NewsId, NewsItem, NewsItemInternal, NewsItemSimple, NewsLocale, NewsTranslationInternal, PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale };
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadAccountNews, CurrentSyncReadAccountNews);
+define_current_read_commands!(CurrentReadAccountNews);
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountNews<C> {
+impl CurrentReadAccountNews<'_> {
     pub fn news_sync_version(
         &mut self,
         id: AccountIdInternal,

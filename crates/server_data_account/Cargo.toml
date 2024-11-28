@@ -13,4 +13,5 @@ model_account = { path = "../model_account" }
 server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }
 
+database = { path = "../database" }
 database_account = { path = "../database_account" }

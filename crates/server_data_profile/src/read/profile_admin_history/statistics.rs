@@ -1,3 +1,4 @@
+use database_profile::history::read::GetDbReadCommandsProfileHistory;
 use model_profile::{GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValueTypeInternal};
 use server_data::{
     define_cmd_wrapper_read, result::Result, DataError, IntoDataError

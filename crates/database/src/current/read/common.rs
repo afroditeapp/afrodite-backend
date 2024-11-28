@@ -1,29 +1,31 @@
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
 use model::{Account, AccountIdInternal, Permissions};
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsCommon, define_current_read_commands, IntoDatabaseError};
 
 mod queue_number;
 mod state;
 mod token;
 
-define_read_commands!(CurrentReadAccount, CurrentSyncReadCommon);
+define_current_read_commands!(CurrentReadCommon);
 
-impl<C: ConnectionProvider> CurrentSyncReadCommon<C> {
-    pub fn state(self) -> state::CurrentSyncReadCommonState<C> {
-        state::CurrentSyncReadCommonState::new(self.cmds)
+impl <'a> CurrentReadCommon<'a> {
+    pub fn state(self) -> state::CurrentReadCommonState<'a> {
+        state::CurrentReadCommonState::new(self.cmds)
     }
 
-    pub fn queue_number(self) -> queue_number::CurrentSyncReadCommonQueueNumber<C> {
-        queue_number::CurrentSyncReadCommonQueueNumber::new(self.cmds)
+    pub fn queue_number(self) -> queue_number::CurrentReadCommonQueueNumber<'a> {
+        queue_number::CurrentReadCommonQueueNumber::new(self.cmds)
     }
 
-    pub fn token(self) -> token::CurrentSyncReadAccountToken<C> {
-        token::CurrentSyncReadAccountToken::new(self.cmds)
+    pub fn token(self) -> token::CurrentReadAccountToken<'a> {
+        token::CurrentReadAccountToken::new(self.cmds)
     }
+}
 
+impl CurrentReadCommon<'_> {
     /// This data is available on all servers as if microservice mode is
     /// enabled, the account server will update the data to other servers.
     pub fn account(&mut self, id: AccountIdInternal) -> Result<Account, DieselDatabaseError> {

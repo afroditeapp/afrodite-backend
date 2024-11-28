@@ -1,16 +1,16 @@
-use database::{define_current_read_commands, ConnectionProvider};
+use database::define_current_read_commands;
 
 mod profile_name_allowlist;
 mod profile_text;
 
-define_current_read_commands!(CurrentReadProfileAdmin, CurrentSyncReadProfileAdmin);
+define_current_read_commands!(CurrentReadProfileAdmin);
 
-impl<C: ConnectionProvider> CurrentSyncReadProfileAdmin<C> {
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentSyncReadProfileNameAllowlist<C> {
-        profile_name_allowlist::CurrentSyncReadProfileNameAllowlist::new(self.cmds)
+impl<'a> CurrentReadProfileAdmin<'a> {
+    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
+        profile_name_allowlist::CurrentReadProfileNameAllowlist::new(self.cmds)
     }
 
-    pub fn profile_text(self) -> profile_text::CurrentSyncReadProfileText<C> {
-        profile_text::CurrentSyncReadProfileText::new(self.cmds)
+    pub fn profile_text(self) -> profile_text::CurrentReadProfileText<'a> {
+        profile_text::CurrentReadProfileText::new(self.cmds)
     }
 }

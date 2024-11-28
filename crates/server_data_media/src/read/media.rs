@@ -1,3 +1,5 @@
+use database::current::read::GetDbReadCommandsCommon;
+use database_media::current::read::GetDbReadCommandsMedia;
 use model_media::{
     AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw,
     ModerationRequest, ModerationRequestState,
@@ -6,9 +8,7 @@ use server_common::{
     data::{DataError, IntoDataError},
     result::Result,
 };
-use server_data::{define_cmd_wrapper_read, file::{utils::ContentFile, FileRead}};
-
-use super::DbReadMedia;
+use server_data::{define_cmd_wrapper_read, file::{utils::ContentFile, FileRead}, read::DbReadCommon};
 
 define_cmd_wrapper_read!(ReadCommandsMedia);
 

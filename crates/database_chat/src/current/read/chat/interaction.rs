@@ -1,6 +1,6 @@
 use std::i64;
 
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
@@ -9,9 +9,9 @@ use model_chat::{
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadChatInteraction, CurrentSyncReadChatInteraction);
+define_current_read_commands!(CurrentReadChatInteraction);
 
-impl<C: ConnectionProvider> CurrentSyncReadChatInteraction<C> {
+impl CurrentReadChatInteraction<'_> {
     pub fn account_interaction(
         &mut self,
         account2: AccountIdInternal,

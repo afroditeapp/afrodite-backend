@@ -7,7 +7,7 @@ use model_account::{
     AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation,
 };
 
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsAccount, IntoDatabaseError};
 
 define_current_write_commands!(CurrentWriteAccountNewsAdmin, CurrentSyncWriteAccountNewsAdmin);
 

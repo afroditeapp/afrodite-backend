@@ -1,11 +1,11 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 
-define_current_read_commands!(CurrentReadProfileFavorite, CurrentSyncReadProfileFavorite);
+define_current_read_commands!(CurrentReadProfileFavorite);
 
-impl<C: ConnectionProvider> CurrentSyncReadProfileFavorite<C> {
+impl CurrentReadProfileFavorite<'_> {
     pub fn favorites(
         &mut self,
         id: AccountIdInternal,

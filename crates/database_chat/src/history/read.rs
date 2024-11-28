@@ -1,24 +1,18 @@
-use database::ConnectionProvider;
+use database::define_history_read_commands;
 
-use self::{chat::HistorySyncReadChat, chat_admin::HistorySyncReadChatAdmin};
+use self::{chat::HistoryReadChat, chat_admin::HistoryReadChatAdmin};
 
 pub mod chat;
 pub mod chat_admin;
 
-pub struct HistorySyncReadCommands<C: ConnectionProvider> {
-    conn: C,
-}
+define_history_read_commands!(HistorySyncReadCommands);
 
-impl<C: ConnectionProvider> HistorySyncReadCommands<C> {
-    pub fn new(conn: C) -> Self {
-        Self { conn }
+impl <'a> HistorySyncReadCommands<'a> {
+    pub fn into_chat(self) -> HistoryReadChat<'a> {
+        HistoryReadChat::new(self.cmds)
     }
 
-    pub fn into_chat(self) -> HistorySyncReadChat<C> {
-        HistorySyncReadChat::new(self.conn)
-    }
-
-    pub fn into_chat_admin(self) -> HistorySyncReadChatAdmin<C> {
-        HistorySyncReadChatAdmin::new(self.conn)
+    pub fn into_chat_admin(self) -> HistoryReadChatAdmin<'a> {
+        HistoryReadChatAdmin::new(self.cmds)
     }
 }

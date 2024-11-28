@@ -1,13 +1,13 @@
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{AccountIdInternal, AccountStateRelatedSharedState, Permissions, OtherSharedState};
-use simple_backend_database::diesel_db::{ConnectionProvider, DieselDatabaseError};
+use simple_backend_database::diesel_db::DieselDatabaseError;
 
-use crate::IntoDatabaseError;
+use crate::{define_current_read_commands, IntoDatabaseError};
 
-define_read_commands!(CurrentReadAccountState, CurrentSyncReadCommonState);
+define_current_read_commands!(CurrentReadCommonState);
 
-impl<C: ConnectionProvider> CurrentSyncReadCommonState<C> {
+impl CurrentReadCommonState<'_> {
     pub fn account_state_related_shared_state(
         &mut self,
         id: AccountIdInternal,

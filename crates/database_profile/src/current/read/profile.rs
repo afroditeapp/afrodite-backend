@@ -1,19 +1,19 @@
-use database::{define_current_read_commands, ConnectionProvider};
+use database::define_current_read_commands;
 
 mod data;
 mod favorite;
 mod profile_name_allowlist;
 
-define_current_read_commands!(CurrentReadProfile, CurrentSyncReadProfile);
+define_current_read_commands!(CurrentReadProfile);
 
-impl<C: ConnectionProvider> CurrentSyncReadProfile<C> {
-    pub fn data(self) -> data::CurrentSyncReadProfileData<C> {
-        data::CurrentSyncReadProfileData::new(self.cmds)
+impl<'a> CurrentReadProfile<'a> {
+    pub fn data(self) -> data::CurrentReadProfileData<'a> {
+        data::CurrentReadProfileData::new(self.cmds)
     }
-    pub fn favorite(self) -> favorite::CurrentSyncReadProfileFavorite<C> {
-        favorite::CurrentSyncReadProfileFavorite::new(self.cmds)
+    pub fn favorite(self) -> favorite::CurrentReadProfileFavorite<'a> {
+        favorite::CurrentReadProfileFavorite::new(self.cmds)
     }
-    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentSyncReadProfileNameAllowlist<C> {
-        profile_name_allowlist::CurrentSyncReadProfileNameAllowlist::new(self.cmds)
+    pub fn profile_name_allowlist(self) -> profile_name_allowlist::CurrentReadProfileNameAllowlist<'a> {
+        profile_name_allowlist::CurrentReadProfileNameAllowlist::new(self.cmds)
     }
 }

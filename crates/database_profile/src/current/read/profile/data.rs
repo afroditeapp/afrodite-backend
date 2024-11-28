@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{
     AcceptedProfileAges, AccountIdInternal, GetMyProfileResult, LastSeenTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileStateInternal, UnixTime
 };
 
-define_current_read_commands!(CurrentReadProfileData, CurrentSyncReadProfileData);
+define_current_read_commands!(CurrentReadProfileData);
 
-impl<C: ConnectionProvider> CurrentSyncReadProfileData<C> {
+impl CurrentReadProfileData<'_> {
     pub fn profile_internal(
         &mut self,
         id: AccountIdInternal,

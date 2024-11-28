@@ -2,7 +2,7 @@ use std::{fmt::Debug, fs, path::Path, sync::Arc};
 
 use config::Config;
 use database::{
-    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbReaderRawUsingWriteHandle, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselConnection, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, PoolObject, TransactionError
+    current::write::TransactionConnection, CurrentReadHandle, CurrentWriteHandle, DatabaseHandleCreator, DbReadCloseHandle, DbReaderHistoryRaw, DbReaderRaw, DbWriteCloseHandle, DbWriter, DbWriterHistory, DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle, PoolObject, TransactionError
 };
 pub use server_common::{
     data::{DataError, IntoDataError},
@@ -275,7 +275,7 @@ pub trait InternalWriting {
     }
 
     async fn db_read_raw<
-        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -283,7 +283,7 @@ pub trait InternalWriting {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, DieselDatabaseError> {
-        DbReaderRawUsingWriteHandle::new(self.current_write_handle())
+        DbReaderRaw::new(self.current_read_handle())
             .db_read(cmd)
             .await
     }
@@ -405,7 +405,7 @@ pub trait InternalReading {
     fn cache(&self) -> &DatabaseCache;
 
     async fn db_read_raw<
-        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
@@ -417,7 +417,7 @@ pub trait InternalReading {
     }
 
     async fn db_read_history_raw<
-        T: FnOnce(&mut DieselConnection) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,

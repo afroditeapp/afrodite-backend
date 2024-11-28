@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
@@ -6,9 +6,9 @@ use model_account::AccountEmailSendingStateRaw;
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadAccountEmail, CurrentSyncReadAccountEmail);
+define_current_read_commands!(CurrentReadAccountEmail);
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountEmail<C> {
+impl CurrentReadAccountEmail<'_> {
     pub fn email_sending_states(
         &mut self,
         id: AccountIdInternal,

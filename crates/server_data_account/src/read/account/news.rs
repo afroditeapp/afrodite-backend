@@ -1,9 +1,8 @@
+use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{AccountIdInternal, NewsId, NewsItem, NewsItemSimple, NewsLocale, PageItemCountForNewPublicNews, PublicationId, RequireNewsLocale, UnreadNewsCountResult};
 use server_data::{
-    cache::db_iterator::new_count::DbIteratorStateNewCount, define_cmd_wrapper_read, result::Result, DataError, IntoDataError
+    cache::db_iterator::new_count::DbIteratorStateNewCount, define_cmd_wrapper_read, read::DbReadCommon, result::Result, DataError, IntoDataError
 };
-
-use crate::read::DbReadAccount;
 
 define_cmd_wrapper_read!(ReadCommandsAccountNews);
 

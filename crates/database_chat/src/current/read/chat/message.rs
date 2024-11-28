@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_chat::{
@@ -7,9 +7,9 @@ use model_chat::{
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadChatMessage, CurrentSyncReadChatMessage);
+define_current_read_commands!(CurrentReadChatMessage);
 
-impl<C: ConnectionProvider> CurrentSyncReadChatMessage<C> {
+impl CurrentReadChatMessage<'_> {
     pub fn all_pending_messages(
         &mut self,
         id_message_receiver: AccountIdInternal,

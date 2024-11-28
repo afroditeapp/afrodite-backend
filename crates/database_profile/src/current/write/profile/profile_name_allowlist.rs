@@ -5,7 +5,7 @@ use error_stack::Result;
 use model_profile::{AccountIdInternal, ProfileNameModerationState};
 
 use super::ConnectionProvider;
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsProfile, IntoDatabaseError};
 
 define_current_write_commands!(CurrentWriteProfileNameAllowlist, CurrentSyncWriteProfileNameAllowlist);
 

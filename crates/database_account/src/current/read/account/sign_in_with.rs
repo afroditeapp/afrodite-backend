@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
@@ -6,12 +6,9 @@ use model_account::{GoogleAccountId, SignInWithInfoRaw};
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(
-    CurrentReadAccountSignInWith,
-    CurrentSyncReadAccountSignInWith
-);
+define_current_read_commands!(CurrentReadAccountSignInWith);
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountSignInWith<C> {
+impl CurrentReadAccountSignInWith<'_> {
     pub fn google_account_id_to_account_id(
         &mut self,
         google_id: GoogleAccountId,

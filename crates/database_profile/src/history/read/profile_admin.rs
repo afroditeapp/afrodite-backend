@@ -1,12 +1,12 @@
-use database::{define_history_read_commands, ConnectionProvider};
+use database::define_history_read_commands;
 mod statistics;
 
-define_history_read_commands!(HistoryReadProfileAdmin, HistorySyncReadProfileAdmin);
+define_history_read_commands!(HistoryReadProfileAdmin);
 
-impl<C: ConnectionProvider> HistorySyncReadProfileAdmin<C> {
+impl<'a> HistoryReadProfileAdmin<'a> {
     pub fn statistics(
         self,
-    ) -> statistics::HistorySyncReadProfileAdminStatistics<C> {
-        statistics::HistorySyncReadProfileAdminStatistics::new(self.cmds)
+    ) -> statistics::HistoryReadProfileAdminStatistics<'a> {
+        statistics::HistoryReadProfileAdminStatistics::new(self.cmds)
     }
 }

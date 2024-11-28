@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
 use model_chat::{AccountIdInternal, ChatGlobalState, ChatStateRaw, PublicKey, PublicKeyData, PublicKeyId, PublicKeyIdAndVersion, PublicKeyVersion, CHAT_GLOBAL_STATE_ROW_TYPE};
@@ -8,17 +8,19 @@ use crate::IntoDatabaseError;
 mod interaction;
 mod message;
 
-define_current_read_commands!(CurrentReadChat, CurrentSyncReadChat);
+define_current_read_commands!(CurrentReadChat);
 
-impl<C: ConnectionProvider> CurrentSyncReadChat<C> {
-    pub fn interaction(self) -> interaction::CurrentSyncReadChatInteraction<C> {
-        interaction::CurrentSyncReadChatInteraction::new(self.cmds)
+impl <'a> CurrentReadChat<'a> {
+    pub fn interaction(self) -> interaction::CurrentReadChatInteraction<'a> {
+        interaction::CurrentReadChatInteraction::new(self.cmds)
     }
 
-    pub fn message(self) -> message::CurrentSyncReadChatMessage<C> {
-        message::CurrentSyncReadChatMessage::new(self.cmds)
+    pub fn message(self) -> message::CurrentReadChatMessage<'a> {
+        message::CurrentReadChatMessage::new(self.cmds)
     }
+}
 
+impl CurrentReadChat<'_> {
     pub fn chat_state(
         &mut self,
         id: AccountIdInternal,

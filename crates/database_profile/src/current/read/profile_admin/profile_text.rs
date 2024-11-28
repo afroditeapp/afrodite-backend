@@ -1,12 +1,12 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{current::read::GetDbReadCommandsCommon, define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_profile::{AccountIdInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams, ProfileTextModerationState, ProfileTextPendingModeration};
 use database::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadProfileText, CurrentSyncReadProfileText);
+define_current_read_commands!(CurrentReadProfileText);
 
-impl<C: ConnectionProvider> CurrentSyncReadProfileText<C> {
+impl CurrentReadProfileText<'_> {
     pub fn profile_text_pending_moderation_list(
         &mut self,
         moderator_id: AccountIdInternal,

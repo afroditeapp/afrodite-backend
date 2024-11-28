@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::{
@@ -10,9 +10,9 @@ use model_account::{
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadAccountData, CurrentSyncReadAccountData);
+define_current_read_commands!(CurrentReadAccountData);
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountData<C> {
+impl CurrentReadAccountData<'_> {
     pub fn account_ids_internal(&mut self) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
         use crate::schema::account_id::dsl::*;
 

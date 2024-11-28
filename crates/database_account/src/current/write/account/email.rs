@@ -4,7 +4,7 @@ use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::AccountEmailSendingStateRaw;
 
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsAccount, IntoDatabaseError};
 
 define_current_write_commands!(CurrentWriteAccountEmail, CurrentSyncWriteAccountEmail);
 

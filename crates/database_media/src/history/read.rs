@@ -1,24 +1,18 @@
-use database::ConnectionProvider;
+use database::define_history_read_commands;
 
-use self::{media::HistorySyncReadMedia, media_admin::HistorySyncReadMediaAdmin};
+use self::{media::HistoryReadMedia, media_admin::HistoryReadMediaAdmin};
 
 pub mod media;
 pub mod media_admin;
 
-pub struct HistorySyncReadCommands<C: ConnectionProvider> {
-    conn: C,
-}
+define_history_read_commands!(HistorySyncReadCommands);
 
-impl<C: ConnectionProvider> HistorySyncReadCommands<C> {
-    pub fn new(conn: C) -> Self {
-        Self { conn }
+impl<'a> HistorySyncReadCommands<'a> {
+    pub fn into_media(self) -> HistoryReadMedia<'a> {
+        HistoryReadMedia::new(self.cmds)
     }
 
-    pub fn into_media(self) -> HistorySyncReadMedia<C> {
-        HistorySyncReadMedia::new(self.conn)
-    }
-
-    pub fn into_media_admin(self) -> HistorySyncReadMediaAdmin<C> {
-        HistorySyncReadMediaAdmin::new(self.conn)
+    pub fn into_media_admin(self) -> HistoryReadMediaAdmin<'a> {
+        HistoryReadMediaAdmin::new(self.cmds)
     }
 }

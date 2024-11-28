@@ -1,7 +1,12 @@
 use std::collections::hash_map::Entry;
 
 use config::Config;
-use database::{CurrentReadHandle, DbReaderRaw, DieselConnection, DieselDatabaseError};
+use database::current::read::GetDbReadCommandsCommon;
+use database::{CurrentReadHandle, DbReaderRaw, DieselDatabaseError};
+use database_account::current::read::GetDbReadCommandsAccount;
+use database_chat::current::read::GetDbReadCommandsChat;
+use database_media::current::read::GetDbReadCommandsMedia;
+use database_profile::current::read::GetDbReadCommandsProfile;
 use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 pub use server_common::data::cache::CacheError;
@@ -28,7 +33,7 @@ impl DbDataToCacheLoader {
 
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let accounts = db
-            .db_read_account(move |mut cmd| cmd.account().data().account_ids_internal())
+            .db_read(move |mut cmd| cmd.account().data().account_ids_internal())
             .await
             .change_context(CacheError::Init)?;
 
@@ -69,7 +74,7 @@ impl DbDataToCacheLoader {
 
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let access_token = db
-            .db_read_common(move |mut cmds| cmds.common().token().access_token(account_id))
+            .db_read(move |mut cmds| cmds.common().token().access_token(account_id))
             .await?;
         if let Some(key) = access_token {
             let mut access_tokens = cache.access_tokens().write().await;
@@ -85,15 +90,15 @@ impl DbDataToCacheLoader {
 
         // Common
         let permissions = db
-            .db_read_common(move |mut cmds| cmds.common().state().account_permissions(account_id))
+            .db_read(move |mut cmds| cmds.common().state().account_permissions(account_id))
             .await?;
         entry.common.permissions = permissions;
         let state = db
-            .db_read_common(move |mut cmds| cmds.common().state().account_state_related_shared_state(account_id))
+            .db_read(move |mut cmds| cmds.common().state().account_state_related_shared_state(account_id))
             .await?;
         entry.common.account_state_related_shared_state = state;
         let other_state = db
-            .db_read_common(move |mut cmds| cmds.common().state().other_shared_state(account_id))
+            .db_read(move |mut cmds| cmds.common().state().other_shared_state(account_id))
             .await?;
         entry.common.other_shared_state = other_state;
 
@@ -106,7 +111,7 @@ impl DbDataToCacheLoader {
         // can contain ProfileContentVersion.
         if config.components().media {
             let media_content = db
-                .db_read_media(move |mut cmds| cmds.media().media_content().current_account_media_raw(account_id))
+                .db_read(move |mut cmds| cmds.media().media_content().current_account_media_raw(account_id))
                 .await?;
             let media_data = CachedMedia::new(account_id.uuid, media_content.profile_content_version_uuid);
             entry.media = Some(Box::new(media_data));
@@ -114,26 +119,26 @@ impl DbDataToCacheLoader {
 
         if config.components().profile {
             let profile = db
-                .db_read_profile(move |mut cmds| cmds.profile().data().profile_internal(account_id))
+                .db_read(move |mut cmds| cmds.profile().data().profile_internal(account_id))
                 .await?;
             let state = db
-                .db_read_profile(move |mut cmds| cmds.profile().data().profile_state(account_id))
+                .db_read(move |mut cmds| cmds.profile().data().profile_state(account_id))
                 .await?;
             let profile_location = db
-                .db_read_profile(move |mut cmds| cmds.profile().data().profile_location(account_id))
+                .db_read(move |mut cmds| cmds.profile().data().profile_location(account_id))
                 .await?;
             let attributes = db
-                .db_read_profile(move |mut cmds| {
+                .db_read(move |mut cmds| {
                     cmds.profile().data().profile_attribute_values(account_id)
                 })
                 .await?;
             let filters = db
-                .db_read_profile(move |mut cmds| {
+                .db_read(move |mut cmds| {
                     cmds.profile().data().profile_attribute_filters(account_id)
                 })
                 .await?;
             let last_seen_unix_time = db
-                .db_read_profile(move |mut cmds| {
+                .db_read(move |mut cmds| {
                     cmds.profile().data().profile_last_seen_time(account_id)
                 })
                 .await?;
@@ -149,7 +154,7 @@ impl DbDataToCacheLoader {
             entry.profile = Some(Box::new(profile_data));
 
             let account = db
-                .db_read_common(move |mut cmds| cmds.common().account(account_id))
+                .db_read(move |mut cmds| cmds.common().account(account_id))
                 .await?;
             if account.profile_visibility().is_currently_public() {
                 index_writer
@@ -165,7 +170,7 @@ impl DbDataToCacheLoader {
 
         if config.components().chat {
             let chat_state = db
-                .db_read_chat(move |mut cmds| cmds.chat().chat_state(account_id))
+                .db_read(move |mut cmds| cmds.chat().chat_state(account_id))
                 .await?;
             // Try retry sending of not already sent notifications
             if !chat_state.fcm_notification_sent {
@@ -188,9 +193,9 @@ impl<'a> DbReaderAll<'a> {
         Self { db_reader }
     }
 
-    pub async fn db_read_account<
+    pub async fn db_read<
         T: FnOnce(
-                database_account::current::read::CurrentSyncReadCommands<&mut DieselConnection>,
+                database::DbReadMode<'_>,
             ) -> error_stack::Result<R, DieselDatabaseError>
             + Send
             + 'static,
@@ -200,83 +205,7 @@ impl<'a> DbReaderAll<'a> {
         cmd: T,
     ) -> error_stack::Result<R, CacheError> {
         self.db_reader
-            .db_read(|conn| {
-                cmd(database_account::current::read::CurrentSyncReadCommands::new(conn))
-            })
-            .await
-            .change_context(CacheError::Init)
-    }
-
-    pub async fn db_read_profile<
-        T: FnOnce(
-                database_profile::current::read::CurrentSyncReadCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, CacheError> {
-        self.db_reader
-            .db_read(|conn| {
-                cmd(database_profile::current::read::CurrentSyncReadCommands::new(conn))
-            })
-            .await
-            .change_context(CacheError::Init)
-    }
-
-    pub async fn db_read_media<
-        T: FnOnce(
-                database_media::current::read::CurrentSyncReadCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, CacheError> {
-        self.db_reader
-            .db_read(|conn| {
-                cmd(database_media::current::read::CurrentSyncReadCommands::new(conn))
-            })
-            .await
-            .change_context(CacheError::Init)
-    }
-
-    pub async fn db_read_chat<
-        T: FnOnce(
-                database_chat::current::read::CurrentSyncReadCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, CacheError> {
-        self.db_reader
-            .db_read(|conn| {
-                cmd(database_chat::current::read::CurrentSyncReadCommands::new(conn))
-            })
-            .await
-            .change_context(CacheError::Init)
-    }
-
-    pub async fn db_read_common<
-        T: FnOnce(
-                database::current::read::CurrentSyncReadCommands<&mut DieselConnection>,
-            ) -> error_stack::Result<R, DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, CacheError> {
-        self.db_reader
-            .db_read(|conn| cmd(database::current::read::CurrentSyncReadCommands::new(conn)))
+            .db_read(cmd)
             .await
             .change_context(CacheError::Init)
     }

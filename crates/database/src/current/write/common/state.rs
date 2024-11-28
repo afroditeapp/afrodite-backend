@@ -8,7 +8,7 @@ use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
 
 use super::ConnectionProvider;
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsCommon, IntoDatabaseError};
 
 define_write_commands!(CurrentWriteAccountState, CurrentSyncWriteCommonState);
 

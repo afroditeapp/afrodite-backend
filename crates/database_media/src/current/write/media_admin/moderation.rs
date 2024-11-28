@@ -7,7 +7,7 @@ use model_media::{
 };
 
 use super::{ConnectionProvider, InitialModerationRequestIsNowAccepted};
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
 
 define_current_write_commands!(
     CurrentWriteMediaAdminModeration,

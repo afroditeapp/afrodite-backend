@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_media::{
@@ -10,11 +10,10 @@ use model_media::{
 use crate::IntoDatabaseError;
 
 define_current_read_commands!(
-    CurrentReadMediaAdminModeration,
-    CurrentSyncReadMediaAdminModeration
+    CurrentReadMediaAdminModeration
 );
 
-impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModeration<C> {
+impl CurrentReadMediaAdminModeration<'_> {
     pub fn get_in_progress_moderations(
         &mut self,
         moderator_id: AccountIdInternal,

@@ -4155,6 +4155,7 @@ dependencies = [
 name = "server_data_account"
 version = "0.0.0"
 dependencies = [
+ "database",
  "database_account",
  "error-stack",
  "model",
@@ -4203,6 +4204,7 @@ dependencies = [
 name = "server_data_media"
 version = "0.0.0"
 dependencies = [
+ "database",
  "database_media",
  "error-stack",
  "model",
@@ -4215,6 +4217,7 @@ dependencies = [
 name = "server_data_profile"
 version = "0.0.0"
 dependencies = [
+ "database",
  "database_profile",
  "error-stack",
  "model_profile",

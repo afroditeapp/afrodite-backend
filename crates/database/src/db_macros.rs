@@ -1,27 +1,21 @@
 #[macro_export]
-#[allow(clippy::crate_in_macro_def)]
 macro_rules! define_current_read_commands {
-    ($struct_name:ident, $sync_name:ident) => {
-        // TODO: Remove struct_name
-
-        pub struct $sync_name<C: database::ConnectionProvider> {
-            cmds: C,
+    ($struct_name:ident) => {
+        pub struct $struct_name<'a> {
+            cmds: &'a mut $crate::DieselConnection,
         }
 
-        impl<C: database::ConnectionProvider> $sync_name<C> {
-            pub fn new(cmds: C) -> Self {
+        impl<'a> $struct_name<'a> {
+            pub fn new(cmds: &'a mut $crate::DieselConnection) -> Self {
                 Self { cmds }
             }
 
-            pub fn conn(&mut self) -> &mut database::DieselConnection {
-                self.cmds.conn()
+            pub fn read(&mut self) -> $crate::DbReadMode<'_> {
+                $crate::DbReadMode(self.cmds)
             }
 
-            pub fn read(
-                &mut self,
-            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
-            {
-                crate::current::read::CurrentSyncReadCommands::new(self.conn())
+            pub fn conn(&mut self) -> &mut $crate::DieselConnection {
+                self.cmds
             }
         }
     };
@@ -52,9 +46,9 @@ macro_rules! define_current_write_commands {
 
             pub fn read(
                 &mut self,
-            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            ) -> $crate::DbReadMode<'_>
             {
-                crate::current::read::CurrentSyncReadCommands::new(self.conn())
+                $crate::DbReadMode(self.conn())
             }
 
             pub fn cmds(
@@ -62,13 +56,6 @@ macro_rules! define_current_write_commands {
             ) -> crate::current::write::CurrentSyncWriteCommands<&mut database::DieselConnection>
             {
                 crate::current::write::CurrentSyncWriteCommands::new(self.conn())
-            }
-
-            pub fn common_read_access(
-                &mut self,
-            ) -> $crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
-            {
-                $crate::current::read::CurrentSyncReadCommands::new(self.conn())
             }
 
             pub fn common_write_access(
@@ -82,29 +69,26 @@ macro_rules! define_current_write_commands {
 }
 
 #[macro_export]
-#[allow(clippy::crate_in_macro_def)]
 macro_rules! define_history_read_commands {
-    ($struct_name:ident, $sync_name:ident) => {
-        // TODO: Remove struct_name
-
-        pub struct $sync_name<C: database::ConnectionProvider> {
-            cmds: C,
+    ($struct_name:ident) => {
+        pub struct $struct_name<'a> {
+            cmds: &'a mut $crate::DieselConnection,
         }
 
-        impl<C: database::ConnectionProvider> $sync_name<C> {
-            pub fn new(cmds: C) -> Self {
+        impl<'a> $struct_name<'a> {
+            pub fn new(cmds: &'a mut $crate::DieselConnection) -> Self {
                 Self { cmds }
             }
 
             pub fn conn(&mut self) -> &mut database::DieselConnection {
-                self.cmds.conn()
+                self.cmds
             }
 
             pub fn read(
                 conn: &mut database::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            ) -> $crate::DbReadModeHistory<'_>
             {
-                crate::current::read::CurrentSyncReadCommands::new(conn)
+                $crate::DbReadModeHistory(conn)
             }
         }
     };
@@ -135,9 +119,9 @@ macro_rules! define_history_write_commands {
 
             pub fn read(
                 conn: &mut database::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<&mut database::DieselConnection>
+            ) -> $crate::DbReadMode<'_>
             {
-                crate::current::read::CurrentSyncReadCommands::new(conn)
+                $crate::DbReadMode(conn)
             }
         }
     };

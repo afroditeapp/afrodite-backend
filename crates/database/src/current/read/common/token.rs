@@ -2,11 +2,11 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::{AccessToken, AccessTokenRaw, AccountIdInternal, RefreshToken, RefreshTokenRaw};
 
-use crate::{ConnectionProvider, DieselDatabaseError, IntoDatabaseError};
+use crate::{define_current_read_commands, DieselDatabaseError, IntoDatabaseError};
 
-define_read_commands!(CurrentReadAccountToken, CurrentSyncReadAccountToken);
+define_current_read_commands!(CurrentReadAccountToken);
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountToken<C> {
+impl CurrentReadAccountToken<'_> {
     pub fn refresh_token(
         &mut self,
         id: AccountIdInternal,

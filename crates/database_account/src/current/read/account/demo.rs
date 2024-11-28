@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountId;
@@ -6,9 +6,9 @@ use model_account::DemoModeId;
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadAccountDemo, CurrentSyncReadAccountDemo);
+define_current_read_commands!(CurrentReadAccountDemo);
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountDemo<C> {
+impl CurrentReadAccountDemo<'_> {
     pub fn related_account_ids(
         &mut self,
         demo_mode_related_id: DemoModeId,

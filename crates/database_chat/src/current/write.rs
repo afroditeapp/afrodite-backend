@@ -13,8 +13,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
         Self { conn }
     }
 
-    pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
-        crate::current::read::CurrentSyncReadCommands::new(self.conn.conn())
+    pub fn read(&mut self) -> database::DbReadMode {
+        database::DbReadMode(self.conn.conn())
     }
 
     pub fn write(&mut self) -> &mut C {

@@ -4,54 +4,10 @@
 #![warn(unused_crate_dependencies)]
 
 use database::{ConnectionProvider, DieselConnection};
-use database_account::current::{read::account::CurrentSyncReadAccount, write::account::CurrentSyncWriteAccount};
-use database_chat::current::{read::chat::CurrentSyncReadChat, write::chat::CurrentSyncWriteChat};
-use database_media::current::{read::media::CurrentSyncReadMedia, write::media::CurrentSyncWriteMedia};
-use database_profile::current::{read::profile::CurrentSyncReadProfile, write::profile::CurrentSyncWriteProfile};
-
-
-pub struct CurrentSyncReadCommands<C: ConnectionProvider> {
-    conn: C,
-}
-
-impl<C: ConnectionProvider> CurrentSyncReadCommands<C> {
-    pub fn new(conn: C) -> Self {
-        Self { conn }
-    }
-
-    pub fn read(&mut self) -> &mut C {
-        &mut self.conn
-    }
-
-    pub fn conn(&mut self) -> &mut DieselConnection {
-        self.conn.conn()
-    }
-}
-
-impl CurrentSyncReadCommands<&mut DieselConnection> {
-    pub fn account(&mut self) -> CurrentSyncReadAccount<&mut DieselConnection> {
-        CurrentSyncReadAccount::new(self.read())
-    }
-
-    pub fn profile(&mut self) -> CurrentSyncReadProfile<&mut DieselConnection> {
-        CurrentSyncReadProfile::new(self.read())
-    }
-
-    pub fn chat(&mut self) -> CurrentSyncReadChat<&mut DieselConnection> {
-        CurrentSyncReadChat::new(self.read())
-    }
-
-    pub fn media(&mut self) -> CurrentSyncReadMedia<&mut DieselConnection> {
-        CurrentSyncReadMedia::new(self.read())
-    }
-
-    pub fn common(
-        &mut self,
-    ) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
-        database::current::read::common::CurrentSyncReadCommon::new(self.read())
-    }
-}
-
+use database_account::current::write::account::CurrentSyncWriteAccount;
+use database_chat::current::write::chat::CurrentSyncWriteChat;
+use database_media::current::write::media::CurrentSyncWriteMedia;
+use database_profile::current::write::profile::CurrentSyncWriteProfile;
 
 pub struct CurrentSyncWriteCommands<C: ConnectionProvider> {
     conn: C,
@@ -94,10 +50,6 @@ impl CurrentSyncWriteCommands<&mut DieselConnection> {
         &mut self,
     ) -> database::current::write::common::CurrentSyncWriteCommon<&mut DieselConnection> {
         database::current::write::common::CurrentSyncWriteCommon::new(self.write())
-    }
-
-    pub fn read(&mut self) -> CurrentSyncReadCommands<&mut DieselConnection> {
-        CurrentSyncReadCommands::new(self.write())
     }
 }
 

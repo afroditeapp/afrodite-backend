@@ -2,17 +2,15 @@ mod push_notifications;
 
 use std::i64;
 
+use database_chat::current::read::GetDbReadCommandsChat;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, AllMatchesPage, ChatStateRaw, GetPublicKey, MatchId, MessageNumber, PageItemCountForNewLikes, PendingMessageAndMessageData, PublicKeyIdAndVersion, PublicKeyVersion, ReceivedBlocksPage, ReceivedLikeId, SentBlocksPage, SentLikesPage, SentMessageId
 };
 use server_data::{
-    cache::{db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, CacheReadCommon}, define_cmd_wrapper_read, result::Result, DataError, IntoDataError
+    cache::{db_iterator::{new_count::DbIteratorStateNewCount, DbIteratorState}, CacheReadCommon}, define_cmd_wrapper_read, read::DbReadCommon, result::Result, DataError, IntoDataError
 };
 
 use self::push_notifications::ReadCommandsChatPushNotifications;
-
-use super::DbReadChat;
-
 
 define_cmd_wrapper_read!(ReadCommandsChat);
 

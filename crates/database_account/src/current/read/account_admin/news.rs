@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::AccountId;
@@ -6,9 +6,9 @@ use model_account::{NewsId, NewsItem, NewsItemInternal, NewsTranslationInternal,
 
 use crate::IntoDatabaseError;
 
-define_current_read_commands!(CurrentReadAccountNewsAdmin, CurrentSyncReadAccountNewsAdmin);
+define_current_read_commands!(CurrentReadAccountNewsAdmin);
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountNewsAdmin<C> {
+impl CurrentReadAccountNewsAdmin<'_> {
     pub fn news_translations(
         &mut self,
         news_id_value: NewsId,

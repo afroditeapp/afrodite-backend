@@ -1,44 +1,20 @@
-use database::{ConnectionProvider, DieselConnection};
+use database::DbReadAccessProvider;
 
-use self::{media::CurrentSyncReadMedia, media_admin::CurrentSyncReadMediaAdmin};
+use self::{media::CurrentReadMedia, media_admin::CurrentReadMediaAdmin};
 
 pub mod media;
 pub mod media_admin;
 
-pub struct CurrentSyncReadCommands<C: ConnectionProvider> {
-    conn: C,
+pub trait GetDbReadCommandsMedia {
+    fn media(&mut self) -> CurrentReadMedia<'_>;
+    fn media_admin(&mut self) -> CurrentReadMediaAdmin<'_>;
 }
 
-impl<C: ConnectionProvider> CurrentSyncReadCommands<C> {
-    pub fn new(conn: C) -> Self {
-        Self { conn }
+impl <I: DbReadAccessProvider> GetDbReadCommandsMedia for I {
+    fn media(&mut self) -> CurrentReadMedia<'_> {
+        CurrentReadMedia::new(self.handle())
     }
-
-    pub fn into_media(self) -> CurrentSyncReadMedia<C> {
-        CurrentSyncReadMedia::new(self.conn)
-    }
-
-    pub fn into_media_admin(self) -> CurrentSyncReadMediaAdmin<C> {
-        CurrentSyncReadMediaAdmin::new(self.conn)
-    }
-
-    pub fn conn(&mut self) -> &mut C {
-        &mut self.conn
-    }
-}
-
-impl CurrentSyncReadCommands<&mut DieselConnection> {
-    pub fn media(&mut self) -> CurrentSyncReadMedia<&mut DieselConnection> {
-        CurrentSyncReadMedia::new(self.conn())
-    }
-
-    pub fn media_admin(&mut self) -> CurrentSyncReadMediaAdmin<&mut DieselConnection> {
-        CurrentSyncReadMediaAdmin::new(self.conn())
-    }
-
-    pub fn common(
-        &mut self,
-    ) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
-        database::current::read::common::CurrentSyncReadCommon::new(self.conn())
+    fn media_admin(&mut self) -> CurrentReadMediaAdmin<'_> {
+        CurrentReadMediaAdmin::new(self.handle())
     }
 }

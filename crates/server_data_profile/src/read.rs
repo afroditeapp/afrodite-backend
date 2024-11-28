@@ -27,49 +27,10 @@ impl <'a, I: ReadAccessProvider<'a>> GetReadProfileCommands<'a> for I {
     }
 }
 
-pub trait DbReadProfile {
-    async fn db_read<
-        T: FnOnce(
-                database_profile::current::read::CurrentSyncReadCommands<
-                    &mut server_data::DieselConnection,
-                >,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, server_data::DieselDatabaseError>;
-}
-
-impl <I: InternalReading> DbReadProfile for I {
-    async fn db_read<
-        T: FnOnce(
-                database_profile::current::read::CurrentSyncReadCommands<
-                    &mut server_data::DieselConnection,
-                >,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError>
-            + Send
-            + 'static,
-        R: Send + 'static,
-    >(
-        &self,
-        cmd: T,
-    ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
-        self.db_read_raw(|conn| {
-            cmd(database_profile::current::read::CurrentSyncReadCommands::new(conn))
-        })
-        .await
-    }
-}
-
 pub trait DbReadProfileHistory {
     async fn db_read_history<
         T: FnOnce(
-                database_profile::history::read::HistorySyncReadCommands<
-                    &mut server_data::DieselConnection,
-                >,
+                database::DbReadModeHistory<'_>,
             ) -> error_stack::Result<R, server_data::DieselDatabaseError>
             + Send
             + 'static,
@@ -83,9 +44,7 @@ pub trait DbReadProfileHistory {
 impl <I: InternalReading> DbReadProfileHistory for I {
     async fn db_read_history<
         T: FnOnce(
-                database_profile::history::read::HistorySyncReadCommands<
-                    &mut server_data::DieselConnection,
-                >,
+                database::DbReadModeHistory<'_>,
             ) -> error_stack::Result<R, server_data::DieselDatabaseError>
             + Send
             + 'static,
@@ -94,9 +53,7 @@ impl <I: InternalReading> DbReadProfileHistory for I {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
-        self.db_read_history_raw(|conn| {
-            cmd(database_profile::history::read::HistorySyncReadCommands::new(conn))
-        })
-        .await
+        self.db_read_history_raw(cmd)
+            .await
     }
 }

@@ -13,4 +13,5 @@ model_media = { path = "../model_media" }
 server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }
 
+database = { path = "../database" }
 database_media = { path = "../database_media" }

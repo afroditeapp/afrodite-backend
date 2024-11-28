@@ -1,11 +1,11 @@
-use database::{define_history_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_history_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::{Result, ResultExt};
 use model_profile::{GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValue, ProfileStatisticsHistoryValueTypeInternal, StatisticsGender};
 
-define_history_read_commands!(HistoryReadProfileAdminStatistics, HistorySyncReadProfileAdminStatistics);
+define_history_read_commands!(HistoryReadProfileAdminStatistics);
 
-impl<C: ConnectionProvider> HistorySyncReadProfileAdminStatistics<C> {
+impl<'a> HistoryReadProfileAdminStatistics<'a> {
     pub fn profile_statistics_history(
         &mut self,
         settings: ProfileStatisticsHistoryValueTypeInternal,
@@ -34,7 +34,7 @@ macro_rules! define_read_count_change_methods {
         fn $method_name:ident,
         $table_name:ident,
     ) => {
-        impl<C: ConnectionProvider> HistorySyncReadProfileAdminStatistics<C> {
+        impl<'a> HistoryReadProfileAdminStatistics<'a> {
             fn $method_name(
                 &mut self,
             ) -> Result<Vec<ProfileStatisticsHistoryValue>, DieselDatabaseError> {
@@ -89,7 +89,7 @@ macro_rules! define_read_age_change_methods {
         fn $method_name:ident,
         $table_name:ident,
     ) => {
-        impl<C: ConnectionProvider> HistorySyncReadProfileAdminStatistics<C> {
+        impl<'a> HistoryReadProfileAdminStatistics<'a> {
             fn $method_name(
                 &mut self,
                 age_value: i64,

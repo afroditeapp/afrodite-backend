@@ -17,9 +17,7 @@ impl <'a, C: ReadAccessProvider<'a>> GetReadCommandsCommon<'a> for C {
 pub trait DbReadCommon {
     async fn db_read<
         T: FnOnce(
-                database::current::read::CurrentSyncReadCommands<
-                    &mut database::DieselConnection,
-                >,
+                database::DbReadMode<'_>,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
@@ -33,9 +31,7 @@ pub trait DbReadCommon {
 impl <I: InternalReading> DbReadCommon for I {
     async fn db_read<
         T: FnOnce(
-                database::current::read::CurrentSyncReadCommands<
-                    &mut database::DieselConnection,
-                >,
+                database::DbReadMode<'_>,
             ) -> error_stack::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
@@ -44,6 +40,6 @@ impl <I: InternalReading> DbReadCommon for I {
         &self,
         cmd: T,
     ) -> error_stack::Result<R, database::DieselDatabaseError> {
-        self.db_read_raw(|c| cmd(database::current::read::CurrentSyncReadCommands::new(c))).await
+        self.db_read_raw(cmd).await
     }
 }

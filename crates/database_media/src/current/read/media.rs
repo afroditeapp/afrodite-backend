@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_media::{AccountIdInternal, MediaStateRaw};
@@ -8,19 +8,21 @@ use crate::IntoDatabaseError;
 mod media_content;
 mod moderation_request;
 
-define_current_read_commands!(CurrentReadMedia, CurrentSyncReadMedia);
+define_current_read_commands!(CurrentReadMedia);
 
-impl<C: ConnectionProvider> CurrentSyncReadMedia<C> {
-    pub fn media_content(self) -> media_content::CurrentSyncReadMediaMediaContent<C> {
-        media_content::CurrentSyncReadMediaMediaContent::new(self.cmds)
+impl<'a> CurrentReadMedia<'a> {
+    pub fn media_content(self) -> media_content::CurrentReadMediaMediaContent<'a> {
+        media_content::CurrentReadMediaMediaContent::new(self.cmds)
     }
 
     pub fn moderation_request(
         self,
-    ) -> moderation_request::CurrentSyncReadMediaModerationRequest<C> {
-        moderation_request::CurrentSyncReadMediaModerationRequest::new(self.cmds)
+    ) -> moderation_request::CurrentReadMediaModerationRequest<'a> {
+        moderation_request::CurrentReadMediaModerationRequest::new(self.cmds)
     }
+}
 
+impl CurrentReadMedia<'_> {
     pub fn get_media_state(
         &mut self,
         id: AccountIdInternal,

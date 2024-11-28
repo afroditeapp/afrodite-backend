@@ -30,6 +30,6 @@ pub mod write_concurrent;
 pub type DatabeseEntryId = String;
 
 pub use database::{
-    current::{read::CurrentSyncReadCommands, write::CurrentSyncWriteCommands},
+    current::write::CurrentSyncWriteCommands,
     DieselConnection, DieselDatabaseError,
 };

@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_media::{
@@ -9,11 +9,10 @@ use model_media::{
 use crate::IntoDatabaseError;
 
 define_current_read_commands!(
-    CurrentReadMediaMediaContent,
-    CurrentSyncReadMediaMediaContent
+    CurrentReadMediaMediaContent
 );
 
-impl<C: ConnectionProvider> CurrentSyncReadMediaMediaContent<C> {
+impl CurrentReadMediaMediaContent<'_> {
     fn media_content_raw(
         &mut self,
         media_owner_id: AccountIdInternal,

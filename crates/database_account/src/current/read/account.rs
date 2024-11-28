@@ -1,6 +1,6 @@
-use database::{define_current_read_commands, ConnectionProvider};
+use database::define_current_read_commands;
 
-define_current_read_commands!(CurrentReadAccount, CurrentSyncReadAccount);
+define_current_read_commands!(CurrentReadAccount);
 
 mod data;
 mod demo;
@@ -8,24 +8,24 @@ mod sign_in_with;
 mod email;
 mod news;
 
-impl<C: ConnectionProvider> CurrentSyncReadAccount<C> {
-    pub fn data(self) -> data::CurrentSyncReadAccountData<C> {
-        data::CurrentSyncReadAccountData::new(self.cmds)
+impl <'a> CurrentReadAccount<'a> {
+    pub fn data(self) -> data::CurrentReadAccountData<'a> {
+        data::CurrentReadAccountData::new(self.cmds)
     }
 
-    pub fn sign_in_with(self) -> sign_in_with::CurrentSyncReadAccountSignInWith<C> {
-        sign_in_with::CurrentSyncReadAccountSignInWith::new(self.cmds)
+    pub fn sign_in_with(self) -> sign_in_with::CurrentReadAccountSignInWith<'a> {
+        sign_in_with::CurrentReadAccountSignInWith::new(self.cmds)
     }
 
-    pub fn demo_mode(self) -> demo::CurrentSyncReadAccountDemo<C> {
-        demo::CurrentSyncReadAccountDemo::new(self.cmds)
+    pub fn demo_mode(self) -> demo::CurrentReadAccountDemo<'a> {
+        demo::CurrentReadAccountDemo::new(self.cmds)
     }
 
-    pub fn email(self) -> email::CurrentSyncReadAccountEmail<C> {
-        email::CurrentSyncReadAccountEmail::new(self.cmds)
+    pub fn email(self) -> email::CurrentReadAccountEmail<'a> {
+        email::CurrentReadAccountEmail::new(self.cmds)
     }
 
-    pub fn news(self) -> news::CurrentSyncReadAccountNews<C> {
-        news::CurrentSyncReadAccountNews::new(self.cmds)
+    pub fn news(self) -> news::CurrentReadAccountNews<'a> {
+        news::CurrentReadAccountNews::new(self.cmds)
     }
 }

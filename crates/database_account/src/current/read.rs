@@ -1,44 +1,22 @@
-use database::{ConnectionProvider, DieselConnection};
+use account_admin::CurrentReadAccountAdmin;
+use database::DbReadAccessProvider;
 
-use self::{account::CurrentSyncReadAccount, account_admin::CurrentSyncReadAccountAdmin};
+use self::account::CurrentReadAccount;
 
 pub mod account;
 pub mod account_admin;
 
-pub struct CurrentSyncReadCommands<C: ConnectionProvider> {
-    conn: C,
+pub trait GetDbReadCommandsAccount {
+    fn account(&mut self) -> CurrentReadAccount<'_>;
+    fn account_admin(&mut self) -> CurrentReadAccountAdmin<'_>;
 }
 
-impl<C: ConnectionProvider> CurrentSyncReadCommands<C> {
-    pub fn new(conn: C) -> Self {
-        Self { conn }
+impl <I: DbReadAccessProvider> GetDbReadCommandsAccount for I {
+    fn account(&mut self) -> CurrentReadAccount<'_> {
+        CurrentReadAccount::new(self.handle())
     }
 
-    pub fn into_account(self) -> CurrentSyncReadAccount<C> {
-        CurrentSyncReadAccount::new(self.conn)
-    }
-
-    pub fn into_account_admin(self) -> CurrentSyncReadAccountAdmin<C> {
-        CurrentSyncReadAccountAdmin::new(self.conn)
-    }
-
-    pub fn conn(&mut self) -> &mut C {
-        &mut self.conn
-    }
-}
-
-impl CurrentSyncReadCommands<&mut DieselConnection> {
-    pub fn account(&mut self) -> CurrentSyncReadAccount<&mut DieselConnection> {
-        CurrentSyncReadAccount::new(self.conn())
-    }
-
-    pub fn account_admin(&mut self) -> CurrentSyncReadAccountAdmin<&mut DieselConnection> {
-        CurrentSyncReadAccountAdmin::new(self.conn())
-    }
-
-    pub fn common(
-        &mut self,
-    ) -> database::current::read::common::CurrentSyncReadCommon<&mut DieselConnection> {
-        database::current::read::common::CurrentSyncReadCommon::new(self.conn())
+    fn account_admin(&mut self) -> CurrentReadAccountAdmin<'_> {
+        CurrentReadAccountAdmin::new(self.handle())
     }
 }

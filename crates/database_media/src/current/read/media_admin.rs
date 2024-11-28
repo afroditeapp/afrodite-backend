@@ -1,18 +1,18 @@
-use database::{define_current_read_commands, ConnectionProvider};
+use database::define_current_read_commands;
 
 mod moderation;
 mod moderation_request;
 
-define_current_read_commands!(CurrentReadMediaAdmin, CurrentSyncReadMediaAdmin);
+define_current_read_commands!(CurrentReadMediaAdmin);
 
-impl<C: ConnectionProvider> CurrentSyncReadMediaAdmin<C> {
+impl<'a> CurrentReadMediaAdmin<'a> {
     pub fn moderation_request(
         self,
-    ) -> moderation_request::CurrentSyncReadMediaAdminModerationRequest<C> {
-        moderation_request::CurrentSyncReadMediaAdminModerationRequest::new(self.cmds)
+    ) -> moderation_request::CurrentReadMediaAdminModerationRequest<'a> {
+        moderation_request::CurrentReadMediaAdminModerationRequest::new(self.cmds)
     }
 
-    pub fn moderation(self) -> moderation::CurrentSyncReadMediaAdminModeration<C> {
-        moderation::CurrentSyncReadMediaAdminModeration::new(self.cmds)
+    pub fn moderation(self) -> moderation::CurrentReadMediaAdminModeration<'a> {
+        moderation::CurrentReadMediaAdminModeration::new(self.cmds)
     }
 }

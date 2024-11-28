@@ -3,7 +3,7 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model_chat::{AccountIdInternal, AccountInteractionInternal};
 
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsChat, IntoDatabaseError};
 
 define_current_write_commands!(CurrentWriteChatInteraction, CurrentSyncWriteChatInteraction);
 

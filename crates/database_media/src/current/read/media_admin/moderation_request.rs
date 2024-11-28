@@ -1,4 +1,4 @@
-use database::{define_current_read_commands, ConnectionProvider, DieselDatabaseError};
+use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_media::{AccountIdInternal, ModerationQueueType, ModerationRequestId, NextQueueNumberType};
@@ -6,11 +6,10 @@ use model_media::{AccountIdInternal, ModerationQueueType, ModerationRequestId, N
 use crate::IntoDatabaseError;
 
 define_current_read_commands!(
-    CurrentReadMediaAdminModerationRequest,
-    CurrentSyncReadMediaAdminModerationRequest
+    CurrentReadMediaAdminModerationRequest
 );
 
-impl<C: ConnectionProvider> CurrentSyncReadMediaAdminModerationRequest<C> {
+impl CurrentReadMediaAdminModerationRequest<'_> {
     /// Get the next active moderation request from the initial moderation
     /// request queue or the moderation request queue.
     pub fn get_next_active_moderation_request(

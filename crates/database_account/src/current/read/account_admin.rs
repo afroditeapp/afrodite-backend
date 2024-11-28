@@ -1,11 +1,11 @@
-use database::{define_current_read_commands, ConnectionProvider};
+use database::define_current_read_commands;
 
-define_current_read_commands!(CurrentReadAccountAdmin, CurrentSyncReadAccountAdmin);
+define_current_read_commands!(CurrentReadAccountAdmin);
 
 mod news;
 
-impl<C: ConnectionProvider> CurrentSyncReadAccountAdmin<C> {
-    pub fn news(self) -> news::CurrentSyncReadAccountNewsAdmin<C> {
-        news::CurrentSyncReadAccountNewsAdmin::new(self.cmds)
+impl<'a> CurrentReadAccountAdmin<'a> {
+    pub fn news(self) -> news::CurrentReadAccountNewsAdmin<'a> {
+        news::CurrentReadAccountNewsAdmin::new(self.cmds)
     }
 }

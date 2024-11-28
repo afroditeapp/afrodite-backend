@@ -36,18 +36,14 @@ macro_rules! define_write_commands {
 
             pub fn read_conn(
                 conn: &mut simple_backend_database::diesel_db::DieselConnection,
-            ) -> crate::current::read::CurrentSyncReadCommands<
-                &mut simple_backend_database::diesel_db::DieselConnection,
-            > {
-                crate::current::read::CurrentSyncReadCommands::new(conn)
+            ) -> crate::DbReadMode<'_> {
+                crate::DbReadMode(conn)
             }
 
             pub fn read(
                 &mut self,
-            ) -> crate::current::read::CurrentSyncReadCommands<
-                &mut simple_backend_database::diesel_db::DieselConnection,
-            > {
-                crate::current::read::CurrentSyncReadCommands::new(self.conn())
+            ) -> crate::DbReadMode<'_> {
+                crate::DbReadMode(self.conn())
             }
         }
     };
@@ -64,8 +60,8 @@ impl<C: ConnectionProvider> CurrentSyncWriteCommands<C> {
         Self { conn }
     }
 
-    pub fn read(&mut self) -> crate::current::read::CurrentSyncReadCommands<&mut DieselConnection> {
-        crate::current::read::CurrentSyncReadCommands::new(self.conn.conn())
+    pub fn read(&mut self) -> crate::DbReadMode<'_> {
+        crate::DbReadMode(self.conn.conn())
     }
 
     pub fn write(&mut self) -> &mut C {

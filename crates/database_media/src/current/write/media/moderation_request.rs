@@ -8,7 +8,7 @@ use model_media::{
 use simple_backend_utils::ContextExt;
 
 use super::{ConnectionProvider, DeletedSomething};
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsMedia, IntoDatabaseError};
 
 define_current_write_commands!(
     CurrentWriteMediaModerationRequest,

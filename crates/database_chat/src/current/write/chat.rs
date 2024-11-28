@@ -6,7 +6,7 @@ use model_chat::{
 };
 use simple_backend_utils::ContextExt;
 
-use crate::IntoDatabaseError;
+use crate::{current::read::GetDbReadCommandsChat, IntoDatabaseError};
 
 mod interaction;
 mod message;
