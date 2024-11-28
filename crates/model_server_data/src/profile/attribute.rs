@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
-    Attribute, ProfileAttributes, ProfileUpdateValidated
+    Attribute, ProfileAttributes
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -55,6 +55,10 @@ impl ProfileAttributeValue {
 
     pub fn id(&self) -> u16 {
         self.id
+    }
+
+    pub fn into_raw(self) -> Vec<u16> {
+        self.v
     }
 
     pub fn as_bitflags(&self) -> u16 {
@@ -119,13 +123,7 @@ impl SortedProfileAttributes {
             .and_then(|i| self.attributes.get(i))
     }
 
-    pub fn update_from(&mut self, update: &ProfileUpdateValidated) {
-        let mut attributes = update
-            .attributes
-            .iter()
-            .filter_map(|v| ProfileAttributeValue::try_from_update(v.clone()).ok())
-            .collect::<Vec<_>>();
-        attributes.sort_by(|a, b| a.id.cmp(&b.id));
-        self.attributes = attributes;
+    pub fn set_attributes(&mut self, value: Vec<ProfileAttributeValue>) {
+        self.attributes = value;
     }
 }

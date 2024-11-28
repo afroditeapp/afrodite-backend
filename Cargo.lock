@@ -2470,6 +2470,7 @@ dependencies = [
  "chrono",
  "diesel",
  "model",
+ "model_server_data",
  "serde",
  "serde_json",
  "simple_backend_model",
@@ -2483,6 +2484,7 @@ version = "0.0.0"
 dependencies = [
  "diesel",
  "model",
+ "model_server_data",
  "serde",
  "serde_json",
  "simple_backend_model",
@@ -2496,6 +2498,7 @@ version = "0.0.0"
 dependencies = [
  "diesel",
  "model",
+ "model_server_data",
  "serde",
  "simple_backend_model",
  "simple_backend_utils",
@@ -2504,6 +2507,20 @@ dependencies = [
 
 [[package]]
 name = "model_profile"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "model",
+ "model_server_data",
+ "serde",
+ "serde_json",
+ "simple_backend_model",
+ "simple_backend_utils",
+ "utoipa",
+]
+
+[[package]]
+name = "model_server_data"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.6.0",
@@ -4120,10 +4137,7 @@ dependencies = [
  "error-stack",
  "futures",
  "model",
- "model_account",
- "model_chat",
- "model_media",
- "model_profile",
+ "model_server_data",
  "nalgebra",
  "num_cpus",
  "server_common",

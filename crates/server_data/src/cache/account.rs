@@ -1,4 +1,4 @@
-use model_account::{NewsIteratorSessionIdInternal, PublicationId};
+use model_server_data::{NewsIteratorSessionIdInternal, PublicationId};
 
 use crate::cache::db_iterator::new_count::DbIteratorNewCount;
 

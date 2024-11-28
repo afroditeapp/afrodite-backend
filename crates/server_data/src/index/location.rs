@@ -24,7 +24,7 @@
 
 use std::{fmt::Debug, num::NonZeroU16, sync::Arc};
 
-use model_profile::{CellData, LocationIndexKey};
+use model_server_data::{CellData, LocationIndexKey};
 use nalgebra::{DMatrix, Dyn, VecStorage};
 use tracing::warn;
 

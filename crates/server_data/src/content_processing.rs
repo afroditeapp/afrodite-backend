@@ -1,9 +1,10 @@
 use std::collections::{HashMap, VecDeque};
 
-use model_media::{
+use model::{
     AccountIdDb, AccountIdInternal, ContentProcessingId, ContentProcessingState,
-    ContentProcessingStateChanged, ContentSlot, NewContentParams,
+    ContentProcessingStateChanged,
 };
+use model_server_data::{ContentSlot, NewContentParams};
 use server_common::result::WrappedResultExt;
 use tokio::sync::{mpsc::{self, UnboundedReceiver, UnboundedSender}, RwLock};
 use tracing::warn;

@@ -5,7 +5,6 @@ enable_logging!(
     ModerationRequestIdDb,
     ModerationRequestId, // TODO: combine with ModerationRequestIdDb
     ContentIdDb,
-    ContentSlot,
     ModerationId,
 );
 

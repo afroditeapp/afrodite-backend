@@ -1,7 +1,8 @@
 use config::Config;
 use error_stack::ResultExt;
 use model::AccountIdInternal;
-use model_profile::{AccountId, LastSeenTime, LocationIndexKey, NextNumberStorage, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, ProfileStateInternal, SortedProfileAttributes, UnixTime};
+use model::{AccountId, NextNumberStorage, UnixTime};
+use model_server_data::{LastSeenTime, LocationIndexKey, ProfileAttributeFilterValue, ProfileAttributeValue, ProfileInternal, ProfileIteratorSessionIdInternal, ProfileQueryMakerDetails, ProfileStateCached, SortedProfileAttributes};
 use server_common::data::cache::CacheError;
 use server_common::data::DataError;
 use crate::cache::CacheEntryCommon;
@@ -28,7 +29,7 @@ impl CachedProfile {
     pub fn new(
         account_id: AccountId,
         data: ProfileInternal,
-        state: ProfileStateInternal,
+        state: ProfileStateCached,
         attributes: Vec<ProfileAttributeValue>,
         filters: Vec<ProfileAttributeFilterValue>,
         config: &Config,
@@ -37,7 +38,7 @@ impl CachedProfile {
         Self {
             account_id,
             data,
-            state: state.into(),
+            state,
             location: LocationData {
                 current_position: LocationIndexKey::default(),
                 current_iterator: LocationIndexIteratorState::new(),

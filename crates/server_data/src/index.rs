@@ -2,10 +2,11 @@ use std::{collections::HashMap, mem::size_of, num::{NonZeroU16, NonZeroU8}, sync
 
 use config::{file::LocationConfig, Config};
 use error_stack::ResultExt;
-use model_profile::{
-    AccountId, CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
-    ProfileQueryMakerDetails, UnixTime,
+use model_server_data::{
+    CellData, Location, LocationIndexKey, LocationIndexProfileData, ProfileLink,
+    ProfileQueryMakerDetails,
 };
+use model::{AccountId, UnixTime};
 use server_common::data::index::IndexError;
 use crate::{cache::LastSeenTimeUpdated, db_manager::InternalWriting};
 use tokio::sync::RwLock;

@@ -2,7 +2,7 @@
 
 use chrono::Datelike;
 use config::Config;
-use model_chat::LimitedActionStatus;
+use model_server_data::LimitedActionStatus;
 use server_common::data::cache::CacheError;
 
 use error_stack::Result;

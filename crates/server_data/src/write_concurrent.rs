@@ -6,9 +6,8 @@ use std::{collections::HashMap, fmt, fmt::Debug, sync::Arc};
 use axum::body::BodyDataStream;
 use config::Config;
 use futures::Future;
-use model_chat::{AccountId, AccountIdInternal, ContentProcessingId, MatchId, MatchesIteratorSessionId, ReceivedLikeId, ReceivedLikesIteratorSessionId};
-use model_profile::{ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink};
-use model_account::{NewsIteratorSessionId, PublicationId};
+use model::{AccountId, AccountIdInternal, ContentProcessingId};
+use model_server_data::{NewsIteratorSessionId, PublicationId, MatchId, MatchesIteratorSessionId, ReceivedLikeId, ReceivedLikesIteratorSessionId, ProfileIteratorSessionId, ProfileIteratorSessionIdInternal, ProfileLink};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
 
 use super::{

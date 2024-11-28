@@ -23,7 +23,7 @@ pub use server_common::{data::DataError, result};
 #[openapi(
     components(schemas(
         // Profile
-        model_profile::profile::GroupValues,
+        model_profile::GroupValues,
         model_profile::profile::StatisticsProfileVisibility,
         // Profile admin
         model_profile::profile_admin::ProfileStatisticsHistoryValueType,

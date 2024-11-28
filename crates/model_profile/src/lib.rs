@@ -8,6 +8,7 @@
 )]
 
 pub use model::*;
+pub use model_server_data::*;
 
 pub mod profile;
 pub mod profile_admin;

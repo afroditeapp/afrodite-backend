@@ -7,7 +7,7 @@ use media::CachedMedia;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, AccountStateRelatedSharedState, Permissions, OtherSharedState, PendingNotificationFlags
 };
-use model_profile::{
+use model_server_data::{
     LastSeenTime, LocationIndexKey, LocationIndexProfileData
 };
 use profile::CachedProfile;

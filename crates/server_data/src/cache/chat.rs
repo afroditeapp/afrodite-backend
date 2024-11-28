@@ -1,5 +1,5 @@
 use limit::ChatLimits;
-use model_chat::{MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
+use model_server_data::{MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
 
 use super::db_iterator::{new_count::DbIteratorNewCount, DbIterator};
 

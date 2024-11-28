@@ -1,12 +1,13 @@
 use chrono::NaiveDate;
 use diesel::{prelude::*, Associations};
+use model_server_data::{AuthPair, PublicationId};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_string_wrapper;
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Text, AccessToken, AccountId, AccountIdDb, AccountIdInternal, PublicKeyIdAndVersion, RefreshToken,
+    schema_sqlite_types::Text, AccountId, AccountIdDb, AccountIdInternal, PublicKeyIdAndVersion,
 };
 
 mod demo;
@@ -85,19 +86,6 @@ pub struct ClientInfo {
 impl ClientInfo {
     pub fn is_unsupported_client(&self) -> bool {
         false
-    }
-}
-
-/// AccessToken and RefreshToken
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
-pub struct AuthPair {
-    pub refresh: RefreshToken,
-    pub access: AccessToken,
-}
-
-impl AuthPair {
-    pub fn new(refresh: RefreshToken, access: AccessToken) -> Self {
-        Self { refresh, access }
     }
 }
 

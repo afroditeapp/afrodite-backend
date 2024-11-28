@@ -8,6 +8,7 @@
 )]
 
 pub use model::*;
+pub use model_server_data::*;
 
 pub mod media;
 pub mod media_admin;

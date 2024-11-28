@@ -1,5 +1,5 @@
 [package]
-name = "model_account"
+name = "model_server_data"
 version = "0.0.0"
 edition = "2021"
 
@@ -9,13 +9,16 @@ edition = "2021"
 
 serde = { workspace = true }
 serde_json = { workspace = true }
+toml = { workspace = true }
+uuid = { workspace = true }
 utoipa = { workspace = true }
 diesel = { workspace = true }
 
-chrono = { workspace = true }
+nalgebra = { workspace = true }
+bitflags = { workspace = true }
+num_enum = { workspace = true }
 
-utils = { path = "../utils" }
 model = { path = "../model" }
-model_server_data = { path = "../model_server_data" }
 
 simple_backend_model = { path = "../simple_backend_model"}
+simple_backend_utils = { path = "../simple_backend_utils"}

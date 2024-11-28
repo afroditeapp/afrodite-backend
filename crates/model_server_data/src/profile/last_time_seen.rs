@@ -1,23 +1,28 @@
 
-use diesel::{
-    sql_types::BigInt,
-    AsExpression, FromSqlRow,
-};
+use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::BigInt};
+use model::UnixTime;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, UnixTime};
+use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
-
 
 /// Account's most recent disconnect time.
 ///
 /// If the last seen time is not None, then it is Unix timestamp or -1 if
 /// the profile is currently online.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq)]
-pub struct LastSeenTime(pub(crate) i64);
+pub struct LastSeenTime(i64);
 
 impl LastSeenTime {
     pub const ONLINE: Self = Self(-1);
-    pub(crate) const MIN_VALUE: i64 = Self::ONLINE.0;
+    pub const MIN_VALUE: i64 = Self::ONLINE.0;
+
+    pub fn new(raw: i64) -> Self {
+        Self(raw)
+    }
+
+    pub fn raw(&self) -> i64 {
+        self.0
+    }
 }
 
 impl From<UnixTime> for LastSeenTime {
@@ -25,7 +30,6 @@ impl From<UnixTime> for LastSeenTime {
         Self(value.ut)
     }
 }
-
 
 /// Filter value for last seen time.
 ///
@@ -53,7 +57,7 @@ pub struct LastSeenTimeFilter {
 
 impl LastSeenTimeFilter {
     const ONLINE: Self = Self { value: -1 };
-    pub(crate) const MIN_VALUE: i64 = -1;
+    pub const MIN_VALUE: i64 = -1;
 
     pub fn new(value: i64) -> Self {
         Self { value }
@@ -70,8 +74,8 @@ impl LastSeenTimeFilter {
     ) -> bool {
         if *self == Self::ONLINE {
             last_seen_time == LastSeenTime::ONLINE
-        } else if last_seen_time.0 <= current_time.ut {
-            let seconds_since_last_seen = last_seen_time.0.abs_diff(current_time.ut);
+        } else if last_seen_time.raw() <= current_time.ut {
+            let seconds_since_last_seen = last_seen_time.raw().abs_diff(current_time.ut);
             let max_seconds_since = self.value as u64;
             last_seen_time == LastSeenTime::ONLINE ||
             seconds_since_last_seen <= max_seconds_since

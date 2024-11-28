@@ -1,6 +1,6 @@
 use model::NextNumberStorage;
-use model_account::{NewsIteratorSessionIdInternal, PublicationId};
-use model_chat::{MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
+use model_server_data::{NewsIteratorSessionIdInternal, PublicationId};
+use model_server_data::{MatchId, MatchesIteratorSessionIdInternal, ReceivedLikeId, ReceivedLikesIteratorSessionIdInternal};
 
 pub mod new_count;
 

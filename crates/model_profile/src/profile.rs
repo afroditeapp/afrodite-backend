@@ -2,12 +2,13 @@ use std::collections::{HashMap, HashSet};
 
 use diesel::{
     prelude::*,
-    sql_types::{BigInt, Binary},
+    sql_types::BigInt,
     AsExpression, FromSqlRow,
 };
 use model::ProfileAge;
+use model_server_data::{LastSeenTime, LastSeenTimeFilter, ProfileAttributeValue, ProfileAttributeValueUpdate, ProfileAttributes, ProfileInternal, ProfileNameModerationState, ProfileStateCached, ProfileTextModerationState, ProfileVersion, SearchGroupFlags, SortedProfileAttributes};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{diesel_i64_wrapper, diesel_uuid_wrapper, UnixTime};
+use simple_backend_model::{diesel_i64_wrapper, UnixTime};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{sync_version_wrappers, AccountId, AccountIdDb};
@@ -15,29 +16,17 @@ use crate::{sync_version_wrappers, AccountId, AccountIdDb};
 mod age;
 pub use age::*;
 
-mod attribute;
-pub use attribute::*;
-
 mod available_attributes;
 pub use available_attributes::*;
 
 mod filter;
 pub use filter::*;
 
-mod index;
-pub use index::*;
-
 mod iterator;
 pub use iterator::*;
 
-mod location;
-pub use location::*;
-
 mod search_group;
 pub use search_group::*;
-
-mod last_seen_time;
-pub use last_seen_time::*;
 
 mod statistics;
 pub use statistics::*;
@@ -45,30 +34,7 @@ pub use statistics::*;
 mod text;
 pub use text::*;
 
-mod name;
-pub use name::*;
-
 const NUMBER_LIST_ATTRIBUTE_MAX_VALUES: usize = 8;
-
-/// Profile's database data
-#[derive(Debug, Clone, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::profile)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct ProfileInternal {
-    pub account_id: AccountIdDb,
-    pub version_uuid: ProfileVersion,
-    pub name: String,
-    pub profile_text: String,
-    pub age: ProfileAge,
-}
-
-impl ProfileInternal {
-    pub fn update_from(&mut self, update: &ProfileUpdateValidated) {
-        self.name.clone_from(&update.name);
-        self.profile_text.clone_from(&update.ptext);
-        self.age = update.age;
-    }
-}
 
 /// Public profile info
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Eq)]
@@ -159,20 +125,6 @@ pub struct ProfileStateInternal {
     pub profile_text_moderation_moderator_account_id: Option<AccountIdDb>,
 }
 
-sync_version_wrappers!(ProfileAttributesSyncVersion, ProfileSyncVersion,);
-
-/// Subset of ProfileStateInternal which is cached in memory.
-#[derive(Debug, Clone, Copy)]
-pub struct ProfileStateCached {
-    pub search_age_range_min: ProfileAge,
-    pub search_age_range_max: ProfileAge,
-    pub search_group_flags: SearchGroupFlags,
-    pub last_seen_time_filter: Option<LastSeenTimeFilter>,
-    pub unlimited_likes_filter: Option<bool>,
-    pub profile_name_moderation_state: ProfileNameModerationState,
-    pub profile_text_moderation_state: ProfileTextModerationState,
-}
-
 impl From<ProfileStateInternal> for ProfileStateCached {
     fn from(value: ProfileStateInternal) -> Self {
         Self {
@@ -186,6 +138,8 @@ impl From<ProfileStateInternal> for ProfileStateCached {
         }
     }
 }
+
+sync_version_wrappers!(ProfileAttributesSyncVersion, ProfileSyncVersion,);
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct ProfileUpdate {
@@ -284,6 +238,22 @@ impl ProfileUpdateValidated {
             false
         }
     }
+
+    pub fn update_to_profile(&self, target: &mut ProfileInternal) {
+        target.name.clone_from(&self.name);
+        target.profile_text.clone_from(&self.ptext);
+        target.age = self.age;
+    }
+
+    pub fn update_to_attributes(&self, target: &mut SortedProfileAttributes) {
+        let mut attributes = self
+            .attributes
+            .iter()
+            .filter_map(|v| ProfileAttributeValue::try_from_update(v.clone()).ok())
+            .collect::<Vec<_>>();
+        attributes.sort_by_key(|a| a.id());
+        target.set_attributes(attributes);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -332,46 +302,6 @@ impl ProfileUpdateInternal {
 pub struct FavoriteProfilesPage {
     pub profiles: Vec<AccountId>,
 }
-
-
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    IntoParams,
-    PartialEq,
-    Eq,
-    Hash,
-    diesel::FromSqlRow,
-    diesel::AsExpression,
-)]
-#[diesel(sql_type = Binary)]
-pub struct ProfileVersion {
-    v: simple_backend_utils::UuidBase64Url,
-}
-
-impl ProfileVersion {
-    pub(crate) fn new_base_64_url(version: simple_backend_utils::UuidBase64Url) -> Self {
-        Self { v: version }
-    }
-
-    fn diesel_uuid_wrapper_new(v: simple_backend_utils::UuidBase64Url) -> Self {
-        Self { v }
-    }
-
-    pub fn new_random() -> Self {
-        Self { v: simple_backend_utils::UuidBase64Url::new_random_id() }
-    }
-
-    fn diesel_uuid_wrapper_as_uuid(&self) -> &simple_backend_utils::UuidBase64Url {
-        &self.v
-    }
-}
-
-diesel_uuid_wrapper!(ProfileVersion);
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetProfileQueryParam {

@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use model::{Account, AccountId, AccountIdInternal};
-use model_account::AuthPair;
+use model_server_data::AuthPair;
 use server_common::data::cache::CacheError;
 
 use super::DbTransactionCommon;
@@ -135,7 +135,7 @@ impl <I: InternalWriting> UpdateLocationIndexVisibility for I {
                 let index_data = e.location_index_profile_data()?;
                 let p = e.profile.as_ref().ok_or(CacheError::FeatureNotEnabled.report())?;
 
-                Ok::<(model_profile::LocationIndexKey, model_profile::LocationIndexProfileData), error_stack::Report<CacheError>>((p.location.current_position, index_data))
+                Ok::<(model_server_data::LocationIndexKey, model_server_data::LocationIndexProfileData), error_stack::Report<CacheError>>((p.location.current_position, index_data))
             })
             .await
             .into_data_error(id)?;

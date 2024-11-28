@@ -1,10 +1,13 @@
 
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU16, Ordering};
 
+use crate::{LastSeenTime, ProfileLink};
 use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
 
-use crate::{AccountId, LastSeenTime, LastSeenTimeFilter, ProfileAge, ProfileAttributeFilterValue, ProfileAttributes, ProfileContentVersion, ProfileInternal, ProfileLink, ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes};
+use model::{AccountId, ProfileAge, ProfileContentVersion};
+
+use super::{LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributes, ProfileInternal, ProfileSearchAgeRangeValidated, ProfileStateCached, SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes};
 
 
 #[derive(Debug)]
@@ -66,7 +69,7 @@ impl LocationIndexProfileData {
         last_seen_value: Option<LastSeenTime>,
     ) -> Self {
         Self {
-            profile_link: ProfileLink::new(id, profile, profile_content_version, None),
+            profile_link: ProfileLink::new(id, profile.version_uuid, profile_content_version, None),
             age: profile.age,
             search_age_range: ProfileSearchAgeRangeValidated::new(
                 state.search_age_range_min,
@@ -76,7 +79,7 @@ impl LocationIndexProfileData {
             attributes,
             unlimited_likes,
             last_seen_time: if let Some(last_seen_time) = last_seen_value {
-                AtomicI64::new(last_seen_time.0)
+                AtomicI64::new(last_seen_time.raw())
             } else {
                 AtomicI64::new(i64::MIN)
             },
@@ -87,13 +90,13 @@ impl LocationIndexProfileData {
         let mut profile_link = self.profile_link;
         let last_seen_value = self.last_seen_time.load(Ordering::Relaxed);
         if last_seen_value >= LastSeenTime::MIN_VALUE {
-            profile_link.last_seen_time = Some(LastSeenTime(last_seen_value));
+            profile_link.set_last_seen_time(LastSeenTime::new(last_seen_value));
         }
         profile_link
     }
 
     pub fn update_last_seen_value(&self, value: LastSeenTime) {
-        self.last_seen_time.store(value.0, Ordering::Relaxed);
+        self.last_seen_time.store(value.raw(), Ordering::Relaxed);
     }
 
     pub fn is_match(
@@ -138,7 +141,7 @@ impl LocationIndexProfileData {
         let current_last_seen_time = if current_last_seen_time < -1 {
             return false;
         } else {
-            LastSeenTime(current_last_seen_time)
+            LastSeenTime::new(current_last_seen_time)
         };
 
         last_seen_time_filter.is_match(current_last_seen_time, current_time)

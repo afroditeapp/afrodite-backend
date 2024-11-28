@@ -102,8 +102,8 @@ impl<C: DbTransactionProfile + DbReadProfile + CacheReadProfile + CacheWriteProf
 
         self
             .write_cache_profile(id.as_id(), |p| {
-                p.data.update_from(&data.new_data);
-                p.attributes.update_from(&data.new_data);
+                data.new_data.update_to_profile(&mut p.data);
+                data.new_data.update_to_attributes(&mut p.attributes);
                 p.data.version_uuid = data.version;
                 if let Some(update) = profile_text_moderation_state_update {
                     p.state.profile_text_moderation_state = update;

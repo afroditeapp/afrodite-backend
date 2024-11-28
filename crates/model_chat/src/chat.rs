@@ -1,5 +1,6 @@
 use diesel::{prelude::*, sql_types::BigInt};
 use model::{MessageNumber, PublicKeyId, PublicKeyVersion};
+use model_server_data::{LimitedActionStatus, MatchId, ReceivedLikeId};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use simple_backend_model::{diesel_i64_try_from, UnixTime};
 use utoipa::{IntoParams, ToSchema};
@@ -622,16 +623,6 @@ impl DeleteLikeResult {
             error_account_interaction_state_mismatch: Some(state),
         }
     }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
-pub enum LimitedActionStatus {
-    /// Action completed successfully.
-    Success,
-    /// Action completed successfully but the action limit was reached.
-    SuccessAndLimitReached,
-    /// Action failed because the action limit is already reached.
-    FailureLimitAlreadyReached,
 }
 
 pub struct NewPendingMessageValues {
