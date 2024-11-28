@@ -13,7 +13,11 @@ tokio = { workspace = true }
 axum = { workspace = true }
 tracing = { workspace = true }
 
+hyper = { workspace = true }
+reqwest = { workspace = true }
+
 error-stack = { workspace = true }
+thiserror = { workspace = true }
 
 config = { path = "../config" }
 model = { path = "../model" }
@@ -29,8 +33,7 @@ server_data_account = { path = "../server_data_account" }
 server_data_profile = { path = "../server_data_profile" }
 server_data_media = { path = "../server_data_media" }
 
-server_api = { path = "../server_api" }
-server_api_media = { path = "../server_api_media" }
+api_internal = { path = "../api_internal" }
 
 simple_backend = { path = "../simple_backend" }
 simple_backend_config = { path = "../simple_backend_config" }

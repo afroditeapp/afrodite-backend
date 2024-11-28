@@ -8,10 +8,10 @@ use model_account::{
     AccessibleAccount, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, SignInWithInfo
 };
 use server_common::internal_api::InternalApiError;
-pub use server_data::app::*;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
+use crate::{websocket::WebSocketError, internal_api::InternalApiClient, utils::StatusCode};
 
-use crate::{common::WebSocketError, internal_api::InternalApiClient, utils::StatusCode};
+pub use server_data::app::*;
 
 pub trait GetInternalApi {
     fn internal_api_client(&self) -> &InternalApiClient;

@@ -1,12 +1,13 @@
 use axum::{extract::State, Extension};
 use model::{AccountIdInternal, BackendConfig, Permissions};
 use obfuscate_api_macro::obfuscate_api;
+use crate::S;
 use simple_backend::create_counters;
 use tracing::info;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{ReadDynamicConfig, StateBase, WriteDynamicConfig}, create_open_api_router, utils::{Json, StatusCode}
+    app::{ReadDynamicConfig,WriteDynamicConfig}, create_open_api_router, utils::{Json, StatusCode}
 };
 
 #[obfuscate_api]
@@ -27,7 +28,7 @@ const PATH_GET_BACKEND_CONFIG: &str = "/common_api/backend_config";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_backend_config<S: ReadDynamicConfig>(
+pub async fn get_backend_config(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<Json<BackendConfig>, StatusCode> {
@@ -60,7 +61,7 @@ const PATH_POST_BACKEND_CONFIG: &str = "/common_api/backend_config";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_backend_config<S: WriteDynamicConfig>(
+pub async fn post_backend_config(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Extension(api_caller_permissions): Extension<Permissions>,
@@ -82,11 +83,11 @@ pub async fn post_backend_config<S: WriteDynamicConfig>(
     }
 }
 
-pub fn config_router<S: StateBase + WriteDynamicConfig + ReadDynamicConfig>(s: S) -> OpenApiRouter {
+pub fn config_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_backend_config::<S>,
-        post_backend_config::<S>,
+        get_backend_config,
+        post_backend_config,
     )
 }
 

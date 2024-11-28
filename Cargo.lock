@@ -4000,11 +4000,8 @@ dependencies = [
 name = "server_api"
 version = "0.0.0"
 dependencies = [
- "api_internal",
  "axum",
  "axum-extra",
- "config",
- "error-stack",
  "headers",
  "http",
  "hyper",
@@ -4012,16 +4009,15 @@ dependencies = [
  "model",
  "model_account",
  "obfuscate_api_macro",
- "reqwest",
  "serde",
  "serde_json",
  "server_common",
  "server_data",
+ "server_state",
  "simple_backend",
  "simple_backend_config",
  "simple_backend_model",
  "simple_backend_utils",
- "thiserror 1.0.63",
  "tokio",
  "tracing",
  "utils",
@@ -4072,7 +4068,6 @@ dependencies = [
 name = "server_api_media"
 version = "0.0.0"
 dependencies = [
- "api_internal",
  "axum",
  "axum-extra",
  "headers",
@@ -4272,16 +4267,17 @@ dependencies = [
 name = "server_state"
 version = "0.0.0"
 dependencies = [
+ "api_internal",
  "axum",
  "config",
  "error-stack",
  "futures",
+ "hyper",
  "model",
  "model_account",
  "model_chat",
+ "reqwest",
  "serde_json",
- "server_api",
- "server_api_media",
  "server_common",
  "server_data",
  "server_data_account",
@@ -4291,6 +4287,7 @@ dependencies = [
  "server_data_profile",
  "simple_backend",
  "simple_backend_config",
+ "thiserror 1.0.63",
  "tokio",
  "tracing",
 ]

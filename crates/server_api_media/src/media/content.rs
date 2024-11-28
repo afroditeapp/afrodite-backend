@@ -7,6 +7,7 @@ use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, Permissions, ContentId, ContentProcessingId, ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, SlotId
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::IsMatch, create_open_api_router, result::WrappedResultExt};
 use server_data::{
     read::GetReadCommandsCommon, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle}, DataError
@@ -16,7 +17,7 @@ use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{ContentProcessingProvider, GetAccounts, ReadData, StateBase, WriteData},
+    app::{ContentProcessingProvider, GetAccounts, ReadData,WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -53,7 +54,7 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_content<S: ReadData + GetAccounts + IsMatch>(
+pub async fn get_content(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -137,7 +138,7 @@ const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_all_account_media_content<S: ReadData + GetAccounts>(
+pub async fn get_all_account_media_content(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
@@ -195,7 +196,7 @@ const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/{slot_id
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_content_to_content_slot<S: WriteData + ContentProcessingProvider>(
+pub async fn put_content_to_content_slot(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Path(slot_number): Path<SlotId>,
@@ -247,7 +248,7 @@ const PATH_GET_CONTENT_SLOT_STATE: &str = "/media_api/content_slot/{slot_id}";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_content_slot_state<S: ContentProcessingProvider>(
+pub async fn get_content_slot_state(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Path(slot_number): Path<SlotId>,
@@ -281,7 +282,7 @@ const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_content<S: WriteData + GetAccounts>(
+pub async fn delete_content(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Path(content_id): Path<ContentId>,
@@ -299,18 +300,16 @@ pub async fn delete_content<S: WriteData + GetAccounts>(
         .delete_content(internal_id, content_id))
 }
 
-pub fn content_router<
-    S: StateBase + WriteData + GetAccounts + ReadData + ContentProcessingProvider + IsMatch,
->(
+pub fn content_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_content::<S>,
-        get_all_account_media_content::<S>,
-        put_content_to_content_slot::<S>,
-        get_content_slot_state::<S>,
-        delete_content::<S>,
+        get_content,
+        get_all_account_media_content,
+        put_content_to_content_slot,
+        get_content_slot_state,
+        delete_content,
     )
 }
 

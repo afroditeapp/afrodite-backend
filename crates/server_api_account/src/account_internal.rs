@@ -2,16 +2,18 @@
 
 use axum::extract::State;
 use model_account::{AccountId, LoginResult, SignInWithInfo};
-use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
+use server_api::{app::RegisteringCmd, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
 use super::account::login_impl;
 use crate::{
-    app::{GetAccounts, GetConfig, ReadData, WriteData},
+    app::{GetAccounts, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
+
+use server_api::S;
 
 pub const PATH_LOGIN: &str = "/account_api/login";
 
@@ -30,7 +32,7 @@ pub const PATH_LOGIN: &str = "/account_api/login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_login<S: WriteData + ReadData + GetAccounts + ResetPushNotificationTokens + LatestPublicKeysInfo>(
+pub async fn post_login(
     State(state): State<S>,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {
@@ -60,7 +62,7 @@ pub const PATH_REGISTER: &str = "/account_api/register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_register<S: WriteData + GetConfig + RegisteringCmd>(
+pub async fn post_register(
     State(state): State<S>,
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_INTERNAL.post_register.incr();

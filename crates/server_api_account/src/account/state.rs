@@ -1,6 +1,7 @@
 use axum::{extract::State, Extension};
 use model_account::{Account, AccountIdInternal, ClientId, LatestBirthdate};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::WriteData, create_open_api_router, db_write};
 use server_data::read::GetReadCommandsCommon;
 use server_data_account::write::GetWriteCommandsAccount;
@@ -8,7 +9,7 @@ use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccessTokens, ReadData, StateBase},
+    app::ReadData,
     utils::{Json, StatusCode},
 };
 
@@ -26,7 +27,7 @@ const PATH_ACCOUNT_STATE: &str = "/account_api/state";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_account_state<S: GetAccessTokens + ReadData>(
+pub async fn get_account_state(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<Account>, StatusCode> {
@@ -48,7 +49,7 @@ const PATH_LATEST_BIRTHDATE: &str = "/account_api/latest_birthdate";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_latest_birthdate<S: GetAccessTokens + ReadData>(
+pub async fn get_latest_birthdate(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<LatestBirthdate>, StatusCode> {
@@ -73,7 +74,7 @@ const PATH_POST_GET_NEXT_CLIENT_ID: &str = "/account_api/next_client_id";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_client_id<S: WriteData>(
+pub async fn post_get_next_client_id(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<ClientId>, StatusCode> {
@@ -86,12 +87,12 @@ pub async fn post_get_next_client_id<S: WriteData>(
     Ok(client_id.into())
 }
 
-pub fn state_router<S: StateBase + GetAccessTokens + ReadData + WriteData>(s: S) -> OpenApiRouter {
+pub fn state_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_account_state::<S>,
-        get_latest_birthdate::<S>,
-        post_get_next_client_id::<S>,
+        get_account_state,
+        get_latest_birthdate,
+        post_get_next_client_id,
     )
 }
 

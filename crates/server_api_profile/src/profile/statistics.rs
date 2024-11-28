@@ -6,15 +6,14 @@ use model_profile::{
     GetProfileStatisticsParams, GetProfileStatisticsResult, Permissions
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use server_data_profile::{app::ProfileStatisticsCacheProvider, read::GetReadProfileCommands};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{
-        ReadData, StateBase,
-    },
+    app::ReadData,
     utils::{Json, StatusCode},
 };
 
@@ -37,9 +36,7 @@ const PATH_GET_PROFILE_STATISTICS: &str = "/profile_api/profile_statistics";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_statistics<
-    S: ReadData + ProfileStatisticsCacheProvider,
->(
+pub async fn get_profile_statistics(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Query(params): Query<GetProfileStatisticsParams>,
@@ -59,14 +56,12 @@ pub async fn get_profile_statistics<
     Ok(r.into())
 }
 
-pub fn statistics_router<
-    S: StateBase + ReadData + ProfileStatisticsCacheProvider,
->(
+pub fn statistics_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_profile_statistics::<S>,
+        get_profile_statistics,
     )
 }
 

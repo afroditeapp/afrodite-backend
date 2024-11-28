@@ -1,12 +1,13 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountIdInternal, ProfileIteratorSessionId, ProfilePage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccessTokens, ReadData, StateBase, WriteData},
+    app::WriteData,
     utils::{Json, StatusCode},
 };
 
@@ -25,7 +26,7 @@ const PATH_POST_NEXT_PROFILE_PAGE: &str = "/profile_api/page/next";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_profile_page<S: GetAccessTokens + WriteData + ReadData>(
+pub async fn post_get_next_profile_page(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(iterator_session_id): Json<ProfileIteratorSessionId>,
@@ -72,7 +73,7 @@ const PATH_POST_RESET_PROFILE_PAGING: &str = "/profile_api/page/reset";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData>(
+pub async fn post_reset_profile_paging(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ProfileIteratorSessionId>, StatusCode> {
@@ -90,13 +91,13 @@ pub async fn post_reset_profile_paging<S: GetAccessTokens + WriteData + ReadData
     Ok(iterator_session_id.into())
 }
 
-pub fn iterate_profiles_router<S: StateBase + GetAccessTokens + WriteData + ReadData>(
+pub fn iterate_profiles_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_get_next_profile_page::<S>,
-        post_reset_profile_paging::<S>,
+        post_get_next_profile_page,
+        post_reset_profile_paging,
     )
 }
 

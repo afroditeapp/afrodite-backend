@@ -39,7 +39,7 @@ impl ConnectedApp {
         private.route_layer({
             middleware::from_fn_with_state(
                 self.state(),
-                api::utils::authenticate_with_access_token::<S>,
+                api::utils::authenticate_with_access_token,
             )
         })
     }

@@ -104,6 +104,23 @@ pub struct ConfigFile {
 }
 
 impl ConfigFile {
+    pub fn minimal_config_for_api_doc_json() -> Self {
+        Self {
+            bot_config_file: None,
+            profile_attributes_file: None,
+            email_content_file: None,
+            components: Components::default(),
+            grant_admin_access: None,
+            location: None,
+            external_services: None,
+            internal_api: None,
+            queue_limits: None,
+            demo_mode: None,
+            limits: None,
+            profile_name_allowlist: None,
+        }
+    }
+
     pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFile, ConfigFileError> {
         let config_string =
             ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT)

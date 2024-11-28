@@ -4,17 +4,18 @@ use model_account::{
     SignInWithInfo, SignInWithLoginInfo,
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
 
 use crate::{
-    app::{GetAccessTokens, GetAccounts, GetConfig, ReadData, WriteData},
+    app::{GetAccounts, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
 
-pub async fn login_impl<S: ReadData + WriteData + GetAccounts + ResetPushNotificationTokens + LatestPublicKeysInfo>(
+pub async fn login_impl(
     id: AccountId,
     state: S,
 ) -> Result<LoginResult, StatusCode> {
@@ -64,9 +65,7 @@ pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn post_sign_in_with_login<
-    S: GetAccessTokens + WriteData + ReadData + GetAccounts + SignInWith + GetConfig + RegisteringCmd + ResetPushNotificationTokens + LatestPublicKeysInfo,
->(
+pub async fn post_sign_in_with_login(
     State(state): State<S>,
     Json(tokens): Json<SignInWithLoginInfo>,
 ) -> Result<Json<LoginResult>, StatusCode> {

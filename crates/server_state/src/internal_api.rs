@@ -10,6 +10,7 @@ use tracing::info;
 use crate::result::{Result, WrappedContextExt};
 
 pub mod common;
+pub mod media;
 
 // TODO: Use TLS for checking that all internal communication comes from trusted
 //       sources.

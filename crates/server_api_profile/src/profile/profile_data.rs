@@ -6,6 +6,7 @@ use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeInfoResult, GetMyProfileResult, GetProfileQueryParam, GetProfileResult, Permissions, ProfileSearchAgeRange, ProfileSearchAgeRangeValidated, ProfileUpdate, ProfileUpdateInternal, SearchGroups, ValidatedSearchGroups
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::IsMatch, create_open_api_router, db_write_multiple, result::WrappedContextExt};
 use server_data::read::GetReadCommandsCommon;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
@@ -15,7 +16,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{
-        GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, StateBase, WriteData,
+        GetAccounts, ReadData,WriteData,
     },
     db_write,
     utils::{Json, StatusCode},
@@ -63,9 +64,7 @@ const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile<
-    S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig + IsMatch,
->(
+pub async fn get_profile(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -164,7 +163,7 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_profile<S: GetConfig + GetAccessTokens + WriteData + ReadData>(
+pub async fn post_profile(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(profile): Json<ProfileUpdate>,
@@ -220,7 +219,7 @@ const PATH_GET_SEARCH_GROUPS: &str = "/profile_api/search_groups";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_search_groups<S: ReadData>(
+pub async fn get_search_groups(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<SearchGroups>, StatusCode> {
@@ -245,7 +244,7 @@ const PATH_POST_SEARCH_GROUPS: &str = "/profile_api/search_groups";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_search_groups<S: WriteData>(
+pub async fn post_search_groups(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(search_groups): Json<SearchGroups>,
@@ -275,7 +274,7 @@ const PATH_GET_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_search_age_range<S: ReadData>(
+pub async fn get_search_age_range(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ProfileSearchAgeRange>, StatusCode> {
@@ -299,7 +298,7 @@ const PATH_POST_SEARCH_AGE_RANGE: &str = "/profile_api/search_age_range";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_search_age_range<S: WriteData>(
+pub async fn post_search_age_range(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(search_age_range): Json<ProfileSearchAgeRange>,
@@ -332,9 +331,7 @@ const PATH_GET_MY_PROFILE: &str = "/profile_api/my_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_my_profile<
-    S: ReadData,
->(
+pub async fn get_my_profile(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<GetMyProfileResult>, StatusCode> {
@@ -367,9 +364,7 @@ const PATH_GET_INITIAL_PROFILE_AGE_INFO: &str = "/profile_api/initial_profile_ag
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_initial_profile_age_info<
-    S: ReadData,
->(
+pub async fn get_initial_profile_age_info(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<GetInitialProfileAgeInfoResult>, StatusCode> {
@@ -388,21 +383,19 @@ pub async fn get_initial_profile_age_info<
     Ok(r.into())
 }
 
-pub fn profile_data_router<
-    S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig + IsMatch,
->(
+pub fn profile_data_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_profile::<S>,
-        get_search_groups::<S>,
-        get_search_age_range::<S>,
-        post_profile::<S>,
-        post_search_groups::<S>,
-        post_search_age_range::<S>,
-        get_my_profile::<S>,
-        get_initial_profile_age_info::<S>,
+        get_profile,
+        get_search_groups,
+        get_search_age_range,
+        post_profile,
+        post_search_groups,
+        post_search_age_range,
+        get_my_profile,
+        get_initial_profile_age_info,
     )
 }
 

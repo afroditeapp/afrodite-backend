@@ -1,6 +1,7 @@
 use axum::{extract::State, Extension};
 use model_chat::{AccountId, AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DeleteLikeResult, LimitedActionStatus, NewReceivedLikesCount, NewReceivedLikesCountResult, PageItemCountForNewLikes, PendingNotificationFlags, ReceivedLikesIteratorSessionId, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLikeResult, SentLikesPage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -8,7 +9,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData},
+    app::{GetAccounts, ReadData,WriteData},
     db_write_multiple,
 };
 
@@ -28,7 +29,7 @@ const PATH_POST_SEND_LIKE: &str = "/chat_api/send_like";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_send_like<S: GetAccounts + WriteData>(
+pub async fn post_send_like(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -123,7 +124,7 @@ const PATH_GET_SENT_LIKES: &str = "/chat_api/sent_likes";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_sent_likes<S: ReadData>(
+pub async fn get_sent_likes(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<SentLikesPage>, StatusCode> {
@@ -146,7 +147,7 @@ const PATH_POST_GET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/new_received_lik
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_new_received_likes_count<S: ReadData + EventManagerProvider>(
+pub async fn post_get_new_received_likes_count(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<NewReceivedLikesCountResult>, StatusCode> {
@@ -201,7 +202,7 @@ const PATH_POST_RESET_RECEIVED_LIKES_PAGING: &str = "/chat_api/received_likes/re
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_reset_received_likes_paging<S: WriteData + ReadData>(
+pub async fn post_reset_received_likes_paging(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetReceivedLikesIteratorResult>, StatusCode> {
@@ -239,7 +240,7 @@ const PATH_POST_GET_NEXT_RECEIVED_LIKES_PAGE: &str = "/chat_api/received_likes";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_received_likes_page<S: WriteData + ReadData>(
+pub async fn post_get_next_received_likes_page(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(iterator_session_id): Json<ReceivedLikesIteratorSessionId>,
@@ -293,7 +294,7 @@ const PATH_DELETE_LIKE: &str = "/chat_api/delete_like";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_like<S: GetAccounts + WriteData>(
+pub async fn delete_like(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -351,15 +352,15 @@ pub async fn delete_like<S: GetAccounts + WriteData>(
     Ok(r.into())
 }
 
-pub fn like_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> OpenApiRouter {
+pub fn like_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_send_like::<S>,
-        get_sent_likes::<S>,
-        post_get_new_received_likes_count::<S>,
-        post_reset_received_likes_paging::<S>,
-        post_get_next_received_likes_page::<S>,
-        delete_like::<S>,
+        post_send_like,
+        get_sent_likes,
+        post_get_new_received_likes_count,
+        post_reset_received_likes_paging,
+        post_get_next_received_likes_page,
+        delete_like,
     )
 }
 

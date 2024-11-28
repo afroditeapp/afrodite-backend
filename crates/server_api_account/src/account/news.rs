@@ -2,13 +2,14 @@
 use axum::{extract::{Path, Query, State}, Extension};
 use model_account::{AccountIdInternal, GetNewsItemResult, NewsId, NewsIteratorSessionId, NewsLocale, NewsPage, PageItemCountForNewPublicNews, PendingNotificationFlags, Permissions, RequireNewsLocale, ResetNewsIteratorResult, UnreadNewsCountResult};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::EventManagerProvider, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
-use crate::app::{GetAccounts, ReadData, StateBase, WriteData};
+use crate::app::{ReadData, WriteData};
 
 
 #[obfuscate_api]
@@ -25,7 +26,7 @@ const PATH_GET_UNREAD_NEWS_COUNT: &str = "/account_api/news_count";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_unread_news_count<S: ReadData + EventManagerProvider>(
+pub async fn post_get_unread_news_count(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<UnreadNewsCountResult>, StatusCode> {
@@ -54,7 +55,7 @@ const PATH_POST_RESET_NEWS_PAGING: &str = "/account_api/reset_news_paging";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_reset_news_paging<S: WriteData + ReadData>(
+pub async fn post_reset_news_paging(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetNewsIteratorResult>, StatusCode> {
@@ -83,7 +84,7 @@ const PATH_POST_GET_NEXT_NEWS_PAGE: &str = "/account_api/next_news_page";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_news_page<S: WriteData + ReadData>(
+pub async fn post_get_next_news_page(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
@@ -142,7 +143,7 @@ const PATH_GET_NEWS_ITEM: &str = "/account_api/news_item/{nid}";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_news_item<S: ReadData>(
+pub async fn get_news_item(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Path(nid): Path<NewsId>,
@@ -177,13 +178,13 @@ pub async fn get_news_item<S: ReadData>(
     Ok(news.into())
 }
 
-pub fn news_router<S: StateBase + GetAccounts + WriteData + ReadData + EventManagerProvider>(s: S) -> OpenApiRouter {
+pub fn news_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_get_unread_news_count::<S>,
-        post_reset_news_paging::<S>,
-        post_get_next_news_page::<S>,
-        get_news_item::<S>,
+        post_get_unread_news_count,
+        post_reset_news_paging,
+        post_get_next_news_page,
+        get_news_item,
     )
 }
 

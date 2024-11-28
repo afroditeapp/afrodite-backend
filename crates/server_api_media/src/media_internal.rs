@@ -6,9 +6,11 @@ use server_api::app::ValidateModerationRequest;
 use simple_backend::create_counters;
 
 use crate::{
-    app::{GetAccounts, GetConfig, GetInternalApi, ReadData},
+    app::{GetAccounts, GetConfig},
     utils::StatusCode,
 };
+
+use server_api::S;
 
 pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
     "/internal/media_api/moderation/request/:account_id";
@@ -24,9 +26,7 @@ pub const PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT: &str =
         (status = 500, description = "Internal server error."),
     ),
 )]
-pub async fn internal_get_check_moderation_request_for_account<
-    S: GetConfig + ReadData + GetAccounts + GetInternalApi + ValidateModerationRequest,
->(
+pub async fn internal_get_check_moderation_request_for_account(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
 ) -> Result<(), StatusCode> {

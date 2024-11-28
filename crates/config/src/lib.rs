@@ -76,6 +76,22 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn minimal_config_for_api_doc_json(simple_backend_config: Arc<SimpleBackendConfig>) -> Self {
+        Self {
+            file: ConfigFile::minimal_config_for_api_doc_json(),
+            file_dynamic: ConfigFileDynamic::minimal_config_for_api_doc_json(),
+            simple_backend_config,
+            external_services: ExternalServices::default(),
+            client_api_urls: InternalApiUrls::new(None, None),
+            mode: None,
+            profile_attributes: None,
+            profile_attributes_sha256: None,
+            email_content: None,
+            reset_likes_utc_offset: FixedOffset::east_opt(0).unwrap(),
+            profile_name_allowlist: ProfileNameAllowlistData::default(),
+        }
+    }
+
     pub fn components(&self) -> &Components {
         &self.file.components
     }

@@ -8,12 +8,13 @@ use manager_model::{
 };
 use model::{AccountIdInternal, Permissions};
 use obfuscate_api_macro::obfuscate_api;
+use crate::S;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tracing::info;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::StateBase, create_open_api_router, utils::{Json, StatusCode}
+    create_open_api_router, utils::{Json, StatusCode}
 };
 
 #[obfuscate_api]
@@ -30,7 +31,7 @@ const PATH_GET_SYSTEM_INFO: &str = "/common_api/system_info";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_system_info<S: GetManagerApi>(
+pub async fn get_system_info(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<Json<SystemInfoList>, StatusCode> {
@@ -58,7 +59,7 @@ const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_software_info<S: GetManagerApi>(
+pub async fn get_software_info(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
 ) -> Result<Json<SoftwareInfo>, StatusCode> {
@@ -88,7 +89,7 @@ const PATH_GET_LATEST_BUILD_INFO: &str = "/common_api/get_latest_build_info";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_latest_build_info<S: GetManagerApi>(
+pub async fn get_latest_build_info(
     State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
     Extension(api_caller_permissions): Extension<Permissions>,
@@ -121,7 +122,7 @@ const PATH_POST_REQUEST_BUILD_SOFTWARE: &str = "/common_api/request_build_softwa
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_request_build_software<S: GetManagerApi>(
+pub async fn post_request_build_software(
     State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
     Extension(api_caller_permissions): Extension<Permissions>,
@@ -166,7 +167,7 @@ const PATH_POST_REQUEST_UPDATE_SOFTWARE: &str = "/common_api/request_update_soft
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_request_update_software<S: GetManagerApi>(
+pub async fn post_request_update_software(
     State(state): State<S>,
     Query(software): Query<SoftwareOptionsQueryParam>,
     Query(reboot): Query<RebootQueryParam>,
@@ -218,7 +219,7 @@ const PATH_POST_REQUEST_RESTART_OR_RESET_BACKEND: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
+pub async fn post_request_restart_or_reset_backend(
     State(state): State<S>,
     Query(reset_data): Query<ResetDataQueryParam>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
@@ -246,15 +247,15 @@ pub async fn post_request_restart_or_reset_backend<S: GetManagerApi>(
     }
 }
 
-pub fn manager_router<S: StateBase + GetManagerApi>(s: S) -> OpenApiRouter {
+pub fn manager_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_system_info::<S>,
-        get_software_info::<S>,
-        get_latest_build_info::<S>,
-        post_request_build_software::<S>,
-        post_request_update_software::<S>,
-        post_request_restart_or_reset_backend::<S>,
+        get_system_info,
+        get_software_info,
+        get_latest_build_info,
+        post_request_build_software,
+        post_request_update_software,
+        post_request_restart_or_reset_backend,
     )
 }
 

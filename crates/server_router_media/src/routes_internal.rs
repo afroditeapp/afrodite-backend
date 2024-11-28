@@ -19,7 +19,7 @@ impl InternalApp {
         if state.config().internal_api_config().microservice {
             router = router.route(
                 api::media_internal::PATH_INTERNAL_GET_CHECK_MODERATION_REQUEST_FOR_ACCOUNT,
-                post(api::media_internal::internal_get_check_moderation_request_for_account::<S>),
+                post(api::media_internal::internal_get_check_moderation_request_for_account),
             );
         }
 

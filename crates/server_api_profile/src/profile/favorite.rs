@@ -1,13 +1,14 @@
 use axum::{extract::State, Extension};
 use model_profile::{AccountId, AccountIdInternal, FavoriteProfilesPage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData},
+    app::{GetAccounts, ReadData,WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -26,7 +27,7 @@ const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_favorite_profiles<S: ReadData>(
+pub async fn get_favorite_profiles(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<FavoriteProfilesPage>, StatusCode> {
@@ -55,7 +56,7 @@ const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_favorite_profile<S: WriteData + GetAccounts>(
+pub async fn post_favorite_profile(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(favorite): Json<AccountId>,
@@ -85,7 +86,7 @@ const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
+pub async fn delete_favorite_profile(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(favorite): Json<AccountId>,
@@ -99,12 +100,12 @@ pub async fn delete_favorite_profile<S: WriteData + GetAccounts>(
     Ok(())
 }
 
-pub fn favorite_router<S: StateBase + WriteData + GetAccounts + ReadData>(s: S) -> OpenApiRouter {
+pub fn favorite_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_favorite_profiles::<S>,
-        post_favorite_profile::<S>,
-        delete_favorite_profile::<S>,
+        get_favorite_profiles,
+        post_favorite_profile,
+        delete_favorite_profile,
     )
 }
 

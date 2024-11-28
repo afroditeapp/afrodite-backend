@@ -6,13 +6,14 @@ use model_media::{
     AccountId, AccountIdInternal, EventToClientInternal, HandleModerationRequest, ModerationList, ModerationQueueTypeParam, NotificationEvent, Permissions
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use server_data_media::write::GetWriteCommandsMedia;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, StateBase, WriteData},
+    app::{GetAccounts, WriteData},
     db_write, db_write_multiple,
     utils::{Json, StatusCode},
 };
@@ -43,7 +44,7 @@ const PATH_ADMIN_MODERATION_PAGE_NEXT: &str = "/media_api/admin/moderation/page/
     ),
     security(("access_token" = [])),
 )]
-pub async fn patch_moderation_request_list<S: WriteData + GetAccessTokens>(
+pub async fn patch_moderation_request_list(
     State(state): State<S>,
     Query(queue_type): Query<ModerationQueueTypeParam>,
     Extension(account_id): Extension<AccountIdInternal>,
@@ -86,9 +87,7 @@ const PATH_ADMIN_MODERATION_HANDLE_REQUEST: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_handle_moderation_request<
-    S: GetInternalApi + WriteData + GetAccounts + GetConfig,
->(
+pub async fn post_handle_moderation_request(
     State(state): State<S>,
     Path(moderation_request_owner_account_id): Path<AccountId>,
     Extension(admin_account_id): Extension<AccountIdInternal>,
@@ -142,15 +141,13 @@ pub async fn post_handle_moderation_request<
     Ok(())
 }
 
-pub fn admin_moderation_router<
-    S: StateBase + GetInternalApi + WriteData + GetAccounts + GetConfig + GetAccessTokens,
->(
+pub fn admin_moderation_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        patch_moderation_request_list::<S>,
-        post_handle_moderation_request::<S>,
+        patch_moderation_request_list,
+        post_handle_moderation_request,
     )
 }
 

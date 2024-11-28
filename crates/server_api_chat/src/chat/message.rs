@@ -5,6 +5,7 @@ use model_chat::{
     AccountId, AccountIdInternal, EventToClientInternal, LatestViewedMessageChanged, MessageNumber, NotificationEvent, PendingMessageAcknowledgementList, SendMessageResult, SendMessageToAccountParams, SentMessageIdList, UpdateMessageViewStatus
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use server_data_chat::{read::GetReadChatCommands, write::{chat::PushNotificationAllowed, GetWriteCommandsChat}};
 use simple_backend::create_counters;
@@ -16,7 +17,7 @@ use super::super::{
     utils::{Json, StatusCode},
 };
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData},
+    app::{GetAccounts, ReadData,WriteData},
     db_write_multiple,
 };
 
@@ -51,7 +52,7 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_pending_messages<S: ReadData>(
+pub async fn get_pending_messages(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
@@ -108,7 +109,7 @@ const PATH_POST_ADD_RECEIVER_ACKNOWLEDGEMENT: &str = "/chat_api/add_receiver_ack
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_add_receiver_acknowledgement<S: WriteData>(
+pub async fn post_add_receiver_acknowledgement(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(list): Json<PendingMessageAcknowledgementList>,
@@ -138,7 +139,7 @@ const PATH_GET_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_message_number_of_latest_viewed_message<S: ReadData + GetAccounts>(
+pub async fn get_message_number_of_latest_viewed_message(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -170,7 +171,7 @@ const PATH_POST_MESSAGE_NUMBER_OF_LATEST_VIEWED_MESSAGE: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_message_number_of_latest_viewed_message<S: GetAccounts + WriteData>(
+pub async fn post_message_number_of_latest_viewed_message(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(update_info): Json<UpdateMessageViewStatus>,
@@ -226,7 +227,7 @@ const PATH_POST_SEND_MESSAGE: &str = "/chat_api/send_message";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_send_message<S: GetAccounts + WriteData>(
+pub async fn post_send_message(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Query(query_params): Query<SendMessageToAccountParams>,
@@ -289,7 +290,7 @@ const PATH_GET_SENT_MESSAGE_IDS: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_sent_message_ids<S: ReadData + GetAccounts>(
+pub async fn get_sent_message_ids(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<SentMessageIdList>, StatusCode> {
@@ -320,7 +321,7 @@ const PATH_POST_ADD_SENDER_ACKNOWLEDGEMENT: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_add_sender_acknowledgement<S: WriteData>(
+pub async fn post_add_sender_acknowledgement(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(id_list): Json<SentMessageIdList>,
@@ -332,16 +333,16 @@ pub async fn post_add_sender_acknowledgement<S: WriteData>(
     Ok(())
 }
 
-pub fn message_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+pub fn message_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_pending_messages::<S>,
-        post_add_receiver_acknowledgement::<S>,
-        get_message_number_of_latest_viewed_message::<S>,
-        post_message_number_of_latest_viewed_message::<S>,
-        post_send_message::<S>,
-        get_sent_message_ids::<S>,
-        post_add_sender_acknowledgement::<S>,
+        get_pending_messages,
+        post_add_receiver_acknowledgement,
+        get_message_number_of_latest_viewed_message,
+        post_message_number_of_latest_viewed_message,
+        post_send_message,
+        get_sent_message_ids,
+        post_add_sender_acknowledgement,
     )
 }
 

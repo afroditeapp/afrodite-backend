@@ -16,7 +16,6 @@ utoipa-axum = { workspace = true }
 
 model = { path = "../model" }
 model_media = { path = "../model_media" }
-api_internal = { path = "../api_internal" }
 
 server_common = { path = "../server_common" }
 server_data = { path = "../server_data" }

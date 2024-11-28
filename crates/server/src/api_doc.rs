@@ -1,4 +1,12 @@
-use server_state::AppStateEmpty;
+use std::sync::Arc;
+
+use config::Config;
+use model::{AccountIdInternal, EmailMessages};
+use server_data::{content_processing::ContentProcessingManagerData, db_manager::DatabaseManager, write_commands::WriteCommandRunnerHandle};
+use server_data_all::demo::DemoModeManager;
+use server_state::S;
+use simple_backend::{app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::PerfCounterManagerData};
+use simple_backend_config::SimpleBackendConfig;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -14,8 +22,7 @@ use utoipa::OpenApi;
 pub struct ApiDoc;
 
 impl ApiDoc {
-    pub fn all() -> utoipa::openapi::OpenApi {
-        let state = AppStateEmpty;
+    pub fn all(state: S) -> utoipa::openapi::OpenApi {
         let mut doc = ApiDoc::openapi();
         doc.merge(server_api::ApiDocCommon::openapi());
         let common_admin = ApiDoc::openapi()
@@ -87,8 +94,48 @@ impl ApiDoc {
         doc
     }
 
-    pub fn open_api_json_string() -> Result<String, serde_json::Error> {
-        Self::all().to_pretty_json()
+    pub async fn open_api_json_string() -> Result<String, serde_json::Error> {
+        let config = Arc::new(SimpleBackendConfig::load_from_file_with_in_ram_database());
+        let perf_data = PerfCounterManagerData::new(&[]).into();
+        let simple_state = SimpleBackendAppState::new(config.clone(), perf_data).await.unwrap();
+
+        let config = Arc::new(Config::minimal_config_for_api_doc_json(config.clone()));
+
+        let (push_notification_sender, _) = crate::push_notifications::channel();
+        let (email_sender, _) = crate::email::channel::<AccountIdInternal, EmailMessages>();
+        let (_, router_database_handle, router_database_write_handle) =
+            DatabaseManager::new(
+                config.simple_backend().data_dir().to_path_buf(),
+                config.clone(),
+                MediaBackupHandle::broken_handle_for_api_doc_json(),
+                push_notification_sender.clone(),
+                email_sender.clone(),
+            )
+            .await
+            .expect("Database init failed");
+
+        let (write_cmd_runner_handle, _) =
+            WriteCommandRunnerHandle::new(router_database_write_handle.into(), &config).await;
+
+        let (content_processing, _) = ContentProcessingManagerData::new();
+        let content_processing = Arc::new(content_processing);
+
+        let demo_mode =
+            DemoModeManager::new(config.demo_mode_config().cloned().unwrap_or_default())
+                .expect("Demo mode manager init failed");
+
+        let app_state = S::create_app_state(
+            router_database_handle,
+            write_cmd_runner_handle,
+            config.clone(),
+            content_processing.clone(),
+            demo_mode,
+            push_notification_sender,
+            simple_state,
+        )
+        .await;
+
+        Self::all(app_state).to_pretty_json()
     }
 }
 

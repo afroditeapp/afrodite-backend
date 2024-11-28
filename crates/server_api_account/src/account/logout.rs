@@ -2,13 +2,14 @@
 use axum::{extract::State, Extension};
 use model::AccountIdInternal;
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::ResetPushNotificationTokens, create_open_api_router, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::StatusCode;
-use crate::app::{StateBase, WriteData};
+use crate::app::WriteData;
 
 #[obfuscate_api]
 const PATH_POST_LOGOUT: &str = "/account_api/logout";
@@ -23,7 +24,7 @@ const PATH_POST_LOGOUT: &str = "/account_api/logout";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_logout<S: WriteData + ResetPushNotificationTokens>(
+pub async fn post_logout(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<(), StatusCode> {
@@ -37,10 +38,10 @@ pub async fn post_logout<S: WriteData + ResetPushNotificationTokens>(
     Ok(())
 }
 
-pub fn logout_router<S: StateBase + WriteData + ResetPushNotificationTokens>(s: S) -> OpenApiRouter {
+pub fn logout_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_logout::<S>,
+        post_logout,
     )
 }
 

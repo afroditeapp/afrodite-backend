@@ -1,6 +1,7 @@
 use axum::{extract::State, Extension};
 use model_chat::{AccountId, AccountIdInternal, ReceivedBlocksPage, SentBlocksPage};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
@@ -8,7 +9,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData},
+    app::{GetAccounts, ReadData,WriteData},
     db_write_multiple,
 };
 
@@ -27,7 +28,7 @@ const PATH_POST_BLOCK_PROFILE: &str = "/chat_api/block_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_block_profile<S: GetAccounts + WriteData>(
+pub async fn post_block_profile(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -65,7 +66,7 @@ const PATH_POST_UNBLOCK_PROFILE: &str = "/chat_api/unblock_profile";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_unblock_profile<S: GetAccounts + WriteData>(
+pub async fn post_unblock_profile(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(requested_profile): Json<AccountId>,
@@ -105,7 +106,7 @@ const PATH_GET_SENT_BLOCKS: &str = "/chat_api/sent_blocks";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_sent_blocks<S: ReadData>(
+pub async fn get_sent_blocks(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<SentBlocksPage>, StatusCode> {
@@ -132,7 +133,7 @@ const PATH_GET_RECEIVED_BLOCKS: &str = "/chat_api/received_blocks";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_received_blocks<S: ReadData>(
+pub async fn get_received_blocks(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<ReceivedBlocksPage>, StatusCode> {
@@ -142,13 +143,13 @@ pub async fn get_received_blocks<S: ReadData>(
     Ok(page.into())
 }
 
-pub fn block_router<S: StateBase + GetAccounts + WriteData + ReadData>(s: S) -> OpenApiRouter {
+pub fn block_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_block_profile::<S>,
-        post_unblock_profile::<S>,
-        get_sent_blocks::<S>,
-        get_received_blocks::<S>,
+        post_block_profile,
+        post_unblock_profile,
+        get_sent_blocks,
+        get_received_blocks,
     )
 }
 

@@ -1,7 +1,8 @@
 use axum::{extract::State, Extension};
 use model_account::{AccountIdInternal, AccountSetup, AccountState, SetAccountSetup};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::{CompleteInitialSetupCmd, ValidateModerationRequest}, create_open_api_router};
+use server_api::S;
+use server_api::{app::CompleteInitialSetupCmd, create_open_api_router};
 use server_data_account::{
     read::GetReadCommandsAccount,
     write::GetWriteCommandsAccount,
@@ -10,7 +11,7 @@ use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccessTokens, GetConfig, GetInternalApi, ReadData, StateBase, WriteData},
+    app::{ReadData,WriteData},
     db_write_multiple, internal_api,
     utils::{Json, StatusCode},
 };
@@ -31,7 +32,7 @@ const PATH_GET_ACCOUNT_SETUP: &str = "/account_api/account_setup";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_account_setup<S: GetAccessTokens + ReadData + WriteData>(
+pub async fn get_account_setup(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<AccountSetup>, StatusCode> {
@@ -62,7 +63,7 @@ const PATH_POST_ACCOUNT_SETUP: &str = "/account_api/account_setup";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_account_setup<S: GetConfig + GetInternalApi + WriteData>(
+pub async fn post_account_setup(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -112,9 +113,7 @@ const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_complete_setup<
-    S: CompleteInitialSetupCmd,
->(
+pub async fn post_complete_setup(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -133,23 +132,14 @@ pub async fn post_complete_setup<
 }
 
 /// Contains only routes which require authentication.
-pub fn register_router<
-    S: StateBase
-        + ReadData
-        + WriteData
-        + GetInternalApi
-        + GetConfig
-        + GetAccessTokens
-        + ValidateModerationRequest
-        + CompleteInitialSetupCmd,
->(
+pub fn register_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_account_setup::<S>,
-        post_account_setup::<S>,
-        post_complete_setup::<S>,
+        get_account_setup,
+        post_account_setup,
+        post_complete_setup,
     )
 }
 

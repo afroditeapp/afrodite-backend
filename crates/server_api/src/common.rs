@@ -14,18 +14,19 @@ use http::HeaderMap;
 use model::{AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
 use model_account::AuthPair;
 use obfuscate_api_macro::obfuscate_api;
+use crate::S;
 use tokio::time::Instant;
-use crate::{app::ConnectionTools, utils::Json};
+use server_state::{app::{ConnectionTools, GetAccessTokens}, websocket::WebSocketError};
+use crate::utils::Json;
 use server_data::{app::{BackendVersionProvider, EventManagerProvider}, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::{app::FilePackageProvider, create_counters, web_socket::WebSocketManager};
 use simple_backend_utils::IntoReportFromString;
 use tracing::{error, info};
 
+use server_state::state_impl::{ReadData, WriteData};
+
 use super::utils::StatusCode;
-use crate::{
-    app::GetAccessTokens,
-    result::{WrappedContextExt, WrappedResultExt},
-};
+use crate::result::{WrappedContextExt, WrappedResultExt};
 
 #[obfuscate_api]
 pub const PATH_GET_VERSION: &str = "/common_api/version";
@@ -39,7 +40,7 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
         (status = 200, description = "Version information.", body = BackendVersion),
     )
 )]
-pub async fn get_version<S: BackendVersionProvider>(
+pub async fn get_version(
     State(state): State<S>,
 ) -> Json<BackendVersion> {
     COMMON.get_version.incr();
@@ -50,7 +51,7 @@ pub async fn get_version<S: BackendVersionProvider>(
 
 pub const PATH_FILE_PACKAGE_ACCESS: &str = "/*path";
 
-pub async fn get_file_package_access<S: FilePackageProvider>(
+pub async fn get_file_package_access(
     State(state): State<S>,
     Path(path_parts): Path<Vec<String>>
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
@@ -65,7 +66,7 @@ pub async fn get_file_package_access<S: FilePackageProvider>(
 
 pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
 
-pub async fn get_file_package_access_root<S: FilePackageProvider>(
+pub async fn get_file_package_access_root(
     State(state): State<S>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), StatusCode> {
     COMMON.get_file_package_access_root.incr();
@@ -74,62 +75,6 @@ pub async fn get_file_package_access_root<S: FilePackageProvider>(
         .data("index.html")
         .ok_or(StatusCode::NOT_FOUND)?;
     Ok((TypedHeader(content_type), data))
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum WebSocketError {
-    #[error("Receive error")]
-    Receive,
-    #[error("Client sent something unsupported")]
-    ProtocolError,
-    #[error("Client version is unsupported")]
-    ClientVersionUnsupported,
-    #[error("Received wrong refresh token")]
-    ReceiveWrongRefreshToken,
-    #[error("Websocket data sending error")]
-    Send,
-    #[error("Websocket closing failed")]
-    Close,
-    #[error("Data serialization error")]
-    Serialize,
-
-    // Database errors
-    #[error("Database: No refresh token")]
-    DatabaseNoRefreshToken,
-    #[error("Invalid refresh token in database")]
-    InvalidRefreshTokenInDatabase,
-    #[error("Database: account logout failed")]
-    DatabaseLogoutFailed,
-    #[error("Database: saving new tokens failed or other error")]
-    DatabaseSaveTokensOrOtherError,
-    #[error("Database: Account state query failed")]
-    DatabaseAccountStateQuery,
-    #[error("Database: Chat state query failed")]
-    DatabaseChatStateQuery,
-    #[error("Database: Profile state query failed")]
-    DatabaseProfileStateQuery,
-    #[error("Database: News count state query failed")]
-    DatabaseNewsCountQuery,
-    #[error("Database: Pending messages query failed")]
-    DatabasePendingMessagesQuery,
-    #[error("Database: Pending notification reset failed")]
-    DatabasePendingNotificationReset,
-
-    // Event errors
-    #[error("Event channel creation failed")]
-    EventChannelCreationFailed,
-
-    // Sync
-    #[error("Account data version number reset failed")]
-    AccountDataVersionResetFailed,
-    #[error("Chat data version number reset failed")]
-    ChatDataVersionResetFailed,
-    #[error("Profile attributes sync version number reset failed")]
-    ProfileAttributesSyncVersionResetFailed,
-    #[error("Profile sync version number reset failed")]
-    ProfileSyncVersionResetFailed,
-    #[error("News count sync version number reset failed")]
-    NewsCountSyncVersionResetFailed,
 }
 
 pub use utils::api::PATH_CONNECT;
@@ -189,9 +134,7 @@ pub use utils::api::PATH_CONNECT_AXUM;
     ),
     security(),
 )]
-pub async fn get_connect_websocket<
-    S: ConnectionTools + GetAccessTokens + EventManagerProvider,
->(
+pub async fn get_connect_websocket(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
     header_map: HeaderMap,
@@ -232,7 +175,7 @@ pub async fn get_connect_websocket<
     Ok(response)
 }
 
-async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
+async fn handle_socket(
     socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,
@@ -301,7 +244,7 @@ async fn handle_socket<S: ConnectionTools + EventManagerProvider>(
 }
 
 
-async fn handle_socket_result<S: ConnectionTools + EventManagerProvider>(
+async fn handle_socket_result(
     mut socket: WebSocket,
     address: SocketAddr,
     id: AccountIdInternal,

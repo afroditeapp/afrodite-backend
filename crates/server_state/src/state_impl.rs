@@ -7,8 +7,7 @@ use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailMessages, EventToClientInternal, NewReceivedLikesCountResult, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags
 };
 use model_account::{EmailAddress, SignInWithInfo};
-pub use server_api::app::*;
-use server_api::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
+use crate::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
     content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, event::EventManagerWithCacheReference, read::GetReadCommandsCommon, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
@@ -25,6 +24,7 @@ use simple_backend_config::SimpleBackendConfig;
 
 use tracing::warn;
 
+pub use crate::app::*;
 use super::S;
 
 // Server common
@@ -414,7 +414,7 @@ impl ValidateModerationRequest for S {
         &self,
         account_id: AccountIdInternal,
     ) -> server_common::result::Result<(), server_common::internal_api::InternalApiError> {
-        server_api_media::internal_api::media_check_moderation_request_for_account(self, account_id)
+        crate::internal_api::media::media_check_moderation_request_for_account(self, account_id)
             .await
     }
 }

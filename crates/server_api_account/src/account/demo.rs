@@ -7,14 +7,15 @@ use model_account::{
     SignInWithInfo,
 };
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, create_open_api_router, db_write};
+use server_api::S;
+use server_api::{app::RegisteringCmd, create_open_api_router, db_write};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::login_impl;
 use crate::{
-    app::{DemoModeManagerProvider, GetAccounts, GetConfig, ReadData, StateBase, WriteData},
+    app::{DemoModeManagerProvider, WriteData},
     utils::{Json, StatusCode},
 };
 
@@ -37,7 +38,7 @@ const PATH_POST_DEMO_MODE_LOGIN: &str = "/account_api/demo_mode_login";
     ),
     security(),
 )]
-pub async fn post_demo_mode_login<S: DemoModeManagerProvider>(
+pub async fn post_demo_mode_login(
     State(state): State<S>,
     Json(password): Json<DemoModePassword>,
 ) -> Result<Json<DemoModeLoginResult>, StatusCode> {
@@ -61,7 +62,7 @@ const PATH_POST_DEMO_MODE_CONFIRM_LOGIN: &str = "/account_api/demo_mode_confirm_
     ),
     security(),
 )]
-pub async fn post_demo_mode_confirm_login<S: DemoModeManagerProvider>(
+pub async fn post_demo_mode_confirm_login(
     State(state): State<S>,
     Json(info): Json<DemoModeConfirmLogin>,
 ) -> Result<Json<DemoModeConfirmLoginResult>, StatusCode> {
@@ -90,9 +91,7 @@ const PATH_POST_DEMO_MODE_ACCESSIBLE_ACCOUNTS: &str =
     ),
     security(),
 )]
-pub async fn post_demo_mode_accessible_accounts<
-    S: DemoModeManagerProvider + ReadData + GetAccounts + GetConfig,
->(
+pub async fn post_demo_mode_accessible_accounts(
     State(state): State<S>,
     Json(token): Json<DemoModeToken>,
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
@@ -116,9 +115,7 @@ const PATH_POST_DEMO_MODE_REGISTER_ACCOUNT: &str = "/account_api/demo_mode_regis
     ),
     security(),
 )]
-pub async fn post_demo_mode_register_account<
-    S: DemoModeManagerProvider + WriteData + GetConfig + RegisteringCmd,
->(
+pub async fn post_demo_mode_register_account(
     State(state): State<S>,
     Json(token): Json<DemoModeToken>,
 ) -> Result<Json<AccountId>, StatusCode> {
@@ -148,9 +145,7 @@ const PATH_POST_DEMO_MODE_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_mode_login
     ),
     security(),
 )]
-pub async fn post_demo_mode_login_to_account<
-    S: DemoModeManagerProvider + ReadData + WriteData + GetAccounts + ResetPushNotificationTokens + LatestPublicKeysInfo,
->(
+pub async fn post_demo_mode_login_to_account(
     State(state): State<S>,
     Json(info): Json<DemoModeLoginToAccount>,
 ) -> Result<Json<LoginResult>, StatusCode> {
@@ -177,9 +172,7 @@ const PATH_POST_DEMO_MODE_LOGOUT: &str =
     ),
     security(),
 )]
-pub async fn post_demo_mode_logout<
-    S: DemoModeManagerProvider,
->(
+pub async fn post_demo_mode_logout(
     State(state): State<S>,
     Json(token): Json<DemoModeToken>,
 ) -> Result<(), StatusCode> {
@@ -188,27 +181,17 @@ pub async fn post_demo_mode_logout<
     Ok(())
 }
 
-pub fn demo_mode_router<
-    S: StateBase
-        + DemoModeManagerProvider
-        + ReadData
-        + WriteData
-        + GetAccounts
-        + GetConfig
-        + RegisteringCmd
-        + ResetPushNotificationTokens
-        + LatestPublicKeysInfo,
->(
+pub fn demo_mode_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_demo_mode_accessible_accounts::<S>,
-        post_demo_mode_login::<S>,
-        post_demo_mode_confirm_login::<S>,
-        post_demo_mode_register_account::<S>,
-        post_demo_mode_login_to_account::<S>,
-        post_demo_mode_logout::<S>,
+        post_demo_mode_accessible_accounts,
+        post_demo_mode_login,
+        post_demo_mode_confirm_login,
+        post_demo_mode_register_account,
+        post_demo_mode_login_to_account,
+        post_demo_mode_logout,
     )
 }
 

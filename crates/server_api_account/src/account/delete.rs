@@ -1,14 +1,12 @@
 use axum::extract::State;
 use model_account::DeleteStatus;
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
-use crate::{
-    app::{GetAccessTokens, ReadData, StateBase},
-    utils::{Json, StatusCode},
-};
+use crate::utils::{Json, StatusCode};
 
 // TODO(prod): Save all AccountId UUIDs to prevent reusing removed
 // AccountId UUID? Save AccountId UUIDs to history database?
@@ -31,7 +29,7 @@ const PATH_POST_DELETE: &str = "/account_api/delete";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_delete<S: GetAccessTokens + ReadData>(
+pub async fn post_delete(
     State(_state): State<S>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_delete.incr();
@@ -55,7 +53,7 @@ const PATH_GET_DELETION_STATUS: &str = "/account_api/delete";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_deletion_status<S: GetAccessTokens + ReadData>(
+pub async fn get_deletion_status(
     State(_state): State<S>,
 ) -> Result<Json<DeleteStatus>, StatusCode> {
     ACCOUNT.get_deletion_status.incr();
@@ -79,7 +77,7 @@ const PATH_CANCEL_DELETION: &str = "/account_api/delete";
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
+pub async fn delete_cancel_deletion(
     State(_state): State<S>,
 ) -> Result<Json<DeleteStatus>, StatusCode> {
     ACCOUNT.delete_cancel_deletion.incr();
@@ -87,12 +85,12 @@ pub async fn delete_cancel_deletion<S: GetAccessTokens + ReadData>(
     Err(StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-pub fn delete_router<S: StateBase + GetAccessTokens + ReadData>(s: S) -> OpenApiRouter {
+pub fn delete_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_delete::<S>,
-        get_deletion_status::<S>,
-        delete_cancel_deletion::<S>,
+        post_delete,
+        get_deletion_status,
+        delete_cancel_deletion,
     )
 }
 

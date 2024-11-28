@@ -4,6 +4,7 @@ use model_profile::{
     ProfileAttributeFilterListUpdate,
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use server_data::DataError;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
@@ -12,7 +13,7 @@ use simple_backend_utils::IntoReportFromString;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetConfig, ReadData, StateBase, WriteData},
+    app::{GetConfig, ReadData,WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -31,7 +32,7 @@ const PATH_GET_AVAILABLE_PROFILE_ATTRIBUTES: &str = "/profile_api/available_prof
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_available_profile_attributes<S: GetConfig + ReadData>(
+pub async fn get_available_profile_attributes(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<AvailableProfileAttributes>, StatusCode> {
@@ -58,7 +59,7 @@ const PATH_GET_PROFILE_ATTRIBUTE_FILTERS: &str = "/profile_api/profile_attribute
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_attribute_filters<S: ReadData>(
+pub async fn get_profile_attribute_filters(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ProfileAttributeFilterList>, StatusCode> {
@@ -86,7 +87,7 @@ const PATH_POST_PROFILE_ATTRIBUTE_FILTERS: &str = "/profile_api/profile_attribut
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_profile_attribute_filters<S: WriteData + GetConfig>(
+pub async fn post_profile_attribute_filters(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(data): Json<ProfileAttributeFilterListUpdate>,
@@ -100,12 +101,12 @@ pub async fn post_profile_attribute_filters<S: WriteData + GetConfig>(
         .update_profile_attribute_filters(account_id, validated))
 }
 
-pub fn attributes_router<S: StateBase + WriteData + GetConfig + ReadData>(s: S) -> OpenApiRouter {
+pub fn attributes_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_available_profile_attributes::<S>,
-        get_profile_attribute_filters::<S>,
-        post_profile_attribute_filters::<S>,
+        get_available_profile_attributes,
+        get_profile_attribute_filters,
+        post_profile_attribute_filters,
     )
 }
 

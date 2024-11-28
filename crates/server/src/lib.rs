@@ -138,11 +138,11 @@ impl BusinessLogic for DatingAppBusinessLogic {
         router
     }
 
-    fn create_swagger_ui(&self) -> Option<SwaggerUi> {
+    fn create_swagger_ui(&self, state: &Self::AppState) -> Option<SwaggerUi> {
         const API_DOC_URL: &str = "/api-doc/app_api.json";
         Some(
             SwaggerUi::new("/swagger-ui")
-                .url(API_DOC_URL, ApiDoc::all())
+                .url(API_DOC_URL, ApiDoc::all(state.clone()))
                 .config(
                     utoipa_swagger_ui::Config::from(API_DOC_URL)
                         .display_operation_id(true)

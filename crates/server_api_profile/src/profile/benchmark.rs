@@ -4,6 +4,7 @@ use axum::{
 };
 use model_profile::{AccountId, AccountIdInternal, AccountState, Profile, ProfileUpdate, ProfileUpdateInternal};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
@@ -12,7 +13,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
     app::{
-        GetAccessTokens, GetAccounts, GetConfig, GetInternalApi, ReadData, StateBase, WriteData,
+        GetAccounts, GetConfig, ReadData, WriteData,
     },
     db_write,
     utils::{Json, StatusCode},
@@ -41,9 +42,7 @@ const PATH_GET_PROFILE_FROM_DATABASE_BENCHMARK: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_from_database_debug_mode_benchmark<
-    S: ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
->(
+pub async fn get_profile_from_database_debug_mode_benchmark(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Path(requested_profile): Path<AccountId>,
@@ -89,9 +88,7 @@ const PATH_POST_PROFILE_TO_DATABASE_BENCHMARK: &str = "/profile_api/benchmark/pr
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_profile_to_database_debug_mode_benchmark<
-    S: GetConfig + GetAccessTokens + WriteData + ReadData,
->(
+pub async fn post_profile_to_database_debug_mode_benchmark(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -122,15 +119,13 @@ pub async fn post_profile_to_database_debug_mode_benchmark<
 
 // ------------------- Benchmark routes end ----------------------------
 
-pub fn benchmark_router<
-    S: StateBase + ReadData + GetAccounts + GetAccessTokens + GetInternalApi + WriteData + GetConfig,
->(
+pub fn benchmark_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_profile_from_database_debug_mode_benchmark::<S>,
-        post_profile_to_database_debug_mode_benchmark::<S>,
+        get_profile_from_database_debug_mode_benchmark,
+        post_profile_to_database_debug_mode_benchmark,
     )
 }
 

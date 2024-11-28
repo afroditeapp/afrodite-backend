@@ -4,13 +4,13 @@ use model_chat::{
     SyncCheckDataType, SyncCheckResult, SyncDataVersionFromClient, SyncVersionFromClient,
     SyncVersionUtils,
 };
-use server_api::{app::ConnectionTools, common::WebSocketError, db_write_raw};
+use crate::{app::ConnectionTools, websocket::WebSocketError, db_write_raw};
 use server_data::read::GetReadCommandsCommon;
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 
-use server_api::{
+use server_data::{
     app::{GetConfig, ReadData, WriteData},
     result::{Result, WrappedResultExt},
 };

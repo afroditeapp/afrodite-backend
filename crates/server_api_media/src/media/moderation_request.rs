@@ -1,13 +1,14 @@
 use axum::{extract::State, Extension};
 use model_media::{AccountIdInternal, CurrentModerationRequest, ModerationRequestContent, PendingNotificationFlags};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::EventManagerProvider, create_open_api_router};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{ReadData, StateBase, WriteData},
+    app::{ReadData,WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -27,7 +28,7 @@ const PATH_MODERATION_REQUEST: &str = "/media_api/moderation/request";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_moderation_request<S: ReadData + EventManagerProvider>(
+pub async fn get_moderation_request(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<CurrentModerationRequest>, StatusCode> {
@@ -64,7 +65,7 @@ pub async fn get_moderation_request<S: ReadData + EventManagerProvider>(
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_moderation_request<S: WriteData>(
+pub async fn put_moderation_request(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(moderation_request): Json<ModerationRequestContent>,
@@ -88,7 +89,7 @@ pub async fn put_moderation_request<S: WriteData>(
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_moderation_request<S: WriteData>(
+pub async fn delete_moderation_request(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<(), StatusCode> {
@@ -100,12 +101,12 @@ pub async fn delete_moderation_request<S: WriteData>(
     })
 }
 
-pub fn moderation_request_router<S: StateBase + WriteData + ReadData + EventManagerProvider>(s: S) -> OpenApiRouter {
+pub fn moderation_request_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_moderation_request::<S>,
-        put_moderation_request::<S>,
-        delete_moderation_request::<S>,
+        get_moderation_request,
+        put_moderation_request,
+        delete_moderation_request,
     )
 }
 

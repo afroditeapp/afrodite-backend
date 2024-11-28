@@ -20,11 +20,11 @@ impl InternalApp {
             router = router
                 .route(
                     api::account_internal::PATH_REGISTER,
-                    post(api::account_internal::post_register::<S>),
+                    post(api::account_internal::post_register),
                 )
                 .route(
                     api::account_internal::PATH_LOGIN,
-                    post(api::account_internal::post_login::<S>),
+                    post(api::account_internal::post_login),
                 )
         }
 

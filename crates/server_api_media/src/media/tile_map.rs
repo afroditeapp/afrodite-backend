@@ -5,12 +5,13 @@ use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType};
 use model_media::{MapTileX, MapTileY, MapTileZ};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::create_open_api_router;
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
 use utoipa_axum::router::OpenApiRouter;
 
-use crate::{app::StateBase, utils::StatusCode};
+use crate::utils::StatusCode;
 
 #[obfuscate_api]
 const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/{z}/{x}/{y}";
@@ -29,7 +30,7 @@ const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/{z}/{x}/{y}";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_map_tile<S: GetTileMap>(
+pub async fn get_map_tile(
     State(state): State<S>,
     Path(z): Path<MapTileZ>,
     Path(x): Path<MapTileX>,
@@ -58,10 +59,10 @@ pub async fn get_map_tile<S: GetTileMap>(
     }
 }
 
-pub fn tile_map_router<S: StateBase + GetTileMap>(s: S) -> OpenApiRouter {
+pub fn tile_map_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_map_tile::<S>,
+        get_map_tile,
     )
 }
 

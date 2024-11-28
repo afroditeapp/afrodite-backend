@@ -28,7 +28,7 @@ impl ConnectedApp {
             .route_layer({
                 middleware::from_fn_with_state(
                     self.state.clone(),
-                    api::utils::authenticate_with_access_token::<S>,
+                    api::utils::authenticate_with_access_token,
                 )
             })
     }

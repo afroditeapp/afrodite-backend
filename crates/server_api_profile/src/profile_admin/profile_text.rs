@@ -6,15 +6,14 @@ use model_profile::{
     AccountIdInternal, EventToClientInternal, GetProfileTextPendingModerationList, GetProfileTextPendingModerationParams, Permissions, PostModerateProfileText
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write_multiple};
 use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{
-        ReadData, StateBase,
-    },
+    app::ReadData,
     utils::{Json, StatusCode},
 };
 
@@ -37,9 +36,7 @@ const PATH_GET_PROFILE_TEXT_PENDING_MODERATION_LIST: &str = "/profile_api/admin/
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_text_pending_moderation_list<
-    S: ReadData,
->(
+pub async fn get_profile_text_pending_moderation_list(
     State(state): State<S>,
     Extension(moderator_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
@@ -83,9 +80,7 @@ const PATH_POST_MODERATE_PROFILE_TEXT: &str = "/profile_api/admin/moderate_profi
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_moderate_profile_text<
-    S: WriteData + GetAccounts,
->(
+pub async fn post_moderate_profile_text(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Extension(moderator_id): Extension<AccountIdInternal>,
@@ -127,15 +122,13 @@ pub async fn post_moderate_profile_text<
     Ok(())
 }
 
-pub fn admin_profile_text_router<
-    S: StateBase + ReadData + WriteData + GetAccounts,
->(
+pub fn admin_profile_text_router(
     s: S,
 ) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_profile_text_pending_moderation_list::<S>,
-        post_moderate_profile_text::<S>,
+        get_profile_text_pending_moderation_list,
+        post_moderate_profile_text,
     )
 }
 

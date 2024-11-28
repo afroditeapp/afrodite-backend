@@ -102,7 +102,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
 
     /// Swagger UI which added to enabled internal API router
     /// only if debug mode is enabled.
-    fn create_swagger_ui(&self) -> Option<SwaggerUi> {
+    fn create_swagger_ui(&self, _state: &Self::AppState) -> Option<SwaggerUi> {
         None
     }
 
@@ -469,7 +469,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
     ) -> JoinHandle<()> {
         let router = self.logic.internal_api_router(state);
         let router = if self.config.debug_mode() {
-            if let Some(swagger) = self.logic.create_swagger_ui() {
+            if let Some(swagger) = self.logic.create_swagger_ui(state) {
                 router.merge(swagger)
             } else {
                 router

@@ -33,7 +33,10 @@ fn main() -> ExitCode {
     }
 
     if let Some(AppMode::OpenApi) = args.mode {
-        println!("{}", ApiDoc::open_api_json_string().unwrap());
+        let runtime = tokio::runtime::Runtime::new().unwrap();
+        runtime.block_on(async {
+            println!("{}", ApiDoc::open_api_json_string().await.unwrap());
+        });
         return ExitCode::SUCCESS;
     }
     let index_info = args.index_info;

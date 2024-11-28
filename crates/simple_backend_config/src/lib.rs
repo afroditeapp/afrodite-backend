@@ -14,6 +14,7 @@ use std::{
     vec,
 };
 
+use args::ServerModeArgs;
 use error_stack::{Result, ResultExt};
 use file::{DatabaseInfo, FirebaseCloudMessagingConfig, ImageProcessingConfig, ScheduledTasksConfig, TileMapConfig};
 use reqwest::Url;
@@ -91,6 +92,17 @@ pub struct SimpleBackendConfig {
 }
 
 impl SimpleBackendConfig {
+    pub fn load_from_file_with_in_ram_database() -> Self {
+        get_config(
+            ServerModeArgs {
+                sqlite_in_ram: true,
+                data_dir: None,
+            },
+            String::new(),
+            String::new(),
+        ).unwrap()
+    }
+
     /// Directory where SQLite databases and other files are stored.
     pub fn data_dir(&self) -> &Path {
         &self.data_dir

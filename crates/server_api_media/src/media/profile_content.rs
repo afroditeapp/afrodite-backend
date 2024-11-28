@@ -6,6 +6,7 @@ use model_media::{
     AccountId, AccountIdInternal, AccountState, GetMyProfileContentResult, GetProfileContentQueryParams, GetProfileContentResult, MyProfileContent, PendingProfileContent, Permissions, ProfileContent, SetProfileContent
 };
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::IsMatch, create_open_api_router};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
@@ -13,7 +14,7 @@ use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::{GetAccounts, ReadData, StateBase, WriteData},
+    app::{GetAccounts, ReadData,WriteData},
     db_write,
     utils::{Json, StatusCode},
 };
@@ -48,7 +49,7 @@ const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{ai
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
+pub async fn get_profile_content_info(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
@@ -116,7 +117,7 @@ const PATH_GET_MY_PROFILE_CONTENT_INFO: &str = "/media_api/my_profile_content_in
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_my_profile_content_info<S: ReadData + GetAccounts + IsMatch>(
+pub async fn get_my_profile_content_info(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<GetMyProfileContentResult>, StatusCode> {
@@ -159,7 +160,7 @@ const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_profile_content<S: WriteData>(
+pub async fn put_profile_content(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Json(new): Json<SetProfileContent>,
@@ -187,7 +188,7 @@ const PATH_GET_PENDING_PROFILE_CONTENT_INFO: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_pending_profile_content_info<S: ReadData + GetAccounts>(
+pub async fn get_pending_profile_content_info(
     State(state): State<S>,
     Path(account_id): Path<AccountId>,
     Extension(_api_caller_account_id): Extension<AccountIdInternal>,
@@ -231,7 +232,7 @@ const PATH_PUT_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_conte
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_pending_profile_content<S: WriteData>(
+pub async fn put_pending_profile_content(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Json(new): Json<SetProfileContent>,
@@ -262,7 +263,7 @@ const PATH_DELETE_PENDING_PROFILE_CONTENT: &str = "/media_api/pending_profile_co
     ),
     security(("access_token" = [])),
 )]
-pub async fn delete_pending_profile_content<S: WriteData>(
+pub async fn delete_pending_profile_content(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
 ) -> Result<(), StatusCode> {
@@ -276,15 +277,15 @@ pub async fn delete_pending_profile_content<S: WriteData>(
         ))
 }
 
-pub fn profile_content_router<S: StateBase + WriteData + ReadData + GetAccounts + IsMatch>(s: S) -> OpenApiRouter {
+pub fn profile_content_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_profile_content_info::<S>,
-        get_my_profile_content_info::<S>,
-        put_profile_content::<S>,
-        get_pending_profile_content_info::<S>,
-        put_pending_profile_content::<S>,
-        delete_pending_profile_content::<S>,
+        get_profile_content_info,
+        get_my_profile_content_info,
+        put_profile_content,
+        get_pending_profile_content_info,
+        put_pending_profile_content,
+        delete_pending_profile_content,
     )
 }
 

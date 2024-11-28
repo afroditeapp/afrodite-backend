@@ -3,13 +3,14 @@
 use axum::{extract::{Path, Query, State}, Extension};
 use model_chat::{AccountId, AccountIdInternal, GetPublicKey, PublicKeyId, PublicKeyVersion, SetPublicKey};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::{GetAccounts, WriteData}, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
-use crate::app::{ReadData, StateBase};
+use crate::app::ReadData;
 
 #[obfuscate_api]
 const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{aid}";
@@ -26,7 +27,7 @@ const PATH_GET_PUBLIC_KEY: &str = "/chat_api/public_key/{aid}";
     ),
     security(("access_token" = [])),
 )]
-async fn get_public_key<S: ReadData + GetAccounts>(
+async fn get_public_key(
     State(state): State<S>,
     Path(requested_id): Path<AccountId>,
     Query(key_version): Query<PublicKeyVersion>,
@@ -59,7 +60,7 @@ const PATH_POST_PUBLIC_KEY: &str = "/chat_api/public_key";
     ),
     security(("access_token" = [])),
 )]
-async fn post_public_key<S: WriteData>(
+async fn post_public_key(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(new_key): Json<SetPublicKey>,
@@ -77,11 +78,11 @@ async fn post_public_key<S: WriteData>(
     Ok(new_key.into())
 }
 
-pub fn public_key_router<S: StateBase + ReadData + WriteData + GetAccounts>(s: S) -> OpenApiRouter {
+pub fn public_key_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_public_key::<S>,
-        post_public_key::<S>,
+        get_public_key,
+        post_public_key,
     )
 }
 

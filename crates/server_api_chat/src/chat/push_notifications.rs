@@ -1,14 +1,15 @@
 use axum::{extract::State, Extension};
 use model::{AccountIdInternal, FcmDeviceToken, PendingNotificationToken, PendingNotificationWithData};
 use obfuscate_api_macro::obfuscate_api;
-use server_api::{app::{GetPushNotificationData, ReadData}, create_open_api_router};
+use server_api::S;
+use server_api::{app::GetPushNotificationData, create_open_api_router};
 use server_data_chat::write::GetWriteCommandsChat;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
 use crate::{
-    app::{GetAccounts, StateBase, WriteData},
+    app::WriteData,
     db_write,
 };
 
@@ -31,7 +32,7 @@ const PATH_POST_SET_DEVICE_TOKEN: &str = "/chat_api/set_device_token";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_set_device_token<S: WriteData>(
+pub async fn post_set_device_token(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Json(device_token): Json<FcmDeviceToken>,
@@ -63,7 +64,7 @@ const PATH_POST_GET_PENDING_NOTIFICATION: &str = "/chat_api/get_pending_notifica
     ),
     security(), // This is public route handler
 )]
-pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData + GetPushNotificationData>(
+pub async fn post_get_pending_notification(
     State(state): State<S>,
     Json(token): Json<PendingNotificationToken>,
 ) -> Json<PendingNotificationWithData> {
@@ -83,17 +84,17 @@ pub async fn post_get_pending_notification<S: GetAccounts + WriteData + ReadData
     state.get_push_notification_data(id, notification_value).await.into()
 }
 
-pub fn push_notification_router_private<S: StateBase + WriteData>(s: S) -> OpenApiRouter {
+pub fn push_notification_router_private(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_set_device_token::<S>,
+        post_set_device_token,
     )
 }
 
-pub fn push_notification_router_public<S: StateBase + GetAccounts + WriteData + ReadData + GetPushNotificationData>(s: S) -> OpenApiRouter {
+pub fn push_notification_router_public(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        post_get_pending_notification::<S>,
+        post_get_pending_notification,
     )
 }
 

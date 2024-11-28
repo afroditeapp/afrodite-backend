@@ -142,6 +142,36 @@ pub struct SimpleBackendConfigFile {
 }
 
 impl SimpleBackendConfigFile {
+    pub fn minimal_config_for_api_doc_json() -> Self {
+        let localhost = "127.0.0.1:8080".parse().unwrap();
+        Self {
+            debug: None,
+            debug_override_face_detection_result: None,
+            log_timestamp: None,
+            data: DataConfig {
+                dir: PathBuf::new(),
+                sqlite: vec![],
+            },
+            socket: SocketConfig {
+                public_api: localhost,
+                internal_api: None,
+                internal_api_allow_non_localhost_ip: false,
+            },
+            email_sending: None,
+            tile_map: None,
+            manager: None,
+            sign_in_with_google: None,
+            firebase_cloud_messaging: None,
+            tls: None,
+            lets_encrypt: None,
+            media_backup: None,
+            litestream: None,
+            scheduled_tasks: None,
+            static_file_package_hosting: None,
+            image_processing: None,
+        }
+    }
+
     pub fn load(dir: impl AsRef<Path>) -> Result<SimpleBackendConfigFile, ConfigFileError> {
         let config_string =
             ConfigFileUtils::load_string(dir, CONFIG_FILE_NAME, DEFAULT_CONFIG_FILE_TEXT)?;

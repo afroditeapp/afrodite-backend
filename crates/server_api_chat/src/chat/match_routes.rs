@@ -3,13 +3,14 @@
 use axum::{extract::State, Extension};
 use model_chat::{AccountIdInternal, AllMatchesPage, MatchesIteratorSessionId, MatchesPage, ResetMatchesIteratorResult};
 use obfuscate_api_macro::obfuscate_api;
+use server_api::S;
 use server_api::{app::WriteData, create_open_api_router, db_write};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
 
 use super::super::utils::{Json, StatusCode};
-use crate::app::{ReadData, StateBase};
+use crate::app::ReadData;
 
 #[obfuscate_api]
 const PATH_GET_MATCHES: &str = "/chat_api/matches";
@@ -25,7 +26,7 @@ const PATH_GET_MATCHES: &str = "/chat_api/matches";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_matches<S: ReadData>(
+pub async fn get_matches(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
 ) -> Result<Json<AllMatchesPage>, StatusCode> {
@@ -48,7 +49,7 @@ const PATH_POST_RESET_MATCHES_PAGING: &str = "/chat_api/matches/reset";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_reset_matches_paging<S: WriteData + ReadData>(
+pub async fn post_reset_matches_paging(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<ResetMatchesIteratorResult>, StatusCode> {
@@ -80,7 +81,7 @@ const PATH_POST_GET_NEXT_MATCHES_PAGE: &str = "/chat_api/matches_page";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_get_next_matches_page<S: WriteData + ReadData>(
+pub async fn post_get_next_matches_page(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(iterator_session_id): Json<MatchesIteratorSessionId>,
@@ -115,12 +116,12 @@ pub async fn post_get_next_matches_page<S: WriteData + ReadData>(
     }
 }
 
-pub fn match_router<S: StateBase + ReadData + WriteData>(s: S) -> OpenApiRouter {
+pub fn match_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_matches::<S>,
-        post_reset_matches_paging::<S>,
-        post_get_next_matches_page::<S>,
+        get_matches,
+        post_reset_matches_paging,
+        post_get_next_matches_page,
     )
 }
 

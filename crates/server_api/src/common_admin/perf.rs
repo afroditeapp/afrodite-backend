@@ -4,12 +4,13 @@ use axum::{
 };
 use model::Permissions;
 use obfuscate_api_macro::obfuscate_api;
+use crate::S;
 use simple_backend::{app::PerfCounterDataProvider, create_counters};
 use simple_backend_model::{PerfHistoryQuery, PerfHistoryQueryResult};
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::{
-    app::StateBase, create_open_api_router, utils::{Json, StatusCode}
+    create_open_api_router, utils::{Json, StatusCode}
 };
 
 #[obfuscate_api]
@@ -30,7 +31,7 @@ const PATH_GET_PERF_DATA: &str = "/common_api/perf_data";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_perf_data<S: PerfCounterDataProvider>(
+pub async fn get_perf_data(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
     Query(_query): Query<PerfHistoryQuery>,
@@ -44,10 +45,10 @@ pub async fn get_perf_data<S: PerfCounterDataProvider>(
     }
 }
 
-pub fn perf_router<S: StateBase + PerfCounterDataProvider>(s: S) -> OpenApiRouter {
+pub fn perf_router(s: S) -> OpenApiRouter {
     create_open_api_router!(
         s,
-        get_perf_data::<S>,
+        get_perf_data,
     )
 }
 

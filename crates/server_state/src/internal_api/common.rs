@@ -3,13 +3,13 @@ use tracing::warn;
 
 use super::InternalApiError;
 use crate::{
-    app::{GetConfig, GetInternalApi},
-    result::{Result, WrappedContextExt},
+    app::GetConfig,
+    result::{Result, WrappedContextExt}, S,
 };
 
 /// Sync new Account to possible other servers.
 /// Only account server can call this function.
-pub async fn sync_account_state<S: GetConfig + GetInternalApi>(
+pub async fn sync_account_state(
     state: &S,
     _account_id: AccountIdInternal,
     _account: Account,
@@ -45,7 +45,7 @@ pub async fn sync_account_state<S: GetConfig + GetInternalApi>(
     Ok(())
 }
 
-pub async fn sync_unlimited_likes<S: GetConfig + GetInternalApi>(
+pub async fn sync_unlimited_likes(
     _state: &S,
     _account_id: AccountIdInternal,
 ) -> Result<(), InternalApiError> {
@@ -53,7 +53,7 @@ pub async fn sync_unlimited_likes<S: GetConfig + GetInternalApi>(
     Ok(())
 }
 
-pub async fn sync_birthdate<S: GetConfig + GetInternalApi>(
+pub async fn sync_birthdate(
     _state: &S,
     _account_id: AccountIdInternal,
 ) -> Result<(), InternalApiError> {

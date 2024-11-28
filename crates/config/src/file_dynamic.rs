@@ -33,6 +33,14 @@ pub struct ConfigFileDynamic {
 }
 
 impl ConfigFileDynamic {
+    pub fn minimal_config_for_api_doc_json() -> Self {
+        Self {
+            backend_config: BackendConfig {
+                bots: None,
+            }
+        }
+    }
+
     pub fn load(dir: impl AsRef<Path>) -> Result<ConfigFileDynamic, ConfigFileError> {
         let config_string = ConfigFileUtils::load_string(
             dir,
