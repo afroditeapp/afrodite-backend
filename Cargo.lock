@@ -4183,6 +4183,7 @@ dependencies = [
  "server_data",
  "server_data_account",
  "server_data_chat",
+ "server_data_media",
  "server_data_profile",
  "tracing",
 ]
@@ -4286,7 +4287,6 @@ dependencies = [
  "server_data",
  "server_data_account",
  "server_data_chat",
- "server_data_media",
  "server_data_profile",
  "simple_backend",
  "simple_backend_config",

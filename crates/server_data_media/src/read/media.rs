@@ -5,10 +5,10 @@ use model_media::{
     ModerationRequest, ModerationRequestState,
 };
 use server_common::{
-    data::{DataError, IntoDataError},
+    data::{DataError, IntoDataError, WrappedWithInfo},
     result::Result,
 };
-use server_data::{define_cmd_wrapper_read, file::{utils::ContentFile, FileRead}, read::DbRead};
+use server_data::{define_cmd_wrapper_read, file::{utils::ContentFile, FileRead}, read::DbRead, result::{WrappedContextExt, WrappedResultExt}};
 
 define_cmd_wrapper_read!(ReadCommandsMedia);
 
@@ -83,5 +83,68 @@ impl ReadCommandsMedia<'_> {
         } else {
             Ok(None)
         }
+    }
+
+    /// Check that media server has correct state for completing initial setup.
+    ///
+    /// Requirements:
+    ///  - Account must have a moderation request.
+    ///  - The current or pending security image of the account is in the request.
+    ///  - The current or pending first profile image of the account is in the
+    ///    request.
+    pub async fn check_moderation_request_for_account(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        let request = self
+            .moderation_request(account_id)
+            .await
+            .change_context_with_info(DataError::Diesel, account_id)?
+            .ok_or(DataError::MissingValue.report())
+            .with_info(account_id)?;
+
+        let account_media = self
+            .current_account_media(account_id)
+            .await
+            .change_context_with_info(DataError::Diesel, account_id)?;
+
+        // Check security content
+        let current_or_pending_security_content = account_media
+            .security_content_id
+            .or(account_media.pending_security_content_id);
+        if let Some(content) = current_or_pending_security_content {
+            if !content.secure_capture {
+                return Err(DataError::NotAllowed.report())
+                    .with_info(account_id)
+                    .with_info("Content secure capture flag is false");
+            }
+            if request.content.find(content.content_id()).is_none() {
+                return Err(DataError::NotAllowed.report())
+                    .with_info(account_id)
+                    .with_info("Security content is not in moderation request");
+            }
+        } else {
+            return Err(DataError::NotAllowed.report())
+                .with_info(account_id)
+                .with_info("Required security content for initial setup is not set");
+        }
+
+        // Check first profile content
+        let current_or_pending_profile_content = account_media
+            .profile_content_id_0
+            .or(account_media.pending_profile_content_id_0);
+        if let Some(content) = current_or_pending_profile_content {
+            if request.content.find(content.content_id()).is_none() {
+                return Err(DataError::NotAllowed.report())
+                    .with_info(account_id)
+                    .with_info("Content is not in moderation request");
+            }
+        } else {
+            return Err(DataError::NotAllowed.report())
+                .with_info(account_id)
+                .with_info("Required content for initial setup is not set");
+        }
+
+        Ok(())
     }
 }

@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use model::{
-    AccessToken, AccountIdInternal, AccountState, PendingNotification, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion
+    AccessToken, AccountIdInternal, AccountState, Permissions, PublicKeyIdAndVersion
 };
 use server_common::internal_api::InternalApiError;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
@@ -69,12 +69,4 @@ pub trait LatestPublicKeysInfo: StateBase + WriteData {
         &self,
         id: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<Vec<PublicKeyIdAndVersion>, DataError>> + Send;
-}
-
-pub trait GetPushNotificationData: StateBase + ReadData {
-    fn get_push_notification_data(
-        &self,
-        id: AccountIdInternal,
-        pending_notification: PendingNotification,
-    ) -> impl std::future::Future<Output = PendingNotificationWithData> + Send;
 }

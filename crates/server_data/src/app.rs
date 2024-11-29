@@ -2,7 +2,7 @@ use std::{future::Future, sync::Arc};
 
 use axum::extract::ws::WebSocket;
 use config::{file::EmailAddress, Config};
-use model::{AccountId, AccountIdInternal, SyncDataVersionFromClient};
+use model::{AccountId, AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
 use model_server_data::SignInWithInfo;
 
 use futures::future::BoxFuture;
@@ -112,4 +112,17 @@ pub trait DataAllUtils: Send + Sync + 'static {
         id: AccountIdInternal,
         sync_versions: Vec<SyncDataVersionFromClient>,
     ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>>;
+
+    fn check_moderation_request_for_account<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        id: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
+
+    fn get_push_notification_data<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        id: AccountIdInternal,
+        notification_value: PendingNotification,
+    ) -> BoxFuture<'a, PendingNotificationWithData>;
 }

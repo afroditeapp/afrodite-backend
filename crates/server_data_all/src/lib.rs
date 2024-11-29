@@ -21,3 +21,4 @@ pub mod register;
 pub mod unlimited_likes;
 pub mod app;
 pub mod websocket;
+pub mod push_notification;

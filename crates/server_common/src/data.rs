@@ -50,6 +50,8 @@ pub enum DataError {
     NotAllowed,
     #[error("Action is already done")]
     AlreadyDone,
+    #[error("Missing value")]
+    MissingValue,
     #[error("Server closing in progress")]
     ServerClosingInProgress,
 

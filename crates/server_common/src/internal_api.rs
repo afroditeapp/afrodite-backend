@@ -22,21 +22,6 @@ pub enum InternalApiError {
     #[error("Invalid value")]
     InvalidValue,
 
-    #[error("Content secure capture flag is false")]
-    SecureCaptureFlagFalse,
-
-    #[error("Security content is not in moderation request")]
-    SecurityContentNotInModerationRequest,
-
-    #[error("Required security content for initial setup is not set")]
-    SecurityContentNotSet,
-
-    #[error("Content is not in moderation request")]
-    ContentNotInModerationRequest,
-
-    #[error("Required content for initial setup is not set")]
-    ContentNotSet,
-
     #[error("Required server component is not enabled")]
     MissingComponent,
 }

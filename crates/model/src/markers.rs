@@ -72,6 +72,8 @@ enable_logging!(
     ModerationQueueNumber,
     ModerationQueueType,
     NextQueueNumberType,
+    // General
+    &'static str,
 );
 
 disable_logging!(

@@ -3,11 +3,12 @@ use std::ops::Deref;
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{future::BoxFuture, FutureExt};
-use model::{AccountId, AccountIdInternal, EmailMessages, SyncDataVersionFromClient};
+use model::{AccountId, AccountIdInternal, EmailMessages, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{app::DataAllUtils, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle, DataError};
 use server_data_account::write::GetWriteCommandsAccount;
+use server_data_media::read::GetReadMediaCommands;
 
 use crate::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 
@@ -92,6 +93,31 @@ impl DataAllUtils for DataAllUtilsImpl {
                 id,
             ).await?;
             Ok(())
+        }.boxed()
+    }
+
+    fn check_moderation_request_for_account<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        id: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
+        async move {
+            read_handle.media().check_moderation_request_for_account(id).await
+        }.boxed()
+    }
+
+    fn get_push_notification_data<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        id: AccountIdInternal,
+        notification_value: PendingNotification,
+    ) -> BoxFuture<'a, PendingNotificationWithData> {
+        async move {
+            crate::push_notification::get_push_notification_data(
+                read_handle,
+                id,
+                notification_value,
+            ).await
         }.boxed()
     }
 }

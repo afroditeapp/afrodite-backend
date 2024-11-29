@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use axum::extract::ws::WebSocket;
 use config::Config;
-use model::{AccountIdInternal, SyncDataVersionFromClient};
+use model::{AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
 use model_account::EmailAddress;
 use model_chat::SignInWithInfo;
 use self::internal_api::InternalApiClient;
@@ -109,6 +109,23 @@ impl AppState {
             id,
             sync_versions,
         );
+        cmd.await
+    }
+
+    pub async fn check_moderation_request_for_account(
+        &self,
+        id: AccountIdInternal,
+    ) -> server_common::result::Result<(), DataError> {
+        let cmd = self.data_all_utils.check_moderation_request_for_account(&self.database, id);
+        cmd.await
+    }
+
+    pub async fn get_push_notification_data(
+        &self,
+        id: AccountIdInternal,
+        notification_value: PendingNotification,
+    ) -> PendingNotificationWithData {
+        let cmd = self.data_all_utils.get_push_notification_data(&self.database, id, notification_value);
         cmd.await
     }
 }
