@@ -4165,6 +4165,7 @@ dependencies = [
 name = "server_data_all"
 version = "0.0.0"
 dependencies = [
+ "axum",
  "config",
  "database",
  "database_account",
@@ -4175,10 +4176,13 @@ dependencies = [
  "futures",
  "model",
  "model_account",
+ "model_chat",
  "model_profile",
+ "serde_json",
  "server_common",
  "server_data",
  "server_data_account",
+ "server_data_chat",
  "server_data_profile",
  "tracing",
 ]
@@ -4278,7 +4282,6 @@ dependencies = [
  "model_account",
  "model_chat",
  "reqwest",
- "serde_json",
  "server_common",
  "server_data",
  "server_data_account",

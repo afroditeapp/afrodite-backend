@@ -20,3 +20,4 @@ pub mod load;
 pub mod register;
 pub mod unlimited_likes;
 pub mod app;
+pub mod websocket;

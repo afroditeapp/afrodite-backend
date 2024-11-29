@@ -5,12 +5,13 @@
 
 use std::sync::Arc;
 
+use axum::extract::ws::WebSocket;
 use config::Config;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, SyncDataVersionFromClient};
 use model_account::EmailAddress;
 use model_chat::SignInWithInfo;
 use self::internal_api::InternalApiClient;
-use server_common::push_notifications::PushNotificationSender;
+use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{
     app::DataAllUtils, content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle
 };
@@ -19,9 +20,7 @@ use server_data_profile::statistics::ProfileStatisticsCache;
 use simple_backend::app::SimpleBackendAppState;
 
 pub mod state_impl;
-pub mod connection_tools_impl;
 pub mod internal_api;
-pub mod websocket;
 pub mod app;
 pub mod utils;
 pub mod demo;
@@ -93,6 +92,23 @@ impl AppState {
         email: Option<EmailAddress>,
     ) -> server_common::result::Result<AccountIdInternal, DataError> {
         let cmd = self.data_all_utils.register_impl(&self.write_queue, sign_in_with, email);
+        cmd.await
+    }
+
+    pub async fn handle_new_websocket_connection(
+        &self,
+        socket: &mut WebSocket,
+        id: AccountIdInternal,
+        sync_versions: Vec<SyncDataVersionFromClient>,
+    ) -> server_common::result::Result<(), WebSocketError> {
+        let cmd = self.data_all_utils.handle_new_websocket_connection(
+            &self.config,
+            &self.database,
+            &self.write_queue,
+            socket,
+            id,
+            sync_versions,
+        );
         cmd.await
     }
 }

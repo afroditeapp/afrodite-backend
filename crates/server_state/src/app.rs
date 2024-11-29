@@ -1,12 +1,11 @@
 use std::net::SocketAddr;
 
-use axum::extract::ws::WebSocket;
 use model::{
-    AccessToken, AccountIdInternal, AccountState, PendingNotification, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, SyncDataVersionFromClient
+    AccessToken, AccountIdInternal, AccountState, PendingNotification, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion
 };
 use server_common::internal_api::InternalApiError;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
-use crate::{internal_api::InternalApiClient, utils::StatusCode, websocket::WebSocketError};
+use crate::{internal_api::InternalApiClient, utils::StatusCode};
 
 pub use server_data::app::*;
 
@@ -47,26 +46,6 @@ pub trait CompleteInitialSetupCmd: ReadData + WriteData + GetInternalApi + GetCo
         &self,
         account_id: AccountIdInternal,
     ) -> impl std::future::Future<Output = std::result::Result<(), StatusCode>> + Send;
-}
-
-pub trait ConnectionTools: StateBase + WriteData + ReadData + GetConfig {
-    fn reset_pending_notification(
-        &self,
-        id: AccountIdInternal,
-    ) -> impl std::future::Future<Output = server_common::result::Result<(), WebSocketError>> + Send;
-
-    fn send_new_messages_event_if_needed(
-        &self,
-        socket: &mut WebSocket,
-        id: AccountIdInternal,
-    ) -> impl std::future::Future<Output = server_common::result::Result<(), WebSocketError>> + Send;
-
-    fn sync_data_with_client_if_needed(
-        &self,
-        socket: &mut WebSocket,
-        id: AccountIdInternal,
-        sync_versions: Vec<SyncDataVersionFromClient>,
-    ) -> impl std::future::Future<Output = server_common::result::Result<(), WebSocketError>> + Send;
 }
 
 pub trait ResetPushNotificationTokens: StateBase + WriteData {

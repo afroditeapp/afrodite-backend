@@ -1,12 +1,14 @@
 use std::{future::Future, sync::Arc};
 
+use axum::extract::ws::WebSocket;
 use config::{file::EmailAddress, Config};
-use model::{AccountId, AccountIdInternal};
+use model::{AccountId, AccountIdInternal, SyncDataVersionFromClient};
 use model_server_data::SignInWithInfo;
 
 use futures::future::BoxFuture;
 
 pub use server_common::app::*;
+use server_common::websocket::WebSocketError;
 
 use crate::{
     db_manager::{InternalWriting, RouterDatabaseReadHandle}, event::EventManagerWithCacheReference, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
@@ -100,26 +102,14 @@ pub trait DataAllUtils: Send + Sync + 'static {
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
     ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>>;
-}
 
-pub struct DataAllUtilsEmpty;
-
-impl DataAllUtils for DataAllUtilsEmpty {
-    fn register_impl<'a>(
+    fn handle_new_websocket_connection<'a>(
         &self,
-        _write_command_runner: &'a WriteCommandRunnerHandle,
-        _sign_in_with: SignInWithInfo,
-        _email: Option<EmailAddress>,
-    ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>> {
-        unimplemented!()
-    }
-
-    fn update_unlimited_likes<'a>(
-        &self,
-        _write_command_runner: &'a WriteCommandRunnerHandle,
-        _id: AccountIdInternal,
-        _unlimited_likes: bool,
-    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
-        unimplemented!()
-    }
+        config: &'a Config,
+        read_handle: &'a RouterDatabaseReadHandle,
+        write_handle: &'a WriteCommandRunnerHandle,
+        socket: &'a mut WebSocket,
+        id: AccountIdInternal,
+        sync_versions: Vec<SyncDataVersionFromClient>,
+    ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>>;
 }

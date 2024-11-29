@@ -8,3 +8,4 @@ pub mod data;
 pub mod internal_api;
 pub mod push_notifications;
 pub mod result;
+pub mod websocket;

@@ -1,5 +1,3 @@
-
-
 #[derive(thiserror::Error, Debug)]
 pub enum WebSocketError {
     #[error("Receive error")]

@@ -14,9 +14,10 @@ use http::HeaderMap;
 use model::{AccessToken, AccountIdInternal, BackendVersion, EventToClient, PendingNotificationFlags, RefreshToken, SyncDataVersionFromClient};
 use model_account::AuthPair;
 use obfuscate_api_macro::obfuscate_api;
+use server_common::websocket::WebSocketError;
 use crate::S;
 use tokio::time::Instant;
-use server_state::{app::{ConnectionTools, GetAccessTokens}, websocket::WebSocketError};
+use server_state::app::GetAccessTokens;
 use crate::utils::Json;
 use server_data::{app::{BackendVersionProvider, EventManagerProvider}, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::{app::FilePackageProvider, create_counters, web_socket::WebSocketManager};
@@ -365,10 +366,7 @@ async fn handle_socket_result(
         _ => return Err(WebSocketError::ProtocolError.report()),
     };
 
-    state.reset_pending_notification(id).await?;
-    state.sync_data_with_client_if_needed(&mut socket, id, data_sync_versions)
-        .await?;
-    state.send_new_messages_event_if_needed(&mut socket, id).await?;
+    state.handle_new_websocket_connection(&mut socket, id, data_sync_versions).await?;
 
     // TODO(prod): Remove extra logging from this file.
 

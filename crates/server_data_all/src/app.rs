@@ -1,9 +1,12 @@
 use std::ops::Deref;
 
+use axum::extract::ws::WebSocket;
+use config::Config;
 use futures::{future::BoxFuture, FutureExt};
-use model::{AccountId, AccountIdInternal, EmailMessages};
+use model::{AccountId, AccountIdInternal, EmailMessages, SyncDataVersionFromClient};
 use model_account::{EmailAddress, SignInWithInfo};
-use server_data::{app::DataAllUtils, write_commands::WriteCommandRunnerHandle, DataError};
+use server_common::websocket::WebSocketError;
+use server_data::{app::DataAllUtils, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle, DataError};
 use server_data_account::write::GetWriteCommandsAccount;
 
 use crate::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
@@ -55,6 +58,40 @@ impl DataAllUtils for DataAllUtilsImpl {
             .await?;
 
             Ok(id)
+        }.boxed()
+    }
+
+    fn handle_new_websocket_connection<'a>(
+        &self,
+        config: &'a Config,
+        read_handle: &'a RouterDatabaseReadHandle,
+        write_handle: &'a WriteCommandRunnerHandle,
+        socket: &'a mut WebSocket,
+        id: AccountIdInternal,
+        sync_versions: Vec<SyncDataVersionFromClient>,
+    ) -> BoxFuture<'a, server_common::result::Result<(), WebSocketError>> {
+        async move {
+            crate::websocket::reset_pending_notification(
+                config,
+                write_handle,
+                id
+            ).await?;
+            crate::websocket::sync_data_with_client_if_needed(
+                config,
+                read_handle,
+                write_handle,
+                socket,
+                id,
+                sync_versions,
+            )
+                .await?;
+            crate::websocket::send_new_messages_event_if_needed(
+                config,
+                read_handle,
+                socket,
+                id,
+            ).await?;
+            Ok(())
         }.boxed()
     }
 }
