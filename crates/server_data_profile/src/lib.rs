@@ -35,3 +35,4 @@ pub mod write;
 pub mod statistics;
 pub mod app;
 pub mod cache;
+pub mod demo;

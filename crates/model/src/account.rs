@@ -4,7 +4,7 @@ use simple_backend_model::{diesel_i64_try_from, diesel_i64_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    schema_sqlite_types::Integer, AccountStateRelatedSharedState, AccountSyncVersion,
+    schema_sqlite_types::Integer, AccountId, AccountStateRelatedSharedState, AccountSyncVersion, ProfileAge
 };
 
 mod news;
@@ -334,4 +334,12 @@ impl EmailMessages {
     pub const VARIANTS: &'static [EmailMessages] = &[
         EmailMessages::AccountRegistered,
     ];
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
+pub struct AccessibleAccount {
+    pub aid: AccountId,
+    pub name: Option<String>,
+    #[schema(value_type = Option<i64>)]
+    pub age: Option<ProfileAge>,
 }

@@ -3,16 +3,11 @@ use std::{collections::HashSet, sync::Arc};
 use config::file::DemoModeConfig;
 use error_stack::Result;
 use model_account::{
-    AccessibleAccount, AccountId, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
+    AccountId, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
     DemoModeLoginToken, DemoModePassword, DemoModeToken,
 };
-use server_common::{
-    app::GetAccounts,
-    data::DataError,
-};
-use server_data::app::{GetConfig, ReadData};
-use server_data_account::read::GetReadCommandsAccount;
-use server_data_profile::read::GetReadProfileCommands;
+use server_common::data::DataError;
+use server_data_account::demo::AccessibleAccountsInfo;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::sync::RwLock;
 use tracing::error;
@@ -367,98 +362,4 @@ impl IndexOrLockedOrErr {
 enum IndexOrLocked {
     Locked,
     Index(usize),
-}
-
-pub enum AccessibleAccountsInfo {
-    All,
-    Specific {
-        config_file_accounts: Vec<AccountId>,
-        demo_mode_id: DemoModeId,
-    },
-}
-
-impl AccessibleAccountsInfo {
-    pub async fn into_accounts<S: ReadData>(
-        self,
-        state: &S,
-    ) -> server_common::result::Result<Vec<AccountId>, DataError> {
-        let (accounts, demo_mode_id) = match self {
-            AccessibleAccountsInfo::All => {
-                let all_accounts = state.read().account().account_ids_vec().await?;
-                return Ok(all_accounts);
-            }
-            AccessibleAccountsInfo::Specific {
-                config_file_accounts,
-                demo_mode_id,
-            } => (config_file_accounts, demo_mode_id),
-        };
-
-        let related_accounts = state
-            .read()
-            .account()
-            .demo_mode_related_account_ids(demo_mode_id)
-            .await?;
-
-        Ok(accounts
-            .into_iter()
-            .chain(related_accounts.into_iter())
-            .collect())
-    }
-
-    pub async fn with_extra_info<S: GetConfig + GetAccounts + ReadData>(
-        self,
-        state: &S,
-    ) -> server_common::result::Result<Vec<AccessibleAccount>, DataError> {
-        let accounts = self.into_accounts(state).await?;
-
-        let mut accessible_accounts = vec![];
-        for id in &accounts {
-            let info = if state.config().components().profile {
-                let internal_id = state.get_internal_id(*id).await?;
-                let profile = state.read().profile().profile(internal_id).await?;
-                AccessibleAccount {
-                    aid: *id,
-                    name: Some(profile.profile.name),
-                    age: Some(profile.profile.age),
-                }
-            } else {
-                AccessibleAccount {
-                    aid: *id,
-                    name: None,
-                    age: None,
-                }
-            };
-            accessible_accounts.push(info);
-        }
-
-        Ok(accessible_accounts)
-    }
-
-    pub async fn contains<S: ReadData>(
-        &self,
-        account: AccountId,
-        state: &S,
-    ) -> server_common::result::Result<(), DataError> {
-        let (accounts, demo_mode_id) = match self {
-            AccessibleAccountsInfo::All => return Ok(()),
-            AccessibleAccountsInfo::Specific {
-                config_file_accounts,
-                demo_mode_id,
-            } => (config_file_accounts, demo_mode_id),
-        };
-
-        let related_accounts = state
-            .read()
-            .account()
-            .demo_mode_related_account_ids(*demo_mode_id)
-            .await?;
-
-        accounts
-            .iter()
-            .chain(related_accounts.iter())
-            .find(|a| **a == account)
-            .ok_or(DataError::NotFound.report())?;
-
-        Ok(())
-    }
 }

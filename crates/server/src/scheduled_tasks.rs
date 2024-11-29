@@ -117,7 +117,7 @@ impl ScheduledTaskManager {
         let statistics = self
             .state
             .profile_statistics_cache()
-            .update_statistics(&self.state)
+            .update_statistics(self.state.read())
             .await
             .change_context(ScheduledTaskError::ProfileStatisticsError)?;
 

@@ -2,7 +2,7 @@
 
 use axum::extract::State;
 use model_account::{AccountId, LoginResult, SignInWithInfo};
-use server_api::{app::RegisteringCmd, db_write};
+use server_api::db_write;
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;

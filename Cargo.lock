@@ -4030,6 +4030,7 @@ name = "server_api_account"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "error-stack",
  "model",
  "model_account",
  "obfuscate_api_macro",
@@ -4150,6 +4151,7 @@ dependencies = [
 name = "server_data_account"
 version = "0.0.0"
 dependencies = [
+ "config",
  "database",
  "database_account",
  "error-stack",
@@ -4170,6 +4172,7 @@ dependencies = [
  "database_media",
  "database_profile",
  "error-stack",
+ "futures",
  "model",
  "model_account",
  "model_profile",
@@ -4177,8 +4180,6 @@ dependencies = [
  "server_data",
  "server_data_account",
  "server_data_profile",
- "simple_backend_utils",
- "tokio",
  "tracing",
 ]
 
@@ -4281,12 +4282,12 @@ dependencies = [
  "server_common",
  "server_data",
  "server_data_account",
- "server_data_all",
  "server_data_chat",
  "server_data_media",
  "server_data_profile",
  "simple_backend",
  "simple_backend_config",
+ "simple_backend_utils",
  "thiserror 1.0.63",
  "tokio",
  "tracing",

@@ -16,7 +16,7 @@ macro_rules! db_transaction {
     }};
 }
 
-pub mod demo;
 pub mod load;
 pub mod register;
 pub mod unlimited_likes;
+pub mod app;

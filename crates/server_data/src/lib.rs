@@ -25,6 +25,7 @@ pub mod utils;
 pub mod write;
 pub mod write_commands;
 pub mod write_concurrent;
+pub mod demo;
 
 // TODO: Remove?
 pub type DatabeseEntryId = String;

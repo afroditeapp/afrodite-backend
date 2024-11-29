@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, ops::Deref};
+use std::net::SocketAddr;
 
 use config::{file::ConfigFileError, file_dynamic::ConfigFileDynamic, Config};
 use error_stack::ResultExt;
@@ -6,14 +6,12 @@ use futures::Future;
 use model::{
     AccessToken, AccountId, AccountIdInternal, AccountState, BackendConfig, BackendVersion, EmailMessages, EventToClientInternal, NewReceivedLikesCountResult, PendingNotification, PendingNotificationFlags, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, PushNotificationStateInfoWithFlags
 };
-use model_account::{EmailAddress, SignInWithInfo};
 use crate::{db_write_multiple, db_write_raw, internal_api::{self, InternalApiClient}, result::WrappedContextExt, utils::StatusCode};
 use server_common::push_notifications::{PushNotificationError, PushNotificationStateProvider};
 use server_data::{
     content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, event::EventManagerWithCacheReference, read::GetReadCommandsCommon, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
 };
 use server_data_account::{read::GetReadCommandsAccount, write::{account::IncrementAdminAccessGrantedCount, GetWriteCommandsAccount}};
-use server_data_all::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_data_profile::{app::ProfileStatisticsCacheProvider, write::GetWriteCommandsProfile};
 use server_data_media::read::GetReadMediaCommands;
@@ -334,81 +332,6 @@ impl ContentProcessingProvider for S {
     }
 }
 
-impl DemoModeManagerProvider for S {
-    async fn stage0_login(
-        &self,
-        password: model_account::DemoModePassword,
-    ) -> error_stack::Result<model_account::DemoModeLoginResult, DataError> {
-        self.demo_mode.stage0_login(password).await
-    }
-
-    async fn stage1_login(
-        &self,
-        password: model_account::DemoModePassword,
-        token: model_account::DemoModeLoginToken,
-    ) -> error_stack::Result<model_account::DemoModeConfirmLoginResult, DataError> {
-        self.demo_mode.stage1_login(password, token).await
-    }
-
-    async fn demo_mode_token_exists(
-        &self,
-        token: &model_account::DemoModeToken,
-    ) -> error_stack::Result<model_account::DemoModeId, DataError> {
-        self.demo_mode.demo_mode_token_exists(token).await
-    }
-
-    async fn demo_mode_logout(
-        &self,
-        token: &model_account::DemoModeToken,
-    ) -> error_stack::Result<(), DataError> {
-        self.demo_mode.demo_mode_logout(token).await
-    }
-
-    async fn accessible_accounts_if_token_valid<
-        S: StateBase + GetConfig + GetAccounts + ReadData,
-    >(
-        &self,
-        state: &S,
-        token: &model_account::DemoModeToken,
-    ) -> server_common::result::Result<Vec<model_account::AccessibleAccount>, DataError> {
-        let info = self
-            .demo_mode
-            .accessible_accounts_if_token_valid(token)
-            .await?;
-        info.with_extra_info(state).await
-    }
-}
-
-impl RegisteringCmd for S {
-    async fn register_impl(
-        &self,
-        sign_in_with: SignInWithInfo,
-        email: Option<EmailAddress>,
-    ) -> std::result::Result<AccountIdInternal, StatusCode> {
-        // New unique UUID is generated every time so no special handling needed
-        // to avoid database collisions.
-        let id = AccountId::new_random();
-
-        let id = db_write_raw!(self, move |cmds| {
-            let id = RegisterAccount::new(cmds.deref())
-                .register(id, sign_in_with, email.clone())
-                .await?;
-
-            if email.is_some() {
-                cmds.account().email().send_email_if_not_already_sent(
-                    id,
-                    EmailMessages::AccountRegistered
-                ).await?;
-            }
-
-            Ok(id)
-        })
-        .await?;
-
-        Ok(id)
-    }
-}
-
 impl ValidateModerationRequest for S {
     async fn media_check_moderation_request_for_account(
         &self,
@@ -546,21 +469,6 @@ impl IsMatch for S {
         } else {
             Ok(false)
         }
-    }
-}
-
-impl UpdateUnlimitedLikes for S {
-    async fn update_unlimited_likes(
-        &self,
-        id: AccountIdInternal,
-        unlimited_likes: bool,
-    ) -> server_common::result::Result<(), DataError> {
-        db_write_raw!(self, move |cmds| {
-            UnlimitedLikesUpdate::new(cmds.deref())
-                .update_unlimited_likes_value(id, unlimited_likes)
-                .await
-        })
-        .await
     }
 }
 

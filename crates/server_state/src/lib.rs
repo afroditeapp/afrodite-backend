@@ -6,13 +6,15 @@
 use std::sync::Arc;
 
 use config::Config;
+use model::AccountIdInternal;
+use model_account::EmailAddress;
+use model_chat::SignInWithInfo;
 use self::internal_api::InternalApiClient;
 use server_common::push_notifications::PushNotificationSender;
 use server_data::{
-    content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle,
-    write_commands::WriteCommandRunnerHandle,
+    app::DataAllUtils, content_processing::ContentProcessingManagerData, db_manager::RouterDatabaseReadHandle, write_commands::WriteCommandRunnerHandle
 };
-use server_data_all::demo::DemoModeManager;
+use crate::demo::DemoModeManager;
 use server_data_profile::statistics::ProfileStatisticsCache;
 use simple_backend::app::SimpleBackendAppState;
 
@@ -22,6 +24,7 @@ pub mod internal_api;
 pub mod websocket;
 pub mod app;
 pub mod utils;
+pub mod demo;
 
 pub use server_common::{data::DataError, result};
 
@@ -39,6 +42,7 @@ pub struct AppState {
     push_notification_sender: PushNotificationSender,
     simple_backend_state: SimpleBackendAppState,
     profile_statistics_cache: Arc<ProfileStatisticsCache>,
+    data_all_utils: &'static dyn DataAllUtils,
 }
 
 impl AppState {
@@ -51,6 +55,7 @@ impl AppState {
         demo_mode: DemoModeManager,
         push_notification_sender: PushNotificationSender,
         simple_backend_state: SimpleBackendAppState,
+        data_all_utils: &'static dyn DataAllUtils,
     ) -> AppState {
         let database = Arc::new(database_handle);
         let state = AppState {
@@ -62,10 +67,33 @@ impl AppState {
             demo_mode,
             push_notification_sender,
             simple_backend_state,
-            profile_statistics_cache: ProfileStatisticsCache::default().into()
+            profile_statistics_cache: ProfileStatisticsCache::default().into(),
+            data_all_utils,
         };
 
         state
+    }
+
+    pub fn demo_mode(&self) -> &DemoModeManager {
+        &self.demo_mode
+    }
+
+    pub async fn update_unlimited_likes(
+        &self,
+        id: AccountIdInternal,
+        unlimited_likes: bool,
+    ) -> server_common::result::Result<(), DataError> {
+        let cmd = self.data_all_utils.update_unlimited_likes(&self.write_queue, id, unlimited_likes);
+        cmd.await
+    }
+
+    pub async fn register_impl(
+        &self,
+        sign_in_with: SignInWithInfo,
+        email: Option<EmailAddress>,
+    ) -> server_common::result::Result<AccountIdInternal, DataError> {
+        let cmd = self.data_all_utils.register_impl(&self.write_queue, sign_in_with, email);
+        cmd.await
     }
 }
 

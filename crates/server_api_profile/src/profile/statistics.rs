@@ -50,7 +50,7 @@ pub async fn get_profile_statistics(
     let r = if params.contains_admin_settings() {
         state.read().profile().statistics().profile_statistics(params.profile_visibility.unwrap_or_default()).await?
     } else {
-        state.profile_statistics_cache().get_or_update_statistics(&state).await?
+        state.profile_statistics_cache().get_or_update_statistics(state.read()).await?
     };
 
     Ok(r.into())

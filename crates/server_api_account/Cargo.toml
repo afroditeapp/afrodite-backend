@@ -12,6 +12,8 @@ axum = { workspace = true }
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 
+error-stack = { workspace = true }
+
 model = { path = "../model" }
 model_account = { path = "../model_account" }
 

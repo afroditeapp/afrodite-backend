@@ -5,6 +5,9 @@ use utoipa::ToSchema;
 mod news;
 pub use news::*;
 
+mod login;
+pub use login::*;
+
 /// AccessToken and RefreshToken
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct AuthPair {

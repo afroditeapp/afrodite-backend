@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{schema_sqlite_types::BigInt, AccountId, ProfileAge, RefreshToken};
+use crate::{schema_sqlite_types::BigInt, AccountId, RefreshToken};
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct DemoModePassword {
@@ -86,14 +86,6 @@ impl DemoModeToken {
             token: RefreshToken::generate_new().into_string(),
         }
     }
-}
-
-#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
-pub struct AccessibleAccount {
-    pub aid: AccountId,
-    pub name: Option<String>,
-    #[schema(value_type = Option<i64>)]
-    pub age: Option<ProfileAge>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]

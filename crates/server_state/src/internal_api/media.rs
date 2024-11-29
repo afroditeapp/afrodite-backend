@@ -5,7 +5,7 @@ use server_data_media::read::GetReadMediaCommands;
 
 use crate::{
     app::{GetConfig, GetInternalApi, ReadData},
-    result::{Result, WrappedResultExt},
+    result::{Result, WrappedResultExt}, S,
 };
 
 /// Check that media server has correct state for completing initial setup.
@@ -18,9 +18,7 @@ use crate::{
 ///
 /// TODO(prod): Make sure that moderation request is not removed when admin
 ///             interacts with it.
-pub async fn media_check_moderation_request_for_account<
-    S: GetConfig + ReadData + GetInternalApi,
->(
+pub async fn media_check_moderation_request_for_account(
     state: &S,
     account_id: AccountIdInternal,
 ) -> Result<(), InternalApiError> {

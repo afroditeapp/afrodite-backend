@@ -4,12 +4,9 @@ use axum::extract::ws::WebSocket;
 use model::{
     AccessToken, AccountIdInternal, AccountState, PendingNotification, PendingNotificationWithData, Permissions, PublicKeyIdAndVersion, SyncDataVersionFromClient
 };
-use model_account::{
-    AccessibleAccount, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult, DemoModeLoginToken, DemoModePassword, DemoModeToken, EmailAddress, SignInWithInfo
-};
 use server_common::internal_api::InternalApiError;
 use server_data::{content_processing::ContentProcessingManagerData, DataError};
-use crate::{websocket::WebSocketError, internal_api::InternalApiClient, utils::StatusCode};
+use crate::{internal_api::InternalApiClient, utils::StatusCode, websocket::WebSocketError};
 
 pub use server_data::app::*;
 
@@ -52,46 +49,6 @@ pub trait CompleteInitialSetupCmd: ReadData + WriteData + GetInternalApi + GetCo
     ) -> impl std::future::Future<Output = std::result::Result<(), StatusCode>> + Send;
 }
 
-pub trait RegisteringCmd: WriteData {
-    fn register_impl(
-        &self,
-        sign_in_with: SignInWithInfo,
-        email: Option<EmailAddress>,
-    ) -> impl std::future::Future<Output = Result<AccountIdInternal, StatusCode>> + Send;
-}
-
-pub trait DemoModeManagerProvider: StateBase {
-    fn stage0_login(
-        &self,
-        password: DemoModePassword,
-    ) -> impl std::future::Future<Output = error_stack::Result<DemoModeLoginResult, DataError>> + Send;
-
-    fn stage1_login(
-        &self,
-        password: DemoModePassword,
-        token: DemoModeLoginToken,
-    ) -> impl std::future::Future<Output = error_stack::Result<DemoModeConfirmLoginResult, DataError>>
-           + Send;
-
-    fn demo_mode_token_exists(
-        &self,
-        token: &DemoModeToken,
-    ) -> impl std::future::Future<Output = error_stack::Result<DemoModeId, DataError>> + Send;
-
-    fn demo_mode_logout(
-        &self,
-        token: &DemoModeToken,
-    ) -> impl std::future::Future<Output = error_stack::Result<(), DataError>> + Send;
-
-    fn accessible_accounts_if_token_valid<S: StateBase + GetConfig + GetAccounts + ReadData>(
-        &self,
-        state: &S,
-        token: &DemoModeToken,
-    ) -> impl std::future::Future<
-        Output = server_common::result::Result<Vec<AccessibleAccount>, DataError>,
-    > + Send;
-}
-
 pub trait ConnectionTools: StateBase + WriteData + ReadData + GetConfig {
     fn reset_pending_notification(
         &self,
@@ -126,14 +83,6 @@ pub trait IsMatch: StateBase + ReadData {
         account0: AccountIdInternal,
         account1: AccountIdInternal,
     ) -> impl std::future::Future<Output = server_common::result::Result<bool, DataError>> + Send;
-}
-
-pub trait UpdateUnlimitedLikes: StateBase + WriteData {
-    fn update_unlimited_likes(
-        &self,
-        id: AccountIdInternal,
-        unlimited_likes: bool,
-    ) -> impl std::future::Future<Output = server_common::result::Result<(), DataError>> + Send;
 }
 
 pub trait LatestPublicKeysInfo: StateBase + WriteData {

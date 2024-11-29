@@ -31,8 +31,8 @@ use server_data::{
     db_manager::DatabaseManager,
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
-use server_data_all::{demo::DemoModeManager, load::DbDataToCacheLoader};
-use server_state::AppState;
+use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
+use server_state::{demo::DemoModeManager, AppState};
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
     app::SimpleBackendAppState, email::{self, EmailManager, EmailManagerQuitHandle}, media_backup::MediaBackupHandle, perf::AllCounters, web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher
@@ -197,6 +197,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             demo_mode,
             push_notification_sender,
             simple_state,
+            &DataAllUtilsImpl,
         )
         .await;
 

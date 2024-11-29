@@ -18,6 +18,8 @@ enable_logging!(
 );
 
 disable_logging!(
+    // Account
+    GoogleAccountId,
     // Chat
     // MessageNumber,
     // // General

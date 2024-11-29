@@ -1,11 +1,15 @@
 use std::{future::Future, sync::Arc};
 
-use config::Config;
-use model::AccountId;
+use config::{file::EmailAddress, Config};
+use model::{AccountId, AccountIdInternal};
+use model_server_data::SignInWithInfo;
+
+use futures::future::BoxFuture;
+
 pub use server_common::app::*;
 
 use crate::{
-    db_manager::{InternalWriting, RouterDatabaseReadHandle}, event::EventManagerWithCacheReference, write_commands::WriteCmds, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
+    db_manager::{InternalWriting, RouterDatabaseReadHandle}, event::EventManagerWithCacheReference, write_commands::{WriteCmds, WriteCommandRunnerHandle}, write_concurrent::{ConcurrentWriteAction, ConcurrentWriteProfileHandleBlocking, ConcurrentWriteSelectorHandle}, DataError
 };
 
 pub trait WriteData {
@@ -75,5 +79,47 @@ pub trait GetEmailSender {
 impl <I: InternalWriting> GetEmailSender for I {
     fn email_sender(&self) -> &EmailSenderImpl {
         InternalWriting::email_sender(self)
+    }
+}
+
+/// Data commands which have cross component dependencies.
+///
+/// This exists to avoid recompiling most of the crates when data layer crate
+/// is edited.
+pub trait DataAllUtils: Send + Sync + 'static {
+    fn update_unlimited_likes<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        id: AccountIdInternal,
+        unlimited_likes: bool,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
+
+    fn register_impl<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        sign_in_with: SignInWithInfo,
+        email: Option<EmailAddress>,
+    ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>>;
+}
+
+pub struct DataAllUtilsEmpty;
+
+impl DataAllUtils for DataAllUtilsEmpty {
+    fn register_impl<'a>(
+        &self,
+        _write_command_runner: &'a WriteCommandRunnerHandle,
+        _sign_in_with: SignInWithInfo,
+        _email: Option<EmailAddress>,
+    ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>> {
+        unimplemented!()
+    }
+
+    fn update_unlimited_likes<'a>(
+        &self,
+        _write_command_runner: &'a WriteCommandRunnerHandle,
+        _id: AccountIdInternal,
+        _unlimited_likes: bool,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
+        unimplemented!()
     }
 }

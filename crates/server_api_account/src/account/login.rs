@@ -5,7 +5,7 @@ use model_account::{
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::S;
-use server_api::{app::{LatestPublicKeysInfo, RegisteringCmd, ResetPushNotificationTokens}, db_write};
+use server_api::{app::{LatestPublicKeysInfo, ResetPushNotificationTokens}, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};

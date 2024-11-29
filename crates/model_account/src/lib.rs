@@ -11,9 +11,12 @@ pub use model::*;
 pub use model_server_data::*;
 
 pub mod account;
-pub mod account_admin;
-
 pub use account::*;
+
+pub mod account_admin;
 pub use account_admin::*;
+
+pub mod profile;
+pub use profile::*;
 
 mod markers_account;

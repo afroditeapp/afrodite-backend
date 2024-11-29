@@ -8,7 +8,7 @@ use model_account::{
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::S;
-use server_api::{app::RegisteringCmd, create_open_api_router, db_write};
+use server_api::{create_open_api_router, db_write};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 use utoipa_axum::router::OpenApiRouter;
@@ -97,7 +97,7 @@ pub async fn post_demo_mode_accessible_accounts(
 ) -> Result<Json<Vec<AccessibleAccount>>, StatusCode> {
     ACCOUNT.post_demo_mode_accessible_accounts.incr();
     let result = state
-        .accessible_accounts_if_token_valid(&state, &token)
+        .accessible_accounts_if_token_valid(&token)
         .await?;
     Ok(result.into())
 }

@@ -3,8 +3,8 @@ use std::sync::Arc;
 use config::Config;
 use model::{AccountIdInternal, EmailMessages};
 use server_data::{content_processing::ContentProcessingManagerData, db_manager::DatabaseManager, write_commands::WriteCommandRunnerHandle};
-use server_data_all::demo::DemoModeManager;
-use server_state::S;
+use server_data_all::app::DataAllUtilsImpl;
+use server_state::{demo::DemoModeManager, S};
 use simple_backend::{app::SimpleBackendAppState, media_backup::MediaBackupHandle, perf::PerfCounterManagerData};
 use simple_backend_config::SimpleBackendConfig;
 use utoipa::OpenApi;
@@ -132,6 +132,7 @@ impl ApiDoc {
             demo_mode,
             push_notification_sender,
             simple_state,
+            &DataAllUtilsImpl,
         )
         .await;
 
