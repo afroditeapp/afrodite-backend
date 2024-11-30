@@ -313,7 +313,7 @@ impl Default for SetAccountSetup<'static> {
 }
 
 #[async_trait]
-impl<'a> BotAction for SetAccountSetup<'a> {
+impl BotAction for SetAccountSetup<'_> {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let setup = api_client::models::SetAccountSetup {
             birthdate: None,

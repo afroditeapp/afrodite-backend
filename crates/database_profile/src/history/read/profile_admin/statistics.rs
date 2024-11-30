@@ -5,7 +5,7 @@ use model_profile::{GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryV
 
 define_history_read_commands!(HistoryReadProfileAdminStatistics);
 
-impl<'a> HistoryReadProfileAdminStatistics<'a> {
+impl HistoryReadProfileAdminStatistics<'_> {
     pub fn profile_statistics_history(
         &mut self,
         settings: ProfileStatisticsHistoryValueTypeInternal,

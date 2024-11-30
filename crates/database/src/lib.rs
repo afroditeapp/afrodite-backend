@@ -83,7 +83,7 @@ impl<T: IsLoggingAllowed + std::fmt::Debug, Ok> std::fmt::Debug for ErrorContext
         struct Printer<'a, T> {
             value: &'a T,
         }
-        impl<'a, T: IsLoggingAllowed> Debug for Printer<'a, T> {
+        impl<T: IsLoggingAllowed> Debug for Printer<'_, T> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 self.value.fmt_loggable(f)
             }
@@ -212,7 +212,7 @@ impl DbReadAccessProvider for DbReadMode<'_> {
 pub trait DbReadAccessProviderHistory {
     fn handle(&mut self) -> &mut DieselConnection;
 }
-impl <'a> DbReadAccessProviderHistory for DbReadModeHistory<'a> {
+impl DbReadAccessProviderHistory for DbReadModeHistory<'_> {
     fn handle(&mut self) -> &mut DieselConnection {
         self.0
     }
@@ -228,7 +228,7 @@ impl DbWriteAccessProvider for DbWriteMode<'_> {
 pub trait DbWriteAccessProviderHistory {
     fn handle(&mut self) -> &mut DieselConnection;
 }
-impl <'a> DbWriteAccessProviderHistory for DbWriteModeHistory<'a> {
+impl DbWriteAccessProviderHistory for DbWriteModeHistory<'_> {
     fn handle(&mut self) -> &mut DieselConnection {
         self.0
     }
