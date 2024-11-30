@@ -13,6 +13,7 @@ pub mod scheduled_tasks;
 pub mod startup_tasks;
 pub mod shutdown_tasks;
 pub mod utils;
+pub mod email;
 
 use std::sync::Arc;
 
@@ -20,6 +21,7 @@ use api_doc::ApiDoc;
 use axum::Router;
 use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
+use email::ServerEmailDataProvider;
 use model::{AccountIdInternal, EmailMessages};
 use perf::ALL_COUNTERS;
 use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
@@ -35,7 +37,7 @@ use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
 use server_state::{demo::DemoModeManager, AppState};
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
-    app::SimpleBackendAppState, email::{self, EmailManager, EmailManagerQuitHandle}, media_backup::MediaBackupHandle, perf::AllCounters, web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher
+    app::SimpleBackendAppState, email::{EmailManager, EmailManagerQuitHandle}, media_backup::MediaBackupHandle, perf::AllCounters, web_socket::WebSocketManager, BusinessLogic, ServerQuitWatcher
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
@@ -158,7 +160,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         server_quit_watcher: ServerQuitWatcher,
     ) -> Self::AppState {
         let (push_notification_sender, push_notification_receiver) = push_notifications::channel();
-        let (email_sender, email_receiver) = email::channel::<AccountIdInternal, EmailMessages>();
+        let (email_sender, email_receiver) = simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.simple_backend().data_dir().to_path_buf(),
@@ -218,7 +220,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let email_manager_quit_handle = EmailManager::new_manager(
             self.config.simple_backend(),
             server_quit_watcher.resubscribe(),
-            app_state.clone(),
+            ServerEmailDataProvider::new(app_state.clone()),
             email_receiver,
         )
         .await;

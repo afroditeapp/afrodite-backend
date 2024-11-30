@@ -6,7 +6,8 @@ use std::{
 use error_stack::{Result, ResultExt};
 // Re-export for test-mode crate
 pub use model_account::EmailAddress;
-use model_account::{DemoModeId, GoogleAccountId};
+use model_account::GoogleAccountId;
+use model_server_state::DemoModeId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::ConfigFileUtils;
 use url::Url;

@@ -1,9 +1,10 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::read::GetDbReadCommandsAccount;
 use model_account::{
-    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, DemoModeId,
+    AccountData, AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
     GoogleAccountId, SignInWithInfo,
 };
+use model_server_state::DemoModeId;
 use server_data::{define_cmd_wrapper_read, read::DbRead, result::Result, DataError, IntoDataError};
 
 pub mod email;
@@ -64,24 +65,6 @@ impl ReadCommandsAccount<'_> {
         id: AccountIdInternal,
     ) -> Result<AccountSetup, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().account_setup(id))
-            .await
-            .into_error()
-    }
-
-    // TODO: move to common
-    pub async fn account_ids_vec(
-        &self,
-    ) -> Result<Vec<AccountId>, DataError> {
-        self.db_read(move |mut cmds| cmds.account().data().account_ids())
-            .await
-            .into_error()
-    }
-
-    // TODO: move to common
-    pub async fn account_ids_internal_vec(
-        &self,
-    ) -> Result<Vec<AccountIdInternal>, DataError> {
-        self.db_read(move |mut cmds| cmds.account().data().account_ids_internal())
             .await
             .into_error()
     }

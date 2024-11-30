@@ -1,6 +1,6 @@
 use diesel::{prelude::*, SelectableHelper};
 use error_stack::Result;
-use model::{Account, AccountIdInternal, Permissions};
+use model::{Account, AccountId, AccountIdInternal, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
 use crate::{current::read::GetDbReadCommandsCommon, define_current_read_commands, IntoDatabaseError};
@@ -40,5 +40,22 @@ impl CurrentReadCommon<'_> {
             .into_db_error(id)?;
 
         Ok(Account::new_from_internal_types(permissions, shared_state))
+    }
+
+    pub fn account_ids_internal(&mut self) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
+        use crate::schema::account_id::dsl::*;
+
+        account_id
+            .select(AccountIdInternal::as_select())
+            .load(self.conn())
+            .into_db_error(())
+    }
+
+    pub fn account_ids(&mut self) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::account_id::dsl::*;
+
+        account_id.select(uuid)
+            .load(self.conn())
+            .into_db_error(())
     }
 }

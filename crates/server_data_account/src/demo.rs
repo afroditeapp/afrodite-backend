@@ -1,26 +1,31 @@
 use config::Config;
 use model::{AccessibleAccount, AccountId};
-use model_account::DemoModeId;
-use server_data::{db_manager::RouterDatabaseReadHandle, result::WrappedContextExt, DataError};
+use model_server_state::AccessibleAccountsInfo;
+use server_data::{db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon, result::WrappedContextExt, DataError};
 
 use crate::read::GetReadCommandsAccount;
 
-pub enum AccessibleAccountsInfo {
-    All,
-    Specific {
-        config_file_accounts: Vec<AccountId>,
-        demo_mode_id: DemoModeId,
-    },
+pub trait AccessibleAccountsInfoUtils: Sized {
+    async fn into_accounts(
+        self,
+        read: &RouterDatabaseReadHandle,
+    ) -> server_common::result::Result<Vec<AccountId>, DataError>;
+
+    async fn contains(
+        &self,
+        account: AccountId,
+        read: &RouterDatabaseReadHandle,
+    ) -> server_common::result::Result<(), DataError>;
 }
 
-impl AccessibleAccountsInfo {
-    pub async fn into_accounts(
+impl AccessibleAccountsInfoUtils for AccessibleAccountsInfo {
+    async fn into_accounts(
         self,
         read: &RouterDatabaseReadHandle,
     ) -> server_common::result::Result<Vec<AccountId>, DataError> {
         let (accounts, demo_mode_id) = match self {
             AccessibleAccountsInfo::All => {
-                let all_accounts = read.account().account_ids_vec().await?;
+                let all_accounts = read.common().account_ids_vec().await?;
                 return Ok(all_accounts);
             }
             AccessibleAccountsInfo::Specific {
@@ -40,7 +45,7 @@ impl AccessibleAccountsInfo {
             .collect())
     }
 
-    pub async fn contains(
+    async fn contains(
         &self,
         account: AccountId,
         read: &RouterDatabaseReadHandle,

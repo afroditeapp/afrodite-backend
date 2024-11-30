@@ -1,9 +1,10 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression};
+use model::{AccountId, RefreshToken};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i64_wrapper;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{schema_sqlite_types::BigInt, AccountId, RefreshToken};
+use crate::schema_sqlite_types::BigInt;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct DemoModePassword {
@@ -124,3 +125,11 @@ impl DemoModeId {
 }
 
 diesel_i64_wrapper!(DemoModeId);
+
+pub enum AccessibleAccountsInfo {
+    All,
+    Specific {
+        config_file_accounts: Vec<AccountId>,
+        demo_mode_id: DemoModeId,
+    },
+}

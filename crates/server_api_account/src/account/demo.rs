@@ -1,10 +1,12 @@
 use std::time::Duration;
 
 use axum::extract::State;
+use model_server_state::{
+    DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId,
+    DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken,
+};
 use model_account::{
-    AccessibleAccount, AccountId, DemoModeConfirmLogin, DemoModeConfirmLoginResult, DemoModeId,
-    DemoModeLoginResult, DemoModeLoginToAccount, DemoModePassword, DemoModeToken, LoginResult,
-    SignInWithInfo,
+    AccessibleAccount, AccountId, LoginResult, SignInWithInfo,
 };
 use obfuscate_api_macro::obfuscate_api;
 use server_api::S;

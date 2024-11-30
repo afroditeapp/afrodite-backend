@@ -11,6 +11,7 @@ members = [
     "crates/api_internal",
     "crates/model",
     "crates/model_server_data",
+    "crates/model_server_state",
     "crates/model_chat",
     "crates/model_profile",
     "crates/model_media",

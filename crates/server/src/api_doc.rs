@@ -102,7 +102,7 @@ impl ApiDoc {
         let config = Arc::new(Config::minimal_config_for_api_doc_json(config.clone()));
 
         let (push_notification_sender, _) = crate::push_notifications::channel();
-        let (email_sender, _) = crate::email::channel::<AccountIdInternal, EmailMessages>();
+        let (email_sender, _) = simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
         let (_, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 config.simple_backend().data_dir().to_path_buf(),

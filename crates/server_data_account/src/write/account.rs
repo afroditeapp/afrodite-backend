@@ -2,8 +2,9 @@ use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommands
 use database_account::current::write::GetDbWriteCommandsAccount;
 use email::WriteCommandsAccountEmail;
 use model_account::{
-    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Permissions, ClientId, DemoModeId, ProfileVisibility, SetAccountSetup
+    Account, AccountData, AccountId, AccountIdInternal, AccountInternal, AccountState, Permissions, ClientId, ProfileVisibility, SetAccountSetup
 };
+use model_server_state::DemoModeId;
 use news::WriteCommandsAccountNews;
 use server_data::{
     define_cmd_wrapper_write, read::DbRead, result::Result, write::GetWriteCommandsCommon, DataError, DieselDatabaseError, write::DbTransaction,

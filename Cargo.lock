@@ -859,6 +859,7 @@ dependencies = [
  "model",
  "model_account",
  "model_profile",
+ "model_server_state",
  "reqwest",
  "serde",
  "sha2",
@@ -1067,6 +1068,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_account",
+ "model_server_state",
  "serde_json",
  "simple_backend_utils",
 ]
@@ -2535,6 +2537,17 @@ dependencies = [
  "toml",
  "utoipa",
  "uuid",
+]
+
+[[package]]
+name = "model_server_state"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "model",
+ "serde",
+ "simple_backend_model",
+ "utoipa",
 ]
 
 [[package]]
@@ -4033,6 +4046,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_account",
+ "model_server_state",
  "obfuscate_api_macro",
  "server_api",
  "server_common",
@@ -4157,6 +4171,7 @@ dependencies = [
  "error-stack",
  "model",
  "model_account",
+ "model_server_state",
  "server_common",
  "server_data",
 ]
@@ -4279,12 +4294,12 @@ dependencies = [
  "futures",
  "hyper",
  "model",
- "model_account",
  "model_chat",
+ "model_server_data",
+ "model_server_state",
  "reqwest",
  "server_common",
  "server_data",
- "server_data_account",
  "server_data_chat",
  "simple_backend",
  "simple_backend_config",

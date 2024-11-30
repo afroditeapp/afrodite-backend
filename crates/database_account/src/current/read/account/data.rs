@@ -1,9 +1,7 @@
 use database::{define_current_read_commands, DieselDatabaseError};
 use diesel::prelude::*;
 use error_stack::Result;
-use model::{
-    AccountId, AccountIdInternal
-};
+use model::AccountIdInternal;
 use model_account::{
     AccountData, AccountGlobalState, AccountInternal, AccountSetup,
 };
@@ -13,21 +11,6 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentReadAccountData);
 
 impl CurrentReadAccountData<'_> {
-    pub fn account_ids_internal(&mut self) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
-        use crate::schema::account_id::dsl::*;
-
-        account_id
-            .select(AccountIdInternal::as_select())
-            .load(self.conn())
-            .into_db_error(())
-    }
-
-    pub fn account_ids(&mut self) -> Result<Vec<AccountId>, DieselDatabaseError> {
-        use crate::schema::account_id::dsl::*;
-
-        account_id.select(uuid).load(self.conn()).into_db_error(())
-    }
-
     pub fn account_setup(
         &mut self,
         id: AccountIdInternal,

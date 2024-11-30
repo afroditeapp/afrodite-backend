@@ -3,7 +3,6 @@ use model_profile::{AccountIdInternal, AccountState, EventToClientInternal, Prof
 use server_api::{db_write_raw, result::WrappedContextExt, DataError};
 use server_common::result::{Result, WrappedResultExt};
 use server_data::read::GetReadCommandsCommon;
-use server_data_account::read::GetReadCommandsAccount;
 use server_data_profile::{read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils, write::GetWriteCommandsProfile};
 use server_state::S;
 use simple_backend::{utils::time::sleep_until_current_time_is_at, ServerQuitWatcher};
@@ -136,7 +135,7 @@ impl ScheduledTaskManager {
     pub async fn run_tasks_for_individual_accounts(&self, quit_notification: &mut ServerQuitWatcher) -> Result<(), ScheduledTaskError> {
         let accounts = self.state
             .read()
-            .account()
+            .common()
             .account_ids_internal_vec()
             .await
             .change_context(ScheduledTaskError::DatabaseError)?;

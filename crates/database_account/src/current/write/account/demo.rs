@@ -2,7 +2,7 @@ use database::{define_current_write_commands, DieselDatabaseError};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
 use model::AccountId;
-use model_account::DemoModeId;
+use model_server_state::DemoModeId;
 
 use crate::IntoDatabaseError;
 

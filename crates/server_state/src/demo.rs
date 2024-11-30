@@ -2,12 +2,13 @@ use std::{collections::HashSet, sync::Arc};
 
 use config::file::DemoModeConfig;
 use error_stack::Result;
-use model_account::{
-    AccountId, DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
+use model::AccountId;
+use model_server_state::{
+    DemoModeConfirmLoginResult, DemoModeId, DemoModeLoginResult,
     DemoModeLoginToken, DemoModePassword, DemoModeToken,
 };
 use server_common::data::DataError;
-use server_data_account::demo::AccessibleAccountsInfo;
+use model_server_state::AccessibleAccountsInfo;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::sync::RwLock;
 use tracing::error;

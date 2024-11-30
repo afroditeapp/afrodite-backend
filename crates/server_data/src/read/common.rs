@@ -66,4 +66,20 @@ impl ReadCommandsCommon<'_> {
             .into_error()
             .map(|v| v.birthdate)
     }
+
+    pub async fn account_ids_vec(
+        &self,
+    ) -> Result<Vec<AccountId>, DataError> {
+        self.db_read(move |mut cmds| cmds.common().account_ids())
+            .await
+            .into_error()
+    }
+
+    pub async fn account_ids_internal_vec(
+        &self,
+    ) -> Result<Vec<AccountIdInternal>, DataError> {
+        self.db_read(move |mut cmds| cmds.common().account_ids_internal())
+            .await
+            .into_error()
+    }
 }

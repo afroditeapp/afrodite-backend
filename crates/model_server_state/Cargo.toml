@@ -1,0 +1,16 @@
+[package]
+name = "model_server_state"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+serde = { workspace = true }
+utoipa = { workspace = true }
+diesel = { workspace = true }
+
+model = { path = "../model" }
+
+simple_backend_model = { path = "../simple_backend_model"}

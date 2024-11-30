@@ -3,7 +3,6 @@ use std::collections::hash_map::Entry;
 use config::Config;
 use database::current::read::GetDbReadCommandsCommon;
 use database::{CurrentReadHandle, DbReaderRaw, DieselDatabaseError};
-use database_account::current::read::GetDbReadCommandsAccount;
 use database_chat::current::read::GetDbReadCommandsChat;
 use database_media::current::read::GetDbReadCommandsMedia;
 use database_profile::current::read::GetDbReadCommandsProfile;
@@ -33,7 +32,7 @@ impl DbDataToCacheLoader {
 
         let db = DbReaderAll::new(DbReaderRaw::new(current_db));
         let accounts = db
-            .db_read(move |mut cmd| cmd.account().data().account_ids_internal())
+            .db_read(move |mut cmd| cmd.common().account_ids_internal())
             .await
             .change_context(CacheError::Init)?;
 

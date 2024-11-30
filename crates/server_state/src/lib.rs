@@ -8,8 +8,8 @@ use std::sync::Arc;
 use axum::extract::ws::WebSocket;
 use config::Config;
 use model::{Account, AccountIdInternal, PendingNotification, PendingNotificationWithData, SyncDataVersionFromClient};
-use model_account::EmailAddress;
 use model_chat::SignInWithInfo;
+use model_server_data::EmailAddress;
 use self::internal_api::InternalApiClient;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{

@@ -8,6 +8,7 @@ CARGO_CRATE_ARGS = 	-p api_internal \
 					-p database_chat \
 					-p model \
 					-p model_server_data \
+					-p model_server_state \
 					-p model_account \
 					-p model_profile \
 					-p model_media \
@@ -120,6 +121,7 @@ code-stats:
 	crates/database_chat \
 	crates/model \
 	crates/model_server_data \
+	crates/model_server_state \
 	crates/model_account \
 	crates/model_profile \
 	crates/model_media \

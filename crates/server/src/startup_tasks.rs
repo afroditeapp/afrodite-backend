@@ -1,7 +1,7 @@
 use model_account::{EmailMessages, EmailSendingState};
 use server_api::{app::{EmailSenderImpl, GetConfig, ReadData, WriteData}, db_write_raw};
 use server_common::{data::DataError, result::Result};
-use server_data::write::GetWriteCommandsCommon;
+use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_profile::write::GetWriteCommandsProfile;
 use server_data_account::read::GetReadCommandsAccount;
 use server_state::S;
@@ -39,7 +39,7 @@ impl StartupTasks {
     }
 
     async fn handle_account_specific_tasks(state: &S, email_sender: EmailSenderImpl) -> Result<(), DataError> {
-        let ids = state.read().account().account_ids_internal_vec().await?;
+        let ids = state.read().common().account_ids_internal_vec().await?;
 
         for id in ids {
             // Email
